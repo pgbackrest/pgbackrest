@@ -39,7 +39,7 @@ typedef struct ArchiveRange
 Given a backup label, expire a backup and all its dependents (if any).
 ***********************************************************************************************************************************/
 static StringList *
-expireBackup(InfoBackup *infoBackup, const String *backupLabel, unsigned int repoIdx)
+expireBackup(const InfoBackup *const infoBackup, const String *const backupLabel, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -51,18 +51,18 @@ expireBackup(InfoBackup *infoBackup, const String *backupLabel, unsigned int rep
     ASSERT(backupLabel != NULL);
 
     // Return a list of all backups being expired
-    StringList *result = strLstNew();
+    StringList *const result = strLstNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the backup and all its dependents sorted from newest to oldest - that way if the process is aborted before all
         // dependencies have been dealt with, the backups remaining should still be usable.
-        StringList *backupList = strLstSort(infoBackupDataDependentList(infoBackup, backupLabel), sortOrderDesc);
+        const StringList *const backupList = strLstSort(infoBackupDataDependentList(infoBackup, backupLabel), sortOrderDesc);
 
         // Expire each backup in the list
         for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
         {
-            String *removeBackupLabel = strLstGet(backupList, backupIdx);
+            const String *const removeBackupLabel = strLstGet(backupList, backupIdx);
 
             // Execute the real expiration and deletion only if the dry-run option is disabled
             if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
@@ -93,7 +93,7 @@ expireBackup(InfoBackup *infoBackup, const String *backupLabel, unsigned int rep
 Function to expire a selected backup (and all its dependents) regardless of retention rules.
 ***********************************************************************************************************************************/
 static unsigned int
-expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel, unsigned int repoIdx)
+expireAdhocBackup(const InfoBackup *const infoBackup, const String *const backupLabel, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -109,7 +109,8 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel, unsigned in
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get a list of all full backups with most recent in position 0
-        StringList *fullList = strLstSort(infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)), sortOrderDesc);
+        const StringList *const fullList = strLstSort(
+            infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)), sortOrderDesc);
 
         // If the requested backup to expire is the latest full backup
         if (strCmp(strLstGet(fullList, 0), backupLabel) == 0)
@@ -127,10 +128,10 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel, unsigned in
 
         // Save off what is currently the latest backup (it may be removed if it is the adhoc backup or is a dependent of the
         // adhoc backup
-        const String *latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
+        const String *const latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel;
 
         // Expire the requested backup and any dependents
-        StringList *backupExpired = expireBackup(infoBackup, backupLabel, repoIdx);
+        const StringList *const backupExpired = expireBackup(infoBackup, backupLabel, repoIdx);
 
         // If the latest backup was removed, then update the latest link if not a dry-run
         if (!infoBackupLabelExists(infoBackup, latestBackup))
@@ -169,7 +170,7 @@ expireAdhocBackup(InfoBackup *infoBackup, const String *backupLabel, unsigned in
 Expire differential backups
 ***********************************************************************************************************************************/
 static unsigned int
-expireDiffBackup(InfoBackup *infoBackup, unsigned int repoIdx)
+expireDiffBackup(const InfoBackup *const infoBackup, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -183,15 +184,16 @@ expireDiffBackup(InfoBackup *infoBackup, unsigned int repoIdx)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        unsigned int differentialRetention = cfgOptionIdxTest(
-            cfgOptRepoRetentionDiff, repoIdx) ? cfgOptionIdxUInt(cfgOptRepoRetentionDiff, repoIdx) : 0;
+        const unsigned int differentialRetention =
+            cfgOptionIdxTest(cfgOptRepoRetentionDiff, repoIdx) ? cfgOptionIdxUInt(cfgOptRepoRetentionDiff, repoIdx) : 0;
 
         // Find all the expired differential backups
         if (differentialRetention > 0)
         {
             // Get a list of full and differential backups. Full are considered differential for the purpose of retention.
             // Example: F1, D1, D2, F2, repo-retention-diff=2, then F1,D2,F2 will be retained, not D2 and D1 as might be expected.
-            StringList *currentBackupList = infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true, .differential = true));
+            const StringList *const currentBackupList = infoBackupDataLabelList(
+                infoBackup, backupRegExpP(.full = true, .differential = true));
 
             // If there are more backups than the number to retain, then expire the oldest ones
             if (strLstSize(currentBackupList) > differentialRetention)
@@ -204,7 +206,8 @@ expireDiffBackup(InfoBackup *infoBackup, unsigned int repoIdx)
                         continue;
 
                     // Expire the differential and any dependent backups
-                    StringList *backupExpired = expireBackup(infoBackup, strLstGet(currentBackupList, diffIdx), repoIdx);
+                    const StringList *const backupExpired = expireBackup(
+                        infoBackup, strLstGet(currentBackupList, diffIdx), repoIdx);
                     result += strLstSize(backupExpired);
 
                     // Log the expired backups. If there is more than one backup, then prepend "set:"
@@ -224,7 +227,7 @@ expireDiffBackup(InfoBackup *infoBackup, unsigned int repoIdx)
 Expire full backups
 ***********************************************************************************************************************************/
 static unsigned int
-expireFullBackup(InfoBackup *infoBackup, unsigned int repoIdx)
+expireFullBackup(const InfoBackup *const infoBackup, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -238,14 +241,14 @@ expireFullBackup(InfoBackup *infoBackup, unsigned int repoIdx)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        unsigned int fullRetention = cfgOptionIdxTest(
-            cfgOptRepoRetentionFull, repoIdx) ? cfgOptionIdxUInt(cfgOptRepoRetentionFull, repoIdx) : 0;
+        const unsigned int fullRetention =
+            cfgOptionIdxTest(cfgOptRepoRetentionFull, repoIdx) ? cfgOptionIdxUInt(cfgOptRepoRetentionFull, repoIdx) : 0;
 
         // Find all the expired full backups
         if (fullRetention > 0)
         {
             // Get list of current full backups (default order is oldest to newest)
-            StringList *currentBackupList = infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true));
+            const StringList *const currentBackupList = infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true));
 
             // If there are more full backups then the number to retain, then expire the oldest ones
             if (strLstSize(currentBackupList) > fullRetention)
@@ -254,7 +257,8 @@ expireFullBackup(InfoBackup *infoBackup, unsigned int repoIdx)
                 for (unsigned int fullIdx = 0; fullIdx < strLstSize(currentBackupList) - fullRetention; fullIdx++)
                 {
                     // Expire the full backup and all its dependents
-                    StringList *backupExpired = expireBackup(infoBackup, strLstGet(currentBackupList, fullIdx), repoIdx);
+                    const StringList *const backupExpired = expireBackup(
+                        infoBackup, strLstGet(currentBackupList, fullIdx), repoIdx);
                     result += strLstSize(backupExpired);
 
                     // Log the expired backups. If there is more than one backup, then prepend "set:"
@@ -274,7 +278,7 @@ expireFullBackup(InfoBackup *infoBackup, unsigned int repoIdx)
 Expire backups based on time
 ***********************************************************************************************************************************/
 static unsigned int
-expireTimeBasedBackup(InfoBackup *infoBackup, const time_t minTimestamp, unsigned int repoIdx)
+expireTimeBasedBackup(const InfoBackup *const infoBackup, const time_t minTimestamp, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -290,7 +294,8 @@ expireTimeBasedBackup(InfoBackup *infoBackup, const time_t minTimestamp, unsigne
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the list of full backups
-        StringList *currentBackupList = strLstSort(infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)), sortOrderAsc);
+        const StringList *const currentBackupList = strLstSort(
+            infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)), sortOrderAsc);
         unsigned int backupIdx = strLstSize(currentBackupList);
 
         // Find out the point where we will have to stop purging backups. Starting with the newest backup (the end of the list),
@@ -326,7 +331,8 @@ expireTimeBasedBackup(InfoBackup *infoBackup, const time_t minTimestamp, unsigne
                 // is always the oldest so if it is not the backup to retain then we can remove it
                 while (!strEq(infoBackupData(infoBackup, 0).backupLabel, retentionMetBackupLabel))
                 {
-                    StringList *backupExpired = expireBackup(infoBackup, infoBackupData(infoBackup, 0).backupLabel, repoIdx);
+                    const StringList *const backupExpired = expireBackup(
+                        infoBackup, infoBackupData(infoBackup, 0).backupLabel, repoIdx);
 
                     result += strLstSize(backupExpired);
                     numFullExpired++;
@@ -357,7 +363,7 @@ expireTimeBasedBackup(InfoBackup *infoBackup, const time_t minTimestamp, unsigne
 Log detailed information about archive logs removed
 ***********************************************************************************************************************************/
 static void
-logExpire(ArchiveExpired *archiveExpire, String *archiveId, unsigned int repoIdx)
+logExpire(ArchiveExpired *const archiveExpire, const String *const archiveId, const unsigned int repoIdx)
 {
     if (archiveExpire->start != NULL)
     {
@@ -374,7 +380,7 @@ logExpire(ArchiveExpired *archiveExpire, String *archiveId, unsigned int repoIdx
 Process archive retention
 ***********************************************************************************************************************************/
 static void
-removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsigned int repoIdx)
+removeExpiredArchive(const InfoBackup *const infoBackup, const bool timeBasedFullRetention, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -388,14 +394,14 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
     {
         // Get the retention options. repo-archive-retention-type always has a value as it defaults to "full"
         const BackupType archiveRetentionType = (BackupType)cfgOptionIdxStrId(cfgOptRepoRetentionArchiveType, repoIdx);
-        unsigned int archiveRetention = cfgOptionIdxTest(
+        const unsigned int archiveRetention = cfgOptionIdxTest(
             cfgOptRepoRetentionArchive, repoIdx) ? cfgOptionIdxUInt(cfgOptRepoRetentionArchive, repoIdx) : 0;
 
         // If archive retention is undefined, then ignore archiving. The user does not have to set this - it will be defaulted in
         // cfgLoadUpdateOption based on certain rules.
         if (archiveRetention == 0)
         {
-            String *msg = strNewZ("- archive logs will not be expired");
+            const String *const msg = strNewZ("- archive logs will not be expired");
 
             // Only notify user if not time-based retention
             if (!timeBasedFullRetention)
@@ -410,7 +416,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
         {
             // Determine which backup type to use for archive retention (full, differential, incremental) and get a list of the
             // remaining non-expired backups, from newest to oldest, based on the type.
-            StringList *globalBackupRetentionList = NULL;
+            const StringList *globalBackupRetentionList = NULL;
 
             switch (archiveRetentionType)
             {
@@ -437,21 +443,20 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
             if (!strLstEmpty(globalBackupRetentionList) && archiveRetention <= strLstSize(globalBackupRetentionList))
             {
                 // Attempt to load the archive info file
-                InfoArchive *infoArchive = infoArchiveLoadFile(
+                const InfoArchive *const infoArchive = infoArchiveLoadFile(
                     storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                     cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
-
-                InfoPg *infoArchivePgData = infoArchivePg(infoArchive);
+                const InfoPg *const infoArchivePgData = infoArchivePg(infoArchive);
 
                 // Get a list of archive directories (e.g. 9.4-1, 10-2, etc) sorted by the db-id (number after the dash).
-                StringList *listArchiveDisk = strLstSort(
+                const StringList *const listArchiveDisk = strLstSort(
                     strLstComparatorSet(
                         storageListP(
                             storageRepoIdx(repoIdx), STORAGE_REPO_ARCHIVE_STR, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
                         archiveIdComparator),
                     sortOrderAsc);
 
-                StringList *globalBackupArchiveRetentionList = strLstNew();
+                StringList *const globalBackupArchiveRetentionList = strLstNew();
 
                 // globalBackupRetentionList is ordered newest to oldest backup, so create globalBackupArchiveRetentionList of the
                 // newest backups whose archives will be retained
@@ -470,8 +475,8 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                 // nothing really to do.
                 for (unsigned int infoPgIdx = 0; infoPgIdx < infoPgDataTotal(infoArchivePgData); infoPgIdx++)
                 {
-                    InfoPgData archiveInfoPgHistory = infoPgData(infoArchivePgData, infoPgIdx);
-                    InfoPgData backupInfoPgHistory = infoPgData(infoBackupPg(infoBackup), infoPgIdx);
+                    const InfoPgData archiveInfoPgHistory = infoPgData(infoArchivePgData, infoPgIdx);
+                    const InfoPgData backupInfoPgHistory = infoPgData(infoBackupPg(infoBackup), infoPgIdx);
 
                     if (archiveInfoPgHistory.id != backupInfoPgHistory.id ||
                         archiveInfoPgHistory.systemId != backupInfoPgHistory.systemId ||
@@ -486,8 +491,8 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                 // then remove WAL that are not part of retention as long as the db:history id version/system-id matches backup.info
                 for (unsigned int pgIdx = infoPgDataTotal(infoArchivePgData) - 1; (int)pgIdx >= 0; pgIdx--)
                 {
-                    String *archiveId = infoPgArchiveId(infoArchivePgData, pgIdx);
-                    StringList *localBackupRetentionList = strLstNew();
+                    const String *const archiveId = infoPgArchiveId(infoArchivePgData, pgIdx);
+                    StringList *const localBackupRetentionList = strLstNew();
 
                     // Initialize the expired archive information for this archive ID
                     ArchiveExpired archiveExpire = {.total = 0, .start = NULL, .stop = NULL};
@@ -523,7 +528,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                         {
                             // If this is not the current database, then delete the archive directory else do nothing since the
                             // current DB archive directory must not be deleted
-                            InfoPgData currentPg = infoPgDataCurrent(infoArchivePgData);
+                            const InfoPgData currentPg = infoPgDataCurrent(infoArchivePgData);
 
                             if (currentPg.id != archivePgId)
                             {
@@ -543,7 +548,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                         }
 
                         // If we get here, then a local backup was found for retention
-                        StringList *localBackupArchiveRetentionList = strLstNew();
+                        StringList *const localBackupArchiveRetentionList = strLstNew();
 
                         // From the full list of backups in archive retention, find the intersection of local backups to retain
                         // from oldest to newest
@@ -571,12 +576,12 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                         }
 
                         // Get the data for the backup selected for retention and all backups associated with this archive id
-                        List *archiveIdBackupList = lstNewP(sizeof(InfoBackupData));
+                        List *const archiveIdBackupList = lstNewP(sizeof(InfoBackupData));
                         InfoBackupData archiveRetentionBackup = {0};
 
                         for (unsigned int infoBackupIdx = 0; infoBackupIdx < infoBackupDataTotal(infoBackup); infoBackupIdx++)
                         {
-                            InfoBackupData archiveIdBackup = infoBackupData(infoBackup, infoBackupIdx);
+                            const InfoBackupData archiveIdBackup = infoBackupData(infoBackup, infoBackupIdx);
 
                             // If this is the backup selected for retention, store its data
                             if (strCmp(archiveIdBackup.backupLabel, strLstGet(localBackupArchiveRetentionList, 0)) == 0)
@@ -596,13 +601,13 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                             // Get archive ranges to preserve. Because archive retention can be less than total retention it is
                             // important to preserve archive that is required to make the older backups consistent even though they
                             // cannot be played any further forward with PITR.
-                            String *archiveExpireMax = NULL;
-                            List *archiveRangeList = lstNewP(sizeof(ArchiveRange));
+                            const String *archiveExpireMax = NULL;
+                            List *const archiveRangeList = lstNewP(sizeof(ArchiveRange));
 
                             // From the full list of backups, loop through those associated with this archiveId
                             for (unsigned int backupListIdx = 0; backupListIdx < lstSize(archiveIdBackupList); backupListIdx++)
                             {
-                                InfoBackupData *backupData = lstGet(archiveIdBackupList, backupListIdx);
+                                const InfoBackupData *const backupData = lstGet(archiveIdBackupList, backupListIdx);
 
                                 // If the backup is earlier than or the same as the retention backup and the backup has an
                                 // archive start
@@ -634,7 +639,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                             }
 
                             // Get all major archive paths (timeline and first 32 bits of LSN)
-                            StringList *walPathList =
+                            const StringList *const walPathList =
                                 strLstSort(
                                     storageListP(
                                         storageRepoIdx(repoIdx), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(archiveId)),
@@ -643,13 +648,13 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
 
                             for (unsigned int walIdx = 0; walIdx < strLstSize(walPathList); walIdx++)
                             {
-                                String *walPath = strLstGet(walPathList, walIdx);
+                                const String *const walPath = strLstGet(walPathList, walIdx);
                                 removeArchive = true;
 
                                 // Keep the path if it falls in the range of any backup in retention
                                 for (unsigned int rangeIdx = 0; rangeIdx < lstSize(archiveRangeList); rangeIdx++)
                                 {
-                                    ArchiveRange *archiveRange = lstGet(archiveRangeList, rangeIdx);
+                                    const ArchiveRange *const archiveRange = lstGet(archiveRangeList, rangeIdx);
 
                                     if (strCmp(walPath, strSubN(archiveRange->start, 0, 16)) >= 0 &&
                                         (archiveRange->stop == NULL || strCmp(walPath, strSubN(archiveRange->stop, 0, 16)) <= 0))
@@ -681,7 +686,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                                 else if (strCmp(walPath, strSubN(archiveExpireMax, 0, 16)) <= 0)
                                 {
                                     // Look for files in the archive directory
-                                    StringList *walSubPathList =
+                                    const StringList *const walSubPathList =
                                         strLstSort(
                                             storageListP(
                                                 storageRepoIdx(repoIdx),
@@ -692,12 +697,12 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                                     for (unsigned int subIdx = 0; subIdx < strLstSize(walSubPathList); subIdx++)
                                     {
                                         removeArchive = true;
-                                        String *walSubPath = strLstGet(walSubPathList, subIdx);
+                                        const String *const walSubPath = strLstGet(walSubPathList, subIdx);
 
                                         // Determine if the individual archive log is used in a backup
                                         for (unsigned int rangeIdx = 0; rangeIdx < lstSize(archiveRangeList); rangeIdx++)
                                         {
-                                            ArchiveRange *archiveRange = lstGet(archiveRangeList, rangeIdx);
+                                            const ArchiveRange *const archiveRange = lstGet(archiveRangeList, rangeIdx);
 
                                             if (strCmp(strSubN(walSubPath, 0, 24), archiveRange->start) >= 0 &&
                                                 (archiveRange->stop == NULL ||
@@ -745,9 +750,10 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
                                 logExpire(&archiveExpire, archiveId, repoIdx);
 
                             // Look for history files to expire based on the timeline of backupArchiveStart
-                            const String *backupArchiveStartTimeline = strSubN(archiveRetentionBackup.backupArchiveStart, 0, 8);
+                            const String *const backupArchiveStartTimeline = strSubN(
+                                archiveRetentionBackup.backupArchiveStart, 0, 8);
 
-                            StringList *historyFilesList =
+                            const StringList *const historyFilesList =
                                 strLstSort(
                                     storageListP(
                                         storageRepoIdx(repoIdx), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(archiveId)),
@@ -756,7 +762,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
 
                             for (unsigned int historyFileIdx = 0; historyFileIdx < strLstSize(historyFilesList); historyFileIdx++)
                             {
-                                String *historyFile = strLstGet(historyFilesList, historyFileIdx);
+                                const String *const historyFile = strLstGet(historyFilesList, historyFileIdx);
 
                                 // Expire history files older than the oldest retained timeline
                                 if (strCmp(strSubN(historyFile, 0, 8), backupArchiveStartTimeline) < 0)
@@ -789,7 +795,7 @@ removeExpiredArchive(InfoBackup *infoBackup, bool timeBasedFullRetention, unsign
 Remove expired backups from repo
 ***********************************************************************************************************************************/
 static void
-removeExpiredBackup(InfoBackup *infoBackup, const String *adhocBackupLabel, unsigned int repoIdx)
+removeExpiredBackup(const InfoBackup *const infoBackup, const String *const adhocBackupLabel, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -802,10 +808,10 @@ removeExpiredBackup(InfoBackup *infoBackup, const String *adhocBackupLabel, unsi
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get all the current backups in backup.info - these will not be expired
-        StringList *currentBackupList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderDesc);
+        const StringList *const currentBackupList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderDesc);
 
         // Get all the backups on disk
-        StringList *backupList = strLstSort(
+        const StringList *const backupList = strLstSort(
             storageListP(
                 storageRepoIdx(repoIdx), STORAGE_REPO_BACKUP_STR,
                 .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
@@ -817,9 +823,9 @@ removeExpiredBackup(InfoBackup *infoBackup, const String *adhocBackupLabel, unsi
         // Only remove the resumable backup if there is a possibility it is a dependent of the adhoc label being expired
         if (adhocBackupLabel != NULL)
         {
-            String *manifestFileName = strNewFmt(
+            const String *const manifestFileName = strNewFmt(
                 STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(strLstGet(backupList, backupIdx)));
-            String *manifestCopyFileName = strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFileName));
+            const String *const manifestCopyFileName = strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFileName));
 
             // If the latest backup is resumable (has a backup.manifest.copy but no backup.manifest)
             if (!storageExistsP(storageRepoIdx(repoIdx), manifestFileName) &&
@@ -833,7 +839,7 @@ removeExpiredBackup(InfoBackup *infoBackup, const String *adhocBackupLabel, unsi
                 // Else it may be related to the adhoc backup so check if its ancestor still exists
                 else
                 {
-                    Manifest *manifestResume = manifestLoadFile(
+                    const Manifest *const manifestResume = manifestLoadFile(
                         storageRepoIdx(repoIdx), manifestFileName, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                         infoPgCipherPass(infoBackupPg(infoBackup)));
 
@@ -872,7 +878,7 @@ removeExpiredBackup(InfoBackup *infoBackup, const String *adhocBackupLabel, unsi
 Remove expired backup history manifests from repo
 ***********************************************************************************************************************************/
 static void
-removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
+removeExpiredHistory(const InfoBackup *const infoBackup, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -886,15 +892,15 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
         if (cfgOptionIdxTest(cfgOptRepoRetentionHistory, repoIdx))
         {
             // Get current backups in backup.info - these will not be expired
-            StringList *currentBackupList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderDesc);
+            const StringList *const currentBackupList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderDesc);
 
             // If the full backup history manifests are expired, we should expire diff and incr too. So, format the oldest full
             // backup label to retain.
             const time_t minTimestamp = time(NULL) - (time_t)(cfgOptionIdxUInt(cfgOptRepoRetentionHistory, repoIdx) * SEC_PER_DAY);
-            String *minBackupLabel = backupLabelFormat(backupTypeFull, NULL, minTimestamp);
+            const String *const minBackupLabel = backupLabelFormat(backupTypeFull, NULL, minTimestamp);
 
             // Get all history years
-            const StringList *historyYearList = strLstSort(
+            const StringList *const historyYearList = strLstSort(
                 storageListP(
                     storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY), .expression = STRDEF("^2[0-9]{3}$")),
                 sortOrderAsc);
@@ -902,7 +908,7 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
             for (unsigned int historyYearIdx = 0; historyYearIdx < strLstSize(historyYearList); historyYearIdx++)
             {
                 // Get all the backup history manifests
-                const String *historyYear = strLstGet(historyYearList, historyYearIdx);
+                const String *const historyYear = strLstGet(historyYearList, historyYearIdx);
 
                 // If the entire year is less than the year of the minimum backup to retain, then remove completely the directory
                 if (strCmp(historyYear, strSubN(minBackupLabel, 0, 4)) < 0)
@@ -921,7 +927,7 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
                 // Else find and remove individual files
                 else if (strEq(historyYear, strSubN(minBackupLabel, 0, 4)))
                 {
-                    const StringList *historyList = strLstSort(
+                    const StringList *const historyList = strLstSort(
                         storageListP(
                             storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", strZ(historyYear)),
                             .expression = strNewFmt(
@@ -929,10 +935,11 @@ removeExpiredHistory(InfoBackup *infoBackup, unsigned int repoIdx)
                                 strZ(backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true)),
                                 strZ(compressTypeStr(compressTypeGz)))),
                         sortOrderDesc);
+
                     for (unsigned int historyIdx = 0; historyIdx < strLstSize(historyList); historyIdx++)
                     {
-                        const String *historyBackupFile = strLstGet(historyList, historyIdx);
-                        const String *historyBackupLabel = strLstGet(strLstNewSplitZ(historyBackupFile, "."), 0);
+                        const String *const historyBackupFile = strLstGet(historyList, historyIdx);
+                        const String *const historyBackupLabel = strLstGet(strLstNewSplitZ(historyBackupFile, "."), 0);
 
                         // Keep backup history manifests for unexpired backups and backups newer than the oldest backup to retain
                         if (!strLstExists(currentBackupList, historyBackupLabel) && strCmp(historyBackupLabel, minBackupLabel) < 0)
@@ -1008,15 +1015,15 @@ cmdExpire(void)
         for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
             // Get the repo storage in case it is remote and encryption settings need to be pulled down
-            const Storage *storageRepo = storageRepoIdx(repoIdx);
+            const Storage *const storageRepo = storageRepoIdx(repoIdx);
             InfoBackup *infoBackup = NULL;
 
-            bool timeBasedFullRetention =
+            const bool timeBasedFullRetention =
                 cfgOptionIdxStrId(cfgOptRepoRetentionFullType, repoIdx) == CFGOPTVAL_REPO_RETENTION_FULL_TYPE_TIME;
 
             TRY_BEGIN()
             {
-                // Load the backup.info
+                // Load backup.info
                 infoBackup = infoBackupLoadFileReconstruct(
                     storageRepo, INFO_BACKUP_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                     cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));

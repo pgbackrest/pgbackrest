@@ -109,7 +109,8 @@ Returns:
 ***********************************************************************************************************************************/
 // Helper to process error conditions
 static int
-tlsSessionResultProcess(TlsSession *this, int errorTls, long unsigned int errorTlsDetail, int errorSys, bool closeOk)
+tlsSessionResultProcess(
+    TlsSession *const this, const int errorTls, const long unsigned int errorTlsDetail, const int errorSys, const bool closeOk)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(TLS_SESSION, this);
@@ -154,7 +155,7 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, long unsigned int errorT
             else
             {
                 // Get detailed error message when available
-                const char *errorTlsDetailMessage = ERR_reason_error_string(errorTlsDetail);
+                const char *const errorTlsDetailMessage = ERR_reason_error_string(errorTlsDetail);
 
                 THROW_FMT(
                     ServiceError, "TLS error [%d:%lu] %s", errorTls, errorTlsDetail,
@@ -169,7 +170,7 @@ tlsSessionResultProcess(TlsSession *this, int errorTls, long unsigned int errorT
 }
 
 static int
-tlsSessionResult(TlsSession *this, int result, bool closeOk)
+tlsSessionResult(TlsSession *const this, int result, const bool closeOk)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(TLS_SESSION, this);
@@ -184,9 +185,9 @@ tlsSessionResult(TlsSession *this, int result, bool closeOk)
     if (result <= 0)
     {
         // Get TLS error and store errno in case of syscall error
-        int errorTls = SSL_get_error(this->session, result);
-        long unsigned int errorTlsDetail = ERR_get_error();
-        int errorSys = errno;
+        const int errorTls = SSL_get_error(this->session, result);
+        const long unsigned int errorTlsDetail = ERR_get_error();
+        const int errorSys = errno;
 
         result = tlsSessionResultProcess(this, errorTls, errorTlsDetail, errorSys, closeOk);
     }
@@ -198,7 +199,7 @@ tlsSessionResult(TlsSession *this, int result, bool closeOk)
 Read from the TLS session
 ***********************************************************************************************************************************/
 static size_t
-tlsSessionRead(THIS_VOID, Buffer *buffer, bool block)
+tlsSessionRead(THIS_VOID, Buffer *const buffer, const bool block)
 {
     THIS(TlsSession);
 
@@ -245,7 +246,7 @@ tlsSessionRead(THIS_VOID, Buffer *buffer, bool block)
 Write to the TLS session
 ***********************************************************************************************************************************/
 static void
-tlsSessionWrite(THIS_VOID, const Buffer *buffer)
+tlsSessionWrite(THIS_VOID, const Buffer *const buffer)
 {
     THIS(TlsSession);
 

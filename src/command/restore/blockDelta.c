@@ -116,7 +116,7 @@ blockDeltaNew(
                     // If the reference has not been added
                     if (referenceData == NULL)
                     {
-                        BlockDeltaReference *referenceData = lstAdd(
+                        const BlockDeltaReference *const referenceData = lstAdd(
                             referenceList,
                             &(BlockDeltaReference){.reference = reference, .blockList = lstNewP(sizeof(unsigned int))});
                         lstAdd(referenceData->blockList, &blockMapIdx);
@@ -135,7 +135,7 @@ blockDeltaNew(
             {
                 const BlockDeltaReference *const referenceData = (const BlockDeltaReference *)lstGet(referenceList, referenceIdx);
                 BlockDeltaRead *blockDeltaRead = NULL;
-                BlockDeltaSuperBlock *blockDeltaSuperBlock = NULL;
+                const BlockDeltaSuperBlock *blockDeltaSuperBlock = NULL;
                 const BlockMapItem *blockMapItemPrior = NULL;
 
                 for (unsigned int blockIdx = 0; blockIdx < lstSize(referenceData->blockList); blockIdx++)
@@ -150,7 +150,7 @@ blockDeltaNew(
                     {
                         MEM_CONTEXT_OBJ_BEGIN(this->pub.readList)
                         {
-                            BlockDeltaRead blockDeltaReadNew =
+                            const BlockDeltaRead blockDeltaReadNew =
                             {
                                 .reference = blockMapItem->reference,
                                 .bundleId = blockMapItem->bundleId,
@@ -168,7 +168,7 @@ blockDeltaNew(
                     {
                         MEM_CONTEXT_OBJ_BEGIN(blockDeltaRead->superBlockList)
                         {
-                            BlockDeltaSuperBlock blockDeltaSuperBlockNew =
+                            const BlockDeltaSuperBlock blockDeltaSuperBlockNew =
                             {
                                 .superBlockSize = blockMapItem->superBlockSize,
                                 .size = blockMapItem->size,

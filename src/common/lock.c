@@ -285,7 +285,7 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Build the json object
-        JsonWrite *json = jsonWriteNewP();
+        JsonWrite *const json = jsonWriteNewP();
         jsonWriteObjectBegin(json);
 
         jsonWriteStr(jsonWriteKeyStrId(json, LOCK_KEY_EXEC_ID), lockLocal.execId);
@@ -344,7 +344,7 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        Wait *wait = waitNew(lockTimeout);
+        Wait *const wait = waitNew(lockTimeout);
         bool retry;
         int errNo = 0;
 
@@ -456,8 +456,8 @@ lockAcquire(const LockAcquireParam param)
         THROW(AssertError, "lock is already held by this process");
 
     // Lock files
-    LockType lockMin = lockLocal.type == lockTypeAll ? lockTypeArchive : lockLocal.type;
-    LockType lockMax = lockLocal.type == lockTypeAll ? (lockTypeAll - 1) : lockLocal.type;
+    const LockType lockMin = lockLocal.type == lockTypeAll ? lockTypeArchive : lockLocal.type;
+    const LockType lockMax = lockLocal.type == lockTypeAll ? (lockTypeAll - 1) : lockLocal.type;
 
     for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
     {
@@ -530,8 +530,8 @@ lockRelease(bool failOnNoLock)
     else
     {
         // Release locks
-        LockType lockMin = lockLocal.type == lockTypeAll ? lockTypeArchive : lockLocal.type;
-        LockType lockMax = lockLocal.type == lockTypeAll ? (lockTypeAll - 1) : lockLocal.type;
+        const LockType lockMin = lockLocal.type == lockTypeAll ? lockTypeArchive : lockLocal.type;
+        const LockType lockMax = lockLocal.type == lockTypeAll ? (lockTypeAll - 1) : lockLocal.type;
 
         for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
         {

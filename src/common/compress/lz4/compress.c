@@ -83,7 +83,7 @@ Compress data
 // otherwise allocate an internal buffer to hold the compressed data. Once we start using the internal buffer we'll need to continue
 // using it until it is completely flushed.
 static Buffer *
-lz4CompressBuffer(Lz4Compress *this, size_t required, Buffer *output)
+lz4CompressBuffer(Lz4Compress *const this, const size_t required, Buffer *const output)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LZ4_COMPRESS, this);
@@ -108,7 +108,7 @@ lz4CompressBuffer(Lz4Compress *this, size_t required, Buffer *output)
 
 // Helper to flush output data to compressed buffer
 static void
-lz4CompressFlush(Lz4Compress *this, Buffer *output, Buffer *compressed)
+lz4CompressFlush(Lz4Compress *const this, Buffer *const output, Buffer *const compressed)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LZ4_COMPRESS, this);
@@ -140,7 +140,7 @@ lz4CompressFlush(Lz4Compress *this, Buffer *output, Buffer *compressed)
 }
 
 static void
-lz4CompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
+lz4CompressProcess(THIS_VOID, const Buffer *const uncompressed, Buffer *const compressed)
 {
     THIS(Lz4Compress);
 

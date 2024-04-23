@@ -88,12 +88,12 @@ stackTraceTestFileLineSet(unsigned int fileLine)
 
 /**********************************************************************************************************************************/
 FN_EXTERN LogLevel
-stackTracePush(const char *fileName, const char *functionName, LogLevel functionLogLevel)
+stackTracePush(const char *const fileName, const char *const functionName, const LogLevel functionLogLevel)
 {
     ASSERT(stackTraceLocal.stackSize < STACK_TRACE_MAX - 1);
 
     // Set function info
-    StackTraceData *data = &stackTraceLocal.stack[stackTraceLocal.stackSize];
+    StackTraceData *const data = &stackTraceLocal.stack[stackTraceLocal.stackSize];
 
     *data = (StackTraceData)
     {
@@ -110,7 +110,7 @@ stackTracePush(const char *fileName, const char *functionName, LogLevel function
     }
     else
     {
-        StackTraceData *dataPrior = &stackTraceLocal.stack[stackTraceLocal.stackSize - 1];
+        StackTraceData *const dataPrior = &stackTraceLocal.stack[stackTraceLocal.stackSize - 1];
 
         data->param = dataPrior->param + dataPrior->paramSize + 1;
 
@@ -128,12 +128,12 @@ stackTracePush(const char *fileName, const char *functionName, LogLevel function
 
 /**********************************************************************************************************************************/
 static const char *
-stackTraceParamIdx(int stackIdx)
+stackTraceParamIdx(const int stackIdx)
 {
     ASSERT(stackTraceLocal.stackSize > 0);
     ASSERT(stackIdx < stackTraceLocal.stackSize);
 
-    StackTraceData *data = &stackTraceLocal.stack[stackIdx];
+    StackTraceData *const data = &stackTraceLocal.stack[stackIdx];
 
     if (data->paramLog)
     {
@@ -159,12 +159,12 @@ stackTraceParam(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN char *
-stackTraceParamBuffer(const char *paramName)
+stackTraceParamBuffer(const char *const paramName)
 {
     ASSERT(stackTraceLocal.stackSize > 0);
 
-    StackTraceData *data = &stackTraceLocal.stack[stackTraceLocal.stackSize - 1];
-    size_t paramNameSize = strlen(paramName);
+    StackTraceData *const data = &stackTraceLocal.stack[stackTraceLocal.stackSize - 1];
+    const size_t paramNameSize = strlen(paramName);
 
     // Make sure that adding this parameter will not overflow the buffer
     if ((size_t)(data->param - stackTraceLocal.functionParamBuffer) + data->paramSize + paramNameSize + 4 >
@@ -199,7 +199,7 @@ stackTraceParamBuffer(const char *paramName)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-stackTraceParamAdd(size_t bufferSize)
+stackTraceParamAdd(const size_t bufferSize)
 {
     ASSERT(stackTraceLocal.stackSize > 0);
 
@@ -222,7 +222,7 @@ stackTraceParamLog(void)
 #ifdef DEBUG
 
 FN_EXTERN void
-stackTracePop(const char *fileName, const char *functionName, bool test)
+stackTracePop(const char *const fileName, const char *const functionName, const bool test)
 {
     ASSERT(stackTraceLocal.stackSize > 0);
 
@@ -251,11 +251,11 @@ stackTracePop(void)
 Stack trace format
 ***********************************************************************************************************************************/
 static FN_PRINTF(4, 5) size_t
-stackTraceFmt(char *buffer, size_t bufferSize, size_t bufferUsed, const char *format, ...)
+stackTraceFmt(char *const buffer, const size_t bufferSize, const size_t bufferUsed, const char *const format, ...)
 {
     va_list argumentList;
     va_start(argumentList, format);
-    int result = vsnprintf(
+    const int result = vsnprintf(
         buffer + bufferUsed, bufferUsed < bufferSize ? bufferSize - bufferUsed : 0, format, argumentList);
     va_end(argumentList);
 
@@ -340,7 +340,7 @@ stackTraceBackCallback(
 
 // Dummy error callback. If there is an error just generate the default stack trace.
 static void
-stackTraceBackErrorCallback(void *data, const char *msg, int errnum)
+stackTraceBackErrorCallback(void *const data, const char *const msg, const int errnum)
 {
     (void)data;
     (void)msg;
@@ -351,7 +351,8 @@ stackTraceBackErrorCallback(void *data, const char *msg, int errnum)
 
 FN_EXTERN size_t
 stackTraceToZ(
-    char *const buffer, const size_t bufferSize, const char *fileName, const char *const functionName, const unsigned int fileLine)
+    char *const buffer, const size_t bufferSize, const char *fileName, const char *const functionName,
+    const unsigned int fileLine)
 {
 #ifdef HAVE_LIBBACKTRACE
     // Attempt to use backtrace data

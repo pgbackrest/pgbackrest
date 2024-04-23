@@ -65,7 +65,7 @@ bz2DecompressFreeResource(THIS_VOID)
 Decompress data
 ***********************************************************************************************************************************/
 static void
-bz2DecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *uncompressed)
+bz2DecompressProcess(THIS_VOID, const Buffer *const compressed, Buffer *const uncompressed)
 {
     THIS(Bz2Decompress);
 

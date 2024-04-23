@@ -65,7 +65,8 @@ infoBackupNewInternal(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoBackup *
-infoBackupNew(unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion, const String *cipherPassSub)
+infoBackupNew(
+    const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int pgCatalogVersion, const String *const cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
@@ -123,7 +124,7 @@ Create new object and load contents from a file
 #define INFO_BACKUP_KEY_OPT_ONLINE                                  "option-online"
 
 static void
-infoBackupLoadCallback(void *data, const String *section, const String *key, const String *value)
+infoBackupLoadCallback(void *const data, const String *const section, const String *const key, const String *const value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
@@ -231,7 +232,7 @@ infoBackupLoadCallback(void *data, const String *section, const String *key, con
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoBackup *
-infoBackupNewLoad(IoRead *read)
+infoBackupNewLoad(IoRead *const read)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, read);
@@ -348,7 +349,7 @@ infoBackupSaveCallback(void *const data, const String *const sectionNext, InfoSa
 }
 
 static void
-infoBackupSave(InfoBackup *this, IoWrite *write)
+infoBackupSave(InfoBackup *const this, IoWrite *const write)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, this);
@@ -369,7 +370,8 @@ infoBackupSave(InfoBackup *this, IoWrite *write)
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoBackup *
-infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, unsigned int pgCatalogVersion)
+infoBackupPgSet(
+    InfoBackup *const this, const unsigned int pgVersion, const uint64_t pgSystemId, const unsigned int pgCatalogVersion)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, this);
@@ -385,7 +387,7 @@ infoBackupPgSet(InfoBackup *this, unsigned int pgVersion, uint64_t pgSystemId, u
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoBackupData
-infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
+infoBackupData(const InfoBackup *const this, const unsigned int backupDataIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INFO_BACKUP, this);
@@ -399,7 +401,7 @@ infoBackupData(const InfoBackup *this, unsigned int backupDataIdx)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
+infoBackupDataAdd(const InfoBackup *const this, const Manifest *const manifest)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INFO_BACKUP, this);
@@ -411,7 +413,7 @@ infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const ManifestData *manData = manifestData(manifest);
+        const ManifestData *const manData = manifestData(manifest);
 
         // Calculate backup sizes, references and report errors
         uint64_t backupSize = 0;
@@ -565,7 +567,7 @@ infoBackupDataAnnotationSet(const InfoBackup *const this, const String *const ba
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel)
+infoBackupDataDelete(const InfoBackup *const this, const String *const backupDeleteLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INFO_BACKUP, this);
@@ -587,7 +589,7 @@ infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel)
 
 /**********************************************************************************************************************************/
 FN_EXTERN StringList *
-infoBackupDataLabelList(const InfoBackup *this, const String *expression)
+infoBackupDataLabelList(const InfoBackup *const this, const String *const expression)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INFO_BACKUP, this);
@@ -597,17 +599,17 @@ infoBackupDataLabelList(const InfoBackup *this, const String *expression)
     ASSERT(this != NULL);
 
     // Return a 0 sized list if no current backups or none matching the filter
-    StringList *result = strLstNew();
+    StringList *const result = strLstNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Prepare regexp if an expression was passed
-        RegExp *regExp = (expression == NULL) ? NULL : regExpNew(expression);
+        RegExp *const regExp = (expression == NULL) ? NULL : regExpNew(expression);
 
         // For each backup label, compare it to the filter (if any) and sort it for return
         for (unsigned int backupLabelIdx = 0; backupLabelIdx < infoBackupDataTotal(this); backupLabelIdx++)
         {
-            InfoBackupData backupData = infoBackupData(this, backupLabelIdx);
+            const InfoBackupData backupData = infoBackupData(this, backupLabelIdx);
 
             if (regExp == NULL || regExpMatch(regExp, backupData.backupLabel))
             {
@@ -622,7 +624,7 @@ infoBackupDataLabelList(const InfoBackup *this, const String *expression)
 
 /**********************************************************************************************************************************/
 FN_EXTERN StringList *
-infoBackupDataDependentList(const InfoBackup *this, const String *backupLabel)
+infoBackupDataDependentList(const InfoBackup *const this, const String *const backupLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INFO_BACKUP, this);
@@ -633,7 +635,7 @@ infoBackupDataDependentList(const InfoBackup *this, const String *backupLabel)
     ASSERT(backupLabel != NULL);
 
     // Return the given label as the only dependency or the given label and a list of labels that depend on it
-    StringList *result = strLstNew();
+    StringList *const result = strLstNew();
     strLstAdd(result, backupLabel);
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -641,7 +643,7 @@ infoBackupDataDependentList(const InfoBackup *this, const String *backupLabel)
         // For each backup label from oldest to newest in the current section, add each dependency to the list
         for (unsigned int backupLabelIdx = 0; backupLabelIdx < infoBackupDataTotal(this); backupLabelIdx++)
         {
-            InfoBackupData backupData = infoBackupData(this, backupLabelIdx);
+            const InfoBackupData backupData = infoBackupData(this, backupLabelIdx);
 
             // If the backupPrior is in the dependency chain add the label to the list
             if (backupData.backupPrior != NULL && strLstExists(result, backupData.backupPrior))
@@ -702,7 +704,8 @@ infoBackupLoadFileCallback(void *const data, const unsigned int try)
 }
 
 FN_EXTERN InfoBackup *
-infoBackupLoadFile(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+infoBackupLoadFile(
+    const Storage *const storage, const String *const fileName, const CipherType cipherType, const String *const cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
@@ -726,7 +729,7 @@ infoBackupLoadFile(const Storage *storage, const String *fileName, CipherType ci
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const char *fileNamePath = strZ(storagePathP(storage, fileName));
+        const char *const fileNamePath = strZ(storagePathP(storage, fileName));
 
         TRY_BEGIN()
         {
@@ -752,7 +755,8 @@ infoBackupLoadFile(const Storage *storage, const String *fileName, CipherType ci
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoBackup *
-infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+infoBackupLoadFileReconstruct(
+    const Storage *const storage, const String *const fileName, const CipherType cipherType, const String *const cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
@@ -765,34 +769,35 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
     ASSERT(fileName != NULL);
     ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
 
-    InfoBackup *infoBackup = infoBackupLoadFile(storage, fileName, cipherType, cipherPass);
+    InfoBackup *const infoBackup = infoBackupLoadFile(storage, fileName, cipherType, cipherPass);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get a list of backups in the repo
-        StringList *backupList = strLstSort(
+        const StringList *const backupList = strLstSort(
             storageListP(
                 storage, STORAGE_REPO_BACKUP_STR,
                 .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
             sortOrderAsc);
 
         // Get the list of current backups and remove backups from current that are no longer in the repository
-        StringList *backupCurrentList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc);
+        const StringList *backupCurrentList = strLstSort(infoBackupDataLabelList(infoBackup, NULL), sortOrderAsc);
 
         for (unsigned int backupCurrIdx = 0; backupCurrIdx < strLstSize(backupCurrentList); backupCurrIdx++)
         {
-            String *backupLabel = strLstGet(backupCurrentList, backupCurrIdx);
-            String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
+            const String *const backupLabel = strLstGet(backupCurrentList, backupCurrIdx);
+            const String *const manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
 
             // If the manifest does not exist on disk and this backup has not already been deleted from the current list in the
             // infoBackup object, then remove it and its dependencies
             if (!storageExistsP(storage, manifestFileName) && infoBackupLabelExists(infoBackup, backupLabel))
             {
-                StringList *backupList = strLstSort(infoBackupDataDependentList(infoBackup, backupLabel), sortOrderDesc);
+                const StringList *const backupList = strLstSort(
+                    infoBackupDataDependentList(infoBackup, backupLabel), sortOrderDesc);
 
                 for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
                 {
-                    String *removeBackup = strLstGet(backupList, backupIdx);
+                    const String *const removeBackup = strLstGet(backupList, backupIdx);
 
                     LOG_WARN_FMT("backup '%s' missing manifest removed from " INFO_BACKUP_FILE, strZ(removeBackup));
 
@@ -807,26 +812,27 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
         // For each backup in the repo, check if it exists in backup.info
         for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupList); backupIdx++)
         {
-            String *backupLabel = strLstGet(backupList, backupIdx);
+            const String *const backupLabel = strLstGet(backupList, backupIdx);
 
             // If it does not exist in the list of current backups, then if it is valid, add it
             if (!strLstExists(backupCurrentList, backupLabel))
             {
-                String *manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
+                const String *const manifestFileName = strNewFmt(
+                    STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
 
                 // Check if a completed backup exists (backup.manifest only - ignore .copy)
                 if (storageExistsP(storage, manifestFileName))
                 {
                     bool found = false;
-                    const Manifest *manifest = manifestLoadFile(
+                    const Manifest *const manifest = manifestLoadFile(
                         storage, manifestFileName, cipherType, infoPgCipherPass(infoBackupPg(infoBackup)));
-                    const ManifestData *manData = manifestData(manifest);
+                    const ManifestData *const manData = manifestData(manifest);
 
                     // If the pg data for the manifest exists in the history, then add it to current, but if something doesn't match
                     // then warn that the backup is not valid
                     for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoBackupPg(infoBackup)); pgIdx++)
                     {
-                        InfoPgData pgHistory = infoPgData(infoBackupPg(infoBackup), pgIdx);
+                        const InfoPgData pgHistory = infoPgData(infoBackupPg(infoBackup), pgIdx);
 
                         // If there is an exact match with the history, system and version and there is no backup-prior dependency
                         // or there is a backup-prior and it is in the list, then add this backup to the current backup list
@@ -855,7 +861,8 @@ infoBackupLoadFileReconstruct(const Storage *storage, const String *fileName, Ci
 /**********************************************************************************************************************************/
 FN_EXTERN void
 infoBackupSaveFile(
-    InfoBackup *infoBackup, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+    InfoBackup *const infoBackup, const Storage *const storage, const String *const fileName, const CipherType cipherType,
+    const String *const cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -873,8 +880,8 @@ infoBackupSaveFile(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Write output into a buffer since it needs to be saved to storage twice
-        Buffer *buffer = bufNew(ioBufferSize());
-        IoWrite *write = ioBufferWriteNew(buffer);
+        Buffer *const buffer = bufNew(ioBufferSize());
+        IoWrite *const write = ioBufferWriteNew(buffer);
         cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherType, cipherModeEncrypt, cipherPass);
         infoBackupSave(infoBackup, write);
 

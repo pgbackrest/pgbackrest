@@ -134,7 +134,7 @@ typedef struct VerifyJobData
 Helper function to add a file to an invalid file list
 ***********************************************************************************************************************************/
 static void
-verifyInvalidFileAdd(List *invalidFileList, VerifyResult reason, const String *fileName)
+verifyInvalidFileAdd(List *const invalidFileList, const VerifyResult reason, const String *const fileName)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, invalidFileList);                 // Invalid file list to add the filename to
@@ -147,7 +147,7 @@ verifyInvalidFileAdd(List *invalidFileList, VerifyResult reason, const String *f
 
     MEM_CONTEXT_BEGIN(lstMemContext(invalidFileList))
     {
-        VerifyInvalidFile invalidFile =
+        const VerifyInvalidFile invalidFile =
         {
             .fileName = strDup(fileName),
             .reason = reason,
@@ -164,7 +164,7 @@ verifyInvalidFileAdd(List *invalidFileList, VerifyResult reason, const String *f
 Load a file into memory
 ***********************************************************************************************************************************/
 static StorageRead *
-verifyFileLoad(const String *pathFileName, const String *cipherPass)
+verifyFileLoad(const String *const pathFileName, const String *const cipherPass)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, pathFileName);                  // Fully qualified path/file name
@@ -174,10 +174,11 @@ verifyFileLoad(const String *pathFileName, const String *cipherPass)
     ASSERT(pathFileName != NULL);
 
     // Read the file and error if missing
-    StorageRead *result = storageNewReadP(storageRepo(), pathFileName);
+    StorageRead *const result = storageNewReadP(storageRepo(), pathFileName);
 
     // *read points to a location within result so update result with contents based on necessary filters
-    IoRead *read = storageReadIo(result);
+    IoRead *const read = storageReadIo(result);
+
     cipherBlockFilterGroupAdd(
         ioReadFilterGroup(read), cfgOptionStrId(cfgOptRepoCipherType), cipherModeDecrypt, cipherPass);
     ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
@@ -193,7 +194,7 @@ verifyFileLoad(const String *pathFileName, const String *cipherPass)
 Get status of info files in the repository
 ***********************************************************************************************************************************/
 static VerifyInfoFile
-verifyInfoFile(const String *pathFileName, bool keepFile, const String *cipherPass)
+verifyInfoFile(const String *const pathFileName, const bool keepFile, const String *const cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, pathFileName);                   // Fully qualified path/file name
@@ -211,7 +212,7 @@ verifyInfoFile(const String *pathFileName, bool keepFile, const String *cipherPa
     {
         TRY_BEGIN()
         {
-            IoRead *infoRead = storageReadIo(verifyFileLoad(pathFileName, cipherPass));
+            IoRead *const infoRead = storageReadIo(verifyFileLoad(pathFileName, cipherPass));
 
             // If directed to keep the loaded file in memory, then move the file into the result, else drain the io and close it
             if (keepFile)
@@ -238,7 +239,7 @@ verifyInfoFile(const String *pathFileName, bool keepFile, const String *cipherPa
         CATCH_ANY()
         {
             result.errorCode = errorCode();
-            String *errorMsg = strCatZ(strNew(), errorMessage());
+            String *const errorMsg = strCatZ(strNew(), errorMessage());
 
             if (result.errorCode == errorTypeCode(&ChecksumError))
                 strCat(errorMsg, strNewFmt(" %s", strZ(pathFileName)));
@@ -265,7 +266,8 @@ verifyArchiveInfoFile(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the main info file
-        VerifyInfoFile verifyArchiveInfo = verifyInfoFile(INFO_ARCHIVE_PATH_FILE_STR, true, cfgOptionStrNull(cfgOptRepoCipherPass));
+        const VerifyInfoFile verifyArchiveInfo = verifyInfoFile(
+            INFO_ARCHIVE_PATH_FILE_STR, true, cfgOptionStrNull(cfgOptRepoCipherPass));
 
         // If the main file did not error, then report on the copy's status and check checksums
         if (verifyArchiveInfo.errorCode == 0)
@@ -274,7 +276,7 @@ verifyArchiveInfoFile(void)
             infoArchiveMove(result, memContextPrior());
 
             // Attempt to load the copy and report on it's status but don't keep it in memory
-            VerifyInfoFile verifyArchiveInfoCopy = verifyInfoFile(
+            const VerifyInfoFile verifyArchiveInfoCopy = verifyInfoFile(
                 INFO_ARCHIVE_PATH_FILE_COPY_STR, false, cfgOptionStrNull(cfgOptRepoCipherPass));
 
             // If the copy loaded successfully, then check the checksums
@@ -289,7 +291,7 @@ verifyArchiveInfoFile(void)
         else
         {
             // Attempt to load the copy
-            VerifyInfoFile verifyArchiveInfoCopy = verifyInfoFile(
+            const VerifyInfoFile verifyArchiveInfoCopy = verifyInfoFile(
                 INFO_ARCHIVE_PATH_FILE_COPY_STR, true, cfgOptionStrNull(cfgOptRepoCipherPass));
 
             // If loaded successfully, then return the copy as usable
@@ -318,7 +320,8 @@ verifyBackupInfoFile(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the main info file
-        VerifyInfoFile verifyBackupInfo = verifyInfoFile(INFO_BACKUP_PATH_FILE_STR, true, cfgOptionStrNull(cfgOptRepoCipherPass));
+        const VerifyInfoFile verifyBackupInfo = verifyInfoFile(
+            INFO_BACKUP_PATH_FILE_STR, true, cfgOptionStrNull(cfgOptRepoCipherPass));
 
         // If the main file did not error, then report on the copy's status and check checksums
         if (verifyBackupInfo.errorCode == 0)
@@ -327,7 +330,7 @@ verifyBackupInfoFile(void)
             infoBackupMove(result, memContextPrior());
 
             // Attempt to load the copy and report on it's status but don't keep it in memory
-            VerifyInfoFile verifyBackupInfoCopy = verifyInfoFile(
+            const VerifyInfoFile verifyBackupInfoCopy = verifyInfoFile(
                 INFO_BACKUP_PATH_FILE_COPY_STR, false, cfgOptionStrNull(cfgOptRepoCipherPass));
 
             // If the copy loaded successfully, then check the checksums
@@ -342,7 +345,7 @@ verifyBackupInfoFile(void)
         else
         {
             // Attempt to load the copy
-            VerifyInfoFile verifyBackupInfoCopy = verifyInfoFile(
+            const VerifyInfoFile verifyBackupInfoCopy = verifyInfoFile(
                 INFO_BACKUP_PATH_FILE_COPY_STR, true, cfgOptionStrNull(cfgOptRepoCipherPass));
 
             // If loaded successfully, then return the copy as usable
@@ -363,8 +366,8 @@ Get the manifest file
 ***********************************************************************************************************************************/
 static Manifest *
 verifyManifestFile(
-    VerifyBackupResult *backupResult, const String *cipherPass, bool currentBackup, const InfoPg *pgHistory,
-    unsigned int *jobErrorTotal)
+    VerifyBackupResult *const backupResult, const String *const cipherPass, bool currentBackup, const InfoPg *const pgHistory,
+    unsigned int *const jobErrorTotal)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_TEST_PARAM_P(VERIFY_BACKUP_RESULT, backupResult);  // The result set for the backup being processed
@@ -378,10 +381,10 @@ verifyManifestFile(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *fileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupResult->backupLabel));
+        const String *const fileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupResult->backupLabel));
 
         // Get the main manifest file
-        VerifyInfoFile verifyManifestInfo = verifyInfoFile(fileName, true, cipherPass);
+        const VerifyInfoFile verifyManifestInfo = verifyInfoFile(fileName, true, cipherPass);
 
         // If the main file did not error, then report on the copy's status and check checksums
         if (verifyManifestInfo.errorCode == 0)
@@ -394,7 +397,7 @@ verifyManifestFile(
             currentBackup = false;
 
             // Attempt to load the copy and report on it's status but don't keep it in memory
-            VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
+            const VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
                 strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), false, cipherPass);
 
             // If the copy loaded successfully, then check the checksums
@@ -415,7 +418,7 @@ verifyManifestFile(
             {
                 currentBackup = false;
 
-                VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
+                const VerifyInfoFile verifyManifestInfoCopy = verifyInfoFile(
                     strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), true, cipherPass);
 
                 // If loaded successfully, then return the copy as usable
@@ -445,12 +448,12 @@ verifyManifestFile(
         if (result != NULL)
         {
             bool found = false;
-            const ManifestData *manData = manifestData(result);
+            const ManifestData *const manData = manifestData(result);
 
             // Confirm the PG database information from the manifest is in the history list
             for (unsigned int infoPgIdx = 0; infoPgIdx < infoPgDataTotal(pgHistory); infoPgIdx++)
             {
-                InfoPgData pgHistoryData = infoPgData(pgHistory, infoPgIdx);
+                const InfoPgData pgHistoryData = infoPgData(pgHistory, infoPgIdx);
 
                 if (pgHistoryData.id == manData->pgId && pgHistoryData.systemId == manData->pgSystemId &&
                     pgHistoryData.version == manData->pgVersion)
@@ -491,7 +494,7 @@ verifyManifestFile(
 Check the history in the info files
 ***********************************************************************************************************************************/
 static void
-verifyPgHistory(const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg)
+verifyPgHistory(const InfoPg *const archiveInfoPg, const InfoPg *const backupInfoPg)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO_PG, archiveInfoPg);                // Postgres information from the archive.info file
@@ -502,14 +505,14 @@ verifyPgHistory(const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg)
     {
         // Check archive.info and backup.info current PG data matches. If there is a mismatch, verify cannot continue since
         // the database is not considered accessible during the verify command so no way to tell which would be valid.
-        InfoPgData archiveInfoPgData = infoPgData(archiveInfoPg, infoPgDataCurrentId(archiveInfoPg));
-        InfoPgData backupInfoPgData = infoPgData(backupInfoPg, infoPgDataCurrentId(backupInfoPg));
+        const InfoPgData archiveInfoPgData = infoPgData(archiveInfoPg, infoPgDataCurrentId(archiveInfoPg));
+        const InfoPgData backupInfoPgData = infoPgData(backupInfoPg, infoPgDataCurrentId(backupInfoPg));
         checkStanzaInfo(&archiveInfoPgData, &backupInfoPgData);
 
-        unsigned int archiveInfoHistoryTotal = infoPgDataTotal(archiveInfoPg);
-        unsigned int backupInfoHistoryTotal = infoPgDataTotal(backupInfoPg);
+        const unsigned int archiveInfoHistoryTotal = infoPgDataTotal(archiveInfoPg);
+        const unsigned int backupInfoHistoryTotal = infoPgDataTotal(backupInfoPg);
 
-        String *errMsg = strNewZ("archive and backup history lists do not match");
+        String *const errMsg = strNewZ("archive and backup history lists do not match");
 
         if (archiveInfoHistoryTotal != backupInfoHistoryTotal)
             THROW(FormatError, strZ(errMsg));
@@ -517,8 +520,8 @@ verifyPgHistory(const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg)
         // Confirm the lists are the same
         for (unsigned int infoPgIdx = 0; infoPgIdx < archiveInfoHistoryTotal; infoPgIdx++)
         {
-            InfoPgData archiveInfoPgHistory = infoPgData(archiveInfoPg, infoPgIdx);
-            InfoPgData backupInfoPgHistory = infoPgData(backupInfoPg, infoPgIdx);
+            const InfoPgData archiveInfoPgHistory = infoPgData(archiveInfoPg, infoPgIdx);
+            const InfoPgData backupInfoPgHistory = infoPgData(backupInfoPg, infoPgIdx);
 
             if (archiveInfoPgHistory.id != backupInfoPgHistory.id ||
                 archiveInfoPgHistory.systemId != backupInfoPgHistory.systemId ||
@@ -537,7 +540,8 @@ verifyPgHistory(const InfoPg *archiveInfoPg, const InfoPg *backupInfoPg)
 Populate the WAL ranges from the provided, sorted, WAL files list for a given archiveId
 ***********************************************************************************************************************************/
 static void
-verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *walFileList, unsigned int *jobErrorTotal)
+verifyCreateArchiveIdRange(
+    const VerifyArchiveResult *const archiveIdResult, StringList *const walFileList, unsigned int *const jobErrorTotal)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VERIFY_ARCHIVE_RESULT, archiveIdResult);  // The result set for the archive Id being processed
@@ -567,7 +571,7 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
 
     do
     {
-        String *walSegment = strSubN(strLstGet(walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE);
+        const String *const walSegment = strSubN(strLstGet(walFileList, walFileIdx), 0, WAL_SEGMENT_NAME_SIZE);
 
         // The lists are sorted so look ahead to see if this is a duplicate of the next one in the list
         if (walFileIdx + 1 < strLstSize(walFileList))
@@ -602,7 +606,7 @@ verifyCreateArchiveIdRange(VerifyArchiveResult *archiveIdResult, StringList *wal
             // Add the initialized wal range to the range list
             MEM_CONTEXT_BEGIN(lstMemContext(archiveIdResult->walRangeList))
             {
-                VerifyWalRange walRangeNew =
+                const VerifyWalRange walRangeNew =
                 {
                     .start = strDup(walSegment),
                     .stop = strDup(walSegment),
@@ -657,11 +661,11 @@ verifyArchive(VerifyJobData *const jobData)
                     ((VerifyArchiveResult *)lstGetLast(jobData->archiveIdResultList))->archiveId,
                     strLstGet(jobData->archiveIdList, 0)))
             {
-                const String *archiveId = strLstGet(jobData->archiveIdList, 0);
+                const String *const archiveId = strLstGet(jobData->archiveIdList, 0);
 
                 MEM_CONTEXT_BEGIN(lstMemContext(jobData->archiveIdResultList))
                 {
-                    VerifyArchiveResult archiveIdResult =
+                    const VerifyArchiveResult archiveIdResult =
                     {
                         .archiveId = strDup(archiveId),
                         .walRangeList = lstNewP(sizeof(VerifyWalRange), .comparator = lstComparatorStr),
@@ -675,7 +679,7 @@ verifyArchive(VerifyJobData *const jobData)
                 strLstFree(jobData->walPathList);
 
                 // Get the WAL paths for the archive Id
-                const String *archiveIdPath = strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(archiveId));
+                const String *const archiveIdPath = strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(archiveId));
 
                 MEM_CONTEXT_BEGIN(jobData->memContext)
                 {
@@ -689,11 +693,11 @@ verifyArchive(VerifyJobData *const jobData)
             if (!strLstEmpty(jobData->walPathList))
             {
                 // Get the archive id info for the current (last) archive id being processed
-                VerifyArchiveResult *archiveResult = lstGetLast(jobData->archiveIdResultList);
+                VerifyArchiveResult *const archiveResult = lstGetLast(jobData->archiveIdResultList);
 
                 do
                 {
-                    String *walPath = strLstGet(jobData->walPathList, 0);
+                    const String *const walPath = strLstGet(jobData->walPathList, 0);
 
                     // Get the WAL files for the first item in the WAL paths list and initialize WAL info and ranges
                     if (strLstEmpty(jobData->walFileList))
@@ -702,7 +706,7 @@ verifyArchive(VerifyJobData *const jobData)
                         strLstFree(jobData->walFileList);
 
                         // Get WAL file list
-                        const String *walFilePath = strNewFmt(
+                        const String *const walFilePath = strNewFmt(
                             STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveResult->archiveId), strZ(walPath));
 
                         MEM_CONTEXT_BEGIN(jobData->memContext)
@@ -717,13 +721,13 @@ verifyArchive(VerifyJobData *const jobData)
                             if (archiveResult->pgWalInfo.size == 0)
                             {
                                 // Initialize the WAL segment size from the first WAL
-                                StorageRead *walRead = verifyFileLoad(
+                                StorageRead *const walRead = verifyFileLoad(
                                     strNewFmt(
                                         STORAGE_REPO_ARCHIVE "/%s/%s/%s", strZ(archiveResult->archiveId), strZ(walPath),
                                         strZ(strLstGet(jobData->walFileList, 0))),
                                     jobData->walCipherPass);
 
-                                PgWal walInfo = pgWalFromBuffer(
+                                const PgWal walInfo = pgWalFromBuffer(
                                     storageGetP(walRead, .exactSize = PG_WAL_HEADER_SIZE), cfgOptionStrNull(cfgOptPgVersionForce));
 
                                 archiveResult->pgWalInfo.size = walInfo.size;
@@ -743,14 +747,14 @@ verifyArchive(VerifyJobData *const jobData)
                     if (!strLstEmpty(jobData->walFileList))
                     {
                         // Get the fully qualified file name and checksum
-                        const String *fileName = strLstGet(jobData->walFileList, 0);
-                        const String *filePathName = strNewFmt(
+                        const String *const fileName = strLstGet(jobData->walFileList, 0);
+                        const String *const filePathName = strNewFmt(
                             STORAGE_REPO_ARCHIVE "/%s/%s/%s", strZ(archiveResult->archiveId), strZ(walPath), strZ(fileName));
-                        Buffer *const checksum = bufNewDecode(
+                        const Buffer *const checksum = bufNewDecode(
                             encodingHex, strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX));
 
                         // Set up the job
-                        ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
+                        ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
                         PackWrite *const param = protocolCommandParam(command);
 
                         pckWriteStrP(param, filePathName);
@@ -837,7 +841,7 @@ verifyBackup(VerifyJobData *const jobData)
             {
                 MEM_CONTEXT_BEGIN(lstMemContext(jobData->backupResultList))
                 {
-                    VerifyBackupResult backupResultNew =
+                    const VerifyBackupResult backupResultNew =
                     {
                         .backupLabel = strDup(strLstGet(jobData->backupList, 0)),
                         .invalidFileList = lstNewP(sizeof(VerifyInvalidFile), .comparator = lstComparatorStr),
@@ -849,16 +853,16 @@ verifyBackup(VerifyJobData *const jobData)
                 MEM_CONTEXT_END();
 
                 // Get the result just added so it can be updated directly
-                VerifyBackupResult *backupResult = lstGetLast(jobData->backupResultList);
+                VerifyBackupResult *const backupResult = lstGetLast(jobData->backupResultList);
 
                 // If currentBackup is set (meaning the newest backup label on disk was not in the db:current section when the
                 // backup.info file was read) and this is the same label, then set inProgessBackup to true, else false.
                 // inProgressBackup may be changed in verifyManifestFile if a main backup.manifest exists since that would indicate
                 // the backup completed during the verify process.
-                bool inProgressBackup = strEq(jobData->currentBackup, backupResult->backupLabel);
+                const bool inProgressBackup = strEq(jobData->currentBackup, backupResult->backupLabel);
 
                 // Get a usable backup manifest file
-                Manifest *manifest = verifyManifestFile(
+                Manifest *const manifest = verifyManifestFile(
                     backupResult, jobData->manifestCipherPass, inProgressBackup, jobData->pgHistory, &jobData->jobErrorTotal);
 
                 // If a usable backup.manifest file is not found
@@ -885,7 +889,7 @@ verifyBackup(VerifyJobData *const jobData)
                     }
                     MEM_CONTEXT_END();
 
-                    const ManifestData *manData = manifestData(jobData->manifest);
+                    const ManifestData *const manData = manifestData(jobData->manifest);
 
                     MEM_CONTEXT_BEGIN(lstMemContext(jobData->backupResultList))
                     {
@@ -900,7 +904,7 @@ verifyBackup(VerifyJobData *const jobData)
                 }
             }
 
-            VerifyBackupResult *backupResult = lstGetLast(jobData->backupResultList);
+            VerifyBackupResult *const backupResult = lstGetLast(jobData->backupResultList);
 
             // Process any files in the manifest
             if (jobData->manifestFileIdx < manifestFileTotal(jobData->manifest))
@@ -922,7 +926,7 @@ verifyBackup(VerifyJobData *const jobData)
                         {
                             // If the prior backup is not in the result list, then that backup was never processed (likely due to
                             // the --set option) so verify the file
-                            unsigned int backupPriorIdx = lstFindIdx(jobData->backupResultList, &fileData.reference);
+                            const unsigned int backupPriorIdx = lstFindIdx(jobData->backupResultList, &fileData.reference);
 
                             if (backupPriorIdx == LIST_NOT_FOUND)
                             {
@@ -932,7 +936,8 @@ verifyBackup(VerifyJobData *const jobData)
                             // backup
                             else
                             {
-                                VerifyBackupResult *backupResultPrior = lstGet(jobData->backupResultList, backupPriorIdx);
+                                const VerifyBackupResult *const backupResultPrior = lstGet(
+                                    jobData->backupResultList, backupPriorIdx);
 
                                 // If the verify-state of the backup is not complete then verify the file
                                 if (!backupResultPrior->fileVerifyComplete)
@@ -942,11 +947,11 @@ verifyBackup(VerifyJobData *const jobData)
                                 // Else skip verification
                                 else
                                 {
-                                    String *priorFile = strNewFmt(
+                                    const String *const priorFile = strNewFmt(
                                         "%s/%s%s", strZ(fileData.reference), strZ(fileData.name),
                                         strZ(compressExtStr((manifestData(jobData->manifest))->backupOptionCompressType)));
-
-                                    unsigned int backupPriorInvalidIdx = lstFindIdx(backupResultPrior->invalidFileList, &priorFile);
+                                    const unsigned int backupPriorInvalidIdx = lstFindIdx(
+                                        backupResultPrior->invalidFileList, &priorFile);
 
                                     // If the file is in the invalid file list of the prior backup where it is referenced then add
                                     // the file as invalid to this backup result and set the backup result status; since already
@@ -975,7 +980,7 @@ verifyBackup(VerifyJobData *const jobData)
                         if (fileBackupLabel != NULL)
                         {
                             // Set up the job
-                            ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
+                            ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
                             PackWrite *const param = protocolCommandParam(command);
                             const String *const filePathName = backupFileRepoPathP(
                                 fileBackupLabel, .manifestName = fileData.name, .bundleId = fileData.bundleId,
@@ -1073,7 +1078,7 @@ verifyBackup(VerifyJobData *const jobData)
 Process the job data
 ***********************************************************************************************************************************/
 static ProtocolParallelJob *
-verifyJobCallback(void *data, unsigned int clientIdx)
+verifyJobCallback(void *const data, const unsigned int clientIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);                          // Pointer to the job data
@@ -1137,7 +1142,8 @@ verifyErrorMsg(const VerifyResult verifyResult)
 Helper function to output a log message based on job result that is not verifyOk and return an error count
 ***********************************************************************************************************************************/
 static unsigned int
-verifyLogInvalidResult(const String *fileType, VerifyResult verifyResult, unsigned int processId, const String *filePathName)
+verifyLogInvalidResult(
+    const String *const fileType, const VerifyResult verifyResult, const unsigned int processId, const String *const filePathName)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, fileType);                      // Indicates archive or backup file
@@ -1166,8 +1172,8 @@ Helper function to set the currently processing backup label, if any, and check 
 ***********************************************************************************************************************************/
 static String *
 verifySetBackupCheckArchive(
-    const StringList *backupList, const InfoBackup *backupInfo, const StringList *archiveIdList, const InfoPg *pgHistory,
-    unsigned int *jobErrorTotal)
+    const StringList *const backupList, const InfoBackup *const backupInfo, const StringList *const archiveIdList,
+    const InfoPg *const pgHistory, unsigned int *const jobErrorTotal)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING_LIST, backupList);               // List of backup labels in the backup directory
@@ -1186,7 +1192,7 @@ verifySetBackupCheckArchive(
         if (!strLstEmpty(backupList))
         {
             // Get the last backup as current if it is not in backup.info current list
-            String *backupLabel = strLstGet(backupList, strLstSize(backupList) - 1);
+            const String *const backupLabel = strLstGet(backupList, strLstSize(backupList) - 1);
 
             if (!infoBackupLabelExists(backupInfo, backupLabel))
             {
@@ -1202,7 +1208,7 @@ verifySetBackupCheckArchive(
         // If there are archive directories on disk, make sure they are in the database history list
         if (!strLstEmpty(archiveIdList))
         {
-            StringList *archiveIdHistoryList = strLstNew();
+            StringList *const archiveIdHistoryList = strLstNew();
 
             for (unsigned int histIdx = 0; histIdx < infoPgDataTotal(pgHistory); histIdx++)
                 strLstAdd(archiveIdHistoryList, infoPgArchiveId(pgHistory, histIdx));
@@ -1210,12 +1216,12 @@ verifySetBackupCheckArchive(
             // Sort the history list
             strLstSort(strLstComparatorSet(archiveIdHistoryList, archiveIdComparator), sortOrderAsc);
 
-            String *missingFromHistory = strNew();
+            String *const missingFromHistory = strNew();
 
             // Check if the archiveId on disk exists in the archive.info history list and report it if not
             for (unsigned int archiveIdx = 0; archiveIdx < strLstSize(archiveIdList); archiveIdx++)
             {
-                String *archiveId = strLstGet(archiveIdList, archiveIdx);
+                const String *const archiveId = strLstGet(archiveIdList, archiveIdx);
 
                 if (!strLstExists(archiveIdHistoryList, archiveId))
                     strCat(missingFromHistory, (strEmpty(missingFromHistory) ? archiveId : strNewFmt(", %s", strZ(archiveId))));
@@ -1238,7 +1244,8 @@ verifySetBackupCheckArchive(
 Add the file to the invalid file list for the range in which it exists
 ***********************************************************************************************************************************/
 static void
-verifyAddInvalidWalFile(List *walRangeList, VerifyResult fileResult, const String *fileName, const String *walSegment)
+verifyAddInvalidWalFile(
+    const List *const walRangeList, const VerifyResult fileResult, const String *const fileName, const String *const walSegment)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, walRangeList);                    // List of WAL ranges for an archive Id
@@ -1255,7 +1262,7 @@ verifyAddInvalidWalFile(List *walRangeList, VerifyResult fileResult, const Strin
     {
         for (unsigned int walIdx = 0; walIdx < lstSize(walRangeList); walIdx++)
         {
-            VerifyWalRange *walRange = lstGet(walRangeList, walIdx);
+            const VerifyWalRange *const walRange = lstGet(walRangeList, walIdx);
 
             // If the WAL segment is less/equal to the stop file then it falls in this range since ranges are sorted by stop file in
             // ascending order, therefore first one found is the range
@@ -1288,7 +1295,7 @@ verifyCreateFileErrorsStr(
         FUNCTION_TEST_PARAM(BOOL, verboseText);                     // Is verbose output requested
     FUNCTION_TEST_END();
 
-    String *result = strNew();
+    String *const result = strNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -1326,7 +1333,7 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
     ASSERT(archiveIdResultList != NULL);
     ASSERT(backupResultList != NULL);
 
-    String *result = strNew();
+    String *const result = strNew();
 
     // Render archive results
     if (verboseText && lstEmpty(archiveIdResultList))
@@ -1335,7 +1342,7 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
     {
         for (unsigned int archiveIdx = 0; archiveIdx < lstSize(archiveIdResultList); archiveIdx++)
         {
-            VerifyArchiveResult *archiveIdResult = lstGet(archiveIdResultList, archiveIdx);
+            const VerifyArchiveResult *const archiveIdResult = lstGet(archiveIdResultList, archiveIdx);
 
             if (verboseText || archiveIdResult->totalWalFile - archiveIdResult->totalValidWal != 0)
             {
@@ -1353,7 +1360,7 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
 
                 for (unsigned int walIdx = 0; walIdx < lstSize(archiveIdResult->walRangeList); walIdx++)
                 {
-                    VerifyWalRange *walRange = lstGet(archiveIdResult->walRangeList, walIdx);
+                    const VerifyWalRange *const walRange = lstGet(archiveIdResult->walRangeList, walIdx);
 
                     LOG_DETAIL_FMT(
                         "archiveId: %s, wal start: %s, wal stop: %s", strZ(archiveIdResult->archiveId), strZ(walRange->start),
@@ -1392,7 +1399,7 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
     {
         for (unsigned int backupIdx = 0; backupIdx < lstSize(backupResultList); backupIdx++)
         {
-            VerifyBackupResult *backupResult = lstGet(backupResultList, backupIdx);
+            const VerifyBackupResult *const backupResult = lstGet(backupResultList, backupIdx);
             const char *status;
 
             switch (backupResult->status)
@@ -1434,7 +1441,7 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
 
                 for (unsigned int invalidIdx = 0; invalidIdx < lstSize(backupResult->invalidFileList); invalidIdx++)
                 {
-                    VerifyInvalidFile *invalidFile = lstGet(backupResult->invalidFileList, invalidIdx);
+                    const VerifyInvalidFile *const invalidFile = lstGet(backupResult->invalidFileList, invalidIdx);
 
                     if (invalidFile->reason == verifyFileMissing)
                         errMissing++;
@@ -1474,10 +1481,10 @@ verifyProcess(const bool verboseText)
         String *resultStr = strNew();
 
         // Get the repo storage in case it is remote and encryption settings need to be pulled down
-        const Storage *storage = storageRepo();
+        const Storage *const storage = storageRepo();
 
         // Get a usable backup info file
-        InfoBackup *backupInfo = verifyBackupInfoFile();
+        const InfoBackup *const backupInfo = verifyBackupInfoFile();
 
         // If a usable backup.info file is not found, then report an error in the log
         if (backupInfo == NULL)
@@ -1487,7 +1494,7 @@ verifyProcess(const bool verboseText)
         }
 
         // Get a usable archive info file
-        InfoArchive *archiveInfo = verifyArchiveInfoFile();
+        const InfoArchive *const archiveInfo = verifyArchiveInfoFile();
 
         // If a usable archive.info file is not found, then report an error in the log
         if (archiveInfo == NULL)
@@ -1559,7 +1566,7 @@ verifyProcess(const bool verboseText)
                     jobData.backupList, backupInfo, jobData.archiveIdList, jobData.pgHistory, &jobData.jobErrorTotal);
 
                 // Create the parallel executor
-                ProtocolParallel *parallelExec = protocolParallelNew(
+                ProtocolParallel *const parallelExec = protocolParallelNew(
                     cfgOptionUInt64(cfgOptProtocolTimeout) / 2, verifyJobCallback, &jobData);
 
                 for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
@@ -1576,16 +1583,16 @@ verifyProcess(const bool verboseText)
                         for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
                         {
                             // Get the job and job key
-                            ProtocolParallelJob *job = protocolParallelResult(parallelExec);
-                            unsigned int processId = protocolParallelJobProcessId(job);
-                            StringList *filePathLst = strLstNewSplit(varStr(protocolParallelJobKey(job)), FSLASH_STR);
+                            ProtocolParallelJob *const job = protocolParallelResult(parallelExec);
+                            const unsigned int processId = protocolParallelJobProcessId(job);
+                            StringList *const filePathLst = strLstNewSplit(varStr(protocolParallelJobKey(job)), FSLASH_STR);
 
                             // Remove the result and file type identifier and recreate the path file name
-                            const String *resultId = strLstGet(filePathLst, 0);
+                            const String *const resultId = strLstGet(filePathLst, 0);
                             strLstRemoveIdx(filePathLst, 0);
-                            const String *fileType = strLstGet(filePathLst, 0);
+                            const String *const fileType = strLstGet(filePathLst, 0);
                             strLstRemoveIdx(filePathLst, 0);
-                            String *filePathName = strLstJoin(filePathLst, "/");
+                            const String *const filePathName = strLstJoin(filePathLst, "/");
 
                             // Initialize the result sets
                             VerifyArchiveResult *archiveIdResult = NULL;
@@ -1595,7 +1602,7 @@ verifyProcess(const bool verboseText)
                             if (strEq(fileType, STORAGE_REPO_ARCHIVE_STR))
                             {
                                 // Find the archiveId in the list - assert if not found since this should never happen
-                                unsigned int index = lstFindIdx(jobData.archiveIdResultList, &resultId);
+                                const unsigned int index = lstFindIdx(jobData.archiveIdResultList, &resultId);
                                 ASSERT(index != LIST_NOT_FOUND);
 
                                 archiveIdResult = lstGet(jobData.archiveIdResultList, index);
@@ -1603,7 +1610,7 @@ verifyProcess(const bool verboseText)
                             // Else get the backup result data
                             else
                             {
-                                unsigned int index = lstFindIdx(jobData.backupResultList, &resultId);
+                                const unsigned int index = lstFindIdx(jobData.backupResultList, &resultId);
                                 ASSERT(index != LIST_NOT_FOUND);
 
                                 backupResult = lstGet(jobData.backupResultList, index);

@@ -40,9 +40,9 @@ verifyFile(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Prepare the file for reading
-        IoRead *read = storageReadIo(
+        IoRead *const read = storageReadIo(
             storageNewReadP(storageRepo(), filePathName, .ignoreMissing = true, .offset = offset, .limit = limit));
-        IoFilterGroup *filterGroup = ioReadFilterGroup(read);
+        IoFilterGroup *const filterGroup = ioReadFilterGroup(read);
 
         // Add decryption filter
         if (cipherPass != NULL)

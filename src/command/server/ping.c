@@ -20,7 +20,7 @@ cmdServerPing(void)
     {
         // Check for user-specified host
         const String *host = cfgOptionStr(cfgOptTlsServerAddress);
-        const StringList *commandParam = cfgCommandParam();
+        const StringList *const commandParam = cfgCommandParam();
 
         if (strLstSize(commandParam) == 1)
             host = strLstGet(commandParam, 0);
