@@ -431,6 +431,7 @@ httpRequestMultiAdd(
 /**********************************************************************************************************************************/
 #define HTTP_MULTIPART_BOUNDARY_PRE_SIZE                            (sizeof(HTTP_MULTIPART_BOUNDARY_PRE) - 1)
 #define HTTP_MULTIPART_BOUNDARY_POST_SIZE                           (sizeof(HTTP_MULTIPART_BOUNDARY_POST) - 1)
+#define HTTP_MULTIPART_BOUNDARY_POST_LAST_SIZE                      (sizeof(HTTP_MULTIPART_BOUNDARY_POST_LAST) - 1)
 
 FN_EXTERN Buffer *
 httpRequestMultiContent(HttpRequestMulti *const this)
@@ -442,8 +443,10 @@ httpRequestMultiContent(HttpRequestMulti *const this)
     ASSERT(this != NULL);
     ASSERT(!lstEmpty(this->contentList));
 
-    const size_t boundarySize = bufUsed(this->boundaryRaw) + HTTP_MULTIPART_BOUNDARY_PRE_SIZE + HTTP_MULTIPART_BOUNDARY_POST_SIZE;
-    Buffer *const result = bufNew(this->contentSize + ((lstSize(this->contentList) + 1) * boundarySize));
+    const size_t boundarySize = bufUsed(this->boundaryRaw) + HTTP_MULTIPART_BOUNDARY_PRE_SIZE;
+    Buffer *const result = bufNew(
+        this->contentSize + (lstSize(this->contentList) * (boundarySize + HTTP_MULTIPART_BOUNDARY_POST_SIZE)) +
+        HTTP_MULTIPART_BOUNDARY_POST_LAST_SIZE);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -451,16 +454,21 @@ httpRequestMultiContent(HttpRequestMulti *const this)
         Buffer *const boundary = bufNew(boundarySize);
         bufCat(boundary, BUFSTRDEF(HTTP_MULTIPART_BOUNDARY_PRE));
         bufCat(boundary, this->boundaryRaw);
-        bufCat(boundary, BUFSTRDEF(HTTP_MULTIPART_BOUNDARY_POST));
 
         // Add first boundary
         bufCat(result, boundary);
+        bufCat(result, BUFSTRDEF(HTTP_MULTIPART_BOUNDARY_POST));
 
         // Add content and boundaries
         for (unsigned int contentIdx = 0; contentIdx < lstSize(this->contentList); contentIdx++)
         {
             bufCat(result, *(Buffer **)lstGet(this->contentList, contentIdx));
             bufCat(result, boundary);
+
+            if (contentIdx < lstSize(this->contentList) - 1)
+                bufCat(result, BUFSTRDEF(HTTP_MULTIPART_BOUNDARY_POST));
+            else
+                bufCat(result, BUFSTRDEF(HTTP_MULTIPART_BOUNDARY_POST_LAST));
         }
     }
     MEM_CONTEXT_TEMP_END();

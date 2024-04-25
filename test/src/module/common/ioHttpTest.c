@@ -878,7 +878,7 @@ testRun(void)
                     "POST /ack HTTP/1.1\r\n"
                     "content-length:3\r\n\r\n"
                     HTTP_MULTIPART_BOUNDARY_INIT
-                    "\r\n--QKX4EYg4LARJ\r\n");
+                    "\r\n--QKX4EYg4LARJ--\r\n");
                 hrnServerScriptReplyZ(
                     http,
                     "HTTP/1.1 200 OK\r\nConnection:ClosE\r\ncontent-type:multipart/mixed; boundary=XXX\r\n\r\n"

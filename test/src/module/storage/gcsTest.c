@@ -990,7 +990,7 @@ testRun(void)
                         "DELETE /storage/v1/b/bucket/o/path2%2Ffile2 HTTP/1.1\r\n"
                         "content-length:0\r\n"
                         "\r\n"
-                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n");
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
                 testResponseP(
                     service, .multiPart = true,
                     .content =
@@ -1009,7 +1009,7 @@ testRun(void)
                         "content-id:response-2\r\n"
                         "\r\n"
                         "HTTP/1.1 300 Error\r\n\r\n"
-                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n");
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
 
                 testRequestP(service, HTTP_VERB_DELETE, .object = "path2/file2");
                 testResponseP(service);
@@ -1050,7 +1050,7 @@ testRun(void)
                         "DELETE /storage/v1/b/bucket/o/path%2Ftest1.txt HTTP/1.1\r\n"
                         "content-length:0\r\n"
                         "\r\n"
-                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n");
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
                 testResponseP(
                     service, .multiPart = true,
                     .content =
@@ -1059,7 +1059,7 @@ testRun(void)
                         "content-id:response-0\r\n"
                         "\r\n"
                         "HTTP/1.1 404 OK\r\n\r\n"
-                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n");
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
 
                 testRequestP(
                     service, HTTP_VERB_POST, .path = "/batch/storage/v1", .multiPart = true,
@@ -1072,7 +1072,7 @@ testRun(void)
                         "DELETE /storage/v1/b/bucket/o/path%2Fpath1%2Fxxx.zzz HTTP/1.1\r\n"
                         "content-length:0\r\n"
                         "\r\n"
-                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n");
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
                 testResponseP(
                     service, .multiPart = true,
                     .content =
@@ -1084,7 +1084,7 @@ testRun(void)
                         "content-length:5\r\n"
                         "content-type:text\r\n\r\n"
                         "ERROR"
-                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n");
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
 
                 testRequestP(service, HTTP_VERB_DELETE, .object = "path/path1/xxx.zzz");
                 testResponseP(service, .code = 300, .content = "ERROR2");

@@ -79,6 +79,7 @@ STRING_DECLARE(HTTP_HEADER_RANGE_STR);
 #define HTTP_MULTIPART_BOUNDARY_EXTRA                               "LARJ52gF4F239iNVrrC5w5aYskcGrWCXIFlMp5IxswggIhcX2A0gF9nrgN8q"
 #define HTTP_MULTIPART_BOUNDARY_PRE                                 "\r\n--"
 #define HTTP_MULTIPART_BOUNDARY_POST                                "\r\n"
+#define HTTP_MULTIPART_BOUNDARY_POST_LAST                           "--\r\n"
 
 /***********************************************************************************************************************************
 Request Constructors
