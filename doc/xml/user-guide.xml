@@ -1043,8 +1043,8 @@
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
                 <exe-cmd>
-                    apt-get install meson gcc libpq-dev libssl-dev libxml2-dev pkg-config
-                    liblz4-dev libzstd-dev libbz2-dev libz-dev libyaml-dev libssh2-1-dev
+                    apt-get install python3-distutils meson gcc libpq-dev libssl-dev libxml2-dev
+                    pkg-config liblz4-dev libzstd-dev libbz2-dev libz-dev libyaml-dev libssh2-1-dev
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
