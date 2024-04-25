@@ -43,6 +43,20 @@
             </release-item>
 
             <release-item>
+                <commit subject="Update meson minimum version to 0.47."/>
+                <commit subject="Dynamically find python in meson build.">
+                    <github-pull-request id="2338"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="michael.schout"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Dynamically find <proper>python</proper> in <proper>meson</proper> build.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2312"/>
 
                 <release-item-contributor-list>
@@ -53,5 +67,18 @@
                 <p>Tag <id>pgbackrest</id> build target in meson as installable.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-pull-request id="2337"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update Fedora test image to Fedora 38.</p>
+            </release-item>
+        </release-development-list>
     </release-core-list>
 </release>
