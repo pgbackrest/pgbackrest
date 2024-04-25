@@ -43,7 +43,10 @@
             </release-item>
 
             <release-item>
-                <github-pull-request id="2338"/>
+                <commit subject="Update meson minimum version to 0.47."/>
+                <commit subject="Dynamically find python in meson build.">
+                    <github-pull-request id="2338"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="michael.schout"/>
