@@ -156,7 +156,7 @@ storageLstInsert(StorageList *const this, const unsigned int idx, const StorageI
 
 /**********************************************************************************************************************************/
 FN_EXTERN StorageInfo
-storageLstGet(StorageList *const this, const unsigned int idx)
+storageLstGet(const StorageList *const this, const unsigned int idx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_LIST, this);

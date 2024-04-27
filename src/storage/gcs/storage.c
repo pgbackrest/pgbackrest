@@ -140,7 +140,7 @@ storageGcsAuthToken(HttpRequest *const request, const time_t timeBegin)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the response
-        KeyValue *const kvResponse = varKv(jsonToVar(strNewBuf(httpResponseContent(httpRequestResponse(request, true)))));
+        const KeyValue *const kvResponse = varKv(jsonToVar(strNewBuf(httpResponseContent(httpRequestResponse(request, true)))));
 
         // Check for an error
         const String *const error = varStr(kvGet(kvResponse, GCS_JSON_ERROR_VAR));
@@ -180,7 +180,7 @@ Based on the documentation at https://developers.google.com/identity/protocols/o
 ***********************************************************************************************************************************/
 // Helper to construct a JSON Web Token
 static String *
-storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
+storageGcsAuthJwt(StorageGcs *const this, const time_t timeBegin)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_GCS, this);
@@ -188,12 +188,13 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
     FUNCTION_TEST_END();
 
     // Static header with dot delimiter
-    String *result = strCatZ(strNew(), "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.");
+    String *const result = strCatZ(strNew(), "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.");
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Load client email and private key
-        KeyValue *const kvKey = varKv(jsonToVar(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), this->key)))));
+        const KeyValue *const kvKey = varKv(
+            jsonToVar(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), this->key)))));
         const String *const clientEmail = varStr(kvGet(kvKey, GCS_JSON_CLIENT_EMAIL_VAR));
         const String *const privateKeyRaw = varStr(kvGet(kvKey, GCS_JSON_PRIVATE_KEY_VAR));
 
@@ -236,7 +237,7 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
             size_t signatureLen = 0;
             cryptoError(EVP_DigestSignFinal((EVP_MD_CTX *)sign, NULL, &signatureLen) <= 0, "unable to get size");
 
-            Buffer *signature = bufNew(signatureLen);
+            Buffer *const signature = bufNew(signatureLen);
             bufUsedSet(signature, bufSize(signature));
 
             cryptoError(EVP_DigestSignFinal((EVP_MD_CTX *)sign, bufPtr(signature), &signatureLen) <= 0, "unable to finalize");
@@ -263,7 +264,7 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
 }
 
 static StorageGcsAuthTokenResult
-storageGcsAuthService(StorageGcs *this, time_t timeBegin)
+storageGcsAuthService(StorageGcs *const this, const time_t timeBegin)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_GCS, this);
@@ -279,16 +280,16 @@ storageGcsAuthService(StorageGcs *this, time_t timeBegin)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *content = strNewFmt(
+        const String *const content = strNewFmt(
             "grant_type=urn%%3Aietf%%3Aparams%%3Aoauth%%3Agrant-type%%3Ajwt-bearer&assertion=%s",
             strZ(storageGcsAuthJwt(this, timeBegin)));
 
-        HttpHeader *header = httpHeaderNew(NULL);
+        HttpHeader *const header = httpHeaderNew(NULL);
         httpHeaderAdd(header, HTTP_HEADER_HOST_STR, httpUrlHost(this->authUrl));
         httpHeaderAdd(header, HTTP_HEADER_CONTENT_TYPE_STR, HTTP_HEADER_CONTENT_TYPE_APP_FORM_URL_STR);
         httpHeaderAdd(header, HTTP_HEADER_CONTENT_LENGTH_STR, strNewFmt("%zu", strSize(content)));
 
-        HttpRequest *request = httpRequestNewP(
+        HttpRequest *const request = httpRequestNewP(
             this->authClient, HTTP_VERB_POST_STR, httpUrlPath(this->authUrl), NULL, .header = header, .content = BUFSTR(content));
 
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -308,7 +309,7 @@ Get authentication token automatically for instances running in GCE.
 Based on the documentation at https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#applications
 ***********************************************************************************************************************************/
 static StorageGcsAuthTokenResult
-storageGcsAuthAuto(StorageGcs *this, time_t timeBegin)
+storageGcsAuthAuto(StorageGcs *const this, const time_t timeBegin)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_GCS, this);
@@ -324,12 +325,12 @@ storageGcsAuthAuto(StorageGcs *this, time_t timeBegin)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        HttpHeader *header = httpHeaderNew(NULL);
+        HttpHeader *const header = httpHeaderNew(NULL);
         httpHeaderAdd(header, HTTP_HEADER_HOST_STR, httpUrlHost(this->authUrl));
         httpHeaderAdd(header, GCS_HEADER_METADATA_FLAVOR_STR, GCS_HEADER_GOOGLE_STR);
         httpHeaderAdd(header, HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
 
-        HttpRequest *request = httpRequestNewP(
+        HttpRequest *const request = httpRequestNewP(
             this->authClient, HTTP_VERB_GET_STR, httpUrlPath(this->authUrl), NULL, .header = header);
 
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -347,7 +348,7 @@ storageGcsAuthAuto(StorageGcs *this, time_t timeBegin)
 Generate authorization header and add it to the supplied header list
 ***********************************************************************************************************************************/
 static void
-storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
+storageGcsAuth(StorageGcs *const this, HttpHeader *const httpHeader)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_GCS, this);
@@ -365,12 +366,12 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
         {
             ASSERT(this->keyType == storageGcsKeyTypeAuto || this->keyType == storageGcsKeyTypeService);
 
-            time_t timeBegin = time(NULL);
+            const time_t timeBegin = time(NULL);
 
             // If the current token has expired then request a new one
             if (timeBegin >= this->tokenTimeExpire)
             {
-                StorageGcsAuthTokenResult tokenResult =
+                const StorageGcsAuthTokenResult tokenResult =
                     this->keyType == storageGcsKeyTypeAuto ?
                         storageGcsAuthAuto(this, timeBegin) : storageGcsAuthService(this, timeBegin);
 
@@ -429,7 +430,7 @@ storageGcsRequestPath(StorageGcs *const this, const String *const object, const 
 }
 
 FN_EXTERN HttpRequest *
-storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAsyncParam param)
+storageGcsRequestAsync(StorageGcs *const this, const String *const verb, StorageGcsRequestAsyncParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_GCS, this);
@@ -459,7 +460,7 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
             param.path != NULL ? param.path : storageGcsRequestPath(this, param.object, !param.noBucket, param.upload);
 
         // Create header list
-        HttpHeader *requestHeader =
+        HttpHeader *const requestHeader =
             param.header == NULL ? httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
 
         // Add tags
@@ -505,7 +506,7 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
             content == NULL || bufEmpty(content) ? ZERO_STR : strNewFmt("%zu", bufUsed(content)));
 
         // Make a copy of the query so it can be modified
-        HttpQuery *query = httpQueryDupP(param.query, .redactList = this->queryRedactList);
+        HttpQuery *const query = httpQueryDupP(param.query, .redactList = this->queryRedactList);
 
         // Generate authorization header
         if (!param.noAuth)
@@ -525,7 +526,7 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
 }
 
 FN_EXTERN HttpResponse *
-storageGcsResponse(HttpRequest *request, StorageGcsResponseParam param)
+storageGcsResponse(HttpRequest *const request, const StorageGcsResponseParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(HTTP_REQUEST, request);
@@ -609,7 +610,7 @@ storageGcsCvtTime(const String *const time)
 }
 
 static void
-storageGcsInfoFile(StorageInfo *info, const KeyValue *file)
+storageGcsInfoFile(StorageInfo *const info, const KeyValue *const file)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
@@ -624,8 +625,8 @@ storageGcsInfoFile(StorageInfo *info, const KeyValue *file)
 
 static void
 storageGcsListInternal(
-    StorageGcs *this, const String *path, StorageInfoLevel level, const String *expression, bool recurse,
-    StorageListCallback callback, void *callbackData)
+    StorageGcs *const this, const String *const path, const StorageInfoLevel level, const String *const expression,
+    const bool recurse, StorageListCallback callback, void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_GCS, this);
@@ -645,15 +646,10 @@ storageGcsListInternal(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Build the base prefix by stripping off the initial /
-        const String *basePrefix;
-
-        if (strSize(path) == 1)
-            basePrefix = EMPTY_STR;
-        else
-            basePrefix = strNewFmt("%s/", strZ(strSub(path, 1)));
+        const String *const basePrefix = strSize(path) == 1 ? EMPTY_STR : strNewFmt("%s/", strZ(strSub(path, 1)));
 
         // Get the expression prefix when possible to limit initial results
-        const String *expressionPrefix = regExpPrefix(expression);
+        const String *const expressionPrefix = regExpPrefix(expression);
 
         // If there is an expression prefix then use it to build the query prefix, otherwise query prefix is base prefix
         const String *queryPrefix;
@@ -669,7 +665,7 @@ storageGcsListInternal(
         }
 
         // Create query
-        HttpQuery *query = httpQueryNewP();
+        HttpQuery *const query = httpQueryNewP();
 
         // Add the delimiter to not recurse
         if (!recurse)
@@ -705,10 +701,10 @@ storageGcsListInternal(
                 else
                     response = storageGcsRequestP(this, HTTP_VERB_GET_STR, .query = query);
 
-                KeyValue *content = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
+                const KeyValue *const content = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
 
                 // If next page token exists then send an async request to get more data
-                const String *nextPageToken = varStr(kvGet(content, GCS_JSON_NEXT_PAGE_TOKEN_VAR));
+                const String *const nextPageToken = varStr(kvGet(content, GCS_JSON_NEXT_PAGE_TOKEN_VAR));
 
                 if (nextPageToken != NULL)
                 {
@@ -723,7 +719,7 @@ storageGcsListInternal(
                 }
 
                 // Get prefix list
-                const VariantList *prefixList = varVarLst(kvGet(content, GCS_JSON_PREFIXES_VAR));
+                const VariantList *const prefixList = varVarLst(kvGet(content, GCS_JSON_PREFIXES_VAR));
 
                 if (prefixList != NULL)
                 {
@@ -750,13 +746,13 @@ storageGcsListInternal(
                 }
 
                 // Get file list
-                const VariantList *fileList = varVarLst(kvGet(content, GCS_JSON_ITEMS_VAR));
+                const VariantList *const fileList = varVarLst(kvGet(content, GCS_JSON_ITEMS_VAR));
 
                 if (fileList != NULL)
                 {
                     for (unsigned int fileIdx = 0; fileIdx < varLstSize(fileList); fileIdx++)
                     {
-                        const KeyValue *file = varKv(varLstGet(fileList, fileIdx));
+                        const KeyValue *const file = varKv(varLstGet(fileList, fileIdx));
                         CHECK(FormatError, file != NULL, "file missing");
 
                         // Get file name
@@ -879,7 +875,7 @@ storageGcsList(THIS_VOID, const String *const path, const StorageInfoLevel level
 
 /**********************************************************************************************************************************/
 static StorageRead *
-storageGcsNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInterfaceNewReadParam param)
+storageGcsNewRead(THIS_VOID, const String *const file, const bool ignoreMissing, const StorageInterfaceNewReadParam param)
 {
     THIS(StorageGcs);
 
@@ -899,7 +895,7 @@ storageGcsNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInte
 
 /**********************************************************************************************************************************/
 static StorageWrite *
-storageGcsNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam param)
+storageGcsNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNewWriteParam param)
 {
     THIS(StorageGcs);
 
@@ -1060,7 +1056,7 @@ storageGcsPathRemoveCallback(void *const callbackData, const StorageInfo *const 
 }
 
 static bool
-storageGcsPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
+storageGcsPathRemove(THIS_VOID, const String *const path, const bool recurse, const StorageInterfacePathRemoveParam param)
 {
     THIS(StorageGcs);
 
@@ -1241,7 +1237,7 @@ storageGcsNew(
         }
 
         // Parse the endpoint to extract the host and port
-        HttpUrl *url = httpUrlNewParseP(endpoint, .type = httpProtocolTypeHttps);
+        const HttpUrl *const url = httpUrlNewParseP(endpoint, .type = httpProtocolTypeHttps);
         this->endpoint = httpUrlHost(url);
 
         // Create the http client used to service requests

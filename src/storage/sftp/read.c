@@ -60,7 +60,7 @@ storageReadSftpOpen(THIS_VOID)
 
     if (this->sftpHandle == NULL)
     {
-        int rc = libssh2_session_last_errno(this->session);
+        const int rc = libssh2_session_last_errno(this->session);
 
         if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL || rc == LIBSSH2_ERROR_EAGAIN)
         {

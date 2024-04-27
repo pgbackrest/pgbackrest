@@ -151,7 +151,7 @@ storageWriteGcsBlock(StorageWriteGcs *const this, const bool done)
 }
 
 static void
-storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
+storageWriteGcsBlockAsync(StorageWriteGcs *const this, const bool done)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_WRITE_GCS, this);
@@ -167,7 +167,7 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
         storageWriteGcsBlock(this, false);
 
         // Build query
-        HttpQuery *query = httpQueryNewP();
+        HttpQuery *const query = httpQueryNewP();
         httpQueryAdd(query, GCS_QUERY_NAME_STR, strSub(this->interface.name, 1));
         httpQueryAdd(query, GCS_QUERY_UPLOAD_TYPE_STR, GCS_QUERY_RESUMABLE_STR);
 
@@ -225,7 +225,7 @@ storageWriteGcsBlockAsync(StorageWriteGcs *this, bool done)
 Write to internal buffer
 ***********************************************************************************************************************************/
 static void
-storageWriteGcs(THIS_VOID, const Buffer *buffer)
+storageWriteGcs(THIS_VOID, const Buffer *const buffer)
 {
     THIS(StorageWriteGcs);
 
