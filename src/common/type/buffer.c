@@ -203,6 +203,42 @@ bufEq(const Buffer *const this, const Buffer *const compare)
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN const unsigned char *
+bufFind(const Buffer *const this, const Buffer *const find, const BufFindParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, this);
+        FUNCTION_TEST_PARAM(BUFFER, find);
+        FUNCTION_TEST_PARAM_P(VOID, param.begin);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(find != NULL);
+    ASSERT(param.begin == NULL || (param.begin >= bufPtrConst(this) && param.begin - bufPtrConst(this) <= (off_t)bufUsed(this)));
+
+    const void *result = NULL;
+
+    if (bufUsed(this) >= bufUsed(find))
+    {
+        const unsigned char *haystack = param.begin != NULL ? param.begin : bufPtrConst(this);
+        unsigned int findIdx = (unsigned int)(haystack - bufPtrConst(this));
+
+        for (; findIdx <= bufUsed(this) - bufUsed(find); findIdx++)
+        {
+            if (memcmp(haystack, bufPtrConst(find), bufSize(find)) == 0)
+            {
+                result = haystack;
+                break;
+            }
+
+            haystack++;
+        }
+    }
+
+    FUNCTION_TEST_RETURN_CONST_P(UCHARDATA, result);
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN Buffer *
 bufResize(Buffer *const this, const size_t size)
 {

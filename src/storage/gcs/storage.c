@@ -19,11 +19,17 @@ GCS Storage
 #include "common/io/tls/client.h"
 #include "common/log.h"
 #include "common/regExp.h"
+#include "common/stat.h"
 #include "common/type/json.h"
 #include "common/type/object.h"
 #include "storage/gcs/read.h"
 #include "storage/gcs/write.h"
 #include "storage/posix/storage.h"
+
+/***********************************************************************************************************************************
+Defaults
+***********************************************************************************************************************************/
+#define STORAGE_GCS_DELETE_MAX                                      100
 
 /***********************************************************************************************************************************
 HTTP headers
@@ -74,6 +80,14 @@ STRING_STATIC(GCS_FIELD_LIST_MIN_STR,                               GCS_FIELD_LI
 STRING_STATIC(GCS_FIELD_LIST_MAX_STR,                               GCS_FIELD_LIST "," GCS_JSON_SIZE "," GCS_JSON_UPDATED ")");
 
 /***********************************************************************************************************************************
+Statistics constants
+***********************************************************************************************************************************/
+STRING_STATIC(GCS_STAT_REMOVE_STR,                                  "gcs.rm");
+STRING_STATIC(GCS_STAT_REMOVE_BATCH_STR,                            "gcs.rm.batch");
+STRING_STATIC(GCS_STAT_REMOVE_BATCH_PART_STR,                       "gcs.rm.batch.part");
+STRING_STATIC(GCS_STAT_REMOVE_BATCH_RETRY_STR,                      "gcs.rm.batch.retry");
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct StorageGcs
@@ -87,6 +101,7 @@ struct StorageGcs
     const String *bucket;                                           // Bucket to store data in
     const String *endpoint;                                         // Endpoint
     size_t chunkSize;                                               // Block size for resumable upload
+    unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
     const Buffer *tag;                                              // Tags to be applied to objects
 
     StorageGcsKeyType keyType;                                      // Auth key type
@@ -383,6 +398,36 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
 /***********************************************************************************************************************************
 Process Gcs request
 ***********************************************************************************************************************************/
+// Helper to generate request path
+static String *
+storageGcsRequestPath(StorageGcs *const this, const String *const object, const bool bucket, const bool upload)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_GCS, this);
+        FUNCTION_TEST_PARAM(STRING, object);
+        FUNCTION_TEST_PARAM(BOOL, bucket);
+        FUNCTION_TEST_PARAM(BOOL, upload);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    String *const result = strNew();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        strCatFmt(result, "%s/storage/v1/b", upload ? "/upload" : "");
+
+        if (bucket)
+            strCatFmt(result, "/%s/o", strZ(this->bucket));
+
+        if (object != NULL)
+            strCatFmt(result, "/%s", strZ(httpUriEncode(strSub(object, 1), false)));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
 FN_EXTERN HttpRequest *
 storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAsyncParam param)
 {
@@ -393,10 +438,12 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         FUNCTION_LOG_PARAM(BOOL, param.upload);
         FUNCTION_LOG_PARAM(BOOL, param.noAuth);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
+        FUNCTION_LOG_PARAM(STRING, param.path);
         FUNCTION_LOG_PARAM(STRING, param.object);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
+        FUNCTION_LOG_PARAM(LIST, param.contentList);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -408,13 +455,8 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Generate path
-        String *path = strCatFmt(strNew(), "%s/storage/v1/b", param.upload ? "/upload" : "");
-
-        if (!param.noBucket)
-            strCatFmt(path, "/%s/o", strZ(this->bucket));
-
-        if (param.object != NULL)
-            strCatFmt(path, "/%s", strZ(httpUriEncode(strSub(param.object, 1), false)));
+        const String *const path =
+            param.path != NULL ? param.path : storageGcsRequestPath(this, param.object, !param.noBucket, param.upload);
 
         // Create header list
         HttpHeader *requestHeader =
@@ -433,10 +475,34 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         // Set host
         httpHeaderPut(requestHeader, HTTP_HEADER_HOST_STR, this->endpoint);
 
+        // Set content or construct multipart content
+        const Buffer *content = param.content;
+
+        if (param.contentList != NULL)
+        {
+            ASSERT(param.content == NULL);
+
+            HttpRequestMulti *const requestMulti = httpRequestMultiNew();
+
+            for (unsigned int contentIdx = 0; contentIdx < lstSize(param.contentList); contentIdx++)
+            {
+                const StorageGcsRequestPart *const requestPart = lstGet(param.contentList, contentIdx);
+                HttpHeader *const partHeader = httpHeaderNew(this->headerRedactList);
+
+                httpHeaderAdd(partHeader, HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
+                httpRequestMultiAddP(
+                    requestMulti, strNewFmt("%u", contentIdx), requestPart->verb,
+                    storageGcsRequestPath(this, requestPart->object, true, false), .header = partHeader);
+            }
+
+            httpRequestMultiHeaderAdd(requestMulti, requestHeader);
+            content = httpRequestMultiContent(requestMulti);
+        }
+
         // Set content length
         httpHeaderPut(
             requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
-            param.content == NULL || bufEmpty(param.content) ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
+            content == NULL || bufEmpty(content) ? ZERO_STR : strNewFmt("%zu", bufUsed(content)));
 
         // Make a copy of the query so it can be modified
         HttpQuery *query = httpQueryDupP(param.query, .redactList = this->queryRedactList);
@@ -449,7 +515,7 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = httpRequestNewP(
-                this->httpClient, verb, path, .query = query, .header = requestHeader, .content = param.content);
+                this->httpClient, verb, path, .query = query, .header = requestHeader, .content = content);
         }
         MEM_CONTEXT_END();
     }
@@ -501,6 +567,7 @@ storageGcsRequest(StorageGcs *const this, const String *const verb, const Storag
         FUNCTION_LOG_PARAM(BOOL, param.upload);
         FUNCTION_LOG_PARAM(BOOL, param.noAuth);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
+        FUNCTION_LOG_PARAM(STRING, param.path);
         FUNCTION_LOG_PARAM(STRING, param.object);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
@@ -512,7 +579,8 @@ storageGcsRequest(StorageGcs *const this, const String *const verb, const Storag
 
     HttpRequest *const request = storageGcsRequestAsyncP(
         this, verb, .noBucket = param.noBucket, .upload = param.upload, .noAuth = param.noAuth, .tag = param.tag,
-        .object = param.object, .header = param.header, .query = param.query, .content = param.content);
+        .path = param.path, .object = param.object, .header = param.header, .query = param.query, .content = param.content,
+        .contentList = param.contentList);
     HttpResponse *const result = storageGcsResponseP(
         request, .allowMissing = param.allowMissing, .allowIncomplete = param.allowIncomplete, .contentIo = param.contentIo);
 
@@ -853,13 +921,99 @@ storageGcsNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam 
 }
 
 /**********************************************************************************************************************************/
+#define GCS_HEADER_CONTENTID_RESPONSE                               "response-"
+
 typedef struct StorageGcsPathRemoveData
 {
     StorageGcs *this;                                               // Storage Object
     MemContext *memContext;                                         // Mem context to create requests in
     HttpRequest *request;                                           // Async remove request
+    List *requestContentList;                                       // Content list for async request
+    List *contentList;                                              // Content list currently being built
     const String *path;                                             // Root path of remove
 } StorageGcsPathRemoveData;
+
+static void
+storageGcsPathRemoveInternal(StorageGcsPathRemoveData *const data)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, data);
+    FUNCTION_TEST_END();
+
+    ASSERT(data != NULL);
+    ASSERT(data->this != NULL);
+
+    // Get response for async request
+    if (data->request != NULL)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            HttpResponse *const response = storageGcsResponseP(data->request);
+            HttpResponseMulti *const responseMulti = httpResponseMultiNew(
+                httpResponseContent(response), httpHeaderGet(httpResponseHeader(response), HTTP_HEADER_CONTENT_TYPE_STR));
+
+            // Loop through all response parts
+            HttpResponse *responsePart = httpResponseMultiNext(responseMulti);
+            CHECK(FormatError, responsePart != NULL, "at least one response part is required");
+
+            do
+            {
+                // If not OK and not missing then retry
+                if (!httpResponseCodeOk(responsePart) && httpResponseCode(responsePart) != HTTP_RESPONSE_CODE_NOT_FOUND)
+                {
+                    // Extract and check content-id header
+                    const String *const contentId = httpHeaderGet(httpResponseHeader(responsePart), HTTP_HEADER_CONTENT_ID_STR);
+                    CHECK(FormatError, contentId != NULL, HTTP_HEADER_CONTENT_ID " header is not present");
+                    CHECK_FMT(
+                        FormatError,
+                        strBeginsWithZ(contentId, GCS_HEADER_CONTENTID_RESPONSE),
+                        HTTP_HEADER_CONTENT_ID " header '%s' must begin with '" GCS_HEADER_CONTENTID_RESPONSE "'", strZ(contentId));
+
+                    // Use content-id to get content
+                    const unsigned int contentIdx = cvtZToUInt(strZ(strSub(contentId, sizeof(GCS_HEADER_CONTENTID_RESPONSE) - 1)));
+                    const StorageGcsRequestPart *const content = lstGet(data->requestContentList, contentIdx);
+
+                    // Retry remove
+                    statInc(GCS_STAT_REMOVE_BATCH_RETRY_STR);
+                    storageGcsRequestP(data->this, content->verb, .object = content->object, .allowMissing = true);
+                }
+                else
+                    statInc(GCS_STAT_REMOVE_BATCH_PART_STR);
+
+                httpResponseFree(responsePart);
+                responsePart = httpResponseMultiNext(responseMulti);
+            }
+            while (responsePart != NULL);
+        }
+        MEM_CONTEXT_TEMP_END();
+
+        // Free request
+        httpRequestFree(data->request);
+        data->request = NULL;
+
+        // Free content list
+        lstFree(data->requestContentList);
+    }
+
+    // Send new async request if there is more to remove
+    if (data->contentList != NULL)
+    {
+        statInc(GCS_STAT_REMOVE_BATCH_STR);
+
+        MEM_CONTEXT_BEGIN(data->memContext)
+        {
+            data->request = storageGcsRequestAsyncP(
+                data->this, HTTP_VERB_POST_STR, .path = STRDEF("/batch/storage/v1"), .contentList = data->contentList);
+        }
+        MEM_CONTEXT_END();
+
+        // Store the content list for use in error handling
+        data->requestContentList = data->contentList;
+        data->contentList = NULL;
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
 
 static void
 storageGcsPathRemoveCallback(void *const callbackData, const StorageInfo *const info)
@@ -872,25 +1026,34 @@ storageGcsPathRemoveCallback(void *const callbackData, const StorageInfo *const 
     ASSERT(callbackData != NULL);
     ASSERT(info != NULL);
 
-    StorageGcsPathRemoveData *const data = callbackData;
-
-    // Get response from prior async request
-    if (data->request != NULL)
-    {
-        httpResponseFree(storageGcsResponseP(data->request, .allowMissing = true));
-        httpRequestFree(data->request);
-        data->request = NULL;
-    }
-
     // Only delete files since paths don't really exist
     if (info->type == storageTypeFile)
     {
-        MEM_CONTEXT_BEGIN(data->memContext)
+        StorageGcsPathRemoveData *const data = callbackData;
+
+        if (data->contentList == NULL)
         {
-            data->request = storageGcsRequestAsyncP(
-                data->this, HTTP_VERB_DELETE_STR, .object = strNewFmt("%s/%s", strZ(data->path), strZ(info->name)));
+            MEM_CONTEXT_BEGIN(data->memContext)
+            {
+                data->contentList = lstNewP(sizeof(StorageGcsRequestPart));
+            }
+            MEM_CONTEXT_END();
         }
-        MEM_CONTEXT_END();
+
+        MEM_CONTEXT_OBJ_BEGIN(data->contentList)
+        {
+            const StorageGcsRequestPart content =
+            {
+                .verb = HTTP_VERB_DELETE_STR,
+                .object = strNewFmt("%s/%s", strZ(data->path), strZ(info->name)),
+            };
+
+            lstAdd(data->contentList, &content);
+        }
+        MEM_CONTEXT_OBJ_END();
+
+        if (lstSize(data->contentList) == data->this->deleteMax)
+            storageGcsPathRemoveInternal(data);
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -920,11 +1083,18 @@ storageGcsPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfa
             .path = strEq(path, FSLASH_STR) ? EMPTY_STR : path,
         };
 
-        storageGcsListInternal(this, path, storageInfoLevelType, NULL, true, storageGcsPathRemoveCallback, &data);
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            storageGcsListInternal(this, path, storageInfoLevelType, NULL, true, storageGcsPathRemoveCallback, &data);
 
-        // Check response on last async request
-        if (data.request != NULL)
-            storageGcsResponseP(data.request, .allowMissing = true);
+            // Call if there is more to be removed
+            if (data.contentList != NULL)
+                storageGcsPathRemoveInternal(&data);
+
+            // Check response on last async request
+            storageGcsPathRemoveInternal(&data);
+        }
+        MEM_CONTEXT_TEMP_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -947,6 +1117,7 @@ storageGcsRemove(THIS_VOID, const String *const file, const StorageInterfaceRemo
     ASSERT(file != NULL);
     ASSERT(!param.errorOnMissing);
 
+    statInc(GCS_STAT_REMOVE_STR);
     httpResponseFree(storageGcsRequestP(this, HTTP_VERB_DELETE_STR, .object = file, .allowMissing = true));
 
     FUNCTION_LOG_RETURN_VOID();
@@ -1000,6 +1171,7 @@ storageGcsNew(
             .bucket = strDup(bucket),
             .keyType = keyType,
             .chunkSize = chunkSize,
+            .deleteMax = STORAGE_GCS_DELETE_MAX,
         };
 
         // Create tag JSON buffer
