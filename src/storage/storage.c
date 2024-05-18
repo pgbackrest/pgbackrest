@@ -273,7 +273,7 @@ storageInfo(const Storage *const this, const String *const fileExp, StorageInfoP
 
         // Error if the file missing and not ignoring
         if (!result.exists && !param.ignoreMissing)
-            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_INFO_MISSING, strZ(file));
+            THROW_FMT(FileOpenError, STORAGE_ERROR_INFO_MISSING, strZ(file));
 
         // Dup the strings into the prior context
         MEM_CONTEXT_PRIOR_BEGIN()
