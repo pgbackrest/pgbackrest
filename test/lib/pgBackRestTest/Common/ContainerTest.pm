@@ -160,7 +160,7 @@ sub userCreate
 
     if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
     {
-        return "adduser -g${strGroup} -u${iId} -n ${strName}";
+        return "adduser -g${strGroup} -u${iId} -N ${strName}";
     }
     elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
     {
@@ -508,11 +508,11 @@ sub containerBuild
                         "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-" . hostArch() . "/" .
                             "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
                 }
-                elsif ($strOS eq VM_F38)
+                elsif ($strOS eq VM_F40)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-38-" . hostArch() . "/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-40-" . hostArch() . "/" .
                             "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
                 }
 

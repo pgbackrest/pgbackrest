@@ -82,8 +82,8 @@ use constant VM_RH7                                                 => 'rh7';
     push @EXPORT, qw(VM_RH7);
 use constant VM_RH8                                                 => 'rh8';
     push @EXPORT, qw(VM_RH8);
-use constant VM_F38                                                 => 'f38';
-    push @EXPORT, qw(VM_F38);
+use constant VM_F40                                                 => 'f40';
+    push @EXPORT, qw(VM_F40);
 use constant VM_U20                                                 => 'u20';
     push @EXPORT, qw(VM_U20);
 use constant VM_U22                                                 => 'u22';
@@ -179,11 +179,11 @@ my $oyVm =
         ],
     },
 
-    # Fedora 38
-    &VM_F38 =>
+    # Fedora 40
+    &VM_F40 =>
     {
         &VM_OS_BASE => VM_OS_BASE_RHEL,
-        &VM_IMAGE => 'fedora:38',
+        &VM_IMAGE => 'fedora:40',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
         &VMDEF_COVERAGE_C => true,
