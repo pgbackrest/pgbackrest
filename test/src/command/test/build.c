@@ -669,7 +669,7 @@ testBldUnit(TestBuild *const this)
         strReplace(
             testC, STRDEF("{[C_TEST_TZ]}"),
             testBldTimeZone(this) == NULL ?
-                STRDEF("// No timezone specified") : strNewFmt("setenv(\"TZ\", \"%s\", true);", strZ(testBldTimeZone(this))));
+                STRDEF("// No timezone specified") : strNewFmt("hrnTzSet(\"%s\");", strZ(testBldTimeZone(this))));
 
         // Scale performance test
         strReplace(testC, STRDEF("{[C_TEST_SCALE]}"), strNewFmt("%" PRIu64, testBldScale(this)));
