@@ -2948,17 +2948,19 @@
     <section id="start-stop" depend="/repo-host/config">
         <title>Starting and Stopping</title>
 
-        <p>Sometimes it is useful to prevent <backrest/> from running on a system. For example, when failing over from a primary to a standby it's best to prevent <backrest/> from running on the old primary in case <postgres/> gets restarted or can't be completely killed. This will also prevent <backrest/> from running on <id>cron</id>.</p>
+        <p>If a standby is promoted for testing, or a test cluster is restored from a production backup, then it is a good idea to prevent those clusters from writing to <backrest/> repositories. This can be accomplished with the <cmd>stop</cmd> command.</p>
+
+        <p>The commands that write and are blocked by <cmd>stop</cmd> are: <cmd>archive-push</cmd>, <cmd>backup</cmd>, <cmd>expire</cmd>, <cmd>stanza-create</cmd>, and <cmd>stanza-upgrade</cmd>. Note that <cmd>stanza-delete</cmd> is an exception to this rule (see <link section="/delete-stanza">Delete a Stanza</link> for more details).</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Stop the <backrest/> services</title>
+            <title>Stop <backrest/> write commands</title>
 
             <execute user="postgres">
                 <exe-cmd>{[project-exe]} stop</exe-cmd>
             </execute>
         </execute-list>
 
-        <p>New <backrest/> processes will no longer run.</p>
+        <p>New <backrest/> write commands will no longer run.</p>
 
         <execute-list host="{[host-repo1]}">
             <title>Attempt a backup</title>
@@ -2969,7 +2971,7 @@
             </execute>
         </execute-list>
 
-        <p>Specify the <br-option>--force</br-option> option to terminate any <backrest/> process that are currently running. If <backrest/> is already stopped then stopping again will generate a warning.</p>
+        <p>Specify the <br-option>--force</br-option> option to terminate any <backrest/> write commands that are currently running. This includes asynchronous archive-get (though it will run again if <postgres/> requires it). If <backrest/> is already stopped then stopping again will generate a warning.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Stop the <backrest/> services again</title>
@@ -2979,10 +2981,10 @@
             </execute>
         </execute-list>
 
-        <p>Start <backrest/> processes again with the <cmd>start</cmd> command.</p>
+        <p>Start <backrest/> write commands again with the <cmd>start</cmd> command. Write commands that were in progress before the stop will not automatically start again, but they are now allowed to start.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Start the <backrest/> services</title>
+            <title>Start <backrest/> write commands</title>
 
             <execute user="postgres">
                 <exe-cmd>{[project-exe]} start</exe-cmd>
@@ -2992,14 +2994,14 @@
         <p>It is also possible to stop <backrest/> for a single stanza.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Stop <backrest/> services for the <id>demo</id> stanza</title>
+            <title>Stop <backrest/> write commands for the <id>demo</id> stanza</title>
 
             <execute user="postgres">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} stop</exe-cmd>
             </execute>
         </execute-list>
 
-        <p>New <backrest/> processes for the specified stanza will no longer run.</p>
+        <p>New <backrest/> write commands for the specified stanza will no longer run.</p>
 
         <execute-list host="{[host-repo1]}">
             <title>Attempt a backup</title>
@@ -3010,10 +3012,10 @@
             </execute>
         </execute-list>
 
-        <p>The stanza must also be specified when starting the <backrest/> processes for a single stanza.</p>
+        <p>The stanza must also be specified when starting <backrest/> write commands for a single stanza.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Start the <backrest/> services for the <id>demo</id> stanza</title>
+            <title>Start <backrest/> write commands for the <id>demo</id> stanza</title>
 
             <execute user="postgres">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} start</exe-cmd>
