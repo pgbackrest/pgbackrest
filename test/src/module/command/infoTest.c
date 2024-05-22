@@ -72,7 +72,7 @@ testRun(void)
                         "\"code\":1,"
                         "\"lock\":{\"backup\":{\"held\":false}},"
                         "\"message\":\"missing stanza path\""
-                        "}"
+                    "}"
                 "}"
             "]",
             // {uncrustify_on}
@@ -125,7 +125,7 @@ testRun(void)
                         "\"code\":3,"
                         "\"lock\":{\"backup\":{\"held\":false}},"
                         "\"message\":\"missing stanza data\""
-                        "}"
+                    "}"
                 "}"
             "]",
             // {uncrustify_on}
@@ -185,7 +185,7 @@ testRun(void)
                         "\"code\":99,"
                         "\"lock\":{\"backup\":{\"held\":false}},"
                         "\"message\":\"other\""
-                        "}"
+                    "}"
                 "}"
             "]",
             // {uncrustify_on}
@@ -3381,7 +3381,7 @@ testRun(void)
                         "\"code\":99,"
                         "\"lock\":{\"backup\":{\"held\":false}},"
                         "\"message\":\"other\""
-                        "}"
+                    "}"
                 "}"
             "]",
             // {uncrustify_on}
