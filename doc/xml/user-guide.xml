@@ -2948,7 +2948,7 @@
     <section id="start-stop" depend="/repo-host/config">
         <title>Starting and Stopping</title>
 
-        <p>Sometimes it is useful to prevent <backrest/> from writing to repositories. For example, when failing over from primary to standby it is best to prevent <backrest/> from writing on the old primary in case <postgres/> gets restarted or cannot be completely killed. If a standby is setup for testing then it is also a good idea to prevent it from writing to repositories.</p>
+        <p>If a standby is promoted for testing, or a test cluster is restored from a production backup, then it is a good idea to prevent those clusters from writing to <backrest/> repositories. This can be accomplished with the <cmd>stop</cmd> command.</p>
 
         <p>The commands that write and are blocked by <cmd>stop</cmd> are: <cmd>archive-push</cmd>, <cmd>backup</cmd>, <cmd>expire</cmd>, <cmd>stanza-create</cmd>, and <cmd>stanza-upgrade</cmd>. Note that <cmd>stanza-delete</cmd> is an exception to this rule (see <link section="/delete-stanza">Delete a Stanza</link> for more details).</p>
 
