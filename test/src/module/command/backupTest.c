@@ -561,7 +561,7 @@ testRun(void)
     hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
 
     // The tests expect the timezone to be UTC
-    setenv("TZ", "UTC", true);
+    hrnTzSet("UTC");
 
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
