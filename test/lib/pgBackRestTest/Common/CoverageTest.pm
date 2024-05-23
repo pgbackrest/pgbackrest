@@ -984,8 +984,8 @@ sub coverageDocSummaryGenerate
 
     foreach my $strFileCov (sort(keys(%{$rhManifest})))
     {
-        # Skip test modules (this includes modules that start with src/ since src/ is stripped from core modules)
-        next if $strFileCov =~ /^test\// || $strFileCov =~ /^src\//;
+        # Skip doc/test modules (this includes modules that start with src/ since src/ is stripped from core modules)
+        next if $strFileCov =~ /^doc\// || $strFileCov =~ /^test\// || $strFileCov =~ /^src\//;
 
         if ($strFileCov =~ /\.lcov$/)
         {
