@@ -238,7 +238,7 @@ pgbackrest/test/test.pl --dry-run
     P00   INFO: test begin on x86_64 - log level info
     P00   INFO: clean autogenerate code
 --> P00   INFO: 81 tests selected
-
+                
     P00   INFO: P1-T01/81 - vm=none, module=common, test=error
            [filtered 78 lines of output]
     P00   INFO: P1-T80/81 - vm=none, module=performance, test=type
@@ -260,27 +260,27 @@ pgbackrest/test/test.pl --vm-out --module=common --test=wait
     P00   INFO: autogenerate code
     P00   INFO: build for none (/home/vagrant/test/build/none)
     P00   INFO: 1 test selected
-
+                
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
-
-        P00   INFO: test command begin 2.51: [common/wait] --log-level=info --no-log-timestamp --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --vm=none --vm-id=0
+                
+        P00   INFO: test command begin 2.52: [common/wait] --log-level=info --no-log-timestamp --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --vm=none --vm-id=0
         P00   INFO: test command end: completed successfully
         run 1 - waitNew(), waitMore, and waitFree()
                       L0018     expect AssertError: assertion 'waitTime <= 999999000' failed
-
+        
         run 1/1 ----- L0021 0ms wait
                       L0025     new wait
                       L0026         check wait time
                       L0027         check sleep time
                       L0028         check sleep prev time
                       L0029         no wait more
-
+        
         run 1/2 ----- L0032 100ms with retries after time expired
                       L0034     new wait
                       L0037         time expired, first retry
                       L0038         time expired, second retry
                       L0039         time expired, retries expired
-
+        
         run 1/3 ----- L0042 200ms wait
                       L0046     new wait = 0.2 sec
                       L0047         check wait time
@@ -295,7 +295,7 @@ pgbackrest/test/test.pl --vm-out --module=common --test=wait
                       L0064         lower range check
                       L0065         upper range check
                       L0067         free wait
-
+        
         run 1/4 ----- L0070 1100ms wait
                       L0074     new wait = 1.1 sec
                       L0075         check wait time
@@ -305,9 +305,9 @@ pgbackrest/test/test.pl --vm-out --module=common --test=wait
                       L0084         lower range check
                       L0085         upper range check
                       L0087         free wait
-
+        
         TESTS COMPLETED SUCCESSFULLY
-
+    
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
     P00   INFO: tested modules have full coverage
     P00   INFO: writing C coverage report
@@ -330,7 +330,7 @@ pgbackrest/test/test.pl --module=postgres
     P00   INFO: autogenerate code
     P00   INFO: build for none (/home/vagrant/test/build/none)
     P00   INFO: 2 tests selected
-
+                
     P00   INFO: P1-T1/2 - vm=none, module=postgres, test=client
     P00   INFO: P1-T2/2 - vm=none, module=postgres, test=interface
     P00   INFO: tested modules have full coverage
@@ -349,7 +349,7 @@ pgbackrest/test/test.pl --vm-build --vm=u20
 --- output ---
 
     P00   INFO: test begin on x86_64 - log level info
-    P00   INFO: Using cached pgbackrest/test:u20-base-20231109A image (51041e6806d2d05ccefbd8a2ab23f2c9e42a7997) ...
+    P00   INFO: Using cached pgbackrest/test:u20-base-20240425A image (c3fc7cc1956c5eb10995119deed7a21b92dd07a7) ...
     P00   INFO: Building pgbackrest/test:u20-test image ...
     P00   INFO: Build Complete
 ```
@@ -369,7 +369,7 @@ pgbackrest/test/test.pl --vm=u20 --module=postgres --test=interface --run=2
     P00   INFO: autogenerate code
     P00   INFO: clean build for u20 (/home/vagrant/test/build/u20)
     P00   INFO: 1 test selected
-
+                
     P00   INFO: P1-T1/1 - vm=u20, module=postgres, test=interface, run=2
     P00   INFO: no code modules had all tests run required for coverage
     P00   INFO: tested modules have full coverage

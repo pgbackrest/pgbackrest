@@ -2771,6 +2771,10 @@ test/src/common/harnessPostgres/harness160.c:
   class: test/harness
   type: c
 
+test/src/common/harnessPostgres/harness170.c:
+  class: test/harness
+  type: c
+
 test/src/common/harnessPostgres/harnessVersion.intern.h:
   class: test/harness
   type: c/h

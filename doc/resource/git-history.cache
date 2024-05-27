@@ -1,5 +1,198 @@
 [
     {
+        "commit": "899b8927888f3930f07f5607902d0493bd3b8f05",
+        "date": "2024-05-24 12:24:11 +1000",
+        "subject": "New CI container build for PostgreSQL 17 beta1.",
+        "body": "Update the catalog version for beta 1 so pgbackrest will not work with any prior development versions.\n\nAlso improve the integration/all test so the catalog version does not need to be updated again during the beta period."
+    },
+    {
+        "commit": "c401ae8fb852d8cd7d10b7b7f3dcf1c42de8d3ee",
+        "date": "2024-05-23 11:03:59 +1000",
+        "subject": "Explicitly run test servers on ipv4 localhost.",
+        "body": "If a host defaults to ipv6 then it can confuse the tests and lead to connection failures and inconsistent error messages.\n\nFor now just hard-code the servers to run on ipv4 but this is an area for later improvement."
+    },
+    {
+        "commit": "04b043797634f36d3deb26dcf0357be1ff9971db",
+        "date": "2024-05-23 10:58:52 +1000",
+        "subject": "Exclude documentation code coverage from metrics report.",
+        "body": "Coverage of the documentation code is not important enough to report to users. If it were reported it should be in a separate section (along with test code coverage)."
+    },
+    {
+        "commit": "91156bf7e1dec5dfeec18bf13a112d16e3badfda",
+        "date": "2024-05-23 08:19:50 +1000",
+        "subject": "Fix comment typos and formatting."
+    },
+    {
+        "commit": "b6ac11beec920fe978994c0d018c380477199ca8",
+        "date": "2024-05-23 08:17:02 +1000",
+        "subject": "Update start/stop documentation to reflect actual functionality.",
+        "body": "The exact functionality of start/stop has evolved over time and has become a bit confusing. It may be appropriate to make the behavior more consistent but for now at least document the behavior correctly. The documentation for start/stop was fairly inaccurate."
+    },
+    {
+        "commit": "9910a4eddb5a7772a289032dc30d6aeab68536ff",
+        "date": "2024-05-20 08:44:37 +1000",
+        "subject": "Add hrnTzSet() to set timezone in tests.",
+        "body": "3c8819e1 replaced gmtime/localtime with gmtime_r/localtime_r but did not take into account a subtle difference in how they operate. While gmtime/localtime operate as if tzset() has been called, i.e. they operate on the TZ env variable directly, gmtime_r/localtime_r require tzset() to be called after changing TZ for consistent results.\n\nRather than call tzset() every time TZ is changed, add hrnTzSet() to encapsulate both operations."
+    },
+    {
+        "commit": "28ad1badd939b4b02c23140bed82b1dc1034bcda",
+        "date": "2024-05-18 18:55:53 +1000",
+        "subject": "Update Fedora test image to Fedora 40."
+    },
+    {
+        "commit": "ffe9a17fcb9b3fe1d7caed64ca142228882d819f",
+        "date": "2024-05-18 14:33:40 +1000",
+        "subject": "Replace erroneous THROW_SYS_ERROR_FMT() in storageInfo().",
+        "body": "This was copied from storagePosixInfo() in a474ba54 but there is no guarantee that errno will be valid at this point. In most cases errno was zero so no system error message was displayed, but when using the Posix driver it could output \"[2] No such file or directory\". For other drivers errno was generally not set but could output a random error message in that case that errno was set by some unrelated action.\n\nUse THROW_FMT() instead since errno will not always be set correctly and in any case \"[2] No such file or directory\" is not very useful information since the main error message already says that.\n\nWhile this is technically a bug it is so harmless that it doesn't merit mention in the release notes.\n\nThis was discovered while testing on Fedora 40 which threw \"[38] Function not implemented\" -- clearly unrelated to missing paths/files."
+    },
+    {
+        "commit": "9e477c432154f5929e0ad3afc4aeae01a739f872",
+        "date": "2024-05-18 09:59:32 +1000",
+        "subject": "Update GitHub test checkout and codeql action versions.",
+        "body": "checkout@v3, codeql-action/init@v2, and codeql-action/analyze@v3 are now deprecated."
+    },
+    {
+        "commit": "db4eefae1a9e999cc6636740e061413b7a09bc37",
+        "date": "2024-05-10 10:01:16 +0930",
+        "subject": "Remove ASSERT() in sckClientOpen() to silence Coverity complaint.",
+        "body": "Coverity complains that this comparison might have a side effect because the variable is volatile. It's hard to see what that might be but since the assertion is not all that important, just remove it. During testing this sort of error will generally be caught by valgrind."
+    },
+    {
+        "commit": "d32eb5bb542f80657cfcc86df7663339297bb431",
+        "date": "2024-05-10 09:45:01 +0930",
+        "subject": "Silence invalid Coverity complaint in jsonReadPush().",
+        "body": "Coverity complains that the output from THROW_FMT will be unpredictable since the order of operations in the call is not deterministic, but it fails to understand that subsequent calls to jsonReadTypeNextIgnoreComma() are noops until the value has been processed.\n\nSilence Coverity by assigning the actual type to a local variable so jsonReadTypeNextIgnoreComma() is only called once.\n\nAlso fix an adjacent comment typo."
+    },
+    {
+        "commit": "bb8988b551757a8932fd99027e436e53609ad7c9",
+        "date": "2024-04-27 19:14:01 +1000",
+        "subject": "Update storage (except remote) module to recent coding standards.",
+        "body": "Add const as appropriate and avoid initializing variables if the variable will definitely be set later on.\n\nThe storage/remote module will be updated with the protocol module once a major waiting refactor has been committed."
+    },
+    {
+        "commit": "76bcb740b66f64804dbbf5a2a6be6407f9cec376",
+        "date": "2024-04-27 15:42:10 +1000",
+        "subject": "Add GCS batch delete support.",
+        "body": "The GCS driver sent a single file delete request for each file while deleting a path. Depending on latency this could lead to rather long delete times, especially noticeable during expiration.\r\n\r\nImprove GCS delete to use batches, which require multipart HTTP, so also add multipart HTTP infrastructure."
+    },
+    {
+        "commit": "e00e33b52856a63e82552ccc12df235d1a7f6f17",
+        "date": "2024-04-25 19:32:07 +1000",
+        "subject": "Dynamically find python in meson build.",
+        "body": "This is better than requiring a python3 binary to be on the path because some installations might have, e.g. python3.9.\r\n\r\nAlso add the python3-distutils package to Debian builds to make this work."
+    },
+    {
+        "commit": "55e996912aa57d39ea21f5dc905b7acabe93b0f8",
+        "date": "2024-04-25 18:35:48 +1000",
+        "subject": "Update meson minimum version to 0.47.",
+        "body": "This allows enabling the check option for run_command, which automatically fails when the command fails."
+    },
+    {
+        "commit": "4ea4e3f3809af24d8a1ff5be15ca7c713f8f40e1",
+        "date": "2024-04-23 22:34:32 +1000",
+        "subject": "Update Fedora test image to Fedora 38.",
+        "body": "This should have been done in 434938e3 but somehow it didn't happen.\r\n\r\nFedora 38 requires 2048 bit keys so update the VM builds to use them. Update the documentation to use 2048 bit keys. This is not technically required by this commit but it makes sense to do it now.\r\n\r\nAlso update the key location for the yum.p.o repository.\r\n\r\nLastly, shuffle test PostgreSQL versions since PostgreSQL 11 is not longer available in the yum.p.o repository."
+    },
+    {
+        "commit": "b40c2616c2a8870b592d8c106a0980a94055aba0",
+        "date": "2024-04-21 13:16:53 +1000",
+        "subject": "Update info module to recent coding standards.",
+        "body": "Add const as appropriate and avoid initializing variables if the variable will definitely be set later on."
+    },
+    {
+        "commit": "c6fcc81db66c4b8f820c4ecf60f7067028dc6e79",
+        "date": "2024-04-21 13:01:40 +1000",
+        "subject": "Update db/postgres modules to recent coding standards.",
+        "body": "Add const as appropriate and avoid initializing variables if the variable will definitely be set later on or is immediately returned."
+    },
+    {
+        "commit": "19411f39d2737542aa28436b3ab661912a5c3965",
+        "date": "2024-04-21 12:06:39 +1000",
+        "subject": "Update config module to recent coding standards.",
+        "body": "Add const as appropriate and avoid initializing variables if the variable will definitely be set later on or is immediately returned."
+    },
+    {
+        "commit": "0e36e1a2fc79d8b425de30f54cc804efb30e3ab1",
+        "date": "2024-04-21 12:01:01 +1000",
+        "subject": "Update common module to recent coding standards.",
+        "body": "Add const as appropriate and avoid initializing variables if the variable will definitely be set later on or is immediately returned."
+    },
+    {
+        "commit": "987e6e31f479874fbb4ff93b6fd45b8178b5e4fa",
+        "date": "2024-04-21 09:42:11 +1000",
+        "subject": "Move packager note about meson to new version.",
+        "body": "Since there were some issues found with the meson install (7877983a, 7b95fd3b) it makes sense for any packagers who have not made the migration to hold off until the next release.\n\nMove the note to the next release where hopefully all issues have been addressed."
+    },
+    {
+        "commit": "9546b9c5d0e4da7bd952b01cc3374c26e9f90ea0",
+        "date": "2024-04-20 14:19:27 +1000",
+        "subject": "Update command module to recent coding standards.",
+        "body": "Add const as appropriate and avoid initializing variables if the variable will definitely be set later on or is immediately returned."
+    },
+    {
+        "commit": "fb22f04555fecfa143354372ec3543ab186c131d",
+        "date": "2024-04-18 10:56:24 +1000",
+        "subject": "PostgreSQL 17 support.",
+        "body": "Add catalog version and WAL magic for PostgreSQL 17."
+    },
+    {
+        "commit": "c8cf8e1f2bfbed2932cfbef4a7a58e3a13e16a46",
+        "date": "2024-04-17 19:02:28 +1000",
+        "subject": "Update contributor name."
+    },
+    {
+        "commit": "57731b6cd261c732041aacc094429ab02ca13418",
+        "date": "2024-04-17 11:58:13 +1000",
+        "subject": "S3 SSE-C encryption support.",
+        "body": "This feature (enabled with --repo-s3-sse-customer-key) provides an encryption key to encrypt the data after it has been transmitted to the server.\r\n\r\nWhile not as secure as encrypting data before transmission (--repo-cipher-type), this may be useful in certain configurations."
+    },
+    {
+        "commit": "06d3cb767c171be872262093b4547a62f1b16ee7",
+        "date": "2024-04-17 11:43:41 +1000",
+        "subject": "Improve unit testing of valid page sizes in pg_control.",
+        "body": "Spread the tests over more versions of PostgreSQL and improve/fix comments."
+    },
+    {
+        "commit": "7b95fd3bd29346e7325aa161bfee45efd71e22eb",
+        "date": "2024-04-10 09:23:17 +1000",
+        "subject": "Allow explicit disabling of optional dependencies in meson builds.",
+        "body": "On some platforms, e.g. FreeBSD, there is a requirement to allow the user to disable support for features even when the required library is present.\r\n\r\nIntroduce tri-state options for the optional features: auto mimics the current behavior and is the default, enable requires libraries for the feature to be present, and disable disables the feature without checking the libraries."
+    },
+    {
+        "commit": "dab52739cd36d2486b902b6b32d84532a834671b",
+        "date": "2024-04-04 18:21:26 +1100",
+        "subject": "Fix comment typo."
+    },
+    {
+        "commit": "fec1b215e37d644c3ae7a54bf197beb853e3f1db",
+        "date": "2024-03-30 10:43:05 +1100",
+        "subject": "Remove test data files made obsolete by d41b21c8.",
+        "body": "These should have been removed when the mock integration tests were removed.\n\nIdeally we would also remove filecopy.table.bin but it serves to provide realistic page data for performance testing."
+    },
+    {
+        "commit": "9f5a97139fa222cf0b448bf76f0821e399849cd9",
+        "date": "2024-03-29 12:21:06 +1100",
+        "subject": "Allow strIdToLog() to output \"null\" values.",
+        "body": "A valid StringId can never be zero so it more or less serves as a NULL value. In most cases zero will not be valid, but it is better to catch this condition with an assert rather than an error in logging."
+    },
+    {
+        "commit": "014e24889ce082c7cdaf3d128c796e1e00dcd3ff",
+        "date": "2024-03-27 09:53:49 +1100",
+        "subject": "Remove extra space before colons in meson.build files.",
+        "body": "The spacing was not consistent so use the style that best matches our general coding standards."
+    },
+    {
+        "commit": "7877983acb3b1a27e900f7e7aea89cb7b29a817d",
+        "date": "2024-03-27 09:29:37 +1100",
+        "subject": "Tag pgbackrest build target in meson as installable.",
+        "body": "By default meson does not install anything. Targets can be installed by tagging them as installable in the build definition."
+    },
+    {
+        "commit": "924aa5e8b127272bd3eff360a7e5737ef825a51f",
+        "date": "2024-03-25 11:22:53 +1300",
+        "subject": "Begin v2.52 development."
+    },
+    {
         "commit": "dc07fb1e5bd38026d4fefb67a0525a89ac98b520",
         "date": "2024-03-25 09:53:22 +1300",
         "subject": "v2.51: Meson Build System"
