@@ -635,6 +635,10 @@ doc/xml/release/2024/2.52.xml:
   class: doc/source
   type: xml
 
+doc/xml/release/2024/2.53.xml:
+  class: doc/source
+  type: xml
+
 doc/xml/release/contributor.xml:
   class: doc/source
   type: xml
