@@ -71,7 +71,7 @@
 <table-row>
     <table-cell>command/backup</table-cell>
     <table-cell>50/50 (100.0%)</table-cell>
-    <table-cell>790/790 (100.0%)</table-cell>
+    <table-cell>792/792 (100.0%)</table-cell>
     <table-cell>1896/1896 (100.0%)</table-cell>
 </table-row>
 
@@ -161,9 +161,9 @@
 
 <table-row>
     <table-cell>common</table-cell>
-    <table-cell>149/149 (100.0%)</table-cell>
-    <table-cell>634/634 (100.0%)</table-cell>
-    <table-cell>1853/1853 (100.0%)</table-cell>
+    <table-cell>147/147 (100.0%)</table-cell>
+    <table-cell>630/630 (100.0%)</table-cell>
+    <table-cell>1829/1829 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
@@ -357,7 +357,7 @@
 
 <table-row>
     <table-cell>TOTAL</table-cell>
-    <table-cell>1651/1651 (100.0%)</table-cell>
-    <table-cell>10409/10410 (99.99%)</table-cell>
-    <table-cell>31143/31143 (100.0%)</table-cell>
+    <table-cell>1649/1649 (100.0%)</table-cell>
+    <table-cell>10407/10408 (99.99%)</table-cell>
+    <table-cell>31119/31119 (100.0%)</table-cell>
 </table-row>

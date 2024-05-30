@@ -42,8 +42,6 @@ use constant VM_OS_BASE                                             => 'os-base'
     push @EXPORT, qw(VM_OS_BASE);
 use constant VMDEF_PGSQL_BIN                                        => 'psql-bin';
     push @EXPORT, qw(VMDEF_PGSQL_BIN);
-use constant VMDEF_LCOV_VERSION                                     => 'lcov-version';
-    push @EXPORT, qw(VMDEF_LCOV_VERSION);
 use constant VMDEF_WITH_LZ4                                         => 'with-lz4';
     push @EXPORT, qw(VMDEF_WITH_LZ4);
 use constant VMDEF_WITH_ZST                                         => 'with-zst';

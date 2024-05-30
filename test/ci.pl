@@ -185,12 +185,6 @@ eval
             "gcc ccache python3-distutils git rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config uncrustify" .
             " libssh2-1-dev valgrind";
 
-        # Add lcov when testing coverage
-        if (vmCoverageC($strVm))
-        {
-            $strPackage .= " lcov";
-        }
-
         # Extra packages required when testing without containers
         if ($strVm eq VM_NONE)
         {
