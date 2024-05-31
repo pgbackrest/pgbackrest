@@ -1474,6 +1474,18 @@ backupJobResult(
                 {
                     LOG_DETAIL_PID_FMT(
                         processId, "match file from prior backup %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
+
+                    // File size may need to be updated because the file original file size may have been larger than what was found
+                    // by copy. This is particularly common for free space maps when performing backup from standby. It is normal
+                    // for the fsm to be larger on the primary than the standby. If the fsm is changed on the primary those changes
+                    // may not be replicated, so the fsm is unchanged and referenced. We still need to be prepared for the fsm to be
+                    // as large as on the primary though, so the primary size must always be used during copy and then updated here
+                    // if copy reads a different size.
+                    if (file.size != copySize)
+                    {
+                        file.size = copySize;
+                        manifestFileUpdate(manifest, &file);
+                    }
                 }
                 // Else if the repo matched the expect checksum, just log it
                 else if (copyResult == backupCopyResultChecksum)
