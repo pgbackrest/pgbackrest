@@ -37,7 +37,6 @@ use pgBackRestDoc::ProjectInfo;
 use pgBackRestTest::Common::BuildTest;
 use pgBackRestTest::Common::CodeCountTest;
 use pgBackRestTest::Common::ContainerTest;
-use pgBackRestTest::Common::CoverageTest;
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::JobTest;
@@ -410,16 +409,12 @@ eval
                 " ${strTestPath}/data-*");
         $oStorageTest->pathCreate("${strTestPath}/temp", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
-        # Remove old lcov dirs -- do it this way so the dirs stay open in finder/explorer, etc.
-        executeTest("rm -rf ${strBackRestBase}/test/result/coverage/lcov/*");
-
         # Overwrite the C coverage report so it will load but not show old coverage
         $oStorageTest->pathCreate(
             "${strBackRestBase}/test/result/coverage", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
         $oStorageBackRest->put(
             "${strBackRestBase}/test/result/coverage/coverage.html",
             "<center>[ " . ($bNoCoverage ? "No Coverage Testing" : "Generating Coverage Report") . " ]</center>");
-        executeTest("rm -rf ${strBackRestBase}/test/result/coverage/lcov");
 
         # Copy C code for coverage tests
         if (vmCoverageC($strVm) && !$bDryRun)
@@ -1071,24 +1066,50 @@ eval
 
     # Write out coverage info and test coverage
     #-------------------------------------------------------------------------------------------------------------------------------
-    my $iUncoveredCodeModuleTotal = 0;
+    my $bUncoveredCodeModule = false;
 
     if (vmCoverageC($strVm) && !$bNoCoverage && !$bDryRun && $iTestFail == 0)
     {
-        $iUncoveredCodeModuleTotal = coverageValidateAndGenerate(
-            $oyTestRun, $oStorageBackRest, !$bNoCoverageReport, $bCoverageSummary, $strTestPath, "${strTestPath}/temp",
-            "${strBackRestBase}/test/result", "${strBackRestBase}/doc/xml/auto");
+        my $strModuleList;
+
+        foreach my $hTest (@{$oyTestRun})
+        {
+            $strModuleList .= ' ' . $hTest->{&TEST_MODULE} . '/' . $hTest->{&TEST_NAME};
+        }
+
+        my $oExec = new pgBackRestTest::Common::ExecuteTest(
+            "${strBuildPath}/test/src/test-pgbackrest --log-level=warn --vm=${strVm} --repo-path=${strBackRestBase}" .
+            " --test-path=${strTestPath}" . ($bCoverageSummary ? ' --coverage-summary' : '') . " test${strModuleList}",
+            {bShowOutputAsync => true, bSuppressError => true});
+        $oExec->begin();
+        my $iResult = $oExec->end();
+
+        if ($iResult <= 1)
+        {
+            $bUncoveredCodeModule = $iResult == 1;
+
+            if (!$bUncoveredCodeModule)
+            {
+                &log(INFO, "tested modules have full coverage");
+            }
+
+        }
+        else
+        {
+            &log(ERROR, "TEST SUBCOMMAND RETURNED ERROR CODE $iResult");
+            exit $iResult;
+        }
     }
 
     # Print test info and exit
     #-------------------------------------------------------------------------------------------------------------------------------
     &log(INFO,
         ($bDryRun ? 'DRY RUN COMPLETED' : 'TESTS COMPLETED') . ($iTestFail == 0 ? ' SUCCESSFULLY' .
-            ($iUncoveredCodeModuleTotal == 0 ? '' : " WITH ${iUncoveredCodeModuleTotal} MODULE(S) MISSING COVERAGE") :
+            (!$bUncoveredCodeModule ? '' : " WITH MODULE(S) MISSING COVERAGE") :
         " WITH ${iTestFail} FAILURE(S)") . ($iTestRetry == 0 ? '' : ", ${iTestRetry} RETRY(IES)") .
             ($bNoLogTimestamp ? '' : ' (' . (time() - $lStartTime) . 's)'));
 
-    exit 1 if ($iTestFail > 0 || ($iUncoveredCodeModuleTotal > 0 && !$bCoverageSummary));
+    exit 1 if ($iTestFail > 0 || ($bUncoveredCodeModule && !$bCoverageSummary));
 
     exit 0;
 }

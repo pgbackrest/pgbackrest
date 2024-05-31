@@ -30,7 +30,7 @@ This example is based on Ubuntu 20.04, but it should work on many versions of De
 
 pgbackrest-dev => Install development tools
 ```
-sudo apt-get install rsync git devscripts build-essential valgrind lcov autoconf \
+sudo apt-get install rsync git devscripts build-essential valgrind autoconf \
        autoconf-archive libssl-dev zlib1g-dev libxml2-dev libpq-dev pkg-config \
        libxml-checker-perl libyaml-perl libdbd-pg-perl liblz4-dev liblz4-tool \
        zstd libzstd-dev bzip2 libbz2-dev libyaml-dev ccache python3-distutils meson
@@ -532,7 +532,7 @@ pgbackrest/test/test.pl --vm-out --module=command --test=check --vm=u20
 ```
 > **NOTE:** Not all systems perform at the same speed, so if a test is timing out, try rerunning with another vm.
 
-Because a test run has not been specified, a coverage report will be generated and written to the local file system under the pgBackRest directory `test/result/coverage/lcov/index.html` and a file with only the highlighted code that has not been covered will be written to `test/result/coverage/coverage.html`.
+A coverage report will be generated and written to the local file system under the pgBackRest repository in `test/result/coverage.html`.
 
 If 100 percent code coverage has not been achieved, an error message will be displayed, for example: `ERROR: [125]: c module command/check/check is not fully covered`
 

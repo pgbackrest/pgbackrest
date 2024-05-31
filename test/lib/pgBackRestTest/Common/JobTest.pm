@@ -25,7 +25,6 @@ use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestTest::Common::BuildTest;
 use pgBackRestTest::Common::ContainerTest;
-use pgBackRestTest::Common::CoverageTest;
 use pgBackRestTest::Common::DbVersion;
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -342,13 +341,13 @@ sub end
         # If C code generate coverage info
         if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit})
         {
-            coverageExtract(
-                $self->{oStorageTest}, $self->{oTest}->{&TEST_MODULE}, $self->{oTest}->{&TEST_NAME},
-                $self->{oTest}->{&TEST_VM} ne VM_NONE, $self->{bCoverageSummary},
-                $self->{oTest}->{&TEST_VM} eq VM_NONE ? undef : $strImage, $self->{strTestPath}, "$self->{strTestPath}/temp",
-                -e "$self->{strUnitPath}/build/test-unit.p" ?
-                    "$self->{strUnitPath}/build/test-unit.p" : "$self->{strUnitPath}/build/test-unit\@exe",
-                $self->{strBackRestBase} . '/test/result');
+            executeTest(
+                ($self->{oTest}->{&TEST_VM} ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
+                    "gcov --json-format --stdout --branch-probabilities " .
+                    (-e "$self->{strUnitPath}/build/test-unit.p" ?
+                        "$self->{strUnitPath}/build/test-unit.p" : "$self->{strUnitPath}/build/test-unit\@exe") .
+                        '/test.c.gcda > ' . $self->{strBackRestBase} . '/test/result/coverage/raw/' .
+                        $self->{oTest}->{&TEST_MODULE} . '-' . $self->{oTest}->{&TEST_NAME} . '.json');
         }
 
         # Record elapsed time
