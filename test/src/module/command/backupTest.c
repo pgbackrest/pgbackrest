@@ -2703,7 +2703,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("online 9.6 backup-standby full backup with block incremental");
 
-        backupTimeStart = BACKUP_EPOCH + 1300000;
+        backupTimeStart = BACKUP_EPOCH + 1600000;
 
         {
             // Load options
@@ -2754,10 +2754,10 @@ testRun(void)
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
-                ".> {d=20191017-081320F}\n"
-                "bundle/1/pg_data/PG_VERSION {s=3, ts=-100000}\n"
+                ".> {d=20191020-193320F}\n"
+                "bundle/1/pg_data/PG_VERSION {s=3, ts=-400000}\n"
                 "bundle/1/pg_data/global/pg_control {s=8192}\n"
-                "bundle/1/pg_data/postgresql.conf {s=11, ts=-1300000}\n"
+                "bundle/1/pg_data/postgresql.conf {s=11, ts=-1600000}\n"
                 "bundle/2/pg_data/base/1/3 {s=32768, so=40960, m=0:{0,1,2,3}}\n"
                 "bundle/2/pg_data/base/1/4 {s=24576, so=40960, m=0:{0,1,2}}\n"
                 "pg_data/backup_label {s=17, ts=+2}\n"
@@ -2770,7 +2770,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("online 9.6 backup-standby incr backup with block incremental");
 
-        backupTimeStart = BACKUP_EPOCH + 1400000;
+        backupTimeStart = BACKUP_EPOCH + 1700000;
 
         {
             // Load options
@@ -2809,13 +2809,13 @@ testRun(void)
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
-                ".> {d=20191017-081320F_20191018-120000I}\n"
+                ".> {d=20191020-193320F_20191021-232000I}\n"
                 "bundle/1/pg_data/global/pg_control {s=8192}\n"
                 "bundle/2/pg_data/base/1/4 {s=32768, so=40960, m=0:{0,1,2},1:{0}, ts=-100000}\n"
                 "pg_data/backup_label {s=17, ts=+2}\n"
-                "20191017-081320F/bundle/1/pg_data/PG_VERSION {s=3, ts=-200000}\n"
-                "20191017-081320F/bundle/2/pg_data/base/1/3 {s=32768, so=40960, m=0:{0,1,2,3}, ts=-100000}\n"
-                "20191017-081320F/bundle/1/pg_data/postgresql.conf {s=11, ts=-1400000}\n"
+                "20191020-193320F/bundle/1/pg_data/PG_VERSION {s=3, ts=-500000}\n"
+                "20191020-193320F/bundle/2/pg_data/base/1/3 {s=32768, so=40960, m=0:{0,1,2,3}, ts=-100000}\n"
+                "20191020-193320F/bundle/1/pg_data/postgresql.conf {s=11, ts=-1700000}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n",

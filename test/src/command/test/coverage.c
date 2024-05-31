@@ -966,7 +966,7 @@ testCvgGenerate(
 
                 if (strLstExists(coverageList, coverage->name) && !strLstExists(moduleList, module->name))
                 {
-                    LOG_WARN_FMT("'%s' did not have all tests run required for coverage", strZ(coverage->name));
+                    LOG_WARN_FMT("module '%s' did not have all tests run required for coverage", strZ(coverage->name));
                     strLstRemove(coverageList, coverage->name);
                 }
             }

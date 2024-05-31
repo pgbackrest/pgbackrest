@@ -383,7 +383,7 @@ testRun(void)
         strLstAddZ(moduleList, "common/error");
 
         TEST_RESULT_INT(testCvgGenerate(pathRepo, pathTest, STRDEF("vm"), false, moduleList), 0, "generate");
-        TEST_RESULT_LOG("P00   WARN: 'test/common/error/error' did not have all tests run required for coverage");
+        TEST_RESULT_LOG("P00   WARN: module 'test/common/error/error' did not have all tests run required for coverage");
 
         TEST_STORAGE_GET(
             storageTest, "repo/test/result/coverage/coverage.html",
