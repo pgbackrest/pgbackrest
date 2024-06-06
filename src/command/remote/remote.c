@@ -8,6 +8,7 @@ Remote Command
 #include "command/backup/blockIncr.h"
 #include "command/backup/pageChecksum.h"
 #include "command/control/common.h"
+#include "command/lock.h"
 #include "command/restore/blockChecksum.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
@@ -77,7 +78,7 @@ cmdRemote(ProtocolServer *const server)
                     lockStopTest();
 
                     // Acquire the lock
-                    lockAcquireP();
+                    cmdLockAcquireP();
                 }
             }
 

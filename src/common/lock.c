@@ -39,15 +39,6 @@ Constants
 #define LOCK_KEY_SIZE                                               STRID5("sz", 0x3530)
 
 /***********************************************************************************************************************************
-Lock type names
-***********************************************************************************************************************************/
-static const char *const lockTypeName[] =
-{
-    "archive",                                                      // lockTypeArchive
-    "backup",                                                       // lockTypeBackup
-};
-
-/***********************************************************************************************************************************
 Mem context and local variables
 ***********************************************************************************************************************************/
 typedef struct LockFile
@@ -62,21 +53,17 @@ static struct LockLocal
     MemContext *memContext;                                         // Mem context for locks
     const String *path;                                             // Lock path
     const String *execId;                                           // Process exec id
-    const String *stanza;                                           // Stanza
-    LockType type;                                                  // Lock type
-    bool held;                                                      // Is the lock being held?
     List *lockList;                                                 // List of locks held
     const Storage *storage;                                         // Storage object for lock path
 } lockLocal;
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-lockInit(const String *const path, const String *const execId, const String *const stanza, const LockType type)
+lockInit(const String *const path, const String *const execId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(STRING, execId);
-        FUNCTION_LOG_PARAM(ENUM, type);
     FUNCTION_LOG_END();
 
     ASSERT(lockLocal.memContext == NULL);
@@ -89,8 +76,6 @@ lockInit(const String *const path, const String *const execId, const String *con
             lockLocal.memContext = MEM_CONTEXT_NEW();
             lockLocal.path = strDup(path);
             lockLocal.execId = strDup(execId);
-            lockLocal.stanza = strDup(stanza);
-            lockLocal.type = type;
             lockLocal.lockList = lstNewP(sizeof(LockFile), .comparator = lstComparatorStr);
             lockLocal.storage = storagePosixNewP(lockLocal.path, .write = true);
         }
@@ -99,18 +84,6 @@ lockInit(const String *const path, const String *const execId, const String *con
     MEM_CONTEXT_END();
 
     FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN String *
-lockFileName(const String *const stanza, const LockType lockType)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, stanza);
-        FUNCTION_TEST_PARAM(ENUM, lockType);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN(STRING, strNewFmt("%s-%s" LOCK_FILE_EXT, strZ(stanza), lockTypeName[lockType]));
 }
 
 /***********************************************************************************************************************************
@@ -190,16 +163,19 @@ lockReadFile(const String *const lockFile, const LockReadFileParam param)
 
     FUNCTION_AUDIT_STRUCT();
 
+    ASSERT(lockLocal.memContext != NULL);
     ASSERT(lockFile != NULL);
 
     LockReadResult result = {.status = lockReadStatusValid};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        const String *const lockFilePath = storagePathP(lockLocal.storage, lockFile);
+
         // If we cannot open the lock file for any reason then warn and continue to next file
         int fd = -1;
 
-        if ((fd = open(strZ(lockFile), O_RDONLY, 0)) == -1)
+        if ((fd = open(strZ(lockFilePath), O_RDONLY, 0)) == -1)
         {
             result.status = lockReadStatusMissing;
         }
@@ -217,7 +193,7 @@ lockReadFile(const String *const lockFile, const LockReadFileParam param)
                 {
                     MEM_CONTEXT_PRIOR_BEGIN()
                     {
-                        result.data = lockReadFileData(lockFile, fd);
+                        result.data = lockReadFileData(lockFilePath, fd);
                     }
                     MEM_CONTEXT_PRIOR_END();
                 }
@@ -230,7 +206,7 @@ lockReadFile(const String *const lockFile, const LockReadFileParam param)
 
             // Remove lock file if requested but do not report failures
             if (param.remove)
-                unlink(strZ(lockFile));
+                unlink(strZ(lockFilePath));
 
             // Close after unlinking to prevent a race condition where another process creates the file as we remove it
             close(fd);
@@ -241,49 +217,20 @@ lockReadFile(const String *const lockFile, const LockReadFileParam param)
     FUNCTION_LOG_RETURN_STRUCT(result);
 }
 
-/**********************************************************************************************************************************/
-FN_EXTERN LockReadResult
-lockRead(const String *const lockPath, const String *const stanza, const LockType lockType)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, lockPath);
-        FUNCTION_LOG_PARAM(STRING, stanza);
-        FUNCTION_LOG_PARAM(ENUM, lockType);
-    FUNCTION_LOG_END();
-
-    FUNCTION_AUDIT_STRUCT();
-
-    LockReadResult result = {0};
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        const String *const lockFile = strNewFmt("%s/%s", strZ(lockPath), strZ(lockFileName(stanza, lockType)));
-
-        MEM_CONTEXT_PRIOR_BEGIN()
-        {
-            result = lockReadFileP(lockFile);
-        }
-        MEM_CONTEXT_PRIOR_END();
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_STRUCT(result);
-}
-
 /***********************************************************************************************************************************
 Write contents of lock file
 ***********************************************************************************************************************************/
 FN_EXTERN void
-lockWriteData(const LockType lockType, const LockWriteDataParam param)
+lockWriteData(const String *const lockFileName, const LockWriteDataParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(ENUM, lockType);
+        FUNCTION_LOG_PARAM(STRING, lockFileName);
         FUNCTION_LOG_PARAM(VARIANT, param.percentComplete);
         FUNCTION_LOG_PARAM(VARIANT, param.sizeComplete);
         FUNCTION_LOG_PARAM(VARIANT, param.size);
     FUNCTION_LOG_END();
 
-    ASSERT(lockType < lockTypeAll);
+    ASSERT(lockFileName != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -307,25 +254,25 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
         jsonWriteObjectEnd(json);
 
         // Write to lock file
-        const String *const lockFileName = strNewFmt(
-            "%s/%s-%s" LOCK_FILE_EXT, strZ(lockLocal.path), strZ(lockLocal.stanza), lockTypeName[lockType]);
         LockFile *const lockFile = lstFind(lockLocal.lockList, &lockFileName);
 
         if (lockFile == NULL)
             THROW_FMT(AssertError, "lock file '%s' not found", strZ(lockFileName));
 
+        const String *const lockFilePath = storagePathP(lockLocal.storage, lockFileName);
+
         if (lockFile->written)
         {
             // Seek to beginning of lock file
             THROW_ON_SYS_ERROR_FMT(
-                lseek(lockFile->fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0, strZ(lockFileName));
+                lseek(lockFile->fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0, strZ(lockFilePath));
 
             // In case the current write is shorter than before
-            THROW_ON_SYS_ERROR_FMT(ftruncate(lockFile->fd, 0) == -1, FileWriteError, "unable to truncate '%s'", strZ(lockFileName));
+            THROW_ON_SYS_ERROR_FMT(ftruncate(lockFile->fd, 0) == -1, FileWriteError, "unable to truncate '%s'", strZ(lockFilePath));
         }
 
         // Write lock file data
-        IoWrite *const write = ioFdWriteNewOpen(lockFileName, lockFile->fd, 0);
+        IoWrite *const write = ioFdWriteNewOpen(lockFilePath, lockFile->fd, 0);
 
         ioCopyP(ioBufferReadNewOpen(BUFSTR(jsonWriteResult(json))), write);
         ioWriteClose(write);
@@ -338,25 +285,26 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
 }
 
 /**********************************************************************************************************************************/
-// Helper to acquire a file lock
-static int
-lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const bool failOnNoLock)
+FN_EXTERN bool
+lockAcquire(const String *const lockFileName, const LockAcquireParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, lockFile);
-        FUNCTION_LOG_PARAM(TIMEMSEC, lockTimeout);
-        FUNCTION_LOG_PARAM(BOOL, failOnNoLock);
+        FUNCTION_LOG_PARAM(STRING, lockFileName);
+        FUNCTION_LOG_PARAM(TIMEMSEC, param.timeout);
+        FUNCTION_LOG_PARAM(BOOL, param.returnOnNoLock);
     FUNCTION_LOG_END();
 
-    ASSERT(lockFile != NULL);
+    ASSERT(lockFileName != NULL);
 
-    int result = -1;
+    bool result = false;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        Wait *const wait = waitNew(lockTimeout);
+        const String *const lockFilePath = storagePathP(lockLocal.storage, lockFileName);
+        Wait *const wait = waitNew(param.timeout);
         bool retry;
         int errNo = 0;
+        int fd = -1;
 
         do
         {
@@ -364,7 +312,7 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
             retry = false;
 
             // Attempt to open the file
-            if ((result = open(strZ(lockFile), O_RDWR | O_CREAT, STORAGE_MODE_FILE_DEFAULT)) == -1)
+            if ((fd = open(strZ(lockFilePath), O_RDWR | O_CREAT, STORAGE_MODE_FILE_DEFAULT)) == -1)
             {
                 // Save the error for reporting outside the loop
                 errNo = errno;
@@ -372,14 +320,14 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
                 // If the path does not exist then create it
                 if (errNo == ENOENT)
                 {
-                    storagePathCreateP(storagePosixNewP(FSLASH_STR, .write = true), strPath(lockFile));
+                    storagePathCreateP(storagePosixNewP(FSLASH_STR, .write = true), strPath(lockFilePath));
                     retry = true;
                 }
             }
             else
             {
                 // Attempt to lock the file
-                if (flock(result, LOCK_EX | LOCK_NB) == -1)
+                if (flock(fd, LOCK_EX | LOCK_NB) == -1)
                 {
                     // Save the error for reporting outside the loop
                     errNo = errno;
@@ -389,7 +337,7 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
 
                     TRY_BEGIN()
                     {
-                        execId = lockReadFileData(lockFile, result).execId;
+                        execId = lockReadFileData(lockFileName, fd).execId;
                     }
                     CATCH_ANY()
                     {
@@ -400,26 +348,26 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
                     }
                     FINALLY()
                     {
-                        close(result);
+                        close(fd);
                     }
                     TRY_END();
 
                     // Even though we were unable to lock the file, it may be that it is already locked by another process with the
                     // same exec-id, i.e. spawned by the same original main process. If so, report the lock as successful.
                     if (strEq(execId, lockLocal.execId))
-                        result = LOCK_ON_EXEC_ID;
+                        fd = LOCK_ON_EXEC_ID;
                     else
-                        result = -1;
+                        fd = -1;
                 }
             }
         }
-        while (result == -1 && (waitMore(wait) || retry));
+        while (fd == -1 && (waitMore(wait) || retry));
 
         // If the lock was not successful
-        if (result == -1)
+        if (fd == -1)
         {
             // Error when requested
-            if (failOnNoLock || errNo != EWOULDBLOCK)
+            if (!param.returnOnNoLock || errNo != EWOULDBLOCK)
             {
                 const String *errorHint = NULL;
 
@@ -432,75 +380,32 @@ lockAcquireFile(const String *const lockFile, const TimeMSec lockTimeout, const 
 
                     errorHint = strNewFmt(
                         "\nHINT: does '%s:%s' running " PROJECT_NAME " have permissions on the '%s' file?", strZ(userName()),
-                        strZ(groupName()), strZ(lockFile));
+                        strZ(groupName()), strZ(lockFilePath));
                 }
 
                 THROW_FMT(
-                    LockAcquireError, "unable to acquire lock on file '%s': %s%s", strZ(lockFile), strerror(errNo),
+                    LockAcquireError, "unable to acquire lock on file '%s': %s%s", strZ(lockFilePath), strerror(errNo),
                     errorHint == NULL ? "" : strZ(errorHint));
             }
         }
+        // Else add lock to list
+        else
+        {
+            MEM_CONTEXT_OBJ_BEGIN(lockLocal.lockList)
+            {
+                lstAdd(lockLocal.lockList, &(LockFile){.name = strDup(lockFileName), .fd = fd});
+            }
+            MEM_CONTEXT_OBJ_END();
+
+            // Write lock data unless lock was acquired by matching execId
+            if (fd != LOCK_ON_EXEC_ID)
+                lockWriteDataP(lockFileName);
+
+            // Success
+            result = true;
+        }
     }
     MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(INT, result);
-}
-
-FN_EXTERN bool
-lockAcquire(const LockAcquireParam param)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(TIMEMSEC, param.timeout);
-        FUNCTION_LOG_PARAM(BOOL, param.returnOnNoLock);
-    FUNCTION_LOG_END();
-
-    ASSERT(lockLocal.memContext != NULL);
-
-    bool result = true;
-
-    // Don't allow failures when locking more than one file. This makes cleanup difficult and there are no known use cases.
-    ASSERT(!param.returnOnNoLock || lockLocal.type != lockTypeAll);
-
-    // Don't allow another lock if one is already held
-    // if (!lstEmpty(lockLocal.held)
-    //     THROW(AssertError, "lock is already held by this process");
-
-    // Lock files
-    const LockType lockMin = lockLocal.type == lockTypeAll ? lockTypeArchive : lockLocal.type;
-    const LockType lockMax = lockLocal.type == lockTypeAll ? (lockTypeAll - 1) : lockLocal.type;
-
-    for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
-    {
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            LockFile lockFile = {.name = strNewFmt("%s/%s", strZ(lockLocal.path), strZ(lockFileName(lockLocal.stanza, lockIdx)))};
-            lockFile.fd = lockAcquireFile(lockFile.name, param.timeout, !param.returnOnNoLock);
-
-            // Report that lock failed
-            if (lockFile.fd == -1)
-            {
-                result = false;
-            }
-            // Else add lock to list
-            else
-            {
-                MEM_CONTEXT_OBJ_BEGIN(lockLocal.lockList)
-                {
-                    lockFile.name = strDup(lockFile.name);
-                    lstAdd(lockLocal.lockList, &lockFile);
-                }
-                MEM_CONTEXT_OBJ_END();
-
-                // Write lock data unless lock was acquired by matching execId
-                if (lockFile.fd != LOCK_ON_EXEC_ID)
-                    lockWriteDataP(lockIdx);
-            }
-        }
-        MEM_CONTEXT_TEMP_END();
-    }
-
-    if (result)
-        lockLocal.held = true;
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }

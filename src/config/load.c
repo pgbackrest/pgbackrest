@@ -8,12 +8,12 @@ Configuration Load
 #include <unistd.h>
 
 #include "command/command.h"
+#include "command/lock.h"
 #include "common/compress/helper.intern.h"
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/io/io.h"
 #include "common/io/socket/common.h"
-#include "common/lock.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.intern.h"
@@ -569,11 +569,11 @@ cfgLoad(const unsigned int argListSize, const char *argList[])
             // Init lock module if this command can lock
             if (cfgLockType() != lockTypeNone && !cfgCommandHelp())
             {
-                lockInit(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptExecId), cfgOptionStr(cfgOptStanza), cfgLockType());
+                lockInit(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptExecId));
 
                 // Acquire a lock if this command requires a lock
                 if (cfgLockRequired())
-                    lockAcquireP();
+                    cmdLockAcquireP();
             }
 
             // Update options that have complex rules

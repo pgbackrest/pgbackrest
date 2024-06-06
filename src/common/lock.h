@@ -40,7 +40,7 @@ Constants
 Functions
 ***********************************************************************************************************************************/
 // Initialize lock module
-FN_EXTERN void lockInit(const String *path, const String *execId, const String *stanza, LockType type);
+FN_EXTERN void lockInit(const String *path, const String *execId);
 
 // Acquire a lock type. This will involve locking one or more files on disk depending on the lock type. Most operations only take a
 // single lock (archive or backup), but the stanza commands all need to lock both.
@@ -51,16 +51,13 @@ typedef struct LockAcquireParam
     bool returnOnNoLock;                                            // Return when no lock acquired (rather than throw an error)
 } LockAcquireParam;
 
-#define lockAcquireP(...)                                                                                                          \
-    lockAcquire((LockAcquireParam) {VAR_PARAM_INIT, __VA_ARGS__})
+#define lockAcquireP(lockFileName, ...)                                                                                            \
+    lockAcquire(lockFileName, (LockAcquireParam) {VAR_PARAM_INIT, __VA_ARGS__})
 
-FN_EXTERN bool lockAcquire(LockAcquireParam param);
+FN_EXTERN bool lockAcquire(const String *lockFileName, LockAcquireParam param);
 
 // Release a lock
 FN_EXTERN bool lockRelease(bool failOnNoLock);
-
-// Build lock file name
-FN_EXTERN String *lockFileName(const String *stanza, LockType lockType);
 
 // Write data to a lock file
 typedef struct LockWriteDataParam
@@ -71,10 +68,10 @@ typedef struct LockWriteDataParam
     const Variant *size;                                            // Total size of the backup in bytes
 } LockWriteDataParam;
 
-#define lockWriteDataP(lockType, ...)                                                                                              \
-    lockWriteData(lockType, (LockWriteDataParam) {VAR_PARAM_INIT, __VA_ARGS__})
+#define lockWriteDataP(lockFileName, ...)                                                                                              \
+    lockWriteData(lockFileName, (LockWriteDataParam) {VAR_PARAM_INIT, __VA_ARGS__})
 
-FN_EXTERN void lockWriteData(LockType lockType, LockWriteDataParam param);
+FN_EXTERN void lockWriteData(const String *lockFileName, LockWriteDataParam param);
 
 // Read a lock file held by another process to get information about what the process is doing. This is a lower-level version to use
 // when the lock file name is already known and the lock file may need to be removed.
@@ -102,8 +99,5 @@ typedef struct LockReadFileParam
     lockReadFile(lockFile, (LockReadFileParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 FN_EXTERN LockReadResult lockReadFile(const String *lockFile, LockReadFileParam param);
-
-// Wrapper that generates the lock filename before calling lockReadFile()
-FN_EXTERN LockReadResult lockRead(const String *lockPath, const String *stanza, LockType lockType);
 
 #endif

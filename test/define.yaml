@@ -504,12 +504,18 @@ unit:
           - config/parse
           - config/parse.auto: noCode
 
+        depend:
+          - command/lock
+
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: load
         total: 4
 
         coverage:
           - config/load
+
+        depend:
+          - command/lock
 
         include:
           - common/io/socket/common
@@ -806,6 +812,9 @@ unit:
           - command/control/start
           - command/control/stop
 
+        include:
+          - command/lock
+
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: annotate
         total: 1
@@ -899,6 +908,9 @@ unit:
 
         coverage:
           - command/info/info
+
+        include:
+          - command/lock
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: backup

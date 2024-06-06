@@ -153,8 +153,8 @@ hrnCmdBackup(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    lockInit(STR(testPath()), cfgOptionStr(cfgOptExecId), cfgOptionStr(cfgOptStanza), lockTypeBackup);
-    lockAcquireP();
+    lockInit(STR(testPath()), cfgOptionStr(cfgOptExecId));
+    cmdLockAcquireP();
 
     TRY_BEGIN()
     {
@@ -162,7 +162,7 @@ hrnCmdBackup(void)
     }
     FINALLY()
     {
-        lockRelease(true);
+        cmdLockRelease(true);
     }
     TRY_END();
 
