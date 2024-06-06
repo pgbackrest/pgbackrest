@@ -441,6 +441,7 @@ unit:
           - common/lock
 
         depend:
+          - command/lock
           - common/lock
           - config/common
           - config/config
@@ -504,18 +505,12 @@ unit:
           - config/parse
           - config/parse.auto: noCode
 
-        depend:
-          - command/lock
-
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: load
         total: 4
 
         coverage:
           - config/load
-
-        depend:
-          - command/lock
 
         include:
           - common/io/socket/common

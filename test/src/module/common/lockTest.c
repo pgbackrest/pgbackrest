@@ -43,14 +43,14 @@ testRun(void)
         //     strZ(archiveLock));
         // TEST_RESULT_BOOL(lockAcquireFile(archiveLock, 0, false) == -1, true, "lock is already held");
 
-        // // -------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         // TEST_TITLE("acquire file lock on the same exec-id");
 
         // lockLocal.execId = STRDEF("1-test");
 
         // TEST_RESULT_INT(lockAcquireFile(archiveLock, 0, true), -2, "allow lock with same exec id");
 
-        // // -------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         // TEST_TITLE("fail file lock on the same exec-id when lock file is empty");
 
         // HRN_SYSTEM_FMT("echo '' > %s", strZ(archiveLock));
@@ -61,14 +61,14 @@ testRun(void)
         //     "HINT: is another pgBackRest process running?",
         //     strZ(archiveLock));
 
-        // // -------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         // TEST_RESULT_VOID(lockReleaseFile(lockFdTest, archiveLock), "release lock");
 
         // TEST_RESULT_VOID(lockReleaseFile(lockFdTest, archiveLock), "release lock");
         // TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLock), false, "lock file was removed");
         // TEST_RESULT_VOID(lockReleaseFile(lockFdTest, archiveLock), "release lock again without error");
 
-        // // -------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         // String *subPathLock = strNewZ(TEST_PATH "/sub1/sub2/db-backup" LOCK_FILE_EXT);
 
         // TEST_ASSIGN(lockFdTest, lockAcquireFile(subPathLock, 0, true), "get lock in subpath");
@@ -77,7 +77,7 @@ testRun(void)
         // TEST_RESULT_VOID(lockReleaseFile(lockFdTest, subPathLock), "release lock");
         // TEST_RESULT_BOOL(storageExistsP(storageTest, subPathLock), false, "lock file was removed");
 
-        // // -------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         // String *dirLock = strNewZ(TEST_PATH "/dir" LOCK_FILE_EXT);
 
         // HRN_SYSTEM_FMT("mkdir -p %s", strZ(dirLock));
@@ -86,7 +86,7 @@ testRun(void)
         //     lockAcquireFile(dirLock, 0, true), LockAcquireError, "unable to acquire lock on file '%s': Is a directory",
         //     strZ(dirLock));
 
-        // // -------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         // TEST_TITLE("permissions error throw regardless of failOnLock");
 
         // String *noPermLock = strNewZ(TEST_PATH "/noperm/noperm");
@@ -105,7 +105,7 @@ testRun(void)
         //     "HINT: does '" TEST_USER ":" TEST_GROUP "' running pgBackRest have permissions on the '%s' file?",
         //     strZ(noPermLock), strZ(noPermLock));
 
-        // // -------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         // String *backupLock = strNewZ(TEST_PATH "/main-backup" LOCK_FILE_EXT);
 
         // HRN_FORK_BEGIN()
@@ -153,11 +153,11 @@ testRun(void)
         // String *backupLockFile = strNewFmt(TEST_PATH "/%s-backup" LOCK_FILE_EXT, strZ(stanza));
         // int lockFdTest = -1;
 
-        // // -------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         // TEST_ERROR(lockRelease(true), AssertError, "no lock is held by this process");
         // TEST_RESULT_BOOL(lockRelease(false), false, "release when there is no lock");
 
-        // // -------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         // lockInit(TEST_PATH_STR, STRDEF("1-test"), stanza, lockTypeArchive);
 
         // TEST_ASSIGN(lockFdTest, lockAcquireFile(archiveLockFile, 0, true), "archive lock by file");
@@ -176,7 +176,7 @@ testRun(void)
         //     "HINT: is another pgBackRest process running?", strZ(archiveLockFile));
         // TEST_RESULT_VOID(lockReleaseFile(lockFdTest, archiveLockFile), "release lock");
 
-        // // -------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         // lockInit(TEST_PATH_STR, STRDEF("1-test"), stanza, lockTypeArchive);
 
         // TEST_RESULT_BOOL(lockAcquireP(), true, "archive lock");
@@ -184,7 +184,7 @@ testRun(void)
         // TEST_ERROR(lockAcquireP(.returnOnNoLock = true), AssertError, "lock is already held by this process");
         // TEST_RESULT_VOID(lockRelease(true), "release archive lock");
 
-        // // -------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         // lockInit(TEST_PATH_STR, STRDEF("1-test"), stanza, lockTypeBackup);
 
         // TEST_ASSIGN(lockFdTest, lockAcquireFile(backupLockFile, 0, true), "backup lock by file");
@@ -203,7 +203,7 @@ testRun(void)
         // TEST_RESULT_VOID(lockReleaseFile(lockFdTest, archiveLockFile), "release archive lock");
         // TEST_RESULT_VOID(lockReleaseFile(lockFdTest, backupLockFile), "release backup lock");
 
-        // // -------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         // lockInit(TEST_PATH_STR, STRDEF("1-test"), stanza, lockTypeAll);
 
         // TEST_RESULT_BOOL(lockAcquireP(), true, "all lock");
@@ -259,7 +259,7 @@ testRun(void)
         // TEST_RESULT_BOOL(storageExistsP(storageTest, archiveLockFile), false, "archive lock file was removed");
         // TEST_RESULT_BOOL(storageExistsP(storageTest, backupLockFile), false, "backup lock file was removed");
 
-        // // -------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         // TEST_TITLE("acquire lock on the same exec-id and release");
 
         // lockInit(TEST_PATH_STR, STRDEF("1-test"), stanza, lockTypeBackup);
@@ -285,14 +285,14 @@ testRun(void)
 
         // TEST_RESULT_UINT(lockReadFileP(STRDEF(TEST_PATH "/missing.lock")).status, lockReadStatusMissing, "lock read");
 
-        // // -------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         // TEST_TITLE("unlocked file");
 
         // HRN_STORAGE_PUT_EMPTY(storageTest, "unlocked.lock");
         // TEST_RESULT_UINT(lockReadFileP(STRDEF(TEST_PATH "/unlocked.lock")).status, lockReadStatusUnlocked, "lock read");
         // TEST_STORAGE_LIST(storageTest, NULL, "unlocked.lock\n", .remove = true);
 
-        // // -------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         // TEST_TITLE("execId && pid valid file");
 
         // lockInit(TEST_PATH_STR, STRDEF("1-test"), STRDEF("1-test"), lockTypeBackup);
@@ -323,7 +323,7 @@ testRun(void)
         // TEST_RESULT_UINT((uint64_t)result.data.processId, 12345, "lock read pid 12345");
         // TEST_RESULT_VOID(lockRelease(true), "release backup lock");
 
-        // // -------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         // TEST_TITLE("invalid locked file");
 
         // HRN_FORK_BEGIN()
@@ -369,7 +369,7 @@ testRun(void)
         // }
         // HRN_FORK_END();
 
-        // // -------------------------------------------------------------------------------------------------------------------------
+        // -------------------------------------------------------------------------------------------------------------------------
         // TEST_TITLE("valid locked file");
 
         // HRN_FORK_BEGIN()
