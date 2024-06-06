@@ -10,10 +10,10 @@ Info Command
 
 #include "command/archive/common.h"
 #include "command/info/info.h"
+#include "command/lock.h"
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/io/fdWrite.h"
-#include "common/lock.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/type/json.h"
@@ -1299,16 +1299,16 @@ infoUpdateStanza(
                 if (!stanzaRepo->backupLockChecked)
                 {
                     // If there is a valid backup lock for this stanza then backup/expire must be running
-                    stanzaRepo->backupLockHeld = lockRead(
-                        cfgOptionStr(cfgOptLockPath), stanzaRepo->name, lockTypeBackup).status == lockReadStatusValid;
+                    const LockReadResult lockResult = cmdLockRead(lockTypeBackup, stanzaRepo->name);
+
+                    stanzaRepo->backupLockHeld = lockResult.status == lockReadStatusValid;
                     stanzaRepo->backupLockChecked = true;
 
                     if (stanzaRepo->backupLockHeld)
                     {
-                        const LockData lockData = lockRead(cfgOptionStr(cfgOptLockPath), stanzaRepo->name, lockTypeBackup).data;
-                        stanzaRepo->percentComplete = lockData.percentComplete;
-                        stanzaRepo->sizeComplete = lockData.sizeComplete;
-                        stanzaRepo->size = lockData.size;
+                        stanzaRepo->percentComplete = lockResult.data.percentComplete;
+                        stanzaRepo->sizeComplete = lockResult.data.sizeComplete;
+                        stanzaRepo->size = lockResult.data.size;
                     }
                 }
             }

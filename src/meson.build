@@ -146,6 +146,7 @@ src_pgbackrest = [
 	'command/control/start.c',
 	'command/control/stop.c',
 	'command/local/local.c',
+	'command/lock.c',
 	'command/manifest/manifest.c',
 	'command/repo/common.c',
 	'command/repo/create.c',
