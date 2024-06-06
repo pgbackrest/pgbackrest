@@ -95,9 +95,9 @@ typedef struct LockReadFileParam
     bool remove;                                                    // Remove the lock file after locking/reading
 } LockReadFileParam;
 
-#define lockReadFileP(lockFile, ...)                                                                                               \
-    lockReadFile(lockFile, (LockReadFileParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define lockReadFileP(lockFileName, ...)                                                                                               \
+    lockReadFile(lockFileName, (LockReadFileParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-FN_EXTERN LockReadResult lockReadFile(const String *lockFile, LockReadFileParam param);
+FN_EXTERN LockReadResult lockReadFile(const String *lockFileName, LockReadFileParam param);
 
 #endif

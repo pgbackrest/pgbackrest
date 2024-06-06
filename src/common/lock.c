@@ -96,16 +96,16 @@ If a seek is required to get to the beginning of the data, that must be done bef
 
 // Helper to read data
 static LockData
-lockReadFileData(const String *const lockFile, const int fd)
+lockReadFileData(const String *const lockFileName, const int fd)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, lockFile);
+        FUNCTION_LOG_PARAM(STRING, lockFileName);
         FUNCTION_LOG_PARAM(INT, fd);
     FUNCTION_LOG_END();
 
     FUNCTION_AUDIT_STRUCT();
 
-    ASSERT(lockFile != NULL);
+    ASSERT(lockFileName != NULL);
     ASSERT(fd != -1);
 
     LockData result = {0};
@@ -118,7 +118,7 @@ lockReadFileData(const String *const lockFile, const int fd)
             Buffer *const buffer = bufNew(LOCK_BUFFER_SIZE);
             IoWrite *const write = ioBufferWriteNewOpen(buffer);
 
-            ioCopyP(ioFdReadNewOpen(lockFile, fd, 0), write);
+            ioCopyP(ioFdReadNewOpen(lockFileName, fd, 0), write);
             ioWriteClose(write);
 
             JsonRead *const json = jsonReadNew(strNewBuf(buffer));
@@ -145,7 +145,7 @@ lockReadFileData(const String *const lockFile, const int fd)
     }
     CATCH_ANY()
     {
-        THROWP_FMT(errorType(), "unable to read lock file '%s': %s", strZ(lockFile), errorMessage());
+        THROWP_FMT(errorType(), "unable to read lock file '%s': %s", strZ(lockFileName), errorMessage());
     }
     TRY_END();
 
@@ -154,23 +154,23 @@ lockReadFileData(const String *const lockFile, const int fd)
 
 /**********************************************************************************************************************************/
 FN_EXTERN LockReadResult
-lockReadFile(const String *const lockFile, const LockReadFileParam param)
+lockReadFile(const String *const lockFileName, const LockReadFileParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, lockFile);
+        FUNCTION_LOG_PARAM(STRING, lockFileName);
         FUNCTION_LOG_PARAM(BOOL, param.remove);
     FUNCTION_LOG_END();
 
     FUNCTION_AUDIT_STRUCT();
 
     ASSERT(lockLocal.memContext != NULL);
-    ASSERT(lockFile != NULL);
+    ASSERT(lockFileName != NULL);
 
     LockReadResult result = {.status = lockReadStatusValid};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *const lockFilePath = storagePathP(lockLocal.storage, lockFile);
+        const String *const lockFilePath = storagePathP(lockLocal.storage, lockFileName);
 
         // If we cannot open the lock file for any reason then warn and continue to next file
         int fd = -1;
