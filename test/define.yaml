@@ -442,7 +442,6 @@ unit:
 
         depend:
           - command/lock
-          - common/lock
           - config/common
           - config/config
           - config/parse

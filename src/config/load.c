@@ -566,15 +566,13 @@ cfgLoad(const unsigned int argListSize, const char *argList[])
             // Begin the command
             cmdBegin();
 
-            // Init lock module if this command can lock
-            if (cfgLockType() != lockTypeNone && !cfgCommandHelp())
-            {
+            // Initialize the lock module
+            if (cfgOptionTest(cfgOptLockPath))
                 lockInit(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptExecId));
 
-                // Acquire a lock if this command requires a lock
-                if (cfgLockRequired())
-                    cmdLockAcquireP();
-            }
+            // Acquire a lock if this command requires a lock
+            if (cfgLockType() != lockTypeNone && !cfgCommandHelp() && cfgLockRequired())
+                cmdLockAcquireP();
 
             // Update options that have complex rules
             cfgLoadUpdateOption();

@@ -226,7 +226,8 @@ testRun(void)
 
         // TEST_RESULT_VOID(
         //     lockWriteDataP(
-        //         lockTypeBackup, .percentComplete = VARUINT(5555), .sizeComplete = VARUINT64(1754824), .size = VARUINT64(3159000)),
+        //         lockTypeBackup, .percentComplete = VARUINT(5555), .sizeComplete = VARUINT64(1754824), .size =
+        // VARUINT64(3159000)),
         //     "write lock data");
 
         // THROW_ON_SYS_ERROR_FMT(
@@ -339,7 +340,8 @@ testRun(void)
         //             lseek(lockLocal.file[lockTypeBackup].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK,
         //             (uint64_t)0, strZ(lockLocal.file[lockTypeBackup].name));
 
-        //         IoWrite *const write = ioFdWriteNewOpen(lockLocal.file[lockTypeBackup].name, lockLocal.file[lockTypeBackup].fd, 0);
+        //         IoWrite *const write = ioFdWriteNewOpen(lockLocal.file[lockTypeBackup].name, lockLocal.file[lockTypeBackup].fd,
+        // 0);
 
         //         ioCopyP(ioBufferReadNewOpen(BUFSTRDEF("BOGUS")), write);
         //         ioWriteClose(write);
