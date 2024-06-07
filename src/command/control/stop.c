@@ -45,6 +45,8 @@ cmdStop(void)
             if (cfgOptionBool(cfgOptForce))
             {
                 const String *const lockPath = cfgOptionStr(cfgOptLockPath);
+                const String *const stanzaPrefix =
+                    cfgOptionTest(cfgOptStanza) ? strNewFmt("%s-", strZ(cfgOptionStr(cfgOptStanza))) : NULL;
                 const StringList *const lockPathFileList = strLstSort(
                     storageListP(storageLocal(), lockPath, .errorOnMissing = true), sortOrderAsc);
 
@@ -52,8 +54,6 @@ cmdStop(void)
                 for (unsigned int lockPathFileIdx = 0; lockPathFileIdx < strLstSize(lockPathFileList); lockPathFileIdx++)
                 {
                     const String *const lockFile = strLstGet(lockPathFileList, lockPathFileIdx);
-                    const String *const stanzaPrefix =
-                        cfgOptionTest(cfgOptStanza) ? strNewFmt("%s-", strZ(cfgOptionStr(cfgOptStanza))) : NULL;
 
                     // Skip any file that is not a lock file. Skip lock files for other stanzas if a stanza is provided.
                     if (!strEndsWithZ(lockFile, LOCK_FILE_EXT) || (stanzaPrefix != NULL && !strBeginsWith(lockFile, stanzaPrefix)))
