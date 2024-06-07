@@ -1299,16 +1299,16 @@ infoUpdateStanza(
                 if (!stanzaRepo->backupLockChecked)
                 {
                     // If there is a valid backup lock for this stanza then backup/expire must be running
-                    stanzaRepo->backupLockHeld = lockRead(
-                        cfgOptionStr(cfgOptLockPath), stanzaRepo->name, lockTypeBackup).status == lockReadStatusValid;
+                    const LockReadResult lockResult = lockRead(cfgOptionStr(cfgOptLockPath), stanzaRepo->name, lockTypeBackup);
+
+                    stanzaRepo->backupLockHeld = lockResult.status == lockReadStatusValid;
                     stanzaRepo->backupLockChecked = true;
 
                     if (stanzaRepo->backupLockHeld)
                     {
-                        const LockData lockData = lockRead(cfgOptionStr(cfgOptLockPath), stanzaRepo->name, lockTypeBackup).data;
-                        stanzaRepo->percentComplete = lockData.percentComplete;
-                        stanzaRepo->sizeComplete = lockData.sizeComplete;
-                        stanzaRepo->size = lockData.size;
+                        stanzaRepo->percentComplete = lockResult.data.percentComplete;
+                        stanzaRepo->sizeComplete = lockResult.data.sizeComplete;
+                        stanzaRepo->size = lockResult.data.size;
                     }
                 }
             }
