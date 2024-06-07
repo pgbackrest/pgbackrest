@@ -295,8 +295,12 @@ lockAcquire(const String *const lockFileName, const LockAcquireParam param)
     FUNCTION_LOG_END();
 
     ASSERT(lockFileName != NULL);
+    ASSERT(lockLocal.memContext != NULL);
 
     bool result = false;
+
+    if (lstFind(lockLocal.lockList, &lockFileName) != NULL)
+        THROW_FMT(AssertError, "lock on file '%s' already held", strZ(lockFileName));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -418,40 +422,38 @@ lockRelease(bool failOnNoLock)
         FUNCTION_LOG_PARAM(BOOL, failOnNoLock);
     FUNCTION_LOG_END();
 
+    ASSERT(lockLocal.memContext != NULL);
+
     bool result = false;
 
-    // !!!TEMPORARY
-    if (lockLocal.lockList != NULL)
+    // Nothing to do if lock list is empty
+    if (lstEmpty(lockLocal.lockList))
     {
-        // Nothing to do if lock list is empty
-        if (lstEmpty(lockLocal.lockList))
+        // Fail if requested
+        if (failOnNoLock)
+            THROW(AssertError, "no lock is held by this process");
+    }
+    // Else release all locks
+    else
+    {
+        // Release until list is empty
+        while (!lstEmpty(lockLocal.lockList))
         {
-            // Fail if requested
-            if (failOnNoLock)
-                THROW(AssertError, "no lock is held by this process");
-        }
-        // Else release all locks
-        else
-        {
-            // Release until list is empty
-            while (!lstEmpty(lockLocal.lockList))
+            LockFile *const lockFile = lstGet(lockLocal.lockList, 0);
+
+            // Remove lock file if this lock was not acquired by matching execId
+            if (lockFile->fd != LOCK_ON_EXEC_ID)
             {
-                LockFile *const lockFile = lstGet(lockLocal.lockList, 0);
-
-                // Remove lock file if this lock was not acquired by matching execId
-                if (lockFile->fd != LOCK_ON_EXEC_ID)
-                {
-                    storageRemoveP(lockLocal.storage, lockFile->name);
-                    close(lockFile->fd);
-                }
-
-                strFree(lockFile->name);
-                lstRemoveIdx(lockLocal.lockList, 0);
+                storageRemoveP(lockLocal.storage, lockFile->name);
+                close(lockFile->fd);
             }
 
-            // Success
-            result = true;
+            strFree(lockFile->name);
+            lstRemoveIdx(lockLocal.lockList, 0);
         }
+
+        // Success
+        result = true;
     }
 
     FUNCTION_LOG_RETURN(BOOL, result);

@@ -257,7 +257,7 @@ testRun(void)
             {
                 String *lockFileName = cmdLockFileName(cfgOptionStr(cfgOptStanza), lockTypeArchive);
                 lockInit(STRDEF(HRN_PATH "/lock"), cfgOptionStr(cfgOptExecId));
-                TEST_RESULT_INT(lockAcquireP(lockFileName, .timeout = 30000), true, "create archive lock");
+                TEST_RESULT_BOOL(lockAcquireP(lockFileName), true, "create archive lock");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
