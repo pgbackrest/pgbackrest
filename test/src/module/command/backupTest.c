@@ -1870,7 +1870,7 @@ testRun(void)
                 manifest, STRDEF("host"), storageTest, strLstNew(), job, false, pgPageSize8, 0, &sizeProgress,
                 &currentPercentComplete),
             "log noop result");
-        TEST_RESULT_VOID(cmdLockRelease(true), "release backup lock");
+        TEST_RESULT_VOID(cmdLockReleaseP(), "release backup lock");
 
         TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:" TEST_PATH "/test (0B, 100.00%)");
     }

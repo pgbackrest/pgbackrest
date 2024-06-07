@@ -162,7 +162,7 @@ hrnCmdBackup(void)
     }
     FINALLY()
     {
-        cmdLockRelease(true);
+        cmdLockReleaseP();
     }
     TRY_END();
 

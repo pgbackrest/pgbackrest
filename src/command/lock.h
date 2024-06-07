@@ -12,7 +12,7 @@ Functions
 // Acquire a command lock. This will involve locking one or more files on disk depending on the lock type. Most operations only
 // acquire a single lock type (archive or backup), but the stanza commands all need to lock both.
 #define cmdLockAcquireP(...)                                                                                                       \
-    cmdLockAcquire((LockAcquireParam) {VAR_PARAM_INIT, __VA_ARGS__})
+    cmdLockAcquire((LockAcquireParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 FN_EXTERN bool cmdLockAcquire(LockAcquireParam param);
 
@@ -21,11 +21,14 @@ FN_EXTERN LockReadResult cmdLockRead(LockType lockType, const String *stanza);
 
 // Write data to command lock file
 #define cmdLockWriteP(...)                                                                                                         \
-    cmdLockWrite((LockWriteDataParam) {VAR_PARAM_INIT, __VA_ARGS__})
+    cmdLockWrite((LockWriteDataParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 FN_EXTERN void cmdLockWrite(LockWriteDataParam param);
 
 // Release command locks
-FN_EXTERN bool cmdLockRelease(bool failOnNoLock);
+#define cmdLockReleaseP(...)                                                                                                       \
+    cmdLockRelease((LockReleaseParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN bool cmdLockRelease(LockReleaseParam param);
 
 #endif

@@ -169,7 +169,7 @@ exitSafe(int result, const bool error, const SignalType signalType)
     // Release any locks but ignore errors
     TRY_BEGIN()
     {
-        cmdLockRelease(false);
+        cmdLockReleaseP(.returnOnNoLock = true);
     }
     TRY_END();
 

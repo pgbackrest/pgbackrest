@@ -72,8 +72,8 @@ testRun(void)
         TEST_TITLE("write lock file");
 
         TEST_RESULT_VOID(
-            lockWriteDataP(lockFile1Name, .percentComplete = VARUINT(5555), .sizeComplete = VARUINT64(1754824),
-                .size = VARUINT64(3159000)),
+            lockWriteDataP(
+                lockFile1Name, .percentComplete = VARUINT(5555), .sizeComplete = VARUINT64(1754824), .size = VARUINT64(3159000)),
             "write lock data");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -145,10 +145,10 @@ testRun(void)
 
                 lockLocal.execId = STRDEF("1-test");
 
-                TEST_RESULT_BOOL(lockAcquireP(lockFileExecName, .timeout = 100), true, "succeed on same execId");
+                TEST_RESULT_BOOL(lockAcquireP(lockFileExecName), true, "succeed on same execId");
 
                 TEST_ERROR_FMT(
-                    lockAcquireP(lockFileExec2Name, .timeout = 100), LockAcquireError,
+                    lockAcquireP(lockFileExec2Name), LockAcquireError,
                     "unable to acquire lock on file '" TEST_PATH "/%s': Resource temporarily unavailable\n"
                     "HINT: is another pgBackRest process running?",
                     strZ(lockFileExec2Name));
@@ -163,9 +163,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("lock release");
 
-        TEST_RESULT_VOID(lockRelease(true), "release locks");
-        TEST_ERROR(lockRelease(true), AssertError, "no lock is held by this process");
-        TEST_RESULT_VOID(lockRelease(false), "ignore no lock held");
+        TEST_RESULT_VOID(lockReleaseP(), "release locks");
+        TEST_ERROR(lockReleaseP(), AssertError, "no lock is held by this process");
+        TEST_RESULT_VOID(lockReleaseP(.returnOnNoLock = true), "ignore no lock held");
 
         // -------------------------------------------------------------------------------------------------------------------------
         // TEST_TITLE("fail file lock on the same exec-id when lock file is empty");

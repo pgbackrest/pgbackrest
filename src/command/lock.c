@@ -45,7 +45,6 @@ FN_EXTERN bool
 cmdLockAcquire(const LockAcquireParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(TIMEMSEC, param.timeout);
         FUNCTION_LOG_PARAM(BOOL, param.returnOnNoLock);
     FUNCTION_LOG_END();
 
@@ -125,17 +124,17 @@ cmdLockWrite(const LockWriteDataParam param)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-cmdLockRelease(const bool failOnNoLock)
+cmdLockRelease(const LockReleaseParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(BOOL, failOnNoLock);
+        FUNCTION_LOG_PARAM(BOOL, param.returnOnNoLock);
     FUNCTION_LOG_END();
 
     bool result = true;
 
     if (cmdLockLocal.held)
     {
-        result = lockRelease(failOnNoLock);
+        result = lockRelease(param);
         cmdLockLocal.held = false;
     }
 

@@ -246,7 +246,7 @@ testRun(void)
                 // Wait for parent to allow release lock
                 HRN_FORK_CHILD_NOTIFY_GET();
 
-                cmdLockRelease(true);
+                cmdLockReleaseP();
             }
             HRN_FORK_CHILD_END();
 
@@ -440,7 +440,7 @@ testRun(void)
                 // Wait for parent to allow release lock
                 HRN_FORK_CHILD_NOTIFY_GET();
 
-                cmdLockRelease(true);
+                cmdLockReleaseP();
             }
             HRN_FORK_CHILD_END();
 
@@ -1054,7 +1054,7 @@ testRun(void)
                 // Wait for parent to allow release lock
                 HRN_FORK_CHILD_NOTIFY_GET();
 
-                cmdLockRelease(true);
+                cmdLockReleaseP();
             }
             HRN_FORK_CHILD_END();
 
@@ -1494,7 +1494,7 @@ testRun(void)
                 // Wait for parent to allow release lock
                 HRN_FORK_CHILD_NOTIFY_GET();
 
-                cmdLockRelease(true);
+                cmdLockReleaseP();
             }
             HRN_FORK_CHILD_END();
 

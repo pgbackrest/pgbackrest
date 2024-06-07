@@ -368,7 +368,7 @@ cmdArchivePush(void)
                     archiveAsyncErrorClear(archiveModePush, archiveFile);
 
                     // Release the lock so the child process can acquire it
-                    cmdLockRelease(true);
+                    cmdLockReleaseP();
 
                     // Execute the async process
                     archiveAsyncExec(archiveModePush, commandExec);

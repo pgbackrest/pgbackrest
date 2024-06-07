@@ -47,17 +47,25 @@ FN_EXTERN void lockInit(const String *path, const String *execId);
 typedef struct LockAcquireParam
 {
     VAR_PARAM_HEADER;
-    TimeMSec timeout;                                               // Lock timeout
     bool returnOnNoLock;                                            // Return when no lock acquired (rather than throw an error)
 } LockAcquireParam;
 
 #define lockAcquireP(lockFileName, ...)                                                                                            \
-    lockAcquire(lockFileName, (LockAcquireParam) {VAR_PARAM_INIT, __VA_ARGS__})
+    lockAcquire(lockFileName, (LockAcquireParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 FN_EXTERN bool lockAcquire(const String *lockFileName, LockAcquireParam param);
 
 // Release a lock
-FN_EXTERN bool lockRelease(bool failOnNoLock);
+typedef struct LockReleaseParam
+{
+    VAR_PARAM_HEADER;
+    bool returnOnNoLock;                                            // Return when no lock is held (rather than throw an error)
+} LockReleaseParam;
+
+#define lockReleaseP(...)                                                                                                          \
+    lockRelease((LockReleaseParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN bool lockRelease(LockReleaseParam param);
 
 // Write data to a lock file
 typedef struct LockWriteDataParam
@@ -69,7 +77,7 @@ typedef struct LockWriteDataParam
 } LockWriteDataParam;
 
 #define lockWriteDataP(lockFileName, ...)                                                                                              \
-    lockWriteData(lockFileName, (LockWriteDataParam) {VAR_PARAM_INIT, __VA_ARGS__})
+    lockWriteData(lockFileName, (LockWriteDataParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 FN_EXTERN void lockWriteData(const String *lockFileName, LockWriteDataParam param);
 

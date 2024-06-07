@@ -753,7 +753,7 @@ testRun(void)
             HRN_FORK_CHILD_BEGIN()
             {
                 lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("555-fefefefe"));
-                cmdLockAcquireP(.timeout = 30000, .returnOnNoLock = true);
+                cmdLockAcquireP(.returnOnNoLock = true);
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -761,7 +761,7 @@ testRun(void)
                 // Wait for parent to allow release lock
                 HRN_FORK_CHILD_NOTIFY_GET();
 
-                cmdLockRelease(true);
+                cmdLockReleaseP();
             }
             HRN_FORK_CHILD_END();
 

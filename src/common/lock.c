@@ -290,7 +290,6 @@ lockAcquire(const String *const lockFileName, const LockAcquireParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, lockFileName);
-        FUNCTION_LOG_PARAM(TIMEMSEC, param.timeout);
         FUNCTION_LOG_PARAM(BOOL, param.returnOnNoLock);
     FUNCTION_LOG_END();
 
@@ -305,7 +304,6 @@ lockAcquire(const String *const lockFileName, const LockAcquireParam param)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         const String *const lockFilePath = storagePathP(lockLocal.storage, lockFileName);
-        Wait *const wait = waitNew(param.timeout);
         bool retry;
         int errNo = 0;
         int fd = -1;
@@ -365,7 +363,7 @@ lockAcquire(const String *const lockFileName, const LockAcquireParam param)
                 }
             }
         }
-        while (fd == -1 && (waitMore(wait) || retry));
+        while (fd == -1 && retry);
 
         // If the lock was not successful
         if (fd == -1)
@@ -416,10 +414,10 @@ lockAcquire(const String *const lockFileName, const LockAcquireParam param)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-lockRelease(bool failOnNoLock)
+lockRelease(const LockReleaseParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(BOOL, failOnNoLock);
+        FUNCTION_LOG_PARAM(BOOL, param.returnOnNoLock);
     FUNCTION_LOG_END();
 
     ASSERT(lockLocal.memContext != NULL);
@@ -430,7 +428,7 @@ lockRelease(bool failOnNoLock)
     if (lstEmpty(lockLocal.lockList))
     {
         // Fail if requested
-        if (failOnNoLock)
+        if (!param.returnOnNoLock)
             THROW(AssertError, "no lock is held by this process");
     }
     // Else release all locks
