@@ -7,7 +7,6 @@ sets the command and options and determines which options are valid for a comman
 #ifndef CONFIG_CONFIG_H
 #define CONFIG_CONFIG_H
 
-#include "common/lock.h"
 #include "common/log.h"
 #include "common/type/stringId.h"
 #include "common/type/stringList.h"
@@ -41,6 +40,17 @@ typedef enum
 #define CONFIG_COMMAND_ROLE_REMOTE                       "remote"
 
 #define CFG_COMMAND_ROLE_TOTAL                           4
+
+/***********************************************************************************************************************************
+Lock types
+***********************************************************************************************************************************/
+typedef enum
+{
+    lockTypeArchive,
+    lockTypeBackup,
+    lockTypeAll,
+    lockTypeNone,
+} LockType;
 
 /***********************************************************************************************************************************
 Command Functions

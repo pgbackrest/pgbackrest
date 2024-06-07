@@ -88,15 +88,13 @@ lockInit(const String *const path, const String *const execId)
 
 /***********************************************************************************************************************************
 Read contents of lock file
-
-If a seek is required to get to the beginning of the data, that must be done before calling this function.
 ***********************************************************************************************************************************/
 // Size of initial buffer used to load lock file
 #define LOCK_BUFFER_SIZE                                            128
 
 // Helper to read data
 static LockData
-lockReadFileData(const String *const lockFileName, const int fd)
+lockReadData(const String *const lockFileName, const int fd)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, lockFileName);
@@ -150,138 +148,6 @@ lockReadFileData(const String *const lockFileName, const int fd)
     TRY_END();
 
     FUNCTION_LOG_RETURN_STRUCT(result);
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN LockReadResult
-lockReadFile(const String *const lockFileName, const LockReadFileParam param)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, lockFileName);
-        FUNCTION_LOG_PARAM(BOOL, param.remove);
-    FUNCTION_LOG_END();
-
-    FUNCTION_AUDIT_STRUCT();
-
-    ASSERT(lockLocal.memContext != NULL);
-    ASSERT(lockFileName != NULL);
-
-    LockReadResult result = {.status = lockReadStatusValid};
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        const String *const lockFilePath = storagePathP(lockLocal.storage, lockFileName);
-
-        // If we cannot open the lock file for any reason then warn and continue to next file
-        int fd = -1;
-
-        if ((fd = open(strZ(lockFilePath), O_RDONLY, 0)) == -1)
-        {
-            result.status = lockReadStatusMissing;
-        }
-        else
-        {
-            // Attempt a lock on the file - if a lock can be acquired that means the original process died without removing the lock
-            if (flock(fd, LOCK_EX | LOCK_NB) == 0)
-            {
-                result.status = lockReadStatusUnlocked;
-            }
-            // Else attempt to read the file
-            else
-            {
-                TRY_BEGIN()
-                {
-                    MEM_CONTEXT_PRIOR_BEGIN()
-                    {
-                        result.data = lockReadFileData(lockFilePath, fd);
-                    }
-                    MEM_CONTEXT_PRIOR_END();
-                }
-                CATCH_ANY()
-                {
-                    result.status = lockReadStatusInvalid;
-                }
-                TRY_END();
-            }
-
-            // Remove lock file if requested but do not report failures
-            if (param.remove)
-                unlink(strZ(lockFilePath));
-
-            // Close after unlinking to prevent a race condition where another process creates the file as we remove it
-            close(fd);
-        }
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_STRUCT(result);
-}
-
-/***********************************************************************************************************************************
-Write contents of lock file
-***********************************************************************************************************************************/
-FN_EXTERN void
-lockWriteData(const String *const lockFileName, const LockWriteDataParam param)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, lockFileName);
-        FUNCTION_LOG_PARAM(VARIANT, param.percentComplete);
-        FUNCTION_LOG_PARAM(VARIANT, param.sizeComplete);
-        FUNCTION_LOG_PARAM(VARIANT, param.size);
-    FUNCTION_LOG_END();
-
-    ASSERT(lockFileName != NULL);
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Build the json object
-        JsonWrite *const json = jsonWriteNewP();
-        jsonWriteObjectBegin(json);
-
-        jsonWriteStr(jsonWriteKeyStrId(json, LOCK_KEY_EXEC_ID), lockLocal.execId);
-
-        if (param.percentComplete != NULL)
-            jsonWriteUInt(jsonWriteKeyStrId(json, LOCK_KEY_PERCENT_COMPLETE), varUInt(param.percentComplete));
-
-        jsonWriteInt(jsonWriteKeyStrId(json, LOCK_KEY_PROCESS_ID), getpid());
-
-        if (param.size != NULL)
-            jsonWriteUInt64(jsonWriteKeyStrId(json, LOCK_KEY_SIZE), varUInt64(param.size));
-
-        if (param.sizeComplete != NULL)
-            jsonWriteUInt64(jsonWriteKeyStrId(json, LOCK_KEY_SIZE_COMPLETE), varUInt64(param.sizeComplete));
-
-        jsonWriteObjectEnd(json);
-
-        // Write to lock file
-        LockFile *const lockFile = lstFind(lockLocal.lockList, &lockFileName);
-
-        if (lockFile == NULL)
-            THROW_FMT(AssertError, "lock file '%s' not found", strZ(lockFileName));
-
-        const String *const lockFilePath = storagePathP(lockLocal.storage, lockFileName);
-
-        if (lockFile->written)
-        {
-            // Seek to beginning of lock file
-            THROW_ON_SYS_ERROR_FMT(
-                lseek(lockFile->fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0, strZ(lockFilePath));
-
-            // In case the current write is shorter than before
-            THROW_ON_SYS_ERROR_FMT(ftruncate(lockFile->fd, 0) == -1, FileWriteError, "unable to truncate '%s'", strZ(lockFilePath));
-        }
-
-        // Write lock file data
-        IoWrite *const write = ioFdWriteNewOpen(lockFilePath, lockFile->fd, 0);
-
-        ioCopyP(ioBufferReadNewOpen(BUFSTR(jsonWriteResult(json))), write);
-        ioWriteClose(write);
-
-        lockFile->written = true;
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -339,7 +205,7 @@ lockAcquire(const String *const lockFileName, const LockAcquireParam param)
 
                     TRY_BEGIN()
                     {
-                        execId = lockReadFileData(lockFileName, fd).execId;
+                        execId = lockReadData(lockFileName, fd).execId;
                     }
                     CATCH_ANY()
                     {
@@ -401,7 +267,7 @@ lockAcquire(const String *const lockFileName, const LockAcquireParam param)
 
             // Write lock data unless lock was acquired by matching execId
             if (fd != LOCK_ON_EXEC_ID)
-                lockWriteDataP(lockFileName);
+                lockWriteP(lockFileName);
 
             // Success
             result = true;
@@ -410,6 +276,136 @@ lockAcquire(const String *const lockFileName, const LockAcquireParam param)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN LockReadResult
+lockRead(const String *const lockFileName, const LockReadParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, lockFileName);
+        FUNCTION_LOG_PARAM(BOOL, param.remove);
+    FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
+
+    ASSERT(lockLocal.memContext != NULL);
+    ASSERT(lockFileName != NULL);
+
+    LockReadResult result = {.status = lockReadStatusValid};
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *const lockFilePath = storagePathP(lockLocal.storage, lockFileName);
+
+        // If we cannot open the lock file for any reason then warn
+        int fd = -1;
+
+        if ((fd = open(strZ(lockFilePath), O_RDONLY, 0)) == -1)
+        {
+            result.status = lockReadStatusMissing;
+        }
+        else
+        {
+            // Attempt a lock on the file - if a lock can be acquired that means the original process died without removing the lock
+            if (flock(fd, LOCK_EX | LOCK_NB) == 0)
+            {
+                result.status = lockReadStatusUnlocked;
+            }
+            // Else attempt to read the file
+            else
+            {
+                TRY_BEGIN()
+                {
+                    MEM_CONTEXT_PRIOR_BEGIN()
+                    {
+                        result.data = lockReadData(lockFilePath, fd);
+                    }
+                    MEM_CONTEXT_PRIOR_END();
+                }
+                CATCH_ANY()
+                {
+                    result.status = lockReadStatusInvalid;
+                }
+                TRY_END();
+            }
+
+            // Remove lock file if requested but do not report failures
+            if (param.remove)
+                unlink(strZ(lockFilePath));
+
+            // Close after unlinking to prevent a race condition where another process creates the file as we remove it
+            close(fd);
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_STRUCT(result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+lockWrite(const String *const lockFileName, const LockWriteParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, lockFileName);
+        FUNCTION_LOG_PARAM(VARIANT, param.percentComplete);
+        FUNCTION_LOG_PARAM(VARIANT, param.sizeComplete);
+        FUNCTION_LOG_PARAM(VARIANT, param.size);
+    FUNCTION_LOG_END();
+
+    ASSERT(lockFileName != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Build the json object
+        JsonWrite *const json = jsonWriteNewP();
+        jsonWriteObjectBegin(json);
+
+        jsonWriteStr(jsonWriteKeyStrId(json, LOCK_KEY_EXEC_ID), lockLocal.execId);
+
+        if (param.percentComplete != NULL)
+            jsonWriteUInt(jsonWriteKeyStrId(json, LOCK_KEY_PERCENT_COMPLETE), varUInt(param.percentComplete));
+
+        jsonWriteInt(jsonWriteKeyStrId(json, LOCK_KEY_PROCESS_ID), getpid());
+
+        if (param.size != NULL)
+            jsonWriteUInt64(jsonWriteKeyStrId(json, LOCK_KEY_SIZE), varUInt64(param.size));
+
+        if (param.sizeComplete != NULL)
+            jsonWriteUInt64(jsonWriteKeyStrId(json, LOCK_KEY_SIZE_COMPLETE), varUInt64(param.sizeComplete));
+
+        jsonWriteObjectEnd(json);
+
+        // Write to lock file
+        LockFile *const lockFile = lstFind(lockLocal.lockList, &lockFileName);
+
+        if (lockFile == NULL)
+            THROW_FMT(AssertError, "lock file '%s' not found", strZ(lockFileName));
+
+        const String *const lockFilePath = storagePathP(lockLocal.storage, lockFileName);
+
+        if (lockFile->written)
+        {
+            // Seek to beginning of lock file
+            THROW_ON_SYS_ERROR_FMT(
+                lseek(lockFile->fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0, strZ(lockFilePath));
+
+            // In case the current write is shorter than before
+            THROW_ON_SYS_ERROR_FMT(ftruncate(lockFile->fd, 0) == -1, FileWriteError, "unable to truncate '%s'", strZ(lockFilePath));
+        }
+
+        // Write lock file data
+        IoWrite *const write = ioFdWriteNewOpen(lockFilePath, lockFile->fd, 0);
+
+        ioCopyP(ioBufferReadNewOpen(BUFSTR(jsonWriteResult(json))), write);
+        ioWriteClose(write);
+
+        lockFile->written = true;
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/

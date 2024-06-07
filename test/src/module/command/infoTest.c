@@ -246,7 +246,7 @@ testRun(void)
                 // Wait for parent to allow release lock
                 HRN_FORK_CHILD_NOTIFY_GET();
 
-                cmdLockReleaseP();
+                lockReleaseP();
             }
             HRN_FORK_CHILD_END();
 
@@ -432,7 +432,7 @@ testRun(void)
                 String *lockFileName = cmdLockFileName(STRDEF("stanza1"), lockTypeBackup);
                 lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("777-afafafaf"));
                 TEST_RESULT_INT(lockAcquireP(lockFileName), true, "create backup/expire lock");
-                TEST_RESULT_VOID(lockWriteDataP(lockFileName), "write lock data");
+                TEST_RESULT_VOID(lockWriteP(lockFileName), "write lock data");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -440,7 +440,7 @@ testRun(void)
                 // Wait for parent to allow release lock
                 HRN_FORK_CHILD_NOTIFY_GET();
 
-                cmdLockReleaseP();
+                lockReleaseP();
             }
             HRN_FORK_CHILD_END();
 
@@ -1043,7 +1043,7 @@ testRun(void)
                 lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"));
                 TEST_RESULT_INT(lockAcquireP(lockFileName), true, "create backup/expire lock");
                 TEST_RESULT_VOID(
-                    lockWriteDataP(
+                    lockWriteP(
                         lockFileName, .percentComplete = VARUINT(4545), .sizeComplete = VARUINT64(1435765),
                         .size = VARUINT64(3159000)),
                     "write lock data");
@@ -1054,7 +1054,7 @@ testRun(void)
                 // Wait for parent to allow release lock
                 HRN_FORK_CHILD_NOTIFY_GET();
 
-                cmdLockReleaseP();
+                lockReleaseP();
             }
             HRN_FORK_CHILD_END();
 
@@ -1486,7 +1486,7 @@ testRun(void)
                 String *lockFileName = cmdLockFileName(STRDEF("stanza2"), lockTypeBackup);
                 lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"));
                 TEST_RESULT_INT(lockAcquireP(lockFileName), true, "create backup/expire lock");
-                TEST_RESULT_VOID(lockWriteDataP(lockFileName, .percentComplete = VARUINT(5555)), "write lock data");
+                TEST_RESULT_VOID(lockWriteP(lockFileName, .percentComplete = VARUINT(5555)), "write lock data");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -1494,7 +1494,7 @@ testRun(void)
                 // Wait for parent to allow release lock
                 HRN_FORK_CHILD_NOTIFY_GET();
 
-                cmdLockReleaseP();
+                lockReleaseP();
             }
             HRN_FORK_CHILD_END();
 

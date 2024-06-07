@@ -9,7 +9,6 @@ Harness for Creating Test Backups
 #include "common/compress/helper.h"
 #include "common/crypto/common.h"
 #include "common/crypto/hash.h"
-#include "common/lock.h"
 #include "config/config.h"
 #include "info/infoArchive.h"
 #include "info/manifest.h"

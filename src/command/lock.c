@@ -70,10 +70,28 @@ cmdLockAcquire(const LockAcquireParam param)
         strFree(lockFileName);
     }
 
-    if (result)
-        cmdLockLocal.held = true;
+    // Set lock held flag
+    cmdLockLocal.held = result;
 
     FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+cmdLockWrite(const LockWriteParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(VARIANT, param.percentComplete);
+        FUNCTION_LOG_PARAM(VARIANT, param.sizeComplete);
+        FUNCTION_LOG_PARAM(VARIANT, param.size);
+    FUNCTION_LOG_END();
+
+    String *const lockFileName = cmdLockFileName(cfgOptionStr(cfgOptStanza), cfgLockType());
+
+    lockWrite(lockFileName, param);
+    strFree(lockFileName);
+
+    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -85,6 +103,9 @@ cmdLockRead(const LockType lockType, const String *const stanza)
         FUNCTION_LOG_PARAM(STRING, stanza);
     FUNCTION_LOG_END();
 
+    ASSERT(lockType == lockTypeBackup);
+    ASSERT(stanza != NULL);
+
     FUNCTION_AUDIT_STRUCT();
 
     LockReadResult result = {0};
@@ -95,31 +116,13 @@ cmdLockRead(const LockType lockType, const String *const stanza)
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result = lockReadFileP(lockFileName);
+            result = lockReadP(lockFileName);
         }
         MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_STRUCT(result);
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN void
-cmdLockWrite(const LockWriteDataParam param)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(VARIANT, param.percentComplete);
-        FUNCTION_LOG_PARAM(VARIANT, param.sizeComplete);
-        FUNCTION_LOG_PARAM(VARIANT, param.size);
-    FUNCTION_LOG_END();
-
-    String *const lockFileName = cmdLockFileName(cfgOptionStr(cfgOptStanza), cfgLockType());
-
-    lockWriteData(lockFileName, param);
-    strFree(lockFileName);
-
-    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -137,6 +140,8 @@ cmdLockRelease(const LockReleaseParam param)
         result = lockRelease(param);
         cmdLockLocal.held = false;
     }
+    else if (!param.returnOnNoLock)
+        THROW(AssertError, "no lock is held by this process");
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }

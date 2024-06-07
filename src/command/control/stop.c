@@ -60,20 +60,20 @@ cmdStop(void)
                         continue;
 
                     // Read the lock file
-                    const LockReadResult lockRead = lockReadFileP(lockFile, .remove = true);
+                    const LockReadResult lockReadResult = lockReadP(lockFile, .remove = true);
 
                     // If we cannot read the lock file for any reason then warn and continue to next file
-                    if (lockRead.status != lockReadStatusValid)
+                    if (lockReadResult.status != lockReadStatusValid)
                     {
                         LOG_WARN_FMT("unable to read lock file %s/%s", strZ(lockPath), strZ(lockFile));
                         continue;
                     }
 
                     // The lock file is valid so that means there is a running process -- send a term signal to the process
-                    if (kill(lockRead.data.processId, SIGTERM) != 0)
-                        LOG_WARN_FMT("unable to send term signal to process %d", lockRead.data.processId);
+                    if (kill(lockReadResult.data.processId, SIGTERM) != 0)
+                        LOG_WARN_FMT("unable to send term signal to process %d", lockReadResult.data.processId);
                     else
-                        LOG_INFO_FMT("sent term signal to process %d", lockRead.data.processId);
+                        LOG_INFO_FMT("sent term signal to process %d", lockReadResult.data.processId);
                 }
             }
         }
