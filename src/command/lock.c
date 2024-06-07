@@ -135,11 +135,13 @@ cmdLockRelease(const LockReleaseParam param)
 
     bool result = true;
 
+    // Release lock(s)
     if (cmdLockLocal.held)
     {
         result = lockRelease(param);
         cmdLockLocal.held = false;
     }
+    // Else error when requested
     else if (!param.returnOnNoLock)
         THROW(AssertError, "no lock is held by this process");
 
