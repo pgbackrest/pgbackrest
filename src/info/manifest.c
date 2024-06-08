@@ -1686,80 +1686,76 @@ manifestBuildIncr(
         {
             ManifestFile file = manifestFile(this, fileIdx);
 
-            // Check if a prior file exists
-            if (manifestFileExists(manifestPrior, file.name))
+            // Check if a prior file exists for files that will be copied (i.e. not zero-length files when bundling). If a prior
+            // file does exist it may be possible to reference it instead of copying the file.
+            if (file.copy && manifestFileExists(manifestPrior, file.name))
             {
                 const ManifestFile filePrior = manifestFileFind(manifestPrior, file.name);
 
-                // If the file will be copied then preserve values from the prior file when needed. Some files may have been
-                // designated not to be copied at manifest build time, e.g. zero-length files when bundling.
-                if (file.copy)
+                // If file size is equal to prior size then the file can be referenced instead of copied if it has not changed (this
+                // must be determined during the backup).
+                const bool fileSizeEqual = file.size == filePrior.size;
+
+                // If prior file was stored with block incremental and file size is at least prior file block size then preserve
+                // prior values. If file size is less than prior file block size then the entire file will need to be stored and the
+                // map will be useless as long as the file stays at this size. It is not possible to change the block size in a
+                // backup set and the map info will be required to compare against the prior block incremental.
+                const bool fileBlockIncrPreserve = filePrior.blockIncrMapSize > 0 && file.size >= filePrior.blockIncrSize;
+
+                // Perform delta if enabled and file size is equal to prior but not zero. Files of unequal length are always
+                // different while zero-length files are always the same, so it wastes time to check them. It is possible for a file
+                // to be truncated down to equal the prior file during backup, but the overhead of checking for such an unlikely
+                // event does not seem worth the possible space saved.
+                file.delta = delta && fileSizeEqual && file.size != 0;
+
+                // Do not copy if size and prior size are both zero. Zero-length files are always equal so the file can simply be
+                // referenced to the prior file. Note that this is only for the case where zero-length files are being explicitly
+                // written to the repo. Bundled zero-length files disable copy at manifest build time and never reference the prior
+                // file, even if it is also zero-length.
+                if (file.size == 0 && filePrior.size == 0)
+                    file.copy = false;
+
+                // If delta is disabled and size/timestamp are equal then the file is not copied
+                if (!file.delta && fileSizeEqual && file.timestamp == filePrior.timestamp)
+                    file.copy = false;
+
+                ASSERT(file.copy || !file.delta);
+                ASSERT(file.copy || fileSizeEqual);
+                ASSERT(!file.delta || fileSizeEqual);
+
+                // Preserve values if the file will not be copied, is possibly equal to the prior file, or will be stored with block
+                // incremental and the prior file is also stored with block incremental. If the file will not be copied then the
+                // file size must be equal to the prior file so there is no need to check that condition separately.
+                if (fileSizeEqual || fileBlockIncrPreserve)
                 {
-                    // If file size is equal to prior size then the file can be referenced instead of copied if it has not changed
-                    // (this must be determined during the backup).
-                    const bool fileSizeEqual = file.size == filePrior.size;
+                    file.sizePrior = filePrior.size;
+                    file.sizeRepo = filePrior.sizeRepo;
+                    file.checksumSha1 = filePrior.checksumSha1;
+                    file.checksumRepoSha1 = filePrior.checksumRepoSha1;
+                    file.reference = filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
+                    file.checksumPage = filePrior.checksumPage;
+                    file.checksumPageError = filePrior.checksumPageError;
+                    file.checksumPageErrorList = filePrior.checksumPageErrorList;
+                    file.bundleId = filePrior.bundleId;
+                    file.bundleOffset = filePrior.bundleOffset;
+                    file.blockIncrSize = filePrior.blockIncrSize;
+                    file.blockIncrChecksumSize = filePrior.blockIncrChecksumSize;
+                    file.blockIncrMapSize = filePrior.blockIncrMapSize;
 
-                    // If prior file was stored with block incremental and file size is at least prior file block size then preserve
-                    // prior values. If file size is less than prior file block size then the entire file will need to be stored and
-                    // the map will be useless as long as the file stays at this size. It is not possible to change the block size
-                    // in a backup set and the map info will be required to compare against the prior block incremental.
-                    const bool fileBlockIncrPreserve = filePrior.blockIncrMapSize > 0 && file.size >= filePrior.blockIncrSize;
-
-                    // Perform delta if enabled and file size is equal to prior but not zero. Files of unequal length are always
-                    // different while zero-length files are always the same, so it wastes time to check them. It is possible for
-                    // a file to be truncated down to equal the prior file during backup, but the overhead of checking for such an
-                    // unlikely event does not seem worth the possible space saved.
-                    file.delta = delta && fileSizeEqual && file.size != 0;
-
-                    // Do not copy if size and prior size are both zero. Zero-length files are always equal so the file can simply
-                    // be referenced to the prior file. Note that this is only for the case where zero-length files are being
-                    // explicitly written to the repo. Bundled zero-length files disable copy at manifest build time and never
-                    // reference the prior file, even if it is also zero-length.
-                    if (file.size == 0 && filePrior.size == 0)
-                        file.copy = false;
-
-                    // If delta is disabled and size/timestamp are equal then the file is not copied
-                    if (!file.delta && fileSizeEqual && file.timestamp == filePrior.timestamp)
-                        file.copy = false;
-
-                    ASSERT(file.copy || !file.delta);
-                    ASSERT(file.copy || fileSizeEqual);
-                    ASSERT(!file.delta || fileSizeEqual);
-
-                    // Preserve values if the file will not be copied, is possibly equal to the prior file, or will be stored with
-                    // block incremental and the prior file is also stored with block incremental. If the file will not be copied
-                    // then the file size must be equal to the prior file so there is no need to check that condition separately.
-                    if (fileSizeEqual || fileBlockIncrPreserve)
-                    {
-                        file.sizePrior = filePrior.size;
-                        file.sizeRepo = filePrior.sizeRepo;
-                        file.checksumSha1 = filePrior.checksumSha1;
-                        file.checksumRepoSha1 = filePrior.checksumRepoSha1;
-                        file.reference = filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
-                        file.checksumPage = filePrior.checksumPage;
-                        file.checksumPageError = filePrior.checksumPageError;
-                        file.checksumPageErrorList = filePrior.checksumPageErrorList;
-                        file.bundleId = filePrior.bundleId;
-                        file.bundleOffset = filePrior.bundleOffset;
-                        file.blockIncrSize = filePrior.blockIncrSize;
-                        file.blockIncrChecksumSize = filePrior.blockIncrChecksumSize;
-                        file.blockIncrMapSize = filePrior.blockIncrMapSize;
-
-                        ASSERT(file.checksumSha1 != NULL);
-                        ASSERT(
-                            (!file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
-                            (file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
-                            (file.checksumPage && file.checksumPageError));
-                        ASSERT(file.size == 0 || file.sizeRepo != 0);
-                        ASSERT(file.reference != NULL);
-                        ASSERT(file.bundleId != 0 || file.bundleOffset == 0);
-                        ASSERT(
-                            (file.blockIncrSize == 0 && file.blockIncrChecksumSize == 0 && file.blockIncrMapSize == 0) ||
-                            (file.blockIncrSize > 0 && file.blockIncrChecksumSize > 0 && file.blockIncrMapSize > 0));
-                    }
-
-                    manifestFileUpdate(this, &file);
+                    ASSERT(file.checksumSha1 != NULL);
+                    ASSERT(
+                        (!file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
+                        (file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
+                        (file.checksumPage && file.checksumPageError));
+                    ASSERT(file.size == 0 || file.sizeRepo != 0);
+                    ASSERT(file.reference != NULL);
+                    ASSERT(file.bundleId != 0 || file.bundleOffset == 0);
+                    ASSERT(
+                        (file.blockIncrSize == 0 && file.blockIncrChecksumSize == 0 && file.blockIncrMapSize == 0) ||
+                        (file.blockIncrSize > 0 && file.blockIncrChecksumSize > 0 && file.blockIncrMapSize > 0));
                 }
+
+                manifestFileUpdate(this, &file);
             }
         }
     }
