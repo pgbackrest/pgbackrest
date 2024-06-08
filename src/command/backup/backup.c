@@ -1867,7 +1867,7 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
             }
 
             // Add size to total
-            result += file.size;
+            result += file.sizeOriginal;
 
             // Increment total files
             fileTotal++;
@@ -2053,7 +2053,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                 pckWriteBoolP(param, file.reference != NULL);
 
                 fileTotal++;
-                fileSize += file.size;
+                fileSize += file.sizeOriginal;
 
                 // Remove job from the queue
                 lstRemoveIdx(queue, fileIdx);
