@@ -1474,18 +1474,6 @@ backupJobResult(
                 {
                     LOG_DETAIL_PID_FMT(
                         processId, "match file from prior backup %s (%s)%s", strZ(fileLog), strZ(logProgress), strZ(logChecksum));
-
-                    // File size may need to be updated because the original file size may have been larger than what was found by
-                    // copy. This is particularly common for free space maps when performing backup from standby where it is normal
-                    // for the fsm to be larger on the primary than the standby. If the fsm is changed on the primary those changes
-                    // may not be replicated, so the fsm is unchanged and referenced to a prior backup. We still need to be prepared
-                    // for the fsm to be as large as on the primary though, so the primary size must always be used during copy and
-                    // then updated here if copy reads a different size.
-                    if (file.size != copySize)
-                    {
-                        file.size = copySize;
-                        manifestFileUpdate(manifest, &file);
-                    }
                 }
                 // Else if the repo matched the expect checksum, just log it
                 else if (copyResult == backupCopyResultChecksum)
@@ -2030,7 +2018,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                 pckWriteBoolP(param, file.delta);
                 pckWriteBoolP(param, !strEq(file.name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
                 pckWriteU64P(param, file.size);
-                pckWriteU64P(param, file.sizePrior);
+                pckWriteU64P(param, file.sizeOriginal);
                 pckWriteBoolP(param, !backupProcessFilePrimary(jobData->standbyExp, file.name));
                 pckWriteBinP(param, file.checksumSha1 != NULL ? BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE) : NULL);
                 pckWriteBoolP(param, file.checksumPage);
