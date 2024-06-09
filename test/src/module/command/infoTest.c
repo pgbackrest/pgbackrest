@@ -22,7 +22,7 @@ testRun(void)
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // The tests expect the timezone to be UTC
-    setenv("TZ", "UTC", true);
+    hrnTzSet("UTC");
 
     // *****************************************************************************************************************************
     if (testBegin("infoRender()"))
@@ -72,7 +72,7 @@ testRun(void)
                         "\"code\":1,"
                         "\"lock\":{\"backup\":{\"held\":false}},"
                         "\"message\":\"missing stanza path\""
-                        "}"
+                    "}"
                 "}"
             "]",
             // {uncrustify_on}
@@ -125,7 +125,7 @@ testRun(void)
                         "\"code\":3,"
                         "\"lock\":{\"backup\":{\"held\":false}},"
                         "\"message\":\"missing stanza data\""
-                        "}"
+                    "}"
                 "}"
             "]",
             // {uncrustify_on}
@@ -185,7 +185,7 @@ testRun(void)
                         "\"code\":99,"
                         "\"lock\":{\"backup\":{\"held\":false}},"
                         "\"message\":\"other\""
-                        "}"
+                    "}"
                 "}"
             "]",
             // {uncrustify_on}
@@ -1658,7 +1658,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         // Switch to America/New_York to test + timezone offset without minutes
-        setenv("TZ", "America/New_York", true);
+        hrnTzSet("America/New_York");
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -1687,7 +1687,7 @@ testRun(void)
             "text - backup set requested");
 
         // Reset timezone
-        setenv("TZ", "UTC", true);
+        hrnTzSet("UTC");
 
         hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
@@ -1851,7 +1851,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         // Switch to Asia/Kolkata to test - timezone offset with 30 minutes
-        setenv("TZ", "Asia/Kolkata", true);
+        hrnTzSet("Asia/Kolkata");
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -1880,7 +1880,7 @@ testRun(void)
             "text - multi-repo, backup set requested, found on repo2, report stanza and db over all repos");
 
         // Reset timezone
-        setenv("TZ", "UTC", true);
+        hrnTzSet("UTC");
 
         hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
@@ -2062,7 +2062,7 @@ testRun(void)
             .comment = "write manifest with checksum errors and no links");
 
         // Switch to Pacific/Chatham to test + timezone offset with 45 minutes
-        setenv("TZ", "Pacific/Chatham", true);
+        hrnTzSet("Pacific/Chatham");
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -2085,7 +2085,7 @@ testRun(void)
             "text - backup set requested, no links");
 
         // Reset timezone
-        setenv("TZ", "UTC", true);
+        hrnTzSet("UTC");
 
         hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
@@ -2240,7 +2240,7 @@ testRun(void)
             .comment = " rewrite same manifest without checksum errors");
 
         // Switch to America/St_Johns to test - timezone offset with 30 minutes
-        setenv("TZ", "America/St_Johns", true);
+        hrnTzSet("America/St_Johns");
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -2262,7 +2262,7 @@ testRun(void)
             "text - backup set requested, no db and no checksum error");
 
         // Reset timezone
-        setenv("TZ", "UTC", true);
+        hrnTzSet("UTC");
 
         hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
@@ -2757,7 +2757,7 @@ testRun(void)
             "/9.5-2/0000000100000000/000000010000000000000006-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz");
 
         // Switch to America/New_York to test + timezone offset without minutes
-        setenv("TZ", "America/New_York", true);
+        hrnTzSet("America/New_York");
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -2795,7 +2795,7 @@ testRun(void)
             "text - multi-repo, database mismatch, repo2 stanza-upgrade needed");
 
         // Reset timezone
-        setenv("TZ", "UTC", true);
+        hrnTzSet("UTC");
 
         hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
@@ -3381,7 +3381,7 @@ testRun(void)
                         "\"code\":99,"
                         "\"lock\":{\"backup\":{\"held\":false}},"
                         "\"message\":\"other\""
-                        "}"
+                    "}"
                 "}"
             "]",
             // {uncrustify_on}

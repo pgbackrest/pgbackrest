@@ -57,12 +57,12 @@ FN_EXTERN uint64_t jsonReadUInt64(JsonRead *this);
 // Read key
 FN_EXTERN String *jsonReadKey(JsonRead *this);
 
-// Read an expected key
+// Read expected key
 FN_EXTERN bool jsonReadKeyExpect(JsonRead *this, const String *key);
 FN_EXTERN bool jsonReadKeyExpectStrId(JsonRead *this, StringId key);
 FN_EXTERN bool jsonReadKeyExpectZ(JsonRead *this, const char *key);
 
-// Read an required key
+// Read required key
 FN_EXTERN JsonRead *jsonReadKeyRequire(JsonRead *this, const String *key);
 FN_EXTERN JsonRead *jsonReadKeyRequireStrId(JsonRead *this, StringId key);
 FN_EXTERN JsonRead *jsonReadKeyRequireZ(JsonRead *this, const char *key);

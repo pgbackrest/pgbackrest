@@ -67,7 +67,7 @@ zstDecompressFreeResource(THIS_VOID)
 Decompress data
 ***********************************************************************************************************************************/
 static void
-zstDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *decompressed)
+zstDecompressProcess(THIS_VOID, const Buffer *const compressed, Buffer *const decompressed)
 {
     THIS(ZstDecompress);
 

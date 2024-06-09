@@ -234,7 +234,6 @@ sckClientOpen(THIS_VOID)
             CATCH_ANY()
             {
                 // Close socket
-                ASSERT(openData != NULL);
                 close(openData->fd);
 
                 // Clear socket so the connection can be retried

@@ -61,7 +61,7 @@ dbFreeResource(THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN Db *
-dbNew(PgClient *client, ProtocolClient *remoteClient, const Storage *const storage, const String *applicationName)
+dbNew(PgClient *const client, ProtocolClient *const remoteClient, const Storage *const storage, const String *const applicationName)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PG_CLIENT, client);
@@ -98,7 +98,7 @@ dbNew(PgClient *client, ProtocolClient *remoteClient, const Storage *const stora
 Execute a query
 ***********************************************************************************************************************************/
 static Pack *
-dbQuery(Db *this, const PgClientQueryResult resultType, const String *const query)
+dbQuery(Db *const this, const PgClientQueryResult resultType, const String *const query)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
@@ -110,14 +110,14 @@ dbQuery(Db *this, const PgClientQueryResult resultType, const String *const quer
     ASSERT(resultType != 0);
     ASSERT(query != NULL);
 
-    Pack *result = NULL;
+    Pack *result;
 
     // Query remotely
     if (this->remoteClient != NULL)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_QUERY);
+            ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_DB_QUERY);
             PackWrite *const param = protocolCommandParam(command);
 
             pckWriteU32P(param, this->remoteIdx);
@@ -145,7 +145,7 @@ dbQuery(Db *this, const PgClientQueryResult resultType, const String *const quer
 Execute a command that expects no output
 ***********************************************************************************************************************************/
 static void
-dbExec(Db *this, const String *command)
+dbExec(Db *const this, const String *const command)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
@@ -227,7 +227,7 @@ dbIsInRecovery(Db *const this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-dbOpen(Db *this)
+dbOpen(Db *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
@@ -329,7 +329,7 @@ dbOpen(Db *this)
 /**********************************************************************************************************************************/
 // Helper to build start backup query
 static String *
-dbBackupStartQuery(unsigned int pgVersion, bool startFast)
+dbBackupStartQuery(const unsigned int pgVersion, const bool startFast)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgVersion);
@@ -480,14 +480,14 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
 /**********************************************************************************************************************************/
 // Helper to build stop backup query
 static String *
-dbBackupStopQuery(unsigned int pgVersion)
+dbBackupStopQuery(const unsigned int pgVersion)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgVersion);
     FUNCTION_TEST_END();
 
     // Build query to return start lsn and WAL segment name
-    String *result = strCatFmt(
+    String *const result = strCatFmt(
         strNew(),
         "select lsn::text as lsn,\n"
         "       pg_catalog.pg_%sfile_name(lsn)::text as wal_segment_name",
@@ -533,7 +533,7 @@ dbBackupStopQuery(unsigned int pgVersion)
 }
 
 FN_EXTERN DbBackupStopResult
-dbBackupStop(Db *this)
+dbBackupStop(Db *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
@@ -581,7 +581,7 @@ dbBackupStop(Db *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN Pack *
-dbList(Db *this)
+dbList(Db *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
@@ -626,15 +626,15 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
         // Loop until lsn has been reached or timeout
         Wait *wait = waitNew(timeout);
         bool targetReached = false;
-        const char *lsnName = strZ(pgLsnName(dbPgVersion(this)));
-        const String *replayLsnFunction = strNewFmt(
+        const char *const lsnName = strZ(pgLsnName(dbPgVersion(this)));
+        const String *const replayLsnFunction = strNewFmt(
             "pg_catalog.pg_last_%s_replay_%s()", strZ(pgWalName(dbPgVersion(this))), lsnName);
         const String *replayLsn = NULL;
 
         do
         {
             // Build the query
-            String *query = strCatFmt(
+            String *const query = strCatFmt(
                 strNew(),
                 "select replayLsn::text,\n"
                 "       (replayLsn > '%s')::bool as targetReached",
@@ -656,7 +656,7 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
                 strZ(replayLsnFunction));
 
             // Execute the query and get replayLsn
-            PackRead *read = dbQueryRow(this, query);
+            PackRead *const read = dbQueryRow(this, query);
             replayLsn = pckReadStrP(read);
 
             // Error when replayLsn is null which indicates that this is not a standby. This should have been sorted out before we
@@ -697,14 +697,14 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
         // On PostgreSQL >= 9.6 the checkpoint location can be verified so loop until lsn has been reached or timeout
         if (dbPgVersion(this) >= PG_VERSION_96)
         {
-            wait = waitNew(timeout);
+            Wait *const wait = waitNew(timeout);
             targetReached = false;
             const String *checkpointLsn = NULL;
 
             do
             {
                 // Build the query
-                const String *query = strNewFmt(
+                const String *const query = strNewFmt(
                     "select (checkpoint_%s > '%s')::bool as targetReached,\n"
                     "       checkpoint_%s::text as checkpointLsn\n"
                     "  from pg_catalog.pg_control_checkpoint()",
@@ -754,7 +754,7 @@ dbPing(Db *const this, const bool force)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Ping if forced or interval has elapsed
-        time_t timeNow = time(NULL);
+        const time_t timeNow = time(NULL);
 
         if (force || timeNow - this->pingTimeLast > DB_PING_SEC)
         {
@@ -784,7 +784,7 @@ dbPing(Db *const this, const bool force)
 
 /**********************************************************************************************************************************/
 FN_EXTERN Pack *
-dbTablespaceList(Db *this)
+dbTablespaceList(Db *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
@@ -797,7 +797,7 @@ dbTablespaceList(Db *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN TimeMSec
-dbTimeMSec(Db *this)
+dbTimeMSec(Db *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
@@ -817,7 +817,7 @@ dbTimeMSec(Db *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-dbWalSwitch(Db *this)
+dbWalSwitch(Db *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
@@ -825,7 +825,7 @@ dbWalSwitch(Db *this)
 
     ASSERT(this != NULL);
 
-    String *result = NULL;
+    String *result;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -833,8 +833,8 @@ dbWalSwitch(Db *this)
         dbQueryColumn(this, STRDEF("select pg_catalog.pg_create_restore_point('" PROJECT_NAME " Archive Check')::text"));
 
         // Request a WAL segment switch
-        const char *walName = strZ(pgWalName(dbPgVersion(this)));
-        const String *walFileName = pckReadStrP(
+        const char *const walName = strZ(pgWalName(dbPgVersion(this)));
+        const String *const walFileName = pckReadStrP(
             dbQueryColumn(this, strNewFmt("select pg_catalog.pg_%sfile_name(pg_catalog.pg_switch_%s())::text", walName, walName)));
 
         // Copy WAL segment name to the prior context

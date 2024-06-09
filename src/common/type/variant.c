@@ -93,7 +93,7 @@ static const char *const variantTypeName[] =
 
 /**********************************************************************************************************************************/
 FN_EXTERN Variant *
-varDup(const Variant *this)
+varDup(const Variant *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
@@ -118,10 +118,8 @@ varDup(const Variant *this)
                 break;
 
             case varTypeKeyValue:
-            {
                 result = varNewKv(kvDup(varKv(this)));
                 break;
-            }
 
             case varTypeString:
                 result = varNewStr(varStr(this));
@@ -146,7 +144,7 @@ varDup(const Variant *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-varEq(const Variant *this1, const Variant *this2)
+varEq(const Variant *const this1, const Variant *const this2)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this1);
@@ -202,7 +200,7 @@ varEq(const Variant *this1, const Variant *this2)
 
 /**********************************************************************************************************************************/
 FN_EXTERN Variant *
-varNewBool(bool data)
+varNewBool(const bool data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BOOL, data);
@@ -226,7 +224,7 @@ varNewBool(bool data)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-varBool(const Variant *this)
+varBool(const Variant *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
@@ -239,7 +237,7 @@ varBool(const Variant *this)
 }
 
 FN_EXTERN bool
-varBoolForce(const Variant *this)
+varBoolForce(const Variant *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
@@ -273,10 +271,10 @@ varBoolForce(const Variant *this)
             };
 
             // Search for the string
-            const char *string = strZ(varStr(this));
-            unsigned int boolIdx;
+            const char *const string = strZ(varStr(this));
+            unsigned int boolIdx = 0;
 
-            for (boolIdx = 0; boolIdx < LENGTH_OF(boolString); boolIdx++)
+            for (; boolIdx < LENGTH_OF(boolString); boolIdx++)
                 if (strcasecmp(string, boolString[boolIdx]) == 0)
                     break;
 
@@ -308,7 +306,7 @@ varBoolForce(const Variant *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN Variant *
-varNewInt(int data)
+varNewInt(const int data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, data);
@@ -332,7 +330,7 @@ varNewInt(int data)
 
 /**********************************************************************************************************************************/
 FN_EXTERN int
-varInt(const Variant *this)
+varInt(const Variant *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
@@ -345,7 +343,7 @@ varInt(const Variant *this)
 }
 
 FN_EXTERN int
-varIntForce(const Variant *this)
+varIntForce(const Variant *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
@@ -367,7 +365,7 @@ varIntForce(const Variant *this)
 
         case varTypeInt64:
         {
-            int64_t resultTest = varInt64(this);
+            const int64_t resultTest = varInt64(this);
 
             // Make sure the value fits into a normal 32-bit int range since 32-bit platforms are supported
             if (resultTest > INT32_MAX || resultTest < INT32_MIN)
@@ -385,7 +383,7 @@ varIntForce(const Variant *this)
 
         case varTypeUInt:
         {
-            unsigned int resultTest = varUInt(this);
+            const unsigned int resultTest = varUInt(this);
 
             // Make sure the value fits into a normal 32-bit int range
             if (resultTest > INT32_MAX)
@@ -399,7 +397,7 @@ varIntForce(const Variant *this)
 
         case varTypeUInt64:
         {
-            uint64_t resultTest = varUInt64(this);
+            const uint64_t resultTest = varUInt64(this);
 
             // Make sure the value fits into a normal 32-bit int range
             if (resultTest > INT32_MAX)
@@ -421,7 +419,7 @@ varIntForce(const Variant *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN Variant *
-varNewInt64(int64_t data)
+varNewInt64(const int64_t data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT64, data);
@@ -445,7 +443,7 @@ varNewInt64(int64_t data)
 
 /**********************************************************************************************************************************/
 FN_EXTERN int64_t
-varInt64(const Variant *this)
+varInt64(const Variant *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
@@ -458,7 +456,7 @@ varInt64(const Variant *this)
 }
 
 FN_EXTERN int64_t
-varInt64Force(const Variant *this)
+varInt64Force(const Variant *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
@@ -493,7 +491,7 @@ varInt64Force(const Variant *this)
 
         case varTypeUInt64:
         {
-            uint64_t resultTest = varUInt64(this);
+            const uint64_t resultTest = varUInt64(this);
 
             // If max number of unsigned 64-bit integer is greater than max 64-bit signed integer can hold, then error
             if (resultTest <= INT64_MAX)
@@ -518,7 +516,7 @@ varInt64Force(const Variant *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN Variant *
-varNewUInt(unsigned int data)
+varNewUInt(const unsigned int data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, data);
@@ -542,7 +540,7 @@ varNewUInt(unsigned int data)
 
 /**********************************************************************************************************************************/
 FN_EXTERN unsigned int
-varUInt(const Variant *this)
+varUInt(const Variant *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
@@ -555,7 +553,7 @@ varUInt(const Variant *this)
 }
 
 FN_EXTERN unsigned int
-varUIntForce(const Variant *this)
+varUIntForce(const Variant *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
@@ -573,7 +571,7 @@ varUIntForce(const Variant *this)
 
         case varTypeInt:
         {
-            int resultTest = varInt(this);
+            const int resultTest = varInt(this);
 
             // If integer is a negative number, throw an error since the resulting conversion would be a different number
             if (resultTest >= 0)
@@ -590,7 +588,7 @@ varUIntForce(const Variant *this)
 
         case varTypeInt64:
         {
-            int64_t resultTest = varInt64(this);
+            const int64_t resultTest = varInt64(this);
 
             // If integer is a negative number or too large, throw an error since the resulting conversion would be out of bounds
             if (resultTest >= 0 && resultTest <= UINT_MAX)
@@ -611,7 +609,7 @@ varUIntForce(const Variant *this)
 
         case varTypeUInt64:
         {
-            uint64_t resultTest = varUInt64(this);
+            const uint64_t resultTest = varUInt64(this);
 
             // If integer is too large, throw an error since the resulting conversion would be out of bounds
             if (resultTest <= UINT_MAX)
@@ -640,7 +638,7 @@ varUIntForce(const Variant *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN Variant *
-varNewUInt64(uint64_t data)
+varNewUInt64(const uint64_t data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT64, data);
@@ -664,7 +662,7 @@ varNewUInt64(uint64_t data)
 
 /**********************************************************************************************************************************/
 FN_EXTERN uint64_t
-varUInt64(const Variant *this)
+varUInt64(const Variant *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
@@ -677,7 +675,7 @@ varUInt64(const Variant *this)
 }
 
 FN_EXTERN uint64_t
-varUInt64Force(const Variant *this)
+varUInt64Force(const Variant *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
@@ -695,7 +693,7 @@ varUInt64Force(const Variant *this)
 
         case varTypeInt:
         {
-            int resultTest = varInt(this);
+            const int resultTest = varInt(this);
 
             // If integer is a negative number, throw an error since the resulting conversion would be a different number
             if (resultTest >= 0)
@@ -712,7 +710,7 @@ varUInt64Force(const Variant *this)
 
         case varTypeInt64:
         {
-            int64_t resultTest = varInt64(this);
+            const int64_t resultTest = varInt64(this);
 
             // If integer is a negative number, throw an error since the resulting conversion would be out of bounds
             if (resultTest >= 0)
@@ -749,7 +747,7 @@ varUInt64Force(const Variant *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN Variant *
-varNewKv(KeyValue *data)
+varNewKv(KeyValue *const data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, data);
@@ -772,7 +770,7 @@ varNewKv(KeyValue *data)
 
 /**********************************************************************************************************************************/
 FN_EXTERN KeyValue *
-varKv(const Variant *this)
+varKv(const Variant *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
@@ -791,14 +789,14 @@ varKv(const Variant *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN Variant *
-varNewStr(const String *data)
+varNewStr(const String *const data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, data);
     FUNCTION_TEST_END();
 
     // If the variant is larger than the extra allowed with a mem context then allocate the buffer separately
-    size_t allocExtra = sizeof(VariantString) + (data != NULL ? sizeof(StringPub) + strSize(data) + 1 : 0);
+    const size_t allocExtra = sizeof(VariantString) + (data != NULL ? sizeof(StringPub) + strSize(data) + 1 : 0);
 
     if (allocExtra > MEM_CONTEXT_ALLOC_EXTRA_MAX)
     {
@@ -854,7 +852,7 @@ varNewStr(const String *data)
 }
 
 FN_EXTERN Variant *
-varNewStrZ(const char *data)
+varNewStrZ(const char *const data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, data);
@@ -865,7 +863,7 @@ varNewStrZ(const char *data)
 
 /**********************************************************************************************************************************/
 FN_EXTERN const String *
-varStr(const Variant *this)
+varStr(const Variant *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
@@ -883,7 +881,7 @@ varStr(const Variant *this)
 }
 
 FN_EXTERN String *
-varStrForce(const Variant *this)
+varStrForce(const Variant *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);
@@ -949,7 +947,7 @@ varStrForce(const Variant *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN Variant *
-varNewVarLst(const VariantList *data)
+varNewVarLst(const VariantList *const data)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT_LIST, data);
@@ -972,7 +970,7 @@ varNewVarLst(const VariantList *data)
 
 /**********************************************************************************************************************************/
 FN_EXTERN VariantList *
-varVarLst(const Variant *this)
+varVarLst(const Variant *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, this);

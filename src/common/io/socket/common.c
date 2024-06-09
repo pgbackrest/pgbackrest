@@ -31,7 +31,8 @@ static struct SocketLocal
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-sckInit(bool block, bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle, int tcpKeepAliveInterval)
+sckInit(
+    const bool block, const bool keepAlive, const int tcpKeepAliveCount, const int tcpKeepAliveIdle, const int tcpKeepAliveInterval)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BOOL, block);
@@ -57,7 +58,7 @@ sckInit(bool block, bool keepAlive, int tcpKeepAliveCount, int tcpKeepAliveIdle,
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-sckOptionSet(int fd)
+sckOptionSet(const int fd)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, fd);

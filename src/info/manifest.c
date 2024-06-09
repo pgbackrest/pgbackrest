@@ -48,7 +48,7 @@ Internal functions to add types to their lists
 ***********************************************************************************************************************************/
 // Helper to add owner to the owner list if it is not there already and return the pointer. This saves a lot of space.
 static const String *
-manifestOwnerCache(Manifest *this, const String *owner)
+manifestOwnerCache(Manifest *const this, const String *const owner)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -64,7 +64,7 @@ manifestOwnerCache(Manifest *this, const String *owner)
 }
 
 static void
-manifestDbAdd(Manifest *this, const ManifestDb *db)
+manifestDbAdd(Manifest *const this, const ManifestDb *const db)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -77,7 +77,7 @@ manifestDbAdd(Manifest *this, const ManifestDb *db)
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.dbList))
     {
-        ManifestDb dbAdd =
+        const ManifestDb dbAdd =
         {
             .id = db->id,
             .lastSystemId = db->lastSystemId,
@@ -461,7 +461,7 @@ manifestFilePackUpdate(Manifest *const this, ManifestFilePack **const filePack, 
 }
 
 FN_EXTERN void
-manifestLinkAdd(Manifest *this, const ManifestLink *link)
+manifestLinkAdd(Manifest *const this, const ManifestLink *const link)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -475,7 +475,7 @@ manifestLinkAdd(Manifest *this, const ManifestLink *link)
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.linkList))
     {
-        ManifestLink linkAdd =
+        const ManifestLink linkAdd =
         {
             .destination = strDup(link->destination),
             .name = strDup(link->name),
@@ -491,7 +491,7 @@ manifestLinkAdd(Manifest *this, const ManifestLink *link)
 }
 
 static void
-manifestPathAdd(Manifest *this, const ManifestPath *path)
+manifestPathAdd(Manifest *const this, const ManifestPath *const path)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -504,7 +504,7 @@ manifestPathAdd(Manifest *this, const ManifestPath *path)
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.pathList))
     {
-        ManifestPath pathAdd =
+        const ManifestPath pathAdd =
         {
             .mode = path->mode,
             .name = strDup(path->name),
@@ -520,7 +520,7 @@ manifestPathAdd(Manifest *this, const ManifestPath *path)
 }
 
 FN_EXTERN void
-manifestTargetAdd(Manifest *this, const ManifestTarget *target)
+manifestTargetAdd(Manifest *const this, const ManifestTarget *const target)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -534,7 +534,7 @@ manifestTargetAdd(Manifest *this, const ManifestTarget *target)
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.targetList))
     {
-        ManifestTarget targetAdd =
+        const ManifestTarget targetAdd =
         {
             .file = strDup(target->file),
             .name = strDup(target->name),
@@ -615,7 +615,7 @@ manifestLinkCheckInit(void)
 
 // Helper to check a single link specified by targetIdx
 static void
-manifestLinkCheckOne(const Manifest *this, ManifestLinkCheck *linkCheck, unsigned int targetIdx)
+manifestLinkCheckOne(const Manifest *const this, ManifestLinkCheck *const linkCheck, const unsigned int targetIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(MANIFEST, this);
@@ -630,7 +630,7 @@ manifestLinkCheckOne(const Manifest *this, ManifestLinkCheck *linkCheck, unsigne
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const ManifestTarget *target1 = manifestTarget(this, targetIdx);
+        const ManifestTarget *const target1 = manifestTarget(this, targetIdx);
 
         // Only check link targets
         if (target1->type == manifestTargetTypeLink)
@@ -700,7 +700,7 @@ manifestLinkCheckOne(const Manifest *this, ManifestLinkCheck *linkCheck, unsigne
                 lstSort(linkCheck->linkList, sortOrderAsc);
 
                 // Find the path in the sorted list
-                unsigned int linkIdx = lstFindIdx(linkCheck->linkList, &path);
+                const unsigned int linkIdx = lstFindIdx(linkCheck->linkList, &path);
                 ASSERT(linkIdx != LIST_NOT_FOUND);
 
                 // Check path links against other links (file links have already been checked)
@@ -765,7 +765,7 @@ manifestLinkCheckOne(const Manifest *this, ManifestLinkCheck *linkCheck, unsigne
 }
 
 FN_EXTERN void
-manifestLinkCheck(const Manifest *this)
+manifestLinkCheck(const Manifest *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
@@ -901,7 +901,7 @@ manifestBuildInfo(
         FUNCTION_TEST_RETURN_VOID();
 
     // Get build data
-    unsigned int pgVersion = buildData->manifest->pub.data.pgVersion;
+    const unsigned int pgVersion = buildData->manifest->pub.data.pgVersion;
 
     // Construct the name used to identify this file/link/path in the manifest
     const String *manifestName = strNewFmt("%s/%s", strZ(manifestParentName), strZ(info->name));
@@ -932,7 +932,7 @@ manifestBuildInfo(
             }
 
             // Add path to manifest
-            ManifestPath path =
+            const ManifestPath path =
             {
                 .name = manifestName,
                 .mode = info->mode,
@@ -1120,9 +1120,8 @@ manifestBuildInfo(
             // If the destination is another link then error. In the future we'll allow this by following the link chain to the
             // eventual destination but for now we are trying to maintain compatibility during the migration. To do this check we
             // need to read outside of the data directory but it is a read-only operation so is considered safe.
-            const String *linkDestinationAbsolute = strPathAbsolute(info->linkDestination, pgPath);
-
-            StorageInfo linkedCheck = storageInfoP(
+            const String *const linkDestinationAbsolute = strPathAbsolute(info->linkDestination, pgPath);
+            const StorageInfo linkedCheck = storageInfoP(
                 buildData->storagePg, linkDestinationAbsolute, .ignoreMissing = true, .noPathEnforce = true);
 
             if (linkedCheck.exists && linkedCheck.type == storageTypeLink)
@@ -1133,7 +1132,7 @@ manifestBuildInfo(
             }
 
             // Initialize link and target
-            ManifestLink link =
+            const ManifestLink link =
             {
                 .name = manifestName,
                 .user = info->user,
@@ -1195,7 +1194,7 @@ manifestBuildInfo(
                 // Add a dummy pg_tblspc path entry if it does not already exist. This entry will be ignored by restore but it is
                 // part of the original manifest format so we need to have it.
                 lstSort(buildData->manifest->pub.pathList, sortOrderAsc);
-                const ManifestPath *pathBase = manifestPathFind(buildData->manifest, MANIFEST_TARGET_PGDATA_STR);
+                const ManifestPath *const pathBase = manifestPathFind(buildData->manifest, MANIFEST_TARGET_PGDATA_STR);
 
                 if (manifestPathFindDefault(buildData->manifest, MANIFEST_TARGET_PGTBLSPC_STR, NULL) == NULL)
                 {
@@ -1213,10 +1212,10 @@ manifestBuildInfo(
                 // The tablespace link destination path is not the path where data will be stored so we can just store it as a dummy
                 // path. This is because PostgreSQL creates a subpath with the version/catalog number so that multiple versions of
                 // PostgreSQL can share a tablespace, which makes upgrades easier.
-                const ManifestPath *pathTblSpc = manifestPathFind(
+                const ManifestPath *const pathTblSpc = manifestPathFind(
                     buildData->manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC));
 
-                ManifestPath path =
+                const ManifestPath path =
                 {
                     .name = manifestName,
                     .mode = pathTblSpc->mode,
@@ -1234,7 +1233,7 @@ manifestBuildInfo(
             }
 
             // Add info about the linked file/path
-            const String *linkPgPath = strNewFmt("%s/%s", strZ(pgPath), strZ(linkName));
+            const String *const linkPgPath = strNewFmt("%s/%s", strZ(pgPath), strZ(linkName));
             StorageInfo linkedInfo = storageInfoP(
                 buildData->storagePg, linkPgPath, .followLink = true, .ignoreMissing = true);
             linkedInfo.name = linkName;
@@ -1369,7 +1368,7 @@ manifestNewBuild(
             {
                 for (unsigned int excludeIdx = 0; excludeIdx < strLstSize(excludeList); excludeIdx++)
                 {
-                    const String *exclude = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(strLstGet(excludeList, excludeIdx)));
+                    const String *const exclude = strNewFmt(MANIFEST_TARGET_PGDATA "/%s", strZ(strLstGet(excludeList, excludeIdx)));
 
                     // If the exclusions refers to the contents of a path
                     if (strEndsWithZ(exclude, "/"))
@@ -1393,9 +1392,9 @@ manifestNewBuild(
             // Build manifest
             // ---------------------------------------------------------------------------------------------------------------------
             const String *const pgPath = storagePathP(storagePg, NULL);
-            StorageInfo info = storageInfoP(storagePg, pgPath, .followLink = true);
+            const StorageInfo info = storageInfoP(storagePg, pgPath, .followLink = true);
 
-            ManifestPath path =
+            const ManifestPath path =
             {
                 .name = MANIFEST_TARGET_PGDATA_STR,
                 .mode = info.mode,
@@ -1414,7 +1413,7 @@ manifestNewBuild(
             }
             MEM_CONTEXT_END();
 
-            ManifestTarget target =
+            const ManifestTarget target =
             {
                 .name = MANIFEST_TARGET_PGDATA_STR,
                 .path = pgPath,
@@ -1458,7 +1457,7 @@ manifestNewBuild(
 
 #ifdef DEBUG_MEM
             // Record the temp context size before the loop begins
-            size_t sizeBegin = memContextSize(memContextCurrent());
+            const size_t sizeBegin = memContextSize(memContextCurrent());
 #endif
 
             while (fileIdx < manifestFileTotal(this))
@@ -1469,8 +1468,8 @@ manifestNewBuild(
                 if (regExpMatch(relationExp, filePathName))
                 {
                     // Get the filename (without path)
-                    const char *fileName = strBaseZ(filePathName);
-                    size_t fileNameSize = strlen(fileName);
+                    const char *const fileName = strBaseZ(filePathName);
+                    const size_t fileNameSize = strlen(fileName);
 
                     // Strip off the numeric part of the relation
                     char relationFileId[sizeof(lastRelationFileId)];
@@ -1493,7 +1492,7 @@ manifestNewBuild(
                     if (strcmp(lastRelationFileId, relationFileId) != 0)
                     {
                         // Determine if the relation is unlogged
-                        String *relationInit = strNewFmt(
+                        String *const relationInit = strNewFmt(
                             "%.*s%s_init", (int)(strSize(filePathName) - fileNameSize), strZ(filePathName), relationFileId);
                         lastRelationFileIdUnlogged = manifestFileExists(this, relationInit);
                         strFree(relationInit);
@@ -1527,7 +1526,7 @@ manifestNewBuild(
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, CompressType compressType)
+manifestBuildValidate(Manifest *const this, const bool delta, const time_t copyStart, const CompressType compressType)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
@@ -1585,7 +1584,8 @@ manifestBuildValidate(Manifest *this, bool delta, time_t copyStart, CompressType
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type, const String *archiveStart)
+manifestBuildIncr(
+    Manifest *const this, const Manifest *const manifestPrior, const BackupType type, const String *const archiveStart)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
@@ -1680,86 +1680,82 @@ manifestBuildIncr(Manifest *this, const Manifest *manifestPrior, BackupType type
         }
 
         // Find files to (possibly) reference in the prior manifest
-        bool delta = varBool(this->pub.data.backupOptionDelta);
+        const bool delta = varBool(this->pub.data.backupOptionDelta);
 
         for (unsigned int fileIdx = 0; fileIdx < lstSize(this->pub.fileList); fileIdx++)
         {
             ManifestFile file = manifestFile(this, fileIdx);
 
-            // Check if a prior file exists
-            if (manifestFileExists(manifestPrior, file.name))
+            // Check if a prior file exists for files that will be copied (i.e. not zero-length files when bundling). If a prior
+            // file does exist it may be possible to reference it instead of copying the file.
+            if (file.copy && manifestFileExists(manifestPrior, file.name))
             {
                 const ManifestFile filePrior = manifestFileFind(manifestPrior, file.name);
 
-                // If the file will be copied then preserve values from the prior file when needed. Some files may have been
-                // designated not to be copied at manifest build time, e.g. zero-length files when bundling.
-                if (file.copy)
+                // If file size is equal to prior size then the file can be referenced instead of copied if it has not changed (this
+                // must be determined during the backup).
+                const bool fileSizeEqual = file.size == filePrior.size;
+
+                // If prior file was stored with block incremental and file size is at least prior file block size then preserve
+                // prior values. If file size is less than prior file block size then the entire file will need to be stored and the
+                // map will be useless as long as the file stays at this size. It is not possible to change the block size in a
+                // backup set and the map info will be required to compare against the prior block incremental.
+                const bool fileBlockIncrPreserve = filePrior.blockIncrMapSize > 0 && file.size >= filePrior.blockIncrSize;
+
+                // Perform delta if enabled and file size is equal to prior but not zero. Files of unequal length are always
+                // different while zero-length files are always the same, so it wastes time to check them. It is possible for a file
+                // to be truncated down to equal the prior file during backup, but the overhead of checking for such an unlikely
+                // event does not seem worth the possible space saved.
+                file.delta = delta && fileSizeEqual && file.size != 0;
+
+                // Do not copy if size and prior size are both zero. Zero-length files are always equal so the file can simply be
+                // referenced to the prior file. Note that this is only for the case where zero-length files are being explicitly
+                // written to the repo. Bundled zero-length files disable copy at manifest build time and never reference the prior
+                // file, even if it is also zero-length.
+                if (file.size == 0 && filePrior.size == 0)
+                    file.copy = false;
+
+                // If delta is disabled and size/timestamp are equal then the file is not copied
+                if (!file.delta && fileSizeEqual && file.timestamp == filePrior.timestamp)
+                    file.copy = false;
+
+                ASSERT(file.copy || !file.delta);
+                ASSERT(file.copy || fileSizeEqual);
+                ASSERT(!file.delta || fileSizeEqual);
+
+                // Preserve values if the file will not be copied, is possibly equal to the prior file, or will be stored with block
+                // incremental and the prior file is also stored with block incremental. If the file will not be copied then the
+                // file size must be equal to the prior file so there is no need to check that condition separately.
+                if (fileSizeEqual || fileBlockIncrPreserve)
                 {
-                    // If file size is equal to prior size then the file can be referenced instead of copied if it has not changed
-                    // (this must be determined during the backup).
-                    const bool fileSizeEqual = file.size == filePrior.size;
+                    file.sizePrior = filePrior.size;
+                    file.sizeRepo = filePrior.sizeRepo;
+                    file.checksumSha1 = filePrior.checksumSha1;
+                    file.checksumRepoSha1 = filePrior.checksumRepoSha1;
+                    file.reference = filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
+                    file.checksumPage = filePrior.checksumPage;
+                    file.checksumPageError = filePrior.checksumPageError;
+                    file.checksumPageErrorList = filePrior.checksumPageErrorList;
+                    file.bundleId = filePrior.bundleId;
+                    file.bundleOffset = filePrior.bundleOffset;
+                    file.blockIncrSize = filePrior.blockIncrSize;
+                    file.blockIncrChecksumSize = filePrior.blockIncrChecksumSize;
+                    file.blockIncrMapSize = filePrior.blockIncrMapSize;
 
-                    // If prior file was stored with block incremental and file size is at least prior file block size then preserve
-                    // prior values. If file size is less than prior file block size then the entire file will need to be stored and
-                    // the map will be useless as long as the file stays at this size. It is not possible to change the block size
-                    // in a backup set and the map info will be required to compare against the prior block incremental.
-                    const bool fileBlockIncrPreserve = filePrior.blockIncrMapSize > 0 && file.size >= filePrior.blockIncrSize;
-
-                    // Perform delta if enabled and file size is equal to prior but not zero. Files of unequal length are always
-                    // different while zero-length files are always the same, so it wastes time to check them. It is possible for
-                    // a file to be truncated down to equal the prior file during backup, but the overhead of checking for such an
-                    // unlikely event does not seem worth the possible space saved.
-                    file.delta = delta && fileSizeEqual && file.size != 0;
-
-                    // Do not copy if size and prior size are both zero. Zero-length files are always equal so the file can simply
-                    // be referenced to the prior file. Note that this is only for the case where zero-length files are being
-                    // explicitly written to the repo. Bundled zero-length files disable copy at manifest build time and never
-                    // reference the prior file, even if it is also zero-length.
-                    if (file.size == 0 && filePrior.size == 0)
-                        file.copy = false;
-
-                    // If delta is disabled and size/timestamp are equal then the file is not copied
-                    if (!file.delta && fileSizeEqual && file.timestamp == filePrior.timestamp)
-                        file.copy = false;
-
-                    ASSERT(file.copy || !file.delta);
-                    ASSERT(file.copy || fileSizeEqual);
-                    ASSERT(!file.delta || fileSizeEqual);
-
-                    // Preserve values if the file will not be copied, is possibly equal to the prior file, or will be stored with
-                    // block incremental and the prior file is also stored with block incremental. If the file will not be copied
-                    // then the file size must be equal to the prior file so there is no need to check that condition separately.
-                    if (fileSizeEqual || fileBlockIncrPreserve)
-                    {
-                        file.sizePrior = filePrior.size;
-                        file.sizeRepo = filePrior.sizeRepo;
-                        file.checksumSha1 = filePrior.checksumSha1;
-                        file.checksumRepoSha1 = filePrior.checksumRepoSha1;
-                        file.reference = filePrior.reference != NULL ? filePrior.reference : manifestPrior->pub.data.backupLabel;
-                        file.checksumPage = filePrior.checksumPage;
-                        file.checksumPageError = filePrior.checksumPageError;
-                        file.checksumPageErrorList = filePrior.checksumPageErrorList;
-                        file.bundleId = filePrior.bundleId;
-                        file.bundleOffset = filePrior.bundleOffset;
-                        file.blockIncrSize = filePrior.blockIncrSize;
-                        file.blockIncrChecksumSize = filePrior.blockIncrChecksumSize;
-                        file.blockIncrMapSize = filePrior.blockIncrMapSize;
-
-                        ASSERT(file.checksumSha1 != NULL);
-                        ASSERT(
-                            (!file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
-                            (file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
-                            (file.checksumPage && file.checksumPageError));
-                        ASSERT(file.size == 0 || file.sizeRepo != 0);
-                        ASSERT(file.reference != NULL);
-                        ASSERT(file.bundleId != 0 || file.bundleOffset == 0);
-                        ASSERT(
-                            (file.blockIncrSize == 0 && file.blockIncrChecksumSize == 0 && file.blockIncrMapSize == 0) ||
-                            (file.blockIncrSize > 0 && file.blockIncrChecksumSize > 0 && file.blockIncrMapSize > 0));
-                    }
-
-                    manifestFileUpdate(this, &file);
+                    ASSERT(file.checksumSha1 != NULL);
+                    ASSERT(
+                        (!file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
+                        (file.checksumPage && !file.checksumPageError && file.checksumPageErrorList == NULL) ||
+                        (file.checksumPage && file.checksumPageError));
+                    ASSERT(file.size == 0 || file.sizeRepo != 0);
+                    ASSERT(file.reference != NULL);
+                    ASSERT(file.bundleId != 0 || file.bundleOffset == 0);
+                    ASSERT(
+                        (file.blockIncrSize == 0 && file.blockIncrChecksumSize == 0 && file.blockIncrMapSize == 0) ||
+                        (file.blockIncrSize > 0 && file.blockIncrChecksumSize > 0 && file.blockIncrMapSize > 0));
                 }
+
+                manifestFileUpdate(this, &file);
             }
         }
     }
@@ -1973,7 +1969,7 @@ typedef struct ManifestLoadData
 // Helper to transform a variant that could be boolean or string into a string. If the boolean is false return NULL else return the
 // string. The boolean cannot be true.
 static const String *
-manifestOwnerGet(const Variant *owner)
+manifestOwnerGet(const Variant *const owner)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, owner);
@@ -1993,7 +1989,7 @@ manifestOwnerGet(const Variant *owner)
 
 // Helper to check the variant type of owner and duplicate (call in the containing context)
 static const Variant *
-manifestOwnerDefaultGet(const Variant *ownerDefault)
+manifestOwnerDefaultGet(const Variant *const ownerDefault)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VARIANT, ownerDefault);
@@ -2014,7 +2010,7 @@ manifestOwnerDefaultGet(const Variant *ownerDefault)
 }
 
 static void
-manifestLoadCallback(void *callbackData, const String *const section, const String *const key, const String *const value)
+manifestLoadCallback(void *const callbackData, const String *const section, const String *const key, const String *const value)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
@@ -2404,7 +2400,7 @@ manifestLoadCallback(void *callbackData, const String *const section, const Stri
 }
 
 FN_EXTERN Manifest *
-manifestNewLoad(IoRead *read)
+manifestNewLoad(IoRead *const read)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, read);
@@ -2463,8 +2459,8 @@ manifestNewLoad(IoRead *read)
         // Process path defaults
         for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(this); pathIdx++)
         {
-            ManifestPath *path = lstGet(this->pub.pathList, pathIdx);
-            ManifestLoadFound *found = lstGet(loadData.pathFoundList, pathIdx);
+            ManifestPath *const path = lstGet(this->pub.pathList, pathIdx);
+            const ManifestLoadFound *const found = lstGet(loadData.pathFoundList, pathIdx);
 
             if (!found->group)
                 path->group = manifestOwnerCache(this, manifestOwnerGet(loadData.pathGroupDefault));
@@ -2511,7 +2507,7 @@ typedef struct ManifestSaveData
 
 // Helper to convert the owner MCV to a default. If the input is NULL boolean false should be returned, else the owner string.
 static const Variant *
-manifestOwnerVar(const String *ownerDefault)
+manifestOwnerVar(const String *const ownerDefault)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, ownerDefault);
@@ -2956,7 +2952,7 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
 }
 
 FN_EXTERN void
-manifestSave(Manifest *this, IoWrite *write)
+manifestSave(Manifest *const this, IoWrite *const write)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
@@ -2993,7 +2989,7 @@ manifestSave(Manifest *this, IoWrite *write)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-manifestValidate(Manifest *this, bool strict)
+manifestValidate(Manifest *const this, const bool strict)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, this);
@@ -3004,7 +3000,7 @@ manifestValidate(Manifest *this, bool strict)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *error = strNew();
+        String *const error = strNew();
 
         // Validate files
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
@@ -3045,7 +3041,7 @@ manifestValidate(Manifest *this, bool strict)
 File functions and getters/setters
 ***********************************************************************************************************************************/
 static ManifestFilePack **
-manifestFilePackFindInternal(const Manifest *this, const String *name)
+manifestFilePackFindInternal(const Manifest *const this, const String *const name)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -3064,7 +3060,7 @@ manifestFilePackFindInternal(const Manifest *this, const String *name)
 }
 
 const ManifestFilePack *
-manifestFilePackFind(const Manifest *this, const String *name)
+manifestFilePackFind(const Manifest *const this, const String *const name)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -3078,7 +3074,7 @@ manifestFilePackFind(const Manifest *this, const String *name)
 }
 
 FN_EXTERN void
-manifestFileRemove(const Manifest *this, const String *name)
+manifestFileRemove(const Manifest *const this, const String *const name)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -3120,7 +3116,7 @@ manifestFileUpdate(Manifest *const this, const ManifestFile *const file)
 Link functions and getters/setters
 ***********************************************************************************************************************************/
 FN_EXTERN const ManifestLink *
-manifestLinkFind(const Manifest *this, const String *name)
+manifestLinkFind(const Manifest *const this, const String *const name)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -3130,7 +3126,7 @@ manifestLinkFind(const Manifest *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    const ManifestLink *result = lstFind(this->pub.linkList, &name);
+    const ManifestLink *const result = lstFind(this->pub.linkList, &name);
 
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest link list", strZ(name));
@@ -3139,7 +3135,7 @@ manifestLinkFind(const Manifest *this, const String *name)
 }
 
 FN_EXTERN void
-manifestLinkRemove(const Manifest *this, const String *name)
+manifestLinkRemove(const Manifest *const this, const String *const name)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -3156,7 +3152,7 @@ manifestLinkRemove(const Manifest *this, const String *name)
 }
 
 FN_EXTERN void
-manifestLinkUpdate(const Manifest *this, const String *name, const String *destination)
+manifestLinkUpdate(const Manifest *const this, const String *const name, const String *const destination)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -3168,7 +3164,7 @@ manifestLinkUpdate(const Manifest *this, const String *name, const String *desti
     ASSERT(name != NULL);
     ASSERT(destination != NULL);
 
-    ManifestLink *link = (ManifestLink *)manifestLinkFind(this, name);
+    ManifestLink *const link = (ManifestLink *)manifestLinkFind(this, name);
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.linkList))
     {
@@ -3184,7 +3180,7 @@ manifestLinkUpdate(const Manifest *this, const String *name, const String *desti
 Path functions and getters/setters
 ***********************************************************************************************************************************/
 FN_EXTERN const ManifestPath *
-manifestPathFind(const Manifest *this, const String *name)
+manifestPathFind(const Manifest *const this, const String *const name)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -3194,7 +3190,7 @@ manifestPathFind(const Manifest *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    const ManifestPath *result = lstFind(this->pub.pathList, &name);
+    const ManifestPath *const result = lstFind(this->pub.pathList, &name);
 
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest path list", strZ(name));
@@ -3203,7 +3199,7 @@ manifestPathFind(const Manifest *this, const String *name)
 }
 
 FN_EXTERN String *
-manifestPathPg(const String *manifestPath)
+manifestPathPg(const String *const manifestPath)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, manifestPath);
@@ -3233,7 +3229,7 @@ manifestPathPg(const String *manifestPath)
 Target functions and getters/setters
 ***********************************************************************************************************************************/
 FN_EXTERN const ManifestTarget *
-manifestTargetFind(const Manifest *this, const String *name)
+manifestTargetFind(const Manifest *const this, const String *const name)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -3243,7 +3239,7 @@ manifestTargetFind(const Manifest *this, const String *name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    const ManifestTarget *result = lstFind(this->pub.targetList, &name);
+    const ManifestTarget *const result = lstFind(this->pub.targetList, &name);
 
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest target list", strZ(name));
@@ -3252,7 +3248,7 @@ manifestTargetFind(const Manifest *this, const String *name)
 }
 
 FN_EXTERN String *
-manifestTargetPath(const Manifest *this, const ManifestTarget *target)
+manifestTargetPath(const Manifest *const this, const ManifestTarget *const target)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -3267,11 +3263,11 @@ manifestTargetPath(const Manifest *this, const ManifestTarget *target)
         FUNCTION_TEST_RETURN(STRING, strDup(target->path));
 
     // Construct it from the base pg path and a relative path
-    String *result = NULL;
+    String *result;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *pgPath = strCat(strNew(), strPath(manifestPathPg(target->name)));
+        String *const pgPath = strCat(strNew(), strPath(manifestPathPg(target->name)));
 
         if (strSize(pgPath) != 0)
             strCatZ(pgPath, "/");
@@ -3290,7 +3286,7 @@ manifestTargetPath(const Manifest *this, const ManifestTarget *target)
 }
 
 FN_EXTERN void
-manifestTargetRemove(const Manifest *this, const String *name)
+manifestTargetRemove(const Manifest *const this, const String *const name)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -3307,7 +3303,7 @@ manifestTargetRemove(const Manifest *this, const String *name)
 }
 
 FN_EXTERN void
-manifestTargetUpdate(const Manifest *this, const String *name, const String *path, const String *file)
+manifestTargetUpdate(const Manifest *const this, const String *const name, const String *const path, const String *const file)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -3320,7 +3316,7 @@ manifestTargetUpdate(const Manifest *this, const String *name, const String *pat
     ASSERT(name != NULL);
     ASSERT(path != NULL);
 
-    ManifestTarget *target = (ManifestTarget *)manifestTargetFind(this, name);
+    ManifestTarget *const target = (ManifestTarget *)manifestTargetFind(this, name);
 
     ASSERT((target->file == NULL && file == NULL) || (target->file != NULL && file != NULL));
 
@@ -3341,7 +3337,7 @@ manifestTargetUpdate(const Manifest *this, const String *name, const String *pat
 Getters/Setters
 ***********************************************************************************************************************************/
 FN_EXTERN void
-manifestBackupLabelSet(Manifest *this, const String *backupLabel)
+manifestBackupLabelSet(Manifest *const this, const String *const backupLabel)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MANIFEST, this);
@@ -3410,7 +3406,8 @@ manifestLoadFileCallback(void *const data, const unsigned int try)
 }
 
 FN_EXTERN Manifest *
-manifestLoadFile(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+manifestLoadFile(
+    const Storage *const storage, const String *const fileName, const CipherType cipherType, const String *const cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
@@ -3434,7 +3431,7 @@ manifestLoadFile(const Storage *storage, const String *fileName, CipherType ciph
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const char *fileNamePath = strZ(storagePathP(storage, fileName));
+        const char *const fileNamePath = strZ(storagePathP(storage, fileName));
 
         infoLoad(
             strNewFmt("unable to load backup manifest file '%s' or '%s" INFO_COPY_EXT "'", fileNamePath, fileNamePath),

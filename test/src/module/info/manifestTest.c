@@ -635,9 +635,7 @@ testRun(void)
         TEST_ERROR(
             manifestNewBuild(
                 storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), 0, false, false, false, false, NULL, NULL, NULL),
-            FileOpenError,
-            "unable to get info for missing path/file '" TEST_PATH "/pg/pg_tblspc/1/PG_12_201909212': [2] No such file or"
-            " directory");
+            FileOpenError, "unable to get info for missing path/file '" TEST_PATH "/pg/pg_tblspc/1/PG_12_201909212'");
 
         // Remove the link inside pg/pg_tblspc
         THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/pg_tblspc/1") == -1, FileRemoveError, "unable to remove symlink");
@@ -894,8 +892,7 @@ testRun(void)
         TEST_ERROR(
             manifestNewBuild(
                 storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, true, false, false, NULL, NULL, NULL),
-            FileOpenError,
-            "unable to get info for missing path/file '" TEST_PATH "/pg/link-to-link': [2] No such file or directory");
+            FileOpenError, "unable to get info for missing path/file '" TEST_PATH "/pg/link-to-link'");
 
         THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/link-to-link") == -1, FileRemoveError, "unable to remove symlink");
 

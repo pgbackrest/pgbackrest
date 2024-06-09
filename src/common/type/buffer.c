@@ -31,7 +31,7 @@ struct Buffer
 
 /**********************************************************************************************************************************/
 FN_EXTERN Buffer *
-bufNew(size_t size)
+bufNew(const size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(SIZE, size);
@@ -59,7 +59,7 @@ bufNew(size_t size)
 
 /**********************************************************************************************************************************/
 FN_EXTERN Buffer *
-bufNewC(const void *buffer, size_t size)
+bufNewC(const void *const buffer, const size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, buffer);
@@ -69,7 +69,7 @@ bufNewC(const void *buffer, size_t size)
     ASSERT(buffer != NULL);
 
     // Create object and copy data
-    Buffer *this = bufNew(size);
+    Buffer *const this = bufNew(size);
     memcpy(this->pub.buffer, buffer, bufSize(this));
     this->pub.used = bufSize(this);
 
@@ -85,7 +85,7 @@ bufNewDecode(const EncodingType type, const String *const string)
         FUNCTION_TEST_PARAM(STRING, string);
     FUNCTION_TEST_END();
 
-    Buffer *this = bufNew(decodeToBinSize(type, strZ(string)));
+    Buffer *const this = bufNew(decodeToBinSize(type, strZ(string)));
 
     decodeToBin(type, strZ(string), bufPtr(this));
     bufUsedSet(this, bufSize(this));
@@ -95,7 +95,7 @@ bufNewDecode(const EncodingType type, const String *const string)
 
 /**********************************************************************************************************************************/
 FN_EXTERN Buffer *
-bufDup(const Buffer *buffer)
+bufDup(const Buffer *const buffer)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, buffer);
@@ -104,7 +104,7 @@ bufDup(const Buffer *buffer)
     ASSERT(buffer != NULL);
 
     // Create object and copy data
-    Buffer *this = bufNew(bufUsed(buffer));
+    Buffer *const this = bufNew(bufUsed(buffer));
 
     if (bufUsed(buffer) != 0)
         memcpy(this->pub.buffer, buffer->pub.buffer, bufSize(this));
@@ -116,7 +116,7 @@ bufDup(const Buffer *buffer)
 
 /**********************************************************************************************************************************/
 FN_EXTERN Buffer *
-bufCat(Buffer *this, const Buffer *cat)
+bufCat(Buffer *const this, const Buffer *const cat)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
@@ -133,7 +133,7 @@ bufCat(Buffer *this, const Buffer *cat)
 
 /**********************************************************************************************************************************/
 FN_EXTERN Buffer *
-bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize)
+bufCatC(Buffer *const this, const unsigned char *const cat, const size_t catOffset, const size_t catSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
@@ -162,7 +162,7 @@ bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize
 
 /**********************************************************************************************************************************/
 FN_EXTERN Buffer *
-bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, size_t catSize)
+bufCatSub(Buffer *const this, const Buffer *const cat, const size_t catOffset, const size_t catSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
@@ -186,7 +186,7 @@ bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, size_t catSize)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-bufEq(const Buffer *this, const Buffer *compare)
+bufEq(const Buffer *const this, const Buffer *const compare)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
@@ -203,8 +203,44 @@ bufEq(const Buffer *this, const Buffer *compare)
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN const unsigned char *
+bufFind(const Buffer *const this, const Buffer *const find, const BufFindParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, this);
+        FUNCTION_TEST_PARAM(BUFFER, find);
+        FUNCTION_TEST_PARAM_P(VOID, param.begin);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(find != NULL);
+    ASSERT(param.begin == NULL || (param.begin >= bufPtrConst(this) && param.begin - bufPtrConst(this) <= (off_t)bufUsed(this)));
+
+    const void *result = NULL;
+
+    if (bufUsed(this) >= bufUsed(find))
+    {
+        const unsigned char *haystack = param.begin != NULL ? param.begin : bufPtrConst(this);
+        unsigned int findIdx = (unsigned int)(haystack - bufPtrConst(this));
+
+        for (; findIdx <= bufUsed(this) - bufUsed(find); findIdx++)
+        {
+            if (memcmp(haystack, bufPtrConst(find), bufSize(find)) == 0)
+            {
+                result = haystack;
+                break;
+            }
+
+            haystack++;
+        }
+    }
+
+    FUNCTION_TEST_RETURN_CONST_P(UCHARDATA, result);
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN Buffer *
-bufResize(Buffer *this, size_t size)
+bufResize(Buffer *const this, const size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
@@ -260,7 +296,7 @@ bufResize(Buffer *this, size_t size)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-bufLimitClear(Buffer *this)
+bufLimitClear(Buffer *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
@@ -275,7 +311,7 @@ bufLimitClear(Buffer *this)
 }
 
 FN_EXTERN void
-bufLimitSet(Buffer *this, size_t limit)
+bufLimitSet(Buffer *const this, const size_t limit)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
@@ -294,7 +330,7 @@ bufLimitSet(Buffer *this, size_t limit)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-bufUsedInc(Buffer *this, size_t inc)
+bufUsedInc(Buffer *const this, const size_t inc)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
@@ -310,7 +346,7 @@ bufUsedInc(Buffer *this, size_t inc)
 }
 
 FN_EXTERN void
-bufUsedSet(Buffer *this, size_t used)
+bufUsedSet(Buffer *const this, const size_t used)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
@@ -326,7 +362,7 @@ bufUsedSet(Buffer *this, size_t used)
 }
 
 FN_EXTERN void
-bufUsedZero(Buffer *this)
+bufUsedZero(Buffer *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);

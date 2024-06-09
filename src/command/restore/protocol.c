@@ -38,7 +38,7 @@ restoreFileProtocol(PackRead *const param, ProtocolServer *const server)
         const StringList *const referenceList = pckReadStrLstP(param);
 
         // Build the file list
-        List *fileList = lstNewP(sizeof(RestoreFile));
+        List *const fileList = lstNewP(sizeof(RestoreFile));
 
         while (!pckReadNullP(param))
         {

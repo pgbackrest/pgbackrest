@@ -103,7 +103,7 @@ storageWriteS3Part(StorageWriteS3 *const this)
 }
 
 static void
-storageWriteS3PartAsync(StorageWriteS3 *this)
+storageWriteS3PartAsync(StorageWriteS3 *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_WRITE_S3, this);
@@ -122,13 +122,13 @@ storageWriteS3PartAsync(StorageWriteS3 *this)
         if (this->uploadId == NULL)
         {
             // Initiate mult-part upload
-            XmlNode *xmlRoot = xmlDocumentRoot(
+            const XmlNode *const xmlRoot = xmlDocumentRoot(
                 xmlDocumentNewBuf(
                     httpResponseContent(
                         storageS3RequestP(
                             this->storage, HTTP_VERB_POST_STR, this->interface.name,
                             .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOADS_STR, EMPTY_STR), .sseKms = true,
-                            .tag = true))));
+                            .sseC = true, .tag = true))));
 
             // Store the upload id
             MEM_CONTEXT_OBJ_BEGIN(this)
@@ -140,14 +140,14 @@ storageWriteS3PartAsync(StorageWriteS3 *this)
         }
 
         // Upload the part async
-        HttpQuery *query = httpQueryNewP();
+        HttpQuery *const query = httpQueryNewP();
         httpQueryAdd(query, S3_QUERY_UPLOAD_ID_STR, this->uploadId);
         httpQueryAdd(query, S3_QUERY_PART_NUMBER_STR, strNewFmt("%u", strLstSize(this->uploadPartList) + 1));
 
         MEM_CONTEXT_OBJ_BEGIN(this)
         {
             this->request = storageS3RequestAsyncP(
-                this->storage, HTTP_VERB_PUT_STR, this->interface.name, .query = query, .content = this->partBuffer);
+                this->storage, HTTP_VERB_PUT_STR, this->interface.name, .query = query, .content = this->partBuffer, .sseC = true);
         }
         MEM_CONTEXT_OBJ_END();
     }
@@ -160,7 +160,7 @@ storageWriteS3PartAsync(StorageWriteS3 *this)
 Write to internal buffer
 ***********************************************************************************************************************************/
 static void
-storageWriteS3(THIS_VOID, const Buffer *buffer)
+storageWriteS3(THIS_VOID, const Buffer *const buffer)
 {
     THIS(StorageWriteS3);
 
@@ -228,21 +228,21 @@ storageWriteS3Close(THIS_VOID)
                 storageWriteS3Part(this);
 
                 // Generate the xml part list
-                XmlDocument *partList = xmlDocumentNew(S3_XML_TAG_COMPLETE_MULTIPART_UPLOAD_STR);
+                XmlDocument *const partList = xmlDocumentNew(S3_XML_TAG_COMPLETE_MULTIPART_UPLOAD_STR);
 
                 for (unsigned int partIdx = 0; partIdx < strLstSize(this->uploadPartList); partIdx++)
                 {
-                    XmlNode *partNode = xmlNodeAdd(xmlDocumentRoot(partList), S3_XML_TAG_PART_STR);
+                    XmlNode *const partNode = xmlNodeAdd(xmlDocumentRoot(partList), S3_XML_TAG_PART_STR);
                     xmlNodeContentSet(xmlNodeAdd(partNode, S3_XML_TAG_PART_NUMBER_STR), strNewFmt("%u", partIdx + 1));
                     xmlNodeContentSet(xmlNodeAdd(partNode, S3_XML_TAG_ETAG_STR), strLstGet(this->uploadPartList, partIdx));
                 }
 
                 // Finalize the multi-part upload
-                HttpRequest *request = storageS3RequestAsyncP(
+                HttpRequest *const request = storageS3RequestAsyncP(
                     this->storage, HTTP_VERB_POST_STR, this->interface.name,
                     .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOAD_ID_STR, this->uploadId),
                     .content = xmlDocumentBuf(partList));
-                HttpResponse *response = storageS3ResponseP(request);
+                HttpResponse *const response = storageS3ResponseP(request);
 
                 // Error when no etag in the result. This indicates that the request did not succeed despite the success code.
                 if (xmlNodeChild(
@@ -256,7 +256,7 @@ storageWriteS3Close(THIS_VOID)
             {
                 storageS3RequestP(
                     this->storage, HTTP_VERB_PUT_STR, this->interface.name, .content = this->partBuffer, .sseKms = true,
-                    .tag = true);
+                    .sseC = true, .tag = true);
             }
 
             bufFree(this->partBuffer);

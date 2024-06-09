@@ -68,7 +68,7 @@ storageLstAdd(StorageList *const this, const StorageInfo *const info)
 }
 
 // Get info. Note that StorageInfo pointer members (e.g. name) will be undefined after the next call to storageLstGet().
-FN_EXTERN StorageInfo storageLstGet(StorageList *this, unsigned int idx);
+FN_EXTERN StorageInfo storageLstGet(const StorageList *this, unsigned int idx);
 
 // Move to a new parent mem context
 FN_INLINE_ALWAYS StorageList *

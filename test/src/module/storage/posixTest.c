@@ -211,9 +211,7 @@ testRun(void)
 
         const String *fileName = STRDEF(TEST_PATH "/fileinfo");
 
-        TEST_ERROR_FMT(
-            storageInfoP(storageTest, fileName), FileOpenError, STORAGE_ERROR_INFO_MISSING ": [2] No such file or directory",
-            strZ(fileName));
+        TEST_ERROR_FMT(storageInfoP(storageTest, fileName), FileOpenError, STORAGE_ERROR_INFO_MISSING, strZ(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file does not exist");

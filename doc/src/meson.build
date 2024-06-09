@@ -19,6 +19,7 @@ subdir('command/help')
 # test target
 ####################################################################################################################################
 src_doc = [
+    '../../src/build/common/json.c',
     '../../src/build/common/render.c',
     '../../src/build/common/string.c',
     '../../src/build/common/xml.c',
@@ -38,7 +39,6 @@ src_doc = [
     '../../src/common/io/fdWrite.c',
     '../../src/common/lock.c',
     '../../src/common/stat.c',
-    '../../src/common/type/json.c',
     '../../src/config/config.c',
     '../../src/config/parse.c',
     'command/build/build.c',

@@ -8,6 +8,7 @@ Main
 #include "command/command.h"
 #include "command/exit.h"
 #include "command/help/help.h"
+#include "command/test/coverage.h"
 #include "command/test/test.h"
 #include "common/debug.h"
 #include "common/log.h"
@@ -69,13 +70,24 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdTest:
                 {
-                    cmdTest(
-                        cfgOptionStr(cfgOptRepoPath), cfgOptionStr(cfgOptTestPath), cfgOptionStr(cfgOptVm),
-                        cfgOptionUInt(cfgOptVmId), cfgOptionStr(cfgOptPgVersion), strLstGet(cfgCommandParam(), 0),
-                        cfgOptionTest(cfgOptTest) ? cfgOptionUInt(cfgOptTest) : 0, cfgOptionUInt64(cfgOptScale),
-                        logLevelEnum(cfgOptionStrId(cfgOptLogLevelTest)), cfgOptionBool(cfgOptLogTimestamp),
-                        cfgOptionStrNull(cfgOptTz), cfgOptionBool(cfgOptCoverage), cfgOptionBool(cfgOptProfile),
-                        cfgOptionBool(cfgOptOptimize), cfgOptionBool(cfgOptBackTrace));
+                    // Run a single test
+                    if (cfgOptionTest(cfgOptVmId))
+                    {
+                        cmdTest(
+                            cfgOptionStr(cfgOptRepoPath), cfgOptionStr(cfgOptTestPath), cfgOptionStr(cfgOptVm),
+                            cfgOptionUInt(cfgOptVmId), cfgOptionStr(cfgOptPgVersion), strLstGet(cfgCommandParam(), 0),
+                            cfgOptionTest(cfgOptTest) ? cfgOptionUInt(cfgOptTest) : 0, cfgOptionUInt64(cfgOptScale),
+                            logLevelEnum(cfgOptionStrId(cfgOptLogLevelTest)), cfgOptionBool(cfgOptLogTimestamp),
+                            cfgOptionStrNull(cfgOptTz), cfgOptionBool(cfgOptCoverage), cfgOptionBool(cfgOptProfile),
+                            cfgOptionBool(cfgOptOptimize), cfgOptionBool(cfgOptBackTrace));
+                    }
+                    // Top-level test
+                    else
+                    {
+                        result = testCvgGenerate(
+                            cfgOptionStr(cfgOptRepoPath), cfgOptionStr(cfgOptTestPath), cfgOptionStr(cfgOptVm),
+                            cfgOptionBool(cfgOptCoverageSummary), cfgCommandParam()) > 0;
+                    }
 
                     break;
                 }

@@ -73,7 +73,7 @@ gzCompressFreeResource(THIS_VOID)
 Compress data
 ***********************************************************************************************************************************/
 static void
-gzCompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
+gzCompressProcess(THIS_VOID, const Buffer *const uncompressed, Buffer *const compressed)
 {
     THIS(GzCompress);
 
@@ -113,7 +113,7 @@ gzCompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
     this->stream.next_out = bufPtr(compressed) + bufUsed(compressed);
 
     // Perform compression
-    int result = gzError(deflate(&this->stream, this->flushing ? Z_FINISH : Z_NO_FLUSH));
+    const int result = gzError(deflate(&this->stream, this->flushing ? Z_FINISH : Z_NO_FLUSH));
 
     // Set buffer used space
     bufUsedSet(compressed, bufSize(compressed) - (size_t)this->stream.avail_out);

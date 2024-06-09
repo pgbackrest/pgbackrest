@@ -27,6 +27,14 @@ doc/lib/pgBackRestDoc/Common/Exception.pm:
   class: doc/core
   type: perl
 
+doc/lib/pgBackRestDoc/Common/Host.pm:
+  class: doc/core
+  type: perl
+
+doc/lib/pgBackRestDoc/Common/HostGroup.pm:
+  class: doc/core
+  type: perl
+
 doc/lib/pgBackRestDoc/Common/Ini.pm:
   class: doc/core
   type: perl
@@ -112,6 +120,14 @@ doc/src/command/build/build.c:
   type: c
 
 doc/src/command/build/build.h:
+  class: doc/core
+  type: c/h
+
+doc/src/command/build/man.c:
+  class: doc/core
+  type: c
+
+doc/src/command/build/man.h:
   class: doc/core
   type: c/h
 
@@ -615,6 +631,14 @@ doc/xml/release/2024/2.51.xml:
   class: doc/source
   type: xml
 
+doc/xml/release/2024/2.52.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2024/2.53.xml:
+  class: doc/source
+  type: xml
+
 doc/xml/release/contributor.xml:
   class: doc/source
   type: xml
@@ -646,6 +670,22 @@ src/build.auto.h.in:
 src/build/aclocal.m4:
   class: build
   type: make
+
+src/build/common/exec.c:
+  class: build
+  type: c
+
+src/build/common/exec.h:
+  class: build
+  type: c/h
+
+src/build/common/json.c:
+  class: build
+  type: c
+
+src/build/common/json.h:
+  class: build
+  type: c/h
 
 src/build/common/regExp.c:
   class: build
@@ -986,6 +1026,10 @@ src/command/expire/expire.c:
 src/command/expire/expire.h:
   class: core
   type: c/h
+
+src/command/help/help.auto.c.inc:
+  class: core/auto
+  type: c
 
 src/command/help/help.c:
   class: core
@@ -2059,6 +2103,10 @@ src/postgres/client.h:
   class: core
   type: c/h
 
+src/postgres/interface.auto.c.inc:
+  class: core/auto
+  type: c
+
 src/postgres/interface.c:
   class: core
   type: c
@@ -2467,10 +2515,6 @@ test/lib/pgBackRestTest/Common/ContainerTest.pm:
   class: test/harness
   type: perl
 
-test/lib/pgBackRestTest/Common/CoverageTest.pm:
-  class: test/harness
-  type: perl
-
 test/lib/pgBackRestTest/Common/DbVersion.pm:
   class: test/harness
   type: perl
@@ -2480,18 +2524,6 @@ test/lib/pgBackRestTest/Common/DefineTest.pm:
   type: perl
 
 test/lib/pgBackRestTest/Common/ExecuteTest.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Common/FileTest.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Common/HostGroupTest.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Common/HostTest.pm:
   class: test/harness
   type: perl
 
@@ -2523,10 +2555,6 @@ test/lib/pgBackRestTest/Common/ListTest.pm:
   class: test/harness
   type: perl
 
-test/lib/pgBackRestTest/Common/RunTest.pm:
-  class: test/harness
-  type: perl
-
 test/lib/pgBackRestTest/Common/Storage.pm:
   class: test/harness
   type: perl
@@ -2547,104 +2575,12 @@ test/lib/pgBackRestTest/Common/StoragePosixWrite.pm:
   class: test/harness
   type: perl
 
-test/lib/pgBackRestTest/Common/StorageRepo.pm:
-  class: test/harness
-  type: perl
-
 test/lib/pgBackRestTest/Common/VmTest.pm:
   class: test/harness
   type: perl
 
 test/lib/pgBackRestTest/Common/Wait.pm:
   class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Env/ArchiveInfo.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Env/BackupInfo.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Env/ExpireEnvTest.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Env/Host/HostAzureTest.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Env/Host/HostBackupTest.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Env/Host/HostBaseTest.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Env/Host/HostDbCommonTest.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Env/Host/HostDbSyntheticTest.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Env/Host/HostDbTest.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Env/Host/HostGcsTest.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Env/Host/HostS3Test.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Env/Host/HostSftpTest.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Env/HostEnvTest.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Env/InfoCommon.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Env/Manifest.pm:
-  class: test/harness
-  type: perl
-
-test/lib/pgBackRestTest/Module/Mock/MockAllTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Mock/MockArchiveStopTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Mock/MockArchiveTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Mock/MockExpireTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Mock/MockStanzaTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Performance/PerformanceArchivePerlTest.pm:
-  class: test/module
-  type: perl
-
-test/lib/pgBackRestTest/Module/Real/RealAllTest.pm:
-  class: test/module
   type: perl
 
 test/src/build/config/config.yaml:
@@ -2664,6 +2600,14 @@ test/src/command/test/build.c:
   type: c
 
 test/src/command/test/build.h:
+  class: test/harness
+  type: c/h
+
+test/src/command/test/coverage.c:
+  class: test/harness
+  type: c
+
+test/src/command/test/coverage.h:
   class: test/harness
   type: c/h
 
@@ -2736,6 +2680,14 @@ test/src/common/harnessFd.h:
   type: c/h
 
 test/src/common/harnessFork.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessHost.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessHost.h:
   class: test/harness
   type: c/h
 
@@ -2832,6 +2784,10 @@ test/src/common/harnessPostgres/harness150.c:
   type: c
 
 test/src/common/harnessPostgres/harness160.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessPostgres/harness170.c:
   class: test/harness
   type: c
 
@@ -3215,6 +3171,10 @@ test/src/module/info/manifestTest.c:
   class: test/module
   type: c
 
+test/src/module/integration/allTest.c:
+  class: test/module
+  type: c
+
 test/src/module/performance/storageTest.c:
   class: test/module
   type: c
@@ -3256,6 +3216,10 @@ test/src/module/storage/s3Test.c:
   type: c
 
 test/src/module/storage/sftpTest.c:
+  class: test/module
+  type: c
+
+test/src/module/test/coverageTest.c:
   class: test/module
   type: c
 

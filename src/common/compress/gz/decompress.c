@@ -67,7 +67,7 @@ gzDecompressFreeResource(THIS_VOID)
 Decompress data
 ***********************************************************************************************************************************/
 static void
-gzDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *uncompressed)
+gzDecompressProcess(THIS_VOID, const Buffer *const compressed, Buffer *const uncompressed)
 {
     THIS(GzDecompress);
 

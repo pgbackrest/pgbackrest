@@ -31,7 +31,7 @@ archiveGetFileProtocol(PackRead *const param, ProtocolServer *const server)
         const String *const request = pckReadStrP(param);
 
         // Build the actual list
-        List *actualList = lstNewP(sizeof(ArchiveGetFile));
+        List *const actualList = lstNewP(sizeof(ArchiveGetFile));
 
         while (!pckReadNullP(param))
         {
@@ -45,7 +45,7 @@ archiveGetFileProtocol(PackRead *const param, ProtocolServer *const server)
         }
 
         // Get file
-        ArchiveGetFileResult fileResult = archiveGetFile(
+        const ArchiveGetFileResult fileResult = archiveGetFile(
             storageSpoolWrite(), request, actualList,
             strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s." STORAGE_FILE_TEMP_EXT, strZ(request)));
 

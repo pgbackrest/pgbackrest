@@ -68,7 +68,7 @@ zstCompressFreeResource(THIS_VOID)
 Compress data
 ***********************************************************************************************************************************/
 static void
-zstCompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
+zstCompressProcess(THIS_VOID, const Buffer *const uncompressed, Buffer *const compressed)
 {
     THIS(ZstCompress);
 

@@ -8,6 +8,7 @@ C Test Harness
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "common/harnessDebug.h"
@@ -324,6 +325,14 @@ hrnDiff(const char *expected, const char *actual)
     harnessDiffBuffer[strlen(harnessDiffBuffer) - 1] = 0;
 
     FUNCTION_HARNESS_RETURN(STRINGZ, harnessDiffBuffer);
+}
+
+/**********************************************************************************************************************************/
+void
+hrnTzSet(const char *const tz)
+{
+    setenv("TZ", tz, true);
+    tzset();
 }
 
 /**********************************************************************************************************************************/

@@ -57,7 +57,7 @@ infoArchiveNewInternal(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoArchive *
-infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipherPassSub)
+infoArchiveNew(const unsigned int pgVersion, const uint64_t pgSystemId, const String *const cipherPassSub)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
@@ -84,7 +84,7 @@ infoArchiveNew(unsigned int pgVersion, uint64_t pgSystemId, const String *cipher
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoArchive *
-infoArchiveNewLoad(IoRead *read)
+infoArchiveNewLoad(IoRead *const read)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_READ, read);
@@ -107,7 +107,7 @@ infoArchiveNewLoad(IoRead *read)
 /**********************************************************************************************************************************/
 const String *
 infoArchiveIdHistoryMatch(
-    const InfoArchive *this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId)
+    const InfoArchive *const this, const unsigned int historyId, const unsigned int pgVersion, const uint64_t pgSystemId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);
@@ -119,12 +119,12 @@ infoArchiveIdHistoryMatch(
     ASSERT(this != NULL);
 
     String *archiveId = NULL;
-    InfoPg *infoPg = infoArchivePg(this);
+    const InfoPg *const infoPg = infoArchivePg(this);
 
     // Search the history list, from newest to oldest
     for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoPg); pgIdx++)
     {
-        InfoPgData pgDataArchive = infoPgData(infoPg, pgIdx);
+        const InfoPgData pgDataArchive = infoPgData(infoPg, pgIdx);
 
         // If there is an exact match with the history, system and version then get the archiveId and stop
         if (historyId == pgDataArchive.id && pgSystemId == pgDataArchive.systemId && pgVersion == pgDataArchive.version)
@@ -139,7 +139,7 @@ infoArchiveIdHistoryMatch(
     {
         for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoPg); pgIdx++)
         {
-            InfoPgData pgDataArchive = infoPgData(infoPg, pgIdx);
+            const InfoPgData pgDataArchive = infoPgData(infoPg, pgIdx);
 
             if (pgSystemId == pgDataArchive.systemId && pgVersion == pgDataArchive.version)
             {
@@ -165,7 +165,7 @@ infoArchiveIdHistoryMatch(
 Save to file
 ***********************************************************************************************************************************/
 static void
-infoArchiveSave(InfoArchive *this, IoWrite *write)
+infoArchiveSave(InfoArchive *const this, IoWrite *const write)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);
@@ -186,7 +186,7 @@ infoArchiveSave(InfoArchive *this, IoWrite *write)
 
 /**********************************************************************************************************************************/
 FN_EXTERN InfoArchive *
-infoArchivePgSet(InfoArchive *this, unsigned int pgVersion, uint64_t pgSystemId)
+infoArchivePgSet(InfoArchive *const this, const unsigned int pgVersion, const uint64_t pgSystemId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_ARCHIVE, this);
@@ -250,7 +250,8 @@ infoArchiveLoadFileCallback(void *const data, const unsigned int try)
 }
 
 FN_EXTERN InfoArchive *
-infoArchiveLoadFile(const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+infoArchiveLoadFile(
+    const Storage *const storage, const String *const fileName, const CipherType cipherType, const String *const cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storage);
@@ -274,7 +275,7 @@ infoArchiveLoadFile(const Storage *storage, const String *fileName, CipherType c
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const char *fileNamePath = strZ(storagePathP(storage, fileName));
+        const char *const fileNamePath = strZ(storagePathP(storage, fileName));
 
         TRY_BEGIN()
         {
@@ -303,7 +304,8 @@ infoArchiveLoadFile(const Storage *storage, const String *fileName, CipherType c
 /**********************************************************************************************************************************/
 FN_EXTERN void
 infoArchiveSaveFile(
-    InfoArchive *infoArchive, const Storage *storage, const String *fileName, CipherType cipherType, const String *cipherPass)
+    InfoArchive *const infoArchive, const Storage *const storage, const String *const fileName, const CipherType cipherType,
+    const String *const cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_ARCHIVE, infoArchive);
@@ -321,8 +323,8 @@ infoArchiveSaveFile(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Write output into a buffer since it needs to be saved to storage twice
-        Buffer *buffer = bufNew(ioBufferSize());
-        IoWrite *write = ioBufferWriteNew(buffer);
+        Buffer *const buffer = bufNew(ioBufferSize());
+        IoWrite *const write = ioBufferWriteNew(buffer);
         cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherType, cipherModeEncrypt, cipherPass);
         infoArchiveSave(infoArchive, write);
 

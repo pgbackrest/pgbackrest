@@ -55,10 +55,10 @@ checkDbConfig(const unsigned int pgVersion, const unsigned int pgIdx, const Db *
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Error if the version from the control file and the configured pg-path do not match the values obtained from the database
         const unsigned int dbVersion = dbPgVersion(dbObject);
         const String *const dbPath = dbPgDataPath(dbObject);
 
-        // Error if the version from the control file and the configured pg-path do not match the values obtained from the database
         if (pgVersion != dbVersion || strCmp(cfgOptionIdxStr(cfgOptPgPath, pgIdx), dbPath) != 0)
         {
             THROW_FMT(
@@ -124,7 +124,7 @@ checkStanzaInfo(const InfoPgData *const archiveInfo, const InfoPgData *const bac
 /**********************************************************************************************************************************/
 FN_EXTERN void
 checkStanzaInfoPg(
-    const Storage *const storage, const unsigned int pgVersion, const uint64_t pgSystemId, CipherType const cipherType,
+    const Storage *const storage, const unsigned int pgVersion, const uint64_t pgSystemId, const CipherType cipherType,
     const String *const cipherPass)
 {
     FUNCTION_TEST_BEGIN();

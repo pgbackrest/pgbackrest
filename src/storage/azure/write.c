@@ -84,7 +84,7 @@ storageWriteAzureOpen(THIS_VOID)
 Flush bytes to upload block
 ***********************************************************************************************************************************/
 static void
-storageWriteAzureBlock(StorageWriteAzure *this)
+storageWriteAzureBlock(StorageWriteAzure *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_WRITE_AZURE, this);
@@ -105,7 +105,7 @@ storageWriteAzureBlock(StorageWriteAzure *this)
 }
 
 static void
-storageWriteAzureBlockAsync(StorageWriteAzure *this)
+storageWriteAzureBlockAsync(StorageWriteAzure *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_WRITE_AZURE, this);
@@ -134,10 +134,10 @@ storageWriteAzureBlockAsync(StorageWriteAzure *this)
         // overlap with any other process. This is to prevent another process from overwriting our blocks. If two processes are
         // writing against the same file then there may be problems anyway but we need to at least ensure the result is consistent,
         // i.e. we get all of one file or all of the other depending on who writes last.
-        const String *blockId = strNewFmt("%016" PRIX64 "x%07u", this->fileId, strLstSize(this->blockIdList));
+        const String *const blockId = strNewFmt("%016" PRIX64 "x%07u", this->fileId, strLstSize(this->blockIdList));
 
         // Upload the block and add to block list
-        HttpQuery *query = httpQueryNewP();
+        HttpQuery *const query = httpQueryNewP();
         httpQueryAdd(query, AZURE_QUERY_COMP_STR, AZURE_QUERY_VALUE_BLOCK_STR);
         httpQueryAdd(query, AZURE_QUERY_BLOCK_ID_STR, blockId);
 
@@ -159,7 +159,7 @@ storageWriteAzureBlockAsync(StorageWriteAzure *this)
 Write to internal buffer
 ***********************************************************************************************************************************/
 static void
-storageWriteAzure(THIS_VOID, const Buffer *buffer)
+storageWriteAzure(THIS_VOID, const Buffer *const buffer)
 {
     THIS(StorageWriteAzure);
 
@@ -227,7 +227,7 @@ storageWriteAzureClose(THIS_VOID)
                 storageWriteAzureBlock(this);
 
                 // Generate the xml block list
-                XmlDocument *blockXml = xmlDocumentNew(AZURE_XML_TAG_BLOCK_LIST_STR);
+                XmlDocument *const blockXml = xmlDocumentNew(AZURE_XML_TAG_BLOCK_LIST_STR);
 
                 for (unsigned int blockIdx = 0; blockIdx < strLstSize(this->blockIdList); blockIdx++)
                 {

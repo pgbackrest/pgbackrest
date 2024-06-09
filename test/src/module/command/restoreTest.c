@@ -388,7 +388,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("system time UTC");
 
-        setenv("TZ", "UTC", true);
+        hrnTzSet("UTC");
+
         TEST_RESULT_INT(getEpoch(STRDEF("2020-01-08 09:18:15-0700")), 1578500295, "epoch with timezone");
         TEST_RESULT_INT(getEpoch(STRDEF("2020-01-08 16:18:15.0000")), 1578500295, "same epoch no timezone");
         TEST_RESULT_INT(getEpoch(STRDEF("2020-01-08 16:18:15.0000+00")), 1578500295, "same epoch timezone 0");
@@ -398,10 +399,13 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("system time America/New_York");
 
-        setenv("TZ", "America/New_York", true);
+        hrnTzSet("America/New_York");
+
         time_t testTime = 1573754569;
         char timeBuffer[20];
-        strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", localtime(&testTime));
+        struct tm timePart;
+        strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", localtime_r(&testTime, &timePart));
+
         TEST_RESULT_Z(timeBuffer, "2019-11-14 13:02:49", "check timezone set");
         TEST_RESULT_INT(getEpoch(STRDEF("2019-11-14 13:02:49-0500")), 1573754569, "offset same as local");
         TEST_RESULT_INT(getEpoch(STRDEF("2019-11-14 13:02:49")), 1573754569, "GMT-0500 (EST)");
@@ -417,7 +421,7 @@ testRun(void)
             "HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM) - if"
             " timezone is omitted, local time is assumed (for UTC use +00)");
 
-        setenv("TZ", "UTC", true);
+        hrnTzSet("UTC");
     }
 
     // *****************************************************************************************************************************
@@ -491,7 +495,8 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("target time");
-        setenv("TZ", "UTC", true);
+
+        hrnTzSet("UTC");
 
         const String *repoPath2 = STRDEF(TEST_PATH "/repo2");
 
