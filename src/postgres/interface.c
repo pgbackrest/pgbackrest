@@ -169,19 +169,11 @@ pgDbIsSystemId(const unsigned int id)
 Check expected WAL segment size for older PostgreSQL versions
 ***********************************************************************************************************************************/
 static void
-pgWalSegmentSizeCheck(unsigned int pgVersion, unsigned int walSegmentSize)
+pgWalSegmentSizeCheck(unsigned int walSegmentSize)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT, pgVersion);
         FUNCTION_TEST_PARAM(UINT, walSegmentSize);
     FUNCTION_TEST_END();
-
-    if (pgVersion < PG_VERSION_11 && walSegmentSize != PG_WAL_SEGMENT_SIZE_DEFAULT)
-    {
-        THROW_FMT(
-            FormatError, "wal segment size is %u but must be %u for " PG_NAME " <= " PG_VERSION_10_Z, walSegmentSize,
-            PG_WAL_SEGMENT_SIZE_DEFAULT);
-    }
 
     // Check that the WAL segment size is valid
     if (!IsValidWalSegSize(walSegmentSize))
@@ -326,7 +318,7 @@ pgControlFromBuffer(const Buffer *controlFile, const String *const pgVersionForc
     pgControlCrcValidate(controlFile, interface, pgVersionForce != NULL);
 
     // Check the segment size
-    pgWalSegmentSizeCheck(result.version, result.walSegmentSize);
+    pgWalSegmentSizeCheck(result.walSegmentSize);
 
     // Check the page size
     pgPageSizeCheck(result.pageSize);
@@ -529,7 +521,7 @@ pgWalFromBuffer(const Buffer *walBuffer, const String *const pgVersionForce)
     result.version = interface->version;
 
     // Check the segment size
-    pgWalSegmentSizeCheck(result.version, result.size);
+    pgWalSegmentSizeCheck(result.size);
 
     FUNCTION_LOG_RETURN(PG_WAL, result);
 }
