@@ -2722,24 +2722,24 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptStartFast, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-            // Add file that is large enough for block incremental but larger on the primary than the standby. This tests that file
-            // size is set correctly when a file is referenced to a prior backup but the original size is different.
+            // Add file that is large enough for block incremental but larger on the primary than the standby. The standby size will
+            // be increased before the next backup.
             Buffer *relation = bufNew(pgPageSize8 * 5);
             memset(bufPtr(relation), 0, bufSize(relation));
             bufUsedSet(relation, bufSize(relation));
 
             HRN_STORAGE_PUT(storagePgIdxWrite(0), PG_PATH_BASE "/1/3", relation, .timeModified = backupTimeStart);
 
-            bufUsedSet(relation, bufSize(relation) - pgPageSize8);
+            bufUsedSet(relation, bufSize(relation) - pgPageSize8 * 2);
             HRN_STORAGE_PUT(storagePgIdxWrite(1), PG_PATH_BASE "/1/3", relation);
 
-            // Add file that is large enough for block incremental but larger on the primary than the standby. The standby size will
-            // be increased before the next backup.
+            // Add file that is large enough for block incremental but larger on the primary than the standby. This tests that file
+            // size is set correctly when a file is referenced to a prior backup but the original size is different.
             bufUsedSet(relation, bufSize(relation));
 
             HRN_STORAGE_PUT(storagePgIdxWrite(0), PG_PATH_BASE "/1/4", relation, .timeModified = backupTimeStart);
 
-            bufUsedSet(relation, bufSize(relation) - pgPageSize8 * 2);
+            bufUsedSet(relation, bufSize(relation) - pgPageSize8);
             HRN_STORAGE_PUT(storagePgIdxWrite(1), PG_PATH_BASE "/1/4", relation);
 
             // Set log level to warn because the following test uses multiple processes so the log order will not be deterministic
@@ -2758,8 +2758,8 @@ testRun(void)
                 "bundle/1/pg_data/PG_VERSION {s=3, ts=-400000}\n"
                 "bundle/1/pg_data/global/pg_control {s=8192}\n"
                 "bundle/1/pg_data/postgresql.conf {s=11, ts=-1600000}\n"
-                "bundle/2/pg_data/base/1/3 {s=32768, so=40960, m=0:{0,1,2,3}}\n"
-                "bundle/2/pg_data/base/1/4 {s=24576, so=40960, m=0:{0,1,2}}\n"
+                "bundle/2/pg_data/base/1/3 {s=24576, so=40960, m=0:{0,1,2}}\n"
+                "bundle/2/pg_data/base/1/4 {s=32768, so=40960, m=0:{0,1,2,3}}\n"
                 "pg_data/backup_label {s=17, ts=+2}\n"
                 "--------\n"
                 "[backup:target]\n"
@@ -2795,7 +2795,7 @@ testRun(void)
             memset(bufPtr(relation), 0, bufSize(relation));
             bufUsedSet(relation, bufSize(relation));
 
-            HRN_STORAGE_PUT(storagePgIdxWrite(1), PG_PATH_BASE "/1/4", relation);
+            HRN_STORAGE_PUT(storagePgIdxWrite(1), PG_PATH_BASE "/1/3", relation);
 
             // Set log level to warn because the following test uses multiple processes so the log order will not be deterministic
             harnessLogLevelSet(logLevelWarn);
@@ -2811,10 +2811,10 @@ testRun(void)
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
                 ".> {d=20191020-193320F_20191021-232000I}\n"
                 "bundle/1/pg_data/global/pg_control {s=8192}\n"
-                "bundle/2/pg_data/base/1/4 {s=32768, so=40960, m=0:{0,1,2},1:{0}, ts=-100000}\n"
+                "bundle/2/pg_data/base/1/3 {s=32768, so=40960, m=0:{0,1,2},1:{0}, ts=-100000}\n"
                 "pg_data/backup_label {s=17, ts=+2}\n"
                 "20191020-193320F/bundle/1/pg_data/PG_VERSION {s=3, ts=-500000}\n"
-                "20191020-193320F/bundle/2/pg_data/base/1/3 {s=32768, so=40960, m=0:{0,1,2,3}, ts=-100000}\n"
+                "20191020-193320F/bundle/2/pg_data/base/1/4 {s=32768, so=40960, m=0:{0,1,2,3}, ts=-100000}\n"
                 "20191020-193320F/bundle/1/pg_data/postgresql.conf {s=11, ts=-1700000}\n"
                 "--------\n"
                 "[backup:target]\n"
