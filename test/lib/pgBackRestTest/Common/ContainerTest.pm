@@ -321,7 +321,7 @@ sub entryPointSetup
 
     if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
     {
-        $strScript .= '/usr/sbin/sshd -D';
+        $strScript .= 'rm -rf /run/nologin && /usr/sbin/sshd -D';
     }
     else
     {
@@ -388,10 +388,13 @@ sub containerBuild
 
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
         {
-            if ($strOS eq VM_RH7)
+            if ($strOS eq VM_RH8)
             {
                 $strScript .=
-                    "    yum -y install centos-release-scl-rh epel-release && \\\n";
+                    "    dnf install -y dnf-plugins-core && \\\n" .
+                    "    dnf config-manager --set-enabled powertools && \\\n" .
+                    "    dnf -y install epel-release && \\\n" .
+                    "    crb enable && \\\n";
             }
 
             $strScript .=
@@ -481,12 +484,13 @@ sub containerBuild
                 $strScript .=
                     "    rpm --import https://download.postgresql.org/pub/repos/yum/keys/RPM-GPG-KEY-PGDG && \\\n";
 
-                if ($strOS eq VM_RH7)
+                if ($strOS eq VM_RH8)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-" . hostArch() . "/" .
-                            "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-" . hostArch() . "/" .
+                            "pgdg-redhat-repo-latest.noarch.rpm && \\\n" .
+                        "    dnf -qy module disable postgresql && \\\n";
                 }
                 elsif ($strOS eq VM_F40)
                 {

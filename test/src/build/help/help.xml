@@ -207,7 +207,7 @@
                         <p>Name of VM to run the test on.</p>
                     </text>
 
-                    <example>rh7</example>
+                    <example>rh8</example>
                 </option>
 
                 <option id="vm-id">

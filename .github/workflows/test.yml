@@ -53,7 +53,7 @@ jobs:
           - param: doc --vm=rh8
 
           # All integration tests
-          - param: test --vm=rh7 --param=module=mock --param=module=integration
+          - param: test --vm=rh8 --param=module=mock --param=module=integration
 
     steps:
       - name: Checkout Code
