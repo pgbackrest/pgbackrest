@@ -399,7 +399,7 @@ sub containerBuild
 
             $strScript .=
                 "    yum -y update && \\\n" .
-                "    yum -y install openssh-server openssh-clients wget sudo valgrind git \\\n" .
+                "    yum -y install openssh-server openssh-clients wget sudo git \\\n" .
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl \\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
                 "        libyaml-devel zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 perl-JSON-PP ccache meson \\\n" .
@@ -410,20 +410,14 @@ sub containerBuild
             $strScript .=
                 "    export DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive && \\\n" .
                 "    apt-get update && \\\n" .
-                "    apt-get install -y --no-install-recommends openssh-server wget sudo gcc make valgrind git \\\n" .
+                "    apt-get install -y --no-install-recommends openssh-server wget sudo gcc make git \\\n" .
                 "        libdbd-pg-perl libhtml-parser-perl libssl-dev libperl-dev python3-distutils \\\n" .
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
                 "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config \\\n" .
                 "        libbz2-dev bzip2 libyaml-dev libjson-pp-perl liblz4-dev liblz4-tool gnupg lsb-release ccache meson \\\n" .
                 "        libssh2-1-dev";
 
-            # This package is required to build valgrind on 32-bit
-            if ($oVm->{$strOS}{&VM_ARCH} eq VM_ARCH_I386)
-            {
-                $strScript .= " g++-multilib";
-            }
-
-            if ($strOS eq VM_U22)
+            if ($strOS eq VM_U20 || $strOS eq VM_U22)
             {
                 $strScript .= " valgrind";
             }
@@ -457,20 +451,6 @@ sub containerBuild
             $strScript .= sectionHeader() .
                 "# Suppress dpkg interactive output\n" .
                 "    rm /etc/apt/apt.conf.d/70debconf";
-        }
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        if ($strOS ne VM_U22)
-        {
-            my $strValgrind = 'valgrind-3.17.0';
-
-            $strScript .= sectionHeader() .
-                "# Build valgrind\n" .
-                "    wget -q -O - https://sourceware.org/pub/valgrind/${strValgrind}.tar.bz2 | tar jx -C /root && \\\n" .
-                "    cd /root/${strValgrind} && \\\n" .
-                "    ./configure --silent && \\\n" .
-                "    make -s -j8 install && \\\n" .
-                "    rm -rf /root/${strValgrind}";
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
