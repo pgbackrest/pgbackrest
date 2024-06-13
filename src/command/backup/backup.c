@@ -187,11 +187,11 @@ backupInit(const InfoBackup *const infoBackup)
     // Don't allow backup from standby when offline
     const InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
 
-    if (!cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptBackupStandby))
+    if (!cfgOptionBool(cfgOptOnline) && cfgOptionStrId(cfgOptBackupStandby) != CFGOPTVAL_BACKUP_STANDBY_N)
     {
         LOG_WARN(
             "option " CFGOPT_BACKUP_STANDBY " is enabled but backup is offline - backups will be performed from the primary");
-        cfgOptionSet(cfgOptBackupStandby, cfgSourceParam, BOOL_FALSE_VAR);
+        cfgOptionSet(cfgOptBackupStandby, cfgSourceParam, VARUINT64(CFGOPTVAL_BACKUP_STANDBY_N));
     }
 
     // Get database info when online
@@ -199,7 +199,8 @@ backupInit(const InfoBackup *const infoBackup)
 
     if (cfgOptionBool(cfgOptOnline))
     {
-        const bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
+        // !!! NEEDS TO BE UPDATED
+        const bool backupStandby = cfgOptionStrId(cfgOptBackupStandby) == CFGOPTVAL_BACKUP_STANDBY_Y;
         const DbGetResult dbInfo = dbGet(!backupStandby, true, backupStandby);
 
         result->pgIdxPrimary = dbInfo.primaryIdx;
@@ -1114,7 +1115,7 @@ backupStart(const BackupData *const backupData)
             LOG_INFO_FMT("backup start archive = %s, lsn = %s", strZ(result.walSegmentName), strZ(result.lsn));
 
             // Wait for replay on the standby to catch up
-            if (cfgOptionBool(cfgOptBackupStandby))
+            if (cfgOptionStrId(cfgOptBackupStandby) == CFGOPTVAL_BACKUP_STANDBY_Y)
             {
                 LOG_INFO_FMT("wait for replay on the standby to reach %s", strZ(result.lsn));
                 dbReplayWait(backupData->dbStandby, result.lsn, backupData->timeline, cfgOptionUInt64(cfgOptArchiveTimeout));
@@ -1677,7 +1678,7 @@ backupDbPing(const BackupData *const backupData, const bool force)
     {
         dbPing(backupData->dbPrimary, force);
 
-        if (cfgOptionBool(cfgOptBackupStandby))
+        if (cfgOptionStrId(cfgOptBackupStandby) == CFGOPTVAL_BACKUP_STANDBY_Y)
             dbPing(backupData->dbStandby, force);
     }
 
@@ -2109,7 +2110,7 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
         const String *const backupLabel = manifestData(manifest)->backupLabel;
         const String *const backupPathExp = strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabel));
         const bool hardLink = cfgOptionBool(cfgOptRepoHardlink) && storageFeature(storageRepoWrite(), storageFeatureHardLink);
-        const bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
+        const bool backupStandby = cfgOptionStrId(cfgOptBackupStandby) == CFGOPTVAL_BACKUP_STANDBY_Y;
 
         BackupJobData jobData =
         {
@@ -2615,7 +2616,7 @@ cmdBackup(void)
         backupDbPing(backupData, true);
 
         // The standby db object and protocol won't be used anymore so free them
-        if (cfgOptionBool(cfgOptBackupStandby))
+        if (cfgOptionStrId(cfgOptBackupStandby) == CFGOPTVAL_BACKUP_STANDBY_Y)
         {
             dbFree(backupData->dbStandby);
             protocolRemoteFree(backupData->pgIdxStandby);
@@ -2630,7 +2631,7 @@ cmdBackup(void)
             backupStopResult.walSegmentName, infoPg.id, infoPg.systemId, backupStartResult.dbList,
             cfgOptionBool(cfgOptArchiveCheck), cfgOptionBool(cfgOptArchiveCopy), cfgOptionUInt(cfgOptBufferSize),
             cfgOptionUInt(cfgOptCompressLevel), cfgOptionUInt(cfgOptCompressLevelNetwork), cfgOptionBool(cfgOptRepoHardlink),
-            cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby),
+            cfgOptionUInt(cfgOptProcessMax), cfgOptionStrId(cfgOptBackupStandby) == CFGOPTVAL_BACKUP_STANDBY_Y,
             cfgOptionTest(cfgOptAnnotation) ? cfgOptionKv(cfgOptAnnotation) : NULL);
 
         // The primary db object won't be used anymore so free it

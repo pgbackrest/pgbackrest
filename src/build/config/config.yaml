@@ -1203,8 +1203,12 @@ option:
 
   backup-standby:
     section: global
-    type: boolean
-    default: false
+    type: string-id
+    default: n
+    allow-list:
+      - n
+      - prefer
+      - y
     command:
       backup: {}
       check: {}

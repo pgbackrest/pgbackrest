@@ -43,6 +43,7 @@ static const StringPub parseRuleValueStr[] =
     PARSE_RULE_STRPUB("info"),                                                                                            // val/str
     PARSE_RULE_STRPUB("latest"),                                                                                          // val/str
     PARSE_RULE_STRPUB("localhost"),                                                                                       // val/str
+    PARSE_RULE_STRPUB("n"),                                                                                               // val/str
     PARSE_RULE_STRPUB("none"),                                                                                            // val/str
     PARSE_RULE_STRPUB("pause"),                                                                                           // val/str
     PARSE_RULE_STRPUB("pgbackrest"),                                                                                      // val/str
@@ -95,6 +96,7 @@ typedef enum
     parseRuleValStrQT_info_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_latest_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_localhost_QT,                                                                                  // val/str/enum
+    parseRuleValStrQT_n_QT,                                                                                          // val/str/enum
     parseRuleValStrQT_none_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_pause_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_pgbackrest_QT,                                                                                 // val/str/enum
@@ -146,6 +148,7 @@ static const StringId parseRuleValueStrId[] =
     STRID5("lsn", 0x3a6c0),                                                                                             // val/strid
     STRID6("lz4", 0x2068c1),                                                                                            // val/strid
     STRID5("md5", 0x748d0),                                                                                             // val/strid
+    STRID5("n", 0xe0),                                                                                                  // val/strid
     STRID5("name", 0x2b42e0),                                                                                           // val/strid
     STRID5("none", 0x2b9ee0),                                                                                           // val/strid
     STRID5("off", 0x18cf0),                                                                                             // val/strid
@@ -153,6 +156,7 @@ static const StringId parseRuleValueStrId[] =
     STRID5("pause", 0x59d4300),                                                                                         // val/strid
     STRID5("pg", 0xf00),                                                                                                // val/strid
     STRID5("posix", 0x184cdf00),                                                                                        // val/strid
+    STRID5("prefer", 0x245316500),                                                                                      // val/strid
     STRID5("preserve", 0x2da45996500),                                                                                  // val/strid
     STRID5("promote", 0x168f6be500),                                                                                    // val/strid
     STRID5("repo", 0x7c0b20),                                                                                           // val/strid
@@ -175,6 +179,7 @@ static const StringId parseRuleValueStrId[] =
     STRID5("warn", 0x748370),                                                                                           // val/strid
     STRID5("web-id", 0x89d88b70),                                                                                       // val/strid
     STRID5("xid", 0x11380),                                                                                             // val/strid
+    STRID5("y", 0x190),                                                                                                 // val/strid
     STRID5("zst", 0x527a0),                                                                                             // val/strid
 };
 
@@ -206,6 +211,7 @@ typedef enum
     parseRuleValStrIdLsn,                                                                                          // val/strid/enum
     parseRuleValStrIdLz4,                                                                                          // val/strid/enum
     parseRuleValStrIdMd5,                                                                                          // val/strid/enum
+    parseRuleValStrIdN,                                                                                            // val/strid/enum
     parseRuleValStrIdName,                                                                                         // val/strid/enum
     parseRuleValStrIdNone,                                                                                         // val/strid/enum
     parseRuleValStrIdOff,                                                                                          // val/strid/enum
@@ -213,6 +219,7 @@ typedef enum
     parseRuleValStrIdPause,                                                                                        // val/strid/enum
     parseRuleValStrIdPg,                                                                                           // val/strid/enum
     parseRuleValStrIdPosix,                                                                                        // val/strid/enum
+    parseRuleValStrIdPrefer,                                                                                       // val/strid/enum
     parseRuleValStrIdPreserve,                                                                                     // val/strid/enum
     parseRuleValStrIdPromote,                                                                                      // val/strid/enum
     parseRuleValStrIdRepo,                                                                                         // val/strid/enum
@@ -235,6 +242,7 @@ typedef enum
     parseRuleValStrIdWarn,                                                                                         // val/strid/enum
     parseRuleValStrIdWebId,                                                                                        // val/strid/enum
     parseRuleValStrIdXid,                                                                                          // val/strid/enum
+    parseRuleValStrIdY,                                                                                            // val/strid/enum
     parseRuleValStrIdZst,                                                                                          // val/strid/enum
 } ParseRuleValueStrId;
 
@@ -1121,8 +1129,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION                                                                                          // opt/backup-standby
     (                                                                                                          // opt/backup-standby
         PARSE_RULE_OPTION_NAME("backup-standby"),                                                              // opt/backup-standby
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),                                                             // opt/backup-standby
-        PARSE_RULE_OPTION_NEGATE(true),                                                                        // opt/backup-standby
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),                                                            // opt/backup-standby
         PARSE_RULE_OPTION_RESET(true),                                                                         // opt/backup-standby
         PARSE_RULE_OPTION_REQUIRED(true),                                                                      // opt/backup-standby
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                           // opt/backup-standby
@@ -1137,9 +1144,17 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         (                                                                                                      // opt/backup-standby
             PARSE_RULE_OPTIONAL_GROUP                                                                          // opt/backup-standby
             (                                                                                                  // opt/backup-standby
+                PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                 // opt/backup-standby
+                (                                                                                              // opt/backup-standby
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdN),                                                  // opt/backup-standby
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdPrefer),                                             // opt/backup-standby
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdY),                                                  // opt/backup-standby
+                ),                                                                                             // opt/backup-standby
+                                                                                                               // opt/backup-standby
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                    // opt/backup-standby
                 (                                                                                              // opt/backup-standby
-                    PARSE_RULE_VAL_BOOL_FALSE,                                                                 // opt/backup-standby
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdN),                                                  // opt/backup-standby
+                    PARSE_RULE_VAL_STR(parseRuleValStrQT_n_QT),                                                // opt/backup-standby
                 ),                                                                                             // opt/backup-standby
             ),                                                                                                 // opt/backup-standby
         ),                                                                                                     // opt/backup-standby

@@ -305,7 +305,8 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, ".5");
-        hrnCfgArgRawBool(argList, cfgOptBackupStandby, true);
+        // !!! FIX
+        hrnCfgArgRawZ(argList, cfgOptBackupStandby, "y");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         // Primary database connection ok
