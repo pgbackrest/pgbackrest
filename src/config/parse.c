@@ -1635,19 +1635,34 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                             }
                         }
                     }
-                    // If no argument was found with the option then try the next argument
+                    // If no argument was found with the option then try the next argument unless bool-like
                     else if (optionArg == NULL)
                     {
-                        // Error if there are no more arguments in the list
-                        if (argListIdx == argListSize - 1)
+                        // If bool-like then arg is always y
+                        if (parseRuleOption[option.id].boolLike)
+                        {
+                            optionArg = Y_STR;
+                        }
+                        // Else if there are no more arguments in the list
+                        else if (argListIdx == argListSize - 1)
+                        {
                             THROW_FMT(OptionInvalidError, "option '--%s' requires an argument", strZ(optionName));
-
-                        optionArg = strNewZ(argList[++argListIdx]);
+                        }
+                        // Else get arg
+                        else
+                            optionArg = strNewZ(argList[++argListIdx]);
                     }
                 }
                 // Else error if an argument was found with the option
                 else if (optionArg != NULL)
                     THROW_FMT(OptionInvalidError, "option '%s' does not allow an argument", strZ(optionName));
+
+                // if negated and bool-like then set to n
+                if (option.negate && parseRuleOption[option.id].boolLike)
+                {
+                    option.negate = false;
+                    optionArg = N_STR;
+                }
 
                 // Error if this option is secure and cannot be passed on the command line
                 if (cfgParseOptionSecure(option.id))

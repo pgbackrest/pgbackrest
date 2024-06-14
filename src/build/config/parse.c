@@ -905,7 +905,8 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                 if (optRaw.negate == NULL)
                 {
                     optRaw.negate = varNewBool(
-                        strEq(optRaw.type, OPT_TYPE_BOOLEAN_STR) && !strEq(optRaw.section, SECTION_COMMAND_LINE_STR));
+                        (strEq(optRaw.type, OPT_TYPE_BOOLEAN_STR) || strEqZ(optRaw.name, "backup-standby") /* !!! */) &&
+                        !strEq(optRaw.section, SECTION_COMMAND_LINE_STR));
                 }
 
                 // Build default command list if not defined

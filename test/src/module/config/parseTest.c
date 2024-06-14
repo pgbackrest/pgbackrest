@@ -1641,6 +1641,33 @@ testRun(void)
             cfgCommandParam(), "000000010000000200000003\n/path/to/wal/RECOVERYWAL\n", "check command arguments");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("bool-like");
+
+        StringList *argListBase = strLstNew();
+        strLstAddZ(argListBase, TEST_BACKREST_EXE);
+        strLstAddZ(argListBase, "backup");
+        strLstAddZ(argListBase, "--stanza=test");
+        strLstAddZ(argListBase, "--pg1-path=/");
+
+        argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--no-backup-standby");
+
+        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "negate");
+        TEST_RESULT_UINT(cfgOptionStrId(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_N, "backup-standby is n");
+
+        argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--backup-standby");
+
+        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "no arg");
+        TEST_RESULT_UINT(cfgOptionStrId(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_Y, "backup-standby is y");
+
+        argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--backup-standby=prefer");
+
+        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "prefer arg");
+        TEST_RESULT_UINT(cfgOptionStrId(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_PREFER, "backup-standby is prefer");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("various configuration settings");
 
         argList = strLstNew();

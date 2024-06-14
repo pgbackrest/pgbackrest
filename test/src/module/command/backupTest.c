@@ -1489,8 +1489,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
-        // Fix !!!
-        hrnCfgArgRawZ(argList, cfgOptBackupStandby, "y");
+        hrnCfgArgRawBool(argList, cfgOptBackupStandby, true);
         hrnCfgArgRawBool(argList, cfgOptOnline, false);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
@@ -2597,8 +2596,7 @@ testRun(void)
             hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5433");
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawBool(argList, cfgOptCompress, false);
-            // !!! FIX
-            hrnCfgArgRawZ(argList, cfgOptBackupStandby, "y");
+            hrnCfgArgRawBool(argList, cfgOptBackupStandby, true);
             hrnCfgArgRawBool(argList, cfgOptStartFast, true);
             hrnCfgArgRawBool(argList, cfgOptArchiveCopy, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
@@ -2720,8 +2718,7 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
             hrnCfgArgRawBool(argList, cfgOptCompress, false);
-            // !!! FIX
-            hrnCfgArgRawZ(argList, cfgOptBackupStandby, "y");
+            hrnCfgArgRawBool(argList, cfgOptBackupStandby, true);
             hrnCfgArgRawBool(argList, cfgOptStartFast, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
@@ -2778,8 +2775,7 @@ testRun(void)
             hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
             hrnCfgArgRawBool(argList, cfgOptCompress, false);
-            // !!! FIX
-            hrnCfgArgRawZ(argList, cfgOptBackupStandby, "y");
+            hrnCfgArgRawBool(argList, cfgOptBackupStandby, true);
             hrnCfgArgRawBool(argList, cfgOptStartFast, true);
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
