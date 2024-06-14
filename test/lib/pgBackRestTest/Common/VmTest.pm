@@ -76,8 +76,6 @@ use constant VM_NONE                                                => 'none';
 
 use constant VM_D10                                                 => 'd10';
     push @EXPORT, qw(VM_D10);
-use constant VM_RH7                                                 => 'rh7';
-    push @EXPORT, qw(VM_RH7);
 use constant VM_RH8                                                 => 'rh8';
     push @EXPORT, qw(VM_RH8);
 use constant VM_F40                                                 => 'f40';
@@ -90,7 +88,7 @@ use constant VM_U22                                                 => 'u22';
 # VM aliases for run matrices (numbered oldest to newest)
 use constant VM2                                                    => VM_D10;
     push @EXPORT, qw(VM2);
-use constant VM3                                                    => VM_RH7;
+use constant VM3                                                    => VM_RH8;
     push @EXPORT, qw(VM3);
 use constant VM4                                                    => VM_U22;
     push @EXPORT, qw(VM4);
@@ -148,11 +146,11 @@ my $oyVm =
         ],
     },
 
-    # RHEL 7
-    &VM_RH7 =>
+    # RHEL 8
+    &VM_RH8 =>
     {
         &VM_OS_BASE => VM_OS_BASE_RHEL,
-        &VM_IMAGE => 'centos:7',
+        &VM_IMAGE => 'rockylinux/rockylinux:8',
         &VM_ARCH => VM_ARCH_AMD64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
 
@@ -161,11 +159,11 @@ my $oyVm =
 
         &VM_DB =>
         [
-            PG_VERSION_11,
             PG_VERSION_12,
             PG_VERSION_13,
             PG_VERSION_14,
             PG_VERSION_15,
+            PG_VERSION_16,
         ],
 
         &VM_DB_TEST =>

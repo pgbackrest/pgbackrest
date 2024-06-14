@@ -28,8 +28,8 @@ jobs:
       # tackle the slowest tests first.
       matrix:
         include:
-          # All unit tests (without coverage) for 32-bit
-          - param: test --vm=d10 --param=no-performance --param=c-only
+          # All unit tests (without coverage or valgrind) for 32-bit
+          - param: test --vm=d10 --param=no-performance --param=no-coverage --param=no-valgrind --param=c-only
 
           # All integration tests for 32-bit
           - param: test --vm=d10 --param=module=mock --param=module=integration
@@ -53,7 +53,7 @@ jobs:
           - param: doc --vm=rh8
 
           # All integration tests
-          - param: test --vm=rh7 --param=module=mock --param=module=integration
+          - param: test --vm=rh8 --param=module=mock --param=module=integration
 
     steps:
       - name: Checkout Code
