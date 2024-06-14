@@ -250,7 +250,7 @@ testRun(void)
             HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(
-            dbGet(true, true, false), DbConnectError,
+            dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), DbConnectError,
             "unable to find primary cluster - cannot proceed\n"
             "HINT: are all available clusters in recovery?");
 
@@ -269,7 +269,7 @@ testRun(void)
             HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='backupdb' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL));
 
         DbGetResult db = {0};
-        TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
+        TEST_ASSIGN(db, dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary");
 
         // Get start time
         HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_TIME_QUERY(1, 1000));
@@ -325,7 +325,7 @@ testRun(void)
         HRN_PQ_SCRIPT_SET(
             HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='backupdb' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL));
 
-        TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
+        TEST_ASSIGN(db, dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary");
 
         // Start backup when backup is in progress
         HRN_PQ_SCRIPT_SET(
@@ -361,7 +361,7 @@ testRun(void)
         HRN_PQ_SCRIPT_SET(
             HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='backupdb' port=5432", PG_VERSION_96, TEST_PATH "/pg1", false, NULL, NULL));
 
-        TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
+        TEST_ASSIGN(db, dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary");
 
         // Start backup with timeline error
         HRN_PQ_SCRIPT_SET(
@@ -426,7 +426,7 @@ testRun(void)
             HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
             HRN_PQ_SCRIPT_OPEN_GE_93(2, "dbname='postgres' port=5433", PG_VERSION_95, TEST_PATH "/pg2", true, NULL, NULL));
 
-        TEST_ASSIGN(db, dbGet(false, true, true), "get primary and standby");
+        TEST_ASSIGN(db, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_Y), "get primary and standby");
 
         // Start backup
         HRN_PQ_SCRIPT_SET(
@@ -487,7 +487,7 @@ testRun(void)
             HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_10, TEST_PATH "/pg1", false, NULL, NULL),
             HRN_PQ_SCRIPT_OPEN_GE_96(2, "dbname='postgres' port=5433", PG_VERSION_10, TEST_PATH "/pg2", true, NULL, NULL));
 
-        TEST_ASSIGN(db, dbGet(false, true, true), "get primary and standby");
+        TEST_ASSIGN(db, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_Y), "get primary and standby");
 
         TEST_RESULT_UINT(dbPgControl(db.primary).timeline, 5, "check primary timeline");
         TEST_RESULT_UINT(dbPgControl(db.standby).timeline, 5, "check standby timeline");
@@ -614,7 +614,7 @@ testRun(void)
         HRN_PQ_SCRIPT_SET(
             HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_14, TEST_PATH "/pg1", false, NULL, NULL));
 
-        TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
+        TEST_ASSIGN(db, dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary");
 
         // Start backup
         HRN_PQ_SCRIPT_SET(
@@ -647,7 +647,7 @@ testRun(void)
         HRN_PQ_SCRIPT_SET(
             HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg1", false, NULL, NULL));
 
-        TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
+        TEST_ASSIGN(db, dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary");
 
         // Start backup
         HRN_PQ_SCRIPT_SET(
@@ -700,7 +700,7 @@ testRun(void)
             {.function = HRN_PQ_FINISH});
 
         TEST_ERROR(
-            dbGet(true, true, false), DbConnectError,
+            dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), DbConnectError,
             "unable to find primary cluster - cannot proceed\n"
             "HINT: are all available clusters in recovery?");
         TEST_RESULT_LOG(
@@ -720,7 +720,7 @@ testRun(void)
             HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(
-            dbGet(true, true, false), DbConnectError,
+            dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), DbConnectError,
             "unable to find primary cluster - cannot proceed\n"
             "HINT: are all available clusters in recovery?");
 
@@ -736,7 +736,8 @@ testRun(void)
             HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false),
             HRN_PQ_SCRIPT_CLOSE(1));
 
-        TEST_ERROR(dbGet(false, false, true), DbConnectError, "unable to find standby cluster - cannot proceed");
+        TEST_ERROR(
+            dbGet(false, false, CFGOPTVAL_BACKUP_STANDBY_Y), DbConnectError, "unable to find standby cluster - cannot proceed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("primary cluster found");
@@ -746,7 +747,7 @@ testRun(void)
                 1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_94, TEST_PATH "/pg1", false, NULL, NULL),
             HRN_PQ_SCRIPT_CLOSE(1));
 
-        TEST_ASSIGN(result, dbGet(true, true, false), "get primary only");
+        TEST_ASSIGN(result, dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary only");
 
         TEST_RESULT_INT(result.primaryIdx, 0, "check primary id");
         TEST_RESULT_BOOL(result.primary != NULL, true, "check primary");
@@ -778,7 +779,7 @@ testRun(void)
             HRN_PQ_SCRIPT_CLOSE(1),
             HRN_PQ_SCRIPT_CLOSE(8));
 
-        TEST_ERROR(dbGet(true, true, false), DbConnectError, "more than one primary cluster found");
+        TEST_ERROR(dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), DbConnectError, "more than one primary cluster found");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("two standbys found but no primary");
@@ -791,7 +792,7 @@ testRun(void)
             HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(
-            dbGet(false, true, false), DbConnectError,
+            dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_N), DbConnectError,
             "unable to find primary cluster - cannot proceed\n"
             "HINT: are all available clusters in recovery?");
 
@@ -805,7 +806,7 @@ testRun(void)
             HRN_PQ_SCRIPT_CLOSE(8),
             HRN_PQ_SCRIPT_CLOSE(1));
 
-        TEST_ASSIGN(result, dbGet(false, false, false), "get standbys");
+        TEST_ASSIGN(result, dbGet(false, false, CFGOPTVAL_BACKUP_STANDBY_N), "get standbys");
 
         TEST_RESULT_INT(result.primaryIdx, 0, "check primary id");
         TEST_RESULT_BOOL(result.primary == NULL, true, "check primary");
@@ -847,7 +848,7 @@ testRun(void)
             HRN_PQ_SCRIPT_CLOSE(8),
             HRN_PQ_SCRIPT_CLOSE(1));
 
-        TEST_ASSIGN(result, dbGet(false, true, false), "get primary and standy");
+        TEST_ASSIGN(result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary and standy");
 
         hrnLogReplaceAdd("(could not connect to server|connection to server on socket).*$", NULL, "PG ERROR", false);
         TEST_RESULT_LOG(

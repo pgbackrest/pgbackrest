@@ -1496,7 +1496,6 @@ testRun(void)
         TEST_RESULT_VOID(
             backupInit(infoBackupNew(PG_VERSION_96, HRN_PG_SYSTEMID_96, hrnPgCatalogVersion(PG_VERSION_96), NULL)),
             "backup init");
-        TEST_RESULT_UINT(cfgOptionStrId(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_N, "check backup-standby");
 
         TEST_RESULT_LOG(
             "P00   WARN: option backup-standby is enabled but backup is offline - backups will be performed from the primary");
