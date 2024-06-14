@@ -123,7 +123,7 @@ typedef struct ParseRuleOption
 {
     const char *name;                                               // Name
     unsigned int type : 4;                                          // e.g. string, int, boolean
-    bool boolLike : 1;                                              // String option accepts y/n and can be treated as bool?
+    bool boolLike : 1;                                              // Option accepts y/n and can be treated as bool?
     bool beta : 1;                                                  // Is the option a beta feature?
     bool negate : 1;                                                // Can the option be negated on the command line?
     bool reset : 1;                                                 // Can the option be reset on the command line?
@@ -1638,7 +1638,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                     // If no argument was found with the option then try the next argument unless bool-like
                     else if (optionArg == NULL)
                     {
-                        // If bool-like then arg is always y
+                        // If bool-like then set arg to y
                         if (parseRuleOption[option.id].boolLike)
                         {
                             optionArg = Y_STR;

@@ -1130,8 +1130,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                          // opt/backup-standby
         PARSE_RULE_OPTION_NAME("backup-standby"),                                                              // opt/backup-standby
         PARSE_RULE_OPTION_TYPE(cfgOptTypeStringId),                                                            // opt/backup-standby
-        PARSE_RULE_OPTION_BOOL_LIKE(true),                                                                     // opt/backup-standby
-        PARSE_RULE_OPTION_NEGATE(true),                                                                        // opt/backup-standby
         PARSE_RULE_OPTION_RESET(true),                                                                         // opt/backup-standby
         PARSE_RULE_OPTION_REQUIRED(true),                                                                      // opt/backup-standby
         PARSE_RULE_OPTION_SECTION(cfgSectionGlobal),                                                           // opt/backup-standby

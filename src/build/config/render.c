@@ -721,8 +721,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
             "        PARSE_RULE_OPTION_TYPE(%s),\n",
             strZ(opt->name), strZ(bldEnum("cfgOptType", opt->type)));
 
-        // !!! FIX
-        if (strEqZ(opt->name, "backup-standby"))
+        if (opt->boolLike)
             strCatZ(configOpt, "        PARSE_RULE_OPTION_BOOL_LIKE(true),\n");
 
         if (opt->beta)
