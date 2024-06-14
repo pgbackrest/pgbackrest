@@ -4113,7 +4113,7 @@ testRun(void)
         TEST_ERROR(storagePathCreateP(storageTest, STRDEF("sub1")), PathCreateError, "timeout stat'ing path '" TEST_PATH "/sub1'");
         TEST_ERROR(
             storagePathCreateP(storageTest, STRDEF("sub1"), .errorOnExists = true), PathCreateError,
-            "unable to create path '" TEST_PATH "/sub1': path already exists");
+            "sftp error unable to create path '" TEST_PATH "/sub1': path already exists");
 
         // NOTE: if operating against an actual sftp server, a neutral umask is required to get the proper permissions.
         // Without the neutral umask, permissions were 0775.
@@ -4155,9 +4155,12 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/subfail\",488]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_FILE_ALREADY_EXISTS},
+            {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/subfail\",0]", .resultInt = LIBSSH2_ERROR_NONE},
             // Error on already exists
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/subfail\",488]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_FILE_ALREADY_EXISTS},
+            {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/subfail\",0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_FILE_ALREADY_EXISTS},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
@@ -4182,7 +4185,7 @@ testRun(void)
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("subfail")), "do not throw error on already exists");
         TEST_ERROR(
             storagePathCreateP(storageTest, STRDEF("subfail"), .errorOnExists = true), PathCreateError,
-            "sftp error unable to create path '" TEST_PATH "/subfail': libssh2 error [-31]: sftp error [11]");
+            "sftp error unable to create path '" TEST_PATH "/subfail': path already exists");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else

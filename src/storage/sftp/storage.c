@@ -901,7 +901,7 @@ storageSftpPathCreate(
             const uint64_t sftpErrno = libssh2_sftp_last_error(this->sftpSession);
 
             // libssh2 may return LIBSSH2_FX_FAILURE if the directory already exists
-            if (sftpErrno == LIBSSH2_FX_FAILURE)
+            if (sftpErrno == LIBSSH2_FX_FAILURE || sftpErrno == LIBSSH2_FX_FILE_ALREADY_EXISTS)
             {
                 // Check if the directory already exists
                 LIBSSH2_SFTP_ATTRIBUTES attr;
@@ -921,7 +921,7 @@ storageSftpPathCreate(
                 {
                     storageSftpEvalLibSsh2Error(
                         rc, libssh2_sftp_last_error(this->sftpSession), &PathCreateError,
-                        strNewFmt("unable to create path '%s': path already exists", strZ(path)), NULL);
+                        strNewFmt("sftp error unable to create path '%s': path already exists", strZ(path)), NULL);
                 }
             }
             // If the parent path does not exist then create it if allowed
@@ -934,7 +934,7 @@ storageSftpPathCreate(
 
                 strFree(pathParent);
             }
-            else if (sftpErrno != LIBSSH2_FX_FILE_ALREADY_EXISTS || errorOnExists)
+            else
             {
                 storageSftpEvalLibSsh2Error(
                     rc, sftpErrno, &PathCreateError, strNewFmt("sftp error unable to create path '%s'", strZ(path)), NULL);
