@@ -313,8 +313,11 @@ storageWriteSftpClose(THIS_VOID)
                 if (rc == LIBSSH2_ERROR_EAGAIN)
                     THROW_FMT(FileCloseError, "timeout renaming file '%s'", strZ(this->nameTmp));
 
+                uint64_t sftpErr = libssh2_sftp_last_error(this->sftpSession);
+
                 // Some/most sftp servers will not rename over an existing file, in testing this returned LIBSSH2_FX_FAILURE
-                if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL && libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_FAILURE)
+                if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL &&
+                    (sftpErr == LIBSSH2_FX_FAILURE || sftpErr == LIBSSH2_FX_FILE_ALREADY_EXISTS))
                 {
                     // Remove the existing file and retry the rename
                     storageWriteSftpUnlinkExisting(this);
@@ -323,7 +326,7 @@ storageWriteSftpClose(THIS_VOID)
                 else
                 {
                     storageSftpEvalLibSsh2Error(
-                        rc, libssh2_sftp_last_error(this->sftpSession), &FileCloseError,
+                        rc, sftpErr, &FileCloseError,
                         strNewFmt("unable to move '%s' to '%s'", strZ(this->nameTmp), strZ(this->interface.name)), NULL);
                 }
             }
