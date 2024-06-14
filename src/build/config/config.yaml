@@ -1204,6 +1204,7 @@ option:
   backup-standby:
     section: global
     type: string-id
+    bool-like: true
     default: n
     allow-list:
       - n
