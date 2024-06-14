@@ -112,7 +112,7 @@ cmdLockRead(const LockType lockType, const String *const stanza)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *const lockFileName = cmdLockFileName(stanza, lockType);
+        const String *const lockFileName = cmdLockFileName(stanza, lockType);
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
