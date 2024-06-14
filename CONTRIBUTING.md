@@ -470,7 +470,7 @@ HRN_FORK_BEGIN()
 {
     HRN_FORK_CHILD_BEGIN()
     {
-        TEST_RESULT_INT_NE(cmdLockAcquireP(), -1, "create backup/expire lock");
+        TEST_RESULT_BOOL(cmdLockAcquireP(), true, "create backup/expire lock");
 
         // Notify parent that lock has been acquired
         HRN_FORK_CHILD_NOTIFY_PUT();

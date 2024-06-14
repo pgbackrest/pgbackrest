@@ -237,7 +237,7 @@ testRun(void)
             HRN_FORK_CHILD_BEGIN()
             {
                 lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"));
-                TEST_RESULT_INT(
+                TEST_RESULT_BOOL(
                     lockAcquireP(cmdLockFileName(STRDEF("stanza1"), lockTypeBackup)), true, "create backup/expire lock");
 
                 // Notify parent that lock has been acquired
@@ -431,7 +431,7 @@ testRun(void)
             {
                 String *lockFileName = cmdLockFileName(STRDEF("stanza1"), lockTypeBackup);
                 lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("777-afafafaf"));
-                TEST_RESULT_INT(lockAcquireP(lockFileName), true, "create backup/expire lock");
+                TEST_RESULT_BOOL(lockAcquireP(lockFileName), true, "create backup/expire lock");
                 TEST_RESULT_VOID(lockWriteP(lockFileName), "write lock data");
 
                 // Notify parent that lock has been acquired
@@ -1041,7 +1041,7 @@ testRun(void)
             {
                 String *lockFileName = cmdLockFileName(STRDEF("stanza2"), lockTypeBackup);
                 lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"));
-                TEST_RESULT_INT(lockAcquireP(lockFileName), true, "create backup/expire lock");
+                TEST_RESULT_BOOL(lockAcquireP(lockFileName), true, "create backup/expire lock");
                 TEST_RESULT_VOID(
                     lockWriteP(
                         lockFileName, .percentComplete = VARUINT(4545), .sizeComplete = VARUINT64(1435765),
@@ -1485,7 +1485,7 @@ testRun(void)
             {
                 String *lockFileName = cmdLockFileName(STRDEF("stanza2"), lockTypeBackup);
                 lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"));
-                TEST_RESULT_INT(lockAcquireP(lockFileName), true, "create backup/expire lock");
+                TEST_RESULT_BOOL(lockAcquireP(lockFileName), true, "create backup/expire lock");
                 TEST_RESULT_VOID(lockWriteP(lockFileName, .percentComplete = VARUINT(5555)), "write lock data");
 
                 // Notify parent that lock has been acquired
