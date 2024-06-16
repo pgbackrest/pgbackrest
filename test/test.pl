@@ -107,7 +107,7 @@ test.pl [options]
    --quiet, -q          equivalent to --log-level=off
 
  VM Options:
-   --vm                 docker container to build/test (e.g. rh7)
+   --vm                 docker container to build/test (e.g. rh8)
    --vm-build           build Docker containers
    --vm-force           force a rebuild of Docker containers
    --vm-out             Show VM output (default false)
@@ -917,7 +917,7 @@ eval
                     # Patch files in RHEL package builds
                     #
                     # Use these commands to create a new patch (may need to modify first line):
-                    # BRDIR=/home/vagrant/pgbackrest;BRVM=rh7;BRPATCHFILE=${BRDIR?}/test/patch/rhel-package.patch
+                    # BRDIR=/home/vagrant/pgbackrest;BRVM=rh8;BRPATCHFILE=${BRDIR?}/test/patch/rhel-package.patch
                     # PKDIR=${BRDIR?}/test/result/package/${BRVM}/SPECS
                     # diff -Naur ${PKDIR?}.old ${PKDIR}.new > ${BRPATCHFILE?}
                     my $strPackagePatch = "${strBackRestBase}/test/patch/rhel-package.patch";

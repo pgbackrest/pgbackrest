@@ -321,7 +321,7 @@ sub entryPointSetup
 
     if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
     {
-        $strScript .= '/usr/sbin/sshd -D';
+        $strScript .= 'rm -rf /run/nologin && /usr/sbin/sshd -D';
     }
     else
     {
@@ -388,15 +388,18 @@ sub containerBuild
 
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
         {
-            if ($strOS eq VM_RH7)
+            if ($strOS eq VM_RH8)
             {
                 $strScript .=
-                    "    yum -y install centos-release-scl-rh epel-release && \\\n";
+                    "    dnf install -y dnf-plugins-core && \\\n" .
+                    "    dnf config-manager --set-enabled powertools && \\\n" .
+                    "    dnf -y install epel-release && \\\n" .
+                    "    crb enable && \\\n";
             }
 
             $strScript .=
                 "    yum -y update && \\\n" .
-                "    yum -y install openssh-server openssh-clients wget sudo valgrind git \\\n" .
+                "    yum -y install openssh-server openssh-clients wget sudo git \\\n" .
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl \\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
                 "        libyaml-devel zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 perl-JSON-PP ccache meson \\\n" .
@@ -407,20 +410,14 @@ sub containerBuild
             $strScript .=
                 "    export DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive && \\\n" .
                 "    apt-get update && \\\n" .
-                "    apt-get install -y --no-install-recommends openssh-server wget sudo gcc make valgrind git \\\n" .
+                "    apt-get install -y --no-install-recommends openssh-server wget sudo gcc make git \\\n" .
                 "        libdbd-pg-perl libhtml-parser-perl libssl-dev libperl-dev python3-distutils \\\n" .
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
                 "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config \\\n" .
                 "        libbz2-dev bzip2 libyaml-dev libjson-pp-perl liblz4-dev liblz4-tool gnupg lsb-release ccache meson \\\n" .
                 "        libssh2-1-dev";
 
-            # This package is required to build valgrind on 32-bit
-            if ($oVm->{$strOS}{&VM_ARCH} eq VM_ARCH_I386)
-            {
-                $strScript .= " g++-multilib";
-            }
-
-            if ($strOS eq VM_U22)
+            if ($strOS eq VM_U20 || $strOS eq VM_U22)
             {
                 $strScript .= " valgrind";
             }
@@ -457,20 +454,6 @@ sub containerBuild
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($strOS ne VM_U22)
-        {
-            my $strValgrind = 'valgrind-3.17.0';
-
-            $strScript .= sectionHeader() .
-                "# Build valgrind\n" .
-                "    wget -q -O - https://sourceware.org/pub/valgrind/${strValgrind}.tar.bz2 | tar jx -C /root && \\\n" .
-                "    cd /root/${strValgrind} && \\\n" .
-                "    ./configure --silent && \\\n" .
-                "    make -s -j8 install && \\\n" .
-                "    rm -rf /root/${strValgrind}";
-        }
-
-        #---------------------------------------------------------------------------------------------------------------------------
         if (!$bDeprecated)
         {
             $strScript .= sectionHeader() .
@@ -481,12 +464,13 @@ sub containerBuild
                 $strScript .=
                     "    rpm --import https://download.postgresql.org/pub/repos/yum/keys/RPM-GPG-KEY-PGDG && \\\n";
 
-                if ($strOS eq VM_RH7)
+                if ($strOS eq VM_RH8)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-" . hostArch() . "/" .
-                            "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-" . hostArch() . "/" .
+                            "pgdg-redhat-repo-latest.noarch.rpm && \\\n" .
+                        "    dnf -qy module disable postgresql && \\\n";
                 }
                 elsif ($strOS eq VM_F40)
                 {

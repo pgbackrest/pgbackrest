@@ -150,7 +150,7 @@ eval
 
     if ($ARGV[0] eq 'doc')
     {
-        if ($strVm eq VM_RH7 || $strVm eq VM_RH8)
+        if ($strVm eq VM_RH8)
         {
             processBegin('LaTeX install');
             processExec(
