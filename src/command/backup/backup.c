@@ -1867,7 +1867,7 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
             }
 
             // Add size to total
-            result += file.size;
+            result += file.sizeOriginal;
 
             // Increment total files
             fileTotal++;
@@ -2018,7 +2018,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                 pckWriteBoolP(param, file.delta);
                 pckWriteBoolP(param, !strEq(file.name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
                 pckWriteU64P(param, file.size);
-                pckWriteU64P(param, file.sizePrior);
+                pckWriteU64P(param, file.sizeOriginal);
                 pckWriteBoolP(param, !backupProcessFilePrimary(jobData->standbyExp, file.name));
                 pckWriteBinP(param, file.checksumSha1 != NULL ? BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE) : NULL);
                 pckWriteBoolP(param, file.checksumPage);
@@ -2053,7 +2053,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                 pckWriteBoolP(param, file.reference != NULL);
 
                 fileTotal++;
-                fileSize += file.size;
+                fileSize += file.sizeOriginal;
 
                 // Remove job from the queue
                 lstRemoveIdx(queue, fileIdx);
