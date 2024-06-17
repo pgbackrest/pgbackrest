@@ -313,7 +313,7 @@ storageWriteSftpClose(THIS_VOID)
                 if (rc == LIBSSH2_ERROR_EAGAIN)
                     THROW_FMT(FileCloseError, "timeout renaming file '%s'", strZ(this->nameTmp));
 
-                uint64_t sftpErr = libssh2_sftp_last_error(this->sftpSession);
+                const uint64_t sftpErr = libssh2_sftp_last_error(this->sftpSession);
 
                 // Some/most sftp servers will not rename over an existing file, in testing this returned LIBSSH2_FX_FAILURE
                 if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL &&
