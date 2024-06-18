@@ -742,8 +742,8 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-dededede"), cfgOptionStr(cfgOptStanza), cfgLockType());
-                TEST_RESULT_VOID(lockAcquireP(.timeout = 30000, .returnOnNoLock = true), "acquire lock");
+                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-dededede"));
+                TEST_RESULT_VOID(cmdLockAcquireP(.returnOnNoLock = true), "acquire lock");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -751,7 +751,7 @@ testRun(void)
                 // Wait for parent to allow release lock
                 HRN_FORK_CHILD_NOTIFY_GET();
 
-                lockRelease(true);
+                cmdLockReleaseP();
             }
             HRN_FORK_CHILD_END();
 

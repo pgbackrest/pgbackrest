@@ -13,17 +13,15 @@ Include shimmed C modules
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-lockInit(const String *const path, const String *const execId, const String *const stanza, const LockType type)
+lockInit(const String *const path, const String *const execId)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STRING, path);
         FUNCTION_HARNESS_PARAM(STRING, execId);
-        FUNCTION_HARNESS_PARAM(STRING, stanza);
-        FUNCTION_HARNESS_PARAM(ENUM, type);
     FUNCTION_HARNESS_END();
 
     hrnLockUnInit();
-    lockInit_SHIMMED(path, execId, stanza, type);
+    lockInit_SHIMMED(path, execId);
 
     FUNCTION_HARNESS_RETURN_VOID();
 }

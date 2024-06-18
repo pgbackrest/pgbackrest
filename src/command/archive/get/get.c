@@ -13,6 +13,7 @@ Archive Get Command
 #include "command/archive/get/file.h"
 #include "command/archive/get/protocol.h"
 #include "command/command.h"
+#include "command/lock.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -730,7 +731,7 @@ cmdArchiveGet(void)
                 // If the WAL segment has not already been found then start the async process to get it. There's no point in forking
                 // the async process off more than once so track that as well. Use an archive lock to prevent forking if the async
                 // process was launched by another process.
-                if (!forked && (!found || !queueFull) && lockAcquireP(.returnOnNoLock = true))
+                if (!forked && (!found || !queueFull) && cmdLockAcquireP(.returnOnNoLock = true))
                 {
                     // Get control info
                     const PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStrNull(cfgOptPgVersionForce));
@@ -761,7 +762,7 @@ cmdArchiveGet(void)
                     archiveAsyncErrorClear(archiveModeGet, walSegment);
 
                     // Release the lock so the child process can acquire it
-                    lockRelease(true);
+                    cmdLockReleaseP();
 
                     // Execute the async process
                     archiveAsyncExec(archiveModeGet, commandExec);
