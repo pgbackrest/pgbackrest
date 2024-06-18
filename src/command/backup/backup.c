@@ -15,12 +15,12 @@ Backup Command
 #include "command/backup/protocol.h"
 #include "command/check/common.h"
 #include "command/control/common.h"
+#include "command/lock.h"
 #include "command/stanza/common.h"
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/io/filter/size.h"
-#include "common/lock.h"
 #include "common/log.h"
 #include "common/regExp.h"
 #include "common/time.h"
@@ -1605,8 +1605,8 @@ backupJobResult(
             if (percentComplete - *currentPercentComplete > 10)
             {
                 *currentPercentComplete = percentComplete;
-                lockWriteDataP(
-                    lockTypeBackup, .percentComplete = VARUINT(*currentPercentComplete), .sizeComplete = VARUINT64(*sizeProgress),
+                cmdLockWriteP(
+                    .percentComplete = VARUINT(*currentPercentComplete), .sizeComplete = VARUINT64(*sizeProgress),
                     .size = VARUINT64(sizeTotal));
             }
         }
@@ -2219,8 +2219,8 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
 
         // Initialize percent complete and bytes completed/total
         unsigned int currentPercentComplete = 0;
-        lockWriteDataP(
-            lockTypeBackup, .percentComplete = VARUINT(currentPercentComplete), .sizeComplete = VARUINT64(sizeProgress),
+        cmdLockWriteP(
+            .percentComplete = VARUINT(currentPercentComplete), .sizeComplete = VARUINT64(sizeProgress),
             .size = VARUINT64(sizeTotal));
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()

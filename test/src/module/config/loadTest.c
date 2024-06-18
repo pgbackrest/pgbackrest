@@ -755,7 +755,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, CFGOPTVAL_ARCHIVE_MODE_OFF_Z);
         strLstAddZ(argList, CFGCMD_BACKUP);
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for backup");
-        lockRelease(true);
+        cmdLockReleaseP();
 
         // Only the error case is tested here, success is tested in cfgLoad()
         TEST_RESULT_VOID(cfgLoadLogFile(), "attempt to open bogus log file");
@@ -777,7 +777,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
         TEST_RESULT_VOID(storageRepoWrite(), "check writable storage");
-        lockRelease(true);
+        cmdLockReleaseP();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("dry-run valid, dry-run");
@@ -787,7 +787,7 @@ testRun(void)
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
         TEST_ERROR(
             storageRepoWrite(), AssertError, "unable to get writable storage in dry-run mode or before dry-run is initialized");
-        lockRelease(true);
+        cmdLockReleaseP();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command does not have umask and disables keep-alives");
@@ -928,7 +928,7 @@ testRun(void)
         TEST_RESULT_INT(socketLocal.tcpKeepAliveIdle, 2222, "check socketLocal.tcpKeepAliveIdle");
         TEST_RESULT_INT(socketLocal.tcpKeepAliveInterval, 888, "check socketLocal.tcpKeepAliveInterval");
 
-        lockRelease(true);
+        cmdLockReleaseP();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("local command opens log file with special filename");
@@ -1011,7 +1011,7 @@ testRun(void)
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
         TEST_RESULT_INT(lstat(TEST_PATH "/test-archive-get-async.log", &statLog), 0, "check log file exists");
 
-        lockRelease(true);
+        cmdLockReleaseP();
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

@@ -53,20 +53,19 @@ cmdStop(void)
                 // Find each lock file and send term signals to the processes
                 for (unsigned int lockPathFileIdx = 0; lockPathFileIdx < strLstSize(lockPathFileList); lockPathFileIdx++)
                 {
-                    const String *lockFile = strLstGet(lockPathFileList, lockPathFileIdx);
+                    const String *const lockFile = strLstGet(lockPathFileList, lockPathFileIdx);
 
                     // Skip any file that is not a lock file. Skip lock files for other stanzas if a stanza is provided.
                     if (!strEndsWithZ(lockFile, LOCK_FILE_EXT) || (stanzaPrefix != NULL && !strBeginsWith(lockFile, stanzaPrefix)))
                         continue;
 
                     // Read the lock file
-                    lockFile = strNewFmt("%s/%s", strZ(lockPath), strZ(lockFile));
-                    const LockReadResult lockResult = lockReadFileP(lockFile, .remove = true);
+                    const LockReadResult lockResult = lockReadP(lockFile, .remove = true);
 
                     // If we cannot read the lock file for any reason then warn and continue to next file
                     if (lockResult.status != lockReadStatusValid)
                     {
-                        LOG_WARN_FMT("unable to read lock file %s", strZ(lockFile));
+                        LOG_WARN_FMT("unable to read lock file %s/%s", strZ(lockPath), strZ(lockFile));
                         continue;
                     }
 

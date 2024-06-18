@@ -8,8 +8,8 @@ Exit Routines
 
 #include "command/command.h"
 #include "command/exit.h"
+#include "command/lock.h"
 #include "common/debug.h"
-#include "common/lock.h"
 #include "common/log.h"
 #include "config/config.h"
 #include "protocol/helper.h"
@@ -169,7 +169,7 @@ exitSafe(int result, const bool error, const SignalType signalType)
     // Release any locks but ignore errors
     TRY_BEGIN()
     {
-        lockRelease(false);
+        cmdLockReleaseP(.returnOnNoLock = true);
     }
     TRY_END();
 
