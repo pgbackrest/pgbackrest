@@ -106,7 +106,7 @@ storageReadPosixOpen(THIS_VOID)
 Read from a file
 ***********************************************************************************************************************************/
 static size_t
-storageReadPosix(THIS_VOID, Buffer *buffer, bool block)
+storageReadPosix(THIS_VOID, Buffer *const buffer, const bool block)
 {
     THIS(StorageReadPosix);
 

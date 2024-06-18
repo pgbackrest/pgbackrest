@@ -1,9 +1,5 @@
-<release date="XXXX-XX-XX" version="2.51dev" title="UNDER DEVELOPMENT">
+<release date="2024-03-25" version="2.51" title="Meson Build System">
     <release-core-list>
-        <text>
-            <p><b>NOTE TO PACKAGERS</b>: The build system for <backrest/> is now <proper>meson</proper>. The <proper>autoconf</proper>/<proper>make</proper> build will not receive any new features and will be removed after a few releases.</p>
-        </text>
-
         <release-bug-list>
             <release-item>
                 <github-issue id="2271"/>
@@ -30,6 +26,19 @@
                 </release-item-contributor-list>
 
                 <p>Fix performance regression in storage list.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2298"/>
+                <github-pull-request id="2304"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="samkingno"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Fix progress logging when file size changes during backup.</p>
             </release-item>
         </release-bug-list>
 
@@ -128,7 +137,7 @@
                     <release-item-reviewer id="greg.sabino.mullane"/>
                 </release-item-contributor-list>
 
-                <p>Allow <br-setting>--version</br-setting> and <br-setting>--help</br-setting> for version and help.</p>
+                <p>Allow <setting>--version</setting> and <setting>--help</setting> for version and help.</p>
             </release-item>
 
             <release-item>

@@ -137,7 +137,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 
-#define CFG_OPTION_TOTAL                                            180
+#define CFG_OPTION_TOTAL                                            181
 
 /***********************************************************************************************************************************
 Option value constants
@@ -518,6 +518,7 @@ typedef enum
     cfgOptRepoS3KmsKeyId,
     cfgOptRepoS3Region,
     cfgOptRepoS3Role,
+    cfgOptRepoS3SseCustomerKey,
     cfgOptRepoS3Token,
     cfgOptRepoS3UriStyle,
     cfgOptRepoSftpHost,

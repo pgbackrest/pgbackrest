@@ -185,6 +185,7 @@ testRun(void)
         TEST_RESULT_BOOL(jsonReadKeyExpectStrId(read, STRID5("key5", 0xee4ab0)), false, "do not expect key5");
         TEST_ERROR(jsonReadKeyRequireStrId(read, STRID5("key5", 0xee4ab0)), JsonFormatError, "required key 'key5' not found");
         TEST_ERROR(jsonReadKeyRequireZ(read, "key5"), JsonFormatError, "required key 'key5' not found");
+        TEST_RESULT_BOOL(jsonReadUntil(read, jsonTypeObjectEnd), false, "read until object end");
         TEST_RESULT_VOID(jsonReadObjectEnd(read), "object end");
 
         TEST_RESULT_STR_Z(jsonReadStr(read), "abc/", "str");
@@ -193,6 +194,7 @@ testRun(void)
         TEST_RESULT_STRLST_Z(jsonReadStrLst(read), "a\nb\n", "str list");
         TEST_RESULT_UINT(jsonReadUInt(read), 123, "uint");
         TEST_RESULT_UINT(jsonReadUInt64(read), 18446744073709551615U, "uint64");
+        TEST_RESULT_BOOL(jsonReadUntil(read, jsonTypeArrayEnd), true, "read until array end");
         TEST_RESULT_INT(jsonReadInt(read), -1, "int");
         TEST_RESULT_INT(jsonReadInt64(read), -9223372036854775807L, "int64");
         TEST_RESULT_VOID(jsonReadSkip(read), "skip");

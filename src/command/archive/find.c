@@ -212,7 +212,7 @@ walSegmentFindOne(
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
 
-    String *result = NULL;
+    String *result;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {

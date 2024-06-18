@@ -54,6 +54,16 @@
                     <example>n</example>
                 </option>
 
+                <option id="coverage-summary">
+                    <summary>Generate code coverage summary.</summary>
+
+                    <text>
+                        <p>Generate coverage summary used in metrics documentation.</p>
+                    </text>
+
+                    <example>n</example>
+                </option>
+
                 <option id="log-level">
                     <summary>Level for harness logging.</summary>
 
@@ -197,7 +207,7 @@
                         <p>Name of VM to run the test on.</p>
                     </text>
 
-                    <example>rh7</example>
+                    <example>rh8</example>
                 </option>
 
                 <option id="vm-id">

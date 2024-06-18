@@ -13,6 +13,7 @@ Archive Get Command
 #include "command/archive/get/file.h"
 #include "command/archive/get/protocol.h"
 #include "command/command.h"
+#include "command/lock.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -60,9 +61,12 @@ typedef struct ArchiveGetCheckResult
 
 // Helper to add an error to an error list and warn if the error is not already in the list
 static void
-archiveGetErrorAdd(StringList *warnList, bool log, unsigned int repoIdx, const ErrorType *type, const String *message)
+archiveGetErrorAdd(
+    StringList *const warnList, const bool log, const unsigned int repoIdx, const ErrorType *const type,
+    const String *const message)
 {
-    const String *warn = strNewFmt("%s: [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorTypeName(type), strZ(message));
+    const String *const warn = strNewFmt(
+        "%s: [%s] %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), errorTypeName(type), strZ(message));
 
     if (!strLstExists(warnList, warn))
     {
@@ -97,8 +101,8 @@ typedef struct ArchiveGetFindCacheRepo
 
 static bool
 archiveGetFind(
-    const String *archiveFileRequest, ArchiveGetCheckResult *getCheckResult, List *cacheRepoList, const StringList *warnList,
-    bool single)
+    const String *const archiveFileRequest, ArchiveGetCheckResult *const getCheckResult, List *const cacheRepoList,
+    const StringList *const warnList, const bool single)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, archiveFileRequest);
@@ -117,16 +121,16 @@ archiveGetFind(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Is the archive file a WAL segment?
-        bool isSegment = walIsSegment(archiveFileRequest);
+        const bool isSegment = walIsSegment(archiveFileRequest);
 
         // Get the WAL segment path
-        const String *path = isSegment ? strSubN(archiveFileRequest, 0, 16) : NULL;
+        const String *const path = isSegment ? strSubN(archiveFileRequest, 0, 16) : NULL;
 
         // List to hold matches for the requested file
-        List *matchList = lstNewP(sizeof(ArchiveGetFile), .comparator = lstComparatorStr);
+        List *const matchList = lstNewP(sizeof(ArchiveGetFile), .comparator = lstComparatorStr);
 
         // List of file level warnings
-        StringList *fileWarnList = strLstDup(warnList);
+        StringList *const fileWarnList = strLstDup(warnList);
 
         // Errored repo total to track if all repos errored
         unsigned int repoErrorTotal = 0;
@@ -134,19 +138,19 @@ archiveGetFind(
         // Check each repo
         for (unsigned int repoCacheIdx = 0; repoCacheIdx < lstSize(cacheRepoList); repoCacheIdx++)
         {
-            ArchiveGetFindCacheRepo *cacheRepo = lstGet(cacheRepoList, repoCacheIdx);
+            const ArchiveGetFindCacheRepo *const cacheRepo = lstGet(cacheRepoList, repoCacheIdx);
 
             TRY_BEGIN()
             {
                 // Check each archiveId
                 for (unsigned int archiveCacheIdx = 0; archiveCacheIdx < lstSize(cacheRepo->archiveList); archiveCacheIdx++)
                 {
-                    ArchiveGetFindCacheArchive *cacheArchive = lstGet(cacheRepo->archiveList, archiveCacheIdx);
+                    const ArchiveGetFindCacheArchive *const cacheArchive = lstGet(cacheRepo->archiveList, archiveCacheIdx);
 
                     // If a WAL segment then search among the possible file names
                     if (isSegment)
                     {
-                        StringList *segmentList = NULL;
+                        StringList *segmentList;
 
                         // If a single file is requested then optimize by adding a restrictive expression to reduce bandwidth
                         if (single)
@@ -275,7 +279,7 @@ archiveGetFind(
             if (isSegment && lstSize(matchList) > 1)
             {
                 // Count the number of unique hashes
-                StringList *hashList = strLstNew();
+                StringList *const hashList = strLstNew();
 
                 for (unsigned int matchIdx = 0; matchIdx < lstSize(matchList); matchIdx++)
                     strLstAddIfMissing(hashList, strSubN(((ArchiveGetFile *)lstGet(matchList, matchIdx))->file, 25, 40));
@@ -285,7 +289,7 @@ archiveGetFind(
                 {
                     // Build list of duplicates
                     unsigned int repoKeyLast = 0;
-                    String *message = strNew();
+                    String *const message = strNew();
                     bool first = true;
 
                     // Sort the matches so they are logged in a consistent order
@@ -293,8 +297,8 @@ archiveGetFind(
 
                     for (unsigned int matchIdx = 0; matchIdx < lstSize(matchList); matchIdx++)
                     {
-                        ArchiveGetFile *file = lstGet(matchList, matchIdx);
-                        unsigned int repoKey = cfgOptionGroupIdxToKey(cfgOptGrpRepo, file->repoIdx);
+                        const ArchiveGetFile *const file = lstGet(matchList, matchIdx);
+                        const unsigned int repoKey = cfgOptionGroupIdxToKey(cfgOptGrpRepo, file->repoIdx);
 
                         if (repoKey != repoKeyLast)
                         {
@@ -333,7 +337,7 @@ archiveGetFind(
             {
                 MEM_CONTEXT_BEGIN(lstMemContext(getCheckResult->archiveFileMapList))
                 {
-                    ArchiveFileMap map =
+                    const ArchiveFileMap map =
                     {
                         .request = strDup(archiveFileRequest),
                         .actualList = lstNewP(sizeof(ArchiveGetFile)),
@@ -357,7 +361,7 @@ archiveGetFind(
 }
 
 static ArchiveGetCheckResult
-archiveGetCheck(const StringList *archiveRequestList)
+archiveGetCheck(const StringList *const archiveRequestList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_LIST, archiveRequestList);
@@ -373,10 +377,10 @@ archiveGetCheck(const StringList *archiveRequestList)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // List of warnings
-        StringList *warnList = strLstNew();
+        StringList *const warnList = strLstNew();
 
         // Get pg_control info. Error if the invalid checkpoint written by restore is detected and backup_label is not present.
-        PgControl controlInfo = pgControlFromFile(storagePg(), cfgOptionStrNull(cfgOptPgVersionForce));
+        const PgControl controlInfo = pgControlFromFile(storagePg(), cfgOptionStrNull(cfgOptPgVersionForce));
 
         if (controlInfo.checkpoint == PG_CONTROL_CHECKPOINT_INVALID && !storageExistsP(storagePg(), STRDEF(PG_FILE_BACKUPLABEL)))
         {
@@ -387,7 +391,7 @@ archiveGetCheck(const StringList *archiveRequestList)
         }
 
         // Build list of repos/archiveIds where WAL may be found
-        List *cacheRepoList = lstNewP(sizeof(ArchiveGetFindCacheRepo));
+        List *const cacheRepoList = lstNewP(sizeof(ArchiveGetFindCacheRepo));
 
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
@@ -409,7 +413,7 @@ archiveGetCheck(const StringList *archiveRequestList)
                 };
 
                 // Attempt to load the archive info file
-                InfoArchive *info = infoArchiveLoadFile(
+                const InfoArchive *const info = infoArchiveLoadFile(
                     storageRepoIdx(repoIdx), INFO_ARCHIVE_PATH_FILE_STR, cacheRepo.cipherType,
                     cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
@@ -421,7 +425,7 @@ archiveGetCheck(const StringList *archiveRequestList)
                 MEM_CONTEXT_END();
 
                 // Loop through pg history and determine which archiveIds to use
-                StringList *archivePathList = NULL;
+                const StringList *archivePathList = NULL;
 
                 for (unsigned int pgIdx = 0; pgIdx < infoPgDataTotal(infoArchivePg(info)); pgIdx++)
                 {
@@ -430,7 +434,7 @@ archiveGetCheck(const StringList *archiveRequestList)
                     // Only use the archive id if it matches the current cluster
                     if (pgData.systemId == controlInfo.systemId && pgData.version == controlInfo.version)
                     {
-                        const String *archiveId = infoPgArchiveId(infoArchivePg(info), pgIdx);
+                        const String *const archiveId = infoPgArchiveId(infoArchivePg(info), pgIdx);
                         bool found = true;
 
                         // If the archiveId is in the past make sure the path exists
@@ -532,7 +536,9 @@ archiveGetCheck(const StringList *archiveRequestList)
 Clean the queue and prepare a list of WAL segments that the async process should get
 ***********************************************************************************************************************************/
 static StringList *
-queueNeed(const String *walSegment, bool found, uint64_t queueSize, size_t walSegmentSize, unsigned int pgVersion)
+queueNeed(
+    const String *const walSegment, const bool found, const uint64_t queueSize, const size_t walSegmentSize,
+    const unsigned int pgVersion)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walSegment);
@@ -544,13 +550,13 @@ queueNeed(const String *walSegment, bool found, uint64_t queueSize, size_t walSe
 
     ASSERT(walSegment != NULL);
 
-    StringList *result = strLstNew();
+    StringList *const result = strLstNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Determine the first WAL segment for the async process to get. If the WAL segment requested by PostgreSQL was not found
         // then use that. If the segment was found but the queue is not full then start with the next segment.
-        const String *walSegmentFirst =
+        const String *const walSegmentFirst =
             found ? walSegmentNext(walSegment, walSegmentSize, pgVersion) : walSegment;
 
         // Determine how many WAL segments should be in the queue. The queue total must be at least 2 or it doesn't make sense to
@@ -561,20 +567,20 @@ queueNeed(const String *walSegment, bool found, uint64_t queueSize, size_t walSe
             walSegmentQueueTotal = 2;
 
         // Build the ideal queue -- the WAL segments we want in the queue after the async process has run
-        StringList *idealQueue = strLstSort(
+        const StringList *const idealQueue = strLstSort(
             walSegmentRange(walSegmentFirst, walSegmentSize, pgVersion, walSegmentQueueTotal), sortOrderAsc);
 
         // Get the list of files actually in the queue
-        StringList *actualQueue = strLstSort(
+        const StringList *const actualQueue = strLstSort(
             storageListP(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN_STR, .errorOnMissing = true), sortOrderAsc);
 
         // Build a list of WAL segments that are being kept so we can later make a list of what is needed
-        StringList *keepQueue = strLstNew();
+        StringList *const keepQueue = strLstNew();
 
         for (unsigned int actualQueueIdx = 0; actualQueueIdx < strLstSize(actualQueue); actualQueueIdx++)
         {
             // Get file from actual queue
-            const String *file = strLstGet(actualQueue, actualQueueIdx);
+            const String *const file = strLstGet(actualQueue, actualQueueIdx);
 
             // Does this match a file we want to preserve?
             if (strLstExists(idealQueue, file))
@@ -620,7 +626,7 @@ cmdArchiveGet(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Check the parameters
-        const StringList *commandParam = cfgCommandParam();
+        const StringList *const commandParam = cfgCommandParam();
 
         if (strLstSize(commandParam) != 2)
         {
@@ -634,10 +640,10 @@ cmdArchiveGet(void)
         }
 
         // Get the segment name
-        String *walSegment = strBase(strLstGet(commandParam, 0));
+        const String *const walSegment = strBase(strLstGet(commandParam, 0));
 
         // Destination is wherever we were told to move the WAL segment
-        const String *walDestination =
+        const String *const walDestination =
             walPath(strLstGet(commandParam, 1), cfgOptionStr(cfgOptPgPath), STR(cfgCommandName()));
 
         // Async get can only be performed on WAL segments, history or other files must use synchronous mode
@@ -650,7 +656,7 @@ cmdArchiveGet(void)
             bool forked = false;                                        // Has the async process been forked yet?
 
             // Loop and wait for the WAL segment to be pushed
-            Wait *wait = waitNew(cfgOptionUInt64(cfgOptArchiveTimeout));
+            Wait *const wait = waitNew(cfgOptionUInt64(cfgOptArchiveTimeout));
 
             do
             {
@@ -687,7 +693,7 @@ cmdArchiveGet(void)
                 if (found)
                 {
                     // Source is the WAL segment in the spool queue
-                    StorageRead *source = storageNewReadP(
+                    StorageRead *const source = storageNewReadP(
                         storageSpool(), strNewFmt(STORAGE_SPOOL_ARCHIVE_IN "/%s", strZ(walSegment)));
 
                     // A move will be attempted but if the spool queue and the WAL path are on different file systems then a copy
@@ -697,7 +703,7 @@ cmdArchiveGet(void)
                     // is safe because if the system crashes Postgres will not try to reuse a restored WAL segment but will instead
                     // request it again using the restore_command. In the case of a move this hardly matters since path syncs are
                     // cheap but if a copy is required we could save a lot of writes.
-                    StorageWrite *destination = storageNewWriteP(
+                    StorageWrite *const destination = storageNewWriteP(
                         storageLocalWrite(), walDestination, .noCreatePath = true, .noSyncFile = true, .noSyncPath = true,
                         .noAtomic = true);
 
@@ -709,13 +715,13 @@ cmdArchiveGet(void)
                     result = 0;
 
                     // Get a list of WAL segments left in the queue
-                    StringList *queue = storageListP(
+                    const StringList *const queue = storageListP(
                         storageSpool(), STORAGE_SPOOL_ARCHIVE_IN_STR, .expression = WAL_SEGMENT_REGEXP_STR, .errorOnMissing = true);
 
                     if (!strLstEmpty(queue))
                     {
                         // Get size of the WAL segment
-                        uint64_t walSegmentSize = storageInfoP(storageLocal(), walDestination).size;
+                        const uint64_t walSegmentSize = storageInfoP(storageLocal(), walDestination).size;
 
                         // Use WAL segment size to estimate queue size and determine if the async process should be launched
                         queueFull = strLstSize(queue) * walSegmentSize > cfgOptionUInt64(cfgOptArchiveGetQueueMax) / 2;
@@ -725,27 +731,27 @@ cmdArchiveGet(void)
                 // If the WAL segment has not already been found then start the async process to get it. There's no point in forking
                 // the async process off more than once so track that as well. Use an archive lock to prevent forking if the async
                 // process was launched by another process.
-                if (!forked && (!found || !queueFull) && lockAcquireP(.returnOnNoLock = true))
+                if (!forked && (!found || !queueFull) && cmdLockAcquireP(.returnOnNoLock = true))
                 {
                     // Get control info
-                    PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStrNull(cfgOptPgVersionForce));
+                    const PgControl pgControl = pgControlFromFile(storagePg(), cfgOptionStrNull(cfgOptPgVersionForce));
 
                     // Create the queue
                     storagePathCreateP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN_STR);
 
                     // The async process should not output on the console at all
-                    KeyValue *optionReplace = kvNew();
+                    KeyValue *const optionReplace = kvNew();
 
                     kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_CONSOLE), VARSTRDEF("off"));
                     kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), VARSTRDEF("off"));
 
                     // Generate command options
-                    StringList *commandExec = cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleAsync, optionReplace, true, false);
+                    StringList *const commandExec = cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleAsync, optionReplace, true, false);
                     strLstInsert(commandExec, 0, cfgExe());
 
                     // Clean the current queue using the list of WAL that we ideally want in the queue. queueNeed() will return the
                     // list of WAL needed to fill the queue and this will be passed to the async process.
-                    const StringList *queue = queueNeed(
+                    const StringList *const queue = queueNeed(
                         walSegment, found, cfgOptionUInt64(cfgOptArchiveGetQueueMax), pgControl.walSegmentSize,
                         pgControl.version);
 
@@ -756,7 +762,7 @@ cmdArchiveGet(void)
                     archiveAsyncErrorClear(archiveModeGet, walSegment);
 
                     // Release the lock so the child process can acquire it
-                    lockRelease(true);
+                    cmdLockReleaseP();
 
                     // Execute the async process
                     archiveAsyncExec(archiveModeGet, commandExec);
@@ -798,10 +804,10 @@ cmdArchiveGet(void)
         else
         {
             // Check for the archive file
-            StringList *archiveRequestList = strLstNew();
+            StringList *const archiveRequestList = strLstNew();
             strLstAdd(archiveRequestList, walSegment);
 
-            ArchiveGetCheckResult checkResult = archiveGetCheck(archiveRequestList);
+            const ArchiveGetCheckResult checkResult = archiveGetCheck(archiveRequestList);
 
             // If there was an error then throw it
             if (checkResult.errorType != NULL)
@@ -812,10 +818,10 @@ cmdArchiveGet(void)
             {
                 // There can only be one file mapping since only one file was requested
                 ASSERT(lstSize(checkResult.archiveFileMapList) == 1);
-                const ArchiveFileMap *fileMap = lstGet(checkResult.archiveFileMapList, 0);
+                const ArchiveFileMap *const fileMap = lstGet(checkResult.archiveFileMapList, 0);
 
                 // Get the file
-                ArchiveGetFileResult fileResult = archiveGetFile(
+                const ArchiveGetFileResult fileResult = archiveGetFile(
                     storageLocalWrite(), fileMap->request, fileMap->actualList, walDestination);
 
                 // Output file warnings
@@ -823,7 +829,7 @@ cmdArchiveGet(void)
                     LOG_WARN(strZ(strLstGet(fileResult.warnList, warnIdx)));
 
                 // If there was no error then the file existed
-                ArchiveGetFile *file = lstGet(fileMap->actualList, fileResult.actualIdx);
+                const ArchiveGetFile *const file = lstGet(fileMap->actualList, fileResult.actualIdx);
                 ASSERT(file != NULL);
 
                 LOG_INFO_FMT(
@@ -865,11 +871,11 @@ archiveGetAsyncCallback(void *const data, const unsigned int clientIdx)
         (void)clientIdx;
 
         // Get a new job if there are any left
-        ArchiveGetAsyncData *jobData = data;
+        ArchiveGetAsyncData *const jobData = data;
 
         if (jobData->archiveFileIdx < lstSize(jobData->archiveFileMapList))
         {
-            const ArchiveFileMap *archiveFileMap = lstGet(jobData->archiveFileMapList, jobData->archiveFileIdx);
+            const ArchiveFileMap *const archiveFileMap = lstGet(jobData->archiveFileMapList, jobData->archiveFileIdx);
             jobData->archiveFileIdx++;
 
             ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_FILE);
@@ -924,7 +930,7 @@ cmdArchiveGetAsync(void)
                     "" : zNewFmt("...%s", strZ(strLstGet(cfgCommandParam(), strLstSize(cfgCommandParam()) - 1))));
 
             // Check for archive files
-            ArchiveGetCheckResult checkResult = archiveGetCheck(cfgCommandParam());
+            const ArchiveGetCheckResult checkResult = archiveGetCheck(cfgCommandParam());
 
             // If any files are missing get the first one (used to construct the "unable to find" warning)
             const String *archiveFileMissing = NULL;
@@ -938,7 +944,7 @@ cmdArchiveGetAsync(void)
                 // Create the parallel executor
                 ArchiveGetAsyncData jobData = {.archiveFileMapList = checkResult.archiveFileMapList};
 
-                ProtocolParallel *parallelExec = protocolParallelNew(
+                ProtocolParallel *const parallelExec = protocolParallelNew(
                     cfgOptionUInt64(cfgOptProtocolTimeout) / 2, archiveGetAsyncCallback, &jobData);
 
                 for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
@@ -949,21 +955,21 @@ cmdArchiveGetAsync(void)
                 {
                     do
                     {
-                        unsigned int completed = protocolParallelProcess(parallelExec);
+                        const unsigned int completed = protocolParallelProcess(parallelExec);
 
                         for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
                         {
                             // Get the job
-                            ProtocolParallelJob *job = protocolParallelResult(parallelExec);
-                            unsigned int processId = protocolParallelJobProcessId(job);
+                            ProtocolParallelJob *const job = protocolParallelResult(parallelExec);
+                            const unsigned int processId = protocolParallelJobProcessId(job);
 
                             // Get wal segment name and archive file map
-                            const String *walSegment = varStr(protocolParallelJobKey(job));
-                            const ArchiveFileMap *fileMap = lstFind(checkResult.archiveFileMapList, &walSegment);
+                            const String *const walSegment = varStr(protocolParallelJobKey(job));
+                            const ArchiveFileMap *const fileMap = lstFind(checkResult.archiveFileMapList, &walSegment);
                             ASSERT(fileMap != NULL);
 
                             // Build warnings for status file
-                            String *warning = strNew();
+                            String *const warning = strNew();
 
                             if (!strLstEmpty(fileMap->warnList))
                                 strCatFmt(warning, "%s", strZ(strLstJoin(fileMap->warnList, "\n")));
@@ -973,11 +979,11 @@ cmdArchiveGetAsync(void)
                             {
                                 // Get the actual file retrieved
                                 PackRead *const fileResult = protocolParallelJobResult(job);
-                                ArchiveGetFile *file = lstGet(fileMap->actualList, pckReadU32P(fileResult));
+                                const ArchiveGetFile *const file = lstGet(fileMap->actualList, pckReadU32P(fileResult));
                                 ASSERT(file != NULL);
 
                                 // Output file warnings
-                                StringList *fileWarnList = pckReadStrLstP(fileResult);
+                                const StringList *const fileWarnList = pckReadStrLstP(fileResult);
 
                                 for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileWarnList); warnIdx++)
                                     LOG_WARN_PID(processId, strZ(strLstGet(fileWarnList, warnIdx)));
@@ -1037,7 +1043,7 @@ cmdArchiveGetAsync(void)
             {
                 LOG_WARN_FMT("[%s] %s", errorTypeName(checkResult.errorType), strZ(checkResult.errorMessage));
 
-                String *message = strCat(strNew(), checkResult.errorMessage);
+                String *const message = strCat(strNew(), checkResult.errorMessage);
 
                 if (!strLstEmpty(checkResult.warnList))
                     strCatFmt(message, "\n%s", strZ(strLstJoin(checkResult.warnList, "\n")));
@@ -1052,7 +1058,7 @@ cmdArchiveGetAsync(void)
             {
                 LOG_DETAIL_FMT(UNABLE_TO_FIND_IN_ARCHIVE_MSG, strZ(archiveFileMissing));
 
-                String *message = NULL;
+                const String *message = NULL;
 
                 if (!strLstEmpty(checkResult.warnList))
                     message = strLstJoin(checkResult.warnList, "\n");

@@ -561,7 +561,7 @@ testRun(void)
     hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
 
     // The tests expect the timezone to be UTC
-    setenv("TZ", "UTC", true);
+    hrnTzSet("UTC");
 
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
@@ -1494,9 +1494,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_VOID(
-            backupInit(infoBackupNew(PG_VERSION_96, HRN_PG_SYSTEMID_96, hrnPgCatalogVersion(PG_VERSION_96), NULL)),
-            "backup init");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "check backup-standby");
+            backupInit(infoBackupNew(PG_VERSION_96, HRN_PG_SYSTEMID_96, hrnPgCatalogVersion(PG_VERSION_96), NULL)), "backup init");
 
         TEST_RESULT_LOG(
             "P00   WARN: option backup-standby is enabled but backup is offline - backups will be performed from the primary");
@@ -1862,15 +1860,15 @@ testRun(void)
         uint64_t sizeProgress = 0;
         currentPercentComplete = 4567;
 
-        lockInit(TEST_PATH_STR, cfgOptionStr(cfgOptExecId), cfgOptionStr(cfgOptStanza), lockTypeBackup);
-        TEST_RESULT_VOID(lockAcquireP(), "acquire backup lock");
+        lockInit(TEST_PATH_STR, cfgOptionStr(cfgOptExecId));
+        TEST_RESULT_VOID(cmdLockAcquireP(), "acquire backup lock");
 
         TEST_RESULT_VOID(
             backupJobResult(
                 manifest, STRDEF("host"), storageTest, strLstNew(), job, false, pgPageSize8, 0, &sizeProgress,
                 &currentPercentComplete),
             "log noop result");
-        TEST_RESULT_VOID(lockRelease(true), "release backup lock");
+        TEST_RESULT_VOID(cmdLockReleaseP(), "release backup lock");
 
         TEST_RESULT_LOG("P00 DETAIL: match file from prior backup host:" TEST_PATH "/test (0B, 100.00%)");
     }
@@ -2087,17 +2085,24 @@ testRun(void)
 
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VER");
 
+        // Modify file postgresql.conf during the backup to demonstrate that percent complete will be updated correctly
+        HRN_STORAGE_PUT_Z(storagePgWrite(), "postgresql.conf", "CONFIGSTUFF2");
+        HRN_BACKUP_SCRIPT_SET(
+            {.op = hrnBackupScriptOpUpdate, .file = storagePathP(storagePg(), STRDEF("postgresql.conf")),
+             .content = BUFSTRDEF("CONFIG")});
+
         unsigned int backupCount = strLstSize(storageListP(storageRepoIdx(1), strNewFmt(STORAGE_PATH_BACKUP "/test1")));
 
         TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
         TEST_RESULT_LOG(
             "P00   INFO: last backup label = [FULL-2], version = " PROJECT_VERSION "\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/postgresql.conf (12B->6B, 80.00%) checksum"
+            " 2fb60054b43a25d7a958d3d19bdb1aa7809577a8\n"
             "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (3B, 100.00%) checksum c8663c2525f44b6d9c687fbceb4aafc63ed8b451\n"
             "P00 DETAIL: reference pg_data/global/pg_control to [FULL-2]\n"
-            "P00 DETAIL: reference pg_data/postgresql.conf to [FULL-2]\n"
             "P00   INFO: new backup label = [DIFF-4]\n"
-            "P00   INFO: diff backup size = 3B, file total = 3");
+            "P00   INFO: diff backup size = 9B, file total = 3");
         TEST_RESULT_UINT(
             strLstSize(storageListP(storageRepoIdx(1), strNewFmt(STORAGE_PATH_BACKUP "/test1"))), backupCount + 1,
             "new backup repo2");
@@ -2702,6 +2707,128 @@ testRun(void)
             // Remove test files
             HRN_STORAGE_PATH_REMOVE(storagePgIdxWrite(1), NULL, .recurse = true);
             HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "base/1", .recurse = true);
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online 9.6 backup-standby full backup with block incremental");
+
+        backupTimeStart = BACKUP_EPOCH + 1600000;
+
+        {
+            // Load options
+            StringList *argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pg1Path);
+            hrnCfgArgKeyRaw(argList, cfgOptPgPath, 2, pg2Path);
+            hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5433");
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+            hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
+            hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
+            hrnCfgArgRawBool(argList, cfgOptCompress, false);
+            hrnCfgArgRawBool(argList, cfgOptBackupStandby, true);
+            hrnCfgArgRawBool(argList, cfgOptStartFast, true);
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            // Add file that is large enough for block incremental but larger on the primary than the standby. The standby size will
+            // be increased before the next backup.
+            Buffer *relation = bufNew(pgPageSize8 * 5);
+            memset(bufPtr(relation), 0, bufSize(relation));
+            bufUsedSet(relation, bufSize(relation));
+
+            HRN_STORAGE_PUT(storagePgIdxWrite(0), PG_PATH_BASE "/1/3", relation, .timeModified = backupTimeStart);
+
+            bufUsedSet(relation, bufSize(relation) - pgPageSize8 * 2);
+            HRN_STORAGE_PUT(storagePgIdxWrite(1), PG_PATH_BASE "/1/3", relation);
+
+            // Add file that is large enough for block incremental but larger on the primary than the standby. This tests that file
+            // size is set correctly when a file is referenced to a prior backup but the original size is different.
+            bufUsedSet(relation, bufSize(relation));
+
+            HRN_STORAGE_PUT(storagePgIdxWrite(0), PG_PATH_BASE "/1/4", relation, .timeModified = backupTimeStart);
+
+            bufUsedSet(relation, bufSize(relation) - pgPageSize8);
+            HRN_STORAGE_PUT(storagePgIdxWrite(1), PG_PATH_BASE "/1/4", relation);
+
+            // Set log level to warn because the following test uses multiple processes so the log order will not be deterministic
+            harnessLogLevelSet(logLevelWarn);
+
+            // Run backup
+            hrnBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .startFast = true);
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+
+            // Set log level back to detail
+            harnessLogLevelSet(logLevelDetail);
+
+            TEST_RESULT_STR_Z(
+                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                ".> {d=20191020-193320F}\n"
+                "bundle/1/pg_data/PG_VERSION {s=3, ts=-400000}\n"
+                "bundle/1/pg_data/global/pg_control {s=8192}\n"
+                "bundle/1/pg_data/postgresql.conf {s=11, ts=-1600000}\n"
+                "bundle/2/pg_data/base/1/3 {s=24576, so=40960, m=0:{0,1,2}}\n"
+                "bundle/2/pg_data/base/1/4 {s=32768, so=40960, m=0:{0,1,2,3}}\n"
+                "pg_data/backup_label {s=17, ts=+2}\n"
+                "--------\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n",
+                "compare file list");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online 9.6 backup-standby incr backup with block incremental");
+
+        backupTimeStart = BACKUP_EPOCH + 1700000;
+
+        {
+            // Load options
+            StringList *argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pg1Path);
+            hrnCfgArgKeyRaw(argList, cfgOptPgPath, 2, pg2Path);
+            hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5433");
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeIncr);
+            hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
+            hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
+            hrnCfgArgRawBool(argList, cfgOptCompress, false);
+            hrnCfgArgRawBool(argList, cfgOptBackupStandby, true);
+            hrnCfgArgRawBool(argList, cfgOptStartFast, true);
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            // Increase size of file on standby. This demonstrates that copy is using the larger file from the primary as the basis
+            // for how far to read.
+            Buffer *relation = bufNew(pgPageSize8 * 4);
+            memset(bufPtr(relation), 0, bufSize(relation));
+            bufUsedSet(relation, bufSize(relation));
+
+            HRN_STORAGE_PUT(storagePgIdxWrite(1), PG_PATH_BASE "/1/3", relation);
+
+            // Set log level to warn because the following test uses multiple processes so the log order will not be deterministic
+            harnessLogLevelSet(logLevelWarn);
+
+            // Run backup
+            hrnBackupPqScriptP(PG_VERSION_96, backupTimeStart, .backupStandby = true, .startFast = true);
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+
+            // Set log level back to detail
+            harnessLogLevelSet(logLevelDetail);
+
+            TEST_RESULT_STR_Z(
+                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                ".> {d=20191020-193320F_20191021-232000I}\n"
+                "bundle/1/pg_data/global/pg_control {s=8192}\n"
+                "bundle/2/pg_data/base/1/3 {s=32768, so=40960, m=0:{0,1,2},1:{0}, ts=-100000}\n"
+                "pg_data/backup_label {s=17, ts=+2}\n"
+                "20191020-193320F/bundle/1/pg_data/PG_VERSION {s=3, ts=-500000}\n"
+                "20191020-193320F/bundle/2/pg_data/base/1/4 {s=32768, so=40960, m=0:{0,1,2,3}, ts=-100000}\n"
+                "20191020-193320F/bundle/1/pg_data/postgresql.conf {s=11, ts=-1700000}\n"
+                "--------\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n",
+                "compare file list");
         }
 
         // -------------------------------------------------------------------------------------------------------------------------

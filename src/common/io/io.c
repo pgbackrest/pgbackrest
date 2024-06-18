@@ -31,7 +31,7 @@ ioBufferSize(void)
 }
 
 FN_EXTERN void
-ioBufferSizeSet(size_t bufferSizeParam)
+ioBufferSizeSet(const size_t bufferSizeParam)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(SIZE, bufferSizeParam);
@@ -51,7 +51,7 @@ ioTimeoutMs(void)
 }
 
 FN_EXTERN void
-ioTimeoutMsSet(TimeMSec timeoutMsParam)
+ioTimeoutMsSet(const TimeMSec timeoutMsParam)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(TIME_MSEC, timeoutMsParam);
@@ -64,7 +64,7 @@ ioTimeoutMsSet(TimeMSec timeoutMsParam)
 
 /**********************************************************************************************************************************/
 FN_EXTERN Buffer *
-ioReadBuf(IoRead *read)
+ioReadBuf(IoRead *const read)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_READ, read);
@@ -72,13 +72,11 @@ ioReadBuf(IoRead *read)
 
     ASSERT(read != NULL);
 
-    Buffer *result = NULL;
+    Buffer *const result = bufNew(0);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Read IO into the buffer
-        result = bufNew(0);
-
         do
         {
             bufResize(result, bufSize(result) + ioBufferSize());
@@ -142,7 +140,7 @@ ioCopy(IoRead *const source, IoWrite *const destination, const IoCopyParam param
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-ioReadDrain(IoRead *read)
+ioReadDrain(IoRead *const read)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(IO_READ, read);

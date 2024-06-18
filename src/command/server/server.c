@@ -93,7 +93,7 @@ cmdServerSigTerm(const int signalType)
 Handler to reap child processes
 ***********************************************************************************************************************************/
 static void
-cmdServerSigChild(const int signalType, siginfo_t *signalInfo, void *context)
+cmdServerSigChild(const int signalType, siginfo_t *const signalInfo, void *const context)
 {
     (void)signalType;
     (void)context;

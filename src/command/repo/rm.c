@@ -31,7 +31,7 @@ cmdStorageRemove(void)
             path = repoPathIsValid(path);
 
         // Check if this is a file
-        StorageInfo info = storageInfoP(storageRepo(), path, .ignoreMissing = true);
+        const StorageInfo info = storageInfoP(storageRepo(), path, .ignoreMissing = true);
 
         if (info.exists && info.type == storageTypeFile)
         {
@@ -40,7 +40,7 @@ cmdStorageRemove(void)
         // Else try to remove a path
         else
         {
-            bool recurse = cfgOptionBool(cfgOptRecurse);
+            const bool recurse = cfgOptionBool(cfgOptRecurse);
 
             if (!recurse && !strLstEmpty(storageListP(storageRepo(), path)))
                 THROW(OptionInvalidError, CFGOPT_RECURSE " option must be used to delete non-empty path");

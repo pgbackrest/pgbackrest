@@ -51,6 +51,10 @@ uint32_t hrnPgInterfaceCatalogVersion160(void);
 void hrnPgInterfaceControl160(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
 void hrnPgInterfaceWal160(unsigned int magic, PgWal pgWal, unsigned char *buffer);
 
+uint32_t hrnPgInterfaceCatalogVersion170(void);
+void hrnPgInterfaceControl170(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceWal170(unsigned int magic, PgWal pgWal, unsigned char *buffer);
+
 typedef struct HrnPgInterface
 {
     // Version of PostgreSQL supported by this interface
@@ -68,6 +72,13 @@ typedef struct HrnPgInterface
 
 static const HrnPgInterface hrnPgInterface[] =
 {
+    {
+        .version = PG_VERSION_17,
+
+        .catalogVersion = hrnPgInterfaceCatalogVersion170,
+        .control = hrnPgInterfaceControl170,
+        .wal = hrnPgInterfaceWal170,
+    },
     {
         .version = PG_VERSION_16,
 
@@ -195,7 +206,7 @@ hrnPgControlToBuffer(const unsigned int controlVersion, const unsigned int crc, 
     pgControl.pageSize = pgControl.pageSize == 0 ? pgPageSize8 : pgControl.pageSize;
     pgControl.walSegmentSize =
         pgControl.walSegmentSize == UINT_MAX ?
-            0 : (pgControl.walSegmentSize == 0 ? PG_WAL_SEGMENT_SIZE_DEFAULT : pgControl.walSegmentSize);
+            0 : (pgControl.walSegmentSize == 0 ? HRN_PG_WAL_SEGMENT_SIZE_DEFAULT : pgControl.walSegmentSize);
     pgControl.catalogVersion =
         pgControl.catalogVersion == 0 ? hrnPgInterfaceVersion(pgControl.version)->catalogVersion() : pgControl.catalogVersion;
     pgControl.systemId = pgControl.systemId < 100 ? hrnPgSystemId(pgControl.version) + pgControl.systemId : pgControl.systemId;
@@ -227,7 +238,7 @@ hrnPgWalToBuffer(Buffer *const walBuffer, const unsigned int magic, PgWal pgWal)
 
     // Set default WAL segment size if not specified
     if (pgWal.size == 0)
-        pgWal.size = PG_WAL_SEGMENT_SIZE_DEFAULT;
+        pgWal.size = HRN_PG_WAL_SEGMENT_SIZE_DEFAULT;
 
     // Set default system id if not specified
     if (pgWal.systemId < 100)

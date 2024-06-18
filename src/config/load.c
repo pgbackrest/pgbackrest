@@ -8,12 +8,12 @@ Configuration Load
 #include <unistd.h>
 
 #include "command/command.h"
+#include "command/lock.h"
 #include "common/compress/helper.intern.h"
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/io/io.h"
 #include "common/io/socket/common.h"
-#include "common/lock.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.intern.h"
@@ -144,7 +144,7 @@ cfgLoadUpdateOption(void)
         }
         else if (cfgOptionSource(cfgOptDbTimeout) == cfgSourceDefault)
         {
-            int64_t dbTimeout = cfgOptionInt64(cfgOptProtocolTimeout) - (int64_t)(30 * MSEC_PER_SEC);
+            const int64_t dbTimeout = cfgOptionInt64(cfgOptProtocolTimeout) - (int64_t)(30 * MSEC_PER_SEC);
 
             // Normally the protocol time will be greater than 45 seconds so db timeout can be at least 15 seconds
             if (dbTimeout >= (int64_t)(15 * MSEC_PER_SEC))
@@ -216,16 +216,16 @@ cfgLoadUpdateOption(void)
         {
             const BackupType archiveRetentionType = (BackupType)cfgOptionIdxStrId(cfgOptRepoRetentionArchiveType, optionIdx);
 
-            const String *msgArchiveOff = strNewFmt(
-                "WAL segments will not be expired: option '%s=%s' but", cfgOptionIdxName(cfgOptRepoRetentionArchiveType, optionIdx),
-                strZ(strIdToStr(archiveRetentionType)));
-
             // If the archive retention is not explicitly set then determine what it should be defaulted to
             if (!cfgOptionIdxTest(cfgOptRepoRetentionArchive, optionIdx))
             {
                 // If repo-retention-archive-type is default (full), then if repo-retention-full is set, set the
                 // repo-retention-archive to this value when retention-full-type is 'count', else ignore archiving. If
                 // retention-full-type is 'time' then the expire command will default the archive retention accordingly.
+                const String *const msgArchiveOff = strNewFmt(
+                    "WAL segments will not be expired: option '%s=%s' but",
+                    cfgOptionIdxName(cfgOptRepoRetentionArchiveType, optionIdx), strZ(strIdToStr(archiveRetentionType)));
+
                 switch (archiveRetentionType)
                 {
                     case backupTypeFull:
@@ -566,15 +566,13 @@ cfgLoad(const unsigned int argListSize, const char *argList[])
             // Begin the command
             cmdBegin();
 
-            // Init lock module if this command can lock
-            if (cfgLockType() != lockTypeNone && !cfgCommandHelp())
-            {
-                lockInit(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptExecId), cfgOptionStr(cfgOptStanza), cfgLockType());
+            // Initialize the lock module
+            if (cfgOptionTest(cfgOptLockPath))
+                lockInit(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptExecId));
 
-                // Acquire a lock if this command requires a lock
-                if (cfgLockRequired())
-                    lockAcquireP();
-            }
+            // Acquire a lock if this command requires a lock
+            if (cfgLockType() != lockTypeNone && !cfgCommandHelp() && cfgLockRequired())
+                cmdLockAcquireP();
 
             // Update options that have complex rules
             cfgLoadUpdateOption();

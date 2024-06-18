@@ -11,7 +11,7 @@ Gz Common
 
 /**********************************************************************************************************************************/
 FN_EXTERN int
-gzError(int error)
+gzError(const int error)
 {
     if (error != Z_OK && error != Z_STREAM_END)
     {

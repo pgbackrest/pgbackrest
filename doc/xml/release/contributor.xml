@@ -125,6 +125,11 @@
     <contributor-id type="github">bradnicholson</contributor-id>
 </contributor>
 
+<contributor id="bradford.boyle">
+    <contributor-name-display>Bradford Boyle</contributor-name-display>
+    <contributor-id type="github">bradfordboyle</contributor-id>
+</contributor>
+
 <contributor id="brent.graveland">
     <contributor-name-display>Brent Graveland</contributor-name-display>
     <contributor-id type="github">graveland</contributor-id>
@@ -785,6 +790,11 @@
     <contributor-id type="github">seinick</contributor-id>
 </contributor>
 
+<contributor id="nicolas.lassimonne">
+    <contributor-name-display>Nicolas Lassimonne</contributor-name-display>
+    <contributor-id type="github">nLassimonneAdveez</contributor-id>
+</contributor>
+
 <contributor id="nikhilchandra.kulkarni">
     <contributor-name-display>Nikhilchandra Kulkarni</contributor-name-display>
     <contributor-id type="github">nikhilchandra-kulkarni</contributor-id>
@@ -895,6 +905,11 @@
     <contributor-id type="github">shkshk90</contributor-id>
 </contributor>
 
+<contributor id="samkingno">
+    <contributor-name-display>samkingno</contributor-name-display>
+    <contributor-id type="github">samkingno</contributor-id>
+</contributor>
+
 <contributor id="sarah.conway">
     <contributor-name-display>Sarah Conway</contributor-name-display>
     <contributor-id type="github">xenophenes</contributor-id>
@@ -968,6 +983,11 @@
 <contributor id="tim.garton">
     <contributor-name-display>Tim Garton</contributor-name-display>
     <contributor-id type="github">ralfthewise</contributor-id>
+</contributor>
+
+<contributor id="tim.jones">
+    <contributor-name-display>Tim Jones</contributor-name-display>
+    <contributor-id type="github">udf2457</contributor-id>
 </contributor>
 
 <contributor id="timothee.peignier">

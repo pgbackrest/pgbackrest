@@ -41,7 +41,7 @@ archiveGetFile(
 
     for (unsigned int actualIdx = 0; actualIdx < lstSize(actualList); actualIdx++)
     {
-        ArchiveGetFile *actual = lstGet(actualList, actualIdx);
+        const ArchiveGetFile *const actual = lstGet(actualList, actualIdx);
 
         // Is the file compressible during the copy?
         bool compressible = true;
@@ -50,7 +50,7 @@ archiveGetFile(
         {
             MEM_CONTEXT_TEMP_BEGIN()
             {
-                StorageWrite *destination = storageNewWriteP(
+                StorageWrite *const destination = storageNewWriteP(
                     storage, walDestination, .noCreatePath = true, .noSyncFile = true, .noSyncPath = true, .noAtomic = true);
 
                 // If there is a cipher then add the decrypt filter

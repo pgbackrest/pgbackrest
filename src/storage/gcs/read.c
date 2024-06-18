@@ -78,7 +78,7 @@ storageReadGcsOpen(THIS_VOID)
 Read from a file
 ***********************************************************************************************************************************/
 static size_t
-storageReadGcs(THIS_VOID, Buffer *buffer, bool block)
+storageReadGcs(THIS_VOID, Buffer *const buffer, const bool block)
 {
     THIS(StorageReadGcs);
 

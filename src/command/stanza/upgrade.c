@@ -44,18 +44,18 @@ cmdStanzaUpgrade(void)
                 CFGCMD_STANZA_UPGRADE " for stanza '%s' on %s", strZ(cfgOptionDisplay(cfgOptStanza)),
                 cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
-            const Storage *storageRepoReadStanza = storageRepoIdx(repoIdx);
-            const Storage *storageRepoWriteStanza = storageRepoIdxWrite(repoIdx);
+            const Storage *const storageRepoReadStanza = storageRepoIdx(repoIdx);
+            const Storage *const storageRepoWriteStanza = storageRepoIdxWrite(repoIdx);
             bool infoArchiveUpgrade = false;
             bool infoBackupUpgrade = false;
 
             // Load the info files (errors if missing)
-            InfoArchive *infoArchive = infoArchiveLoadFile(
+            InfoArchive *const infoArchive = infoArchiveLoadFile(
                 storageRepoReadStanza, INFO_ARCHIVE_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
             InfoPgData archiveInfo = infoPgData(infoArchivePg(infoArchive), infoPgDataCurrentId(infoArchivePg(infoArchive)));
 
-            InfoBackup *infoBackup = infoBackupLoadFile(
+            InfoBackup *const infoBackup = infoBackupLoadFile(
                 storageRepoReadStanza, INFO_BACKUP_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
             InfoPgData backupInfo = infoPgData(infoBackupPg(infoBackup), infoPgDataCurrentId(infoBackupPg(infoBackup)));

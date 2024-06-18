@@ -32,7 +32,7 @@ Macros for function logging
 Read data from the buffer
 ***********************************************************************************************************************************/
 static size_t
-ioBufferRead(THIS_VOID, Buffer *buffer, bool block)
+ioBufferRead(THIS_VOID, Buffer *const buffer, const bool block)
 {
     THIS(IoBufferRead);
 

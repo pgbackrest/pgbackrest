@@ -30,7 +30,7 @@ list will be no longer than size even if multiple delimiters are skipped. This i
 example.
 ***********************************************************************************************************************************/
 static StringList *
-helpRenderSplitSize(const String *string, const char *delimiter, size_t size)
+helpRenderSplitSize(const String *const string, const char *const delimiter, const size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, string);
@@ -43,7 +43,7 @@ helpRenderSplitSize(const String *string, const char *delimiter, size_t size)
     ASSERT(size > 0);
 
     // Create the list
-    StringList *this = strLstNew();
+    StringList *const this = strLstNew();
 
     // Base points to the beginning of the string that is being searched
     const char *stringBase = strZ(string);
@@ -132,7 +132,7 @@ helpRenderText(
                 strCat(result, LF_STR);
 
             // Split the paragraph into lines that don't exceed the line length
-            StringList *const partList = helpRenderSplitSize(strLstGet(lineList, lineIdx), " ", length - indent);
+            const StringList *const partList = helpRenderSplitSize(strLstGet(lineList, lineIdx), " ", length - indent);
 
             for (unsigned int partIdx = 0; partIdx < strLstSize(partList); partIdx++)
             {
@@ -231,17 +231,17 @@ Render help to a string
 typedef struct HelpCommandData
 {
     bool internal;                                                  // Is the command internal?
-    String *summary;                                                // Short summary of the command
-    String *description;                                            // Full description of the command
+    const String *summary;                                          // Short summary of the command
+    const String *description;                                      // Full description of the command
 } HelpCommandData;
 
 // Stored unpacked option data
 typedef struct HelpOptionData
 {
     bool internal;                                                  // Is the option internal?
-    String *section;                                                // eg. general, command
-    String *summary;                                                // Short summary of the option
-    String *description;                                            // Full description of the option
+    const String *section;                                          // eg. general, command
+    const String *summary;                                          // Short summary of the option
+    const String *description;                                      // Full description of the option
     StringList *deprecatedNames;                                    // Deprecated names for the option
 } HelpOptionData;
 
@@ -252,7 +252,7 @@ helpRender(const Buffer *const helpData)
         FUNCTION_LOG_PARAM(BUFFER, helpData);
     FUNCTION_LOG_END();
 
-    String *result = strCatZ(strNew(), PROJECT_NAME " " PROJECT_VERSION);
+    String *const result = strCatZ(strNew(), PROJECT_NAME " " PROJECT_VERSION);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -264,10 +264,10 @@ helpRender(const Buffer *const helpData)
         ioFilterGroupAdd(ioReadFilterGroup(helpRead), bz2DecompressNew(false));
         ioReadOpen(helpRead);
 
-        PackRead *pckHelp = pckReadNewIo(helpRead);
+        PackRead *const pckHelp = pckReadNewIo(helpRead);
 
         // Unpack command data
-        HelpCommandData *commandData = memNew(sizeof(HelpCommandData) * CFG_COMMAND_TOTAL);
+        HelpCommandData *const commandData = memNew(sizeof(HelpCommandData) * CFG_COMMAND_TOTAL);
 
         pckReadArrayBeginP(pckHelp);
 
@@ -327,11 +327,11 @@ helpRender(const Buffer *const helpData)
         }
         else
         {
-            ConfigCommand commandId = cfgCommand();
-            const char *commandName = cfgParseCommandName(commandId);
+            const ConfigCommand commandId = cfgCommand();
+            const char *const commandName = cfgParseCommandName(commandId);
 
             // Unpack option data
-            HelpOptionData *optionData = memNew(sizeof(HelpOptionData) * CFG_OPTION_TOTAL);
+            HelpOptionData *const optionData = memNew(sizeof(HelpOptionData) * CFG_OPTION_TOTAL);
 
             pckReadArrayBeginP(pckHelp);
 
@@ -366,14 +366,14 @@ helpRender(const Buffer *const helpData)
                     while (pckReadNext(pckHelp))
                     {
                         // Get command override id
-                        ConfigCommand commandIdArray = pckReadId(pckHelp) - 1;
+                        const ConfigCommand commandIdArray = pckReadId(pckHelp) - 1;
 
                         // Unpack override data
                         pckReadObjBeginP(pckHelp, .id = commandIdArray + 1);
 
-                        bool internal = pckReadBoolP(pckHelp, .defaultValue = optionData[optionId].internal);
-                        String *summary = pckReadStrP(pckHelp, .defaultValue = optionData[optionId].summary);
-                        String *description = pckReadStrP(pckHelp, .defaultValue = optionData[optionId].description);
+                        const bool internal = pckReadBoolP(pckHelp, .defaultValue = optionData[optionId].internal);
+                        const String *const summary = pckReadStrP(pckHelp, .defaultValue = optionData[optionId].summary);
+                        const String *const description = pckReadStrP(pckHelp, .defaultValue = optionData[optionId].description);
 
                         pckReadObjEndP(pckHelp);
 
@@ -417,7 +417,7 @@ helpRender(const Buffer *const helpData)
                             commandData[commandId].description, commandData[commandId].internal, false, 0, true, CONSOLE_WIDTH)));
 
                 // Construct key/value of sections and options
-                KeyValue *optionKv = kvNew();
+                KeyValue *const optionKv = kvNew();
                 size_t optionSizeMax = 0;
 
                 for (unsigned int optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
@@ -441,23 +441,23 @@ helpRender(const Buffer *const helpData)
                 }
 
                 // Output sections
-                StringList *sectionList = strLstSort(strLstNewVarLst(kvKeyList(optionKv)), sortOrderAsc);
+                const StringList *const sectionList = strLstSort(strLstNewVarLst(kvKeyList(optionKv)), sortOrderAsc);
 
                 for (unsigned int sectionIdx = 0; sectionIdx < strLstSize(sectionList); sectionIdx++)
                 {
-                    const String *section = strLstGet(sectionList, sectionIdx);
+                    const String *const section = strLstGet(sectionList, sectionIdx);
 
                     strCatFmt(result, "\n%s Options:\n\n", strZ(strFirstUpper(strDup(section))));
 
                     // Output options
-                    VariantList *optionList = kvGetList(optionKv, VARSTR(section));
+                    const VariantList *const optionList = kvGetList(optionKv, VARSTR(section));
 
                     for (unsigned int optionIdx = 0; optionIdx < varLstSize(optionList); optionIdx++)
                     {
-                        ConfigOption optionId = varUInt(varLstGet(optionList, optionIdx));
+                        const ConfigOption optionId = varUInt(varLstGet(optionList, optionIdx));
 
                         // Get option summary and lower-case first letter if it does not appear to be part of an acronym
-                        String *summary = strCatN(
+                        String *const summary = strCatN(
                             strNew(), optionData[optionId].summary, strSize(optionData[optionId].summary) - 1);
                         ASSERT(strSize(summary) > 1);
 
@@ -465,8 +465,8 @@ helpRender(const Buffer *const helpData)
                             strFirstLower(summary);
 
                         // Output current and default values if they exist
-                        const String *defaultValue = cfgOptionDefault(optionId);
-                        const String *value = helpRenderValue(optionId, 0);
+                        const String *const defaultValue = cfgOptionDefault(optionId);
+                        const String *const value = helpRenderValue(optionId, 0);
 
                         if (value != NULL || defaultValue != NULL)
                         {
@@ -506,8 +506,8 @@ helpRender(const Buffer *const helpData)
                     THROW(ParamInvalidError, "only one option allowed for option help");
 
                 // Ensure the option is valid
-                const String *optionName = strLstGet(cfgCommandParam(), 0);
-                CfgParseOptionResult option = cfgParseOptionP(optionName, .ignoreMissingIndex = true);
+                const String *const optionName = strLstGet(cfgCommandParam(), 0);
+                const CfgParseOptionResult option = cfgParseOptionP(optionName, .ignoreMissingIndex = true);
 
                 // Error when option is not found or is invalid for the current command
                 if (!option.found || !cfgParseOptionValid(cfgCommand(), cfgCmdRoleMain, option.id))
@@ -533,8 +533,8 @@ helpRender(const Buffer *const helpData)
                             CONSOLE_WIDTH)));
 
                 // Output current and default values if they exist
-                const String *defaultValue = cfgOptionDefault(option.id);
-                const String *value = helpRenderValue(option.id, 0);
+                const String *const defaultValue = cfgOptionDefault(option.id);
+                const String *const value = helpRenderValue(option.id, 0);
 
                 if (value != NULL || defaultValue != NULL)
                 {

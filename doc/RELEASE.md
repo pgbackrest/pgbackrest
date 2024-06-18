@@ -177,6 +177,11 @@ Run deploy to generate git history (ctrl-c as soon as the file is generated):
 pgbackrest/doc/release.pl --build
 ```
 
+Run code count to add new release file:
+```
+pgbackrest/test/test.pl --code-count
+```
+
 Commit and push to integration:
 ```
 git commit -m "Begin v2.15 development."

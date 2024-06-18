@@ -62,14 +62,14 @@ cfgParseSize(const String *const value)
     ASSERT(value != NULL);
 
     // Lowercase the value
-    String *valueLower = strLower(strDup(value));
+    String *const valueLower = strLower(strDup(value));
 
     // Match the value against possible values
     if (regExpMatchOne(STRDEF("^[0-9]+(kib|kb|k|mib|mb|m|gib|gb|g|tib|tb|t|pib|pb|p|b)*$"), valueLower))
     {
         // Get the character array and size
-        const char *strArray = strZ(valueLower);
-        size_t size = strSize(valueLower);
+        const char *const strArray = strZ(valueLower);
+        const size_t size = strSize(valueLower);
         int chrPos = -1;
 
         // If there is a 'b' on the end, then see if the previous character is a number

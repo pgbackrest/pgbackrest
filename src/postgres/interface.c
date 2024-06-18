@@ -102,7 +102,7 @@ typedef struct PgControlCommon
 Get the interface for a PostgreSQL version
 ***********************************************************************************************************************************/
 static const PgInterface *
-pgInterfaceVersion(unsigned int pgVersion)
+pgInterfaceVersion(const unsigned int pgVersion)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgVersion);
@@ -169,19 +169,11 @@ pgDbIsSystemId(const unsigned int id)
 Check expected WAL segment size for older PostgreSQL versions
 ***********************************************************************************************************************************/
 static void
-pgWalSegmentSizeCheck(unsigned int pgVersion, unsigned int walSegmentSize)
+pgWalSegmentSizeCheck(const unsigned int walSegmentSize)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT, pgVersion);
         FUNCTION_TEST_PARAM(UINT, walSegmentSize);
     FUNCTION_TEST_END();
-
-    if (pgVersion < PG_VERSION_11 && walSegmentSize != PG_WAL_SEGMENT_SIZE_DEFAULT)
-    {
-        THROW_FMT(
-            FormatError, "wal segment size is %u but must be %u for " PG_NAME " <= " PG_VERSION_10_Z, walSegmentSize,
-            PG_WAL_SEGMENT_SIZE_DEFAULT);
-    }
 
     // Check that the WAL segment size is valid
     if (!IsValidWalSegSize(walSegmentSize))
@@ -278,7 +270,7 @@ pgControlCrcUpdate(Buffer *const controlFile, const unsigned int pgVersion, cons
 
 /**********************************************************************************************************************************/
 static PgControl
-pgControlFromBuffer(const Buffer *controlFile, const String *const pgVersionForce)
+pgControlFromBuffer(const Buffer *const controlFile, const String *const pgVersionForce)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BUFFER, controlFile);
@@ -326,7 +318,7 @@ pgControlFromBuffer(const Buffer *controlFile, const String *const pgVersionForc
     pgControlCrcValidate(controlFile, interface, pgVersionForce != NULL);
 
     // Check the segment size
-    pgWalSegmentSizeCheck(result.version, result.walSegmentSize);
+    pgWalSegmentSizeCheck(result.walSegmentSize);
 
     // Check the page size
     pgPageSizeCheck(result.pageSize);
@@ -364,7 +356,7 @@ pgControlBufferFromFile(const Storage *const storage, const String *const pgVers
 
     ASSERT(storage != NULL);
 
-    Buffer *result = NULL;
+    Buffer *result;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -429,7 +421,7 @@ pgControlFromFile(const Storage *const storage, const String *const pgVersionFor
     ASSERT(storage != NULL);
 
     Buffer *const buffer = pgControlBufferFromFile(storage, pgVersionForce);
-    PgControl result = pgControlFromBuffer(buffer, pgVersionForce);
+    const PgControl result = pgControlFromBuffer(buffer, pgVersionForce);
 
     bufFree(buffer);
 
@@ -459,7 +451,7 @@ pgControlCheckpointInvalidate(Buffer *const buffer, const String *const pgVersio
 
 /**********************************************************************************************************************************/
 FN_EXTERN uint32_t
-pgControlVersion(unsigned int pgVersion)
+pgControlVersion(const unsigned int pgVersion)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgVersion);
@@ -482,7 +474,7 @@ typedef struct PgWalCommon
 
 /**********************************************************************************************************************************/
 FN_EXTERN PgWal
-pgWalFromBuffer(const Buffer *walBuffer, const String *const pgVersionForce)
+pgWalFromBuffer(const Buffer *const walBuffer, const String *const pgVersionForce)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BUFFER, walBuffer);
@@ -529,13 +521,13 @@ pgWalFromBuffer(const Buffer *walBuffer, const String *const pgVersionForce)
     result.version = interface->version;
 
     // Check the segment size
-    pgWalSegmentSizeCheck(result.version, result.size);
+    pgWalSegmentSizeCheck(result.size);
 
     FUNCTION_LOG_RETURN(PG_WAL, result);
 }
 
 FN_EXTERN PgWal
-pgWalFromFile(const String *walFile, const Storage *storage, const String *const pgVersionForce)
+pgWalFromFile(const String *const walFile, const Storage *const storage, const String *const pgVersionForce)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, walFile);
@@ -544,12 +536,12 @@ pgWalFromFile(const String *walFile, const Storage *storage, const String *const
 
     ASSERT(walFile != NULL);
 
-    PgWal result = {0};
+    PgWal result;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Read WAL segment header
-        Buffer *walBuffer = storageGetP(storageNewReadP(storage, walFile), .exactSize = PG_WAL_HEADER_SIZE);
+        const Buffer *const walBuffer = storageGetP(storageNewReadP(storage, walFile), .exactSize = PG_WAL_HEADER_SIZE);
 
         result = pgWalFromBuffer(walBuffer, pgVersionForce);
     }
@@ -560,18 +552,18 @@ pgWalFromFile(const String *walFile, const Storage *storage, const String *const
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-pgTablespaceId(unsigned int pgVersion, unsigned int pgCatalogVersion)
+pgTablespaceId(const unsigned int pgVersion, const unsigned int pgCatalogVersion)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgVersion);
         FUNCTION_TEST_PARAM(UINT, pgCatalogVersion);
     FUNCTION_TEST_END();
 
-    String *result = NULL;
+    String *result;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *pgVersionStr = pgVersionToStr(pgVersion);
+        const String *const pgVersionStr = pgVersionToStr(pgVersion);
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
@@ -596,7 +588,7 @@ pgLsnFromStr(const String *lsn)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        StringList *lsnPart = strLstNewSplit(lsn, FSLASH_STR);
+        const StringList *const lsnPart = strLstNewSplit(lsn, FSLASH_STR);
 
         CHECK(FormatError, strLstSize(lsnPart) == 2, "lsn requires two parts");
 
@@ -608,7 +600,7 @@ pgLsnFromStr(const String *lsn)
 }
 
 FN_EXTERN String *
-pgLsnToStr(uint64_t lsn)
+pgLsnToStr(const uint64_t lsn)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT64, lsn);
@@ -619,7 +611,7 @@ pgLsnToStr(uint64_t lsn)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-pgLsnToWalSegment(uint32_t timeline, uint64_t lsn, unsigned int walSegmentSize)
+pgLsnToWalSegment(const uint32_t timeline, const uint64_t lsn, const unsigned int walSegmentSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, timeline);
@@ -697,7 +689,7 @@ pgLsnRangeToWalSegmentList(
 
 /**********************************************************************************************************************************/
 FN_EXTERN const String *
-pgLsnName(unsigned int pgVersion)
+pgLsnName(const unsigned int pgVersion)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgVersion);
@@ -710,7 +702,7 @@ pgLsnName(unsigned int pgVersion)
 Get WAL name (wal/xlog) for a PostgreSQL version
 ***********************************************************************************************************************************/
 FN_EXTERN const String *
-pgWalName(unsigned int pgVersion)
+pgWalName(const unsigned int pgVersion)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgVersion);
@@ -721,7 +713,7 @@ pgWalName(unsigned int pgVersion)
 
 /**********************************************************************************************************************************/
 FN_EXTERN const String *
-pgWalPath(unsigned int pgVersion)
+pgWalPath(const unsigned int pgVersion)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgVersion);
@@ -732,7 +724,7 @@ pgWalPath(unsigned int pgVersion)
 
 /**********************************************************************************************************************************/
 FN_EXTERN const String *
-pgXactPath(unsigned int pgVersion)
+pgXactPath(const unsigned int pgVersion)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgVersion);
@@ -767,7 +759,7 @@ pgVersionFromStr(const String *const version)
 }
 
 FN_EXTERN String *
-pgVersionToStr(unsigned int version)
+pgVersionToStr(const unsigned int version)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, version);

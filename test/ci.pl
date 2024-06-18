@@ -150,7 +150,7 @@ eval
 
     if ($ARGV[0] eq 'doc')
     {
-        if ($strVm eq VM_RH7 || $strVm eq VM_RH8)
+        if ($strVm eq VM_RH8)
         {
             processBegin('LaTeX install');
             processExec(
@@ -182,14 +182,8 @@ eval
     {
         # Build list of packages that need to be installed
         my $strPackage =
-            "gcc ccache python3-pip git rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config uncrustify" .
+            "gcc ccache python3-distutils git rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config uncrustify" .
             " libssh2-1-dev valgrind";
-
-        # Add lcov when testing coverage
-        if (vmCoverageC($strVm))
-        {
-            $strPackage .= " lcov";
-        }
 
         # Extra packages required when testing without containers
         if ($strVm eq VM_NONE)

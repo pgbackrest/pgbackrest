@@ -310,6 +310,19 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("HttpResponseMulti"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("errors");
+
+        TEST_ERROR(httpResponseMultiNew(BUFSTRDEF(""), NULL), FormatError, "expected multipart content type");
+        TEST_ERROR(httpResponseMultiNew(BUFSTRDEF(""), STRDEF("bogus")), FormatError, "expected multipart content type");
+        TEST_ERROR(
+            strNewBuf(httpResponseMultiNew(BUFSTRDEF("--YYY"), STRDEF("multipart/mixed; boundary=\"XXX\""))->boundary),
+            FormatError, "multipart boundary 'XXX' not found");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("HttpClient"))
     {
         char logBuf[STACK_TRACE_PARAM_MAX];
@@ -842,9 +855,118 @@ testRun(void)
                 TEST_RESULT_STR_Z(strNewBuf(buffer), "", "check response");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("close connection and end server process");
+                TEST_TITLE("request with multipart request and response");
+
+                ioBufferSizeSet(512);
+
+                hrnServerScriptAccept(http);
+
+                hrnServerScriptExpectZ(
+                    http,
+                    "GET / HTTP/1.1\r\n" TEST_USER_AGENT
+                    "content-type:multipart/mixed; boundary=QKX4EYg4LARJ\r\n"
+                    "hdr1:1\r\n\r\n"
+                    "\r\n--QKX4EYg4LARJ\r\n"
+                    "content-type:application/http\r\n"
+                    "content-transfer-encoding:binary\r\n"
+                    "content-id:0\r\n\r\n"
+                    "GET / HTTP/1.1\r\n\r\n"
+                    "\r\n--QKX4EYg4LARJ\r\n"
+                    "content-type:application/http\r\n"
+                    "content-transfer-encoding:binary\r\n"
+                    "content-id:1\r\n\r\n"
+                    "POST /ack HTTP/1.1\r\n"
+                    "content-length:3\r\n\r\n"
+                    HTTP_MULTIPART_BOUNDARY_INIT
+                    "\r\n--QKX4EYg4LARJ--\r\n");
+                hrnServerScriptReplyZ(
+                    http,
+                    "HTTP/1.1 200 OK\r\nConnection:ClosE\r\ncontent-type:multipart/mixed; boundary=XXX\r\n\r\n"
+                    "PREAMBLE JUNK\r\n"
+                    "--XXX\r\n"
+                    "content-type:application/http\r\n"
+                    "content-id:0\r\n\r\n"
+                    "HTTP/1.1 200 OK\r\n\r\n"
+                    "\r\n--XXX\r\n"
+                    "content-type:application/http\r\n"
+                    "content-id:1\r\n"
+                    "\r\n"
+                    "HTTP/1.1 200 OK\r\n"
+                    "content-length:3\r\n"
+                    "\r\n"
+                    "123"
+                    "\r\n--XXX\n"
+                    "EPILOGUE JUNK");
 
                 hrnServerScriptClose(http);
+
+                HttpRequestMulti *requestMulti = httpRequestMultiNew();
+                httpRequestMultiAddP(requestMulti, STRDEF("0"), HTTP_VERB_GET_STR, STRDEF("/"), .header = httpHeaderNew(NULL));
+                httpRequestMultiAddP(
+                    requestMulti, STRDEF("1"), HTTP_VERB_POST_STR, STRDEF("/ack"),
+                    .header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, STRDEF("3")),
+                    .content = BUFSTRDEF(HTTP_MULTIPART_BOUNDARY_INIT));
+
+                HttpHeader *headerRequest = httpHeaderNew(NULL);
+                httpHeaderAdd(headerRequest, STRDEF("hdr1"), STRDEF("1"));
+                httpRequestMultiHeaderAdd(requestMulti, headerRequest);
+
+                TEST_ASSIGN(
+                    response,
+                    httpRequestResponse(
+                        httpRequestNewP(
+                            client, STRDEF("GET"), STRDEF("/"), .header = headerRequest,
+                            .content = httpRequestMultiContent(requestMulti)),
+                        false),
+                    "request");
+                TEST_RESULT_VOID(
+                    FUNCTION_LOG_OBJECT_FORMAT(httpResponseHeader(response), httpHeaderToLog, logBuf, sizeof(logBuf)),
+                    "httpHeaderToLog");
+                TEST_RESULT_Z(
+                    logBuf, "{connection: 'close', content-type: 'multipart/mixed; boundary=XXX'}", "check response headers");
+
+                HttpResponseMulti *responseMulti = NULL;
+                TEST_ASSIGN(
+                    responseMulti,
+                    httpResponseMultiNew(
+                        httpResponseContent(response), httpHeaderGet(httpResponseHeader(response), HTTP_HEADER_CONTENT_TYPE_STR)),
+                    "response multi");
+
+                HttpResponse *responsePart = NULL;
+                TEST_ASSIGN(responsePart, httpResponseMultiNext(responseMulti), "response part");
+                TEST_RESULT_UINT(httpResponseCode(responsePart), 200, "response code");
+                TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(responsePart)), "", "response content");
+
+                TEST_ASSIGN(responsePart, httpResponseMultiNext(responseMulti), "response part");
+                TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(responsePart)), "123", "response content");
+
+                TEST_RESULT_PTR(httpResponseMultiNext(responseMulti), NULL, "no more responses");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error on full boundary in header or content");
+
+                requestMulti = httpRequestMultiNew();
+                TEST_ERROR(
+                    httpRequestMultiAddP(
+                        requestMulti, STRDEF("0"), HTTP_VERB_GET_STR, STRDEF("/"),
+                        .header = httpHeaderAdd(
+                            httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR,
+                            STRDEF(HTTP_MULTIPART_BOUNDARY_INIT HTTP_MULTIPART_BOUNDARY_EXTRA))),
+                    AssertError, "unable to construct unique boundary");
+
+                requestMulti = httpRequestMultiNew();
+                TEST_ERROR(
+                    httpRequestMultiAddP(
+                        requestMulti, STRDEF("0"), HTTP_VERB_GET_STR, STRDEF("/"), .header = httpHeaderNew(NULL),
+                        .content = BUFSTRDEF(HTTP_MULTIPART_BOUNDARY_INIT HTTP_MULTIPART_BOUNDARY_EXTRA)),
+                    AssertError, "unable to construct unique boundary");
+                TEST_RESULT_BOOL(
+                    bufEq(requestMulti->boundaryRaw, BUFSTRDEF(HTTP_MULTIPART_BOUNDARY_INIT HTTP_MULTIPART_BOUNDARY_EXTRA)),
+                    true, "max boundary");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("end server process");
+
                 hrnServerScriptEnd(http);
             }
             HRN_FORK_PARENT_END();

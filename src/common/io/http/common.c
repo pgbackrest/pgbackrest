@@ -109,7 +109,7 @@ httpUriDecode(const String *const uri)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-httpUriEncode(const String *uri, bool path)
+httpUriEncode(const String *const uri, const bool path)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, uri);
@@ -126,7 +126,7 @@ httpUriEncode(const String *uri, bool path)
         // Iterate all characters in the string
         for (unsigned uriIdx = 0; uriIdx < strSize(uri); uriIdx++)
         {
-            char uriChar = strZ(uri)[uriIdx];
+            const char uriChar = strZ(uri)[uriIdx];
 
             // These characters are reproduced verbatim
             if ((uriChar >= 'A' && uriChar <= 'Z') || (uriChar >= 'a' && uriChar <= 'z') || (uriChar >= '0' && uriChar <= '9') ||

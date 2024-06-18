@@ -3,11 +3,11 @@
 ####################################################################################################################################
 doc_parse_auto_c_inc = custom_target(
     'doc_parse.auto.c.inc',
-    output : 'parse.auto.c.inc',
+    output: 'parse.auto.c.inc',
     depend_files: [
         '../build/config/config.yaml',
     ],
-    command : [
+    command: [
         build_code,
         'config',
         '@CURRENT_SOURCE_DIR@/../..',

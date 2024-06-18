@@ -61,6 +61,7 @@ testRun(void)
             "HINT: is this version of PostgreSQL supported?");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_94), 942, "9.4 control version");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_11), 1100, "11 control version");
+        TEST_RESULT_UINT(pgControlVersion(PG_VERSION_17), 1300, "17 control version");
     }
 
     // *****************************************************************************************************************************
@@ -122,13 +123,6 @@ testRun(void)
         TEST_RESULT_UINT(info.timeline, 47, "check timeline");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_94, .walSegmentSize = 1024 * 1024);
-
-        TEST_ERROR(
-            pgControlFromFile(storageTest, NULL), FormatError,
-            "wal segment size is 1048576 but must be 16777216 for PostgreSQL <= 10");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_11, .walSegmentSize = UINT_MAX); // UINT_MAX forces size to 0
 
         TEST_ERROR(
@@ -147,7 +141,7 @@ testRun(void)
             pgControlFromFile(storageTest, NULL), FormatError,
             "wal segment size is 47 but must be a power of two between 1048576 and 1073741824 inclusive");
 
-        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_11, .walSegmentSize = (unsigned int)2 * 1024 * 1024 * 1024);
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_17, .walSegmentSize = (unsigned int)2 * 1024 * 1024 * 1024);
 
         TEST_ERROR(
             pgControlFromFile(storageTest, NULL), FormatError,
@@ -167,11 +161,13 @@ testRun(void)
             pgControlFromFile(storageTest, NULL), FormatError, "page checksum version is 2 but only 0 and 1 are valid");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("check all valid page sizes");
+
         HRN_PG_CONTROL_PUT(
             storageTest, PG_VERSION_94, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_94),
             .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .pageSize = pgPageSize8);
 
-        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info v90");
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_94, "   check version");
         TEST_RESULT_UINT(info.catalogVersion, 201409291, "   check catalog version");
@@ -180,52 +176,48 @@ testRun(void)
         TEST_RESULT_UINT(info.pageSize, pgPageSize8, "check page size");
         TEST_RESULT_UINT(info.pageChecksumVersion, 0, "check page checksum");
 
-        // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
-            storageTest, PG_VERSION_16, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_16),
+            storageTest, PG_VERSION_96, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_96),
             .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .pageSize = pgPageSize1, .pageChecksumVersion = 1);
 
-        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info v90");
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
-        TEST_RESULT_UINT(info.version, PG_VERSION_16, "check version");
-        TEST_RESULT_UINT(info.catalogVersion, 202307071, "check catalog version");
+        TEST_RESULT_UINT(info.version, PG_VERSION_96, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 201608131, "check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
         TEST_RESULT_UINT(info.pageSize, pgPageSize1, "check page size");
         TEST_RESULT_UINT(info.pageChecksumVersion, 1, "check page checksum");
 
-        // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
-            storageTest, PG_VERSION_16, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_16),
+            storageTest, PG_VERSION_12, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_12),
             .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .pageSize = pgPageSize2);
 
-        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info v90");
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
-        TEST_RESULT_UINT(info.version, PG_VERSION_16, "check version");
-        TEST_RESULT_UINT(info.catalogVersion, 202307071, "check catalog version");
+        TEST_RESULT_UINT(info.version, PG_VERSION_12, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 201909212, "check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
         TEST_RESULT_UINT(info.pageSize, pgPageSize2, "check page size");
 
-        // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
-            storageTest, PG_VERSION_16, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_16),
+            storageTest, PG_VERSION_14, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_14),
             .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .pageSize = pgPageSize4);
 
-        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info v90");
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
-        TEST_RESULT_UINT(info.version, PG_VERSION_16, "check version");
-        TEST_RESULT_UINT(info.catalogVersion, 202307071, "check catalog version");
+        TEST_RESULT_UINT(info.version, PG_VERSION_14, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 202107181, "check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
         TEST_RESULT_UINT(info.pageSize, pgPageSize4, "check page size");
 
-        // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
             storageTest, PG_VERSION_16, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_16),
             .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .pageSize = pgPageSize16);
 
-        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info v90");
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_16, "check version");
         TEST_RESULT_UINT(info.catalogVersion, 202307071, "check catalog version");
@@ -233,15 +225,14 @@ testRun(void)
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
         TEST_RESULT_UINT(info.pageSize, pgPageSize16, "check page size");
 
-        // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
-            storageTest, PG_VERSION_16, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_16),
+            storageTest, PG_VERSION_17, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_17),
             .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .pageSize = pgPageSize32);
 
-        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info v90");
-        TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
-        TEST_RESULT_UINT(info.version, PG_VERSION_16, "check version");
-        TEST_RESULT_UINT(info.catalogVersion, 202307071, "check catalog version");
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
+        TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_17, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 202405161, "check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
         TEST_RESULT_UINT(info.pageSize, pgPageSize32, "check page size");
@@ -481,37 +472,30 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
-        HRN_PG_WAL_TO_BUFFER(result, PG_VERSION_11, .systemId = 0xECAFECAF, .size = PG_WAL_SEGMENT_SIZE_DEFAULT * 2);
+        HRN_PG_WAL_TO_BUFFER(result, PG_VERSION_11, .systemId = 0xECAFECAF, .size = HRN_PG_WAL_SEGMENT_SIZE_DEFAULT * 2);
         storagePutP(storageNewWriteP(storageTest, walFile), result);
 
         PgWal info = {0};
         TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest, NULL), "get wal info v11");
         TEST_RESULT_UINT(info.systemId, 0xECAFECAF, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_11, "   check version");
-        TEST_RESULT_UINT(info.size, PG_WAL_SEGMENT_SIZE_DEFAULT * 2, "   check size");
+        TEST_RESULT_UINT(info.size, HRN_PG_WAL_SEGMENT_SIZE_DEFAULT * 2, "   check size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
-        HRN_PG_WAL_TO_BUFFER(result, PG_VERSION_96, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT * 2);
-
-        TEST_ERROR(
-            pgWalFromBuffer(result, NULL), FormatError, "wal segment size is 33554432 but must be 16777216 for PostgreSQL <= 10");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        memset(bufPtr(result), 0, bufSize(result));
-        HRN_PG_WAL_TO_BUFFER(result, PG_VERSION_94, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT);
+        HRN_PG_WAL_TO_BUFFER(result, PG_VERSION_94, .systemId = 0xEAEAEAEA, .size = HRN_PG_WAL_SEGMENT_SIZE_DEFAULT);
         storagePutP(storageNewWriteP(storageTest, walFile), result);
 
         TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest, NULL), "get wal info v9.4");
         TEST_RESULT_UINT(info.systemId, 0xEAEAEAEA, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_94, "   check version");
-        TEST_RESULT_UINT(info.size, PG_WAL_SEGMENT_SIZE_DEFAULT, "   check size");
+        TEST_RESULT_UINT(info.size, HRN_PG_WAL_SEGMENT_SIZE_DEFAULT, "   check size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("force WAL version");
 
         memset(bufPtr(result), 0, bufSize(result));
-        HRN_PG_WAL_OVERRIDE_TO_BUFFER(result, PG_VERSION_15, 777, .systemId = 0xFAFAFAFA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT);
+        HRN_PG_WAL_OVERRIDE_TO_BUFFER(result, PG_VERSION_15, 777, .systemId = 0xFAFAFAFA, .size = HRN_PG_WAL_SEGMENT_SIZE_DEFAULT);
         storagePutP(storageNewWriteP(storageTest, walFile), result);
 
         TEST_ERROR(
@@ -522,7 +506,7 @@ testRun(void)
         TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest, STRDEF(PG_VERSION_15_Z)), "force wal info v15");
         TEST_RESULT_UINT(info.systemId, 0xFAFAFAFA, "check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_15, "   check version");
-        TEST_RESULT_UINT(info.size, PG_WAL_SEGMENT_SIZE_DEFAULT, "   check size");
+        TEST_RESULT_UINT(info.size, HRN_PG_WAL_SEGMENT_SIZE_DEFAULT, "   check size");
     }
 
     // *****************************************************************************************************************************

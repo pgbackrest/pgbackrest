@@ -15,12 +15,12 @@ Backup Command
 #include "command/backup/protocol.h"
 #include "command/check/common.h"
 #include "command/control/common.h"
+#include "command/lock.h"
 #include "command/stanza/common.h"
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/io/filter/size.h"
-#include "common/lock.h"
 #include "common/log.h"
 #include "common/regExp.h"
 #include "common/time.h"
@@ -62,7 +62,7 @@ backupLabelCreate(const BackupType type, const String *const backupLabelPrior, c
         const String *backupLabelLatest = NULL;
 
         // Get the newest backup
-        const StringList *backupList = strLstSort(
+        const StringList *const backupList = strLstSort(
             storageListP(
                 storageRepo(), STRDEF(STORAGE_REPO_BACKUP),
                 .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
@@ -72,7 +72,7 @@ backupLabelCreate(const BackupType type, const String *const backupLabelPrior, c
             backupLabelLatest = strLstGet(backupList, 0);
 
         // Get the newest history
-        const StringList *historyYearList = strLstSort(
+        const StringList *const historyYearList = strLstSort(
             storageListP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY), .expression = STRDEF("^2[0-9]{3}$")),
             sortOrderDesc);
 
@@ -85,8 +85,7 @@ backupLabelCreate(const BackupType type, const String *const backupLabelPrior, c
                 (type == backupTypeFull) ?
                     backupRegExpP(.full = true, .differential = true, .incremental = true, .noAnchorEnd = true) :
                     strNewFmt("^%.*sF\\_" DATE_TIME_REGEX "(D|I)", DATE_TIME_LEN, strZ(backupLabelLatest));
-
-            const StringList *historyList = strLstSort(
+            const StringList *const historyList = strLstSort(
                 storageListP(
                     storageRepo(),
                     strNewFmt(STORAGE_REPO_BACKUP "/" BACKUP_PATH_HISTORY "/%s", strZ(strLstGet(historyYearList, 0))),
@@ -188,13 +187,14 @@ backupInit(const InfoBackup *const infoBackup)
     *result = (BackupData){0};
 
     // Don't allow backup from standby when offline
+    bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
     const InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
 
-    if (!cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptBackupStandby))
+    if (!cfgOptionBool(cfgOptOnline) && backupStandby)
     {
         LOG_WARN(
             "option " CFGOPT_BACKUP_STANDBY " is enabled but backup is offline - backups will be performed from the primary");
-        cfgOptionSet(cfgOptBackupStandby, cfgSourceParam, BOOL_FALSE_VAR);
+        backupStandby = false;
     }
 
     // Get database info when online
@@ -202,13 +202,12 @@ backupInit(const InfoBackup *const infoBackup)
 
     if (cfgOptionBool(cfgOptOnline))
     {
-        const bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
         const DbGetResult dbInfo = dbGet(!backupStandby, true, backupStandby);
 
         result->pgIdxPrimary = dbInfo.primaryIdx;
         result->dbPrimary = dbInfo.primary;
 
-        if (backupStandby)
+        if (dbInfo.standby != NULL)
         {
             ASSERT(dbInfo.standby != NULL);
 
@@ -471,7 +470,7 @@ backupBlockIncrMap(void)
 
             for (unsigned int mapKeyIdx = 0; mapKeyIdx < varLstSize(mapKeyList); mapKeyIdx++)
             {
-                const Variant *mapKey = varLstGet(mapKeyList, mapKeyIdx);
+                const Variant *const mapKey = varLstGet(mapKeyList, mapKeyIdx);
 
                 ManifestBlockIncrChecksumSizeMap manifestBuildBlockIncrChecksumSizeMap =
                 {
@@ -499,7 +498,7 @@ backupBlockIncrMap(void)
 Get time from the database or locally depending on online
 ***********************************************************************************************************************************/
 static time_t
-backupTime(BackupData *const backupData, const bool waitRemainder)
+backupTime(const BackupData *const backupData, const bool waitRemainder)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
@@ -1155,7 +1154,7 @@ typedef struct BackupStartResult
 } BackupStartResult;
 
 static BackupStartResult
-backupStart(BackupData *const backupData)
+backupStart(const BackupData *const backupData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
@@ -1217,7 +1216,7 @@ backupStart(BackupData *const backupData)
             LOG_INFO_FMT("backup start archive = %s, lsn = %s", strZ(result.walSegmentName), strZ(result.lsn));
 
             // Wait for replay on the standby to catch up
-            if (cfgOptionBool(cfgOptBackupStandby))
+            if (backupData->dbStandby != NULL)
             {
                 LOG_INFO_FMT("wait for replay on the standby to reach %s", strZ(result.lsn));
                 dbReplayWait(backupData->dbStandby, result.lsn, backupData->timeline, cfgOptionUInt64(cfgOptArchiveTimeout));
@@ -1251,7 +1250,7 @@ Stop the backup
 // Helper to write a file from a string to the repository and update the manifest
 static void
 backupFilePut(
-    BackupData *const backupData, Manifest *const manifest, const String *const name, const time_t timestamp,
+    const BackupData *const backupData, Manifest *const manifest, const String *const name, const time_t timestamp,
     const String *const content)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -1544,8 +1543,9 @@ backupJobResult(
                 const Buffer *const repoChecksum = pckReadBinP(jobResult);
                 PackRead *const checksumPageResult = pckReadPackReadP(jobResult);
 
-                // Increment backup copy progress
-                *sizeProgress += copySize;
+                // Increment backup copy progress. Use the original size since the size may have changed during the copy but for the
+                // purpose of reporting progress we need to increment by the original size used to generate the total size.
+                *sizeProgress += file.sizeOriginal;
 
                 // Create log file name
                 const String *const fileName = storagePathP(storagePg, manifestPathPg(file.name));
@@ -1641,7 +1641,7 @@ backupJobResult(
                                 CHECK(FormatError, checksumPageErrorList != NULL, "page checksum error list is missing");
                                 CHECK(FormatError, !varLstEmpty(checksumPageErrorList), "page checksum error list is empty");
 
-                                String *error = strNew();
+                                String *const error = strNew();
                                 unsigned int errorTotalMin = 0;
 
                                 for (unsigned int errorIdx = 0; errorIdx < varLstSize(checksumPageErrorList); errorIdx++)
@@ -1706,8 +1706,8 @@ backupJobResult(
             if (percentComplete - *currentPercentComplete > 10)
             {
                 *currentPercentComplete = percentComplete;
-                lockWriteDataP(
-                    lockTypeBackup, .percentComplete = VARUINT(*currentPercentComplete), .sizeComplete = VARUINT64(*sizeProgress),
+                cmdLockWriteP(
+                    .percentComplete = VARUINT(*currentPercentComplete), .sizeComplete = VARUINT64(*sizeProgress),
                     .size = VARUINT64(sizeTotal));
             }
         }
@@ -1779,7 +1779,7 @@ backupDbPing(const BackupData *const backupData, const bool force)
     {
         dbPing(backupData->dbPrimary, force);
 
-        if (cfgOptionBool(cfgOptBackupStandby))
+        if (backupData->dbStandby != NULL)
             dbPing(backupData->dbStandby, force);
     }
 
@@ -1971,7 +1971,7 @@ backupProcessQueue(
             }
 
             // Add size to total
-            result += file.size;
+            result += file.sizeOriginal;
 
             // Increment total files
             fileTotal++;
@@ -2122,7 +2122,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                 pckWriteBoolP(param, file.delta);
                 pckWriteBoolP(param, !strEq(file.name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
                 pckWriteU64P(param, file.size);
-                pckWriteU64P(param, file.sizePrior);
+                pckWriteU64P(param, file.sizeOriginal);
                 pckWriteBoolP(param, !backupProcessFilePrimary(jobData->standbyExp, file.name));
                 pckWriteBinP(param, file.checksumSha1 != NULL ? BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE) : NULL);
                 pckWriteBoolP(param, file.checksumPage);
@@ -2157,7 +2157,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                 pckWriteBoolP(param, file.reference != NULL);
 
                 fileTotal++;
-                fileSize += file.size;
+                fileSize += file.sizeOriginal;
 
                 // Remove job from the queue
                 lstRemoveIdx(queue, fileIdx);
@@ -2218,13 +2218,13 @@ backupProcess(
         const String *const backupLabel = manifestData(manifest)->backupLabel;
         const String *const backupPathExp = strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabel));
         const bool hardLink = cfgOptionBool(cfgOptRepoHardlink) && storageFeature(storageRepoWrite(), storageFeatureHardLink);
-        const bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
+        const bool backupStandby = backupData->dbStandby != NULL;
 
         BackupJobData jobData =
         {
             .manifest = manifest,
             .backupLabel = backupLabel,
-            .backupStandby = backupStandby,
+            .backupStandby = backupData->dbStandby != NULL,
             .compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType)),
             .compressLevel = cfgOptionInt(cfgOptCompressLevel),
             .cipherType = cfgOptionStrId(cfgOptRepoCipherType),
@@ -2306,8 +2306,8 @@ backupProcess(
 
         // Create the rest of the clients on the primary or standby depending on the value of backup-standby. Note that standby
         // backups don't count the primary client in process-max.
-        const unsigned int processMax = cfgOptionUInt(cfgOptProcessMax) + (backupStandby ? 1 : 0);
-        const unsigned int pgIdx = backupStandby ? backupData->pgIdxStandby : backupData->pgIdxPrimary;
+        const unsigned int processMax = cfgOptionUInt(cfgOptProcessMax) + (jobData.backupStandby ? 1 : 0);
+        const unsigned int pgIdx = jobData.backupStandby ? backupData->pgIdxStandby : backupData->pgIdxPrimary;
 
         for (unsigned int processIdx = 2; processIdx <= processMax; processIdx++)
             protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, pgIdx, processIdx));
@@ -2327,8 +2327,8 @@ backupProcess(
 
         // Initialize percent complete and bytes completed/total
         unsigned int currentPercentComplete = 0;
-        lockWriteDataP(
-            lockTypeBackup, .percentComplete = VARUINT(currentPercentComplete), .sizeComplete = VARUINT64(sizeProgress),
+        cmdLockWriteP(
+            .percentComplete = VARUINT(currentPercentComplete), .sizeComplete = VARUINT64(sizeProgress),
             .size = VARUINT64(sizeTotal));
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
@@ -2807,7 +2807,7 @@ cmdBackup(void)
         backupDbPing(backupData, true);
 
         // The standby db object and protocol won't be used anymore so free them
-        if (cfgOptionBool(cfgOptBackupStandby))
+        if (backupData->dbStandby != NULL)
         {
             dbFree(backupData->dbStandby);
             protocolRemoteFree(backupData->pgIdxStandby);
@@ -2822,7 +2822,7 @@ cmdBackup(void)
             backupStopResult.walSegmentName, infoPg.id, infoPg.systemId, backupStartResult.dbList,
             cfgOptionBool(cfgOptArchiveCheck), cfgOptionBool(cfgOptArchiveCopy), cfgOptionUInt(cfgOptBufferSize),
             cfgOptionUInt(cfgOptCompressLevel), cfgOptionUInt(cfgOptCompressLevelNetwork), cfgOptionBool(cfgOptRepoHardlink),
-            cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby),
+            cfgOptionUInt(cfgOptProcessMax), backupData->dbStandby != NULL,
             cfgOptionTest(cfgOptAnnotation) ? cfgOptionKv(cfgOptAnnotation) : NULL);
 
         // The primary db object won't be used anymore so free it

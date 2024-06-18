@@ -29,7 +29,7 @@ Macros for function logging
 Write to the buffer
 ***********************************************************************************************************************************/
 static void
-ioBufferWrite(THIS_VOID, const Buffer *buffer)
+ioBufferWrite(THIS_VOID, const Buffer *const buffer)
 {
     THIS(IoBufferWrite);
 

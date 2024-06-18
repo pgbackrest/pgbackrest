@@ -98,7 +98,7 @@ storageHelperInit(const StorageHelper *const helperList)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-storageHelperDryRunInit(bool dryRun)
+storageHelperDryRunInit(const bool dryRun)
 {
     FUNCTION_TEST_VOID();
 
@@ -176,14 +176,14 @@ storageLocalWrite(void)
 Get pg storage for the specified host id
 ***********************************************************************************************************************************/
 static Storage *
-storagePgGet(unsigned int pgIdx, bool write)
+storagePgGet(const unsigned int pgIdx, const bool write)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgIdx);
         FUNCTION_TEST_PARAM(BOOL, write);
     FUNCTION_TEST_END();
 
-    Storage *result = NULL;
+    Storage *result;
 
     // Use remote storage
     if (!pgIsLocal(pgIdx))
@@ -194,16 +194,14 @@ storagePgGet(unsigned int pgIdx, bool write)
     }
     // Use Posix storage
     else
-    {
         result = storagePosixNewP(cfgOptionIdxStr(cfgOptPgPath, pgIdx), .write = write);
-    }
 
     FUNCTION_TEST_RETURN(STORAGE, result);
 }
 
 /**********************************************************************************************************************************/
 FN_EXTERN const Storage *
-storagePgIdx(unsigned int pgIdx)
+storagePgIdx(const unsigned int pgIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgIdx);
@@ -234,7 +232,7 @@ storagePg(void)
 }
 
 FN_EXTERN const Storage *
-storagePgIdxWrite(unsigned int pgIdx)
+storagePgIdxWrite(const unsigned int pgIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgIdx);
@@ -349,7 +347,7 @@ storageRepoPathExpression(const String *const expression, const String *const pa
 Get the repo storage
 ***********************************************************************************************************************************/
 static Storage *
-storageRepoGet(unsigned int repoIdx, bool write)
+storageRepoGet(const unsigned int repoIdx, const bool write)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, repoIdx);
@@ -398,7 +396,7 @@ storageRepoGet(unsigned int repoIdx, bool write)
 
 /**********************************************************************************************************************************/
 FN_EXTERN const Storage *
-storageRepoIdx(unsigned int repoIdx)
+storageRepoIdx(const unsigned int repoIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, repoIdx);
@@ -437,7 +435,7 @@ storageRepo(void)
 }
 
 FN_EXTERN const Storage *
-storageRepoIdxWrite(unsigned int repoIdx)
+storageRepoIdxWrite(const unsigned int repoIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, repoIdx);
@@ -483,7 +481,7 @@ storageRepoWrite(void)
 Spool storage path expression
 ***********************************************************************************************************************************/
 static String *
-storageSpoolPathExpression(const String *expression, const String *path)
+storageSpoolPathExpression(const String *const expression, const String *const path)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, expression);
