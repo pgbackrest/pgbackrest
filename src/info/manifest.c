@@ -104,7 +104,6 @@ typedef enum
     manifestFilePackFlagBlockIncr,
     manifestFilePackFlagCopy,
     manifestFilePackFlagDelta,
-    manifestFilePackFlagSizePrior,
     manifestFilePackFlagResume,
     manifestFilePackFlagChecksumPage,
     manifestFilePackFlagChecksumPageError,
@@ -146,9 +145,6 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
 
     if (file->delta)
         flag |= 1 << manifestFilePackFlagDelta;
-
-    if (file->reference && file->sizePrior != 0)
-        flag |= 1 << manifestFilePackFlagSizePrior;
 
     if (file->resume)
         flag |= 1 << manifestFilePackFlagResume;
@@ -195,10 +191,6 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
     // Original size
     if (flag & (1 << manifestFilePackFlagSizeOriginal))
         cvtUInt64ToVarInt128(file->sizeOriginal, buffer, &bufferPos, sizeof(buffer));
-
-    // Prior size
-    if (flag & (1 << manifestFilePackFlagSizePrior))
-        cvtUInt64ToVarInt128(cvtInt64ToZigZag((int64_t)file->size - (int64_t)file->sizePrior), buffer, &bufferPos, sizeof(buffer));
 
     // Use the first timestamp that appears as the base for all other timestamps. Ideally we would like a timestamp as close to the
     // middle as possible but it doesn't seem worth doing the calculation.
@@ -329,14 +321,6 @@ manifestFileUnpack(const Manifest *const manifest, const ManifestFilePack *const
         result.sizeOriginal = cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX);
     else
         result.sizeOriginal = result.size;
-
-    // Prior size
-    if (flag & (1 << manifestFilePackFlagSizePrior))
-    {
-        result.sizePrior =
-            (uint64_t)
-            ((int64_t)result.size - cvtInt64FromZigZag(cvtUInt64FromVarInt128((const uint8_t *)filePack, &bufferPos, UINT_MAX)));
-    }
 
     // Timestamp
     result.timestamp =
@@ -1728,7 +1712,7 @@ manifestBuildIncr(
                 // file size must be equal to the prior file so there is no need to check that condition separately.
                 if (fileSizeEqual || fileBlockIncrPreserve)
                 {
-                    file.sizePrior = filePrior.size;
+                    file.size = filePrior.size;
                     file.sizeRepo = filePrior.sizeRepo;
                     file.checksumSha1 = filePrior.checksumSha1;
                     file.checksumRepoSha1 = filePrior.checksumRepoSha1;
