@@ -16,6 +16,7 @@ Key type
 ***********************************************************************************************************************************/
 typedef enum
 {
+    storageAzureKeyTypeAuto = STRID5("auto", 0x7d2a10),
     storageAzureKeyTypeShared = STRID5("shared", 0x85905130),
     storageAzureKeyTypeSas = STRID5("sas", 0x4c330),
 } StorageAzureKeyType;
