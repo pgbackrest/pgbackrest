@@ -2743,9 +2743,15 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                         // Else error if option is required and help was not requested
                         else if (!config->help)
                         {
-                            const bool required =
+                            bool required =
                                 cfgParseOptionalRule(&optionalRules, parseRuleOptionalTypeRequired, config->command, optionId) ?
                                     optionalRules.required : ruleOption->required;
+
+                            // If a dependency exists and is not valid, the option should not be required
+                            // This handles cases where an option is only required when a dependency value is in a specific list
+                            // Check dependId to ensure a dependency check was actually performed
+                            if (required && dependResult.dependId != 0 && !dependResult.valid)
+                                required = false;
 
                             if (required)
                             {
@@ -2761,13 +2767,57 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                     if (optionGroup && configOptionValue->source != cfgSourceDefault)
                         optionGroupIndexKeep[optionGroupId][optionListIdx] = true;
                 }
-                // Else apply the default for the unresolved dependency, if it exists
-                else if (dependResult.defaultExists)
+                // Else dependency is not valid - check if option is required
+                else
                 {
-                    configOptionValue->set = true;
-                    configOptionValue->value = dependResult.defaultValue;
-                    configOptionValue->defaultValue = optionalRules.defaultRaw;
-                    configOptionValue->display = optionalRules.defaultRaw;
+                    // If option is not set, check if it's required
+                    if ((!configOptionValue->set && !parseOptionValue->negate) || config->help)
+                    {
+                        // If the option has a default, only apply it if the dependency is valid
+                        // If dependency is invalid, don't apply defaults as they may cause dependent options to be incorrectly
+                        // required
+                        if (cfgParseOptionalRule(&optionalRules, parseRuleOptionalTypeDefault, config->command, optionId) &&
+                            (dependResult.dependId == 0 || dependResult.valid))
+                        {
+                            if (!configOptionValue->set)
+                            {
+                                configOptionValue->set = true;
+                                configOptionValue->value = optionalRules.defaultValue;
+                                configOptionValue->display = optionalRules.defaultRaw;
+                            }
+
+                            configOptionValue->defaultValue = optionalRules.defaultRaw;
+                        }
+                        // Else error if option is required and help was not requested
+                        else if (!config->help)
+                        {
+                            bool required =
+                                cfgParseOptionalRule(&optionalRules, parseRuleOptionalTypeRequired, config->command, optionId) ?
+                                    optionalRules.required : ruleOption->required;
+
+                            // If a dependency exists and is not valid, the option should not be required
+                            // This handles cases where an option is only required when a dependency value is in a specific list
+                            if (required && dependResult.dependId != 0 && !dependResult.valid)
+                                required = false;
+
+                            if (required)
+                            {
+                                THROW_FMT(
+                                    OptionRequiredError, "%s command requires option: %s%s",
+                                    cfgParseCommandName(config->command), cfgParseOptionKeyIdxName(optionId, optionKeyIdx),
+                                    ruleOption->section == cfgSectionStanza ? "\nHINT: does this stanza exist?" : "");
+                            }
+                        }
+                    }
+
+                    // Apply the default for the unresolved dependency, if it exists
+                    if (dependResult.defaultExists)
+                    {
+                        configOptionValue->set = true;
+                        configOptionValue->value = dependResult.defaultValue;
+                        configOptionValue->defaultValue = optionalRules.defaultRaw;
+                        configOptionValue->display = optionalRules.defaultRaw;
+                    }
                 }
 
                 pckReadFree(optionalRules.pack);
