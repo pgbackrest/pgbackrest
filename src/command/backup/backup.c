@@ -200,7 +200,6 @@ backupInit(const InfoBackup *const infoBackup)
 
     if (cfgOptionBool(cfgOptOnline))
     {
-        // !!! NEEDS TO BE UPDATED
         const DbGetResult dbInfo = dbGet(backupStandby == CFGOPTVAL_BACKUP_STANDBY_N, true, backupStandby);
 
         result->pgIdxPrimary = dbInfo.primaryIdx;

@@ -2873,8 +2873,8 @@ testRun(void)
                 "bundle/1/pg_data/base/1/4 {s=40960, m=0:{0,1,2,3},2:{0}, ts=-200000}\n"
                 "bundle/1/pg_data/global/pg_control {s=8192}\n"
                 "pg_data/backup_label {s=17, ts=+2}\n"
-                "20191020-193320F/bundle/1/pg_data/PG_VERSION {s=3, ts=-500000}\n"
-                "20191020-193320F/bundle/1/pg_data/postgresql.conf {s=11, ts=-1700000}\n"
+                "20191020-193320F/bundle/1/pg_data/PG_VERSION {s=3, ts=-600000}\n"
+                "20191020-193320F/bundle/1/pg_data/postgresql.conf {s=11, ts=-1800000}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n",
