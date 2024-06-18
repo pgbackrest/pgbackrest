@@ -122,13 +122,6 @@ testRun(void)
         TEST_RESULT_UINT(info.timeline, 47, "check timeline");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_94, .walSegmentSize = 1024 * 1024);
-
-        TEST_ERROR(
-            pgControlFromFile(storageTest, NULL), FormatError,
-            "wal segment size is 1048576 but must be 16777216 for PostgreSQL <= 10");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_11, .walSegmentSize = UINT_MAX); // UINT_MAX forces size to 0
 
         TEST_ERROR(
@@ -238,7 +231,7 @@ testRun(void)
         TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_17, "check version");
-        TEST_RESULT_UINT(info.catalogVersion, 202404021, "check catalog version");
+        TEST_RESULT_UINT(info.catalogVersion, 202405161, "check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
         TEST_RESULT_UINT(info.pageSize, pgPageSize32, "check page size");
@@ -478,37 +471,30 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
-        HRN_PG_WAL_TO_BUFFER(result, PG_VERSION_11, .systemId = 0xECAFECAF, .size = PG_WAL_SEGMENT_SIZE_DEFAULT * 2);
+        HRN_PG_WAL_TO_BUFFER(result, PG_VERSION_11, .systemId = 0xECAFECAF, .size = HRN_PG_WAL_SEGMENT_SIZE_DEFAULT * 2);
         storagePutP(storageNewWriteP(storageTest, walFile), result);
 
         PgWal info = {0};
         TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest, NULL), "get wal info v11");
         TEST_RESULT_UINT(info.systemId, 0xECAFECAF, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_11, "   check version");
-        TEST_RESULT_UINT(info.size, PG_WAL_SEGMENT_SIZE_DEFAULT * 2, "   check size");
+        TEST_RESULT_UINT(info.size, HRN_PG_WAL_SEGMENT_SIZE_DEFAULT * 2, "   check size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
-        HRN_PG_WAL_TO_BUFFER(result, PG_VERSION_96, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT * 2);
-
-        TEST_ERROR(
-            pgWalFromBuffer(result, NULL), FormatError, "wal segment size is 33554432 but must be 16777216 for PostgreSQL <= 10");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        memset(bufPtr(result), 0, bufSize(result));
-        HRN_PG_WAL_TO_BUFFER(result, PG_VERSION_94, .systemId = 0xEAEAEAEA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT);
+        HRN_PG_WAL_TO_BUFFER(result, PG_VERSION_94, .systemId = 0xEAEAEAEA, .size = HRN_PG_WAL_SEGMENT_SIZE_DEFAULT);
         storagePutP(storageNewWriteP(storageTest, walFile), result);
 
         TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest, NULL), "get wal info v9.4");
         TEST_RESULT_UINT(info.systemId, 0xEAEAEAEA, "   check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_94, "   check version");
-        TEST_RESULT_UINT(info.size, PG_WAL_SEGMENT_SIZE_DEFAULT, "   check size");
+        TEST_RESULT_UINT(info.size, HRN_PG_WAL_SEGMENT_SIZE_DEFAULT, "   check size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("force WAL version");
 
         memset(bufPtr(result), 0, bufSize(result));
-        HRN_PG_WAL_OVERRIDE_TO_BUFFER(result, PG_VERSION_15, 777, .systemId = 0xFAFAFAFA, .size = PG_WAL_SEGMENT_SIZE_DEFAULT);
+        HRN_PG_WAL_OVERRIDE_TO_BUFFER(result, PG_VERSION_15, 777, .systemId = 0xFAFAFAFA, .size = HRN_PG_WAL_SEGMENT_SIZE_DEFAULT);
         storagePutP(storageNewWriteP(storageTest, walFile), result);
 
         TEST_ERROR(
@@ -519,7 +505,7 @@ testRun(void)
         TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest, STRDEF(PG_VERSION_15_Z)), "force wal info v15");
         TEST_RESULT_UINT(info.systemId, 0xFAFAFAFA, "check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_15, "   check version");
-        TEST_RESULT_UINT(info.size, PG_WAL_SEGMENT_SIZE_DEFAULT, "   check size");
+        TEST_RESULT_UINT(info.size, HRN_PG_WAL_SEGMENT_SIZE_DEFAULT, "   check size");
     }
 
     // *****************************************************************************************************************************

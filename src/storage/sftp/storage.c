@@ -165,8 +165,6 @@ storageSftpUpdateKnownHostsFile(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        int rc;
-
         // Init a known host collection for the user's known_hosts file
         const char *const userKnownHostsFile = strZ(strNewFmt("%s%s", strZ(userHome()), "/.ssh/known_hosts"));
         LIBSSH2_KNOWNHOSTS *const userKnownHostsList = libssh2_knownhost_init(this->session);
@@ -185,6 +183,8 @@ storageSftpUpdateKnownHostsFile(
         {
             // Read the user's known_hosts file entries into the collection. libssh2_knownhost_readfile() returns the number of
             // successfully loaded hosts or a negative value on error, an empty known hosts file will return 0.
+            int rc;
+
             if ((rc = libssh2_knownhost_readfile(userKnownHostsList, userKnownHostsFile, LIBSSH2_KNOWNHOST_FILE_OPENSSH)) < 0)
             {
                 // Missing known_hosts file will return LIBSSH2_ERROR_FILE. Possibly issues other than missing may return this.
@@ -898,7 +898,7 @@ storageSftpPathCreate(
 
         if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
         {
-            uint64_t sftpErrno = libssh2_sftp_last_error(this->sftpSession);
+            const uint64_t sftpErrno = libssh2_sftp_last_error(this->sftpSession);
 
             // libssh2 may return LIBSSH2_FX_FAILURE if the directory already exists
             if (sftpErrno == LIBSSH2_FX_FAILURE)
@@ -974,7 +974,7 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
         // Recurse if requested
         if (recurse)
         {
-            StorageList *const list = storageInterfaceListP(this, path, storageInfoLevelExists);
+            const StorageList *const list = storageInterfaceListP(this, path, storageInfoLevelExists);
 
             if (list != NULL)
             {

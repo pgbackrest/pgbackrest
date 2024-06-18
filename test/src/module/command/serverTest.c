@@ -123,6 +123,7 @@ testRun(void)
                             storageTest,
                             "pgbackrest.conf",
                             "[global]\n"
+                            CFGOPT_TLS_SERVER_ADDRESS "=127.0.0.1\n"
                             CFGOPT_TLS_SERVER_CA_FILE "=" HRN_SERVER_CA "\n"
                             CFGOPT_TLS_SERVER_CERT_FILE "=" HRN_SERVER_CERT "\n"
                             CFGOPT_TLS_SERVER_KEY_FILE "=" HRN_SERVER_KEY "\n"
@@ -221,7 +222,7 @@ testRun(void)
                 TEST_RESULT_VOID(cmdServerPing(), "ping");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("ping 12.0.0.1");
+                TEST_TITLE("ping 127.0.0.1");
 
                 argList = strLstNew();
                 hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", testPort);
@@ -242,6 +243,7 @@ testRun(void)
                     HRN_FORK_CHILD_BEGIN(.prefix = "server")
                     {
                         StringList *argList = strLstNew();
+                        hrnCfgArgRawZ(argList, cfgOptTlsServerAddress, "127.0.0.1");
                         hrnCfgArgRawZ(argList, cfgOptTlsServerCaFile, HRN_SERVER_CA);
                         hrnCfgArgRawZ(argList, cfgOptTlsServerCertFile, HRN_SERVER_CERT);
                         hrnCfgArgRawZ(argList, cfgOptTlsServerKeyFile, HRN_SERVER_KEY);

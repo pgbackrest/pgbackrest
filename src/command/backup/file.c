@@ -93,7 +93,7 @@ backupFile(
                     IoRead *const read = storageReadIo(
                         storageNewReadP(
                             storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing,
-                            .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSize) : NULL));
+                            .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSizeOriginal) : NULL));
                     ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
                     ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
 
@@ -208,7 +208,7 @@ backupFile(
                         readIo = storageReadIo(
                             storageNewReadP(
                                 storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing, .compressible = compressible,
-                                .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSize) : NULL));
+                                .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSizeOriginal) : NULL));
                     }
 
                     ioFilterGroupAdd(ioReadFilterGroup(readIo), cryptoHashNew(hashTypeSha1));
@@ -329,7 +329,7 @@ backupFile(
                                             ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE, .idx = 0))));
                             }
                             // Else check if size is equal to prior size
-                            else if (file->manifestFileHasReference && fileResult->copySize == file->pgFileSizePrior)
+                            else if (file->manifestFileHasReference && fileResult->copySize == file->pgFileSize)
                             {
                                 const Buffer *const copyChecksum = pckReadBinP(
                                     ioFilterGroupResultP(ioReadFilterGroup(readIo), CRYPTO_HASH_FILTER_TYPE));

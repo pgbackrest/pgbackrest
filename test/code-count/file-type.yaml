@@ -635,6 +635,10 @@ doc/xml/release/2024/2.52.xml:
   class: doc/source
   type: xml
 
+doc/xml/release/2024/2.53.xml:
+  class: doc/source
+  type: xml
+
 doc/xml/release/contributor.xml:
   class: doc/source
   type: xml
@@ -672,6 +676,14 @@ src/build/common/exec.c:
   type: c
 
 src/build/common/exec.h:
+  class: build
+  type: c/h
+
+src/build/common/json.c:
+  class: build
+  type: c
+
+src/build/common/json.h:
   class: build
   type: c/h
 
@@ -2495,10 +2507,6 @@ test/lib/pgBackRestTest/Common/ContainerTest.pm:
   class: test/harness
   type: perl
 
-test/lib/pgBackRestTest/Common/CoverageTest.pm:
-  class: test/harness
-  type: perl
-
 test/lib/pgBackRestTest/Common/DbVersion.pm:
   class: test/harness
   type: perl
@@ -2584,6 +2592,14 @@ test/src/command/test/build.c:
   type: c
 
 test/src/command/test/build.h:
+  class: test/harness
+  type: c/h
+
+test/src/command/test/coverage.c:
+  class: test/harness
+  type: c
+
+test/src/command/test/coverage.h:
   class: test/harness
   type: c/h
 
@@ -2760,6 +2776,10 @@ test/src/common/harnessPostgres/harness150.c:
   type: c
 
 test/src/common/harnessPostgres/harness160.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessPostgres/harness170.c:
   class: test/harness
   type: c
 
@@ -3188,6 +3208,10 @@ test/src/module/storage/s3Test.c:
   type: c
 
 test/src/module/storage/sftpTest.c:
+  class: test/module
+  type: c
+
+test/src/module/test/coverageTest.c:
   class: test/module
   type: c
 

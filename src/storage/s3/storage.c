@@ -127,7 +127,7 @@ Expected ISO-8601 data/time size
 Format ISO-8601 date/time for authentication
 ***********************************************************************************************************************************/
 static String *
-storageS3DateTime(time_t authTime)
+storageS3DateTime(const time_t authTime)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(TIME, authTime);
@@ -150,8 +150,8 @@ Based on the excellent documentation at http://docs.aws.amazon.com/AmazonS3/late
 ***********************************************************************************************************************************/
 static void
 storageS3Auth(
-    StorageS3 *this, const String *verb, const String *path, const HttpQuery *query, const String *dateTime,
-    HttpHeader *httpHeader, const String *payloadHash)
+    StorageS3 *const this, const String *const verb, const String *const path, const HttpQuery *const query,
+    const String *const dateTime, HttpHeader *const httpHeader, const String *const payloadHash)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_S3, this);
@@ -172,7 +172,7 @@ storageS3Auth(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get date from datetime
-        const String *date = strSubN(dateTime, 0, 8);
+        const String *const date = strSubN(dateTime, 0, 8);
 
         // Set required headers
         httpHeaderPut(httpHeader, S3_HEADER_CONTENT_SHA256_STR, payloadHash);
@@ -183,16 +183,16 @@ storageS3Auth(
             httpHeaderPut(httpHeader, S3_HEADER_TOKEN_STR, this->securityToken);
 
         // Generate canonical request and signed headers
-        const StringList *headerList = strLstSort(strLstDup(httpHeaderList(httpHeader)), sortOrderAsc);
+        const StringList *const headerList = strLstSort(strLstDup(httpHeaderList(httpHeader)), sortOrderAsc);
         String *signedHeaders = NULL;
 
-        String *canonicalRequest = strCatFmt(
+        String *const canonicalRequest = strCatFmt(
             strNew(), "%s\n%s\n%s\n", strZ(verb), strZ(path), query == NULL ? "" : strZ(httpQueryRenderP(query)));
 
         for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
         {
-            const String *headerKey = strLstGet(headerList, headerIdx);
-            const String *headerKeyLower = strLower(strDup(headerKey));
+            const String *const headerKey = strLstGet(headerList, headerIdx);
+            const String *const headerKeyLower = strLower(strDup(headerKey));
 
             // Skip the authorization (exists on retry) and content-length headers since they do not need to be signed
             if (strEq(headerKeyLower, HTTP_HEADER_AUTHORIZATION_STR) || strEq(headerKeyLower, HTTP_HEADER_CONTENT_LENGTH_STR))
@@ -209,7 +209,7 @@ storageS3Auth(
         strCatFmt(canonicalRequest, "\n%s\n%s", strZ(signedHeaders), strZ(payloadHash));
 
         // Generate string to sign
-        const String *stringToSign = strNewFmt(
+        const String *const stringToSign = strNewFmt(
             AWS4_HMAC_SHA256 "\n%s\n%s/%s/" S3 "/" AWS4_REQUEST "\n%s", strZ(dateTime), strZ(date), strZ(this->region),
             strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha256, BUFSTR(canonicalRequest)))));
 
@@ -218,10 +218,10 @@ storageS3Auth(
         // If the cached signing key has expired (or has none been generated) then regenerate it
         if (!strEq(date, this->signingKeyDate))
         {
-            const Buffer *dateKey = cryptoHmacOne(
+            const Buffer *const dateKey = cryptoHmacOne(
                 hashTypeSha256, BUFSTR(strNewFmt(AWS4 "%s", strZ(this->secretAccessKey))), BUFSTR(date));
-            const Buffer *regionKey = cryptoHmacOne(hashTypeSha256, dateKey, BUFSTR(this->region));
-            const Buffer *serviceKey = cryptoHmacOne(hashTypeSha256, regionKey, S3_BUF);
+            const Buffer *const regionKey = cryptoHmacOne(hashTypeSha256, dateKey, BUFSTR(this->region));
+            const Buffer *const serviceKey = cryptoHmacOne(hashTypeSha256, regionKey, S3_BUF);
 
             // Switch to the object context so signing key and date are not lost
             MEM_CONTEXT_OBJ_BEGIN(this)
@@ -233,7 +233,7 @@ storageS3Auth(
         }
 
         // Generate authorization header
-        const String *authorization = strNewFmt(
+        const String *const authorization = strNewFmt(
             AWS4_HMAC_SHA256 " Credential=%s/%s/%s/" S3 "/" AWS4_REQUEST ",SignedHeaders=%s,Signature=%s",
             strZ(this->accessKey), strZ(date), strZ(this->region), strZ(signedHeaders),
             strZ(strNewEncode(encodingHex, cryptoHmacOne(hashTypeSha256, this->signingKey, BUFSTR(stringToSign)))));
@@ -313,9 +313,9 @@ storageS3AuthAuto(StorageS3 *const this, HttpHeader *const header)
         if (this->credRole == NULL)
         {
             // Request the role
-            HttpRequest *request = httpRequestNewP(
+            HttpRequest *const request = httpRequestNewP(
                 this->credHttpClient, HTTP_VERB_GET_STR, STRDEF(S3_CREDENTIAL_PATH), .header = header);
-            HttpResponse *response = httpRequestResponse(request, true);
+            HttpResponse *const response = httpRequestResponse(request, true);
 
             // Not found likely means no role is associated with this instance
             if (httpResponseCode(response) == HTTP_RESPONSE_CODE_NOT_FOUND)
@@ -356,12 +356,12 @@ storageS3AuthAuto(StorageS3 *const this, HttpHeader *const header)
             httpRequestError(request, response);
 
         // Get credentials from the JSON response
-        KeyValue *credential = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
+        const KeyValue *const credential = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
 
         MEM_CONTEXT_OBJ_BEGIN(this)
         {
             // Check the code field for errors
-            const Variant *code = kvGetDefault(credential, S3_JSON_TAG_CODE_VAR, VARSTRDEF("code field is missing"));
+            const Variant *const code = kvGetDefault(credential, S3_JSON_TAG_CODE_VAR, VARSTRDEF("code field is missing"));
             CHECK(FormatError, code != NULL, "error code missing");
 
             if (!varEq(code, S3_JSON_VALUE_SUCCESS_VAR))
@@ -451,7 +451,7 @@ storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
 Process S3 request
 ***********************************************************************************************************************************/
 FN_EXTERN HttpRequest *
-storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, StorageS3RequestAsyncParam param)
+storageS3RequestAsync(StorageS3 *const this, const String *const verb, const String *path, const StorageS3RequestAsyncParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
@@ -473,7 +473,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        HttpHeader *requestHeader =
+        HttpHeader *const requestHeader =
             param.header == NULL ? httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
 
         // Set content length
@@ -572,7 +572,7 @@ storageS3RequestAsync(StorageS3 *this, const String *verb, const String *path, S
 }
 
 FN_EXTERN HttpResponse *
-storageS3Response(HttpRequest *request, StorageS3ResponseParam param)
+storageS3Response(HttpRequest *const request, const StorageS3ResponseParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(HTTP_REQUEST, request);
@@ -602,7 +602,7 @@ storageS3Response(HttpRequest *request, StorageS3ResponseParam param)
 }
 
 FN_EXTERN HttpResponse *
-storageS3Request(StorageS3 *this, const String *verb, const String *path, StorageS3RequestParam param)
+storageS3Request(StorageS3 *const this, const String *const verb, const String *const path, const StorageS3RequestParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
@@ -634,8 +634,8 @@ General function for listing files to be used by other list routines
 ***********************************************************************************************************************************/
 static void
 storageS3ListInternal(
-    StorageS3 *this, const String *path, StorageInfoLevel level, const String *expression, bool recurse,
-    StorageListCallback callback, void *callbackData)
+    StorageS3 *const this, const String *const path, const StorageInfoLevel level, const String *const expression,
+    const bool recurse, StorageListCallback callback, void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
@@ -655,15 +655,10 @@ storageS3ListInternal(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Build the base prefix by stripping off the initial /
-        const String *basePrefix;
-
-        if (strSize(path) == 1)
-            basePrefix = EMPTY_STR;
-        else
-            basePrefix = strNewFmt("%s/", strZ(strSub(path, 1)));
+        const String *const basePrefix = strSize(path) == 1 ? EMPTY_STR : strNewFmt("%s/", strZ(strSub(path, 1)));
 
         // Get the expression prefix when possible to limit initial results
-        const String *expressionPrefix = regExpPrefix(expression);
+        const String *const expressionPrefix = regExpPrefix(expression);
 
         // If there is an expression prefix then use it to build the query prefix, otherwise query prefix is base prefix
         const String *queryPrefix;
@@ -679,7 +674,7 @@ storageS3ListInternal(
         }
 
         // Create query
-        HttpQuery *query = httpQueryNewP();
+        HttpQuery *const query = httpQueryNewP();
 
         // Add the delimiter to not recurse
         if (!recurse)
@@ -715,7 +710,7 @@ storageS3ListInternal(
                 else
                     response = storageS3RequestP(this, HTTP_VERB_GET_STR, FSLASH_STR, .query = query);
 
-                XmlNode *xmlRoot = xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response)));
+                const XmlNode *const xmlRoot = xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response)));
 
                 // If list is truncated then send an async request to get more data
                 if (strEq(xmlNodeContent(xmlNodeChild(xmlRoot, S3_XML_TAG_IS_TRUNCATED_STR, true)), TRUE_STR))
@@ -735,11 +730,11 @@ storageS3ListInternal(
                 }
 
                 // Get prefix list
-                XmlNodeList *subPathList = xmlNodeChildList(xmlRoot, S3_XML_TAG_COMMON_PREFIXES_STR);
+                const XmlNodeList *const subPathList = xmlNodeChildList(xmlRoot, S3_XML_TAG_COMMON_PREFIXES_STR);
 
                 for (unsigned int subPathIdx = 0; subPathIdx < xmlNodeLstSize(subPathList); subPathIdx++)
                 {
-                    const XmlNode *subPathNode = xmlNodeLstGet(subPathList, subPathIdx);
+                    const XmlNode *const subPathNode = xmlNodeLstGet(subPathList, subPathIdx);
 
                     // Get path name
                     StorageInfo info =
@@ -761,11 +756,11 @@ storageS3ListInternal(
                 }
 
                 // Get file list
-                XmlNodeList *fileList = xmlNodeChildList(xmlRoot, S3_XML_TAG_CONTENTS_STR);
+                const XmlNodeList *const fileList = xmlNodeChildList(xmlRoot, S3_XML_TAG_CONTENTS_STR);
 
                 for (unsigned int fileIdx = 0; fileIdx < xmlNodeLstSize(fileList); fileIdx++)
                 {
-                    const XmlNode *fileNode = xmlNodeLstGet(fileList, fileIdx);
+                    const XmlNode *const fileNode = xmlNodeLstGet(fileList, fileIdx);
 
                     // Get file name
                     StorageInfo info =
@@ -882,7 +877,7 @@ storageS3List(THIS_VOID, const String *const path, const StorageInfoLevel level,
 
 /**********************************************************************************************************************************/
 static StorageRead *
-storageS3NewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInterfaceNewReadParam param)
+storageS3NewRead(THIS_VOID, const String *const file, const bool ignoreMissing, const StorageInterfaceNewReadParam param)
 {
     THIS(StorageS3);
 
@@ -902,7 +897,7 @@ storageS3NewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInter
 
 /**********************************************************************************************************************************/
 static StorageWrite *
-storageS3NewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam param)
+storageS3NewWrite(THIS_VOID, const String *const file, const StorageInterfaceNewWriteParam param)
 {
     THIS(StorageS3);
 
@@ -955,7 +950,8 @@ storageS3PathRemoveInternal(StorageS3 *const this, HttpRequest *const request, X
             // Nothing is returned when there are no errors
             if (!bufEmpty(response))
             {
-                XmlNodeList *errorList = xmlNodeChildList(xmlDocumentRoot(xmlDocumentNewBuf(response)), S3_XML_TAG_ERROR_STR);
+                const XmlNodeList *const errorList = xmlNodeChildList(
+                    xmlDocumentRoot(xmlDocumentNewBuf(response)), S3_XML_TAG_ERROR_STR);
 
                 // Attempt to remove errored files one at a time rather than retrying the batch
                 for (unsigned int errorIdx = 0; errorIdx < xmlNodeLstSize(errorList); errorIdx++)
@@ -991,7 +987,7 @@ storageS3PathRemoveInternal(StorageS3 *const this, HttpRequest *const request, X
 }
 
 static void
-storageS3PathRemoveCallback(void *callbackData, const StorageInfo *info)
+storageS3PathRemoveCallback(void *const callbackData, const StorageInfo *const info)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
@@ -1004,7 +1000,7 @@ storageS3PathRemoveCallback(void *callbackData, const StorageInfo *info)
     // Only delete files since paths don't really exist
     if (info->type == storageTypeFile)
     {
-        StorageS3PathRemoveData *data = (StorageS3PathRemoveData *)callbackData;
+        StorageS3PathRemoveData *const data = (StorageS3PathRemoveData *)callbackData;
 
         // If there is something to delete then create the request
         if (data->xml == NULL)
@@ -1047,7 +1043,7 @@ storageS3PathRemoveCallback(void *callbackData, const StorageInfo *info)
 }
 
 static bool
-storageS3PathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
+storageS3PathRemove(THIS_VOID, const String *const path, const bool recurse, const StorageInterfacePathRemoveParam param)
 {
     THIS(StorageS3);
 

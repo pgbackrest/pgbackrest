@@ -30,10 +30,10 @@ This example is based on Ubuntu 20.04, but it should work on many versions of De
 
 pgbackrest-dev => Install development tools
 ```
-sudo apt-get install rsync git devscripts build-essential valgrind lcov autoconf \
+sudo apt-get install rsync git devscripts build-essential valgrind autoconf \
        autoconf-archive libssl-dev zlib1g-dev libxml2-dev libpq-dev pkg-config \
        libxml-checker-perl libyaml-perl libdbd-pg-perl liblz4-dev liblz4-tool \
-       zstd libzstd-dev bzip2 libbz2-dev libyaml-dev ccache meson
+       zstd libzstd-dev bzip2 libbz2-dev libyaml-dev ccache python3-distutils meson
 ```
 
 Some unit tests and all the integration tests require Docker. Running in containers allows us to simulate multiple hosts, test on different distributions and versions of PostgreSQL, and use sudo without affecting the host system.
@@ -263,7 +263,7 @@ pgbackrest/test/test.pl --vm-out --module=common --test=wait
                 
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
                 
-        P00   INFO: test command begin 2.51: [common/wait] --log-level=info --no-log-timestamp --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --vm=none --vm-id=0
+        P00   INFO: test command begin 2.52: [common/wait] --log-level=info --no-log-timestamp --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --vm=none --vm-id=0
         P00   INFO: test command end: completed successfully
         run 1 - waitNew(), waitMore, and waitFree()
                       L0018     expect AssertError: assertion 'waitTime <= 999999000' failed
@@ -349,7 +349,7 @@ pgbackrest/test/test.pl --vm-build --vm=u20
 --- output ---
 
     P00   INFO: test begin on x86_64 - log level info
-    P00   INFO: Using cached pgbackrest/test:u20-base-20231109A image (51041e6806d2d05ccefbd8a2ab23f2c9e42a7997) ...
+    P00   INFO: Using cached pgbackrest/test:u20-base-20240425A image (c3fc7cc1956c5eb10995119deed7a21b92dd07a7) ...
     P00   INFO: Building pgbackrest/test:u20-test image ...
     P00   INFO: Build Complete
 ```
@@ -470,7 +470,7 @@ HRN_FORK_BEGIN()
 {
     HRN_FORK_CHILD_BEGIN()
     {
-        TEST_RESULT_INT_NE(lockAcquireP(), -1, "create backup/expire lock");
+        TEST_RESULT_BOOL(cmdLockAcquireP(), true, "create backup/expire lock");
 
         // Notify parent that lock has been acquired
         HRN_FORK_CHILD_NOTIFY_PUT();
@@ -478,7 +478,7 @@ HRN_FORK_BEGIN()
         // Wait for parent to allow release lock
         HRN_FORK_CHILD_NOTIFY_GET();
 
-        lockRelease(true);
+        cmdLockReleaseP();
     }
     HRN_FORK_CHILD_END();
 
@@ -532,7 +532,7 @@ pgbackrest/test/test.pl --vm-out --module=command --test=check --vm=u20
 ```
 > **NOTE:** Not all systems perform at the same speed, so if a test is timing out, try rerunning with another vm.
 
-Because a test run has not been specified, a coverage report will be generated and written to the local file system under the pgBackRest directory `test/result/coverage/lcov/index.html` and a file with only the highlighted code that has not been covered will be written to `test/result/coverage/coverage.html`.
+A coverage report will be generated and written to the local file system under the pgBackRest repository in `test/result/coverage.html`.
 
 If 100 percent code coverage has not been achieved, an error message will be displayed, for example: `ERROR: [125]: c module command/check/check is not fully covered`
 

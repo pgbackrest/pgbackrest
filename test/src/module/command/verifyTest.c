@@ -404,7 +404,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("Single WAL");
 
-        archiveIdResult->pgWalInfo.size = PG_WAL_SEGMENT_SIZE_DEFAULT;
+        archiveIdResult->pgWalInfo.size = HRN_PG_WAL_SEGMENT_SIZE_DEFAULT;
         archiveIdResult->pgWalInfo.version = PG_VERSION_94;
 
         strLstAddZ(walFileList, "000000020000000200000000-daa497dba64008db824607940609ba1cd7c6c501.gz");

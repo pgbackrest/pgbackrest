@@ -74,7 +74,7 @@ storageReadS3Open(THIS_VOID)
 Read from a file
 ***********************************************************************************************************************************/
 static size_t
-storageReadS3(THIS_VOID, Buffer *buffer, bool block)
+storageReadS3(THIS_VOID, Buffer *const buffer, const bool block)
 {
     THIS(StorageReadS3);
 

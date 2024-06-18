@@ -28,8 +28,8 @@ jobs:
       # tackle the slowest tests first.
       matrix:
         include:
-          # All unit tests (without coverage) for 32-bit
-          - param: test --vm=d10 --param=no-performance --param=c-only
+          # All unit tests (without coverage or valgrind) for 32-bit
+          - param: test --vm=d10 --param=no-performance --param=no-coverage --param=no-valgrind --param=c-only
 
           # All integration tests for 32-bit
           - param: test --vm=d10 --param=module=mock --param=module=integration
@@ -47,17 +47,17 @@ jobs:
           - param: test --vm=u22 --param=c-only --param=no-coverage --param=no-back-trace
 
           # All unit tests on the newest gcc available
-          - param: test --vm=f38 --param=c-only --param=no-valgrind --param=no-coverage --param=no-performance
+          - param: test --vm=f40 --param=c-only --param=no-valgrind --param=no-coverage --param=no-performance
 
           # RHEL documentation
           - param: doc --vm=rh8
 
           # All integration tests
-          - param: test --vm=rh7 --param=module=mock --param=module=integration
+          - param: test --vm=rh8 --param=module=mock --param=module=integration
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: pgbackrest
 
@@ -87,7 +87,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: pgbackrest
 
@@ -103,7 +103,7 @@ jobs:
 
           install: |
             apt-get update
-            DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y perl sudo libxml-checker-perl libyaml-perl rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config make gcc ccache meson git liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev
+            DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y perl sudo libxml-checker-perl libyaml-perl rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config make gcc ccache python3-distutils meson git liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev
 
           run: |
             git config --global --add safe.directory ${GITHUB_WORKSPACE?}/pgbackrest
@@ -116,7 +116,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: pgbackrest
 
@@ -140,7 +140,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: pgbackrest
 
@@ -164,13 +164,13 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Packages
         run: sudo apt-get install -y --no-install-recommends libyaml-dev
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v2
+        uses: github/codeql-action/init@v3
         with:
           languages: ${{matrix.language}}
 
@@ -178,4 +178,4 @@ jobs:
         run: ${GITHUB_WORKSPACE?}/src/configure && make -j 2
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v2
+        uses: github/codeql-action/analyze@v3

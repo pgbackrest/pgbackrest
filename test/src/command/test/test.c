@@ -158,7 +158,7 @@ cmdTest(
             }
             CATCH_ANY()
             {
-                // If this is the first build failure then clean the build path a retry
+                // If this is the first build failure then clean the build path and retry
                 if (buildRetry == false)
                 {
                     buildRetry = true;

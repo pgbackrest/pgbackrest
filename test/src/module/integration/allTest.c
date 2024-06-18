@@ -88,6 +88,11 @@ testRun(void)
         const unsigned int ts1Oid = pckReadU32P(hrnHostSqlValue(pg1, "select oid from pg_tablespace where spcname = 'ts1'"));
         TEST_LOG_FMT("ts1 tablespace oid = %u", ts1Oid);
 
+        // Get the tablespace path to use for this version. We could use our internally stored catalog number but during the beta
+        // period this number will be changing and would need to be updated. Make this less fragile by just reading the path.
+        const String *const tablespacePath = strLstGet(
+            storageListP(hrnHostPgStorage(pg1), strNewFmt(PG_PATH_PGTBLSPC "/%u", ts1Oid)), 0);
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check hosts (skip pg2 for now)");
         {
@@ -269,9 +274,7 @@ testRun(void)
             const Buffer *const pgFileNodeMap = storageGetP(
                 storageNewReadP(
                     hrnHostPgStorage(pg1),
-                    strNewFmt(
-                        PG_PATH_PGTBLSPC "/%u/%s/%u/" PG_FILE_PGFILENODEMAP, ts1Oid,
-                        strZ(pgTablespaceId(hrnHostPgVersion(), hrnPgCatalogVersion(hrnHostPgVersion()))), excludeMeOid)));
+                    strNewFmt(PG_PATH_PGTBLSPC "/%u/%s/%u/" PG_FILE_PGFILENODEMAP, ts1Oid, strZ(tablespacePath), excludeMeOid)));
 
             Buffer *const pgFileNodeMapZero = bufNew(bufUsed(pgFileNodeMap));
             memset(bufPtr(pgFileNodeMapZero), 0, bufSize(pgFileNodeMapZero));

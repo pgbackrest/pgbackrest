@@ -960,8 +960,8 @@ testRun(void)
             HRN_FORK_PARENT_BEGIN()
             {
                 IoServer *const tlsServer = tlsServerNew(
-                    STRDEF("localhost"), STRDEF(HRN_SERVER_CA), STRDEF(HRN_SERVER_KEY), STRDEF(HRN_SERVER_CERT), 5000);
-                IoServer *const socketServer = sckServerNew(STRDEF("localhost"), testPort, 5000);
+                    STRDEF("127.0.0.1"), STRDEF(HRN_SERVER_CA), STRDEF(HRN_SERVER_KEY), STRDEF(HRN_SERVER_CERT), 5000);
+                IoServer *const socketServer = sckServerNew(STRDEF("127.0.0.1"), testPort, 5000);
                 ProtocolServer *server = NULL;
 
                 // Server ping

@@ -48,6 +48,9 @@ void hrnFileWrite(const char *fileName, const unsigned char *buffer, size_t buff
 // Diff two strings using command-line diff tool
 const char *hrnDiff(const char *actual, const char *expected);
 
+// Set timezone
+void hrnTzSet(const char *tz);
+
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/

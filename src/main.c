@@ -20,6 +20,7 @@ Main
 #include "command/help/help.h"
 #include "command/info/info.h"
 #include "command/local/local.h"
+#include "command/lock.h"
 #include "command/manifest/manifest.h"
 #include "command/remote/remote.h"
 #include "command/repo/create.h"
@@ -180,7 +181,7 @@ main(int argListSize, const char *argList[])
                         cmdBegin();
 
                         // Null out any backup percent complete value in the backup lock file
-                        lockWriteDataP(lockTypeBackup);
+                        cmdLockWriteP();
 
                         // Run expire
                         cmdExpire();

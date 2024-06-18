@@ -19,6 +19,7 @@ subdir('command/help')
 # test target
 ####################################################################################################################################
 src_doc = [
+    '../../src/build/common/json.c',
     '../../src/build/common/render.c',
     '../../src/build/common/string.c',
     '../../src/build/common/xml.c',
@@ -29,6 +30,7 @@ src_doc = [
     '../../src/command/command.c',
     '../../src/command/exit.c',
     '../../src/command/help/help.c',
+    '../../src/command/lock.c',
     '../../src/common/compress/bz2/common.c',
     '../../src/common/compress/bz2/compress.c',
     '../../src/common/compress/bz2/decompress.c',
@@ -38,7 +40,6 @@ src_doc = [
     '../../src/common/io/fdWrite.c',
     '../../src/common/lock.c',
     '../../src/common/stat.c',
-    '../../src/common/type/json.c',
     '../../src/config/config.c',
     '../../src/config/parse.c',
     'command/build/build.c',

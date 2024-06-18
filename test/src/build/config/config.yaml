@@ -59,6 +59,12 @@ option:
     command:
       test: {}
 
+  coverage-summary:
+    type: boolean
+    default: false
+    command:
+      test: {}
+
   neutral-umask:
     type: boolean
     internal: true
@@ -126,8 +132,8 @@ option:
 
   vm-id:
     type: integer
+    required: false
     internal: true
-    default: 0
     allow-range: [0, 1024]
     command:
       test: {}

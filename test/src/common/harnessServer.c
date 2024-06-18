@@ -268,7 +268,7 @@ hrnServerRun(IoRead *const read, const HrnServerProtocol protocol, const unsigne
         tlsServer = tlsServerNew(STRDEF(HRN_SERVER_HOST), param.ca, param.key, param.certificate, 5000);
     }
 
-    IoServer *socketServer = sckServerNew(STRDEF("localhost"), port, 5000);
+    IoServer *socketServer = sckServerNew(STRDEF("127.0.0.1"), port, 5000);
 
     // Loop until no more commands
     IoSession *serverSession = NULL;

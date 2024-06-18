@@ -37,7 +37,7 @@ struct StoragePosix
 
 /**********************************************************************************************************************************/
 static StorageInfo
-storagePosixInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
+storagePosixInfo(THIS_VOID, const String *const file, const StorageInfoLevel level, const StorageInterfaceInfoParam param)
 {
     THIS(StoragePosix);
 
@@ -269,7 +269,7 @@ storagePosixList(THIS_VOID, const String *const path, const StorageInfoLevel lev
 
 /**********************************************************************************************************************************/
 static bool
-storagePosixMove(THIS_VOID, StorageRead *source, StorageWrite *destination, StorageInterfaceMoveParam param)
+storagePosixMove(THIS_VOID, StorageRead *const source, StorageWrite *const destination, const StorageInterfaceMoveParam param)
 {
     THIS(StoragePosix);
 
@@ -288,9 +288,9 @@ storagePosixMove(THIS_VOID, StorageRead *source, StorageWrite *destination, Stor
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *sourceFile = storageReadName(source);
-        const String *destinationFile = storageWriteName(destination);
-        const String *destinationPath = strPath(destinationFile);
+        const String *const sourceFile = storageReadName(source);
+        const String *const destinationFile = storageWriteName(destination);
+        const String *const destinationPath = strPath(destinationFile);
 
         // Attempt to move the file
         if (rename(strZ(sourceFile), strZ(destinationFile)) == -1)
@@ -328,7 +328,7 @@ storagePosixMove(THIS_VOID, StorageRead *source, StorageWrite *destination, Stor
             // Sync source path if the destination path was synced and the paths are not equal
             if (storageWriteSyncPath(destination))
             {
-                String *sourcePath = strPath(sourceFile);
+                const String *const sourcePath = strPath(sourceFile);
 
                 if (!strEq(destinationPath, sourcePath))
                     storageInterfacePathSyncP(this, sourcePath);
@@ -342,7 +342,7 @@ storagePosixMove(THIS_VOID, StorageRead *source, StorageWrite *destination, Stor
 
 /**********************************************************************************************************************************/
 static StorageRead *
-storagePosixNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInterfaceNewReadParam param)
+storagePosixNewRead(THIS_VOID, const String *const file, const bool ignoreMissing, const StorageInterfaceNewReadParam param)
 {
     THIS(StoragePosix);
 
@@ -362,7 +362,7 @@ storagePosixNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageIn
 
 /**********************************************************************************************************************************/
 static StorageWrite *
-storagePosixNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam param)
+storagePosixNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNewWriteParam param)
 {
     THIS(StoragePosix);
 
@@ -434,7 +434,7 @@ storagePosixPathCreate(
 
 /**********************************************************************************************************************************/
 static bool
-storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
+storagePosixPathRemove(THIS_VOID, const String *const path, const bool recurse, const StorageInterfacePathRemoveParam param)
 {
     THIS(StoragePosix);
 
@@ -503,7 +503,7 @@ storagePosixPathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
 
 /**********************************************************************************************************************************/
 static void
-storagePosixPathSync(THIS_VOID, const String *path, StorageInterfacePathSyncParam param)
+storagePosixPathSync(THIS_VOID, const String *const path, const StorageInterfacePathSyncParam param)
 {
     THIS(StoragePosix);
 
@@ -517,7 +517,7 @@ storagePosixPathSync(THIS_VOID, const String *path, StorageInterfacePathSyncPara
     ASSERT(path != NULL);
 
     // Open directory and handle errors
-    int fd = open(strZ(path), O_RDONLY, 0);
+    const int fd = open(strZ(path), O_RDONLY, 0);
 
     // Handle errors
     if (fd == -1)
@@ -532,7 +532,7 @@ storagePosixPathSync(THIS_VOID, const String *path, StorageInterfacePathSyncPara
         // Attempt to sync the directory
         if (fsync(fd) == -1)
         {
-            int errNo = errno;
+            const int errNo = errno;
 
             // Close the file descriptor to free resources but don't check for failure
             close(fd);
@@ -548,7 +548,7 @@ storagePosixPathSync(THIS_VOID, const String *path, StorageInterfacePathSyncPara
 
 /**********************************************************************************************************************************/
 static void
-storagePosixRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam param)
+storagePosixRemove(THIS_VOID, const String *const file, const StorageInterfaceRemoveParam param)
 {
     THIS(StoragePosix);
 
@@ -635,7 +635,7 @@ storagePosixNewInternal(
 }
 
 FN_EXTERN Storage *
-storagePosixNew(const String *path, StoragePosixNewParam param)
+storagePosixNew(const String *const path, const StoragePosixNewParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);

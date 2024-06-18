@@ -72,6 +72,8 @@ typedef struct TestRequestParam
     bool noBucket;
     bool upload;
     bool noAuth;
+    bool multiPart;
+    const char *path;
     const char *object;
     const char *query;
     const char *contentRange;
@@ -86,8 +88,10 @@ typedef struct TestRequestParam
 static void
 testRequest(IoWrite *write, const char *verb, TestRequestParam param)
 {
-    String *request = strCatFmt(
-        strNew(), "%s %s/storage/v1/b%s", verb, param.upload ? "/upload" : "", param.noBucket ? "" : "/bucket/o");
+    String *const request =
+        param.path != NULL ?
+            strCatFmt(strNew(), "%s %s", verb, param.path) :
+            strCatFmt(strNew(), "%s %s/storage/v1/b%s", verb, param.upload ? "/upload" : "", param.noBucket ? "" : "/bucket/o");
 
     // Add object
     if (param.object != NULL)
@@ -115,6 +119,13 @@ testRequest(IoWrite *write, const char *verb, TestRequestParam param)
     if (param.contentType != NULL)
         strCatFmt(request, "content-type:%s\r\n", param.contentType);
 
+    // Add multipart content-type
+    if (param.multiPart)
+    {
+        ASSERT(param.contentType == NULL);
+        strCatZ(request, "content-type:multipart/mixed; boundary=" HTTP_MULTIPART_BOUNDARY_INIT "\r\n");
+    }
+
     // Add host
     strCatFmt(request, "host:%s\r\n", strZ(hrnServerHost()));
 
@@ -139,6 +150,7 @@ typedef struct TestResponseParam
 {
     VAR_PARAM_HEADER;
     unsigned int code;
+    bool multiPart;
     const char *header;
     const char *content;
 } TestResponseParam;
@@ -173,6 +185,10 @@ testResponse(IoWrite *write, TestResponseParam param)
     // Headers
     if (param.header != NULL)
         strCatFmt(response, "%s\r\n", param.header);
+
+    // Add multipart content-type
+    if (param.multiPart)
+        strCatZ(response, "content-type:multipart/mixed; boundary=" HTTP_MULTIPART_BOUNDARY_INIT "\r\n");
 
     // Content
     if (param.content != NULL)
@@ -940,20 +956,70 @@ testRun(void)
                         "    },"
                         "    {"
                         "      \"name\": \"path1/xxx.zzz\""
+                        "    },"
+                        "    {"
+                        "      \"name\": \"path2/file2\""
                         "    }"
                         "  ]"
                         "}");
 
-                testRequestP(service, HTTP_VERB_DELETE, .object = "path/to/test1.txt");
-                testResponseP(service);
+                testRequestP(
+                    service, HTTP_VERB_POST, .path = "/batch/storage/v1", .multiPart = true,
+                    .content =
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-transfer-encoding:binary\r\n"
+                        "content-id:0\r\n"
+                        "\r\n"
+                        "DELETE /storage/v1/b/bucket/o/path%2Fto%2Ftest1.txt HTTP/1.1\r\n"
+                        "content-length:0\r\n"
+                        "\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-transfer-encoding:binary\r\n"
+                        "content-id:1\r\n"
+                        "\r\n"
+                        "DELETE /storage/v1/b/bucket/o/path1%2Fxxx.zzz HTTP/1.1\r\n"
+                        "content-length:0\r\n"
+                        "\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-transfer-encoding:binary\r\n"
+                        "content-id:2\r\n"
+                        "\r\n"
+                        "DELETE /storage/v1/b/bucket/o/path2%2Ffile2 HTTP/1.1\r\n"
+                        "content-length:0\r\n"
+                        "\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
+                testResponseP(
+                    service, .multiPart = true,
+                    .content =
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:response-0\r\n"
+                        "\r\n"
+                        "HTTP/1.1 404 Missing\r\n\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:response-1\r\n"
+                        "\r\n"
+                        "HTTP/1.1 200 OK\r\n\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:response-2\r\n"
+                        "\r\n"
+                        "HTTP/1.1 300 Error\r\n\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
 
-                testRequestP(service, HTTP_VERB_DELETE, .object = "path1/xxx.zzz");
+                testRequestP(service, HTTP_VERB_DELETE, .object = "path2/file2");
                 testResponseP(service);
 
                 TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files from path");
+
+                ((StorageGcs *)storageDriver(storage))->deleteMax = 1;
 
                 testRequestP(service, HTTP_VERB_GET, .query = "fields=nextPageToken%2Cprefixes%2Citems%28name%29&prefix=path%2F");
                 testResponseP(
@@ -973,13 +1039,72 @@ testRun(void)
                         "  ]"
                         "}");
 
-                testRequestP(service, HTTP_VERB_DELETE, .object = "path/test1.txt");
-                testResponseP(service);
+                testRequestP(
+                    service, HTTP_VERB_POST, .path = "/batch/storage/v1", .multiPart = true,
+                    .content =
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-transfer-encoding:binary\r\n"
+                        "content-id:0\r\n"
+                        "\r\n"
+                        "DELETE /storage/v1/b/bucket/o/path%2Ftest1.txt HTTP/1.1\r\n"
+                        "content-length:0\r\n"
+                        "\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
+                testResponseP(
+                    service, .multiPart = true,
+                    .content =
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:response-0\r\n"
+                        "\r\n"
+                        "HTTP/1.1 404 OK\r\n\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
+
+                testRequestP(
+                    service, HTTP_VERB_POST, .path = "/batch/storage/v1", .multiPart = true,
+                    .content =
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-transfer-encoding:binary\r\n"
+                        "content-id:0\r\n"
+                        "\r\n"
+                        "DELETE /storage/v1/b/bucket/o/path%2Fpath1%2Fxxx.zzz HTTP/1.1\r\n"
+                        "content-length:0\r\n"
+                        "\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
+                testResponseP(
+                    service, .multiPart = true,
+                    .content =
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:response-0\r\n"
+                        "\r\n"
+                        "HTTP/1.1 305 Error\r\n"
+                        "content-length:5\r\n"
+                        "content-type:text\r\n\r\n"
+                        "ERROR"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
 
                 testRequestP(service, HTTP_VERB_DELETE, .object = "path/path1/xxx.zzz");
-                testResponseP(service);
+                testResponseP(service, .code = 300, .content = "ERROR2");
 
-                TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), "remove");
+                TEST_ERROR_FMT(
+                    storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), ProtocolError,
+                    "HTTP request failed with 300:\n"
+                    "*** Path/Query ***:\n"
+                    "DELETE /storage/v1/b/bucket/o/path%%2Fpath1%%2Fxxx.zzz\n"
+                    "*** Request Headers ***:\n"
+                    "authorization: <redacted>\n"
+                    "content-length: 0\n"
+                    "host: %s\n"
+                    "*** Response Headers ***:\n"
+                    "content-length: 6\n"
+                    "*** Response Content ***:\n"
+                    "ERROR2",
+                    strZ(hrnServerHost()));
+
+                ((StorageGcs *)storageDriver(storage))->deleteMax = STORAGE_GCS_DELETE_MAX;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files in empty subpath (nothing to do)");
