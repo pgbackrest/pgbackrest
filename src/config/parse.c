@@ -1635,7 +1635,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                             }
                         }
                     }
-                    // If no argument was found with the option then try the next argument unless bool-like
+                    // If no argument was found with the option then try the next argument (unless bool-like)
                     else if (optionArg == NULL)
                     {
                         // If bool-like then set arg to y

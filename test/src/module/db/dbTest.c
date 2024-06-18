@@ -866,6 +866,40 @@ testRun(void)
 
         TEST_RESULT_VOID(dbFree(result.primary), "free primary");
         TEST_RESULT_VOID(dbFree(result.standby), "free standby");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("primary found and standby skipped");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 4, TEST_PATH "/pg4");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 4, "5433");
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_12, TEST_PATH "/pg1", false, NULL, NULL),
+
+            // pg4 error
+            {.session = 4, .function = HRN_PQ_CONNECTDB, .param = "[\"dbname='postgres' port=5433\"]"},
+            {.session = 4, .function = HRN_PQ_STATUS, .resultInt = CONNECTION_BAD},
+            {.session = 4, .function = HRN_PQ_ERRORMESSAGE, .resultZ = "error"},
+            {.session = 4, .function = HRN_PQ_FINISH},
+
+            HRN_PQ_SCRIPT_CLOSE(1));
+
+        TEST_ASSIGN(result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_PREFER), "get primary and try standby");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to check pg4: [DbConnectError] unable to connect to 'dbname='postgres' port=5433': error");
+
+        TEST_RESULT_INT(result.primaryIdx, 0, "check primary idx");
+        TEST_RESULT_BOOL(result.primary != NULL, true, "check primary");
+        TEST_RESULT_BOOL(result.standby == NULL, true, "check standby was not found");
+
+        TEST_RESULT_VOID(dbFree(result.primary), "free primary");
+        TEST_RESULT_VOID(dbFree(result.standby), "free standby");
     }
 
     protocolFree();

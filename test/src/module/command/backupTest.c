@@ -2822,6 +2822,66 @@ testRun(void)
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online 9.6 backup-standby (prefer) incr backup with block incremental");
+
+        backupTimeStart = BACKUP_EPOCH + 1800000;
+
+        {
+            // Load options
+            StringList *argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pg1Path);
+            hrnCfgArgKeyRaw(argList, cfgOptPgPath, 2, pg2Path);
+            hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5433");
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeIncr);
+            hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
+            hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
+            hrnCfgArgRawBool(argList, cfgOptCompress, false);
+            hrnCfgArgRawZ(argList, cfgOptBackupStandby, "prefer");
+            hrnCfgArgRawBool(argList, cfgOptStartFast, true);
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            // Run backup
+            hrnBackupPqScriptP(
+                PG_VERSION_96, backupTimeStart, .backupStandby = true, .backupStandbyError = true, .startFast = true);
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+
+            TEST_RESULT_LOG(
+                "P00   WARN: unable to check pg2: [DbConnectError] unable to connect to 'dbname='postgres' port=5433': error\n"
+                "P00   INFO: last backup label = 20191020-193320F_20191021-232000I, version = " PROJECT_VERSION "\n"
+                "P00   INFO: execute non-exclusive backup start: backup begins after the requested immediate checkpoint completes\n"
+                "P00   INFO: backup start archive = 0000000105DAFC3000000000, lsn = 5dafc30/0\n"
+                "P00   INFO: check archive for prior segment 0000000105DAFC2F000000FF\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/4 (bundle 1/0, 40KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/3 (bundle 1/8234, 40KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/16476, 8KB, [PCT]) checksum [SHA1]\n"
+                "P00 DETAIL: reference pg_data/PG_VERSION to 20191020-193320F\n"
+                "P00 DETAIL: reference pg_data/postgresql.conf to 20191020-193320F\n"
+                "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
+                "P00   INFO: backup stop archive = 0000000105DAFC3000000000, lsn = 5dafc30/800000\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
+                "P00   INFO: check archive for segment(s) 0000000105DAFC3000000000:0000000105DAFC3000000000\n"
+                "P00   INFO: new backup label = 20191020-193320F_20191023-030640I\n"
+                "P00   INFO: incr backup size = [SIZE], file total = 6");
+
+            TEST_RESULT_STR_Z(
+                testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
+                ".> {d=20191020-193320F_20191023-030640I}\n"
+                "bundle/1/pg_data/base/1/3 {s=40960, m=0:{0,1,2},1:{0},2:{0}, ts=-200000}\n"
+                "bundle/1/pg_data/base/1/4 {s=40960, m=0:{0,1,2,3},2:{0}, ts=-200000}\n"
+                "bundle/1/pg_data/global/pg_control {s=8192}\n"
+                "pg_data/backup_label {s=17, ts=+2}\n"
+                "20191020-193320F/bundle/1/pg_data/PG_VERSION {s=3, ts=-500000}\n"
+                "20191020-193320F/bundle/1/pg_data/postgresql.conf {s=11, ts=-1700000}\n"
+                "--------\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n",
+                "compare file list");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("online 11 full backup with tablespaces and page checksums");
 
         backupTimeStart = BACKUP_EPOCH + 2200000;

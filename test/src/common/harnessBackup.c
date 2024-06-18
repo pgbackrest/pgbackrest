@@ -264,7 +264,22 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
             if (pgVersion <= PG_VERSION_95)
                 HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_OPEN_GE_93(2, "dbname='postgres' port=5433", pgVersion, pg2Path, true, NULL, NULL));
             else
-                HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_OPEN_GE_96(2, "dbname='postgres' port=5433", pgVersion, pg2Path, true, NULL, NULL));
+            {
+                if (param.backupStandbyError)
+                {
+                    HRN_PQ_SCRIPT_ADD(
+                        {.session = 2, .function = HRN_PQ_CONNECTDB, .param = "[\"dbname='postgres' port=5433\"]"},
+                        {.session = 2, .function = HRN_PQ_STATUS, .resultInt = CONNECTION_BAD},
+                        {.session = 2, .function = HRN_PQ_ERRORMESSAGE, .resultZ = "error"});
+
+                    param.backupStandby = false;
+                }
+                else
+                {
+                    HRN_PQ_SCRIPT_ADD(
+                        HRN_PQ_SCRIPT_OPEN_GE_96(2, "dbname='postgres' port=5433", pgVersion, pg2Path, true, NULL, NULL));
+                }
+            }
         }
 
         // Get start time
