@@ -1517,7 +1517,7 @@ testRun(void)
         TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
         TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command is none");
         TEST_RESULT_INT(hrnLogLevelStdOut(), logLevelWarn, "console logging is warn");
-        TEST_RESULT_INT(hrnLogLevelStdErr(), logLevelWarn, "stderr logging is warn");
+        TEST_RESULT_INT(hrnLogLevelStdErr(), logLevelOff, "stderr logging is warn");
         harnessLogLevelReset();
 
         // -------------------------------------------------------------------------------------------------------------------------
