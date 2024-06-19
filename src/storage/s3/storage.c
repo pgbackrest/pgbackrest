@@ -124,26 +124,6 @@ Expected ISO-8601 data/time size
 #define ISO_8601_DATE_TIME_SIZE                                     16
 
 /***********************************************************************************************************************************
-Format ISO-8601 date/time for authentication
-***********************************************************************************************************************************/
-static String *
-storageS3DateTime(const time_t authTime)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(TIME, authTime);
-    FUNCTION_TEST_END();
-
-    struct tm timePart;
-    char buffer[ISO_8601_DATE_TIME_SIZE + 1];
-
-    THROW_ON_SYS_ERROR(
-        strftime(buffer, sizeof(buffer), "%Y%m%dT%H%M%SZ", gmtime_r(&authTime, &timePart)) != ISO_8601_DATE_TIME_SIZE, AssertError,
-        "unable to format date");
-
-    FUNCTION_TEST_RETURN(STRING, strNewZ(buffer));
-}
-
-/***********************************************************************************************************************************
 Generate authorization header and add it to the supplied header list
 
 Based on the excellent documentation at http://docs.aws.amazon.com/AmazonS3/latest/API/sig-v4-header-based-auth.html.
@@ -552,7 +532,7 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
 
         // Generate authorization header
         storageS3Auth(
-            this, verb, path, param.query, storageS3DateTime(time(NULL)), requestHeader,
+            this, verb, path, param.query, strNewTimeP("%Y%m%dT%H%M%SZ", time(NULL), .utc = true), requestHeader,
             strNewEncode(
                 encodingHex,
                 param.content == NULL || bufEmpty(param.content) ?

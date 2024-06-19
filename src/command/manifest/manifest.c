@@ -471,18 +471,13 @@ cmdManifestRender(void)
             strCatFmt(result, "reference: %s\n", strZ(strLstJoin(manifestReferenceList(manifest), ", ")));
             strCatFmt(result, "type: %s\n", strZ(strIdToStr(data->backupType)));
 
-            struct tm timePart;
-            char timeBufferStart[20];
-            char timeBufferStop[20];
             int64_t duration = (int64_t)(data->backupTimestampStop - data->backupTimestampStart);
 
-            strftime(
-                timeBufferStart, sizeof(timeBufferStart), "%Y-%m-%d %H:%M:%S", localtime_r(&data->backupTimestampStart, &timePart));
-            strftime(
-                timeBufferStop, sizeof(timeBufferStop), "%Y-%m-%d %H:%M:%S", localtime_r(&data->backupTimestampStop, &timePart));
             strCatFmt(
-                result, "time: start: %s, stop: %s, duration: %" PRId64 ":%02" PRId64 ":%02" PRId64 "\n", timeBufferStart,
-                timeBufferStop, duration / 3600, duration % 3600 / 60, duration % 60);
+                result, "time: start: %s, stop: %s, duration: %" PRId64 ":%02" PRId64 ":%02" PRId64 "\n",
+                strZ(strNewTimeP("%Y-%m-%d %H:%M:%S", data->backupTimestampStart)),
+                strZ(strNewTimeP("%Y-%m-%d %H:%M:%S", data->backupTimestampStop)), duration / 3600, duration % 3600 / 60,
+                duration % 60);
 
             strCatFmt(result, "bundle: %s\n", cvtBoolToConstZ(data->bundle));
             strCatFmt(result, "block: %s\n", cvtBoolToConstZ(data->blockIncr));

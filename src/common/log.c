@@ -15,6 +15,7 @@ Log Handler
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/time.h"
+#include "common/type/convert.h"
 
 /***********************************************************************************************************************************
 Module variables
@@ -398,13 +399,11 @@ logPre(
     // Add time
     if (logTimestamp)
     {
-        struct tm timePart;
         const TimeMSec logTimeMSec = timeMSec();
         const time_t logTimeSec = (time_t)(logTimeMSec / MSEC_PER_SEC);
 
-        result.bufferPos += strftime(
-            logBuffer + result.bufferPos, sizeof(logBuffer) - result.bufferPos, "%Y-%m-%d %H:%M:%S",
-            localtime_r(&logTimeSec, &timePart));
+        result.bufferPos += cvtTimeToZP(
+            "%Y-%m-%d %H:%M:%S", logTimeSec, logBuffer + result.bufferPos, sizeof(logBuffer) - result.bufferPos);
         result.bufferPos += (size_t)snprintf(
             logBuffer + result.bufferPos, sizeof(logBuffer) - result.bufferPos, ".%03d ", (int)(logTimeMSec % 1000));
     }
