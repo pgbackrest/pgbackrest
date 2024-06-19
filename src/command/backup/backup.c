@@ -2723,11 +2723,9 @@ cmdBackup(void)
                 if (manifestFileTotal(manifestPrelim) > 0)
                 {
                     // Report limit of files to be copied in the preliminary copy
-                    struct tm timePart;
-                    char timeBuffer[20];
-
-                    strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", localtime_r(&timestampCopyStart, &timePart));
-                    LOG_INFO_FMT("full/incr backup preliminary copy of files last modified before %s", timeBuffer);
+                    LOG_INFO_FMT(
+                        "full/incr backup preliminary copy of files last modified before %s",
+                        strZ(strNewTimeP("%Y-%m-%d %H:%M:%S", timestampCopyStart)));
 
                     // Wait for replay on the standby to catch up
                     const String *const checkpointLsn = pgLsnToStr(backupData->checkpoint);
