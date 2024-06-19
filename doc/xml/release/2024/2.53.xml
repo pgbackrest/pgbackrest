@@ -1,5 +1,9 @@
 <release date="XXXX-XX-XX" version="2.53dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <text>
+            <p><b>IMPORTANT NOTE</b>: The <br-setting>log-level-stderr</br-setting> option default has been changed from <id>warn</id> to <id>off</id>. This makes it easier to capture errors when only redirecting <id>stdout</id>. To preserve the prior behavior set <br-setting>log-level-stderr=warn</br-setting>.</p>
+        </text>
+
         <release-bug-list>
             <release-item>
                 <github-issue id="2358"/>
