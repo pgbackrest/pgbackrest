@@ -366,18 +366,26 @@ cvtSizeToZ(const size_t value, char *const buffer, const size_t bufferSize)
 
 /**********************************************************************************************************************************/
 FN_EXTERN size_t
-cvtTimeToZ(const time_t value, char *const buffer, const size_t bufferSize)
+cvtTimeToZ(const char *const format, const time_t value, char *const buffer, const size_t bufferSize, const CvtTimeToZParam param)
 {
     FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, format);
         FUNCTION_TEST_PARAM(TIME, value);
         FUNCTION_TEST_PARAM_P(CHARDATA, buffer);
         FUNCTION_TEST_PARAM(SIZE, bufferSize);
+        FUNCTION_TEST_PARAM(BOOL, param.utc);
     FUNCTION_TEST_END();
 
     ASSERT(buffer != NULL);
 
     struct tm timePart;
-    const size_t result = strftime(buffer, bufferSize, "%s", localtime_r(&value, &timePart));
+
+    // We can ignore this warning here since the format parameter of cvtTimeToZP() is checked
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+    const size_t result = strftime(
+        buffer, bufferSize, format, param.utc ? gmtime_r(&value, &timePart) : localtime_r(&value, &timePart));
+#pragma GCC diagnostic pop
 
     if (result == 0)
         THROW(AssertError, "buffer overflow");

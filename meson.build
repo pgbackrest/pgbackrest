@@ -211,6 +211,12 @@ configuration.set(
     description: 'Indicate that a function is formatted like printf (and provide format and args position)'
 )
 
+# Set FN_STRFTIME macro
+configuration.set(
+    'FN_STRFTIME(fmt)', '__attribute__((format(strftime, fmt, 0)))',
+    description: 'Indicate that a function is formatted like strftime (and provide format position)'
+)
+
 ####################################################################################################################################
 # Include subdirs
 ####################################################################################################################################

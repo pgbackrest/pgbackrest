@@ -8,6 +8,7 @@ String Handler
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "common/debug.h"
 #include "common/macro.h"
@@ -172,6 +173,27 @@ strNewDbl(const double value)
     cvtDoubleToZ(value, working, sizeof(working));
 
     FUNCTION_TEST_RETURN(STRING, strNewZ(working));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN String *
+strNewTime(const char *const format, const time_t timestamp, const StrNewTimeParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, format);
+        FUNCTION_TEST_PARAM(TIME, timestamp);
+        FUNCTION_TEST_PARAM(BOOL, param.utc);
+    FUNCTION_TEST_END();
+
+    char buffer[64];
+
+    // We can ignore this warning here since the format parameter of strNewTimeP() is checked
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+    cvtTimeToZP(format, timestamp, buffer, sizeof(buffer), .utc = param.utc);
+#pragma GCC diagnostic pop
+
+    FUNCTION_TEST_RETURN(STRING, strNewZ(buffer));
 }
 
 /**********************************************************************************************************************************/
@@ -511,6 +533,28 @@ strCatEncode(String *const this, const EncodingType type, const Buffer *const bu
     }
 
     FUNCTION_TEST_RETURN(STRING, this);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN String *
+strCatTime(String *const this, const char *const format, const time_t timestamp, const StrCatTimeParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(STRINGZ, format);
+        FUNCTION_TEST_PARAM(TIME, timestamp);
+        FUNCTION_TEST_PARAM(BOOL, param.utc);
+    FUNCTION_TEST_END();
+
+    char buffer[64];
+
+    // We can ignore this warning here since the format parameter of strCatTimeP() is checked
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+    cvtTimeToZP(format, timestamp, buffer, sizeof(buffer), .utc = param.utc);
+#pragma GCC diagnostic pop
+
+    FUNCTION_TEST_RETURN(STRING, strCatZ(this, buffer));
 }
 
 /**********************************************************************************************************************************/

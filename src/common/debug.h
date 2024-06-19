@@ -246,7 +246,7 @@ FN_EXTERN size_t typeToLog(const char *typeName, char *buffer, size_t bufferSize
 #define FUNCTION_LOG_TIME_TYPE                                                                                                     \
     time_t
 #define FUNCTION_LOG_TIME_FORMAT(value, buffer, bufferSize)                                                                        \
-    cvtTimeToZ(value, buffer, bufferSize)
+    cvtTimeToZP("%s", value, buffer, bufferSize)
 
 #define FUNCTION_LOG_UINT_TYPE                                                                                                     \
     unsigned int
