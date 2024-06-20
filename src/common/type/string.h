@@ -69,6 +69,18 @@ FN_EXTERN String *strNewBuf(const Buffer *buffer);
 // Create a new fixed length string by converting the double value
 FN_EXTERN String *strNewDbl(double value);
 
+// Create a new fixed length string by converting a timestamp
+typedef struct StrNewTimeParam
+{
+    VAR_PARAM_HEADER;
+    bool utc;                                                       // Use UTC instead of local time?
+} StrNewTimeParam;
+
+#define strNewTimeP(format, timestamp, ...)                                                                                        \
+    strNewTime(format, timestamp, (StrNewTimeParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN FN_STRFTIME(1) String *strNewTime(const char *format, time_t timestamp, StrNewTimeParam param);
+
 // Create a new fixed length string encoded with the specified type (e.g. encodingBase64) from a buffer
 FN_EXTERN String *strNewEncode(EncodingType type, const Buffer *buffer);
 
@@ -128,6 +140,18 @@ FN_EXTERN String *strCatChr(String *this, char cat);
 
 // Append a string encoded with the specified type (e.g. encodingBase64) from a buffer
 FN_EXTERN String *strCatEncode(String *this, EncodingType type, const Buffer *buffer);
+
+// Append a timestamp
+typedef struct StrCatTimeParam
+{
+    VAR_PARAM_HEADER;
+    bool utc;                                                       // Use UTC instead of local time?
+} StrCatTimeParam;
+
+#define strCatTimeP(this, format, timestamp, ...)                                                                                  \
+    strCatTime(this, format, timestamp, (StrCatTimeParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN FN_STRFTIME(2) String *strCatTime(String *this, const char *format, time_t timestamp, StrCatTimeParam param);
 
 // Append a formatted string
 FN_EXTERN FN_PRINTF(2, 3) String *strCatFmt(String *this, const char *format, ...);

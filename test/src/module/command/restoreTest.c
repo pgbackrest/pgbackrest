@@ -401,12 +401,7 @@ testRun(void)
 
         hrnTzSet("America/New_York");
 
-        time_t testTime = 1573754569;
-        char timeBuffer[20];
-        struct tm timePart;
-        strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", localtime_r(&testTime, &timePart));
-
-        TEST_RESULT_Z(timeBuffer, "2019-11-14 13:02:49", "check timezone set");
+        TEST_RESULT_STR_Z(strNewTimeP("%Y-%m-%d %H:%M:%S", 1573754569), "2019-11-14 13:02:49", "check timezone set");
         TEST_RESULT_INT(getEpoch(STRDEF("2019-11-14 13:02:49-0500")), 1573754569, "offset same as local");
         TEST_RESULT_INT(getEpoch(STRDEF("2019-11-14 13:02:49")), 1573754569, "GMT-0500 (EST)");
         TEST_RESULT_INT(getEpoch(STRDEF("2019-09-14 20:02:49")), 1568505769, "GMT-0400 (EDT)");
