@@ -24,7 +24,7 @@ FN_EXTERN bool cmdLockAcquire(LockAcquireParam param);
 FN_EXTERN void cmdLockWrite(LockWriteParam param);
 
 // Read a command lock file held by another process to get information about what the process is doing
-FN_EXTERN LockReadResult cmdLockRead(LockType lockType, const String *stanza);
+FN_EXTERN LockReadResult cmdLockRead(LockType lockType, const String *stanza, unsigned int repoKey);
 
 // Release command lock(s)
 #define cmdLockReleaseP(...)                                                                                                       \

@@ -133,7 +133,6 @@ typedef struct InfoStanzaRepo
     const String *name;                                             // Name of the stanza
     uint64_t currentPgSystemId;                                     // Current postgres system id for the stanza
     unsigned int currentPgVersion;                                  // Current postgres version for the stanza
-    bool backupLockChecked;                                         // Has the check for a backup lock already been performed?
     bool backupLockHeld;                                            // Is backup lock held on the system where info command is run?
     const Variant *percentComplete;                                 // Percentage of backup complete * 100 (when not NULL)
     const Variant *sizeComplete;                                    // Completed size of the backup in bytes
@@ -1295,20 +1294,27 @@ infoUpdateStanza(
                         infoPgCipherPass(infoBackupPg(stanzaRepo->repoList[repoIdx].backupInfo)));
                 }
 
-                // If a backup lock check has not already been performed, then do so
-                if (!stanzaRepo->backupLockChecked)
+                // If there is a valid backup lock for this stanza then backup/expire must be running
+                const LockReadResult lockResult = cmdLockRead(lockTypeBackup, stanzaRepo->name, repoIdx);
+
+                if (lockResult.status == lockReadStatusValid)
                 {
-                    // If there is a valid backup lock for this stanza then backup/expire must be running
-                    const LockReadResult lockResult = cmdLockRead(lockTypeBackup, stanzaRepo->name);
+                    stanzaRepo->backupLockHeld = true;
+                    stanzaRepo->sizeComplete =
+                        stanzaRepo->sizeComplete == NULL ?
+                            lockResult.data.sizeComplete :
+                            varNewUInt64(varUInt64(stanzaRepo->sizeComplete) + varUInt64(lockResult.data.sizeComplete));
+                    stanzaRepo->size =
+                        stanzaRepo->size == NULL ?
+                            lockResult.data.size : varNewUInt64(varUInt64(stanzaRepo->size) + varUInt64(lockResult.data.size));
 
-                    stanzaRepo->backupLockHeld = lockResult.status == lockReadStatusValid;
-                    stanzaRepo->backupLockChecked = true;
-
-                    if (stanzaRepo->backupLockHeld)
+                    if (stanzaRepo->size != NULL)
                     {
-                        stanzaRepo->percentComplete = lockResult.data.percentComplete;
-                        stanzaRepo->sizeComplete = lockResult.data.sizeComplete;
-                        stanzaRepo->size = lockResult.data.size;
+                        stanzaRepo->percentComplete =
+                            varUInt64(stanzaRepo->size) == 0 ?
+                                varNewUInt(10000) :
+                                varNewUInt(
+                                    (unsigned int)(((double)varUInt64(stanzaRepo->sizeComplete) / (double)varUInt64(stanzaRepo->size)) * 10000));
                     }
                 }
             }

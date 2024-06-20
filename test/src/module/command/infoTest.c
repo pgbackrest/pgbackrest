@@ -238,7 +238,7 @@ testRun(void)
             {
                 lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"));
                 TEST_RESULT_BOOL(
-                    lockAcquireP(cmdLockFileName(STRDEF("stanza1"), lockTypeBackup)), true, "create backup/expire lock");
+                    lockAcquireP(cmdLockFileName(STRDEF("stanza1"), lockTypeBackup, 1)), true, "create backup/expire lock");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -429,7 +429,7 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                String *lockFileName = cmdLockFileName(STRDEF("stanza1"), lockTypeBackup);
+                String *lockFileName = cmdLockFileName(STRDEF("stanza1"), lockTypeBackup, 1);
                 lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("777-afafafaf"));
                 TEST_RESULT_BOOL(lockAcquireP(lockFileName), true, "create backup/expire lock");
                 TEST_RESULT_VOID(lockWriteP(lockFileName), "write lock data");
@@ -1039,7 +1039,7 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                String *lockFileName = cmdLockFileName(STRDEF("stanza2"), lockTypeBackup);
+                String *lockFileName = cmdLockFileName(STRDEF("stanza2"), lockTypeBackup, 1);
                 lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"));
                 TEST_RESULT_BOOL(lockAcquireP(lockFileName), true, "create backup/expire lock");
                 TEST_RESULT_VOID(
@@ -1483,7 +1483,7 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                String *lockFileName = cmdLockFileName(STRDEF("stanza2"), lockTypeBackup);
+                String *lockFileName = cmdLockFileName(STRDEF("stanza2"), lockTypeBackup, 1);
                 lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"));
                 TEST_RESULT_BOOL(lockAcquireP(lockFileName), true, "create backup/expire lock");
                 TEST_RESULT_VOID(lockWriteP(lockFileName, .percentComplete = VARUINT(5555)), "write lock data");
@@ -1559,7 +1559,7 @@ testRun(void)
                     "            backup reference list: 20201116-155000F\n"
                     "\n"
                     "stanza: stanza2\n"
-                    "    status: mixed (backup/expire running - 55.55% complete)\n"
+                    "    status: mixed (backup/expire running)\n"
                     "        repo1: error (no valid backups)\n"
                     "        repo2: error (missing stanza path)\n"
                     "    cipher: mixed\n"
