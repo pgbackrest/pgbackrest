@@ -1623,7 +1623,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 }
 
                 // If the option may have an argument (arguments are optional for boolean options)
-                const ParseRuleOption *const ruleOption = &parseRuleOption[optionId];
+                const ParseRuleOption *const ruleOption = &parseRuleOption[option.id];
 
                 if (!option.negate && !option.reset)
                 {
