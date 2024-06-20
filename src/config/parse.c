@@ -1623,10 +1623,12 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 }
 
                 // If the option may have an argument (arguments are optional for boolean options)
+                const ParseRuleOption *const ruleOption = &parseRuleOption[optionId];
+
                 if (!option.negate && !option.reset)
                 {
                     // Handle boolean (only y/n allowed as argument)
-                    if (parseRuleOption[option.id].type == cfgOptTypeBoolean)
+                    if (ruleOption->type == cfgOptTypeBoolean)
                     {
                         // Validate argument/set negate when argument present
                         if (optionArg != NULL)
@@ -1644,7 +1646,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                     else if (optionArg == NULL)
                     {
                         // If bool-like then set arg to y
-                        if (parseRuleOption[option.id].boolLike)
+                        if (ruleOption->boolLike)
                         {
                             optionArg = Y_STR;
                         }
@@ -1663,7 +1665,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                     THROW_FMT(OptionInvalidError, "option '%s' does not allow an argument", strZ(optionName));
 
                 // if negated and bool-like then set to n
-                if (option.negate && parseRuleOption[option.id].boolLike)
+                if (option.negate && ruleOption->boolLike)
                 {
                     option.negate = false;
                     optionArg = N_STR;
