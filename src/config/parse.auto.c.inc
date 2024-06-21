@@ -595,6 +595,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     (                                                                                                           // cmd/stanza-create
         PARSE_RULE_COMMAND_NAME("stanza-create"),                                                               // cmd/stanza-create
         PARSE_RULE_COMMAND_LOCK_REQUIRED(true),                                                                 // cmd/stanza-create
+        PARSE_RULE_COMMAND_LOCK_REMOTE_REQUIRED(true),                                                          // cmd/stanza-create
         PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeAll),                                                              // cmd/stanza-create
         PARSE_RULE_COMMAND_LOG_FILE(true),                                                                      // cmd/stanza-create
         PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo),                                                     // cmd/stanza-create
@@ -610,6 +611,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     (                                                                                                           // cmd/stanza-delete
         PARSE_RULE_COMMAND_NAME("stanza-delete"),                                                               // cmd/stanza-delete
         PARSE_RULE_COMMAND_LOCK_REQUIRED(true),                                                                 // cmd/stanza-delete
+        PARSE_RULE_COMMAND_LOCK_REMOTE_REQUIRED(true),                                                          // cmd/stanza-delete
         PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeAll),                                                              // cmd/stanza-delete
         PARSE_RULE_COMMAND_LOG_FILE(true),                                                                      // cmd/stanza-delete
         PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo),                                                     // cmd/stanza-delete
@@ -625,6 +627,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     (                                                                                                          // cmd/stanza-upgrade
         PARSE_RULE_COMMAND_NAME("stanza-upgrade"),                                                             // cmd/stanza-upgrade
         PARSE_RULE_COMMAND_LOCK_REQUIRED(true),                                                                // cmd/stanza-upgrade
+        PARSE_RULE_COMMAND_LOCK_REMOTE_REQUIRED(true),                                                         // cmd/stanza-upgrade
         PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeAll),                                                             // cmd/stanza-upgrade
         PARSE_RULE_COMMAND_LOG_FILE(true),                                                                     // cmd/stanza-upgrade
         PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelInfo),                                                    // cmd/stanza-upgrade

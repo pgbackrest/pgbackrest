@@ -30,7 +30,10 @@
 
         <release-development-list>
             <release-item>
-                <github-pull-request id="2371"/>
+                <commit subject="Refactor lock module.">
+                    <github-pull-request id="2371"/>
+                </commit>
+                <commit subject="Add remote locks for stanza commands missed in 31c7824a."/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
