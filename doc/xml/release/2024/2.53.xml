@@ -26,6 +26,7 @@
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="greg.sabino.mullane"/>
+                    <release-item-reviewer id="stefan.fercot"/>
                 </release-item-contributor-list>
 
                 <p>Default <br-setting>log-level-stderr</br-setting> option to <id>off</id>.</p>
