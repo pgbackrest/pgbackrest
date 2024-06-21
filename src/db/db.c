@@ -383,7 +383,8 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
     {
         // Acquire the backup advisory lock to make sure that backups are not running from multiple backup servers against the same
         // database cluster. This lock helps make the stop-auto option safe.
-        if (!pckReadBoolP(dbQueryColumn(this, STRDEF("select pg_catalog.pg_try_advisory_lock(" PG_BACKUP_ADVISORY_LOCK ")::bool"))))
+        if (dbPgVersion(this) <= PG_VERSION_95 &&
+            !pckReadBoolP(dbQueryColumn(this, STRDEF("select pg_catalog.pg_try_advisory_lock(" PG_BACKUP_ADVISORY_LOCK ")::bool"))))
         {
             THROW(
                 LockAcquireError,
