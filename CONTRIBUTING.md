@@ -642,7 +642,7 @@ repo-test-type:
 
 - `command-role` - defines the processes for which the option is valid. `main` indicates the option will be used by the main process and not be passed on to other local/remote processes.
 
-At compile time, the `config.auto.h` file will be generated to contain the constants used for options in the code. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with `cfgOpt`, e.g. `repo-path` becomes `cfgOptRepoPath`.
+When `test.pl` is run the `config.auto.h` file will be generated to contain the constants used for options in the code. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with `cfgOpt`, e.g. `repo-path` becomes `cfgOptRepoPath`.
 
 ### help.xml
 
