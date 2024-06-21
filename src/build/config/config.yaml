@@ -143,18 +143,21 @@ command:
   stanza-create:
     command-role:
       remote: {}
+    lock-remote-required: true
     lock-required: true
     lock-type: all
 
   stanza-delete:
     command-role:
       remote: {}
+    lock-remote-required: true
     lock-required: true
     lock-type: all
 
   stanza-upgrade:
     command-role:
       remote: {}
+    lock-remote-required: true
     lock-required: true
     lock-type: all
 
