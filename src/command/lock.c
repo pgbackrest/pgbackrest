@@ -25,7 +25,9 @@ static const char *const lockTypeName[] =
     "backup",                                                       // lockTypeBackup
 };
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+Generate lock file name
+***********************************************************************************************************************************/
 static String *
 cmdLockFileName(const String *const stanza, const LockType lockType, const unsigned int repoKey)
 {
@@ -40,6 +42,40 @@ cmdLockFileName(const String *const stanza, const LockType lockType, const unsig
     ASSERT(repoKey > 0);
 
     FUNCTION_TEST_RETURN(STRING, strNewFmt("%s-%s-%u" LOCK_FILE_EXT, strZ(stanza), lockTypeName[lockType], repoKey));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN StringList *
+cmdLockList(void)
+{
+    FUNCTION_TEST_VOID();
+
+    ASSERT(cfgLockType() != lockTypeNone);
+
+    StringList *const result = strLstNew();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const LockType lockType = cfgLockType();
+        const LockType lockMin = lockType == lockTypeAll ? lockTypeArchive : lockType;
+        const LockType lockMax = lockType == lockTypeAll ? (lockTypeAll - 1) : lockType;
+
+        const bool repoSet = cfgOptionTest(cfgOptRepo);
+        const unsigned int repoMin = repoSet ? cfgOptionGroupIdxDefault(cfgOptGrpRepo) : 0;
+        const unsigned int repoMax = repoSet ? repoMin : cfgOptionGroupIdxTotal(cfgOptGrpRepo) - 1;
+
+        for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
+        {
+            for (unsigned int repoIdx = repoMin; repoIdx <= repoMax; repoIdx++)
+            {
+                strLstAdd(
+                    result, cmdLockFileName(cfgOptionStr(cfgOptStanza), lockIdx, cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx)));
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(STRING_LIST, result);
 }
 
 /**********************************************************************************************************************************/
@@ -61,22 +97,14 @@ cmdLockAcquire(const LockAcquireParam param)
         THROW(AssertError, "lock is already held by this process");
 
     // Lock files
-    const LockType lockMin = lockType == lockTypeAll ? lockTypeArchive : lockType;
-    const LockType lockMax = lockType == lockTypeAll ? (lockTypeAll - 1) : lockType;
-    const unsigned int repoMin = cfgOptionTest(cfgOptRepo) ? cfgOptionGroupIdxDefault(cfgOptGrpRepo) : 0;
-    const unsigned int repoMax = cfgOptionTest(cfgOptRepo) ? repoMin : cfgOptionGroupIdxTotal(cfgOptGrpRepo) - 1;
-
-    for (LockType lockIdx = lockMin; lockIdx <= lockMax; lockIdx++)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        for (unsigned int repoIdx = repoMin; repoIdx <= repoMax; repoIdx++)
-        {
-            String *const lockFileName = cmdLockFileName(
-                cfgOptionStr(cfgOptStanza), lockIdx, cfgOptionGroupIdxToKey(cfgOptGrpRepo, repoIdx));
+        const StringList *const lockList = cfgOptionTest(cfgOptLock) ? strLstNewVarLst(cfgOptionLst(cfgOptLock)) : cmdLockList();
 
-            result = lockAcquire(lockFileName, param);
-            strFree(lockFileName);
-        }
+        for (unsigned int lockListIdx = 0; lockListIdx < strLstSize(lockList); lockListIdx++)
+            result = lockAcquire(strLstGet(lockList, lockListIdx), param);
     }
+    MEM_CONTEXT_TEMP_END();
 
     // Set lock held flag
     cmdLockLocal.held = result;

@@ -2473,6 +2473,25 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                           // opt/link-map
     ),                                                                                                               // opt/link-map
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                                    // opt/lock
+    (                                                                                                                    // opt/lock
+        PARSE_RULE_OPTION_NAME("lock"),                                                                                  // opt/lock
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeList),                                                                          // opt/lock
+        PARSE_RULE_OPTION_REQUIRED(false),                                                                               // opt/lock
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),                                                                // opt/lock
+        PARSE_RULE_OPTION_MULTI(true),                                                                                   // opt/lock
+                                                                                                                         // opt/lock
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                                 // opt/lock
+        (                                                                                                                // opt/lock
+            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                                    // opt/lock
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                                 // opt/lock
+            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                      // opt/lock
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                                // opt/lock
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                                // opt/lock
+            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                               // opt/lock
+        ),                                                                                                               // opt/lock
+    ),                                                                                                                   // opt/lock
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                               // opt/lock-path
     (                                                                                                               // opt/lock-path
         PARSE_RULE_OPTION_NAME("lock-path"),                                                                        // opt/lock-path
@@ -10953,6 +10972,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptJobRetryInterval,                                                                                     // opt-resolve-order
     cfgOptLinkAll,                                                                                              // opt-resolve-order
     cfgOptLinkMap,                                                                                              // opt-resolve-order
+    cfgOptLock,                                                                                                 // opt-resolve-order
     cfgOptLockPath,                                                                                             // opt-resolve-order
     cfgOptLogLevelConsole,                                                                                      // opt-resolve-order
     cfgOptLogLevelFile,                                                                                         // opt-resolve-order

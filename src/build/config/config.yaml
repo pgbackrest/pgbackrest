@@ -540,6 +540,20 @@ option:
       local: {}
       remote: {}
 
+  lock:
+    type: list
+    internal: true
+    required: false
+    command:
+      annotate: {}
+      archive-push: {}
+      backup: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+    command-role:
+      remote: {}
+
   remote-type:
     type: string-id
     internal: true

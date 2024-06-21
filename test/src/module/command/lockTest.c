@@ -84,6 +84,26 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdLockReleaseP(), "release locks");
         TEST_STORAGE_LIST(storageTest, NULL, NULL, .comment = "check lock file does not exist");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("acquire backup:remote command lock");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptLockPath, TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
+        hrnCfgArgRawZ(argList, cfgOptLock, "test-lock-99.lock");
+        hrnCfgArgRawZ(argList, cfgOptLock, "other-lock.lock");
+        HRN_CFG_LOAD(cfgCmdBackup, argList, .role = cfgCmdRoleRemote, .noStd = true);
+
+        TEST_RESULT_VOID(cmdLockAcquireP(), "acquire backup:remote lock");
+        TEST_STORAGE_LIST(storageTest, NULL, "other-lock.lock\ntest-lock-99.lock\n", .comment = "check lock files");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("lock release");
+
+        TEST_RESULT_VOID(cmdLockReleaseP(), "release locks");
+        TEST_STORAGE_LIST(storageTest, NULL, NULL, .comment = "check lock file does not exist");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

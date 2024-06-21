@@ -5,6 +5,7 @@ Protocol Helper
 
 #include <string.h>
 
+#include "command/lock.h"
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/exec.h"
@@ -598,6 +599,10 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
 
         // Add the remote type
         kvPut(optionReplace, VARSTRDEF(CFGOPT_REMOTE_TYPE), VARSTR(strIdToStr(protocolStorageType)));
+
+        // Add locks
+        if (cfgLockRemoteRequired())
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOCK), varNewVarLst(varLstNewStrLst(cmdLockList())));
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
