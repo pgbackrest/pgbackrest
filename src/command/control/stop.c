@@ -59,7 +59,7 @@ cmdStop(void)
                     if (!strEndsWithZ(lockFile, LOCK_FILE_EXT) || (stanzaPrefix != NULL && !strBeginsWith(lockFile, stanzaPrefix)))
                         continue;
 
-                    // Read the lock file
+                    // Read the lock file !!! FILTER DUPLICATE PID
                     const LockReadResult lockResult = lockReadP(lockFile, .remove = true);
 
                     // If we cannot read the lock file for any reason then warn and continue to next file
