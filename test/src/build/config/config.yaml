@@ -173,7 +173,7 @@ option:
     type: string, default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH, default-literal: true, command: {noop: {}}}
   job-retry: {type: string, required: false, deprecate: {job-retry-old: {}}, command: {noop: {}}}
   job-retry-interval: {type: string, required: false, command: {noop: {}}}
-  lock: {type: list, required: false}
+  lock: {type: list, required: false, command: {noop: {}}}
   log-level-file: {type: string, required: false, command: {noop: {}}}
   log-level-stderr: {type: string, required: false, command: {noop: {}}}
   pg: {type: string, required: false, command: {noop: {}}}

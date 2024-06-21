@@ -89,8 +89,7 @@ cmdLockAcquire(const LockAcquireParam param)
     bool result = true;
 
     // Don't allow return on no lock when locking more than one file. This makes cleanup difficult and there are no known use cases.
-    const LockType lockType = cfgLockType();
-    ASSERT(!param.returnOnNoLock || lockType != lockTypeAll);
+    ASSERT(!param.returnOnNoLock || cfgLockType() != lockTypeAll);
 
     // Don't allow another lock if one is already held
     if (cmdLockLocal.held)
