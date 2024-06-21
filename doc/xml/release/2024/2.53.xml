@@ -21,6 +21,17 @@
 
         <release-improvement-list>
             <release-item>
+                <github-pull-request id="2379"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="greg.sabino.mullane"/>
+                </release-item-contributor-list>
+
+                <p>Default <br-setting>log-level-stderr</br-setting> option to <id>off</id>.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2303"/>
 
                 <release-item-contributor-list>
