@@ -135,6 +135,16 @@ add_project_arguments(cc.get_supported_arguments('-fmacro-prefix-map=@0@/test/sr
 ####################################################################################################################################
 configuration = configuration_data()
 
+# Ensure the C compiler supports __builtin_clzl()
+if not cc.links('''int main(int arg, char **argv) {__builtin_clzl(1);}''')
+    error('compiler must support __builtin_clzl()')
+endif
+
+# Ensure the C compiler supports __builtin_bswap64()
+if not cc.links('''int main(int arg, char **argv) {__builtin_bswap64(1);}''')
+    error('compiler must support __builtin_bswap64()')
+endif
+
 # Find optional backtrace library
 lib_backtrace = cc.find_library('backtrace', required: false)
 
