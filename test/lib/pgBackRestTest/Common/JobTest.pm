@@ -239,7 +239,7 @@ sub run
 
         foreach my $iRunIdx (@{$self->{oTest}->{&TEST_RUN}})
         {
-            $strCommandRunParam .= ' --run=' . $iRunIdx;
+            $strCommandRunParam .= ' --test=' . $iRunIdx;
         }
 
         if (!$self->{bDryRun} || $self->{bVmOut})
@@ -255,9 +255,10 @@ sub run
                 $self->{strTestPath} . "/build/${strVm}/test/src/test-pgbackrest" .
                     ' --repo-path=' . $self->{strTestPath} . '/repo' . ' --test-path=' . $self->{strTestPath} .
                     " --log-level=$self->{strLogLevel}" . ' --vm=' . $self->{oTest}->{&TEST_VM} .
-                    ' --vm-id=' . $self->{iVmIdx} . ($self->{bProfile} ? ' --profile' : '') .
+                    ' --vm-id=' . $self->{iVmIdx} . ($self->{bProfile} ? ' --profile' : '') . $strCommandRunParam .
                     ($self->{bLogTimestamp} ? '' : ' --no-log-timestamp') .
                     ($self->{strTimeZone} ? " --tz='$self->{strTimeZone}'" : '') .
+                    ($self->{iScale} ? " --scale=$self->{iScale}" : '') .
                     (defined($self->{oTest}->{&TEST_DB}) ? ' --pg-version=' . $self->{oTest}->{&TEST_DB} : '') .
                     ($self->{bBackTraceUnit} ? '' : ' --no-back-trace') . ($bCoverage ? '' : ' --no-coverage') . ' test ' .
                     $self->{oTest}->{&TEST_MODULE} . '/' . $self->{oTest}->{&TEST_NAME} . " && \\\n" .
