@@ -1832,7 +1832,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
 
         // Enable logging for main role so config file warnings will be output
         if (!param.noResetLogLevel && config->commandRole == cfgCmdRoleMain)
-            logInit(logLevelWarn, logLevelWarn, logLevelOff, false, 0, 1, false);
+            logInit(logLevelWarn, logLevelOff, logLevelOff, false, 0, 1, false);
 
         // Only continue if command options need to be validated, i.e. a real command is running or we are getting help for a
         // specific command and would like to display actual option values in the help.

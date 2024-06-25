@@ -1053,7 +1053,7 @@ option:
   log-level-stderr:
     section: global
     type: string-id
-    default: warn
+    default: off
     allow-list: log-level-console
 
   log-path:

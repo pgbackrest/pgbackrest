@@ -44,6 +44,7 @@ static const StringPub parseRuleValueStr[] =
     PARSE_RULE_STRPUB("latest"),                                                                                          // val/str
     PARSE_RULE_STRPUB("localhost"),                                                                                       // val/str
     PARSE_RULE_STRPUB("none"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("off"),                                                                                             // val/str
     PARSE_RULE_STRPUB("pause"),                                                                                           // val/str
     PARSE_RULE_STRPUB("pgbackrest"),                                                                                      // val/str
     PARSE_RULE_STRPUB("posix"),                                                                                           // val/str
@@ -96,6 +97,7 @@ typedef enum
     parseRuleValStrQT_latest_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_localhost_QT,                                                                                  // val/str/enum
     parseRuleValStrQT_none_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_off_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_pause_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_pgbackrest_QT,                                                                                 // val/str/enum
     parseRuleValStrQT_posix_QT,                                                                                      // val/str/enum
@@ -2814,8 +2816,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                              // opt/log-level-stderr
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                  // opt/log-level-stderr
                 (                                                                                            // opt/log-level-stderr
-                    PARSE_RULE_VAL_STRID(parseRuleValStrIdWarn),                                             // opt/log-level-stderr
-                    PARSE_RULE_VAL_STR(parseRuleValStrQT_warn_QT),                                           // opt/log-level-stderr
+                    PARSE_RULE_VAL_STRID(parseRuleValStrIdOff),                                              // opt/log-level-stderr
+                    PARSE_RULE_VAL_STR(parseRuleValStrQT_off_QT),                                            // opt/log-level-stderr
                 ),                                                                                           // opt/log-level-stderr
             ),                                                                                               // opt/log-level-stderr
         ),                                                                                                   // opt/log-level-stderr
