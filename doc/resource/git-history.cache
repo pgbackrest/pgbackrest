@@ -1,5 +1,10 @@
 [
     {
+        "commit": "dfc14b193454b3003c10eb2d021699cbd6294004",
+        "date": "2024-05-27 11:13:16 +1000",
+        "subject": "v2.52: PostgreSQL 17 Support"
+    },
+    {
         "commit": "899b8927888f3930f07f5607902d0493bd3b8f05",
         "date": "2024-05-24 12:24:11 +1000",
         "subject": "New CI container build for PostgreSQL 17 beta1.",
