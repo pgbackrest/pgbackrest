@@ -356,26 +356,6 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-pgClientClose(PgClient *const this)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(PG_CLIENT, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    if (this->connection != NULL)
-    {
-        memContextCallbackClear(objMemContext(this));
-        PQfinish(this->connection);
-        this->connection = NULL;
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN void
 pgClientToLog(const PgClient *const this, StringStatic *const debugLog)
 {
     strStcCat(debugLog, "{host: ");

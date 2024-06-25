@@ -497,8 +497,7 @@ testRun(void)
             {.function = HRN_PQ_FINISH},
             {.function = HRN_PQ_GETRESULT, .resultNull = true});
 #endif
-        TEST_RESULT_VOID(pgClientClose(client), "close client");
-        TEST_RESULT_VOID(pgClientClose(client), "close client again");
+        TEST_RESULT_VOID(pgClientFree(client), "free client");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

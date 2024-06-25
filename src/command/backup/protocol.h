@@ -11,7 +11,7 @@ Backup Protocol Handler
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-FN_EXTERN void backupFileProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN ProtocolServerResult *backupFileProtocol(PackRead *param);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
@@ -19,6 +19,6 @@ Protocol commands for ProtocolServerHandler arrays passed to protocolServerProce
 #define PROTOCOL_COMMAND_BACKUP_FILE                                STRID5("bp-f", 0x36e020)
 
 #define PROTOCOL_SERVER_HANDLER_BACKUP_LIST                                                                                        \
-    {.command = PROTOCOL_COMMAND_BACKUP_FILE, .handler = backupFileProtocol},
+    {.command = PROTOCOL_COMMAND_BACKUP_FILE, .process = backupFileProtocol},
 
 #endif
