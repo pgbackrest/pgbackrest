@@ -1,5 +1,9 @@
 <release date="XXXX-XX-XX" version="2.53dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <text>
+            <p><b>NOTE TO PACKAGERS</b>: The <proper>lz4</proper> library is now required by the meson build.</p>
+        </text>
+
         <release-bug-list>
             <release-item>
                 <github-issue id="2358"/>
