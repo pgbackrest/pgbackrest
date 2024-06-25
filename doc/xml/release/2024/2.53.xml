@@ -2,6 +2,9 @@
     <release-core-list>
         <text>
             <p><b>IMPORTANT NOTE</b>: The <br-setting>log-level-stderr</br-setting> option default has been changed from <id>warn</id> to <id>off</id>. This makes it easier to capture errors when only redirecting <id>stdout</id>. To preserve the prior behavior set <br-setting>log-level-stderr=warn</br-setting>.</p>
+
+            <p><b>NOTE TO PACKAGERS</b>: The <proper>lz4</proper> library is now required by the meson build.</p>
+            <p><b>NOTE TO PACKAGERS</b>: Compiler support for <code>__builtin_clzl()</code> and <code>__builtin_bswap64()</code> is now required by the meson build.</p>
         </text>
 
         <release-bug-list>
