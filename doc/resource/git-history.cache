@@ -1,5 +1,22 @@
 [
     {
+        "commit": "aabc122021a582e9d0193f978cf710cff95c2bee",
+        "date": "2024-06-25 09:02:40 +0800",
+        "subject": "Fix issue with files larger on the replica than on the primary.",
+        "body": "If a file on the primary was larger than on the replica then the next diff/incr backup would store the primary size instead of the replica size when block incremental was enabled. On the next diff/incr backup this would lead to a repo size must be > 0 for file error when validating the manifest.\n\nFix this by limiting copy based on sizeOriginal rather than size so size can be set to the value expected to be stored in the manifest. As a bonus sizePrior is no longer needed since size can be used for the same purpose."
+    },
+    {
+        "commit": "83aaa868ef396348bf96589457f13c1805b25cb6",
+        "date": "2024-06-25 08:55:22 +0800",
+        "subject": "Add unit tests for backup from standby with block incremental.",
+        "body": "These tests are important for an upcoming bug fix related to differing sizes of a file on a primary vs standby.\n\nThe test that demonstrates the bug cannot be included here since it causes a test failure, but this commit introduces the infrastructure and one test to guard against a regression in the bug fix."
+    },
+    {
+        "commit": "0c6068b8df0318143f05509170e4837cf0fc60d0",
+        "date": "2024-06-25 08:54:39 +0800",
+        "subject": "Begin v2.52.1 development."
+    },
+    {
         "commit": "dfc14b193454b3003c10eb2d021699cbd6294004",
         "date": "2024-05-27 11:13:16 +1000",
         "subject": "v2.52: PostgreSQL 17 Support"
