@@ -655,6 +655,9 @@ eval
                 $strFile eq 'src/configure' ||
                 $strFile eq 'test/ci.pl' ||
                 $strFile eq 'test/test.pl' ||
+                $strFile eq 'arenadata/run_docker.sh' ||
+                $strFile eq 'arenadata/test_in_docker.sh' ||
+                $strFile =~ m{^arenadata/scripts/} ||
                 $hManifest->{$strFile}{type} eq 'd')
             {
                 $strExpectedMode = sprintf('%04o', oct($hManifest->{$strFile}{mode}) & 0777);
