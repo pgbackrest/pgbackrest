@@ -590,7 +590,7 @@ testRun(void)
             HRN_PQ_SCRIPT_CLOSE(1),
             HRN_PQ_SCRIPT_CLOSE(8));
 
-        TEST_ASSIGN(db, dbGet(false, false, false), "get primary and standby");
+        TEST_ASSIGN(db, dbGet(false, false, CFGOPTVAL_BACKUP_STANDBY_N), "get primary and standby");
 
         TEST_RESULT_VOID(checkDbConfig(PG_VERSION_11, db.primaryIdx, db.primary, false), "valid db config");
 
@@ -651,7 +651,7 @@ testRun(void)
             HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_11, TEST_PATH "/pg", false, "always", NULL),
             HRN_PQ_SCRIPT_CLOSE(1));
 
-        TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
+        TEST_ASSIGN(db, dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary");
         TEST_ERROR(
             checkDbConfig(PG_VERSION_11, db.primaryIdx, db.primary, false), FeatureNotSupportedError,
             "archive_mode=always not supported");

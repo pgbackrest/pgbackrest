@@ -101,7 +101,7 @@ checkStandby(const DbGetResult dbGroup, const unsigned int pgPathDefinedTotal)
         dbFree(dbGroup.standby);
     }
     // If backup from standby is true then warn when a standby not found
-    else if (cfgOptionBool(cfgOptBackupStandby))
+    else if (cfgOptionStrId(cfgOptBackupStandby) != CFGOPTVAL_BACKUP_STANDBY_N)
     {
         LOG_WARN("option '" CFGOPT_BACKUP_STANDBY "' is enabled but standby is not properly configured");
     }
@@ -225,7 +225,7 @@ cmdCheck(void)
                 }
 
                 // Get the primary/standby connections (standby is only required if backup from standby is enabled)
-                DbGetResult dbGroup = dbGet(false, false, false);
+                DbGetResult dbGroup = dbGet(false, false, CFGOPTVAL_BACKUP_STANDBY_N);
 
                 if (dbGroup.standby == NULL && dbGroup.primary == NULL)
                     THROW(ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");

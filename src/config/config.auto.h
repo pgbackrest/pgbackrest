@@ -146,6 +146,13 @@ Option value constants
 #define CFGOPTVAL_ARCHIVE_MODE_PRESERVE                             STRID5("preserve", 0x2da45996500)
 #define CFGOPTVAL_ARCHIVE_MODE_PRESERVE_Z                           "preserve"
 
+#define CFGOPTVAL_BACKUP_STANDBY_N                                  STRID5("n", 0xe0)
+#define CFGOPTVAL_BACKUP_STANDBY_N_Z                                "n"
+#define CFGOPTVAL_BACKUP_STANDBY_PREFER                             STRID5("prefer", 0x245316500)
+#define CFGOPTVAL_BACKUP_STANDBY_PREFER_Z                           "prefer"
+#define CFGOPTVAL_BACKUP_STANDBY_Y                                  STRID5("y", 0x190)
+#define CFGOPTVAL_BACKUP_STANDBY_Y_Z                                "y"
+
 #define CFGOPTVAL_COMPRESS_TYPE_BZ2                                 STRID5("bz2", 0x73420)
 #define CFGOPTVAL_COMPRESS_TYPE_BZ2_Z                               "bz2"
 #define CFGOPTVAL_COMPRESS_TYPE_GZ                                  STRID5("gz", 0x3470)
