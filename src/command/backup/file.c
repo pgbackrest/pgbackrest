@@ -109,17 +109,14 @@ backupFile(
                         {
                             pgFileMatch = true;
 
-                            // If it matches and is a reference to a previous backup then no need to copy the file
-                            if (file->manifestFileHasReference)
+                            // If it matches then no need to copy the file
+                            MEM_CONTEXT_BEGIN(lstMemContext(result))
                             {
-                                MEM_CONTEXT_BEGIN(lstMemContext(result))
-                                {
-                                    fileResult->backupCopyResult = backupCopyResultNoOp;
-                                    fileResult->copySize = file->pgFileSize;
-                                    fileResult->copyChecksum = file->pgFileChecksum;
-                                }
-                                MEM_CONTEXT_END();
+                                fileResult->backupCopyResult = backupCopyResultNoOp;
+                                fileResult->copySize = file->pgFileSize;
+                                fileResult->copyChecksum = file->pgFileChecksum;
                             }
+                            MEM_CONTEXT_END();
                         }
                     }
                     // Else the source file is missing from the database so skip this file
@@ -170,7 +167,11 @@ backupFile(
                         }
                         // Else copy when repo file is invalid
                         else
+                        {
+                            // Delta may have changed the result so set it back to copy
+                            fileResult->backupCopyResult = backupCopyResultCopy;
                             fileResult->repoInvalid = true;
+                        }
                     }
                 }
             }
