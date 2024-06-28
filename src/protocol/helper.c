@@ -600,7 +600,7 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
         // Add the remote type
         kvPut(optionReplace, VARSTRDEF(CFGOPT_REMOTE_TYPE), VARSTR(strIdToStr(protocolStorageType)));
 
-        // Add locks
+        // Add lock required on the remote
         if (cfgLockRemoteRequired())
             kvPut(optionReplace, VARSTRDEF(CFGOPT_LOCK), varNewVarLst(varLstNewStrLst(cmdLockList())));
 
