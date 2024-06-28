@@ -11,6 +11,7 @@ Archive Push Command
 #include "command/archive/push/protocol.h"
 #include "command/command.h"
 #include "command/control/common.h"
+#include "command/lock.h"
 #include "common/compress/helper.h"
 #include "common/debug.h"
 #include "common/log.h"
@@ -350,7 +351,7 @@ cmdArchivePush(void)
                 // If the WAL segment has not already been pushed then start the async process to push it. There's no point in
                 // forking the async process off more than once so track that as well. Use an archive lock to prevent more than one
                 // async process being launched.
-                if (!pushed && !forked && lockAcquireP(.returnOnNoLock = true))
+                if (!pushed && !forked && cmdLockAcquireP(.returnOnNoLock = true))
                 {
                     // The async process should not output on the console at all
                     KeyValue *const optionReplace = kvNew();
@@ -367,7 +368,7 @@ cmdArchivePush(void)
                     archiveAsyncErrorClear(archiveModePush, archiveFile);
 
                     // Release the lock so the child process can acquire it
-                    lockRelease(true);
+                    cmdLockReleaseP();
 
                     // Execute the async process
                     archiveAsyncExec(archiveModePush, commandExec);

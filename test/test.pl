@@ -292,6 +292,11 @@ eval
     logLevelSet(uc($strLogLevel), uc($strLogLevel), OFF, !$bNoLogTimestamp);
     &log(INFO, 'test begin on ' . hostArch() . " - log level ${strLogLevel}");
 
+    if (@iyModuleTestRun > 1)
+    {
+        confess "Only one --run can be provided";
+    }
+
     if (@stryModuleTest != 0 && @stryModule != 1)
     {
         confess "Only one --module can be provided when --test is specified";
@@ -1068,7 +1073,7 @@ eval
     #-------------------------------------------------------------------------------------------------------------------------------
     my $bUncoveredCodeModule = false;
 
-    if (vmCoverageC($strVm) && !$bNoCoverage && !$bDryRun && $iTestFail == 0)
+    if (vmCoverageC($strVm) && !$bNoCoverage && !$bDryRun && $iTestFail == 0 && @iyModuleTestRun == 0)
     {
         my $strModuleList;
 

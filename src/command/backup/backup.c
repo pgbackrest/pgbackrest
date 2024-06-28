@@ -15,12 +15,12 @@ Backup Command
 #include "command/backup/protocol.h"
 #include "command/check/common.h"
 #include "command/control/common.h"
+#include "command/lock.h"
 #include "command/stanza/common.h"
 #include "common/compress/helper.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/io/filter/size.h"
-#include "common/lock.h"
 #include "common/log.h"
 #include "common/regExp.h"
 #include "common/time.h"
@@ -185,13 +185,14 @@ backupInit(const InfoBackup *const infoBackup)
     *result = (BackupData){0};
 
     // Don't allow backup from standby when offline
+    bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
     const InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
 
-    if (!cfgOptionBool(cfgOptOnline) && cfgOptionBool(cfgOptBackupStandby))
+    if (!cfgOptionBool(cfgOptOnline) && backupStandby)
     {
         LOG_WARN(
             "option " CFGOPT_BACKUP_STANDBY " is enabled but backup is offline - backups will be performed from the primary");
-        cfgOptionSet(cfgOptBackupStandby, cfgSourceParam, BOOL_FALSE_VAR);
+        backupStandby = false;
     }
 
     // Get database info when online
@@ -199,13 +200,12 @@ backupInit(const InfoBackup *const infoBackup)
 
     if (cfgOptionBool(cfgOptOnline))
     {
-        const bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
         const DbGetResult dbInfo = dbGet(!backupStandby, true, backupStandby);
 
         result->pgIdxPrimary = dbInfo.primaryIdx;
         result->dbPrimary = dbInfo.primary;
 
-        if (backupStandby)
+        if (dbInfo.standby != NULL)
         {
             ASSERT(dbInfo.standby != NULL);
 
@@ -1114,7 +1114,7 @@ backupStart(const BackupData *const backupData)
             LOG_INFO_FMT("backup start archive = %s, lsn = %s", strZ(result.walSegmentName), strZ(result.lsn));
 
             // Wait for replay on the standby to catch up
-            if (cfgOptionBool(cfgOptBackupStandby))
+            if (backupData->dbStandby != NULL)
             {
                 LOG_INFO_FMT("wait for replay on the standby to reach %s", strZ(result.lsn));
                 dbReplayWait(backupData->dbStandby, result.lsn, backupData->timeline, cfgOptionUInt64(cfgOptArchiveTimeout));
@@ -1604,8 +1604,8 @@ backupJobResult(
             if (percentComplete - *currentPercentComplete > 10)
             {
                 *currentPercentComplete = percentComplete;
-                lockWriteDataP(
-                    lockTypeBackup, .percentComplete = VARUINT(*currentPercentComplete), .sizeComplete = VARUINT64(*sizeProgress),
+                cmdLockWriteP(
+                    .percentComplete = VARUINT(*currentPercentComplete), .sizeComplete = VARUINT64(*sizeProgress),
                     .size = VARUINT64(sizeTotal));
             }
         }
@@ -1677,7 +1677,7 @@ backupDbPing(const BackupData *const backupData, const bool force)
     {
         dbPing(backupData->dbPrimary, force);
 
-        if (cfgOptionBool(cfgOptBackupStandby))
+        if (backupData->dbStandby != NULL)
             dbPing(backupData->dbStandby, force);
     }
 
@@ -1867,7 +1867,7 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
             }
 
             // Add size to total
-            result += file.size;
+            result += file.sizeOriginal;
 
             // Increment total files
             fileTotal++;
@@ -2018,7 +2018,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                 pckWriteBoolP(param, file.delta);
                 pckWriteBoolP(param, !strEq(file.name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
                 pckWriteU64P(param, file.size);
-                pckWriteU64P(param, file.sizePrior);
+                pckWriteU64P(param, file.sizeOriginal);
                 pckWriteBoolP(param, !backupProcessFilePrimary(jobData->standbyExp, file.name));
                 pckWriteBinP(param, file.checksumSha1 != NULL ? BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE) : NULL);
                 pckWriteBoolP(param, file.checksumPage);
@@ -2053,7 +2053,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                 pckWriteBoolP(param, file.reference != NULL);
 
                 fileTotal++;
-                fileSize += file.size;
+                fileSize += file.sizeOriginal;
 
                 // Remove job from the queue
                 lstRemoveIdx(queue, fileIdx);
@@ -2109,13 +2109,13 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
         const String *const backupLabel = manifestData(manifest)->backupLabel;
         const String *const backupPathExp = strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabel));
         const bool hardLink = cfgOptionBool(cfgOptRepoHardlink) && storageFeature(storageRepoWrite(), storageFeatureHardLink);
-        const bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
+        const bool backupStandby = backupData->dbStandby != NULL;
 
         BackupJobData jobData =
         {
             .manifest = manifest,
             .backupLabel = backupLabel,
-            .backupStandby = backupStandby,
+            .backupStandby = backupData->dbStandby != NULL,
             .compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType)),
             .compressLevel = cfgOptionInt(cfgOptCompressLevel),
             .cipherType = cfgOptionStrId(cfgOptRepoCipherType),
@@ -2197,8 +2197,8 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
 
         // Create the rest of the clients on the primary or standby depending on the value of backup-standby. Note that standby
         // backups don't count the primary client in process-max.
-        const unsigned int processMax = cfgOptionUInt(cfgOptProcessMax) + (backupStandby ? 1 : 0);
-        const unsigned int pgIdx = backupStandby ? backupData->pgIdxStandby : backupData->pgIdxPrimary;
+        const unsigned int processMax = cfgOptionUInt(cfgOptProcessMax) + (jobData.backupStandby ? 1 : 0);
+        const unsigned int pgIdx = jobData.backupStandby ? backupData->pgIdxStandby : backupData->pgIdxPrimary;
 
         for (unsigned int processIdx = 2; processIdx <= processMax; processIdx++)
             protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypePg, pgIdx, processIdx));
@@ -2218,8 +2218,8 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
 
         // Initialize percent complete and bytes completed/total
         unsigned int currentPercentComplete = 0;
-        lockWriteDataP(
-            lockTypeBackup, .percentComplete = VARUINT(currentPercentComplete), .sizeComplete = VARUINT64(sizeProgress),
+        cmdLockWriteP(
+            .percentComplete = VARUINT(currentPercentComplete), .sizeComplete = VARUINT64(sizeProgress),
             .size = VARUINT64(sizeTotal));
 
         MEM_CONTEXT_TEMP_RESET_BEGIN()
@@ -2615,7 +2615,7 @@ cmdBackup(void)
         backupDbPing(backupData, true);
 
         // The standby db object and protocol won't be used anymore so free them
-        if (cfgOptionBool(cfgOptBackupStandby))
+        if (backupData->dbStandby != NULL)
         {
             dbFree(backupData->dbStandby);
             protocolRemoteFree(backupData->pgIdxStandby);
@@ -2630,7 +2630,7 @@ cmdBackup(void)
             backupStopResult.walSegmentName, infoPg.id, infoPg.systemId, backupStartResult.dbList,
             cfgOptionBool(cfgOptArchiveCheck), cfgOptionBool(cfgOptArchiveCopy), cfgOptionUInt(cfgOptBufferSize),
             cfgOptionUInt(cfgOptCompressLevel), cfgOptionUInt(cfgOptCompressLevelNetwork), cfgOptionBool(cfgOptRepoHardlink),
-            cfgOptionUInt(cfgOptProcessMax), cfgOptionBool(cfgOptBackupStandby),
+            cfgOptionUInt(cfgOptProcessMax), backupData->dbStandby != NULL,
             cfgOptionTest(cfgOptAnnotation) ? cfgOptionKv(cfgOptAnnotation) : NULL);
 
         // The primary db object won't be used anymore so free it

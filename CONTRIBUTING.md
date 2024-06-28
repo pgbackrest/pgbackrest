@@ -470,7 +470,7 @@ HRN_FORK_BEGIN()
 {
     HRN_FORK_CHILD_BEGIN()
     {
-        TEST_RESULT_INT_NE(lockAcquireP(), -1, "create backup/expire lock");
+        TEST_RESULT_BOOL(cmdLockAcquireP(), true, "create backup/expire lock");
 
         // Notify parent that lock has been acquired
         HRN_FORK_CHILD_NOTIFY_PUT();
@@ -478,7 +478,7 @@ HRN_FORK_BEGIN()
         // Wait for parent to allow release lock
         HRN_FORK_CHILD_NOTIFY_GET();
 
-        lockRelease(true);
+        cmdLockReleaseP();
     }
     HRN_FORK_CHILD_END();
 
@@ -642,7 +642,7 @@ repo-test-type:
 
 - `command-role` - defines the processes for which the option is valid. `main` indicates the option will be used by the main process and not be passed on to other local/remote processes.
 
-At compile time, the `config.auto.h` file will be generated to contain the constants used for options in the code. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with `cfgOpt`, e.g. `repo-path` becomes `cfgOptRepoPath`.
+When `test.pl` is run the `config.auto.h` file will be generated to contain the constants used for options in the code. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with `cfgOpt`, e.g. `repo-path` becomes `cfgOptRepoPath`.
 
 ### help.xml
 
