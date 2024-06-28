@@ -261,7 +261,7 @@ testRun(void)
             "\n"
             "  --log-level-console                 level for console logging [default=warn]\n"
             "  --log-level-file                    level for file logging [default=info]\n"
-            "  --log-level-stderr                  level for stderr logging [default=warn]\n"
+            "  --log-level-stderr                  level for stderr logging [default=off]\n"
             "  --log-path                          path where log files are stored\n"
             "                                      [default=/var/log/pgbackrest]\n"
             "  --log-subprocess                    enable logging in subprocesses [default=n]\n"
