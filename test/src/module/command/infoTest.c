@@ -1483,12 +1483,29 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                String *lockFileName = cmdLockFileName(STRDEF("stanza2"), lockTypeBackup, 1);
                 lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"));
-                TEST_RESULT_BOOL(lockAcquireP(lockFileName), true, "create backup/expire lock");
+
+                String *lockFileStanza1Repo1 = cmdLockFileName(STRDEF("stanza1"), lockTypeBackup, 1);
+                TEST_RESULT_BOOL(lockAcquireP(lockFileStanza1Repo1), true, "create backup/expire lock");
                 TEST_RESULT_VOID(
                     lockWriteP(
-                        lockFileName, .size = VARUINT64(3159000), .sizeComplete = VARUINT64(1754830),
+                        lockFileStanza1Repo1, .size = VARUINT64(3159000), .sizeComplete = VARUINT64(1754830),
+                        .percentComplete = VARUINT(5555)),
+                    "write lock data");
+
+                String *lockFileStanza1Repo2 = cmdLockFileName(STRDEF("stanza1"), lockTypeBackup, 2);
+                TEST_RESULT_BOOL(lockAcquireP(lockFileStanza1Repo2), true, "create backup/expire lock");
+                TEST_RESULT_VOID(
+                    lockWriteP(
+                        lockFileStanza1Repo2, .size = VARUINT64(3159000), .sizeComplete = VARUINT64(2369250),
+                        .percentComplete = VARUINT(7500)),
+                    "write lock data");
+
+                String *lockFileStanza2Repo1 = cmdLockFileName(STRDEF("stanza2"), lockTypeBackup, 1);
+                TEST_RESULT_BOOL(lockAcquireP(lockFileStanza2Repo1), true, "create backup/expire lock");
+                TEST_RESULT_VOID(
+                    lockWriteP(
+                        lockFileStanza2Repo1, .size = VARUINT64(3159000), .sizeComplete = VARUINT64(1754830),
                         .percentComplete = VARUINT(5555)),
                     "write lock data");
 
@@ -1511,7 +1528,7 @@ testRun(void)
                 TEST_RESULT_STR_Z(
                     infoRender(),
                     "stanza: stanza1\n"
-                    "    status: ok\n"
+                    "    status: ok (backup/expire running - 65.27% complete)\n"
                     "    cipher: mixed\n"
                     "        repo1: none\n"
                     "        repo2: aes-256-cbc\n"

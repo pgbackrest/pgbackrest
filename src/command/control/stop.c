@@ -49,6 +49,7 @@ cmdStop(void)
                     cfgOptionTest(cfgOptStanza) ? strNewFmt("%s-", strZ(cfgOptionStr(cfgOptStanza))) : NULL;
                 const StringList *const lockPathFileList = strLstSort(
                     storageListP(storageLocal(), lockPath, .errorOnMissing = true), sortOrderAsc);
+                List *const pidList = lstNewP(sizeof(int), .comparator = lstComparatorInt);
 
                 // Find each lock file and send term signals to the processes
                 for (unsigned int lockPathFileIdx = 0; lockPathFileIdx < strLstSize(lockPathFileList); lockPathFileIdx++)
@@ -59,7 +60,7 @@ cmdStop(void)
                     if (!strEndsWithZ(lockFile, LOCK_FILE_EXT) || (stanzaPrefix != NULL && !strBeginsWith(lockFile, stanzaPrefix)))
                         continue;
 
-                    // Read the lock file !!! FILTER DUPLICATE PID
+                    // Read the lock file
                     const LockReadResult lockResult = lockReadP(lockFile, .remove = true);
 
                     // If we cannot read the lock file for any reason then warn and continue to next file
@@ -68,6 +69,13 @@ cmdStop(void)
                         LOG_WARN_FMT("unable to read lock file %s/%s", strZ(lockPath), strZ(lockFile));
                         continue;
                     }
+
+                    // If the process has already been killed then skip it. This is possible because a single process may be holding
+                    // multiple lock files.
+                    if (lstFind(pidList, &lockResult.data.processId) != NULL)
+                        continue;
+
+                    lstAdd(pidList, &lockResult.data.processId);
 
                     // The lock file is valid so that means there is a running process -- send a term signal to the process
                     if (kill(lockResult.data.processId, SIGTERM) != 0)
