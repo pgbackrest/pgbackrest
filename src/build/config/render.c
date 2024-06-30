@@ -746,7 +746,6 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
         {
             strCatFmt(
                 configOpt,
-                "        PARSE_RULE_OPTION_GROUP_MEMBER(true),\n"
                 "        PARSE_RULE_OPTION_GROUP_ID(%s),\n",
                 strZ(bldEnum("cfgOptGrp", opt->group)));
         }

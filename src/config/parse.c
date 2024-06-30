@@ -188,11 +188,8 @@ typedef enum
 #define PARSE_RULE_OPTION_MULTI(typeMulti)                                                                                         \
     .multi = typeMulti
 
-#define PARSE_RULE_OPTION_GROUP_MEMBER(groupParam)                                                                                 \
-    .group = groupParam
-
 #define PARSE_RULE_OPTION_GROUP_ID(groupIdParam)                                                                                   \
-    .groupId = groupIdParam
+    .group = true, .groupId = groupIdParam
 
 #define PARSE_RULE_OPTION_DEPRECATE_MATCH(deprecateMatchParam)                                                                     \
     .deprecateMatch = deprecateMatchParam
