@@ -191,6 +191,16 @@ testRun(void)
         TEST_RESULT_BOOL(lstComparatorUInt(&uint2, &uint1) > 0, true, "first uint is greater");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("lstComparatorInt()");
+
+        int int1 = -1;
+        int int2 = 2;
+
+        TEST_RESULT_INT(lstComparatorInt(&int1, &int1), 0, "ints are equal");
+        TEST_RESULT_BOOL(lstComparatorInt(&int1, &int2) < 0, true, "first int is less");
+        TEST_RESULT_BOOL(lstComparatorInt(&int2, &int1) > 0, true, "first int is greater");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("lstComparatorZ()");
 
         const char *string1 = "abc";

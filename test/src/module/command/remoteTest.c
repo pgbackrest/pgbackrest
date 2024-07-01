@@ -169,7 +169,7 @@ testRun(void)
                     "create client");
                 protocolClientNoOp(client);
 
-                TEST_STORAGE_EXISTS(hrnStorage, "lock/test-archive" LOCK_FILE_EXT, .comment = "lock exists");
+                TEST_STORAGE_EXISTS(hrnStorage, "lock/test-archive-1" LOCK_FILE_EXT, .comment = "lock exists");
 
                 protocolClientFree(client);
             }
