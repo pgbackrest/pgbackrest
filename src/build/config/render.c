@@ -371,10 +371,10 @@ static String *
 bldCfgRenderScalar(const String *const scalar, const String *const optType)
 {
     if (strEq(optType, OPT_TYPE_STRING_ID_STR))
-        return strNewFmt("PARSE_RULE_VAL_STRID(%s)", strZ(bldEnum("parseRuleValStrId", scalar)));
+        return strNewFmt("PARSE_RULE_VAL_STRID(%s)", strZ(bldEnum("", scalar)));
 
     if (strEq(optType, OPT_TYPE_STRING_STR))
-        return strNewFmt("PARSE_RULE_VAL_STR(parseRuleValStr%s)", strZ(bldCfgRenderEnumStr(scalar)));
+        return strNewFmt("PARSE_RULE_VAL_STR(%s)", strZ(bldCfgRenderEnumStr(scalar)));
 
     if (strEq(optType, OPT_TYPE_BOOLEAN_STR))
         return strNewFmt("PARSE_RULE_VAL_BOOL_%s", strEqZ(scalar, "true") ? "TRUE" : "FALSE");
@@ -396,7 +396,7 @@ bldCfgRenderScalar(const String *const scalar, const String *const optType)
         value = cvtZToInt64(strZ(scalar));
     }
 
-    return strNewFmt("PARSE_RULE_VAL_INT(%s)", strZ(bldEnum("parseRuleValInt", strNewFmt("%" PRId64, value))));
+    return strNewFmt("PARSE_RULE_VAL_INT(%s)", strZ(bldEnum("", strNewFmt("%" PRId64, value))));
 }
 
 // Helper to render validity
@@ -423,7 +423,7 @@ bldCfgRenderValid(const BldCfgOptionDepend *const depend)
     strCatFmt(
         result,
         "                    PARSE_RULE_VAL_OPT(%s),\n",
-        strZ(bldEnum("cfgOpt", depend->option->name)));
+        strZ(bldEnum("", depend->option->name)));
 
     if (depend->valueList != NULL)
     {
@@ -573,7 +573,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
         strZ(
             bldDefineRender(
                 STRDEF("PARSE_RULE_VAL_CMD(value)"),
-                strNewFmt("PARSE_RULE_U32_%zu(value)", bldCfgRenderVar128Size(lstSize(bldCfg.cmdList) - 1)))));
+                strNewFmt("PARSE_RULE_U32_%zu(cfgCmd##value)", bldCfgRenderVar128Size(lstSize(bldCfg.cmdList) - 1)))));
 
     strCatZ(
         config,
@@ -602,13 +602,13 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
         if (cmd->lockRemoteRequired)
             strCatZ(configCmd, "        PARSE_RULE_COMMAND_LOCK_REMOTE_REQUIRED(true),\n");
 
-        strCatFmt(configCmd, "        PARSE_RULE_COMMAND_LOCK_TYPE(%s),\n", strZ(bldEnum("lockType", cmd->lockType)));
+        strCatFmt(configCmd, "        PARSE_RULE_COMMAND_LOCK_TYPE(%s),\n", strZ(bldEnum("", cmd->lockType)));
 
         if (cmd->logFile)
             strCatZ(configCmd, "        PARSE_RULE_COMMAND_LOG_FILE(true),\n");
 
         strCatFmt(
-            configCmd, "        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(%s),\n", strZ(bldEnum("logLevel", cmd->logLevelDefault)));
+            configCmd, "        PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(%s),\n", strZ(bldEnum("", cmd->logLevelDefault)));
 
         if (cmd->parameterAllowed)
             strCatZ(configCmd, "        PARSE_RULE_COMMAND_PARAMETER_ALLOWED(true),\n");
@@ -624,7 +624,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
             strCatFmt(
                 configCmd,
                 "            PARSE_RULE_COMMAND_ROLE(%s)\n",
-                strZ(bldEnum("cfgCmdRole", strLstGet(cmd->roleList, cmdRoleIdx))));
+                strZ(bldEnum("", strLstGet(cmd->roleList, cmdRoleIdx))));
         }
 
         strCatZ(
@@ -689,7 +689,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
         strZ(
             bldDefineRender(
                 STRDEF("PARSE_RULE_VAL_OPT(value)"),
-                strNewFmt("PARSE_RULE_U32_%zu(value)", bldCfgRenderVar128Size(lstSize(bldCfg.optList) - 1)))));
+                strNewFmt("PARSE_RULE_U32_%zu(cfgOpt##value)", bldCfgRenderVar128Size(lstSize(bldCfg.optList) - 1)))));
 
     strCatZ(
         config,
@@ -719,7 +719,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
             "    (\n"
             "        PARSE_RULE_OPTION_NAME(\"%s\"),\n"
             "        PARSE_RULE_OPTION_TYPE(%s),\n",
-            strZ(opt->name), strZ(bldEnum("cfgOptType", opt->type)));
+            strZ(opt->name), strZ(bldEnum("", opt->type)));
 
         if (opt->beta)
             strCatZ(configOpt, "        PARSE_RULE_OPTION_BETA(true),\n");
@@ -734,7 +734,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
             configOpt,
             "        PARSE_RULE_OPTION_REQUIRED(%s),\n"
             "        PARSE_RULE_OPTION_SECTION(%s),\n",
-            cvtBoolToConstZ(opt->required), strZ(bldEnum("cfgSection", opt->section)));
+            cvtBoolToConstZ(opt->required), strZ(bldEnum("", opt->section)));
 
         if (opt->secure)
             strCatZ(configOpt, "        PARSE_RULE_OPTION_SECURE(true),\n");
@@ -747,7 +747,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
             strCatFmt(
                 configOpt,
                 "        PARSE_RULE_OPTION_GROUP_ID(%s),\n",
-                strZ(bldEnum("cfgOptGrp", opt->group)));
+                strZ(bldEnum("", opt->group)));
         }
 
         // If an unindexed deprecation matches the base option name of an indexed option
@@ -780,7 +780,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
                 {
                     strCatFmt(
                         configRole,
-                        "            PARSE_RULE_OPTION_COMMAND(%s)\n", strZ(bldEnum("cfgCmd", optCmd->name)));
+                        "            PARSE_RULE_OPTION_COMMAND(%s)\n", strZ(bldEnum("", optCmd->name)));
                 }
             }
 
@@ -950,7 +950,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
                         strCatFmt(
                             configOpt,
                             "                    PARSE_RULE_VAL_CMD(%s),\n",
-                            strZ(bldEnum("cfgCmd", varStr(varLstGet(cmdList, cmdIdx)))));
+                            strZ(bldEnum("", varStr(varLstGet(cmdList, cmdIdx)))));
                     }
 
                     strCatFmt(
@@ -1155,7 +1155,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
         strZ(
             bldDefineRender(
                 STRDEF("PARSE_RULE_VAL_STR(value)"),
-                strNewFmt("PARSE_RULE_U32_%zu(value)", bldCfgRenderVar128Size(strLstSize(ruleStrList) - 1)))));
+                strNewFmt("PARSE_RULE_U32_%zu(parseRuleValStr##value)", bldCfgRenderVar128Size(strLstSize(ruleStrList) - 1)))));
 
     strCatZ(
         configVal,
@@ -1210,7 +1210,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
         strZ(
             bldDefineRender(
                 STRDEF("PARSE_RULE_VAL_STRID(value)"),
-                strNewFmt("PARSE_RULE_U32_%zu(value)", bldCfgRenderVar128Size(strLstSize(ruleStrIdList) - 1)))));
+                strNewFmt("PARSE_RULE_U32_%zu(parseRuleValStrId##value)", bldCfgRenderVar128Size(strLstSize(ruleStrIdList) - 1)))));
 
     strCatZ(
         configVal,
@@ -1262,7 +1262,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
         strZ(
             bldDefineRender(
                 STRDEF("PARSE_RULE_VAL_INT(value)"),
-                strNewFmt("PARSE_RULE_U32_%zu(value)", bldCfgRenderVar128Size(strLstSize(ruleIntList) - 1)))));
+                strNewFmt("PARSE_RULE_U32_%zu(parseRuleValInt##value)", bldCfgRenderVar128Size(strLstSize(ruleIntList) - 1)))));
 
     strCatZ(
         configVal,
