@@ -222,7 +222,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, ".5");
+        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "500ms");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -260,7 +260,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 8, "5433");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 2, "repo.domain.com");
-        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, ".5");
+        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "500ms");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_96);
@@ -283,7 +283,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 1, "repo.domain.com");
-        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, ".5");
+        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "500ms");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         HRN_PQ_SCRIPT_SET(
@@ -304,7 +304,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, ".5");
+        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "500ms");
         hrnCfgArgRawBool(argList, cfgOptBackupStandby, true);
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
@@ -334,7 +334,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, ".5");
+        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "500ms");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 8, TEST_PATH "/pg8");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 8, "5433");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
@@ -442,7 +442,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptConfig, TEST_PATH "/pgbackrest.conf");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
-        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, ".5");
+        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "500ms");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         // Create stanza files on repo2
@@ -508,7 +508,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
-        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, ".5");
+        hrnCfgArgRawZ(argList, cfgOptArchiveTimeout, "500ms");
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         // Create WAL segment

@@ -85,6 +85,7 @@ Option constants
 #define CFGOPT_JOB_RETRY_INTERVAL                                   "job-retry-interval"
 #define CFGOPT_LINK_ALL                                             "link-all"
 #define CFGOPT_LINK_MAP                                             "link-map"
+#define CFGOPT_LOCK                                                 "lock"
 #define CFGOPT_LOCK_PATH                                            "lock-path"
 #define CFGOPT_LOG_LEVEL_CONSOLE                                    "log-level-console"
 #define CFGOPT_LOG_LEVEL_FILE                                       "log-level-file"
@@ -136,7 +137,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 
-#define CFG_OPTION_TOTAL                                            180
+#define CFG_OPTION_TOTAL                                            181
 
 /***********************************************************************************************************************************
 Option value constants
@@ -425,6 +426,7 @@ typedef enum
     cfgOptJobRetryInterval,
     cfgOptLinkAll,
     cfgOptLinkMap,
+    cfgOptLock,
     cfgOptLockPath,
     cfgOptLogLevelConsole,
     cfgOptLogLevelFile,
