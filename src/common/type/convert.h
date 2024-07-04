@@ -34,9 +34,8 @@ cvtCharToZ(const char value, char *const buffer, const size_t bufferSize)
     return (size_t)snprintf(buffer, bufferSize, "%c", value);
 }
 
-// Convert double to zero-terminated string and vice versa
+// Convert double to zero-terminated string
 FN_EXTERN size_t cvtDoubleToZ(double value, char *buffer, size_t bufferSize);
-FN_EXTERN double cvtZToDouble(const char *value);
 
 // Convert int to zero-terminated string and vice versa
 FN_EXTERN size_t cvtIntToZ(int value, char *buffer, size_t bufferSize);

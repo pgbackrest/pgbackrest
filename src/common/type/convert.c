@@ -161,24 +161,6 @@ cvtDoubleToZ(const double value, char *const buffer, const size_t bufferSize)
     FUNCTION_TEST_RETURN(SIZE, (size_t)(end - buffer + 1));
 }
 
-FN_EXTERN double
-cvtZToDouble(const char *const value)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRINGZ, value);
-    FUNCTION_TEST_END();
-
-    ASSERT(value != NULL);
-
-    double result = 0;
-    sscanf(value, "%lf", &result);
-
-    if (result == 0 && strcmp(value, "0") != 0)
-        THROW_FMT(FormatError, "unable to convert string '%s' to double", value);
-
-    FUNCTION_TEST_RETURN(DOUBLE, result);
-}
-
 /**********************************************************************************************************************************/
 FN_EXTERN size_t
 cvtIntToZ(const int value, char *const buffer, const size_t bufferSize)
