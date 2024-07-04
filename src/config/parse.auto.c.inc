@@ -260,7 +260,6 @@ static const int64_t parseRuleValueInt[] =
     443,                                                                                                                  // val/int
     900,                                                                                                                  // val/int
     999,                                                                                                                  // val/int
-    1000,                                                                                                                 // val/int
     1024,                                                                                                                 // val/int
     3600,                                                                                                                 // val/int
     5432,                                                                                                                 // val/int
@@ -310,7 +309,6 @@ typedef enum
     parseRuleValInt443,                                                                                              // val/int/enum
     parseRuleValInt900,                                                                                              // val/int/enum
     parseRuleValInt999,                                                                                              // val/int/enum
-    parseRuleValInt1000,                                                                                             // val/int/enum
     parseRuleValInt1024,                                                                                             // val/int/enum
     parseRuleValInt3600,                                                                                             // val/int/enum
     parseRuleValInt5432,                                                                                             // val/int/enum
@@ -2399,27 +2397,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                            // opt/job-retry-interval
         PARSE_RULE_OPTIONAL                                                                                // opt/job-retry-interval
         (                                                                                                  // opt/job-retry-interval
-            PARSE_RULE_OPTIONAL_GROUP                                                                      // opt/job-retry-interval
-            (                                                                                              // opt/job-retry-interval
-                PARSE_RULE_FILTER_CMD                                                                      // opt/job-retry-interval
-                (                                                                                          // opt/job-retry-interval
-                    PARSE_RULE_VAL_CMD(ArchiveGet),                                                        // opt/job-retry-interval
-                    PARSE_RULE_VAL_CMD(ArchivePush),                                                       // opt/job-retry-interval
-                ),                                                                                         // opt/job-retry-interval
-                                                                                                           // opt/job-retry-interval
-                PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                            // opt/job-retry-interval
-                (                                                                                          // opt/job-retry-interval
-                    PARSE_RULE_VAL_INT(0),                                                                 // opt/job-retry-interval
-                    PARSE_RULE_VAL_INT(900000),                                                            // opt/job-retry-interval
-                ),                                                                                         // opt/job-retry-interval
-                                                                                                           // opt/job-retry-interval
-                PARSE_RULE_OPTIONAL_DEFAULT                                                                // opt/job-retry-interval
-                (                                                                                          // opt/job-retry-interval
-                    PARSE_RULE_VAL_INT(1000),                                                              // opt/job-retry-interval
-                    PARSE_RULE_VAL_STR(QT_1_QT),                                                           // opt/job-retry-interval
-                ),                                                                                         // opt/job-retry-interval
-            ),                                                                                             // opt/job-retry-interval
-                                                                                                           // opt/job-retry-interval
             PARSE_RULE_OPTIONAL_GROUP                                                                      // opt/job-retry-interval
             (                                                                                              // opt/job-retry-interval
                 PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                            // opt/job-retry-interval

@@ -843,6 +843,12 @@ option:
     type: time
     default: 15
     allow-range: [0, 900]
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      restore: {}
+      verify: {}
 
   lock-path:
     section: global
