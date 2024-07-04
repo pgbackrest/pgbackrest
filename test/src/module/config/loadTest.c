@@ -235,11 +235,11 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
         hrnCfgArgRawZ(argList, cfgOptDbTimeout, "100000");
-        hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "50.5");
+        hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "50500ms");
         TEST_ERROR(
             hrnCfgLoadP(cfgCmdCheck, argList), OptionInvalidValueError,
-            "'50.5' is not valid for 'protocol-timeout' option\n"
-            "HINT 'protocol-timeout' option (50.5) should be greater than 'db-timeout' option (100000).");
+            "'50500ms' is not valid for 'protocol-timeout' option\n"
+            "HINT 'protocol-timeout' option (50500ms) should be greater than 'db-timeout' option (100000).");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("very small protocol-timeout triggers db-timeout special handling");
@@ -823,7 +823,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptLogLevelConsole, "off");
         hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, "off");
         hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "off");
-        hrnCfgArgRawZ(argList, cfgOptIoTimeout, "95.5");
+        hrnCfgArgRawZ(argList, cfgOptIoTimeout, "95500ms");
         strLstAddZ(argList, CFGCMD_ARCHIVE_GET);
 
         umask(0111);

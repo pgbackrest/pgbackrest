@@ -17,20 +17,20 @@ static const StringPub parseRuleValueStr[] =
     PARSE_RULE_STRPUB("/var/spool/pgbackrest"),                                                                           // val/str
     PARSE_RULE_STRPUB("1"),                                                                                               // val/str
     PARSE_RULE_STRPUB("128MiB"),                                                                                          // val/str
-    PARSE_RULE_STRPUB("15"),                                                                                              // val/str
-    PARSE_RULE_STRPUB("1800"),                                                                                            // val/str
-    PARSE_RULE_STRPUB("1830"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("15s"),                                                                                             // val/str
     PARSE_RULE_STRPUB("1GiB"),                                                                                            // val/str
     PARSE_RULE_STRPUB("1MiB"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("1m"),                                                                                              // val/str
     PARSE_RULE_STRPUB("2"),                                                                                               // val/str
     PARSE_RULE_STRPUB("20MiB"),                                                                                           // val/str
     PARSE_RULE_STRPUB("22"),                                                                                              // val/str
     PARSE_RULE_STRPUB("256KiB"),                                                                                          // val/str
     PARSE_RULE_STRPUB("2MiB"),                                                                                            // val/str
     PARSE_RULE_STRPUB("3"),                                                                                               // val/str
+    PARSE_RULE_STRPUB("30m"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("31m"),                                                                                             // val/str
     PARSE_RULE_STRPUB("443"),                                                                                             // val/str
     PARSE_RULE_STRPUB("5432"),                                                                                            // val/str
-    PARSE_RULE_STRPUB("60"),                                                                                              // val/str
     PARSE_RULE_STRPUB("8432"),                                                                                            // val/str
     PARSE_RULE_STRPUB("asc"),                                                                                             // val/str
     PARSE_RULE_STRPUB("blob.core.windows.net"),                                                                           // val/str
@@ -70,20 +70,20 @@ typedef enum
     parseRuleValStrQT_FS_var_FS_spool_FS_pgbackrest_QT,                                                              // val/str/enum
     parseRuleValStrQT_1_QT,                                                                                          // val/str/enum
     parseRuleValStrQT_128MiB_QT,                                                                                     // val/str/enum
-    parseRuleValStrQT_15_QT,                                                                                         // val/str/enum
-    parseRuleValStrQT_1800_QT,                                                                                       // val/str/enum
-    parseRuleValStrQT_1830_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_15s_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_1GiB_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_1MiB_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_1m_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_2_QT,                                                                                          // val/str/enum
     parseRuleValStrQT_20MiB_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_22_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_256KiB_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_2MiB_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_3_QT,                                                                                          // val/str/enum
+    parseRuleValStrQT_30m_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_31m_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_443_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_5432_QT,                                                                                       // val/str/enum
-    parseRuleValStrQT_60_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_8432_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_asc_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_blob_DT_core_DT_windows_DT_net_QT,                                                             // val/str/enum
@@ -277,7 +277,7 @@ static const int64_t parseRuleValueInt[] =
     900000,                                                                                                               // val/int
     1048576,                                                                                                              // val/int
     1800000,                                                                                                              // val/int
-    1830000,                                                                                                              // val/int
+    1860000,                                                                                                              // val/int
     2097152,                                                                                                              // val/int
     3600000,                                                                                                              // val/int
     4194304,                                                                                                              // val/int
@@ -326,7 +326,7 @@ typedef enum
     parseRuleValInt900000,                                                                                           // val/int/enum
     parseRuleValInt1048576,                                                                                          // val/int/enum
     parseRuleValInt1800000,                                                                                          // val/int/enum
-    parseRuleValInt1830000,                                                                                          // val/int/enum
+    parseRuleValInt1860000,                                                                                          // val/int/enum
     parseRuleValInt2097152,                                                                                          // val/int/enum
     parseRuleValInt3600000,                                                                                          // val/int/enum
     parseRuleValInt4194304,                                                                                          // val/int/enum
@@ -1115,7 +1115,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                   // opt/archive-timeout
                 (                                                                                             // opt/archive-timeout
                     PARSE_RULE_VAL_INT(60000),                                                                // opt/archive-timeout
-                    PARSE_RULE_VAL_STR(QT_60_QT),                                                             // opt/archive-timeout
+                    PARSE_RULE_VAL_STR(QT_1m_QT),                                                             // opt/archive-timeout
                 ),                                                                                            // opt/archive-timeout
             ),                                                                                                // opt/archive-timeout
         ),                                                                                                    // opt/archive-timeout
@@ -1951,7 +1951,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                        // opt/db-timeout
                 (                                                                                                  // opt/db-timeout
                     PARSE_RULE_VAL_INT(1800000),                                                                   // opt/db-timeout
-                    PARSE_RULE_VAL_STR(QT_1800_QT),                                                                // opt/db-timeout
+                    PARSE_RULE_VAL_STR(QT_30m_QT),                                                                 // opt/db-timeout
                 ),                                                                                                 // opt/db-timeout
             ),                                                                                                     // opt/db-timeout
         ),                                                                                                         // opt/db-timeout
@@ -2285,7 +2285,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                        // opt/io-timeout
                 (                                                                                                  // opt/io-timeout
                     PARSE_RULE_VAL_INT(60000),                                                                     // opt/io-timeout
-                    PARSE_RULE_VAL_STR(QT_60_QT),                                                                  // opt/io-timeout
+                    PARSE_RULE_VAL_STR(QT_1m_QT),                                                                  // opt/io-timeout
                 ),                                                                                                 // opt/io-timeout
             ),                                                                                                     // opt/io-timeout
         ),                                                                                                         // opt/io-timeout
@@ -2408,7 +2408,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                // opt/job-retry-interval
                 (                                                                                          // opt/job-retry-interval
                     PARSE_RULE_VAL_INT(15000),                                                             // opt/job-retry-interval
-                    PARSE_RULE_VAL_STR(QT_15_QT),                                                          // opt/job-retry-interval
+                    PARSE_RULE_VAL_STR(QT_15s_QT),                                                         // opt/job-retry-interval
                 ),                                                                                         // opt/job-retry-interval
             ),                                                                                             // opt/job-retry-interval
         ),                                                                                                 // opt/job-retry-interval
@@ -4378,8 +4378,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                              // opt/protocol-timeout
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                  // opt/protocol-timeout
                 (                                                                                            // opt/protocol-timeout
-                    PARSE_RULE_VAL_INT(1830000),                                                             // opt/protocol-timeout
-                    PARSE_RULE_VAL_STR(QT_1830_QT),                                                          // opt/protocol-timeout
+                    PARSE_RULE_VAL_INT(1860000),                                                             // opt/protocol-timeout
+                    PARSE_RULE_VAL_STR(QT_31m_QT),                                                           // opt/protocol-timeout
                 ),                                                                                           // opt/protocol-timeout
             ),                                                                                               // opt/protocol-timeout
         ),                                                                                                   // opt/protocol-timeout
