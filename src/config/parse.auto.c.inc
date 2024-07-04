@@ -2458,19 +2458,19 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION                                                                                                    // opt/lock
     (                                                                                                                    // opt/lock
         PARSE_RULE_OPTION_NAME("lock"),                                                                                  // opt/lock
-        PARSE_RULE_OPTION_TYPE(cfgOptTypeList),                                                                          // opt/lock
+        PARSE_RULE_OPTION_TYPE(List),                                                                                    // opt/lock
         PARSE_RULE_OPTION_REQUIRED(false),                                                                               // opt/lock
-        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),                                                                // opt/lock
+        PARSE_RULE_OPTION_SECTION(CommandLine),                                                                          // opt/lock
         PARSE_RULE_OPTION_MULTI(true),                                                                                   // opt/lock
                                                                                                                          // opt/lock
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                                 // opt/lock
         (                                                                                                                // opt/lock
-            PARSE_RULE_OPTION_COMMAND(cfgCmdAnnotate)                                                                    // opt/lock
-            PARSE_RULE_OPTION_COMMAND(cfgCmdArchivePush)                                                                 // opt/lock
-            PARSE_RULE_OPTION_COMMAND(cfgCmdBackup)                                                                      // opt/lock
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaCreate)                                                                // opt/lock
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaDelete)                                                                // opt/lock
-            PARSE_RULE_OPTION_COMMAND(cfgCmdStanzaUpgrade)                                                               // opt/lock
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                                          // opt/lock
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                       // opt/lock
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                            // opt/lock
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                      // opt/lock
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                      // opt/lock
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                     // opt/lock
         ),                                                                                                               // opt/lock
     ),                                                                                                                   // opt/lock
     // -----------------------------------------------------------------------------------------------------------------------------
