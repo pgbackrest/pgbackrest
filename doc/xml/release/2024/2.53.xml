@@ -26,6 +26,7 @@
                 <github-pull-request id="2377"/>
 
                 <release-item-contributor-list>
+                    <release-item-ideator id="ahmed112212"/>
                     <release-item-contributor id="reid.thompson"/>
                     <release-item-reviewer id="david.steele"/>
                 </release-item-contributor-list>
