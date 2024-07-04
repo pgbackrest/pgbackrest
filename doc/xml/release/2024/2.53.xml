@@ -24,6 +24,24 @@
 
         <release-improvement-list>
             <release-item>
+                <commit subject="Refactor lock module.">
+                    <github-pull-request id="2371"/>
+                </commit>
+                <commit subject="Add remote locks for stanza commands missed in 31c7824a."/>
+                <commit subject="Allow backups to run concurrently on different repositories.">
+                    <github-pull-request id="2389"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="reid.thompson"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Allow backups to run concurrently on different repositories.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2379"/>
 
                 <release-item-contributor-list>
@@ -46,21 +64,5 @@
                 <p>Allow alternative WAL segment sizes for PostgreSQL &amp;le; 10.</p>
             </release-item>
         </release-improvement-list>
-
-        <release-development-list>
-            <release-item>
-                <commit subject="Refactor lock module.">
-                    <github-pull-request id="2371"/>
-                </commit>
-                <commit subject="Add remote locks for stanza commands missed in 31c7824a."/>
-
-                <release-item-contributor-list>
-                    <release-item-contributor id="david.steele"/>
-                    <release-item-reviewer id="reid.thompson"/>
-                </release-item-contributor-list>
-
-                <p>Refactor lock module.</p>
-            </release-item>
-        </release-development-list>
     </release-core-list>
 </release>
