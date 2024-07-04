@@ -20,6 +20,19 @@
 
                 <p>Fix issue with files larger on the replica than on the primary.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2376"/>
+                <github-pull-request id="2377"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="ahmed112212"/>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix <proper>SFTP</proper> renaming failure when file already exists.</p>
+            </release-item>
         </release-bug-list>
 
         <release-improvement-list>
