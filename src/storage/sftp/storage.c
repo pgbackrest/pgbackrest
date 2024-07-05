@@ -1344,7 +1344,7 @@ storageSftpNew(
                     " --repo-sftp-public-key-file to be provided\n"
                     "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to"
                     " generate the keypair\n"
-                    "HINT: Check the authorization log on the SFTP server"));
+                    "HINT: check the authorization log on the SFTP server"));
         }
 
         // Init the sftp session
