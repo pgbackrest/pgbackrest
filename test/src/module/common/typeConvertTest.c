@@ -34,7 +34,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("cvtDoubleToZ() and cvtZToDouble()"))
+    if (testBegin("cvtDoubleToZ()"))
     {
         char buffer[STACK_TRACE_PARAM_MAX];
 
@@ -48,11 +48,6 @@ testRun(void)
 
         TEST_RESULT_UINT(cvtDoubleToZ(999.0, buffer, STACK_TRACE_PARAM_MAX), 3, "convert double to string");
         TEST_RESULT_Z(buffer, "999", "    check buffer");
-
-        TEST_ERROR(cvtZToDouble("AAA"), FormatError, "unable to convert string 'AAA' to double");
-        TEST_RESULT_DOUBLE(cvtZToDouble("0"), 0, "convert string to double");
-        TEST_RESULT_DOUBLE(cvtZToDouble("123.123"), 123.123, "convert string to double");
-        TEST_RESULT_DOUBLE(cvtZToDouble("-999999999.123456"), -999999999.123456, "convert string to double");
     }
 
     // *****************************************************************************************************************************

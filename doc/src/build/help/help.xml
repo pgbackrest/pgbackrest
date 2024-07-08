@@ -15,6 +15,7 @@
                 <option id="compress-level-network"><summary></summary><text><p></p></text></option>
                 <option id="job-retry"><summary></summary><text><p></p></text></option>
                 <option id="job-retry-interval"><summary></summary><text><p></p></text></option>
+                <option id="lock"><summary></summary><text><p></p></text></option>
                 <option id="log-level-file"><summary></summary><text><p></p></text></option>
                 <option id="log-level-stderr"><summary></summary><text><p></p></text></option>
                 <option id="repo"><summary></summary><text><p></p></text></option>

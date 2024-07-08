@@ -81,7 +81,7 @@ typedef struct ParseRuleCommand
     .commandRoleValid = 0 __VA_ARGS__
 
 #define PARSE_RULE_COMMAND_ROLE(commandRoleParam)                                                                                  \
-    | (1 << commandRoleParam)
+    | (1 << cfgCmdRole##commandRoleParam)
 
 #define PARSE_RULE_COMMAND_LOCK_REQUIRED(lockRequiredParam)                                                                        \
     .lockRequired = lockRequiredParam
@@ -90,13 +90,13 @@ typedef struct ParseRuleCommand
     .lockRemoteRequired = lockRemoteRequiredParam
 
 #define PARSE_RULE_COMMAND_LOCK_TYPE(lockTypeParam)                                                                                \
-    .lockType = lockTypeParam
+    .lockType = lockType##lockTypeParam
 
 #define PARSE_RULE_COMMAND_LOG_FILE(logFileParam)                                                                                  \
     .logFile = logFileParam
 
 #define PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(logLevelDefaultParam)                                                                 \
-    .logLevelDefault = logLevelDefaultParam
+    .logLevelDefault = logLevel##logLevelDefaultParam
 
 #define PARSE_RULE_COMMAND_PARAMETER_ALLOWED(parameterAllowedParam)                                                                \
     .parameterAllowed = parameterAllowedParam
@@ -165,7 +165,7 @@ typedef enum
     .name = nameParam
 
 #define PARSE_RULE_OPTION_TYPE(typeParam)                                                                                          \
-    .type = typeParam
+    .type = cfgOptType##typeParam
 
 #define PARSE_RULE_OPTION_BETA(betaParam)                                                                                          \
     .beta = betaParam
@@ -180,7 +180,7 @@ typedef enum
     .required = requiredParam
 
 #define PARSE_RULE_OPTION_SECTION(sectionParam)                                                                                    \
-    .section = sectionParam
+    .section = cfgSection##sectionParam
 
 #define PARSE_RULE_OPTION_SECURE(secureParam)                                                                                      \
     .secure = secureParam
@@ -188,11 +188,8 @@ typedef enum
 #define PARSE_RULE_OPTION_MULTI(typeMulti)                                                                                         \
     .multi = typeMulti
 
-#define PARSE_RULE_OPTION_GROUP_MEMBER(groupParam)                                                                                 \
-    .group = groupParam
-
 #define PARSE_RULE_OPTION_GROUP_ID(groupIdParam)                                                                                   \
-    .groupId = groupIdParam
+    .group = true, .groupId = cfgOptGrp##groupIdParam
 
 #define PARSE_RULE_OPTION_DEPRECATE_MATCH(deprecateMatchParam)                                                                     \
     .deprecateMatch = deprecateMatchParam
@@ -210,7 +207,7 @@ typedef enum
     .commandRoleValid[cfgCmdRoleRemote] = 0 __VA_ARGS__
 
 #define PARSE_RULE_OPTION_COMMAND(commandParam)                                                                                    \
-    | (1 << commandParam)
+    | (1 << cfgCmd##commandParam)
 
 #define PARSE_RULE_STRPUB(value)                                    {.buffer = (char *)value, .size = sizeof(value) - 1}
 
@@ -1832,7 +1829,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
 
         // Enable logging for main role so config file warnings will be output
         if (!param.noResetLogLevel && config->commandRole == cfgCmdRoleMain)
-            logInit(logLevelWarn, logLevelWarn, logLevelOff, false, 0, 1, false);
+            logInit(logLevelWarn, logLevelOff, logLevelOff, false, 0, 1, false);
 
         // Only continue if command options need to be validated, i.e. a real command is running or we are getting help for a
         // specific command and would like to display actual option values in the help.

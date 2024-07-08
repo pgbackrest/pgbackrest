@@ -135,6 +135,16 @@ add_project_arguments(cc.get_supported_arguments('-fmacro-prefix-map=@0@/test/sr
 ####################################################################################################################################
 configuration = configuration_data()
 
+# Ensure the C compiler supports __builtin_clzl()
+if not cc.links('''int main(int arg, char **argv) {__builtin_clzl(1);}''')
+    error('compiler must support __builtin_clzl()')
+endif
+
+# Ensure the C compiler supports __builtin_bswap64()
+if not cc.links('''int main(int arg, char **argv) {__builtin_bswap64(1);}''')
+    error('compiler must support __builtin_bswap64()')
+endif
+
 # Find optional backtrace library
 lib_backtrace = cc.find_library('backtrace', required: false)
 
@@ -146,11 +156,9 @@ endif
 lib_bz2 = cc.find_library('bz2')
 
 # Find optional lz4 library
-lib_lz4 = dependency('liblz4', required: get_option('liblz4'))
+lib_lz4 = dependency('liblz4')
 
-if lib_lz4.found()
-    configuration.set('HAVE_LIBLZ4', true, description: 'Is liblz4 present?')
-endif
+configuration.set('HAVE_LIBLZ4', true, description: 'Is liblz4 present?')
 
 # Find required openssl library
 lib_openssl = dependency('openssl')

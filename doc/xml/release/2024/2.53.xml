@@ -1,5 +1,12 @@
 <release date="XXXX-XX-XX" version="2.53dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <text>
+            <p><b>IMPORTANT NOTE</b>: The <br-setting>log-level-stderr</br-setting> option default has been changed from <id>warn</id> to <id>off</id>. This makes it easier to capture errors when only redirecting <id>stdout</id>. To preserve the prior behavior set <br-setting>log-level-stderr=warn</br-setting>.</p>
+
+            <p><b>NOTE TO PACKAGERS</b>: The <proper>lz4</proper> library is now required by the meson build.</p>
+            <p><b>NOTE TO PACKAGERS</b>: Compiler support for <code>__builtin_clzl()</code> and <code>__builtin_bswap64()</code> is now required by the meson build.</p>
+        </text>
+
         <release-bug-list>
             <release-item>
                 <github-issue id="2358"/>
@@ -13,9 +20,52 @@
 
                 <p>Fix issue with files larger on the replica than on the primary.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2376"/>
+                <github-pull-request id="2377"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="ahmed112212"/>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix <proper>SFTP</proper> renaming failure when file already exists.</p>
+            </release-item>
         </release-bug-list>
 
         <release-improvement-list>
+            <release-item>
+                <commit subject="Refactor lock module.">
+                    <github-pull-request id="2371"/>
+                </commit>
+                <commit subject="Add remote locks for stanza commands missed in 31c7824a."/>
+                <commit subject="Allow backups to run concurrently on different repositories.">
+                    <github-pull-request id="2389"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="reid.thompson"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Allow backups to run concurrently on different repositories.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2379"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="greg.sabino.mullane"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Default <br-setting>log-level-stderr</br-setting> option to <id>off</id>.</p>
+            </release-item>
+
             <release-item>
                 <github-pull-request id="2303"/>
 
@@ -27,21 +77,5 @@
                 <p>Allow alternative WAL segment sizes for PostgreSQL &amp;le; 10.</p>
             </release-item>
         </release-improvement-list>
-
-        <release-development-list>
-            <release-item>
-                <commit subject="Refactor lock module.">
-                    <github-pull-request id="2371"/>
-                </commit>
-                <commit subject="Add remote locks for stanza commands missed in 31c7824a."/>
-
-                <release-item-contributor-list>
-                    <release-item-contributor id="david.steele"/>
-                    <release-item-reviewer id="reid.thompson"/>
-                </release-item-contributor-list>
-
-                <p>Refactor lock module.</p>
-            </release-item>
-        </release-development-list>
     </release-core-list>
 </release>
