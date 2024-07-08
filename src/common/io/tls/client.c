@@ -3,7 +3,10 @@ TLS Client
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+// {uncrustify_off - header order required for FreeBSD}
+#include <sys/socket.h>
 #include <arpa/inet.h>
+// {uncrustify_on}
 #include <strings.h>
 
 #include "common/crypto/common.h"
