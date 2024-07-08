@@ -1,0 +1,90 @@
+<release date="2017-12-19" version="1.27" title="Bug Fixes and Documentation">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="sebastien.lardiere"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue that suppressed locality errors for <cmd>backup</cmd> and <cmd>restore</cmd>. When a backup host is present, backups should only be allowed on the backup host and restores should only be allowed on the database host unless an alternate configuration is created that ignores the remote host.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="adam.brusselback"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where WAL was not expired on <postgres/> 10. This was caused by a faulty regex that expected all <postgres/> major versions to be X.X.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fixed an issue where the <br-option>--no-config</br-option> option was not passed to child processes. This meant the child processes would still read the local config file and possibly cause unexpected behaviors.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fixed <cmd>info</cmd> command to eliminate <code>"db (prior)"</code> output if no backups or archives exist for a prior version of the cluster.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Add <code>memGrowRaw()</code> to memory context module.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="markus.nullmeier"/>
+                </release-item-contributor-list>
+
+                <p>Document the relationship between the <br-option>archive-copy</br-option> and <br-option>archive-check</br-option> options.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve <br-option>archive-copy</br-option> reference documentation.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Relax permissions set by <file>release.pl</file>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Split <quote>refactor</quote> sections into <quote>improvements</quote> and <quote>development</quote> in the release notes. Many development notes are not relevant to users and simply clutter the release notes, so they are no longer shown on the website.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow internal options that do not show up in the documentation. Used for test options initially but other use cases are on the horizon.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Update CI branches to <path>release/1</path> and <path>release/1-integration</path>.</p>
+            </release-item>
+
+            <release-item>
+                <p>No longer run <id>release/1</id> branch through CI. The <id>release/1-integration</id> branch will be run through CI and then pushed to <id>release/1</id> with github status checks.</p>
+            </release-item>
+
+            <release-item>
+                <p>Move restore test infrastructure to <code>HostBackup.pm</code>. Required to test restores on the backup server, a fairly common scenario. Improve the restore function to accept optional parameters rather than a long list of parameters. In passing, clean up extraneous use of <code>strType</code> and <code>strComment</code> variables.</p>
+            </release-item>
+
+            <release-item>
+                <p>Sync time to prevent build failures when running on VirtualBox.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

@@ -35,7 +35,7 @@ Macros for function logging
 Are there bytes ready to read immediately?
 ***********************************************************************************************************************************/
 static bool
-ioFdReadReady(THIS_VOID, bool error)
+ioFdReadReady(THIS_VOID, const bool error)
 {
     THIS(IoFdRead);
 
@@ -66,7 +66,7 @@ ioFdReadReady(THIS_VOID, bool error)
 Read data from the file descriptor
 ***********************************************************************************************************************************/
 static size_t
-ioFdRead(THIS_VOID, Buffer *buffer, bool block)
+ioFdRead(THIS_VOID, Buffer *const buffer, const bool block)
 {
     THIS(IoFdRead);
 

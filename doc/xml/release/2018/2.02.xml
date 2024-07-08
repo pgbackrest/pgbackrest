@@ -1,0 +1,298 @@
+<release date="2018-05-06" version="2.02" title="Parallel Asynchronous Archive Get and Configuration Includes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="craig.a.james"/>
+                </release-item-contributor-list>
+
+                <p>Fix directory syncs running recursively when only the specified directory should be synced.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="yummyliu"/>
+                    <release-item-ideator id="vitaliy.kukharik"/>
+                </release-item-contributor-list>
+
+                <p>Fix <br-option>archive-copy</br-option> throwing <quote>path not found</quote> error for incr/diff backups.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="vitaliy.kukharik"/>
+                </release-item-contributor-list>
+
+                <p>Fix failure in manifest build when two or more files in <id>PGDATA</id> are linked to the same directory.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fix delta restore failing when a linked file is missing.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="clinton.adams"/>
+                </release-item-contributor-list>
+
+                <p>Fix rendering of key/value and list options in help.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <p>Add asynchronous, parallel <cmd>archive-get</cmd>.</p>
+
+                <p>This feature maintains a queue of WAL segments to help reduce latency when <postgres/> requests a WAL segment with <pg-option>restore_command</pg-option>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Add support for additional <backrest/> configuration files.</p>
+
+                <p>The directory is specified by the <br-option>--config-include-path</br-option> option. Add <br-option>--config-path</br-option> option for overriding the default base path of the <br-option>--config</br-option> and <br-option>--config-include-path</br-option> option.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="yogesh.sharma"/>
+                </release-item-contributor-list>
+
+                <p>Add <br-option>repo-s3-token</br-option> option to allow temporary credentials tokens to be configured.</p>
+
+                <p><backrest/> currently has no way to request new credentials so the entire command (e.g. <cmd>backup</cmd>, <cmd>restore</cmd>) must complete before the credentials expire.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Update the <br-option>archive-push-queue-max</br-option>, <br-option>manifest-save-threshold</br-option>, and <br-option>buffer-size</br-option> options to accept values in <id>KB</id>, <id>MB</id>, <id>GB</id>, <id>TB</id>, or <id>PB</id> where the multiplier is a power of <id>1024</id>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Make backup/restore path sync more efficient.</p>
+
+                <p>Scanning the entire directory can be very expensive if there are a lot of small tables. The backup manifest contains the path list so use it to perform syncs instead of scanning the backup/restore path.</p>
+            </release-item>
+
+            <release-item>
+                <p>Show command parameters as well as command options in initial info log message.</p>
+            </release-item>
+
+            <release-item>
+                <p>Rename archive-queue-max option to archive-push-queue-max.</p>
+
+                <p>This is consistent with the new <br-option>archive-get-queue-max</br-option> option. The old option name will continue to be accepted.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Make <path>backup.history</path> sync more efficient. Only the <path>backup.history/[year]</path> directory was being synced, so check if the <path>backup.history</path> is newly created and sync it as well.</p>
+            </release-item>
+
+            <release-item>
+                <p>Move async forking and more error handling to C. The Perl process was exiting directly when called but that interfered with proper locking for the forked async process. Now Perl returns results to the C process which handles all errors, including signals.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improved lock implementation written in C. Now only two types of locks can be taken: <id>archive</id> and <id>backup</id>. Most commands use one or the other but the <cmd>stanza-*</cmd> commands acquire both locks. This provides better protection than the old command-based locking scheme.</p>
+            </release-item>
+
+            <release-item>
+                <p>Storage object improvements. Convert all functions to variadic functions. Enforce read-only storage. Add <code>storageLocalWrite()</code> helper function. Add <code>storageCopy()</code>, <code>storageExists()</code>, <code>storageMove()</code>, <code>storageNewRead()</code>/<code>storageNewWrite()</code>, <code>storagePathCreate()</code>, <code>storagePathRemove()</code>, <code>storagePathSync()</code>, and <code>storageRemove()</code>. Add <code>StorageFileRead</code> and <code>StorageFileWrite</code> objects. Abstract Posix driver code into a separate module. Call <code>storagePathRemove()</code> from the Perl Posix driver.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve <code>String</code> and <code>StringList</code> objects. Add <code>strUpper()</code>, <code>strLower()</code>, <code>strLstExists()</code>, <code>strLstExistsZ()</code>, <code>strChr()</code>, <code>strSub()</code>, <code>strSubN()</code>, and <code>strTrunc()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve <code>Buffer</code> object. Add <code>bufNewC()</code>, <code>bufEq()</code> and <code>bufCat()</code>. Only reallocate buffer when the size has changed.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>pgControlInfo()</code> to read <file>pg_control</file> and determine the <postgres/> version.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>walSegmentNext()</code> and <code>walSegmentRange()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Error handling improvements. Add <code>THROWP_</code>* macro variants for error handling. These macros allow an <code>ErrorType</code> pointer to be passed and are required for functions that may return different errors based on a parameter. Add <code>_FMT</code> variants for all <code>THROW</code> macros so format types are checked by the compiler.</p>
+            </release-item>
+
+            <release-item>
+                <p>Split <code>cfgLoad()</code> into multiple functions to make testing easier. Mainly this helps with unit tests that need to do log expect testing.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow <code>MemContext</code> objects to be copied to a new parent. This makes it easier to create objects and then copy them to another context when they are complete without having to worry about freeing them on error. Update <code>List</code>, <code>StringList</code>, and <code>Buffer</code> to allow moves. Update <code>Ini</code> and <code>Storage</code> to take advantage of moves.</p>
+            </release-item>
+
+            <release-item>
+                <p>Full branch coverage in C code.</p>
+            </release-item>
+
+            <release-item>
+                <p>Refactor <id>usec</id> to <id>msec</id> in <code>common/time.c</code>. The implementation provides <id>usec</id> resolution but this is not needed in practice and it makes the interface more complicated due to the extra zeros.</p>
+            </release-item>
+
+            <release-item>
+                <p>Replace <code>THROW_ON_SYS_ERROR()</code> with <code>THROW_SYS_ERROR()</code>. The former macro was hiding missing branch coverage for critical error handling.</p>
+            </release-item>
+
+            <release-item>
+                <p>Start work on C handle io object and use it to output help.</p>
+            </release-item>
+
+            <release-item>
+                <p>Don't copy <id>CFGDEF_NAME_ALT</id> or <id>CFGDEF_INHERIT</id> when processing config option inheritance.</p>
+            </release-item>
+
+            <release-item>
+                <p>Split debug and assert code into separate headers. Assert can be used earlier because it only depends on the error-handler and not logging. Add <code>ASSERT()</code> macro which is preserved in production builds.</p>
+            </release-item>
+
+            <release-item>
+                <p>Cleanup C types. Remove <code>typec.h</code>. Order all typdefs above local includes.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fix header exclusion defines that do not match the general pattern.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="viorel.tabara"/>
+                </release-item-contributor-list>
+
+                <p>Update docs with 32-bit support and caveats.</p>
+
+                <p>32-bit support was added in <proper>v1.26</proper>.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                    <release-item-ideator id="brian.faherty"/>
+                </release-item-contributor-list>
+
+                <p>Add monitoring examples using <postgres/> and <proper>jq</proper>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="christophe.courtois"/>
+                </release-item-contributor-list>
+
+                <p>Add example of command section usage to archiving configuration.</p>
+            </release-item>
+
+            <release-item>
+                <p>Remove documentation describing <code>info --output=json</code> as experimental.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update out-of-date description for the <br-option>spool-path</br-option> option.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Add logic to find the real oid of the <id>test1</id> database during restore testing.</p>
+            </release-item>
+
+            <release-item>
+                <p>Document build improvements. Perform <code>apt-get update</code> to ensure packages are up to date before installing. Add <id>-p</id> to the repository <file>mkdir</file> so it won't fail if the directory already exists, handy for testing packages.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-feature-list>
+            <release-item>
+                <p>Use <proper>lcov</proper> for C unit test coverage reporting.</p>
+
+                <p>Switch from <proper>Devel::Cover</proper> because it would not report on branch coverage for reports converted from <proper>gcov</proper>. Incomplete branch coverage for a module now generates an error. Coverage of unit tests is not displayed in the report unless they are incomplete for either statement or branch coverage.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Move test definitions to <file>test/define.yaml</file>. The location is better because it is no longer buried in the Perl test libs. Also, the data can be easily accessed from C.</p>
+            </release-item>
+
+            <release-item>
+                <p>Move help/version integration tests to <id>mock/all</id>. Help and version are covered by unit tests, so we really just to need to make sure there is output when called from the command line.</p>
+            </release-item>
+
+            <release-item>
+                <p>Move <id>archive-stop</id> and <id>expire</id> tests to the <id>mock</id> module. These are mock integration tests so they should be grouped with the other mock integration tests.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>harnessCfgLoad()</code> test function, which allows a new config to be loaded for unit testing without resetting log functions, opening a log file, or taking locks.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>HARNESS_FORK</code> macros for tests that require fork(). A standard pattern for tests makes fork() easier to use and should help prevent some common mistakes.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>TEST_ERROR_FMT</code> macro to simplify testing of formatted error messages.</p>
+            </release-item>
+
+            <release-item>
+                <p>Generate code counts for all source files. The source files are also classified by type and purpose.</p>
+            </release-item>
+
+            <release-item>
+                <p>Include VM type in <id>gcov</id> path to avoid conflicts between VMs with different architectures.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve logic for smart builds to include version changes. Skip version checks when testing in <setting>--dev</setting> mode.</p>
+            </release-item>
+
+            <release-item>
+                <p>Use <proper>pip 9.03</proper> in test VMs. <proper>pip 10</proper> drops support for <proper>Python 2.6</proper> which is still used by the older test VMs.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow <code>-DDEBUG_UNIT</code> to be suppressed to test how debug macros behave.</p>
+            </release-item>
+
+            <release-item>
+                <p>Rename Perl tests so they don't conflict with their C counterparts.</p>
+            </release-item>
+
+            <release-item>
+                <p>Divide tests into three types (<id>unit</id>, <id>integration</id>, <id>performance</id>). Many options that were set per test can instead be inferred from the types, i.e. <id>container</id>, <id>c</id>, <id>expect</id>, and <id>individual</id>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Try tweaking time sync settings to prevent clock drift rather than restarting <id>VBoxService</id> on every test run.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

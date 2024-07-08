@@ -12,16 +12,16 @@ Object type
 ***********************************************************************************************************************************/
 struct Wait
 {
-    WaitPub pub;                                                    // Publicly accessible variables
     TimeMSec waitTime;                                              // Total time to wait (in usec)
     TimeMSec sleepTime;                                             // Next sleep time (in usec)
     TimeMSec sleepPrevTime;                                         // Previous time slept (in usec)
     TimeMSec beginTime;                                             // Time the wait began (in epoch usec)
+    unsigned int retry;                                             // Retries remaining
 };
 
 /**********************************************************************************************************************************/
 FN_EXTERN Wait *
-waitNew(TimeMSec waitTime)
+waitNew(const TimeMSec waitTime)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(TIMEMSEC, waitTime);
@@ -33,16 +33,15 @@ waitNew(TimeMSec waitTime)
     {
         *this = (Wait)
         {
-            .pub =
-            {
-                .remainTime = waitTime,
-            },
             .waitTime = waitTime,
+            .retry = 2,
         };
 
         // Calculate first sleep time -- start with 1/10th of a second for anything >= 1 second
         if (this->waitTime >= MSEC_PER_SEC)
+        {
             this->sleepTime = MSEC_PER_SEC / 10;
+        }
         // Unless the wait time is really small -- in that case divide wait time by 10
         else
             this->sleepTime = this->waitTime / 10;
@@ -57,7 +56,7 @@ waitNew(TimeMSec waitTime)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-waitMore(Wait *this)
+waitMore(Wait *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(WAIT, this);
@@ -70,33 +69,48 @@ waitMore(Wait *this)
     // If sleep is 0 then the wait time has already ended
     if (this->sleepTime > 0)
     {
-        // Sleep required amount
-        sleepMSec(this->sleepTime);
-
-        // Get the end time
-        TimeMSec elapsedTime = timeMSec() - this->beginTime;
+        // Get the elapsed time
+        const TimeMSec elapsedTime = timeMSec() - this->beginTime;
 
         // Is there more time to go?
         if (elapsedTime < this->waitTime)
         {
-            // Calculate sleep time as a sum of current and last (a Fibonacci-type sequence)
-            TimeMSec sleepNextTime = this->sleepTime + this->sleepPrevTime;
+            // Calculate remaining sleep time
+            const TimeMSec remainTime = this->waitTime - elapsedTime;
 
-            // Make sure sleep time does not go beyond end time (this won't be negative because of the if condition above)
-            if (sleepNextTime > this->waitTime - elapsedTime)
-                sleepNextTime = this->waitTime - elapsedTime;
+            // Calculate sleep time as a sum of current and last (a Fibonacci-type sequence)
+            TimeMSec sleepTime = this->sleepTime + this->sleepPrevTime;
+
+            // Make sure sleep time does not go beyond remaining time (this won't be negative because of the if condition above)
+            if (sleepTime > remainTime)
+                sleepTime = remainTime;
+
+            // Sleep required amount
+            sleepMSec(sleepTime);
 
             // Store new sleep times
             this->sleepPrevTime = this->sleepTime;
-            this->sleepTime = sleepNextTime;
-            this->pub.remainTime = this->waitTime - elapsedTime;
+            this->sleepTime = sleepTime;
         }
-        // Else set sleep to zero so next call will return false
+        // Else are there retries left?
+        else if (this->retry != 0)
+        {
+            // Sleep using the last calculated time
+            sleepMSec(this->sleepTime);
+        }
+        // Else set sleep to zero so call will return false
         else
             this->sleepTime = 0;
 
-        // Need to wait more
-        result = true;
+        // Caller can continue processing
+        if (this->sleepTime > 0)
+        {
+            // Decrement retries
+            if (this->retry != 0)
+                this->retry--;
+
+            result = true;
+        }
     }
 
     FUNCTION_LOG_RETURN(BOOL, result);

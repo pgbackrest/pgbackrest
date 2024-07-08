@@ -27,7 +27,7 @@ cmdStop(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *stopFile = lockStopFileName(cfgOptionStrNull(cfgOptStanza));
+        const String *const stopFile = lockStopFileName(cfgOptionStrNull(cfgOptStanza));
 
         // If the stop file does not already exist, then create it
         if (!storageExistsP(storageLocal(), stopFile))
@@ -44,40 +44,44 @@ cmdStop(void)
             // If --force was specified then send term signals to running processes
             if (cfgOptionBool(cfgOptForce))
             {
-                const String *lockPath = cfgOptionStr(cfgOptLockPath);
-                StringList *lockPathFileList = strLstSort(
+                const String *const lockPath = cfgOptionStr(cfgOptLockPath);
+                const String *const stanzaPrefix =
+                    cfgOptionTest(cfgOptStanza) ? strNewFmt("%s-", strZ(cfgOptionStr(cfgOptStanza))) : NULL;
+                const StringList *const lockPathFileList = strLstSort(
                     storageListP(storageLocal(), lockPath, .errorOnMissing = true), sortOrderAsc);
+                List *const pidList = lstNewP(sizeof(int), .comparator = lstComparatorInt);
 
                 // Find each lock file and send term signals to the processes
                 for (unsigned int lockPathFileIdx = 0; lockPathFileIdx < strLstSize(lockPathFileList); lockPathFileIdx++)
                 {
-                    const String *lockFile = strLstGet(lockPathFileList, lockPathFileIdx);
+                    const String *const lockFile = strLstGet(lockPathFileList, lockPathFileIdx);
 
                     // Skip any file that is not a lock file. Skip lock files for other stanzas if a stanza is provided.
-                    if (!strEndsWithZ(lockFile, LOCK_FILE_EXT) ||
-                        (cfgOptionTest(cfgOptStanza) &&
-                         !strEq(lockFile, lockFileName(cfgOptionStr(cfgOptStanza), lockTypeArchive)) &&
-                         !strEq(lockFile, lockFileName(cfgOptionStr(cfgOptStanza), lockTypeBackup))))
-                    {
+                    if (!strEndsWithZ(lockFile, LOCK_FILE_EXT) || (stanzaPrefix != NULL && !strBeginsWith(lockFile, stanzaPrefix)))
                         continue;
-                    }
 
                     // Read the lock file
-                    lockFile = strNewFmt("%s/%s", strZ(lockPath), strZ(lockFile));
-                    LockReadResult lockRead = lockReadFileP(lockFile, .remove = true);
+                    const LockReadResult lockResult = lockReadP(lockFile, .remove = true);
 
                     // If we cannot read the lock file for any reason then warn and continue to next file
-                    if (lockRead.status != lockReadStatusValid)
+                    if (lockResult.status != lockReadStatusValid)
                     {
-                        LOG_WARN_FMT("unable to read lock file %s", strZ(lockFile));
+                        LOG_WARN_FMT("unable to read lock file %s/%s", strZ(lockPath), strZ(lockFile));
                         continue;
                     }
 
+                    // If the process has already been killed then skip it. This is possible because a single process may be holding
+                    // multiple lock files.
+                    if (lstFind(pidList, &lockResult.data.processId) != NULL)
+                        continue;
+
+                    lstAdd(pidList, &lockResult.data.processId);
+
                     // The lock file is valid so that means there is a running process -- send a term signal to the process
-                    if (kill(lockRead.data.processId, SIGTERM) != 0)
-                        LOG_WARN_FMT("unable to send term signal to process %d", lockRead.data.processId);
+                    if (kill(lockResult.data.processId, SIGTERM) != 0)
+                        LOG_WARN_FMT("unable to send term signal to process %d", lockResult.data.processId);
                     else
-                        LOG_INFO_FMT("sent term signal to process %d", lockRead.data.processId);
+                        LOG_INFO_FMT("sent term signal to process %d", lockResult.data.processId);
                 }
             }
         }

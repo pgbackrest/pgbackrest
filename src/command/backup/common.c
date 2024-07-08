@@ -13,7 +13,6 @@ Common Functions and Definitions for Backup and Expire Commands
 /***********************************************************************************************************************************
 Constants
 ***********************************************************************************************************************************/
-#define DATE_TIME_REGEX                                             "[0-9]{8}\\-[0-9]{6}"
 #define BACKUP_LINK_LATEST                                          "latest"
 
 /**********************************************************************************************************************************/
@@ -59,12 +58,8 @@ backupLabelFormat(const BackupType type, const String *const backupLabelPrior, c
     ASSERT(timestamp > 0);
 
     // Format the timestamp
-    struct tm timePart;
-    char buffer[16];
-
-    THROW_ON_SYS_ERROR(
-        strftime(buffer, sizeof(buffer), "%Y%m%d-%H%M%S", localtime_r(&timestamp, &timePart)) == 0, AssertError,
-        "unable to format time");
+    char buffer[DATE_TIME_LEN + 1];
+    cvtTimeToZP("%Y%m%d-%H%M%S", timestamp, buffer, sizeof(buffer));
 
     // If full label
     String *result;
@@ -77,7 +72,7 @@ backupLabelFormat(const BackupType type, const String *const backupLabelPrior, c
     else
     {
         // Get the full backup portion of the prior backup label and append the diff/incr timestamp
-        result = strNewFmt("%.16s_%s%s", strZ(backupLabelPrior), buffer, type == backupTypeDiff ? "D" : "I");
+        result = strNewFmt("%.*s_%s%s", DATE_TIME_LEN + 1, strZ(backupLabelPrior), buffer, type == backupTypeDiff ? "D" : "I");
     }
 
     FUNCTION_LOG_RETURN(STRING, result);

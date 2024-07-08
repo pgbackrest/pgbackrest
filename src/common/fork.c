@@ -16,7 +16,7 @@ forkSafe(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    int result = fork();
+    const int result = fork();
 
     THROW_ON_SYS_ERROR(result == -1, KernelError, "unable to fork");
 

@@ -100,7 +100,7 @@ static char stackTraceBuffer[ERROR_MESSAGE_BUFFER_SIZE];
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-errorHandlerSet(ErrorHandlerFunction *list, unsigned int total)
+errorHandlerSet(const ErrorHandlerFunction *const list, const unsigned int total)
 {
     assert(total == 0 || list != NULL);
 
@@ -110,7 +110,7 @@ errorHandlerSet(ErrorHandlerFunction *list, unsigned int total)
 
 /**********************************************************************************************************************************/
 FN_EXTERN int
-errorTypeCode(const ErrorType *errorType)
+errorTypeCode(const ErrorType *const errorType)
 {
     return errorType->code;
 }
@@ -124,7 +124,7 @@ errorTypeFatal(const ErrorType *const errorType)
 
 /**********************************************************************************************************************************/
 FN_EXTERN const ErrorType *
-errorTypeFromCode(int code)
+errorTypeFromCode(const int code)
 {
     // Search for error type by code
     int errorTypeIdx = 0;
@@ -147,14 +147,14 @@ errorTypeFromCode(int code)
 
 /**********************************************************************************************************************************/
 FN_EXTERN const char *
-errorTypeName(const ErrorType *errorType)
+errorTypeName(const ErrorType *const errorType)
 {
     return errorType->name;
 }
 
 /**********************************************************************************************************************************/
 FN_EXTERN const ErrorType *
-errorTypeParent(const ErrorType *errorType)
+errorTypeParent(const ErrorType *const errorType)
 {
     return errorType->parentType;
 }
@@ -168,7 +168,7 @@ errorTryDepth(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-errorTypeExtends(const ErrorType *child, const ErrorType *parent)
+errorTypeExtends(const ErrorType *const child, const ErrorType *const parent)
 {
     const ErrorType *find = child;
 
@@ -263,7 +263,7 @@ errorStackTrace(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-errorInstanceOf(const ErrorType *errorTypeTest)
+errorInstanceOf(const ErrorType *const errorTypeTest)
 {
     return errorType() == errorTypeTest || errorTypeExtends(errorType(), errorTypeTest);
 }
@@ -407,7 +407,8 @@ errorInternalThrow(
 
 FN_EXTERN void
 errorInternalThrowFmt(
-    const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *format, ...)
+    const ErrorType *const errorType, const char *const fileName, const char *const functionName, const int fileLine,
+    const char *const format, ...)
 {
     // Format message
     va_list argument;
@@ -421,7 +422,8 @@ errorInternalThrowFmt(
 /**********************************************************************************************************************************/
 FN_EXTERN void
 errorInternalThrowSys(
-    int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message)
+    const int errNo, const ErrorType *const errorType, const char *const fileName, const char *const functionName,
+    const int fileLine, const char *const message)
 {
     // Format message with system message appended
     if (errNo == 0)
@@ -439,8 +441,8 @@ errorInternalThrowSys(
 
 FN_EXTERN void
 errorInternalThrowOnSys(
-    bool error, int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine,
-    const char *message)
+    const bool error, const int errNo, const ErrorType *const errorType, const char *const fileName, const char *const functionName,
+    const int fileLine, const char *const message)
 {
     if (error)
         errorInternalThrowSys(errNo, errorType, fileName, functionName, fileLine, message);
@@ -450,7 +452,8 @@ errorInternalThrowOnSys(
 
 FN_EXTERN void
 errorInternalThrowSysFmt(
-    int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *format, ...)
+    const int errNo, const ErrorType *const errorType, const char *const fileName, const char *const functionName,
+    const int fileLine, const char *const format, ...)
 {
     // Format message
     va_list argument;
@@ -469,8 +472,8 @@ errorInternalThrowSysFmt(
 
 FN_EXTERN void
 errorInternalThrowOnSysFmt(
-    bool error, int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine,
-    const char *format, ...)
+    const bool error, const int errNo, const ErrorType *const errorType, const char *const fileName, const char *const functionName,
+    const int fileLine, const char *const format, ...)
 {
     if (error)
     {

@@ -4,9 +4,9 @@
 project(
     'pgbackrest',
     ['c'],
-    version: '2.46dev',
+    version: '2.53dev',
     license: 'MIT',
-    meson_version: '>=0.45',
+    meson_version: '>=0.47',
     default_options: [
         # Core options
         'buildtype=release',
@@ -30,9 +30,9 @@ cc = meson.get_compiler('c')
 # OS-specific settings
 ####################################################################################################################################
 if host_machine.system() == 'linux'
-    add_global_arguments('-D_POSIX_C_SOURCE=200809L', language : 'c')
+    add_global_arguments('-D_POSIX_C_SOURCE=200809L', language: 'c')
 elif host_machine.system() == 'darwin'
-    add_global_arguments('-D_DARWIN_C_SOURCE', language : 'c')
+    add_global_arguments('-D_DARWIN_C_SOURCE', language: 'c')
 endif
 
 ####################################################################################################################################
@@ -114,15 +114,17 @@ endif
 # reproducible builds and minimizes the file path in debug messages, just like an in-tree make build. For test source, prefix with
 # test/ in case there are any module name collisions.
 ####################################################################################################################################
+python = import('python').find_installation()
+
 file_prefix = run_command(
     [
-        'python3',
+        python,
         '-c',
         'import sys, os; print(os.path.relpath(sys.argv[1], sys.argv[2]))',
         meson.current_source_dir(),
         meson.current_build_dir(),
     ],
-    # check: true, # This should be set when the minimum supported meson version is >= 0.47
+    check: true,
 ).stdout().strip()
 
 add_project_arguments(cc.get_supported_arguments('-fmacro-prefix-map=@0@/src/=' . format(file_prefix)), language: 'c')
@@ -132,6 +134,16 @@ add_project_arguments(cc.get_supported_arguments('-fmacro-prefix-map=@0@/test/sr
 # Build configuration
 ####################################################################################################################################
 configuration = configuration_data()
+
+# Ensure the C compiler supports __builtin_clzl()
+if not cc.links('''int main(int arg, char **argv) {__builtin_clzl(1);}''')
+    error('compiler must support __builtin_clzl()')
+endif
+
+# Ensure the C compiler supports __builtin_bswap64()
+if not cc.links('''int main(int arg, char **argv) {__builtin_bswap64(1);}''')
+    error('compiler must support __builtin_bswap64()')
+endif
 
 # Find optional backtrace library
 lib_backtrace = cc.find_library('backtrace', required: false)
@@ -144,11 +156,9 @@ endif
 lib_bz2 = cc.find_library('bz2')
 
 # Find optional lz4 library
-lib_lz4 = dependency('liblz4', required: false)
+lib_lz4 = dependency('liblz4')
 
-if lib_lz4.found()
-    configuration.set('HAVE_LIBLZ4', true, description: 'Is liblz4 present?')
-endif
+configuration.set('HAVE_LIBLZ4', true, description: 'Is liblz4 present?')
 
 # Find required openssl library
 lib_openssl = dependency('openssl')
@@ -165,8 +175,17 @@ lib_yaml = dependency('yaml-0.1')
 # Find required gz library
 lib_z = dependency('zlib')
 
+configuration.set('ZLIB_CONST', true, description: 'Require zlib const input buffer')
+
+# Find optional libssh2 library
+lib_ssh2 = dependency('libssh2', required: get_option('libssh2'))
+
+if lib_ssh2.found()
+    configuration.set('HAVE_LIBSSH2', true, description: 'Is libssh2 present?')
+endif
+
 # Find optional zstd library
-lib_zstd = dependency('libzstd', version: '>=1.0', required: false)
+lib_zstd = dependency('libzstd', version: '>=1.0', required: get_option('libzstd'))
 
 if lib_zstd.found()
     configuration.set('HAVE_LIBZST', true, description: 'Is libzstd present?')
@@ -200,8 +219,15 @@ configuration.set(
     description: 'Indicate that a function is formatted like printf (and provide format and args position)'
 )
 
+# Set FN_STRFTIME macro
+configuration.set(
+    'FN_STRFTIME(fmt)', '__attribute__((format(strftime, fmt, 0)))',
+    description: 'Indicate that a function is formatted like strftime (and provide format position)'
+)
+
 ####################################################################################################################################
 # Include subdirs
 ####################################################################################################################################
 subdir('src')
+subdir('doc/src')
 subdir('test/src')

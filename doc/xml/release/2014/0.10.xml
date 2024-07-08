@@ -1,0 +1,33 @@
+<release date="2014-03-05" version="0.10" title="Backup and Archiving are Functional">
+    <release-core-list>
+        <release-feature-list>
+            <release-item>
+                <p>No restore functionality, but the backup directories are consistent <postgres/> data directories. You'll need to either uncompress the files or turn off compression in the backup. Uncompressed backups on a ZFS (or similar) filesystem are a good option because backups can be restored locally via a snapshot to create logical backups or do spot data recovery.</p>
+            </release-item>
+
+            <release-item>
+                <p>Archiving is single-threaded. This has not posed an issue on our multi-terabyte databases with heavy write volume. Recommend a large WAL volume or to use the async option with a large volume nearby.</p>
+            </release-item>
+
+            <release-item>
+                <p>Backups are multi-threaded, but the <code>Net::OpenSSH</code> library does not appear to be 100% thread-safe so it will very occasionally lock up on a thread. There is an overall process timeout that resolves this issue by killing the process. Yes, very ugly.</p>
+            </release-item>
+
+            <release-item>
+                <p>Checksums are lost on any resumed backup. Only the final backup will record checksum on multiple resumes. Checksums from previous backups are correctly recorded and a full backup will reset everything.</p>
+            </release-item>
+
+            <release-item>
+                <p>The <file>backup.manifest</file> is being written as <code>Storable</code> because <code>Config::IniFile</code> does not seem to handle large files well. Would definitely like to save these as human-readable text.</p>
+            </release-item>
+        </release-feature-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-feature-list>
+            <release-item>
+                <p>Absolutely no documentation (outside the code). Well, excepting these release notes.</p>
+            </release-item>
+        </release-feature-list>
+    </release-doc-list>
+</release>

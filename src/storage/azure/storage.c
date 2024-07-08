@@ -22,8 +22,9 @@ Azure Storage
 /***********************************************************************************************************************************
 Azure http headers
 ***********************************************************************************************************************************/
+STRING_STATIC(AZURE_HEADER_TAGS,                                    "x-ms-tags");
 STRING_STATIC(AZURE_HEADER_VERSION_STR,                             "x-ms-version");
-STRING_STATIC(AZURE_HEADER_VERSION_VALUE_STR,                       "2019-02-02");
+STRING_STATIC(AZURE_HEADER_VERSION_VALUE_STR,                       "2019-12-12");
 
 /***********************************************************************************************************************************
 Azure query tokens
@@ -66,6 +67,7 @@ struct StorageAzure
     const HttpQuery *sasKey;                                        // SAS key
     const String *host;                                             // Host name
     size_t blockSize;                                               // Block size for multi-block upload
+    const String *tag;                                              // Tags to be applied to objects
     const String *pathPrefix;                                       // Account/container prefix
 
     uint64_t fileId;                                                // Id to used to make file block identifiers unique
@@ -78,7 +80,8 @@ Based on the documentation at https://docs.microsoft.com/en-us/rest/api/storages
 ***********************************************************************************************************************************/
 static void
 storageAzureAuth(
-    StorageAzure *this, const String *verb, const String *path, HttpQuery *query, const String *dateTime, HttpHeader *httpHeader)
+    StorageAzure *const this, const String *const verb, const String *const path, HttpQuery *const query,
+    const String *const dateTime, HttpHeader *const httpHeader)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_AZURE, this);
@@ -109,12 +112,12 @@ storageAzureAuth(
             httpHeaderPut(httpHeader, AZURE_HEADER_VERSION_STR, AZURE_HEADER_VERSION_VALUE_STR);
 
             // Generate canonical headers
-            String *headerCanonical = strNew();
-            StringList *headerKeyList = httpHeaderList(httpHeader);
+            String *const headerCanonical = strNew();
+            const StringList *const headerKeyList = httpHeaderList(httpHeader);
 
             for (unsigned int headerKeyIdx = 0; headerKeyIdx < strLstSize(headerKeyList); headerKeyIdx++)
             {
-                const String *headerKey = strLstGet(headerKeyList, headerKeyIdx);
+                const String *const headerKey = strLstGet(headerKeyList, headerKeyIdx);
 
                 if (!strBeginsWithZ(headerKey, "x-ms-"))
                     continue;
@@ -123,27 +126,27 @@ storageAzureAuth(
             }
 
             // Generate canonical query
-            String *queryCanonical = strNew();
+            String *const queryCanonical = strNew();
 
             if (query != NULL)
             {
-                StringList *queryKeyList = httpQueryList(query);
+                const StringList *const queryKeyList = httpQueryList(query);
                 ASSERT(!strLstEmpty(queryKeyList));
 
                 for (unsigned int queryKeyIdx = 0; queryKeyIdx < strLstSize(queryKeyList); queryKeyIdx++)
                 {
-                    const String *queryKey = strLstGet(queryKeyList, queryKeyIdx);
+                    const String *const queryKey = strLstGet(queryKeyList, queryKeyIdx);
 
                     strCatFmt(queryCanonical, "\n%s:%s", strZ(queryKey), strZ(httpQueryGet(query, queryKey)));
                 }
             }
 
             // Generate string to sign
-            const String *contentLength = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR);
-            const String *contentMd5 = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_MD5_STR);
+            const String *const contentLength = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR);
+            const String *const contentMd5 = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_MD5_STR);
             const String *const range = httpHeaderGet(httpHeader, HTTP_HEADER_RANGE_STR);
 
-            const String *stringToSign = strNewFmt(
+            const String *const stringToSign = strNewFmt(
                 "%s\n"                                                  // verb
                 "\n"                                                    // content-encoding
                 "\n"                                                    // content-language
@@ -183,7 +186,7 @@ storageAzureAuth(
 Process Azure request
 ***********************************************************************************************************************************/
 FN_EXTERN HttpRequest *
-storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureRequestAsyncParam param)
+storageAzureRequestAsync(StorageAzure *const this, const String *const verb, StorageAzureRequestAsyncParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, this);
@@ -192,6 +195,7 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
+        FUNCTION_LOG_PARAM(BOOL, param.tag);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -221,11 +225,15 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
                 strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, param.content)));
         }
 
+        // Set tags when requested and available
+        if (param.tag && this->tag != NULL)
+            httpHeaderPut(requestHeader, AZURE_HEADER_TAGS, this->tag);
+
         // Encode path
         const String *const path = httpUriEncode(param.path, true);
 
         // Make a copy of the query so it can be modified
-        HttpQuery *query =
+        HttpQuery *const query =
             this->sasKey != NULL && param.query == NULL ?
                 httpQueryNewP(.redactList = this->queryRedactList) :
                 httpQueryDupP(param.query, .redactList = this->queryRedactList);
@@ -247,7 +255,7 @@ storageAzureRequestAsync(StorageAzure *this, const String *verb, StorageAzureReq
 }
 
 FN_EXTERN HttpResponse *
-storageAzureResponse(HttpRequest *request, StorageAzureResponseParam param)
+storageAzureResponse(HttpRequest *const request, const StorageAzureResponseParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(HTTP_REQUEST, request);
@@ -277,7 +285,7 @@ storageAzureResponse(HttpRequest *request, StorageAzureResponseParam param)
 }
 
 FN_EXTERN HttpResponse *
-storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestParam param)
+storageAzureRequest(StorageAzure *const this, const String *const verb, const StorageAzureRequestParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, this);
@@ -288,10 +296,11 @@ storageAzureRequest(StorageAzure *this, const String *verb, StorageAzureRequestP
         FUNCTION_LOG_PARAM(BUFFER, param.content);
         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
         FUNCTION_LOG_PARAM(BOOL, param.contentIo);
+        FUNCTION_LOG_PARAM(BOOL, param.tag);
     FUNCTION_LOG_END();
 
     HttpRequest *const request = storageAzureRequestAsyncP(
-        this, verb, .path = param.path, .header = param.header, .query = param.query, .content = param.content);
+        this, verb, .path = param.path, .header = param.header, .query = param.query, .content = param.content, .tag = param.tag);
     HttpResponse *const result = storageAzureResponseP(request, .allowMissing = param.allowMissing, .contentIo = param.contentIo);
 
     httpRequestFree(request);
@@ -304,8 +313,8 @@ General function for listing files to be used by other list routines
 ***********************************************************************************************************************************/
 static void
 storageAzureListInternal(
-    StorageAzure *this, const String *path, StorageInfoLevel level, const String *expression, bool recurse,
-    StorageListCallback callback, void *callbackData)
+    StorageAzure *const this, const String *const path, const StorageInfoLevel level, const String *const expression,
+    const bool recurse, const StorageListCallback callback, void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, this);
@@ -325,15 +334,10 @@ storageAzureListInternal(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Build the base prefix by stripping off the initial /
-        const String *basePrefix;
-
-        if (strSize(path) == 1)
-            basePrefix = EMPTY_STR;
-        else
-            basePrefix = strNewFmt("%s/", strZ(strSub(path, 1)));
+        const String *const basePrefix = strSize(path) == 1 ? EMPTY_STR : strNewFmt("%s/", strZ(strSub(path, 1)));
 
         // Get the expression prefix when possible to limit initial results
-        const String *expressionPrefix = regExpPrefix(expression);
+        const String *const expressionPrefix = regExpPrefix(expression);
 
         // If there is an expression prefix then use it to build the query prefix, otherwise query prefix is base prefix
         const String *queryPrefix;
@@ -349,7 +353,7 @@ storageAzureListInternal(
         }
 
         // Create query
-        HttpQuery *query = httpQueryNewP();
+        HttpQuery *const query = httpQueryNewP();
 
         // Add the delimiter to not recurse
         if (!recurse)
@@ -388,10 +392,11 @@ storageAzureListInternal(
                 else
                     response = storageAzureRequestP(this, HTTP_VERB_GET_STR, .query = query);
 
-                XmlNode *xmlRoot = xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response)));
+                const XmlNode *const xmlRoot = xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response)));
 
                 // If a continuation marker exists then send an async request to get more data
-                const String *continuationMarker = xmlNodeContent(xmlNodeChild(xmlRoot, AZURE_XML_TAG_NEXT_MARKER_STR, false));
+                const String *const continuationMarker = xmlNodeContent(
+                    xmlNodeChild(xmlRoot, AZURE_XML_TAG_NEXT_MARKER_STR, false));
 
                 if (!strEq(continuationMarker, EMPTY_STR))
                 {
@@ -406,12 +411,12 @@ storageAzureListInternal(
                 }
 
                 // Get prefix list
-                XmlNode *blobs = xmlNodeChild(xmlRoot, AZURE_XML_TAG_BLOBS_STR, true);
-                XmlNodeList *blobPrefixList = xmlNodeChildList(blobs, AZURE_XML_TAG_BLOB_PREFIX_STR);
+                const XmlNode *const blobs = xmlNodeChild(xmlRoot, AZURE_XML_TAG_BLOBS_STR, true);
+                const XmlNodeList *const blobPrefixList = xmlNodeChildList(blobs, AZURE_XML_TAG_BLOB_PREFIX_STR);
 
                 for (unsigned int blobPrefixIdx = 0; blobPrefixIdx < xmlNodeLstSize(blobPrefixList); blobPrefixIdx++)
                 {
-                    const XmlNode *subPathNode = xmlNodeLstGet(blobPrefixList, blobPrefixIdx);
+                    const XmlNode *const subPathNode = xmlNodeLstGet(blobPrefixList, blobPrefixIdx);
 
                     // Get path name
                     StorageInfo info =
@@ -433,11 +438,11 @@ storageAzureListInternal(
                 }
 
                 // Get file list
-                XmlNodeList *fileList = xmlNodeChildList(blobs, AZURE_XML_TAG_BLOB_STR);
+                const XmlNodeList *const fileList = xmlNodeChildList(blobs, AZURE_XML_TAG_BLOB_STR);
 
                 for (unsigned int fileIdx = 0; fileIdx < xmlNodeLstSize(fileList); fileIdx++)
                 {
-                    const XmlNode *fileNode = xmlNodeLstGet(fileList, fileIdx);
+                    const XmlNode *const fileNode = xmlNodeLstGet(fileList, fileIdx);
 
                     // Get file name
                     StorageInfo info =
@@ -454,7 +459,7 @@ storageAzureListInternal(
                     // Add basic info if requested (no need to add type info since file is default type)
                     if (level >= storageInfoLevelBasic)
                     {
-                        XmlNode *property = xmlNodeChild(fileNode, AZURE_XML_TAG_PROPERTIES_STR, true);
+                        const XmlNode *const property = xmlNodeChild(fileNode, AZURE_XML_TAG_PROPERTIES_STR, true);
 
                         info.size = cvtZToUInt64(
                             strZ(xmlNodeContent(xmlNodeChild(property, AZURE_XML_TAG_CONTENT_LENGTH_STR, true))));
@@ -477,7 +482,7 @@ storageAzureListInternal(
 
 /**********************************************************************************************************************************/
 static StorageInfo
-storageAzureInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
+storageAzureInfo(THIS_VOID, const String *const file, const StorageInfoLevel level, const StorageInterfaceInfoParam param)
 {
     THIS(StorageAzure);
 
@@ -550,7 +555,7 @@ storageAzureList(THIS_VOID, const String *const path, const StorageInfoLevel lev
 
 /**********************************************************************************************************************************/
 static StorageRead *
-storageAzureNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInterfaceNewReadParam param)
+storageAzureNewRead(THIS_VOID, const String *const file, const bool ignoreMissing, const StorageInterfaceNewReadParam param)
 {
     THIS(StorageAzure);
 
@@ -570,7 +575,7 @@ storageAzureNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageIn
 
 /**********************************************************************************************************************************/
 static StorageWrite *
-storageAzureNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam param)
+storageAzureNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNewWriteParam param)
 {
     THIS(StorageAzure);
 
@@ -636,7 +641,7 @@ storageAzurePathRemoveCallback(void *const callbackData, const StorageInfo *cons
 }
 
 static bool
-storageAzurePathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
+storageAzurePathRemove(THIS_VOID, const String *const path, const bool recurse, const StorageInterfacePathRemoveParam param)
 {
     THIS(StorageAzure);
 
@@ -672,7 +677,7 @@ storageAzurePathRemove(THIS_VOID, const String *path, bool recurse, StorageInter
 
 /**********************************************************************************************************************************/
 static void
-storageAzureRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam param)
+storageAzureRemove(THIS_VOID, const String *const file, const StorageInterfaceRemoveParam param)
 {
     THIS(StorageAzure);
 
@@ -706,8 +711,8 @@ FN_EXTERN Storage *
 storageAzureNew(
     const String *const path, const bool write, StoragePathExpressionCallback pathExpressionFunction, const String *const container,
     const String *const account, const StorageAzureKeyType keyType, const String *const key, const size_t blockSize,
-    const String *const endpoint, const StorageAzureUriStyle uriStyle, const unsigned int port, const TimeMSec timeout,
-    const bool verifyPeer, const String *const caFile, const String *const caPath)
+    const KeyValue *const tag, const String *const endpoint, const StorageAzureUriStyle uriStyle, const unsigned int port,
+    const TimeMSec timeout, const bool verifyPeer, const String *const caFile, const String *const caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -718,6 +723,7 @@ storageAzureNew(
         FUNCTION_LOG_PARAM(STRING_ID, keyType);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_LOG_PARAM(SIZE, blockSize);
+        FUNCTION_LOG_PARAM(KEY_VALUE, tag);
         FUNCTION_LOG_PARAM(STRING, endpoint);
         FUNCTION_LOG_PARAM(ENUM, uriStyle);
         FUNCTION_LOG_PARAM(UINT, port);
@@ -747,6 +753,14 @@ storageAzureNew(
                 uriStyle == storageAzureUriStyleHost ?
                     strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
         };
+
+        // Create tag query string
+        if (tag != NULL)
+        {
+            HttpQuery *const query = httpQueryNewP(.kv = tag);
+            this->tag = httpQueryRenderP(query);
+            httpQueryFree(query);
+        }
 
         // Store shared key or parse sas query
         if (keyType == storageAzureKeyTypeShared)

@@ -5,6 +5,7 @@ Test HTTP
 
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
+#include "common/io/socket/address.h"
 #include "common/io/socket/client.h"
 #include "common/io/tls/client.h"
 
@@ -24,6 +25,13 @@ static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
+
+    // Ensure that the ipv4 loopback address will be selected
+    const String *const ipLoop4 = STRDEF("127.0.0.1");
+    AddressInfo *addrInfo = NULL;
+
+    TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF("localhost"), 443), "localhost addr list");
+    TEST_RESULT_VOID(addrInfoPrefer(addrInfo, lstFindIdx(addrInfo->pub.list, &ipLoop4)), "prefer 127.0.0.1");
 
     // *****************************************************************************************************************************
     if (testBegin("httpUriEncode() and httpUriDecode()"))
@@ -177,14 +185,21 @@ testRun(void)
         TEST_ERROR(httpQueryNewStr(STRDEF("a=b&c")), FormatError, "invalid key/value 'c' in query 'a=b&c'");
 
         HttpQuery *query2 = NULL;
-        TEST_ASSIGN(query2, httpQueryNewStr(STRDEF("?a=%2Bb&c=d%3D")), "query from string");
-        TEST_RESULT_STR_Z(httpQueryRenderP(query2), "a=%2Bb&c=d%3D", "render query");
+        TEST_ASSIGN(query2, httpQueryNewStr(STRDEF("?a%2F=%2Bb&c=d%3D")), "query from string");
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(query2, httpQueryToLog, logBuf, sizeof(logBuf)), "httpQueryToLog");
+        TEST_RESULT_Z(logBuf, "{a/: '+b', c: 'd='}", "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("new query from kv");
+
+        TEST_RESULT_STR_Z(httpQueryRenderP(httpQueryNewP(.kv = query->kv)), "key1=value%201%3F&key2=value2a", "new query");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("merge queries");
 
         TEST_RESULT_STR_Z(
-            httpQueryRenderP(httpQueryMerge(query, query2)), "a=%2Bb&c=d%3D&key1=value%201%3F&key2=value2a", "render merge");
+            httpQueryRenderP(httpQueryMerge(query, query2)), "a%2F=%2Bb&c=d%3D&key1=value%201%3F&key2=value2a", "render merge");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("free query");
@@ -295,25 +310,40 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("HttpResponseMulti"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("errors");
+
+        TEST_ERROR(httpResponseMultiNew(BUFSTRDEF(""), NULL), FormatError, "expected multipart content type");
+        TEST_ERROR(httpResponseMultiNew(BUFSTRDEF(""), STRDEF("bogus")), FormatError, "expected multipart content type");
+        TEST_ERROR(
+            strNewBuf(httpResponseMultiNew(BUFSTRDEF("--YYY"), STRDEF("multipart/mixed; boundary=\"XXX\""))->boundary),
+            FormatError, "multipart boundary 'XXX' not found");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("HttpClient"))
     {
         char logBuf[STACK_TRACE_PARAM_MAX];
         HttpClient *client = NULL;
 
-        TEST_ASSIGN(client, httpClientNew(sckClientNew(STRDEF("localhost"), hrnServerPort(0), 500, 500), 500), "new client");
+        TEST_ASSIGN(client, httpClientNew(sckClientNew(STRDEF("localhost"), HRN_SERVER_PORT_BOGUS, 500, 500), 500), "new client");
 
         TEST_ERROR_FMT(
             httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), HostConnectError,
-            "unable to connect to 'localhost:%u': [111] Connection refused\n"
-            "[RETRY DETAIL OMITTED]",
-            hrnServerPort(0));
+            "unable to connect to 'localhost:34342 (127.0.0.1)': [111] Connection refused\n"
+            "[RETRY DETAIL OMITTED]\n"
+            "[RETRY DETAIL OMITTED]");
 
         HRN_FORK_BEGIN()
         {
+            const unsigned int testPort = hrnServerPortNext();
+
             HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
             {
                 // Start HTTP test server
-                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket), "http server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, testPort), "http server");
             }
             HRN_FORK_CHILD_END();
 
@@ -326,7 +356,7 @@ testRun(void)
 
                 ioBufferSizeSet(35);
 
-                TEST_ASSIGN(client, httpClientNew(sckClientNew(hrnServerHost(), hrnServerPort(0), 5000, 5000), 5000), "new client");
+                TEST_ASSIGN(client, httpClientNew(sckClientNew(hrnServerHost(), testPort, 5000, 5000), 5000), "new client");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("no output from server");
@@ -676,13 +706,15 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
+            const unsigned int testPort = hrnServerPortNext();
+
             // Start HTTPS test server
             HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
             {
                 // Set buffer size large enough for server to read expect messages
                 ioBufferSizeSet(65536);
 
-                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls), "http server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort), "http server");
             }
             HRN_FORK_CHILD_END();
 
@@ -699,7 +731,7 @@ testRun(void)
                     client,
                     httpClientNew(
                         tlsClientNewP(
-                            sckClientNew(hrnServerHost(), hrnServerPort(0), 5000, 5000), hrnServerHost(), 0, 0, TEST_IN_CONTAINER),
+                            sckClientNew(hrnServerHost(), testPort, 5000, 5000), hrnServerHost(), 0, 0, TEST_IN_CONTAINER),
                         5000),
                     "new client");
 
@@ -823,9 +855,118 @@ testRun(void)
                 TEST_RESULT_STR_Z(strNewBuf(buffer), "", "check response");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("close connection and end server process");
+                TEST_TITLE("request with multipart request and response");
+
+                ioBufferSizeSet(512);
+
+                hrnServerScriptAccept(http);
+
+                hrnServerScriptExpectZ(
+                    http,
+                    "GET / HTTP/1.1\r\n" TEST_USER_AGENT
+                    "content-type:multipart/mixed; boundary=QKX4EYg4LARJ\r\n"
+                    "hdr1:1\r\n\r\n"
+                    "\r\n--QKX4EYg4LARJ\r\n"
+                    "content-type:application/http\r\n"
+                    "content-transfer-encoding:binary\r\n"
+                    "content-id:0\r\n\r\n"
+                    "GET / HTTP/1.1\r\n\r\n"
+                    "\r\n--QKX4EYg4LARJ\r\n"
+                    "content-type:application/http\r\n"
+                    "content-transfer-encoding:binary\r\n"
+                    "content-id:1\r\n\r\n"
+                    "POST /ack HTTP/1.1\r\n"
+                    "content-length:3\r\n\r\n"
+                    HTTP_MULTIPART_BOUNDARY_INIT
+                    "\r\n--QKX4EYg4LARJ--\r\n");
+                hrnServerScriptReplyZ(
+                    http,
+                    "HTTP/1.1 200 OK\r\nConnection:ClosE\r\ncontent-type:multipart/mixed; boundary=XXX\r\n\r\n"
+                    "PREAMBLE JUNK\r\n"
+                    "--XXX\r\n"
+                    "content-type:application/http\r\n"
+                    "content-id:0\r\n\r\n"
+                    "HTTP/1.1 200 OK\r\n\r\n"
+                    "\r\n--XXX\r\n"
+                    "content-type:application/http\r\n"
+                    "content-id:1\r\n"
+                    "\r\n"
+                    "HTTP/1.1 200 OK\r\n"
+                    "content-length:3\r\n"
+                    "\r\n"
+                    "123"
+                    "\r\n--XXX\n"
+                    "EPILOGUE JUNK");
 
                 hrnServerScriptClose(http);
+
+                HttpRequestMulti *requestMulti = httpRequestMultiNew();
+                httpRequestMultiAddP(requestMulti, STRDEF("0"), HTTP_VERB_GET_STR, STRDEF("/"), .header = httpHeaderNew(NULL));
+                httpRequestMultiAddP(
+                    requestMulti, STRDEF("1"), HTTP_VERB_POST_STR, STRDEF("/ack"),
+                    .header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, STRDEF("3")),
+                    .content = BUFSTRDEF(HTTP_MULTIPART_BOUNDARY_INIT));
+
+                HttpHeader *headerRequest = httpHeaderNew(NULL);
+                httpHeaderAdd(headerRequest, STRDEF("hdr1"), STRDEF("1"));
+                httpRequestMultiHeaderAdd(requestMulti, headerRequest);
+
+                TEST_ASSIGN(
+                    response,
+                    httpRequestResponse(
+                        httpRequestNewP(
+                            client, STRDEF("GET"), STRDEF("/"), .header = headerRequest,
+                            .content = httpRequestMultiContent(requestMulti)),
+                        false),
+                    "request");
+                TEST_RESULT_VOID(
+                    FUNCTION_LOG_OBJECT_FORMAT(httpResponseHeader(response), httpHeaderToLog, logBuf, sizeof(logBuf)),
+                    "httpHeaderToLog");
+                TEST_RESULT_Z(
+                    logBuf, "{connection: 'close', content-type: 'multipart/mixed; boundary=XXX'}", "check response headers");
+
+                HttpResponseMulti *responseMulti = NULL;
+                TEST_ASSIGN(
+                    responseMulti,
+                    httpResponseMultiNew(
+                        httpResponseContent(response), httpHeaderGet(httpResponseHeader(response), HTTP_HEADER_CONTENT_TYPE_STR)),
+                    "response multi");
+
+                HttpResponse *responsePart = NULL;
+                TEST_ASSIGN(responsePart, httpResponseMultiNext(responseMulti), "response part");
+                TEST_RESULT_UINT(httpResponseCode(responsePart), 200, "response code");
+                TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(responsePart)), "", "response content");
+
+                TEST_ASSIGN(responsePart, httpResponseMultiNext(responseMulti), "response part");
+                TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(responsePart)), "123", "response content");
+
+                TEST_RESULT_PTR(httpResponseMultiNext(responseMulti), NULL, "no more responses");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error on full boundary in header or content");
+
+                requestMulti = httpRequestMultiNew();
+                TEST_ERROR(
+                    httpRequestMultiAddP(
+                        requestMulti, STRDEF("0"), HTTP_VERB_GET_STR, STRDEF("/"),
+                        .header = httpHeaderAdd(
+                            httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR,
+                            STRDEF(HTTP_MULTIPART_BOUNDARY_INIT HTTP_MULTIPART_BOUNDARY_EXTRA))),
+                    AssertError, "unable to construct unique boundary");
+
+                requestMulti = httpRequestMultiNew();
+                TEST_ERROR(
+                    httpRequestMultiAddP(
+                        requestMulti, STRDEF("0"), HTTP_VERB_GET_STR, STRDEF("/"), .header = httpHeaderNew(NULL),
+                        .content = BUFSTRDEF(HTTP_MULTIPART_BOUNDARY_INIT HTTP_MULTIPART_BOUNDARY_EXTRA)),
+                    AssertError, "unable to construct unique boundary");
+                TEST_RESULT_BOOL(
+                    bufEq(requestMulti->boundaryRaw, BUFSTRDEF(HTTP_MULTIPART_BOUNDARY_INIT HTTP_MULTIPART_BOUNDARY_EXTRA)),
+                    true, "max boundary");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("end server process");
+
                 hrnServerScriptEnd(http);
             }
             HRN_FORK_PARENT_END();

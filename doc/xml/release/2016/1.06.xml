@@ -1,0 +1,95 @@
+<release date="2016-08-25" version="1.06" title="Backup from Standby and Bug Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="michael.vitale"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where a tablespace link that referenced another link would not produce an error, but instead skip the tablespace entirely.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="michael.vitale"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where options that should not allow multiple values could be specified multiple times in <file>pgbackrest.conf</file> without an error being raised.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="todd.vernick"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where the <br-option>protocol-timeout</br-option> option was not automatically increased when the <br-option>db-timeout</br-option> option was increased.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <p>Backup from a standby cluster. A connection to the primary cluster is still required to start/stop the backup and copy files that are not replicated, but the vast majority of files are copied from the standby in order to reduce load on the primary.</p>
+            </release-item>
+
+            <release-item>
+                <p>More flexible configuration for databases. Master and standby can both be configured on the backup server and <backrest/> will automatically determine which is the primary. This means no configuration changes for backup are required after failing over from a primary to standby when a separate backup server is used.</p>
+            </release-item>
+
+            <release-item>
+                <p>Exclude directories during backup that are cleaned, recreated, or zeroed by <postgres/> at startup. These include <path>pgsql_tmp</path> and <path>pg_stat_tmp</path>. The <file>postgresql.auto.conf.tmp</file> file is now excluded in addition to files that were already excluded: <file>backup_label.old</file>, <file>postmaster.opts</file>, <file>postmaster.pid</file>, <file>recovery.conf</file>, <file>recovery.done</file>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Experimental support for non-exclusive backups in <postgres/> 9.6 beta4. Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <p>Improve error message for links that reference links in manifest build.</p>
+            </release-item>
+
+            <release-item>
+                <p>Added hints to error message when relative paths are detected in <cmd>archive-push</cmd> or <cmd>archive-get</cmd>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve backup log messages to indicate which host the files are being copied from.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Simplify protocol creation and identifying which host is local/remote.</p>
+            </release-item>
+
+            <release-item>
+                <p>Removed all <code>OP_*</code> function constants that were used only for debugging, not in the protocol, and replaced with <code>__PACKAGE__</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improvements in <code>Db</code> module: separated out <code>connect()</code> function, allow <code>executeSql()</code> calls that do not return data, and improve error handling.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-development-list>
+            <release-item>
+                <p>Improve host tag rendering.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Refactor db version constants into a separate module.</p>
+            </release-item>
+
+            <release-item>
+                <p>Update synthetic backup tests to <postgres/> 9.4.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

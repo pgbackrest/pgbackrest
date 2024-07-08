@@ -1,0 +1,33 @@
+<release date="2014-10-05" version="0.30" title="Core Restructuring and Unit Tests">
+    <release-core-list>
+        <release-development-list>
+            <release-item>
+                <p>Complete rewrite of <code>BackRest::File</code> module to use a custom protocol for remote operations and Perl native GZIP and SHA operations. Compression is performed in threads rather than forked processes.</p>
+            </release-item>
+
+            <release-item>
+                <p>Removed dependency on <code>Storable</code> and replaced with a custom ini file implementation.</p>
+            </release-item>
+
+            <release-item>
+                <p>Numerous other changes that can only be identified with a diff.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-feature-list>
+            <release-item>
+                <p>Added much needed documentation</p>
+            </release-item>
+        </release-feature-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-feature-list>
+            <release-item>
+                <p>Fairly comprehensive unit tests for all the basic operations. More work to be done here for sure, but then there is always more work to be done on unit tests.</p>
+            </release-item>
+        </release-feature-list>
+    </release-test-list>
+</release>

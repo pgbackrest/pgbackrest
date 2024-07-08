@@ -104,12 +104,14 @@ sub new
     {
         my $oSourceHash = {};
         my $strKey = $oSource->paramGet('key');
+        my $strFile = $oSource->paramGet('file', false);
         my $strSourceType = $oSource->paramGet('type', false);
 
         logDebugMisc
         (
             $strOperation, 'load source',
             {name => 'strKey', value => $strKey},
+            {name => 'strFile', value => $strFile},
             {name => 'strSourceType', value => $strSourceType}
         );
 
@@ -119,10 +121,10 @@ sub new
             next;
         }
 
-        # Help is in src/build/help
-        if ($strKey eq 'help')
+        # If file is defined
+        if (defined($strFile))
         {
-            $oSourceHash->{doc} = new pgBackRestDoc::Common::Doc("$self->{strDocPath}/../src/build/help/${strKey}.xml");
+            $oSourceHash->{doc} = new pgBackRestDoc::Common::Doc($self->{strDocPath} . "/${strFile}");
         }
         # Else should be in doc/xml
         else

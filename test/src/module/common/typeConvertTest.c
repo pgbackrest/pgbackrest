@@ -34,7 +34,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("cvtDoubleToZ() and cvtZToDouble()"))
+    if (testBegin("cvtDoubleToZ()"))
     {
         char buffer[STACK_TRACE_PARAM_MAX];
 
@@ -48,11 +48,6 @@ testRun(void)
 
         TEST_RESULT_UINT(cvtDoubleToZ(999.0, buffer, STACK_TRACE_PARAM_MAX), 3, "convert double to string");
         TEST_RESULT_Z(buffer, "999", "    check buffer");
-
-        TEST_ERROR(cvtZToDouble("AAA"), FormatError, "unable to convert string 'AAA' to double");
-        TEST_RESULT_DOUBLE(cvtZToDouble("0"), 0, "convert string to double");
-        TEST_RESULT_DOUBLE(cvtZToDouble("123.123"), 123.123, "convert string to double");
-        TEST_RESULT_DOUBLE(cvtZToDouble("-999999999.123456"), -999999999.123456, "convert string to double");
     }
 
     // *****************************************************************************************************************************
@@ -125,14 +120,27 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("cvtTimeToZ()"))
+    if (testBegin("cvtTimeToZP()"))
     {
         char buffer[STACK_TRACE_PARAM_MAX];
 
-        TEST_ERROR(cvtTimeToZ(9999, buffer, 4), AssertError, "buffer overflow");
+        hrnTzSet("America/New_York");
 
-        TEST_RESULT_UINT(cvtTimeToZ(1573222014, buffer, STACK_TRACE_PARAM_MAX), 10, "convert time to string");
+        TEST_ERROR(cvtTimeToZP("%s", 9999, buffer, 4), AssertError, "buffer overflow");
+
+        TEST_RESULT_UINT(cvtTimeToZP("%s", 1573222014, buffer, STACK_TRACE_PARAM_MAX), 10, "local epoch");
         TEST_RESULT_Z(buffer, "1573222014", "    check buffer");
+
+        TEST_RESULT_UINT(cvtTimeToZP("%s", 1573222014, buffer, STACK_TRACE_PARAM_MAX, .utc = true), 10, "utc epoch");
+        TEST_RESULT_Z(buffer, "1573240014", "    check buffer");
+
+        TEST_RESULT_UINT(cvtTimeToZP("%Y%m%d-%H%M%S", 1715930051, buffer, STACK_TRACE_PARAM_MAX), 15, "local string");
+        TEST_RESULT_Z(buffer, "20240517-031411", "    check buffer");
+
+        TEST_RESULT_UINT(cvtTimeToZP("%Y%m%d-%H%M%S", 1715930051, buffer, STACK_TRACE_PARAM_MAX, .utc = true), 15, "utc string");
+        TEST_RESULT_Z(buffer, "20240517-071411", "    check buffer");
+
+        hrnTzSet("UTC");
     }
 
     // *****************************************************************************************************************************

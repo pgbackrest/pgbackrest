@@ -48,6 +48,9 @@ void hrnFileWrite(const char *fileName, const unsigned char *buffer, size_t buff
 // Diff two strings using command-line diff tool
 const char *hrnDiff(const char *actual, const char *expected);
 
+// Set timezone
+void hrnTzSet(const char *tz);
+
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
@@ -66,6 +69,15 @@ bool testContainer(void);
 // Get the 0-based index of the test. Useful for modifying resources like port numbers to avoid conflicts when running tests in
 // parallel.
 unsigned int testIdx(void);
+
+// PostgreSQL version for integration testing
+const char *testPgVersion(void);
+
+// User running the test
+const char *testUser(void);
+
+// VM for integration testing
+const char *testVm(void);
 
 /***********************************************************************************************************************************
 Test that an expected error is actually thrown and error when it isn't
@@ -141,6 +153,14 @@ Output information about the test
     hrnTestLogPrefix(__LINE__);                                                                                                    \
     puts(comment);                                                                                                                 \
     fflush(stdout);
+
+#define TEST_RESULT_INFO_LINE_FMT(line, comment, ...)                                                                              \
+    hrnTestLogPrefix(line);                                                                                                        \
+    printf(comment "\n", __VA_ARGS__);                                                                                             \
+    fflush(stdout)
+
+#define TEST_RESULT_INFO_FMT(comment, ...)                                                                                         \
+    TEST_RESULT_INFO_LINE_FMT(__LINE__, comment, __VA_ARGS__)
 
 /***********************************************************************************************************************************
 Test that a void statement returns and does not throw an error
@@ -319,6 +339,20 @@ Test log result
         CATCH_ANY()                                                                                                                \
         {                                                                                                                          \
             THROW_FMT(AssertError, "LOG RESULT FAILED WITH:\n%s", errorMessage());                                                 \
+        }                                                                                                                          \
+        TRY_END();                                                                                                                 \
+    } while (0)
+
+#define TEST_RESULT_LOG_EMPTY_OR_CONTAINS(expected)                                                                                \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        TRY_BEGIN()                                                                                                                \
+        {                                                                                                                          \
+            harnessLogResultEmptyOrContains(expected);                                                                             \
+        }                                                                                                                          \
+        CATCH_ANY()                                                                                                                \
+        {                                                                                                                          \
+            THROW_FMT(AssertError, "LOG RESULT CONTAINS FAILED WITH:\n%s", errorMessage());                                        \
         }                                                                                                                          \
         TRY_END();                                                                                                                 \
     } while (0)

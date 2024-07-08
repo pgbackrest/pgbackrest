@@ -10,6 +10,6 @@ GCS Storage File Write
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN StorageWrite *storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize);
+FN_EXTERN StorageWrite *storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize, bool tag);
 
 #endif

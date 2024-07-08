@@ -73,7 +73,7 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
 FN_EXTERN void
 protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
         FUNCTION_LOG_PARAM(INT, code);
         FUNCTION_LOG_PARAM(STRING, message);
@@ -203,7 +203,7 @@ protocolServerProcess(
                             CATCH_ANY()
                             {
                                 // Add the error retry info
-                                errRetryAdd(errRetry);
+                                errRetryAddP(errRetry);
 
                                 // On first error record the stack trace. Only the first error will contain a stack trace since
                                 // the first error is most likely to contain valuable information.

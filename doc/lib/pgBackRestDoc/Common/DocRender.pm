@@ -204,22 +204,7 @@ sub new
                 new pgBackRestDoc::Common::DocConfig(${$self->{oManifest}->sourceGet('help')}{doc}, $self);
         }
 
-        if (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'help' && $self->{oManifest}->isBackRest())
-        {
-            if ($self->{strRenderOutKey} eq 'configuration')
-            {
-                $self->{oDoc} = $self->{oReference}->helpConfigDocGet();
-            }
-            elsif ($self->{strRenderOutKey} eq 'command')
-            {
-                $self->{oDoc} = $self->{oReference}->helpCommandDocGet();
-            }
-            else
-            {
-                confess &log(ERROR, "cannot render $self->{strRenderOutKey} from source $$oRenderOut{source}");
-            }
-        }
-        elsif (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'release' && $self->{oManifest}->isBackRest())
+        if (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'release' && $self->{oManifest}->isBackRest())
         {
             require pgBackRestDoc::Custom::DocCustomRelease;
             pgBackRestDoc::Custom::DocCustomRelease->import();

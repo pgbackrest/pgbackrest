@@ -90,6 +90,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             archivePushDrop(STRDEF("pg_wal"), archivePushProcessList(STRDEF(TEST_PATH "/db/pg_wal"))), true, "wal is dropped");
+
+        // No WAL to be processed
+        TEST_RESULT_BOOL(archivePushDrop(STRDEF("pg_wal"), strLstNew()), false, "no WAL to be processed");
     }
 
     // *****************************************************************************************************************************
@@ -469,7 +472,7 @@ testRun(void)
             "unexpected WAL magic 999\n"
             "HINT: is this version of PostgreSQL supported?");
 
-        HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_11, 1501, .catalogVersion = 202211111);
+        HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(storagePgWrite(), PG_VERSION_11, 1501, .catalogVersion = 202211111);
 
         TEST_ERROR(
             cmdArchivePush(), VersionNotSupportedError,
@@ -749,8 +752,8 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("555-fefefefe"), cfgOptionStr(cfgOptStanza), cfgLockType());
-                lockAcquireP(.timeout = 30000, .returnOnNoLock = true);
+                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("555-fefefefe"));
+                cmdLockAcquireP(.returnOnNoLock = true);
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -758,7 +761,7 @@ testRun(void)
                 // Wait for parent to allow release lock
                 HRN_FORK_CHILD_NOTIFY_GET();
 
-                lockRelease(true);
+                cmdLockReleaseP();
             }
             HRN_FORK_CHILD_END();
 

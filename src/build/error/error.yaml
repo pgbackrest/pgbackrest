@@ -105,5 +105,5 @@ runtime: 122
 # Used when an error is not caught. This should not happen.
 unhandled: 124
 
-# Used when a specific error is not provided, generally by a executed process. This should be rare.
+# Used when a specific error is not provided, generally by an executed process. This should be rare.
 unknown: 125

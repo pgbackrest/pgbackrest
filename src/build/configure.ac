@@ -1,7 +1,7 @@
 # Initialize configuration
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_PREREQ([2.71])
-AC_INIT([pgBackRest], [2.46dev])
+AC_INIT([pgBackRest], [2.53dev])
 AC_CONFIG_SRCDIR([version.h])
 AC_CONFIG_AUX_DIR(build)
 
@@ -40,6 +40,13 @@ AC_LINK_IFELSE(
 # Include the build directory
 # ----------------------------------------------------------------------------------------------------------------------------------
 AC_SUBST(CPPFLAGS, "${CPPFLAGS} -I.")
+
+# Check backtrace library
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_CHECK_LIB(
+    [backtrace], [backtrace_full],
+    [AC_CHECK_HEADER(backtrace.h, [AC_DEFINE(HAVE_LIBBACKTRACE) AC_SUBST(LIBS, "${LIBS} -lbacktrace")],
+        [AC_MSG_ERROR([header file <backtrace.h> is required])])])
 
 # Check required pq library
 # ----------------------------------------------------------------------------------------------------------------------------------
@@ -105,6 +112,17 @@ AC_CHECK_LIB(
     [lz4], [LZ4F_isError],
     [AC_CHECK_HEADER(lz4frame.h, [AC_DEFINE(HAVE_LIBLZ4) AC_SUBST(LIBS, "${LIBS} -llz4")],
         [AC_MSG_ERROR([header file <lz4frame.h> is required])])])
+
+# Check optional libSSH2 library
+# ----------------------------------------------------------------------------------------------------------------------------------
+AC_CHECK_LIB(
+    [ssh2], [libssh2_init],
+    [AC_CHECK_HEADER(libssh2.h, [AC_DEFINE(HAVE_LIBSSH2) AC_SUBST(LIBS, "${LIBS} -lssh2")],
+        [AC_MSG_ERROR([header file <libssh2.h> is required])])])
+AC_CHECK_LIB(
+    [ssh2], [libssh2_sftp_init],
+    [AC_CHECK_HEADER(libssh2_sftp.h, [],
+        [AC_MSG_ERROR([header file <libssh2_sftp.h> is required])])])
 
 # Check optional zst library. Ignore any versions below 1.0.
 # ----------------------------------------------------------------------------------------------------------------------------------

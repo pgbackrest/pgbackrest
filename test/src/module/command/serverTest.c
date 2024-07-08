@@ -29,6 +29,8 @@ testRun(void)
 
         HRN_FORK_BEGIN(.timeout = 15000)
         {
+            const unsigned int testPort = hrnServerPortNext();
+
             HRN_FORK_CHILD_BEGIN(.prefix = "client repo")
             {
                 StringList *argList = strLstNew();
@@ -41,7 +43,7 @@ testRun(void)
 #endif
                 hrnCfgArgRawZ(argList, cfgOptRepoHostCertFile, HRN_SERVER_CLIENT_CERT);
                 hrnCfgArgRawZ(argList, cfgOptRepoHostKeyFile, HRN_SERVER_CLIENT_KEY);
-                hrnCfgArgRawFmt(argList, cfgOptRepoHostPort, "%u", hrnServerPort(0));
+                hrnCfgArgRawFmt(argList, cfgOptRepoHostPort, "%u", testPort);
                 hrnCfgArgRawZ(argList, cfgOptStanza, "db");
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
@@ -87,7 +89,7 @@ testRun(void)
 #endif
                 hrnCfgArgRawZ(argList, cfgOptPgHostCertFile, HRN_SERVER_CLIENT_CERT);
                 hrnCfgArgRawZ(argList, cfgOptPgHostKeyFile, HRN_SERVER_CLIENT_KEY);
-                hrnCfgArgRawFmt(argList, cfgOptPgHostPort, "%u", hrnServerPort(0));
+                hrnCfgArgRawFmt(argList, cfgOptPgHostPort, "%u", testPort);
                 hrnCfgArgRawZ(argList, cfgOptStanza, "db");
                 hrnCfgArgRawZ(argList, cfgOptProcess, "1");
                 HRN_CFG_LOAD(cfgCmdBackup, argList, .role = cfgCmdRoleLocal);
@@ -121,6 +123,7 @@ testRun(void)
                             storageTest,
                             "pgbackrest.conf",
                             "[global]\n"
+                            CFGOPT_TLS_SERVER_ADDRESS "=127.0.0.1\n"
                             CFGOPT_TLS_SERVER_CA_FILE "=" HRN_SERVER_CA "\n"
                             CFGOPT_TLS_SERVER_CERT_FILE "=" HRN_SERVER_CERT "\n"
                             CFGOPT_TLS_SERVER_KEY_FILE "=" HRN_SERVER_KEY "\n"
@@ -129,7 +132,7 @@ testRun(void)
 
                         StringList *argList = strLstNew();
                         hrnCfgArgRawZ(argList, cfgOptConfig, TEST_PATH "/pgbackrest.conf");
-                        hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
+                        hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", testPort);
                         hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, CFGOPTVAL_ARCHIVE_MODE_OFF_Z);
                         HRN_CFG_LOAD(cfgCmdServer, argList);
 
@@ -206,21 +209,23 @@ testRun(void)
 
         HRN_FORK_BEGIN(.timeout = 15000)
         {
+            const unsigned int testPort = hrnServerPortNext();
+
             HRN_FORK_CHILD_BEGIN(.prefix = "client")
             {
                 TEST_TITLE("ping localhost");
 
                 argList = strLstNew();
-                hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
+                hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", testPort);
                 HRN_CFG_LOAD(cfgCmdServerPing, argList);
 
                 TEST_RESULT_VOID(cmdServerPing(), "ping");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("ping 12.0.0.1");
+                TEST_TITLE("ping 127.0.0.1");
 
                 argList = strLstNew();
-                hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
+                hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", testPort);
                 strLstAddZ(argList, "127.0.0.1");
                 HRN_CFG_LOAD(cfgCmdServerPing, argList);
 
@@ -238,11 +243,12 @@ testRun(void)
                     HRN_FORK_CHILD_BEGIN(.prefix = "server")
                     {
                         StringList *argList = strLstNew();
+                        hrnCfgArgRawZ(argList, cfgOptTlsServerAddress, "127.0.0.1");
                         hrnCfgArgRawZ(argList, cfgOptTlsServerCaFile, HRN_SERVER_CA);
                         hrnCfgArgRawZ(argList, cfgOptTlsServerCertFile, HRN_SERVER_CERT);
                         hrnCfgArgRawZ(argList, cfgOptTlsServerKeyFile, HRN_SERVER_KEY);
                         hrnCfgArgRawZ(argList, cfgOptTlsServerAuth, "bogus=*");
-                        hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", hrnServerPort(0));
+                        hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", testPort);
                         HRN_CFG_LOAD(cfgCmdServer, argList);
 
                         // Init exit signal handlers

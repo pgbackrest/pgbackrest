@@ -1,0 +1,102 @@
+<release date="2024-01-22" version="2.50" title="Performance Improvements and Bug Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="2215"/>
+                <github-issue id="2238"/>
+                <github-pull-request id="2256"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="adol.rodriguez"/>
+                    <release-item-ideator id="brent.graveland"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                    <!-- Actually tester, but we don't have a tag for that yet -->
+                    <release-item-reviewer id="brent.graveland"/>
+                </release-item-contributor-list>
+
+                <p>Fix short read in block incremental restore.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2251"/>
+                <github-pull-request id="2252"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="robert.donovan"/>
+                    <release-item-reviewer id="joe.wildish"/>
+                </release-item-contributor-list>
+
+                <p>Fix overflow suppressing backup progress in <cmd>info</cmd> output.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2254"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Preserve partial files during block incremental delta restore.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2197"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="viktor.kurilko"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add support for alternate compile-time page sizes.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Skip files truncated during backup when bundling.">
+                    <github-pull-request id="2227"/>
+                </commit>
+                <commit subject="Allow const checksum buffers to be returned from backupFile()."/>
+                <commit subject="Refactor skip files truncated during backup when bundling."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="georgy.shelkovy"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Skip files truncated during backup when bundling.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2249"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve <proper>SFTP</proper> storage error messages.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <commit subject="Refactor backup incremental manifest generation.">
+                    <github-pull-request id="2253"/>
+                </commit>
+                <commit subject="Do not preserve block incremental if file is less than prior block size.">
+                    <github-pull-request id="2255"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Refactor backup incremental manifest generation.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+</release>

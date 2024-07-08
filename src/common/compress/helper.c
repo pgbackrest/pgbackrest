@@ -136,8 +136,8 @@ compressTypeEnum(const StringId type)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
-compressTypePresent(CompressType type)
+static void
+compressTypePresent(const CompressType type)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
@@ -146,14 +146,14 @@ compressTypePresent(CompressType type)
     ASSERT(type < LENGTH_OF(compressHelperLocal));
 
     if (type != compressTypeNone && compressHelperLocal[type].compressNew == NULL)
-        THROW_FMT(OptionInvalidValueError, PROJECT_NAME " not compiled with %s support", strZ(compressHelperLocal[type].type));
+        THROW_FMT(OptionInvalidValueError, PROJECT_NAME " not built with %s support", strZ(compressHelperLocal[type].type));
 
     FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
 FN_EXTERN const String *
-compressTypeStr(CompressType type)
+compressTypeStr(const CompressType type)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
@@ -166,7 +166,7 @@ compressTypeStr(CompressType type)
 
 /**********************************************************************************************************************************/
 FN_EXTERN CompressType
-compressTypeFromName(const String *name)
+compressTypeFromName(const String *const name)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, name);
@@ -188,7 +188,7 @@ compressTypeFromName(const String *name)
 
 /**********************************************************************************************************************************/
 FN_EXTERN int
-compressLevelDefault(CompressType type)
+compressLevelDefault(const CompressType type)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
@@ -202,7 +202,7 @@ compressLevelDefault(CompressType type)
 
 /**********************************************************************************************************************************/
 FN_EXTERN int
-compressLevelMin(CompressType type)
+compressLevelMin(const CompressType type)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
@@ -216,7 +216,7 @@ compressLevelMin(CompressType type)
 
 /**********************************************************************************************************************************/
 FN_EXTERN int
-compressLevelMax(CompressType type)
+compressLevelMax(const CompressType type)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
@@ -305,7 +305,7 @@ decompressFilter(const CompressType type, const DecompressFilterParam param)
 
 /**********************************************************************************************************************************/
 FN_EXTERN const String *
-compressExtStr(CompressType type)
+compressExtStr(const CompressType type)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, type);
@@ -318,7 +318,7 @@ compressExtStr(CompressType type)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-compressExtCat(String *file, CompressType type)
+compressExtCat(String *const file, const CompressType type)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, file);
@@ -334,7 +334,7 @@ compressExtCat(String *file, CompressType type)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-compressExtStrip(const String *file, CompressType type)
+compressExtStrip(const String *const file, const CompressType type)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, file);

@@ -19,6 +19,7 @@ Restore File
 #include "common/io/filter/group.h"
 #include "common/io/filter/size.h"
 #include "common/io/io.h"
+#include "common/io/limitRead.h"
 #include "common/log.h"
 #include "config/config.h"
 #include "info/manifest.h"
@@ -47,12 +48,10 @@ restoreFile(
     ASSERT(repoFile != NULL);
 
     // Restore file results
-    List *result = NULL;
+    List *const result = lstNewP(sizeof(RestoreFileResult));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = lstNewP(sizeof(RestoreFileResult));
-
         // Check files to determine which ones need to be restored
         for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
         {
@@ -87,8 +86,10 @@ restoreFile(
                         // Else use size and checksum
                         else
                         {
-                            // Only continue delta if the file size is as expected or larger
-                            if (info.size >= file->size)
+                            // Only continue delta if the file size is as expected or larger (for normal files) or if block
+                            // incremental and the file to delta is not zero-length. Block incremental can potentially use almost
+                            // any portion of an existing file, but of course zero-length files do not have anything to reuse.
+                            if (info.size >= file->size || (file->blockIncrMapSize != 0 && info.size != 0))
                             {
                                 const char *const fileName = strZ(storagePathP(storagePg(), file->name));
 
@@ -114,6 +115,12 @@ restoreFile(
 
                                     // Update info
                                     info = storageInfoP(storagePg(), file->name, .followLink = true);
+
+                                    // For block incremental it is very important that the file be exactly the expected size, so
+                                    // make sure the truncate worked as expected
+                                    CHECK_FMT(
+                                        FileWriteError, info.size == file->size, "unable to truncate '%s' to %" PRIu64 " bytes",
+                                        strZ(file->name), file->size);
                                 }
 
                                 // Generate checksum for the file if size is not zero
@@ -122,7 +129,10 @@ restoreFile(
                                 if (file->size != 0)
                                 {
                                     read = storageReadIo(storageNewReadP(storagePg(), file->name));
-                                    ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
+
+                                    // Calculate checksum only when size matches
+                                    if (info.size == file->size)
+                                        ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
 
                                     // Generate block checksum list if block incremental
                                     if (file->blockIncrMapSize != 0)
@@ -135,11 +145,12 @@ restoreFile(
                                     ioReadDrain(read);
                                 }
 
-                                // If the checksum is the same (or file is zero size) then no need to copy the file
+                                // If size/checksum is the same (or file is zero size) then no need to copy the file
                                 if (file->size == 0 ||
-                                    bufEq(
-                                        file->checksum,
-                                        pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE))))
+                                    (info.size == file->size &&
+                                     bufEq(
+                                         file->checksum,
+                                         pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE)))))
                                 {
                                     // If the checksum/size are now the same but the time is not, then set the time back to the
                                     // backup time. This helps with unit testing, but also presents a pristine version of the
@@ -182,7 +193,7 @@ restoreFile(
                 if (fileResult->result == restoreResultCopy && (file->size == 0 || file->zero))
                 {
                     // Create destination file
-                    StorageWrite *pgFileWrite = storageNewWriteP(
+                    StorageWrite *const pgFileWrite = storageNewWriteP(
                         storagePgWrite(), file->name, .modeFile = file->mode, .user = file->user, .group = file->group,
                         .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true);
 
@@ -215,7 +226,7 @@ restoreFile(
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 const RestoreFile *const file = lstGet(fileList, fileIdx);
-                const RestoreFileResult *const fileResult = lstGet(result, fileIdx);
+                RestoreFileResult *const fileResult = lstGet(result, fileIdx);
 
                 // Copy file from repository to database
                 if (fileResult->result == restoreResultCopy)
@@ -265,22 +276,13 @@ restoreFile(
                                 .compressible = repoFileCompressType == compressTypeNone && cipherPass == NULL,
                                 .offset = file->offset, .limit = repoFileLimit != 0 ? VARUINT64(repoFileLimit) : NULL);
 
-                            // Add decryption filter for block incremental map
-                            if (cipherPass != NULL && file->blockIncrMapSize != 0)
-                            {
-                                ioFilterGroupAdd(
-                                    ioReadFilterGroup(storageReadIo(repoFileRead)),
-                                    cipherBlockNewP(
-                                        cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), .raw = true));
-                            }
-
                             ioReadOpen(storageReadIo(repoFileRead));
                         }
                         MEM_CONTEXT_PRIOR_END();
                     }
 
                     // Create pg file
-                    StorageWrite *pgFileWrite = storageNewWriteP(
+                    StorageWrite *const pgFileWrite = storageNewWriteP(
                         storagePgWrite(), file->name, .modeFile = file->mode, .user = file->user, .group = file->group,
                         .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true,
                         .noTruncate = file->blockChecksum != NULL);
@@ -294,8 +296,19 @@ restoreFile(
 
                         // Read block map. This will be compared to the block checksum list already created to determine which
                         // blocks need to be fetched from the repository. If we got here there must be at least one block to fetch.
+                        IoRead *const blockMapRead = ioLimitReadNew(storageReadIo(repoFileRead), varUInt64(file->limit));
+
+                        if (cipherPass != NULL)
+                        {
+                            ioFilterGroupAdd(
+                                ioReadFilterGroup(blockMapRead),
+                                cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), .raw = true));
+                        }
+
+                        ioReadOpen(blockMapRead);
+
                         const BlockMap *const blockMap = blockMapNewRead(
-                            storageReadIo(repoFileRead), file->blockIncrSize, file->blockIncrChecksumSize);
+                            blockMapRead, file->blockIncrSize, file->blockIncrChecksumSize);
 
                         // The repo file needs to be closed so that block lists can be read from the remote protocol
                         ioReadClose(storageReadIo(repoFileRead));
@@ -336,6 +349,7 @@ restoreFile(
 
                                 // Write block
                                 ioWrite(storageWriteIo(pgFileWrite), deltaWrite->block);
+                                fileResult->blockIncrDeltaSize += bufUsed(deltaWrite->block);
 
                                 // Flush writes since we may seek to a new location for the next block
                                 ioWriteFlush(storageWriteIo(pgFileWrite));
@@ -362,7 +376,7 @@ restoreFile(
                     // Else normal file
                     else
                     {
-                        IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(pgFileWrite));
+                        IoFilterGroup *const filterGroup = ioWriteFilterGroup(storageWriteIo(pgFileWrite));
 
                         // Add decryption filter
                         if (cipherPass != NULL)
@@ -411,8 +425,6 @@ restoreFile(
             }
             MEM_CONTEXT_TEMP_END();
         }
-
-        lstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

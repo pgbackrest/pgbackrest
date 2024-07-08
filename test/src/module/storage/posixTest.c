@@ -207,16 +207,14 @@ testRun(void)
         TEST_RESULT_BOOL(storageInfoP(storageRootNoPath, NULL, .ignoreMissing = true).exists, false, "no info for /");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("directory does not exists");
+        TEST_TITLE("directory does not exist");
 
         const String *fileName = STRDEF(TEST_PATH "/fileinfo");
 
-        TEST_ERROR_FMT(
-            storageInfoP(storageTest, fileName), FileOpenError, STORAGE_ERROR_INFO_MISSING ": [2] No such file or directory",
-            strZ(fileName));
+        TEST_ERROR_FMT(storageInfoP(storageTest, fileName), FileOpenError, STORAGE_ERROR_INFO_MISSING, strZ(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("file does not exists");
+        TEST_TITLE("file does not exist");
 
         StorageInfo info = {0};
         TEST_ASSIGN(info, storageInfoP(storageTest, fileName, .ignoreMissing = true), "get file info (missing)");
@@ -483,6 +481,23 @@ testRun(void)
             "file {s=8, t=1656433838}\n"
             "./\n",
             .levelForce = true, .includeDot = true, .sortOrder = sortOrderDesc);
+
+        storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path basic info - no recurse");
+
+        storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
+
+        TEST_STORAGE_LIST(
+            storageTest, "pg",
+            "zzz/\n"
+            "pipe*\n"
+            "path/\n"
+            "link> {d=../file}\n"
+            "file {s=8, t=1656433838}\n"
+            "./\n",
+            .levelForce = true, .includeDot = true, .noRecurse = true, .sortOrder = sortOrderDesc);
 
         storageTest->pub.interface.feature ^= 1 << storageFeatureInfoDetail;
 

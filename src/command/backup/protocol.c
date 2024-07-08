@@ -5,6 +5,7 @@ Backup Protocol Handler
 
 #include "command/backup/file.h"
 #include "command/backup/protocol.h"
+#include "common/crypto/hash.h"
 #include "common/debug.h"
 #include "common/io/io.h"
 #include "common/log.h"
@@ -36,6 +37,8 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
         const int repoFileCompressLevel = pckReadI32P(param);
         const CipherType cipherType = (CipherType)pckReadU64P(param);
         const String *const cipherPass = pckReadStrP(param);
+        const PgPageSize pageSize = pckReadU32P(param);
+        const String *const pgVersionForce = pckReadStrP(param);
 
         // Build the file list
         List *const fileList = lstNewP(sizeof(BackupFile));
@@ -46,6 +49,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
             file.pgFileDelta = pckReadBoolP(param);
             file.pgFileIgnoreMissing = pckReadBoolP(param);
             file.pgFileSize = pckReadU64P(param);
+            file.pgFileSizeOriginal = pckReadU64P(param);
             file.pgFileCopyExactSize = pckReadBoolP(param);
             file.pgFileChecksum = pckReadBinP(param);
             file.pgFileChecksumPage = pckReadBoolP(param);
@@ -77,7 +81,7 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
         // Backup file
         const List *const result = backupFile(
             repoFile, bundleId, bundleRaw, blockIncrReference, repoFileCompressType, repoFileCompressLevel, cipherType, cipherPass,
-            fileList);
+            pgVersionForce, pageSize, fileList);
 
         // Return result
         PackWrite *const resultPack = protocolPackNew();
@@ -86,8 +90,13 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
         {
             const BackupFileResult *const fileResult = lstGet(result, resultIdx);
 
+            ASSERT(
+                fileResult->backupCopyResult == backupCopyResultSkip || fileResult->copySize != 0 ||
+                bufEq(fileResult->copyChecksum, HASH_TYPE_SHA1_ZERO_BUF));
+
             pckWriteStrP(resultPack, fileResult->manifestFile);
             pckWriteU32P(resultPack, fileResult->backupCopyResult);
+            pckWriteBoolP(resultPack, fileResult->repoInvalid);
             pckWriteU64P(resultPack, fileResult->copySize);
             pckWriteU64P(resultPack, fileResult->bundleOffset);
             pckWriteU64P(resultPack, fileResult->blockIncrMapSize);

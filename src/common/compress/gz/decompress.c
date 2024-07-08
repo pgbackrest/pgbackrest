@@ -67,7 +67,7 @@ gzDecompressFreeResource(THIS_VOID)
 Decompress data
 ***********************************************************************************************************************************/
 static void
-gzDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *uncompressed)
+gzDecompressProcess(THIS_VOID, const Buffer *const compressed, Buffer *const uncompressed)
 {
     THIS(GzDecompress);
 
@@ -90,7 +90,7 @@ gzDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *uncompressed)
         this->stream.avail_in = (unsigned int)bufUsed(compressed);
 
         // Not all versions of zlib (and none by default) will accept const input buffers
-        this->stream.next_in = UNCONSTIFY(unsigned char *, bufPtrConst(compressed));
+        this->stream.next_in = bufPtrConst(compressed);
     }
 
     this->stream.avail_out = (unsigned int)bufRemains(uncompressed);

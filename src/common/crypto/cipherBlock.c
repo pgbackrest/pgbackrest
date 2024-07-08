@@ -84,7 +84,7 @@ cipherBlockFreeResource(THIS_VOID)
 Determine how large the destination buffer should be
 ***********************************************************************************************************************************/
 static size_t
-cipherBlockProcessSize(CipherBlock *this, size_t sourceSize)
+cipherBlockProcessSize(const CipherBlock *const this, const size_t sourceSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(CIPHER_BLOCK, this);
@@ -107,7 +107,7 @@ cipherBlockProcessSize(CipherBlock *this, size_t sourceSize)
 Encrypt/decrypt data
 ***********************************************************************************************************************************/
 static size_t
-cipherBlockProcessBlock(CipherBlock *this, const unsigned char *source, size_t sourceSize, unsigned char *destination)
+cipherBlockProcessBlock(CipherBlock *const this, const unsigned char *source, size_t sourceSize, unsigned char *destination)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(CIPHER_BLOCK, this);
@@ -225,7 +225,7 @@ cipherBlockProcessBlock(CipherBlock *this, const unsigned char *source, size_t s
 Flush the remaining data
 ***********************************************************************************************************************************/
 static size_t
-cipherBlockFlush(CipherBlock *this, Buffer *destination)
+cipherBlockFlush(CipherBlock *const this, Buffer *const destination)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(CIPHER_BLOCK, this);
@@ -254,7 +254,7 @@ cipherBlockFlush(CipherBlock *this, Buffer *destination)
 Process function used by C filter
 ***********************************************************************************************************************************/
 static void
-cipherBlockProcess(THIS_VOID, const Buffer *source, Buffer *destination)
+cipherBlockProcess(THIS_VOID, const Buffer *const source, Buffer *const destination)
 {
     THIS(CipherBlock);
 
@@ -280,7 +280,7 @@ cipherBlockProcess(THIS_VOID, const Buffer *source, Buffer *destination)
         }
         else
         {
-            size_t catSize = bufRemains(destination);
+            const size_t catSize = bufRemains(destination);
             bufCatSub(destination, this->buffer, 0, catSize);
 
             memmove(bufPtr(this->buffer), bufPtr(this->buffer) + catSize, bufUsed(this->buffer) - catSize);
@@ -296,7 +296,7 @@ cipherBlockProcess(THIS_VOID, const Buffer *source, Buffer *destination)
         // Determine how much space is required in the output buffer
         Buffer *outputActual = destination;
 
-        size_t destinationSize = cipherBlockProcessSize(this, source == NULL ? 0 : bufUsed(source));
+        const size_t destinationSize = cipherBlockProcessSize(this, source == NULL ? 0 : bufUsed(source));
 
         if (destinationSize > bufRemains(destination))
         {
@@ -482,7 +482,7 @@ cipherBlockNewPack(const Pack *const paramList)
 
 /**********************************************************************************************************************************/
 FN_EXTERN IoFilterGroup *
-cipherBlockFilterGroupAdd(IoFilterGroup *filterGroup, CipherType type, CipherMode mode, const String *pass)
+cipherBlockFilterGroupAdd(IoFilterGroup *const filterGroup, const CipherType type, const CipherMode mode, const String *const pass)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_FILTER_GROUP, filterGroup);

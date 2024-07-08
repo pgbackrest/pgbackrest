@@ -20,6 +20,7 @@ Main
 #include "command/help/help.h"
 #include "command/info/info.h"
 #include "command/local/local.h"
+#include "command/lock.h"
 #include "command/manifest/manifest.h"
 #include "command/remote/remote.h"
 #include "command/repo/create.h"
@@ -47,6 +48,7 @@ Main
 #include "storage/gcs/helper.h"
 #include "storage/helper.h"
 #include "storage/s3/helper.h"
+#include "storage/sftp/helper.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -68,6 +70,9 @@ main(int argListSize, const char *argList[])
         STORAGE_CIFS_HELPER,
         STORAGE_GCS_HELPER,
         STORAGE_S3_HELPER,
+#ifdef HAVE_LIBSSH2
+        STORAGE_SFTP_HELPER,
+#endif
         STORAGE_END_HELPER
     };
 
@@ -176,7 +181,7 @@ main(int argListSize, const char *argList[])
                         cmdBegin();
 
                         // Null out any backup percent complete value in the backup lock file
-                        lockWriteDataP(lockTypeBackup);
+                        cmdLockWriteP();
 
                         // Run expire
                         cmdExpire();

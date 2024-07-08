@@ -137,11 +137,20 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("bufDup() and bufEq()"))
+    if (testBegin("bufDup(), bufEq(), and bufFind()"))
     {
         TEST_RESULT_BOOL(bufEq(BUFSTRDEF("123"), bufDup(BUFSTRDEF("1234"))), false, "buffer sizes not equal");
         TEST_RESULT_BOOL(bufEq(BUFSTR(STRDEF("321")), BUFSTRDEF("123")), false, "buffer sizes equal");
         TEST_RESULT_BOOL(bufEq(bufDup(BUFSTRZ("123")), BUF("123", 3)), true, "buffers equal");
+
+        const Buffer *haystack = BUFSTRDEF("findsomethinginhere");
+
+        TEST_RESULT_PTR(bufFindP(haystack, BUFSTRDEF("xxx")), NULL, "not found");
+        TEST_RESULT_PTR(bufFindP(haystack, BUFSTRDEF("find")), bufPtrConst(haystack), "found first");
+        TEST_RESULT_PTR(bufFindP(haystack, BUFSTRDEF("here")), bufPtrConst(haystack) + 15, "found last");
+        TEST_RESULT_PTR(bufFindP(haystack, BUFSTRDEF("thing")), bufPtrConst(haystack) + 8, "found middle");
+        TEST_RESULT_PTR(bufFindP(haystack, BUFSTRDEF("find"), .begin = bufPtrConst(haystack) + 1), NULL, "skipped not found");
+        TEST_RESULT_PTR(bufFindP(haystack, BUFSTRDEF("findsomethinginhere2")), NULL, "needle longer than haystack");
     }
 
     // *****************************************************************************************************************************

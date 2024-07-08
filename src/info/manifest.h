@@ -157,8 +157,16 @@ typedef struct ManifestFile
     size_t blockIncrSize;                                           // Size of incremental blocks
     size_t blockIncrChecksumSize;                                   // Size of incremental block checksum
     uint64_t blockIncrMapSize;                                      // Block incremental map size
-    uint64_t size;                                                  // Original size
+
+    // After manifest build size is either equal to sizeOriginal or it is copied from the prior file. After the file is backed up
+    // the size will reflect the actual size found during backup. sizeOriginal is used to make sure all required bytes are copied
+    // from a file even if it is referenced to a prior file. For example, an fsm file from a replica may be smaller than the
+    // original on the primary, but during copy we need to be ready to read more bytes if in fact the size of the fsm has increased
+    // on the replica. sizeRepo records the size of the file in the repository (even if it is part of a bundle).
+    uint64_t size;                                                  // Final size (after copy)
+    uint64_t sizeOriginal;                                          // Original size (from manifest build)
     uint64_t sizeRepo;                                              // Size in repo
+
     time_t timestamp;                                               // Original timestamp
 } ManifestFile;
 

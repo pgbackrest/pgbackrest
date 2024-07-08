@@ -71,7 +71,7 @@ storageReadAzureOpen(THIS_VOID)
 Read from a file
 ***********************************************************************************************************************************/
 static size_t
-storageReadAzure(THIS_VOID, Buffer *buffer, bool block)
+storageReadAzure(THIS_VOID, Buffer *const buffer, const bool block)
 {
     THIS(StorageReadAzure);
 

@@ -152,6 +152,135 @@ testRun(void)
         chmod(HRN_SERVER_CLIENT_KEY, 0600) == -1, FileModeError, "unable to set mode on " HRN_SERVER_CLIENT_KEY);
 
     // *****************************************************************************************************************************
+    if (testBegin("AddressInfo"))
+    {
+#ifdef TEST_CONTAINER_REQUIRED
+        #define TEST_ADDR_LOOP_HOST                                 "test-addr-loop.pgbackrest.org"
+
+        HRN_SYSTEM("echo \"127.0.0.1 " TEST_ADDR_LOOP_HOST "\" | sudo tee -a /etc/hosts > /dev/null");
+        HRN_SYSTEM("echo \"::1 " TEST_ADDR_LOOP_HOST "\" | sudo tee -a /etc/hosts > /dev/null");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("lookup address info");
+
+        AddressInfo *addrInfo = NULL;
+        TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF(TEST_ADDR_LOOP_HOST), 443), "addr list");
+        TEST_RESULT_STR_Z(addrInfoHost(addrInfo), TEST_ADDR_LOOP_HOST, "check host");
+        TEST_RESULT_UINT(addrInfoPort(addrInfo), 443, "check port");
+        TEST_RESULT_UINT(addrInfoSize(addrInfo), 2, "check size");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("addrInfoToLog()");
+
+        char logBuf[STACK_TRACE_PARAM_MAX];
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(
+            logBuf,
+            zNewFmt(
+                "{host: {\"" TEST_ADDR_LOOP_HOST "\"}, port: 443, list: [%s, %s]}",
+                strZ(addrInfoGet(addrInfo, 0)->name), strZ(addrInfoGet(addrInfo, 1)->name)),
+            "check log");
+
+        addrInfoSort(addrInfo);
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(logBuf, "{host: {\"" TEST_ADDR_LOOP_HOST "\"}, port: 443, list: [::1, 127.0.0.1]}", "check log");
+
+        // Munge address so it is invalid
+        ((AddressInfoItem *)lstGet(addrInfo->pub.list, 0))->info->ai_addr = NULL;
+        TEST_RESULT_STR_Z(addrInfoToStr(addrInfoGet(addrInfo, 0)->info), "invalid", "check invalid");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("addrInfoSort() break early");
+
+        struct addrinfo addr4 = {.ai_family = AF_INET};
+        struct addrinfo addr6 = {.ai_family = AF_INET6};
+
+        MEM_CONTEXT_OBJ_BEGIN(addrInfo)
+        {
+            addrInfo->pub.host = strNewZ("test");
+            lstClear(addrInfo->pub.list);
+
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("127.0.0.1"), .info = &addr4});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("::1"), .info = &addr6});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("127.0.0.2"), .info = &addr4});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("::2"), .info = &addr6});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("::3"), .info = &addr6});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("::4"), .info = &addr6});
+            addrInfoSort(addrInfo);
+        }
+        MEM_CONTEXT_OBJ_END();
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(
+            logBuf, zNewFmt("{host: {\"test\"}, port: 443, list: [::1, 127.0.0.1, ::2, 127.0.0.2, ::3, ::4]}"), "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("addrInfoSort()");
+
+        // Set a preference that won't be found
+        addrInfoPrefer(addrInfo, 5);
+
+        MEM_CONTEXT_OBJ_BEGIN(addrInfo)
+        {
+            lstClear(addrInfo->pub.list);
+
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("127.0.0.1"), .info = &addr4});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("127.0.0.2"), .info = &addr4});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("::1"), .info = &addr6});
+            lstAdd(addrInfo->pub.list, &(AddressInfoItem){.name = strNewZ("::2"), .info = &addr6});
+            addrInfoSort(addrInfo);
+        }
+        MEM_CONTEXT_OBJ_END();
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(
+            logBuf, zNewFmt("{host: {\"test\"}, port: 443, list: [::1, 127.0.0.2, ::2, 127.0.0.1]}"), "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("addrInfoSort() prefer v4");
+
+        addrInfoPrefer(addrInfo, 1);
+        addrInfoSort(addrInfo);
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(
+            logBuf, zNewFmt("{host: {\"test\"}, port: 443, list: [127.0.0.2, ::1, 127.0.0.1, ::2]}"), "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("addrInfoSort() prefer v4 (already first)");
+
+        addrInfoSort(addrInfo);
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(
+            logBuf, zNewFmt("{host: {\"test\"}, port: 443, list: [127.0.0.2, ::1, 127.0.0.1, ::2]}"), "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("addrInfoSort() prefer v6");
+
+        addrInfoPrefer(addrInfo, 3);
+        addrInfoSort(addrInfo);
+
+        TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(addrInfo, addrInfoToLog, logBuf, sizeof(logBuf)), "addrInfoToLog");
+        TEST_RESULT_Z(
+            logBuf, zNewFmt("{host: {\"test\"}, port: 443, list: [::2, 127.0.0.1, ::1, 127.0.0.2]}"), "check log");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("free");
+
+        TEST_RESULT_VOID(addrInfoFree(addrInfo), "free");
+#endif
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("addrInfoToStr (invalid)");
+
+        struct addrinfo addrInfoInvalid = {0};
+
+        TEST_RESULT_STR_Z(addrInfoToStr(&addrInfoInvalid), "invalid", "check invalid");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("Socket Common"))
     {
         // Save socket settings
@@ -289,11 +418,6 @@ testRun(void)
             TEST_ERROR(
                 ioClientOpen(socketClient), HostConnectError, "unable to connect to '127.0.0.1:7777': [111] Connection refused");
             socketLocal.block = false;
-
-            // ---------------------------------------------------------------------------------------------------------------------
-            TEST_TITLE("uncovered conditions for sckConnect()");
-
-            TEST_RESULT_BOOL(sckConnectInProgress(EINTR), true, "connection in progress (EINTR)");
         }
         FINALLY()
         {
@@ -311,28 +435,108 @@ testRun(void)
     if (testBegin("SocketClient/SocketServer"))
     {
         IoClient *client = NULL;
+        AddressInfo *addrInfo = NULL;
+        const String *const ipLoop4 = STRDEF("127.0.0.1");
 
-        TEST_ASSIGN(client, sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100, 100), "new client");
-        TEST_ERROR_FMT(
-            ioClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
-            hrnServerPort(0));
+        TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF("localhost"), 443), "localhost addr list");
+        TEST_RESULT_VOID(addrInfoPrefer(addrInfo, lstFindIdx(addrInfo->pub.list, &ipLoop4)), "prefer 127.0.0.1");
+
+        TEST_ASSIGN(client, sckClientNew(STRDEF("localhost"), HRN_SERVER_PORT_BOGUS, 100, 100), "new client");
+        TEST_ERROR(
+            ioClientOpen(client), HostConnectError,
+            "unable to connect to 'localhost:34342 (127.0.0.1)': [111] Connection refused\n"
+            "[RETRY DETAIL OMITTED]");
 
         // This address should not be in use in a test environment -- if it is the test will fail
-        TEST_ASSIGN(client, sckClientNew(STRDEF("172.31.255.255"), hrnServerPort(0), 100, 100), "new client");
-        TEST_ERROR_FMT(ioClientOpen(client), HostConnectError, "timeout connecting to '172.31.255.255:%u'", hrnServerPort(0));
+        TEST_ASSIGN(client, sckClientNew(STRDEF("172.31.255.255"), HRN_SERVER_PORT_BOGUS, 100, 100), "new client");
+        TEST_ERROR(ioClientOpen(client), HostConnectError, "timeout connecting to '172.31.255.255:34342'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+#ifdef TEST_CONTAINER_REQUIRED
+        #define TEST_ADDR_CONN_HOST                                 "test-addr-conn.pgbackrest.org"
+
+        HRN_SYSTEM("echo \"127.0.0.1 " TEST_ADDR_CONN_HOST "\" | sudo tee -a /etc/hosts > /dev/null");
+        HRN_SYSTEM("echo \"::1 " TEST_ADDR_CONN_HOST "\" | sudo tee -a /etc/hosts > /dev/null");
+        HRN_SYSTEM("echo \"172.31.255.255 " TEST_ADDR_CONN_HOST "\" | sudo tee -a /etc/hosts > /dev/null");
+
+        // Explicitly set the order of the address list for the test below. The first IP must not respond, the second must error,
+        // and only the last will succeed.
+        const String *ipPrefer = STRDEF("172.31.255.255");
+        TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF(TEST_ADDR_CONN_HOST), 443), "localhost addr list");
+        TEST_RESULT_VOID(addrInfoPrefer(addrInfo, lstFindIdx(addrInfo->pub.list, &ipPrefer)), "prefer 172.31.255.255");
+
+        TEST_ASSIGN(addrInfo, addrInfoNew(STRDEF(TEST_ADDR_CONN_HOST), 443), "localhost addr list");
+        TEST_RESULT_VOID(addrInfoSort(addrInfo), "sort addresses");
+        TEST_RESULT_STR(addrInfoToStr(addrInfoGet(addrInfo, 0)->info), ipPrefer, "first 172.31.255.255");
+        TEST_RESULT_STR_Z(addrInfoToStr(addrInfoGet(addrInfo, 1)->info), "::1", "second ::1");
+        TEST_RESULT_STR_Z(addrInfoToStr(addrInfoGet(addrInfo, 2)->info), "127.0.0.1", "third 127.0.0.1");
+
+        HRN_FORK_BEGIN()
+        {
+            const unsigned int testPort = hrnServerPortNext();
+
+            HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
+            {
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, testPort), "socket server");
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN()
+            {
+                IoWrite *server = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
+                IoClient *client;
+                IoSession *session;
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("connect to 127.0.0.1 when ::1 errors and 172.31.255.255 never responds");
+
+                TEST_ASSIGN(client, sckClientNew(STRDEF(TEST_ADDR_CONN_HOST), testPort, 1000, 1000), "new client");
+
+                hrnServerScriptAccept(server);
+                hrnServerScriptClose(server);
+
+                // Shim the server address to return false one time for write ready. This tests connections that take longer.
+                hrnSckClientOpenWaitShimInstall("127.0.0.1");
+                AddressInfo *addrInfo = addrInfoNew(STRDEF("127.0.0.1"), 443);
+                ASSERT(addrInfoSize(addrInfo) == 1);
+
+                TEST_ASSIGN(session, ioClientOpen(client), "connection established");
+
+                SckClientOpenData openData =
+                {
+                    .name = "test",
+                    .fd = ((SocketSession *)session->pub.driver)->fd,
+                    .address = addrInfoGet(addrInfo, 0)->info,
+                    .errNo = EINTR
+                };
+
+                TEST_RESULT_VOID(sckClientOpenWait(&openData, 99), "check EINTR wait condition");
+                TEST_RESULT_VOID(ioSessionFree(session), "connection closed");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("end server process");
+
+                hrnServerScriptEnd(server);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+#endif
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("sckServerAccept() returns NULL on interrupt");
 
         HRN_FORK_BEGIN(.timeout = 5000)
         {
+            const unsigned int testPort = hrnServerPortNext();
+
             HRN_FORK_CHILD_BEGIN(.prefix = "sighup server")
             {
                 // Ignore SIGHUP
                 sigaction(SIGHUP, &(struct sigaction){.sa_handler = testSignalHandler}, NULL);
 
                 // Wait for connection. Use port 1 to avoid port conflicts later.
-                IoServer *server = sckServerNew(STRDEF("127.0.0.1"), hrnServerPort(1), 5000);
+                IoServer *server = sckServerNew(STRDEF("127.0.0.1"), testPort, 5000);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("ioServerToLog()");
@@ -341,7 +545,7 @@ testRun(void)
 
                 TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(server, ioServerToLog, buffer, sizeof(buffer)), "ioServerToLog");
                 TEST_RESULT_Z(
-                    buffer, zNewFmt("{type: socket, driver: {address: 127.0.0.1, port: %u, timeout: 5000}}", hrnServerPort(1)),
+                    buffer, zNewFmt("{type: socket, driver: {address: 127.0.0.1, port: %u, timeout: 5000}}", testPort),
                     "check log");
 
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -388,17 +592,19 @@ testRun(void)
         // Connection errors
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(
-            client, tlsClientNewP(sckClientNew(STRDEF("99.99.99.99.99"), 7777, 0, 0), STRDEF("X"), 0, 0, true), "new client");
+            client, tlsClientNewP(sckClientNew(STRDEF("99.99.99.99.99"), 7777, 0, 0), STRDEF("X"), 100, 0, true), "new client");
         TEST_RESULT_STR_Z(ioClientName(client), "99.99.99.99.99:7777", " check name");
         TEST_ERROR(
             ioClientOpen(client), HostConnectError, "unable to get address for '99.99.99.99.99': [-2] Name or service not known");
 
+        // Set TLS client timeout higher than socket timeout to ensure that TLS retries are covered
         TEST_ASSIGN(
-            client, tlsClientNewP(sckClientNew(STRDEF("localhost"), hrnServerPort(0), 100, 100), STRDEF("X"), 100, 100, true),
+            client, tlsClientNewP(sckClientNew(STRDEF("localhost"), HRN_SERVER_PORT_BOGUS, 100, 100), STRDEF("X"), 250, 250, true),
             "new client");
-        TEST_ERROR_FMT(
-            ioClientOpen(client), HostConnectError, "unable to connect to 'localhost:%u': [111] Connection refused",
-            hrnServerPort(0));
+        TEST_ERROR(
+            ioClientOpen(client), HostConnectError,
+            "unable to connect to 'localhost:34342 (127.0.0.1)': [111] Connection refused\n"
+            "[RETRY DETAIL OMITTED]");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("missing ca cert/path");
@@ -406,7 +612,7 @@ testRun(void)
         TEST_ERROR(
             ioClientOpen(
                 tlsClientNewP(
-                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
+                    sckClientNew(STRDEF("localhost"), HRN_SERVER_PORT_BOGUS, 5000, 5000), STRDEF("X"), 0, 0, true,
                     .caFile = STRDEF("bogus.crt"), .caPath = STRDEF("/bogus"))),
             CryptoError, "unable to set user-defined CA certificate location: "
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
@@ -421,7 +627,7 @@ testRun(void)
         TEST_ERROR(
             ioClientOpen(
                 tlsClientNewP(
-                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
+                    sckClientNew(STRDEF("localhost"), HRN_SERVER_PORT_BOGUS, 5000, 5000), STRDEF("X"), 0, 0, true,
                     .certFile = STRDEF("/bogus"), .keyFile = STRDEF("/bogus"))),
             CryptoError, "unable to load cert file '/bogus': "
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
@@ -436,7 +642,7 @@ testRun(void)
         TEST_ERROR(
             ioClientOpen(
                 tlsClientNewP(
-                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
+                    sckClientNew(STRDEF("localhost"), HRN_SERVER_PORT_BOGUS, 5000, 5000), STRDEF("X"), 0, 0, true,
                     .certFile = STRDEF(HRN_SERVER_CLIENT_CERT), .keyFile = STRDEF("/bogus"))),
             CryptoError, "unable to load key file '/bogus': "
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
@@ -451,7 +657,7 @@ testRun(void)
         TEST_ERROR(
             ioClientOpen(
                 tlsClientNewP(
-                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
+                    sckClientNew(STRDEF("localhost"), HRN_SERVER_PORT_BOGUS, 5000, 5000), STRDEF("X"), 0, 0, true,
                     .certFile = STRDEF(HRN_SERVER_CLIENT_CERT), .keyFile = STRDEF(HRN_SERVER_KEY))),
             CryptoError, "unable to load key file '" HRN_PATH_REPO "/test/certificate/pgbackrest-test-server.key': "
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
@@ -470,7 +676,7 @@ testRun(void)
         {
             TEST_ERROR(
                 tlsClientNewP(
-                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
+                    sckClientNew(STRDEF("localhost"), HRN_SERVER_PORT_BOGUS, 5000, 5000), STRDEF("X"), 0, 0, true,
                     .certFile = STRDEF(HRN_SERVER_CLIENT_CERT), .keyFile = STRDEF(TEST_PATH "/client-pwd.key")),
                 CryptoError, "unable to load key file '" TEST_PATH "/client-pwd.key': "
 #if OPENSSL_VERSION_NUMBER >= 0x30000000L
@@ -484,7 +690,7 @@ testRun(void)
         {
             TEST_ERROR(                                                                             // {uncovered - 32-bit error}
                 tlsClientNewP(
-                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
+                    sckClientNew(STRDEF("localhost"), HRN_SERVER_PORT_BOGUS, 5000, 5000), STRDEF("X"), 0, 0, true,
                     .certFile = STRDEF(HRN_SERVER_CLIENT_CERT), .keyFile = STRDEF(TEST_PATH "/client-pwd.key")),
                 CryptoError, "unable to load key file '" TEST_PATH "/client-pwd.key': [151429224] bad password read");
         }
@@ -500,7 +706,7 @@ testRun(void)
         TEST_ERROR(
             ioClientOpen(
                 tlsClientNewP(
-                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
+                    sckClientNew(STRDEF("localhost"), HRN_SERVER_PORT_BOGUS, 5000, 5000), STRDEF("X"), 0, 0, true,
                     .certFile = STRDEF(HRN_SERVER_CLIENT_CERT), .keyFile = STRDEF(TEST_PATH "/client-bad-perm.key"))),
             FileReadError,
             "key file '" TEST_PATH "/client-bad-perm.key' has group or other permissions\n"
@@ -519,7 +725,7 @@ testRun(void)
         TEST_ERROR(
             ioClientOpen(
                 tlsClientNewP(
-                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
+                    sckClientNew(STRDEF("localhost"), HRN_SERVER_PORT_BOGUS, 5000, 5000), STRDEF("X"), 0, 0, true,
                     .certFile = STRDEF(HRN_SERVER_CLIENT_CERT), .keyFile = STRDEF(TEST_PATH "/client-bad-perm.key"))),
             FileReadError, "key file '" TEST_PATH "/client-bad-perm.key' must be owned by the '" TEST_USER "' user or root");
 
@@ -531,7 +737,7 @@ testRun(void)
         TEST_ERROR(
             ioClientOpen(
                 tlsClientNewP(
-                    sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
+                    sckClientNew(STRDEF("localhost"), HRN_SERVER_PORT_BOGUS, 5000, 5000), STRDEF("X"), 0, 0, true,
                     .certFile = STRDEF(HRN_SERVER_CLIENT_CERT), .keyFile = STRDEF(TEST_PATH "/client-bad-perm.key"))),
             FileReadError,
             "key file '" TEST_PATH "/client-bad-perm.key' has group or other permissions\n"
@@ -549,15 +755,16 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
+            const unsigned int testPort = hrnServerPortNext();
+
             HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
             {
                 // Start server to test various certificate errors
                 TEST_RESULT_VOID(
                     hrnServerRunP(
-                        HRN_FORK_CHILD_READ(), hrnServerProtocolTls,
-                        .certificate = STRDEF(HRN_SERVER_CERT),
+                        HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort, .certificate = STRDEF(HRN_SERVER_CERT),
                         .key = STRDEF(HRN_SERVER_KEY)),
-                    "tls alt name server run");
+                    "tls alt name server");
             }
             HRN_FORK_CHILD_END();
 
@@ -574,11 +781,12 @@ testRun(void)
                 TEST_ERROR_FMT(
                     ioClientOpen(
                         tlsClientNewP(
-                            sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
+                            sckClientNew(STRDEF("localhost"), testPort, 5000, 5000), STRDEF("X"), 0, 0, true,
                             .caPath = STRDEF("/bogus"))),
                     CryptoError,
-                    "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
-                    hrnServerPort(0));
+                    "unable to verify certificate presented by 'localhost:%u (127.0.0.1)': [20] unable to get local issuer"
+                    " certificate",
+                    testPort);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("valid ca file and match common name");
@@ -589,7 +797,7 @@ testRun(void)
                 TEST_RESULT_VOID(
                     ioClientOpen(
                         tlsClientNewP(
-                            sckClientNew(STRDEF("test.pgbackrest.org"), hrnServerPort(0), 5000, 5000),
+                            sckClientNew(STRDEF("test.pgbackrest.org"), testPort, 5000, 5000),
                             STRDEF("test.pgbackrest.org"), 0, 0, true, .caFile = STRDEF(HRN_SERVER_CA))),
                     "open connection");
 
@@ -602,7 +810,7 @@ testRun(void)
                 TEST_RESULT_VOID(
                     ioClientOpen(
                         tlsClientNewP(
-                            sckClientNew(STRDEF("host.test2.pgbackrest.org"), hrnServerPort(0), 5000, 5000),
+                            sckClientNew(STRDEF("host.test2.pgbackrest.org"), testPort, 5000, 5000),
                             STRDEF("host.test2.pgbackrest.org"), 0, 0, true, .caFile = STRDEF(HRN_SERVER_CA))),
                     "open connection");
 
@@ -615,7 +823,7 @@ testRun(void)
                 TEST_ERROR(
                     ioClientOpen(
                         tlsClientNewP(
-                            sckClientNew(STRDEF("test3.pgbackrest.org"), hrnServerPort(0), 5000, 5000),
+                            sckClientNew(STRDEF("test3.pgbackrest.org"), testPort, 5000, 5000),
                             STRDEF("test3.pgbackrest.org"), 0, 0, true, .caFile = STRDEF(HRN_SERVER_CA))),
                     CryptoError,
                     "unable to find hostname 'test3.pgbackrest.org' in certificate common name or subject alternative names");
@@ -629,11 +837,12 @@ testRun(void)
                 TEST_ERROR_FMT(
                     ioClientOpen(
                         tlsClientNewP(
-                            sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, true,
+                            sckClientNew(STRDEF("localhost"), testPort, 5000, 5000), STRDEF("X"), 0, 0, true,
                             .caFile = STRDEF(HRN_SERVER_CERT))),
                     CryptoError,
-                    "unable to verify certificate presented by 'localhost:%u': [20] unable to get local issuer certificate",
-                    hrnServerPort(0));
+                    "unable to verify certificate presented by 'localhost:%u (127.0.0.1)': [20] unable to get local issuer"
+                    " certificate",
+                    testPort);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("no certificate verify");
@@ -643,7 +852,7 @@ testRun(void)
 
                 TEST_RESULT_VOID(
                     ioClientOpen(
-                        tlsClientNewP(sckClientNew(STRDEF("localhost"), hrnServerPort(0), 5000, 5000), STRDEF("X"), 0, 0, false)),
+                        tlsClientNewP(sckClientNew(STRDEF("localhost"), testPort, 5000, 5000), STRDEF("X"), 0, 0, false)),
                     "open connection");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -671,17 +880,20 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
+            const unsigned int testPort = hrnServerPortNext();
+
             HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
             {
                 // TLS server to accept connections
-                IoServer *socketServer = sckServerNew(STRDEF("localhost"), hrnServerPort(0), 5000);
+                IoServer *socketServer = sckServerNew(STRDEF("127.0.0.1"), testPort, 5000);
                 IoServer *tlsServer = tlsServerNew(
-                    STRDEF("localhost"), STRDEF(HRN_SERVER_CA), STRDEF(TEST_PATH "/server-root-perm-link"),
+                    STRDEF("127.0.0.1"), STRDEF(HRN_SERVER_CA), STRDEF(TEST_PATH "/server-root-perm-link"),
                     STRDEF(TEST_PATH "/server-cn-only.crt"), 5000);
                 IoSession *socketSession = NULL;
 
-                TEST_RESULT_STR(ioServerName(socketServer), strNewFmt("localhost:%u", hrnServerPort(0)), "socket server name");
-                TEST_RESULT_STR_Z(ioServerName(tlsServer), "localhost", "tls server name");
+                TEST_RESULT_STR(
+                    ioServerName(socketServer), strNewFmt("127.0.0.1:%u", testPort), "socket server name");
+                TEST_RESULT_STR_Z(ioServerName(tlsServer), "127.0.0.1", "tls server name");
 
                 // Invalid client cert
                 socketSession = ioServerAccept(socketServer, NULL);
@@ -733,7 +945,7 @@ testRun(void)
                     clientSession,
                     ioClientOpen(
                         tlsClientNewP(
-                            sckClientNew(STRDEF("127.0.0.1"), hrnServerPort(0), 5000, 5000), STRDEF("127.0.0.1"), 5000, 5000,
+                            sckClientNew(STRDEF("127.0.0.1"), testPort, 5000, 5000), STRDEF("127.0.0.1"), 5000, 5000,
                             true, .certFile = STRDEF(TEST_PATH "/client-bad-ca.crt"),
                             .keyFile = STRDEF(HRN_SERVER_CLIENT_KEY))),
                     "client open");
@@ -757,7 +969,7 @@ testRun(void)
                     clientSession,
                     ioClientOpen(
                         tlsClientNewP(
-                            sckClientNew(STRDEF("127.0.0.1"), hrnServerPort(0), 5000, 5000), STRDEF("127.0.0.1"), 5000, 5000, true,
+                            sckClientNew(STRDEF("127.0.0.1"), testPort, 5000, 5000), STRDEF("127.0.0.1"), 5000, 5000, true,
                             .certFile = STRDEF(HRN_SERVER_CLIENT_CERT), .keyFile = STRDEF(HRN_SERVER_CLIENT_KEY))),
                     "client open");
 
@@ -774,7 +986,7 @@ testRun(void)
                     clientSession,
                     ioClientOpen(
                         tlsClientNewP(
-                            sckClientNew(STRDEF("127.0.0.1"), hrnServerPort(0), 5000, 5000), STRDEF("127.0.0.1"), 5000, 5000,
+                            sckClientNew(STRDEF("127.0.0.1"), testPort, 5000, 5000), STRDEF("127.0.0.1"), 5000, 5000,
                             true)),
                     "client open");
 
@@ -801,9 +1013,11 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
+            const unsigned int testPort = hrnServerPortNext();
+
             HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
             {
-                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls), "tls server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort), "tls server");
             }
             HRN_FORK_CHILD_END();
 
@@ -815,7 +1029,7 @@ testRun(void)
                 TEST_ASSIGN(
                     client,
                     tlsClientNewP(
-                        sckClientNew(hrnServerHost(), hrnServerPort(0), 5000, 5000), hrnServerHost(), 0, 0, TEST_IN_CONTAINER),
+                        sckClientNew(hrnServerHost(), testPort, 5000, 5000), hrnServerHost(), 0, 0, TEST_IN_CONTAINER),
                     "new client");
 
                 hrnServerScriptAccept(tls);
@@ -836,7 +1050,7 @@ testRun(void)
                     zNewFmt(
                         "{type: tls, driver: {ioClient: {type: socket, driver: {host: %s, port: %u, timeoutConnect: 5000"
                         ", timeoutSession: 5000}}, timeoutConnect: 0, timeoutSession: 0, verifyPeer: %s}}",
-                        strZ(hrnServerHost()), hrnServerPort(0), cvtBoolToConstZ(TEST_IN_CONTAINER)),
+                        strZ(hrnServerHost()), testPort, cvtBoolToConstZ(TEST_IN_CONTAINER)),
                     "check log");
 
                 TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(session, ioSessionToLog, buffer, sizeof(buffer)), "ioSessionToLog");
@@ -845,7 +1059,7 @@ testRun(void)
                     zNewFmt(
                         "{type: tls, role: client, driver: {ioSession: {type: socket, role: client, driver: {host: %s, port: %u"
                         ", fd: %d, timeout: 5000}}, timeout: 0, shutdownOnClose: true}}",
-                        strZ(hrnServerHost()), hrnServerPort(0),
+                        strZ(hrnServerHost()), testPort,
                         ((SocketSession *)((TlsSession *)session->pub.driver)->ioSession->pub.driver)->fd),
                     "check log");
 
@@ -905,7 +1119,7 @@ testRun(void)
                 ((IoFdRead *)((SocketSession *)tlsSession->ioSession->pub.driver)->read->pub.driver)->timeout = 100;
                 TEST_ERROR_FMT(
                     ioRead(ioSessionIoReadP(session), output), FileReadError,
-                    "timeout after 100ms waiting for read from '%s:%u'", strZ(hrnServerHost()), hrnServerPort(0));
+                    "timeout after 100ms waiting for read from '%s:%u'", strZ(hrnServerHost()), testPort);
                 ((IoFdRead *)((SocketSession *)tlsSession->ioSession->pub.driver)->read->pub.driver)->timeout = 5000;
 
                 // -----------------------------------------------------------------------------------------------------------------

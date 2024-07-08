@@ -66,7 +66,7 @@ bz2CompressFreeResource(THIS_VOID)
 Compress data
 ***********************************************************************************************************************************/
 static void
-bz2CompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
+bz2CompressProcess(THIS_VOID, const Buffer *const uncompressed, Buffer *const compressed)
 {
     THIS(Bz2Compress);
 
@@ -106,7 +106,7 @@ bz2CompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
     this->stream.next_out = (char *)bufPtr(compressed) + bufUsed(compressed);
 
     // Perform compression, check for error
-    int result = bz2Error(BZ2_bzCompress(&this->stream, this->flushing ? BZ_FINISH : BZ_RUN));
+    const int result = bz2Error(BZ2_bzCompress(&this->stream, this->flushing ? BZ_FINISH : BZ_RUN));
 
     // Set buffer used space
     bufUsedSet(compressed, bufSize(compressed) - (size_t)this->stream.avail_out);

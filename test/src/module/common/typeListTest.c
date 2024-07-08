@@ -9,16 +9,7 @@ Test sort comparator
 static int
 testComparator(const void *item1, const void *item2)
 {
-    int int1 = *(int *)item1;
-    int int2 = *(int *)item2;
-
-    if (int1 < int2)
-        return -1;
-
-    if (int1 > int2)
-        return 1;
-
-    return 0;
+    return LST_COMPARATOR_CMP(*(int *)item1, *(int *)item2);
 }
 
 /***********************************************************************************************************************************
@@ -198,6 +189,16 @@ testRun(void)
         TEST_RESULT_INT(lstComparatorUInt(&uint1, &uint1), 0, "uints are equal");
         TEST_RESULT_BOOL(lstComparatorUInt(&uint1, &uint2) < 0, true, "first uint is less");
         TEST_RESULT_BOOL(lstComparatorUInt(&uint2, &uint1) > 0, true, "first uint is greater");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("lstComparatorInt()");
+
+        int int1 = -1;
+        int int2 = 2;
+
+        TEST_RESULT_INT(lstComparatorInt(&int1, &int1), 0, "ints are equal");
+        TEST_RESULT_BOOL(lstComparatorInt(&int1, &int2) < 0, true, "first int is less");
+        TEST_RESULT_BOOL(lstComparatorInt(&int2, &int1) > 0, true, "first int is greater");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("lstComparatorZ()");

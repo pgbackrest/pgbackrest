@@ -22,6 +22,9 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    // The tests expect the timezone to be UTC
+    hrnTzSet("UTC");
+
     // Install local command handler shim
     static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_BACKUP_LIST};
     hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
@@ -70,7 +73,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
             // Create pg_control and run stanza-create
-            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_95, .pageChecksum = false);
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_95);
             TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create");
         }
 
@@ -161,7 +164,7 @@ testRun(void)
             TEST_TITLE("single file block map from full");
 
             StringList *argList = strLstDup(argListCommon);
-            hrnCfgArgRawZ(argList, cfgOptFilter, PG_PATH_BASE "/1/2");
+            hrnCfgArgRawZ(argList, cfgOptFilter, MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/1/2");
             hrnCfgArgRawZ(argList, cfgOptSet, "20191002-070640F");
             HRN_CFG_LOAD(cfgCmdManifest, argList);
 
@@ -456,7 +459,7 @@ testRun(void)
             TEST_TITLE("single file block map from diff");
 
             argList = strLstDup(argListCommon);
-            hrnCfgArgRawZ(argList, cfgOptFilter, PG_PATH_BASE "/1/2");
+            hrnCfgArgRawZ(argList, cfgOptFilter, MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/1/2");
             HRN_CFG_LOAD(cfgCmdManifest, argList);
 
             TEST_RESULT_STR_Z(
@@ -484,7 +487,7 @@ testRun(void)
             TEST_TITLE("single file block map delta from diff");
 
             argList = strLstDup(argListCommon);
-            hrnCfgArgRawZ(argList, cfgOptFilter, PG_PATH_BASE "/1/2");
+            hrnCfgArgRawZ(argList, cfgOptFilter, MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/1/2");
             hrnCfgArgRawZ(argList, cfgOptRepo, "2");
             hrnCfgArgRawZ(argList, cfgOptPg, "1");
             HRN_CFG_LOAD(cfgCmdManifest, argList);

@@ -1,0 +1,34 @@
+<release date="2022-11-28" version="2.43" title="Bug Fix">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="1933"/>
+                <github-pull-request id="1935"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="marcel.borger"/>
+                    <release-item-ideator id="ulfedf"/>
+                    <release-item-ideator id="jaymefSO"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix missing reference in diff/incr backup.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <github-issue id="1925"/>
+                <github-pull-request id="1929"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add hint when an option is specified without an index.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-core-list>
+</release>

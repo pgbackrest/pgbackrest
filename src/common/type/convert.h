@@ -12,6 +12,7 @@ Contains conversions to/from native C types. Conversions of project types should
 #include <sys/types.h>
 
 #include "common/assert.h"
+#include "common/type/param.h"
 
 /***********************************************************************************************************************************
 Required buffer sizes
@@ -33,9 +34,8 @@ cvtCharToZ(const char value, char *const buffer, const size_t bufferSize)
     return (size_t)snprintf(buffer, bufferSize, "%c", value);
 }
 
-// Convert double to zero-terminated string and vice versa
+// Convert double to zero-terminated string
 FN_EXTERN size_t cvtDoubleToZ(double value, char *buffer, size_t bufferSize);
-FN_EXTERN double cvtZToDouble(const char *value);
 
 // Convert int to zero-terminated string and vice versa
 FN_EXTERN size_t cvtIntToZ(int value, char *buffer, size_t bufferSize);
@@ -97,7 +97,17 @@ FN_EXTERN mode_t cvtZToMode(const char *value);
 FN_EXTERN size_t cvtSizeToZ(size_t value, char *buffer, size_t bufferSize);
 
 // Convert time_t to zero-terminated string
-FN_EXTERN size_t cvtTimeToZ(time_t value, char *buffer, size_t bufferSize);
+typedef struct CvtTimeToZParam
+{
+    VAR_PARAM_HEADER;
+    bool utc;                                                       // Use UTC instead of local time?
+} CvtTimeToZParam;
+
+#define cvtTimeToZP(format, value, buffer, bufferSize, ...)                                                                        \
+    cvtTimeToZ(format, value, buffer, bufferSize, (CvtTimeToZParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN FN_STRFTIME(1) size_t cvtTimeToZ(
+    const char *format, time_t value, char *buffer, size_t bufferSize, CvtTimeToZParam param);
 
 // Convert uint to zero-terminated string and vice versa
 FN_EXTERN size_t cvtUIntToZ(unsigned int value, char *buffer, size_t bufferSize);

@@ -143,18 +143,21 @@ command:
   stanza-create:
     command-role:
       remote: {}
+    lock-remote-required: true
     lock-required: true
     lock-type: all
 
   stanza-delete:
     command-role:
       remote: {}
+    lock-remote-required: true
     lock-required: true
     lock-type: all
 
   stanza-upgrade:
     command-role:
       remote: {}
+    lock-remote-required: true
     lock-required: true
     lock-type: all
 
@@ -361,6 +364,15 @@ option:
     command-role:
       main: {}
 
+  report:
+    type: boolean
+    internal: true
+    default: false
+    command:
+      check: {}
+    command-role:
+      main: {}
+
   stanza:
     type: string
     command:
@@ -368,7 +380,8 @@ option:
       archive-get: {}
       archive-push: {}
       backup: {}
-      check: {}
+      check:
+        required: false
       expire: {}
       info:
         required: false
@@ -530,6 +543,20 @@ option:
       local: {}
       remote: {}
 
+  lock:
+    type: list
+    internal: true
+    required: false
+    command:
+      annotate: {}
+      archive-push: {}
+      backup: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+    command-role:
+      remote: {}
+
   remote-type:
     type: string-id
     internal: true
@@ -623,8 +650,8 @@ option:
   archive-timeout:
     section: global
     type: time
-    default: 60
-    allow-range: [0.1, 86400]
+    default: 1m
+    allow-range: [100ms, 1d]
     command:
       archive-get: {}
       archive-push: {}
@@ -763,8 +790,8 @@ option:
       - none
       - bz2
       - gz
-      - lz4
-      - zst
+      - lz4: HAVE_LIBLZ4
+      - zst: HAVE_LIBZST
     command: compress
     command-role:
       async: {}
@@ -773,8 +800,8 @@ option:
   db-timeout:
     section: global
     type: time
-    default: 1800
-    allow-range: [0.1, 604800]
+    default: 30m
+    allow-range: [100ms, 7d]
     command:
       archive-get: {}
       archive-push: {}
@@ -802,8 +829,8 @@ option:
   io-timeout:
     section: global
     type: time
-    default: 60
-    allow-range: [0.1, 3600]
+    default: 1m
+    allow-range: [100ms, 1h]
     command: buffer-size
 
   job-retry:
@@ -828,8 +855,14 @@ option:
   job-retry-interval:
     inherit: job-retry
     type: time
-    default: 15
-    allow-range: [0, 900]
+    default: 15s
+    allow-range: [0s, 15m]
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      restore: {}
+      verify: {}
 
   lock-path:
     section: global
@@ -891,8 +924,8 @@ option:
   protocol-timeout:
     section: global
     type: time
-    default: 1830
-    allow-range: [0.1, 604800]
+    default: 31m
+    allow-range: [100ms, 7d]
     command:
       annotate: {}
       archive-get: {}
@@ -1040,7 +1073,7 @@ option:
   log-level-stderr:
     section: global
     type: string-id
-    default: warn
+    default: off
     allow-list: log-level-console
 
   log-path:
@@ -1544,7 +1577,9 @@ option:
       archive-push:
         required: false
       backup: {}
-      check: {}
+      check:
+        depend:
+          option: stanza
       manifest:
         required: false
       restore: {}
@@ -1595,7 +1630,6 @@ option:
   pg-version-force:
     section: stanza
     type: string
-    internal: true
     required: false
     command:
       archive-get: {}
@@ -1735,6 +1769,7 @@ option:
       - gcs
       - posix
       - s3
+      - sftp: HAVE_LIBSSH2
     command:
       annotate:
         command-role:
@@ -2321,6 +2356,11 @@ option:
     inherit: repo-s3-bucket
     required: false
 
+  repo-s3-sse-customer-key:
+    inherit: repo-s3-bucket
+    required: false
+    secure: true
+
   repo-s3-region:
     inherit: repo-s3-bucket
     deprecate:
@@ -2349,6 +2389,104 @@ option:
       - path
     command: repo-type
     depend: repo-s3-bucket
+
+  repo-sftp-host:
+    section: global
+    group: repo
+    type: string
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - sftp
+
+  repo-sftp-host-fingerprint:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command: repo-type
+    depend:
+      option: repo-sftp-host-key-check-type
+      list:
+        - fingerprint
+        - strict
+
+  repo-sftp-host-key-check-type:
+    section: global
+    group: repo
+    type: string-id
+    default: strict
+    allow-list:
+      - accept-new
+      - fingerprint
+      - none
+      - strict
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-host-key-hash-type:
+    section: global
+    group: repo
+    type: string-id
+    allow-list:
+      - md5
+      - sha1
+      - sha256
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-host-port:
+    section: global
+    group: repo
+    type: integer
+    default: 22
+    allow-range: [1, 65535]
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-host-user:
+    section: global
+    group: repo
+    type: string
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-known-host:
+    section: global
+    group: repo
+    type: list
+    required: false
+    command: repo-type
+    depend:
+      option: repo-sftp-host-key-check-type
+      list:
+        - accept-new
+        - strict
+
+  repo-sftp-private-key-file:
+    section: global
+    group: repo
+    type: string
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-private-key-passphrase:
+    section: global
+    group: repo
+    type: string
+    required: false
+    secure: true
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-public-key-file:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command: repo-type
+    depend: repo-sftp-host
 
   repo-storage-verify-tls:
     section: global
@@ -2415,6 +2553,19 @@ option:
     deprecate:
       repo?-azure-port: {}
       repo?-s3-port: {}
+
+  repo-storage-tag:
+    section: global
+    group: repo
+    type: hash
+    required: false
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - azure
+        - gcs
+        - s3
 
   repo-storage-upload-chunk-size:
     section: global

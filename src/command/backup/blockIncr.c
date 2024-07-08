@@ -47,6 +47,7 @@ typedef struct BlockIncr
     const BlockMap *blockMapPrior;                                  // Prior block map
     BlockMap *blockMapOut;                                          // Output block map
     uint64_t blockMapOutSize;                                       // Output block map size (if any)
+    bool blockMapWrite;                                             // Write block map (at least one new/changed block)
 
     size_t inputOffset;                                             // Input offset
     bool inputSame;                                                 // Input the same data
@@ -175,7 +176,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
 
                     memcpy(blockMapItem.checksum, bufPtrConst(checksum), bufUsed(checksum));
 
-                    unsigned int blockMapItemIdx = blockMapSize(this->blockMapOut);
+                    const unsigned int blockMapItemIdx = blockMapSize(this->blockMapOut);
                     blockMapAdd(this->blockMapOut, &blockMapItem);
                     lstAdd(this->blockOutList, &blockMapItemIdx);
 
@@ -201,8 +202,8 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
             ioWriteClose(this->blockOutWrite);
 
             // Update size and super block size for items already added to the block map
-            const uint64_t blockOutSize = pckReadU64P(
-                ioFilterGroupResultP(ioWriteFilterGroup(this->blockOutWrite), SIZE_FILTER_TYPE));
+            PackRead *const filter = ioFilterGroupResultP(ioWriteFilterGroup(this->blockOutWrite), SIZE_FILTER_TYPE);
+            const uint64_t blockOutSize = pckReadU64P(filter);
 
             for (unsigned int blockMapIdx = 0; blockMapIdx < lstSize(this->blockOutList); blockMapIdx++)
             {
@@ -213,6 +214,7 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                 blockMapItem->superBlockSize = this->blockOutSize;
             }
 
+            pckReadFree(filter);
             lstFree(this->blockOutList);
 
             // Set to NULL so the super block can be flushed
@@ -225,10 +227,15 @@ blockIncrProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
             // Reset block out size and super block no
             this->blockOutSize = 0;
             this->superBlockNo = 0;
+
+            // Block map must be written since there are new/changed blocks
+            this->blockMapWrite = true;
         }
 
-        // Write the block map if done processing and at least one block was written
-        if (this->done && this->blockOutOffset == 0 && this->blockNo > 0)
+        // Write the block map if done processing and there are new/changed blocks or block list has been truncated
+        if (this->done && this->blockOutOffset == 0 &&
+            (this->blockMapWrite ||
+             (this->blockMapPrior != NULL && blockMapSize(this->blockMapOut) < blockMapSize(this->blockMapPrior))))
         {
             MEM_CONTEXT_TEMP_BEGIN()
             {

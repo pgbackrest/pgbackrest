@@ -251,15 +251,19 @@ jsonReadPush(JsonRead *const this, const JsonType type, const bool key)
     if (this->complete)
         THROW(FormatError, "JSON read is complete");
 
-    // Check that the requested type matches the actual type
-    if (jsonReadTypeNextIgnoreComma(this) != type)
+    // Check that the requested type matches the actual type. The actual type needs to be assigned to a local variable or Coverity
+    // will complain about parameter order when jsonReadTypeNextIgnoreComma() is called again in THROW_FMT() even though it is a
+    // noop.
+    const JsonType typeActual = jsonReadTypeNextIgnoreComma(this);
+
+    if (typeActual != type)
     {
         THROW_FMT(
-            JsonFormatError, "expected '%s' but found '%s' at: %s", strZ(strIdToStr(type)),
-            strZ(strIdToStr(jsonReadTypeNextIgnoreComma(this))), this->json);
+            JsonFormatError, "expected '%s' but found '%s' at: %s", strZ(strIdToStr(type)), strZ(strIdToStr(typeActual)),
+            this->json);
     }
 
-    // If the container stack jas not been created yet
+    // If the container stack has not been created yet
     if (this->stack == NULL)
     {
         ASSERT(!key);
@@ -1307,7 +1311,7 @@ jsonReadToLog(const JsonRead *const this, StringStatic *const debugLog)
 
 /**********************************************************************************************************************************/
 FN_EXTERN JsonWrite *
-jsonWriteNew(JsonWriteNewParam param)
+jsonWriteNew(const JsonWriteNewParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, param.json);
