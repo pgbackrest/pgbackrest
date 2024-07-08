@@ -6,6 +6,7 @@ TLS Client
 // {uncrustify_off - header order required for FreeBSD}
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <netinet/in.h>
 #include <arpa/inet.h>
 // {uncrustify_on}
 #include <strings.h>
