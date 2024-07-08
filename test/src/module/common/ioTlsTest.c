@@ -896,7 +896,7 @@ testRun(void)
                     hrnServerRunP(
                         HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort, .certificate = STRDEF(HRN_SERVER_CERT),
                         .key = STRDEF(HRN_SERVER_KEY), .address = STRDEF("::1")),
-                    "tls alt name server");
+                    "tls alt name ipv6 server");
             }
             HRN_FORK_CHILD_END();
 

@@ -135,8 +135,7 @@ tlsClientHostVerifyName(const String *const host, const String *const name)
 /***********************************************************************************************************************************
 Check if an IP address from the server certificate matches the hostname
 
-As provided in the certificate, the IP address would be a packed string in network byte order. The length of the address parameter
-determines if we check as an IPv4 or IPv6 address. Adapted from libpq/fe-secure-common.c.
+Adapted from libpq/fe-secure-common.c.
 ***********************************************************************************************************************************/
 static bool
 tlsClientHostVerifyIPAddr(const String *const host, const String *const address)
@@ -153,11 +152,11 @@ tlsClientHostVerifyIPAddr(const String *const host, const String *const address)
 
     // The data from the certificate is in network byte order. Convert our host string to network-ordered bytes as well for
     // comparison. The host string is not guaranteed to be an IP address so if this conversion fails consider it a mismatch rather
-    // than an error.
+    // than an error. Use the size of the address parameter to determine ipv4 or ipv6 checking.
     const size_t addrSize = strSize(address);
 
     // IPv4
-    if (addrSize == 4)
+    if (addrSize == sizeof(struct in_addr))
     {
         struct in_addr addr;
 
@@ -165,7 +164,7 @@ tlsClientHostVerifyIPAddr(const String *const host, const String *const address)
             result = true;                                                                                          // {vm_covered}
     }
     // Else IPv6
-    else if (addrSize == 16)
+    else if (addrSize == sizeof(struct in6_addr))
     {
         struct in6_addr addr;
 
