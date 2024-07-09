@@ -85,8 +85,8 @@ option:
   config-path: {type: string, required: false, command: {noop: {}}}
   config-include-path: {
     type: string, default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH, default-literal: true, command: {noop: {}}}
-  job-retry: {type: string, required: false, deprecate: {job-retry-old: {}}, command: {noop: {}}}
-  job-retry-interval: {type: string, required: false, command: {noop: {}}}
+  job-retry: {type: time, default: 0, deprecate: {job-retry-old: {}}, command: {noop: {}}}
+  job-retry-interval: {type: integer, default: 0, command: {noop: {}}}
   lock: {type: list, required: false, command: {noop: {}}}
   log-level-file: {type: string, required: false, command: {noop: {}}}
   log-level-stderr: {type: string, required: false, command: {noop: {}}}
