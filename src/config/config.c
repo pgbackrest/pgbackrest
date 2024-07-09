@@ -70,7 +70,6 @@ cfgCommandSet(ConfigCommand commandId, ConfigCommandRole commandRoleId)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-
 /**********************************************************************************************************************************/
 FN_EXTERN VariantList *
 cfgCommandJobRetry(void)
@@ -390,25 +389,6 @@ cfgOptionIdxTotal(const ConfigOption optionId)
     const ConfigOptionData *const option = &configLocal->option[optionId];
 
     FUNCTION_TEST_RETURN(UINT, option->group ? configLocal->optionGroup[option->groupId].indexTotal : 1);
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN const String *
-cfgOptionDefault(const ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(configLocal != NULL);
-    ASSERT(optionId < CFG_OPTION_TOTAL);
-
-    ConfigOptionData *const option = &configLocal->option[optionId];
-
-    if (option->defaultValue == NULL)
-        option->defaultValue = cfgParseOptionDefault(cfgCommand(), optionId);
-
-    FUNCTION_TEST_RETURN_CONST(STRING, option->defaultValue);
 }
 
 FN_EXTERN void

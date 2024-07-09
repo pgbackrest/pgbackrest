@@ -105,9 +105,6 @@ FN_EXTERN unsigned int cfgOptionGroupId(ConfigOption optionId);
 /***********************************************************************************************************************************
 Option Functions
 ***********************************************************************************************************************************/
-// Option default - should only be called by the help command
-FN_EXTERN const String *cfgOptionDefault(ConfigOption optionId);
-
 // Format a variant for display using the supplied option type. cfgOptionDisplay()/cfgOptionIdxDisplay() should be used whenever
 // possible, but sometimes the variant needs to be manipulated before being formatted.
 FN_EXTERN const String *cfgOptionDisplayVar(const Variant *const value, const ConfigOptionType optionType);

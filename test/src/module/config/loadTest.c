@@ -869,6 +869,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command");
         TEST_RESULT_UINT(ioBufferSize(), 333, "buffer size not updated by help command");
+        TEST_RESULT_INT(hrnLogLevelStdErr(), logLevelError, "console logging is error");
         TEST_RESULT_BOOL(socketLocal.init, false, "socketLocal not updated by help command");
 
         // -------------------------------------------------------------------------------------------------------------------------
