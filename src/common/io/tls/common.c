@@ -15,6 +15,29 @@ TLS Common
 #include "storage/posix/storage.h"
 
 /**********************************************************************************************************************************/
+FN_EXTERN Buffer *
+tlsAsn1ToBuf(const ASN1_STRING *const nameAsn1)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, nameAsn1);
+    FUNCTION_TEST_END();
+
+    // The name should not be null
+    if (nameAsn1 == NULL)                                                                                           // {vm_covered}
+        THROW(CryptoError, "TLS certificate name entry is missing");
+
+    FUNCTION_TEST_RETURN(                                                                                           // {vm_covered}
+        BUFFER,
+        bufNewC(
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+            (const char *)ASN1_STRING_data(nameAsn1),
+#else
+            (const char *)ASN1_STRING_get0_data(nameAsn1),
+#endif
+            (size_t)ASN1_STRING_length(nameAsn1)));
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN String *
 tlsAsn1ToStr(ASN1_STRING *const nameAsn1)
 {

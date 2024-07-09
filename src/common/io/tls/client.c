@@ -137,11 +137,11 @@ Check if an IP address from the server certificate matches the hostname
 Adapted from libpq/fe-secure-common.c.
 ***********************************************************************************************************************************/
 static bool
-tlsClientHostVerifyIPAddr(const String *const host, const String *const address)
+tlsClientHostVerifyIPAddr(const String *const host, const Buffer *const address)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, host);
-        FUNCTION_LOG_PARAM(STRING, address);
+        FUNCTION_LOG_PARAM(BUFFER, address);
     FUNCTION_LOG_END();
 
     ASSERT(host != NULL);
@@ -152,23 +152,29 @@ tlsClientHostVerifyIPAddr(const String *const host, const String *const address)
     // The data from the certificate is in network byte order. Convert our host string to network-ordered bytes as well for
     // comparison. The host string is not guaranteed to be an IP address so if this conversion fails consider it a mismatch rather
     // than an error. Use the size of the address parameter to determine ipv4 or ipv6 checking.
-    const size_t addrSize = strSize(address);
+    const size_t addrSize = bufSize(address);
 
     // IPv4
     if (addrSize == sizeof(struct in_addr))
     {
         struct in_addr addr;
 
-        if (inet_pton(AF_INET, strZ(host), &addr) == 1 && memcmp(strZ(address), &addr.s_addr, addrSize) == 0)       // {vm_covered}
+        if (inet_pton(AF_INET, strZ(host), &addr) == 1 &&                                                           // {vm_covered}
+            memcmp(bufPtrConst(address), &addr.s_addr, addrSize) == 0)                                              // {vm_covered}
+        {
             result = true;                                                                                          // {vm_covered}
+        }
     }
     // Else IPv6
     else if (addrSize == sizeof(struct in6_addr))
     {
         struct in6_addr addr;
 
-        if (inet_pton(AF_INET6, strZ(host), &addr) == 1 && memcmp(strZ(address), &addr.s6_addr, addrSize) == 0)     // {vm_covered}
+        if (inet_pton(AF_INET6, strZ(host), &addr) == 1 &&                                                          // {vm_covered}
+            memcmp(bufPtrConst(address), &addr.s6_addr, addrSize) == 0)                                             // {vm_covered}
+        {
             result = true;                                                                                          // {vm_covered}
+        }
     }
 
     FUNCTION_LOG_RETURN(BOOL, result);
@@ -212,7 +218,7 @@ tlsClientHostVerify(const String *const host, X509 *const certificate)
                 if (name->type == GEN_DNS)                                                                          // {vm_covered}
                     result = tlsClientHostVerifyName(host, tlsAsn1ToStr(name->d.dNSName));                          // {vm_covered}
                 else if (name->type == GEN_IPADD)                                                                   // {vm_covered}
-                    result = tlsClientHostVerifyIPAddr(host, tlsAsn1ToStr(name->d.dNSName));                        // {vm_covered}
+                    result = tlsClientHostVerifyIPAddr(host, tlsAsn1ToBuf(name->d.dNSName));                        // {vm_covered}
 
                 if (result != false)                                                                                // {vm_covered}
                     break;                                                                                          // {vm_covered}

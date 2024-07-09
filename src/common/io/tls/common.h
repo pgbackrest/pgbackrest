@@ -11,6 +11,9 @@ TLS Common
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Convert an ASN1 string used in certificates to a Buffer
+FN_EXTERN Buffer *tlsAsn1ToBuf(const ASN1_STRING *nameAsn1);
+
 // Convert an ASN1 string used in certificates to a String
 FN_EXTERN String *tlsAsn1ToStr(ASN1_STRING *nameAsn1);
 

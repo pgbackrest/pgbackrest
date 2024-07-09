@@ -569,9 +569,10 @@ testRun(void)
 
     // Additional coverage not provided by testing with actual certificates
     // *****************************************************************************************************************************
-    if (testBegin("tlsAsn1ToStr(), tlsClientHostVerify(), tlsClientHostVerifyName(), and tlsClientHostVerifyIpAddr()"))
+    if (testBegin("tlsAsn1ToStr/Buf(), tlsClientHostVerify(), tlsClientHostVerifyName(), and tlsClientHostVerifyIpAddr()"))
     {
         TEST_ERROR(tlsAsn1ToStr(NULL), CryptoError, "TLS certificate name entry is missing");
+        TEST_ERROR(tlsAsn1ToBuf(NULL), CryptoError, "TLS certificate name entry is missing");
 
         TEST_ERROR(
             tlsClientHostVerifyName(
@@ -586,10 +587,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("tlsClientHostVerifyIpAddr()");
 
-        TEST_RESULT_BOOL(tlsClientHostVerifyIPAddr(STRDEF("127.0.0.1"), strNewZN("\x7F\0\0", 3)), false, "invalid len");
-        TEST_RESULT_BOOL(tlsClientHostVerifyIPAddr(STRDEF("127.0.0.1"), strNewZN("\x7F\0\0\x02", 4)), false, "ipv4 no match");
+        TEST_RESULT_BOOL(tlsClientHostVerifyIPAddr(STRDEF("127.0.0.1"), bufNewC("\x7F\0\0", 3)), false, "invalid len");
+        TEST_RESULT_BOOL(tlsClientHostVerifyIPAddr(STRDEF("127.0.0.1"), bufNewC("\x7F\0\0\x02", 4)), false, "ipv4 no match");
         TEST_RESULT_BOOL(
-            tlsClientHostVerifyIPAddr(STRDEF("::1"), strNewZN("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x02", 16)), false, "ipv6 no match");
+            tlsClientHostVerifyIPAddr(STRDEF("::1"), bufNewC("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x02", 16)), false, "ipv6 no match");
     }
 
     // *****************************************************************************************************************************
