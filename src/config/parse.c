@@ -380,13 +380,21 @@ cfgParseCommandId(const char *const commandName)
 
     ASSERT(commandName != NULL);
 
+    // If command has a colon only search part before the colon
+    const char *const colonPtr = strchr(commandName, ':');
+    const size_t commandSize = colonPtr == NULL ? (size_t)strlen(commandName) : (size_t)(colonPtr - commandName);
+
+    // Get command
     ConfigCommand commandId;
 
     for (commandId = 0; commandId < CFG_COMMAND_TOTAL; commandId++)
     {
-        if (strcmp(commandName, parseRuleCommand[commandId].name) == 0)
+        if (strncmp(commandName, parseRuleCommand[commandId].name, commandSize) == 0)
             break;
     }
+
+    if (commandId == CFG_COMMAND_TOTAL)
+        THROW_FMT(CommandInvalidError, "invalid command '%s'", commandName);
 
     FUNCTION_TEST_RETURN(ENUM, commandId);
 }
@@ -412,22 +420,22 @@ STRING_STATIC(CONFIG_COMMAND_ROLE_LOCAL_STR,                        CONFIG_COMMA
 STRING_STATIC(CONFIG_COMMAND_ROLE_REMOTE_STR,                       CONFIG_COMMAND_ROLE_REMOTE);
 
 static ConfigCommandRole
-cfgParseCommandRoleEnum(const String *const commandRole)
+cfgParseCommandRoleEnum(const char *const commandRole)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING, commandRole);
+        FUNCTION_TEST_PARAM(STRINGZ, commandRole);
     FUNCTION_TEST_END();
 
     if (commandRole == NULL)
         FUNCTION_TEST_RETURN(ENUM, cfgCmdRoleMain);
-    else if (strEq(commandRole, CONFIG_COMMAND_ROLE_ASYNC_STR))
+    else if (strEqZ(CONFIG_COMMAND_ROLE_ASYNC_STR, commandRole))
         FUNCTION_TEST_RETURN(ENUM, cfgCmdRoleAsync);
-    else if (strEq(commandRole, CONFIG_COMMAND_ROLE_LOCAL_STR))
+    else if (strEqZ(CONFIG_COMMAND_ROLE_LOCAL_STR, commandRole))
         FUNCTION_TEST_RETURN(ENUM, cfgCmdRoleLocal);
-    else if (strEq(commandRole, CONFIG_COMMAND_ROLE_REMOTE_STR))
+    else if (strEqZ(CONFIG_COMMAND_ROLE_REMOTE_STR, commandRole))
         FUNCTION_TEST_RETURN(ENUM, cfgCmdRoleRemote);
 
-    THROW_FMT(CommandInvalidError, "invalid command role '%s'", strZ(commandRole));
+    THROW_FMT(CommandInvalidError, "invalid command role '%s'", commandRole);
 }
 
 FN_EXTERN const String *
@@ -1810,39 +1818,29 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 {
                     // Try getting the command from the valid command list
                     config->command = cfgParseCommandId(arg);
-                    config->commandRole = cfgCmdRoleMain;
 
-                    // If not successful then a command role may be appended
-                    if (config->command == cfgCmdNone)
-                    {
-                        const StringList *commandPart = strLstNewSplitZ(STR(arg), ":");
-
-                        if (strLstSize(commandPart) == 2)
-                        {
-                            // Get command id
-                            config->command = cfgParseCommandId(strZ(strLstGet(commandPart, 0)));
-
-                            // If command id is valid then get command role id
-                            if (config->command != cfgCmdNone)
-                                config->commandRole = cfgParseCommandRoleEnum(strLstGet(commandPart, 1));
-                        }
-                    }
-
-                    // Error when command does not exist
-                    if (config->command == cfgCmdNone)
-                        THROW_FMT(CommandInvalidError, "invalid command '%s'", arg);
-
-                    // Error when role is not valid for the command
-                    if (!(parseRuleCommand[config->command].commandRoleValid & ((unsigned int)1 << config->commandRole)))
-                        THROW_FMT(CommandInvalidError, "invalid command/role combination '%s'", arg);
-
+                    // Set help if help command
                     if (config->command == cfgCmdHelp && !config->help)
                     {
                         config->command = cfgCmdNone;
                         config->help = true;
                     }
+                    // Else parse command role if appended
                     else
+                    {
+                        const char *const colonPtr = strchr(arg, ':');
+
+                        if (colonPtr != NULL)
+                            config->commandRole = cfgParseCommandRoleEnum(colonPtr + 1);
+                        else
+                            config->commandRole = cfgCmdRoleMain;
+
+                        // Error when role is not valid for the command
+                        if (!(parseRuleCommand[config->command].commandRoleValid & ((unsigned int)1 << config->commandRole)))
+                            THROW_FMT(CommandInvalidError, "invalid command/role combination '%s'", arg);
+
                         commandSet = true;
+                    }
                 }
                 // Additional arguments are command arguments
                 else
