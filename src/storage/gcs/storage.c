@@ -249,11 +249,7 @@ storageGcsAuthJwt(StorageGcs *const this, const time_t timeBegin)
         FINALLY()
         {
             BIO_free((BIO *)bio);
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-            EVP_MD_CTX_cleanup((EVP_MD_CTX *)sign);
-#else
             EVP_MD_CTX_free((EVP_MD_CTX *)sign);
-#endif
             EVP_PKEY_free((EVP_PKEY *)privateKey);
         }
         TRY_END();

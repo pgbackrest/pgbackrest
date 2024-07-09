@@ -16,7 +16,7 @@ TLS Common
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-tlsAsn1ToStr(ASN1_STRING *const nameAsn1)
+tlsAsn1ToStr(const ASN1_STRING *const nameAsn1)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, nameAsn1);
@@ -29,11 +29,7 @@ tlsAsn1ToStr(ASN1_STRING *const nameAsn1)
     FUNCTION_TEST_RETURN(                                                                                           // {vm_covered}
         STRING,
         strNewZN(
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-            (const char *)ASN1_STRING_data(nameAsn1),
-#else
             (const char *)ASN1_STRING_get0_data(nameAsn1),
-#endif
             (size_t)ASN1_STRING_length(nameAsn1)));
 }
 
