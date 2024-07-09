@@ -578,11 +578,12 @@ eval
 
     # Setup build if it does not exist
     my $strGenerateCommand =
-        "ninja -C ${strBuildPath} src/build-code test/src/test-pgbackrest" .
+        "ninja -C ${strBuildPath} src/build-code" .
         ($bMinGen ? '' : " && \\\n${strBuildPath}/src/build-code config ${strBackRestBase}/src") .
         ($bMinGen ? '' : " && \\\n${strBuildPath}/src/build-code error ${strBackRestBase}/src") .
         ($bMinGen ? '' : " && \\\n${strBuildPath}/src/build-code postgres-version ${strBackRestBase}/src") .
-        " && \\\n${strBuildPath}/src/build-code postgres ${strBackRestBase}/src ${strRepoCachePath}";
+        " && \\\n${strBuildPath}/src/build-code postgres ${strBackRestBase}/src ${strRepoCachePath}" .
+        " && \\\nninja -C ${strBuildPath} test/src/test-pgbackrest";
 
     if (!-e $strBuildNinja)
     {

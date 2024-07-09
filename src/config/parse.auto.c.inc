@@ -15,48 +15,116 @@ static const StringPub parseRuleValueStr[] =
     PARSE_RULE_STRPUB("/var/lib/pgbackrest"),                                                                             // val/str
     PARSE_RULE_STRPUB("/var/log/pgbackrest"),                                                                             // val/str
     PARSE_RULE_STRPUB("/var/spool/pgbackrest"),                                                                           // val/str
+    PARSE_RULE_STRPUB("0"),                                                                                               // val/str
+    PARSE_RULE_STRPUB("0B"),                                                                                              // val/str
+    PARSE_RULE_STRPUB("0s"),                                                                                              // val/str
     PARSE_RULE_STRPUB("1"),                                                                                               // val/str
+    PARSE_RULE_STRPUB("100ms"),                                                                                           // val/str
+    PARSE_RULE_STRPUB("1024"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("128KiB"),                                                                                          // val/str
     PARSE_RULE_STRPUB("128MiB"),                                                                                          // val/str
+    PARSE_RULE_STRPUB("15m"),                                                                                             // val/str
     PARSE_RULE_STRPUB("15s"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("16KiB"),                                                                                           // val/str
+    PARSE_RULE_STRPUB("16MiB"),                                                                                           // val/str
+    PARSE_RULE_STRPUB("1B"),                                                                                              // val/str
     PARSE_RULE_STRPUB("1GiB"),                                                                                            // val/str
     PARSE_RULE_STRPUB("1MiB"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("1PiB"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("1TiB"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("1d"),                                                                                              // val/str
+    PARSE_RULE_STRPUB("1h"),                                                                                              // val/str
     PARSE_RULE_STRPUB("1m"),                                                                                              // val/str
     PARSE_RULE_STRPUB("2"),                                                                                               // val/str
     PARSE_RULE_STRPUB("20MiB"),                                                                                           // val/str
     PARSE_RULE_STRPUB("22"),                                                                                              // val/str
+    PARSE_RULE_STRPUB("256"),                                                                                             // val/str
     PARSE_RULE_STRPUB("256KiB"),                                                                                          // val/str
     PARSE_RULE_STRPUB("2MiB"),                                                                                            // val/str
     PARSE_RULE_STRPUB("3"),                                                                                               // val/str
     PARSE_RULE_STRPUB("30m"),                                                                                             // val/str
     PARSE_RULE_STRPUB("31m"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("32"),                                                                                              // val/str
+    PARSE_RULE_STRPUB("32KiB"),                                                                                           // val/str
+    PARSE_RULE_STRPUB("360"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("3600"),                                                                                            // val/str
     PARSE_RULE_STRPUB("443"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("4MiB"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("4PiB"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("512KiB"),                                                                                          // val/str
     PARSE_RULE_STRPUB("5432"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("64KiB"),                                                                                           // val/str
+    PARSE_RULE_STRPUB("65535"),                                                                                           // val/str
+    PARSE_RULE_STRPUB("7d"),                                                                                              // val/str
     PARSE_RULE_STRPUB("8432"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("8KiB"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("8MiB"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("9"),                                                                                               // val/str
+    PARSE_RULE_STRPUB("900"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("999"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("9999999"),                                                                                         // val/str
+    PARSE_RULE_STRPUB("accept-new"),                                                                                      // val/str
+    PARSE_RULE_STRPUB("aes-256-cbc"),                                                                                     // val/str
     PARSE_RULE_STRPUB("asc"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("auto"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("azure"),                                                                                           // val/str
     PARSE_RULE_STRPUB("blob.core.windows.net"),                                                                           // val/str
+    PARSE_RULE_STRPUB("bz2"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("cifs"),                                                                                            // val/str
     PARSE_RULE_STRPUB("count"),                                                                                           // val/str
+    PARSE_RULE_STRPUB("debug"),                                                                                           // val/str
     PARSE_RULE_STRPUB("default"),                                                                                         // val/str
+    PARSE_RULE_STRPUB("desc"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("detail"),                                                                                          // val/str
+    PARSE_RULE_STRPUB("diff"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("error"),                                                                                           // val/str
+    PARSE_RULE_STRPUB("fingerprint"),                                                                                     // val/str
     PARSE_RULE_STRPUB("full"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("gcs"),                                                                                             // val/str
     PARSE_RULE_STRPUB("gz"),                                                                                              // val/str
     PARSE_RULE_STRPUB("host"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("immediate"),                                                                                       // val/str
     PARSE_RULE_STRPUB("incr"),                                                                                            // val/str
     PARSE_RULE_STRPUB("info"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("json"),                                                                                            // val/str
     PARSE_RULE_STRPUB("latest"),                                                                                          // val/str
     PARSE_RULE_STRPUB("localhost"),                                                                                       // val/str
+    PARSE_RULE_STRPUB("lsn"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("lz4"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("md5"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("name"),                                                                                            // val/str
     PARSE_RULE_STRPUB("none"),                                                                                            // val/str
     PARSE_RULE_STRPUB("off"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("path"),                                                                                            // val/str
     PARSE_RULE_STRPUB("pause"),                                                                                           // val/str
+    PARSE_RULE_STRPUB("pg"),                                                                                              // val/str
     PARSE_RULE_STRPUB("pgbackrest"),                                                                                      // val/str
     PARSE_RULE_STRPUB("posix"),                                                                                           // val/str
     PARSE_RULE_STRPUB("postgres"),                                                                                        // val/str
     PARSE_RULE_STRPUB("preserve"),                                                                                        // val/str
+    PARSE_RULE_STRPUB("promote"),                                                                                         // val/str
+    PARSE_RULE_STRPUB("repo"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("s3"),                                                                                              // val/str
+    PARSE_RULE_STRPUB("sas"),                                                                                             // val/str
     PARSE_RULE_STRPUB("service"),                                                                                         // val/str
+    PARSE_RULE_STRPUB("sftp"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("sha1"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("sha256"),                                                                                          // val/str
     PARSE_RULE_STRPUB("shared"),                                                                                          // val/str
+    PARSE_RULE_STRPUB("shutdown"),                                                                                        // val/str
     PARSE_RULE_STRPUB("ssh"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("standby"),                                                                                         // val/str
     PARSE_RULE_STRPUB("storage.googleapis.com"),                                                                          // val/str
     PARSE_RULE_STRPUB("strict"),                                                                                          // val/str
     PARSE_RULE_STRPUB("text"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("time"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("tls"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("token"),                                                                                           // val/str
+    PARSE_RULE_STRPUB("trace"),                                                                                           // val/str
     PARSE_RULE_STRPUB("warn"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("web-id"),                                                                                          // val/str
+    PARSE_RULE_STRPUB("xid"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("zst"),                                                                                             // val/str
     PARSE_RULE_STRPUB(CFGOPTDEF_CONFIG_PATH),                                                                             // val/str
     PARSE_RULE_STRPUB(CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE),                                                     // val/str
     PARSE_RULE_STRPUB(CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH),                                             // val/str
@@ -68,48 +136,116 @@ typedef enum
     parseRuleValStrQT_FS_var_FS_lib_FS_pgbackrest_QT,                                                                // val/str/enum
     parseRuleValStrQT_FS_var_FS_log_FS_pgbackrest_QT,                                                                // val/str/enum
     parseRuleValStrQT_FS_var_FS_spool_FS_pgbackrest_QT,                                                              // val/str/enum
+    parseRuleValStrQT_0_QT,                                                                                          // val/str/enum
+    parseRuleValStrQT_0B_QT,                                                                                         // val/str/enum
+    parseRuleValStrQT_0s_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_1_QT,                                                                                          // val/str/enum
+    parseRuleValStrQT_100ms_QT,                                                                                      // val/str/enum
+    parseRuleValStrQT_1024_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_128KiB_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_128MiB_QT,                                                                                     // val/str/enum
+    parseRuleValStrQT_15m_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_15s_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_16KiB_QT,                                                                                      // val/str/enum
+    parseRuleValStrQT_16MiB_QT,                                                                                      // val/str/enum
+    parseRuleValStrQT_1B_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_1GiB_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_1MiB_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_1PiB_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_1TiB_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_1d_QT,                                                                                         // val/str/enum
+    parseRuleValStrQT_1h_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_1m_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_2_QT,                                                                                          // val/str/enum
     parseRuleValStrQT_20MiB_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_22_QT,                                                                                         // val/str/enum
+    parseRuleValStrQT_256_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_256KiB_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_2MiB_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_3_QT,                                                                                          // val/str/enum
     parseRuleValStrQT_30m_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_31m_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_32_QT,                                                                                         // val/str/enum
+    parseRuleValStrQT_32KiB_QT,                                                                                      // val/str/enum
+    parseRuleValStrQT_360_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_3600_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_443_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_4MiB_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_4PiB_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_512KiB_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_5432_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_64KiB_QT,                                                                                      // val/str/enum
+    parseRuleValStrQT_65535_QT,                                                                                      // val/str/enum
+    parseRuleValStrQT_7d_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_8432_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_8KiB_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_8MiB_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_9_QT,                                                                                          // val/str/enum
+    parseRuleValStrQT_900_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_999_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_9999999_QT,                                                                                    // val/str/enum
+    parseRuleValStrQT_accept_DS_new_QT,                                                                              // val/str/enum
+    parseRuleValStrQT_aes_DS_256_DS_cbc_QT,                                                                          // val/str/enum
     parseRuleValStrQT_asc_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_auto_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_azure_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_blob_DT_core_DT_windows_DT_net_QT,                                                             // val/str/enum
+    parseRuleValStrQT_bz2_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_cifs_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_count_QT,                                                                                      // val/str/enum
+    parseRuleValStrQT_debug_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_default_QT,                                                                                    // val/str/enum
+    parseRuleValStrQT_desc_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_detail_QT,                                                                                     // val/str/enum
+    parseRuleValStrQT_diff_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_error_QT,                                                                                      // val/str/enum
+    parseRuleValStrQT_fingerprint_QT,                                                                                // val/str/enum
     parseRuleValStrQT_full_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_gcs_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_gz_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_host_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_immediate_QT,                                                                                  // val/str/enum
     parseRuleValStrQT_incr_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_info_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_json_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_latest_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_localhost_QT,                                                                                  // val/str/enum
+    parseRuleValStrQT_lsn_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_lz4_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_md5_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_name_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_none_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_off_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_path_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_pause_QT,                                                                                      // val/str/enum
+    parseRuleValStrQT_pg_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_pgbackrest_QT,                                                                                 // val/str/enum
     parseRuleValStrQT_posix_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_postgres_QT,                                                                                   // val/str/enum
     parseRuleValStrQT_preserve_QT,                                                                                   // val/str/enum
+    parseRuleValStrQT_promote_QT,                                                                                    // val/str/enum
+    parseRuleValStrQT_repo_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_s3_QT,                                                                                         // val/str/enum
+    parseRuleValStrQT_sas_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_service_QT,                                                                                    // val/str/enum
+    parseRuleValStrQT_sftp_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_sha1_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_sha256_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_shared_QT,                                                                                     // val/str/enum
+    parseRuleValStrQT_shutdown_QT,                                                                                   // val/str/enum
     parseRuleValStrQT_ssh_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_standby_QT,                                                                                    // val/str/enum
     parseRuleValStrQT_storage_DT_googleapis_DT_com_QT,                                                               // val/str/enum
     parseRuleValStrQT_strict_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_text_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_time_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_tls_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_token_QT,                                                                                      // val/str/enum
+    parseRuleValStrQT_trace_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_warn_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_web_DS_id_QT,                                                                                  // val/str/enum
+    parseRuleValStrQT_xid_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_zst_QT,                                                                                        // val/str/enum
     parseRuleValStrCFGOPTDEF_CONFIG_PATH,                                                                            // val/str/enum
     parseRuleValStrCFGOPTDEF_CONFIG_PATH_SP_QT_FS_QT_SP_PROJECT_CONFIG_FILE,                                         // val/str/enum
     parseRuleValStrCFGOPTDEF_CONFIG_PATH_SP_QT_FS_QT_SP_PROJECT_CONFIG_INCLUDE_PATH,                                 // val/str/enum
@@ -180,6 +316,66 @@ static const StringId parseRuleValueStrId[] =
     STRID5("zst", 0x527a0),                                                                                             // val/strid
 };
 
+static const uint8_t parseRuleValueStrIdStrMap[] =
+{
+    parseRuleValStrQT_accept_DS_new_QT,                                                                          // val/strid/strmap
+    parseRuleValStrQT_aes_DS_256_DS_cbc_QT,                                                                      // val/strid/strmap
+    parseRuleValStrQT_asc_QT,                                                                                    // val/strid/strmap
+    parseRuleValStrQT_auto_QT,                                                                                   // val/strid/strmap
+    parseRuleValStrQT_azure_QT,                                                                                  // val/strid/strmap
+    parseRuleValStrQT_bz2_QT,                                                                                    // val/strid/strmap
+    parseRuleValStrQT_cifs_QT,                                                                                   // val/strid/strmap
+    parseRuleValStrQT_count_QT,                                                                                  // val/strid/strmap
+    parseRuleValStrQT_debug_QT,                                                                                  // val/strid/strmap
+    parseRuleValStrQT_default_QT,                                                                                // val/strid/strmap
+    parseRuleValStrQT_desc_QT,                                                                                   // val/strid/strmap
+    parseRuleValStrQT_detail_QT,                                                                                 // val/strid/strmap
+    parseRuleValStrQT_diff_QT,                                                                                   // val/strid/strmap
+    parseRuleValStrQT_error_QT,                                                                                  // val/strid/strmap
+    parseRuleValStrQT_fingerprint_QT,                                                                            // val/strid/strmap
+    parseRuleValStrQT_full_QT,                                                                                   // val/strid/strmap
+    parseRuleValStrQT_gcs_QT,                                                                                    // val/strid/strmap
+    parseRuleValStrQT_gz_QT,                                                                                     // val/strid/strmap
+    parseRuleValStrQT_host_QT,                                                                                   // val/strid/strmap
+    parseRuleValStrQT_immediate_QT,                                                                              // val/strid/strmap
+    parseRuleValStrQT_incr_QT,                                                                                   // val/strid/strmap
+    parseRuleValStrQT_info_QT,                                                                                   // val/strid/strmap
+    parseRuleValStrQT_json_QT,                                                                                   // val/strid/strmap
+    parseRuleValStrQT_lsn_QT,                                                                                    // val/strid/strmap
+    parseRuleValStrQT_lz4_QT,                                                                                    // val/strid/strmap
+    parseRuleValStrQT_md5_QT,                                                                                    // val/strid/strmap
+    parseRuleValStrQT_name_QT,                                                                                   // val/strid/strmap
+    parseRuleValStrQT_none_QT,                                                                                   // val/strid/strmap
+    parseRuleValStrQT_off_QT,                                                                                    // val/strid/strmap
+    parseRuleValStrQT_path_QT,                                                                                   // val/strid/strmap
+    parseRuleValStrQT_pause_QT,                                                                                  // val/strid/strmap
+    parseRuleValStrQT_pg_QT,                                                                                     // val/strid/strmap
+    parseRuleValStrQT_posix_QT,                                                                                  // val/strid/strmap
+    parseRuleValStrQT_preserve_QT,                                                                               // val/strid/strmap
+    parseRuleValStrQT_promote_QT,                                                                                // val/strid/strmap
+    parseRuleValStrQT_repo_QT,                                                                                   // val/strid/strmap
+    parseRuleValStrQT_s3_QT,                                                                                     // val/strid/strmap
+    parseRuleValStrQT_sas_QT,                                                                                    // val/strid/strmap
+    parseRuleValStrQT_service_QT,                                                                                // val/strid/strmap
+    parseRuleValStrQT_sftp_QT,                                                                                   // val/strid/strmap
+    parseRuleValStrQT_sha1_QT,                                                                                   // val/strid/strmap
+    parseRuleValStrQT_sha256_QT,                                                                                 // val/strid/strmap
+    parseRuleValStrQT_shared_QT,                                                                                 // val/strid/strmap
+    parseRuleValStrQT_shutdown_QT,                                                                               // val/strid/strmap
+    parseRuleValStrQT_ssh_QT,                                                                                    // val/strid/strmap
+    parseRuleValStrQT_standby_QT,                                                                                // val/strid/strmap
+    parseRuleValStrQT_strict_QT,                                                                                 // val/strid/strmap
+    parseRuleValStrQT_text_QT,                                                                                   // val/strid/strmap
+    parseRuleValStrQT_time_QT,                                                                                   // val/strid/strmap
+    parseRuleValStrQT_tls_QT,                                                                                    // val/strid/strmap
+    parseRuleValStrQT_token_QT,                                                                                  // val/strid/strmap
+    parseRuleValStrQT_trace_QT,                                                                                  // val/strid/strmap
+    parseRuleValStrQT_warn_QT,                                                                                   // val/strid/strmap
+    parseRuleValStrQT_web_DS_id_QT,                                                                              // val/strid/strmap
+    parseRuleValStrQT_xid_QT,                                                                                    // val/strid/strmap
+    parseRuleValStrQT_zst_QT,                                                                                    // val/strid/strmap
+};
+
 typedef enum
 {
     parseRuleValStrIdAcceptNew,                                                                                    // val/strid/enum
@@ -245,7 +441,7 @@ Rule Ints
 ***********************************************************************************************************************************/
 #define PARSE_RULE_VAL_INT(value)                                   PARSE_RULE_U32_1(parseRuleValInt##value)
 
-static const int64_t parseRuleValueInt[] =
+static const int parseRuleValueInt[] =
 {
     0,                                                                                                                    // val/int
     1,                                                                                                                    // val/int
@@ -254,7 +450,6 @@ static const int64_t parseRuleValueInt[] =
     9,                                                                                                                    // val/int
     22,                                                                                                                   // val/int
     32,                                                                                                                   // val/int
-    100,                                                                                                                  // val/int
     256,                                                                                                                  // val/int
     360,                                                                                                                  // val/int
     443,                                                                                                                  // val/int
@@ -263,35 +458,31 @@ static const int64_t parseRuleValueInt[] =
     1024,                                                                                                                 // val/int
     3600,                                                                                                                 // val/int
     5432,                                                                                                                 // val/int
-    8192,                                                                                                                 // val/int
     8432,                                                                                                                 // val/int
-    15000,                                                                                                                // val/int
-    16384,                                                                                                                // val/int
-    32768,                                                                                                                // val/int
-    60000,                                                                                                                // val/int
     65535,                                                                                                                // val/int
-    65536,                                                                                                                // val/int
-    131072,                                                                                                               // val/int
-    262144,                                                                                                               // val/int
-    524288,                                                                                                               // val/int
-    900000,                                                                                                               // val/int
-    1048576,                                                                                                              // val/int
-    1800000,                                                                                                              // val/int
-    1860000,                                                                                                              // val/int
-    2097152,                                                                                                              // val/int
-    3600000,                                                                                                              // val/int
-    4194304,                                                                                                              // val/int
-    8388608,                                                                                                              // val/int
     9999999,                                                                                                              // val/int
-    16777216,                                                                                                             // val/int
-    20971520,                                                                                                             // val/int
-    86400000,                                                                                                             // val/int
-    134217728,                                                                                                            // val/int
-    604800000,                                                                                                            // val/int
-    1073741824,                                                                                                           // val/int
-    1099511627776,                                                                                                        // val/int
-    1125899906842624,                                                                                                     // val/int
-    4503599627370496,                                                                                                     // val/int
+};
+
+static const uint8_t parseRuleValueIntStrMap[] =
+{
+    parseRuleValStrQT_0_QT,                                                                                        // val/int/strmap
+    parseRuleValStrQT_1_QT,                                                                                        // val/int/strmap
+    parseRuleValStrQT_2_QT,                                                                                        // val/int/strmap
+    parseRuleValStrQT_3_QT,                                                                                        // val/int/strmap
+    parseRuleValStrQT_9_QT,                                                                                        // val/int/strmap
+    parseRuleValStrQT_22_QT,                                                                                       // val/int/strmap
+    parseRuleValStrQT_32_QT,                                                                                       // val/int/strmap
+    parseRuleValStrQT_256_QT,                                                                                      // val/int/strmap
+    parseRuleValStrQT_360_QT,                                                                                      // val/int/strmap
+    parseRuleValStrQT_443_QT,                                                                                      // val/int/strmap
+    parseRuleValStrQT_900_QT,                                                                                      // val/int/strmap
+    parseRuleValStrQT_999_QT,                                                                                      // val/int/strmap
+    parseRuleValStrQT_1024_QT,                                                                                     // val/int/strmap
+    parseRuleValStrQT_3600_QT,                                                                                     // val/int/strmap
+    parseRuleValStrQT_5432_QT,                                                                                     // val/int/strmap
+    parseRuleValStrQT_8432_QT,                                                                                     // val/int/strmap
+    parseRuleValStrQT_65535_QT,                                                                                    // val/int/strmap
+    parseRuleValStrQT_9999999_QT,                                                                                  // val/int/strmap
 };
 
 typedef enum
@@ -303,7 +494,6 @@ typedef enum
     parseRuleValInt9,                                                                                                // val/int/enum
     parseRuleValInt22,                                                                                               // val/int/enum
     parseRuleValInt32,                                                                                               // val/int/enum
-    parseRuleValInt100,                                                                                              // val/int/enum
     parseRuleValInt256,                                                                                              // val/int/enum
     parseRuleValInt360,                                                                                              // val/int/enum
     parseRuleValInt443,                                                                                              // val/int/enum
@@ -312,36 +502,134 @@ typedef enum
     parseRuleValInt1024,                                                                                             // val/int/enum
     parseRuleValInt3600,                                                                                             // val/int/enum
     parseRuleValInt5432,                                                                                             // val/int/enum
-    parseRuleValInt8192,                                                                                             // val/int/enum
     parseRuleValInt8432,                                                                                             // val/int/enum
-    parseRuleValInt15000,                                                                                            // val/int/enum
-    parseRuleValInt16384,                                                                                            // val/int/enum
-    parseRuleValInt32768,                                                                                            // val/int/enum
-    parseRuleValInt60000,                                                                                            // val/int/enum
     parseRuleValInt65535,                                                                                            // val/int/enum
-    parseRuleValInt65536,                                                                                            // val/int/enum
-    parseRuleValInt131072,                                                                                           // val/int/enum
-    parseRuleValInt262144,                                                                                           // val/int/enum
-    parseRuleValInt524288,                                                                                           // val/int/enum
-    parseRuleValInt900000,                                                                                           // val/int/enum
-    parseRuleValInt1048576,                                                                                          // val/int/enum
-    parseRuleValInt1800000,                                                                                          // val/int/enum
-    parseRuleValInt1860000,                                                                                          // val/int/enum
-    parseRuleValInt2097152,                                                                                          // val/int/enum
-    parseRuleValInt3600000,                                                                                          // val/int/enum
-    parseRuleValInt4194304,                                                                                          // val/int/enum
-    parseRuleValInt8388608,                                                                                          // val/int/enum
     parseRuleValInt9999999,                                                                                          // val/int/enum
-    parseRuleValInt16777216,                                                                                         // val/int/enum
-    parseRuleValInt20971520,                                                                                         // val/int/enum
-    parseRuleValInt86400000,                                                                                         // val/int/enum
-    parseRuleValInt134217728,                                                                                        // val/int/enum
-    parseRuleValInt604800000,                                                                                        // val/int/enum
-    parseRuleValInt1073741824,                                                                                       // val/int/enum
-    parseRuleValInt1099511627776,                                                                                    // val/int/enum
-    parseRuleValInt1125899906842624,                                                                                 // val/int/enum
-    parseRuleValInt4503599627370496,                                                                                 // val/int/enum
 } ParseRuleValueInt;
+
+/***********************************************************************************************************************************
+Rule Sizes
+***********************************************************************************************************************************/
+#define PARSE_RULE_VAL_SIZE(value)                                  PARSE_RULE_U32_1(parseRuleValSize##value)
+
+static const int64_t parseRuleValueSize[] =
+{
+    0,                                                                                                                   // val/size
+    1,                                                                                                                   // val/size
+    8192,                                                                                                                // val/size
+    16384,                                                                                                               // val/size
+    32768,                                                                                                               // val/size
+    65536,                                                                                                               // val/size
+    131072,                                                                                                              // val/size
+    262144,                                                                                                              // val/size
+    524288,                                                                                                              // val/size
+    1048576,                                                                                                             // val/size
+    2097152,                                                                                                             // val/size
+    4194304,                                                                                                             // val/size
+    8388608,                                                                                                             // val/size
+    16777216,                                                                                                            // val/size
+    20971520,                                                                                                            // val/size
+    134217728,                                                                                                           // val/size
+    1073741824,                                                                                                          // val/size
+    1099511627776,                                                                                                       // val/size
+    1125899906842624,                                                                                                    // val/size
+    4503599627370496,                                                                                                    // val/size
+};
+
+static const uint8_t parseRuleValueSizeStrMap[] =
+{
+    parseRuleValStrQT_0B_QT,                                                                                      // val/size/strmap
+    parseRuleValStrQT_1B_QT,                                                                                      // val/size/strmap
+    parseRuleValStrQT_8KiB_QT,                                                                                    // val/size/strmap
+    parseRuleValStrQT_16KiB_QT,                                                                                   // val/size/strmap
+    parseRuleValStrQT_32KiB_QT,                                                                                   // val/size/strmap
+    parseRuleValStrQT_64KiB_QT,                                                                                   // val/size/strmap
+    parseRuleValStrQT_128KiB_QT,                                                                                  // val/size/strmap
+    parseRuleValStrQT_256KiB_QT,                                                                                  // val/size/strmap
+    parseRuleValStrQT_512KiB_QT,                                                                                  // val/size/strmap
+    parseRuleValStrQT_1MiB_QT,                                                                                    // val/size/strmap
+    parseRuleValStrQT_2MiB_QT,                                                                                    // val/size/strmap
+    parseRuleValStrQT_4MiB_QT,                                                                                    // val/size/strmap
+    parseRuleValStrQT_8MiB_QT,                                                                                    // val/size/strmap
+    parseRuleValStrQT_16MiB_QT,                                                                                   // val/size/strmap
+    parseRuleValStrQT_20MiB_QT,                                                                                   // val/size/strmap
+    parseRuleValStrQT_128MiB_QT,                                                                                  // val/size/strmap
+    parseRuleValStrQT_1GiB_QT,                                                                                    // val/size/strmap
+    parseRuleValStrQT_1TiB_QT,                                                                                    // val/size/strmap
+    parseRuleValStrQT_1PiB_QT,                                                                                    // val/size/strmap
+    parseRuleValStrQT_4PiB_QT,                                                                                    // val/size/strmap
+};
+
+typedef enum
+{
+    parseRuleValSize0B,                                                                                             // val/size/enum
+    parseRuleValSize1B,                                                                                             // val/size/enum
+    parseRuleValSize8KiB,                                                                                           // val/size/enum
+    parseRuleValSize16KiB,                                                                                          // val/size/enum
+    parseRuleValSize32KiB,                                                                                          // val/size/enum
+    parseRuleValSize64KiB,                                                                                          // val/size/enum
+    parseRuleValSize128KiB,                                                                                         // val/size/enum
+    parseRuleValSize256KiB,                                                                                         // val/size/enum
+    parseRuleValSize512KiB,                                                                                         // val/size/enum
+    parseRuleValSize1MiB,                                                                                           // val/size/enum
+    parseRuleValSize2MiB,                                                                                           // val/size/enum
+    parseRuleValSize4MiB,                                                                                           // val/size/enum
+    parseRuleValSize8MiB,                                                                                           // val/size/enum
+    parseRuleValSize16MiB,                                                                                          // val/size/enum
+    parseRuleValSize20MiB,                                                                                          // val/size/enum
+    parseRuleValSize128MiB,                                                                                         // val/size/enum
+    parseRuleValSize1GiB,                                                                                           // val/size/enum
+    parseRuleValSize1TiB,                                                                                           // val/size/enum
+    parseRuleValSize1PiB,                                                                                           // val/size/enum
+    parseRuleValSize4PiB,                                                                                           // val/size/enum
+} ParseRuleValueSize;
+
+/***********************************************************************************************************************************
+Rule Times
+***********************************************************************************************************************************/
+#define PARSE_RULE_VAL_TIME(value)                                  PARSE_RULE_U32_1(parseRuleValTime##value)
+
+static const unsigned int parseRuleValueTime[] =
+{
+    0,                                                                                                                   // val/time
+    100,                                                                                                                 // val/time
+    15000,                                                                                                               // val/time
+    60000,                                                                                                               // val/time
+    900000,                                                                                                              // val/time
+    1800000,                                                                                                             // val/time
+    1860000,                                                                                                             // val/time
+    3600000,                                                                                                             // val/time
+    86400000,                                                                                                            // val/time
+    604800000,                                                                                                           // val/time
+};
+
+static const uint8_t parseRuleValueTimeStrMap[] =
+{
+    parseRuleValStrQT_0s_QT,                                                                                      // val/time/strmap
+    parseRuleValStrQT_100ms_QT,                                                                                   // val/time/strmap
+    parseRuleValStrQT_15s_QT,                                                                                     // val/time/strmap
+    parseRuleValStrQT_1m_QT,                                                                                      // val/time/strmap
+    parseRuleValStrQT_15m_QT,                                                                                     // val/time/strmap
+    parseRuleValStrQT_30m_QT,                                                                                     // val/time/strmap
+    parseRuleValStrQT_31m_QT,                                                                                     // val/time/strmap
+    parseRuleValStrQT_1h_QT,                                                                                      // val/time/strmap
+    parseRuleValStrQT_1d_QT,                                                                                      // val/time/strmap
+    parseRuleValStrQT_7d_QT,                                                                                      // val/time/strmap
+};
+
+typedef enum
+{
+    parseRuleValTime0s,                                                                                             // val/time/enum
+    parseRuleValTime100ms,                                                                                          // val/time/enum
+    parseRuleValTime15s,                                                                                            // val/time/enum
+    parseRuleValTime1m,                                                                                             // val/time/enum
+    parseRuleValTime15m,                                                                                            // val/time/enum
+    parseRuleValTime30m,                                                                                            // val/time/enum
+    parseRuleValTime31m,                                                                                            // val/time/enum
+    parseRuleValTime1h,                                                                                             // val/time/enum
+    parseRuleValTime1d,                                                                                             // val/time/enum
+    parseRuleValTime7d,                                                                                             // val/time/enum
+} ParseRuleValueTime;
 
 /***********************************************************************************************************************************
 Command parse data
@@ -913,14 +1201,13 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                           // opt/archive-get-queue-max
                 PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                         // opt/archive-get-queue-max
                 (                                                                                       // opt/archive-get-queue-max
-                    PARSE_RULE_VAL_INT(0),                                                              // opt/archive-get-queue-max
-                    PARSE_RULE_VAL_INT(4503599627370496),                                               // opt/archive-get-queue-max
+                    PARSE_RULE_VAL_SIZE(0B),                                                            // opt/archive-get-queue-max
+                    PARSE_RULE_VAL_SIZE(4PiB),                                                          // opt/archive-get-queue-max
                 ),                                                                                      // opt/archive-get-queue-max
                                                                                                         // opt/archive-get-queue-max
                 PARSE_RULE_OPTIONAL_DEFAULT                                                             // opt/archive-get-queue-max
                 (                                                                                       // opt/archive-get-queue-max
-                    PARSE_RULE_VAL_INT(134217728),                                                      // opt/archive-get-queue-max
-                    PARSE_RULE_VAL_STR(QT_128MiB_QT),                                                   // opt/archive-get-queue-max
+                    PARSE_RULE_VAL_SIZE(128MiB),                                                        // opt/archive-get-queue-max
                 ),                                                                                      // opt/archive-get-queue-max
             ),                                                                                          // opt/archive-get-queue-max
         ),                                                                                              // opt/archive-get-queue-max
@@ -1009,7 +1296,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                      // opt/archive-mode
                 (                                                                                                // opt/archive-mode
                     PARSE_RULE_VAL_STRID(Preserve),                                                              // opt/archive-mode
-                    PARSE_RULE_VAL_STR(QT_preserve_QT),                                                          // opt/archive-mode
                 ),                                                                                               // opt/archive-mode
             ),                                                                                                   // opt/archive-mode
         ),                                                                                                       // opt/archive-mode
@@ -1079,8 +1365,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                          // opt/archive-push-queue-max
                 PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                        // opt/archive-push-queue-max
                 (                                                                                      // opt/archive-push-queue-max
-                    PARSE_RULE_VAL_INT(0),                                                             // opt/archive-push-queue-max
-                    PARSE_RULE_VAL_INT(4503599627370496),                                              // opt/archive-push-queue-max
+                    PARSE_RULE_VAL_SIZE(0B),                                                           // opt/archive-push-queue-max
+                    PARSE_RULE_VAL_SIZE(4PiB),                                                         // opt/archive-push-queue-max
                 ),                                                                                     // opt/archive-push-queue-max
             ),                                                                                         // opt/archive-push-queue-max
         ),                                                                                             // opt/archive-push-queue-max
@@ -1108,14 +1394,13 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                                 // opt/archive-timeout
                 PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                               // opt/archive-timeout
                 (                                                                                             // opt/archive-timeout
-                    PARSE_RULE_VAL_INT(100),                                                                  // opt/archive-timeout
-                    PARSE_RULE_VAL_INT(86400000),                                                             // opt/archive-timeout
+                    PARSE_RULE_VAL_TIME(100ms),                                                               // opt/archive-timeout
+                    PARSE_RULE_VAL_TIME(1d),                                                                  // opt/archive-timeout
                 ),                                                                                            // opt/archive-timeout
                                                                                                               // opt/archive-timeout
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                   // opt/archive-timeout
                 (                                                                                             // opt/archive-timeout
-                    PARSE_RULE_VAL_INT(60000),                                                                // opt/archive-timeout
-                    PARSE_RULE_VAL_STR(QT_1m_QT),                                                             // opt/archive-timeout
+                    PARSE_RULE_VAL_TIME(1m),                                                                  // opt/archive-timeout
                 ),                                                                                            // opt/archive-timeout
             ),                                                                                                // opt/archive-timeout
         ),                                                                                                    // opt/archive-timeout
@@ -1306,23 +1591,22 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                                     // opt/buffer-size
                 PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                    // opt/buffer-size
                 (                                                                                                 // opt/buffer-size
-                    PARSE_RULE_VAL_INT(16384),                                                                    // opt/buffer-size
-                    PARSE_RULE_VAL_INT(32768),                                                                    // opt/buffer-size
-                    PARSE_RULE_VAL_INT(65536),                                                                    // opt/buffer-size
-                    PARSE_RULE_VAL_INT(131072),                                                                   // opt/buffer-size
-                    PARSE_RULE_VAL_INT(262144),                                                                   // opt/buffer-size
-                    PARSE_RULE_VAL_INT(524288),                                                                   // opt/buffer-size
-                    PARSE_RULE_VAL_INT(1048576),                                                                  // opt/buffer-size
-                    PARSE_RULE_VAL_INT(2097152),                                                                  // opt/buffer-size
-                    PARSE_RULE_VAL_INT(4194304),                                                                  // opt/buffer-size
-                    PARSE_RULE_VAL_INT(8388608),                                                                  // opt/buffer-size
-                    PARSE_RULE_VAL_INT(16777216),                                                                 // opt/buffer-size
+                    PARSE_RULE_VAL_SIZE(16KiB),                                                                   // opt/buffer-size
+                    PARSE_RULE_VAL_SIZE(32KiB),                                                                   // opt/buffer-size
+                    PARSE_RULE_VAL_SIZE(64KiB),                                                                   // opt/buffer-size
+                    PARSE_RULE_VAL_SIZE(128KiB),                                                                  // opt/buffer-size
+                    PARSE_RULE_VAL_SIZE(256KiB),                                                                  // opt/buffer-size
+                    PARSE_RULE_VAL_SIZE(512KiB),                                                                  // opt/buffer-size
+                    PARSE_RULE_VAL_SIZE(1MiB),                                                                    // opt/buffer-size
+                    PARSE_RULE_VAL_SIZE(2MiB),                                                                    // opt/buffer-size
+                    PARSE_RULE_VAL_SIZE(4MiB),                                                                    // opt/buffer-size
+                    PARSE_RULE_VAL_SIZE(8MiB),                                                                    // opt/buffer-size
+                    PARSE_RULE_VAL_SIZE(16MiB),                                                                   // opt/buffer-size
                 ),                                                                                                // opt/buffer-size
                                                                                                                   // opt/buffer-size
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                       // opt/buffer-size
                 (                                                                                                 // opt/buffer-size
-                    PARSE_RULE_VAL_INT(1048576),                                                                  // opt/buffer-size
-                    PARSE_RULE_VAL_STR(QT_1MiB_QT),                                                               // opt/buffer-size
+                    PARSE_RULE_VAL_SIZE(1MiB),                                                                    // opt/buffer-size
                 ),                                                                                                // opt/buffer-size
             ),                                                                                                    // opt/buffer-size
         ),                                                                                                        // opt/buffer-size
@@ -1558,7 +1842,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                            // opt/compress-level-network
                 (                                                                                      // opt/compress-level-network
                     PARSE_RULE_VAL_INT(3),                                                             // opt/compress-level-network
-                    PARSE_RULE_VAL_STR(QT_3_QT),                                                       // opt/compress-level-network
                 ),                                                                                     // opt/compress-level-network
             ),                                                                                         // opt/compress-level-network
         ),                                                                                             // opt/compress-level-network
@@ -1605,7 +1888,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                     // opt/compress-type
                 (                                                                                               // opt/compress-type
                     PARSE_RULE_VAL_STRID(Gz),                                                                   // opt/compress-type
-                    PARSE_RULE_VAL_STR(QT_gz_QT),                                                               // opt/compress-type
                 ),                                                                                              // opt/compress-type
             ),                                                                                                  // opt/compress-type
         ),                                                                                                      // opt/compress-type
@@ -1944,14 +2226,13 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                                      // opt/db-timeout
                 PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                                    // opt/db-timeout
                 (                                                                                                  // opt/db-timeout
-                    PARSE_RULE_VAL_INT(100),                                                                       // opt/db-timeout
-                    PARSE_RULE_VAL_INT(604800000),                                                                 // opt/db-timeout
+                    PARSE_RULE_VAL_TIME(100ms),                                                                    // opt/db-timeout
+                    PARSE_RULE_VAL_TIME(7d),                                                                       // opt/db-timeout
                 ),                                                                                                 // opt/db-timeout
                                                                                                                    // opt/db-timeout
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                        // opt/db-timeout
                 (                                                                                                  // opt/db-timeout
-                    PARSE_RULE_VAL_INT(1800000),                                                                   // opt/db-timeout
-                    PARSE_RULE_VAL_STR(QT_30m_QT),                                                                 // opt/db-timeout
+                    PARSE_RULE_VAL_TIME(30m),                                                                      // opt/db-timeout
                 ),                                                                                                 // opt/db-timeout
             ),                                                                                                     // opt/db-timeout
         ),                                                                                                         // opt/db-timeout
@@ -2278,14 +2559,13 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                                      // opt/io-timeout
                 PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                                    // opt/io-timeout
                 (                                                                                                  // opt/io-timeout
-                    PARSE_RULE_VAL_INT(100),                                                                       // opt/io-timeout
-                    PARSE_RULE_VAL_INT(3600000),                                                                   // opt/io-timeout
+                    PARSE_RULE_VAL_TIME(100ms),                                                                    // opt/io-timeout
+                    PARSE_RULE_VAL_TIME(1h),                                                                       // opt/io-timeout
                 ),                                                                                                 // opt/io-timeout
                                                                                                                    // opt/io-timeout
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                        // opt/io-timeout
                 (                                                                                                  // opt/io-timeout
-                    PARSE_RULE_VAL_INT(60000),                                                                     // opt/io-timeout
-                    PARSE_RULE_VAL_STR(QT_1m_QT),                                                                  // opt/io-timeout
+                    PARSE_RULE_VAL_TIME(1m),                                                                       // opt/io-timeout
                 ),                                                                                                 // opt/io-timeout
             ),                                                                                                     // opt/io-timeout
         ),                                                                                                         // opt/io-timeout
@@ -2342,7 +2622,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                         // opt/job-retry
                 (                                                                                                   // opt/job-retry
                     PARSE_RULE_VAL_INT(1),                                                                          // opt/job-retry
-                    PARSE_RULE_VAL_STR(QT_1_QT),                                                                    // opt/job-retry
                 ),                                                                                                  // opt/job-retry
             ),                                                                                                      // opt/job-retry
                                                                                                                     // opt/job-retry
@@ -2357,7 +2636,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                         // opt/job-retry
                 (                                                                                                   // opt/job-retry
                     PARSE_RULE_VAL_INT(2),                                                                          // opt/job-retry
-                    PARSE_RULE_VAL_STR(QT_2_QT),                                                                    // opt/job-retry
                 ),                                                                                                  // opt/job-retry
             ),                                                                                                      // opt/job-retry
         ),                                                                                                          // opt/job-retry
@@ -2401,14 +2679,13 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                              // opt/job-retry-interval
                 PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                            // opt/job-retry-interval
                 (                                                                                          // opt/job-retry-interval
-                    PARSE_RULE_VAL_INT(0),                                                                 // opt/job-retry-interval
-                    PARSE_RULE_VAL_INT(900000),                                                            // opt/job-retry-interval
+                    PARSE_RULE_VAL_TIME(0s),                                                               // opt/job-retry-interval
+                    PARSE_RULE_VAL_TIME(15m),                                                              // opt/job-retry-interval
                 ),                                                                                         // opt/job-retry-interval
                                                                                                            // opt/job-retry-interval
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                // opt/job-retry-interval
                 (                                                                                          // opt/job-retry-interval
-                    PARSE_RULE_VAL_INT(15000),                                                             // opt/job-retry-interval
-                    PARSE_RULE_VAL_STR(QT_15s_QT),                                                         // opt/job-retry-interval
+                    PARSE_RULE_VAL_TIME(15s),                                                              // opt/job-retry-interval
                 ),                                                                                         // opt/job-retry-interval
             ),                                                                                             // opt/job-retry-interval
         ),                                                                                                 // opt/job-retry-interval
@@ -2625,7 +2902,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                 // opt/log-level-console
                 (                                                                                           // opt/log-level-console
                     PARSE_RULE_VAL_STRID(Warn),                                                             // opt/log-level-console
-                    PARSE_RULE_VAL_STR(QT_warn_QT),                                                         // opt/log-level-console
                 ),                                                                                          // opt/log-level-console
             ),                                                                                              // opt/log-level-console
         ),                                                                                                  // opt/log-level-console
@@ -2719,7 +2995,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                    // opt/log-level-file
                 (                                                                                              // opt/log-level-file
                     PARSE_RULE_VAL_STRID(Info),                                                                // opt/log-level-file
-                    PARSE_RULE_VAL_STR(QT_info_QT),                                                            // opt/log-level-file
                 ),                                                                                             // opt/log-level-file
             ),                                                                                                 // opt/log-level-file
         ),                                                                                                     // opt/log-level-file
@@ -2813,7 +3088,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                  // opt/log-level-stderr
                 (                                                                                            // opt/log-level-stderr
                     PARSE_RULE_VAL_STRID(Off),                                                               // opt/log-level-stderr
-                    PARSE_RULE_VAL_STR(QT_off_QT),                                                           // opt/log-level-stderr
                 ),                                                                                           // opt/log-level-stderr
             ),                                                                                               // opt/log-level-stderr
         ),                                                                                                   // opt/log-level-stderr
@@ -3081,14 +3355,13 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                         // opt/manifest-save-threshold
                 PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                       // opt/manifest-save-threshold
                 (                                                                                     // opt/manifest-save-threshold
-                    PARSE_RULE_VAL_INT(1),                                                            // opt/manifest-save-threshold
-                    PARSE_RULE_VAL_INT(1099511627776),                                                // opt/manifest-save-threshold
+                    PARSE_RULE_VAL_SIZE(1B),                                                          // opt/manifest-save-threshold
+                    PARSE_RULE_VAL_SIZE(1TiB),                                                        // opt/manifest-save-threshold
                 ),                                                                                    // opt/manifest-save-threshold
                                                                                                       // opt/manifest-save-threshold
                 PARSE_RULE_OPTIONAL_DEFAULT                                                           // opt/manifest-save-threshold
                 (                                                                                     // opt/manifest-save-threshold
-                    PARSE_RULE_VAL_INT(1073741824),                                                   // opt/manifest-save-threshold
-                    PARSE_RULE_VAL_STR(QT_1GiB_QT),                                                   // opt/manifest-save-threshold
+                    PARSE_RULE_VAL_SIZE(1GiB),                                                        // opt/manifest-save-threshold
                 ),                                                                                    // opt/manifest-save-threshold
             ),                                                                                        // opt/manifest-save-threshold
         ),                                                                                            // opt/manifest-save-threshold
@@ -3231,7 +3504,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                            // opt/output
                 (                                                                                                      // opt/output
                     PARSE_RULE_VAL_STRID(None),                                                                        // opt/output
-                    PARSE_RULE_VAL_STR(QT_none_QT),                                                                    // opt/output
                 ),                                                                                                     // opt/output
             ),                                                                                                         // opt/output
                                                                                                                        // opt/output
@@ -3246,7 +3518,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                            // opt/output
                 (                                                                                                      // opt/output
                     PARSE_RULE_VAL_STRID(Text),                                                                        // opt/output
-                    PARSE_RULE_VAL_STR(QT_text_QT),                                                                    // opt/output
                 ),                                                                                                     // opt/output
             ),                                                                                                         // opt/output
         ),                                                                                                             // opt/output
@@ -3858,7 +4129,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                      // opt/pg-host-type
                 (                                                                                                // opt/pg-host-type
                     PARSE_RULE_VAL_STRID(Ssh),                                                                   // opt/pg-host-type
-                    PARSE_RULE_VAL_STR(QT_ssh_QT),                                                               // opt/pg-host-type
                 ),                                                                                               // opt/pg-host-type
             ),                                                                                                   // opt/pg-host-type
         ),                                                                                                       // opt/pg-host-type
@@ -4081,7 +4351,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                           // opt/pg-port
                 (                                                                                                     // opt/pg-port
                     PARSE_RULE_VAL_INT(5432),                                                                         // opt/pg-port
-                    PARSE_RULE_VAL_STR(QT_5432_QT),                                                                   // opt/pg-port
                 ),                                                                                                    // opt/pg-port
             ),                                                                                                        // opt/pg-port
         ),                                                                                                            // opt/pg-port
@@ -4313,7 +4582,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                       // opt/process-max
                 (                                                                                                 // opt/process-max
                     PARSE_RULE_VAL_INT(1),                                                                        // opt/process-max
-                    PARSE_RULE_VAL_STR(QT_1_QT),                                                                  // opt/process-max
                 ),                                                                                                // opt/process-max
             ),                                                                                                    // opt/process-max
         ),                                                                                                        // opt/process-max
@@ -4391,14 +4659,13 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                                // opt/protocol-timeout
                 PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                              // opt/protocol-timeout
                 (                                                                                            // opt/protocol-timeout
-                    PARSE_RULE_VAL_INT(100),                                                                 // opt/protocol-timeout
-                    PARSE_RULE_VAL_INT(604800000),                                                           // opt/protocol-timeout
+                    PARSE_RULE_VAL_TIME(100ms),                                                              // opt/protocol-timeout
+                    PARSE_RULE_VAL_TIME(7d),                                                                 // opt/protocol-timeout
                 ),                                                                                           // opt/protocol-timeout
                                                                                                              // opt/protocol-timeout
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                  // opt/protocol-timeout
                 (                                                                                            // opt/protocol-timeout
-                    PARSE_RULE_VAL_INT(1860000),                                                             // opt/protocol-timeout
-                    PARSE_RULE_VAL_STR(QT_31m_QT),                                                           // opt/protocol-timeout
+                    PARSE_RULE_VAL_TIME(31m),                                                                // opt/protocol-timeout
                 ),                                                                                           // opt/protocol-timeout
             ),                                                                                               // opt/protocol-timeout
         ),                                                                                                   // opt/protocol-timeout
@@ -5030,7 +5297,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                               // opt/repo-azure-key-type
                 (                                                                                         // opt/repo-azure-key-type
                     PARSE_RULE_VAL_STRID(Shared),                                                         // opt/repo-azure-key-type
-                    PARSE_RULE_VAL_STR(QT_shared_QT),                                                     // opt/repo-azure-key-type
                 ),                                                                                        // opt/repo-azure-key-type
             ),                                                                                            // opt/repo-azure-key-type
         ),                                                                                                // opt/repo-azure-key-type
@@ -5121,7 +5387,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                              // opt/repo-azure-uri-style
                 (                                                                                        // opt/repo-azure-uri-style
                     PARSE_RULE_VAL_STRID(Host),                                                          // opt/repo-azure-uri-style
-                    PARSE_RULE_VAL_STR(QT_host_QT),                                                      // opt/repo-azure-uri-style
                 ),                                                                                       // opt/repo-azure-uri-style
             ),                                                                                           // opt/repo-azure-uri-style
         ),                                                                                               // opt/repo-azure-uri-style
@@ -5271,14 +5536,13 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                         // opt/repo-block-size-super
                 PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                         // opt/repo-block-size-super
                 (                                                                                       // opt/repo-block-size-super
-                    PARSE_RULE_VAL_INT(32768),                                                          // opt/repo-block-size-super
-                    PARSE_RULE_VAL_INT(16777216),                                                       // opt/repo-block-size-super
+                    PARSE_RULE_VAL_SIZE(32KiB),                                                         // opt/repo-block-size-super
+                    PARSE_RULE_VAL_SIZE(16MiB),                                                         // opt/repo-block-size-super
                 ),                                                                                      // opt/repo-block-size-super
                                                                                                         // opt/repo-block-size-super
                 PARSE_RULE_OPTIONAL_DEFAULT                                                             // opt/repo-block-size-super
                 (                                                                                       // opt/repo-block-size-super
-                    PARSE_RULE_VAL_INT(262144),                                                         // opt/repo-block-size-super
-                    PARSE_RULE_VAL_STR(QT_256KiB_QT),                                                   // opt/repo-block-size-super
+                    PARSE_RULE_VAL_SIZE(256KiB),                                                        // opt/repo-block-size-super
                 ),                                                                                      // opt/repo-block-size-super
             ),                                                                                          // opt/repo-block-size-super
         ),                                                                                              // opt/repo-block-size-super
@@ -5310,14 +5574,13 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                    // opt/repo-block-size-super-full
                 PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                    // opt/repo-block-size-super-full
                 (                                                                                  // opt/repo-block-size-super-full
-                    PARSE_RULE_VAL_INT(32768),                                                     // opt/repo-block-size-super-full
-                    PARSE_RULE_VAL_INT(16777216),                                                  // opt/repo-block-size-super-full
+                    PARSE_RULE_VAL_SIZE(32KiB),                                                    // opt/repo-block-size-super-full
+                    PARSE_RULE_VAL_SIZE(16MiB),                                                    // opt/repo-block-size-super-full
                 ),                                                                                 // opt/repo-block-size-super-full
                                                                                                    // opt/repo-block-size-super-full
                 PARSE_RULE_OPTIONAL_DEFAULT                                                        // opt/repo-block-size-super-full
                 (                                                                                  // opt/repo-block-size-super-full
-                    PARSE_RULE_VAL_INT(1048576),                                                   // opt/repo-block-size-super-full
-                    PARSE_RULE_VAL_STR(QT_1MiB_QT),                                                // opt/repo-block-size-super-full
+                    PARSE_RULE_VAL_SIZE(1MiB),                                                     // opt/repo-block-size-super-full
                 ),                                                                                 // opt/repo-block-size-super-full
             ),                                                                                     // opt/repo-block-size-super-full
         ),                                                                                         // opt/repo-block-size-super-full
@@ -5376,14 +5639,13 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                             // opt/repo-bundle-limit
                 PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                             // opt/repo-bundle-limit
                 (                                                                                           // opt/repo-bundle-limit
-                    PARSE_RULE_VAL_INT(8192),                                                               // opt/repo-bundle-limit
-                    PARSE_RULE_VAL_INT(1125899906842624),                                                   // opt/repo-bundle-limit
+                    PARSE_RULE_VAL_SIZE(8KiB),                                                              // opt/repo-bundle-limit
+                    PARSE_RULE_VAL_SIZE(1PiB),                                                              // opt/repo-bundle-limit
                 ),                                                                                          // opt/repo-bundle-limit
                                                                                                             // opt/repo-bundle-limit
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                 // opt/repo-bundle-limit
                 (                                                                                           // opt/repo-bundle-limit
-                    PARSE_RULE_VAL_INT(2097152),                                                            // opt/repo-bundle-limit
-                    PARSE_RULE_VAL_STR(QT_2MiB_QT),                                                         // opt/repo-bundle-limit
+                    PARSE_RULE_VAL_SIZE(2MiB),                                                              // opt/repo-bundle-limit
                 ),                                                                                          // opt/repo-bundle-limit
             ),                                                                                              // opt/repo-bundle-limit
         ),                                                                                                  // opt/repo-bundle-limit
@@ -5415,14 +5677,13 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                              // opt/repo-bundle-size
                 PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                              // opt/repo-bundle-size
                 (                                                                                            // opt/repo-bundle-size
-                    PARSE_RULE_VAL_INT(1048576),                                                             // opt/repo-bundle-size
-                    PARSE_RULE_VAL_INT(1125899906842624),                                                    // opt/repo-bundle-size
+                    PARSE_RULE_VAL_SIZE(1MiB),                                                               // opt/repo-bundle-size
+                    PARSE_RULE_VAL_SIZE(1PiB),                                                               // opt/repo-bundle-size
                 ),                                                                                           // opt/repo-bundle-size
                                                                                                              // opt/repo-bundle-size
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                  // opt/repo-bundle-size
                 (                                                                                            // opt/repo-bundle-size
-                    PARSE_RULE_VAL_INT(20971520),                                                            // opt/repo-bundle-size
-                    PARSE_RULE_VAL_STR(QT_20MiB_QT),                                                         // opt/repo-bundle-size
+                    PARSE_RULE_VAL_SIZE(20MiB),                                                              // opt/repo-bundle-size
                 ),                                                                                           // opt/repo-bundle-size
             ),                                                                                               // opt/repo-bundle-size
         ),                                                                                                   // opt/repo-bundle-size
@@ -5589,7 +5850,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                  // opt/repo-cipher-type
                 (                                                                                            // opt/repo-cipher-type
                     PARSE_RULE_VAL_STRID(None),                                                              // opt/repo-cipher-type
-                    PARSE_RULE_VAL_STR(QT_none_QT),                                                          // opt/repo-cipher-type
                 ),                                                                                           // opt/repo-cipher-type
             ),                                                                                               // opt/repo-cipher-type
         ),                                                                                                   // opt/repo-cipher-type
@@ -5923,7 +6183,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                 // opt/repo-gcs-key-type
                 (                                                                                           // opt/repo-gcs-key-type
                     PARSE_RULE_VAL_STRID(Service),                                                          // opt/repo-gcs-key-type
-                    PARSE_RULE_VAL_STR(QT_service_QT),                                                      // opt/repo-gcs-key-type
                 ),                                                                                          // opt/repo-gcs-key-type
             ),                                                                                              // opt/repo-gcs-key-type
         ),                                                                                                  // opt/repo-gcs-key-type
@@ -6619,7 +6878,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                    // opt/repo-host-type
                 (                                                                                              // opt/repo-host-type
                     PARSE_RULE_VAL_STRID(Ssh),                                                                 // opt/repo-host-type
-                    PARSE_RULE_VAL_STR(QT_ssh_QT),                                                             // opt/repo-host-type
                 ),                                                                                             // opt/repo-host-type
             ),                                                                                                 // opt/repo-host-type
         ),                                                                                                     // opt/repo-host-type
@@ -6880,7 +7138,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                       // opt/repo-retention-archive-type
                 (                                                                                 // opt/repo-retention-archive-type
                     PARSE_RULE_VAL_STRID(Full),                                                   // opt/repo-retention-archive-type
-                    PARSE_RULE_VAL_STR(QT_full_QT),                                               // opt/repo-retention-archive-type
                 ),                                                                                // opt/repo-retention-archive-type
             ),                                                                                    // opt/repo-retention-archive-type
         ),                                                                                        // opt/repo-retention-archive-type
@@ -6970,7 +7227,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                          // opt/repo-retention-full-type
                 (                                                                                    // opt/repo-retention-full-type
                     PARSE_RULE_VAL_STRID(Count),                                                     // opt/repo-retention-full-type
-                    PARSE_RULE_VAL_STR(QT_count_QT),                                                 // opt/repo-retention-full-type
                 ),                                                                                   // opt/repo-retention-full-type
             ),                                                                                       // opt/repo-retention-full-type
         ),                                                                                           // opt/repo-retention-full-type
@@ -7412,7 +7668,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                  // opt/repo-s3-key-type
                 (                                                                                            // opt/repo-s3-key-type
                     PARSE_RULE_VAL_STRID(Shared),                                                            // opt/repo-s3-key-type
-                    PARSE_RULE_VAL_STR(QT_shared_QT),                                                        // opt/repo-s3-key-type
                 ),                                                                                           // opt/repo-s3-key-type
             ),                                                                                               // opt/repo-s3-key-type
         ),                                                                                                   // opt/repo-s3-key-type
@@ -7901,7 +8156,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                 // opt/repo-s3-uri-style
                 (                                                                                           // opt/repo-s3-uri-style
                     PARSE_RULE_VAL_STRID(Host),                                                             // opt/repo-s3-uri-style
-                    PARSE_RULE_VAL_STR(QT_host_QT),                                                         // opt/repo-s3-uri-style
                 ),                                                                                          // opt/repo-s3-uri-style
             ),                                                                                              // opt/repo-s3-uri-style
         ),                                                                                                  // opt/repo-s3-uri-style
@@ -8153,7 +8407,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                     // opt/repo-sftp-host-key-check-type
                 (                                                                               // opt/repo-sftp-host-key-check-type
                     PARSE_RULE_VAL_STRID(Strict),                                               // opt/repo-sftp-host-key-check-type
-                    PARSE_RULE_VAL_STR(QT_strict_QT),                                           // opt/repo-sftp-host-key-check-type
                 ),                                                                              // opt/repo-sftp-host-key-check-type
             ),                                                                                  // opt/repo-sftp-host-key-check-type
         ),                                                                                      // opt/repo-sftp-host-key-check-type
@@ -8330,7 +8583,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                               // opt/repo-sftp-host-port
                 (                                                                                         // opt/repo-sftp-host-port
                     PARSE_RULE_VAL_INT(22),                                                               // opt/repo-sftp-host-port
-                    PARSE_RULE_VAL_STR(QT_22_QT),                                                         // opt/repo-sftp-host-port
                 ),                                                                                        // opt/repo-sftp-host-port
             ),                                                                                            // opt/repo-sftp-host-port
         ),                                                                                                // opt/repo-sftp-host-port
@@ -9062,7 +9314,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                 // opt/repo-storage-port
                 (                                                                                           // opt/repo-storage-port
                     PARSE_RULE_VAL_INT(443),                                                                // opt/repo-storage-port
-                    PARSE_RULE_VAL_STR(QT_443_QT),                                                          // opt/repo-storage-port
                 ),                                                                                          // opt/repo-storage-port
             ),                                                                                              // opt/repo-storage-port
         ),                                                                                                  // opt/repo-storage-port
@@ -9230,8 +9481,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                // opt/repo-storage-upload-chunk-size
                 PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                // opt/repo-storage-upload-chunk-size
                 (                                                                              // opt/repo-storage-upload-chunk-size
-                    PARSE_RULE_VAL_INT(65536),                                                 // opt/repo-storage-upload-chunk-size
-                    PARSE_RULE_VAL_INT(1099511627776),                                         // opt/repo-storage-upload-chunk-size
+                    PARSE_RULE_VAL_SIZE(64KiB),                                                // opt/repo-storage-upload-chunk-size
+                    PARSE_RULE_VAL_SIZE(1TiB),                                                 // opt/repo-storage-upload-chunk-size
                 ),                                                                             // opt/repo-storage-upload-chunk-size
             ),                                                                                 // opt/repo-storage-upload-chunk-size
         ),                                                                                     // opt/repo-storage-upload-chunk-size
@@ -9411,7 +9662,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                         // opt/repo-type
                 (                                                                                                   // opt/repo-type
                     PARSE_RULE_VAL_STRID(Posix),                                                                    // opt/repo-type
-                    PARSE_RULE_VAL_STR(QT_posix_QT),                                                                // opt/repo-type
                 ),                                                                                                  // opt/repo-type
             ),                                                                                                      // opt/repo-type
         ),                                                                                                          // opt/repo-type
@@ -9715,7 +9965,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                              // opt/sort
                 (                                                                                                        // opt/sort
                     PARSE_RULE_VAL_STRID(Asc),                                                                           // opt/sort
-                    PARSE_RULE_VAL_STR(QT_asc_QT),                                                                       // opt/sort
                 ),                                                                                                       // opt/sort
             ),                                                                                                           // opt/sort
         ),                                                                                                               // opt/sort
@@ -10015,7 +10264,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                     // opt/target-action
                 (                                                                                               // opt/target-action
                     PARSE_RULE_VAL_STRID(Pause),                                                                // opt/target-action
-                    PARSE_RULE_VAL_STR(QT_pause_QT),                                                            // opt/target-action
                 ),                                                                                              // opt/target-action
             ),                                                                                                  // opt/target-action
         ),                                                                                                      // opt/target-action
@@ -10454,7 +10702,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                   // opt/tls-server-port
                 (                                                                                             // opt/tls-server-port
                     PARSE_RULE_VAL_INT(8432),                                                                 // opt/tls-server-port
-                    PARSE_RULE_VAL_STR(QT_8432_QT),                                                           // opt/tls-server-port
                 ),                                                                                            // opt/tls-server-port
             ),                                                                                                // opt/tls-server-port
         ),                                                                                                    // opt/tls-server-port
@@ -10493,7 +10740,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                              // opt/type
                 (                                                                                                        // opt/type
                     PARSE_RULE_VAL_STRID(Incr),                                                                          // opt/type
-                    PARSE_RULE_VAL_STR(QT_incr_QT),                                                                      // opt/type
                 ),                                                                                                       // opt/type
             ),                                                                                                           // opt/type
                                                                                                                          // opt/type
@@ -10537,7 +10783,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                              // opt/type
                 (                                                                                                        // opt/type
                     PARSE_RULE_VAL_STRID(Default),                                                                       // opt/type
-                    PARSE_RULE_VAL_STR(QT_default_QT),                                                                   // opt/type
                 ),                                                                                                       // opt/type
             ),                                                                                                           // opt/type
         ),                                                                                                               // opt/type

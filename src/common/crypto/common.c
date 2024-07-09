@@ -59,14 +59,8 @@ cryptoInit(void)
         ERR_load_crypto_strings();
         OpenSSL_add_all_algorithms();
 
-        // SSL initialization depends on the version of OpenSSL
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-        OPENSSL_config(NULL);
-        SSL_library_init();
-        SSL_load_error_strings();
-#else
+        // Initialization
         OPENSSL_init_ssl(OPENSSL_INIT_LOAD_CONFIG, NULL);
-#endif
 
         // Mark crypto as initialized
         cryptoInitDone = true;

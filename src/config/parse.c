@@ -801,6 +801,74 @@ cfgParseOptionDataType(const ConfigOption optionId)
 }
 
 /***********************************************************************************************************************************
+Get a value string by index
+***********************************************************************************************************************************/
+static const String *
+cfgParseOptionValueStr(const ConfigOptionType type, unsigned int valueIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(UINT, valueIdx);
+    FUNCTION_TEST_END();
+
+    switch (type)
+    {
+        case cfgOptTypeInteger:
+            valueIdx = parseRuleValueIntStrMap[valueIdx];
+            break;
+
+        case cfgOptTypeSize:
+            valueIdx = parseRuleValueSizeStrMap[valueIdx];
+            break;
+
+        case cfgOptTypeTime:
+            valueIdx = parseRuleValueTimeStrMap[valueIdx];
+            break;
+
+        case cfgOptTypePath:
+        case cfgOptTypeString:
+            break;
+
+        default:
+        {
+            ASSERT(type == cfgOptTypeStringId);
+
+            valueIdx = parseRuleValueStrIdStrMap[valueIdx];
+            break;
+        }
+    }
+
+    FUNCTION_TEST_RETURN_CONST(STRING, (const String *)&parseRuleValueStr[valueIdx]);
+}
+
+/***********************************************************************************************************************************
+Get an integer value by index
+***********************************************************************************************************************************/
+static int64_t
+cfgParseOptionValue(const ConfigOptionType type, unsigned int valueIdx)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM(UINT, valueIdx);
+    FUNCTION_TEST_END();
+
+    switch (type)
+    {
+        case cfgOptTypeInteger:
+            FUNCTION_TEST_RETURN(INT64, parseRuleValueInt[valueIdx]);
+
+        case cfgOptTypeSize:
+            FUNCTION_TEST_RETURN(INT64, parseRuleValueSize[valueIdx]);
+
+        default:
+            ASSERT(type == cfgOptTypeTime);
+            break;
+    }
+
+    FUNCTION_TEST_RETURN(INT64, parseRuleValueTime[valueIdx]);
+}
+
+/***********************************************************************************************************************************
 Find an optional rule
 ***********************************************************************************************************************************/
 typedef struct CfgParseOptionalRuleState
@@ -816,6 +884,8 @@ typedef struct CfgParseOptionalRuleState
     // Allow range
     int64_t allowRangeMin;
     int64_t allowRangeMax;
+    unsigned int allowRangeMinIdx;
+    unsigned int allowRangeMaxIdx;
 
     // Allow list
     const unsigned char *allowList;
@@ -978,8 +1048,10 @@ cfgParseOptionalRule(
                     {
                         PackRead *const ruleData = pckReadPackReadConstP(optionalRules->pack);
 
-                        optionalRules->allowRangeMin = parseRuleValueInt[pckReadU32P(ruleData)];
-                        optionalRules->allowRangeMax = parseRuleValueInt[pckReadU32P(ruleData)];
+                        optionalRules->allowRangeMinIdx = pckReadU32P(ruleData);
+                        optionalRules->allowRangeMaxIdx = pckReadU32P(ruleData);
+                        optionalRules->allowRangeMin = cfgParseOptionValue(ruleOption->type, optionalRules->allowRangeMinIdx);
+                        optionalRules->allowRangeMax = cfgParseOptionValue(ruleOption->type, optionalRules->allowRangeMaxIdx);
 
                         break;
                     }
@@ -998,32 +1070,27 @@ cfgParseOptionalRule(
 
                             default:
                             {
+                                const unsigned int valueIdx = pckReadU32P(ruleData);
+
                                 switch (ruleOption->type)
                                 {
                                     case cfgOptTypeInteger:
-                                    case cfgOptTypeTime:
                                     case cfgOptTypeSize:
-                                    {
-                                        optionalRules->defaultValue.integer = parseRuleValueInt[pckReadU32P(ruleData)];
-                                        optionalRules->defaultRaw = (const String *)&parseRuleValueStr[pckReadU32P(ruleData)];
-
+                                    case cfgOptTypeTime:
+                                        optionalRules->defaultValue.integer = cfgParseOptionValue(ruleOption->type, valueIdx);
                                         break;
-                                    }
 
                                     case cfgOptTypePath:
                                     case cfgOptTypeString:
-                                    {
-                                        optionalRules->defaultRaw = (const String *)&parseRuleValueStr[pckReadU32P(ruleData)];
-                                        optionalRules->defaultValue.string = optionalRules->defaultRaw;
-
+                                        optionalRules->defaultValue.string = cfgParseOptionValueStr(ruleOption->type, valueIdx);
                                         break;
-                                    }
 
                                     case cfgOptTypeStringId:
-                                        optionalRules->defaultValue.stringId = parseRuleValueStrId[pckReadU32P(ruleData)];
-                                        optionalRules->defaultRaw = (const String *)&parseRuleValueStr[pckReadU32P(ruleData)];
+                                        optionalRules->defaultValue.stringId = parseRuleValueStrId[valueIdx];
                                         break;
                                 }
+
+                                optionalRules->defaultRaw = cfgParseOptionValueStr(ruleOption->type, valueIdx);
                             }
                         }
 
@@ -2300,9 +2367,9 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                             // Build type dependent error data
                             const String *errorValue = EMPTY_STR;
 
-                            switch (cfgParseOptionDataType(dependId))
+                            switch (parseRuleOption[dependId].type)
                             {
-                                case cfgOptDataTypeBoolean:
+                                case cfgOptTypeBoolean:
                                 {
                                     if (!pckReadBoolP(filter))
                                         dependOptionName = strNewFmt("no-%s", strZ(dependOptionName));
@@ -2312,8 +2379,6 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
 
                                 default:
                                 {
-                                    ASSERT(cfgParseOptionDataType(dependId) == cfgOptDataTypeStringId);
-
                                     String *const errorList = strNew();
                                     unsigned int validSize = 0;
 
@@ -2321,7 +2386,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                                     {
                                         strCatFmt(
                                             errorList, "%s'%s'", validSize != 0 ? ", " : "",
-                                            strZ(strIdToStr(parseRuleValueStrId[pckReadU32P(filter)])));
+                                            strZ(cfgParseOptionValueStr(parseRuleOption[dependId].type, pckReadU32P(filter))));
 
                                         validSize++;
                                     }
@@ -2446,8 +2511,12 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                                          configOptionValue->value.integer > optionalRules.allowRangeMax))
                                     {
                                         THROW_FMT(
-                                            OptionInvalidValueError, "'%s' is out of range for '%s' option", strZ(value),
-                                            cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
+                                            OptionInvalidValueError,
+                                            "'%s' is out of range for '%s' option\n"
+                                            "HINT: allowed range is %s to %s inclusive",
+                                            strZ(value), cfgParseOptionKeyIdxName(optionId, optionKeyIdx),
+                                            strZ(cfgParseOptionValueStr(optionType, optionalRules.allowRangeMinIdx)),
+                                            strZ(cfgParseOptionValueStr(optionType, optionalRules.allowRangeMaxIdx)));
                                     }
                                 }
                                 // Else if StringId
@@ -2526,12 +2595,10 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                                                 break;
 
                                             default:
-                                            {
-                                                ASSERT(ruleOption->type == cfgOptTypeSize);
-
-                                                allowListFound = parseRuleValueInt[valueIdx] == configOptionValue->value.integer;
+                                                allowListFound =
+                                                    cfgParseOptionValue(ruleOption->type, valueIdx) ==
+                                                    configOptionValue->value.integer;
                                                 break;
-                                            }
                                         }
 
                                         // Stop when allow list is exhausted or value is found
@@ -2548,9 +2615,25 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
 
                                     if (!allowListFound)
                                     {
+                                        PackRead *const allowList = pckReadNewC(
+                                            optionalRules.allowList, optionalRules.allowListSize);
+                                        String *const hintList = strNew();
+
+                                        while (!pckReadNullP(allowList))
+                                        {
+                                            if (!strEmpty(hintList))
+                                                strCatZ(hintList, ", ");
+
+                                            strCatFmt(
+                                                hintList, "'%s'",
+                                                strZ(cfgParseOptionValueStr(ruleOption->type, pckReadU32P(allowList))));
+                                        }
+
                                         THROW_FMT(
-                                            OptionInvalidValueError, "'%s' is not allowed for '%s' option", strZ(valueAllow),
-                                            cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
+                                            OptionInvalidValueError,
+                                            "'%s' is not allowed for '%s' option\n"
+                                            "HINT: allowed values are %s",
+                                            strZ(valueAllow), cfgParseOptionKeyIdxName(optionId, optionKeyIdx), strZ(hintList));
                                     }
                                 }
                             }

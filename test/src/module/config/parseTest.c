@@ -1048,7 +1048,8 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptManifestSaveThreshold, "999t");
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidValueError,
-            "'999t' is out of range for 'manifest-save-threshold' option");
+            "'999t' is out of range for 'manifest-save-threshold' option\n"
+            "HINT: allowed range is 1B to 1TiB inclusive");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("value missing");
@@ -1315,7 +1316,8 @@ testRun(void)
         strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidValueError,
-            "'^bogus' is not allowed for 'type' option");
+            "'^bogus' is not allowed for 'type' option\n"
+            "HINT: allowed values are 'lsn', 'name', 'time', 'xid', 'preserve', 'none', 'immediate', 'default', 'standby'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("option value invalid (size)");
@@ -1328,7 +1330,9 @@ testRun(void)
         strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidValueError,
-            "'777' is not allowed for 'buffer-size' option");
+            "'777' is not allowed for 'buffer-size' option\n"
+            "HINT: allowed values are '16KiB', '32KiB', '64KiB', '128KiB', '256KiB', '512KiB', '1MiB', '2MiB', '4MiB', '8MiB',"
+            " '16MiB'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("option value not in allowed list");
@@ -1341,7 +1345,8 @@ testRun(void)
         strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidValueError,
-            "'bogus' is not allowed for 'type' option");
+            "'bogus' is not allowed for 'type' option\n"
+            "HINT: allowed values are 'lsn', 'name', 'time', 'xid', 'preserve', 'none', 'immediate', 'default', 'standby'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("lower and upper bounds for integer ranges");
@@ -1354,7 +1359,8 @@ testRun(void)
         strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidValueError,
-            "'0' is out of range for 'process-max' option");
+            "'0' is out of range for 'process-max' option\n"
+            "HINT: allowed range is 1 to 999 inclusive");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
@@ -1364,7 +1370,8 @@ testRun(void)
         strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidValueError,
-            "'65536' is out of range for 'process-max' option");
+            "'65536' is out of range for 'process-max' option\n"
+            "HINT: allowed range is 1 to 999 inclusive");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("character value when integer expected");
@@ -1390,7 +1397,8 @@ testRun(void)
         strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidValueError,
-            "'10ms' is out of range for 'protocol-timeout' option");
+            "'10ms' is out of range for 'protocol-timeout' option\n"
+            "HINT: allowed range is 100ms to 7d inclusive");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);

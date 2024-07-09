@@ -15,7 +15,7 @@ Functions
 FN_EXTERN Buffer *tlsAsn1ToBuf(const ASN1_STRING *nameAsn1);
 
 // Convert an ASN1 string used in certificates to a String
-FN_EXTERN String *tlsAsn1ToStr(ASN1_STRING *nameAsn1);
+FN_EXTERN String *tlsAsn1ToStr(const ASN1_STRING *nameAsn1);
 
 // Get common name from a certificate
 FN_EXTERN String *tlsCertCommonName(X509 *certificate);
