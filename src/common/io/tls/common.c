@@ -29,11 +29,7 @@ tlsAsn1ToBuf(const ASN1_STRING *const nameAsn1)
     FUNCTION_TEST_RETURN(                                                                                           // {vm_covered}
         BUFFER,
         bufNewC(
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-            (const char *)ASN1_STRING_data(nameAsn1),
-#else
             (const char *)ASN1_STRING_get0_data(nameAsn1),
-#endif
             (size_t)ASN1_STRING_length(nameAsn1)));
 }
 
