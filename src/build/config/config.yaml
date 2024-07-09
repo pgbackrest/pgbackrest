@@ -1124,7 +1124,7 @@ option:
     section: global
     type: size
     default: 128MiB
-    allow-range: [0, 4PiB]
+    allow-range: [0B, 4PiB]
     command:
       archive-get: {}
     command-role:
@@ -1154,7 +1154,7 @@ option:
     section: global
     type: size
     required: false
-    allow-range: [0, 4PiB]
+    allow-range: [0B, 4PiB]
     command:
       archive-push: {}
     command-role:
@@ -1274,7 +1274,7 @@ option:
     section: global
     type: size
     default: 1GiB
-    allow-range: [1, 1TiB]
+    allow-range: [1B, 1TiB]
     command:
       backup: {}
     command-role:
