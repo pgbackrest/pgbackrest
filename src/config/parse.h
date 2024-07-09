@@ -65,6 +65,9 @@ typedef struct CfgParseParam
 
 FN_EXTERN void cfgParse(const Storage *storage, unsigned int argListSize, const char *argList[], CfgParseParam param);
 
+// Get command id by name
+FN_EXTERN ConfigCommand cfgParseCommandId(const char *commandName);
+
 // Get command name by id
 FN_EXTERN const char *cfgParseCommandName(ConfigCommand commandId);
 

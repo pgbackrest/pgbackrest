@@ -220,7 +220,7 @@ helpRender(const Buffer *const helpData)
         const String *more = NULL;
 
         // Display general help
-        if (cfgCommand() == cfgCmdNone)
+        if (strLstEmpty(cfgCommandParam()))
         {
             strCatZ(
                 result,
@@ -260,8 +260,12 @@ helpRender(const Buffer *const helpData)
         }
         else
         {
-            const ConfigCommand commandId = cfgCommand();
-            const char *const commandName = cfgParseCommandName(commandId);
+            // Make sure only two parameters were specified
+            if (strLstSize(cfgCommandParam()) > 2)
+                THROW(ParamInvalidError, "only two parameters allowed for help");
+
+            const String *const commandName = strLstGet(cfgCommandParam(), 0);
+            const ConfigCommand commandId = cfgParseCommandId(strZ(commandName));
 
             // Unpack option data
             HelpOptionData *const optionData = memNew(sizeof(HelpOptionData) * CFG_OPTION_TOTAL);
@@ -330,10 +334,10 @@ helpRender(const Buffer *const helpData)
             pckReadArrayEndP(pckHelp);
 
             // Output command part of title
-            strCatFmt(result, " - '%s' command", commandName);
+            strCatFmt(result, " - '%s' command", strZ(commandName));
 
             // If no additional params then this is command help
-            if (strLstEmpty(cfgCommandParam()))
+            if (strLstSize(cfgCommandParam()) == 1)
             {
                 // Output command summary and description. Add a warning for internal commands.
                 CHECK(
@@ -410,22 +414,18 @@ helpRender(const Buffer *const helpData)
 
                 // Construct message for more help if there are options
                 if (optionSizeMax > 0)
-                    more = strNewFmt("%s [option]", commandName);
+                    more = strNewFmt("%s [option]", strZ(commandName));
             }
             // Else option help for the specified command
             else
             {
-                // Make sure only one option was specified
-                if (strLstSize(cfgCommandParam()) > 1)
-                    THROW(ParamInvalidError, "only one option allowed for option help");
-
                 // Ensure the option is valid
-                const String *const optionName = strLstGet(cfgCommandParam(), 0);
+                const String *const optionName = strLstGet(cfgCommandParam(), 1);
                 const CfgParseOptionResult option = cfgParseOptionP(optionName, .ignoreMissingIndex = true);
 
                 // Error when option is not found or is invalid for the current command
-                if (!option.found || !cfgParseOptionValid(cfgCommand(), cfgCmdRoleMain, option.id))
-                    THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
+                if (!option.found || !cfgParseOptionValid(commandId, cfgCmdRoleMain, option.id))
+                    THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), strZ(commandName));
 
                 // Output option summary and description. Add a warning for internal and beta options.
                 CHECK(

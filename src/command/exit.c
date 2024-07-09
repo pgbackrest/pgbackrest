@@ -138,33 +138,30 @@ exitSafe(int result, const bool error, const SignalType signalType)
     }
 
     // Log command end if a command is set
-    if (cfgCommand() != cfgCmdNone)
+    String *errorMessage = NULL;
+
+    // On error generate an error message
+    if (result != 0)
     {
-        String *errorMessage = NULL;
-
-        // On error generate an error message
-        if (result != 0)
+        // On process terminate
+        if (result == errorTypeCode(&TermError))
         {
-            // On process terminate
-            if (result == errorTypeCode(&TermError))
-            {
-                errorMessage = strCatZ(strNew(), "terminated on signal ");
+            errorMessage = strCatZ(strNew(), "terminated on signal ");
 
-                // Terminate from a child
-                if (signalType == signalTypeNone)
-                    strCatZ(errorMessage, "from child process");
-                // Else terminated directly
-                else
-                    strCatFmt(errorMessage, "[SIG%s]", exitSignalName(signalType));
-            }
-            // Standard error exit message
-            else if (error)
-                errorMessage = strNewFmt("aborted with exception [%03d]", result);
+            // Terminate from a child
+            if (signalType == signalTypeNone)
+                strCatZ(errorMessage, "from child process");
+            // Else terminated directly
+            else
+                strCatFmt(errorMessage, "[SIG%s]", exitSignalName(signalType));
         }
-
-        cmdEnd(result, errorMessage);
-        strFree(errorMessage);
+        // Standard error exit message
+        else if (error)
+            errorMessage = strNewFmt("aborted with exception [%03d]", result);
     }
+
+    cmdEnd(result, errorMessage);
+    strFree(errorMessage);
 
     // Release any locks but ignore errors
     TRY_BEGIN()

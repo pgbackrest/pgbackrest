@@ -103,15 +103,9 @@ main(int argListSize, const char *argList[])
         cfgLoad((unsigned int)argListSize, argList);
         ConfigCommandRole commandRole = cfgCommandRole();
 
-        // Display help
-        // -------------------------------------------------------------------------------------------------------------------------
-        if (cfgCommandHelp())
-        {
-            cmdHelp(BUF(helpData, sizeof(helpData)));
-        }
         // Local role
         // -------------------------------------------------------------------------------------------------------------------------
-        else if (commandRole == cfgCmdRoleLocal)
+        if (commandRole == cfgCmdRoleLocal)
         {
             String *name = strNewFmt(PROTOCOL_SERVICE_LOCAL "-%s", strZ(cfgOptionDisplay(cfgOptProcess)));
 
@@ -205,8 +199,8 @@ main(int argListSize, const char *argList[])
                 // Help command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdHelp:
-                case cfgCmdNone:
-                    THROW(AssertError, "'help' and 'none' commands should have been handled already");
+                    cmdHelp(BUF(helpData, sizeof(helpData)));
+                    break;
 
                 // Info command
                 // -----------------------------------------------------------------------------------------------------------------

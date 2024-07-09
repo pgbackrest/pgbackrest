@@ -70,7 +70,6 @@ typedef struct Config
     ConfigCommandRole commandRole;                                  // Current command role
 
     String *exe;                                                    // Location of the executable
-    bool help;                                                      // Was help requested for the command?
     bool lockRequired;                                              // Is an immediate lock required?
     bool lockRemoteRequired;                                        // Is a lock required on the remote?
     LockType lockType;                                              // Lock type required

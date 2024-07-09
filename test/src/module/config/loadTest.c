@@ -288,7 +288,7 @@ testRun(void)
 
         harnessLogLevelSet(logLevelWarn);
         HRN_CFG_LOAD(cfgCmdHelp, argList, .comment = "load help config -- no retention warning");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "command is help");
+        TEST_RESULT_UINT(cfgCommand(), cfgCmdHelp, "command is help");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("retention-full warning, retention-archive-type full - expire command");
@@ -870,32 +870,6 @@ testRun(void)
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command");
         TEST_RESULT_UINT(ioBufferSize(), 333, "buffer size not updated by help command");
         TEST_RESULT_BOOL(socketLocal.init, false, "socketLocal not updated by help command");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("help command for backup");
-
-        argList = strLstNew();
-        strLstAddZ(argList, PROJECT_BIN);
-        strLstAddZ(argList, "help");
-        strLstAddZ(argList, "backup");
-        hrnCfgArgRawZ(argList, cfgOptLogLevelConsole, "off");
-        hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, "off");
-        hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "off");
-        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
-
-        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command for backup");
-        TEST_RESULT_UINT(ioBufferSize(), 1048576, "buffer size set to option default");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("help command for help");
-
-        argList = strLstNew();
-        strLstAddZ(argList, PROJECT_BIN);
-        strLstAddZ(argList, "help");
-        strLstAddZ(argList, "help");
-
-        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
-        TEST_RESULT_UINT(ioBufferSize(), 1048576, "buffer size set to option default");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command takes lock and opens log file and uses custom tcp settings");

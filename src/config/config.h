@@ -247,9 +247,6 @@ Load Functions
 Used primarily by modules that need to manipulate the configuration. These modules include, but are not limited to, config/parse.c,
 config/load.c.
 ***********************************************************************************************************************************/
-// Was help requested?
-FN_EXTERN bool cfgCommandHelp(void);
-
 FN_EXTERN void cfgCommandSet(ConfigCommand commandId, ConfigCommandRole commandRoleId);
 
 // pgBackRest exe

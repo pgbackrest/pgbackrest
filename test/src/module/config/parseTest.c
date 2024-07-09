@@ -87,7 +87,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("config command defaults to none before cfgInit()");
 
-        TEST_RESULT_UINT(cfgCommand(), cfgCmdNone, "command is none");
+        TEST_RESULT_UINT(cfgCommand(), cfgCmdHelp, "command is helps");
     }
 
     // config and config-include-path options
@@ -1536,8 +1536,7 @@ testRun(void)
         hrnLogLevelStdOutSet(logLevelOff);
         hrnLogLevelStdErrSet(logLevelOff);
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList)), "no command");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command is none");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is none");
         TEST_RESULT_INT(hrnLogLevelStdOut(), logLevelWarn, "console logging is warn");
         TEST_RESULT_INT(hrnLogLevelStdErr(), logLevelOff, "stderr logging is off");
         harnessLogLevelReset();
@@ -1550,8 +1549,7 @@ testRun(void)
         strLstAddZ(argList, "help");
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "help command");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command is help");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
@@ -1560,9 +1558,8 @@ testRun(void)
 
         TEST_RESULT_VOID(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "help for version command");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdVersion, "command is version");
-        TEST_RESULT_Z(cfgCommandName(), "version", "command name is version");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
+        TEST_RESULT_Z(cfgCommandName(), "help", "command name is help");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
@@ -1571,7 +1568,6 @@ testRun(void)
 
         TEST_RESULT_VOID(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
         TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1582,8 +1578,7 @@ testRun(void)
         strLstAddZ(argList, "--help");
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command is none");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is none");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("version option");
@@ -1593,7 +1588,6 @@ testRun(void)
         strLstAddZ(argList, "--version");
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
-        TEST_RESULT_BOOL(cfgCommandHelp(), false, "help is not set");
         TEST_RESULT_INT(cfgCommand(), cfgCmdVersion, "command is version");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1605,8 +1599,7 @@ testRun(void)
         strLstAddZ(argList, "--version");
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is not set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command is none");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is none");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on command with --help option");
@@ -1631,21 +1624,6 @@ testRun(void)
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
             "invalid option '--version'");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("help command - should not fail on missing options");
-
-        argList = strLstNew();
-        strLstAddZ(argList, TEST_BACKREST_EXE);
-        strLstAddZ(argList, "help");
-        strLstAddZ(argList, "backup");
-
-        TEST_RESULT_VOID(
-            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "help for backup command");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdBackup, "command is backup");
-        TEST_RESULT_BOOL(cfgOptionValid(cfgOptPgPath), true, "pg1-path is valid");
-        TEST_RESULT_PTR(cfgOptionVar(cfgOptPgPath), NULL, "pg1-path is not set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command argument valid");
@@ -1690,7 +1668,7 @@ testRun(void)
         TEST_RESULT_BOOL(cfgLockRemoteRequired(), true, "backup command requires remote lock");
         TEST_RESULT_STRLST_Z(cfgCommandParam(), NULL, "check command arguments");
         TEST_RESULT_UINT(cfgParseCommandRoleEnum(NULL), cfgCmdRoleMain, "command role main enum");
-        TEST_ERROR(cfgParseCommandRoleEnum(STRDEF("bogus")), CommandInvalidError, "invalid command role 'bogus'");
+        TEST_ERROR(cfgParseCommandRoleEnum("bogus"), CommandInvalidError, "invalid command role 'bogus'");
         TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleMain, "command role is main");
         TEST_RESULT_STR_Z(cfgCommandRoleName(), "backup", "command/role name is backup");
         TEST_RESULT_STR_Z(cfgParseCommandRoleStr(cfgCmdRoleMain), NULL, "main role name is NULL");
@@ -1920,7 +1898,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("set command to expire");
 
-        TEST_RESULT_VOID(cfgCommandSet(cfgCmdExpire, cfgParseCommandRoleEnum(STRDEF("async"))), "set command");
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdExpire, cfgParseCommandRoleEnum("async")), "set command");
         TEST_RESULT_STR_Z(cfgCommandRoleName(), "expire:async", "command/role name is expire:async");
 
         // -------------------------------------------------------------------------------------------------------------------------

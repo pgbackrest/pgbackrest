@@ -354,7 +354,7 @@ testRun(void)
         strLstAddZ(argList, "buffer-size");
         strLstAddZ(argList, "buffer-size");
         TEST_RESULT_VOID(testCfgLoad(argList), "parse too many options");
-        TEST_ERROR(helpRender(helpData), ParamInvalidError, "only one option allowed for option help");
+        TEST_ERROR(helpRender(helpData), ParamInvalidError, "only two parameters allowed for help");
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");

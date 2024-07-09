@@ -47,7 +47,6 @@ testRun(void)
     if (testBegin("exitSafe()"))
     {
         HRN_CFG_LOAD(cfgCmdHelp, strLstNew());
-        cfgCommandSet(cfgCmdNone, cfgCmdRoleMain);
 
         TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no command");
 

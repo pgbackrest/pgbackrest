@@ -56,57 +56,54 @@ main(int argListSize, const char *argList[])
         // -------------------------------------------------------------------------------------------------------------------------
         cfgLoad((unsigned int)argListSize, argList);
 
-        // Display help
+        // Process command
         // -------------------------------------------------------------------------------------------------------------------------
-        if (cfgCommandHelp())
+        switch (cfgCommand())
         {
-            cmdHelp(BUF(helpData, sizeof(helpData)));
-        }
-        else
-        {
-            switch (cfgCommand())
+            // Test
+            // -----------------------------------------------------------------------------------------------------------------
+            case cfgCmdTest:
             {
-                // Test
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdTest:
+                // Run a single test
+                if (cfgOptionTest(cfgOptVmId))
                 {
-                    // Run a single test
-                    if (cfgOptionTest(cfgOptVmId))
-                    {
-                        cmdTest(
-                            cfgOptionStr(cfgOptRepoPath), cfgOptionStr(cfgOptTestPath), cfgOptionStr(cfgOptVm),
-                            cfgOptionUInt(cfgOptVmId), cfgOptionStr(cfgOptPgVersion), strLstGet(cfgCommandParam(), 0),
-                            cfgOptionTest(cfgOptTest) ? cfgOptionUInt(cfgOptTest) : 0, cfgOptionUInt64(cfgOptScale),
-                            logLevelEnum(cfgOptionStrId(cfgOptLogLevelTest)), cfgOptionBool(cfgOptLogTimestamp),
-                            cfgOptionStrNull(cfgOptTz), cfgOptionBool(cfgOptCoverage), cfgOptionBool(cfgOptProfile),
-                            cfgOptionBool(cfgOptOptimize), cfgOptionBool(cfgOptBackTrace));
-                    }
-                    // Top-level test
-                    else
-                    {
-                        result = testCvgGenerate(
-                            cfgOptionStr(cfgOptRepoPath), cfgOptionStr(cfgOptTestPath), cfgOptionStr(cfgOptVm),
-                            cfgOptionBool(cfgOptCoverageSummary), cfgCommandParam()) > 0;
-                    }
-
-                    break;
+                    cmdTest(
+                        cfgOptionStr(cfgOptRepoPath), cfgOptionStr(cfgOptTestPath), cfgOptionStr(cfgOptVm),
+                        cfgOptionUInt(cfgOptVmId), cfgOptionStr(cfgOptPgVersion), strLstGet(cfgCommandParam(), 0),
+                        cfgOptionTest(cfgOptTest) ? cfgOptionUInt(cfgOptTest) : 0, cfgOptionUInt64(cfgOptScale),
+                        logLevelEnum(cfgOptionStrId(cfgOptLogLevelTest)), cfgOptionBool(cfgOptLogTimestamp),
+                        cfgOptionStrNull(cfgOptTz), cfgOptionBool(cfgOptCoverage), cfgOptionBool(cfgOptProfile),
+                        cfgOptionBool(cfgOptOptimize), cfgOptionBool(cfgOptBackTrace));
+                }
+                // Top-level test
+                else
+                {
+                    result = testCvgGenerate(
+                        cfgOptionStr(cfgOptRepoPath), cfgOptionStr(cfgOptTestPath), cfgOptionStr(cfgOptVm),
+                        cfgOptionBool(cfgOptCoverageSummary), cfgCommandParam()) > 0;
                 }
 
-                // Display version
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdVersion:
-                    printf(PROJECT_NAME " Test " PROJECT_VERSION "\n");
-                    fflush(stdout);
-                    break;
-
-                // Error on commands that should have already been handled
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdHelp:
-                case cfgCmdNone:
-                case cfgCmdNoop:
-                    THROW_FMT(AssertError, "'%s' command should have been handled", cfgCommandName());
-                    break;
+                break;
             }
+
+            // Help
+            // -----------------------------------------------------------------------------------------------------------------
+            case cfgCmdHelp:
+                cmdHelp(BUF(helpData, sizeof(helpData)));
+                break;
+
+            // Display version
+            // -----------------------------------------------------------------------------------------------------------------
+            case cfgCmdVersion:
+                printf(PROJECT_NAME " Test " PROJECT_VERSION "\n");
+                fflush(stdout);
+                break;
+
+            // Error on commands that should have already been handled
+            // -----------------------------------------------------------------------------------------------------------------
+            case cfgCmdNoop:
+                THROW_FMT(AssertError, "'%s' command should have been handled", cfgCommandName());
+                break;
         }
     }
     CATCH_FATAL()

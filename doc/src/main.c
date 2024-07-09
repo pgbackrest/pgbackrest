@@ -55,37 +55,33 @@ main(int argListSize, const char *argList[])
         // -------------------------------------------------------------------------------------------------------------------------
         cfgLoad((unsigned int)argListSize, argList);
 
-        // Display help
-        // -------------------------------------------------------------------------------------------------------------------------
-        if (cfgCommandHelp())
+        // Process command
+        switch (cfgCommand())
         {
-            cmdHelp(BUF(helpData, sizeof(helpData)));
-        }
-        else
-        {
-            switch (cfgCommand())
-            {
-                // Build
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdBuild:
-                    cmdBuild(cfgOptionStr(cfgOptRepoPath));
-                    break;
+            // Build
+            // -----------------------------------------------------------------------------------------------------------------
+            case cfgCmdBuild:
+                cmdBuild(cfgOptionStr(cfgOptRepoPath));
+                break;
 
-                // Display version
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdVersion:
-                    printf(PROJECT_NAME " Documentation " PROJECT_VERSION "\n");
-                    fflush(stdout);
-                    break;
+            // Help
+            // -----------------------------------------------------------------------------------------------------------------
+            case cfgCmdHelp:
+                cmdHelp(BUF(helpData, sizeof(helpData)));
+                break;
 
-                // Error on commands that should have already been handled
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdHelp:
-                case cfgCmdNone:
-                case cfgCmdNoop:
-                    THROW_FMT(AssertError, "'%s' command should have been handled", cfgCommandName());
-                    break;
-            }
+            // Display version
+            // -----------------------------------------------------------------------------------------------------------------
+            case cfgCmdVersion:
+                printf(PROJECT_NAME " Documentation " PROJECT_VERSION "\n");
+                fflush(stdout);
+                break;
+
+            // Error on commands that should have already been handled
+            // -----------------------------------------------------------------------------------------------------------------
+            case cfgCmdNoop:
+                THROW_FMT(AssertError, "'%s' command should have been handled", cfgCommandName());
+                break;
         }
     }
     CATCH_FATAL()

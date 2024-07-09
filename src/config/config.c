@@ -42,7 +42,7 @@ FN_EXTERN ConfigCommand
 cfgCommand(void)
 {
     FUNCTION_TEST_VOID();
-    FUNCTION_TEST_RETURN(ENUM, configLocal == NULL ? cfgCmdNone : configLocal->command);
+    FUNCTION_TEST_RETURN(ENUM, configLocal == NULL ? cfgCmdHelp : configLocal->command);
 }
 
 FN_EXTERN ConfigCommandRole
@@ -62,7 +62,7 @@ cfgCommandSet(ConfigCommand commandId, ConfigCommandRole commandRoleId)
     FUNCTION_TEST_END();
 
     ASSERT(configLocal != NULL);
-    ASSERT(commandId <= cfgCmdNone);
+    ASSERT(commandId < CFG_COMMAND_TOTAL);
 
     configLocal->command = commandId;
     configLocal->commandRole = commandRoleId;
@@ -70,14 +70,6 @@ cfgCommandSet(ConfigCommand commandId, ConfigCommandRole commandRoleId)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/**********************************************************************************************************************************/
-FN_EXTERN bool
-cfgCommandHelp(void)
-{
-    FUNCTION_TEST_VOID();
-    ASSERT(configLocal != NULL);
-    FUNCTION_TEST_RETURN(BOOL, configLocal->help);
-}
 
 /**********************************************************************************************************************************/
 FN_EXTERN VariantList *
@@ -113,7 +105,7 @@ cfgCommandName(void)
     FUNCTION_TEST_VOID();
 
     ASSERT(configLocal != NULL);
-    ASSERT(configLocal->command < cfgCmdNone);
+    ASSERT(configLocal->command < CFG_COMMAND_TOTAL);
 
     FUNCTION_TEST_RETURN_CONST(STRINGZ, cfgParseCommandName(configLocal->command));
 }
@@ -161,7 +153,7 @@ cfgLockRequired(void)
     FUNCTION_TEST_VOID();
 
     ASSERT(configLocal != NULL);
-    ASSERT(configLocal->command != cfgCmdNone);
+    ASSERT(configLocal->command < CFG_COMMAND_TOTAL);
 
     // Local roles never take a lock and the remote role has special logic for locking
     FUNCTION_TEST_RETURN(
@@ -179,7 +171,7 @@ cfgLockRemoteRequired(void)
     FUNCTION_TEST_VOID();
 
     ASSERT(configLocal != NULL);
-    ASSERT(configLocal->command != cfgCmdNone);
+    ASSERT(configLocal->command < CFG_COMMAND_TOTAL);
 
     FUNCTION_TEST_RETURN(BOOL, configLocal->lockRemoteRequired);
 }
@@ -191,7 +183,7 @@ cfgLockType(void)
     FUNCTION_TEST_VOID();
 
     ASSERT(configLocal != NULL);
-    ASSERT(configLocal->command != cfgCmdNone);
+    ASSERT(configLocal->command < CFG_COMMAND_TOTAL);
 
     FUNCTION_TEST_RETURN(ENUM, configLocal->lockType);
 }
@@ -203,7 +195,7 @@ cfgLogFile(void)
     FUNCTION_TEST_VOID();
 
     ASSERT(configLocal != NULL);
-    ASSERT(configLocal->command != cfgCmdNone);
+    ASSERT(configLocal->command < CFG_COMMAND_TOTAL);
 
     FUNCTION_TEST_RETURN(
         BOOL,
@@ -222,7 +214,7 @@ cfgLogLevelDefault(void)
     FUNCTION_TEST_VOID();
 
     ASSERT(configLocal != NULL);
-    ASSERT(configLocal->command != cfgCmdNone);
+    ASSERT(configLocal->command < CFG_COMMAND_TOTAL);
 
     FUNCTION_TEST_RETURN(ENUM, configLocal->logLevelDefault);
 }
