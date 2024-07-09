@@ -200,6 +200,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("parse and render");
 
+        TEST_RESULT_STR(bldHlpRenderDefault(OPT_TYPE_BOOLEAN_STR, TRUE_STR), Y_STR, "check default true render");
+
         HRN_STORAGE_PUT_Z(
             storageTest, "src/build/config/config.yaml",
             "command:\n"
@@ -233,14 +235,15 @@ testRun(void)
             "  buffer-size:\n"
             "    section: global\n"
             "    type: integer\n"
-            "    default: 1024\n"
-            "    allow-list: [512, 1024, 2048, 4096]\n"
+            "    default: 1KiB\n"
+            "    allow-list: [512B, 1KiB, 2KiB, 4KiB]\n"
             "\n"
             "  force:\n"
             "    type: boolean\n"
             "    internal: true\n"
             "    command:\n"
-            "      check: {}\n"
+            "      check:\n"
+            "        default: false\n"
             "      restore: {}\n"
             "\n"
             "  stanza:\n"
@@ -370,11 +373,12 @@ testRun(void)
                 "2:str:general"
                 ", 3:str:Buffer size for file operations."
                 ", 4:str:Buffer."
+                ", 5:str:1KiB"
                 // config option
-                ", 8:str:stanza"
-                ", 9:str:pgBackRest configuration file."
-                ", 10:str:Use this option to specify a different configuration file than the default."
-                ", 12:array:"
+                ", 9:str:stanza"
+                ", 10:str:pgBackRest configuration file."
+                ", 11:str:Use this option to specify a different configuration file than the default."
+                ", 14:array:"
                 "["
                     // backup command override
                     "1:obj:"
@@ -383,14 +387,16 @@ testRun(void)
                     "}"
                 "]"
                 // force option
-                ", 13:bool:true"
-                ", 18:array:"
+                ", 15:bool:true"
+                ", 19:str:y"
+                ", 21:array:"
                 "["
                     // check command override
                     "2:obj:"
                     "{"
                         "2:str:Force delete."
                         ", 3:str:Longer description."
+                        ", 4:str:n"
                     "}"
                     // restore command override
                     ", 3:obj:"
@@ -400,10 +406,10 @@ testRun(void)
                     "}"
                 "]"
                 // stanza option
-                ", 20:str:general"
-                ", 21:str:Defines the stanza."
-                ", 22:str:Stanza."
-                ", 23:array:"
+                ", 23:str:general"
+                ", 24:str:Defines the stanza."
+                ", 25:str:Stanza."
+                ", 27:array:"
                 "["
                     "1:str:stanza1"
                     ", 2:str:stanza2"

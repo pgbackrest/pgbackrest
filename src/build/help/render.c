@@ -124,6 +124,26 @@ bldHlpRenderXml(const XmlNode *const xml)
 }
 
 /***********************************************************************************************************************************
+Render default
+***********************************************************************************************************************************/
+static const String *
+bldHlpRenderDefault(const String *const optType, const String *const defaultValue)
+{
+    if (strEq(optType, OPT_TYPE_BOOLEAN_STR))
+    {
+        if (defaultValue != NULL && strEq(defaultValue, FALSE_STR))
+            return N_STR;
+
+        return Y_STR;
+    }
+
+    if (defaultValue != NULL)
+        return defaultValue;
+
+    return NULL;
+}
+
+/***********************************************************************************************************************************
 Render help to a pack
 ***********************************************************************************************************************************/
 static PackWrite *
@@ -178,6 +198,9 @@ bldHlpRenderHelpAutoCPack(const BldCfg bldCfg, const BldHlp bldHlp)
         else
             pckWriteNullP(pack);
 
+        // Default
+        pckWriteStrP(pack, bldHlpRenderDefault(opt->type, opt->defaultValue));
+
         // Deprecations
         StringList *const deprecateList = strLstNew();
 
@@ -210,7 +233,7 @@ bldHlpRenderHelpAutoCPack(const BldCfg bldCfg, const BldHlp bldHlp)
         for (unsigned int cmdIdx = 0; cmdIdx < lstSize(bldCfg.cmdList); cmdIdx++)
         {
             const BldCfgCommand *const cmd = lstGet(bldCfg.cmdList, cmdIdx);
-            const BldCfgCommand *const optCmd = lstFind(opt->cmdList, &cmd->name);
+            const BldCfgOptionCommand *const optCmd = lstFind(opt->cmdList, &cmd->name);
 
             if (optCmd != NULL)
             {
@@ -237,6 +260,14 @@ bldHlpRenderHelpAutoCPack(const BldCfg bldCfg, const BldHlp bldHlp)
                     {
                         pckWriteStrP(pack, bldHlpRenderXml(cmdOptHlp->summary));
                         pckWriteStrP(pack, bldHlpRenderXml(cmdOptHlp->description));
+                    }
+
+                    // Default
+                    if (!strEq(
+                            bldHlpRenderDefault(opt->type, opt->defaultValue),
+                            bldHlpRenderDefault(opt->type, optCmd->defaultValue)))
+                    {
+                        pckWriteStrP(pack, bldHlpRenderDefault(opt->type, optCmd->defaultValue));
                     }
 
                     pckWriteObjEndP(pack);

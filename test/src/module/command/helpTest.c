@@ -204,54 +204,45 @@ testRun(void)
             "Command Options:\n"
             "\n"
             "  --archive-mode                      preserve or disable archiving on restored\n"
-            "                                      cluster [default=preserve]\n"
+            "                                      cluster\n"
             "  --db-exclude                        restore excluding the specified databases\n"
             "  --db-include                        restore only specified databases\n"
-            "                                      [current=db1, db2]\n"
-            "  --force                             force a restore [default=n]\n"
-            "  --link-all                          restore all symlinks [default=n]\n"
+            "  --force                             force a restore\n"
+            "  --link-all                          restore all symlinks\n"
             "  --link-map                          modify the destination of a symlink\n"
-            "                                      [current=/link1=/dest1, /link2=/dest2]\n"
             "  --recovery-option                   set an option in postgresql.auto.conf or\n"
             "                                      recovery.conf\n"
-            "  --set                               backup set to restore [default=latest]\n"
+            "  --set                               backup set to restore\n"
             "  --tablespace-map                    restore a tablespace into the specified\n"
             "                                      directory\n"
             "  --tablespace-map-all                restore all tablespaces into the\n"
             "                                      specified directory\n"
             "  --target                            recovery target\n"
             "  --target-action                     action to take when recovery target is\n"
-            "                                      reached [default=pause]\n"
+            "                                      reached\n"
             "  --target-exclusive                  stop just before the recovery target is\n"
-            "                                      reached [default=n]\n"
+            "                                      reached\n"
             "  --target-timeline                   recover along a timeline\n"
-            "  --type                              recovery type [default=default]\n"
+            "  --type                              recovery type\n"
             "\n"
             "General Options:\n"
             "\n"
             "  --buffer-size                       buffer size for I/O operations\n"
-            "                                      [current=32768, default=1MiB]\n"
             "  --cmd                               pgBackRest command\n"
-            "                                      [default=/path/to/pgbackrest]\n"
-            "  --cmd-ssh                           SSH client command [default=ssh]\n"
-            "  --compress-level-network            network compression level [default=3]\n"
+            "  --cmd-ssh                           SSH client command\n"
+            "  --compress-level-network            network compression level\n"
             "  --config                            pgBackRest configuration file\n"
-            "                                      [default=/etc/pgbackrest/pgbackrest.conf]\n"
             "  --config-include-path               path to additional pgBackRest\n"
             "                                      configuration files\n"
-            "                                      [default=/etc/pgbackrest/conf.d]\n"
             "  --config-path                       base path of pgBackRest configuration\n"
-            "                                      files [default=/etc/pgbackrest]\n"
+            "                                      files\n"
             "  --delta                             restore or backup using checksums\n"
-            "                                      [default=n]\n"
-            "  --io-timeout                        I/O timeout [default=1m]\n"
+            "  --io-timeout                        I/O timeout\n"
             "  --lock-path                         path where lock files are stored\n"
-            "                                      [default=/tmp/pgbackrest]\n"
-            "  --neutral-umask                     use a neutral umask [default=y]\n"
-            "  --process-max                       max processes to use for\n"
-            "                                      compress/transfer [default=1]\n"
-            "  --protocol-timeout                  protocol timeout [default=31m]\n"
-            "  --sck-keep-alive                    keep-alive enable [default=y]\n"
+            "  --neutral-umask                     use a neutral umask\n"
+            "  --process-max                       max processes to use for compress/transfer\n"
+            "  --protocol-timeout                  protocol timeout\n"
+            "  --sck-keep-alive                    keep-alive enable\n"
             "  --stanza                            defines the stanza\n"
             "  --tcp-keep-alive-count              keep-alive count\n"
             "  --tcp-keep-alive-idle               keep-alive idle time\n"
@@ -259,13 +250,12 @@ testRun(void)
             "\n"
             "Log Options:\n"
             "\n"
-            "  --log-level-console                 level for console logging [default=warn]\n"
-            "  --log-level-file                    level for file logging [default=info]\n"
-            "  --log-level-stderr                  level for stderr logging [default=off]\n"
+            "  --log-level-console                 level for console logging\n"
+            "  --log-level-file                    level for file logging\n"
+            "  --log-level-stderr                  level for stderr logging\n"
             "  --log-path                          path where log files are stored\n"
-            "                                      [default=/var/log/pgbackrest]\n"
-            "  --log-subprocess                    enable logging in subprocesses [default=n]\n"
-            "  --log-timestamp                     enable timestamp in logging [default=y]\n"
+            "  --log-subprocess                    enable logging in subprocesses\n"
+            "  --log-timestamp                     enable timestamp in logging\n"
             "\n",
             "Maintainer Options:\n"
             "\n"
@@ -277,58 +267,47 @@ testRun(void)
             "  --repo-azure-account                azure repository account\n"
             "  --repo-azure-container              azure repository container\n"
             "  --repo-azure-endpoint               azure repository endpoint\n"
-            "                                      [default=blob.core.windows.net]\n"
             "  --repo-azure-key                    azure repository key\n"
-            "  --repo-azure-key-type               azure repository key type [default=shared]\n"
-            "  --repo-azure-uri-style              azure URI Style [default=host]\n"
+            "  --repo-azure-key-type               azure repository key type\n"
+            "  --repo-azure-uri-style              azure URI Style\n"
             "  --repo-cipher-pass                  repository cipher passphrase\n"
-            "                                      [current=<redacted>]\n"
             "  --repo-cipher-type                  cipher used to encrypt the repository\n"
-            "                                      [current=aes-256-cbc, default=none]\n"
             "  --repo-gcs-bucket                   GCS repository bucket\n"
             "  --repo-gcs-endpoint                 GCS repository endpoint\n"
-            "                                      [default=storage.googleapis.com]\n"
             "  --repo-gcs-key                      GCS repository key\n"
-            "  --repo-gcs-key-type                 GCS repository key type [default=service]\n"
+            "  --repo-gcs-key-type                 GCS repository key type\n"
             "  --repo-host                         repository host when operating remotely\n"
-            "                                      [current=backup.example.net]\n"
             "  --repo-host-ca-file                 repository host certificate authority file\n"
             "  --repo-host-ca-path                 repository host certificate authority path\n"
             "  --repo-host-cert-file               repository host certificate file\n"
             "  --repo-host-cmd                     repository host pgBackRest command\n"
-            "                                      [default=/path/to/pgbackrest]\n"
             "  --repo-host-config                  pgBackRest repository host configuration\n"
             "                                      file\n"
-            "                                      [default=/etc/pgbackrest/pgbackrest.conf]\n"
             "  --repo-host-config-include-path     pgBackRest repository host configuration\n"
             "                                      include path\n"
-            "                                      [default=/etc/pgbackrest/conf.d]\n"
             "  --repo-host-config-path             pgBackRest repository host configuration\n"
-            "                                      path [default=/etc/pgbackrest]\n"
+            "                                      path\n"
             "  --repo-host-key-file                repository host key file\n"
             "  --repo-host-port                    repository host port when repo-host is set\n"
             "  --repo-host-type                    repository host protocol type\n"
-            "                                      [default=ssh]\n"
-            "  --repo-host-user                    repository host user when repo-host is\n"
-            "                                      set [default=pgbackrest]\n"
+            "  --repo-host-user                    repository host user when repo-host is set\n"
             "  --repo-path                         path where backups and archive are stored\n"
-            "                                      [default=/var/lib/pgbackrest]\n"
             "  --repo-s3-bucket                    S3 repository bucket\n"
             "  --repo-s3-endpoint                  S3 repository endpoint\n"
             "  --repo-s3-key                       S3 repository access key\n"
             "  --repo-s3-key-secret                S3 repository secret access key\n"
-            "  --repo-s3-key-type                  S3 repository key type [default=shared]\n"
+            "  --repo-s3-key-type                  S3 repository key type\n"
             "  --repo-s3-kms-key-id                S3 repository KMS key\n"
             "  --repo-s3-region                    S3 repository region\n"
             "  --repo-s3-role                      S3 repository role\n"
             "  --repo-s3-sse-customer-key          S3 Repository SSE Customer Key\n"
             "  --repo-s3-token                     S3 repository security token\n"
-            "  --repo-s3-uri-style                 S3 URI Style [default=host]\n"
+            "  --repo-s3-uri-style                 S3 URI Style\n"
             "  --repo-sftp-host                    SFTP repository host\n"
             "  --repo-sftp-host-fingerprint        SFTP repository host fingerprint\n"
-            "  --repo-sftp-host-key-check-type     SFTP host key check type [default=strict]\n"
+            "  --repo-sftp-host-key-check-type     SFTP host key check type\n"
             "  --repo-sftp-host-key-hash-type      SFTP repository host key hash type\n"
-            "  --repo-sftp-host-port               SFTP repository host port [default=22]\n"
+            "  --repo-sftp-host-port               SFTP repository host port\n"
             "  --repo-sftp-host-user               SFTP repository host user\n"
             "  --repo-sftp-known-host              SFTP known hosts file\n"
             "  --repo-sftp-private-key-file        SFTP private key file\n"
@@ -337,13 +316,11 @@ testRun(void)
             "  --repo-storage-ca-file              repository storage CA file\n"
             "  --repo-storage-ca-path              repository storage CA path\n"
             "  --repo-storage-host                 repository storage host\n"
-            "  --repo-storage-port                 repository storage port [default=443]\n"
+            "  --repo-storage-port                 repository storage port\n"
             "  --repo-storage-tag                  repository storage tag(s)\n"
             "  --repo-storage-upload-chunk-size    repository storage upload chunk size\n"
             "  --repo-storage-verify-tls           repository storage certificate verify\n"
-            "                                      [default=y]\n"
             "  --repo-type                         type of storage used for the repository\n"
-            "                                      [default=posix]\n"
             "\n"
             "Stanza Options:\n"
             "\n"
@@ -423,7 +400,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptBufferSize, "32k");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, buffer-size option");
         TEST_RESULT_STR(
-            helpRender(helpData), strNewFmt("%s\ncurrent: 32k\ndefault: 1MiB\n", optionHelp), "check text, current value");
+            helpRender(helpData), strNewFmt("%s\ndefault: 1MiB\n", optionHelp), "check text, current value");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("deprecated host option names");
@@ -455,8 +432,6 @@ testRun(void)
 
         optionHelp = zNewFmt(
             HELP_OPTION
-            "current: s3-host\n"
-            "\n"
             HELP_OPTION_DEPRECATED_NAMES,
             helpVersion);
 
@@ -465,30 +440,6 @@ testRun(void)
         strLstAddZ(argList, "--repo1-s3-host=s3-host");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, repo1-s3-host option");
         TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check text, current value");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("cipher pass redacted");
-
-        optionHelp = zNewFmt(
-            "%s - 'archive-push' command - 'repo-cipher-pass' option help\n"
-            "\n"
-            "Repository cipher passphrase.\n"
-            "\n"
-            "Passphrase used to encrypt/decrypt files of the repository.\n"
-            "\n"
-            "current: <redacted>\n",
-            helpVersion);
-
-        argList = strLstNew();
-        strLstAddZ(argList, "/path/to/pgbackrest");
-        strLstAddZ(argList, "help");
-        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
-        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
-        strLstAddZ(argList, "archive-push");
-        strLstAddZ(argList, "repo-cipher-pass");
-        TEST_RESULT_VOID(testCfgLoad(argList), "help for archive-push command, repo1-s3-host option");
-        TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check text");
-        hrnCfgEnvRemoveRaw(cfgOptRepoCipherPass);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("deprecated and new option name produce same results");
