@@ -1814,13 +1814,14 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 {
                     // Try getting the command from the valid command list
                     config->command = cfgParseCommandId(arg);
-                    config->commandRole = cfgCmdRoleMain;
 
                     // Parse command role if appended
                     const char *const colonPtr = strchr(arg, ':');
 
                     if (colonPtr != NULL)
                         config->commandRole = cfgParseCommandRoleEnum(colonPtr + 1);
+                    else
+                        config->commandRole = cfgCmdRoleMain;
 
                     // Error when role is not valid for the command
                     if (!(parseRuleCommand[config->command].commandRoleValid & ((unsigned int)1 << config->commandRole)))
