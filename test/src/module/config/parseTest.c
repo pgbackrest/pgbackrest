@@ -87,7 +87,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("config command defaults to none before cfgInit()");
 
-        TEST_RESULT_UINT(cfgCommand(), cfgCmdHelp, "command is helps");
+        TEST_RESULT_UINT(cfgCommand(), cfgCmdHelp, "command is help");
     }
 
     // config and config-include-path options
@@ -1536,7 +1536,7 @@ testRun(void)
         hrnLogLevelStdOutSet(logLevelOff);
         hrnLogLevelStdErrSet(logLevelOff);
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList)), "no command");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is none");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
         TEST_RESULT_INT(hrnLogLevelStdOut(), logLevelWarn, "console logging is warn");
         TEST_RESULT_INT(hrnLogLevelStdErr(), logLevelOff, "stderr logging is off");
         harnessLogLevelReset();
@@ -1578,7 +1578,7 @@ testRun(void)
         strLstAddZ(argList, "--help");
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is none");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("version option");
@@ -1599,7 +1599,7 @@ testRun(void)
         strLstAddZ(argList, "--version");
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is none");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on command with --help option");

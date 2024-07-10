@@ -48,7 +48,7 @@ testRun(void)
     {
         HRN_CFG_LOAD(cfgCmdHelp, strLstNew());
 
-        TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no command");
+        TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with help command (no options)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
