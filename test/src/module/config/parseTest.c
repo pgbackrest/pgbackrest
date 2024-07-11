@@ -85,8 +85,9 @@ testRun(void)
     if (testBegin("cfg*()"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("config command defaults to none before cfgInit()");
+        TEST_TITLE("config command defaults to help before cfgInit()");
 
+        TEST_RESULT_BOOL(cfgInited(), false, "config is not initialized");
         TEST_RESULT_UINT(cfgCommand(), cfgCmdHelp, "command is help");
     }
 

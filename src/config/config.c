@@ -37,6 +37,13 @@ cfgInit(Config *const config)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+FN_EXTERN bool
+cfgInited(void)
+{
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN(ENUM, configLocal != NULL);
+}
+
 /**********************************************************************************************************************************/
 FN_EXTERN ConfigCommand
 cfgCommand(void)

@@ -11,7 +11,7 @@ Exit Routines
 #include "command/lock.h"
 #include "common/debug.h"
 #include "common/log.h"
-#include "config/config.h"
+#include "config/config.intern.h"
 #include "protocol/helper.h"
 #include "version.h"
 
@@ -137,31 +137,33 @@ exitSafe(int result, const bool error, const SignalType signalType)
         result = errorCode();
     }
 
-    // Log command end if a command is set
-    String *errorMessage = NULL;
-
-    // On error generate an error message
-    if (result != 0)
+    // On error generate an error message for command end when config is initialized
+    if (cfgInited())
     {
-        // On process terminate
-        if (result == errorTypeCode(&TermError))
+        String *errorMessage = NULL;
+
+        if (result != 0)
         {
-            errorMessage = strCatZ(strNew(), "terminated on signal ");
+            // On process terminate
+            if (result == errorTypeCode(&TermError))
+            {
+                errorMessage = strCatZ(strNew(), "terminated on signal ");
 
-            // Terminate from a child
-            if (signalType == signalTypeNone)
-                strCatZ(errorMessage, "from child process");
-            // Else terminated directly
-            else
-                strCatFmt(errorMessage, "[SIG%s]", exitSignalName(signalType));
+                // Terminate from a child
+                if (signalType == signalTypeNone)
+                    strCatZ(errorMessage, "from child process");
+                // Else terminated directly
+                else
+                    strCatFmt(errorMessage, "[SIG%s]", exitSignalName(signalType));
+            }
+            // Standard error exit message
+            else if (error)
+                errorMessage = strNewFmt("aborted with exception [%03d]", result);
         }
-        // Standard error exit message
-        else if (error)
-            errorMessage = strNewFmt("aborted with exception [%03d]", result);
-    }
 
-    cmdEnd(result, errorMessage);
-    strFree(errorMessage);
+        cmdEnd(result, errorMessage);
+        strFree(errorMessage);
+    }
 
     // Release any locks but ignore errors
     TRY_BEGIN()
