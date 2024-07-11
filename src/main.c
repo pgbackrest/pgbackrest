@@ -98,10 +98,12 @@ main(int argListSize, const char *argList[])
 
     TRY_BEGIN()
     {
-        // Load the configuration
+        // Load the configuration (exit when config dry run)
         // -------------------------------------------------------------------------------------------------------------------------
-        cfgLoad((unsigned int)argListSize, argList);
-        ConfigCommandRole commandRole = cfgCommandRole();
+        if (!cfgLoad((unsigned int)argListSize, argList))
+            FUNCTION_LOG_RETURN(INT, exitSafe(0, false, 0));
+
+        const ConfigCommandRole commandRole = cfgCommandRole();
 
         // Local role
         // -------------------------------------------------------------------------------------------------------------------------

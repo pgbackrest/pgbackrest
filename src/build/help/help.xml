@@ -1970,6 +1970,16 @@
                     <example>/conf/pgbackrest/pgbackrest.conf</example>
                 </option>
 
+                <option id="config-dry-run" name="Config Dry Run">
+                    <summary>Configuration dry run.</summary>
+
+                    <text>
+                        <p>Log command begin/end and exit. Configuration errors and warnings will also be logged.</p>
+                    </text>
+
+                    <example>y</example>
+                </option>
+
                 <option id="config-include-path" name="Config Include Path">
                     <summary>Path to additional <backrest/> configuration files.</summary>
 

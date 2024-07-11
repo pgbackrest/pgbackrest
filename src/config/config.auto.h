@@ -67,6 +67,7 @@ Option constants
 #define CFGOPT_COMPRESS_LEVEL_NETWORK                               "compress-level-network"
 #define CFGOPT_COMPRESS_TYPE                                        "compress-type"
 #define CFGOPT_CONFIG                                               "config"
+#define CFGOPT_CONFIG_DRY_RUN                                       "config-dry-run"
 #define CFGOPT_CONFIG_INCLUDE_PATH                                  "config-include-path"
 #define CFGOPT_CONFIG_PATH                                          "config-path"
 #define CFGOPT_DB_EXCLUDE                                           "db-exclude"
@@ -137,7 +138,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 
-#define CFG_OPTION_TOTAL                                            181
+#define CFG_OPTION_TOTAL                                            182
 
 /***********************************************************************************************************************************
 Option value constants
@@ -407,6 +408,7 @@ typedef enum
     cfgOptCompressLevelNetwork,
     cfgOptCompressType,
     cfgOptConfig,
+    cfgOptConfigDryRun,
     cfgOptConfigIncludePath,
     cfgOptConfigPath,
     cfgOptDbExclude,

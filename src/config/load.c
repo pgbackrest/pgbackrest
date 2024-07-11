@@ -38,9 +38,11 @@ static struct ConfigLoadLocal
 Load log settings
 ***********************************************************************************************************************************/
 static void
-cfgLoadLogSetting(void)
+cfgLoadLogSetting(const bool dryRun)
 {
-    FUNCTION_LOG_VOID(logLevelTrace);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(BOOL, dryRun);
+    FUNCTION_LOG_END();
 
     // Initialize logging
     LogLevel logLevelConsole = logLevelOff;
@@ -64,9 +66,7 @@ cfgLoadLogSetting(void)
     if (cfgOptionValid(cfgOptProcessMax))
         logProcessMax = cfgOptionUInt(cfgOptProcessMax);
 
-    logInit(
-        logLevelConsole, logLevelStdErr, logLevelFile, logTimestamp, 0, logProcessMax,
-        cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
+    logInit(logLevelConsole, logLevelStdErr, logLevelFile, logTimestamp, 0, logProcessMax, dryRun);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -496,7 +496,7 @@ cfgLoadLogFile(void)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
+FN_EXTERN bool
 cfgLoad(const unsigned int argListSize, const char *argList[])
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -511,16 +511,19 @@ cfgLoad(const unsigned int argListSize, const char *argList[])
     configLoadLocal.argListSize = argListSize;
     configLoadLocal.argList = argList;
 
+    // Parse config from command line and config file
+    cfgParseP(storageLocal(), configLoadLocal.argListSize, configLoadLocal.argList);
+
+    // Initialize dry-run mode for storage when valid for the current command
+    const bool dryRunConfig = cfgOptionValid(cfgOptConfigDryRun) && cfgOptionBool(cfgOptConfigDryRun);
+    const bool dryRun = dryRunConfig || (cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Parse config from command line and config file
-        cfgParseP(storageLocal(), configLoadLocal.argListSize, configLoadLocal.argList);
-
-        // Initialize dry-run mode for storage when valid for the current command
-        storageHelperDryRunInit(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
+        storageHelperDryRunInit(dryRun);
 
         // Load the log settings
-        cfgLoadLogSetting();
+        cfgLoadLogSetting(dryRun);
 
         // Neutralize the umask to make the repository file/path modes more consistent
         if (cfgOptionValid(cfgOptNeutralUmask) && cfgOptionBool(cfgOptNeutralUmask))
@@ -576,7 +579,7 @@ cfgLoad(const unsigned int argListSize, const char *argList[])
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(BOOL, !dryRunConfig);
 }
 
 /**********************************************************************************************************************************/

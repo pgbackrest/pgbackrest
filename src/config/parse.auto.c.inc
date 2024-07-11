@@ -1975,6 +1975,51 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                             // opt/config
     ),                                                                                                                 // opt/config
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                          // opt/config-dry-run
+    (                                                                                                          // opt/config-dry-run
+        PARSE_RULE_OPTION_NAME("config-dry-run"),                                                              // opt/config-dry-run
+        PARSE_RULE_OPTION_TYPE(Boolean),                                                                       // opt/config-dry-run
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                      // opt/config-dry-run
+        PARSE_RULE_OPTION_SECTION(CommandLine),                                                                // opt/config-dry-run
+                                                                                                               // opt/config-dry-run
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                         // opt/config-dry-run
+        (                                                                                                      // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                                // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                              // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                             // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                  // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(Check)                                                                   // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                  // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                    // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(RepoCreate)                                                              // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                 // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                  // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                                 // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                  // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                 // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(Server)                                                                  // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(ServerPing)                                                              // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                            // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                            // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                           // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(Start)                                                                   // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(Stop)                                                                    // opt/config-dry-run
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                  // opt/config-dry-run
+        ),                                                                                                     // opt/config-dry-run
+                                                                                                               // opt/config-dry-run
+        PARSE_RULE_OPTIONAL                                                                                    // opt/config-dry-run
+        (                                                                                                      // opt/config-dry-run
+            PARSE_RULE_OPTIONAL_GROUP                                                                          // opt/config-dry-run
+            (                                                                                                  // opt/config-dry-run
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                    // opt/config-dry-run
+                (                                                                                              // opt/config-dry-run
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                                 // opt/config-dry-run
+                ),                                                                                             // opt/config-dry-run
+            ),                                                                                                 // opt/config-dry-run
+        ),                                                                                                     // opt/config-dry-run
+    ),                                                                                                         // opt/config-dry-run
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                     // opt/config-include-path
     (                                                                                                     // opt/config-include-path
         PARSE_RULE_OPTION_NAME("config-include-path"),                                                    // opt/config-include-path
@@ -11093,6 +11138,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptCompressLevelNetwork,                                                                                 // opt-resolve-order
     cfgOptCompressType,                                                                                         // opt-resolve-order
     cfgOptConfig,                                                                                               // opt-resolve-order
+    cfgOptConfigDryRun,                                                                                         // opt-resolve-order
     cfgOptConfigIncludePath,                                                                                    // opt-resolve-order
     cfgOptConfigPath,                                                                                           // opt-resolve-order
     cfgOptDbExclude,                                                                                            // opt-resolve-order

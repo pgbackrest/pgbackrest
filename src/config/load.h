@@ -12,7 +12,7 @@ Configuration Load
 Functions
 ***********************************************************************************************************************************/
 // Load the configuration
-FN_EXTERN void cfgLoad(unsigned int argListSize, const char *argList[]);
+FN_EXTERN bool cfgLoad(unsigned int argListSize, const char *argList[]);
 
 // Load the configuration using the specified stanza
 FN_EXTERN void cfgLoadStanza(const String *stanza);

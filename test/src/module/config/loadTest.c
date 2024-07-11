@@ -23,7 +23,7 @@ testRun(void)
     {
         HRN_CFG_LOAD(cfgCmdVersion, strLstNew());
 
-        TEST_RESULT_VOID(cfgLoadLogSetting(), "load log settings all defaults");
+        TEST_RESULT_VOID(cfgLoadLogSetting(false), "load log settings all defaults");
 
         TEST_RESULT_INT(hrnLogLevelStdOut(), logLevelOff, "console logging is off");
         TEST_RESULT_INT(hrnLogLevelStdErr(), logLevelOff, "stderr logging is off");
@@ -785,6 +785,22 @@ testRun(void)
         hrnCfgArgRawBool(argList, cfgOptDryRun, true);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
+        TEST_ERROR(
+            storageRepoWrite(), AssertError, "unable to get writable storage in dry-run mode or before dry-run is initialized");
+        cmdLockReleaseP();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("config-dry-run");
+
+        argList = strLstNew();
+        strLstAddZ(argList, PROJECT_BIN);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptLockPath, HRN_PATH "/lock");
+        hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, CFGOPTVAL_ARCHIVE_MODE_OFF_Z);
+        hrnCfgArgRawBool(argList, cfgOptConfigDryRun, true);
+        strLstAddZ(argList, CFGCMD_EXPIRE);
+
+        TEST_RESULT_BOOL(cfgLoad(strLstSize(argList), strLstPtr(argList)), false, "config dry run");
         TEST_ERROR(
             storageRepoWrite(), AssertError, "unable to get writable storage in dry-run mode or before dry-run is initialized");
         cmdLockReleaseP();

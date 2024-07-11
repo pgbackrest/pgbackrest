@@ -281,6 +281,12 @@ option:
     default: CFGOPTDEF_CONFIG_PATH
     default-literal: true
 
+  config-dry-run:
+    type: boolean
+    default: false
+    command-role:
+      main: {}
+
   dry-run:
     type: boolean
     default: false
