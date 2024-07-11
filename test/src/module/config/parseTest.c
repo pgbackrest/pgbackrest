@@ -1690,7 +1690,7 @@ testRun(void)
         TEST_RESULT_BOOL(cfgLockRemoteRequired(), true, "backup command requires remote lock");
         TEST_RESULT_STRLST_Z(cfgCommandParam(), NULL, "check command arguments");
         TEST_RESULT_UINT(cfgParseCommandRoleEnum(NULL), cfgCmdRoleMain, "command role main enum");
-        TEST_ERROR(cfgParseCommandRoleEnum(STRDEF("bogus")), CommandInvalidError, "invalid command role 'bogus'");
+        TEST_ERROR(cfgParseCommandRoleEnum("bogus"), CommandInvalidError, "invalid command role 'bogus'");
         TEST_RESULT_INT(cfgCommandRole(), cfgCmdRoleMain, "command role is main");
         TEST_RESULT_STR_Z(cfgCommandRoleName(), "backup", "command/role name is backup");
         TEST_RESULT_STR_Z(cfgParseCommandRoleStr(cfgCmdRoleMain), NULL, "main role name is NULL");
@@ -1920,7 +1920,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("set command to expire");
 
-        TEST_RESULT_VOID(cfgCommandSet(cfgCmdExpire, cfgParseCommandRoleEnum(STRDEF("async"))), "set command");
+        TEST_RESULT_VOID(cfgCommandSet(cfgCmdExpire, cfgParseCommandRoleEnum("async")), "set command");
         TEST_RESULT_STR_Z(cfgCommandRoleName(), "expire:async", "command/role name is expire:async");
 
         // -------------------------------------------------------------------------------------------------------------------------
