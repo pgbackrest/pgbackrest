@@ -35,6 +35,20 @@
             </release-item>
         </release-bug-list>
 
+        <release-feature-list>
+            <release-item>
+                <github-issue id="1977"/>
+                <github-pull-request id="2047"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.christensen"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Support IP-based SANs for <proper>TLS</proper> certificate validation.</p>
+            </release-item>
+        </release-feature-list>
+
         <release-improvement-list>
             <release-item>
                 <commit subject="Refactor lock module.">
