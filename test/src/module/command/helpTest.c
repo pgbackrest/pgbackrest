@@ -232,6 +232,7 @@ testRun(void)
             "  --cmd-ssh                           SSH client command\n"
             "  --compress-level-network            network compression level\n"
             "  --config                            pgBackRest configuration file\n"
+            "  --config-dry-run                    configuration dry run\n"
             "  --config-include-path               path to additional pgBackRest\n"
             "                                      configuration files\n"
             "  --config-path                       base path of pgBackRest configuration\n"
