@@ -28,11 +28,11 @@ jobs:
       # tackle the slowest tests first.
       matrix:
         include:
-          # All unit tests (without coverage or valgrind) for 32-bit
-          - param: test --vm=d10 --param=no-performance --param=no-coverage --param=no-valgrind --param=c-only
+          # All integration tests for oldest Debian
+          - param: test --vm=u20 --param=module=integration
 
-          # All integration tests for 32-bit
-          - param: test --vm=d10 --param=module=integration
+          # All tests (without coverage or valgrind) for 32-bit
+          - param: test --vm=d11 --param=no-performance --param=no-coverage --param=no-valgrind
 
           # Debian/Ubuntu documentation
           - param: doc --vm=u20
