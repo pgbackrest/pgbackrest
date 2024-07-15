@@ -94,7 +94,7 @@ protocolClientMove(ProtocolClient *const this, MemContext *const parentNew)
     return objMove(this, parentNew);
 }
 
-// Do not send exit request to the server when the client is freed
+// Do not send exit command to the server when the client is freed
 FN_INLINE_ALWAYS void
 protocolClientNoExit(ProtocolClient *const this)
 {

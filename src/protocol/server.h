@@ -112,7 +112,7 @@ FN_EXTERN ProtocolServerResult *protocolServerResultNew(ProtocolServerResultNewP
 /***********************************************************************************************************************************
 Result Getters/Setters
 ***********************************************************************************************************************************/
-// PackWrite to send data to client
+// Create PackWrite object required to send data to the client
 FN_EXTERN PackWrite *protocolServerResultData(ProtocolServerResult *this);
 
 // Set session data
