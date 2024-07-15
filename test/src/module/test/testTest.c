@@ -188,7 +188,7 @@ testRun(void)
             "          - doc/command/build/build\n"
             "\n"
             "integration:\n"
-            "  - name: mock\n"
+            "  - name: integration\n"
             "    test:\n"
             "      - name: all\n"
             "        total: 2\n"
