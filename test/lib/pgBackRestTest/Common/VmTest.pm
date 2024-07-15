@@ -85,16 +85,8 @@ use constant VM_U20                                                 => 'u20';
 use constant VM_U22                                                 => 'u22';
     push @EXPORT, qw(VM_U22);
 
-# VM aliases for run matrices (numbered oldest to newest)
-use constant VM2                                                    => VM_D10;
-    push @EXPORT, qw(VM2);
-use constant VM3                                                    => VM_RH8;
-    push @EXPORT, qw(VM3);
-use constant VM4                                                    => VM_U22;
-    push @EXPORT, qw(VM4);
-
 # List of default test VMs
-use constant VM_LIST                                                => (VM2, VM3, VM4);
+use constant VM_LIST                                                => (VM_D10, VM_RH8, VM_U22);
     push @EXPORT, qw(VM_LIST);
 
 my $oyVm =
@@ -336,23 +328,6 @@ sub vmValid
 }
 
 push @EXPORT, qw(vmValid);
-
-####################################################################################################################################
-# Which vm to use for the test matrix. If one of the standard four, then use that, else use VM4.
-####################################################################################################################################
-sub vmTest
-{
-    my $strVm = shift;
-
-    if (grep(/^$strVm$/, VM_LIST))
-    {
-        return $strVm;
-    }
-
-    return VM4;
-}
-
-push @EXPORT, qw(vmTest);
 
 ####################################################################################################################################
 # vmGet
