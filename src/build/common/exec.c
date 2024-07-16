@@ -56,7 +56,6 @@ execOne(const String *const command, const ExecOneParam param)
         FUNCTION_LOG_PARAM(STRING, command);
         FUNCTION_LOG_PARAM(STRING, param.shell);
         FUNCTION_LOG_PARAM(INT, param.resultExpect);
-        FUNCTION_LOG_PARAM(TIME_MSEC, param.retry);
     FUNCTION_LOG_END();
 
     String *result = NULL;
@@ -74,13 +73,6 @@ execOne(const String *const command, const ExecOneParam param)
         strLstAddFmt(paramList, "%s 2>&1", strZ(command));
         strLstAddZ(paramList, "2>&1");
 
-        volatile bool done = false;
-        Wait *const wait = waitNew(param.retry);
-
-        do
-        {
-            TRY_BEGIN()
-            {
                 Exec *const exec = execNew(strLstGet(shellList, 0), paramList, command, ioTimeoutMs());
 
                 execOpen(exec);
@@ -90,17 +82,6 @@ execOne(const String *const command, const ExecOneParam param)
                     result = execProcess(exec, param);
                 }
                 MEM_CONTEXT_PRIOR_END();
-
-                done = true;
-            }
-            CATCH_ANY()
-            {
-                if (!waitMore(wait))
-                    RETHROW();
-            }
-            TRY_END();
-        }
-        while (!done);
     }
     MEM_CONTEXT_TEMP_END();
 
