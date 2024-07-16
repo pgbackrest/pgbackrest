@@ -8,14 +8,15 @@ Host Harness
 #include "common/crypto/common.h"
 #include "common/error/retry.h"
 #include "common/io/io.h"
+#include "common/type/json.h"
 #include "common/wait.h"
 #include "config/config.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
-#include "storage/azure/storage.h"
-#include "storage/gcs/storage.h"
+#include "storage/azure/storage.intern.h"
+#include "storage/gcs/storage.intern.h"
 #include "storage/posix/storage.h"
-#include "storage/s3/storage.h"
+#include "storage/s3/storage.intern.h"
 #include "storage/sftp/storage.h"
 
 #include "common/harnessDebug.h"
@@ -1222,6 +1223,22 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
                     }
                     MEM_CONTEXT_PRIOR_END();
 
+// curl --insecure -X PUT "https://172.18.0.5:443/azaccount/azcontainer?restype=container&sv=2022-11-02&ss=bqt&srt=sco&se=2100-01-01T00%3A00%3A00Z&sp=rwdxylacuptfi&sig=cPr3DAuz9MV4wdGwBIGNBteDy%2F5C%2BrTd8tKTduzwDOc%3D"
+
+                    // Create storage container
+                    // storageAzureRequestP(
+                    //     (StorageAzure *)storageDriver(hrnHostRepo1Storage(repo)repo)), HTTP_VERB_PUT_STR,
+                    //     .query = httpQueryAdd(httpQueryNewP(), AZURE_QUERY_RESTYPE_STR, AZURE_QUERY_VALUE_CONTAINER_STR));
+
+                    // execOneP(
+                    //     strNewFmt(
+                    //         "export AZURE_CLI_DISABLE_CONNECTION_VERIFICATION=1;az storage container create -n "
+                    //         HRN_HOST_AZURE_CONTAINER " --connection-string \"DefaultEndpointsProtocol=https;AccountName="
+                    //         HRN_HOST_AZURE_ACCOUNT ";AccountKey=" HRN_HOST_AZURE_KEY ";BlobEndpoint=%s:443/" HRN_HOST_AZURE_ACCOUNT
+                    //         "\"",
+                    //         strZ(hrnHostIp(hrnHostGet(HRN_HOST_AZURE)))),
+                    //     .retry = 10000);
+
                     break;
                 }
 
@@ -1232,6 +1249,9 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
                         hrnHostNewP(HRN_HOST_GCS, containerName, STRDEF("fsouza/fake-gcs-server"), .noUpdateHosts = true);
                     }
                     MEM_CONTEXT_PRIOR_END();
+
+                    // Create bucket
+                    // hrnHostExecP(hrnHostGet(HRN_HOST_GCS), STRDEF("mkdir /storage/" HRN_HOST_GCS_BUCKET));
 
                     break;
                 }
@@ -1265,6 +1285,15 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
                             "echo \"%s\t" HRN_HOST_S3_BUCKET "." HRN_HOST_S3_ENDPOINT "\" >> /etc/hosts", strZ(hrnHostIp(s3))),
                         .user = STRDEF("root"));
 
+                    // Create bucket (retry to allow server to start)
+                    // hrnHostExecP(
+                    //     s3,
+                    //     STRDEF(
+                    //         "mc --insecure alias set s3 https://127.0.0.1 " HRN_HOST_S3_ACCESS_KEY
+                    //         " " HRN_HOST_S3_ACCESS_SECRET_KEY),
+                    //     .retry = 10000);
+                    // hrnHostExecP(s3, STRDEF("mc --insecure mb --with-versioning s3/" HRN_HOST_S3_BUCKET));
+
                     break;
                 }
 
@@ -1289,11 +1318,35 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
     // Write pgBackRest configuration for hosts
     hrnHostConfigUpdateP();
 
-    // Create the repo for object stores
-    if (hrnHostLocal.storage == STORAGE_AZURE_TYPE || hrnHostLocal.storage == STORAGE_GCS_TYPE ||
-        hrnHostLocal.storage == STORAGE_S3_TYPE)
+    // Create the bucket/container for object stores
+    switch (hrnHostLocal.storage)
     {
-        hrnHostExecBrP(repo, CFGCMD_REPO_CREATE, .option = "--repo=1");
+        case STORAGE_AZURE_TYPE:
+        {
+            storageAzureRequestP(
+                (StorageAzure *)storageDriver(hrnHostRepo1Storage(repo)), HTTP_VERB_PUT_STR,
+                .query = httpQueryAdd(httpQueryNewP(), AZURE_QUERY_RESTYPE_STR, AZURE_QUERY_VALUE_CONTAINER_STR));
+
+            break;
+        }
+
+        case STORAGE_GCS_TYPE:
+        {
+            storageGcsRequestP(
+                (StorageGcs *)storageDriver(hrnHostRepo1Storage(repo)), HTTP_VERB_POST_STR, .noBucket = true,
+                .content = BUFSTR(
+                    jsonWriteResult(
+                        jsonWriteObjectEnd(
+                            jsonWriteStr(
+                                jsonWriteKeyZ(
+                                    jsonWriteObjectBegin(jsonWriteNewP()), GCS_JSON_NAME), STRDEF(HRN_HOST_GCS_BUCKET))))));
+
+            break;
+        }
+
+        case STORAGE_S3_TYPE:
+            storageS3RequestP((StorageS3 *)storageDriver(hrnHostRepo1Storage(repo)), HTTP_VERB_PUT_STR, FSLASH_STR);
+            break;
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
