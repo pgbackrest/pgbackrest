@@ -2260,14 +2260,6 @@
                 </option-list>
             </command>
 
-            <command id="repo-create" name="Create Repository">
-                <summary>Create the repository.</summary>
-
-                <text>
-                    <p>Create the repository (path, bucket, etc.) on the default repository. If more than one repository is configured, the command will default to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified. If <setting>repo-type=s3</setting> the bucket will be created.</p>
-                </text>
-            </command>
-
             <command id="repo-get" name="Repository Get">
                 <summary>Get a file from a repository.</summary>
 

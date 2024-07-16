@@ -149,7 +149,6 @@ src_pgbackrest = [
     'command/lock.c',
     'command/manifest/manifest.c',
     'command/repo/common.c',
-    'command/repo/create.c',
     'command/repo/get.c',
     'command/repo/ls.c',
     'command/repo/put.c',

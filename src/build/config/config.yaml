@@ -93,12 +93,6 @@ command:
     log-file: false
     log-level-default: DEBUG
 
-  repo-create:
-    command-role:
-      remote: {}
-    internal: true
-    log-file: false
-
   repo-get:
     command-role:
       remote: {}
@@ -386,8 +380,6 @@ option:
       info:
         required: false
       manifest: {}
-      repo-create:
-        required: false
       repo-get:
         required: false
       repo-ls:
@@ -529,7 +521,6 @@ option:
       check: {}
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -572,7 +563,6 @@ option:
       check: {}
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -692,7 +682,6 @@ option:
       expire: {}
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -716,7 +705,6 @@ option:
       check: {}
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -807,7 +795,6 @@ option:
       archive-push: {}
       backup: {}
       check: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -893,7 +880,6 @@ option:
       backup: {}
       check: {}
       expire: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -934,7 +920,6 @@ option:
       check: {}
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -1093,7 +1078,6 @@ option:
       check: {}
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -1681,10 +1665,6 @@ option:
         command-role:
           main: {}
           remote: {}
-      repo-create:
-        command-role:
-          main: {}
-          remote: {}
       repo-get:
         command-role:
           main: {}
@@ -1743,7 +1723,6 @@ option:
         internal: true
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -1803,10 +1782,6 @@ option:
           main: {}
           remote: {}
       manifest:
-        command-role:
-          main: {}
-          remote: {}
-      repo-create:
         command-role:
           main: {}
           remote: {}
@@ -2137,7 +2112,6 @@ option:
       check: {}
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}

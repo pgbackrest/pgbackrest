@@ -408,9 +408,9 @@
 
         # Install Azure CLI
         ENV AZURE_CLI_DISABLE_CONNECTION_VERIFICATION 1
-        RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc \
-            dnf install -y https://packages.microsoft.com/config/rhel/8/packages-microsoft-prod.rpm \
-            dnf install -y azure-cli
+        RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc
+        RUN dnf install -y https://packages.microsoft.com/config/rhel/8/packages-microsoft-prod.rpm
+        RUN dnf install -y azure-cli
 
         # Create an ssh key for root so all hosts can ssh to each other as root
         RUN \ {[ssh-key-install]}

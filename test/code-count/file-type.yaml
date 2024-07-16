@@ -1083,14 +1083,6 @@ src/command/repo/common.h:
   class: core
   type: c/h
 
-src/command/repo/create.c:
-  class: core
-  type: c
-
-src/command/repo/create.h:
-  class: core
-  type: c/h
-
 src/command/repo/get.c:
   class: core
   type: c

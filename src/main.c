@@ -23,7 +23,6 @@ Main
 #include "command/lock.h"
 #include "command/manifest/manifest.h"
 #include "command/remote/remote.h"
-#include "command/repo/create.h"
 #include "command/repo/get.h"
 #include "command/repo/ls.h"
 #include "command/repo/put.h"
@@ -218,12 +217,6 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdManifest:
                     cmdManifest();
-                    break;
-
-                // Repository create command
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdRepoCreate:
-                    cmdRepoCreate();
                     break;
 
                 // Repository get file command
