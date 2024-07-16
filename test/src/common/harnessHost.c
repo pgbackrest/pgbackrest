@@ -235,6 +235,7 @@ hrnHostExec(HrnHost *const this, const String *const command, const HrnHostExecP
         FUNCTION_HARNESS_PARAM(STRING, command);
         FUNCTION_HARNESS_PARAM(STRING, param.user);
         FUNCTION_HARNESS_PARAM(INT, param.resultExpect);
+        FUNCTION_HARNESS_PARAM(TIME_MSEC, param.retry);
     FUNCTION_HARNESS_END();
 
     ASSERT(this != NULL);
@@ -251,7 +252,7 @@ hrnHostExec(HrnHost *const this, const String *const command, const HrnHostExecP
                 .shell = strNewFmt(
                     "docker exec -u %s %s sh -c", param.user == NULL ? strZ(hrnHostUser(this)) : strZ(param.user),
                     strZ(hrnHostContainer(this))),
-                .resultExpect = param.resultExpect));
+                .resultExpect = param.resultExpect, .retry = param.retry));
     }
     MEM_CONTEXT_TEMP_END();
 
