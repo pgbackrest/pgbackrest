@@ -338,7 +338,6 @@
             apt-get install -y --no-install-recommends postgresql-{[pg-version]} postgresql-{[pg-version-upgrade]} 2>&amp;1
 
         # Install Azure CLI
-        ENV AZURE_CLI_DISABLE_CONNECTION_VERIFICATION 1
         RUN apt-get install -y azure-cli
 
         # Create an ssh key for root so all hosts can ssh to each other as root
@@ -407,7 +406,6 @@
         RUN yum install -y postgresql{[pg-version-nodot]}-server postgresql{[pg-version-upgrade-nodot]}-server
 
         # Install Azure CLI
-        ENV AZURE_CLI_DISABLE_CONNECTION_VERIFICATION 1
         RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc
         RUN dnf install -y https://packages.microsoft.com/config/rhel/8/packages-microsoft-prod.rpm
         RUN dnf install -y azure-cli
@@ -755,8 +753,9 @@
 
             <execute user="{[azure-setup-user]}" if="'{[azure-setup-create-container]}' eq 'y'" show='n'>
                 <exe-cmd>
-                    az storage container create -n {[azure-container]}
-                        --connection-string "DefaultEndpointsProtocol=https;AccountName={[azure-account]};AccountKey={[azure-key]}"
+                    bash -c 'export AZURE_CLI_DISABLE_CONNECTION_VERIFICATION=1;az storage container create -n {[azure-container]}
+                    --connection-string "DefaultEndpointsProtocol=https;AccountName={[azure-account]};AccountKey={[azure-key]}"
+                    2>&amp;1'
                 </exe-cmd>
             </execute>
         </execute-list>
