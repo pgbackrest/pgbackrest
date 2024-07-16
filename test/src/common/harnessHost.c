@@ -1223,22 +1223,6 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
                     }
                     MEM_CONTEXT_PRIOR_END();
 
-// curl --insecure -X PUT "https://172.18.0.5:443/azaccount/azcontainer?restype=container&sv=2022-11-02&ss=bqt&srt=sco&se=2100-01-01T00%3A00%3A00Z&sp=rwdxylacuptfi&sig=cPr3DAuz9MV4wdGwBIGNBteDy%2F5C%2BrTd8tKTduzwDOc%3D"
-
-                    // Create storage container
-                    // storageAzureRequestP(
-                    //     (StorageAzure *)storageDriver(hrnHostRepo1Storage(repo)repo)), HTTP_VERB_PUT_STR,
-                    //     .query = httpQueryAdd(httpQueryNewP(), AZURE_QUERY_RESTYPE_STR, AZURE_QUERY_VALUE_CONTAINER_STR));
-
-                    // execOneP(
-                    //     strNewFmt(
-                    //         "export AZURE_CLI_DISABLE_CONNECTION_VERIFICATION=1;az storage container create -n "
-                    //         HRN_HOST_AZURE_CONTAINER " --connection-string \"DefaultEndpointsProtocol=https;AccountName="
-                    //         HRN_HOST_AZURE_ACCOUNT ";AccountKey=" HRN_HOST_AZURE_KEY ";BlobEndpoint=%s:443/" HRN_HOST_AZURE_ACCOUNT
-                    //         "\"",
-                    //         strZ(hrnHostIp(hrnHostGet(HRN_HOST_AZURE)))),
-                    //     .retry = 10000);
-
                     break;
                 }
 
@@ -1249,9 +1233,6 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
                         hrnHostNewP(HRN_HOST_GCS, containerName, STRDEF("fsouza/fake-gcs-server"), .noUpdateHosts = true);
                     }
                     MEM_CONTEXT_PRIOR_END();
-
-                    // Create bucket
-                    // hrnHostExecP(hrnHostGet(HRN_HOST_GCS), STRDEF("mkdir /storage/" HRN_HOST_GCS_BUCKET));
 
                     break;
                 }
@@ -1284,15 +1265,6 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
                         strNewFmt(
                             "echo \"%s\t" HRN_HOST_S3_BUCKET "." HRN_HOST_S3_ENDPOINT "\" >> /etc/hosts", strZ(hrnHostIp(s3))),
                         .user = STRDEF("root"));
-
-                    // Create bucket (retry to allow server to start)
-                    // hrnHostExecP(
-                    //     s3,
-                    //     STRDEF(
-                    //         "mc --insecure alias set s3 https://127.0.0.1 " HRN_HOST_S3_ACCESS_KEY
-                    //         " " HRN_HOST_S3_ACCESS_SECRET_KEY),
-                    //     .retry = 10000);
-                    // hrnHostExecP(s3, STRDEF("mc --insecure mb --with-versioning s3/" HRN_HOST_S3_BUCKET));
 
                     break;
                 }

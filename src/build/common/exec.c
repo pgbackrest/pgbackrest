@@ -73,15 +73,15 @@ execOne(const String *const command, const ExecOneParam param)
         strLstAddFmt(paramList, "%s 2>&1", strZ(command));
         strLstAddZ(paramList, "2>&1");
 
-                Exec *const exec = execNew(strLstGet(shellList, 0), paramList, command, ioTimeoutMs());
+        Exec *const exec = execNew(strLstGet(shellList, 0), paramList, command, ioTimeoutMs());
 
-                execOpen(exec);
+        execOpen(exec);
 
-                MEM_CONTEXT_PRIOR_BEGIN()
-                {
-                    result = execProcess(exec, param);
-                }
-                MEM_CONTEXT_PRIOR_END();
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = execProcess(exec, param);
+        }
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
