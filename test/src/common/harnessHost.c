@@ -1304,14 +1304,13 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
 
         case STORAGE_GCS_TYPE:
         {
+            JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
+            jsonWriteStr(jsonWriteKeyZ(json, GCS_JSON_NAME), STRDEF(HRN_HOST_GCS_BUCKET));
+            jsonWriteObjectEnd(json);
+
             storageGcsRequestP(
                 (StorageGcs *)storageDriver(hrnHostRepo1Storage(repo)), HTTP_VERB_POST_STR, .noBucket = true,
-                .content = BUFSTR(
-                    jsonWriteResult(
-                        jsonWriteObjectEnd(
-                            jsonWriteStr(
-                                jsonWriteKeyZ(
-                                    jsonWriteObjectBegin(jsonWriteNewP()), GCS_JSON_NAME), STRDEF(HRN_HOST_GCS_BUCKET))))));
+                .content = BUFSTR(jsonWriteResult(json)));
 
             break;
         }
