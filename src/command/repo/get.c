@@ -53,6 +53,7 @@ storageGetProcess(IoWrite *const destination)
         {
             const CipherType repoCipherType = cfgOptionStrId(cfgOptRepoCipherType);
 
+            // !!! VERSION-ID WILL NOT WORK CORRECTLY IF ENCRYPTED AND MANIFEST HAS BEEN REMOVED
             if (repoCipherType != cipherTypeNone)
             {
                 // Check for a passphrase parameter
