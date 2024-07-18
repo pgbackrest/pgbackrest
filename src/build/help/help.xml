@@ -2531,7 +2531,7 @@
 
                     <p>The '<id>repo</id>' indicates in which repository this backup resides. The '<id>backup set size</id>' includes all the files from this backup and any referenced backups in the repository that are required to restore the database from this backup while '<id>backup size</id>' includes only the files in this backup (these will also be the same for full backups). Repository sizes reflect compressed file sizes if compression is enabled in <backrest/>.</p>
 
-                    <p>The '<id>backup reference total</id>' summarizes the list of additional backups that are required to restore this backup. Use the <br-option>--set</br-option> option to display the complete list of reference.</p>
+                    <p>The '<id>backup reference total</id>' summarizes the list of additional backups that are required to restore this backup. Use the <br-option>--set</br-option> option to display the complete reference list.</p>
 
                     <!-- Note, linking to the User Guide is limited since it can cause a cyclical reference -->
                 </text>
