@@ -765,11 +765,6 @@ storageS3ListInternal(
                         .exists = true,
                     };
 
-                    // fprintf(stdout, "!!!NAME %s DEL %d VER %s\n", strZ(info.name), strEqZ(xmlNodeName(fileNode), "DeleteMarker"), strZNull(xmlNodeContent(xmlNodeChild(fileNode, STRDEF("VersionId"), false))));fflush(stdout);
-
-                    // if (strEqZ(xmlNodeName(fileNode), "DeleteMarker"))
-                    //     continue;
-
                     // Strip off the base prefix when present
                     if (!strEmpty(basePrefix))
                         info.name = strSub(info.name, strSize(basePrefix));

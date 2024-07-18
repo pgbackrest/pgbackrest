@@ -151,7 +151,6 @@ storageLstInsert(StorageList *const this, const unsigned int idx, const StorageI
                     listInfo.basic.versionId = blbAdd(this->blob, strZ(info->versionId), strSize(info->versionId) + 1);
             }
 
-
             case storageInfoLevelType:
                 listInfo.type.type = info->type;
 

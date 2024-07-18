@@ -78,7 +78,7 @@ xmlNodeChild(const XmlNode *const this, const String *const name, const bool err
 FN_EXTERN XmlNodeList *xmlNodeChildList(const XmlNode *this, const String *name);
 
 // List of child nodes using multiple name
-FN_EXTERN XmlNodeList * xmlNodeChildListMulti(const XmlNode *this, const StringList *nameList);
+FN_EXTERN XmlNodeList *xmlNodeChildListMulti(const XmlNode *this, const StringList *nameList);
 
 // Node content
 FN_EXTERN String *xmlNodeContent(const XmlNode *this);
