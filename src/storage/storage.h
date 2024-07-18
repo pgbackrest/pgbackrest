@@ -115,6 +115,7 @@ typedef struct StorageNewItrParam
     bool errorOnMissing;
     bool nullOnMissing;
     bool recurse;
+    bool versions;                                                  // Show all file versions
     SortOrder sortOrder;
     const String *expression;
 } StorageNewItrParam;
@@ -150,6 +151,7 @@ typedef struct StorageNewReadParam
     VAR_PARAM_HEADER;
     bool ignoreMissing;
     bool compressible;
+    const String *versionId;                                        // File version to read (NULL for current version)
 
     // Where to start reading in the file
     const uint64_t offset;

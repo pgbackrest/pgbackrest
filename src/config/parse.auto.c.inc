@@ -10650,6 +10650,43 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),                                                                                                        // opt/verbose
         ),                                                                                                            // opt/verbose
     ),                                                                                                                // opt/verbose
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                              // opt/version-id
+    (                                                                                                              // opt/version-id
+        PARSE_RULE_OPTION_NAME("version-id"),                                                                      // opt/version-id
+        PARSE_RULE_OPTION_TYPE(String),                                                                            // opt/version-id
+        PARSE_RULE_OPTION_REQUIRED(false),                                                                         // opt/version-id
+        PARSE_RULE_OPTION_SECTION(CommandLine),                                                                    // opt/version-id
+                                                                                                                   // opt/version-id
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                             // opt/version-id
+        (                                                                                                          // opt/version-id
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                     // opt/version-id
+        ),                                                                                                         // opt/version-id
+    ),                                                                                                             // opt/version-id
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                                // opt/versions
+    (                                                                                                                // opt/versions
+        PARSE_RULE_OPTION_NAME("versions"),                                                                          // opt/versions
+        PARSE_RULE_OPTION_TYPE(Boolean),                                                                             // opt/versions
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                            // opt/versions
+        PARSE_RULE_OPTION_SECTION(CommandLine),                                                                      // opt/versions
+                                                                                                                     // opt/versions
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                               // opt/versions
+        (                                                                                                            // opt/versions
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                        // opt/versions
+        ),                                                                                                           // opt/versions
+                                                                                                                     // opt/versions
+        PARSE_RULE_OPTIONAL                                                                                          // opt/versions
+        (                                                                                                            // opt/versions
+            PARSE_RULE_OPTIONAL_GROUP                                                                                // opt/versions
+            (                                                                                                        // opt/versions
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                          // opt/versions
+                (                                                                                                    // opt/versions
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                                       // opt/versions
+                ),                                                                                                   // opt/versions
+            ),                                                                                                       // opt/versions
+        ),                                                                                                           // opt/versions
+    ),                                                                                                               // opt/versions
 };
 
 /***********************************************************************************************************************************
@@ -11013,6 +11050,8 @@ static const uint8_t optionResolveOrder[] =
     cfgOptTlsServerPort,                                                                                        // opt-resolve-order
     cfgOptType,                                                                                                 // opt-resolve-order
     cfgOptVerbose,                                                                                              // opt-resolve-order
+    cfgOptVersionId,                                                                                            // opt-resolve-order
+    cfgOptVersions,                                                                                             // opt-resolve-order
     cfgOptArchiveCheck,                                                                                         // opt-resolve-order
     cfgOptArchiveCopy,                                                                                          // opt-resolve-order
     cfgOptArchiveModeCheck,                                                                                     // opt-resolve-order

@@ -2281,6 +2281,16 @@
 
                         <example>y</example>
                     </option>
+
+                    <option id="version-id" name="Read Version Id">
+                        <summary>!!!.</summary>
+
+                        <text>
+                            <p>!!!</p>
+                        </text>
+
+                        <example>y</example>
+                    </option>
                 </option-list>
             </command>
 
@@ -2355,6 +2365,16 @@
                         </text>
 
                         <example>desc</example>
+                    </option>
+
+                    <option id="versions" name="Output File Versions">
+                        <summary>!!!.</summary>
+
+                        <text>
+                            <p>!!!</p>
+                        </text>
+
+                        <example>y</example>
                     </option>
                 </option-list>
             </command>

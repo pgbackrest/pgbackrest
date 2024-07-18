@@ -615,7 +615,7 @@ General function for listing files to be used by other list routines
 static void
 storageS3ListInternal(
     StorageS3 *const this, const String *const path, const StorageInfoLevel level, const String *const expression,
-    const bool recurse, StorageListCallback callback, void *const callbackData)
+    const bool recurse, const bool versions, StorageListCallback callback, void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
@@ -623,6 +623,7 @@ storageS3ListInternal(
         FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(STRING, expression);
         FUNCTION_LOG_PARAM(BOOL, recurse);
+        FUNCTION_LOG_PARAM(BOOL, versions);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
@@ -660,8 +661,11 @@ storageS3ListInternal(
         if (!recurse)
             httpQueryAdd(query, S3_QUERY_DELIMITER_STR, FSLASH_STR);
 
-        // Use list type 2
-        httpQueryAdd(query, S3_QUERY_LIST_TYPE_STR, S3_QUERY_VALUE_LIST_TYPE_2_STR);
+        // Use list type 2 or versions as specified
+        if (versions)
+            httpQueryAdd(query, STRDEF("versions"), STRDEF(""));
+        else
+            httpQueryAdd(query, S3_QUERY_LIST_TYPE_STR, S3_QUERY_VALUE_LIST_TYPE_2_STR);
 
         // Don't specify empty prefix because it is the default
         if (!strEmpty(queryPrefix))
@@ -736,7 +740,18 @@ storageS3ListInternal(
                 }
 
                 // Get file list
-                const XmlNodeList *const fileList = xmlNodeChildList(xmlRoot, S3_XML_TAG_CONTENTS_STR);
+                const XmlNodeList *fileList;
+
+                if (versions)
+                {
+                    StringList *const nameList = strLstNew();
+                    strLstAddZ(nameList, "Version");
+                    strLstAddZ(nameList, "DeleteMarker");
+
+                    fileList = xmlNodeChildListMulti(xmlRoot, nameList);
+                }
+                else
+                    fileList = xmlNodeChildList(xmlRoot, S3_XML_TAG_CONTENTS_STR);
 
                 for (unsigned int fileIdx = 0; fileIdx < xmlNodeLstSize(fileList); fileIdx++)
                 {
@@ -750,6 +765,11 @@ storageS3ListInternal(
                         .exists = true,
                     };
 
+                    // fprintf(stdout, "!!!NAME %s DEL %d VER %s\n", strZ(info.name), strEqZ(xmlNodeName(fileNode), "DeleteMarker"), strZNull(xmlNodeContent(xmlNodeChild(fileNode, STRDEF("VersionId"), false))));fflush(stdout);
+
+                    // if (strEqZ(xmlNodeName(fileNode), "DeleteMarker"))
+                    //     continue;
+
                     // Strip off the base prefix when present
                     if (!strEmpty(basePrefix))
                         info.name = strSub(info.name, strSize(basePrefix));
@@ -760,6 +780,12 @@ storageS3ListInternal(
                         info.size = cvtZToUInt64(strZ(xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_SIZE_STR, true))));
                         info.timeModified = storageS3CvtTime(
                             xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_LAST_MODIFIED_STR, true)));
+
+                        if (versions)
+                        {
+                            info.deleteMarker = strEqZ(xmlNodeName(fileNode), "DeleteMarker");
+                            info.versionId = xmlNodeContent(xmlNodeChild(fileNode, STRDEF("VersionId"), true));
+                        }
                     }
 
                     // Callback with info
@@ -843,6 +869,7 @@ storageS3List(THIS_VOID, const String *const path, const StorageInfoLevel level,
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(STRING, param.expression);
+        FUNCTION_LOG_PARAM(BOOL, param.versions);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -850,7 +877,7 @@ storageS3List(THIS_VOID, const String *const path, const StorageInfoLevel level,
 
     StorageList *const result = storageLstNew(level);
 
-    storageS3ListInternal(this, path, level, param.expression, false, storageS3ListCallback, result);
+    storageS3ListInternal(this, path, level, param.expression, false, param.versions, storageS3ListCallback, result);
 
     FUNCTION_LOG_RETURN(STORAGE_LIST, result);
 }
@@ -867,12 +894,13 @@ storageS3NewRead(THIS_VOID, const String *const file, const bool ignoreMissing, 
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(UINT64, param.offset);
         FUNCTION_LOG_PARAM(VARIANT, param.limit);
+        FUNCTION_LOG_PARAM(STRING, param.versionId);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadS3New(this, file, ignoreMissing, param.offset, param.limit));
+    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadS3New(this, file, ignoreMissing, param.offset, param.limit, param.versionId));
 }
 
 /**********************************************************************************************************************************/
@@ -1046,7 +1074,7 @@ storageS3PathRemove(THIS_VOID, const String *const path, const bool recurse, con
             .path = strEq(path, FSLASH_STR) ? EMPTY_STR : strNewFmt("%s/", strZ(strSub(path, 1))),
         };
 
-        storageS3ListInternal(this, path, storageInfoLevelType, NULL, true, storageS3PathRemoveCallback, &data);
+        storageS3ListInternal(this, path, storageInfoLevelType, NULL, true, false, storageS3PathRemoveCallback, &data);
 
         // Call if there is more to be removed
         if (data.xml != NULL)

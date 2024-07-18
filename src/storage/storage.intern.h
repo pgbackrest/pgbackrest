@@ -118,6 +118,9 @@ typedef struct StorageInterfaceNewReadParam
 
     // Limit bytes read from the file. NULL for no limit.
     const Variant *limit;
+
+    // File version to read (NULL for current version)
+    const String *versionId;
 } StorageInterfaceNewReadParam;
 
 typedef StorageRead *StorageInterfaceNewRead(
@@ -185,6 +188,9 @@ typedef struct StorageInterfaceListParam
     // using the prefix returned from regExpPrefix(). This may cause extra results to be sent to the callback but won't exclude
     // anything that matches the expression exactly.
     const String *expression;
+
+    // List all file versions
+    bool versions;
 } StorageInterfaceListParam;
 
 typedef StorageList *StorageInterfaceList(

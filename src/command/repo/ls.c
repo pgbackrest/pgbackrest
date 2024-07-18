@@ -20,12 +20,15 @@ Repository List Command
 Render storage list
 ***********************************************************************************************************************************/
 static void
-storageListRenderInfo(const StorageInfo *const info, IoWrite *const write, const bool json)
+storageListRenderInfo(
+    const StorageInfo *const info, IoWrite *const write, const bool json, const bool version, const bool versionFirst)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
         FUNCTION_TEST_PARAM(IO_WRITE, write);
         FUNCTION_TEST_PARAM(BOOL, json);
+        FUNCTION_TEST_PARAM(BOOL, version);
+        FUNCTION_TEST_PARAM(BOOL, versionFirst);
     FUNCTION_TEST_END();
 
     FUNCTION_AUDIT_HELPER();
@@ -36,6 +39,7 @@ storageListRenderInfo(const StorageInfo *const info, IoWrite *const write, const
     // Render in json
     if (json)
     {
+        (void)versionFirst; // !!!
         ioWriteStr(write, jsonFromVar(VARSTR(info->name)));
         ioWrite(write, BUFSTRDEF(":{\"type\":\""));
 
@@ -72,6 +76,23 @@ storageListRenderInfo(const StorageInfo *const info, IoWrite *const write, const
     // Render in text
     else
     {
+        if (version)
+        {
+            ioWrite(write, BUFSTR(strNewTimeP("%Y-%m-%d %H:%M:%S", info->timeModified)));
+            ioWrite(write, BUFSTR(strNewFmt(" %" PRIu64, info->size)));
+
+            if (info->versionId != NULL)
+            {
+                ioWrite(write, BUFSTRDEF(" "));
+                ioWrite(write, BUFSTR(info->versionId));
+            }
+
+            if (info->deleteMarker)
+                ioWrite(write, BUFSTRDEF(" D "));
+            else
+                ioWrite(write, BUFSTRDEF("   "));
+        }
+
         ioWrite(write, BUFSTR(info->name));
         ioWrite(write, LF_BUF);
     }
@@ -132,7 +153,7 @@ storageListRender(IoWrite *const write)
         if (regExp == NULL || regExpMatch(regExp, storagePathP(storageRepo(), path)))
         {
             info.name = DOT_STR;
-            storageListRenderInfo(&info, write, json);
+            storageListRenderInfo(&info, write, json, false, false);
         }
     }
     // Else try to list the path
@@ -143,13 +164,17 @@ storageListRender(IoWrite *const write)
 
         if (json && (regExp == NULL || regExpMatch(regExp, DOT_STR)))
         {
-            storageListRenderInfo(&(StorageInfo){.type = storageTypePath, .name = DOT_STR}, write, json);
+            storageListRenderInfo(&(StorageInfo){.type = storageTypePath, .name = DOT_STR}, write, json, false, false);
             first = false;
         }
 
         // List content of the path
+        const bool versions = cfgOptionBool(cfgOptVersions);
+        String *const infoNameLast = strNew();
+
         StorageIterator *const storageItr = storageNewItrP(
-            storageRepo(), path, .sortOrder = sortOrder, .expression = expression, .recurse = cfgOptionBool(cfgOptRecurse));
+            storageRepo(), path, .sortOrder = sortOrder, .expression = expression, .recurse = cfgOptionBool(cfgOptRecurse),
+            .versions = versions);
 
         while (storageItrMore(storageItr))
         {
@@ -161,7 +186,10 @@ storageListRender(IoWrite *const write)
             else
                 first = false;
 
-            storageListRenderInfo(&info, write, json);
+            storageListRenderInfo(&info, write, json, versions, !strEq(info.name, infoNameLast));
+
+            strTrunc(infoNameLast);
+            strCat(infoNameLast, info.name);
         }
     }
 

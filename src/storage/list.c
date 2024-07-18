@@ -20,6 +20,7 @@ struct StorageList
     Blob *blob;                                                     // Blob of info data
     String *name;                                                   // Current info name
     String *linkDestination;                                        // Current link destination
+    String *versionId;                                              // Current version id
 };
 
 /***********************************************************************************************************************************
@@ -49,6 +50,9 @@ typedef struct StorageListInfo
     {
         uint64_t size;                                              // Size (path/link is 0)
         time_t timeModified;                                        // Time file was last modified
+        // !!! WOULD BE NICE TO SPLIT THESE OUT FOR SPACE SAVINGS
+        const char *versionId;                                      // Version id when versioning enabled
+        bool deleteMarker;                                          // Is this a delete marker?
     } basic;
 
     // Set when info type >= storageInfoLevelDetail (undefined at lower levels)
@@ -95,6 +99,7 @@ storageLstNew(const StorageInfoLevel level)
             .blob = blbNew(),
             .name = strNew(),
             .linkDestination = strNew(),
+            .versionId = strNew(),
         };
     }
     OBJ_NEW_END();
@@ -137,8 +142,15 @@ storageLstInsert(StorageList *const this, const unsigned int idx, const StorageI
             }
 
             case storageInfoLevelBasic:
+            {
                 listInfo.basic.size = info->size;
                 listInfo.basic.timeModified = info->timeModified;
+                listInfo.basic.deleteMarker = info->deleteMarker;
+
+                if (info->versionId != NULL)
+                    listInfo.basic.versionId = blbAdd(this->blob, strZ(info->versionId), strSize(info->versionId) + 1);
+            }
+
 
             case storageInfoLevelType:
                 listInfo.type.type = info->type;
@@ -189,8 +201,14 @@ storageLstGet(const StorageList *const this, const unsigned int idx)
         }
 
         case storageInfoLevelBasic:
+        {
             result.size = listInfo->basic.size;
             result.timeModified = listInfo->basic.timeModified;
+            result.deleteMarker = listInfo->basic.deleteMarker;
+
+            if (listInfo->basic.versionId != NULL)
+                result.versionId = strCatZ(strTrunc(this->versionId), listInfo->basic.versionId);
+        }
 
         case storageInfoLevelType:
             result.type = listInfo->type.type;

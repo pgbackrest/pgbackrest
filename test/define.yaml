@@ -544,10 +544,12 @@ unit:
           - storage/posix/write
           - storage/helper
           - storage/iterator
-          - storage/list
           - storage/read
           - storage/storage
           - storage/write
+
+        include:
+          - storage/list
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote
@@ -601,14 +603,18 @@ unit:
 
         coverage:
           - storage/s3/helper
-          - storage/s3/read
-          - storage/s3/storage
           - storage/s3/write
           - storage/helper
 
         include:
           - storage/storage
           - storage/write
+          - storage/s3/read
+          - storage/s3/storage
+
+        depend:
+          - storage/s3/read
+          - storage/s3/storage
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: sftp
@@ -966,9 +972,11 @@ unit:
         coverage:
           - command/repo/common
           - command/repo/get
-          - command/repo/ls
           - command/repo/put
           - command/repo/rm
+
+        include:
+          - command/repo/ls
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: verify

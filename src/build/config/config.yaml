@@ -635,6 +635,22 @@ option:
     command-role:
       main: {}
 
+  versions:
+    type: boolean
+    default: false
+    command:
+      repo-ls: {}
+    command-role:
+      main: {}
+
+  version-id:
+    type: string
+    required: false
+    command:
+      repo-get: {}
+    command-role:
+      main: {}
+
   # General options
   #---------------------------------------------------------------------------------------------------------------------------------
   archive-timeout:

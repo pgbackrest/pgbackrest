@@ -44,7 +44,9 @@ storageGetProcess(IoWrite *const destination)
 
         // Create new file read
         IoRead *const source = storageReadIo(
-            storageNewReadP(storageRepo(), file, .ignoreMissing = cfgOptionBool(cfgOptIgnoreMissing)));
+            storageNewReadP(
+                storageRepo(), file, .ignoreMissing = cfgOptionBool(cfgOptIgnoreMissing),
+                .versionId = cfgOptionStrNull(cfgOptVersionId)));
 
         // Add decryption if needed
         if (!cfgOptionBool(cfgOptRaw))

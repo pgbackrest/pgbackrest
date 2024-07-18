@@ -299,10 +299,10 @@ storageNewItr(const Storage *const this, const String *const pathExp, StorageNew
         FUNCTION_LOG_PARAM(ENUM, param.level);
         FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
         FUNCTION_LOG_PARAM(BOOL, param.recurse);
+        FUNCTION_LOG_PARAM(BOOL, param.versions);
         FUNCTION_LOG_PARAM(BOOL, param.nullOnMissing);
         FUNCTION_LOG_PARAM(ENUM, param.sortOrder);
         FUNCTION_LOG_PARAM(STRING, param.expression);
-        FUNCTION_LOG_PARAM(BOOL, param.recurse);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -320,7 +320,7 @@ storageNewItr(const Storage *const this, const String *const pathExp, StorageNew
         result = storageItrMove(
             storageItrNew(
                 storageDriver(this), storagePathP(this, pathExp), param.level, param.errorOnMissing, param.nullOnMissing,
-                param.recurse, param.sortOrder, param.expression),
+                param.recurse, param.versions, param.sortOrder, param.expression),
             memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
@@ -447,6 +447,7 @@ storageNewRead(const Storage *const this, const String *const fileExp, const Sto
         FUNCTION_LOG_PARAM(BOOL, param.compressible);
         FUNCTION_LOG_PARAM(UINT64, param.offset);
         FUNCTION_LOG_PARAM(VARIANT, param.limit);
+        FUNCTION_LOG_PARAM(STRING, param.versionId);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -459,7 +460,7 @@ storageNewRead(const Storage *const this, const String *const fileExp, const Sto
         result = storageReadMove(
             storageInterfaceNewReadP(
                 storageDriver(this), storagePathP(this, fileExp), param.ignoreMissing, .compressible = param.compressible,
-                .offset = param.offset, .limit = param.limit),
+                .offset = param.offset, .limit = param.limit, .versionId = param.versionId),
             memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
