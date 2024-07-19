@@ -1029,12 +1029,14 @@ cmdExpire(void)
                     cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
                 // If a backupLabel was set, then attempt to expire the requested backup
+                unsigned int backupExpireTotal = 0;
+
                 if (adhocBackupLabel != NULL)
                 {
                     if (infoBackupLabelExists(infoBackup, adhocBackupLabel))
                     {
                         adhocBackupFound = true;
-                        expireAdhocBackup(infoBackup, adhocBackupLabel, repoIdx);
+                        backupExpireTotal += expireAdhocBackup(infoBackup, adhocBackupLabel, repoIdx);
                     }
 
                     // If the adhoc backup was not found and this was the last repo to check, then log a warning but continue to
@@ -1055,26 +1057,28 @@ cmdExpire(void)
                         // been warned by the config system that retention-full was not set)
                         if (cfgOptionIdxTest(cfgOptRepoRetentionFull, repoIdx))
                         {
-                            expireTimeBasedBackup(
+                            backupExpireTotal += expireTimeBasedBackup(
                                 infoBackup, time(NULL) - (time_t)(cfgOptionIdxUInt(cfgOptRepoRetentionFull, repoIdx) * SEC_PER_DAY),
                                 repoIdx);
                         }
                     }
                     else
-                        expireFullBackup(infoBackup, repoIdx);
+                        backupExpireTotal += expireFullBackup(infoBackup, repoIdx);
 
-                    expireDiffBackup(infoBackup, repoIdx);
+                    backupExpireTotal += expireDiffBackup(infoBackup, repoIdx);
                 }
 
-                // Store the new backup info only if the dry-run mode is disabled
-                if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+                // Store backup info only if backups were expired and dry-run mode is disabled
+                if (backupExpireTotal > 0 && (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun)))
                 {
                     infoBackupSaveFile(
                         infoBackup, storageRepoIdxWrite(repoIdx), INFO_BACKUP_PATH_FILE_STR,
                         cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx), cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
                 }
 
-                // Remove all files on disk that are now expired
+                // Remove all files on disk that are now expired. Required even if backupExpireTotal is zero because the prior
+                // expire process may have terminated after backup.info was saved but before file removal was completed. In that
+                // case we need to complete file removal even if nothing new was expired.
                 removeExpiredBackup(infoBackup, adhocBackupLabel, repoIdx);
                 removeExpiredArchive(infoBackup, timeBasedFullRetention, repoIdx);
                 removeExpiredHistory(infoBackup, repoIdx);
