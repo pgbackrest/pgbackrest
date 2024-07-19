@@ -772,15 +772,17 @@ storageS3ListInternal(
                     // Add basic info if requested (no need to add type info since file is default type)
                     if (level >= storageInfoLevelBasic)
                     {
-                        info.size = cvtZToUInt64(strZ(xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_SIZE_STR, true))));
-                        info.timeModified = storageS3CvtTime(
-                            xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_LAST_MODIFIED_STR, true)));
-
                         if (versions)
                         {
                             info.deleteMarker = strEqZ(xmlNodeName(fileNode), "DeleteMarker");
                             info.versionId = xmlNodeContent(xmlNodeChild(fileNode, STRDEF("VersionId"), true));
                         }
+
+                        if (!info.deleteMarker)
+                            info.size = cvtZToUInt64(strZ(xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_SIZE_STR, true))));
+
+                        info.timeModified = storageS3CvtTime(
+                            xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_LAST_MODIFIED_STR, true)));
                     }
 
                     // Callback with info
