@@ -560,10 +560,10 @@ unit:
           - storage/remote/storage
           - storage/remote/write
           - storage/helper
-          - storage/storage
 
         include:
           - storage/read
+          - storage/storage
           - storage/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
