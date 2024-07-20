@@ -39,7 +39,7 @@ typedef struct StorageListInfo
     struct
     {
         // Set when info type >= storageInfoLevelType (undefined at lower levels)
-        StorageType type;                                           // Type file/path/link)
+        StorageType type : 8;                                       // Type file/path/link)
 
         // Set when info type >= storageInfoLevelDetail (undefined at lower levels)
         mode_t mode;                                                // Mode of path/file/link
