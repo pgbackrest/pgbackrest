@@ -313,7 +313,7 @@
                     </config-key>
 
                     <config-key id="limit-time" name="Time Limit for Repository Versions">
-                        <summary>!!!.</summary>
+                        <summary>Time limit for repository versions.</summary>
 
                         <text>
                             <p>!!!</p>
@@ -2367,8 +2367,8 @@
                         <example>desc</example>
                     </option>
 
-                    <option id="vers" name="Output File Versions">
-                        <summary>!!!.</summary>
+                    <option id="vers" name="List File Versions">
+                        <summary>List file versions.</summary>
 
                         <text>
                             <p>!!!</p>
