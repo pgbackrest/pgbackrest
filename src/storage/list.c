@@ -231,7 +231,7 @@ storageLstFind(const StorageList *const this, const String *const name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    const char *const namePtr =strZ(name);
+    const char *const namePtr = strZ(name);
     const unsigned int listIdx = lstFindIdx(this->pub.list, &namePtr);
 
     if (listIdx == LIST_NOT_FOUND)

@@ -663,7 +663,7 @@ storageS3ListInternal(
             httpQueryAdd(query, S3_QUERY_DELIMITER_STR, FSLASH_STR);
 
         // Use list type 2 or versions as specified
-        if (limitTime || versions)
+        if (limitTime != 0 || versions)
             httpQueryAdd(query, STRDEF("versions"), STRDEF(""));
         else
             httpQueryAdd(query, S3_QUERY_LIST_TYPE_STR, S3_QUERY_VALUE_LIST_TYPE_2_STR);
@@ -743,7 +743,7 @@ storageS3ListInternal(
                 // Get file list
                 const XmlNodeList *fileList;
 
-                if (limitTime || versions)
+                if (limitTime != 0 || versions)
                 {
                     StringList *const nameList = strLstNew();
                     strLstAddZ(nameList, "Version");
@@ -770,7 +770,7 @@ storageS3ListInternal(
                     };
 
                     // Time and delete marker are required for processing versioned files
-                    if (limitTime || versions)
+                    if (limitTime != 0 || versions)
                     {
                         info.timeModified = storageS3CvtTime(
                             xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_LAST_MODIFIED_STR, true)));
@@ -816,7 +816,7 @@ storageS3ListInternal(
                     // Add basic info if requested (no need to add type info since file is default type)
                     if (level >= storageInfoLevelBasic)
                     {
-                        if (limitTime || versions)
+                        if (limitTime != 0 || versions)
                             info.versionId = xmlNodeContent(xmlNodeChild(fileNode, STRDEF("VersionId"), true));
                         else
                         {

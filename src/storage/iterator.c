@@ -67,7 +67,7 @@ storageItrPathAdd(StorageIterator *const this, const String *const pathSub)
         // Get path content
         StorageList *const list = storageInterfaceListP(
             this->driver, pathSub == NULL ? this->path : strNewFmt("%s/%s", strZ(this->path), strZ(pathSub)), this->level,
-            .expression = this->expression, .versions = this->versions, .limitTime  = this->limitTime);
+            .expression = this->expression, .versions = this->versions, .limitTime = this->limitTime);
 
         // If path exists
         if (list != NULL)

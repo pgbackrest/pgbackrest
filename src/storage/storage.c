@@ -489,7 +489,7 @@ storageNewRead(const Storage *const this, const String *const fileExp, const Sto
                 MEM_CONTEXT_OBJ_BEGIN(this->cacheList)
                 {
                     StorageList *const list = storageInterfaceListP(
-                        storageDriver(this), strPath(path), storageInfoLevelBasic, .limitTime  = this->limitTime);
+                        storageDriver(this), strPath(path), storageInfoLevelBasic, .limitTime = this->limitTime);
 
                     if (list != NULL)
                         storageLstSort(list, sortOrderAsc);

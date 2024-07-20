@@ -245,6 +245,7 @@ testRun(void)
             "  --delta                             restore or backup using checksums\n"
             "                                      [default=n]\n"
             "  --io-timeout                        I/O timeout [default=1m]\n"
+            "  --limit-time                        !!!\n"
             "  --lock-path                         path where lock files are stored\n"
             "                                      [default=/tmp/pgbackrest]\n"
             "  --neutral-umask                     use a neutral umask [default=y]\n"
