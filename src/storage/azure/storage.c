@@ -542,6 +542,7 @@ storageAzureList(THIS_VOID, const String *const path, const StorageInfoLevel lev
         FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(STRING, param.expression);
         FUNCTION_LOG_PARAM(BOOL, param.versions);
+        FUNCTION_LOG_PARAM(TIME, param.limitTime);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -566,6 +567,7 @@ storageAzureNewRead(THIS_VOID, const String *const file, const bool ignoreMissin
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(UINT64, param.offset);
         FUNCTION_LOG_PARAM(VARIANT, param.limit);
+        FUNCTION_LOG_PARAM(STRING, param.versionId);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -790,5 +792,6 @@ storageAzureNew(
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE, storageNew(STORAGE_AZURE_TYPE, path, 0, 0, write, pathExpressionFunction, this, this->interface));
+    FUNCTION_LOG_RETURN(
+        STORAGE, storageNew(STORAGE_AZURE_TYPE, path, 0, 0, write, 0, pathExpressionFunction, this, this->interface));
 }

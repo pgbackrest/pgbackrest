@@ -82,6 +82,7 @@ Option constants
 #define CFGOPT_IO_TIMEOUT                                           "io-timeout"
 #define CFGOPT_JOB_RETRY                                            "job-retry"
 #define CFGOPT_JOB_RETRY_INTERVAL                                   "job-retry-interval"
+#define CFGOPT_LIMIT_TIME                                           "limit-time"
 #define CFGOPT_LINK_ALL                                             "link-all"
 #define CFGOPT_LINK_MAP                                             "link-map"
 #define CFGOPT_LOCK                                                 "lock"
@@ -135,7 +136,6 @@ Option constants
 #define CFGOPT_TLS_SERVER_PORT                                      "tls-server-port"
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
-#define CFGOPT_VERSION_ID                                           "version-id"
 #define CFGOPT_VERSIONS                                             "versions"
 
 #define CFG_OPTION_TOTAL                                            183
@@ -424,6 +424,7 @@ typedef enum
     cfgOptIoTimeout,
     cfgOptJobRetry,
     cfgOptJobRetryInterval,
+    cfgOptLimitTime,
     cfgOptLinkAll,
     cfgOptLinkMap,
     cfgOptLock,
@@ -566,7 +567,6 @@ typedef enum
     cfgOptTlsServerPort,
     cfgOptType,
     cfgOptVerbose,
-    cfgOptVersionId,
     cfgOptVersions,
 } ConfigOption;
 

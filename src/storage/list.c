@@ -51,8 +51,8 @@ typedef struct StorageListInfo
         uint64_t size;                                              // Size (path/link is 0)
         time_t timeModified;                                        // Time file was last modified
         // !!! WOULD BE NICE TO SPLIT THESE OUT FOR SPACE SAVINGS
-        const char *versionId;                                      // Version id when versioning enabled
-        bool deleteMarker;                                          // Is this a delete marker?
+        const char *versionId;                                      // Version id when versioning enabled !!! REMOVE THIS?
+        bool deleteMarker;                                          // Is this a delete marker? !!! MOVE THIS TO TYPE
     } basic;
 
     // Set when info type >= storageInfoLevelDetail (undefined at lower levels)
@@ -217,6 +217,27 @@ storageLstGet(const StorageList *const this, const unsigned int idx)
     }
 
     FUNCTION_TEST_RETURN(STORAGE_INFO, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN StorageInfo
+storageLstFind(const StorageList *const this, const String *const name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_LIST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    const char *const namePtr =strZ(name);
+    const unsigned int listIdx = lstFindIdx(this->pub.list, &namePtr);
+
+    if (listIdx == LIST_NOT_FOUND)
+        FUNCTION_TEST_RETURN(STORAGE_INFO, (StorageInfo){.exists = false});
+
+    FUNCTION_TEST_RETURN(STORAGE_INFO, storageLstGet(this, listIdx));
 }
 
 /**********************************************************************************************************************************/

@@ -17,7 +17,7 @@ Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN StorageIterator *storageItrNew(
     void *driver, const String *path, StorageInfoLevel level, bool errorOnMissing, bool nullOnMissing, bool recurse, bool versions,
-    SortOrder sortOrder, const String *expression);
+    SortOrder sortOrder, time_t limitTime, const String *expression);
 
 /***********************************************************************************************************************************
 Functions

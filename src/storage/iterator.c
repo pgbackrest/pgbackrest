@@ -22,6 +22,7 @@ struct StorageIterator
     bool recurse;                                                   // Recurse into paths
     bool versions;                                                  // List all file versions
     SortOrder sortOrder;                                            // Sort order
+    time_t limitTime;                                               // List versions <= time
     const String *expression;                                       // Match expression
     RegExp *regExp;                                                 // Parsed match expression
 
@@ -66,7 +67,7 @@ storageItrPathAdd(StorageIterator *const this, const String *const pathSub)
         // Get path content
         StorageList *const list = storageInterfaceListP(
             this->driver, pathSub == NULL ? this->path : strNewFmt("%s/%s", strZ(this->path), strZ(pathSub)), this->level,
-            .expression = this->expression, .versions = this->versions);
+            .expression = this->expression, .versions = this->versions, .limitTime  = this->limitTime);
 
         // If path exists
         if (list != NULL)
@@ -112,7 +113,7 @@ storageItrPathAdd(StorageIterator *const this, const String *const pathSub)
 FN_EXTERN StorageIterator *
 storageItrNew(
     void *const driver, const String *const path, const StorageInfoLevel level, const bool errorOnMissing, const bool nullOnMissing,
-    const bool recurse, const bool versions, const SortOrder sortOrder, const String *const expression)
+    const bool recurse, const bool versions, const SortOrder sortOrder, const time_t limitTime, const String *const expression)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM_P(VOID, driver);
@@ -123,6 +124,7 @@ storageItrNew(
         FUNCTION_LOG_PARAM(BOOL, recurse);
         FUNCTION_LOG_PARAM(BOOL, versions);
         FUNCTION_LOG_PARAM(ENUM, sortOrder);
+        FUNCTION_LOG_PARAM(TIME, limitTime);
         FUNCTION_LOG_PARAM(STRING, expression);
     FUNCTION_LOG_END();
 
@@ -146,6 +148,7 @@ storageItrNew(
                 .recurse = recurse,
                 .versions = versions,
                 .sortOrder = sortOrder,
+                .limitTime = limitTime,
                 .expression = strDup(expression),
                 .stack = lstNewP(sizeof(StorageIteratorInfo *)),
                 .nameNext = strNew(),

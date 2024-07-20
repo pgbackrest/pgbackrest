@@ -214,7 +214,8 @@ storageRemoteList(THIS_VOID, const String *const path, const StorageInfoLevel le
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(ENUM, level);
-        (void)param;                                                // No parameters are used
+        FUNCTION_LOG_PARAM(BOOL, param.versions);
+        FUNCTION_LOG_PARAM(TIME, param.limitTime);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -282,6 +283,7 @@ storageRemoteNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageI
         FUNCTION_LOG_PARAM(BOOL, param.compressible);
         FUNCTION_LOG_PARAM(UINT64, param.offset);
         FUNCTION_LOG_PARAM(VARIANT, param.limit);
+        FUNCTION_LOG_PARAM(STRING, param.versionId);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -517,5 +519,6 @@ storageRemoteNew(
     OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(
-        STORAGE, storageNew(STORAGE_REMOTE_TYPE, path, modeFile, modePath, write, pathExpressionFunction, this, this->interface));
+        STORAGE,
+        storageNew(STORAGE_REMOTE_TYPE, path, modeFile, modePath, write, 0, pathExpressionFunction, this, this->interface));
 }

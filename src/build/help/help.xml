@@ -312,6 +312,16 @@
                         <example>30</example>
                     </config-key>
 
+                    <config-key id="limit-time" name="Time Limit for Repository Versions">
+                        <summary>!!!.</summary>
+
+                        <text>
+                            <p>!!!</p>
+                        </text>
+
+                        <example>30</example>
+                    </config-key>
+
                     <config-key id="lock-path" name="Lock Path">
                         <summary>Path where lock files are stored.</summary>
 
@@ -2277,16 +2287,6 @@
 
                         <text>
                             <p>Exit with 1 if the source file is missing but don't throw an error.</p>
-                        </text>
-
-                        <example>y</example>
-                    </option>
-
-                    <option id="version-id" name="Read Version Id">
-                        <summary>!!!.</summary>
-
-                        <text>
-                            <p>!!!</p>
                         </text>
 
                         <example>y</example>

@@ -17,6 +17,53 @@ Repository List Command
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
+!!! COPIED FROM RESTORE. NEED TO MOVE TO TIME.C
+***********************************************************************************************************************************/
+static String *
+storageListDateTime(const time_t epoch)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(TIME, epoch);
+    FUNCTION_TEST_END();
+
+    // Construct date/time
+    String *const result = strNew();
+    struct tm timePart;
+    char timeBuffer[20];
+
+    strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", localtime_r(&epoch, &timePart));
+    strCatZ(result, timeBuffer);
+
+    // Add timezone offset. Since this is not directly available in Posix-compliant APIs, use the difference between gmtime_r() and
+    // localtime_r to determine the offset. Handle minute offsets when present.
+    struct tm timePartGm;
+
+    gmtime_r(&epoch, &timePartGm);
+
+    timePart.tm_isdst = -1;
+    timePartGm.tm_isdst = -1;
+    time_t offset = mktime(&timePart) - mktime(&timePartGm);
+
+    if (offset >= 0)
+        strCatChr(result, '+');
+    else
+    {
+        offset *= -1;
+        strCatChr(result, '-');
+    }
+
+    const unsigned int minute = (unsigned int)(offset / 60);
+    const unsigned int hour = minute / 60;
+
+    strCatFmt(result, "%02u", hour);
+
+    if (minute % 60 != 0)
+        strCatFmt(result, ":%02u", minute - (hour * 60));
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
+/***********************************************************************************************************************************
 Render storage list
 ***********************************************************************************************************************************/
 static void
@@ -39,7 +86,7 @@ storageListRenderInfo(
     // Render in json
     if (json)
     {
-        (void)versionFirst; // !!!
+        (void)versionFirst; // !!! JSON OUTPUT BROKEN FOR VERSIONS
         ioWriteStr(write, jsonFromVar(VARSTR(info->name)));
         ioWrite(write, BUFSTRDEF(":{\"type\":\""));
 
@@ -78,14 +125,15 @@ storageListRenderInfo(
     {
         if (version)
         {
-            ioWrite(write, BUFSTR(strNewTimeP("%Y-%m-%d %H:%M:%S", info->timeModified)));
-            ioWrite(write, BUFSTR(strNewFmt(" %" PRIu64, info->size)));
+            if (info->type == storageTypeFile)
+                ioWrite(write, BUFSTR(storageListDateTime(info->timeModified)));
+            else
+                ioWrite(write, BUFSTRDEF("                      "));
 
-            if (info->versionId != NULL)
-            {
-                ioWrite(write, BUFSTRDEF(" "));
-                ioWrite(write, BUFSTR(info->versionId));
-            }
+            if (info->type == storageTypeFile && !info->deleteMarker)
+                ioWrite(write, BUFSTR(strNewFmt(" %10" PRIu64, info->size)));
+            else
+                ioWrite(write, BUFSTRDEF("           "));
 
             if (info->deleteMarker)
                 ioWrite(write, BUFSTRDEF(" D "));
@@ -139,6 +187,7 @@ storageListRender(IoWrite *const write)
     const bool json = cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON ? true : false;
     const String *const expression = cfgOptionStrNull(cfgOptFilter);
     RegExp *const regExp = expression == NULL ? NULL : regExpNew(expression);
+    const bool versions = cfgOptionBool(cfgOptVersions);
 
     ioWriteOpen(write);
 
@@ -148,7 +197,7 @@ storageListRender(IoWrite *const write)
     // Check if this is a file
     StorageInfo info = storageInfoP(storageRepo(), path, .ignoreMissing = true);
 
-    if (info.exists && info.type == storageTypeFile)
+    if (!versions && info.exists && info.type == storageTypeFile)
     {
         if (regExp == NULL || regExpMatch(regExp, storagePathP(storageRepo(), path)))
         {
@@ -168,8 +217,14 @@ storageListRender(IoWrite *const write)
             first = false;
         }
 
+        // Output header !!! NEED THIS?
+        // if (versions && !json)
+        // {
+        //     ioWrite(write, BUFSTRDEF("      Timestamp           Size    D                    Name\n"));
+        //     ioWrite(write, BUFSTRDEF("---------------------- ---------- - --------------------------------------------\n"));
+        // }
+
         // List content of the path
-        const bool versions = cfgOptionBool(cfgOptVersions);
         String *const infoNameLast = strNew();
 
         StorageIterator *const storageItr = storageNewItrP(

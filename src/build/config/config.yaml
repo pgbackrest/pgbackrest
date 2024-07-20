@@ -643,14 +643,6 @@ option:
     command-role:
       main: {}
 
-  version-id:
-    type: string
-    required: false
-    command:
-      repo-get: {}
-    command-role:
-      main: {}
-
   # General options
   #---------------------------------------------------------------------------------------------------------------------------------
   archive-timeout:
@@ -864,6 +856,19 @@ option:
       archive-get: {}
       archive-push: {}
       backup: {}
+      restore: {}
+      verify: {}
+
+  limit-time:
+    section: global
+    type: string
+    required: false
+    command:
+      archive-get: {}
+      info: {}
+      manifest: {}
+      repo-get: {}
+      repo-ls: {}
       restore: {}
       verify: {}
 

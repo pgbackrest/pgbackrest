@@ -180,6 +180,9 @@ typedef struct StorageInterfaceListParam
 {
     VAR_PARAM_HEADER;
 
+    // List all file versions
+    bool versions;
+
     // Regular expression used to filter the results. The expression is always checked in the callback passed to
     // storageInterfaceIterP() so checking the expression in the driver is entirely optional. The driver should only use the
     // expression if it can improve performance or limit network transfer.
@@ -189,8 +192,8 @@ typedef struct StorageInterfaceListParam
     // anything that matches the expression exactly.
     const String *expression;
 
-    // List all file versions
-    bool versions;
+    // Limit versions to <= the specified time
+    time_t limitTime;
 } StorageInterfaceListParam;
 
 typedef StorageList *StorageInterfaceList(
@@ -309,10 +312,10 @@ typedef struct StorageInterface
 } StorageInterface;
 
 #define storageNewP(type, path, modeFile, modePath, write, pathExpressionFunction, driver, ...)                                    \
-    storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, (StorageInterface){__VA_ARGS__})
+    storageNew(type, path, modeFile, modePath, write, limitTime, pathExpressionFunction, driver, (StorageInterface){__VA_ARGS__})
 
 FN_EXTERN Storage *storageNew(
-    StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write,
+    StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write, time_t limitTime,
     StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface);
 
 /***********************************************************************************************************************************
