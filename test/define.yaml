@@ -539,16 +539,16 @@ unit:
           - storage/cifs/helper
           - storage/cifs/storage
           - storage/posix/read
+          - storage/posix/storage
           - storage/posix/write
           - storage/helper
           - storage/iterator
           - storage/read
-          - storage/storage
           - storage/write
 
         include:
           - storage/list
-          - storage/posix/storage
+          - storage/storage
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote
