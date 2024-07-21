@@ -47,9 +47,6 @@ cfgLoadUpdateOption(void)
     char currentWorkDir[1024];
     THROW_ON_SYS_ERROR(getcwd(currentWorkDir, sizeof(currentWorkDir)) == NULL, FormatError, "unable to get cwd");
 
-    // Invalidate config option so it does not show up in option list
-    cfgOptionInvalidate(cfgOptConfig);
-
     // If repo-path is relative then make it absolute
     const String *const repoPath = cfgOptionStr(cfgOptRepoPath);
 
@@ -76,18 +73,15 @@ cfgLoad(unsigned int argListSize, const char *argList[])
         for (unsigned int argListIdx = 0; argListIdx < argListSize; argListIdx++)
             strLstAddZ(argListNew, argList[argListIdx]);
 
-        // Explicitly set --no-config so a stray config file will not be loaded
-        strLstAddZ(argListNew, "--no-" CFGOPT_CONFIG);
-
         // Parse config from command line
         TRY_BEGIN()
         {
-            cfgParseP(storagePosixNewP(FSLASH_STR), strLstSize(argListNew), strLstPtr(argListNew));
+            cfgParseP(storagePosixNewP(FSLASH_STR), strLstSize(argListNew), strLstPtr(argListNew), .noConfigLoad = true);
         }
         CATCH(CommandRequiredError)
         {
             strLstAddZ(argListNew, CFGCMD_BUILD);
-            cfgParseP(storagePosixNewP(FSLASH_STR), strLstSize(argListNew), strLstPtr(argListNew));
+            cfgParseP(storagePosixNewP(FSLASH_STR), strLstSize(argListNew), strLstPtr(argListNew), .noConfigLoad = true);
         }
         TRY_END();
 
