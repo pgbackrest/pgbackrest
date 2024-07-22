@@ -160,7 +160,7 @@ sub userCreate
 
     if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
     {
-        return "adduser -g${strGroup} -u${iId} -n ${strName}";
+        return "adduser -g${strGroup} -u${iId} -N ${strName}";
     }
     elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
     {
@@ -186,23 +186,36 @@ sub sshSetup
         "# Setup SSH\n" .
         "    mkdir ${strUserPath}/.ssh && \\\n" .
         "    echo '-----BEGIN RSA PRIVATE KEY-----' > ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'MIICXwIBAAKBgQDR0yJsZW5d5LcqteiOtv8d+FFeFFHDPI0VTcTOdMn1iDiIP1ou' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'X3Q2OyNjsBaDbsRJd+sp9IRq1LKX3zsBcgGZANwm0zduuNEPEU94ajS/uRoejIqY' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo '/XkKOpnEF6ZbQ2S7TaE4sWeGLvba7kUFs0QTOO+N+nV2dMbdqZf6C8lazwIDAQAB' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'AoGBAJXa6xzrnFVmwgK5BKzYuX/YF5TPgk2j80ch0ct50buQXH/Cb0/rUH5i4jWS' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'T6Hy/DFUehnuzpvV6O9auTOhDs3BhEKFRuRLn1nBwTtZny5Hh+cw7azUCEHFCJlz' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'makCrVbgawtno6oU/pFgQm1FcxD0f+Me5ruNcLHqUZsPQwkRAkEA+8pG+ckOlz6R' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'AJLIHedmfcrEY9T7sfdo83bzMOz8H5soUUP4aOTLJYCla1LO7JdDnXMGo0KxaHBP' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'l8j5zDmVewJBANVVPDJr1w37m0FBi37QgUOAijVfLXgyPMxYp2uc9ddjncif0063' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo '0Wc0FQefoPszf3CDrHv/RHvhHq97jXDwTb0CQQDgH83NygoS1r57pCw9chzpG/R0' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'aMEiSPhCvz757fj+qT3aGIal2AJ7/2c/gRZvwrWNETZ3XIZOUKqIkXzJLPjBAkEA' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'wnP799W2Y8d4/+VX2pMBkF7lG7sSviHEq1sP2BZtPBRQKSQNvw3scM7XcGh/mxmY' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'yx0qpqfKa8SKbNgI1+4iXQJBAOlg8MJLwkUtrG+p8wf69oCuZsnyv0K6UMDxm6/8' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'cbvfmvODulYFaIahaqHWEZoRo5CLYZ7gN43WHPOrKxdDL78=' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'MIIEowIBAAKCAQEA5VySpEan5Rn7QQ5XP13YkXxTg+Xp9N+ecyDhD92OQk0VZOFn' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'EKlXUaMXH0WVjRRgjgbF78JHFbEQjUHimbzr9ev1IuDaIS42E1nUkBaHggnHNAW2' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'aqtczUDSnLGcXqd0XeDtwpjj1I0xWOeJli/xjU+eSwjzqNgX6ZX2P0uTXflu254u' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'SjOF3IARo9FiDEKQdksoxNOAhCTYgDAynmkcfJ9e87FjiTGmfnZO3H6gU2kidSFX' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'rwdHtdN3Qlv6RgCroLGAZZpmtqBorTwShWRScWAAg/OqWwLphfNbXIIHZO4EJ4S2' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'JLgsgJHb20SJ2XEI2Iln9sj+oCWgLJ2m+RLvWwIDAQABAoIBAArBC0EiQkyxf1Xe' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'txmKAWsE4iI85/oqzVJG7YvhuVdY0j16J2vLvNk05T3P9JdPqB1QqlGNEZSDSlbi' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'isjm55tkFl4tyRx61F9A5tYLWwwuVYWWFPutuuVcJOPi8gWAItUkruaLu6GjgyJQ' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo '143QA//lBp4sYRxUEX71defO19iKkDz+xEuOzYMd16j76OKMcmbnog7hbMrXR4Yi' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'kNXuhnwBadutaXLve3mZ0JowrZyHKfTUWOHgvuULpCVD5su3NdbpE2AVn1idcF8V' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'jaj6p0vtcvEnXEC69XwX+yL0TgvOE4Vu/OWg8lDWQdetONIHGbElJZvB6eyTF1nl' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'IIgLc2ECgYEA7PL3soOfH3dMNUt4KGSw1cK/kwvy7UsT6QrAPi1Cc/A4szluk6/O' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo '5YhKfTjzHW5WDmsTTAcT29MLmW8dQXeUAe/1BtIATubsav+uSelfBmUAnQj9fvKT' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'ieJ6JMf20OTbS6XODA3+jJAdApLCu61Lv6nePOuNzLY/uqSMWu9kO/sCgYEA981v' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'YIUaadFaHnPnmax0+jJMs8S5AIEjSfSIxR8oNOWNUxBBvwFd4zWTApVfZqKjmI83' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'Ng5tISxspzHseakyrIpoDqzxRQPxZF7RTO6VUX+ZQj6iIXVp9FDqWAjvDACuSky2' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'mGAiiA+fWZ1za62opgoYQZ17O17SyHF9/vJ7XCECgYANwNyXxAQMc4Q847CJx65r' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo '+e3cvyjOlTkGodUexsnAqQThgkfk0qOTtyF7uz6BStI77AMmupJwhAN8WHK+Rg6V' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'PjRevPm/mq/GVijrqVwWpu4uL0NnhvUBX9/vGpw868u+zFT1ZiqMRiEo8RPUiO6I' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'pXd82b9VTo7Mapiq/pI22QKBgC8Kb586BUabOGlZhVi11Ur9q3Pg32HKIgHTCveo' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'r4BDJ23iQyjYQJN2Qx8VbhPUwgue/FMlr+/BOCsRHhwGU5lPeOt4RyDb28I7Aa6C' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'CBR9jYF21F5XpLJ9fc8SexajNnLiVzNb5JJBrPVdH2EMiVxjxDEIjTE7EfZ9HPb9' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo '3w8hAoGBALyik3jr0W6DxzqOW0jPXPLDqp1JvzieC03nZD1scWeI8qIzUOpLX7cc' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'jaMU/8QMBRvyEcZK82Cedilm30nLf+C/FR5TsUmftS7IcjoC4Z2ZXWNOhMv22TUJ' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
+        "    echo 'Ml6z//+WSZ3qVZ5rvAeo4obwiBfe+Uh+AyyprEGgmimF9qDejcwc' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
         "    echo '-----END RSA PRIVATE KEY-----' >> ${strUserPath}/.ssh/id_rsa && \\\n" .
-        "    echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDR0yJsZW5d5LcqteiOtv8d+FFeFFHDPI0VTcTOdMn1iDiIP1ouX3Q2OyNjsBaDbsRJd+sp9I" .
-             "Rq1LKX3zsBcgGZANwm0zduuNEPEU94ajS/uRoejIqY/XkKOpnEF6ZbQ2S7TaE4sWeGLvba7kUFs0QTOO+N+nV2dMbdqZf6C8lazw== " .
-             "user\@pgbackrest-test' > ${strUserPath}/.ssh/authorized_keys && \\\n" .
+        "    echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDlXJKkRqflGftBDlc/XdiRfFOD5en0355zIOEP3Y5CTRVk4WcQqVdRoxcfRZWNFGCOBsXvwk" .
+             "cVsRCNQeKZvOv16/Ui4NohLjYTWdSQFoeCCcc0BbZqq1zNQNKcsZxep3Rd4O3CmOPUjTFY54mWL/GNT55LCPOo2BfplfY/S5Nd+W7bni5KM4XcgBGj0" .
+             "WIMQpB2SyjE04CEJNiAMDKeaRx8n17zsWOJMaZ+dk7cfqBTaSJ1IVevB0e103dCW/pGAKugsYBlmma2oGitPBKFZFJxYACD86pbAumF81tcggdk7gQn" .
+             "hLYkuCyAkdvbRInZcQjYiWf2yP6gJaAsnab5Eu9b user\@pgbackrest-test' > ${strUserPath}/.ssh/authorized_keys && \\\n" .
         "    echo 'Host *' > ${strUserPath}/.ssh/config && \\\n" .
         "    echo '    StrictHostKeyChecking no' >> ${strUserPath}/.ssh/config && \\\n";
 
@@ -308,7 +321,7 @@ sub entryPointSetup
 
     if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
     {
-        $strScript .= '/usr/sbin/sshd -D';
+        $strScript .= 'rm -rf /run/nologin && /usr/sbin/sshd -D';
     }
     else
     {
@@ -375,15 +388,18 @@ sub containerBuild
 
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
         {
-            if ($strOS eq VM_RH7)
+            if ($strOS eq VM_RH8)
             {
                 $strScript .=
-                    "    yum -y install centos-release-scl-rh epel-release && \\\n";
+                    "    dnf install -y dnf-plugins-core && \\\n" .
+                    "    dnf config-manager --set-enabled powertools && \\\n" .
+                    "    dnf -y install epel-release && \\\n" .
+                    "    crb enable && \\\n";
             }
 
             $strScript .=
                 "    yum -y update && \\\n" .
-                "    yum -y install openssh-server openssh-clients wget sudo valgrind git \\\n" .
+                "    yum -y install openssh-server openssh-clients wget sudo git \\\n" .
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl \\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
                 "        libyaml-devel zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 perl-JSON-PP ccache meson \\\n" .
@@ -394,20 +410,14 @@ sub containerBuild
             $strScript .=
                 "    export DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive && \\\n" .
                 "    apt-get update && \\\n" .
-                "    apt-get install -y --no-install-recommends openssh-server wget sudo gcc make valgrind git \\\n" .
-                "        libdbd-pg-perl libhtml-parser-perl libssl-dev libperl-dev \\\n" .
+                "    apt-get install -y --no-install-recommends openssh-server wget sudo gcc make git \\\n" .
+                "        libdbd-pg-perl libhtml-parser-perl libssl-dev libperl-dev python3-distutils \\\n" .
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
                 "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config \\\n" .
                 "        libbz2-dev bzip2 libyaml-dev libjson-pp-perl liblz4-dev liblz4-tool gnupg lsb-release ccache meson \\\n" .
                 "        libssh2-1-dev";
 
-            # This package is required to build valgrind on 32-bit
-            if ($oVm->{$strOS}{&VM_ARCH} eq VM_ARCH_I386)
-            {
-                $strScript .= " g++-multilib";
-            }
-
-            if ($strOS eq VM_U22)
+            if ($strOS eq VM_U20 || $strOS eq VM_U22)
             {
                 $strScript .= " valgrind";
             }
@@ -426,17 +436,11 @@ sub containerBuild
             }
         }
 
-        # If no specific version of lcov is requested then install the default package
-        if (!defined($oVm->{$strOS}{&VMDEF_LCOV_VERSION}))
-        {
-            $strScript .= ' lcov';
-        }
-
         #---------------------------------------------------------------------------------------------------------------------------
         $strScript .= sectionHeader() .
             "# Regenerate SSH keys\n" .
             "    rm -f /etc/ssh/ssh_host_rsa_key* && \\\n" .
-            "    ssh-keygen -t rsa -b 1024 -f /etc/ssh/ssh_host_rsa_key";
+            "    ssh-keygen -t rsa -b 2048 -f /etc/ssh/ssh_host_rsa_key";
 
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
@@ -450,34 +454,6 @@ sub containerBuild
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
-        if ($strOS ne VM_U22)
-        {
-            my $strValgrind = 'valgrind-3.17.0';
-
-            $strScript .= sectionHeader() .
-                "# Build valgrind\n" .
-                "    wget -q -O - https://sourceware.org/pub/valgrind/${strValgrind}.tar.bz2 | tar jx -C /root && \\\n" .
-                "    cd /root/${strValgrind} && \\\n" .
-                "    ./configure --silent && \\\n" .
-                "    make -s -j8 install && \\\n" .
-                "    rm -rf /root/${strValgrind}";
-        }
-
-        #---------------------------------------------------------------------------------------------------------------------------
-        if (defined($oVm->{$strOS}{&VMDEF_LCOV_VERSION}))
-        {
-            my $strLCovVersion = $oVm->{$strOS}{&VMDEF_LCOV_VERSION};
-            my $strLCovPath = "/root/lcov-${strLCovVersion}";
-
-            $strScript .= sectionHeader() .
-                "# Build lcov ${strLCovVersion}\n" .
-                "    wget -q -O - https://github.com/linux-test-project/lcov/releases/download/v${strLCovVersion}/" .
-                    "lcov-${strLCovVersion}.tar.gz | tar zx -C /root && \\\n" .
-                "    make -C ${strLCovPath} install && \\\n" .
-                "    rm -rf ${strLCovPath}";
-        }
-
-        #---------------------------------------------------------------------------------------------------------------------------
         if (!$bDeprecated)
         {
             $strScript .= sectionHeader() .
@@ -486,20 +462,21 @@ sub containerBuild
             if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
             {
                 $strScript .=
-                    "    rpm --import http://yum.postgresql.org/RPM-GPG-KEY-PGDG && \\\n";
+                    "    rpm --import https://download.postgresql.org/pub/repos/yum/keys/RPM-GPG-KEY-PGDG && \\\n";
 
-                if ($strOS eq VM_RH7)
+                if ($strOS eq VM_RH8)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-7-" . hostArch() . "/" .
-                            "pgdg-redhat-repo-latest.noarch.rpm && \\\n";
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-" . hostArch() . "/" .
+                            "pgdg-redhat-repo-latest.noarch.rpm && \\\n" .
+                        "    dnf -qy module disable postgresql && \\\n";
                 }
-                elsif ($strOS eq VM_F38)
+                elsif ($strOS eq VM_F40)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-38-" . hostArch() . "/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-40-" . hostArch() . "/" .
                             "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
                 }
 
@@ -507,11 +484,17 @@ sub containerBuild
             }
             else
             {
+                # Install repo from apt.postgresql.org
+                if (vmPgRepo($strVm))
+                {
+                    $strScript .=
+                        "    echo \"deb http://apt.postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg main" .
+                            ($strOS eq VM_U22 ? ' 17' : '') . "\" >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
+                        "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
+                        "    apt-get update && \\\n";
+                }
+
                 $strScript .=
-                    "    echo \"deb http://apt.postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg main" .
-                        ($strOS eq VM_U22 ? ' 16' : '') . "\" >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
-                    "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
-                    "    apt-get update && \\\n" .
                     "    apt-get install -y --no-install-recommends postgresql-common libpq-dev && \\\n" .
                     "    sed -i 's/^\\#create\\_main\\_cluster.*\$/create\\_main\\_cluster \\= false/' " .
                         "/etc/postgresql-common/createcluster.conf";
@@ -616,6 +599,12 @@ sub containerBuild
                     "    echo 'HostKeyAlgorithms=+ssh-rsa,ssh-rsa-cert-v01\@openssh.com'        >> /etc/ssh/sshd_config && \\\n" .
                     "    echo 'PubkeyAcceptedAlgorithms=+ssh-rsa,ssh-rsa-cert-v01\@openssh.com' >> /etc/ssh/sshd_config";
             }
+
+            # Rename existing group that would conflict with our group name. This is pretty hacky but should be OK since we are the
+            # only thing running in the container.
+            $strScript .= sectionHeader() .
+                "# Rename conflicting group\n" .
+                '    sed -i s/.*\:x\:' . TEST_GROUP_ID . '\:$/' . TEST_GROUP . '\:x\:' . TEST_GROUP_ID . "\:/ /etc/group";
 
             $strScript .= sectionHeader() .
                 "# Create test user\n" .

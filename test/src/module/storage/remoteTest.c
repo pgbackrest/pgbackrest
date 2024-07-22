@@ -265,6 +265,24 @@ testRun(void)
             "raised from remote-0 shim protocol: " STORAGE_ERROR_READ_MISSING, TEST_PATH "/pg256/test.txt");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("raw read file without compression");
+
+        HRN_STORAGE_PUT(storageTest, TEST_PATH "/repo128/test.txt", contentBuf);
+
+        // Disable protocol compression in the storage object
+        ((StorageRemote *)storageDriver(storageRepo))->compressLevel = 0;
+
+        Buffer *buffer = bufNew(bufUsed(contentBuf));
+        size_t size;
+        StorageRead *fileReadRaw;
+        TEST_ASSIGN(fileReadRaw, storageNewReadP(storageRepo, STRDEF("test.txt")), "new file");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(fileReadRaw)), true, "open read");
+        TEST_ASSIGN(size, storageReadRemote(fileReadRaw->driver, buffer, true), "read file and save returned size");
+        TEST_RESULT_UINT(size, bufUsed(buffer), "check returned size");
+        TEST_RESULT_UINT(size, bufUsed(contentBuf), "returned size should be the same as the file size");
+        TEST_RESULT_VOID(ioReadClose(storageReadIo(fileReadRaw)), "close");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read file without compression");
 
         HRN_STORAGE_PUT(storageTest, TEST_PATH "/repo128/test.txt", contentBuf);
@@ -295,7 +313,7 @@ testRun(void)
 
         size_t bufferOld = ioBufferSize();
         ioBufferSizeSet(11);
-        Buffer *buffer = bufNew(11);
+        buffer = bufNew(11);
 
         TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF("test.txt"), .limit = VARUINT64(11)), "get file");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(fileRead)), true, "open read");
@@ -448,7 +466,7 @@ testRun(void)
         ((StorageRemote *)storageDriver(storageRepoWrite))->compressLevel = 3;
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("write file, free before close, make sure the .tmp file remains (interleave with normal write)");
+        TEST_TITLE("write file, free before close, make sure the .tmp file remains (interleaved with normal write)");
 
         StorageWrite *write3 = NULL;
         TEST_ASSIGN(write, storageNewWriteP(storageRepoWrite, STRDEF("test2.txt")), "new write file");
@@ -466,6 +484,17 @@ testRun(void)
         TEST_RESULT_UINT(
             storageInfoP(storageTest, STRDEF("repo128/test2.txt.pgbackrest.tmp")).size, 16384, "file exists and is partial");
         TEST_RESULT_BOOL(bufEq(storageGetP(storageNewReadP(storageRepo, STRDEF("test3.txt"))), contentBuf), true, "check file 3");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write free and close before write");
+
+        TEST_ASSIGN(write, storageNewWriteP(storageRepoWrite, STRDEF("test2.txt")), "new write file");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(write)), "open file");
+        TEST_RESULT_VOID(storageWriteFree(write), "free file");
+
+        TEST_ASSIGN(write, storageNewWriteP(storageRepoWrite, STRDEF("test2.txt")), "new write file");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(write)), "open file");
+        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(write)), "close file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write the file again with protocol compression");
@@ -714,10 +743,23 @@ testRun(void)
     // sure coverage data has been written by the remote. We also need to make sure that the mem context callback is cleared so that
     // protocolClientFreeResource() will not be called and send another exit. protocolFree() is still required to free the client
     // objects.
-    memContextCallbackClear(objMemContext(protocolRemoteGet(protocolStorageTypeRepo, 0)));
-    protocolClientExecute(protocolRemoteGet(protocolStorageTypeRepo, 0), protocolCommandNewP(PROTOCOL_COMMAND_EXIT));
-    memContextCallbackClear(objMemContext(protocolRemoteGet(protocolStorageTypePg, 1)));
-    protocolClientExecute(protocolRemoteGet(protocolStorageTypePg, 1), protocolCommandNewP(PROTOCOL_COMMAND_EXIT));
+    ProtocolClient *client = protocolRemoteGet(protocolStorageTypeRepo, 0);
+
+    memContextCallbackClear(objMemContext(client));
+
+    for (unsigned int sessionIdx = 0; sessionIdx < lstSize(client->sessionList); sessionIdx++)
+        memContextCallbackClear(objMemContext(*(ProtocolClientSession **)lstGet(client->sessionList, sessionIdx)));
+
+    protocolClientRequestP(client, PROTOCOL_COMMAND_EXIT);
+
+    client = protocolRemoteGet(protocolStorageTypePg, 1);
+
+    for (unsigned int sessionIdx = 0; sessionIdx < lstSize(client->sessionList); sessionIdx++)
+        memContextCallbackClear(objMemContext(*(ProtocolClientSession **)lstGet(client->sessionList, sessionIdx)));
+
+    memContextCallbackClear(objMemContext(client));
+    protocolClientRequestP(client, PROTOCOL_COMMAND_EXIT);
+
     protocolFree();
 
     FUNCTION_HARNESS_RETURN_VOID();

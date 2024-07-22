@@ -21,7 +21,7 @@ Base64 encoding/decoding
 static const char encodeBase64Lookup[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static void
-encodeToStrBase64(const unsigned char *source, size_t sourceSize, char *destination)
+encodeToStrBase64(const unsigned char *const source, const size_t sourceSize, char *const destination)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(UCHARDATA, source);
@@ -80,21 +80,14 @@ encodeToStrBase64(const unsigned char *source, size_t sourceSize, char *destinat
 
 /**********************************************************************************************************************************/
 static size_t
-encodeToStrSizeBase64(size_t sourceSize)
+encodeToStrSizeBase64(const size_t sourceSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(SIZE, sourceSize);
     FUNCTION_TEST_END();
 
-    // Calculate how many groups of three are in the source
-    size_t encodeGroupTotal = sourceSize / 3;
-
-    // Increase by one if there is a partial group
-    if (sourceSize % 3 != 0)
-        encodeGroupTotal++;
-
-    // Four characters are needed to encode each group
-    FUNCTION_TEST_RETURN(SIZE, encodeGroupTotal * 4);
+    // Four characters are needed to encode each 3 byte group (plus up to two bytes of padding)
+    FUNCTION_TEST_RETURN(SIZE, (sourceSize + 2) / 3 * 4);
 }
 
 /**********************************************************************************************************************************/
@@ -119,14 +112,14 @@ static const int8_t decodeBase64Lookup[256] =
 };
 
 static void
-decodeToBinValidateBase64(const char *source)
+decodeToBinValidateBase64(const char *const source)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, source);
     FUNCTION_TEST_END();
 
     // Check for the correct length
-    size_t sourceSize = strlen(source);
+    const size_t sourceSize = strlen(source);
 
     if (sourceSize % 4 != 0)
         THROW_FMT(FormatError, "base64 size %zu is not evenly divisible by 4", sourceSize);
@@ -158,7 +151,7 @@ decodeToBinValidateBase64(const char *source)
 
 /**********************************************************************************************************************************/
 static void
-decodeToBinBase64(const char *source, unsigned char *destination)
+decodeToBinBase64(const char *const source, unsigned char *const destination)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, source);
@@ -199,7 +192,7 @@ decodeToBinBase64(const char *source, unsigned char *destination)
 
 /**********************************************************************************************************************************/
 static size_t
-decodeToBinSizeBase64(const char *source)
+decodeToBinSizeBase64(const char *const source)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, source);
@@ -209,7 +202,7 @@ decodeToBinSizeBase64(const char *source)
     decodeToBinValidateBase64(source);
 
     // Start with size calculated directly from source length
-    size_t sourceSize = strlen(source);
+    const size_t sourceSize = strlen(source);
     size_t destinationSize = sourceSize / 4 * 3;
 
     // Subtract last character if it is not present
@@ -231,7 +224,7 @@ Base64Url encoding
 static const char encodeBase64LookupUrl[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
 static void
-encodeToStrBase64Url(const unsigned char *source, size_t sourceSize, char *destination)
+encodeToStrBase64Url(const unsigned char *const source, const size_t sourceSize, char *const destination)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(UCHARDATA, source);
@@ -285,34 +278,14 @@ encodeToStrBase64Url(const unsigned char *source, size_t sourceSize, char *desti
 
 /**********************************************************************************************************************************/
 static size_t
-encodeToStrSizeBase64Url(size_t sourceSize)
+encodeToStrSizeBase64Url(const size_t sourceSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(SIZE, sourceSize);
     FUNCTION_TEST_END();
 
-    // Calculate how many groups of three are in the source. Each group of three is encoded with four bytes.
-    size_t encodeTotal = sourceSize / 3 * 4;
-
-    // Determine additional required bytes for the partial group, if any
-    switch (sourceSize % 3)
-    {
-        // One byte requires two characters to encode
-        case 1:
-            encodeTotal += 2;
-            break;
-
-        // Two bytes require three characters to encode
-        case 2:
-            encodeTotal += 3;
-            break;
-
-        // If mod is zero then sourceSize was evenly divisible and no additional bytes are required
-        case 0:
-            break;
-    }
-
-    FUNCTION_TEST_RETURN(SIZE, encodeTotal);
+    // Four characters are needed to encode each 3 byte group, three characters for 2 bytes, and two characters for 1 byte
+    FUNCTION_TEST_RETURN(SIZE, sourceSize / 3 * 4 + (sourceSize % 3 == 0 ? 0 : sourceSize % 3 + 1));
 }
 
 /***********************************************************************************************************************************

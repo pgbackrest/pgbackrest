@@ -1,0 +1,139 @@
+<release date="2017-04-12" version="1.18" title="Stanza Upgrade, Refactoring, and Locking Improvements">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jens.wilke"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where read-only operations that used local worker processes (i.e. <cmd>restore</cmd>) were creating write locks that could interfere with parallel <cmd>archive-push</cmd>.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Added the stanza-upgrade command to provide a mechanism for upgrading a stanza after upgrading to a new major version of <postgres/>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Added validation of <setting>pgbackrest.conf</setting> to display warnings if options are not valid or are not in the correct section.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <p>Simplify locking scheme. Now, only the master process will hold write locks (for <cmd>archive-push</cmd> and <cmd>backup</cmd> commands) and not all local and remote worker processes as before.</p>
+            </release-item>
+
+            <release-item>
+                <p>Do not set timestamps of files in the backup directories to match timestamps in the cluster directory. This was originally done to enable backup resume, but that process is now implemented with checksums.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="yogesh.sharma"/>
+                </release-item-contributor-list>
+
+                <p>Improved error message when the <cmd>restore</cmd> command detects the presence of <file>postmaster.pid</file>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="yogesh.sharma"/>
+                </release-item-contributor-list>
+
+                <p>Renumber return codes between 25 and 125 to avoid PostgreSQL interpreting some as fatal signal exceptions.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Refactor <code>Ini.pm</code> to facilitate testing.</p>
+            </release-item>
+
+            <release-item>
+                <p>The <cmd>backup</cmd> and <cmd>restore</cmd> commands no longer copy via temp files. In both cases the files are checksummed on resume so there's no danger of partial copies.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow functions to accept optional parameters as a hash.</p>
+            </release-item>
+
+            <release-item>
+                <p>Refactor <code>File->list()</code> and <code>fileList()</code> to accept optional parameters.</p>
+            </release-item>
+
+            <release-item>
+                <p>Refactor <code>backupLabel()</code> and add unit tests.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Silence some perl critic warnings.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-development-list>
+            <release-item>
+                <p>Update wording for release note sections.</p>
+            </release-item>
+
+            <release-item>
+                <p>Ignore clock skew in container libc/package builds using make. It is common for containers to have clock skew so the build process takes care of this issue independently.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Complete statement/branch coverage for <code>Ini.pm</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improved functions used to test/munge manifest and info files.</p>
+            </release-item>
+
+            <release-item>
+                <p>Coverage testing always enabled on Debian-based containers.</p>
+            </release-item>
+
+            <release-item>
+                <p>Require description in every call to <code>testResult()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Make <code>iWaitSeconds</code> an optional parameter for <code>testResult()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Updated vagrant to new version and image.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fixed flapping archive stop tests.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Added ability to test warning messages.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

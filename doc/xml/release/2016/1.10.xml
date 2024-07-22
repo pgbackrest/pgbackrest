@@ -1,0 +1,73 @@
+<release date="2016-11-08" version="1.10" title="Stanza Creation and Minor Bug Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <p>Fixed an issue where a backup could error if no changes were made to a database between backups and only <file>pg_control</file> changed.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="nikhilchandra.kulkarni"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where tablespace paths with the same prefix would cause an invalid link error.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Added the <cmd>stanza-create</cmd> command to formalize creation of stanzas in the repository.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="devrim.gunduz"/>
+                </release-item-contributor-list>
+
+                <p>Removed extraneous <code>use lib</code> directives from Perl modules.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-development-list>
+            <release-item>
+                <p>Fixed missing variable replacements.</p>
+            </release-item>
+
+            <release-item>
+                <p>Removed hard-coded host names from configuration file paths.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow command-line length to be configured using <id>cmd-line-len</id> param.</p>
+            </release-item>
+
+            <release-item>
+                <p>Added <id>compact</id> param to allow CSS to be embedded in HTML file.</p>
+            </release-item>
+
+            <release-item>
+                <p>Added <id>pretty</id> param to produce HTML with proper indenting.</p>
+            </release-item>
+
+            <release-item>
+                <p>Only generate HTML menu when required and don't require index page.</p>
+            </release-item>
+
+            <release-item>
+                <p>Assign numbers to sections by default.</p>
+            </release-item>
+
+            <release-item>
+                <p>VM mount points are now optional.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+</release>

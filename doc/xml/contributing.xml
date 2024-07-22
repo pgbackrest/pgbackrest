@@ -91,10 +91,10 @@
 
             <execute user="root" pre="y">
                 <exe-cmd>
-                    apt-get install rsync git devscripts build-essential valgrind lcov autoconf
+                    apt-get install rsync git devscripts build-essential valgrind autoconf
                     autoconf-archive libssl-dev zlib1g-dev libxml2-dev libpq-dev pkg-config
                     libxml-checker-perl libyaml-perl libdbd-pg-perl liblz4-dev liblz4-tool
-                    zstd libzstd-dev bzip2 libbz2-dev libyaml-dev ccache meson
+                    zstd libzstd-dev bzip2 libbz2-dev libyaml-dev ccache python3-distutils meson
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
@@ -398,7 +398,7 @@ pgbackrest/doc/doc.pl --help
                     <title>Run a Specific Test Run</title>
 
                     <execute output="y">
-                        <exe-cmd>pgbackrest/test/test.pl {[dash]}-vm=u20 {[dash]}-module=mock {[dash]}-test=archive {[dash]}-run=2</exe-cmd>
+                        <exe-cmd>pgbackrest/test/test.pl {[dash]}-vm=u20 {[dash]}-module=postgres {[dash]}-test=interface {[dash]}-run=2</exe-cmd>
                         <exe-cmd-extra>{[test-cmd-extra]}</exe-cmd-extra>
                     </execute>
                 </execute-list>
@@ -526,7 +526,7 @@ HRN_FORK_BEGIN()
 {
     HRN_FORK_CHILD_BEGIN()
     {
-        TEST_RESULT_INT_NE(lockAcquireP(), -1, "create backup/expire lock");
+        TEST_RESULT_BOOL(cmdLockAcquireP(), true, "create backup/expire lock");
 
         // Notify parent that lock has been acquired
         HRN_FORK_CHILD_NOTIFY_PUT();
@@ -534,7 +534,7 @@ HRN_FORK_BEGIN()
         // Wait for parent to allow release lock
         HRN_FORK_CHILD_NOTIFY_GET();
 
-        lockRelease(true);
+        cmdLockReleaseP();
     }
     HRN_FORK_CHILD_END();
 
@@ -571,17 +571,13 @@ HRN_FORK_END();
 
                 <code-block>
 // Set up two standbys but no primary
-harnessPqScriptSet((HarnessPq [])
-{
-    HRNPQ_MACRO_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, "/pgdata", true, NULL, NULL),
-    HRNPQ_MACRO_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_96, "/pgdata", true, NULL, NULL),
+HRN_PQ_SCRIPT_SET(
+    HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, "/pgdata", true, NULL, NULL),
+    HRN_PQ_SCRIPT_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_96, "/pgdata", true, NULL, NULL),
 
     // Close the "inner" session first (8) then the outer (1)
-    HRNPQ_MACRO_CLOSE(8),
-    HRNPQ_MACRO_CLOSE(1),
-
-    HRNPQ_MACRO_DONE()
-});
+    HRN_PQ_SCRIPT_CLOSE(8),
+    HRN_PQ_SCRIPT_CLOSE(1));
 
 TEST_ERROR(cmdCheck(), ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
                 </code-block>
@@ -601,7 +597,7 @@ pgbackrest/test/test.pl --vm-out --module=command --test=check --vm=u20
 
 <admonition type="note">Not all systems perform at the same speed, so if a test is timing out, try rerunning with another vm.</admonition>
 
-            <p>Because a test run has not been specified, a coverage report will be generated and written to the local file system under the <backrest/> directory <file>test/result/coverage/lcov/index.html</file> and a file with only the highlighted code that has not been covered will be written to <file>test/result/coverage/coverage.html</file>.</p>
+            <p>A coverage report will be generated and written to the local file system under the <backrest/> repository in <file>test/result/coverage.html</file>.</p>
 
             <p>If 100 percent code coverage has not been achieved, an error message will be displayed, for example: <code>ERROR: [125]: c module command/check/check is not fully covered</code></p>
 
@@ -723,7 +719,7 @@ run 8/1 ------------- L2285 no current backups
                 <list-item><id>command-role</id> - defines the processes for which the option is valid. <code>main</code> indicates the option will be used by the main process and not be passed on to other local/remote processes.</list-item>
             </list>
 
-            <p>At compile time, the <file>config.auto.h</file> file will be generated to contain the constants used for options in the code. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with <code>cfgOpt</code>, e.g. <code>repo-path</code> becomes <code>cfgOptRepoPath</code>.</p>
+            <p>When <file>test.pl</file> is run the <file>config.auto.h</file> file will be generated to contain the constants used for options in the code. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with <code>cfgOpt</code>, e.g. <code>repo-path</code> becomes <code>cfgOptRepoPath</code>.</p>
         </section>
 
         <!-- =================================================================================================================== -->

@@ -24,6 +24,9 @@ static struct
 
     gid_t groupId;                                                  // Real group id of the calling process from getgid()
     const String *groupName;                                        // Group name if it exists
+#ifdef HAVE_LIBSSH2
+    const String *userHome;                                         // User home directory
+#endif // HAVE_LIBSSH2
 } userLocalData;
 
 /**********************************************************************************************************************************/
@@ -40,6 +43,9 @@ userInitInternal(void)
 
             userLocalData.userId = getuid();
             userLocalData.userName = userNameFromId(userLocalData.userId);
+#ifdef HAVE_LIBSSH2
+            userLocalData.userHome = userHomeFromId(userLocalData.userId);
+#endif // HAVE_LIBSSH2
             userLocalData.userRoot = userLocalData.userId == 0;
 
             userLocalData.groupId = getgid();
@@ -73,7 +79,7 @@ groupId(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN gid_t
-groupIdFromName(const String *groupName)
+groupIdFromName(const String *const groupName)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, groupName);
@@ -81,7 +87,7 @@ groupIdFromName(const String *groupName)
 
     if (groupName != NULL)
     {
-        struct group *groupData = getgrnam(strZ(groupName));
+        const struct group *const groupData = getgrnam(strZ(groupName));
 
         if (groupData != NULL)
             FUNCTION_TEST_RETURN_TYPE(gid_t, groupData->gr_gid);
@@ -100,19 +106,48 @@ groupName(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-groupNameFromId(gid_t groupId)
+groupNameFromId(const gid_t groupId)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, groupId);
     FUNCTION_TEST_END();
 
-    struct group *groupData = getgrgid(groupId);
+    const struct group *const groupData = getgrgid(groupId);
 
     if (groupData != NULL)
         FUNCTION_TEST_RETURN(STRING, strNewZ(groupData->gr_name));
 
     FUNCTION_TEST_RETURN(STRING, NULL);
 }
+
+/**********************************************************************************************************************************/
+// Currently userHome() and userHomeFromId() are only used if we are building with libssh2
+#ifdef HAVE_LIBSSH2
+
+FN_EXTERN const String *
+userHome(void)
+{
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN_CONST(STRING, userLocalData.userHome);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN String *
+userHomeFromId(const uid_t userId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT, userId);
+    FUNCTION_TEST_END();
+
+    const struct passwd *const userData = getpwuid(userId);
+
+    if (userData != NULL)
+        FUNCTION_TEST_RETURN(STRING, strNewZ(userData->pw_dir));
+
+    FUNCTION_TEST_RETURN(STRING, NULL);
+}
+
+#endif // HAVE_LIBSSH2
 
 /**********************************************************************************************************************************/
 FN_EXTERN uid_t
@@ -124,7 +159,7 @@ userId(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN uid_t
-userIdFromName(const String *userName)
+userIdFromName(const String *const userName)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, userName);
@@ -132,7 +167,7 @@ userIdFromName(const String *userName)
 
     if (userName != NULL)
     {
-        struct passwd *userData = getpwnam(strZ(userName));
+        const struct passwd *const userData = getpwnam(strZ(userName));
 
         if (userData != NULL)
             FUNCTION_TEST_RETURN_TYPE(uid_t, userData->pw_uid);
@@ -151,13 +186,13 @@ userName(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-userNameFromId(uid_t userId)
+userNameFromId(const uid_t userId)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, userId);
     FUNCTION_TEST_END();
 
-    struct passwd *userData = getpwuid(userId);
+    const struct passwd *const userData = getpwuid(userId);
 
     if (userData != NULL)
         FUNCTION_TEST_RETURN(STRING, strNewZ(userData->pw_name));

@@ -11,7 +11,7 @@ Verify Protocol Handler
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-FN_EXTERN void verifyFileProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN ProtocolServerResult *verifyFileProtocol(PackRead *param);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()

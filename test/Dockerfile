@@ -12,7 +12,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
         sudo vim htop jq rsync sysstat curl \
         libdbd-pg-perl libxml-checker-perl libyaml-perl \
         devscripts build-essential lintian git cloc txt2man debhelper libssl-dev zlib1g-dev libperl-dev libxml2-dev liblz4-dev \
-        liblz4-tool libpq-dev lcov autoconf-archive zstd libzstd-dev bzip2 libbz2-dev pkg-config libyaml-dev libc6-dbg wget meson \
+        liblz4-tool libpq-dev autoconf-archive zstd libzstd-dev bzip2 libbz2-dev pkg-config libyaml-dev libc6-dbg wget meson \
         ccache valgrind tzdata uncrustify libssh2-1-dev
 
 # Install Docker

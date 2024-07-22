@@ -1,0 +1,184 @@
+<release date="2024-03-25" version="2.51" title="Meson Build System">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="2271"/>
+                <github-pull-request id="2272"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="sebastian.krause"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="sebastian.krause"/>
+                    <release-item-reviewer id="rene.hojbjerg.larsen"/>
+                </release-item-contributor-list>
+
+                <p>Skip zero-length files for block incremental delta restore.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2275"/>
+                <github-pull-request id="2276"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="maksym.boguk"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Fix performance regression in storage list.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2298"/>
+                <github-pull-request id="2304"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="samkingno"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Fix progress logging when file size changes during backup.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <github-issue id="2154"/>
+                <github-pull-request id="2235"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="timothee.peignier"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Improved support for dual stack connections.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Make meson the primary build system.">
+                    <github-pull-request id="2264"/>
+                </commit>
+                <commit subject="Set function/variable visibility to hidden.">
+                    <github-pull-request id="2265"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Make meson the primary build system.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2257"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Detect files that have not changed during non-delta incremental backup.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2232"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Prevent invalid recovery when <file>backup_label</file> removed.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2277"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Improve <cmd>archive-push</cmd> WAL segment queue handling.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2268"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Limit resume functionality to full backups.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2296"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Update resume functionality for block incremental.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2263"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="greg.sabino.mullane"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="greg.sabino.mullane"/>
+                </release-item-contributor-list>
+
+                <p>Allow <setting>--version</setting> and <setting>--help</setting> for version and help.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="1970"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Add detailed backtrace to <proper>autoconf</proper>/<proper>make</proper> build.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-pull-request id="2280"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Improve sort comparators.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2281"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Update references to <file>recovery.conf</file>.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
+</release>

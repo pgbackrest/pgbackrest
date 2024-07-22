@@ -1,0 +1,13 @@
+<release date="2017-03-13" version="1.17" title="Page Checksum Bug Fix">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where newly initialized (but unused) pages would cause page checksum warnings.</p>
+            </release-item>
+        </release-bug-list>
+    </release-core-list>
+</release>

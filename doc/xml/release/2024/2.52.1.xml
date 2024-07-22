@@ -1,0 +1,21 @@
+<release date="2024-06-25" version="2.52.1" title="Bug Fix">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <commit subject="Add unit tests for backup from standby with block incremental."/>
+                <commit subject="Fix issue with files larger on the replica than on the primary.">
+                    <github-issue id="2358"/>
+                    <github-pull-request id="2367"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="nicolas.lassimonne"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix issue with files larger on the replica than on the primary.</p>
+            </release-item>
+        </release-bug-list>
+    </release-core-list>
+</release>

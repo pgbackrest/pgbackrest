@@ -11,14 +11,13 @@ File Descriptor Functions
 #include "common/debug.h"
 #include "common/io/fd.h"
 #include "common/log.h"
-#include "common/wait.h"
 
 /***********************************************************************************************************************************
 Use poll() to determine when data is ready to read/write on a socket. Retry after EINTR with whatever time is left on the timer.
 ***********************************************************************************************************************************/
 // Helper to determine when poll() should be retried
 static bool
-fdReadyRetry(int pollResult, int errNo, bool first, TimeMSec *timeout, TimeMSec timeEnd)
+fdReadyRetry(const int pollResult, const int errNo, const bool first, TimeMSec *const timeout, const TimeMSec timeEnd)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, pollResult);
@@ -62,7 +61,7 @@ fdReadyRetry(int pollResult, int errNo, bool first, TimeMSec *timeout, TimeMSec 
 }
 
 FN_EXTERN bool
-fdReady(int fd, bool read, bool write, TimeMSec timeout)
+fdReady(const int fd, const bool read, const bool write, TimeMSec timeout)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INT, fd);

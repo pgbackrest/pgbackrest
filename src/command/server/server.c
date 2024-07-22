@@ -93,18 +93,19 @@ cmdServerSigTerm(const int signalType)
 Handler to reap child processes
 ***********************************************************************************************************************************/
 static void
-cmdServerSigChild(const int signalType, siginfo_t *signalInfo, void *context)
+cmdServerSigChild(const int signalType, siginfo_t *const signalInfo, void *const context)
 {
     (void)signalType;
     (void)context;
-
-    ASSERT(signalInfo->si_code == CLD_EXITED);
 
     // Find the process and remove it
     for (unsigned int processIdx = 0; processIdx < lstSize(serverLocal.processList); processIdx++)
     {
         if (*(int *)lstGet(serverLocal.processList, processIdx) == signalInfo->si_pid)
+        {
+            ASSERT(signalInfo->si_code == CLD_EXITED);
             lstRemoveIdx(serverLocal.processList, processIdx);
+        }
     }
 }
 

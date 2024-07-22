@@ -39,7 +39,8 @@ testRun(void)
 
     // Create help data
     const BldCfg bldCfg = bldCfgParse(storagePosixNewP(HRN_PATH_REPO_STR));
-    const Buffer *const helpData = bldHlpRenderHelpAutoCCmp(bldCfg, bldHlpParse(storagePosixNewP(HRN_PATH_REPO_STR), bldCfg));
+    const Buffer *const helpData = bldHlpRenderHelpAutoCCmp(
+        bldCfg, bldHlpParse(storagePosixNewP(HRN_PATH_REPO_STR), bldCfg, false));
 
     // Program name a version are used multiple times
     const char *helpVersion = PROJECT_NAME " " PROJECT_VERSION;
@@ -211,7 +212,8 @@ testRun(void)
             "  --link-all                          restore all symlinks [default=n]\n"
             "  --link-map                          modify the destination of a symlink\n"
             "                                      [current=/link1=/dest1, /link2=/dest2]\n"
-            "  --recovery-option                   set an option in recovery.conf\n"
+            "  --recovery-option                   set an option in postgresql.auto.conf or\n"
+            "                                      recovery.conf\n"
             "  --set                               backup set to restore [default=latest]\n"
             "  --tablespace-map                    restore a tablespace into the specified\n"
             "                                      directory\n"
@@ -242,13 +244,13 @@ testRun(void)
             "                                      files [default=/etc/pgbackrest]\n"
             "  --delta                             restore or backup using checksums\n"
             "                                      [default=n]\n"
-            "  --io-timeout                        I/O timeout [default=60]\n"
+            "  --io-timeout                        I/O timeout [default=1m]\n"
             "  --lock-path                         path where lock files are stored\n"
             "                                      [default=/tmp/pgbackrest]\n"
             "  --neutral-umask                     use a neutral umask [default=y]\n"
             "  --process-max                       max processes to use for\n"
             "                                      compress/transfer [default=1]\n"
-            "  --protocol-timeout                  protocol timeout [default=1830]\n"
+            "  --protocol-timeout                  protocol timeout [default=31m]\n"
             "  --sck-keep-alive                    keep-alive enable [default=y]\n"
             "  --stanza                            defines the stanza\n"
             "  --tcp-keep-alive-count              keep-alive count\n"
@@ -259,12 +261,16 @@ testRun(void)
             "\n"
             "  --log-level-console                 level for console logging [default=warn]\n"
             "  --log-level-file                    level for file logging [default=info]\n"
-            "  --log-level-stderr                  level for stderr logging [default=warn]\n"
+            "  --log-level-stderr                  level for stderr logging [default=off]\n"
             "  --log-path                          path where log files are stored\n"
             "                                      [default=/var/log/pgbackrest]\n"
             "  --log-subprocess                    enable logging in subprocesses [default=n]\n"
             "  --log-timestamp                     enable timestamp in logging [default=y]\n"
             "\n",
+            "Maintainer Options:\n"
+            "\n"
+            "  --pg-version-force                  force PostgreSQL version\n"
+            "\n"
             "Repository Options:\n"
             "\n"
             "  --repo                              set repository\n"
@@ -315,13 +321,16 @@ testRun(void)
             "  --repo-s3-kms-key-id                S3 repository KMS key\n"
             "  --repo-s3-region                    S3 repository region\n"
             "  --repo-s3-role                      S3 repository role\n"
+            "  --repo-s3-sse-customer-key          S3 Repository SSE Customer Key\n"
             "  --repo-s3-token                     S3 repository security token\n"
             "  --repo-s3-uri-style                 S3 URI Style [default=host]\n"
             "  --repo-sftp-host                    SFTP repository host\n"
             "  --repo-sftp-host-fingerprint        SFTP repository host fingerprint\n"
+            "  --repo-sftp-host-key-check-type     SFTP host key check type [default=strict]\n"
             "  --repo-sftp-host-key-hash-type      SFTP repository host key hash type\n"
             "  --repo-sftp-host-port               SFTP repository host port [default=22]\n"
             "  --repo-sftp-host-user               SFTP repository host user\n"
+            "  --repo-sftp-known-host              SFTP known hosts file\n"
             "  --repo-sftp-private-key-file        SFTP private key file\n"
             "  --repo-sftp-private-key-passphrase  SFTP private key passphrase\n"
             "  --repo-sftp-public-key-file         SFTP public key file\n"
@@ -329,6 +338,7 @@ testRun(void)
             "  --repo-storage-ca-path              repository storage CA path\n"
             "  --repo-storage-host                 repository storage host\n"
             "  --repo-storage-port                 repository storage port [default=443]\n"
+            "  --repo-storage-tag                  repository storage tag(s)\n"
             "  --repo-storage-upload-chunk-size    repository storage upload chunk size\n"
             "  --repo-storage-verify-tls           repository storage certificate verify\n"
             "                                      [default=y]\n"

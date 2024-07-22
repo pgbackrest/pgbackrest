@@ -11,7 +11,7 @@ Archive Push Protocol Handler
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-FN_EXTERN void archivePushFileProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN ProtocolServerResult *archivePushFileProtocol(PackRead *param);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()

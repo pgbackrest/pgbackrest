@@ -12,7 +12,7 @@ Configuration Protocol Handler
 Functions
 ***********************************************************************************************************************************/
 // Process config protocol requests
-FN_EXTERN void configOptionProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN ProtocolServerResult *configOptionProtocol(PackRead *param);
 
 // Get option values from a remote process
 FN_EXTERN VariantList *configOptionRemote(ProtocolClient *client, const VariantList *paramList);

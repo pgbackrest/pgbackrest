@@ -16,6 +16,8 @@ testRun(void)
         const unsigned char *encode = (const unsigned char *)"string_to_encode\r\n";
         char destinationEncode[256];
 
+        TEST_RESULT_UINT(encodeToStrSize(encodingBase64, 0), 0, "check zero size");
+
         encodeToStr(encodingBase64, encode, 1, destinationEncode);
         TEST_RESULT_Z(destinationEncode, "cw==", "1 character encode");
         TEST_RESULT_UINT(encodeToStrSize(encodingBase64, 1), strlen(destinationEncode), "check size");
@@ -105,6 +107,8 @@ testRun(void)
 
         const unsigned char *encode = (const unsigned char *)"string_to_encode\r\n";
         char destinationEncode[256];
+
+        TEST_RESULT_UINT(encodeToStrSize(encodingBase64Url, 0), 0, "check zero size");
 
         encodeToStr(encodingBase64Url, encode, 1, destinationEncode);
         TEST_RESULT_Z(destinationEncode, "cw", "1 character encode");

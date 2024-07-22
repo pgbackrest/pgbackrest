@@ -5,6 +5,7 @@ Protocol Helper
 
 #include <string.h>
 
+#include "command/lock.h"
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/exec.h"
@@ -412,6 +413,11 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
         {
             TRY_BEGIN()
             {
+                // Get parameter list from the client. This needs to happen even if we cannot authorize the client so that the
+                // session id gets set for the error.
+                const ProtocolServerRequestResult command = protocolServerRequest(result);
+                CHECK(FormatError, command.id == PROTOCOL_COMMAND_CONFIG, "expected config command");
+
                 // Get list of authorized stanzas for this client
                 CHECK(AssertError, cfgOptionTest(cfgOptTlsServerAuth), "missing auth data");
 
@@ -422,10 +428,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
                 if (clientAuthList == NULL)
                     THROW(AccessError, "access denied");
 
-                // Get parameter list from the client and load it
-                const ProtocolServerCommandGetResult command = protocolServerCommandGet(result);
-                CHECK(FormatError, command.id == PROTOCOL_COMMAND_CONFIG, "expected config command");
-
+                // Load parameter list from the client
                 StringList *const paramList = pckReadStrLstP(pckReadNew(command.param));
                 strLstInsert(paramList, 0, cfgExe());
                 cfgLoad(strLstSize(paramList), strLstPtr(paramList));
@@ -442,7 +445,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
             TRY_END();
 
             // Ack the config command
-            protocolServerDataPut(result, NULL);
+            protocolServerResponseP(result);
 
             // Move result to prior context and move session into result so there is only one return value
             protocolServerMove(result, memContextPrior());
@@ -451,8 +454,12 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
         // Else the client can only detect that the server is alive
         else
         {
-            // Send a data end message and return a NULL server. Do not waste time looking at what the client wrote.
-            protocolServerDataPut(result, NULL);
+            // A noop command should have been received
+            const ProtocolServerRequestResult command = protocolServerRequest(result);
+            CHECK(FormatError, command.id == PROTOCOL_COMMAND_NOOP, "expected config command");
+
+            // Send a data end message and return a NULL server
+            protocolServerResponseP(result);
 
             // Set result to NULL so there is no server for the caller to use. The TLS session will be freed when the temp mem
             // context ends.
@@ -503,7 +510,8 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
 
         kvPut(
             optionReplace, VARSTRDEF(CFGOPT_CONFIG_PATH),
-            cfgOptionIdxSource(optConfigPath, hostIdx) != cfgSourceDefault ? VARSTR(cfgOptionIdxStr(optConfigPath, hostIdx)) : NULL);
+            cfgOptionIdxSource(optConfigPath, hostIdx) != cfgSourceDefault ?
+                VARSTR(cfgOptionIdxStr(optConfigPath, hostIdx)) : NULL);
 
         // Update/remove repo/pg options that are sent to the remote
         for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
@@ -542,7 +550,9 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
                 // Remove unrequired/defaulted pg options when the remote type is repo since they won't be used
                 if (protocolStorageType == protocolStorageTypeRepo)
                 {
-                    remove = !cfgParseOptionRequired(cfgCommand(), optionId) || cfgParseOptionDefault(cfgCommand(), optionId) != NULL;
+                    remove =
+                        !cfgParseOptionRequired(cfgCommand(), optionId) ||
+                        cfgParseOptionDefault(cfgCommand(), optionId) != NULL;
                 }
                 // Move pg options to host index 0 (key 1) so they will be in the default index on the remote host
                 else
@@ -598,6 +608,10 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
 
         // Add the remote type
         kvPut(optionReplace, VARSTRDEF(CFGOPT_REMOTE_TYPE), VARSTR(strIdToStr(protocolStorageType)));
+
+        // Add lock required on the remote
+        if (cfgLockRemoteRequired())
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOCK), varNewVarLst(varLstNewStrLst(cmdLockList())));
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
@@ -767,10 +781,10 @@ protocolRemoteExec(
                 TRY_BEGIN()
                 {
                     // Pass parameters to server
-                    ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_CONFIG);
-                    pckWriteStrLstP(protocolCommandParamP(command), protocolRemoteParam(protocolStorageType, hostIdx));
-                    protocolClientExecute(helper->client, command);
-                    protocolCommandFree(command);
+                    PackWrite *const param = protocolPackNew();
+
+                    pckWriteStrLstP(param, protocolRemoteParam(protocolStorageType, hostIdx));
+                    protocolClientRequestP(helper->client, PROTOCOL_COMMAND_CONFIG, .param = param);
                 }
                 CATCH_ANY()
                 {

@@ -158,7 +158,7 @@ storageWritePosixOpen(THIS_VOID)
 Write to the file
 ***********************************************************************************************************************************/
 static void
-storageWritePosix(THIS_VOID, const Buffer *buffer)
+storageWritePosix(THIS_VOID, const Buffer *const buffer)
 {
     THIS(StorageWritePosix);
 

@@ -13,7 +13,9 @@ Exec Configuration
 
 /**********************************************************************************************************************************/
 FN_EXTERN StringList *
-cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const KeyValue *optionReplace, bool local, bool quote)
+cfgExecParam(
+    const ConfigCommand commandId, const ConfigCommandRole commandRoleId, const KeyValue *const optionReplace, const bool local,
+    const bool quote)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(ENUM, commandId);
@@ -23,13 +25,11 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
         FUNCTION_LOG_PARAM(BOOL, quote);                            // Do parameters with spaces need to be quoted?
     FUNCTION_LOG_END();
 
-    StringList *result = NULL;
+    StringList *const result = strLstNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Loop though options and add the ones that apply to the specified command
-        result = strLstNew();
-
         for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
         {
             // Skip the option if it is not valid for the original/specified command or if is secure. Also skip repo1-cipher-type
@@ -42,12 +42,12 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
             }
 
             // Loop through option indexes
-            unsigned int optionIdxTotal = cfgOptionGroup(optionId) ? cfgOptionGroupIdxTotal(cfgOptionGroupId(optionId)) : 1;
+            const unsigned int optionIdxTotal = cfgOptionGroup(optionId) ? cfgOptionGroupIdxTotal(cfgOptionGroupId(optionId)) : 1;
 
             for (unsigned int optionIdx = 0; optionIdx < optionIdxTotal; optionIdx++)
             {
                 // First check for a replacement
-                const Variant *key = VARSTRZ(cfgOptionIdxName(optionId, optionIdx));
+                const Variant *const key = VARSTRZ(cfgOptionIdxName(optionId, optionIdx));
                 const Variant *value = NULL;
                 bool exists = false;
 
@@ -92,8 +92,8 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
                         {
                             valueList = strLstNew();
 
-                            const KeyValue *optionKv = varKv(value);
-                            const VariantList *keyList = kvKeyList(optionKv);
+                            const KeyValue *const optionKv = varKv(value);
+                            const VariantList *const keyList = kvKeyList(optionKv);
 
                             for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
                             {
@@ -134,9 +134,6 @@ cfgExecParam(ConfigCommand commandId, ConfigCommandRole commandRoleId, const Key
 
         // Add the command
         strLstAdd(result, cfgParseCommandRoleName(commandId, commandRoleId));
-
-        // Move list to the prior context
-        strLstMove(result, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

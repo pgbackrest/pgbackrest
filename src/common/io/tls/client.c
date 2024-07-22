@@ -3,6 +3,12 @@ TLS Client
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+// {uncrustify_off - header order required for FreeBSD}
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+// {uncrustify_on}
 #include <strings.h>
 
 #include "common/crypto/common.h"
@@ -84,7 +90,7 @@ Check if a name from the server certificate matches the hostname
 Matching is always case-insensitive since DNS is case insensitive.
 ***********************************************************************************************************************************/
 static bool
-tlsClientHostVerifyName(const String *host, const String *name)
+tlsClientHostVerifyName(const String *const host, const String *const name)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, host);
@@ -126,12 +132,61 @@ tlsClientHostVerifyName(const String *host, const String *name)
 }
 
 /***********************************************************************************************************************************
+Check if an IP address from the server certificate matches the hostname
+
+Adapted from libpq/fe-secure-common.c.
+***********************************************************************************************************************************/
+static bool
+tlsClientHostVerifyIPAddr(const String *const host, const Buffer *const address)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, host);
+        FUNCTION_LOG_PARAM(BUFFER, address);
+    FUNCTION_LOG_END();
+
+    ASSERT(host != NULL);
+    ASSERT(address != NULL);
+
+    bool result = false;
+
+    // The data from the certificate is in network byte order. Convert our host string to network-ordered bytes as well for
+    // comparison. The host string is not guaranteed to be an IP address so if this conversion fails consider it a mismatch rather
+    // than an error. Use the size of the address parameter to determine ipv4 or ipv6 checking.
+    const size_t addrSize = bufSize(address);
+
+    // IPv4
+    if (addrSize == sizeof(struct in_addr))
+    {
+        struct in_addr addr;
+
+        if (inet_pton(AF_INET, strZ(host), &addr) == 1 &&                                                           // {vm_covered}
+            memcmp(bufPtrConst(address), &addr.s_addr, addrSize) == 0)                                              // {vm_covered}
+        {
+            result = true;                                                                                          // {vm_covered}
+        }
+    }
+    // Else IPv6
+    else if (addrSize == sizeof(struct in6_addr))
+    {
+        struct in6_addr addr;
+
+        if (inet_pton(AF_INET6, strZ(host), &addr) == 1 &&                                                          // {vm_covered}
+            memcmp(bufPtrConst(address), &addr.s6_addr, addrSize) == 0)                                             // {vm_covered}
+        {
+            result = true;                                                                                          // {vm_covered}
+        }
+    }
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/***********************************************************************************************************************************
 Verify that the server certificate matches the hostname we connected to
 
 The certificate's Common Name and Subject Alternative Names are considered.
 ***********************************************************************************************************************************/
 static bool
-tlsClientHostVerify(const String *host, X509 *certificate)
+tlsClientHostVerify(const String *const host, X509 *const certificate)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, host);
@@ -149,7 +204,7 @@ tlsClientHostVerify(const String *host, X509 *certificate)
     MEM_CONTEXT_TEMP_BEGIN()                                                                                        // {vm_covered}
     {
         // First get the subject alternative names from the certificate and compare them against the hostname
-        STACK_OF(GENERAL_NAME) *altNameStack = (STACK_OF(GENERAL_NAME) *)X509_get_ext_d2i(                          // {vm_covered}
+        STACK_OF(GENERAL_NAME) *const altNameStack = (STACK_OF(GENERAL_NAME) *)X509_get_ext_d2i(                    // {vm_covered}
             certificate, NID_subject_alt_name, NULL, NULL);                                                         // {vm_covered}
         bool altNameFound = false;                                                                                  // {vm_covered}
 
@@ -157,11 +212,13 @@ tlsClientHostVerify(const String *host, X509 *certificate)
         {
             for (int altNameIdx = 0; altNameIdx < sk_GENERAL_NAME_num(altNameStack); altNameIdx++)                  // {vm_covered}
             {
-                const GENERAL_NAME *name = sk_GENERAL_NAME_value(altNameStack, altNameIdx);                         // {vm_covered}
+                const GENERAL_NAME *const name = sk_GENERAL_NAME_value(altNameStack, altNameIdx);                   // {vm_covered}
                 altNameFound = true;                                                                                // {vm_covered}
 
                 if (name->type == GEN_DNS)                                                                          // {vm_covered}
                     result = tlsClientHostVerifyName(host, tlsAsn1ToStr(name->d.dNSName));                          // {vm_covered}
+                else if (name->type == GEN_IPADD)                                                                   // {vm_covered}
+                    result = tlsClientHostVerifyIPAddr(host, tlsAsn1ToBuf(name->d.dNSName));                        // {vm_covered}
 
                 if (result != false)                                                                                // {vm_covered}
                     break;                                                                                          // {vm_covered}
@@ -201,7 +258,7 @@ tlsClientAuth(const TlsClient *const this, SSL *const tlsSession)
         if (this->verifyPeer)                                                                                       // {vm_covered}
         {
             // Verify that the chain of trust leads to a valid CA
-            long int verifyResult = SSL_get_verify_result(tlsSession);                                              // {vm_covered}
+            const long int verifyResult = SSL_get_verify_result(tlsSession);                                        // {vm_covered}
 
             if (verifyResult != X509_V_OK)                                                                          // {vm_covered}
             {
@@ -212,8 +269,8 @@ tlsClientAuth(const TlsClient *const this, SSL *const tlsSession)
             }
 
             // Verify that the hostname appears in the certificate
-            X509 *certificate = SSL_get_peer_certificate(tlsSession);                                               // {vm_covered}
-            bool nameResult = tlsClientHostVerify(this->host, certificate);                                         // {vm_covered}
+            X509 *const certificate = SSL_get_peer_certificate(tlsSession);                                         // {vm_covered}
+            const bool nameResult = tlsClientHostVerify(this->host, certificate);                                   // {vm_covered}
             X509_free(certificate);                                                                                 // {vm_covered}
 
             if (!nameResult)                                                                                        // {vm_covered}
@@ -251,7 +308,7 @@ tlsClientOpen(THIS_VOID)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         bool retry;
-        Wait *wait = waitNew(this->timeoutConnect);
+        Wait *const wait = waitNew(this->timeoutConnect);
         SSL *tlsSession = NULL;
 
         do

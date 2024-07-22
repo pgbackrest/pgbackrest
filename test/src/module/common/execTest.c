@@ -95,7 +95,7 @@ testRun(void)
         option = strLstNew();
         strLstAddZ(option, "2");
 
-        TEST_ASSIGN(exec, execNew(STRDEF("sleep"), option, STRDEF("sleep"), 1000), "new sleep exec");
+        TEST_ASSIGN(exec, execNew(STRDEF("sleep"), option, STRDEF("sleep"), 1500), "new sleep exec");
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
 
         TEST_ERROR(execFreeResource(exec), ExecuteError, "sleep did not exit when expected");
@@ -106,6 +106,51 @@ testRun(void)
 
         sleepMSec(500);
         TEST_RESULT_VOID(execFree(exec), "sleep exited as expected");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("execOne()"))
+    {
+        Exec *exec = NULL;
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("exec without output");
+
+        TEST_RESULT_STR_Z(execOneP(STRDEF("ls " TEST_PATH)), "", "exec ls");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("touch file");
+
+        TEST_RESULT_STR_Z(execOneP(STRDEF("touch " TEST_PATH "/file")), "", "exec touch");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("exec with custom shell and output");
+
+        TEST_RESULT_STR_Z(execOneP(STRDEF("ls " TEST_PATH), .shell = STRDEF("sh -c")), "file\n", "exec ls");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("exec exits from signal");
+
+        TEST_ASSIGN(exec, execNew(STRDEF("cat"), NULL, STRDEF("cat"), 1000), "new cat exec");
+        TEST_RESULT_VOID(execOpen(exec), "open cat exec");
+        kill(exec->processId, SIGKILL);
+
+        TEST_ERROR(execProcess(exec, (ExecOneParam){0}), ExecuteError, "cat terminated unexpectedly on signal 9");
+        TEST_RESULT_VOID(execFree(exec), "free exec");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("exec exits with error");
+
+        TEST_ERROR(
+            execOneP(STRDEF("cat missing.txt")), UnknownError,
+            "cat missing.txt terminated unexpectedly [1]: cat: missing.txt: No such file or directory");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("exec ignores error");
+
+        TEST_RESULT_STR_Z(
+            execOneP(STRDEF("cat missing.txt"), .resultExpect = 1), "cat: missing.txt: No such file or directory\n",
+            "ignore error");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

@@ -34,8 +34,8 @@ Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN Storage *storageAzureNew(
     const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *container,
-    const String *account, StorageAzureKeyType keyType, const String *key, size_t blockSize, const String *endpoint,
-    StorageAzureUriStyle uriStyle, unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile,
-    const String *caPath);
+    const String *account, StorageAzureKeyType keyType, const String *key, size_t blockSize, const KeyValue *tag,
+    const String *endpoint, StorageAzureUriStyle uriStyle, unsigned int port, TimeMSec timeout, bool verifyPeer,
+    const String *caFile, const String *caPath);
 
 #endif

@@ -2,9 +2,9 @@
 
 ## Introduction
 
-pgBackRest aims to be a reliable, easy-to-use backup and restore solution that can seamlessly scale up to the largest databases and workloads by utilizing algorithms that are optimized for database-specific requirements.
+pgBackRest is a reliable backup and restore solution for PostgreSQL that seamlessly scales up to the largest databases and workloads.
 
-pgBackRest [v2.46](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.46) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
+pgBackRest [v2.53](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.53) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
 
 Please find us on [GitHub](https://github.com/pgbackrest/pgbackrest) and give us a star if you like pgBackRest!
 
@@ -22,9 +22,9 @@ A custom protocol allows pgBackRest to backup, restore, and archive locally or r
 
 Multiple repositories allow, for example, a local repository with minimal retention for fast restores and a remote repository with a longer retention for redundancy and access across the enterprise.
 
-### Full, Incremental, & Differential Backups
+### Full, Differential, & Incremental Backups (at File or Block Level)
 
-Full, differential, and incremental backups are supported. pgBackRest is not susceptible to the time resolution issues of rsync, making differential and incremental backups safe without the requirement to checksum each file.
+Full, differential, and incremental backups are supported. pgBackRest is not susceptible to the time resolution issues of rsync, making differential and incremental backups safe without the requirement to checksum each file. Block-level backups save space by only copying the parts of files that have changed.
 
 ### Backup Rotation & Archive Expiration
 
@@ -40,7 +40,7 @@ All operations utilize file and directory level fsync to ensure durability.
 
 ### Page Checksums
 
-PostgreSQL has supported page-level checksums since 9.3. If page checksums are enabled pgBackRest will validate the checksums for every file that is copied during a backup. All page checksums are validated during a full backup and checksums in files that have changed are validated during differential and incremental backups.
+If page checksums are enabled pgBackRest will validate the checksums for every file that is copied during a backup. All page checksums are validated during a full backup and checksums in files that have changed are validated during differential and incremental backups.
 
 Validation failures do not stop the backup process, but warnings with details of exactly which pages have failed validation are output to the console and file log.
 

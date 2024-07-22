@@ -85,6 +85,7 @@ Option constants
 #define CFGOPT_JOB_RETRY_INTERVAL                                   "job-retry-interval"
 #define CFGOPT_LINK_ALL                                             "link-all"
 #define CFGOPT_LINK_MAP                                             "link-map"
+#define CFGOPT_LOCK                                                 "lock"
 #define CFGOPT_LOCK_PATH                                            "lock-path"
 #define CFGOPT_LOG_LEVEL_CONSOLE                                    "log-level-console"
 #define CFGOPT_LOG_LEVEL_FILE                                       "log-level-file"
@@ -108,6 +109,7 @@ Option constants
 #define CFGOPT_REFERENCE                                            "reference"
 #define CFGOPT_REMOTE_TYPE                                          "remote-type"
 #define CFGOPT_REPO                                                 "repo"
+#define CFGOPT_REPORT                                               "report"
 #define CFGOPT_RESUME                                               "resume"
 #define CFGOPT_SCK_BLOCK                                            "sck-block"
 #define CFGOPT_SCK_KEEP_ALIVE                                       "sck-keep-alive"
@@ -135,7 +137,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 
-#define CFG_OPTION_TOTAL                                            175
+#define CFG_OPTION_TOTAL                                            181
 
 /***********************************************************************************************************************************
 Option value constants
@@ -268,6 +270,15 @@ Option value constants
 #define CFGOPTVAL_REPO_S3_URI_STYLE_HOST_Z                          "host"
 #define CFGOPTVAL_REPO_S3_URI_STYLE_PATH                            STRID5("path", 0x450300)
 #define CFGOPTVAL_REPO_S3_URI_STYLE_PATH_Z                          "path"
+
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_ACCEPT_NEW          STRID5("accept-new", 0x2e576e9028c610)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_ACCEPT_NEW_Z        "accept-new"
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT         STRID5("fingerprint", 0x51c9942453b9260)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT_Z       "fingerprint"
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_NONE                STRID5("none", 0x2b9ee0)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_NONE_Z              "none"
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_STRICT              STRID5("strict", 0x2834ca930)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_STRICT_Z            "strict"
 
 #define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_MD5                  STRID5("md5", 0x748d0)
 #define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_MD5_Z                "md5"
@@ -415,6 +426,7 @@ typedef enum
     cfgOptJobRetryInterval,
     cfgOptLinkAll,
     cfgOptLinkMap,
+    cfgOptLock,
     cfgOptLockPath,
     cfgOptLogLevelConsole,
     cfgOptLogLevelFile,
@@ -506,13 +518,16 @@ typedef enum
     cfgOptRepoS3KmsKeyId,
     cfgOptRepoS3Region,
     cfgOptRepoS3Role,
+    cfgOptRepoS3SseCustomerKey,
     cfgOptRepoS3Token,
     cfgOptRepoS3UriStyle,
     cfgOptRepoSftpHost,
     cfgOptRepoSftpHostFingerprint,
+    cfgOptRepoSftpHostKeyCheckType,
     cfgOptRepoSftpHostKeyHashType,
     cfgOptRepoSftpHostPort,
     cfgOptRepoSftpHostUser,
+    cfgOptRepoSftpKnownHost,
     cfgOptRepoSftpPrivateKeyFile,
     cfgOptRepoSftpPrivateKeyPassphrase,
     cfgOptRepoSftpPublicKeyFile,
@@ -520,9 +535,11 @@ typedef enum
     cfgOptRepoStorageCaPath,
     cfgOptRepoStorageHost,
     cfgOptRepoStoragePort,
+    cfgOptRepoStorageTag,
     cfgOptRepoStorageUploadChunkSize,
     cfgOptRepoStorageVerifyTls,
     cfgOptRepoType,
+    cfgOptReport,
     cfgOptResume,
     cfgOptSckBlock,
     cfgOptSckKeepAlive,

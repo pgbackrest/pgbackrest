@@ -14,8 +14,8 @@
         <variable key="os-rhel-title">RHEL</variable>
 
         <!-- Base PostgreSQL versions -->
-        <variable key="os-debian-pg-version">12</variable>
-        <variable key="os-rhel-pg-version">11</variable>
+        <variable key="os-debian-pg-version">15</variable>
+        <variable key="os-rhel-pg-version">12</variable>
 
         <!-- User-defined package to use in documentation (use "apt" to install the current PGDG apt package) -->
         <variable key="package">none</variable>
@@ -62,6 +62,7 @@
         <!-- Path where builds are performed -->
         <variable key="build-path">/build</variable>
         <variable key="build-br-path">{[build-path]}/pgbackrest-release-{[version]}</variable>
+        <variable key="build-meson-path">{[build-path]}/pgbackrest</variable>
 
         <!-- PostreSQL versions to run documentation for and min/max versions represented -->
         <variable key="pg-version" if="{[os-type-is-debian]}">{[os-debian-pg-version]}</variable>
@@ -69,12 +70,8 @@
 
         <variable key="pg-version-nodot" eval="y">my $version = '{[pg-version]}'; $version =~ s/\.//g; return $version;</variable>
 
-        <!-- WAL level should be the minimum required for replication -->
-        <variable key="wal-level" if="{[pg-version]} &lt; 9.6">hot_standby</variable>
-        <variable key="wal-level" if="{[pg-version]} &gt;= 9.6">replica</variable>
-
-        <variable key="pg-version-upgrade" if="{[os-type-is-debian]}">14</variable>
-        <variable key="pg-version-upgrade" if="{[os-type-is-rhel]}">12</variable>
+        <variable key="pg-version-upgrade" if="{[os-type-is-debian]}">16</variable>
+        <variable key="pg-version-upgrade" if="{[os-type-is-rhel]}">13</variable>
         <variable key="pg-version-upgrade-nodot" eval="y">my $version = '{[pg-version-upgrade]}'; $version =~ s/\.//g; return $version;</variable>
 
         <variable key="pg-bin-path" if="{[os-type-is-debian]}">/usr/lib/postgresql/{[pg-version]}/bin</variable>
@@ -128,18 +125,12 @@
         <variable key="postgres-pgpass">{[pg-home-path]}/.pgpass</variable>
 
         <variable key="postgres-log-demo" if="{[os-type-is-debian]}">/var/log/postgresql/postgresql-{[pg-version]}-{[postgres-cluster-demo]}.log</variable>
-        <variable key="postgres-log-demo" if="{[os-type-is-rhel]} &amp;&amp; {[pg-version]} &lt; 10">{[pg-path]}/pg_log/postgresql.log</variable>
-        <variable key="postgres-log-demo" if="{[os-type-is-rhel]} &amp;&amp; {[pg-version]} &gt;= 10">{[pg-path]}/log/postgresql.log</variable>
+        <variable key="postgres-log-demo" if="{[os-type-is-rhel]}">{[pg-path]}/log/postgresql.log</variable>
 
         <variable key="postgres-log-pgstartup-demo" if="{[os-type-is-rhel]}">/var/lib/pgsql/{[pg-version]}/pgstartup.log</variable>
 
-        <variable key="pg-recovery-file-demo" if="{[pg-version]} &lt; 12">recovery.conf</variable>
-        <variable key="pg-recovery-file-demo" if="{[pg-version]} &gt;= 12">postgresql.auto.conf</variable>
+        <variable key="pg-recovery-file-demo">postgresql.auto.conf</variable>
         <variable key="pg-recovery-path-demo">{[pg-path]}/{[pg-recovery-file-demo]}</variable>
-
-        <!-- Select correct WAL switch function based on the version of PostgreSQL -->
-        <variable key="pg-switch-wal" if="{[pg-version]} &lt; 10">pg_switch_xlog</variable>
-        <variable key="pg-switch-wal" if="{[pg-version]} &gt;= 10">pg_switch_wal</variable>
 
         <!-- Azure Settings -->
         <variable key="azure-image">mcr.microsoft.com/azure-storage/azurite</variable>  <!-- Azurite docker image -->
@@ -159,7 +150,7 @@
         <variable key="gcs-key">/etc/pgbackrest/gcs-key.json</variable>
 
         <!-- S3 Settings -->
-        <variable key="s3-image">minio/minio:RELEASE.2022-07-30T05-21-40Z</variable>    <!-- Minio docker image -->
+        <variable key="s3-image">minio/minio:RELEASE.2024-07-15T19-02-30Z</variable>    <!-- Minio docker image -->
         <variable key="s3-all">n</variable>                         <!-- Build all the documentation with S3? -->
         <variable key="s3-local">y</variable>
         <variable key="s3-bucket">demo-bucket</variable>
@@ -220,6 +211,12 @@
         <variable key="host-pg2-image">{[host-image]}</variable>
         <variable key="host-pg2-mount">{[host-mount]}</variable>
 
+        <variable key="host-pgalt-id">pgalt</variable>
+        <variable key="host-pgalt">pg-alt</variable>
+        <variable key="host-pgalt-user">{[host-pg1-user]}</variable>
+        <variable key="host-pgalt-image">{[host-image]}</variable>
+        <variable key="host-pgalt-mount">{[host-mount]}</variable>
+
         <variable key="host-repo1-id">repo1</variable>
         <variable key="host-repo1">repository</variable>
         <variable key="host-repo1-user">{[host-user]}</variable>
@@ -264,21 +261,33 @@
         <variable key="ssh-key-install">
             mkdir -p -m 700 /root/.ssh &amp;&amp; \
             echo '-----BEGIN RSA PRIVATE KEY-----' > /root/.ssh/id_rsa &amp;&amp; \
-            echo 'MIICXwIBAAKBgQDR0yJsZW5d5LcqteiOtv8d+FFeFFHDPI0VTcTOdMn1iDiIP1ou' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'X3Q2OyNjsBaDbsRJd+sp9IRq1LKX3zsBcgGZANwm0zduuNEPEU94ajS/uRoejIqY' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo '/XkKOpnEF6ZbQ2S7TaE4sWeGLvba7kUFs0QTOO+N+nV2dMbdqZf6C8lazwIDAQAB' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'AoGBAJXa6xzrnFVmwgK5BKzYuX/YF5TPgk2j80ch0ct50buQXH/Cb0/rUH5i4jWS' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'T6Hy/DFUehnuzpvV6O9auTOhDs3BhEKFRuRLn1nBwTtZny5Hh+cw7azUCEHFCJlz' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'makCrVbgawtno6oU/pFgQm1FcxD0f+Me5ruNcLHqUZsPQwkRAkEA+8pG+ckOlz6R' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'AJLIHedmfcrEY9T7sfdo83bzMOz8H5soUUP4aOTLJYCla1LO7JdDnXMGo0KxaHBP' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'l8j5zDmVewJBANVVPDJr1w37m0FBi37QgUOAijVfLXgyPMxYp2uc9ddjncif0063' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo '0Wc0FQefoPszf3CDrHv/RHvhHq97jXDwTb0CQQDgH83NygoS1r57pCw9chzpG/R0' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'aMEiSPhCvz757fj+qT3aGIal2AJ7/2c/gRZvwrWNETZ3XIZOUKqIkXzJLPjBAkEA' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'wnP799W2Y8d4/+VX2pMBkF7lG7sSviHEq1sP2BZtPBRQKSQNvw3scM7XcGh/mxmY' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'yx0qpqfKa8SKbNgI1+4iXQJBAOlg8MJLwkUtrG+p8wf69oCuZsnyv0K6UMDxm6/8' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'cbvfmvODulYFaIahaqHWEZoRo5CLYZ7gN43WHPOrKxdDL78=' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'MIIEowIBAAKCAQEA5VySpEan5Rn7QQ5XP13YkXxTg+Xp9N+ecyDhD92OQk0VZOFn' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'EKlXUaMXH0WVjRRgjgbF78JHFbEQjUHimbzr9ev1IuDaIS42E1nUkBaHggnHNAW2' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'aqtczUDSnLGcXqd0XeDtwpjj1I0xWOeJli/xjU+eSwjzqNgX6ZX2P0uTXflu254u' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'SjOF3IARo9FiDEKQdksoxNOAhCTYgDAynmkcfJ9e87FjiTGmfnZO3H6gU2kidSFX' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'rwdHtdN3Qlv6RgCroLGAZZpmtqBorTwShWRScWAAg/OqWwLphfNbXIIHZO4EJ4S2' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'JLgsgJHb20SJ2XEI2Iln9sj+oCWgLJ2m+RLvWwIDAQABAoIBAArBC0EiQkyxf1Xe' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'txmKAWsE4iI85/oqzVJG7YvhuVdY0j16J2vLvNk05T3P9JdPqB1QqlGNEZSDSlbi' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'isjm55tkFl4tyRx61F9A5tYLWwwuVYWWFPutuuVcJOPi8gWAItUkruaLu6GjgyJQ' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo '143QA//lBp4sYRxUEX71defO19iKkDz+xEuOzYMd16j76OKMcmbnog7hbMrXR4Yi' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'kNXuhnwBadutaXLve3mZ0JowrZyHKfTUWOHgvuULpCVD5su3NdbpE2AVn1idcF8V' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'jaj6p0vtcvEnXEC69XwX+yL0TgvOE4Vu/OWg8lDWQdetONIHGbElJZvB6eyTF1nl' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'IIgLc2ECgYEA7PL3soOfH3dMNUt4KGSw1cK/kwvy7UsT6QrAPi1Cc/A4szluk6/O' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo '5YhKfTjzHW5WDmsTTAcT29MLmW8dQXeUAe/1BtIATubsav+uSelfBmUAnQj9fvKT' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'ieJ6JMf20OTbS6XODA3+jJAdApLCu61Lv6nePOuNzLY/uqSMWu9kO/sCgYEA981v' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'YIUaadFaHnPnmax0+jJMs8S5AIEjSfSIxR8oNOWNUxBBvwFd4zWTApVfZqKjmI83' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'Ng5tISxspzHseakyrIpoDqzxRQPxZF7RTO6VUX+ZQj6iIXVp9FDqWAjvDACuSky2' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'mGAiiA+fWZ1za62opgoYQZ17O17SyHF9/vJ7XCECgYANwNyXxAQMc4Q847CJx65r' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo '+e3cvyjOlTkGodUexsnAqQThgkfk0qOTtyF7uz6BStI77AMmupJwhAN8WHK+Rg6V' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'PjRevPm/mq/GVijrqVwWpu4uL0NnhvUBX9/vGpw868u+zFT1ZiqMRiEo8RPUiO6I' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'pXd82b9VTo7Mapiq/pI22QKBgC8Kb586BUabOGlZhVi11Ur9q3Pg32HKIgHTCveo' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'r4BDJ23iQyjYQJN2Qx8VbhPUwgue/FMlr+/BOCsRHhwGU5lPeOt4RyDb28I7Aa6C' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'CBR9jYF21F5XpLJ9fc8SexajNnLiVzNb5JJBrPVdH2EMiVxjxDEIjTE7EfZ9HPb9' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo '3w8hAoGBALyik3jr0W6DxzqOW0jPXPLDqp1JvzieC03nZD1scWeI8qIzUOpLX7cc' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'jaMU/8QMBRvyEcZK82Cedilm30nLf+C/FR5TsUmftS7IcjoC4Z2ZXWNOhMv22TUJ' >> /root/.ssh/id_rsa &amp;&amp; \
+            echo 'Ml6z//+WSZ3qVZ5rvAeo4obwiBfe+Uh+AyyprEGgmimF9qDejcwc' >> /root/.ssh/id_rsa &amp;&amp; \
             echo '-----END RSA PRIVATE KEY-----' >> /root/.ssh/id_rsa &amp;&amp; \
-            echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDR0yJsZW5d5LcqteiOtv8d+FFeFFHDPI0VTcTOdMn1iDiIP1ouX3Q2OyNjsBaDbsRJd+sp9IRq1LKX3zsBcgGZANwm0zduuNEPEU94ajS/uRoejIqY/XkKOpnEF6ZbQ2S7TaE4sWeGLvba7kUFs0QTOO+N+nV2dMbdqZf6C8lazw== root@pgbackrest-doc' > /root/.ssh/authorized_keys &amp;&amp; \
+            echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDlXJKkRqflGftBDlc/XdiRfFOD5en0355zIOEP3Y5CTRVk4WcQqVdRoxcfRZWNFGCOBsXvwkcVsRCNQeKZvOv16/Ui4NohLjYTWdSQFoeCCcc0BbZqq1zNQNKcsZxep3Rd4O3CmOPUjTFY54mWL/GNT55LCPOo2BfplfY/S5Nd+W7bni5KM4XcgBGj0WIMQpB2SyjE04CEJNiAMDKeaRx8n17zsWOJMaZ+dk7cfqBTaSJ1IVevB0e103dCW/pGAKugsYBlmma2oGitPBKFZFJxYACD86pbAumF81tcggdk7gQnhLYkuCyAkdvbRInZcQjYiWf2yP6gJaAsnab5Eu9b' > /root/.ssh/authorized_keys &amp;&amp; \
             echo 'Host *' > /root/.ssh/config &amp;&amp; \
             echo '    StrictHostKeyChecking no' >> /root/.ssh/config &amp;&amp; \
             chmod 600 /root/.ssh/*
@@ -385,8 +394,7 @@
             ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key
 
         # Install PGDG PostgreSQL repository
-        RUN rpm --import http://yum.postgresql.org/RPM-GPG-KEY-PGDG-10 &amp;&amp; \
-            rpm -ivh https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+        RUN rpm -ivh https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
 
         # Disable default PostgreSQL repository
         RUN command -v dnf >/dev/null 2>&amp;1 &amp;&amp; dnf -qy module disable postgresql || true
@@ -586,7 +594,11 @@
         <execute-list host="{[br-install-host]}">
             <title>Copy <backrest/> binary from build host</title>
 
-            <execute user="root">
+            <execute if="{[os-type-is-debian]}" user="root">
+                <exe-cmd>scp {[host-build]}:{[build-meson-path]}/src/pgbackrest /usr/bin</exe-cmd>
+                <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
+            </execute>
+            <execute if="{[os-type-is-rhel]}" user="root">
                 <exe-cmd>scp {[host-build]}:{[build-br-path]}/src/pgbackrest /usr/bin</exe-cmd>
                 <exe-cmd-extra>2>&amp;1</exe-cmd-extra>
             </execute>
@@ -990,6 +1002,10 @@
 
         <p>When building from source it is best to use a build host rather than building on production. Many of the tools required for the build should generally not be installed in production. <backrest/> consists of a single executable so it is easy to copy to a new host once it is built.</p>
 
+        <p if="{[os-type-is-rhel]}">The preferred build method is <proper>meson</proper>/<proper>ninja</proper>, see <link url="user-guide.html#build">Build</link>. The <proper>autoconf</proper>/<proper>make</proper> method is shown here for legacy purposes.</p>
+
+        <p if="{[os-type-is-debian]}">The preferred build method is <proper>meson</proper>/<proper>ninja</proper> as shown below. The <proper>autoconf</proper>/<proper>make</proper> method is also provided for legacy purposes, see <link url="user-guide-rhel.html#build">Build</link>.</p>
+
         <execute-list host="{[host-build]}">
             <title>Download version <id>{[version]}</id> of <backrest/> to <path>{[build-path]}</path> path</title>
 
@@ -1011,10 +1027,10 @@
                 <exe-cmd>mkdir -p {[build-br-path]}</exe-cmd>
             </execute>
             <execute user="root" show="n">
-                <exe-cmd>cp -r {[pgbackrest-repo-path]}/src {[build-br-path]}</exe-cmd>
+                <exe-cmd>cp -r {[pgbackrest-repo-path]}/* {[build-br-path]}</exe-cmd>
             </execute>
             <execute user="root" show="n">
-                <exe-cmd>chown -R {[host-build-user]} {[build-br-path]}</exe-cmd>
+                <exe-cmd>chown -R {[host-build-user]} {[build-path]}</exe-cmd>
             </execute>
         </execute-list>
 
@@ -1027,8 +1043,8 @@
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
                 <exe-cmd>
-                    apt-get install make gcc libpq-dev libssl-dev libxml2-dev pkg-config
-                    liblz4-dev libzstd-dev libbz2-dev libz-dev libyaml-dev libssh2-1-dev
+                    apt-get install python3-distutils meson gcc libpq-dev libssl-dev libxml2-dev
+                    pkg-config liblz4-dev libzstd-dev libbz2-dev libz-dev libyaml-dev libssh2-1-dev
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
@@ -1042,7 +1058,18 @@
             </execute>
         </execute-list>
 
-        <execute-list host="{[host-build]}">
+        <execute-list if="{[os-type-is-debian]}" host="{[host-build]}">
+            <title>Configure and compile <backrest/></title>
+
+            <execute>
+                <exe-cmd>meson setup {[build-meson-path]} {[build-br-path]}</exe-cmd>
+            </execute>
+            <execute>
+                <exe-cmd>ninja -C {[build-meson-path]}</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list if="{[os-type-is-rhel]}" host="{[host-build]}">
             <title>Configure and compile <backrest/></title>
 
             <execute>
@@ -1147,7 +1174,6 @@
 
                 <backrest-config-option section="demo" key="pg1-path">{[pg-path]}</backrest-config-option>
 
-                <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
@@ -1274,11 +1300,11 @@
 
                 <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} archive-push %p'</postgres-config-option>
                 <postgres-config-option key="archive_mode">on</postgres-config-option>
-                <postgres-config-option key="wal_level">{[wal-level]}</postgres-config-option>
+                <postgres-config-option key="wal_level">replica</postgres-config-option>
                 <postgres-config-option key="max_wal_senders">3</postgres-config-option>
             </postgres-config>
 
-            <p><id>%p</id> is how <postgres/> specifies the location of the WAL segment to be archived. Setting <pg-option>wal_level</pg-option> to at least <pg-setting>{[wal-level]}</pg-setting> and increasing <pg-option>max_wal_senders</pg-option> is a good idea even if there are currently no replicas as this will allow them to be added later without restarting the primary cluster.</p>
+            <p><id>%p</id> is how <postgres/> specifies the location of the WAL segment to be archived. Setting <pg-option>wal_level</pg-option> to at least <pg-setting>replica</pg-setting> and increasing <pg-option>max_wal_senders</pg-option> is a good idea even if there are currently no replicas as this will allow them to be added later without restarting the primary cluster.</p>
 
             <p>The <postgres/> cluster must be restarted after making these changes and before performing a backup.</p>
 
@@ -1873,8 +1899,8 @@
                 <!-- Push a few WAL segments to make the example below more interesting -->
                 <execute user="postgres" show="n">
                     <exe-cmd>psql -c "
-                        select pg_create_restore_point('generate WAL'); select {[pg-switch-wal]}();
-                        select pg_create_restore_point('generate WAL'); select {[pg-switch-wal]}();"</exe-cmd>
+                        select pg_create_restore_point('generate WAL'); select pg_switch_wal();
+                        select pg_create_restore_point('generate WAL'); select pg_switch_wal();"</exe-cmd>
                 </execute>
 
                 <execute user="postgres" output="y">
@@ -2139,14 +2165,10 @@
 
         <p><link section="/quickstart/perform-restore">Restore a Backup</link> in <link section="/quickstart">Quick Start</link> performed default recovery, which is to play all the way to the end of the WAL stream. In the case of a hardware failure this is usually the best choice but for data corruption scenarios (whether machine or human in origin) Point-in-Time Recovery (PITR) is often more appropriate.</p>
 
-        <p>Point-in-Time Recovery (PITR) allows the WAL to be played from the last backup to a specified lsn, time, transaction id, or recovery point. For common recovery scenarios time-based recovery is arguably the most useful. A typical recovery scenario is to restore a table that was accidentally dropped or data that was accidentally deleted. Recovering a dropped table is more dramatic so that's the example given here but deleted data would be recovered in exactly the same way.</p>
+        <p>Point-in-Time Recovery (PITR) allows the WAL to be played from a backup to a specified lsn, time, transaction id, or recovery point. For common recovery scenarios time-based recovery is arguably the most useful. A typical recovery scenario is to restore a table that was accidentally dropped or data that was accidentally deleted. Recovering a dropped table is more dramatic so that's the example given here but deleted data would be recovered in exactly the same way.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Backup the {[postgres-cluster-demo]} cluster and create a table with very important data</title>
-
-            <execute user="postgres">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --type=diff backup</exe-cmd>
-            </execute>
+            <title>Create a table with very important data</title>
 
             <execute user="postgres" output="y">
                 <exe-cmd>
@@ -2194,12 +2216,84 @@
             </execute>
         </execute-list>
 
-        <p>Now the restore can be performed with time-based recovery to bring back the missing table.</p>
+        <p>If the wrong backup is selected for restore then recovery to the required time target will fail. To demonstrate this a new incremental backup is performed where <id>important_table</id> does not exist.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Stop <postgres/>, restore the {[postgres-cluster-demo]} cluster to <id>{[time-recovery-timestamp]}</id>, and display <file>{[pg-recovery-file-demo]}</file></title>
+            <title>Perform an incremental backup</title>
+
+            <execute user="postgres">
+                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=incr backup</exe-cmd>
+            </execute>
+
+            <execute user="postgres" show="n" variable-key="backup-last">
+                <exe-cmd>{[cmd-backup-last]}</exe-cmd>
+            </execute>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>{[project-exe]} info</exe-cmd>
+                <exe-highlight>{[backup-last]}</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <p>It will not be possible to recover the lost table from this backup since <postgres/> can only play forward, not backward.</p>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Attempt recovery from an incorrect backup</title>
 
             <execute user="root">
+                <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
+            </execute>
+
+            <execute user="postgres">
+                <exe-cmd>
+                    {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
+                     {[dash]}-set={[backup-last]} {[dash]}-target-timeline=current
+                     {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}" {[dash]}-target-action=promote restore
+                </exe-cmd>
+            </execute>
+
+            <execute user="root" show="n">
+                <exe-cmd>rm {[postgres-log-demo]}</exe-cmd>
+            </execute>
+
+            <execute if="{[pg-version]} &gt; 12" user="root" output="y" err-expect="1">
+                <exe-cmd>{[pg-cluster-start]}</exe-cmd>
+                <exe-highlight>recovery ended before configured recovery target was reached</exe-highlight>
+            </execute>
+
+            <execute if="{[pg-version]} &lt;= 12" user="root">
+                <exe-cmd>{[pg-cluster-start]}</exe-cmd>
+            </execute>
+
+            <execute if="{[pg-version]} &lt;= 12" user="postgres" show="n">
+                <exe-cmd>{[pg-cluster-wait]}</exe-cmd>
+            </execute>
+
+            <execute if="{[pg-version]} &lt;= 12" user="postgres" output="y" err-expect="1">
+                <exe-cmd>psql -c "select * from important_table"</exe-cmd>
+                <exe-highlight>does not exist</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <p if="{[pg-version]} &lt;= 12">Looking at the log output it's not obvious that recovery failed to restore the table. The key is to look for the presence of the <quote>recovery stopping before...</quote> and <quote>last completed transaction...</quote> log messages. If they are not present then the recovery to the specified point-in-time was not successful.</p>
+
+        <execute-list if="{[pg-version]} &lt;= 12" host="{[host-pg1]}">
+            <title>Examine the <postgres/> log output to discover the recovery was not successful</title>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>cat {[postgres-log-demo]}</exe-cmd>
+                <exe-highlight>starting point-in-time recovery|consistent recovery state reached</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <p>A reliable method is to allow <backrest/> to automatically select a backup capable of recovery to the time target, i.e. a backup that ended before the specified time.</p>
+
+        <admonition type="note"><backrest/> cannot automatically select a backup when the restore type is <id>xid</id> or <id>name</id>.</admonition>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Restore the {[postgres-cluster-demo]} cluster to <id>{[time-recovery-timestamp]}</id></title>
+
+            <execute if="{[pg-version]} &lt;= 12" user="root">
                 <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
             </execute>
 
@@ -2219,7 +2313,7 @@
             </execute>
         </execute-list>
 
-        <p><backrest/> has automatically generated the recovery settings in <file>{[pg-recovery-file-demo]}</file> so <postgres/> can be started immediately. <id>%f</id> is how <postgres/> specifies the WAL segment it needs and <id>%p</id> is the location where it should be copied. Once <postgres/> has finished recovery the table will exist again and can be queried.</p>
+        <p><backrest/> has generated the recovery settings in <file>{[pg-recovery-file-demo]}</file> so <postgres/> can be started immediately. <id>%f</id> is how <postgres/> specifies the WAL segment it needs and <id>%p</id> is the location where it should be copied. Once <postgres/> has finished recovery the table will exist again and can be queried.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Start <postgres/> and check that the important table exists</title>
@@ -2242,127 +2336,6 @@
 
         <execute-list host="{[host-pg1]}">
             <title>Examine the <postgres/> log output</title>
-
-            <execute user="postgres" output="y">
-                <exe-cmd>cat {[postgres-log-demo]}</exe-cmd>
-                <exe-highlight>recovery stopping before|last completed transaction|starting point-in-time recovery</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <p>This example was rigged to give the correct result. If a backup after the required time is chosen then <postgres/> will not be able to recover the lost table. <postgres/> can only play forward, not backward. To demonstrate this the important table must be dropped (again).</p>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Drop the important table (again)</title>
-
-            <execute user="postgres" output="y" err-expect="1">
-                <exe-cmd>psql -c "begin;
-                                  drop table important_table;
-                                  commit;
-                                  select * from important_table;"</exe-cmd>
-                <exe-highlight>does not exist</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <p>Now take a new backup and attempt recovery from the new backup by specifying the <br-option>{[dash]}-set</br-option> option. The <cmd>info</cmd> command can be used to find the new backup label.</p>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Perform a backup and get backup info</title>
-
-            <execute user="postgres">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-type=incr backup</exe-cmd>
-            </execute>
-
-            <execute user="postgres" show="n" variable-key="backup-last">
-                <exe-cmd>{[cmd-backup-last]}</exe-cmd>
-            </execute>
-
-            <execute user="postgres" filter="n" output="y">
-                <exe-cmd>{[project-exe]} info</exe-cmd>
-                <exe-highlight>{[backup-last]}</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Attempt recovery from the specified backup</title>
-
-            <execute user="root">
-                <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
-            </execute>
-
-            <execute user="postgres">
-                <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
-                     {[dash]}-set={[backup-last]}
-                     {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}" {[dash]}-target-action=promote restore</exe-cmd>
-            </execute>
-
-            <execute user="root" show="n">
-                <exe-cmd>rm {[postgres-log-demo]}</exe-cmd>
-            </execute>
-
-            <execute user="root">
-                <exe-cmd>{[pg-cluster-start]}</exe-cmd>
-            </execute>
-
-            <execute user="postgres" show="n">
-                <exe-cmd>{[pg-cluster-wait]}</exe-cmd>
-            </execute>
-
-            <execute user="postgres" output="y" err-expect="1">
-                <exe-cmd>psql -c "select * from important_table"</exe-cmd>
-                <exe-highlight>does not exist</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <p>Looking at the log output it's not obvious that recovery failed to restore the table. The key is to look for the presence of the <quote>recovery stopping before...</quote> and <quote>last completed transaction...</quote> log messages. If they are not present then the recovery to the specified point-in-time was not successful.</p>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Examine the <postgres/> log output to discover the recovery was not successful</title>
-
-            <execute user="postgres" output="y">
-                <exe-cmd>cat {[postgres-log-demo]}</exe-cmd>
-                <exe-highlight>starting point-in-time recovery|consistent recovery state reached</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <p>The default behavior for time-based restore, if the <br-option>{[dash]}-set</br-option> option is not specified, is to attempt to discover an earlier backup to play forward from. If a backup set cannot be found, then restore will default to the latest backup which, as shown earlier, may not give the desired result.</p>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Stop <postgres/>, restore from auto-selected backup, and start <postgres/></title>
-
-            <execute user="root">
-                <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
-            </execute>
-
-            <execute user="postgres">
-                <exe-cmd>
-                    {[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-delta
-                        {[dash]}-type=time "{[dash]}-target={[time-recovery-timestamp]}"
-                        {[dash]}-target-action=promote restore
-                </exe-cmd>
-            </execute>
-
-            <execute user="root" show="n">
-                <exe-cmd>rm {[postgres-log-demo]}</exe-cmd>
-            </execute>
-
-            <execute user="root">
-                <exe-cmd>{[pg-cluster-start]}</exe-cmd>
-            </execute>
-
-            <execute user="postgres" show="n">
-                <exe-cmd>{[pg-cluster-wait]}</exe-cmd>
-            </execute>
-
-            <execute user="postgres" output="y">
-                <exe-cmd>psql -c "select * from important_table"</exe-cmd>
-                <exe-highlight>{[test-table-data]}</exe-highlight>
-            </execute>
-        </execute-list>
-
-        <p>Now the log output will contain the expected <quote>recovery stopping before...</quote> and <quote>last completed transaction...</quote> messages showing that the recovery was successful.</p>
-
-        <execute-list host="{[host-pg1]}">
-            <title>Examine the <postgres/> log output for log messages indicating success</title>
 
             <execute user="postgres" output="y">
                 <exe-cmd>cat {[postgres-log-demo]}</exe-cmd>
@@ -2422,7 +2395,9 @@
 
         <p>Note that the <br-option>repo</br-option> option is not required when only <br-option>repo1</br-option> is configured in order to maintain backward compatibility. However, the <br-option>repo</br-option> option <i>is</i> required when a single repo is configured as, e.g. <br-option>repo2</br-option>. This is to prevent command breakage if a new repository is added later.</p>
 
-        <p>The <cmd>archive-push</cmd> command will always push WAL to the archive in all configured repositories but backups will need to be scheduled individually for each repository. In many cases this is desirable since backup types and retention will vary by repository. Likewise, restores must specify a repository. It is generally better to specify a repository for restores that has low latency/cost even if that means more recovery time. Only restore testing can determine which repository will be most efficient.</p>
+        <p>The <cmd>archive-push</cmd> command will always push WAL to the archive in all configured repositories. When a repository cannot be reached, WAL will still be pushed to other repositories. However, for this to work effectively, <br-setting>archive-aync=y</br-setting> must be enabled; otherwise, the other repositories can only get one WAL segment ahead of the unreachable repository. Also, note that if WAL cannot be pushed to any repository, then <postgres/> will not remove it from the <path>pg_wal</path> directory, which may cause the volume to run out of space.</p>
+
+        <p>Backups need to be scheduled individually for each repository. In many cases this is desirable since backup types and retention will vary by repository. Likewise, restores must specify a repository. It is generally better to specify a repository for restores that has low latency/cost even if that means more recovery time. Only restore testing can determine which repository will be most efficient.</p>
     </section>
 
     <!-- ======================================================================================================================= -->
@@ -2523,6 +2498,7 @@
                         "Effect": "Allow",
                         "Action": [
                             "s3:PutObject",
+                            "s3:PutObjectTagging",
                             "s3:GetObject",
                             "s3:DeleteObject"
                         ],
@@ -2571,6 +2547,14 @@
         </block>
 
         <p>Commands are run exactly as if the repository were stored on a local disk.</p>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Add sftp-server fingerprint to known_hosts file since <br-option>repo4-sftp-host-key-check-type</br-option> defaults to <quote>strict</quote></title>
+
+            <execute user="postgres" user-force="y">
+                <exe-cmd>ssh-keyscan -H {[host-sftp]} >> {[pg-home-path]}/.ssh/known_hosts 2>/dev/null</exe-cmd>
+            </execute>
+        </execute-list>
 
         <execute-list host="{[host-pg1]}">
             <title>Create the stanza</title>
@@ -2720,7 +2704,7 @@
                 <backrest-config-option if="{[protocol-tls]}" section="demo" key="pg1-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
                 <backrest-config-option if="{[protocol-tls]}" section="demo" key="pg1-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
 
-                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-auth">pgbackrest-client=demo</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-auth">pgbackrest-client=*</backrest-config-option>
                 <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-address">*</backrest-config-option>
                 <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
                 <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-cert-file">/etc/pgbackrest/cert/server.crt</backrest-config-option>
@@ -2729,7 +2713,6 @@
                 <backrest-config-option section="global" key="start-fast">y</backrest-config-option>
                 <backrest-config-option section="global" key="repo1-retention-full">2</backrest-config-option>
 
-                <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
@@ -2754,8 +2737,6 @@
                 <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-key-file">/etc/pgbackrest/cert/server.key</backrest-config-option>
 
                 <backrest-config-option section="global" key="log-level-file">detail</backrest-config-option>
-
-                <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
@@ -2965,17 +2946,19 @@
     <section id="start-stop" depend="/repo-host/config">
         <title>Starting and Stopping</title>
 
-        <p>Sometimes it is useful to prevent <backrest/> from running on a system. For example, when failing over from a primary to a standby it's best to prevent <backrest/> from running on the old primary in case <postgres/> gets restarted or can't be completely killed. This will also prevent <backrest/> from running on <id>cron</id>.</p>
+        <p>If a standby is promoted for testing, or a test cluster is restored from a production backup, then it is a good idea to prevent those clusters from writing to <backrest/> repositories. This can be accomplished with the <cmd>stop</cmd> command.</p>
+
+        <p>The commands that write and are blocked by <cmd>stop</cmd> are: <cmd>archive-push</cmd>, <cmd>backup</cmd>, <cmd>expire</cmd>, <cmd>stanza-create</cmd>, and <cmd>stanza-upgrade</cmd>. Note that <cmd>stanza-delete</cmd> is an exception to this rule (see <link section="/delete-stanza">Delete a Stanza</link> for more details).</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Stop the <backrest/> services</title>
+            <title>Stop <backrest/> write commands</title>
 
             <execute user="postgres">
                 <exe-cmd>{[project-exe]} stop</exe-cmd>
             </execute>
         </execute-list>
 
-        <p>New <backrest/> processes will no longer run.</p>
+        <p>New <backrest/> write commands will no longer run.</p>
 
         <execute-list host="{[host-repo1]}">
             <title>Attempt a backup</title>
@@ -2986,7 +2969,7 @@
             </execute>
         </execute-list>
 
-        <p>Specify the <br-option>--force</br-option> option to terminate any <backrest/> process that are currently running. If <backrest/> is already stopped then stopping again will generate a warning.</p>
+        <p>Specify the <br-option>--force</br-option> option to terminate any <backrest/> write commands that are currently running. This includes asynchronous archive-get (though it will run again if <postgres/> requires it). If <backrest/> is already stopped then stopping again will generate a warning.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Stop the <backrest/> services again</title>
@@ -2996,10 +2979,10 @@
             </execute>
         </execute-list>
 
-        <p>Start <backrest/> processes again with the <cmd>start</cmd> command.</p>
+        <p>Start <backrest/> write commands again with the <cmd>start</cmd> command. Write commands that were in progress before the stop will not automatically start again, but they are now allowed to start.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Start the <backrest/> services</title>
+            <title>Start <backrest/> write commands</title>
 
             <execute user="postgres">
                 <exe-cmd>{[project-exe]} start</exe-cmd>
@@ -3009,14 +2992,14 @@
         <p>It is also possible to stop <backrest/> for a single stanza.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Stop <backrest/> services for the <id>demo</id> stanza</title>
+            <title>Stop <backrest/> write commands for the <id>demo</id> stanza</title>
 
             <execute user="postgres">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} stop</exe-cmd>
             </execute>
         </execute-list>
 
-        <p>New <backrest/> processes for the specified stanza will no longer run.</p>
+        <p>New <backrest/> write commands for the specified stanza will no longer run.</p>
 
         <execute-list host="{[host-repo1]}">
             <title>Attempt a backup</title>
@@ -3027,10 +3010,10 @@
             </execute>
         </execute-list>
 
-        <p>The stanza must also be specified when starting the <backrest/> processes for a single stanza.</p>
+        <p>The stanza must also be specified when starting <backrest/> write commands for a single stanza.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Start the <backrest/> services for the <id>demo</id> stanza</title>
+            <title>Start <backrest/> write commands for the <id>demo</id> stanza</title>
 
             <execute user="postgres">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} start</exe-cmd>
@@ -3119,8 +3102,6 @@
                 <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-key-file">/etc/pgbackrest/cert/server.key</backrest-config-option>
 
                 <backrest-config-option section="global" key="log-level-file">detail</backrest-config-option>
-
-                <backrest-config-option section="global" key="log-level-stderr">off</backrest-config-option>
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
@@ -3184,7 +3165,7 @@
                 <postgres-config-option key="hot_standby">on</postgres-config-option>
                 <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} archive-push %p'</postgres-config-option>
                 <postgres-config-option key="archive_mode">on</postgres-config-option>
-                <postgres-config-option key="wal_level">{[wal-level]}</postgres-config-option>
+                <postgres-config-option key="wal_level">replica</postgres-config-option>
                 <postgres-config-option key="max_wal_senders">3</postgres-config-option>
                 <postgres-config-option if="{[os-type-is-rhel]}" key="log_filename">'postgresql.log'</postgres-config-option>
             </postgres-config>
@@ -3247,14 +3228,14 @@
 
             <p>So, what went wrong? Since <postgres/> is pulling WAL segments from the archive to perform replication, changes won't be seen on the standby until the WAL segment that contains those changes is pushed from <host>{[host-pg1]}</host>.</p>
 
-            <p>This can be done manually by calling <code>{[pg-switch-wal]}()</code> which pushes the current WAL segment to the archive (a new WAL segment is created to contain further changes).</p>
+            <p>This can be done manually by calling <code>pg_switch_wal()</code> which pushes the current WAL segment to the archive (a new WAL segment is created to contain further changes).</p>
 
             <execute-list host="{[host-pg1]}">
-                <title>Call <code>{[pg-switch-wal]}()</code></title>
+                <title>Call <code>pg_switch_wal()</code></title>
 
                 <execute user="postgres" output="y" filter="n">
                     <exe-cmd>
-                        psql -c "select *, current_timestamp from {[pg-switch-wal]}()";
+                        psql -c "select *, current_timestamp from pg_switch_wal()";
                     </exe-cmd>
                 </execute>
             </execute-list>
@@ -3401,7 +3382,7 @@
                 </execute>
             </execute-list>
 
-            <p>Now when a table is created on <host>{[host-pg1]}</host> it will appear on <host>{[host-pg2]}</host> quickly and without the need to call <code>{[pg-switch-wal]}()</code>.</p>
+            <p>Now when a table is created on <host>{[host-pg1]}</host> it will appear on <host>{[host-pg2]}</host> quickly and without the need to call <code>pg_switch_wal()</code>.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Create a new table on the primary</title>
@@ -3426,6 +3407,169 @@
                     <exe-cmd>psql -c "
                         select *, current_timestamp from stream_table"</exe-cmd>
                     <exe-highlight>{[test-table-data]}</exe-highlight>
+                </execute>
+            </execute-list>
+        </section>
+    </section>
+
+    <!-- ======================================================================================================================= -->
+    <section id="multi-stanza" depend="/repo-host/perform-backup">
+        <title>Multiple Stanzas</title>
+
+        <p><backrest/> supports multiple stanzas. The most common usage is sharing a <host>{[host-repo1]}</host> host among multiple stanzas.</p>
+
+        <!-- =================================================================================================================== -->
+        <section id="installation">
+            <title>Installation</title>
+
+            <p>A new host named <host>{[host-pgalt]}</host> is created to run the new primary.</p>
+
+            <host-add id="{[host-pgalt-id]}" name="{[host-pgalt]}" user="{[host-pgalt-user]}" image="{[host-pgalt-image]}" os="{[os-type]}" mount="{[host-pgalt-mount]}" option="{[host-mem]} {[host-option]}"/>
+
+            <block id="br-install">
+                <block-variable-replace key="br-install-host">{[host-pgalt]}</block-variable-replace>
+                <block-variable-replace key="br-install-user">postgres</block-variable-replace>
+                <block-variable-replace key="br-install-group">postgres</block-variable-replace>
+            </block>
+        </section>
+
+        <!-- =================================================================================================================== -->
+        <section if="{[protocol-ssh]}" id="setup-ssh">
+            <title>Setup Passwordless SSH</title>
+
+            <block id="setup-ssh-intro">
+                <!-- ??? Bogus variable is set because the syntax currently requires at least one -->
+                <block-variable-replace key="bogus"></block-variable-replace>
+            </block>
+
+            <block id="setup-ssh">
+                <block-variable-replace key="setup-ssh-host">{[host-pgalt]}</block-variable-replace>
+                <block-variable-replace key="setup-ssh-user">postgres</block-variable-replace>
+                <block-variable-replace key="setup-ssh-user-home-path">{[pg-home-path]}</block-variable-replace>
+            </block>
+        </section>
+
+        <!-- =================================================================================================================== -->
+        <section id="configuration">
+            <title>Configuration</title>
+
+            <p><backrest/> configuration is nearly identical to <host>{[host-pg1]}</host> except that the <id>demo-alt</id> stanza will be used so backups and archive will be stored in a separate location.</p>
+
+            <backrest-config host="{[host-pgalt]}" file="{[backrest-config-demo]}">
+                <title>Configure <backrest/> on the new primary</title>
+
+                <backrest-config-option section="demo-alt" key="pg1-path">{[pg-path]}</backrest-config-option>
+
+                <backrest-config-option section="global" key="repo1-host">{[host-repo1]}</backrest-config-option>
+
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-type">tls</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="repo1-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
+
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-auth">pgbackrest-client=demo-alt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-address">*</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-cert-file">/etc/pgbackrest/cert/server.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="global" key="tls-server-key-file">/etc/pgbackrest/cert/server.key</backrest-config-option>
+
+                <backrest-config-option section="global" key="log-level-file">detail</backrest-config-option>
+                <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
+            </backrest-config>
+
+            <backrest-config host="{[host-repo1]}" owner="{[br-user]}:{[br-group]}" file="{[backrest-config-demo]}">
+                <title>Configure <br-option>pg1-host</br-option>/<br-option>pg1-host-user</br-option> and <br-option>pg1-path</br-option></title>
+
+                <backrest-config-option section="demo-alt" key="pg1-path">{[pg-path]}</backrest-config-option>
+                <backrest-config-option section="demo-alt" key="pg1-host">{[host-pgalt]}</backrest-config-option>
+
+                <backrest-config-option if="{[protocol-tls]}" section="demo-alt" key="pg1-host-type">tls</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="demo-alt" key="pg1-host-ca-file">/etc/pgbackrest/cert/ca.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="demo-alt" key="pg1-host-cert-file">/etc/pgbackrest/cert/client.crt</backrest-config-option>
+                <backrest-config-option if="{[protocol-tls]}" section="demo-alt" key="pg1-host-key-file">/etc/pgbackrest/cert/client.key</backrest-config-option>
+            </backrest-config>
+
+            <block if="{[protocol-tls]}" id="setup-tls">
+                <block-variable-replace key="setup-tls-host">{[host-pgalt]}</block-variable-replace>
+                <block-variable-replace key="setup-tls-user">postgres</block-variable-replace>
+                <block-variable-replace key="setup-tls-group">postgres</block-variable-replace>
+            </block>
+        </section>
+
+        <!-- =================================================================================================================== -->
+        <section id="setup-demo-cluster">
+            <title>Setup Demo Cluster</title>
+
+            <execute-list host="{[host-pgalt]}">
+                <title>Create the demo cluster</title>
+
+                <execute user="postgres">
+                    <exe-cmd>
+                        {[pg-bin-path]}/initdb
+                            -D {[pg-path]} -k -A peer
+                    </exe-cmd>
+                </execute>
+
+                <execute if="{[os-type-is-debian]}" user="root" output="y" filter="n">
+                    <exe-cmd>{[pg-cluster-create]}</exe-cmd>
+                </execute>
+
+                <execute user="root" show="n" user-force="y">
+                    <exe-cmd>cat /root/postgresql.common.conf >> {[postgres-config-demo]}</exe-cmd>
+                </execute>
+            </execute-list>
+
+            <postgres-config host="{[host-pgalt]}" file="{[postgres-config-demo]}">
+                <title>Configure <postgres/> settings</title>
+
+                <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza=demo-alt archive-push %p'</postgres-config-option>
+                <postgres-config-option key="archive_mode">on</postgres-config-option>
+                <postgres-config-option key="wal_level">replica</postgres-config-option>
+                <postgres-config-option key="max_wal_senders">3</postgres-config-option>
+                <postgres-config-option if="{[os-type-is-rhel]}" key="log_filename">'postgresql.log'</postgres-config-option>
+            </postgres-config>
+
+            <execute-list host="{[host-pgalt]}">
+                <title>Start the {[postgres-cluster-demo]} cluster</title>
+
+                <execute user="root">
+                    <exe-cmd>{[pg-cluster-restart]}</exe-cmd>
+                </execute>
+
+                <execute user="postgres" show="n">
+                    <exe-cmd>{[pg-cluster-wait]}</exe-cmd>
+                </execute>
+            </execute-list>
+        </section>
+
+        <!-- =================================================================================================================== -->
+        <section id="create-stanza">
+            <title>Create the Stanza and Check Configuration</title>
+
+            <p>The <cmd>stanza-create</cmd> command must be run to initialize the stanza. It is recommended that the <cmd>check</cmd> command be run after <cmd>stanza-create</cmd> to ensure archiving and backups are properly configured.</p>
+
+            <execute-list host="{[host-pgalt]}">
+                <title>Create the stanza and check the configuration</title>
+
+                <execute user="postgres" output="y">
+                    <exe-cmd>{[project-exe]} {[dash]}-stanza=demo-alt {[dash]}-log-level-console=info stanza-create</exe-cmd>
+                    <exe-highlight>completed successfully</exe-highlight>
+                </execute>
+
+                <execute user="postgres" output="y">
+                    <exe-cmd>{[project-exe]} {[dash]}-log-level-console=info check</exe-cmd>
+                    <exe-highlight>check stanza | successfully archived to </exe-highlight>
+                </execute>
+            </execute-list>
+
+            <p>If the <cmd>check</cmd> command is run from the <host>{[host-repo1]}</host> host then all stanzas will be checked.</p>
+
+            <execute-list host="{[host-repo1]}">
+                <title>Check the configuration for all stanzas</title>
+
+                <execute user="{[br-user]}" output="y">
+                    <exe-cmd>{[project-exe]} {[dash]}-log-level-console=info check</exe-cmd>
+                    <exe-highlight>check stanza | successfully archived to </exe-highlight>
                 </execute>
             </execute-list>
         </section>
@@ -3525,11 +3669,11 @@
                 <execute user="postgres" output="n">
                     <exe-cmd>
                         psql -c "
-                            select pg_create_restore_point('test async push'); select {[pg-switch-wal]}();
-                            select pg_create_restore_point('test async push'); select {[pg-switch-wal]}();
-                            select pg_create_restore_point('test async push'); select {[pg-switch-wal]}();
-                            select pg_create_restore_point('test async push'); select {[pg-switch-wal]}();
-                            select pg_create_restore_point('test async push'); select {[pg-switch-wal]}();"
+                            select pg_create_restore_point('test async push'); select pg_switch_wal();
+                            select pg_create_restore_point('test async push'); select pg_switch_wal();
+                            select pg_create_restore_point('test async push'); select pg_switch_wal();
+                            select pg_create_restore_point('test async push'); select pg_switch_wal();
+                            select pg_create_restore_point('test async push'); select pg_switch_wal();"
                     </exe-cmd>
                 </execute>
 
@@ -3630,9 +3774,11 @@
 
     To initialize the build, run the following. This only needs to be done once per doc build or branch change, though running it more that once only costs additional time:
         docker exec -it doc-build bash -c 'rm -rf /build/dev && mkdir -p /build/dev && cd /build/dev && /pgbackrest/src/configure -\-enable-test'
+        docker exec -it doc-build bash -c 'rm -rf /build/dev && meson setup -Dbuildtype=debug /build/dev /pgbackrest'
 
     One each host where a new build is required, run the following. This will build pgbackrest, copy it to the host, and display the build time for sanity:
         docker exec -it <container> bash -c 'ssh build make -C /build/dev -j 8 && scp build:/build/dev/pgbackrest /usr/bin && ls -lah /usr/bin/pgbackrest'
+        docker exec -it <container> bash -c 'ssh build ninja -C /build/dev && scp build:/build/dev/src/pgbackrest /usr/bin && ls -lah /usr/bin/pgbackrest'
     ============================================================================================================================ -->
     <section id="stress" if="'{[stress]}' eq 'y'">
         <title>Stress Testing</title>
@@ -4019,7 +4165,7 @@
 
             <postgres-config-option key="archive_command">'{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} archive-push %p'</postgres-config-option>
             <postgres-config-option key="archive_mode">on</postgres-config-option>
-            <postgres-config-option key="wal_level">{[wal-level]}</postgres-config-option>
+            <postgres-config-option key="wal_level">replica</postgres-config-option>
             <postgres-config-option key="max_wal_senders">3</postgres-config-option>
             <postgres-config-option if="{[os-type-is-rhel]}" key="log_filename">'postgresql.log'</postgres-config-option>
         </postgres-config>

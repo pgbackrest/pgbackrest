@@ -166,6 +166,180 @@ libssh2_init(int flags)
 }
 
 /***********************************************************************************************************************************
+Shim for libssh2_knownhost_addc
+***********************************************************************************************************************************/
+int
+libssh2_knownhost_addc(
+    LIBSSH2_KNOWNHOSTS *hosts, const char *host, const char *salt, const char *key, size_t keylen, const char *comment,
+    size_t commentlen, int typemask, struct libssh2_knownhost **store)
+{
+    // Avoid compiler complaining of unused param
+    (void)store;
+
+    if (hosts == NULL)
+    {
+        snprintf(
+            hrnLibSsh2ScriptError, sizeof(hrnLibSsh2ScriptError),
+            "libssh2 script function 'libssh2_knownhost_adddc', expects hosts to be not NULL");
+        THROW(AssertError, hrnLibSsh2ScriptError);
+    }
+
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_KNOWNHOST_ADDC,
+            varLstAdd(
+                varLstAdd(
+                    varLstAdd(
+                        varLstAdd(
+                            varLstAdd(
+                                varLstAdd(
+                                    varLstAdd(
+                                        varLstNew(), varNewStrZ(host)),
+                                    varNewStrZ(salt)),
+                                varNewStrZ(key)),
+                            varNewUInt64(keylen)),
+                        varNewStrZ(comment)),
+                    varNewUInt64(commentlen)),
+                varNewInt(typemask)),
+            (HrnLibSsh2 *)hosts);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return hrnLibSsh2->resultInt;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_knownhost_checkp
+***********************************************************************************************************************************/
+int
+libssh2_knownhost_checkp(
+    LIBSSH2_KNOWNHOSTS *hosts, const char *host, int port, const char *key, size_t keylen, int typemask,
+    struct libssh2_knownhost **knownhost)
+{
+    // Avoid compiler complaining of unused param
+    (void)knownhost;
+
+    if (hosts == NULL)
+    {
+        snprintf(
+            hrnLibSsh2ScriptError, sizeof(hrnLibSsh2ScriptError),
+            "libssh2 script function 'libssh2_knownhost_checkp', expects hosts to be not NULL");
+        THROW(AssertError, hrnLibSsh2ScriptError);
+    }
+
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_KNOWNHOST_CHECKP,
+            varLstAdd(
+                varLstAdd(
+                    varLstAdd(
+                        varLstAdd(
+                            varLstAdd(
+                                varLstNew(), varNewStrZ(host)),
+                            varNewInt(port)),
+                        varNewStrZ(key)),
+                    varNewUInt64(keylen)),
+                varNewInt(typemask)),
+            (HrnLibSsh2 *)hosts);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return hrnLibSsh2->resultInt;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_knownhost_free
+***********************************************************************************************************************************/
+void
+libssh2_knownhost_free(LIBSSH2_KNOWNHOSTS *hosts)
+{
+    if (hosts == NULL)
+    {
+        snprintf(
+            hrnLibSsh2ScriptError, sizeof(hrnLibSsh2ScriptError),
+            "libssh2 script function 'libssh2_session_knownhost_free', expects hosts to be not NULL");
+        THROW(AssertError, hrnLibSsh2ScriptError);
+    }
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_knownhost_init
+***********************************************************************************************************************************/
+LIBSSH2_KNOWNHOSTS *
+libssh2_knownhost_init(LIBSSH2_SESSION *session)
+{
+    HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(HRNLIBSSH2_KNOWNHOST_INIT, NULL, (HrnLibSsh2 *)session);
+
+    return hrnLibSsh2->resultNull ? NULL : (LIBSSH2_KNOWNHOSTS *)hrnLibSsh2;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_knownhost_readfile
+***********************************************************************************************************************************/
+int
+libssh2_knownhost_readfile(LIBSSH2_KNOWNHOSTS *hosts, const char *filename, int type)
+{
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_KNOWNHOST_READFILE,
+            varLstAdd(
+                varLstAdd(
+                    varLstNew(), varNewStrZ(filename)),
+                varNewInt(type)),
+            (HrnLibSsh2 *)hosts);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return hrnLibSsh2->resultInt;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_knownhost_writefile
+***********************************************************************************************************************************/
+int
+libssh2_knownhost_writefile(LIBSSH2_KNOWNHOSTS *hosts, const char *filename, int type)
+{
+    HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        hrnLibSsh2 = hrnLibSsh2ScriptRun(
+            HRNLIBSSH2_KNOWNHOST_WRITEFILE,
+            varLstAdd(
+                varLstAdd(
+                    varLstNew(), varNewStrZ(filename)),
+                varNewInt(type)),
+            (HrnLibSsh2 *)hosts);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    return hrnLibSsh2->resultInt;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_session_hostkey
+***********************************************************************************************************************************/
+const char *
+libssh2_session_hostkey(LIBSSH2_SESSION *session, size_t *len, int *type)
+{
+    HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(HRNLIBSSH2_SESSION_HOSTKEY, NULL, (HrnLibSsh2 *)session);
+
+    *len = (size_t)hrnLibSsh2->len;
+    *type = (int)hrnLibSsh2->type;
+
+    return hrnLibSsh2->resultNull ? NULL : (const char *)hrnLibSsh2->resultZ;
+}
+
+/***********************************************************************************************************************************
 Shim for libssh2_session_init
 ***********************************************************************************************************************************/
 LIBSSH2_SESSION *
@@ -197,28 +371,28 @@ libssh2_session_init_ex(
 }
 
 /***********************************************************************************************************************************
-Shim for libssh2_session_set_blocking
+Shim for libssh2_session_last_error
 ***********************************************************************************************************************************/
-void
-libssh2_session_set_blocking(LIBSSH2_SESSION *session, int blocking)
+int
+libssh2_session_last_error(LIBSSH2_SESSION *session, char **errmsg, int *errmsg_len, int want_buf)
 {
-    if (session == NULL)
+    // Avoid compiler complaining of unused params
+    (void)want_buf;
+
+    HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(HRNLIBSSH2_SESSION_LAST_ERROR, NULL, (HrnLibSsh2 *)session);
+
+    if (hrnLibSsh2->errMsg != NULL)
     {
-        snprintf(
-            hrnLibSsh2ScriptError, sizeof(hrnLibSsh2ScriptError),
-            "libssh2 script function 'libssh2_session_set_blocking', expects session to be not NULL");
-        THROW(AssertError, hrnLibSsh2ScriptError);
+        *errmsg = hrnLibSsh2->errMsg;
+        *errmsg_len = (int)(strlen(hrnLibSsh2->errMsg) + 1);
+    }
+    else
+    {
+        *errmsg = NULL;
+        *errmsg_len = 0;
     }
 
-    if (!(INT_MIN <= blocking && blocking <= INT_MAX))
-    {
-        snprintf(
-            hrnLibSsh2ScriptError, sizeof(hrnLibSsh2ScriptError),
-            "libssh2 script function 'libssh2_session_set_blocking', expects blocking to be an integer value");
-        THROW(AssertError, hrnLibSsh2ScriptError);
-    }
-
-    return;
+    return hrnLibSsh2->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -229,6 +403,15 @@ libssh2_session_handshake(LIBSSH2_SESSION *session, libssh2_socket_t sock)
 {
     return hrnLibSsh2ScriptRun(
         HRNLIBSSH2_SESSION_HANDSHAKE, varLstAdd(varLstNew(), varNewInt(sock)), (HrnLibSsh2 *)session)->resultInt;
+}
+
+/***********************************************************************************************************************************
+Shim for libssh2_session_block_directions
+***********************************************************************************************************************************/
+int
+libssh2_session_block_directions(LIBSSH2_SESSION *session)
+{
+    return hrnLibSsh2ScriptRun(HRNLIBSSH2_SESSION_BLOCK_DIRECTIONS, NULL, (HrnLibSsh2 *)session)->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -258,6 +441,14 @@ libssh2_userauth_publickey_fromfile_ex(
     const char *passphrase)
 {
     HrnLibSsh2 *hrnLibSsh2 = NULL;
+
+    if (privatekey == NULL)
+    {
+        snprintf(
+            hrnLibSsh2ScriptError, sizeof(hrnLibSsh2ScriptError),
+            "libssh2 script function 'libssh2_userauth_publickey_fromfile_ex', expects privatekey to be not NULL");
+        THROW(AssertError, hrnLibSsh2ScriptError);
+    }
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -424,7 +615,7 @@ libssh2_sftp_symlink_ex(
     }
     MEM_CONTEXT_TEMP_END();
 
-    int rc = 0;
+    int rc;
 
     switch (link_type)
     {

@@ -22,7 +22,7 @@ typedef struct StorageWriteRemote
     StorageRemote *storage;                                         // Storage that created this object
     StorageWrite *write;                                            // Storage write interface
     ProtocolClient *client;                                         // Protocol client to make requests with
-    uint64_t sessionId;                                             // Session id for subsequent commands
+    ProtocolClientSession *session;                                 // Protocol session for requests
 
 #ifdef DEBUG
     uint64_t protocolWriteBytes;                                    // How many bytes were written to the protocol layer?
@@ -36,30 +36,6 @@ Macros for function logging
     StorageWriteRemote *
 #define FUNCTION_LOG_STORAGE_WRITE_REMOTE_FORMAT(value, buffer, bufferSize)                                                        \
     objNameToLog(value, "StorageWriteRemote", buffer, bufferSize)
-
-/***********************************************************************************************************************************
-Close file on the remote
-***********************************************************************************************************************************/
-static void
-storageWriteRemoteFreeResource(THIS_VOID)
-{
-    THIS(StorageWriteRemote);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_WRITE_REMOTE, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    ProtocolCommand *const command = protocolCommandNewP(
-        PROTOCOL_COMMAND_STORAGE_WRITE, .type = protocolCommandTypeCancel, .sessionId = this->sessionId);
-    protocolClientCommandPut(this->client, command);
-    protocolCommandFree(command);
-
-    protocolClientDataGet(this->client);
-
-    FUNCTION_LOG_RETURN_VOID();
-}
 
 /***********************************************************************************************************************************
 Open the file
@@ -81,8 +57,7 @@ storageWriteRemoteOpen(THIS_VOID)
         if (this->interface.compressible)
             ioFilterGroupInsert(ioWriteFilterGroup(storageWriteIo(this->write)), 0, decompressFilterP(compressTypeGz));
 
-        ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_WRITE, .type = protocolCommandTypeOpen);
-        PackWrite *const param = protocolCommandParamP(command);
+        PackWrite *const param = protocolPackNew();
 
         pckWriteStrP(param, this->interface.name);
         pckWriteModeP(param, this->interface.modeFile);
@@ -96,9 +71,7 @@ storageWriteRemoteOpen(THIS_VOID)
         pckWriteBoolP(param, this->interface.atomic);
         pckWritePackP(param, ioFilterGroupParamAll(ioWriteFilterGroup(storageWriteIo(this->write))));
 
-        this->sessionId = protocolClientCommandPut(this->client, command);
-
-        protocolClientDataGet(this->client);
+        protocolClientSessionOpenP(this->session, .param = param);
 
         // Clear filters since they will be run on the remote side
         ioFilterGroupClear(ioWriteFilterGroup(storageWriteIo(this->write)));
@@ -110,9 +83,6 @@ storageWriteRemoteOpen(THIS_VOID)
                 ioWriteFilterGroup(storageWriteIo(this->write)),
                 compressFilterP(compressTypeGz, (int)this->interface.compressLevel));
         }
-
-        // Set free callback to ensure remote file is cancelled
-        memContextCallbackSet(objMemContext(this), storageWriteRemoteFreeResource, this);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -137,13 +107,13 @@ storageWriteRemote(THIS_VOID, const Buffer *const buffer)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_STORAGE_WRITE, .sessionId = this->sessionId);
-        PackWrite *const param = protocolCommandParamP(command, .extra = bufUsed(buffer));
+        if (protocolClientSessionQueued(this->session))
+            protocolClientSessionResponse(this->session);
 
+        PackWrite *const param = pckWriteNewP(.size = PROTOCOL_PACK_DEFAULT_SIZE + bufUsed(buffer));
         pckWriteBinP(param, buffer);
 
-        protocolClientCommandPut(this->client, command);
-        protocolClientDataGet(this->client);
+        protocolClientSessionRequestAsyncP(this->session, .param = param);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -173,17 +143,15 @@ storageWriteRemoteClose(THIS_VOID)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            ProtocolCommand *const command = protocolCommandNewP(
-                PROTOCOL_COMMAND_STORAGE_WRITE, .type = protocolCommandTypeClose, .sessionId = this->sessionId);
-            protocolClientCommandPut(this->client, command);
+            if (protocolClientSessionQueued(this->session))
+                protocolClientSessionResponse(this->session);
 
             ioFilterGroupResultAllSet(
-                ioWriteFilterGroup(storageWriteIo(this->write)), pckReadPackP(protocolClientDataGet(this->client)));
+                ioWriteFilterGroup(storageWriteIo(this->write)), pckReadPackP(protocolClientSessionClose(this->session)));
         }
         MEM_CONTEXT_TEMP_END();
 
         this->client = NULL;
-        memContextCallbackClear(objMemContext(this));
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -224,6 +192,7 @@ storageWriteRemoteNew(
         {
             .storage = storage,
             .client = client,
+            .session = protocolClientSessionNewP(client, PROTOCOL_COMMAND_STORAGE_WRITE, .async = true),
 
             .interface = (StorageWriteInterface)
             {

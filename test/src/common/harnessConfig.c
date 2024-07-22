@@ -19,8 +19,12 @@ Harness for Loading Test Configurations
 #include "common/harnessDebug.h"
 #include "common/harnessLock.h"
 #include "common/harnessLog.h"
-#include "common/harnessStorageHelper.h"
 #include "common/harnessTest.h"
+
+/***********************************************************************************************************************************
+Include shimmed C modules
+***********************************************************************************************************************************/
+{[SHIM_MODULE]}
 
 /**********************************************************************************************************************************/
 void
@@ -79,7 +83,11 @@ hrnCfgLoad(ConfigCommand commandId, const StringList *argListParam, const HrnCfg
     }
 
     // Free objects in storage helper
-    hrnStorageHelperFree();
+    storageHelperFree();
+
+    // Store config so it can be reloaded with a stanza
+    configLoadLocal.argListSize = strLstSize(argList);
+    configLoadLocal.argList = strLstPtr(argList);
 
     // Parse config
     cfgParseP(storageLocal(), strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true);
@@ -100,8 +108,8 @@ hrnCfgLoad(ConfigCommand commandId, const StringList *argListParam, const HrnCfg
     if (cfgOptionValid(cfgOptExecId) && !cfgOptionTest(cfgOptExecId))
         cfgOptionSet(cfgOptExecId, cfgSourceParam, VARSTRDEF("1-test"));
 
-    if (cfgOptionTest(cfgOptExecId) && cfgOptionTest(cfgOptLockPath) && cfgOptionTest(cfgOptStanza))
-        lockInit(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptExecId), cfgOptionStr(cfgOptStanza), cfgLockType());
+    if (cfgOptionTest(cfgOptExecId) && cfgOptionTest(cfgOptLockPath))
+        lockInit(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptExecId));
     else
         hrnLockUnInit();
 

@@ -25,17 +25,17 @@ testRun(void)
             }
             CATCH_ANY()
             {
-                TEST_RESULT_VOID(errRetryAdd(retry), "add retry");
+                TEST_RESULT_VOID(errRetryAddP(retry), "add retry");
             }
             TRY_END();
 
             TRY_BEGIN()
             {
-                THROW(KernelError, "message1");
+                THROW(KernelError, "message2");
             }
             CATCH_ANY()
             {
-                TEST_RESULT_VOID(errRetryAdd(retry), "add retry");
+                TEST_RESULT_VOID(errRetryAddP(retry, errorType(), STR(errorMessage())), "add retry");
             }
             TRY_END();
 
@@ -63,7 +63,7 @@ testRun(void)
             }
             CATCH_ANY()
             {
-                TEST_RESULT_VOID(errRetryAdd(retry), "add retry");
+                TEST_RESULT_VOID(errRetryAddP(retry), "add retry");
             }
             TRY_END();
 
@@ -73,7 +73,7 @@ testRun(void)
             }
             CATCH_ANY()
             {
-                TEST_RESULT_VOID(errRetryAdd(retry), "add retry");
+                TEST_RESULT_VOID(errRetryAddP(retry), "add retry");
             }
             TRY_END();
 
@@ -83,17 +83,17 @@ testRun(void)
             }
             CATCH_ANY()
             {
-                TEST_RESULT_VOID(errRetryAdd(retry), "add retry");
+                TEST_RESULT_VOID(errRetryAddP(retry), "add retry");
             }
             TRY_END();
 
             TRY_BEGIN()
             {
-                THROW(ServiceError, "message2");
+                THROW(ServiceError, "message1");
             }
             CATCH_ANY()
             {
-                TEST_RESULT_VOID(errRetryAdd(retry), "add retry");
+                TEST_RESULT_VOID(errRetryAddP(retry), "add retry");
             }
             TRY_END();
 
@@ -101,9 +101,8 @@ testRun(void)
             TEST_RESULT_STR_Z(
                 errRetryMessage(retry),
                 "message1\n"
-                "[FormatError] on retry after 50ms: [same message]\n"
-                "[KernelError] on retry after 75ms: message2\n"
-                "[ServiceError] on retry after 150ms: [same message]",
+                "    [FormatError] on 2 retries from 50-150ms: message1\n"
+                "    [KernelError] on retry at 75ms: message2",
                 "error message");
         }
     }

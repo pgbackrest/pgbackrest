@@ -40,7 +40,7 @@ regExpFreeResource(THIS_VOID)
 Handle errors
 ***********************************************************************************************************************************/
 static void
-regExpError(int error)
+regExpError(const int error)
 {
     char buffer[4096];
     regerror(error, NULL, buffer, sizeof(buffer));
@@ -48,7 +48,7 @@ regExpError(int error)
 }
 
 static void
-regExpErrorCheck(int error)
+regExpErrorCheck(const int error)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, error);
@@ -62,7 +62,7 @@ regExpErrorCheck(int error)
 
 /**********************************************************************************************************************************/
 FN_EXTERN RegExp *
-regExpNew(const String *expression)
+regExpNew(const String *const expression)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, expression);
@@ -112,7 +112,7 @@ regExpMatch(RegExp *const this, const String *const string)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-regExpMatchOne(const String *expression, const String *string)
+regExpMatchOne(const String *const expression, const String *const string)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, expression);
@@ -135,7 +135,7 @@ regExpMatchOne(const String *expression, const String *string)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-regExpPrefix(const String *expression)
+regExpPrefix(const String *const expression)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, expression);
@@ -146,8 +146,8 @@ regExpPrefix(const String *expression)
     // Only generate prefix if expression is defined and has a beginning anchor
     if (expression != NULL && strZ(expression)[0] == '^')
     {
-        const char *expressionZ = strZ(expression);
-        size_t expressionSize = strSize(expression);
+        const char *const expressionZ = strZ(expression);
+        const size_t expressionSize = strSize(expression);
         unsigned int expressionIdx = 1;
 
         for (; expressionIdx < expressionSize; expressionIdx++)

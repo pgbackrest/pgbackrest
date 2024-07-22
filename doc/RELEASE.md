@@ -152,6 +152,10 @@ Deploy the documentation on `pgbackrest.org`.
 
 Start from NEWS.md and update with the new date, version, and interesting features added since the last release. News items are automatically sent to the `pgsql-announce` mailing list once they have been approved.
 
+## Update PostgreSQL ecosystem wiki
+
+Update version, date, and minimum supported version (when changed): https://wiki.postgresql.org/wiki/Ecosystem:Backup#pgBackRest
+
 ## Prepare for the next release
 
 Add new release in `doc/xml/release.xml`, e.g.:
@@ -171,6 +175,11 @@ to:
 Run deploy to generate git history (ctrl-c as soon as the file is generated):
 ```
 pgbackrest/doc/release.pl --build
+```
+
+Run code count to add new release file:
+```
+pgbackrest/test/test.pl --code-count
 ```
 
 Commit and push to integration:

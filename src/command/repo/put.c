@@ -38,12 +38,12 @@ storagePutProcess(IoRead *source)
         // Is path valid for repo?
         file = repoPathIsValid(file);
 
-        StorageWrite *destination = storageNewWriteP(storageRepoWrite(), file);
+        StorageWrite *const destination = storageNewWriteP(storageRepoWrite(), file);
 
         // Add encryption if needed
         if (!cfgOptionBool(cfgOptRaw))
         {
-            CipherType repoCipherType = cfgOptionStrId(cfgOptRepoCipherType);
+            const CipherType repoCipherType = cfgOptionStrId(cfgOptRepoCipherType);
 
             if (repoCipherType != cipherTypeNone)
             {

@@ -44,6 +44,14 @@ Constants
 ***********************************************************************************************************************************/
 #define HRN_SERVER_HOST                                             "tls.test.pgbackrest.org"
 
+/***********************************************************************************************************************************
+Local data
+***********************************************************************************************************************************/
+struct HrnServerLocal
+{
+    unsigned int portOffsetNext;                                    // Next server port offset to be returned
+} hrnServerLocal;
+
 /**********************************************************************************************************************************/
 void
 hrnServerInit(void)
@@ -230,21 +238,20 @@ hrnServerScriptSleep(IoWrite *write, TimeMSec sleepMs)
 
 /**********************************************************************************************************************************/
 void
-hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam param)
+hrnServerRun(IoRead *const read, const HrnServerProtocol protocol, const unsigned int port, HrnServerRunParam param)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(IO_READ, read);
         FUNCTION_HARNESS_PARAM(ENUM, protocol);
-        FUNCTION_HARNESS_PARAM(UINT, param.port);
+        FUNCTION_HARNESS_PARAM(UINT, port);
+        FUNCTION_HARNESS_PARAM(STRING, param.ca);
         FUNCTION_HARNESS_PARAM(STRING, param.certificate);
         FUNCTION_HARNESS_PARAM(STRING, param.key);
+        FUNCTION_HARNESS_PARAM(STRING, param.address);
     FUNCTION_HARNESS_END();
 
     ASSERT(read != NULL);
-
-    // Set port to index 0 if not specified
-    if (param.port == 0)
-        param.port = hrnServerPort(0);
+    ASSERT(port >= HRN_SERVER_PORT_MIN);
 
     // Initialize ssl and create a context
     IoServer *tlsServer = NULL;
@@ -263,7 +270,7 @@ hrnServerRun(IoRead *read, HrnServerProtocol protocol, HrnServerRunParam param)
         tlsServer = tlsServerNew(STRDEF(HRN_SERVER_HOST), param.ca, param.key, param.certificate, 5000);
     }
 
-    IoServer *socketServer = sckServerNew(STRDEF("localhost"), param.port, 5000);
+    IoServer *socketServer = sckServerNew(param.address == NULL ? STRDEF("127.0.0.1") : param.address, port, 5000);
 
     // Loop until no more commands
     IoSession *serverSession = NULL;
@@ -377,9 +384,12 @@ hrnServerHost(void)
 
 /**********************************************************************************************************************************/
 unsigned int
-hrnServerPort(unsigned int portIdx)
+hrnServerPortNext(void)
 {
-    ASSERT(portIdx < HRN_SERVER_PORT_MAX);
+    CHECK(AssertError, testIdx() < 32, "test max exceeds limit of 32");
+    CHECK(
+        AssertError, hrnServerLocal.portOffsetNext < HRN_SERVER_PORT_MAX,
+        "requested port exceeds limit of " STRINGIFY(HRN_SERVER_PORT_MAX));
 
-    return 44443 + (HRN_SERVER_PORT_MAX * testIdx()) + portIdx;
+    return HRN_SERVER_PORT_MIN + (HRN_SERVER_PORT_MAX * testIdx()) + hrnServerLocal.portOffsetNext++;
 }

@@ -25,7 +25,15 @@ struct ProtocolServer
     IoWrite *write;                                                 // Write interface
     const String *name;                                             // Name displayed in logging
     List *sessionList;                                              // List of active sessions
-    uint64_t sessionTotal;                                          // Total sessions (used to generate session ids);
+    uint64_t sessionId;                                             // Current session being processed
+};
+
+struct ProtocolServerResult
+{
+    void *sessionData;                                              // Session data
+    PackWrite *data;                                                // Result data
+    size_t extra;                                                   // Extra bytes for initializing data
+    bool close;                                                     // Close session?
 };
 
 // Track server sessions
@@ -81,9 +89,43 @@ protocolServerNew(const String *name, const String *service, IoRead *read, IoWri
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
+protocolServerResponse(ProtocolServer *const this, const ProtocolServerResponseParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PROTOCOL_SERVER, this);
+        FUNCTION_TEST_PARAM(ENUM, param.type);
+        FUNCTION_TEST_PARAM(BOOL, param.close);
+        FUNCTION_TEST_PARAM(PACK_WRITE, param.data);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // End the pack
+        if (param.data != NULL)
+            pckWriteEndP(param.data);
+
+        // Write the result
+        PackWrite *const resultMessage = pckWriteNewIo(this->write);
+
+        pckWriteU64P(resultMessage, this->sessionId);
+        pckWriteU32P(resultMessage, param.type, .defaultWrite = true);
+        pckWriteBoolP(resultMessage, param.close);
+        pckWritePackP(resultMessage, pckWriteResult(param.data));
+        pckWriteEndP(resultMessage);
+        ioWriteFlush(this->write);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
 protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
+    FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
         FUNCTION_LOG_PARAM(INT, code);
         FUNCTION_LOG_PARAM(STRING, message);
@@ -97,15 +139,13 @@ protocolServerError(ProtocolServer *this, int code, const String *message, const
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Write the error and flush to be sure it gets sent immediately
-        PackWrite *error = pckWriteNewIo(this->write);
-        pckWriteU32P(error, protocolMessageTypeError);
-        pckWriteI32P(error, code);
-        pckWriteStrP(error, message);
-        pckWriteStrP(error, stack);
-        pckWriteEndP(error);
+        PackWrite *const packWrite = protocolPackNew();
 
-        ioWriteFlush(this->write);
+        pckWriteI32P(packWrite, code);
+        pckWriteStrP(packWrite, message);
+        pckWriteStrP(packWrite, stack);
+
+        protocolServerResponseP(this, .type = protocolMessageTypeError, .data = packWrite);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -113,8 +153,8 @@ protocolServerError(ProtocolServer *this, int code, const String *message, const
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN ProtocolServerCommandGetResult
-protocolServerCommandGet(ProtocolServer *const this)
+FN_EXTERN ProtocolServerRequestResult
+protocolServerRequest(ProtocolServer *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
@@ -122,25 +162,28 @@ protocolServerCommandGet(ProtocolServer *const this)
 
     FUNCTION_AUDIT_STRUCT();
 
-    ProtocolServerCommandGetResult result = {0};
+    ProtocolServerRequestResult result = {0};
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        PackRead *const command = pckReadNewIo(this->read);
-        ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(command);
+        PackRead *const request = pckReadNewIo(this->read);
+        ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(request);
 
-        CHECK(FormatError, type == protocolMessageTypeCommand, "expected command message");
+        CHECK(FormatError, type == protocolMessageTypeRequest, "expected request message");
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            result.id = pckReadStrIdP(command);
-            result.type = (ProtocolCommandType)pckReadStrIdP(command);
-            result.sessionId = pckReadU64P(command);
-            result.param = pckReadPackP(command);
+            result.id = pckReadStrIdP(request);
+            result.type = (ProtocolCommandType)pckReadStrIdP(request);
+            this->sessionId = pckReadU64P(request);
+            result.sessionRequired = pckReadBoolP(request);
+            result.param = pckReadPackP(request);
+
+            ASSERT(this->sessionId != 0);
         }
         MEM_CONTEXT_PRIOR_END();
 
-        pckReadEndP(command);
+        pckReadEndP(request);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -164,7 +207,7 @@ protocolServerProcess(
     ASSERT(handlerList != NULL);
     ASSERT(handlerListSize > 0);
 
-    // Loop until exit command is received
+    // Loop until exit request is received
     bool exit = false;
 
     do
@@ -173,15 +216,15 @@ protocolServerProcess(
         {
             MEM_CONTEXT_TEMP_BEGIN()
             {
-                // Get command
-                ProtocolServerCommandGetResult command = protocolServerCommandGet(this);
+                // Get request
+                ProtocolServerRequestResult request = protocolServerRequest(this);
 
                 // Find the handler
                 const ProtocolServerHandler *handler = NULL;
 
                 for (unsigned int handlerIdx = 0; handlerIdx < handlerListSize; handlerIdx++)
                 {
-                    if (command.id == handlerList[handlerIdx].command)
+                    if (request.id == handlerList[handlerIdx].command)
                     {
                         handler = &handlerList[handlerIdx];
                         break;
@@ -191,14 +234,14 @@ protocolServerProcess(
                 // If handler was found then process
                 if (handler != NULL)
                 {
-                    // Send the command to the handler
+                    // Send the request to the handler
                     MEM_CONTEXT_TEMP_BEGIN()
                     {
                         // Variables to store first error message and retry messages
                         ErrorRetry *const errRetry = errRetryNew();
                         const String *errStackTrace = NULL;
 
-                        // Initialize retries in case of command failure
+                        // Initialize retries in case of request failure
                         bool retry = false;
                         unsigned int retryRemaining = retryInterval != NULL ? varLstSize(retryInterval) : 0;
                         TimeMSec retrySleepMs = 0;
@@ -210,30 +253,31 @@ protocolServerProcess(
 
                             TRY_BEGIN()
                             {
-                                // Process command type
-                                switch (command.type)
+                                // Process request type
+                                switch (request.type)
                                 {
                                     // Open a protocol session
                                     case protocolCommandTypeOpen:
                                     {
-                                        ASSERT(command.sessionId == 0);
                                         ASSERT(handler->open != NULL);
 
-                                        ProtocolServerSession session = {.id = ++this->sessionTotal};
-
-                                        // Return session id to client
-                                        protocolServerDataPut(this, pckWriteU64P(protocolPackNew(), session.id));
-
                                         // Call open handler
-                                        MEM_CONTEXT_OBJ_BEGIN(this->sessionList)
-                                        {
-                                            session.data = handler->open(pckReadNew(command.param), this);
-                                        }
-                                        MEM_CONTEXT_OBJ_END();
+                                        ProtocolServerResult *const openResult = handler->open(pckReadNew(request.param));
+                                        ASSERT(openResult != NULL);
+                                        ASSERT(!openResult->close);
+
+                                        ProtocolServerSession session = {.id = this->sessionId};
+
+                                        // Send data
+                                        protocolServerResponseP(
+                                            this, .data = openResult->data, .close = openResult->sessionData == NULL);
 
                                         // Create session if open returned session data
-                                        if (session.data != NULL)
+                                        if (openResult->sessionData != NULL)
+                                        {
+                                            session.data = objMove(openResult->sessionData, objMemContext(this->sessionList));
                                             lstAdd(this->sessionList, &session);
+                                        }
 
                                         break;
                                     }
@@ -241,13 +285,11 @@ protocolServerProcess(
                                     // Process or close/cancel protocol session
                                     default:
                                     {
-                                        ASSERT(command.type == protocolCommandTypeProcess || protocolCommandTypeClose);
-
                                         // Find session data
                                         void *sessionData = NULL;
                                         unsigned int sessionListIdx = 0;
 
-                                        if (command.sessionId != 0)
+                                        if (request.sessionRequired)
                                         {
                                             ASSERT(handler->processSession != NULL);
                                             ASSERT(handler->process == NULL);
@@ -256,7 +298,7 @@ protocolServerProcess(
                                             {
                                                 ProtocolServerSession *const session = lstGet(this->sessionList, sessionListIdx);
 
-                                                if (session->id == command.sessionId)
+                                                if (session->id == this->sessionId)
                                                 {
                                                     sessionData = session->data;
                                                     break;
@@ -264,44 +306,59 @@ protocolServerProcess(
                                             }
 
                                             // Error when session not found
-                                            if (sessionData == NULL)
+                                            if (sessionData == NULL && request.type != protocolCommandTypeCancel)
                                             {
                                                 THROW_FMT(
-                                                    ProtocolError, "unable to find session id %" PRIu64 " for command %s:%s",
-                                                    command.sessionId, strZ(strIdToStr(command.id)),
-                                                    strZ(strIdToStr(command.type)));
+                                                    ProtocolError, "unable to find session id %" PRIu64 " for request %s:%s",
+                                                    this->sessionId, strZ(strIdToStr(request.id)),
+                                                    strZ(strIdToStr(request.type)));
                                             }
                                         }
 
-                                        // Process command type
-                                        switch (command.type)
+                                        // Process request type
+                                        switch (request.type)
                                         {
-                                            // Process command
+                                            // Process request
                                             case protocolCommandTypeProcess:
                                             {
                                                 // Process session
+                                                ProtocolServerResult *processResult;
+
                                                 if (handler->processSession != NULL)
                                                 {
                                                     ASSERT(handler->process == NULL);
                                                     CHECK_FMT(
-                                                        ProtocolError, command.sessionId != 0, "no session id for command %s:%s",
-                                                        strZ(strIdToStr(command.id)), strZ(strIdToStr(command.type)));
+                                                        ProtocolError, this->sessionId != 0, "no session id for request %s:%s",
+                                                        strZ(strIdToStr(request.id)), strZ(strIdToStr(request.type)));
 
-                                                    // Free session when process returns false. This optimization allows an explicit
-                                                    // close to be skipped.
-                                                    if (!handler->processSession(pckReadNew(command.param), this, sessionData))
-                                                    {
-                                                        objFree(sessionData);
-                                                        lstRemoveIdx(this->sessionList, sessionListIdx);
-                                                    }
+                                                    processResult = handler->processSession(pckReadNew(request.param), sessionData);
                                                 }
                                                 // Standalone process
                                                 else
                                                 {
                                                     ASSERT(handler->process != NULL);
-                                                    ASSERT(command.sessionId == 0);
+                                                    ASSERT(!request.sessionRequired);
 
-                                                    handler->process(pckReadNew(command.param), this);
+                                                    processResult = handler->process(pckReadNew(request.param));
+                                                }
+
+                                                if (processResult == NULL)
+                                                    protocolServerResponseP(this);
+                                                else
+                                                {
+                                                    ASSERT(processResult->sessionData == NULL);
+                                                    ASSERT(handler->processSession != NULL || !processResult->close);
+
+                                                    protocolServerResponseP(
+                                                        this, .data = processResult->data, .close = processResult->close);
+
+                                                    // Free session when close is true. This optimization allows an explicit
+                                                    // close to be skipped.
+                                                    if (processResult->close)
+                                                    {
+                                                        objFree(sessionData);
+                                                        lstRemoveIdx(this->sessionList, sessionListIdx);
+                                                    }
                                                 }
 
                                                 break;
@@ -311,13 +368,21 @@ protocolServerProcess(
                                             case protocolCommandTypeClose:
                                             {
                                                 // If there is a close handler then call it
+                                                PackWrite *data = NULL;
+
                                                 if (handler->close != NULL)
                                                 {
-                                                    handler->close(pckReadNew(command.param), this, sessionData);
+                                                    ProtocolServerResult *const closeResult = handler->close(
+                                                        pckReadNew(request.param), sessionData);
+                                                    ASSERT(closeResult != NULL);
+                                                    ASSERT(closeResult->sessionData == NULL);
+                                                    ASSERT(!closeResult->close);
+
+                                                    data = closeResult->data;
                                                 }
-                                                // Else send default NULL data
-                                                else
-                                                    protocolServerDataPut(this, NULL);
+
+                                                // Send data
+                                                protocolServerResponseP(this, .data = data, .close = true);
 
                                                 // Free the session
                                                 objFree(sessionData);
@@ -330,15 +395,18 @@ protocolServerProcess(
                                             default:
                                             {
                                                 CHECK_FMT(
-                                                    ProtocolError, command.type == protocolCommandTypeCancel,
-                                                    "unknown command type '%s'", strZ(strIdToStr(command.type)));
+                                                    ProtocolError, request.type == protocolCommandTypeCancel,
+                                                    "unknown request type '%s'", strZ(strIdToStr(request.type)));
 
                                                 // Send NULL data
-                                                protocolServerDataPut(this, NULL);
+                                                protocolServerResponseP(this, .close = true);
 
                                                 // Free the session
-                                                objFree(sessionData);
-                                                lstRemoveIdx(this->sessionList, sessionListIdx);
+                                                if (sessionData != NULL)
+                                                {
+                                                    objFree(sessionData);
+                                                    lstRemoveIdx(this->sessionList, sessionListIdx);
+                                                }
 
                                                 break;
                                             }
@@ -349,7 +417,7 @@ protocolServerProcess(
                             CATCH_ANY()
                             {
                                 // Add the error retry info
-                                errRetryAdd(errRetry);
+                                errRetryAddP(errRetry);
 
                                 // On first error record the stack trace. Only the first error will contain a stack trace since
                                 // the first error is most likely to contain valuable information.
@@ -374,7 +442,7 @@ protocolServerProcess(
                                     retryRemaining--;
                                     retry = true;
 
-                                    // Send keep-alive to remotes. A retry means the command is taking longer than usual so make
+                                    // Send keep-alive to remotes. A retry means the request is taking longer than usual so make
                                     // sure the remote does not timeout.
                                     protocolKeepAlive();
                                 }
@@ -391,22 +459,22 @@ protocolServerProcess(
                     }
                     MEM_CONTEXT_TEMP_END();
                 }
-                // Else check built-in commands
+                // Else check built-in requests
                 else
                 {
-                    switch (command.id)
+                    switch (request.id)
                     {
                         case PROTOCOL_COMMAND_EXIT:
                             exit = true;
                             break;
 
                         case PROTOCOL_COMMAND_NOOP:
-                            protocolServerDataPut(this, NULL);
+                            protocolServerResponseP(this);
                             break;
 
                         default:
                             THROW_FMT(
-                                ProtocolError, "invalid command '%s' (0x%" PRIx64 ")", strZ(strIdToStr(command.id)), command.id);
+                                ProtocolError, "invalid request '%s' (0x%" PRIx64 ")", strZ(strIdToStr(request.id)), request.id);
                     }
                 }
 
@@ -419,6 +487,9 @@ protocolServerProcess(
         }
         CATCH_FATAL()
         {
+            // Zero session id so a fatal error will be handled by the first client that sees it
+            this->sessionId = 0;
+
             // Report error to the client
             protocolServerError(this, errorCode(), STR(errorMessage()), STR(errorStackTrace()));
 
@@ -433,31 +504,75 @@ protocolServerProcess(
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
-protocolServerDataPut(ProtocolServer *const this, PackWrite *const data)
+FN_EXTERN ProtocolServerResult *
+protocolServerResultNew(const ProtocolServerResultNewParam param)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
-        FUNCTION_LOG_PARAM(PACK_WRITE, data);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(SIZE, param.extra);
+    FUNCTION_TEST_END();
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    OBJ_NEW_BEGIN(ProtocolServerResult, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        // End the pack
-        if (data != NULL)
-            pckWriteEndP(data);
-
-        // Write the result
-        PackWrite *const resultMessage = pckWriteNewIo(this->write);
-
-        pckWriteU32P(resultMessage, protocolMessageTypeData, .defaultWrite = true);
-        pckWritePackP(resultMessage, pckWriteResult(data));
-        pckWriteEndP(resultMessage);
-        ioWriteFlush(this->write);
+        *this = (ProtocolServerResult)
+        {
+            .extra = param.extra,
+        };
     }
-    MEM_CONTEXT_TEMP_END();
+    OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_TEST_RETURN(PROTOCOL_SERVER_RESULT, this);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN PackWrite *
+protocolServerResultData(ProtocolServerResult *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PROTOCOL_SERVER_RESULT, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->data == NULL);
+
+    MEM_CONTEXT_OBJ_BEGIN(this)
+    {
+        this->data = pckWriteNewP(.size = PROTOCOL_PACK_DEFAULT_SIZE + this->extra);
+    }
+    MEM_CONTEXT_OBJ_END();
+
+    FUNCTION_TEST_RETURN(PACK_WRITE, this->data);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+protocolServerResultSessionDataSet(ProtocolServerResult *const this, void *const sessionData)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PROTOCOL_SERVER_RESULT, this);
+        FUNCTION_TEST_PARAM_P(VOID, sessionData);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(sessionData != NULL);
+
+    this->sessionData = objMove(sessionData, objMemContext(this));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+protocolServerResultCloseSet(ProtocolServerResult *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PROTOCOL_SERVER_RESULT, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    this->close = true;
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -465,4 +580,13 @@ FN_EXTERN void
 protocolServerToLog(const ProtocolServer *const this, StringStatic *const debugLog)
 {
     strStcFmt(debugLog, "{name: %s}", strZ(this->name));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+protocolServerResultToLog(const ProtocolServerResult *const this, StringStatic *const debugLog)
+{
+    strStcFmt(
+        debugLog, "{data: %s, sessionData: %s, close: %s}", cvtBoolToConstZ(this->data != NULL),
+        cvtBoolToConstZ(this->sessionData != NULL), cvtBoolToConstZ(this->close));
 }

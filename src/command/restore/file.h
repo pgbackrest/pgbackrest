@@ -44,6 +44,7 @@ typedef struct RestoreFileResult
 {
     const String *manifestFile;                                     // Manifest file
     RestoreResult result;                                           // Restore result (e.g. preserve, copy)
+    uint64_t blockIncrDeltaSize;                                    // Size restored by block incremental delta
 } RestoreFileResult;
 
 FN_EXTERN List *restoreFile(

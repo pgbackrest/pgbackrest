@@ -1,0 +1,61 @@
+<release date="2017-02-13" version="1.14" title="Refactoring and Bug Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jens.wilke"/>
+                </release-item-contributor-list>
+
+                <p>Fixed an issue where an archive-push error would not be retried and would instead return errors to <postgres/> indefinitely (unless the <file>.error</file> file was manually deleted).</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jens.wilke"/>
+                </release-item-contributor-list>
+
+                <p>Fixed a race condition in parallel archiving where creation of new paths generated an error when multiple processes attempted to do so at the same time.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jens.wilke"/>
+                </release-item-contributor-list>
+
+                <p>Improved performance of <id>wal archive min/max</id> provided by the <cmd>info</cmd> command.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-feature-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jens.wilke"/>
+                </release-item-contributor-list>
+
+                <p>Updated async archiving documentation to more accurately describe how the new method works and how it differs from the old method.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Documentation can now be built with reusable blocks to reduce duplication.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improved support for <setting>--require</setting> option and section depends now default to the previous section.</p>
+            </release-item>
+
+            <release-item>
+                <p>Added ability to pass options to containers within the documentation.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>proper</code> tag to slightly emphasize proper nouns.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+</release>

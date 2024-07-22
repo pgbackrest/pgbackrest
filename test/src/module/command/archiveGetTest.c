@@ -84,7 +84,7 @@ testRun(void)
 
         TEST_RESULT_STRLST_Z(
             queueNeed(STRDEF("000000010000000A00000FFD"), true, queueSize, walSegmentSize, PG_VERSION_11),
-            "000000010000000B00000000\n000000010000000B00000001\n000000010000000B00000002\n", "queue has wal >= 9.3");
+            "000000010000000B00000000\n000000010000000B00000001\n000000010000000B00000002\n", "queue has wal");
 
         TEST_STORAGE_LIST(
             storageSpool(), STORAGE_SPOOL_ARCHIVE_IN,
@@ -136,9 +136,27 @@ testRun(void)
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg_control from backup is not valid without backup_label");
+
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_10, .checkpoint = PG_CONTROL_CHECKPOINT_INVALID);
+
+        strLstAddZ(argList, "000000010000000100000001");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleAsync);
+
+        TEST_ERROR(
+            cmdArchiveGetAsync(), FormatError,
+            "pg_control from backup is not valid without backup_label\n"
+            "HINT: was the backup_label file removed?");
+
+        TEST_RESULT_LOG(
+            "P00   INFO: get 1 WAL file(s) from archive: 000000010000000100000001");
+        TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "global.error\n", .remove = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no segments to find");
 
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_10);
+        // Success not that backup_label exists
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_BACKUPLABEL);
 
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
@@ -148,7 +166,6 @@ testRun(void)
             "[db:history]\n"
             "1={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}\n");
 
-        strLstAddZ(argList, "000000010000000100000001");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleAsync);
 
         TEST_RESULT_VOID(cmdArchiveGetAsync(), "get async");
@@ -725,8 +742,8 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-dededede"), cfgOptionStr(cfgOptStanza), cfgLockType());
-                TEST_RESULT_VOID(lockAcquireP(.timeout = 30000, .returnOnNoLock = true), "acquire lock");
+                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-dededede"));
+                TEST_RESULT_VOID(cmdLockAcquireP(.returnOnNoLock = true), "acquire lock");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -734,7 +751,7 @@ testRun(void)
                 // Wait for parent to allow release lock
                 HRN_FORK_CHILD_NOTIFY_GET();
 
-                lockRelease(true);
+                cmdLockReleaseP();
             }
             HRN_FORK_CHILD_END();
 
@@ -833,7 +850,7 @@ testRun(void)
         TEST_TITLE("get WAL segment with a modified control/catalog version");
 
         // Modify control/catalog version and use the --pg-version option
-        HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_10, 1501, .catalogVersion = 202211111);
+        HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(storagePgWrite(), PG_VERSION_10, 1501, .catalogVersion = 202211111);
 
         TEST_ERROR(
             cmdArchiveGet(), VersionNotSupportedError,

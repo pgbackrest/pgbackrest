@@ -220,6 +220,24 @@ eval
         $rhVariableOverride->{$strKey} = $rhKeyVariableOverride->{$strKey};
     }
 
+    # Build C code
+    my $strBuildPath = "${strBasePath}/output/build";
+    my $strRepoPath = dirname($strBasePath);
+    my $strBuildNinja = "${strBuildPath}/build.ninja";
+
+    &log(INFO, "build C helper");
+
+    if (!-e $strBuildNinja)
+    {
+        executeTest("meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug ${strBuildPath} ${strRepoPath}");
+    }
+
+    executeTest("ninja -C ${strBuildPath} doc/src/doc-pgbackrest");
+    executeTest(
+        "${strBuildPath}/doc/src/doc-pgbackrest --repo-path=${strRepoPath}" .
+            ($strLogLevel ne 'info' ? " --log-level=${strLogLevel}" : ''),
+        {bShowOutputAsync => true});
+
     # Load the manifest
     my $oManifest = new pgBackRestDoc::Common::DocManifest(
         $oStorageDoc, \@stryRequire, \@stryInclude, \@stryExclude, $rhKeyVariableOverride, $rhVariableOverride,
@@ -273,12 +291,10 @@ eval
     # Render output
     for my $strOutput (@stryOutput)
     {
-        if (!($strOutput eq 'man' && $oManifest->isBackRest()))
-        {
-            $oManifest->renderGet($strOutput);
-        }
-
         &log(INFO, "render ${strOutput} output");
+
+        # Man output has already been generated in C so do not remove it
+        next if ($strOutput eq 'man');
 
         # Clean contents of out directory
         if (!$bOutPreserve)
@@ -298,6 +314,8 @@ eval
             }
         }
 
+        $oManifest->renderGet($strOutput);
+
         if ($strOutput eq 'markdown')
         {
             my $oMarkdown =
@@ -310,18 +328,6 @@ eval
                 );
 
             $oMarkdown->process();
-        }
-        elsif ($strOutput eq 'man' && $oManifest->isBackRest())
-        {
-            # Generate the command-line help
-            my $oRender = new pgBackRestDoc::Common::DocRender('text', $oManifest, !$bNoExe);
-            my $oDocConfig =
-                new pgBackRestDoc::Common::DocConfig(
-                    new pgBackRestDoc::Common::Doc("${strBasePath}/../src/build/help/help.xml"), $oRender);
-
-            $oStorageDoc->pathCreate(
-                "${strBasePath}/output/man", {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
-            $oStorageDoc->put("${strBasePath}/output/man/" . lc(PROJECT_NAME) . '.1.txt', $oDocConfig->manGet($oManifest));
         }
         elsif ($strOutput eq 'html')
         {

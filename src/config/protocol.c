@@ -13,20 +13,20 @@ Configuration Protocol Handler
 #include "config/protocol.h"
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
-configOptionProtocol(PackRead *const param, ProtocolServer *const server)
+FN_EXTERN ProtocolServerResult *
+configOptionProtocol(PackRead *const param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
-        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
     ASSERT(param != NULL);
-    ASSERT(server != NULL);
+
+    ProtocolServerResult *const result = protocolServerResultNewP();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        VariantList *optionList = varLstNew();
+        VariantList *const optionList = varLstNew();
 
         while (pckReadNext(param))
         {
@@ -36,16 +36,16 @@ configOptionProtocol(PackRead *const param, ProtocolServer *const server)
             varLstAdd(optionList, varDup(cfgOptionIdxVar(option.id, cfgOptionKeyToIdx(option.id, option.keyIdx + 1))));
         }
 
-        protocolServerDataPut(server, pckWriteStrP(protocolPackNew(), jsonFromVar(varNewVarLst(optionList))));
+        pckWriteStrP(protocolServerResultData(result), jsonFromVar(varNewVarLst(optionList)));
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(PROTOCOL_SERVER_RESULT, result);
 }
 
 /**********************************************************************************************************************************/
 FN_EXTERN VariantList *
-configOptionRemote(ProtocolClient *client, const VariantList *paramList)
+configOptionRemote(ProtocolClient *const client, const VariantList *const paramList)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, client);
@@ -56,13 +56,13 @@ configOptionRemote(ProtocolClient *client, const VariantList *paramList)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        ProtocolCommand *const command = protocolCommandNewP(PROTOCOL_COMMAND_CONFIG_OPTION);
-        PackWrite *const param = protocolCommandParamP(command);
+        PackWrite *const param = protocolPackNew();
 
         for (unsigned int paramIdx = 0; paramIdx < varLstSize(paramList); paramIdx++)
             pckWriteStrP(param, varStr(varLstGet(paramList, paramIdx)));
 
-        const VariantList *const list = varVarLst(jsonToVar(pckReadStrP(protocolClientExecute(client, command))));
+        const VariantList *const list = varVarLst(
+            jsonToVar(pckReadStrP(protocolClientRequestP(client, PROTOCOL_COMMAND_CONFIG_OPTION, .param = param))));
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {

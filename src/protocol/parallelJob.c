@@ -5,7 +5,6 @@ Protocol Parallel Job
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "protocol/command.h"
 #include "protocol/parallelJob.h"
 
 /***********************************************************************************************************************************
@@ -18,11 +17,12 @@ struct ProtocolParallelJob
 
 /**********************************************************************************************************************************/
 FN_EXTERN ProtocolParallelJob *
-protocolParallelJobNew(const Variant *key, ProtocolCommand *command)
+protocolParallelJobNew(const Variant *key, const StringId command, PackWrite *const param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(VARIANT, key);
-        FUNCTION_LOG_PARAM(PROTOCOL_COMMAND, command);
+        FUNCTION_LOG_PARAM(STRING_ID, command);
+        FUNCTION_LOG_PARAM(PACK_WRITE, param);
     FUNCTION_LOG_END();
 
     OBJ_NEW_BEGIN(ProtocolParallelJob, .childQty = MEM_CONTEXT_QTY_MAX)
@@ -33,10 +33,10 @@ protocolParallelJobNew(const Variant *key, ProtocolCommand *command)
             {
                 .state = protocolParallelJobStatePending,
                 .key = varDup(key),
+                .command = command,
+                .param = pckWriteMove(param, objMemContext(this)),
             },
         };
-
-        this->pub.command = protocolCommandMove(command, objMemContext(this));
     }
     OBJ_NEW_END();
 
@@ -136,7 +136,8 @@ protocolParallelJobToLog(const ProtocolParallelJob *const this, StringStatic *co
     varToLog(protocolParallelJobKey(this), debugLog);
 
     strStcCat(debugLog, ", command: ");
-    protocolCommandToLog(protocolParallelJobCommand(this), debugLog);
+    strStcResultSizeInc(
+        debugLog, strIdToLog(protocolParallelJobCommand(this), strStcRemains(debugLog), strStcRemainsSize(debugLog)));
 
     strStcCat(debugLog, ", result: ");
     strStcResultSizeInc(
@@ -144,7 +145,7 @@ protocolParallelJobToLog(const ProtocolParallelJob *const this, StringStatic *co
         FUNCTION_LOG_OBJECT_FORMAT(
             protocolParallelJobResult(this), pckReadToLog, strStcRemains(debugLog), strStcRemainsSize(debugLog)));
 
-    strStcFmt(debugLog, "code: %d, message: ", protocolParallelJobErrorCode(this));
+    strStcFmt(debugLog, ", code: %d, message: ", protocolParallelJobErrorCode(this));
 
     strStcResultSizeInc(
         debugLog,

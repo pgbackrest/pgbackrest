@@ -390,19 +390,15 @@ hrnLogReplace(void)
     FUNCTION_HARNESS_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Compare log to a static string
-
-After the comparison the log is cleared so the next result can be compared.
-***********************************************************************************************************************************/
+/**********************************************************************************************************************************/
 void
 harnessLogResult(const char *expected)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STRINGZ, expected);
-
-        FUNCTION_HARNESS_ASSERT(expected != NULL);
     FUNCTION_HARNESS_END();
+
+    ASSERT(expected != NULL);
 
     harnessLogLoad(logFile);
     hrnLogReplace();
@@ -412,6 +408,32 @@ harnessLogResult(const char *expected)
         THROW_FMT(
             AssertError, "\nACTUAL LOG:\n\n%s\n\nBUT DIFF FROM EXPECTED IS (- remove from expected, + add to expected):\n\n%s",
             harnessLogBuffer, hrnDiff(expected, harnessLogBuffer));
+    }
+
+    close(logFdFile);
+    logFdFile = harnessLogOpen(logFile, O_WRONLY | O_CREAT | O_TRUNC, 0640);
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+harnessLogResultEmptyOrContains(const char *const contains)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, contains);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(contains != NULL);
+
+    harnessLogLoad(logFile);
+    hrnLogReplace();
+
+    if (strlen(harnessLogBuffer) != 0 && strstr(harnessLogBuffer, contains) == NULL)
+    {
+        THROW_FMT(
+            AssertError, "\nLOG MUST CONTAIN:\n\n%s\n\nBUT WAS ACTUALLY:\n\n%s",
+            contains, harnessLogBuffer);
     }
 
     close(logFdFile);
