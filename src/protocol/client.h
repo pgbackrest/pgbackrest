@@ -1,5 +1,28 @@
 /***********************************************************************************************************************************
 Protocol Client
+
+There are three ways to make a request using the client:
+
+1. Synchronous
+
+This is the most common way to make a request. Simply call protocolClientRequestP() and process the result.
+
+2. Synchronous with Session
+
+In some cases it is useful to keep session state between requests. An example of this is queries against a database where it is more
+efficient to maintain the connection to the database between queries. The session is created with protocolClientSessionNewP(),
+opened with protocolClientSessionOpenP(), and closed with protocolClientSessionClose(). Requests are made with
+protocolClientSessionRequest().
+
+3. Asynchronous with Session
+
+Asynchronous requests provide better performance by allowing the client and server to process at the same time. An example of this
+is reading a file where a asynchronous request for the next block of data can be sent before the current block is being processed.
+The next block should be waiting when processing of the current block is complete. The same session functions are used for creation,
+open, and close, except that .async = true is passed to protocolClientSessionNewP(). Asynchronous requests are made with
+protocolClientSessionRequestAsync() and the responses are read with protocolClientSessionResponse(). Note that there can only be one
+outstanding asynchronous request, therefore protocolClientSessionResponse() must be called before
+protocolClientSessionRequestAsync() can be called again.
 ***********************************************************************************************************************************/
 #ifndef PROTOCOL_CLIENT_H
 #define PROTOCOL_CLIENT_H
