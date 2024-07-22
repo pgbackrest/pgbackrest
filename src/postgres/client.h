@@ -98,9 +98,6 @@ pgClientMove(PgClient *const this, MemContext *const parentNew)
 // Execute a query and return results
 FN_EXTERN Pack *pgClientQuery(PgClient *this, const String *query, PgClientQueryResult resultType);
 
-// Close connection to PostgreSQL
-FN_EXTERN void pgClientClose(PgClient *this);
-
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/

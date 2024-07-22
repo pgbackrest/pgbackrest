@@ -11,7 +11,7 @@ Archive Get Protocol Handler
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-FN_EXTERN void archiveGetFileProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN ProtocolServerResult *archiveGetFileProtocol(PackRead *param);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
@@ -19,6 +19,6 @@ Protocol commands for ProtocolServerHandler arrays passed to protocolServerProce
 #define PROTOCOL_COMMAND_ARCHIVE_GET_FILE                           STRID5("ag-f", 0x36ce10)
 
 #define PROTOCOL_SERVER_HANDLER_ARCHIVE_GET_LIST                                                                                   \
-    {.command = PROTOCOL_COMMAND_ARCHIVE_GET_FILE, .handler = archiveGetFileProtocol},
+    {.command = PROTOCOL_COMMAND_ARCHIVE_GET_FILE, .process = archiveGetFileProtocol},
 
 #endif

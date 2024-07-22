@@ -413,6 +413,11 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
         {
             TRY_BEGIN()
             {
+                // Get parameter list from the client. This needs to happen even if we cannot authorize the client so that the
+                // session id gets set for the error.
+                const ProtocolServerRequestResult command = protocolServerRequest(result);
+                CHECK(FormatError, command.id == PROTOCOL_COMMAND_CONFIG, "expected config command");
+
                 // Get list of authorized stanzas for this client
                 CHECK(AssertError, cfgOptionTest(cfgOptTlsServerAuth), "missing auth data");
 
@@ -423,10 +428,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
                 if (clientAuthList == NULL)
                     THROW(AccessError, "access denied");
 
-                // Get parameter list from the client and load it
-                const ProtocolServerCommandGetResult command = protocolServerCommandGet(result);
-                CHECK(FormatError, command.id == PROTOCOL_COMMAND_CONFIG, "expected config command");
-
+                // Load parameter list from the client
                 StringList *const paramList = pckReadStrLstP(pckReadNew(command.param));
                 strLstInsert(paramList, 0, cfgExe());
                 cfgLoad(strLstSize(paramList), strLstPtr(paramList));
@@ -443,7 +445,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
             TRY_END();
 
             // Ack the config command
-            protocolServerDataEndPut(result);
+            protocolServerResponseP(result);
 
             // Move result to prior context and move session into result so there is only one return value
             protocolServerMove(result, memContextPrior());
@@ -452,8 +454,12 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
         // Else the client can only detect that the server is alive
         else
         {
-            // Send a data end message and return a NULL server. Do not waste time looking at what the client wrote.
-            protocolServerDataEndPut(result);
+            // A noop command should have been received
+            const ProtocolServerRequestResult command = protocolServerRequest(result);
+            CHECK(FormatError, command.id == PROTOCOL_COMMAND_NOOP, "expected config command");
+
+            // Send a data end message and return a NULL server
+            protocolServerResponseP(result);
 
             // Set result to NULL so there is no server for the caller to use. The TLS session will be freed when the temp mem
             // context ends.
@@ -775,10 +781,10 @@ protocolRemoteExec(
                 TRY_BEGIN()
                 {
                     // Pass parameters to server
-                    ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG);
-                    pckWriteStrLstP(protocolCommandParam(command), protocolRemoteParam(protocolStorageType, hostIdx));
-                    protocolClientExecute(helper->client, command, false);
-                    protocolCommandFree(command);
+                    PackWrite *const param = protocolPackNew();
+
+                    pckWriteStrLstP(param, protocolRemoteParam(protocolStorageType, hostIdx));
+                    protocolClientRequestP(helper->client, PROTOCOL_COMMAND_CONFIG, .param = param);
                 }
                 CATCH_ANY()
                 {

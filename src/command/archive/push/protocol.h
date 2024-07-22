@@ -11,7 +11,7 @@ Archive Push Protocol Handler
 Functions
 ***********************************************************************************************************************************/
 // Process protocol requests
-FN_EXTERN void archivePushFileProtocol(PackRead *param, ProtocolServer *server);
+FN_EXTERN ProtocolServerResult *archivePushFileProtocol(PackRead *param);
 
 /***********************************************************************************************************************************
 Protocol commands for ProtocolServerHandler arrays passed to protocolServerProcess()
@@ -19,6 +19,6 @@ Protocol commands for ProtocolServerHandler arrays passed to protocolServerProce
 #define PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE                          STRID5("ap-f", 0x36e010)
 
 #define PROTOCOL_SERVER_HANDLER_ARCHIVE_PUSH_LIST                                                                                  \
-    {.command = PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE, .handler = archivePushFileProtocol},
+    {.command = PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE, .process = archivePushFileProtocol},
 
 #endif
