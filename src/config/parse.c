@@ -368,10 +368,8 @@ parseOptionBeta(
     FUNCTION_TEST_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Get command id by name
-***********************************************************************************************************************************/
-static ConfigCommand
+/**********************************************************************************************************************************/
+FN_EXTERN ConfigCommand
 cfgParseCommandId(const char *const commandName)
 {
     FUNCTION_TEST_BEGIN();
@@ -406,8 +404,6 @@ cfgParseCommandName(const ConfigCommand commandId)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, commandId);
     FUNCTION_TEST_END();
-
-    ASSERT(commandId < cfgCmdNone);
 
     FUNCTION_TEST_RETURN_CONST(STRINGZ, parseRuleCommand[commandId].name);
 }
@@ -1621,7 +1617,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
             *config = (Config)
             {
                 .memContext = MEM_CONTEXT_NEW(),
-                .command = cfgCmdNone,
+                .command = cfgCmdHelp,
                 .exe = strNewZ(argList[0]),
             };
         }
@@ -1819,28 +1815,19 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                     // Try getting the command from the valid command list
                     config->command = cfgParseCommandId(arg);
 
-                    // Set help if help command
-                    if (config->command == cfgCmdHelp && !config->help)
-                    {
-                        config->command = cfgCmdNone;
-                        config->help = true;
-                    }
-                    // Else parse command role if appended
+                    // Parse command role if appended
+                    const char *const colonPtr = strchr(arg, ':');
+
+                    if (colonPtr != NULL)
+                        config->commandRole = cfgParseCommandRoleEnum(colonPtr + 1);
                     else
-                    {
-                        const char *const colonPtr = strchr(arg, ':');
+                        config->commandRole = cfgCmdRoleMain;
 
-                        if (colonPtr != NULL)
-                            config->commandRole = cfgParseCommandRoleEnum(colonPtr + 1);
-                        else
-                            config->commandRole = cfgCmdRoleMain;
+                    // Error when role is not valid for the command
+                    if (!(parseRuleCommand[config->command].commandRoleValid & ((unsigned int)1 << config->commandRole)))
+                        THROW_FMT(CommandInvalidError, "invalid command/role combination '%s'", arg);
 
-                        // Error when role is not valid for the command
-                        if (!(parseRuleCommand[config->command].commandRoleValid & ((unsigned int)1 << config->commandRole)))
-                            THROW_FMT(CommandInvalidError, "invalid command/role combination '%s'", arg);
-
-                        commandSet = true;
-                    }
+                    commandSet = true;
                 }
                 // Additional arguments are command arguments
                 else
@@ -1860,36 +1847,28 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
         }
 
         // Handle command not found
-        if (!commandSet && !config->help)
+        if (!commandSet)
         {
             // If there are args then error
             if (argListSize - argIgnore > 1)
                 THROW_FMT(CommandRequiredError, "no command found");
 
-            // Output help if --help specified or --version not specified
-            if (help || !version)
-            {
-                config->help = true;
-            }
-            // Else output version
-            else
+            // Output version if --version and --help not specified
+            if (!help && version)
                 config->command = cfgCmdVersion;
         }
 
         // Set command options
         const ParseRuleCommand *const ruleCommand = &parseRuleCommand[config->command];
 
-        if (config->command != cfgCmdNone)
-        {
-            config->lockRequired = ruleCommand->lockRequired;
-            config->lockRemoteRequired = ruleCommand->lockRemoteRequired;
-            config->lockType = (LockType)ruleCommand->lockType;
-            config->logFile = ruleCommand->logFile;
-            config->logLevelDefault = (LogLevel)ruleCommand->logLevelDefault;
-        }
+        config->lockRequired = ruleCommand->lockRequired;
+        config->lockRemoteRequired = ruleCommand->lockRemoteRequired;
+        config->lockType = (LockType)ruleCommand->lockType;
+        config->logFile = ruleCommand->logFile;
+        config->logLevelDefault = (LogLevel)ruleCommand->logLevelDefault;
 
         // Error when parameters found but the command does not allow parameters
-        if (config->paramList != NULL && !config->help && !ruleCommand->parameterAllowed)
+        if (config->paramList != NULL && !ruleCommand->parameterAllowed)
             THROW(ParamInvalidError, "command does not allow parameters");
 
         // Enable logging for main role so config file warnings will be output
@@ -1898,7 +1877,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
 
         // Only continue if command options need to be validated, i.e. a real command is running or we are getting help for a
         // specific command and would like to display actual option values in the help.
-        if (config->command != cfgCmdNone && config->command != cfgCmdVersion && config->command != cfgCmdHelp)
+        if (config->command != cfgCmdVersion && config->command != cfgCmdHelp)
         {
             // Error if --help or --version passed to command
             if (help || version)
@@ -2664,7 +2643,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                                         &optionalRules, parseRuleOptionalTypeRequired, config->command, optionId) ?
                                         optionalRules.required : ruleOption->required;
 
-                                if (required && !config->help)
+                                if (required)
                                 {
                                     THROW_FMT(
                                         OptionRequiredError, "%s command requires option: %s%s",

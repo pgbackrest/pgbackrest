@@ -157,74 +157,6 @@ helpRenderText(
 }
 
 /***********************************************************************************************************************************
-Helper function for helpRender() to output values as strings
-***********************************************************************************************************************************/
-static String *
-helpRenderValue(const ConfigOption optionId, const unsigned int optionIdx)
-{
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(ENUM, optionId);
-        FUNCTION_LOG_PARAM(UINT, optionIdx);
-    FUNCTION_LOG_END();
-
-    String *result = NULL;
-
-    if (cfgOptionIdxSource(optionId, 0) != cfgSourceDefault)
-    {
-        result = strNew();
-
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            const Variant *const value = cfgOptionIdxVar(optionId, optionIdx);
-            ASSERT(value != NULL);
-
-            switch (varType(value))
-            {
-                case varTypeKeyValue:
-                {
-                    const KeyValue *const optionKv = varKv(value);
-                    const VariantList *const keyList = kvKeyList(optionKv);
-
-                    for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
-                    {
-                        if (keyIdx != 0)
-                            strCatZ(result, ", ");
-
-                        strCatFmt(
-                            result, "%s=%s", strZ(varStr(varLstGet(keyList, keyIdx))),
-                            strZ(varStrForce(kvGet(optionKv, varLstGet(keyList, keyIdx)))));
-                    }
-
-                    break;
-                }
-
-                case varTypeVariantList:
-                {
-                    const VariantList *const list = varVarLst(value);
-
-                    for (unsigned int listIdx = 0; listIdx < varLstSize(list); listIdx++)
-                    {
-                        if (listIdx != 0)
-                            strCatZ(result, ", ");
-
-                        strCatFmt(result, "%s", strZ(varStr(varLstGet(list, listIdx))));
-                    }
-
-                    break;
-                }
-
-                default:
-                    strCat(result, cfgOptionIdxDisplay(optionId, optionIdx));
-                    break;
-            }
-        }
-        MEM_CONTEXT_TEMP_END();
-    }
-
-    FUNCTION_LOG_RETURN(STRING, result);
-}
-
-/***********************************************************************************************************************************
 Render help to a string
 ***********************************************************************************************************************************/
 // Stored unpacked command data
@@ -242,6 +174,7 @@ typedef struct HelpOptionData
     const String *section;                                          // eg. general, command
     const String *summary;                                          // Short summary of the option
     const String *description;                                      // Full description of the option
+    const String *defaultValue;                                     // Default value
     StringList *deprecatedNames;                                    // Deprecated names for the option
 } HelpOptionData;
 
@@ -287,7 +220,7 @@ helpRender(const Buffer *const helpData)
         const String *more = NULL;
 
         // Display general help
-        if (cfgCommand() == cfgCmdNone)
+        if (strLstEmpty(cfgCommandParam()))
         {
             strCatZ(
                 result,
@@ -327,8 +260,12 @@ helpRender(const Buffer *const helpData)
         }
         else
         {
-            const ConfigCommand commandId = cfgCommand();
-            const char *const commandName = cfgParseCommandName(commandId);
+            // Make sure only two parameters were specified
+            if (strLstSize(cfgCommandParam()) > 2)
+                THROW(ParamInvalidError, "only two parameters allowed for help");
+
+            const String *const commandName = strLstGet(cfgCommandParam(), 0);
+            const ConfigCommand commandId = cfgParseCommandId(strZ(commandName));
 
             // Unpack option data
             HelpOptionData *const optionData = memNew(sizeof(HelpOptionData) * CFG_OPTION_TOTAL);
@@ -343,6 +280,7 @@ helpRender(const Buffer *const helpData)
                     .section = pckReadStrP(pckHelp, .defaultValue = STRDEF("general")),
                     .summary = pckReadStrP(pckHelp),
                     .description = pckReadStrP(pckHelp),
+                    .defaultValue = pckReadStrP(pckHelp),
                 };
 
                 // Unpack deprecated names
@@ -374,6 +312,7 @@ helpRender(const Buffer *const helpData)
                         const bool internal = pckReadBoolP(pckHelp, .defaultValue = optionData[optionId].internal);
                         const String *const summary = pckReadStrP(pckHelp, .defaultValue = optionData[optionId].summary);
                         const String *const description = pckReadStrP(pckHelp, .defaultValue = optionData[optionId].description);
+                        const String *const defaultValue = pckReadStrP(pckHelp, .defaultValue = optionData[optionId].defaultValue);
 
                         pckReadObjEndP(pckHelp);
 
@@ -384,6 +323,7 @@ helpRender(const Buffer *const helpData)
                             optionData[optionId].section = NULL;
                             optionData[optionId].summary = summary;
                             optionData[optionId].description = description;
+                            optionData[optionId].defaultValue = defaultValue;
                         }
                     }
 
@@ -394,10 +334,10 @@ helpRender(const Buffer *const helpData)
             pckReadArrayEndP(pckHelp);
 
             // Output command part of title
-            strCatFmt(result, " - '%s' command", commandName);
+            strCatFmt(result, " - '%s' command", strZ(commandName));
 
             // If no additional params then this is command help
-            if (strLstEmpty(cfgCommandParam()))
+            if (strLstSize(cfgCommandParam()) == 1)
             {
                 // Output command summary and description. Add a warning for internal commands.
                 CHECK(
@@ -464,28 +404,6 @@ helpRender(const Buffer *const helpData)
                         if (!isupper(strZ(summary)[1]) && isalpha(strZ(summary)[1]))
                             strFirstLower(summary);
 
-                        // Output current and default values if they exist
-                        const String *const defaultValue = cfgOptionDefault(optionId);
-                        const String *const value = helpRenderValue(optionId, 0);
-
-                        if (value != NULL || defaultValue != NULL)
-                        {
-                            strCatZ(summary, " [");
-
-                            if (value != NULL)
-                                strCatFmt(summary, "current=%s", cfgParseOptionSecure(optionId) ? "<redacted>" : strZ(value));
-
-                            if (defaultValue != NULL)
-                            {
-                                if (value != NULL)
-                                    strCatZ(summary, ", ");
-
-                                strCatFmt(summary, "default=%s", strZ(defaultValue));
-                            }
-
-                            strCatZ(summary, "]");
-                        }
-
                         // Output option help
                         strCatFmt(
                             result, "  --%s%*s%s\n",
@@ -496,22 +414,18 @@ helpRender(const Buffer *const helpData)
 
                 // Construct message for more help if there are options
                 if (optionSizeMax > 0)
-                    more = strNewFmt("%s [option]", commandName);
+                    more = strNewFmt("%s [option]", strZ(commandName));
             }
             // Else option help for the specified command
             else
             {
-                // Make sure only one option was specified
-                if (strLstSize(cfgCommandParam()) > 1)
-                    THROW(ParamInvalidError, "only one option allowed for option help");
-
                 // Ensure the option is valid
-                const String *const optionName = strLstGet(cfgCommandParam(), 0);
+                const String *const optionName = strLstGet(cfgCommandParam(), 1);
                 const CfgParseOptionResult option = cfgParseOptionP(optionName, .ignoreMissingIndex = true);
 
                 // Error when option is not found or is invalid for the current command
-                if (!option.found || !cfgParseOptionValid(cfgCommand(), cfgCmdRoleMain, option.id))
-                    THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), commandName);
+                if (!option.found || !cfgParseOptionValid(commandId, cfgCmdRoleMain, option.id))
+                    THROW_FMT(OptionInvalidError, "option '%s' is not valid for command '%s'", strZ(optionName), strZ(commandName));
 
                 // Output option summary and description. Add a warning for internal and beta options.
                 CHECK(
@@ -533,19 +447,8 @@ helpRender(const Buffer *const helpData)
                             CONSOLE_WIDTH)));
 
                 // Output current and default values if they exist
-                const String *const defaultValue = cfgOptionDefault(option.id);
-                const String *const value = helpRenderValue(option.id, 0);
-
-                if (value != NULL || defaultValue != NULL)
-                {
-                    strCat(result, LF_STR);
-
-                    if (value != NULL)
-                        strCatFmt(result, "current: %s\n", cfgParseOptionSecure(option.id) ? "<redacted>" : strZ(value));
-
-                    if (defaultValue != NULL)
-                        strCatFmt(result, "default: %s\n", strZ(defaultValue));
-                }
+                if (optionData[option.id].defaultValue != NULL)
+                    strCatFmt(result, "\ndefault: %s\n", strZ(optionData[option.id].defaultValue));
 
                 // Output alternate name (call it deprecated so the user will know not to use it)
                 if (optionData[option.id].deprecatedNames != NULL)

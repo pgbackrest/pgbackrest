@@ -85,9 +85,10 @@ testRun(void)
     if (testBegin("cfg*()"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("config command defaults to none before cfgInit()");
+        TEST_TITLE("config command defaults to help before cfgInit()");
 
-        TEST_RESULT_UINT(cfgCommand(), cfgCmdNone, "command is none");
+        TEST_RESULT_BOOL(cfgInited(), false, "config is not initialized");
+        TEST_RESULT_UINT(cfgCommand(), cfgCmdHelp, "command is help");
     }
 
     // config and config-include-path options
@@ -1536,8 +1537,7 @@ testRun(void)
         hrnLogLevelStdOutSet(logLevelOff);
         hrnLogLevelStdErrSet(logLevelOff);
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList)), "no command");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command is none");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
         TEST_RESULT_INT(hrnLogLevelStdOut(), logLevelWarn, "console logging is warn");
         TEST_RESULT_INT(hrnLogLevelStdErr(), logLevelOff, "stderr logging is off");
         harnessLogLevelReset();
@@ -1550,8 +1550,7 @@ testRun(void)
         strLstAddZ(argList, "help");
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "help command");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command is help");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
@@ -1560,9 +1559,8 @@ testRun(void)
 
         TEST_RESULT_VOID(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "help for version command");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdVersion, "command is version");
-        TEST_RESULT_Z(cfgCommandName(), "version", "command name is version");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
+        TEST_RESULT_Z(cfgCommandName(), "help", "command name is help");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
@@ -1571,7 +1569,6 @@ testRun(void)
 
         TEST_RESULT_VOID(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
         TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1582,8 +1579,7 @@ testRun(void)
         strLstAddZ(argList, "--help");
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command is none");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("version option");
@@ -1593,7 +1589,6 @@ testRun(void)
         strLstAddZ(argList, "--version");
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
-        TEST_RESULT_BOOL(cfgCommandHelp(), false, "help is not set");
         TEST_RESULT_INT(cfgCommand(), cfgCmdVersion, "command is version");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1605,8 +1600,7 @@ testRun(void)
         strLstAddZ(argList, "--version");
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is not set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command is none");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on command with --help option");
@@ -1631,21 +1625,6 @@ testRun(void)
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
             "invalid option '--version'");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("help command - should not fail on missing options");
-
-        argList = strLstNew();
-        strLstAddZ(argList, TEST_BACKREST_EXE);
-        strLstAddZ(argList, "help");
-        strLstAddZ(argList, "backup");
-
-        TEST_RESULT_VOID(
-            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "help for backup command");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdBackup, "command is backup");
-        TEST_RESULT_BOOL(cfgOptionValid(cfgOptPgPath), true, "pg1-path is valid");
-        TEST_RESULT_PTR(cfgOptionVar(cfgOptPgPath), NULL, "pg1-path is not set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command argument valid");
@@ -1885,13 +1864,13 @@ testRun(void)
         TEST_RESULT_BOOL(cfgParseOptionRequired(cfgCmdBackup, cfgOptPgHost), false, "pg-host is not required for backup");
         TEST_RESULT_BOOL(cfgParseOptionRequired(cfgCmdInfo, cfgOptStanza), false, "stanza is not required for info");
 
-        TEST_RESULT_STR_Z(cfgOptionDefault(cfgOptBackupStandby), "n", "backup-standby default is false");
-        TEST_RESULT_STR_Z(cfgOptionDefault(cfgOptBackupStandby), "n", "backup-standby default is false (again)");
-        TEST_RESULT_PTR(cfgOptionDefault(cfgOptPgHost), NULL, "pg-host default is NULL");
-        TEST_RESULT_STR_Z(cfgOptionDefault(cfgOptLogLevelConsole), "warn", "log-level-console default is warn");
-        TEST_RESULT_STR_Z(cfgOptionDefault(cfgOptPgPort), "5432", "pg-port default is 5432");
+        TEST_RESULT_STR_Z(cfgParseOptionDefault(cfgCmdBackup, cfgOptBackupStandby), "n", "backup-standby default is false");
+        TEST_RESULT_STR_Z(cfgParseOptionDefault(cfgCmdBackup, cfgOptBackupStandby), "n", "backup-standby default is false (again)");
+        TEST_RESULT_PTR(cfgParseOptionDefault(cfgCmdBackup, cfgOptPgHost), NULL, "pg-host default is NULL");
+        TEST_RESULT_STR_Z(cfgParseOptionDefault(cfgCmdBackup, cfgOptLogLevelConsole), "warn", "log-level-console default is warn");
+        TEST_RESULT_STR_Z(cfgParseOptionDefault(cfgCmdBackup, cfgOptPgPort), "5432", "pg-port default is 5432");
         TEST_RESULT_STR_Z(cfgOptionDisplay(cfgOptPgPort), "5432", "pg-port display is 5432");
-        TEST_RESULT_STR_Z(cfgOptionDefault(cfgOptDbTimeout), "30m", "db-timeout default is 30m");
+        TEST_RESULT_STR_Z(cfgParseOptionDefault(cfgCmdBackup, cfgOptDbTimeout), "30m", "db-timeout default is 30m");
 
         TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptPgSocketPath, VARSTRDEF("/default")), "set pg-socket-path default");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 0), "/path/to/socket", "pg1-socket-path unchanged");

@@ -525,7 +525,6 @@ testRun(void)
             "    cfgCmdBackup,\n"
             "    cfgCmdHelp,\n"
             "    cfgCmdVersion,\n"
-            "    cfgCmdNone,\n"
             "} ConfigCommand;\n"
             "\n"
             COMMENT_BLOCK_BEGIN "\n"

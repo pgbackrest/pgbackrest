@@ -65,7 +65,7 @@ hrnCfgLoad(ConfigCommand commandId, const StringList *argListParam, const HrnCfg
     }
 
     // Insert the command so it does not interfere with parameters
-    if (commandId != cfgCmdNone)
+    if (commandId < CFG_COMMAND_TOTAL)
         strLstInsert(argList, 0, cfgParseCommandRoleName(commandId, param.role));
 
     // Insert the project exe

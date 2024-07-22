@@ -366,7 +366,6 @@ typedef enum
     cfgCmdStop,
     cfgCmdVerify,
     cfgCmdVersion,
-    cfgCmdNone,
 } ConfigCommand;
 
 /***********************************************************************************************************************************

@@ -27,6 +27,15 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("exitSafe() before config initialized"))
+    {
+        TEST_RESULT_BOOL(cfgInited(), false, "config not initialized");
+        TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit without error");
+        TEST_RESULT_INT(
+            exitSafe(errorTypeCode(&FormatError), false, signalTypeNone), errorTypeCode(&FormatError), "exit with error");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("exitInit() and exitOnSignal()"))
     {
         HRN_CFG_LOAD(cfgCmdHelp, strLstNew());
@@ -47,9 +56,8 @@ testRun(void)
     if (testBegin("exitSafe()"))
     {
         HRN_CFG_LOAD(cfgCmdHelp, strLstNew());
-        cfgCommandSet(cfgCmdNone, cfgCmdRoleMain);
 
-        TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no command");
+        TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with help command (no options)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();

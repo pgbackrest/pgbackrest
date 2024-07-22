@@ -70,7 +70,6 @@ typedef struct Config
     ConfigCommandRole commandRole;                                  // Current command role
 
     String *exe;                                                    // Location of the executable
-    bool help;                                                      // Was help requested for the command?
     bool lockRequired;                                              // Is an immediate lock required?
     bool lockRemoteRequired;                                        // Is a lock required on the remote?
     LockType lockType;                                              // Lock type required
@@ -87,6 +86,9 @@ Init Function
 ***********************************************************************************************************************************/
 // Init with new configuration
 FN_EXTERN void cfgInit(Config *config);
+
+// Has the configuration been initialized?
+FN_EXTERN bool cfgInited(void);
 
 /***********************************************************************************************************************************
 Command Functions
@@ -106,9 +108,6 @@ FN_EXTERN unsigned int cfgOptionGroupId(ConfigOption optionId);
 /***********************************************************************************************************************************
 Option Functions
 ***********************************************************************************************************************************/
-// Option default - should only be called by the help command
-FN_EXTERN const String *cfgOptionDefault(ConfigOption optionId);
-
 // Format a variant for display using the supplied option type. cfgOptionDisplay()/cfgOptionIdxDisplay() should be used whenever
 // possible, but sometimes the variant needs to be manipulated before being formatted.
 FN_EXTERN const String *cfgOptionDisplayVar(const Variant *const value, const ConfigOptionType optionType);
