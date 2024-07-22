@@ -97,7 +97,8 @@ Shim protocolLocalExec() to provide coverage as detailed in the hrnProtocolLocal
 ***********************************************************************************************************************************/
 static void
 protocolLocalExec(
-    ProtocolHelperClient *helper, ProtocolStorageType protocolStorageType, unsigned int hostIdx, unsigned int processId)
+    ProtocolHelperClient *const helper, ProtocolStorageType const protocolStorageType, const unsigned int hostIdx,
+    const unsigned int processId)
 {
     // Call the shim when installed
     if (hrnProtocolStatic.localShim)
@@ -194,7 +195,8 @@ Shim protocolRemoteExec() to provide coverage as detailed in the hrnProtocolRemo
 ***********************************************************************************************************************************/
 static void
 protocolRemoteExec(
-    ProtocolHelperClient *helper, ProtocolStorageType protocolStorageType, unsigned int hostIdx, unsigned int processId)
+    ProtocolHelperClient *const helper, const ProtocolStorageType protocolStorageType, const unsigned int hostIdx,
+    const unsigned int processId)
 {
     // Call the shim when installed
     if (hrnProtocolStatic.remoteShim)

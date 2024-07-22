@@ -39,7 +39,7 @@ struct ProtocolParallel
 
 /**********************************************************************************************************************************/
 FN_EXTERN ProtocolParallel *
-protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, void *callbackData)
+protocolParallelNew(const TimeMSec timeout, ParallelJobCallback *const callbackFunction, void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(UINT64, timeout);
@@ -69,7 +69,7 @@ protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, voi
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-protocolParallelClientAdd(ProtocolParallel *this, ProtocolClient *client)
+protocolParallelClientAdd(ProtocolParallel *const this, ProtocolClient *const client)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL, this);
@@ -90,7 +90,7 @@ protocolParallelClientAdd(ProtocolParallel *this, ProtocolClient *client)
 
 /**********************************************************************************************************************************/
 FN_EXTERN unsigned int
-protocolParallelProcess(ProtocolParallel *this)
+protocolParallelProcess(ProtocolParallel *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL, this);
@@ -149,7 +149,7 @@ protocolParallelProcess(ProtocolParallel *this)
             timeoutSelect.tv_usec = (suseconds_t)(this->timeout % MSEC_PER_SEC * 1000);
 
             // Determine if there is data to be read
-            int completed = select(fdMax + 1, &selectSet, NULL, NULL, &timeoutSelect);
+            const int completed = select(fdMax + 1, &selectSet, NULL, NULL, &timeoutSelect);
             THROW_ON_SYS_ERROR(completed == -1, AssertError, "unable to select from parallel client(s)");
 
             // If any jobs have completed then get the results
@@ -234,7 +234,7 @@ protocolParallelProcess(ProtocolParallel *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN ProtocolParallelJob *
-protocolParallelResult(ProtocolParallel *this)
+protocolParallelResult(ProtocolParallel *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL, this);
@@ -263,7 +263,7 @@ protocolParallelResult(ProtocolParallel *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-protocolParallelDone(ProtocolParallel *this)
+protocolParallelDone(ProtocolParallel *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL, this);

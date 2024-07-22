@@ -92,7 +92,7 @@ storageReadRemoteInternal(StorageReadRemote *const this, PackRead *const packRea
 }
 
 static size_t
-storageReadRemote(THIS_VOID, Buffer *buffer, bool block)
+storageReadRemote(THIS_VOID, Buffer *const buffer, const bool block)
 {
     THIS(StorageReadRemote);
 

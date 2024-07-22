@@ -160,9 +160,9 @@ storageWriteRemoteClose(THIS_VOID)
 /**********************************************************************************************************************************/
 FN_EXTERN StorageWrite *
 storageWriteRemoteNew(
-    StorageRemote *storage, ProtocolClient *client, const String *name, mode_t modeFile, mode_t modePath, const String *user,
-    const String *group, time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic, bool compressible,
-    unsigned int compressLevel)
+    StorageRemote *const storage, ProtocolClient *const client, const String *const name, const mode_t modeFile,
+    const mode_t modePath, const String *const user, const String *const group, const time_t timeModified, const bool createPath,
+    const bool syncFile, const bool syncPath, const bool atomic, const bool compressible, const unsigned int compressLevel)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, storage);
