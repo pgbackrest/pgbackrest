@@ -8,14 +8,15 @@ Host Harness
 #include "common/crypto/common.h"
 #include "common/error/retry.h"
 #include "common/io/io.h"
+#include "common/type/json.h"
 #include "common/wait.h"
 #include "config/config.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
-#include "storage/azure/storage.h"
-#include "storage/gcs/storage.h"
+#include "storage/azure/storage.intern.h"
+#include "storage/gcs/storage.intern.h"
 #include "storage/posix/storage.h"
-#include "storage/s3/storage.h"
+#include "storage/s3/storage.intern.h"
 #include "storage/sftp/storage.h"
 
 #include "common/harnessDebug.h"
@@ -1289,11 +1290,34 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
     // Write pgBackRest configuration for hosts
     hrnHostConfigUpdateP();
 
-    // Create the repo for object stores
-    if (hrnHostLocal.storage == STORAGE_AZURE_TYPE || hrnHostLocal.storage == STORAGE_GCS_TYPE ||
-        hrnHostLocal.storage == STORAGE_S3_TYPE)
+    // Create the bucket/container for object stores
+    switch (hrnHostLocal.storage)
     {
-        hrnHostExecBrP(repo, CFGCMD_REPO_CREATE, .option = "--repo=1");
+        case STORAGE_AZURE_TYPE:
+        {
+            storageAzureRequestP(
+                (StorageAzure *)storageDriver(hrnHostRepo1Storage(repo)), HTTP_VERB_PUT_STR,
+                .query = httpQueryAdd(httpQueryNewP(), AZURE_QUERY_RESTYPE_STR, AZURE_QUERY_VALUE_CONTAINER_STR));
+
+            break;
+        }
+
+        case STORAGE_GCS_TYPE:
+        {
+            JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
+            jsonWriteStr(jsonWriteKeyZ(json, GCS_JSON_NAME), STRDEF(HRN_HOST_GCS_BUCKET));
+            jsonWriteObjectEnd(json);
+
+            storageGcsRequestP(
+                (StorageGcs *)storageDriver(hrnHostRepo1Storage(repo)), HTTP_VERB_POST_STR, .noBucket = true,
+                .content = BUFSTR(jsonWriteResult(json)));
+
+            break;
+        }
+
+        case STORAGE_S3_TYPE:
+            storageS3RequestP((StorageS3 *)storageDriver(hrnHostRepo1Storage(repo)), HTTP_VERB_PUT_STR, FSLASH_STR);
+            break;
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

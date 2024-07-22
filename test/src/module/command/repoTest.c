@@ -20,19 +20,6 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("cmdRepoCreate()"))
-    {
-        StringList *argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-        HRN_CFG_LOAD(cfgCmdRepoCreate, argList);
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("noop on non-S3 storage");
-
-        TEST_RESULT_VOID(cmdRepoCreate(), "repo create");
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("cmdStorageList() and storageListRender()"))
     {
         StringList *argList = strLstNew();
