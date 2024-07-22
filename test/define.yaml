@@ -452,7 +452,6 @@ unit:
           - postgres/interface/crc32
           - postgres/interface/page
           - protocol/client
-          - protocol/command
           - protocol/helper
           - protocol/server
           - storage/helper
@@ -480,7 +479,6 @@ unit:
 
         coverage:
           - protocol/client
-          - protocol/command
           - protocol/helper
           - protocol/parallel
           - protocol/parallelJob
@@ -562,6 +560,7 @@ unit:
           - storage/helper
 
         include:
+          - protocol/client
           - storage/read
           - storage/storage
           - storage/write

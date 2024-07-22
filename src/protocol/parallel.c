@@ -11,13 +11,18 @@ Protocol Parallel Executor
 #include "common/macro.h"
 #include "common/type/keyValue.h"
 #include "common/type/list.h"
-#include "protocol/command.h"
 #include "protocol/helper.h"
 #include "protocol/parallel.h"
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
+typedef struct ProtocolParallelJobData
+{
+    ProtocolParallelJob *job;                                       // Job
+    ProtocolClientSession *session;                                 // Protocol session for the job
+} ProtocolParallelJobData;
+
 struct ProtocolParallel
 {
     TimeMSec timeout;                                               // Max time to wait for jobs before returning
@@ -27,14 +32,14 @@ struct ProtocolParallel
     List *clientList;                                               // List of clients to process jobs
     List *jobList;                                                  // List of jobs to be processed
 
-    ProtocolParallelJob **clientJobList;                            // Jobs being processing by each client
+    ProtocolParallelJobData *clientJobList;                         // Jobs being processing by each client
 
     ProtocolParallelJobState state;                                 // Overall state of job processing
 };
 
 /**********************************************************************************************************************************/
 FN_EXTERN ProtocolParallel *
-protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, void *callbackData)
+protocolParallelNew(const TimeMSec timeout, ParallelJobCallback *const callbackFunction, void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(UINT64, timeout);
@@ -64,7 +69,7 @@ protocolParallelNew(TimeMSec timeout, ParallelJobCallback *callbackFunction, voi
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-protocolParallelClientAdd(ProtocolParallel *this, ProtocolClient *client)
+protocolParallelClientAdd(ProtocolParallel *const this, ProtocolClient *const client)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL, this);
@@ -85,7 +90,7 @@ protocolParallelClientAdd(ProtocolParallel *this, ProtocolClient *client)
 
 /**********************************************************************************************************************************/
 FN_EXTERN unsigned int
-protocolParallelProcess(ProtocolParallel *this)
+protocolParallelProcess(ProtocolParallel *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL, this);
@@ -103,7 +108,10 @@ protocolParallelProcess(ProtocolParallel *this)
         {
             MEM_CONTEXT_OBJ_BEGIN(this)
             {
-                this->clientJobList = memNewPtrArray(lstSize(this->clientList));
+                this->clientJobList = memNew(lstSize(this->clientList) * sizeof(ProtocolParallelJobData));
+
+                for (unsigned int jobIdx = 0; jobIdx < lstSize(this->clientList); jobIdx++)
+                    this->clientJobList[jobIdx] = (ProtocolParallelJobData){0};
             }
             MEM_CONTEXT_OBJ_END();
 
@@ -120,7 +128,7 @@ protocolParallelProcess(ProtocolParallel *this)
 
         for (unsigned int clientIdx = 0; clientIdx < lstSize(this->clientList); clientIdx++)
         {
-            if (this->clientJobList[clientIdx] != NULL)
+            if (this->clientJobList[clientIdx].job != NULL)
             {
                 int fd = protocolClientIoReadFd(*(ProtocolClient **)lstGet(this->clientList, clientIdx));
                 FD_SET(fd, &selectSet);
@@ -141,7 +149,7 @@ protocolParallelProcess(ProtocolParallel *this)
             timeoutSelect.tv_usec = (suseconds_t)(this->timeout % MSEC_PER_SEC * 1000);
 
             // Determine if there is data to be read
-            int completed = select(fdMax + 1, &selectSet, NULL, NULL, &timeoutSelect);
+            const int completed = select(fdMax + 1, &selectSet, NULL, NULL, &timeoutSelect);
             THROW_ON_SYS_ERROR(completed == -1, AssertError, "unable to select from parallel client(s)");
 
             // If any jobs have completed then get the results
@@ -149,7 +157,7 @@ protocolParallelProcess(ProtocolParallel *this)
             {
                 for (unsigned int clientIdx = 0; clientIdx < lstSize(this->clientList); clientIdx++)
                 {
-                    ProtocolParallelJob *job = this->clientJobList[clientIdx];
+                    ProtocolParallelJob *const job = this->clientJobList[clientIdx].job;
 
                     if (job != NULL &&
                         FD_ISSET(
@@ -160,10 +168,8 @@ protocolParallelProcess(ProtocolParallel *this)
                         {
                             TRY_BEGIN()
                             {
-                                ProtocolClient *const client = *(ProtocolClient **)lstGet(this->clientList, clientIdx);
-
-                                protocolParallelJobResultSet(job, protocolClientDataGet(client));
-                                protocolClientDataEndGet(client);
+                                protocolParallelJobResultSet(
+                                    job, protocolClientSessionResponse(this->clientJobList[clientIdx].session));
                             }
                             CATCH_ANY()
                             {
@@ -172,7 +178,8 @@ protocolParallelProcess(ProtocolParallel *this)
                             TRY_END();
 
                             protocolParallelJobStateSet(job, protocolParallelJobStateDone);
-                            this->clientJobList[clientIdx] = NULL;
+                            this->clientJobList[clientIdx].job = NULL;
+                            protocolClientSessionFree(this->clientJobList[clientIdx].session);
                         }
                         MEM_CONTEXT_TEMP_END();
                     }
@@ -186,35 +193,37 @@ protocolParallelProcess(ProtocolParallel *this)
         for (unsigned int clientIdx = 0; clientIdx < lstSize(this->clientList); clientIdx++)
         {
             // If nothing is running for this client
-            if (this->clientJobList[clientIdx] == NULL)
+            if (this->clientJobList[clientIdx].job == NULL)
             {
-                // Get a new job
-                ProtocolParallelJob *job = NULL;
-
                 MEM_CONTEXT_BEGIN(lstMemContext(this->jobList))
                 {
-                    job = this->callbackFunction(this->callbackData, clientIdx);
+                    // Get a new job
+                    ProtocolParallelJob *const job = this->callbackFunction(this->callbackData, clientIdx);
+
+                    // If a new job was found
+                    if (job != NULL)
+                    {
+                        // Add to the job list
+                        lstAdd(this->jobList, &job);
+
+                        // Put command
+                        ProtocolClientSession *const session = protocolClientSessionNewP(
+                            *(ProtocolClient **)lstGet(this->clientList, clientIdx), protocolParallelJobCommand(job),
+                            .async = true);
+                        protocolClientSessionRequestAsyncP(session, .param = protocolParallelJobParam(job));
+
+                        // Set client id and running state
+                        protocolParallelJobProcessIdSet(job, clientIdx + 1);
+                        protocolParallelJobStateSet(job, protocolParallelJobStateRunning);
+
+                        this->clientJobList[clientIdx].job = job;
+                        this->clientJobList[clientIdx].session = session;
+                    }
+                    // Else no more jobs for this client so free it
+                    else
+                        protocolLocalFree(clientIdx + 1);
                 }
                 MEM_CONTEXT_END();
-
-                // If a new job was found
-                if (job != NULL)
-                {
-                    // Add to the job list
-                    lstAdd(this->jobList, &job);
-
-                    // Put command
-                    protocolClientCommandPut(
-                        *(ProtocolClient **)lstGet(this->clientList, clientIdx), protocolParallelJobCommand(job), false);
-
-                    // Set client id and running state
-                    protocolParallelJobProcessIdSet(job, clientIdx + 1);
-                    protocolParallelJobStateSet(job, protocolParallelJobStateRunning);
-                    this->clientJobList[clientIdx] = job;
-                }
-                // Else no more jobs for this client so free it
-                else
-                    protocolLocalFree(clientIdx + 1);
             }
         }
     }
@@ -225,7 +234,7 @@ protocolParallelProcess(ProtocolParallel *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN ProtocolParallelJob *
-protocolParallelResult(ProtocolParallel *this)
+protocolParallelResult(ProtocolParallel *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL, this);
@@ -254,7 +263,7 @@ protocolParallelResult(ProtocolParallel *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-protocolParallelDone(ProtocolParallel *this)
+protocolParallelDone(ProtocolParallel *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL, this);

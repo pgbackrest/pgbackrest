@@ -52,6 +52,14 @@ C Debug Harness
     }                                                                                                                              \
     while (0)
 
+#define FUNCTION_HARNESS_RETURN_STRUCT(...)                                                                                        \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        STACK_TRACE_POP(false);                                                                                                    \
+        return __VA_ARGS__;                                                                                                        \
+    }                                                                                                                              \
+    while (0)
+
 #define FUNCTION_HARNESS_RETURN_VOID()                                                                                             \
         STACK_TRACE_POP(false);
 
