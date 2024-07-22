@@ -1,5 +1,260 @@
 [
     {
+        "commit": "dea48be06dfcd50f48b205f65e45e4dbefa7c37a",
+        "date": "2024-07-21 17:01:23 +0700",
+        "subject": "Fix incorrect examples in doc/test help.",
+        "body": "The help for help was copied from core but the examples were not updated.\n\nUpdate the examples to be appropriate for doc/help."
+    },
+    {
+        "commit": "32a6dd6c3d1becdbad9ae14df83daf231a84f860",
+        "date": "2024-07-21 16:57:35 +0700",
+        "subject": "Improve config file handling in doc/test config load.",
+        "body": "Since 1141dc20 it has been possible to request that cfgParse() skip loading the config file. Use this logic to replace the code used to ignore config files in doc/test config load."
+    },
+    {
+        "commit": "ec3e387bb73826c30b32bf0221acb2d56f23f1c5",
+        "date": "2024-07-18 11:19:25 +0700",
+        "subject": "Clarify archive-push multi-repo behavior.",
+        "body": "Clarify that archive-push will not be able to push ahead in other repositories if one is failing unless archive-async in enabled."
+    },
+    {
+        "commit": "c85191e02486d4e9f5ea34ce3bfe7243ddf74831",
+        "date": "2024-07-16 09:45:22 +0700",
+        "subject": "Update Minio test/documentation container version."
+    },
+    {
+        "commit": "d8ff89ae758314c8a0f006b7a92097c35534d0ff",
+        "date": "2024-07-15 11:53:57 +0700",
+        "subject": "Update EOL Debian 10 to Debian 11/Ubuntu 20.04 in CI.",
+        "body": "Typically we use the oldest Debian/Ubuntu to run 32-bit unit and integration tests. However, 32-bit is no longer fully supported by Ubuntu (multiple packages we need are missing) and apt.postgresql.org no longer packages for any 32-bit version.\n\nTo address these changes, do 64-bit integration testing on the oldest Debian/Ubuntu (currently Ubuntu 20.04) and 32-bit unit/integration testing on the oldest Debian (currently 11) using the included version for integration testing."
+    },
+    {
+        "commit": "ce2493c3f6718cfa9209665019d56dde36b81b75",
+        "date": "2024-07-15 11:22:13 +0700",
+        "subject": "Remove obsolete vm constants.",
+        "body": "The VM[2-4] constants do not serve a purpose anymore (removed in 794c5771) and just make the mappings more complicated, so remove them."
+    },
+    {
+        "commit": "c84ab4914f33dbf0cb762cfb5a552ee39b73eb1e",
+        "date": "2024-07-15 11:12:53 +0700",
+        "subject": "Remove references to mock integration tests.",
+        "body": "Mock integration tests were removed in d41b21c8 but CI was still trying to run them, so remove from CI.\n\nAlso rename mock to integration in test unit tests to avoid confusion in the future."
+    },
+    {
+        "commit": "dfb620b0b8cf884ca486b413f4cd162e258b2fc5",
+        "date": "2024-07-11 10:54:20 +0700",
+        "subject": "Support IP-based SANs for TLS certificate validation.",
+        "body": "The prior SAN code only recognized DNS-based SANs, which meant that it would not properly validate if using an IP-based SAN. \r\n\r\nAdd support for IPv4 and IPv6 SANs with exact matching only.\r\n\r\nThis simplifies testing when certificate generation tools have trouble generating a DNS:1.2.3.4-style SAN, preferring to include the SAN as IP:1.2.3.4."
+    },
+    {
+        "commit": "d295156dd38c88c9d71e566509426cf91322e326",
+        "date": "2024-07-09 16:07:40 +0700",
+        "subject": "Improve command/role parsing.",
+        "body": "Reduce redundancy by improving cfgParseCommandId() to work when a command role is present. This way the function does not need to be called twice.\n\nAlso, remove the use of StringList in cfgParse() since checking for a colon is faster and saves memory allocations. Modify cfgParseCommandRoleEnum() to accept char * since a String is no longer produced for the role name."
+    },
+    {
+        "commit": "ccae60940241b30e8bc3e405936b6ba68857930c",
+        "date": "2024-07-09 11:34:13 +0700",
+        "subject": "Add hint to check SFTP authorization log.",
+        "body": "In the case of authorization failures there many be valuable information in the log."
+    },
+    {
+        "commit": "cf8625d24bd953ad1ed448c32b937584009e5b6b",
+        "date": "2024-07-09 11:17:25 +0700",
+        "subject": "Require OpenSSL >= 1.1.1.",
+        "body": "Versions below 1.1.1 are quite old and no longer need to be supported.\n\nAlso add a missing const in tlsAsn1ToStr()."
+    },
+    {
+        "commit": "b71d4b53d68800daceb4b6dcb717862cbe5757dc",
+        "date": "2024-07-09 10:48:27 +0700",
+        "subject": "Auto-generate code before building test binary.",
+        "body": "Errors in code generation can cause the test binary build to fail and then it is not possible to see the generated code.\n\nInstead, generate code first so any errors can be seen and analyzed."
+    },
+    {
+        "commit": "66d3cd42b5a07edaf75b0f365088dc7e202d0573",
+        "date": "2024-07-09 10:45:47 +0700",
+        "subject": "Improve error messages for allow range and allow list options.",
+        "body": "Create mappings between integer, size, time, and stringid option values and their string equivalents. This allows for better error messages and means that the mappings do not need to be stored with defaults, allow lists, etc."
+    },
+    {
+        "commit": "aadfb54046e52eeedc38750eb91f3e719e22d758",
+        "date": "2024-07-09 10:09:55 +0700",
+        "subject": "Add units to all option sizes.",
+        "body": "Some sizes were missing units. Add units to make it clear that they are sizes in messages."
+    },
+    {
+        "commit": "6f5066b0b63c5f89e39a8930d29ab725c381221c",
+        "date": "2024-07-07 17:06:44 +0700",
+        "subject": "Fix overly long lines."
+    },
+    {
+        "commit": "d6f0bf88af8b39492aa8e20c09bdf30260e2eb2f",
+        "date": "2024-07-04 16:53:07 +0700",
+        "subject": "Fix SFTP renaming failure when file already exists.",
+        "body": "Update error handling for libssh2_sftp_rename_ex() in storageWriteSftpClose() when a file already exists. \r\n\r\nThe SFTP servers used during development and testing never returned LIBSSH2_FX_FILE_ALREADY_EXISTS, rather they returned LIBSSH2_FX_FAILURE when a file already existed. However, it is clear that some SFTP servers use LIBSSH2_FX_FILE_ALREADY_EXISTS so add support."
+    },
+    {
+        "commit": "edd61636a98d193b7c0634b5a4444527132959e0",
+        "date": "2024-07-04 16:22:17 +0700",
+        "subject": "Allow backups to run concurrently on different repositories.",
+        "body": "The prior locking only allowed one backup per stanza, which was required by PostgreSQL <= 9.5 and didn't present a problem when only one stanza could be created.\r\n\r\nNow that multiple stanzas are allowed relax this restriction so that backups can run concurrently for PostgreSQL > 9.5. To do this, update the locking to be per stanza and repo rather than per stanza. Remotes are not aware of the repos that require locking so send an explicit list of files to be locked to the remote. Also remove the advisory lock for PostgreSQL > 9.5.\r\n\r\nFor info output the running backups are combined for progress output in order to avoid changing the JSON format. It definitely makes sense to have per repo progress as well but that will be left for a future commit."
+    },
+    {
+        "commit": "3a2266f327c340ff1133a6a2398429c844b5755d",
+        "date": "2024-07-04 15:42:09 +0700",
+        "subject": "Display time option defaults and allowed values with appropriate units.",
+        "body": "Similar to size options in 038abaa7, time option defaults and allowed values were displayed in seconds, which could be confusing when the values were large.\n\nThe time options were not updated in 038abaa7 because it required removing the ability to do fractional seconds, e.g. 0.5 seconds. In theory this could cause breakage for users but it seems really unlikely. Fractional seconds are used in tests, however, so the tests have been changed to use milliseconds where required, e.g. 500ms."
+    },
+    {
+        "commit": "df469471e3afa91212967fc3bca7877a1a8830f3",
+        "date": "2024-07-04 09:28:57 +0700",
+        "subject": "Fix invalid default inherited in job-retry-interval.",
+        "body": "This default was being mistakenly inherited from job-retry and would set job-retry-interval to 1 second for archive get and push. In practice this did not matter since archive get and push default to one retry and the first retry interval is always 0, but it still makes sense to fix it to correct the behavior when the value of job-retry is changed."
+    },
+    {
+        "commit": "8b82641d87de7fd749414737f62289fb2648e608",
+        "date": "2024-07-01 11:15:14 +0800",
+        "subject": "Shorten enums used in parse.auto.c.inc.",
+        "body": "Rather than using the full enum just use the part of the enum that is unique. This makes the output a bit more readable by removing the repetitive elements. The prefix for each enum is built into its macro."
+    },
+    {
+        "commit": "cfd4fb2c7da7b0fc113b6518a054eab29d0ef34f",
+        "date": "2024-06-30 16:11:11 +0800",
+        "subject": "Remove PARSE_RULE_OPTION_GROUP_MEMBER() macro from parse.auto.c.inc.",
+        "body": "It is simpler to just set group = true in the PARSE_RULE_OPTION_GROUP_ID(), so do that."
+    },
+    {
+        "commit": "7d540730941994d3cb630c695e9f672e047d8e7f",
+        "date": "2024-06-25 16:45:47 +0800",
+        "subject": "Default log-level-stderr option to off.",
+        "body": "Writing warnings and errors to stderr by default leads to error messages being lost when the user does not correctly redirect stderr while generating logs for analysis. This happens so often that it seems worth changing the default to increase the quality of the logs we receive.\r\n\r\nIf the user has explicitly set log-level-stderr then there is no change in behavior."
+    },
+    {
+        "commit": "1094aecab563e8c1601ae80caefb2e4247db87d4",
+        "date": "2024-06-25 16:16:55 +0800",
+        "subject": "Require compiler support for __builtin_clzl() and __builtin_bswap64().",
+        "body": "These functions will be useful for optimizing varint-128 functions.\n\nRequire them in the meson build before adding new code in case there are problems with packaging."
+    },
+    {
+        "commit": "0c32757fd9269a18b827fa33230d2997c98571a0",
+        "date": "2024-06-25 16:04:02 +0800",
+        "subject": "Require the lz4 library in the meson build.",
+        "body": "We would like to use lz4 for protocol compression instead of gz but first we need to make sure this is not going to cause a problem for packaging.\n\nTo do this make lz4 required in meson but make no changes to the code so this is an easy revert for packagers if there is an issue."
+    },
+    {
+        "commit": "acb9b6ccbeb78391e19b146488093c83d0ac3ab3",
+        "date": "2024-06-25 15:54:57 +0800",
+        "subject": "Increase width of unsigned integration in performance/type module.",
+        "body": "The prior int was too small to scale up as much as we need for performance testing."
+    },
+    {
+        "commit": "6495a46ca3e08f867efd677aecd29806e9e9f753",
+        "date": "2024-06-25 15:46:07 +0800",
+        "subject": "Fix --run and --scale options for unit tests.",
+        "body": "These were broken while code was being migrated to C and went unnoticed because the options are generally only used when doing performance testing.\n\nThe C code can only take one --run param so add a check for that in test.pl."
+    },
+    {
+        "commit": "cfb8aa202ee972579697db2cc8d5d8ef111f0022",
+        "date": "2024-06-21 13:29:17 +0800",
+        "subject": "Add remote locks for stanza commands missed in 31c7824a.",
+        "body": "31c7824a should have added remote locks when the commands were modified to run remotely. This is unlikely to have caused issues since these commands are generally not run concurrently with backup/expire but having the locks is safer."
+    },
+    {
+        "commit": "b9a9ef2d5fa22c4e257f4d1befbc067029570211",
+        "date": "2024-06-21 11:17:42 +0800",
+        "subject": "Clarify when code generation is run when modifying config.yaml.",
+        "body": "The contributing guide indicated that this happened at compile time but in fact it happens when test.pl is run."
+    },
+    {
+        "commit": "bcda7f8c7ee9823880bd1a9b5e65075df1102652",
+        "date": "2024-06-20 13:06:04 +0800",
+        "subject": "Optimize assignment of command/option rules.",
+        "body": "Assign the rule to a local variable to make subsequent assignments more efficient.\n\nAlso fix a missing const."
+    },
+    {
+        "commit": "a0a5f2300cf771095a0a7fc309d40c1f27c899a6",
+        "date": "2024-06-19 10:33:46 +0800",
+        "subject": "Replace strftime() with cvtTimeToZP() and strNew/CatTimeP().",
+        "body": "These functions produce cleaner code and hide implementation details."
+    },
+    {
+        "commit": "cec486b6dd02b6a755142ad4bee322fb02ff0d23",
+        "date": "2024-06-18 11:42:59 +0800",
+        "subject": "Refactor backup to use flag for backup standby state rather than option.",
+        "body": "Using the option adds a bit of complexity -- it is simpler just to use the state of the standby object to determine if backup from standby is enabled."
+    },
+    {
+        "commit": "270dce41b6fff0d0ad0769b0ea5df0011140f0b9",
+        "date": "2024-06-18 10:43:54 +0800",
+        "subject": "Refactor lock module.",
+        "body": "Refactor the lock module to split command-specific logic from the basic file locking functionality. Command specific logic is now in command/lock.c. This will make it easier to implement new features such as repository locking and updating lock file contents on remotes.\r\n\r\nThis implementation is essentially a drop-in replacement but there are a few differences. First, the lock names no longer require a path (the path is added in the lock module). Second, the timeout functionality has been removed since it was not being used."
+    },
+    {
+        "commit": "ad7377c75b2769d2907482de139fb21f779ae674",
+        "date": "2024-06-16 11:55:04 +0800",
+        "subject": "Fix issue with files larger on the replica than on the primary.",
+        "body": "If a file on the primary was larger than on the replica then the next diff/incr backup would store the primary size instead of the replica size when block incremental was enabled. On the next diff/incr backup this would lead to a repo size must be > 0 for file error when validating the manifest.\r\n\r\nFix this by limiting copy based on sizeOriginal rather than size so size can be set to the value expected to be stored in the manifest. As a bonus sizePrior is no longer needed since size can be used for the same purpose."
+    },
+    {
+        "commit": "2ec99ca4d9e40dcae628c2a435c8242bdcefabc2",
+        "date": "2024-06-12 16:08:17 +1000",
+        "subject": "Specify test images that get valgrind installed.",
+        "body": "This means valgrind is no longer built from source, which caused image builds to run for a very long time.\n\nValgrind is only required in a few images for testing."
+    },
+    {
+        "commit": "886bb281f69bb22228eb41760ef8ad60cdd820db",
+        "date": "2024-06-11 15:20:04 +1000",
+        "subject": "Migrate CentOS 7 integration tests to Rocky 8.",
+        "body": "CentOS 7 will be EOL on June 30 and since there is no CentOS 8 migrate instead to Rocky 8."
+    },
+    {
+        "commit": "4ac3b82c99ff3bd48d2cc74651a47ce072ac0022",
+        "date": "2024-06-11 12:08:52 +1000",
+        "subject": "Allow alternative WAL segment sizes for PostgreSQL <= 10.",
+        "body": "Alternative WAL segment sizes can be configured in PostgreSQL <= 10 with compile-time options. We have not allowed these before since it was not a well-tested feature of PostgreSQL.\n\nHowever, forks such as Greenplum allow alternative WAL segment sizes at initdb time (which are presumably well-tested) so it makes sense to allow it.\n\nSince the PostgreSQL versions in question are all EOL it is not important to have this restriction in place anymore."
+    },
+    {
+        "commit": "e8b965756c380953d4312c26c81489cc9787d1cf",
+        "date": "2024-06-09 11:39:58 +1000",
+        "subject": "Add unit tests for backup from standby with block incremental.",
+        "body": "These tests are important for an upcoming bug fix related to differing sizes of a file on a primary vs standby.\n\nThe test that demonstrates the bug cannot be included here since it causes a test failure, but this commit introduces the infrastructure and one test to guard against a regression in the bug fix."
+    },
+    {
+        "commit": "cf478bc75352486b5aed555404f912c6fdea92a0",
+        "date": "2024-06-08 13:00:53 +1000",
+        "subject": "Improve efficiency of incremental manifest build.",
+        "body": "Move the file.copy check before the manifest lookup to save a lookup and (probably) find for zero-length files when bundling.\n\nThis also removes a layer of indentation which helps with readability."
+    },
+    {
+        "commit": "48823b6cd320373b1b8de52d6ff931094fbe43f7",
+        "date": "2024-06-07 14:24:08 +1000",
+        "subject": "Simplify lock file scanning in stop command.",
+        "body": "This simpler implementation only requires that a lock file begin with the stanza (followed by a dash) and end in .lock.\n\nThis will make the implementation more resilient to planned changes in lock file naming."
+    },
+    {
+        "commit": "ea1596152ceba8ad8f8e94d55c992e0982e5c879",
+        "date": "2024-06-07 14:09:17 +1000",
+        "subject": "Avoid possible race condition while reading lock files in info command.",
+        "body": "Since lockRead() was being called twice the state of the lock file could change between leading to invalid data in the info output.\n\nInstead call lockRead() once and use the result for both the validity test and output."
+    },
+    {
+        "commit": "01838995ce08f93789d5003598cf5b43ed405465",
+        "date": "2024-06-07 09:21:13 +1000",
+        "subject": "Replace tabs with spaces in meson.build files.",
+        "body": "These were probably copied over from Makefile.in."
+    },
+    {
+        "commit": "6f562fba60cd035508726b037f72fdcc75e94e88",
+        "date": "2024-05-31 14:52:07 +1000",
+        "subject": "Migrate coverage testing to C and remove dependency on lcov.",
+        "body": "lcov does not seem to be very well maintained and is often not compatible with the version of gcc it ships with until a few months after a new distro is released. In any case, lcov is that not useful for us because it generates reports on all coverage while we are mainly interested in missing coverage during development.\n\nInstead use the JSON output generated by gcov to generate our minimal coverage report and metrics for the documentation.\n\nThere are some slight differences in the metrics. The difference in the common module was due to a bug in the old code -- build/common was being added into common as well as being reported separately. The source of the two additional branches in the backup module is unknown but almost certainly down to how exclusions are processed with regular expressions. Since there is additional coverage rather than coverage missing this seems fine.\n\nSince this was pretty much a rewrite it was also a good time to migrate to C."
+    },
+    {
+        "commit": "49e252f49260c6d8f3925dc7dace0785322ec288",
+        "date": "2024-05-27 11:49:21 +1000",
+        "subject": "Begin v2.53 development."
+    },
+    {
         "commit": "dfc14b193454b3003c10eb2d021699cbd6294004",
         "date": "2024-05-27 11:13:16 +1000",
         "subject": "v2.52: PostgreSQL 17 Support"

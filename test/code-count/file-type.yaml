@@ -631,6 +631,10 @@ doc/xml/release/2024/2.51.xml:
   class: doc/source
   type: xml
 
+doc/xml/release/2024/2.52.1.xml:
+  class: doc/source
+  type: xml
+
 doc/xml/release/2024/2.52.xml:
   class: doc/source
   type: xml
@@ -1056,6 +1060,14 @@ src/command/local/local.c:
   type: c
 
 src/command/local/local.h:
+  class: core
+  type: c/h
+
+src/command/lock.c:
+  class: core
+  type: c
+
+src/command/lock.h:
   class: core
   type: c/h
 
@@ -2952,6 +2964,10 @@ test/src/module/command/infoTest.c:
   type: c
 
 test/src/module/command/localTest.c:
+  class: test/module
+  type: c
+
+test/src/module/command/lockTest.c:
   class: test/module
   type: c
 
