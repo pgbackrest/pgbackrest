@@ -1,5 +1,10 @@
 [
     {
+        "commit": "6e8a45f650e303fe74a1e34ee8e76a193dbc6c4a",
+        "date": "2024-07-22 09:33:31 +0700",
+        "subject": "v2.53: Concurrent Backups"
+    },
+    {
         "commit": "dea48be06dfcd50f48b205f65e45e4dbefa7c37a",
         "date": "2024-07-21 17:01:23 +0700",
         "subject": "Fix incorrect examples in doc/test help.",
