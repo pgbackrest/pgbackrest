@@ -1926,12 +1926,7 @@ restoreRecoveryWrite(const Manifest *const manifest, const StorageInfo *const fi
         else
         {
             // Generate a label used to identify this restore in the recovery file
-            struct tm timePart;
-            char restoreTimestamp[20];
-            const time_t timestamp = time(NULL);
-
-            strftime(restoreTimestamp, sizeof(restoreTimestamp), "%Y-%m-%d %H:%M:%S", localtime_r(&timestamp, &timePart));
-            const String *const restoreLabel = STR(restoreTimestamp);
+            const String *const restoreLabel = strNewTimeP("%Y-%m-%d %H:%M:%S", time(NULL));
 
             // Write recovery file based on PostgreSQL version
             if (pgVersion >= PG_VERSION_RECOVERY_GUC)
@@ -2494,12 +2489,8 @@ cmdRestore(void)
 
         if (manifestData(jobData.manifest)->backupOptionOnline)
         {
-            struct tm timePart;
-            char timeBuffer[20];
-            const time_t backupTimestampStart = manifestData(jobData.manifest)->backupTimestampStart;
-
-            strftime(timeBuffer, sizeof(timeBuffer), "%Y-%m-%d %H:%M:%S", localtime_r(&backupTimestampStart, &timePart));
-            strCatFmt(message, ", recovery will start at %s", timeBuffer);
+            strCatZ(message, ", recovery will start at ");
+            strCatTimeP(message, "%Y-%m-%d %H:%M:%S", manifestData(jobData.manifest)->backupTimestampStart);
         }
 
         LOG_INFO(strZ(message));

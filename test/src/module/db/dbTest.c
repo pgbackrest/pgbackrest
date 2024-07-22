@@ -363,7 +363,6 @@ testRun(void)
 
         // Start backup with timeline error
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
             HRN_PQ_SCRIPT_CURRENT_WAL_LE_96(1, "000000020000000300000002"),
             HRN_PQ_SCRIPT_START_BACKUP_96(1, false, "3/3", "000000020000000300000003"));
 
@@ -372,7 +371,6 @@ testRun(void)
 
         // Start backup with checkpoint error
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
             HRN_PQ_SCRIPT_CURRENT_WAL_LE_96(1, "000000010000000400000003"),
             HRN_PQ_SCRIPT_START_BACKUP_96(1, false, "4/4", "000000010000000400000004"));
 
@@ -382,7 +380,6 @@ testRun(void)
 
         // Start backup
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
             HRN_PQ_SCRIPT_CURRENT_WAL_LE_96(1, "000000010000000300000002"),
             HRN_PQ_SCRIPT_START_BACKUP_96(1, false, "3/3", "000000010000000300000003"));
 
@@ -492,7 +489,6 @@ testRun(void)
 
         // Start backup
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
             HRN_PQ_SCRIPT_CURRENT_WAL_GE_10(1, "000000050000000500000005"),
             HRN_PQ_SCRIPT_START_BACKUP_GE_10(1, false, "5/5", "000000050000000500000005"),
 
@@ -616,7 +612,6 @@ testRun(void)
 
         // Start backup
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
             HRN_PQ_SCRIPT_CURRENT_WAL_GE_10(1, "000000050000000500000004"),
             HRN_PQ_SCRIPT_START_BACKUP_GE_10(1, false, "5/5", "000000050000000500000005"));
 
@@ -649,7 +644,6 @@ testRun(void)
 
         // Start backup
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
             HRN_PQ_SCRIPT_CURRENT_WAL_GE_10(1, "000000060000000600000005"),
             HRN_PQ_SCRIPT_START_BACKUP_GE_15(1, false, "6/6", "000000060000000600000006"));
 

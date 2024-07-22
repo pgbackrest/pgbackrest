@@ -15,6 +15,7 @@
                 <option id="compress-level-network"><summary></summary><text><p></p></text></option>
                 <option id="job-retry"><summary></summary><text><p></p></text></option>
                 <option id="job-retry-interval"><summary></summary><text><p></p></text></option>
+                <option id="lock"><summary></summary><text><p></p></text></option>
                 <option id="log-level-file"><summary></summary><text><p></p></text></option>
                 <option id="log-level-stderr"><summary></summary><text><p></p></text></option>
                 <option id="repo"><summary></summary><text><p></p></text></option>
@@ -227,7 +228,7 @@
                 <summary>Get help.</summary>
 
                 <text>
-                    <p>Three levels of help are provided. If no command is specified then general help will be displayed. If a command is specified (e.g. <cmd>pgbackrest help backup</cmd>) then a full description of the command will be displayed along with a list of valid options. If an option is specified in addition to a command (e.g. <cmd>pgbackrest help backup type</cmd>) then a full description of the option as it applies to the command will be displayed.</p>
+                    <p>Three levels of help are provided. If no command is specified then general help will be displayed. If a command is specified (e.g. <cmd>test-pgbackrest help test</cmd>) then a full description of the command will be displayed along with a list of valid options. If an option is specified in addition to a command (e.g. <cmd>pgbackrest help test vm</cmd>) then a full description of the option as it applies to the command will be displayed.</p>
                 </text>
             </command>
 

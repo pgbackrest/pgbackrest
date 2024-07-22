@@ -5,6 +5,7 @@ Protocol Helper
 
 #include <string.h>
 
+#include "command/lock.h"
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/exec.h"
@@ -509,7 +510,8 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
 
         kvPut(
             optionReplace, VARSTRDEF(CFGOPT_CONFIG_PATH),
-            cfgOptionIdxSource(optConfigPath, hostIdx) != cfgSourceDefault ? VARSTR(cfgOptionIdxStr(optConfigPath, hostIdx)) : NULL);
+            cfgOptionIdxSource(optConfigPath, hostIdx) != cfgSourceDefault ?
+                VARSTR(cfgOptionIdxStr(optConfigPath, hostIdx)) : NULL);
 
         // Update/remove repo/pg options that are sent to the remote
         for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
@@ -548,7 +550,9 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
                 // Remove unrequired/defaulted pg options when the remote type is repo since they won't be used
                 if (protocolStorageType == protocolStorageTypeRepo)
                 {
-                    remove = !cfgParseOptionRequired(cfgCommand(), optionId) || cfgParseOptionDefault(cfgCommand(), optionId) != NULL;
+                    remove =
+                        !cfgParseOptionRequired(cfgCommand(), optionId) ||
+                        cfgParseOptionDefault(cfgCommand(), optionId) != NULL;
                 }
                 // Move pg options to host index 0 (key 1) so they will be in the default index on the remote host
                 else
@@ -604,6 +608,10 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
 
         // Add the remote type
         kvPut(optionReplace, VARSTRDEF(CFGOPT_REMOTE_TYPE), VARSTR(strIdToStr(protocolStorageType)));
+
+        // Add lock required on the remote
+        if (cfgLockRemoteRequired())
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOCK), varNewVarLst(varLstNewStrLst(cmdLockList())));
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {

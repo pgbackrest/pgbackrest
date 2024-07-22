@@ -70,6 +70,16 @@ testRun(void)
         TEST_RESULT_STR_Z(strNewDbl(999.1), "999.1", "new");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("new from time");
+
+        hrnTzSet("America/New_York");
+
+        TEST_RESULT_STR_Z(strNewTimeP("%Y%m%d-%H%M%S", 1715930051), "20240517-031411", "local");
+        TEST_RESULT_STR_Z(strNewTimeP("%Y%m%d-%H%M%S", 1715930051, .utc = true), "20240517-071411", "utc");
+
+        hrnTzSet("UTC");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         string = strNewFmt("formatted %s %04d", "string", 1);
         TEST_RESULT_STR_Z(string, "formatted string 0001", "new with formatted string");
         TEST_RESULT_Z(strZNull(NULL), NULL, "null string pointer");
@@ -141,6 +151,8 @@ testRun(void)
         String *string = strCatZ(strNew(), "XXX");
         String *string2 = strNewZ("ZZZZ");
 
+        hrnTzSet("America/New_York");
+
         TEST_RESULT_STR_Z(strCatN(string, STRDEF("XX"), 1), "XXXX", "cat N chars");
         TEST_RESULT_UINT(string->pub.extra, 60, "check extra");
         TEST_RESULT_STR_Z(strCatZ(string, ""), "XXXX", "cat empty string");
@@ -165,9 +177,19 @@ testRun(void)
             strCatEncode(string, encodingBase64, BUFSTRDEF("zzzzz")),
             "XXXXYYYY?00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$enp6eno=", "cat encode");
         TEST_RESULT_UINT(string->pub.extra, 27, "check extra");
+        TEST_RESULT_STR_Z(
+            strCatTimeP(string, "%Y%m%d-%H%M%S", 1715930051),
+            "XXXXYYYY?00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$enp6eno=20240517-031411", "cat time");
+        TEST_RESULT_STR_Z(
+            strCatTimeP(string, "%Y%m%d-%H%M%S", 1715930051, .utc = true),
+            "XXXXYYYY?00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$enp6eno=20240517-03141120240517-071411",
+            "cat time");
+        TEST_RESULT_UINT(string->pub.extra, 54, "check extra");
         TEST_RESULT_VOID(strFree(string), "free string");
 
         TEST_RESULT_STR_Z(string2, "ZZZZ", "check unaltered string");
+
+        hrnTzSet("UTC");
     }
 
     // *****************************************************************************************************************************

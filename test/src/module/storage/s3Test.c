@@ -242,13 +242,7 @@ testS3DateTime(time_t time)
         FUNCTION_HARNESS_PARAM(TIME, time);
     FUNCTION_HARNESS_END();
 
-    char buffer[21];
-
-    THROW_ON_SYS_ERROR(
-        strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", gmtime(&time)) != sizeof(buffer) - 1, AssertError,
-        "unable to format date");
-
-    FUNCTION_HARNESS_RETURN(STRING, strNewZ(buffer));
+    FUNCTION_HARNESS_RETURN(STRING, strNewTimeP("%Y-%m-%dT%H:%M:%SZ", time, .utc = true));
 }
 
 /***********************************************************************************************************************************
@@ -298,15 +292,12 @@ testRun(void)
     hrnCfgEnvRaw(cfgOptRepoS3KeySecret, secretAccessKey);
 
     // *****************************************************************************************************************************
-    if (testBegin("storageS3DateTime() and storageS3Auth()"))
+    if (testBegin("storageS3Auth()"))
     {
-        char logBuf[STACK_TRACE_PARAM_MAX];
-
-        TEST_RESULT_STR_Z(storageS3DateTime(1491267845), "20170404T010405Z", "static date");
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("config without token");
 
+        char logBuf[STACK_TRACE_PARAM_MAX];
         StringList *argList = strLstDup(commonArgList);
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 

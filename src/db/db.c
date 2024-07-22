@@ -376,8 +376,10 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Acquire the backup advisory lock to make sure that backups are not running from multiple backup servers against the same
-        // database cluster. This lock helps make the stop-auto option safe.
-        if (!pckReadBoolP(dbQueryColumn(this, STRDEF("select pg_catalog.pg_try_advisory_lock(" PG_BACKUP_ADVISORY_LOCK ")::bool"))))
+        // database cluster when PostgreSQL <= 9.5. This lock helps make the stop-auto option safe. On PostgreSQL > 9.5 multiple
+        // backups are allowed on the same cluster.
+        if (dbPgVersion(this) <= PG_VERSION_95 &&
+            !pckReadBoolP(dbQueryColumn(this, STRDEF("select pg_catalog.pg_try_advisory_lock(" PG_BACKUP_ADVISORY_LOCK ")::bool"))))
         {
             THROW(
                 LockAcquireError,

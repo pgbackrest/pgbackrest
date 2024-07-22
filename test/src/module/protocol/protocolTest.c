@@ -470,8 +470,8 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             protocolRemoteParamSsh(protocolStorageTypePg, 0),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npostgres@pg1-host\n"
-            TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
-            " --pg1-path=/path/to/1 --process=0 --remote-type=pg --stanza=test1 backup:remote\n",
+            TEST_PROJECT_EXE " --exec-id=1-test --lock=test1-backup-1.lock --log-level-console=off --log-level-file=off"
+            " --log-level-stderr=error --pg1-path=/path/to/1 --process=0 --remote-type=pg --stanza=test1 backup:remote\n",
             "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -492,8 +492,8 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             protocolRemoteParamSsh(protocolStorageTypePg, 1),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npostgres@pg2-host\n"
-            TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
-            " --pg1-path=/path/to/2 --process=4 --remote-type=pg --stanza=test1 backup:remote\n",
+            TEST_PROJECT_EXE " --exec-id=1-test --lock=test1-backup-1.lock --log-level-console=off --log-level-file=off"
+            " --log-level-stderr=error --pg1-path=/path/to/2 --process=4 --remote-type=pg --stanza=test1 backup:remote\n",
             "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -514,9 +514,9 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             protocolRemoteParamSsh(protocolStorageTypePg, 1),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npostgres@pg3-host\n"
-            TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
-            " --pg1-path=/path/to/3 --pg1-port=3333 --pg1-socket-path=/socket3 --process=4 --remote-type=pg --stanza=test1"
-            " backup:remote\n",
+            TEST_PROJECT_EXE " --exec-id=1-test --lock=test1-backup-1.lock --log-level-console=off --log-level-file=off"
+            " --log-level-stderr=error --pg1-path=/path/to/3 --pg1-port=3333 --pg1-socket-path=/socket3 --process=4"
+            " --remote-type=pg --stanza=test1 backup:remote\n",
             "check config");
     }
 

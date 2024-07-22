@@ -244,8 +244,10 @@ hrnServerRun(IoRead *const read, const HrnServerProtocol protocol, const unsigne
         FUNCTION_HARNESS_PARAM(IO_READ, read);
         FUNCTION_HARNESS_PARAM(ENUM, protocol);
         FUNCTION_HARNESS_PARAM(UINT, port);
+        FUNCTION_HARNESS_PARAM(STRING, param.ca);
         FUNCTION_HARNESS_PARAM(STRING, param.certificate);
         FUNCTION_HARNESS_PARAM(STRING, param.key);
+        FUNCTION_HARNESS_PARAM(STRING, param.address);
     FUNCTION_HARNESS_END();
 
     ASSERT(read != NULL);
@@ -268,7 +270,7 @@ hrnServerRun(IoRead *const read, const HrnServerProtocol protocol, const unsigne
         tlsServer = tlsServerNew(STRDEF(HRN_SERVER_HOST), param.ca, param.key, param.certificate, 5000);
     }
 
-    IoServer *socketServer = sckServerNew(STRDEF("127.0.0.1"), port, 5000);
+    IoServer *socketServer = sckServerNew(param.address == NULL ? STRDEF("127.0.0.1") : param.address, port, 5000);
 
     // Loop until no more commands
     IoSession *serverSession = NULL;

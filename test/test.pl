@@ -292,6 +292,11 @@ eval
     logLevelSet(uc($strLogLevel), uc($strLogLevel), OFF, !$bNoLogTimestamp);
     &log(INFO, 'test begin on ' . hostArch() . " - log level ${strLogLevel}");
 
+    if (@iyModuleTestRun > 1)
+    {
+        confess "Only one --run can be provided";
+    }
+
     if (@stryModuleTest != 0 && @stryModule != 1)
     {
         confess "Only one --module can be provided when --test is specified";
@@ -573,11 +578,12 @@ eval
 
     # Setup build if it does not exist
     my $strGenerateCommand =
-        "ninja -C ${strBuildPath} src/build-code test/src/test-pgbackrest" .
+        "ninja -C ${strBuildPath} src/build-code" .
         ($bMinGen ? '' : " && \\\n${strBuildPath}/src/build-code config ${strBackRestBase}/src") .
         ($bMinGen ? '' : " && \\\n${strBuildPath}/src/build-code error ${strBackRestBase}/src") .
         ($bMinGen ? '' : " && \\\n${strBuildPath}/src/build-code postgres-version ${strBackRestBase}/src") .
-        " && \\\n${strBuildPath}/src/build-code postgres ${strBackRestBase}/src ${strRepoCachePath}";
+        " && \\\n${strBuildPath}/src/build-code postgres ${strBackRestBase}/src ${strRepoCachePath}" .
+        " && \\\nninja -C ${strBuildPath} test/src/test-pgbackrest";
 
     if (!-e $strBuildNinja)
     {
@@ -1068,7 +1074,7 @@ eval
     #-------------------------------------------------------------------------------------------------------------------------------
     my $bUncoveredCodeModule = false;
 
-    if (vmCoverageC($strVm) && !$bNoCoverage && !$bDryRun && $iTestFail == 0)
+    if (vmCoverageC($strVm) && !$bNoCoverage && !$bDryRun && $iTestFail == 0 && @iyModuleTestRun == 0)
     {
         my $strModuleList;
 

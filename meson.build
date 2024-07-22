@@ -4,7 +4,7 @@
 project(
     'pgbackrest',
     ['c'],
-    version: '2.53dev',
+    version: '2.54dev',
     license: 'MIT',
     meson_version: '>=0.47',
     default_options: [
@@ -135,6 +135,16 @@ add_project_arguments(cc.get_supported_arguments('-fmacro-prefix-map=@0@/test/sr
 ####################################################################################################################################
 configuration = configuration_data()
 
+# Ensure the C compiler supports __builtin_clzl()
+if not cc.links('''int main(int arg, char **argv) {__builtin_clzl(1);}''')
+    error('compiler must support __builtin_clzl()')
+endif
+
+# Ensure the C compiler supports __builtin_bswap64()
+if not cc.links('''int main(int arg, char **argv) {__builtin_bswap64(1);}''')
+    error('compiler must support __builtin_bswap64()')
+endif
+
 # Find optional backtrace library
 lib_backtrace = cc.find_library('backtrace', required: false)
 
@@ -146,14 +156,12 @@ endif
 lib_bz2 = cc.find_library('bz2')
 
 # Find optional lz4 library
-lib_lz4 = dependency('liblz4', required: get_option('liblz4'))
+lib_lz4 = dependency('liblz4')
 
-if lib_lz4.found()
-    configuration.set('HAVE_LIBLZ4', true, description: 'Is liblz4 present?')
-endif
+configuration.set('HAVE_LIBLZ4', true, description: 'Is liblz4 present?')
 
 # Find required openssl library
-lib_openssl = dependency('openssl')
+lib_openssl = dependency('openssl', version : '>=1.1.1')
 
 # Find required pq library
 lib_pq = dependency('libpq')
@@ -209,6 +217,12 @@ configuration.set(
 configuration.set(
     'FN_PRINTF(fmt, args)', '__attribute__((format(printf, fmt, args)))',
     description: 'Indicate that a function is formatted like printf (and provide format and args position)'
+)
+
+# Set FN_STRFTIME macro
+configuration.set(
+    'FN_STRFTIME(fmt)', '__attribute__((format(strftime, fmt, 0)))',
+    description: 'Indicate that a function is formatted like strftime (and provide format position)'
 )
 
 ####################################################################################################################################

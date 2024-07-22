@@ -57,6 +57,7 @@ typedef struct HrnServerRunParam
     const String *ca;                                               // TLS CA store when protocol = hrnServerProtocolTls
     const String *certificate;                                      // TLS certificate when protocol = hrnServerProtocolTls
     const String *key;                                              // TLS key when protocol = hrnServerProtocolTls
+    const String *address;                                          // Use address other than 127.0.0.1
 } HrnServerRunParam;
 
 #define hrnServerRunP(read, protocol, port, ...)                                                                                         \

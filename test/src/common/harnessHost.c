@@ -624,7 +624,6 @@ hrnHostConfig(HrnHost *const this)
         // Log options
         strCatZ(config, "\n");
         strCatFmt(config, "log-path=%s\n", strZ(hrnHostLogPath(this)));
-        strCatZ(config, "log-level-stderr=off\n");
         strCatZ(config, "log-level-console=warn\n");
         strCatZ(config, "log-level-file=info\n");
         strCatZ(config, "log-subprocess=n\n");
@@ -1250,7 +1249,7 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
                     MEM_CONTEXT_PRIOR_BEGIN()
                     {
                         hrnHostNewP(
-                            HRN_HOST_S3, containerName, STRDEF("minio/minio:RELEASE.2023-09-30T07-02-29Z"), .option = option,
+                            HRN_HOST_S3, containerName, STRDEF("minio/minio:RELEASE.2024-07-15T19-02-30Z"), .option = option,
                             .param = param, .noUpdateHosts = true);
                     }
                     MEM_CONTEXT_PRIOR_END();
