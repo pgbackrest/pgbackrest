@@ -187,7 +187,7 @@ storageListRender(IoWrite *const write)
     const bool json = cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON ? true : false;
     const String *const expression = cfgOptionStrNull(cfgOptFilter);
     RegExp *const regExp = expression == NULL ? NULL : regExpNew(expression);
-    const bool versions = cfgOptionBool(cfgOptVers);
+    const bool versions = cfgOptionBool(cfgOptVersions);
 
     ioWriteOpen(write);
 

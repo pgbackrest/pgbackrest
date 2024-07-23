@@ -651,8 +651,7 @@ option:
     command-role:
       main: {}
 
-  # !!! THIS NAME IS NOT IDEAL BUT --version CONFLICTS WITH PARTIAL MATCHING FOR --versions
-  vers:
+  versions:
     type: boolean
     default: false
     command:

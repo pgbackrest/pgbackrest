@@ -137,8 +137,8 @@ Option constants
 #define CFGOPT_TLS_SERVER_PORT                                      "tls-server-port"
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
-#define CFGOPT_VERS                                                 "vers"
 #define CFGOPT_VERSION                                              "version"
+#define CFGOPT_VERSIONS                                             "versions"
 
 #define CFG_OPTION_TOTAL                                            185
 
@@ -569,8 +569,8 @@ typedef enum
     cfgOptTlsServerPort,
     cfgOptType,
     cfgOptVerbose,
-    cfgOptVers,
     cfgOptVersion,
+    cfgOptVersions,
 } ConfigOption;
 
 #endif

@@ -2367,7 +2367,7 @@
                         <example>desc</example>
                     </option>
 
-                    <option id="vers" name="List File Versions">
+                    <option id="versions" name="List File Versions">
                         <summary>List file versions.</summary>
 
                         <text>
