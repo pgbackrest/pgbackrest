@@ -1839,6 +1839,10 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                         if (!(parseRuleCommand[config->command].commandRoleValid & ((unsigned int)1 << config->commandRole)))
                             THROW_FMT(CommandInvalidError, "invalid command/role combination '%s'", arg);
 
+                        // Error if help requested and role is not main
+                        if (config->help && config->commandRole != cfgCmdRoleMain)
+                            THROW_FMT(CommandInvalidError, "help is not available for the '%s' role", colonPtr + 1);
+
                         commandSet = true;
                     }
                 }
