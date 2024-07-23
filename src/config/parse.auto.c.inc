@@ -2432,6 +2432,30 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                              // opt/force
     ),                                                                                                                  // opt/force
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                                    // opt/help
+    (                                                                                                                    // opt/help
+        PARSE_RULE_OPTION_NAME("help"),                                                                                  // opt/help
+        PARSE_RULE_OPTION_TYPE(Boolean),                                                                                 // opt/help
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                                // opt/help
+        PARSE_RULE_OPTION_SECTION(CommandLine),                                                                          // opt/help
+                                                                                                                         // opt/help
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                   // opt/help
+        (                                                                                                                // opt/help
+            PARSE_RULE_OPTION_COMMAND(Help)                                                                              // opt/help
+        ),                                                                                                               // opt/help
+                                                                                                                         // opt/help
+        PARSE_RULE_OPTIONAL                                                                                              // opt/help
+        (                                                                                                                // opt/help
+            PARSE_RULE_OPTIONAL_GROUP                                                                                    // opt/help
+            (                                                                                                            // opt/help
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                              // opt/help
+                (                                                                                                        // opt/help
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                                           // opt/help
+                ),                                                                                                       // opt/help
+            ),                                                                                                           // opt/help
+        ),                                                                                                               // opt/help
+    ),                                                                                                                   // opt/help
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                          // opt/ignore-missing
     (                                                                                                          // opt/ignore-missing
         PARSE_RULE_OPTION_NAME("ignore-missing"),                                                              // opt/ignore-missing
@@ -10717,6 +10741,30 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),                                                                                                           // opt/vers
         ),                                                                                                               // opt/vers
     ),                                                                                                                   // opt/vers
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                                 // opt/version
+    (                                                                                                                 // opt/version
+        PARSE_RULE_OPTION_NAME("version"),                                                                            // opt/version
+        PARSE_RULE_OPTION_TYPE(Boolean),                                                                              // opt/version
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                             // opt/version
+        PARSE_RULE_OPTION_SECTION(CommandLine),                                                                       // opt/version
+                                                                                                                      // opt/version
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                // opt/version
+        (                                                                                                             // opt/version
+            PARSE_RULE_OPTION_COMMAND(Help)                                                                           // opt/version
+        ),                                                                                                            // opt/version
+                                                                                                                      // opt/version
+        PARSE_RULE_OPTIONAL                                                                                           // opt/version
+        (                                                                                                             // opt/version
+            PARSE_RULE_OPTIONAL_GROUP                                                                                 // opt/version
+            (                                                                                                         // opt/version
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                           // opt/version
+                (                                                                                                     // opt/version
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                                        // opt/version
+                ),                                                                                                    // opt/version
+            ),                                                                                                        // opt/version
+        ),                                                                                                            // opt/version
+    ),                                                                                                                // opt/version
 };
 
 /***********************************************************************************************************************************
@@ -11010,6 +11058,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptExecId,                                                                                               // opt-resolve-order
     cfgOptExpireAuto,                                                                                           // opt-resolve-order
     cfgOptFilter,                                                                                               // opt-resolve-order
+    cfgOptHelp,                                                                                                 // opt-resolve-order
     cfgOptIgnoreMissing,                                                                                        // opt-resolve-order
     cfgOptIoTimeout,                                                                                            // opt-resolve-order
     cfgOptJobRetry,                                                                                             // opt-resolve-order
@@ -11082,6 +11131,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptType,                                                                                                 // opt-resolve-order
     cfgOptVerbose,                                                                                              // opt-resolve-order
     cfgOptVers,                                                                                                 // opt-resolve-order
+    cfgOptVersion,                                                                                              // opt-resolve-order
     cfgOptArchiveCheck,                                                                                         // opt-resolve-order
     cfgOptArchiveCopy,                                                                                          // opt-resolve-order
     cfgOptArchiveModeCheck,                                                                                     // opt-resolve-order

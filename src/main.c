@@ -100,39 +100,13 @@ main(int argListSize, const char *argList[])
         // Load the configuration
         // -------------------------------------------------------------------------------------------------------------------------
         cfgLoad((unsigned int)argListSize, argList);
-        ConfigCommandRole commandRole = cfgCommandRole();
+        const ConfigCommandRole commandRole = cfgCommandRole();
 
-        // Display help
+        // Main/async commands
         // -------------------------------------------------------------------------------------------------------------------------
-        if (cfgCommandHelp())
+        if (commandRole == cfgCmdRoleMain || commandRole == cfgCmdRoleAsync)
         {
-            cmdHelp(BUF(helpData, sizeof(helpData)));
-        }
-        // Local role
-        // -------------------------------------------------------------------------------------------------------------------------
-        else if (commandRole == cfgCmdRoleLocal)
-        {
-            String *name = strNewFmt(PROTOCOL_SERVICE_LOCAL "-%s", strZ(cfgOptionDisplay(cfgOptProcess)));
-
-            cmdLocal(
-                protocolServerNew(
-                    name, PROTOCOL_SERVICE_LOCAL_STR, ioFdReadNewOpen(name, STDIN_FILENO, cfgOptionUInt64(cfgOptProtocolTimeout)),
-                    ioFdWriteNewOpen(name, STDOUT_FILENO, cfgOptionUInt64(cfgOptProtocolTimeout))));
-        }
-        // Remote role
-        // -------------------------------------------------------------------------------------------------------------------------
-        else if (commandRole == cfgCmdRoleRemote)
-        {
-            String *name = strNewFmt(PROTOCOL_SERVICE_REMOTE "-%s", strZ(cfgOptionDisplay(cfgOptProcess)));
-
-            cmdRemote(
-                protocolServerNew(
-                    name, PROTOCOL_SERVICE_REMOTE_STR, ioFdReadNewOpen(name, STDIN_FILENO, cfgOptionUInt64(cfgOptProtocolTimeout)),
-                    ioFdWriteNewOpen(name, STDOUT_FILENO, cfgOptionUInt64(cfgOptProtocolTimeout))));
-        }
-        else
-        {
-            switch (cfgCommand())
+            switch (cfgCommandHelp() ? cfgCmdHelp : cfgCommand())
             {
                 // Annotate command
                 // -----------------------------------------------------------------------------------------------------------------
@@ -200,12 +174,6 @@ main(int argListSize, const char *argList[])
                 case cfgCmdExpire:
                     cmdExpire();
                     break;
-
-                // Help command
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdHelp:
-                case cfgCmdNone:
-                    THROW(AssertError, "'help' and 'none' commands should have been handled already");
 
                 // Info command
                 // -----------------------------------------------------------------------------------------------------------------
@@ -297,13 +265,30 @@ main(int argListSize, const char *argList[])
                     cmdVerify();
                     break;
 
-                // Display version
+                // Help/version commands
                 // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdHelp:
                 case cfgCmdVersion:
-                    printf(PROJECT_NAME " " PROJECT_VERSION "\n");
-                    fflush(stdout);
+                    cmdHelp(BUF(helpData, sizeof(helpData)));
                     break;
             }
+        }
+        // Local/remote commands
+        // -------------------------------------------------------------------------------------------------------------------------
+        else
+        {
+            ASSERT(commandRole == cfgCmdRoleLocal || commandRole == cfgCmdRoleRemote);
+
+            const String *const service = commandRole == cfgCmdRoleLocal ? PROTOCOL_SERVICE_LOCAL_STR : PROTOCOL_SERVICE_REMOTE_STR;
+            const String *const name = strNewFmt("%s-%s", strZ(service), strZ(cfgOptionDisplay(cfgOptProcess)));
+            const TimeMSec timeout = cfgOptionUInt64(cfgOptProtocolTimeout);
+            ProtocolServer *const server = protocolServerNew(
+                name, service, ioFdReadNewOpen(name, STDIN_FILENO, timeout), ioFdWriteNewOpen(name, STDOUT_FILENO, timeout));
+
+            if (commandRole == cfgCmdRoleLocal)
+                cmdLocal(server);
+            else
+                cmdRemote(server);
         }
     }
     CATCH_FATAL()

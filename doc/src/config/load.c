@@ -48,10 +48,16 @@ cfgLoadUpdateOption(void)
     THROW_ON_SYS_ERROR(getcwd(currentWorkDir, sizeof(currentWorkDir)) == NULL, FormatError, "unable to get cwd");
 
     // If repo-path is relative then make it absolute
-    const String *const repoPath = cfgOptionStr(cfgOptRepoPath);
+    if (cfgOptionValid(cfgOptRepoPath))
+    {
+        const String *const repoPath = cfgOptionStr(cfgOptRepoPath);
 
-    if (!strBeginsWithZ(repoPath, "/"))
-        cfgOptionSet(cfgOptRepoPath, cfgOptionSource(cfgOptRepoPath), VARSTR(strNewFmt("%s/%s", currentWorkDir, strZ(repoPath))));
+        if (!strBeginsWithZ(repoPath, "/"))
+        {
+            cfgOptionSet(
+                cfgOptRepoPath, cfgOptionSource(cfgOptRepoPath), VARSTR(strNewFmt("%s/%s", currentWorkDir, strZ(repoPath))));
+        }
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -89,27 +95,23 @@ cfgLoad(unsigned int argListSize, const char *argList[])
         if (cfgCommand() == cfgCmdNoop)
             THROW(CommandInvalidError, "invalid command '" CFGCMD_NOOP "'");
 
-        // If a command is set
-        if (cfgCommand() != cfgCmdNone && cfgCommand() != cfgCmdHelp && cfgCommand() != cfgCmdVersion)
-        {
-            // Load the log settings
-            if (!cfgCommandHelp())
-                cfgLoadLogSetting();
+        // Load the log settings
+        if (!cfgCommandHelp())
+            cfgLoadLogSetting();
 
-            // Neutralize the umask to make the repository file/path modes more consistent
-            if (cfgOptionValid(cfgOptNeutralUmask) && cfgOptionBool(cfgOptNeutralUmask))
-                umask(0000);
+        // Neutralize the umask to make the repository file/path modes more consistent
+        if (cfgOptionValid(cfgOptNeutralUmask) && cfgOptionBool(cfgOptNeutralUmask))
+            umask(0000);
 
-            // Set IO buffer size
-            if (cfgOptionValid(cfgOptBufferSize))
-                ioBufferSizeSet(cfgOptionUInt(cfgOptBufferSize));
+        // Set IO buffer size
+        if (cfgOptionValid(cfgOptBufferSize))
+            ioBufferSizeSet(cfgOptionUInt(cfgOptBufferSize));
 
-            // Update options that have complex rules
-            cfgLoadUpdateOption();
+        // Update options that have complex rules
+        cfgLoadUpdateOption();
 
-            // Begin the command
-            cmdBegin();
-        }
+        // Begin the command
+        cmdBegin();
     }
     MEM_CONTEXT_TEMP_END();
 

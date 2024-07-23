@@ -78,6 +78,7 @@ Option constants
 #define CFGOPT_EXPIRE_AUTO                                          "expire-auto"
 #define CFGOPT_FILTER                                               "filter"
 #define CFGOPT_FORCE                                                "force"
+#define CFGOPT_HELP                                                 "help"
 #define CFGOPT_IGNORE_MISSING                                       "ignore-missing"
 #define CFGOPT_IO_TIMEOUT                                           "io-timeout"
 #define CFGOPT_JOB_RETRY                                            "job-retry"
@@ -137,8 +138,9 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERS                                                 "vers"
+#define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            183
+#define CFG_OPTION_TOTAL                                            185
 
 /***********************************************************************************************************************************
 Option value constants
@@ -368,7 +370,6 @@ typedef enum
     cfgCmdStop,
     cfgCmdVerify,
     cfgCmdVersion,
-    cfgCmdNone,
 } ConfigCommand;
 
 /***********************************************************************************************************************************
@@ -420,6 +421,7 @@ typedef enum
     cfgOptExpireAuto,
     cfgOptFilter,
     cfgOptForce,
+    cfgOptHelp,
     cfgOptIgnoreMissing,
     cfgOptIoTimeout,
     cfgOptJobRetry,
@@ -568,6 +570,7 @@ typedef enum
     cfgOptType,
     cfgOptVerbose,
     cfgOptVers,
+    cfgOptVersion,
 } ConfigOption;
 
 #endif

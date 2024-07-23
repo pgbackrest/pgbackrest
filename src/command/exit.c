@@ -11,7 +11,7 @@ Exit Routines
 #include "command/lock.h"
 #include "common/debug.h"
 #include "common/log.h"
-#include "config/config.h"
+#include "config/config.intern.h"
 #include "protocol/helper.h"
 #include "version.h"
 
@@ -137,12 +137,11 @@ exitSafe(int result, const bool error, const SignalType signalType)
         result = errorCode();
     }
 
-    // Log command end if a command is set
-    if (cfgCommand() != cfgCmdNone)
+    // On error generate an error message for command end when config is initialized
+    if (cfgInited())
     {
         String *errorMessage = NULL;
 
-        // On error generate an error message
         if (result != 0)
         {
             // On process terminate
