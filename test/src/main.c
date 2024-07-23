@@ -86,22 +86,15 @@ main(int argListSize, const char *argList[])
                 break;
             }
 
-            // Help
+            // Help/version
             // -----------------------------------------------------------------------------------------------------------------
             case cfgCmdHelp:
-                cmdHelp(BUF(helpData, sizeof(helpData)));
-                break;
-
-            // Version
-            // -----------------------------------------------------------------------------------------------------------------
             case cfgCmdVersion:
-                printf(PROJECT_NAME " Test " PROJECT_VERSION "\n");
-                fflush(stdout);
+                cmdHelp(BUF(helpData, sizeof(helpData)));
                 break;
 
             // Error on commands that should have been handled
             // -----------------------------------------------------------------------------------------------------------------
-            case cfgCmdNone:
             case cfgCmdNoop:
                 THROW_FMT(AssertError, "'%s' command should have been handled", cfgCommandName());
                 break;

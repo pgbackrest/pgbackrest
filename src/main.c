@@ -175,12 +175,6 @@ main(int argListSize, const char *argList[])
                     cmdExpire();
                     break;
 
-                // Help command
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdHelp:
-                    cmdHelp(BUF(helpData, sizeof(helpData)));
-                    break;
-
                 // Info command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdInfo:
@@ -271,17 +265,12 @@ main(int argListSize, const char *argList[])
                     cmdVerify();
                     break;
 
-                // Display version
+                // Help/version commands
                 // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdHelp:
                 case cfgCmdVersion:
-                    printf(PROJECT_NAME " " PROJECT_VERSION "\n");
-                    fflush(stdout);
+                    cmdHelp(BUF(helpData, sizeof(helpData)));
                     break;
-
-                // Error on commands that should have been handled
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdNone:
-                    THROW(AssertError, "'none' command should have been handled");
             }
         }
         // Local/remote commands

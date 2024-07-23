@@ -82,12 +82,12 @@ testRun(void)
 
     // Config functions that are not tested with parse
     // *****************************************************************************************************************************
-    if (testBegin("cfg*()"))
+    if (testBegin("cfgInited()"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("config command defaults to none before cfgInit()");
 
-        TEST_RESULT_UINT(cfgCommand(), cfgCmdNone, "command is none");
+        TEST_RESULT_BOOL(cfgInited(), false, "config is not inited");
     }
 
     // config and config-include-path options
@@ -1547,8 +1547,8 @@ testRun(void)
         hrnLogLevelStdOutSet(logLevelOff);
         hrnLogLevelStdErrSet(logLevelOff);
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList)), "no command");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command is none");
+        TEST_RESULT_BOOL(cfgCommandHelp(), false, "help is not set");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
         TEST_RESULT_INT(hrnLogLevelStdOut(), logLevelWarn, "console logging is warn");
         TEST_RESULT_INT(hrnLogLevelStdErr(), logLevelOff, "stderr logging is off");
         harnessLogLevelReset();
@@ -1561,8 +1561,8 @@ testRun(void)
         strLstAddZ(argList, "help");
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "help command");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command is help");
+        TEST_RESULT_BOOL(cfgCommandHelp(), false, "command help is not set");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
@@ -1571,7 +1571,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "help for version command");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
+        TEST_RESULT_BOOL(cfgCommandHelp(), true, "command help is set");
         TEST_RESULT_INT(cfgCommand(), cfgCmdVersion, "command is version");
         TEST_RESULT_Z(cfgCommandName(), "version", "command name is version");
 
@@ -1582,7 +1582,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
+        TEST_RESULT_BOOL(cfgCommandHelp(), true, "command help is set");
         TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1593,8 +1593,9 @@ testRun(void)
         strLstAddZ(argList, "--help");
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command is none");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
+        TEST_RESULT_BOOL(cfgCommandHelp(), false, "command help is not set");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptHelp), true, "help option is set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("version option");
@@ -1604,8 +1605,9 @@ testRun(void)
         strLstAddZ(argList, "--version");
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
-        TEST_RESULT_BOOL(cfgCommandHelp(), false, "help is not set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdVersion, "command is version");
+        TEST_RESULT_BOOL(cfgCommandHelp(), false, "command help is not set");
+        TEST_RESULT_UINT(cfgCommand(), cfgCmdHelp, "command is help");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptVersion), true, "version option is set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("help and version options");
@@ -1616,8 +1618,10 @@ testRun(void)
         strLstAddZ(argList, "--version");
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is not set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command is none");
+        TEST_RESULT_BOOL(cfgCommandHelp(), false, "help is not set");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptHelp), true, "version option is set");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptVersion), true, "version option is set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on command with --help option");
@@ -1629,7 +1633,7 @@ testRun(void)
 
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
-            "invalid option '--help'");
+            "option 'help' not valid for command 'backup'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on command with --version option");
@@ -1641,7 +1645,7 @@ testRun(void)
 
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
-            "invalid option '--version'");
+            "option 'version' not valid for command 'backup'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("help command - should not fail on missing options");

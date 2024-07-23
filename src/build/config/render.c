@@ -193,8 +193,6 @@ bldCfgRenderConfigAutoH(const Storage *const storageRepo, const BldCfg bldCfg)
         strCatFmt(config, "    %s,\n", strZ(bldEnumCmd(cmd->name)));
     }
 
-    strCatFmt(config, "    %s,\n", strZ(bldEnumCmd(STRDEF("none"))));
-
     strCatZ(
         config,
         "} ConfigCommand;\n");

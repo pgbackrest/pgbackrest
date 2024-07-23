@@ -300,6 +300,14 @@ option:
     command-role:
       main: {}
 
+  help:
+    type: boolean
+    default: false
+    command:
+      help: {}
+    command-role:
+      main: {}
+
   online:
     type: boolean
     default: true
@@ -498,6 +506,14 @@ option:
     default: false
     command:
      verify: {}
+    command-role:
+      main: {}
+
+  version:
+    type: boolean
+    default: false
+    command:
+      help: {}
     command-role:
       main: {}
 
