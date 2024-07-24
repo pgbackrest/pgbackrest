@@ -28,7 +28,7 @@ static HrnHostTestDefine testMatrix[] =
     {.pg =  "14", .repo = "repo", .tls = 0, .stg =   "gcs", .enc = 0, .cmp =  "lz4", .rt = 1, .bnd = 1, .bi = 0},
     {.pg =  "15", .repo =  "pg2", .tls = 0, .stg = "azure", .enc = 0, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1},
     {.pg =  "16", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
-    {.pg =  "17", .repo = "pg2", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
+    {.pg =  "17", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
     // {uncrustify_on}
 };
 
@@ -117,9 +117,48 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("standby restore");
         {
-            TEST_HOST_BR(
-                pg2, CFGCMD_RESTORE, .option = zNewFmt("--log-level-file=debug --type=standby --tablespace-map=ts1='%s'", strZ(hrnHostPgTsPath(pg2))),
-                .user = pg2 == repo ? "root" : NULL);
+            // If the repo is running on pg2 then switch the user to root to test restoring as root. Use this configuration so the
+            // repo is local and root does not need to be configured for TLS or SSH.
+            const char *user = NULL;
+
+            if (pg2 == repo)
+            {
+                user = "root";
+
+                // Create the pg/ts directory so it will not be created with root permissions
+                HRN_STORAGE_PATH_CREATE(hrnHostDataStorage(pg2), strZ(hrnHostPgTsPath(pg2)), .mode = 0700);
+
+                // Create the restore log file so it will not be created with root permissions
+                HRN_STORAGE_PUT_EMPTY(hrnHostDataStorage(pg2), zNewFmt("%s/test-restore.log", strZ(hrnHostLogPath(pg2))));
+            }
+
+            // Run restore
+            const char *option = zNewFmt("--type=standby --tablespace-map=ts1='%s'", strZ(hrnHostPgTsPath(pg2)));
+            TEST_HOST_BR(pg2, CFGCMD_RESTORE, .option = option, .user = user);
+
+            // If the repo is running on pg2 then perform additional ownership tests
+            if (pg2 == repo)
+            {
+                // Update some ownership to root
+                hrnHostExecP(
+                    pg2,
+                    strNewFmt(
+                        "chown %s:%s %s &&"
+                        "chown %s:%s %s/" PG_PATH_GLOBAL " &&"
+                        "chown %s:%s %s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+                        user, user, strZ(hrnHostPgDataPath(pg2)), user, user, strZ(hrnHostPgDataPath(pg2)), user, user,
+                        strZ(hrnHostPgDataPath(pg2))),
+                    .user = STRDEF(user));
+
+                // Expect an error when running without root since permissions cannot be updated
+                TEST_HOST_BR(
+                    pg2, CFGCMD_RESTORE, .option = zNewFmt("--delta %s", option), .user = NULL,
+                    .resultExpect = errorTypeCode(&FileOpenError));
+
+                // Running as root fixes the ownership
+                TEST_HOST_BR(pg2, CFGCMD_RESTORE, .option = zNewFmt("--delta %s", option), .user = user);
+            }
+
             HRN_HOST_PG_START(pg2);
 
             // Check standby
