@@ -28,7 +28,7 @@ static HrnHostTestDefine testMatrix[] =
     {.pg =  "14", .repo = "repo", .tls = 0, .stg =   "gcs", .enc = 0, .cmp =  "lz4", .rt = 1, .bnd = 1, .bi = 0},
     {.pg =  "15", .repo =  "pg2", .tls = 0, .stg = "azure", .enc = 0, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1},
     {.pg =  "16", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
-    {.pg =  "17", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
+    {.pg =  "17", .repo = "pg2", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
     // {uncrustify_on}
 };
 
@@ -118,7 +118,8 @@ testRun(void)
         TEST_TITLE("standby restore");
         {
             TEST_HOST_BR(
-                pg2, CFGCMD_RESTORE, .option = zNewFmt("--type=standby --tablespace-map=ts1='%s'", strZ(hrnHostPgTsPath(pg2))));
+                pg2, CFGCMD_RESTORE, .option = zNewFmt("--log-level-file=debug --type=standby --tablespace-map=ts1='%s'", strZ(hrnHostPgTsPath(pg2))),
+                .user = pg2 == repo ? "root" : NULL);
             HRN_HOST_PG_START(pg2);
 
             // Check standby
