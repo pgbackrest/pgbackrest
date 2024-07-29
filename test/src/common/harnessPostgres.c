@@ -40,6 +40,10 @@ uint32_t hrnPgInterfaceCatalogVersion120(void);
 void hrnPgInterfaceControl120(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
 void hrnPgInterfaceWal120(unsigned int magic, PgWal pgWal, unsigned char *buffer);
 
+uint32_t hrnPgInterfaceCatalogVersion120GPDB(void);
+void hrnPgInterfaceControl120GPDB(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
+void hrnPgInterfaceWal120GPDB(unsigned int magic, PgWal pgWal, unsigned char *buffer);
+
 uint32_t hrnPgInterfaceCatalogVersion130(void);
 void hrnPgInterfaceControl130(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
 void hrnPgInterfaceWal130(unsigned int magic, PgWal pgWal, unsigned char *buffer);
@@ -126,6 +130,14 @@ static const HrnPgInterface hrnPgInterface[] =
         .catalogVersion = hrnPgInterfaceCatalogVersion120,
         .control = hrnPgInterfaceControl120,
         .wal = hrnPgInterfaceWal120,
+    },
+    {
+        .version = PG_VERSION_12,
+        .fork = CFGOPTVAL_FORK_GPDB,
+
+        .catalogVersion = hrnPgInterfaceCatalogVersion120GPDB,
+        .control = hrnPgInterfaceControl120GPDB,
+        .wal = hrnPgInterfaceWal120GPDB,
     },
     {
         .version = PG_VERSION_11,
