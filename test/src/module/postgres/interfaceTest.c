@@ -605,5 +605,47 @@ testRun(void)
         TEST_RESULT_UINT(info.checkpoint, 0xDEAD, "check invalid checkpoint");
     }
 
+    if (testBegin("pgTablespaceId for GPDB7"))
+    {
+        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_12, 999999999), "GPDB_7_999999999", "check GPDB 7 tablespace id");
+    }
+
+    if (testBegin("pg_control with valid crc32 for GPDB7"))
+    {
+        HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(
+            storageTest, PG_VERSION_12, 12010700, .systemId = 0xEFEFEFEFEF, .catalogVersion = 302307241,
+            .pageSize = 32768, .walSegmentSize = 64 * 1024 * 1024);
+
+        PgControl info = {0};
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info v12 (Greenplum)");
+        TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_12, "   check version");
+        TEST_RESULT_UINT(info.catalogVersion, 302307241, "   check catalog version");
+        TEST_RESULT_UINT(info.checkpoint, 1, "check checkpoint");
+        TEST_RESULT_UINT(info.timeline, 1, "check timeline");
+    }
+
+    if (testBegin("Invalidate checkpoint for GPDB7"))
+    {
+        PgControl info;
+        Buffer *control;
+        PgControl pgControl =
+        {
+            .version = PG_VERSION_12,
+            .systemId = 0xAAAA0AAAA,
+            .checkpoint = 777,
+            .walSegmentSize = 64 * 1024 * 1024,
+        };
+
+        control = hrnPgControlToBuffer(0, 0, pgControl);
+
+        info = pgControlFromBuffer(control, NULL);
+        TEST_RESULT_UINT(info.checkpoint, 777, "check checkpoint");
+
+        TEST_RESULT_VOID(pgControlCheckpointInvalidate(control, NULL), "invalidate checkpoint");
+        info = pgControlFromBuffer(control, NULL);
+        TEST_RESULT_UINT(info.checkpoint, 0xDEAD, "check invalid checkpoint");
+    }
+
     FUNCTION_HARNESS_RETURN_VOID();
 }
