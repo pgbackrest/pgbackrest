@@ -453,7 +453,6 @@ unit:
           - postgres/interface/crc32
           - postgres/interface/page
           - protocol/client
-          - protocol/command
           - protocol/helper
           - protocol/server
           - storage/helper
@@ -481,7 +480,6 @@ unit:
 
         coverage:
           - protocol/client
-          - protocol/command
           - protocol/helper
           - protocol/parallel
           - protocol/parallelJob
@@ -562,6 +560,7 @@ unit:
           - storage/storage
 
         include:
+          - protocol/client
           - storage/read
           - storage/write
 
@@ -961,7 +960,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: repo
-        total: 4
+        total: 3
 
         coverage:
           - command/repo/common
@@ -969,11 +968,6 @@ unit:
           - command/repo/ls
           - command/repo/put
           - command/repo/rm
-
-        include:
-          # command/repo/create is currently for testing purposes only so coverage is not provided except in integration. In the
-          # future this will probably be rolled into a custom object store server implementation.
-          - command/repo/create
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: verify

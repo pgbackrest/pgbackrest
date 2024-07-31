@@ -137,6 +137,23 @@ testRun(void)
         StringList *argList = NULL;
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("version");
+
+        const char *versionOnly = zNewFmt("%s\n", helpVersion);
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "version");
+        TEST_RESULT_VOID(testCfgLoad(argList), "version from version command");
+        TEST_RESULT_STR_Z(helpRender(helpData), versionOnly, "check text");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "--version");
+        TEST_RESULT_VOID(testCfgLoad(argList), "version from version option");
+        TEST_RESULT_STR_Z(helpRender(helpData), versionOnly, "check text");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("general invocation");
 
         argList = strLstNew();
@@ -148,6 +165,13 @@ testRun(void)
         strLstAddZ(argList, "/path/to/pgbackrest");
         strLstAddZ(argList, "help");
         TEST_RESULT_VOID(testCfgLoad(argList), "help from help command");
+        TEST_RESULT_STR_Z(helpRender(helpData), generalHelp, "check text");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "--version");
+        strLstAddZ(argList, "--help");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help from help option");
         TEST_RESULT_STR_Z(helpRender(helpData), generalHelp, "check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
