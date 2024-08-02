@@ -817,7 +817,7 @@
                 <exe-cmd>mc --insecure alias set s3 https://127.0.0.1 {[s3-key]} {[s3-key-secret]}</exe-cmd>
             </execute>
             <execute user="root" user-force="y">
-                <exe-cmd>mc --insecure mb s3/{[s3-bucket]}</exe-cmd>
+                <exe-cmd>mc --insecure mb --with-versioning s3/{[s3-bucket]}</exe-cmd>
             </execute>
         </execute-list>
 

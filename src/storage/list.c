@@ -20,6 +20,7 @@ struct StorageList
     Blob *blob;                                                     // Blob of info data
     String *name;                                                   // Current info name
     String *linkDestination;                                        // Current link destination
+    String *versionId;                                              // Current version id
 };
 
 /***********************************************************************************************************************************
@@ -34,11 +35,15 @@ typedef struct StorageListInfo
         const char *name;                                           // Name of path/file/link
     } exists;
 
-    // Mode is only provided at detail level but is included here to save space on 64-bit architectures
+    // Set when info type >= storageInfoLevelType (undefined at lower levels). mode/deleteMarker are only provided at higher detail
+    // levels but included here to save space on 64-bit architectures
     struct
     {
         // Set when info type >= storageInfoLevelType (undefined at lower levels)
-        StorageType type;                                           // Type file/path/link)
+        uint8_t type;                                               // Type file/path/link)
+
+        // Set when info type >= storageInfoLevelBasic (undefined at lower levels)
+        bool deleteMarker;                                          // Is this a delete marker?
 
         // Set when info type >= storageInfoLevelDetail (undefined at lower levels)
         mode_t mode;                                                // Mode of path/file/link
@@ -49,6 +54,8 @@ typedef struct StorageListInfo
     {
         uint64_t size;                                              // Size (path/link is 0)
         time_t timeModified;                                        // Time file was last modified
+        // !!! WOULD BE NICE TO SPLIT THESE OUT FOR SPACE SAVINGS
+        const char *versionId;                                      // Version id when versioning enabled !!! REMOVE THIS?
     } basic;
 
     // Set when info type >= storageInfoLevelDetail (undefined at lower levels)
@@ -95,6 +102,7 @@ storageLstNew(const StorageInfoLevel level)
             .blob = blbNew(),
             .name = strNew(),
             .linkDestination = strNew(),
+            .versionId = strNew(),
         };
     }
     OBJ_NEW_END();
@@ -137,11 +145,17 @@ storageLstInsert(StorageList *const this, const unsigned int idx, const StorageI
             }
 
             case storageInfoLevelBasic:
+            {
                 listInfo.basic.size = info->size;
                 listInfo.basic.timeModified = info->timeModified;
+                listInfo.type.deleteMarker = info->deleteMarker;
+
+                if (info->versionId != NULL)
+                    listInfo.basic.versionId = blbAdd(this->blob, strZ(info->versionId), strSize(info->versionId) + 1);
+            }
 
             case storageInfoLevelType:
-                listInfo.type.type = info->type;
+                listInfo.type.type = (uint8_t)info->type;
 
             default:
                 break;
@@ -189,17 +203,44 @@ storageLstGet(const StorageList *const this, const unsigned int idx)
         }
 
         case storageInfoLevelBasic:
+        {
             result.size = listInfo->basic.size;
             result.timeModified = listInfo->basic.timeModified;
+            result.deleteMarker = listInfo->type.deleteMarker;
+
+            if (listInfo->basic.versionId != NULL)
+                result.versionId = strCatZ(strTrunc(this->versionId), listInfo->basic.versionId);
+        }
 
         case storageInfoLevelType:
-            result.type = listInfo->type.type;
+            result.type = (StorageType)listInfo->type.type;
 
         default:
             break;
     }
 
     FUNCTION_TEST_RETURN(STORAGE_INFO, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN StorageInfo
+storageLstFind(const StorageList *const this, const String *const name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_LIST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    const char *const namePtr = strZ(name);
+    const unsigned int listIdx = lstFindIdx(this->pub.list, &namePtr);
+
+    if (listIdx == LIST_NOT_FOUND)
+        FUNCTION_TEST_RETURN(STORAGE_INFO, (StorageInfo){.exists = false});
+
+    FUNCTION_TEST_RETURN(STORAGE_INFO, storageLstGet(this, listIdx));
 }
 
 /**********************************************************************************************************************************/

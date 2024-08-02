@@ -2684,6 +2684,49 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                 // opt/job-retry-interval
     ),                                                                                                     // opt/job-retry-interval
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                              // opt/limit-time
+    (                                                                                                              // opt/limit-time
+        PARSE_RULE_OPTION_NAME("limit-time"),                                                                      // opt/limit-time
+        PARSE_RULE_OPTION_TYPE(String),                                                                            // opt/limit-time
+        PARSE_RULE_OPTION_RESET(true),                                                                             // opt/limit-time
+        PARSE_RULE_OPTION_REQUIRED(false),                                                                         // opt/limit-time
+        PARSE_RULE_OPTION_SECTION(Global),                                                                         // opt/limit-time
+                                                                                                                   // opt/limit-time
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                             // opt/limit-time
+        (                                                                                                          // opt/limit-time
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/limit-time
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                        // opt/limit-time
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                    // opt/limit-time
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                     // opt/limit-time
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                      // opt/limit-time
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                     // opt/limit-time
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                      // opt/limit-time
+        ),                                                                                                         // opt/limit-time
+                                                                                                                   // opt/limit-time
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                            // opt/limit-time
+        (                                                                                                          // opt/limit-time
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/limit-time
+        ),                                                                                                         // opt/limit-time
+                                                                                                                   // opt/limit-time
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                            // opt/limit-time
+        (                                                                                                          // opt/limit-time
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/limit-time
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                     // opt/limit-time
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                      // opt/limit-time
+        ),                                                                                                         // opt/limit-time
+                                                                                                                   // opt/limit-time
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                           // opt/limit-time
+        (                                                                                                          // opt/limit-time
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/limit-time
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                        // opt/limit-time
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                    // opt/limit-time
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                     // opt/limit-time
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                      // opt/limit-time
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                     // opt/limit-time
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                      // opt/limit-time
+        ),                                                                                                         // opt/limit-time
+    ),                                                                                                             // opt/limit-time
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                                // opt/link-all
     (                                                                                                                // opt/link-all
         PARSE_RULE_OPTION_NAME("link-all"),                                                                          // opt/link-all
@@ -10698,6 +10741,30 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),                                                                                                        // opt/version
         ),                                                                                                            // opt/version
     ),                                                                                                                // opt/version
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                                // opt/versions
+    (                                                                                                                // opt/versions
+        PARSE_RULE_OPTION_NAME("versions"),                                                                          // opt/versions
+        PARSE_RULE_OPTION_TYPE(Boolean),                                                                             // opt/versions
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                            // opt/versions
+        PARSE_RULE_OPTION_SECTION(CommandLine),                                                                      // opt/versions
+                                                                                                                     // opt/versions
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                               // opt/versions
+        (                                                                                                            // opt/versions
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                        // opt/versions
+        ),                                                                                                           // opt/versions
+                                                                                                                     // opt/versions
+        PARSE_RULE_OPTIONAL                                                                                          // opt/versions
+        (                                                                                                            // opt/versions
+            PARSE_RULE_OPTIONAL_GROUP                                                                                // opt/versions
+            (                                                                                                        // opt/versions
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                          // opt/versions
+                (                                                                                                    // opt/versions
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                                       // opt/versions
+                ),                                                                                                   // opt/versions
+            ),                                                                                                       // opt/versions
+        ),                                                                                                           // opt/versions
+    ),                                                                                                               // opt/versions
 };
 
 /***********************************************************************************************************************************
@@ -10996,6 +11063,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptIoTimeout,                                                                                            // opt-resolve-order
     cfgOptJobRetry,                                                                                             // opt-resolve-order
     cfgOptJobRetryInterval,                                                                                     // opt-resolve-order
+    cfgOptLimitTime,                                                                                            // opt-resolve-order
     cfgOptLinkAll,                                                                                              // opt-resolve-order
     cfgOptLinkMap,                                                                                              // opt-resolve-order
     cfgOptLock,                                                                                                 // opt-resolve-order
@@ -11063,6 +11131,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptType,                                                                                                 // opt-resolve-order
     cfgOptVerbose,                                                                                              // opt-resolve-order
     cfgOptVersion,                                                                                              // opt-resolve-order
+    cfgOptVersions,                                                                                             // opt-resolve-order
     cfgOptArchiveCheck,                                                                                         // opt-resolve-order
     cfgOptArchiveCopy,                                                                                          // opt-resolve-order
     cfgOptArchiveModeCheck,                                                                                     // opt-resolve-order

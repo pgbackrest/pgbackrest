@@ -57,6 +57,9 @@ typedef enum
 
     // Does the storage support detailed info, i.e. user, group, mode, link destination, etc.
     storageFeatureInfoDetail,
+
+    // Does the storage support versioning?
+    storageFeatureVersioning,
 } StorageFeature;
 
 /***********************************************************************************************************************************
@@ -115,6 +118,7 @@ typedef struct StorageNewItrParam
     bool errorOnMissing;
     bool nullOnMissing;
     bool recurse;
+    bool versions;                                                  // Fetch all file versions
     SortOrder sortOrder;
     const String *expression;
 } StorageNewItrParam;

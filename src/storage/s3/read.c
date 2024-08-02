@@ -55,6 +55,9 @@ storageReadS3Open(THIS_VOID)
         this->httpResponse = storageS3RequestP(
             this->storage, HTTP_VERB_GET_STR, this->interface.name,
             .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
+            .query =
+                this->interface.versionId == NULL
+                    ? NULL : httpQueryPut(httpQueryNewP(), STRDEF("versionId"), this->interface.versionId),
             .allowMissing = true, .contentIo = true, .sseC = true);
     }
     MEM_CONTEXT_OBJ_END();
@@ -112,7 +115,8 @@ storageReadS3Eof(THIS_VOID)
 /**********************************************************************************************************************************/
 FN_EXTERN StorageRead *
 storageReadS3New(
-    StorageS3 *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset, const Variant *const limit)
+    StorageS3 *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset, const Variant *const limit,
+    const String *const versionId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_S3, storage);
@@ -120,6 +124,7 @@ storageReadS3New(
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
+        FUNCTION_LOG_PARAM(STRING, versionId);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -139,6 +144,7 @@ storageReadS3New(
                 .ignoreMissing = ignoreMissing,
                 .offset = offset,
                 .limit = varDup(limit),
+                .versionId = strDup(versionId),
 
                 .ioInterface = (IoReadInterface)
                 {

@@ -270,7 +270,6 @@ unit:
 
         coverage:
           - build/common/xml
-          - common/type/xml: included
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: stat
@@ -545,10 +544,12 @@ unit:
           - storage/posix/write
           - storage/helper
           - storage/iterator
-          - storage/list
           - storage/read
-          - storage/storage
           - storage/write
+
+        include:
+          - storage/list
+          - storage/storage
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote
@@ -560,11 +561,11 @@ unit:
           - storage/remote/storage
           - storage/remote/write
           - storage/helper
-          - storage/storage
 
         include:
           - protocol/client
           - storage/read
+          - storage/storage
           - storage/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
@@ -602,15 +603,20 @@ unit:
         total: 2
 
         coverage:
-          - storage/s3/helper
-          - storage/s3/read
-          - storage/s3/storage
           - storage/s3/write
           - storage/helper
 
         include:
           - storage/storage
           - storage/write
+          - storage/s3/helper
+          - storage/s3/read
+          - storage/s3/storage
+
+        depend:
+          - storage/s3/helper
+          - storage/s3/read
+          - storage/s3/storage
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: sftp
@@ -968,9 +974,11 @@ unit:
         coverage:
           - command/repo/common
           - command/repo/get
-          - command/repo/ls
           - command/repo/put
           - command/repo/rm
+
+        include:
+          - command/repo/ls
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: verify

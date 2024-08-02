@@ -644,6 +644,8 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
+    ASSERT(!param.versions);
+    ASSERT(param.limitTime == 0);
 
     StorageList *result = NULL;
 
@@ -818,6 +820,7 @@ storageSftpNewRead(THIS_VOID, const String *const file, const bool ignoreMissing
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
+    ASSERT(param.versionId == NULL);
 
     FUNCTION_LOG_RETURN(
         STORAGE_READ,
@@ -1375,7 +1378,7 @@ storageSftpNew(
         STORAGE,
         storageNew(
             STORAGE_SFTP_TYPE, path, param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile,
-            param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, param.pathExpressionFunction,
+            param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, 0, param.pathExpressionFunction,
             this, this->interface));
 }
 
