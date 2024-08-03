@@ -1683,5 +1683,35 @@ testRun(void)
         TEST_RESULT_VOID(storagePathSyncP(storage, STRDEF(BOGUS_STR)), "path sync is a noop");
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("HrnStorageTest"))
+    {
+        hrnStorageHelperRepoShimSet(true);
+
+        StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write file with version");
+
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test1")), BUFSTRDEF("test1")), "write version");
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test1")), BUFSTRDEF("test1")), "write version");
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test1")), BUFSTRDEF("test1a")), "write version");
+
+        // List using standard driver to show structure
+        TEST_STORAGE_LIST(
+            storageTest, NULL,
+            ".pgbfs/\n"
+            ".pgbfs/test1/\n"
+            ".pgbfs/test1/v0001\n"
+            ".pgbfs/test1/v0002\n"
+            ".pgbfs/test1/v0003\n"
+            "test1\n");
+
+        hrnStorageHelperRepoShimSet(false);
+    }
+
     FUNCTION_HARNESS_RETURN_VOID();
 }
