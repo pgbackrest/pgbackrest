@@ -5546,7 +5546,7 @@ testRun(void)
         ((StorageSftp *)storageDriver(storageTest))->interface.pathSync = malloc(1);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noAtomic = true, .noSyncPath = false), "new write file");
-        ((StorageWriteSftp *)file->driver)->interface.syncFile = false;
+        ((StorageWriteSftp *)file->pub.driver)->interface.syncFile = false;
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
@@ -5586,7 +5586,7 @@ testRun(void)
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
 
         // Make sftpHandle NULL
-        ((StorageWriteSftp *)file->driver)->sftpHandle = NULL;
+        ((StorageWriteSftp *)file->pub.driver)->sftpHandle = NULL;
 
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
 

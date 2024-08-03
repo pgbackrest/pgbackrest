@@ -14,7 +14,6 @@ Object type
 struct StorageWrite
 {
     StorageWritePub pub;                                            // Publicly accessible variables
-    void *driver;                                                   // Driver
 };
 
 /***********************************************************************************************************************************
@@ -50,8 +49,8 @@ storageWriteNew(void *const driver, const StorageWriteInterface *const interface
             {
                 .interface = interface,
                 .io = ioWriteNew(driver, interface->ioInterface),
+                .driver = objMoveToInterface(driver, this, memContextPrior()),
             },
-            .driver = objMoveToInterface(driver, this, memContextPrior()),
         };
     }
     OBJ_NEW_END();

@@ -266,5 +266,6 @@ void hrnStorageTime(const Storage *const storage, const char *const path, const 
 Dummy interface for constructing test storage drivers. All functions and features are pulled from the Posix driver.
 ***********************************************************************************************************************************/
 extern const StorageInterface hrnStorageInterfaceDummy;
+extern const IoWriteInterface hrnStorageWriteInterfaceDummy;
 
 #endif

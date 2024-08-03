@@ -976,7 +976,7 @@ testRun(void)
             storageNewWriteP(storageTest, fileName, .user = TEST_USER_STR, .group = TEST_GROUP_STR, .timeModified = 1),
             "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
-        TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), ((StorageWritePosix *)file->driver)->fd, "check write fd");
+        TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), ((StorageWritePosix *)file->pub.driver)->fd, "check write fd");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
         TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0750, "check path mode");
         TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0640, "check file mode");
@@ -1023,7 +1023,7 @@ testRun(void)
             "new write file (set mode)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
-        TEST_RESULT_VOID(storageWritePosixClose(file->driver), "close file again");
+        TEST_RESULT_VOID(storageWritePosixClose(file->pub.driver), "close file again");
         TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0700, "check path mode");
         TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0600, "check file mode");
     }
@@ -1329,25 +1329,25 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
 
         // Close the file descriptor so operations will fail
-        close(((StorageWritePosix *)file->driver)->fd);
+        close(((StorageWritePosix *)file->pub.driver)->fd);
         storageRemoveP(storageTest, fileTmp, .errorOnMissing = true);
 
         TEST_ERROR_FMT(
-            storageWritePosix(file->driver, buffer), FileWriteError, "unable to write '%s.pgbackrest.tmp': [9] Bad file descriptor",
-            strZ(fileName));
+            storageWritePosix(file->pub.driver, buffer), FileWriteError,
+            "unable to write '%s.pgbackrest.tmp': [9] Bad file descriptor", strZ(fileName));
         TEST_ERROR_FMT(
-            storageWritePosixClose(file->driver), FileSyncError, STORAGE_ERROR_WRITE_SYNC ": [9] Bad file descriptor",
+            storageWritePosixClose(file->pub.driver), FileSyncError, STORAGE_ERROR_WRITE_SYNC ": [9] Bad file descriptor",
             strZ(fileTmp));
 
         // Disable file sync so close() can be reached
-        ((StorageWritePosix *)file->driver)->interface.syncFile = false;
+        ((StorageWritePosix *)file->pub.driver)->interface.syncFile = false;
 
         TEST_ERROR_FMT(
-            storageWritePosixClose(file->driver), FileCloseError, STORAGE_ERROR_WRITE_CLOSE ": [9] Bad file descriptor",
+            storageWritePosixClose(file->pub.driver), FileCloseError, STORAGE_ERROR_WRITE_CLOSE ": [9] Bad file descriptor",
             strZ(fileTmp));
 
         // Set file descriptor to -1 so the close on free with not fail
-        ((StorageWritePosix *)file->driver)->fd = -1;
+        ((StorageWritePosix *)file->pub.driver)->fd = -1;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("fail rename in close");
@@ -1364,7 +1364,7 @@ testRun(void)
             strZ(fileTmp), strZ(fileName));
 
         // Set file descriptor to -1 so the close on free with not fail
-        ((StorageWritePosix *)file->driver)->fd = -1;
+        ((StorageWritePosix *)file->pub.driver)->fd = -1;
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
 

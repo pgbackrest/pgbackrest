@@ -4,6 +4,7 @@ Storage Helper Test Harness
 #include "build.auto.h"
 
 #include "common/debug.h"
+#include "storage/posix/write.h"
 #include "storage/storage.h"
 
 #include "common/harnessDebug.h"
@@ -15,13 +16,19 @@ Include shimmed C modules
 {[SHIM_MODULE]}
 
 /***********************************************************************************************************************************
-Object type
+Object types
 ***********************************************************************************************************************************/
 typedef struct HrnStorageTest
 {
     STORAGE_COMMON_MEMBER;
-    void *posix;
+    void *posix;                                                    // Posix driver
 } HrnStorageTest;
+
+typedef struct HrnStorageWriteTest
+{
+    StorageWriteInterface interface;                                // Interface
+    void *posix;                                                    // Posix driver
+} HrnStorageWriteTest;
 
 /***********************************************************************************************************************************
 Local variables
@@ -37,6 +44,8 @@ Constants
 #define HRN_STORAGE_TEST_SECRET                                     ".pgbfs"
 // STRING_STATIC(HRN_STORAGE_TEST_SECRET_STR,                          HRN_STORAGE_TEST_SECRET); !!!
 
+#define STORAGE_TEST_TYPE                                           STRID5("test", 0xa4cb40)
+
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
@@ -46,13 +55,60 @@ Macros for function logging
     objNameToLog(value, "HrnStorageTest *", buffer, bufferSize)
 
 /***********************************************************************************************************************************
-Test storage driver interface functions.
+Test storage driver interface functions
 ***********************************************************************************************************************************/
 static void
 hrnStorageTestSecretCheck(const String *const file)
 {
     if (strstr(strZ(file), HRN_STORAGE_TEST_SECRET) != NULL)
         THROW_FMT(AssertError, "path/file '%s' cannot contain " HRN_STORAGE_TEST_SECRET, strZ(file));
+}
+
+FN_EXTERN StorageWrite *
+hrnStorageWriteTestNew(
+    HrnStorageTest *const storage, const String *const name, const mode_t modeFile, const mode_t modePath, const String *const user,
+    const String *const group, const time_t timeModified, const bool createPath, const bool syncFile, const bool syncPath,
+    const bool atomic, const bool truncate)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(HRN_STORAGE_TEST, storage);
+        FUNCTION_HARNESS_PARAM(STRING, name);
+        FUNCTION_HARNESS_PARAM(MODE, modeFile);
+        FUNCTION_HARNESS_PARAM(MODE, modePath);
+        FUNCTION_HARNESS_PARAM(STRING, user);
+        FUNCTION_HARNESS_PARAM(STRING, group);
+        FUNCTION_HARNESS_PARAM(TIME, timeModified);
+        FUNCTION_HARNESS_PARAM(BOOL, createPath);
+        FUNCTION_HARNESS_PARAM(BOOL, syncFile);
+        FUNCTION_HARNESS_PARAM(BOOL, syncPath);
+        FUNCTION_HARNESS_PARAM(BOOL, atomic);
+        FUNCTION_HARNESS_PARAM(BOOL, truncate);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(storage != NULL);
+    ASSERT(name != NULL);
+    ASSERT(modeFile != 0);
+    ASSERT(modePath != 0);
+    ASSERT(!truncate);
+    ASSERT(timeModified == 0);
+
+    OBJ_NEW_BEGIN(HrnStorageWriteTest, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
+    {
+        StorageWrite *const posix = storageWritePosixNew(
+            (StoragePosix *)storage, name, modeFile, modePath, user, group, timeModified, createPath, false, false, false, false);
+
+        // Copy the interface and update with our functions
+        StorageWriteInterface interface = *storageWriteInterface(posix);
+
+        *this = (HrnStorageWriteTest)
+        {
+            .posix = storageWriteDriver(posix),
+            .interface = interface,
+        };
+    }
+    OBJ_NEW_END();
+
+    FUNCTION_HARNESS_RETURN(STORAGE_WRITE, storageWriteNew(this, &this->interface));
 }
 
 static StorageInfo
@@ -215,9 +271,9 @@ hrnStorageTestNew(const String *const path, const StoragePosixNewParam param)
     FUNCTION_HARNESS_RETURN(
         STORAGE,
         storageNew(
-            STORAGE_POSIX_TYPE, path, param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile,
-            param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, param.pathExpressionFunction, this,
-            this->interface));
+            STORAGE_TEST_TYPE, path, param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile,
+            param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, 0, param.pathExpressionFunction,
+            this, this->interface));
 }
 
 static Storage *

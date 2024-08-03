@@ -446,8 +446,8 @@ testRun(void)
         TEST_RESULT_BOOL(storageWriteTruncate(write), true, "file will be truncated");
 
         TEST_RESULT_VOID(storagePutP(write, contentBuf), "write file");
-        TEST_RESULT_UINT(((StorageWriteRemote *)write->driver)->protocolWriteBytes, bufSize(contentBuf), "check write size");
-        TEST_RESULT_VOID(storageWriteRemoteClose(write->driver), "close file again");
+        TEST_RESULT_UINT(((StorageWriteRemote *)write->pub.driver)->protocolWriteBytes, bufSize(contentBuf), "check write size");
+        TEST_RESULT_VOID(storageWriteRemoteClose(write->pub.driver), "close file again");
         TEST_RESULT_VOID(storageWriteFree(write), "free file");
 
         // Make sure the file was written correctly
@@ -503,7 +503,8 @@ testRun(void)
             write, storageNewWriteP(storageRepoWrite, STRDEF("test2.txt"), .compressible = true), "new write file (compress)");
         TEST_RESULT_VOID(storagePutP(write, contentBuf), "write file");
         TEST_RESULT_BOOL(
-            ((StorageWriteRemote *)write->driver)->protocolWriteBytes < bufSize(contentBuf), true, "check compressed write size");
+            ((StorageWriteRemote *)write->pub.driver)->protocolWriteBytes < bufSize(contentBuf), true,
+            "check compressed write size");
     }
 
     // *****************************************************************************************************************************
