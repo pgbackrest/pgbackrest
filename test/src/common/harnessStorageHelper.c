@@ -89,13 +89,15 @@ hrnStorageWriteTestNew(
     ASSERT(name != NULL);
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);
-    ASSERT(!truncate);
+    ASSERT(truncate);
     ASSERT(timeModified == 0);
+    ASSERT(createPath);
 
     OBJ_NEW_BEGIN(HrnStorageWriteTest, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         StorageWrite *const posix = storageWritePosixNew(
-            (StoragePosix *)storage, name, modeFile, modePath, user, group, timeModified, createPath, false, false, false, false);
+            (StoragePosix *)storage, name, modeFile, modePath, user, group, timeModified, createPath, false, false, false,
+            truncate);
 
         // Copy the interface and update with our functions
         StorageWriteInterface interface = *storageWriteInterface(posix);
