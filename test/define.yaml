@@ -351,7 +351,10 @@ unit:
       - name: crypto
         total: 4
         feature: STORAGE
-        harness: storage
+        harness:
+          name: storage
+          shim:
+            storage/posix/storage: ~
 
         coverage:
           - common/crypto/cipherBlock
