@@ -9,6 +9,7 @@ Test Posix/CIFS Storage
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
 #include "common/harnessStorage.h"
+#include "common/harnessTime.h"
 
 /***********************************************************************************************************************************
 Test function for path expression
@@ -1696,19 +1697,50 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write file with version");
 
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test1")), BUFSTRDEF("test1")), "write version");
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test1")), BUFSTRDEF("test1")), "write version");
-        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test1")), BUFSTRDEF("test1a")), "write version");
+        const TimeMSec timeOld = 1722740000000;
+        const TimeMSec timeNew = 1722740099000;
 
-        // List using standard driver to show structure
+        hrnTimeMSecSetOne(timeOld);
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test1")), BUFSTRDEF("test1")), "write version");
+        hrnTimeMSecSetOne(timeOld);
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test1")), BUFSTRDEF("test1")), "write version");
+        hrnTimeMSecSetOne(timeNew);
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test1")), BUFSTRDEF("test1a")), "write version");
+        hrnTimeMSecSetOne(timeOld);
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test2")), BUFSTRDEF("test2")), "write version");
+        hrnTimeMSecSetOne(timeNew);
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test2")), BUFSTRDEF("test2")), "write version");
+        hrnTimeMSecSetOne(timeOld);
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test3")), BUFSTRDEF("test3")), "write version");
+        hrnTimeMSecSetOne(timeNew);
+        TEST_RESULT_VOID(storageRemoveP(storageRepoWrite(), STRDEF("test3")), "remove version");
+
+        // Raw list to show structure
         TEST_STORAGE_LIST(
             storageTest, NULL,
             ".pgbfs/\n"
             ".pgbfs/test1/\n"
-            ".pgbfs/test1/v0001\n"
-            ".pgbfs/test1/v0002\n"
-            ".pgbfs/test1/v0003\n"
-            "test1\n");
+            ".pgbfs/test1/v0001 {s=5, t=1722740000}\n"
+            ".pgbfs/test1/v0002 {s=5, t=1722740000}\n"
+            ".pgbfs/test1/v0003 {s=6, t=1722740099}\n"
+            ".pgbfs/test2/\n"
+            ".pgbfs/test2/v0001 {s=5, t=1722740000}\n"
+            ".pgbfs/test2/v0002 {s=5, t=1722740099}\n"
+            ".pgbfs/test3/\n"
+            ".pgbfs/test3/v0001 {s=5, t=1722740000}\n"
+            ".pgbfs/test3/v0002.delete {s=0, t=1722740099}\n"
+            "test1 {s=6, t=1722740099}\n"
+            "test2 {s=5, t=1722740099}\n",
+            .level = storageInfoLevelBasic);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("list without limit");
+
+        TEST_STORAGE_LIST(
+            storageRepoWrite(), NULL,
+            "test1 {s=6, t=1722740099}\n"
+            "test2 {s=5, t=1722740099}\n",
+            .level = storageInfoLevelBasic);
 
         hrnStorageHelperRepoShimSet(false);
     }

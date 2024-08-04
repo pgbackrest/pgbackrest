@@ -50,6 +50,10 @@ FN_EXTERN int dayOfYear(int year, int month, int day);
 // is the number of seconds plus or minus (+/-) the provided time - if 0, then the datetime is assumed to be UTC)
 FN_EXTERN time_t epochFromParts(int year, int month, int day, int hour, int minute, int second, int tzOffsetSecond);
 
+// Return epoch from a time string matching this format:
+// ^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}((\,|\.)[0-9]{1,6})?((\+|\-)[0-9]{2}(:?)([0-9]{2})?)?$
+FN_EXTERN time_t epochFromZ(const char *time);
+
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/

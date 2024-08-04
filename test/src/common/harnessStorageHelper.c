@@ -4,6 +4,7 @@ Storage Helper Test Harness
 #include "build.auto.h"
 
 #include "common/debug.h"
+#include "common/time.h"
 #include "storage/posix/write.h"
 #include "storage/storage.h"
 
@@ -60,14 +61,43 @@ Macros for function logging
 #define FUNCTION_LOG_HRN_STORAGE_WRITE_TEST_FORMAT(value, buffer, bufferSize)                                                      \
     objNameToLog(value, "HrnStorageWriteTest *", buffer, bufferSize)
 
-/***********************************************************************************************************************************
-Test storage driver interface functions
-***********************************************************************************************************************************/
 static void
 hrnStorageTestSecretCheck(const String *const file)
 {
     if (strstr(strZ(file), HRN_STORAGE_TEST_SECRET) != NULL)
         THROW_FMT(AssertError, "path/file '%s' cannot contain " HRN_STORAGE_TEST_SECRET, strZ(file));
+}
+
+static String *
+hrnStorageTestVersionFind(const Storage *const storage, const String *const file)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STORAGE, storage);
+        FUNCTION_HARNESS_PARAM(STRING, file);
+    FUNCTION_HARNESS_END();
+
+    String *const result = strNew();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *version;
+
+        for (unsigned int versionId = 1;; versionId++)
+        {
+            version = strNewFmt("%s/" HRN_STORAGE_TEST_SECRET "/%s/v%04u", strZ(strPath(file)), strZ(strBase(file)), versionId);
+
+            if (!storageInfoP(storage, version, .ignoreMissing = true).exists &&
+                !storageInfoP(storage, strNewFmt("%s.delete", strZ(version)), .ignoreMissing = true).exists)
+            {
+                break;
+            }
+        }
+
+        strCat(result, version);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_HARNESS_RETURN(STRING, result);
 }
 
 static void
@@ -175,7 +205,7 @@ hrnStorageWriteTestNew(
     OBJ_NEW_BEGIN(HrnStorageWriteTest, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         // Make sure the main file and the version both have the same timestamp
-        const time_t timeModified = time(NULL);
+        const time_t timeModified = (time_t)(timeMSec() / MSEC_PER_SEC);
 
         StorageWrite *const posix = storageWritePosixNew(
             storageDriver(storagePosix), name, modeFile, modePath, user, group, timeModified, createPath, false, false, false,
@@ -188,24 +218,13 @@ hrnStorageWriteTestNew(
         interface.ioInterface.open = hrnStorageWriteTestOpen;
         interface.ioInterface.write = hrnStorageWriteTest;
 
-        // Find a version that has not been used
-        const String *version;
-
-        for (unsigned int versionId = 1; ; versionId++)
-        {
-            version = strNewFmt("%s/" HRN_STORAGE_TEST_SECRET "/%s/v%04u", strZ(strPath(name)), strZ(strBase(name)), versionId);
-
-            if (!storageInfoP(storagePosix, version, .ignoreMissing = true).exists)
-                break;
-        }
-
         *this = (HrnStorageWriteTest)
         {
             .base = storageWriteDriver(posix),
             .version = storageWriteDriver(
                 storageWritePosixNew(
-                    storageDriver(storagePosix), version, modeFile, modePath, user, group, timeModified, createPath, false, false,
-                    false, truncate)),
+                    storageDriver(storagePosix), hrnStorageTestVersionFind(storagePosix, name), modeFile, modePath, user, group,
+                    timeModified, createPath, false, false, false, truncate)),
             .interface = interface,
         };
     }
@@ -242,14 +261,32 @@ hrnStorageTestList(THIS_VOID, const String *const path, const StorageInfoLevel l
         FUNCTION_HARNESS_PARAM(HRN_STORAGE_TEST, this);
         FUNCTION_HARNESS_PARAM(STRING, path);
         FUNCTION_HARNESS_PARAM(ENUM, level);
-        (void)param;                                                // No parameters are used
+        FUNCTION_HARNESS_PARAM(TIME, param.limitTime);
     FUNCTION_HARNESS_END();
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
     hrnStorageTestSecretCheck(path);
 
-    FUNCTION_HARNESS_RETURN(STORAGE_LIST, hrnStorageInterfaceDummy.list(storageDriver(this->storagePosix), path, level, param));
+    StorageList *result = NULL;
+    const StorageList *const list = hrnStorageInterfaceDummy.list(storageDriver(this->storagePosix), path, level, param);
+
+    if (list != NULL)
+    {
+        result = storageLstNew(level);
+
+        for (unsigned int listIdx = 0; listIdx < storageLstSize(list); listIdx++)
+        {
+            const StorageInfo info = storageLstGet(list, listIdx);
+
+            if (strstr(strZ(info.name), HRN_STORAGE_TEST_SECRET) != NULL)
+                continue;
+
+            storageLstAdd(result, &info);
+        }
+    }
+
+    FUNCTION_HARNESS_RETURN(STORAGE_LIST, result);
 }
 
 static StorageRead *
@@ -338,20 +375,34 @@ hrnStorageTestRemove(THIS_VOID, const String *const file, const StorageInterface
     ASSERT(file != NULL);
     hrnStorageTestSecretCheck(file);
 
+    // Set modified time and determine if file exists
+    const time_t timeModified = (time_t)(timeMSec() / MSEC_PER_SEC);
+    const bool exists = storageExistsP(this->storagePosix, file);
+
     hrnStorageInterfaceDummy.remove(storageDriver(this->storagePosix), file, param);
+
+    // If the file existed then write a delete marker
+    if (exists)
+    {
+        storagePutP(
+            storageNewWriteP(
+                this->storagePosix, strNewFmt("%s.delete", strZ(hrnStorageTestVersionFind(this->storagePosix, file))),
+                .timeModified = timeModified, .noAtomic = true, .noSyncFile = true, .noSyncPath = true),
+            NULL);
+    }
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
 
-FN_EXTERN Storage *
-hrnStorageTestNew(const String *const path, const StoragePosixNewParam param)
+static Storage *
+hrnStorageTestNew(
+    const String *const path, const bool write, const time_t limitTime, StoragePathExpressionCallback pathExpressionFunction)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STRING, path);
-        FUNCTION_HARNESS_PARAM(MODE, param.modeFile);
-        FUNCTION_HARNESS_PARAM(MODE, param.modePath);
-        FUNCTION_HARNESS_PARAM(BOOL, param.write);
-        FUNCTION_HARNESS_PARAM(FUNCTIONP, param.pathExpressionFunction);
+        FUNCTION_HARNESS_PARAM(BOOL, write);
+        FUNCTION_HARNESS_PARAM(TIME, limitTime);
+        FUNCTION_HARNESS_PARAM(FUNCTIONP, pathExpressionFunction);
     FUNCTION_HARNESS_END();
 
     static const StorageInterface hrnStorageInterfaceTest =
@@ -371,7 +422,9 @@ hrnStorageTestNew(const String *const path, const StoragePosixNewParam param)
         *this = (HrnStorageTest)
         {
             .interface = hrnStorageInterfaceTest,
-            .storagePosix = storagePosixNew(path, param),
+            .storagePosix = storagePosixNewP(
+                path, .write = write, .modeFile = STORAGE_MODE_FILE_DEFAULT, .modePath = STORAGE_MODE_PATH_DEFAULT,
+                .pathExpressionFunction = pathExpressionFunction),
         };
     }
     OBJ_NEW_END();
@@ -379,9 +432,8 @@ hrnStorageTestNew(const String *const path, const StoragePosixNewParam param)
     FUNCTION_HARNESS_RETURN(
         STORAGE,
         storageNew(
-            STORAGE_TEST_TYPE, path, param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile,
-            param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, 0, param.pathExpressionFunction,
-            this, this->interface));
+            STORAGE_TEST_TYPE, path, STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, limitTime,
+            pathExpressionFunction, this, this->interface));
 }
 
 static Storage *
@@ -397,8 +449,8 @@ storageRepoGet(const unsigned int repoIdx, const bool write)
         FUNCTION_HARNESS_RETURN(
             STORAGE,
             hrnStorageTestNew(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx),
-                (StoragePosixNewParam){.write = write, .pathExpressionFunction = storageRepoPathExpression}));
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write,
+                cfgOptionTest(cfgOptLimitTime) ? epochFromZ(strZ(cfgOptionStr(cfgOptLimitTime))) : 0, storageRepoPathExpression));
     }
 
     FUNCTION_HARNESS_RETURN(STORAGE, storageRepoGet_SHIMMED(repoIdx, write));

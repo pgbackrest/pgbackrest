@@ -3,7 +3,9 @@ Time Management
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <ctype.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/time.h>
 
 #include "common/debug.h"
@@ -186,4 +188,107 @@ epochFromParts(
         -1 * tzOffsetSecond + second + minute * 60 + hour * 3600 +
         (dayOfYear(year, month, day) - 1) * 86400 + (year - 1900 - 70) * 31536000 +
         ((year - 1900 - 69) / 4) * 86400 - ((year - 1900 - 1) / 100) * 86400 + ((year - 1900 + 299) / 400) * 86400);
+}
+
+/**********************************************************************************************************************************/
+static int
+timePartFromZN(const char *const time, const char *const part, const size_t partSize)
+{
+    int result = 0;
+    int power = 1;
+
+    for (size_t partIdx = partSize - 1; partIdx < partSize; partIdx--)
+    {
+        if (!isdigit(part[partIdx]))
+            THROW_FMT(FormatError, "invalid date/time %s", time);
+
+        result += (part[partIdx] - '0') * power;
+        power *= 10;
+    }
+
+    return result;
+}
+
+FN_EXTERN time_t
+epochFromZ(const char *const time)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, time);
+    FUNCTION_TEST_END();
+
+    ASSERT(time != NULL);
+
+    // Validate structure of date/time
+    if (strlen(time) < 19 || time[4] != '-' || time[7] != '-' || time[10] != ' ' || time[13] != ':' || time[16] != ':')
+        THROW_FMT(FormatError, "invalid date/time %s", time);
+
+    // Parse date/time // !!! REMOVE DT
+    const int year = timePartFromZN(time, time, 4);
+    const int month = timePartFromZN(time, time + 5, 2);
+    const int day = timePartFromZN(time, time + 8, 2);
+    const int hour = timePartFromZN(time, time + 11, 2);
+    const int minute = timePartFromZN(time, time + 14, 2);
+    const int second = timePartFromZN(time, time + 17, 2);
+
+    // Confirm date and time parts are valid
+    datePartsValid(year, month, day);
+    timePartsValid(hour, minute, second);
+
+    // Consume milliseconds when present (they are omitted from the result)
+    const char *part = time + 19;
+
+    if ((*part == '.' || *part == ',') && strlen(part) >= 2)
+    {
+        part++;
+
+        while (*part != 0 && isdigit(*part))
+            part++;
+    }
+
+    // Add timezone offset when present
+    if ((*part == '+' || *part == '-') && strlen(part) >= 3)
+    {
+        const int offsetHour = timePartFromZN(time, part + 1, 2) * (*part == '-' ? -1 : 1);
+        part += 3;
+
+        // Offset separator is optional
+        if (*part == ':')
+            part++;
+
+        // Offset minutes are optional
+        int offsetMinute = 0;
+
+        if (strlen(part) == 2)
+        {
+            offsetMinute = timePartFromZN(time, part, 2);
+            part += 2;
+        }
+
+        // Make sure there is nothing left over
+        if (*part != 0)
+            THROW_FMT(FormatError, "invalid date/time %s", time);
+
+        FUNCTION_TEST_RETURN(
+            TIME, epochFromParts(year, month, day, hour, minute, second, tzOffsetSeconds(offsetHour, offsetMinute)));
+    }
+
+    // Make sure there is nothing left over
+    if (*part != 0)
+        THROW_FMT(FormatError, "invalid date/time %s", time);
+
+    // If no timezone was specified then use the current timezone. Set tm_isdst to -1 to force mktime to consider if DST. For
+    // example, if system time is America/New_York then 2019-09-14 20:02:49 was a time in DST so the Epoch value should be
+    // 1568505769 (and not 1568509369 which would be 2019-09-14 21:02:49 - an hour too late).
+    struct tm timePart =
+    {
+        .tm_year = year - 1900,
+        .tm_mon = month - 1,
+        .tm_mday = day,
+        .tm_hour = hour,
+        .tm_min = minute,
+        .tm_sec = second,
+        .tm_isdst = -1,
+    };
+
+    FUNCTION_TEST_RETURN(TIME, mktime(&timePart));
 }
