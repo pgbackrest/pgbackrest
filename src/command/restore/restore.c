@@ -778,7 +778,7 @@ restoreManifestOwner(const Manifest *const manifest, const String **const rootRe
         if (userRoot())
         {
             // Get user/group info from data directory to use for invalid user/groups
-            StorageInfo pathInfo = storageInfoP(storagePg(), manifestTargetBase(manifest)->path);
+            StorageInfo pathInfo = storageInfoP(storagePg(), manifestTargetBase(manifest)->path, .ignoreMissing = true);
 
             // If user/group is null then set it to root
             if (pathInfo.user == NULL)                                                                              // {vm_covered}
@@ -2618,7 +2618,7 @@ cmdRestore(void)
                 storagePutP(
                     storageNewWriteP(
                         storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT),
-                        .modeFile = pgControlFile.mode, .timeModified = pgControlFile.timestamp),
+                        .timeModified = pgControlFile.timestamp, .noAtomic = true, .noCreatePath = true, .noSyncPath = true),
                     pgControlBuffer);
             }
 

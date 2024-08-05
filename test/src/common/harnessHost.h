@@ -315,6 +315,7 @@ String *hrnHostExec(HrnHost *this, const String *command, HrnHostExecParam param
 typedef struct HrnHostExecBrParam
 {
     VAR_PARAM_HEADER;
+    const char *user;                                               // User to execute command
     const char *option;                                             // Options
     const char *param;                                              // Parameters
     int resultExpect;                                               // Expected result, if not 0
