@@ -234,7 +234,12 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
             strCatZ(item, " {");
 
             if (info.type == storageTypeFile)
+            {
                 strCatFmt(item, "s=%" PRIu64 ", t=%" PRId64, info.size, (int64_t)info.timeModified);
+
+                if (info.versionId != NULL)
+                    strCatFmt(item, ", v=%s", strZ(info.versionId));
+            }
             else if (info.type == storageTypeLink)
             {
                 const StorageInfo infoLink = storageInfoP(

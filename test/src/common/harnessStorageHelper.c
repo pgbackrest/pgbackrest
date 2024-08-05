@@ -269,20 +269,71 @@ hrnStorageTestList(THIS_VOID, const String *const path, const StorageInfoLevel l
     hrnStorageTestSecretCheck(path);
 
     StorageList *result = NULL;
-    const StorageList *const list = hrnStorageInterfaceDummy.list(storageDriver(this->storagePosix), path, level, param);
+    const StorageList *const list = storageInterfaceListP(storageDriver(this->storagePosix), path, level);
 
     if (list != NULL)
     {
         result = storageLstNew(level);
 
-        for (unsigned int listIdx = 0; listIdx < storageLstSize(list); listIdx++)
+        if (param.limitTime != 0)
         {
-            const StorageInfo info = storageLstGet(list, listIdx);
+            // Get just the paths
+            for (unsigned int listIdx = 0; listIdx < storageLstSize(list); listIdx++)
+            {
+                const StorageInfo info = storageLstGet(list, listIdx);
 
-            if (strstr(strZ(info.name), HRN_STORAGE_TEST_SECRET) != NULL)
-                continue;
+                if (strstr(strZ(info.name), HRN_STORAGE_TEST_SECRET) != NULL || info.type != storageTypePath)
+                    continue;
 
-            storageLstAdd(result, &info);
+                storageLstAdd(result, &info);
+            }
+
+            // Get file versions
+            const StorageList *const list = storageInterfaceListP(
+                storageDriver(this->storagePosix), strNewFmt("%s/" HRN_STORAGE_TEST_SECRET, strZ(path)), level);
+
+            for (unsigned int listIdx = 0; listIdx < storageLstSize(list); listIdx++)
+            {
+                const StorageInfo info = storageLstGet(list, listIdx);
+                StorageList *const versionList =
+                    storageInterfaceListP(
+                        storageDriver(this->storagePosix),
+                        strNewFmt("%s/" HRN_STORAGE_TEST_SECRET "/%s", strZ(path), strZ(info.name)), level);
+                storageLstSort(versionList, sortOrderDesc);
+
+                for (unsigned int versionIdx = 0; versionIdx < storageLstSize(versionList); versionIdx++)
+                {
+                    StorageInfo versionInfo = storageLstGet(versionList, versionIdx);
+
+                    // Return version if within the time limit
+                    if (versionInfo.timeModified <= param.limitTime)
+                    {
+                        // If the most recent version is a delete marker then skip the file
+                        if (strEndsWithZ(versionInfo.name, ".delete"))
+                            break;
+
+                        // Return the version
+                        versionInfo.versionId = versionInfo.name;
+                        versionInfo.name = info.name;
+
+                        storageLstAdd(result, &versionInfo);
+                        break;
+                    }
+                }
+            }
+        }
+        else
+        {
+            // Return everything except the contents of the secret path
+            for (unsigned int listIdx = 0; listIdx < storageLstSize(list); listIdx++)
+            {
+                const StorageInfo info = storageLstGet(list, listIdx);
+
+                if (strstr(strZ(info.name), HRN_STORAGE_TEST_SECRET) != NULL)
+                    continue;
+
+                storageLstAdd(result, &info);
+            }
         }
     }
 
@@ -305,6 +356,8 @@ hrnStorageTestNewRead(THIS_VOID, const String *const file, const bool ignoreMiss
     ASSERT(this != NULL);
     ASSERT(file != NULL);
     hrnStorageTestSecretCheck(file);
+
+    // !!! Add versioning logic
 
     FUNCTION_HARNESS_RETURN(
         STORAGE_READ, hrnStorageInterfaceDummy.newRead(storageDriver(this->storagePosix), file, ignoreMissing, param));
@@ -357,6 +410,8 @@ hrnStorageTestPathRemove(THIS_VOID, const String *const path, const bool recurse
     ASSERT(path != NULL);
     hrnStorageTestSecretCheck(path);
 
+    // !!! ADD VERSION LOGIC
+
     FUNCTION_HARNESS_RETURN(BOOL, hrnStorageInterfaceDummy.pathRemove(storageDriver(this->storagePosix), path, recurse, param));
 }
 
@@ -407,7 +462,7 @@ hrnStorageTestNew(
 
     static const StorageInterface hrnStorageInterfaceTest =
     {
-        .feature = 0, // !!! NEED TO ADD VERSION
+        .feature = 1 << storageFeatureVersioning,
 
         .info = hrnStorageTestInfo,
         .list = hrnStorageTestList,

@@ -222,7 +222,7 @@ epochFromZ(const char *const time)
     if (strlen(time) < 19 || time[4] != '-' || time[7] != '-' || time[10] != ' ' || time[13] != ':' || time[16] != ':')
         THROW_FMT(FormatError, "invalid date/time %s", time);
 
-    // Parse date/time // !!! REMOVE DT
+    // Parse date/time
     const int year = timePartFromZN(time, time, 4);
     const int month = timePartFromZN(time, time + 5, 2);
     const int day = timePartFromZN(time, time + 8, 2);

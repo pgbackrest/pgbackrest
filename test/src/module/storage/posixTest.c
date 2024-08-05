@@ -1689,20 +1689,21 @@ testRun(void)
     {
         hrnStorageHelperRepoShimSet(true);
 
-        StringList *argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
-        HRN_CFG_LOAD(cfgCmdInfo, argList);
+        StringList *argListBase = strLstNew();
+        hrnCfgArgRawZ(argListBase, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argListBase, cfgOptRepoPath, TEST_PATH);
+        HRN_CFG_LOAD(cfgCmdInfo, argListBase);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write file with version");
 
         const TimeMSec timeOld = 1722740000000;
+        const TimeMSec timeMid = 1722740049000;
         const TimeMSec timeNew = 1722740099000;
 
         hrnTimeMSecSetOne(timeOld);
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test1")), BUFSTRDEF("test1")), "write version");
-        hrnTimeMSecSetOne(timeOld);
+        hrnTimeMSecSetOne(timeMid);
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test1")), BUFSTRDEF("test1")), "write version");
         hrnTimeMSecSetOne(timeNew);
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test1")), BUFSTRDEF("test1a")), "write version");
@@ -1712,7 +1713,7 @@ testRun(void)
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test2")), BUFSTRDEF("test2")), "write version");
         hrnTimeMSecSetOne(timeOld);
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test3")), BUFSTRDEF("test3")), "write version");
-        hrnTimeMSecSetOne(timeNew);
+        hrnTimeMSecSetOne(timeMid);
         TEST_RESULT_VOID(storageRemoveP(storageRepoWrite(), STRDEF("test3")), "remove version");
 
         // Raw list to show structure
@@ -1721,14 +1722,14 @@ testRun(void)
             ".pgbfs/\n"
             ".pgbfs/test1/\n"
             ".pgbfs/test1/v0001 {s=5, t=1722740000}\n"
-            ".pgbfs/test1/v0002 {s=5, t=1722740000}\n"
+            ".pgbfs/test1/v0002 {s=5, t=1722740049}\n"
             ".pgbfs/test1/v0003 {s=6, t=1722740099}\n"
             ".pgbfs/test2/\n"
             ".pgbfs/test2/v0001 {s=5, t=1722740000}\n"
             ".pgbfs/test2/v0002 {s=5, t=1722740099}\n"
             ".pgbfs/test3/\n"
             ".pgbfs/test3/v0001 {s=5, t=1722740000}\n"
-            ".pgbfs/test3/v0002.delete {s=0, t=1722740099}\n"
+            ".pgbfs/test3/v0002.delete {s=0, t=1722740049}\n"
             "test1 {s=6, t=1722740099}\n"
             "test2 {s=5, t=1722740099}\n",
             .level = storageInfoLevelBasic);
@@ -1737,12 +1738,36 @@ testRun(void)
         TEST_TITLE("list without limit");
 
         TEST_STORAGE_LIST(
-            storageRepoWrite(), NULL,
+            storageRepo(), NULL,
             "test1 {s=6, t=1722740099}\n"
             "test2 {s=5, t=1722740099}\n",
             .level = storageInfoLevelBasic);
 
-        hrnStorageHelperRepoShimSet(false);
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("list with limits");
+
+        StringList *argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:53:20+00");
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        TEST_STORAGE_LIST(
+            storageRepo(), NULL,
+            "test1 {s=5, t=1722740000, v=v0001}\n"
+            "test2 {s=5, t=1722740000, v=v0001}\n"
+            "test3 {s=5, t=1722740000, v=v0001}\n",
+            .level = storageInfoLevelBasic);
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:54:09+00");
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        TEST_STORAGE_LIST(
+            storageRepo(), NULL,
+            "test1 {s=5, t=1722740049, v=v0002}\n"
+            "test2 {s=5, t=1722740000, v=v0001}\n",
+            .level = storageInfoLevelBasic);
+
+        // hrnStorageHelperRepoShimSet(false); !!! PUT THIS AT THE END
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
