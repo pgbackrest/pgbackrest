@@ -16,6 +16,7 @@ Info Command
 #include "common/io/fdWrite.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/regExp.h"
 #include "common/type/json.h"
 #include "config/config.h"
 #include "info/info.h"
@@ -45,6 +46,9 @@ VARIANT_STRDEF_STATIC(BACKUP_KEY_LINK_VAR,                          "link");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_LSN_VAR,                           "lsn");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_PRIOR_VAR,                         "prior");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_REFERENCE_VAR,                     "reference");
+VARIANT_STRDEF_STATIC(BACKUP_KEY_REFERENCE_FULL_VAR,                "reference-full");
+VARIANT_STRDEF_STATIC(BACKUP_KEY_REFERENCE_DIFF_VAR,                "reference-diff");
+VARIANT_STRDEF_STATIC(BACKUP_KEY_REFERENCE_INCR_VAR,                "reference-incr");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_TABLESPACE_VAR,                    "tablespace");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_TIMESTAMP_VAR,                     "timestamp");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_TYPE_VAR,                          "type");
@@ -435,6 +439,38 @@ backupListAdd(
     kvPut(
         varKv(backupInfo), BACKUP_KEY_REFERENCE_VAR,
         (backupData->backupReference != NULL ? varNewVarLst(varLstNewStrLst(backupData->backupReference)) : NULL));
+
+    // Display complete reference list only for json output or --set text. Otherwise keep track of full, diff and incremental to
+    // display a summary.
+    if (backupData->backupReference != NULL && backupLabel == NULL && !outputJson)
+    {
+        StringList *const fullList = strLstNew();
+        StringList *const diffList = strLstNew();
+        StringList *const incrList = strLstNew();
+
+        for (unsigned int backupIdx = 0; backupIdx < strLstSize(backupData->backupReference); backupIdx++)
+        {
+            const String *const backupReferenceLabel = strLstGet(backupData->backupReference, backupIdx);
+
+            if (regExpMatchOne(backupRegExpP(.full = true), backupReferenceLabel))
+                strLstAdd(fullList, backupReferenceLabel);
+
+            if (regExpMatchOne(backupRegExpP(.differential = true), backupReferenceLabel))
+                strLstAdd(diffList, backupReferenceLabel);
+
+            if (regExpMatchOne(backupRegExpP(.incremental = true), backupReferenceLabel))
+                strLstAdd(incrList, backupReferenceLabel);
+        }
+
+        // The reference list will always contain at least 1 full
+        kvPut(varKv(backupInfo), BACKUP_KEY_REFERENCE_FULL_VAR, varNewVarLst(varLstNewStrLst(fullList)));
+        kvPut(
+            varKv(backupInfo), BACKUP_KEY_REFERENCE_DIFF_VAR,
+            strLstSize(diffList) > 0 ? varNewVarLst(varLstNewStrLst(diffList)) : NULL);
+        kvPut(
+            varKv(backupInfo), BACKUP_KEY_REFERENCE_INCR_VAR,
+            strLstSize(incrList) > 0 ? varNewVarLst(varLstNewStrLst(incrList)) : NULL);
+    }
 
     // archive section
     KeyValue *const archiveInfo = kvPutKv(varKv(backupInfo), KEY_ARCHIVE_VAR);
@@ -954,8 +990,25 @@ formatTextBackup(const DbGroup *const dbGroup, String *const resultStr)
 
         if (kvGet(backupInfo, BACKUP_KEY_REFERENCE_VAR) != NULL)
         {
-            const StringList *const referenceList = strLstNewVarLst(varVarLst(kvGet(backupInfo, BACKUP_KEY_REFERENCE_VAR)));
-            strCatFmt(resultStr, "            backup reference list: %s\n", strZ(strLstJoin(referenceList, ", ")));
+            if (kvGet(backupInfo, BACKUP_KEY_REFERENCE_FULL_VAR) != NULL)
+            {
+                const String *const diffListSizeText =
+                    kvGet(backupInfo, BACKUP_KEY_REFERENCE_DIFF_VAR) != NULL ?
+                        strNewFmt(", %u diff", varLstSize(varVarLst(kvGet(backupInfo, BACKUP_KEY_REFERENCE_DIFF_VAR)))) : EMPTY_STR;
+                const String *const incrListSizeText =
+                    kvGet(backupInfo, BACKUP_KEY_REFERENCE_INCR_VAR) != NULL ?
+                        strNewFmt(", %u incr", varLstSize(varVarLst(kvGet(backupInfo, BACKUP_KEY_REFERENCE_INCR_VAR)))) : EMPTY_STR;
+
+                strCatFmt(
+                    resultStr, "            backup reference total: %u full%s%s\n",
+                    varLstSize(varVarLst(kvGet(backupInfo, BACKUP_KEY_REFERENCE_FULL_VAR))), strZ(diffListSizeText),
+                    strZ(incrListSizeText));
+            }
+            else
+            {
+                const StringList *const referenceList = strLstNewVarLst(varVarLst(kvGet(backupInfo, BACKUP_KEY_REFERENCE_VAR)));
+                strCatFmt(resultStr, "            backup reference list: %s\n", strZ(strLstJoin(referenceList, ", ")));
+            }
         }
 
         if (kvGet(backupInfo, BACKUP_KEY_DATABASE_REF_VAR) != NULL)

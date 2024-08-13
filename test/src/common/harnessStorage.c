@@ -21,78 +21,29 @@ Storage Test Harness
 #include "common/harnessTest.h"
 
 /***********************************************************************************************************************************
-Dummy functions and interface for constructing test storage drivers
+Include shimmed C modules
 ***********************************************************************************************************************************/
-static StorageInfo
-storageTestDummyInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
+{[SHIM_MODULE]}
+
+/***********************************************************************************************************************************
+Dummy interface for constructing test storage drivers
+***********************************************************************************************************************************/
+const StorageInterface hrnStorageInterfaceDummy =
 {
-    (void)thisVoid;
-    (void)file;
-    (void)level;
-    (void)param;
+    .feature =
+        1 << storageFeaturePath | 1 << storageFeatureHardLink | 1 << storageFeatureSymLink | 1 << storageFeaturePathSync |
+        1 << storageFeatureInfoDetail,
 
-    return (StorageInfo){.exists = false};
-}
-
-static StorageList *
-storageTestDummyList(THIS_VOID, const String *path, StorageInfoLevel level, StorageInterfaceListParam param)
-{
-    (void)thisVoid;
-    (void)path;
-    (void)level;
-    (void)param;
-
-    return false;
-}
-
-static StorageRead *
-storageTestDummyNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInterfaceNewReadParam param)
-{
-    (void)thisVoid;
-    (void)file;
-    (void)ignoreMissing;
-    (void)param;
-
-    return NULL;
-}
-
-static StorageWrite *
-storageTestDummyNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam param)
-{
-    (void)thisVoid;
-    (void)file;
-    (void)param;
-
-    return NULL;
-}
-
-static bool
-storageTestDummyPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
-{
-    (void)thisVoid;
-    (void)path;
-    (void)recurse;
-    (void)param;
-
-    return false;
-}
-
-static void
-storageTestDummyRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam param)
-{
-    (void)thisVoid;
-    (void)file;
-    (void)param;
-}
-
-const StorageInterface storageInterfaceTestDummy =
-{
-    .info = storageTestDummyInfo,
-    .list = storageTestDummyList,
-    .newRead = storageTestDummyNewRead,
-    .newWrite = storageTestDummyNewWrite,
-    .pathRemove = storageTestDummyPathRemove,
-    .remove = storageTestDummyRemove,
+    .info = storagePosixInfo,
+    .linkCreate = storagePosixLinkCreate,
+    .list = storagePosixList,
+    .move = storagePosixMove,
+    .newRead = storagePosixNewRead,
+    .newWrite = storagePosixNewWrite,
+    .pathCreate = storagePosixPathCreate,
+    .pathRemove = storagePosixPathRemove,
+    .pathSync = storagePosixPathSync,
+    .remove = storagePosixRemove,
 };
 
 /**********************************************************************************************************************************/
