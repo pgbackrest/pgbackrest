@@ -263,9 +263,8 @@ typedef struct HrnStorageTimeParam
 void hrnStorageTime(const Storage *const storage, const char *const path, const time_t modified, const HrnStorageTimeParam param);
 
 /***********************************************************************************************************************************
-Dummy interface for constructing test storage drivers. All required functions are stubbed out so this interface can be copied and
-specific functions replaced for testing.
+Dummy interface for constructing test storage drivers. All functions and features are pulled from the Posix driver.
 ***********************************************************************************************************************************/
-extern const StorageInterface storageInterfaceTestDummy;
+extern const StorageInterface hrnStorageInterfaceDummy;
 
 #endif

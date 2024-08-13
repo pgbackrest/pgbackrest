@@ -248,7 +248,7 @@ testRun(void)
 
             *driver = (StorageTestManifestNewBuild)
             {
-                .interface = storageInterfaceTestDummy,
+                .interface = hrnStorageInterfaceDummy,
                 .fileTotal = 100000 * (unsigned int)TEST_SCALE,
             };
         }
