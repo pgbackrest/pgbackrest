@@ -159,10 +159,12 @@ sckClientOpen(THIS_VOID)
                 {
                     SckClientOpenData *const openDataWait = lstGet(openDataList, openDataIdx);
 
-                    if (openDataWait->fd != 0 && sckClientOpenWait(openDataWait, 0))
+                    if (openDataWait->fd != 0)
                     {
                         openData = openDataWait;
-                        break;
+
+                        if (sckClientOpenWait(openDataWait, 0))
+                            break;
                     }
                 }
 
@@ -233,16 +235,14 @@ sckClientOpen(THIS_VOID)
             }
             CATCH_ANY()
             {
-                // Close when a connection was attempted
-                if (openData != NULL)
-                {
-                    // Close socket
-                    close(openData->fd);
+                ASSERT(openData != NULL);
 
-                    // Clear socket so the connection can be retried
-                    openData->fd = 0;
-                    openData->errNo = 0;
-                }
+                // Close socket
+                close(openData->fd);
+
+                // Clear socket so the connection can be retried
+                openData->fd = 0;
+                openData->errNo = 0;
 
                 // Add the error retry info
                 errRetryAddP(errRetry);
