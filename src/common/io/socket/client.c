@@ -165,6 +165,8 @@ sckClientOpen(THIS_VOID)
 
                         if (sckClientOpenWait(openDataWait, 0))
                             break;
+                        else
+                            openData = NULL;
                     }
                 }
 
