@@ -233,12 +233,16 @@ sckClientOpen(THIS_VOID)
             }
             CATCH_ANY()
             {
-                // Close socket
-                close(openData->fd);
+                // Close when a connection was attempted
+                if (openData != NULL)
+                {
+                    // Close socket
+                    close(openData->fd);
 
-                // Clear socket so the connection can be retried
-                openData->fd = 0;
-                openData->errNo = 0;
+                    // Clear socket so the connection can be retried
+                    openData->fd = 0;
+                    openData->errNo = 0;
+                }
 
                 // Add the error retry info
                 errRetryAddP(errRetry);
