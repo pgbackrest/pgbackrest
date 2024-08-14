@@ -161,12 +161,14 @@ sckClientOpen(THIS_VOID)
 
                     if (openDataWait->fd != 0)
                     {
+                        // Set this so error handling will work as expected
                         openData = openDataWait;
 
                         if (sckClientOpenWait(openDataWait, 0))
                             break;
-                        else
-                            openData = NULL;
+
+                        // Reset to NULL if the connection was not successful
+                        openData = NULL;
                     }
                 }
 
