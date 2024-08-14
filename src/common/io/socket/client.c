@@ -164,7 +164,8 @@ sckClientOpen(THIS_VOID)
                         // Set so the connection will be closed on error
                         openData = openDataWait;
 
-                        if (sckClientOpenWait(openDataWait, 0))
+                        // Check if the connection has completed without waiting
+                        if (sckClientOpenWait(openData, 0))
                             break;
 
                         // Reset to NULL if the connection is still waiting so another connection can be attempted
