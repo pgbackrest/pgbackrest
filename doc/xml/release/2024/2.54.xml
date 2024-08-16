@@ -15,6 +15,19 @@
             </release-item>
 
             <release-item>
+                <github-issue id="2420"/>
+                <github-pull-request id="2422"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="anton.glushakov"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Fix segfault on delayed connection errors.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2418"/>
                 <github-pull-request id="2421"/>
 
