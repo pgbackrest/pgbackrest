@@ -1,2 +1,18 @@
 <release date="XXXX-XX-XX" version="2.53.1dev" title="UNDER DEVELOPMENT">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="2407"/>
+                <github-pull-request id="2416"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="will.m"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix permissions when <cmd>restore</cmd> run as root user.</p>
+            </release-item>
+        </release-bug-list>
+    </release-core-list>
 </release>

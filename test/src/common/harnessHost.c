@@ -265,6 +265,7 @@ hrnHostExecBr(HrnHost *const this, const char *const command, const HrnHostExecB
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(HRN_HOST, this);
         FUNCTION_HARNESS_PARAM(STRINGZ, command);
+        FUNCTION_HARNESS_PARAM(STRINGZ, param.user);
         FUNCTION_HARNESS_PARAM(STRINGZ, param.option);
         FUNCTION_HARNESS_PARAM(STRINGZ, param.param);
         FUNCTION_HARNESS_PARAM(INT, param.resultExpect);
@@ -277,6 +278,7 @@ hrnHostExecBr(HrnHost *const this, const char *const command, const HrnHostExecB
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        const String *const user = param.user == NULL ? NULL : STR(param.user);
         String *const commandStr = strCatFmt(strNew(), "pgbackrest --stanza=" HRN_STANZA);
 
         if (param.option != NULL)
@@ -287,7 +289,7 @@ hrnHostExecBr(HrnHost *const this, const char *const command, const HrnHostExecB
         if (param.param != NULL)
             strCatFmt(commandStr, " %s", param.param);
 
-        strCat(result, hrnHostExecP(this, commandStr, .resultExpect = param.resultExpect));
+        strCat(result, hrnHostExecP(this, commandStr, .user = user, .resultExpect = param.resultExpect));
     }
     MEM_CONTEXT_TEMP_END();
 
