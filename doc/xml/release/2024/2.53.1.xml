@@ -14,5 +14,15 @@
                 <p>Fix permissions when <cmd>restore</cmd> run as root user.</p>
             </release-item>
         </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p><proper>PostgreSQL</proper> 17beta3 support.</p>
+            </release-item>
+        </release-improvement-list>
     </release-core-list>
 </release>

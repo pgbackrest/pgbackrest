@@ -169,7 +169,7 @@ Types from src/include/catalog/catversion.h
  */
 
 /*							yyyymmddN */
-#define CATALOG_VERSION_NO	202405161
+#define CATALOG_VERSION_NO	202406281
 
 #elif PG_VERSION >= PG_VERSION_16
 
@@ -333,6 +333,11 @@ Types from src/include/catalog/pg_control.h
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
+#elif PG_VERSION >= PG_VERSION_17
+
+/* Version identifier for this pg_control format */
+#define PG_CONTROL_VERSION	1700
+
 #elif PG_VERSION >= PG_VERSION_13
 
 /* Version identifier for this pg_control format */
@@ -379,6 +384,45 @@ Types from src/include/catalog/pg_control.h
 // CheckPoint Type
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
+
+#elif PG_VERSION >= PG_VERSION_17
+
+/*
+ * Body of CheckPoint XLOG records.  This is declared here because we keep
+ * a copy of the latest one in pg_control for possible disaster recovery.
+ * Changing this struct requires a PG_CONTROL_VERSION bump.
+ */
+typedef struct CheckPoint
+{
+	XLogRecPtr	redo;			/* next RecPtr available when we began to
+								 * create CheckPoint (i.e. REDO start point) */
+	TimeLineID	ThisTimeLineID; /* current TLI */
+	TimeLineID	PrevTimeLineID; /* previous TLI, if this record begins a new
+								 * timeline (equals ThisTimeLineID otherwise) */
+	bool		fullPageWrites; /* current full_page_writes */
+	int			wal_level;		/* current wal_level */
+	FullTransactionId nextXid;	/* next free transaction ID */
+	Oid			nextOid;		/* next free OID */
+	MultiXactId nextMulti;		/* next free MultiXactId */
+	MultiXactOffset nextMultiOffset;	/* next free MultiXact offset */
+	TransactionId oldestXid;	/* cluster-wide minimum datfrozenxid */
+	Oid			oldestXidDB;	/* database with minimum datfrozenxid */
+	MultiXactId oldestMulti;	/* cluster-wide minimum datminmxid */
+	Oid			oldestMultiDB;	/* database with minimum datminmxid */
+	pg_time_t	time;			/* time stamp of checkpoint */
+	TransactionId oldestCommitTsXid;	/* oldest Xid with valid commit
+										 * timestamp */
+	TransactionId newestCommitTsXid;	/* newest Xid with valid commit
+										 * timestamp */
+
+	/*
+	 * Oldest XID still running. This is only needed to initialize hot standby
+	 * mode from an online checkpoint, so we only bother calculating this for
+	 * online checkpoints and only when wal_level is replica. Otherwise it's
+	 * set to InvalidTransactionId.
+	 */
+	TransactionId oldestActiveXid;
+} CheckPoint;
 
 #elif PG_VERSION >= PG_VERSION_14
 
@@ -1582,7 +1626,7 @@ Types from src/include/access/xlog_internal.h
 
 #elif PG_VERSION >= PG_VERSION_17
 
-#define XLOG_PAGE_MAGIC 0xD115	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD116	/* can be used as WAL version indicator */
 
 #elif PG_VERSION >= PG_VERSION_16
 
