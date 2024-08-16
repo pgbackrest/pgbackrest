@@ -914,6 +914,17 @@ testRun(void)
             "command does not allow parameters");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("help not available for roles other than main");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "backup:remote");
+        TEST_ERROR(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), CommandInvalidError,
+            "help is not available for the 'remote' role");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("help ignores parameters");
 
         argList = strLstNew();
