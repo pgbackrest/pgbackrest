@@ -17,6 +17,7 @@ typedef struct TestStorageGetParam
 {
     VAR_PARAM_HEADER;
     bool remove;                                                    // Remove file after testing?
+    bool nullOnMissing;                                             // NULL when file is missing
     CompressType compressType;                                      // Compression extension added to file name (limited gz and bz2)
     CipherType cipherType;
     const char *cipherPass;                                         // If pass=null but cipherType set, defaults to TEST_CIPHER_PASS

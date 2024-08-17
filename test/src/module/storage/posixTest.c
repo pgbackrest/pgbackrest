@@ -977,7 +977,8 @@ testRun(void)
             storageNewWriteP(storageTest, fileName, .user = TEST_USER_STR, .group = TEST_GROUP_STR, .timeModified = 1),
             "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
-        TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), ((StorageWritePosix *)file->pub.driver)->fd, "check write fd");
+        TEST_RESULT_INT(
+            ioWriteFd(storageWriteIo(file)), ((StorageWritePosix *)ioWriteDriver(storageWriteIo(file)))->fd, "check write fd");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
         TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0750, "check path mode");
         TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0640, "check file mode");
@@ -1024,7 +1025,7 @@ testRun(void)
             "new write file (set mode)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
-        TEST_RESULT_VOID(storageWritePosixClose(file->pub.driver), "close file again");
+        TEST_RESULT_VOID(storageWritePosixClose(ioWriteDriver(storageWriteIo(file))), "close file again");
         TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0700, "check path mode");
         TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0600, "check file mode");
     }
@@ -1330,25 +1331,25 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
 
         // Close the file descriptor so operations will fail
-        close(((StorageWritePosix *)file->pub.driver)->fd);
+        close(((StorageWritePosix *)ioWriteDriver(storageWriteIo(file)))->fd);
         storageRemoveP(storageTest, fileTmp, .errorOnMissing = true);
 
         TEST_ERROR_FMT(
-            storageWritePosix(file->pub.driver, buffer), FileWriteError,
+            storageWritePosix(ioWriteDriver(storageWriteIo(file)), buffer), FileWriteError,
             "unable to write '%s.pgbackrest.tmp': [9] Bad file descriptor", strZ(fileName));
         TEST_ERROR_FMT(
-            storageWritePosixClose(file->pub.driver), FileSyncError, STORAGE_ERROR_WRITE_SYNC ": [9] Bad file descriptor",
-            strZ(fileTmp));
+            storageWritePosixClose(ioWriteDriver(storageWriteIo(file))), FileSyncError,
+            STORAGE_ERROR_WRITE_SYNC ": [9] Bad file descriptor", strZ(fileTmp));
 
         // Disable file sync so close() can be reached
-        ((StorageWritePosix *)file->pub.driver)->interface.syncFile = false;
+        ((StorageWritePosix *)ioWriteDriver(storageWriteIo(file)))->interface.syncFile = false;
 
         TEST_ERROR_FMT(
-            storageWritePosixClose(file->pub.driver), FileCloseError, STORAGE_ERROR_WRITE_CLOSE ": [9] Bad file descriptor",
-            strZ(fileTmp));
+            storageWritePosixClose(ioWriteDriver(storageWriteIo(file))), FileCloseError,
+            STORAGE_ERROR_WRITE_CLOSE ": [9] Bad file descriptor", strZ(fileTmp));
 
         // Set file descriptor to -1 so the close on free with not fail
-        ((StorageWritePosix *)file->pub.driver)->fd = -1;
+        ((StorageWritePosix *)ioWriteDriver(storageWriteIo(file)))->fd = -1;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("fail rename in close");
@@ -1365,7 +1366,7 @@ testRun(void)
             strZ(fileTmp), strZ(fileName));
 
         // Set file descriptor to -1 so the close on free with not fail
-        ((StorageWritePosix *)file->pub.driver)->fd = -1;
+        ((StorageWritePosix *)ioWriteDriver(storageWriteIo(file)))->fd = -1;
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
 
@@ -1766,6 +1767,35 @@ testRun(void)
             "test1 {s=5, t=1722740049, v=v0002}\n"
             "test2 {s=5, t=1722740000, v=v0001}\n",
             .level = storageInfoLevelBasic);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get without limit");
+
+        argList = strLstDup(argListBase);
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        TEST_STORAGE_GET(storageRepo(), "test1", "test1a");
+        TEST_STORAGE_GET(storageRepo(), "test2", "test2");
+        TEST_STORAGE_GET(storageRepo(), "test3", NULL, .nullOnMissing = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get with limits");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:53:20+00");
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        TEST_STORAGE_GET(storageRepo(), "test1", "test1");
+        TEST_STORAGE_GET(storageRepo(), "test1", "test1");
+        TEST_STORAGE_GET(storageRepo(), "test2", "test2");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:54:59+00");
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        TEST_STORAGE_GET(storageRepo(), "test1", "test1a");
+        TEST_STORAGE_GET(storageRepo(), "test2", "test2");
+        // TEST_STORAGE_GET(storageRepo(), "test3", NULL, .nullOnMissing = true); !!!
 
         // hrnStorageHelperRepoShimSet(false); !!! PUT THIS AT THE END
     }

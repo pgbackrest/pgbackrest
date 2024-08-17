@@ -819,6 +819,7 @@ storageSftpNewRead(THIS_VOID, const String *const file, const bool ignoreMissing
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
+    ASSERT(!param.version);
     ASSERT(param.versionId == NULL);
 
     FUNCTION_LOG_RETURN(

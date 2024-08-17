@@ -38,28 +38,4 @@ typedef struct StorageWriteInterface
 
 FN_EXTERN StorageWrite *storageWriteNew(void *driver, const StorageWriteInterface *interface);
 
-/***********************************************************************************************************************************
-Getters/Setters
-***********************************************************************************************************************************/
-typedef struct StorageWritePub
-{
-    const StorageWriteInterface *interface;                         // File data (name, driver type, etc.)
-    IoWrite *io;                                                    // Write interface
-    void *driver;                                                   // Driver
-} StorageWritePub;
-
-// Storage driver
-FN_INLINE_ALWAYS void *
-storageWriteDriver(const StorageWrite *const this)
-{
-    return THIS_PUB(StorageWrite)->driver;
-}
-
-// Storage interface
-FN_INLINE_ALWAYS const StorageWriteInterface *
-storageWriteInterface(const StorageWrite *const this)
-{
-    return THIS_PUB(StorageWrite)->interface;
-}
-
 #endif

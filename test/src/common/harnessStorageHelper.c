@@ -5,6 +5,7 @@ Storage Helper Test Harness
 
 #include "common/debug.h"
 #include "common/time.h"
+#include "storage/posix/read.h"
 #include "storage/posix/write.h"
 #include "storage/storage.h"
 
@@ -220,11 +221,12 @@ hrnStorageWriteTestNew(
 
         *this = (HrnStorageWriteTest)
         {
-            .base = storageWriteDriver(posix),
-            .version = storageWriteDriver(
-                storageWritePosixNew(
-                    storageDriver(storagePosix), hrnStorageTestVersionFind(storagePosix, name), modeFile, modePath, user, group,
-                    timeModified, createPath, false, false, false, truncate)),
+            .base = ioWriteDriver(storageWriteIo(posix)),
+            .version = ioWriteDriver(
+                storageWriteIo(
+                    storageWritePosixNew(
+                        storageDriver(storagePosix), hrnStorageTestVersionFind(storagePosix, name), modeFile, modePath, user, group,
+                        timeModified, createPath, false, false, false, truncate))),
             .interface = interface,
         };
     }
@@ -341,7 +343,7 @@ hrnStorageTestList(THIS_VOID, const String *const path, const StorageInfoLevel l
 }
 
 static StorageRead *
-hrnStorageTestNewRead(THIS_VOID, const String *const file, const bool ignoreMissing, const StorageInterfaceNewReadParam param)
+hrnStorageTestNewRead(THIS_VOID, const String *file, const bool ignoreMissing, const StorageInterfaceNewReadParam param)
 {
     THIS(HrnStorageTest);
 
@@ -351,16 +353,19 @@ hrnStorageTestNewRead(THIS_VOID, const String *const file, const bool ignoreMiss
         FUNCTION_HARNESS_PARAM(BOOL, ignoreMissing);
         FUNCTION_HARNESS_PARAM(UINT64, param.offset);
         FUNCTION_HARNESS_PARAM(VARIANT, param.limit);
+        FUNCTION_HARNESS_PARAM(STRING, param.versionId);
     FUNCTION_HARNESS_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
     hrnStorageTestSecretCheck(file);
 
-    // !!! Add versioning logic
+    // Update file name when versionId is set
+    if (param.versionId)
+        file = strNewFmt("%s/" HRN_STORAGE_TEST_SECRET "/%s/%s", strZ(strPath(file)), strZ(strBase(file)), strZ(param.versionId));
 
     FUNCTION_HARNESS_RETURN(
-        STORAGE_READ, hrnStorageInterfaceDummy.newRead(storageDriver(this->storagePosix), file, ignoreMissing, param));
+        STORAGE_READ, storageReadPosixNew(storageDriver(this->storagePosix), file, ignoreMissing, param.offset, param.limit));
 }
 
 static StorageWrite *

@@ -49,25 +49,26 @@ storageReadS3Open(THIS_VOID)
 
     bool result = false;
 
-    // Request the file
-    MEM_CONTEXT_OBJ_BEGIN(this)
+    if (!this->interface.version || this->interface.versionId != NULL)
     {
-        this->httpResponse = storageS3RequestP(
-            this->storage, HTTP_VERB_GET_STR, this->interface.name,
-            .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
-            .query =
-                this->interface.versionId == NULL
-                    ? NULL : httpQueryPut(httpQueryNewP(), STRDEF("versionId"), this->interface.versionId),
-            .allowMissing = true, .contentIo = true, .sseC = true);
-    }
-    MEM_CONTEXT_OBJ_END();
+        // Request the file
+        MEM_CONTEXT_OBJ_BEGIN(this)
+        {
+            this->httpResponse = storageS3RequestP(
+                this->storage, HTTP_VERB_GET_STR, this->interface.name,
+                .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
+                .query =
+                    this->interface.versionId == NULL
+                        ? NULL : httpQueryPut(httpQueryNewP(), STRDEF("versionId"), this->interface.versionId),
+                .allowMissing = true, .contentIo = true, .sseC = true);
+        }
+        MEM_CONTEXT_OBJ_END();
 
-    if (httpResponseCodeOk(this->httpResponse))
-    {
-        result = true;
+        result = httpResponseCodeOk(this->httpResponse);
     }
-    // Else error unless ignore missing
-    else if (!this->interface.ignoreMissing)
+
+    // Error on missing unless ignore
+    if (!result && !this->interface.ignoreMissing)
         THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
 
     FUNCTION_LOG_RETURN(BOOL, result);
@@ -116,7 +117,7 @@ storageReadS3Eof(THIS_VOID)
 FN_EXTERN StorageRead *
 storageReadS3New(
     StorageS3 *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset, const Variant *const limit,
-    const String *const versionId)
+    const bool version, const String *const versionId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_S3, storage);
@@ -124,6 +125,7 @@ storageReadS3New(
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
+        FUNCTION_LOG_PARAM(BOOL, version);
         FUNCTION_LOG_PARAM(STRING, versionId);
     FUNCTION_LOG_END();
 
@@ -144,6 +146,7 @@ storageReadS3New(
                 .ignoreMissing = ignoreMissing,
                 .offset = offset,
                 .limit = varDup(limit),
+                .version = version,
                 .versionId = strDup(versionId),
 
                 .ioInterface = (IoReadInterface)

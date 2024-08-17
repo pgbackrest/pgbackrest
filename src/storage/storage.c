@@ -478,7 +478,7 @@ storageNewRead(const Storage *const this, const String *const fileExp, const Sto
         const String *versionId = NULL;
 
         // If limiting by time
-        if (this->limitTime)
+        if (this->limitTime != 0)
         {
             // Find the version to read using the cache
             StorageListCache *cache = lstFind(this->cacheList, &path);
@@ -511,15 +511,11 @@ storageNewRead(const Storage *const this, const String *const fileExp, const Sto
                 THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(path));
         }
 
-        // Read from storage only when not limiting by time or a version was found
-        if (this->limitTime == 0 || versionId != NULL)
-        {
-            result = storageReadMove(
-                storageInterfaceNewReadP(
-                    storageDriver(this), path, param.ignoreMissing, .compressible = param.compressible, .offset = param.offset,
-                    .limit = param.limit, .versionId = versionId),
-                memContextPrior());
-        }
+        result = storageReadMove(
+            storageInterfaceNewReadP(
+                storageDriver(this), path, param.ignoreMissing, .compressible = param.compressible, .offset = param.offset,
+                .limit = param.limit, .version = this->limitTime != 0, .versionId = versionId),
+            memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 

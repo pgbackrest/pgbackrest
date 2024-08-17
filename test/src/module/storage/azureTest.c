@@ -612,7 +612,7 @@ testRun(void)
                 TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
                 TEST_RESULT_BOOL(storageWriteTruncate(write), true, "file will be truncated");
 
-                TEST_RESULT_VOID(storageWriteAzureClose(write->pub.driver), "close file again");
+                TEST_RESULT_VOID(storageWriteAzureClose(ioWriteDriver(storageWriteIo(write))), "close file again");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write zero-length file");

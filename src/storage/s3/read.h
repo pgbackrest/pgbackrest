@@ -11,6 +11,7 @@ S3 Storage Read
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN StorageRead *storageReadS3New(
-    StorageS3 *storage, const String *name, bool ignoreMissing, uint64_t offset, const Variant *limit, const String *versionId);
+    StorageS3 *storage, const String *name, bool ignoreMissing, uint64_t offset, const Variant *limit, bool version,
+    const String *versionId);
 
 #endif

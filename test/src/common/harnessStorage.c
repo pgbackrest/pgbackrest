@@ -71,7 +71,7 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
     // Declare an information filter for displaying paramaters to the output
     String *const filter = strNew();
 
-    StorageRead *read = storageNewReadP(storage, fileFull);
+    StorageRead *read = storageNewReadP(storage, fileFull, .ignoreMissing = param.nullOnMissing);
     IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(read));
 
     // Add decrypt filter
@@ -96,7 +96,10 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
     printf("test content of %s'%s'", strEmpty(filter) ? "" : strZ(filter), strZ(fileFull));
     hrnTestResultComment(param.comment);
 
-    hrnTestResultZ(strZ(strNewBuf(storageGetP(read))), expected, harnessTestResultOperationEq);
+    const Buffer *const readBuf = storageGetP(read);
+    const char *const readZ = readBuf != NULL ? strZ(strNewBuf(readBuf)) : NULL;
+
+    hrnTestResultZ(readZ, expected, harnessTestResultOperationEq);
 
     if (param.remove)
         storageRemoveP(storage, fileFull, .errorOnMissing = true);

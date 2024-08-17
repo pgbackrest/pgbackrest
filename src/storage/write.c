@@ -49,7 +49,6 @@ storageWriteNew(void *const driver, const StorageWriteInterface *const interface
             {
                 .interface = interface,
                 .io = ioWriteNew(driver, interface->ioInterface),
-                .driver = objMoveToInterface(driver, this, memContextPrior()),
             },
         };
     }

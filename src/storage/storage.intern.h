@@ -120,6 +120,7 @@ typedef struct StorageInterfaceNewReadParam
     const Variant *limit;
 
     // File version to read (NULL for current version)
+    bool version;
     const String *versionId;
 } StorageInterfaceNewReadParam;
 

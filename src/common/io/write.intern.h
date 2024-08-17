@@ -29,6 +29,21 @@ typedef struct IoWriteInterface
 FN_EXTERN IoWrite *ioWriteNew(void *driver, IoWriteInterface interface);
 
 /***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct IoWritePub
+{
+    void *driver;                                                   // Driver object
+    IoFilterGroup *filterGroup;                                     // IO filters
+} IoWritePub;
+
+FN_INLINE_ALWAYS void *
+ioWriteDriver(const IoWrite *const this)
+{
+    return THIS_PUB(IoWrite)->driver;
+}
+
+/***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
 #define FUNCTION_LOG_IO_WRITE_INTERFACE_TYPE                                                                                       \

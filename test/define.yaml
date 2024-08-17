@@ -551,12 +551,10 @@ unit:
           - storage/posix/write
           - storage/helper
           - storage/iterator
-          - storage/read
-          - storage/write
-
-        include:
           - storage/list
+          - storage/read
           - storage/storage
+          - storage/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote

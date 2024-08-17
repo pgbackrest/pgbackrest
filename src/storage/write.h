@@ -29,19 +29,32 @@ storageWriteMove(StorageWrite *const this, MemContext *const parentNew)
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+typedef struct StorageWritePub
+{
+    const StorageWriteInterface *interface;                         // File data (name, driver type, etc.)
+    IoWrite *io;                                                    // Write interface
+} StorageWritePub;
+
+// Write interface
+FN_INLINE_ALWAYS const StorageWriteInterface *
+storageWriteInterface(const StorageWrite *const this)
+{
+    return THIS_PUB(StorageWrite)->interface;
+}
+
 // Will the file be written atomically? Atomic writes means the file will be complete or be missing. Filesystems have different ways
 // to accomplish this.
 FN_INLINE_ALWAYS bool
 storageWriteAtomic(const StorageWrite *const this)
 {
-    return THIS_PUB(StorageWrite)->interface->atomic;
+    return storageWriteInterface(this)->atomic;
 }
 
 // Will the path be created if required?
 FN_INLINE_ALWAYS bool
 storageWriteCreatePath(const StorageWrite *const this)
 {
-    return THIS_PUB(StorageWrite)->interface->createPath;
+    return storageWriteInterface(this)->createPath;
 }
 
 // Write interface
@@ -55,49 +68,49 @@ storageWriteIo(const StorageWrite *const this)
 FN_INLINE_ALWAYS mode_t
 storageWriteModeFile(const StorageWrite *const this)
 {
-    return THIS_PUB(StorageWrite)->interface->modeFile;
+    return storageWriteInterface(this)->modeFile;
 }
 
 // Path mode (if the destination path needs to be create)
 FN_INLINE_ALWAYS mode_t
 storageWriteModePath(const StorageWrite *const this)
 {
-    return THIS_PUB(StorageWrite)->interface->modePath;
+    return storageWriteInterface(this)->modePath;
 }
 
 // File name
 FN_INLINE_ALWAYS const String *
 storageWriteName(const StorageWrite *const this)
 {
-    return THIS_PUB(StorageWrite)->interface->name;
+    return storageWriteInterface(this)->name;
 }
 
 // Will the file be synced before it is closed?
 FN_INLINE_ALWAYS bool
 storageWriteSyncFile(const StorageWrite *const this)
 {
-    return THIS_PUB(StorageWrite)->interface->syncFile;
+    return storageWriteInterface(this)->syncFile;
 }
 
 // Will the path be synced after the file is closed?
 FN_INLINE_ALWAYS bool
 storageWriteSyncPath(const StorageWrite *const this)
 {
-    return THIS_PUB(StorageWrite)->interface->syncPath;
+    return storageWriteInterface(this)->syncPath;
 }
 
 // Will the file be truncated if it exists?
 FN_INLINE_ALWAYS bool
 storageWriteTruncate(const StorageWrite *const this)
 {
-    return THIS_PUB(StorageWrite)->interface->truncate;
+    return storageWriteInterface(this)->truncate;
 }
 
 // File type
 FN_INLINE_ALWAYS StringId
 storageWriteType(const StorageWrite *const this)
 {
-    return THIS_PUB(StorageWrite)->interface->type;
+    return storageWriteInterface(this)->type;
 }
 
 /***********************************************************************************************************************************

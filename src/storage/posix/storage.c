@@ -357,6 +357,7 @@ storagePosixNewRead(THIS_VOID, const String *const file, const bool ignoreMissin
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
+    ASSERT(!param.version);
     ASSERT(param.versionId == NULL);
 
     FUNCTION_LOG_RETURN(STORAGE_READ, storageReadPosixNew(this, file, ignoreMissing, param.offset, param.limit));
