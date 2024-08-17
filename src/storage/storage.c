@@ -318,7 +318,6 @@ storageNewItr(const Storage *const this, const String *const pathExp, StorageNew
         FUNCTION_LOG_PARAM(ENUM, param.level);
         FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
         FUNCTION_LOG_PARAM(BOOL, param.recurse);
-        FUNCTION_LOG_PARAM(BOOL, param.versions);
         FUNCTION_LOG_PARAM(BOOL, param.nullOnMissing);
         FUNCTION_LOG_PARAM(ENUM, param.sortOrder);
         FUNCTION_LOG_PARAM(STRING, param.expression);
@@ -339,7 +338,7 @@ storageNewItr(const Storage *const this, const String *const pathExp, StorageNew
         result = storageItrMove(
             storageItrNew(
                 storageDriver(this), storagePathP(this, pathExp), param.level, param.errorOnMissing, param.nullOnMissing,
-                param.recurse, param.versions, param.sortOrder, this->limitTime, param.expression),
+                param.recurse, param.sortOrder, this->limitTime, param.expression),
             memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();

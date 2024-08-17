@@ -118,7 +118,6 @@ typedef struct StorageNewItrParam
     bool errorOnMissing;
     bool nullOnMissing;
     bool recurse;
-    bool versions;                                                  // Fetch all file versions
     SortOrder sortOrder;
     const String *expression;
 } StorageNewItrParam;

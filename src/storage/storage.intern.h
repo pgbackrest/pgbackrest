@@ -180,9 +180,6 @@ typedef struct StorageInterfaceListParam
 {
     VAR_PARAM_HEADER;
 
-    // List all file versions
-    bool versions;
-
     // Regular expression used to filter the results. The expression is always checked in the callback passed to
     // storageInterfaceIterP() so checking the expression in the driver is entirely optional. The driver should only use the
     // expression if it can improve performance or limit network transfer.

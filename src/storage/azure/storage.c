@@ -541,7 +541,6 @@ storageAzureList(THIS_VOID, const String *const path, const StorageInfoLevel lev
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(STRING, param.expression);
-        FUNCTION_LOG_PARAM(BOOL, param.versions);
         FUNCTION_LOG_PARAM(TIME, param.limitTime);
     FUNCTION_LOG_END();
 

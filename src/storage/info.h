@@ -59,7 +59,6 @@ typedef struct StorageInfo
     uint64_t size;                                                  // Size (path/link is 0)
     time_t timeModified;                                            // Time file was last modified
     const String *versionId;                                        // Version id when versioning enabled
-    bool deleteMarker;                                              // Is this a delete marker?
 
     // Set when info type >= storageInfoLevelDetail (undefined at lower levels)
     mode_t mode;                                                    // Mode of path/file/link

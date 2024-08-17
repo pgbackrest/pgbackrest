@@ -651,14 +651,6 @@ option:
     command-role:
       main: {}
 
-  versions:
-    type: boolean
-    default: false
-    command:
-      repo-ls: {}
-    command-role:
-      main: {}
-
   # General options
   #---------------------------------------------------------------------------------------------------------------------------------
   archive-timeout:

@@ -138,9 +138,8 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
-#define CFGOPT_VERSIONS                                             "versions"
 
-#define CFG_OPTION_TOTAL                                            185
+#define CFG_OPTION_TOTAL                                            184
 
 /***********************************************************************************************************************************
 Option value constants
@@ -570,7 +569,6 @@ typedef enum
     cfgOptType,
     cfgOptVerbose,
     cfgOptVersion,
-    cfgOptVersions,
 } ConfigOption;
 
 #endif

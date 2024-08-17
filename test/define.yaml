@@ -981,11 +981,9 @@ unit:
         coverage:
           - command/repo/common
           - command/repo/get
+          - command/repo/ls
           - command/repo/put
           - command/repo/rm
-
-        include:
-          - command/repo/ls
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: verify

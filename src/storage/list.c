@@ -35,15 +35,12 @@ typedef struct StorageListInfo
         const char *name;                                           // Name of path/file/link
     } exists;
 
-    // Set when info type >= storageInfoLevelType (undefined at lower levels). mode/deleteMarker are only provided at higher detail
-    // levels but included here to save space on 64-bit architectures
+    // Set when info type >= storageInfoLevelType (undefined at lower levels). Mode is only provided at higher detail levels but
+    // included here to save space on 64-bit architectures
     struct
     {
         // Set when info type >= storageInfoLevelType (undefined at lower levels)
-        uint8_t type;                                               // Type file/path/link)
-
-        // Set when info type >= storageInfoLevelBasic (undefined at lower levels)
-        bool deleteMarker;                                          // Is this a delete marker?
+        StorageType type;                                           // Type file/path/link)
 
         // Set when info type >= storageInfoLevelDetail (undefined at lower levels)
         mode_t mode;                                                // Mode of path/file/link
@@ -148,7 +145,6 @@ storageLstInsert(StorageList *const this, const unsigned int idx, const StorageI
             {
                 listInfo.basic.size = info->size;
                 listInfo.basic.timeModified = info->timeModified;
-                listInfo.type.deleteMarker = info->deleteMarker;
 
                 if (info->versionId != NULL)
                     listInfo.basic.versionId = blbAdd(this->blob, strZ(info->versionId), strSize(info->versionId) + 1);
@@ -206,7 +202,6 @@ storageLstGet(const StorageList *const this, const unsigned int idx)
         {
             result.size = listInfo->basic.size;
             result.timeModified = listInfo->basic.timeModified;
-            result.deleteMarker = listInfo->type.deleteMarker;
 
             if (listInfo->basic.versionId != NULL)
                 result.versionId = strCatZ(strTrunc(this->versionId), listInfo->basic.versionId);

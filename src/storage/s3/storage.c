@@ -615,7 +615,7 @@ General function for listing files to be used by other list routines
 static void
 storageS3ListInternal(
     StorageS3 *const this, const String *const path, const StorageInfoLevel level, const String *const expression,
-    const bool recurse, const bool versions, const time_t limitTime, StorageListCallback callback, void *const callbackData)
+    const bool recurse, const time_t limitTime, StorageListCallback callback, void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
@@ -623,7 +623,6 @@ storageS3ListInternal(
         FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(STRING, expression);
         FUNCTION_LOG_PARAM(BOOL, recurse);
-        FUNCTION_LOG_PARAM(BOOL, versions);
         FUNCTION_LOG_PARAM(TIME, limitTime);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
@@ -663,8 +662,8 @@ storageS3ListInternal(
             httpQueryAdd(query, S3_QUERY_DELIMITER_STR, FSLASH_STR);
 
         // Use list type 2 or versions as specified
-        if (limitTime != 0 || versions)
-            httpQueryAdd(query, STRDEF("versions"), STRDEF(""));
+        if (limitTime != 0 || limitTime != 0)
+            httpQueryAdd(query, STRDEF("versions") /* !!! MAKE THIS A CONST */, STRDEF(""));
         else
             httpQueryAdd(query, S3_QUERY_LIST_TYPE_STR, S3_QUERY_VALUE_LIST_TYPE_2_STR);
 
@@ -743,7 +742,7 @@ storageS3ListInternal(
                 // Get file list
                 const XmlNodeList *fileList;
 
-                if (limitTime != 0 || versions)
+                if (limitTime != 0)
                 {
                     StringList *const nameList = strLstNew();
                     strLstAddZ(nameList, "Version");
@@ -769,42 +768,35 @@ storageS3ListInternal(
                         .exists = true,
                     };
 
-                    // Time and delete marker are required for processing versioned files
-                    if (limitTime != 0 || versions)
-                    {
-                        info.timeModified = storageS3CvtTime(
-                            xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_LAST_MODIFIED_STR, true)));
-                        info.deleteMarker = strEqZ(xmlNodeName(fileNode), "DeleteMarker");
-                    }
-
                     // If filtering by time
                     if (limitTime != 0)
                     {
                         // Skip later versions
+                        info.timeModified = storageS3CvtTime(
+                            xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_LAST_MODIFIED_STR, true)));
+
                         if (info.timeModified > limitTime)
                             continue;
 
-                        // If not returned all versions skip all but most recent version
-                        if (!versions)
+                        // If most recent version is a delete marker then the file will not be returned
+                        const bool deleteMarker = strEqZ(xmlNodeName(fileNode), "DeleteMarker");
+
+                        if (deleteMarker)
                         {
-                            // If most recent version is a delete marker then the file will not be returned
-                            if (info.deleteMarker)
-                            {
-                                nameLast = info.name;
-                                continue;
-                            }
-
-                            // If a version has already been return (or delete marker found) then skip this version
-                            if (strEq(info.name, nameLast))
-                                continue;
-
-                            // Store last name to skip remaining versions
                             nameLast = info.name;
+                            continue;
                         }
+
+                        // If a version has already been return (or delete marker found) then skip this version
+                        if (strEq(info.name, nameLast))
+                            continue;
+
+                        // Store last name to skip remaining versions
+                        nameLast = info.name;
                     }
 
                     // Skip additional versions in the same second since we cannot filter the storage at that level
-                    if (versions && info.timeModified == timeModifiedLast)
+                    if (limitTime != 0 && info.timeModified == timeModifiedLast)
                         continue;
 
                     timeModifiedLast = info.timeModified;
@@ -816,16 +808,14 @@ storageS3ListInternal(
                     // Add basic info if requested (no need to add type info since file is default type)
                     if (level >= storageInfoLevelBasic)
                     {
-                        if (limitTime != 0 || versions)
+                        if (limitTime != 0)
                             info.versionId = xmlNodeContent(xmlNodeChild(fileNode, STRDEF("VersionId"), true));
                         else
                         {
                             info.timeModified = storageS3CvtTime(
                                 xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_LAST_MODIFIED_STR, true)));
-                        }
-
-                        if (!info.deleteMarker)
                             info.size = cvtZToUInt64(strZ(xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_SIZE_STR, true))));
+                        }
                     }
 
                     // Callback with info
@@ -909,7 +899,6 @@ storageS3List(THIS_VOID, const String *const path, const StorageInfoLevel level,
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(STRING, param.expression);
-        FUNCTION_LOG_PARAM(BOOL, param.versions);
         FUNCTION_LOG_PARAM(TIME, param.limitTime);
     FUNCTION_LOG_END();
 
@@ -919,7 +908,7 @@ storageS3List(THIS_VOID, const String *const path, const StorageInfoLevel level,
     StorageList *const result = storageLstNew(level);
 
     storageS3ListInternal(
-        this, path, level, param.expression, false, param.versions, param.limitTime, storageS3ListCallback, result);
+        this, path, level, param.expression, false, param.limitTime, storageS3ListCallback, result);
 
     FUNCTION_LOG_RETURN(STORAGE_LIST, result);
 }
@@ -1116,7 +1105,7 @@ storageS3PathRemove(THIS_VOID, const String *const path, const bool recurse, con
             .path = strEq(path, FSLASH_STR) ? EMPTY_STR : strNewFmt("%s/", strZ(strSub(path, 1))),
         };
 
-        storageS3ListInternal(this, path, storageInfoLevelType, NULL, true, false, 0, storageS3PathRemoveCallback, &data);
+        storageS3ListInternal(this, path, storageInfoLevelType, NULL, true, 0, storageS3PathRemoveCallback, &data);
 
         // Call if there is more to be removed
         if (data.xml != NULL)

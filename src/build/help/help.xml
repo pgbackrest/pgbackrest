@@ -2366,16 +2366,6 @@
 
                         <example>desc</example>
                     </option>
-
-                    <option id="versions" name="List File Versions">
-                        <summary>List file versions.</summary>
-
-                        <text>
-                            <p>!!!</p>
-                        </text>
-
-                        <example>y</example>
-                    </option>
                 </option-list>
             </command>
 

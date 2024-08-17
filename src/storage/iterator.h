@@ -16,7 +16,7 @@ typedef struct StorageIterator StorageIterator;
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN StorageIterator *storageItrNew(
-    void *driver, const String *path, StorageInfoLevel level, bool errorOnMissing, bool nullOnMissing, bool recurse, bool versions,
+    void *driver, const String *path, StorageInfoLevel level, bool errorOnMissing, bool nullOnMissing, bool recurse,
     SortOrder sortOrder, time_t limitTime, const String *expression);
 
 /***********************************************************************************************************************************
