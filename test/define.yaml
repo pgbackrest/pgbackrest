@@ -101,15 +101,14 @@ unit:
           - common/assert: noCode
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: mem-context
-        total: 8
-        feature: memContext
+      - name: type-convert
+        total: 12
 
         coverage:
-          - common/memContext
+          - common/type/convert
 
         depend:
-          - common/type/convert
+          - common/time
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: time
@@ -125,11 +124,12 @@ unit:
           - common/time
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: type-convert
-        total: 12
+      - name: mem-context
+        total: 8
+        feature: memContext
 
         coverage:
-          - common/type/convert
+          - common/memContext
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: encode
