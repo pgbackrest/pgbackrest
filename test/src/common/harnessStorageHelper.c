@@ -505,7 +505,7 @@ storageRepoGet(const unsigned int repoIdx, const bool write)
             STORAGE,
             hrnStorageTestNew(
                 cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write,
-                cfgOptionTest(cfgOptLimitTime) ? epochFromZ(strZ(cfgOptionStr(cfgOptLimitTime))) : 0, storageRepoPathExpression));
+                cfgOptionTest(cfgOptLimitTime) ? cvtZToTime(strZ(cfgOptionStr(cfgOptLimitTime))) : 0, storageRepoPathExpression));
     }
 
     FUNCTION_HARNESS_RETURN(STORAGE, storageRepoGet_SHIMMED(repoIdx, write));

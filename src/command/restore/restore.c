@@ -94,104 +94,6 @@ restorePathValidate(void)
 }
 
 /***********************************************************************************************************************************
-Get epoch time from formatted string
-***********************************************************************************************************************************/
-static time_t
-getEpoch(const String *const targetTime)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, targetTime);
-    FUNCTION_LOG_END();
-
-    ASSERT(targetTime != NULL);
-
-    time_t result = 0;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Build the regex to accept formats: YYYY-MM-DD HH:MM:SS with optional msec (up to 6 digits and separated from minutes by
-        // a comma or period), optional timezone offset +/- HH or HHMM or HH:MM, where offset boundaries are UTC-12 to UTC+14
-        const String *const expression = STRDEF(
-            "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}((\\,|\\.)[0-9]{1,6})?((\\+|\\-)[0-9]{2}(:?)([0-9]{2})?)?$");
-        RegExp *const regExp = regExpNew(expression);
-
-        // If the target-recovery time matches the regular expression then validate it
-        if (regExpMatch(regExp, targetTime))
-        {
-            // Strip off the date and time and put the remainder into another string
-            const String *const datetime = strSubN(targetTime, 0, 19);
-
-            const int dtYear = cvtZSubNToInt(strZ(datetime), 0, 4);
-            const int dtMonth = cvtZSubNToInt(strZ(datetime), 5, 2);
-            const int dtDay = cvtZSubNToInt(strZ(datetime), 8, 2);
-            const int dtHour = cvtZSubNToInt(strZ(datetime), 11, 2);
-            const int dtMinute = cvtZSubNToInt(strZ(datetime), 14, 2);
-            const int dtSecond = cvtZSubNToInt(strZ(datetime), 17, 2);
-
-            // Confirm date and time parts are valid
-            datePartsValid(dtYear, dtMonth, dtDay);
-            timePartsValid(dtHour, dtMinute, dtSecond);
-
-            const String *const timeTargetZone = strSub(targetTime, 19);
-
-            // Find the + or - indicating a timezone offset was provided (there may be milliseconds before the timezone, so need to
-            // skip). If a timezone offset was not provided, then local time is assumed.
-            int idxSign = strChr(timeTargetZone, '+');
-
-            if (idxSign == -1)
-                idxSign = strChr(timeTargetZone, '-');
-
-            if (idxSign != -1)
-            {
-                const String *const timezoneOffset = strSub(timeTargetZone, (size_t)idxSign);
-
-                // Include the sign with the hour
-                const int tzHour = cvtZSubNToInt(strZ(timezoneOffset), 0, 3);
-                int tzMinute = 0;
-
-                // If minutes are included in timezone offset then extract the minutes based on whether a colon separates them from
-                // the hour
-                if (strSize(timezoneOffset) > 3)
-                    tzMinute = cvtZSubNToInt(strZ(timezoneOffset), 3 + (strChr(timezoneOffset, ':') == -1 ? 0 : 1), 2);
-
-                result = epochFromParts(dtYear, dtMonth, dtDay, dtHour, dtMinute, dtSecond, tzOffsetSeconds(tzHour, tzMinute));
-            }
-            // If there is no timezone offset, then assume it is local time
-            else
-            {
-                // Set tm_isdst to -1 to force mktime to consider if DST. For example, if system time is America/New_York then
-                // 2019-09-14 20:02:49 was a time in DST so the Epoch value should be 1568505769 (and not 1568509369 which would be
-                // 2019-09-14 21:02:49 - an hour too late)
-                struct tm time =
-                {
-                    .tm_sec = dtSecond,
-                    .tm_min = dtMinute,
-                    .tm_hour = dtHour,
-                    .tm_mday = dtDay,
-                    .tm_mon = dtMonth - 1,
-                    .tm_year = dtYear - 1900,
-                    .tm_isdst = -1,
-                };
-
-                result = mktime(&time);
-            }
-        }
-        else
-        {
-            THROW_FMT(
-                FormatError,
-                "automatic backup set selection cannot be performed with provided time '%s'\n"
-                "HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM)"
-                " - if timezone is omitted, local time is assumed (for UTC use +00)",
-                strZ(targetTime));
-        }
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(TIME, result);
-}
-
-/***********************************************************************************************************************************
 Get the backup set to restore
 ***********************************************************************************************************************************/
 typedef struct RestoreBackupData
@@ -263,7 +165,22 @@ restoreBackupSet(void)
         if (cfgOptionSource(cfgOptSet) == cfgSourceDefault)
         {
             if (targetType == CFGOPTVAL_TYPE_TIME)
-                target.time = getEpoch(cfgOptionStr(cfgOptTarget));
+            {
+                TRY_BEGIN()
+                {
+                    target.time = cvtZToTime(strZ(cfgOptionStr(cfgOptTarget)));
+                }
+                CATCH_ANY()
+                {
+                    THROW_FMT(
+                        FormatError,
+                        "automatic backup set selection cannot be performed with provided time '%s'\n"
+                        "HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or"
+                        " HH:MM) - if timezone is omitted, local time is assumed (for UTC use +00)",
+                        strZ(cfgOptionStr(cfgOptTarget)));
+                }
+                TRY_END();
+            }
             else if (targetType == CFGOPTVAL_TYPE_LSN)
                 target.lsn = pgLsnFromStr(cfgOptionStr(cfgOptTarget));
         }

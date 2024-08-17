@@ -82,7 +82,7 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
         {
             result = storageS3New(
                 cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write,
-                cfgOptionTest(cfgOptLimitTime) ? epochFromZ(strZ(cfgOptionStr(cfgOptLimitTime))) : 0,
+                cfgOptionTest(cfgOptLimitTime) ? cvtZToTime(strZ(cfgOptionStr(cfgOptLimitTime))) : 0,
                 pathExpressionCallback, cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint,
                 (StorageS3UriStyle)cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx), cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx),
                 keyType, cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx),

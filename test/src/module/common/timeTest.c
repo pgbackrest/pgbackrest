@@ -111,47 +111,5 @@ testRun(void)
         TEST_RESULT_INT(epochFromParts(2020, 1, 8, 9, 18, 15, tzOffsetSeconds(-7, 0)), 1578500295, "epoch with timezone");
     }
 
-    // *****************************************************************************************************************************
-    if (testBegin("epochFromZ()"))
-    {
-        TEST_TITLE("invalid");
-
-        TEST_ERROR(epochFromZ("2020-01-01 00:00:0"), FormatError, "invalid date/time 2020-01-01 00:00:0");
-        TEST_ERROR(epochFromZ("2020+01-01 00:00:00"), FormatError, "invalid date/time 2020+01-01 00:00:00");
-        TEST_ERROR(epochFromZ("2020-01+01 00:00:00"), FormatError, "invalid date/time 2020-01+01 00:00:00");
-        TEST_ERROR(epochFromZ("2020-01-01+00:00:00"), FormatError, "invalid date/time 2020-01-01+00:00:00");
-        TEST_ERROR(epochFromZ("2020-01-01 00+00:00"), FormatError, "invalid date/time 2020-01-01 00+00:00");
-        TEST_ERROR(epochFromZ("2020-01-01 00:00+00"), FormatError, "invalid date/time 2020-01-01 00:00+00");
-        TEST_ERROR(epochFromZ("2020-13-08 16:18:15"), FormatError, "invalid date 2020-13-08");
-        TEST_ERROR(epochFromZ("2020-01-08 16:68:15"), FormatError, "invalid time 16:68:15");
-        TEST_ERROR(epochFromZ("202A-01-01 00:00:00"), FormatError, "invalid date/time 202A-01-01 00:00:00");
-        TEST_ERROR(epochFromZ("2020-01-01 00:00:00!0"), FormatError, "invalid date/time 2020-01-01 00:00:00!0");
-        TEST_ERROR(epochFromZ("2020-01-01 00:00:00,"), FormatError, "invalid date/time 2020-01-01 00:00:00,");
-        TEST_ERROR(epochFromZ("2020-01-01 00:00:00,0A"), FormatError, "invalid date/time 2020-01-01 00:00:00,0A");
-        TEST_ERROR(epochFromZ("2020-01-01 00:00:00+0"), FormatError, "invalid date/time 2020-01-01 00:00:00+0");
-        TEST_ERROR(epochFromZ("2020-01-01 00:00:00+000"), FormatError, "invalid date/time 2020-01-01 00:00:00+000");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("system time UTC");
-
-        hrnTzSet("UTC");
-
-        TEST_RESULT_INT(epochFromZ("2020-01-08 09:18:15-0700"), 1578500295, "epoch with timezone");
-        TEST_RESULT_INT(epochFromZ("2020-01-08 16:18:15.0000"), 1578500295, "same epoch no timezone");
-        TEST_RESULT_INT(epochFromZ("2020-01-08 16:18:15.0000+00"), 1578500295, "same epoch timezone 0");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("system time America/New_York");
-
-        hrnTzSet("America/New_York");
-
-        TEST_RESULT_INT(epochFromZ("2019-11-14 13:02:49-0500"), 1573754569, "offset same as local");
-        TEST_RESULT_INT(epochFromZ("2019-11-14 13:02:49.0"), 1573754569, "GMT-0500 (EST) with ms");
-        TEST_RESULT_INT(epochFromZ("2019-11-14 13:02:49,123456"), 1573754569, "GMT-0500 (EST) with ms");
-        TEST_RESULT_INT(epochFromZ("2019-11-14 13:02:49"), 1573754569, "GMT-0500 (EST)");
-        TEST_RESULT_INT(epochFromZ("2019-09-14 20:02:49"), 1568505769, "GMT-0400 (EDT)");
-        TEST_RESULT_INT(epochFromZ("2018-04-27 04:29:00+04:30"), 1524787140, "GMT+0430");
-    }
-
     FUNCTION_HARNESS_RETURN_VOID();
 }
