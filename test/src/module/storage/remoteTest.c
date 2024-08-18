@@ -277,7 +277,9 @@ testRun(void)
         StorageRead *fileReadRaw;
         TEST_ASSIGN(fileReadRaw, storageNewReadP(storageRepo, STRDEF("test.txt")), "new file");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(fileReadRaw)), true, "open read");
-        TEST_ASSIGN(size, storageReadRemote(fileReadRaw->driver, buffer, true), "read file and save returned size");
+        TEST_ASSIGN(
+            size, storageReadRemote(ioReadDriver(storageReadIo(fileReadRaw)), buffer, true),
+            "read file and save returned size");
         TEST_RESULT_UINT(size, bufUsed(buffer), "check returned size");
         TEST_RESULT_UINT(size, bufUsed(contentBuf), "returned size should be the same as the file size");
         TEST_RESULT_VOID(ioReadClose(storageReadIo(fileReadRaw)), "close");
@@ -295,8 +297,8 @@ testRun(void)
         TEST_RESULT_BOOL(bufEq(storageGetP(fileRead), contentBuf), true, "get file");
         TEST_RESULT_BOOL(storageReadIgnoreMissing(fileRead), false, "check ignore missing");
         TEST_RESULT_STR_Z(storageReadName(fileRead), TEST_PATH "/repo128/test.txt", "check name");
-        TEST_RESULT_UINT(storageReadRemote(fileRead->driver, bufNew(32), false), 0, "nothing more to read");
-        TEST_RESULT_UINT(((StorageReadRemote *)fileRead->driver)->protocolReadBytes, bufSize(contentBuf), "check read size");
+        TEST_RESULT_UINT(storageReadRemote(ioReadDriver(storageReadIo(fileRead)), bufNew(32), false), 0, "nothing more to read");
+        TEST_RESULT_UINT(((StorageReadRemote *)ioReadDriver(storageReadIo(fileRead)))->protocolReadBytes, bufSize(contentBuf), "check read size");
 
         // Enable protocol compression in the storage object
         ((StorageRemote *)storageDriver(storageRepo))->compressLevel = 3;
@@ -306,7 +308,7 @@ testRun(void)
 
         TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF("test.txt"), .limit = VARUINT64(11)), "get file");
         TEST_RESULT_STR_Z(strNewBuf(storageGetP(fileRead)), "BABABABABAB", "check contents");
-        TEST_RESULT_UINT(((StorageReadRemote *)fileRead->driver)->protocolReadBytes, 11, "check read size");
+        TEST_RESULT_UINT(((StorageReadRemote *)ioReadDriver(storageReadIo(fileRead)))->protocolReadBytes, 11, "check read size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read partial file then close");
@@ -358,7 +360,8 @@ testRun(void)
         TEST_RESULT_BOOL(bufEq(storageGetP(fileRead), contentBuf), true, "check contents");
         // We don't know how much protocol compression there will be exactly, but make sure this is some
         TEST_RESULT_BOOL(
-            ((StorageReadRemote *)fileRead->driver)->protocolReadBytes < bufSize(contentBuf), true, "check compressed read size");
+            ((StorageReadRemote *)ioReadDriver(storageReadIo(fileRead)))->protocolReadBytes < bufSize(contentBuf), true,
+            "check compressed read size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file missing");

@@ -14,7 +14,6 @@ Object type
 struct StorageRead
 {
     StorageReadPub pub;                                             // Publicly accessible variables
-    void *driver;                                                   // Driver
 };
 
 /***********************************************************************************************************************************
@@ -48,7 +47,6 @@ storageReadNew(void *const driver, const StorageReadInterface *const interface)
                 .interface = interface,
                 .io = ioReadNew(driver, interface->ioInterface),
             },
-            .driver = objMoveToInterface(driver, this, memContextPrior()),
         };
     }
     OBJ_NEW_END();
