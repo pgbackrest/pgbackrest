@@ -1,5 +1,45 @@
 [
     {
+        "commit": "377ba062ac81867dca6197265688deb0111ae81a",
+        "date": "2024-08-16 11:46:56 +0700",
+        "subject": "Fix segfault on delayed connection errors.",
+        "body": "Connection errors could cause a segfault if the error was delayed enough to pass the initial call to sckClientOpenWait() and the error was instead thrown by a subsequent call to sckClientOpenWait(), which was not correctly initializing a variable required for error handling.\n\nWhile this can be produced fairly easily in a test environment, I was unable to craft a unit test to hit this exact condition, probably due to timing. The new code still has full coverage and I added several comments to help prevent regressions."
+    },
+    {
+        "commit": "98403046ed6af4c54fa2f572ecf9c211f94b67db",
+        "date": "2024-08-16 11:21:44 +0700",
+        "subject": "Skip local repository duplicate check for SFTP.",
+        "body": "This check does not make sense for SFTP since the repository will never be local."
+    },
+    {
+        "commit": "189d15d1a640e31aac5ffbbd0fb06eb9eed8b576",
+        "date": "2024-08-16 11:13:35 +0700",
+        "subject": "PostgreSQL 17beta3 support.",
+        "body": "This release changed the control and WAL format, which is very unusual for a beta. Update control and WAL versions/structs to match."
+    },
+    {
+        "commit": "7bd8da4eecb0ce1461854414b727606a5e884edf",
+        "date": "2024-08-16 10:46:41 +0700",
+        "subject": "Fix permissions when restore run as root user.",
+        "body": "When restore was run as the root user the pg_control file would end up with root permissions. This bug was introduced in e634fd8. Fix this by directly overwriting the pg_control temp file rather than doing an atomic write that updates permissions. Also update other parameters to more closely match similar calls.\n\nThere was also an adjacent error where restore as the root user would fail if the base path did not exist. Fix this by ignoring the missing path since it will be created later and this logic is just trying to find an alternate user for permissions if the user in the manifest does not exist."
+    },
+    {
+        "commit": "5fa74d5d3ce85b157b11169b25b15085379b84aa",
+        "date": "2024-08-16 10:16:00 +0700",
+        "subject": "Fix typo in user guide."
+    },
+    {
+        "commit": "c1fe2dbe81139482a42cc6ca957c68ff7454ce9e",
+        "date": "2024-08-16 10:13:14 +0700",
+        "subject": "Do not allow help for command roles other than main.",
+        "body": "Previously requesting help for roles other than main would result in a segfault since help.auto.c.inc does not include such help.\n\nPrevent this by erroring when a user requests help for roles other than main.\n\nThis is a bug but it is unlikely to have ever been seen in the field and in any case it has a very low severity since it only impacts a corner-case for the help command."
+    },
+    {
+        "commit": "6d653a14a2330659928c4700f851d3bafb899527",
+        "date": "2024-08-16 09:35:41 +0700",
+        "subject": "Begin v2.53.1 development."
+    },
+    {
         "commit": "6e8a45f650e303fe74a1e34ee8e76a193dbc6c4a",
         "date": "2024-07-22 09:33:31 +0700",
         "subject": "v2.53: Concurrent Backups"

@@ -240,7 +240,7 @@
     <table-cell>common/io/socket</table-cell>
     <table-cell>28/28 (100.0%)</table-cell>
     <table-cell>104/104 (100.0%)</table-cell>
-    <table-cell>439/439 (100.0%)</table-cell>
+    <table-cell>442/442 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
@@ -260,8 +260,8 @@
 <table-row>
     <table-cell>config</table-cell>
     <table-cell>92/92 (100.0%)</table-cell>
-    <table-cell>1000/1000 (100.0%)</table-cell>
-    <table-cell>1956/1956 (100.0%)</table-cell>
+    <table-cell>1002/1002 (100.0%)</table-cell>
+    <table-cell>1957/1957 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
@@ -358,6 +358,6 @@
 <table-row>
     <table-cell>TOTAL</table-cell>
     <table-cell>1661/1661 (100.0%)</table-cell>
-    <table-cell>10433/10434 (99.99%)</table-cell>
-    <table-cell>31267/31267 (100.0%)</table-cell>
+    <table-cell>10435/10436 (99.99%)</table-cell>
+    <table-cell>31271/31271 (100.0%)</table-cell>
 </table-row>
