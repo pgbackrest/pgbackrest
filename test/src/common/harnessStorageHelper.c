@@ -62,6 +62,9 @@ Macros for function logging
 #define FUNCTION_LOG_HRN_STORAGE_WRITE_TEST_FORMAT(value, buffer, bufferSize)                                                      \
     objNameToLog(value, "HrnStorageWriteTest *", buffer, bufferSize)
 
+/***********************************************************************************************************************************
+Error if secret path is specified
+***********************************************************************************************************************************/
 static void
 hrnStorageTestSecretCheck(const String *const file)
 {
@@ -69,6 +72,9 @@ hrnStorageTestSecretCheck(const String *const file)
         THROW_FMT(AssertError, "path/file '%s' cannot contain " HRN_STORAGE_TEST_SECRET, strZ(file));
 }
 
+/***********************************************************************************************************************************
+Find an unused file version
+***********************************************************************************************************************************/
 static String *
 hrnStorageTestVersionFind(const Storage *const storage, const String *const file)
 {
@@ -101,6 +107,9 @@ hrnStorageTestVersionFind(const Storage *const storage, const String *const file
     FUNCTION_HARNESS_RETURN(STRING, result);
 }
 
+/***********************************************************************************************************************************
+Test storage write driver
+***********************************************************************************************************************************/
 static void
 hrnStorageWriteTestOpen(THIS_VOID)
 {
@@ -137,9 +146,6 @@ hrnStorageWriteTest(THIS_VOID, const Buffer *const buffer)
     FUNCTION_HARNESS_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Close the file
-***********************************************************************************************************************************/
 static void
 hrnStorageWriteTestClose(THIS_VOID)
 {
@@ -157,9 +163,6 @@ hrnStorageWriteTestClose(THIS_VOID)
     FUNCTION_HARNESS_RETURN_VOID();
 }
 
-/***********************************************************************************************************************************
-Get file descriptor
-***********************************************************************************************************************************/
 static int
 hrnStorageWriteTestFd(const THIS_VOID)
 {
@@ -174,7 +177,7 @@ hrnStorageWriteTestFd(const THIS_VOID)
     FUNCTION_HARNESS_RETURN(INT, hrnStorageWriteInterfaceDummy.fd(this->base));
 }
 
-FN_EXTERN StorageWrite *
+static StorageWrite *
 hrnStorageWriteTestNew(
     Storage *const storagePosix, const String *const name, const mode_t modeFile, const mode_t modePath,
     const String *const user, const String *const group, const time_t timeModified, const bool createPath, const bool syncFile,
@@ -235,6 +238,9 @@ hrnStorageWriteTestNew(
     FUNCTION_HARNESS_RETURN(STORAGE_WRITE, storageWriteNew(this, &this->interface));
 }
 
+/***********************************************************************************************************************************
+Test storage driver
+***********************************************************************************************************************************/
 static StorageInfo
 hrnStorageTestInfo(THIS_VOID, const String *const file, const StorageInfoLevel level, const StorageInterfaceInfoParam param)
 {
@@ -496,6 +502,9 @@ hrnStorageTestNew(
             pathExpressionFunction, this, this->interface));
 }
 
+/***********************************************************************************************************************************
+storageRepoGet() shim
+***********************************************************************************************************************************/
 static Storage *
 storageRepoGet(const unsigned int repoIdx, const bool write)
 {
