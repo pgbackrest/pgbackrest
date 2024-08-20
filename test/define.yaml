@@ -355,7 +355,6 @@ unit:
           name: storage
           shim:
             storage/posix/storage: ~
-            storage/posix/write: ~
 
         coverage:
           - common/crypto/cipherBlock
