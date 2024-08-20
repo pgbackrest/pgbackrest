@@ -29,19 +29,6 @@ storageWriteMove(StorageWrite *const this, MemContext *const parentNew)
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-typedef struct StorageWritePub
-{
-    const StorageWriteInterface *interface;                         // File data (name, driver type, etc.)
-    IoWrite *io;                                                    // Write interface
-} StorageWritePub;
-
-// Write interface
-FN_INLINE_ALWAYS const StorageWriteInterface *
-storageWriteInterface(const StorageWrite *const this)
-{
-    return THIS_PUB(StorageWrite)->interface;
-}
-
 // Will the file be written atomically? Atomic writes means the file will be complete or be missing. Filesystems have different ways
 // to accomplish this.
 FN_INLINE_ALWAYS bool

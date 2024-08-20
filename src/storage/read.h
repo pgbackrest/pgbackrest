@@ -26,19 +26,6 @@ storageReadMove(StorageRead *const this, MemContext *const parentNew)
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-typedef struct StorageReadPub
-{
-    const StorageReadInterface *interface;                          // File data (name, driver type, etc.)
-    IoRead *io;                                                     // Read interface
-} StorageReadPub;
-
-// Read interface
-FN_INLINE_ALWAYS const StorageReadInterface *
-storageReadInterface(const StorageRead *const this)
-{
-    return THIS_PUB(StorageRead)->interface;
-}
-
 // Should a missing file be ignored?
 FN_INLINE_ALWAYS bool
 storageReadIgnoreMissing(const StorageRead *const this)

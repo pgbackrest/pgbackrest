@@ -27,4 +27,20 @@ typedef struct StorageReadInterface
 
 FN_EXTERN StorageRead *storageReadNew(void *driver, const StorageReadInterface *interface);
 
+/***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct StorageReadPub
+{
+    const StorageReadInterface *interface;                          // File data (name, driver type, etc.)
+    IoRead *io;                                                     // Read interface
+} StorageReadPub;
+
+// Read interface
+FN_INLINE_ALWAYS const StorageReadInterface *
+storageReadInterface(const StorageRead *const this)
+{
+    return THIS_PUB(StorageRead)->interface;
+}
+
 #endif
