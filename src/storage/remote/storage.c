@@ -269,6 +269,7 @@ storageRemoteNewRead(THIS_VOID, const String *const file, const bool ignoreMissi
         FUNCTION_LOG_PARAM(BOOL, param.compressible);
         FUNCTION_LOG_PARAM(UINT64, param.offset);
         FUNCTION_LOG_PARAM(VARIANT, param.limit);
+        FUNCTION_LOG_PARAM(BOOL, param.version);
         FUNCTION_LOG_PARAM(STRING, param.versionId);
     FUNCTION_LOG_END();
 

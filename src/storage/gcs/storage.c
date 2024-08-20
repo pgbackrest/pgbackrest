@@ -882,6 +882,7 @@ storageGcsNewRead(THIS_VOID, const String *const file, const bool ignoreMissing,
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(UINT64, param.offset);
         FUNCTION_LOG_PARAM(VARIANT, param.limit);
+        FUNCTION_LOG_PARAM(BOOL, param.version);
         FUNCTION_LOG_PARAM(STRING, param.versionId);
     FUNCTION_LOG_END();
 

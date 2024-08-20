@@ -32,11 +32,18 @@ typedef struct StorageReadPub
     IoRead *io;                                                     // Read interface
 } StorageReadPub;
 
+// Read interface
+FN_INLINE_ALWAYS const StorageReadInterface *
+storageReadInterface(const StorageRead *const this)
+{
+    return THIS_PUB(StorageRead)->interface;
+}
+
 // Should a missing file be ignored?
 FN_INLINE_ALWAYS bool
 storageReadIgnoreMissing(const StorageRead *const this)
 {
-    return THIS_PUB(StorageRead)->interface->ignoreMissing;
+    return storageReadInterface(this)->ignoreMissing;
 }
 
 // Read interface
@@ -50,28 +57,28 @@ storageReadIo(const StorageRead *const this)
 FN_INLINE_ALWAYS const Variant *
 storageReadLimit(const StorageRead *const this)
 {
-    return THIS_PUB(StorageRead)->interface->limit;
+    return storageReadInterface(this)->limit;
 }
 
 // File name
 FN_INLINE_ALWAYS const String *
 storageReadName(const StorageRead *const this)
 {
-    return THIS_PUB(StorageRead)->interface->name;
+    return storageReadInterface(this)->name;
 }
 
 // Is there a read limit? NULL for no limit.
 FN_INLINE_ALWAYS uint64_t
 storageReadOffset(const StorageRead *const this)
 {
-    return THIS_PUB(StorageRead)->interface->offset;
+    return storageReadInterface(this)->offset;
 }
 
 // Get file type
 FN_INLINE_ALWAYS StringId
 storageReadType(const StorageRead *const this)
 {
-    return THIS_PUB(StorageRead)->interface->type;
+    return storageReadInterface(this)->type;
 }
 
 /***********************************************************************************************************************************

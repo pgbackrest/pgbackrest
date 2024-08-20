@@ -1790,6 +1790,7 @@ testRun(void)
         TEST_STORAGE_GET(storageRepo(), "test1", "test1");
         TEST_STORAGE_GET(storageRepo(), "test1", "test1");
         TEST_STORAGE_GET(storageRepo(), "test2", "test2");
+        TEST_STORAGE_GET(storageRepo(), "missing/test2", NULL, .nullOnMissing = true);
 
         argList = strLstDup(argListBase);
         hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:54:59+00");
@@ -1797,7 +1798,11 @@ testRun(void)
 
         TEST_STORAGE_GET(storageRepo(), "test1", "test1a");
         TEST_STORAGE_GET(storageRepo(), "test2", "test2");
-        // TEST_STORAGE_GET(storageRepo(), "test3", NULL, .nullOnMissing = true); !!!
+        TEST_STORAGE_GET(storageRepo(), "test3", NULL, .nullOnMissing = true);
+
+        TEST_ERROR(
+            storageGetP(storageNewReadP(storageRepo(), STRDEF("test3"))), FileMissingError,
+            "unable to open missing file '" TEST_PATH "/test3' for read");
 
         // hrnStorageHelperRepoShimSet(false); !!! PUT THIS AT THE END
     }
