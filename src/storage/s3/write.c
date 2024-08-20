@@ -8,7 +8,7 @@ S3 Storage File Write
 #include "common/type/object.h"
 #include "common/type/xml.h"
 #include "storage/s3/write.h"
-#include "storage/write.intern.h"
+#include "storage/write.h"
 
 /***********************************************************************************************************************************
 S3 query tokens

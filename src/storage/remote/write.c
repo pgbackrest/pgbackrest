@@ -11,7 +11,7 @@ Remote Storage File write
 #include "common/type/object.h"
 #include "storage/remote/protocol.h"
 #include "storage/remote/write.h"
-#include "storage/write.intern.h"
+#include "storage/write.h"
 
 /***********************************************************************************************************************************
 Object type

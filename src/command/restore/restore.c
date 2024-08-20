@@ -25,7 +25,7 @@ Restore Command
 #include "protocol/helper.h"
 #include "protocol/parallel.h"
 #include "storage/helper.h"
-#include "storage/write.intern.h"
+#include "storage/write.h"
 #include "version.h"
 
 /***********************************************************************************************************************************

@@ -27,7 +27,7 @@ Archive Get Command
 #include "protocol/helper.h"
 #include "protocol/parallel.h"
 #include "storage/helper.h"
-#include "storage/write.intern.h"
+#include "storage/write.h"
 
 /***********************************************************************************************************************************
 Constants for log messages that are used multiple times to keep them consistent
