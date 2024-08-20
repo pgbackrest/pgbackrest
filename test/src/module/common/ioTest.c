@@ -654,7 +654,7 @@ testRun(void)
 
                 TEST_ASSIGN(write, ioFdWriteNewOpen(STRDEF("write test"), HRN_FORK_CHILD_WRITE_FD(), 1000), "move write");
                 TEST_RESULT_BOOL(ioWriteReadyP(write), true, "write is ready");
-                TEST_RESULT_INT(ioWriteFd(write), ((IoFdWrite *)write->driver)->fd, "check write fd");
+                TEST_RESULT_INT(ioWriteFd(write), ((IoFdWrite *)ioWriteDriver(write))->fd, "check write fd");
 
                 // Write a line to be read
                 TEST_RESULT_VOID(ioWriteStrLine(write, STRDEF("test string 1")), "write test string");

@@ -11,7 +11,7 @@ Archive Get Protocol Handler
 #include "common/memContext.h"
 #include "config/config.h"
 #include "storage/helper.h"
-#include "storage/write.intern.h"
+#include "storage/write.h"
 
 /**********************************************************************************************************************************/
 FN_EXTERN ProtocolServerResult *

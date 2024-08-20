@@ -747,7 +747,7 @@ testRun(void)
                 TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
                 TEST_RESULT_BOOL(storageWriteTruncate(write), true, "file will be truncated");
 
-                TEST_RESULT_VOID(storageWriteS3Close(write->driver), "close file again");
+                TEST_RESULT_VOID(storageWriteS3Close(ioWriteDriver(storageWriteIo(write))), "close file again");
 
                 // Check that temp credentials were changed
                 TEST_RESULT_STR_Z(driver->accessKey, "xx", "check access key");

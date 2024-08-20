@@ -7,7 +7,7 @@ S3 Storage Read
 #include "common/io/http/client.h"
 #include "common/log.h"
 #include "common/type/object.h"
-#include "storage/read.intern.h"
+#include "storage/read.h"
 #include "storage/s3/read.h"
 
 /***********************************************************************************************************************************
