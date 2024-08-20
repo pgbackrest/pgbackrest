@@ -34,13 +34,22 @@ Getters/Setters
 typedef struct IoWritePub
 {
     void *driver;                                                   // Driver object
+    IoWriteInterface interface;                                     // Driver interface
     IoFilterGroup *filterGroup;                                     // IO filters
 } IoWritePub;
 
+// Driver for the write object
 FN_INLINE_ALWAYS void *
 ioWriteDriver(const IoWrite *const this)
 {
     return THIS_PUB(IoWrite)->driver;
+}
+
+// Interface for the write object
+FN_INLINE_ALWAYS const IoWriteInterface *
+ioWriteInterface(const IoWrite *const this)
+{
+    return &THIS_PUB(IoWrite)->interface;
 }
 
 /***********************************************************************************************************************************

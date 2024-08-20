@@ -46,14 +46,6 @@ const StorageInterface hrnStorageInterfaceDummy =
     .remove = storagePosixRemove,
 };
 
-const IoWriteInterface hrnStorageWriteInterfaceDummy =
-{
-    .close = storageWritePosixClose,
-    .fd = storageWritePosixFd,
-    .open = storageWritePosixOpen,
-    .write = storageWritePosix,
-};
-
 /**********************************************************************************************************************************/
 void
 testStorageGet(const Storage *const storage, const char *const file, const char *const expected, TestStorageGetParam param)
