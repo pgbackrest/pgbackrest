@@ -565,11 +565,11 @@ unit:
           - storage/remote/storage
           - storage/remote/write
           - storage/helper
+          - storage/storage
 
         include:
           - protocol/client
           - storage/read
-          - storage/storage
           - storage/write
 
       # ----------------------------------------------------------------------------------------------------------------------------

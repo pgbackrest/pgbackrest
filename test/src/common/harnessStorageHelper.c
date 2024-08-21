@@ -323,7 +323,7 @@ hrnStorageWriteTestFd(const THIS_VOID)
 static StorageWrite *
 hrnStorageWriteTestNew(
     Storage *const storagePosix, const String *const name, const mode_t modeFile, const mode_t modePath,
-    const String *const user, const String *const group, const time_t timeModified, const bool createPath, const bool syncFile,
+    const String *const user, const String *const group, time_t timeModified, const bool createPath, const bool syncFile,
     const bool syncPath, const bool atomic, const bool truncate)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -346,13 +346,13 @@ hrnStorageWriteTestNew(
     ASSERT(modeFile != 0);
     ASSERT(modePath != 0);
     ASSERT(truncate);
-    ASSERT(timeModified == 0);
     ASSERT(createPath);
 
     OBJ_NEW_BEGIN(HrnStorageWriteTest, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
     {
         // Make sure the main file and the version both have the same timestamp
-        const time_t timeModified = (time_t)(timeMSec() / MSEC_PER_SEC);
+        if (timeModified == 0)
+            timeModified = (time_t)(timeMSec() / MSEC_PER_SEC);
 
         StorageWrite *const posix = storageWritePosixNew(
             storageDriver(storagePosix), name, modeFile, modePath, user, group, timeModified, createPath, false, false, false,
@@ -442,32 +442,35 @@ hrnStorageTestList(THIS_VOID, const String *const path, const StorageInfoLevel l
             const StorageList *const list = storageInterfaceListP(
                 storageDriver(this->storagePosix), strNewFmt("%s/" HRN_STORAGE_TEST_SECRET, strZ(path)), level);
 
-            for (unsigned int listIdx = 0; listIdx < storageLstSize(list); listIdx++)
+            if (list != NULL)
             {
-                const StorageInfo info = storageLstGet(list, listIdx);
-                StorageList *const versionList =
-                    storageInterfaceListP(
-                        storageDriver(this->storagePosix),
-                        strNewFmt("%s/" HRN_STORAGE_TEST_SECRET "/%s", strZ(path), strZ(info.name)), level);
-                storageLstSort(versionList, sortOrderDesc);
-
-                for (unsigned int versionIdx = 0; versionIdx < storageLstSize(versionList); versionIdx++)
+                for (unsigned int listIdx = 0; listIdx < storageLstSize(list); listIdx++)
                 {
-                    StorageInfo versionInfo = storageLstGet(versionList, versionIdx);
+                    const StorageInfo info = storageLstGet(list, listIdx);
+                    StorageList *const versionList =
+                        storageInterfaceListP(
+                            storageDriver(this->storagePosix),
+                            strNewFmt("%s/" HRN_STORAGE_TEST_SECRET "/%s", strZ(path), strZ(info.name)), level);
+                    storageLstSort(versionList, sortOrderDesc);
 
-                    // Return version if within the time limit
-                    if (versionInfo.timeModified <= param.limitTime)
+                    for (unsigned int versionIdx = 0; versionIdx < storageLstSize(versionList); versionIdx++)
                     {
-                        // If the most recent version is a delete marker then skip the file
-                        if (strEndsWithZ(versionInfo.name, ".delete"))
+                        StorageInfo versionInfo = storageLstGet(versionList, versionIdx);
+
+                        // Return version if within the time limit
+                        if (versionInfo.timeModified <= param.limitTime)
+                        {
+                            // If the most recent version is a delete marker then skip the file
+                            if (strEndsWithZ(versionInfo.name, ".delete"))
+                                break;
+
+                            // Return the version
+                            versionInfo.versionId = versionInfo.name;
+                            versionInfo.name = info.name;
+
+                            storageLstAdd(result, &versionInfo);
                             break;
-
-                        // Return the version
-                        versionInfo.versionId = versionInfo.name;
-                        versionInfo.name = info.name;
-
-                        storageLstAdd(result, &versionInfo);
-                        break;
+                        }
                     }
                 }
             }
@@ -546,6 +549,31 @@ hrnStorageTestNewWrite(THIS_VOID, const String *const file, const StorageInterfa
             param.createPath, param.syncFile, param.syncPath, param.atomic, param.truncate));
 }
 
+static void
+hrnStorageTestPathCreate(
+    THIS_VOID, const String *const path, const bool errorOnExists, const bool noParentCreate, const mode_t mode,
+    const StorageInterfacePathCreateParam param)
+{
+    THIS(HrnStorageTest);
+
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STORAGE_POSIX, this);
+        FUNCTION_HARNESS_PARAM(STRING, path);
+        FUNCTION_HARNESS_PARAM(BOOL, errorOnExists);
+        FUNCTION_HARNESS_PARAM(BOOL, noParentCreate);
+        FUNCTION_HARNESS_PARAM(MODE, mode);
+        (void)param;                                                // No parameters are used
+    FUNCTION_HARNESS_END();
+
+    ASSERT(this != NULL);
+    ASSERT(path != NULL);
+
+    storageInterface(this->storagePosix).pathCreate(
+        storageDriver(this->storagePosix), path, errorOnExists, noParentCreate, mode, param);
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
 static bool
 hrnStorageTestPathRemove(THIS_VOID, const String *const path, const bool recurse, const StorageInterfacePathRemoveParam param)
 {
@@ -562,9 +590,40 @@ hrnStorageTestPathRemove(THIS_VOID, const String *const path, const bool recurse
     ASSERT(path != NULL);
     hrnStorageTestSecretCheck(path);
 
-    // !!! ADD VERSION LOGIC
+    // Get time to use for delete markers
+    const time_t timeModified = (time_t)(timeMSec() / MSEC_PER_SEC);
 
-    FUNCTION_HARNESS_RETURN(BOOL, hrnStorageInterfaceDummy.pathRemove(storageDriver(this->storagePosix), path, recurse, param));
+    // Remove files recursively
+    StorageIterator *const storageItr = storageNewItrP(
+        this->storagePosix, path, .level = storageInfoLevelBasic, .nullOnMissing = true, .sortOrder = sortOrderAsc,
+        .recurse = true);
+
+    if (storageItr != NULL)
+    {
+        while (storageItrMore(storageItr))
+        {
+            const StorageInfo info = storageItrNext(storageItr);
+
+            // Only proceed if file and not in the secret path
+            if (info.type != storageTypeFile || strstr(strZ(info.name), HRN_STORAGE_TEST_SECRET) != NULL)
+                continue;
+
+            // Remove file
+            const String *const file = strNewFmt("%s/%s", strZ(path), strZ(info.name));
+
+            storageInterface(this->storagePosix).remove(
+                storageDriver(this->storagePosix), file, (StorageInterfaceRemoveParam){.errorOnMissing = true});
+
+            // Write delete marker
+            storagePutP(
+                storageNewWriteP(
+                    this->storagePosix, strNewFmt("%s.delete", strZ(hrnStorageTestVersionFind(this->storagePosix, file))),
+                    .timeModified = timeModified, .noAtomic = true, .noSyncFile = true, .noSyncPath = true),
+                NULL);
+        }
+    }
+
+    FUNCTION_HARNESS_RETURN(BOOL, storageItr != NULL);
 }
 
 static void
@@ -614,12 +673,13 @@ hrnStorageTestNew(
 
     static const StorageInterface hrnStorageInterfaceTest =
     {
-        .feature = 1 << storageFeatureVersioning,
+        .feature = 1 << storageFeaturePath | 1 << storageFeatureInfoDetail | 1 << storageFeatureVersioning,
 
         .info = hrnStorageTestInfo,
         .list = hrnStorageTestList,
         .newRead = hrnStorageTestNewRead,
         .newWrite = hrnStorageTestNewWrite,
+        .pathCreate = hrnStorageTestPathCreate,
         .pathRemove = hrnStorageTestPathRemove,
         .remove = hrnStorageTestRemove,
     };

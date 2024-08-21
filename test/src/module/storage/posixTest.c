@@ -1747,7 +1747,7 @@ testRun(void)
             .level = storageInfoLevelBasic);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("list with limits");
+        TEST_TITLE("list with limit");
 
         StringList *argList = strLstDup(argListBase);
         hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:53:20+00");
@@ -1781,13 +1781,15 @@ testRun(void)
         TEST_STORAGE_GET(storageRepo(), "test3", NULL, .nullOnMissing = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("get with limits");
+        TEST_TITLE("get with limit");
 
         argList = strLstDup(argListBase);
         hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:53:20+00");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         TEST_STORAGE_GET(storageRepo(), "test1", "test1");
+        TEST_RESULT_INT(storageInfoP(storageRepo(), STRDEF("test1")).timeModified, 1722740000, "test1 time");
+        TEST_RESULT_UINT(storageInfoP(storageRepo(), STRDEF("test1")).size, 5, "test1 size");
         TEST_STORAGE_GET(storageRepo(), "test1", "test1");
         TEST_STORAGE_GET(storageRepo(), "test2", "test2");
         TEST_STORAGE_GET(storageRepo(), "missing/test2", NULL, .nullOnMissing = true);
@@ -1797,6 +1799,8 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         TEST_STORAGE_GET(storageRepo(), "test1", "test1a");
+        TEST_RESULT_INT(storageInfoP(storageRepo(), STRDEF("test1")).timeModified, 1722740099, "test1 time");
+        TEST_RESULT_UINT(storageInfoP(storageRepo(), STRDEF("test1")).size, 6, "test1 size");
         TEST_STORAGE_GET(storageRepo(), "test2", "test2");
         TEST_STORAGE_GET(storageRepo(), "test3", NULL, .nullOnMissing = true);
 
@@ -1804,7 +1808,100 @@ testRun(void)
             storageGetP(storageNewReadP(storageRepo(), STRDEF("test3"))), FileMissingError,
             "unable to open missing file '" TEST_PATH "/test3' for read");
 
-        // hrnStorageHelperRepoShimSet(false); !!! PUT THIS AT THE END
+        TEST_ERROR(storageRemoveP(storageRepoWrite(), NULL), AssertError, "time limit requires read-only storage");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path remove");
+
+        argList = strLstDup(argListBase);
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        hrnTimeMSecSetOne(timeMid);
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("sub1/test4")), BUFSTRDEF("test4")), "write version");
+        hrnTimeMSecSetOne(timeMid);
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("sub1/sub2/test5")), BUFSTRDEF("test5")), "write version");
+
+        hrnTimeMSecSetOne(timeNew);
+        TEST_RESULT_VOID(storagePathRemoveP(storageRepoWrite(), STRDEF("sub1"), .recurse = true), "remove sub1");
+
+        // Raw list to show structure
+        TEST_STORAGE_LIST(
+            storageTest, NULL,
+            ".pgbfs/\n"
+            ".pgbfs/test1/\n"
+            ".pgbfs/test1/v0001 {s=5, t=1722740000}\n"
+            ".pgbfs/test1/v0002 {s=5, t=1722740049}\n"
+            ".pgbfs/test1/v0003 {s=6, t=1722740099}\n"
+            ".pgbfs/test2/\n"
+            ".pgbfs/test2/v0001 {s=5, t=1722740000}\n"
+            ".pgbfs/test2/v0002 {s=5, t=1722740099}\n"
+            ".pgbfs/test3/\n"
+            ".pgbfs/test3/v0001 {s=5, t=1722740000}\n"
+            ".pgbfs/test3/v0002.delete {s=0, t=1722740049}\n"
+            "sub1/\n"
+            "sub1/.pgbfs/\n"
+            "sub1/.pgbfs/test4/\n"
+            "sub1/.pgbfs/test4/v0001 {s=5, t=1722740049}\n"
+            "sub1/.pgbfs/test4/v0002.delete {s=0, t=1722740099}\n"
+            "sub1/sub2/\n"
+            "sub1/sub2/.pgbfs/\n"
+            "sub1/sub2/.pgbfs/test5/\n"
+            "sub1/sub2/.pgbfs/test5/v0001 {s=5, t=1722740049}\n"
+            "sub1/sub2/.pgbfs/test5/v0002.delete {s=0, t=1722740099}\n"
+            "test1 {s=6, t=1722740099}\n"
+            "test2 {s=5, t=1722740099}\n",
+            .level = storageInfoLevelBasic);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("list without limit");
+
+        argList = strLstDup(argListBase);
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        TEST_STORAGE_GET(storageRepo(), "test1", "test1a");
+        TEST_STORAGE_GET(storageRepo(), "test2", "test2");
+        TEST_STORAGE_GET(storageRepo(), "test3", NULL, .nullOnMissing = true);
+
+        TEST_STORAGE_LIST(
+            storageRepo(), NULL,
+            "sub1/\n"
+            "sub1/sub2/\n"
+            "test1 {s=6, t=1722740099}\n"
+            "test2 {s=5, t=1722740099}\n",
+            .level = storageInfoLevelBasic);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("list with limit");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:54:09+00");
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        TEST_STORAGE_LIST(
+            storageRepo(), NULL,
+            "sub1/\n"
+            "sub1/sub2/\n"
+            "sub1/sub2/test5 {s=5, t=1722740049, v=v0001}\n"
+            "sub1/test4 {s=5, t=1722740049, v=v0001}\n"
+            "test1 {s=5, t=1722740049, v=v0002}\n"
+            "test2 {s=5, t=1722740000, v=v0001}\n",
+            .level = storageInfoLevelBasic);
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:54:59+00");
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        TEST_STORAGE_LIST(
+            storageRepo(), NULL,
+            "sub1/\n"
+            "sub1/sub2/\n"
+            "test1 {s=6, t=1722740099, v=v0003}\n"
+            "test2 {s=5, t=1722740099, v=v0002}\n",
+            .level = storageInfoLevelBasic);
+
+        hrnStorageHelperRepoShimSet(false);
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

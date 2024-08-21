@@ -93,6 +93,9 @@ storageNew(
         // If time limit is requested then versioning must be supported
         CHECK(AssertError, limitTime == 0 || storageFeature(this, storageFeatureVersioning), "versioning required for time limit");
 
+        // If time limit is requested then storage must be write-only
+        CHECK(AssertError, limitTime == 0 || !write, "time limit requires read-only storage");
+
         // If path sync feature is enabled then path feature must be enabled
         CHECK(
             AssertError, !storageFeature(this, storageFeaturePathSync) || storageFeature(this, storageFeaturePath),
@@ -276,7 +279,7 @@ storageInfo(const Storage *const this, const String *const fileExp, StorageInfoP
         // Build the path
         const String *const file = storagePathP(this, fileExp, .noEnforce = param.noPathEnforce);
 
-        // Call driver function
+        // Set level when default
         if (param.level == storageInfoLevelDefault)
             param.level = storageFeature(this, storageFeatureInfoDetail) ? storageInfoLevelDetail : storageInfoLevelBasic;
 
@@ -288,7 +291,44 @@ storageInfo(const Storage *const this, const String *const fileExp, StorageInfoP
         }
         // Else call the driver
         else
-            result = storageInterfaceInfoP(storageDriver(this), file, param.level, .followLink = param.followLink);
+        {
+            // If limiting by time
+            if (this->limitTime != 0)
+            {
+                // Find the version to read using the cache
+                const String *const path = storagePathP(this, fileExp);
+
+                StorageListCache *cache = lstFind(this->cacheList, &path);
+
+                if (cache == NULL)
+                {
+                    MEM_CONTEXT_OBJ_BEGIN(this->cacheList)
+                    {
+                        StorageList *const list = storageInterfaceListP(
+                            storageDriver(this), strPath(path), storageInfoLevelBasic, .limitTime = this->limitTime);
+
+                        if (list != NULL)
+                            storageLstSort(list, sortOrderAsc);
+
+                        cache = memNew(sizeof(StorageListCache));
+                        *cache = (StorageListCache){.path = strDup(path), .list = list};
+
+                        lstAdd(this->cacheList, cache);
+                    }
+                    MEM_CONTEXT_OBJ_END();
+
+                    lstSort(this->cacheList, sortOrderAsc);
+                }
+
+                if (cache->list != NULL)
+                {
+                    result = storageLstFind(cache->list, strBase(path));
+                    ASSERT(!result.exists || result.type != storageTypeFile || result.versionId != NULL);
+                }
+            }
+            else
+                result = storageInterfaceInfoP(storageDriver(this), file, param.level, .followLink = param.followLink);
+        }
 
         // Error if the file missing and not ignoring
         if (!result.exists && !param.ignoreMissing)
@@ -480,33 +520,8 @@ storageNewRead(const Storage *const this, const String *const fileExp, const Sto
         // If limiting by time
         if (this->limitTime != 0)
         {
-            // Find the version to read using the cache
-            StorageListCache *cache = lstFind(this->cacheList, &path);
+            versionId = storageInfoP(this, fileExp, .ignoreMissing = true).versionId;
 
-            if (cache == NULL)
-            {
-                MEM_CONTEXT_OBJ_BEGIN(this->cacheList)
-                {
-                    StorageList *const list = storageInterfaceListP(
-                        storageDriver(this), strPath(path), storageInfoLevelBasic, .limitTime = this->limitTime);
-
-                    if (list != NULL)
-                        storageLstSort(list, sortOrderAsc);
-
-                    cache = memNew(sizeof(StorageListCache));
-                    *cache = (StorageListCache){.path = strDup(path), .list = list};
-
-                    lstAdd(this->cacheList, cache);
-                }
-                MEM_CONTEXT_OBJ_END();
-
-                lstSort(this->cacheList, sortOrderAsc);
-            }
-
-            if (cache->list != NULL)
-                versionId = storageLstFind(cache->list, strBase(path)).versionId;
-
-            // Error if a version was not found and not ignoring missing
             if (versionId == NULL && !param.ignoreMissing)
                 THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(path));
         }

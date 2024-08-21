@@ -7,6 +7,7 @@ Test Repo Commands
 
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
+#include "common/harnessStorageHelper.h"
 
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
@@ -22,6 +23,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdStorageList() and storageListRender()"))
     {
+        hrnStorageHelperRepoShimSet(true);
+
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawZ(argList, cfgOptOutput, "text");
@@ -286,11 +289,15 @@ testRun(void)
         cfgOptionSet(cfgOptFilter, cfgSourceParam, VARSTRDEF("bbb$"));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "file (json)");
         TEST_RESULT_STR_Z(strNewBuf(output), "{}\n", "check output");
+
+        hrnStorageHelperRepoShimSet(false);
     }
 
     // *****************************************************************************************************************************
     if (testBegin("cmdStoragePut() and cmdStorageGet()"))
     {
+        hrnStorageHelperRepoShimSet(true);
+
         // Set buffer size small so copy loops get exercised
         size_t oldBufferSize = ioBufferSize();
         ioBufferSizeSet(8);
@@ -791,6 +798,8 @@ testRun(void)
 
         // Reset buffer size
         ioBufferSizeSet(oldBufferSize);
+
+        hrnStorageHelperRepoShimSet(false);
     }
 
     // *****************************************************************************************************************************
