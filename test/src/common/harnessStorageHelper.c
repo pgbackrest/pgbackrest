@@ -136,12 +136,7 @@ hrnStorageReadTestOpen(THIS_VOID)
 
     // If the version is missing
     if (this->version && this->versionId == NULL)
-    {
-        if (!this->interface.ignoreMissing)
-            THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
-
         FUNCTION_HARNESS_RETURN(BOOL, false);
-    }
 
     FUNCTION_HARNESS_RETURN(BOOL, ioReadInterface(this->posix)->open(ioReadDriver(this->posix)));
 }

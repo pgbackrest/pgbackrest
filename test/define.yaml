@@ -607,20 +607,15 @@ unit:
         total: 2
 
         coverage:
+          - storage/s3/helper
+          - storage/s3/read
+          - storage/s3/storage
           - storage/s3/write
           - storage/helper
 
         include:
           - storage/storage
           - storage/write
-          - storage/s3/helper
-          - storage/s3/read
-          - storage/s3/storage
-
-        depend:
-          - storage/s3/helper
-          - storage/s3/read
-          - storage/s3/storage
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: sftp

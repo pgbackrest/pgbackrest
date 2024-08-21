@@ -1437,6 +1437,125 @@ testRun(void)
                 TEST_RESULT_VOID(storageRemoveP(s3, STRDEF("/path/to/test.txt")), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to time limited");
+
+                hrnServerScriptClose(service);
+
+                argList = strLstDup(commonArgList);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
+                hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
+                hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:54:09+00");
+                HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+                s3 = storageRepoGet(0, false);
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("list with time limit");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&prefix=path%2Fto%2F&versions=");
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
+                        "    <DeleteMarker>"
+                        "        <Key>path/to/test_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
+                        "    </DeleteMarker>"
+                        "    <Version>"
+                        "        <Key>path/to/test_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
+                        "    </Version>"
+                        "    <Version>"
+                        "        <Key>path/to/test_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:09.000Z</LastModified>"
+                        "        <Size>737</Size>"
+                        "        <VersionId>bbbb</VersionId>"
+                        "    </Version>"
+                        "    <Version>"
+                        "        <Key>path/to/test_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:09.000Z</LastModified>"
+                        "    </Version>"
+                        "    <Version>"
+                        "        <Key>path/to/test_file2</Key>"
+                        "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
+                        "    </Version>"
+                        "    <DeleteMarker>"
+                        "        <Key>path/to/test_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:09.000Z</LastModified>"
+                        "    </DeleteMarker>"
+                        "   <CommonPrefixes>"
+                        "       <Prefix>path/to/test_path/</Prefix>"
+                        "   </CommonPrefixes>"
+                        "</ListBucketResult>");
+
+                TEST_STORAGE_LIST(
+                    s3, "/path/to",
+                    "test_file {s=737, t=1722740049, v=bbbb}\n"
+                    "test_path/\n",
+                    .level = storageInfoLevelBasic, .noRecurse = true);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file with time limit");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&prefix=path%2Fto%2F&versions=");
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
+                        "    <Version>"
+                        "        <Key>path/to/test_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
+                        "    </Version>"
+                        "    <Version>"
+                        "        <Key>path/to/test_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:09.000Z</LastModified>"
+                        "        <Size>6</Size>"
+                        "        <VersionId>bbbb</VersionId>"
+                        "    </Version>"
+                        "   <CommonPrefixes>"
+                        "       <Prefix>path/to/test_path/</Prefix>"
+                        "   </CommonPrefixes>"
+                        "</ListBucketResult>");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/path/to/test_file?versionId=bbbb");
+                testResponseP(service, .content = "123456");
+
+                TEST_RESULT_STR_Z(
+                    strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("/path/to/test_file")))), "123456", "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get missing file with time limit");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&versions=");
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
+                        "    <Version>"
+                        "        <Key>missing_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
+                        "    </Version>"
+                        "    <DeleteMarker>"
+                        "        <Key>missing_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:09.000Z</LastModified>"
+                        "    </DeleteMarker>"
+                        "    <CommonPrefixes>"
+                        "       <Prefix>test_path/</Prefix>"
+                        "    </CommonPrefixes>"
+                        "</ListBucketResult>");
+
+                TEST_RESULT_PTR(
+                    storageGetP(storageNewReadP(s3, STRDEF("missing_file"), .ignoreMissing = true)), NULL, "missing file");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 hrnServerScriptEnd(service);
             }
             HRN_FORK_PARENT_END();

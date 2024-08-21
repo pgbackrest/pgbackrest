@@ -64,12 +64,14 @@ storageReadS3Open(THIS_VOID)
         }
         MEM_CONTEXT_OBJ_END();
 
-        result = httpResponseCodeOk(this->httpResponse);
+        if (httpResponseCodeOk(this->httpResponse))
+        {
+            result = true;
+        }
+        // Else error unless ignore missing
+        else if (!this->interface.ignoreMissing)
+            THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
     }
-
-    // Error on missing unless ignore
-    if (!result && !this->interface.ignoreMissing)
-        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }

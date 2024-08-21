@@ -662,7 +662,7 @@ storageS3ListInternal(
             httpQueryAdd(query, S3_QUERY_DELIMITER_STR, FSLASH_STR);
 
         // Use list type 2 or versions as specified
-        if (limitTime != 0 || limitTime != 0)
+        if (limitTime != 0)
             httpQueryAdd(query, STRDEF("versions") /* !!! MAKE THIS A CONST */, STRDEF(""));
         else
             httpQueryAdd(query, S3_QUERY_LIST_TYPE_STR, S3_QUERY_VALUE_LIST_TYPE_2_STR);
@@ -753,7 +753,6 @@ storageS3ListInternal(
                 else
                     fileList = xmlNodeChildList(xmlRoot, S3_XML_TAG_CONTENTS_STR);
 
-                time_t timeModifiedLast = 0;
                 const String *nameLast = NULL;
 
                 for (unsigned int fileIdx = 0; fileIdx < xmlNodeLstSize(fileList); fileIdx++)
@@ -795,12 +794,6 @@ storageS3ListInternal(
                         nameLast = info.name;
                     }
 
-                    // Skip additional versions in the same second since we cannot filter the storage at that level
-                    if (limitTime != 0 && info.timeModified == timeModifiedLast)
-                        continue;
-
-                    timeModifiedLast = info.timeModified;
-
                     // Strip off the base prefix when present
                     if (!strEmpty(basePrefix))
                         info.name = strSub(info.name, strSize(basePrefix));
@@ -814,8 +807,9 @@ storageS3ListInternal(
                         {
                             info.timeModified = storageS3CvtTime(
                                 xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_LAST_MODIFIED_STR, true)));
-                            info.size = cvtZToUInt64(strZ(xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_SIZE_STR, true))));
                         }
+
+                        info.size = cvtZToUInt64(strZ(xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_SIZE_STR, true))));
                     }
 
                     // Callback with info
