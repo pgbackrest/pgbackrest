@@ -1161,6 +1161,7 @@ storageS3New(
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(BOOL, write);
+        FUNCTION_LOG_PARAM(TIME, limitTime);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(STRING, bucket);
         FUNCTION_LOG_PARAM(STRING, endPoint);

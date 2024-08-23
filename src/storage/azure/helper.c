@@ -77,7 +77,8 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = storageAzureNew(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, pathExpressionCallback,
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write,
+                cfgOptionTest(cfgOptLimitTime) ? cvtZToTime(strZ(cfgOptionStr(cfgOptLimitTime))) : 0, pathExpressionCallback,
                 cfgOptionIdxStr(cfgOptRepoAzureContainer, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureAccount, repoIdx), keyType, key,
                 (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx),
                 cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), endpoint, uriStyle, port, ioTimeoutMs(),

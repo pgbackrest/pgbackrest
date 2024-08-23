@@ -101,7 +101,7 @@ testRequest(IoWrite *write, const char *verb, const char *path, TestRequestParam
 
     // Add version
     if (driver->sharedKey != NULL)
-        strCatZ(request, "x-ms-version:2019-12-12\r\n");
+        strCatZ(request, "x-ms-version:2021-06-08\r\n");
 
     // Complete headers
     strCatZ(request, "\r\n");
@@ -397,7 +397,7 @@ testRun(void)
             storage,
             (StorageAzure *)storageDriver(
                 storageAzureNew(
-                    STRDEF("/repo"), false, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeShared,
+                    STRDEF("/repo"), false, 0, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeShared,
                     TEST_KEY_SHARED_STR, 16, NULL, STRDEF("blob.core.windows.net"), storageAzureUriStyleHost, 443, 1000, true, NULL,
                     NULL)),
             "new azure storage - shared key");
@@ -412,7 +412,7 @@ testRun(void)
         TEST_RESULT_Z(
             logBuf,
             "{content-length: '0', host: 'account.blob.core.windows.net', date: 'Sun, 21 Jun 2020 12:46:19 GMT'"
-            ", x-ms-version: '2019-12-12', authorization: 'SharedKey account:wZCOnSPB1KkkdjaQMcThkkKyUlfS0pPjwaIfd1cUh4Y='}",
+            ", x-ms-version: '2021-06-08', authorization: 'SharedKey account:2HRoJbu+G0rqwMjG+6gsb8WWkVo9rJNrDywsrnkmQAE='}",
             "check headers");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -428,8 +428,8 @@ testRun(void)
         TEST_RESULT_Z(
             logBuf,
             "{content-length: '44', content-md5: 'b64f49553d5c441652e95697a2c5949e', host: 'account.blob.core.windows.net'"
-            ", date: 'Sun, 21 Jun 2020 12:46:19 GMT', x-ms-version: '2019-12-12'"
-            ", authorization: 'SharedKey account:Adr+lyGByiEpKrKPyhY3c1uLBDgB7hw0XW5Do6u79Nw='}",
+            ", date: 'Sun, 21 Jun 2020 12:46:19 GMT', x-ms-version: '2021-06-08'"
+            ", authorization: 'SharedKey account:nuaRe9f/J91zHEE2x734ARyHJxd6Smju1j8qPrueE6o='}",
             "check headers");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -439,7 +439,7 @@ testRun(void)
             storage,
             (StorageAzure *)storageDriver(
                 storageAzureNew(
-                    STRDEF("/repo"), false, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeSas, TEST_KEY_SAS_STR,
+                    STRDEF("/repo"), false, 0, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeSas, TEST_KEY_SAS_STR,
                     16, NULL, STRDEF("blob.core.usgovcloudapi.net"), storageAzureUriStyleHost, 443, 1000, true, NULL, NULL)),
             "new azure storage - sas key");
 
@@ -556,7 +556,7 @@ testRun(void)
                     "content-length: 0\n"
                     "date: <redacted>\n"
                     "host: %s\n"
-                    "x-ms-version: 2019-12-12\n"
+                    "x-ms-version: 2021-06-08\n"
                     "*** Response Headers ***:\n"
                     "content-length: 7\n"
                     "*** Response Content ***:\n"
@@ -584,7 +584,7 @@ testRun(void)
                     "host: %s\n"
                     "x-ms-blob-type: BlockBlob\n"
                     "x-ms-tags: %%20Key%%202=%%20Value%%202&Key1=Value1\n"
-                    "x-ms-version: 2019-12-12",
+                    "x-ms-version: 2021-06-08",
                     strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------

@@ -24,7 +24,7 @@ Azure http headers
 ***********************************************************************************************************************************/
 STRING_STATIC(AZURE_HEADER_TAGS,                                    "x-ms-tags");
 STRING_STATIC(AZURE_HEADER_VERSION_STR,                             "x-ms-version");
-STRING_STATIC(AZURE_HEADER_VERSION_VALUE_STR,                       "2019-12-12");
+STRING_STATIC(AZURE_HEADER_VERSION_VALUE_STR,                       "2021-06-08");
 
 /***********************************************************************************************************************************
 Azure query tokens
@@ -310,11 +310,13 @@ storageAzureRequest(StorageAzure *const this, const String *const verb, const St
 
 /***********************************************************************************************************************************
 General function for listing files to be used by other list routines
+
+Documentation for the list format is found at: https://learn.microsoft.com/en-us/rest/api/storageservices/list-blobs
 ***********************************************************************************************************************************/
 static void
 storageAzureListInternal(
     StorageAzure *const this, const String *const path, const StorageInfoLevel level, const String *const expression,
-    const bool recurse, const StorageListCallback callback, void *const callbackData)
+    const bool recurse, const time_t limitTime, const StorageListCallback callback, void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, this);
@@ -322,6 +324,7 @@ storageAzureListInternal(
         FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(STRING, expression);
         FUNCTION_LOG_PARAM(BOOL, recurse);
+        FUNCTION_LOG_PARAM(TIME, limitTime);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
@@ -369,6 +372,20 @@ storageAzureListInternal(
         if (!strEmpty(queryPrefix))
             httpQueryAdd(query, AZURE_QUERY_PREFIX_STR, queryPrefix);
 
+        // httpQueryAdd(query, STRDEF("maxresults"), STRDEF("1")); // !!! REMOVE
+
+        // Add versions
+        if (limitTime != 0)
+            httpQueryAdd(query, STRDEF("include") /* !!! MAKE THIS A CONST */, STRDEF("versions"));
+
+        // Store last info so it can be updated across requests for versioning
+        String *const nameLast = strNew();
+        String *const versionIdLast = strNew();
+        StorageInfo infoLast = {.level = level, .name = nameLast};
+
+        if (limitTime != 0)
+            infoLast.versionId = versionIdLast;
+
         // Loop as long as a continuation marker returned
         HttpRequest *request = NULL;
 
@@ -391,6 +408,11 @@ storageAzureListInternal(
                 // Else get the response immediately from a sync request
                 else
                     response = storageAzureRequestP(this, HTTP_VERB_GET_STR, .query = query);
+
+                // if (limitTime != 0)
+                // {
+                //     fprintf(stdout, "!!!XML: %s\n", strZ(strNewBuf(httpResponseContent(response))));fflush(stdout);
+                // }
 
                 const XmlNode *const xmlRoot = xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response)));
 
@@ -443,37 +465,74 @@ storageAzureListInternal(
                 for (unsigned int fileIdx = 0; fileIdx < xmlNodeLstSize(fileList); fileIdx++)
                 {
                     const XmlNode *const fileNode = xmlNodeLstGet(fileList, fileIdx);
+                    const XmlNode *const property = xmlNodeChild(fileNode, AZURE_XML_TAG_PROPERTIES_STR, true);
 
-                    // Get file name
-                    StorageInfo info =
-                    {
-                        .level = level,
-                        .name = xmlNodeContent(xmlNodeChild(fileNode, AZURE_XML_TAG_NAME_STR, true)),
-                        .exists = true,
-                    };
+                    // Get file name and strip off the base prefix when present
+                    const String *name = xmlNodeContent(xmlNodeChild(fileNode, AZURE_XML_TAG_NAME_STR, true));
 
-                    // Strip off the base prefix when present
                     if (!strEmpty(basePrefix))
-                        info.name = strSub(info.name, strSize(basePrefix));
+                        name = strSub(name, strSize(basePrefix));
 
-                    // Add basic info if requested (no need to add type info since file is default type)
-                    if (level >= storageInfoLevelBasic)
+                    // if (!strEq(name, nameLast))
+                    // {
+                    //     fprintf(stdout, "!!!NAME %s\n", strZ(name));fflush(stdout);
+                    // }
+
+                    // Return info for last file if new file
+                    if (infoLast.exists && !strEq(name, nameLast))
                     {
-                        const XmlNode *const property = xmlNodeChild(fileNode, AZURE_XML_TAG_PROPERTIES_STR, true);
-
-                        info.size = cvtZToUInt64(
-                            strZ(xmlNodeContent(xmlNodeChild(property, AZURE_XML_TAG_CONTENT_LENGTH_STR, true))));
-                        info.timeModified = httpDateToTime(
-                            xmlNodeContent(xmlNodeChild(property, AZURE_XML_TAG_LAST_MODIFIED_STR, true)));
+                        callback(callbackData, &infoLast);
+                        infoLast.exists = true;
                     }
 
-                    // Callback with info
-                    callback(callbackData, &info);
+                    // If filtering by time exclude versions that are newer than limitTime. Note that the API does not provide
+                    // reliable delete markers so the filtering will also show files that have been deleted rather than replaced
+                    // with a new version. The problem with the delete markers is that Creation-Time/Last-Modified are set equal to
+                    // the times in the last version so we don't know when the file was deleted. It might be possible to use
+                    // VersionId for this purpose, since it appears to be a timestamp, but the field is described as "opaque" in the
+                    // documentation so it does not seem to be a good idea to use it.
+                    if (limitTime != 0)
+                    {
+                        infoLast.timeModified = httpDateToTime(
+                            xmlNodeContent(xmlNodeChild(property, AZURE_XML_TAG_LAST_MODIFIED_STR, true)));
+
+                        // Skip this version if it is newer than the time limit
+                        if (infoLast.timeModified > limitTime)
+                        {
+//                            fprintf(stdout, "!!!  REJECT %s\n", strZ(xmlNodeContent(xmlNodeChild(property, AZURE_XML_TAG_LAST_MODIFIED_STR, true))));fflush(stdout);
+                            continue;
+                        }
+
+//                        fprintf(stdout, "!!!  KEEP %s\n", strZ(xmlNodeContent(xmlNodeChild(property, AZURE_XML_TAG_LAST_MODIFIED_STR, true))));fflush(stdout);
+                    }
+
+                    // Update last name and set exists
+                    strCat(strTrunc(nameLast), name);
+                    infoLast.exists = true;
+
+                    // Add basic info if requested (no need to add type info since file is default type)
+                    if (infoLast.exists && level >= storageInfoLevelBasic)
+                    {
+                        infoLast.size = cvtZToUInt64(
+                            strZ(xmlNodeContent(xmlNodeChild(property, AZURE_XML_TAG_CONTENT_LENGTH_STR, true))));
+
+                        if (limitTime == 0)
+                        {
+                            infoLast.timeModified = httpDateToTime(
+                                xmlNodeContent(xmlNodeChild(property, AZURE_XML_TAG_LAST_MODIFIED_STR, true)));
+                        }
+                        else
+                            strCat(strTrunc(versionIdLast), xmlNodeContent(xmlNodeChild(fileNode, STRDEF("VersionId"), true)));
+                    }
                 }
             }
             MEM_CONTEXT_TEMP_END();
         }
         while (request != NULL);
+
+        // Callback with last info if it exists
+        if (infoLast.exists)
+            callback(callbackData, &infoLast);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -549,7 +608,7 @@ storageAzureList(THIS_VOID, const String *const path, const StorageInfoLevel lev
 
     StorageList *const result = storageLstNew(level);
 
-    storageAzureListInternal(this, path, level, param.expression, false, storageAzureListCallback, result);
+    storageAzureListInternal(this, path, level, param.expression, false, param.limitTime, storageAzureListCallback, result);
 
     FUNCTION_LOG_RETURN(STORAGE_LIST, result);
 }
@@ -573,7 +632,8 @@ storageAzureNewRead(THIS_VOID, const String *const file, const bool ignoreMissin
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadAzureNew(this, file, ignoreMissing, param.offset, param.limit));
+    FUNCTION_LOG_RETURN(
+        STORAGE_READ, storageReadAzureNew(this, file, ignoreMissing, param.offset, param.limit, param.version, param.versionId));
 }
 
 /**********************************************************************************************************************************/
@@ -667,7 +727,7 @@ storageAzurePathRemove(THIS_VOID, const String *const path, const bool recurse, 
             .path = strEq(path, FSLASH_STR) ? EMPTY_STR : path,
         };
 
-        storageAzureListInternal(this, path, storageInfoLevelType, NULL, true, storageAzurePathRemoveCallback, &data);
+        storageAzureListInternal(this, path, storageInfoLevelType, NULL, true, 0, storageAzurePathRemoveCallback, &data);
 
         // Check response on last async request
         if (data.request != NULL)
@@ -702,6 +762,8 @@ storageAzureRemove(THIS_VOID, const String *const file, const StorageInterfaceRe
 /**********************************************************************************************************************************/
 static const StorageInterface storageInterfaceAzure =
 {
+    .feature = 1 << storageFeatureVersioning,
+
     .info = storageAzureInfo,
     .list = storageAzureList,
     .newRead = storageAzureNewRead,
@@ -712,14 +774,15 @@ static const StorageInterface storageInterfaceAzure =
 
 FN_EXTERN Storage *
 storageAzureNew(
-    const String *const path, const bool write, StoragePathExpressionCallback pathExpressionFunction, const String *const container,
-    const String *const account, const StorageAzureKeyType keyType, const String *const key, const size_t blockSize,
-    const KeyValue *const tag, const String *const endpoint, const StorageAzureUriStyle uriStyle, const unsigned int port,
-    const TimeMSec timeout, const bool verifyPeer, const String *const caFile, const String *const caPath)
+    const String *const path, const bool write, const time_t limitTime, StoragePathExpressionCallback pathExpressionFunction,
+    const String *const container, const String *const account, const StorageAzureKeyType keyType, const String *const key,
+    const size_t blockSize, const KeyValue *const tag, const String *const endpoint, const StorageAzureUriStyle uriStyle,
+    const unsigned int port, const TimeMSec timeout, const bool verifyPeer, const String *const caFile, const String *const caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(BOOL, write);
+        FUNCTION_LOG_PARAM(TIME, limitTime);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(STRING, container);
         FUNCTION_TEST_PARAM(STRING, account);
@@ -793,5 +856,5 @@ storageAzureNew(
     OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(
-        STORAGE, storageNew(STORAGE_AZURE_TYPE, path, 0, 0, write, 0, pathExpressionFunction, this, this->interface));
+        STORAGE, storageNew(STORAGE_AZURE_TYPE, path, 0, 0, write, limitTime, pathExpressionFunction, this, this->interface));
 }
