@@ -876,6 +876,100 @@ testRun(void)
             "P00   INFO: map tablespace 'pg_tblspc/1' to '/all2/1'\n"
             "P00   INFO: map tablespace 'pg_tblspc/2' to '/all2/ts2'");
 
+        // Same tests, for Greenplum
+
+        // Recreate the tablespaces
+        manifestTargetRemove(manifest, STRDEF("pg_tblspc/1"));
+        manifestLinkRemove(manifest, STRDEF("pg_data/pg_tblspc/1"));
+        manifestTargetRemove(manifest, STRDEF("pg_tblspc/2"));
+        manifestLinkRemove(manifest, STRDEF("pg_data/pg_tblspc/2"));
+
+        HRN_MANIFEST_TARGET_ADD(
+            manifest, .name = "pg_tblspc/gpdb_1", .path = "/gpdb_1/0", .tablespaceId = 3, .tablespaceName = "gpdb_1",
+            .type = manifestTargetTypeLink);
+        HRN_MANIFEST_LINK_ADD(manifest, .name = "pg_data/pg_tblspc/gpdb_1", .destination = "/1/0");
+        HRN_MANIFEST_TARGET_ADD(
+            manifest, .name = "pg_tblspc/gpdb_2", .path = "/gpdb_2/1", .tablespaceId = 4, .tablespaceName = "gpdb_ts2",
+            .type = manifestTargetTypeLink);
+        HRN_MANIFEST_LINK_ADD(manifest, .name = "pg_data/pg_tblspc/gpdb_2", .destination = "/2/1");
+
+        // Remap one tablespace using the id and another with the name
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptTablespaceMap, "3=/gpdb_1-2");
+        hrnCfgArgRawZ(argList, cfgOptTablespaceMap, "gpdb_ts2=/gpdb_2-2");
+
+        hrnCfgArgRawZ(argList, cfgOptFork, "GPDB");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_RESULT_VOID(restoreManifestMap(manifest), "remap tablespaces");
+        TEST_RESULT_STR_Z(
+            manifestTargetFind(manifest, STRDEF("pg_tblspc/gpdb_1"))->path, "/gpdb_1-2/0", "check tablespace 1 target");
+        TEST_RESULT_STR_Z(
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/gpdb_1"))->destination, "/gpdb_1-2/0", "check tablespace 1 link");
+        TEST_RESULT_STR_Z(
+            manifestTargetFind(manifest, STRDEF("pg_tblspc/gpdb_2"))->path, "/gpdb_2-2/1", "check tablespace 2 target");
+        TEST_RESULT_STR_Z(
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/gpdb_2"))->destination, "/gpdb_2-2/1", "check tablespace 2 link");
+
+        TEST_RESULT_LOG(
+            "P00   INFO: map tablespace 'pg_tblspc/gpdb_1' to '/gpdb_1-2/0'\n"
+            "P00   INFO: map tablespace 'pg_tblspc/gpdb_2' to '/gpdb_2-2/1'");
+
+        // Remap a tablespace using just the id and map the rest with tablespace-map-all
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptTablespaceMap, "4=/gpdb_2-3");
+        hrnCfgArgRawZ(argList, cfgOptTablespaceMapAll, "/all");
+
+        hrnCfgArgRawZ(argList, cfgOptFork, "GPDB");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_RESULT_VOID(restoreManifestMap(manifest), "remap tablespaces");
+        TEST_RESULT_STR_Z(
+            manifestTargetFind(manifest, STRDEF("pg_tblspc/gpdb_1"))->path, "/all/gpdb_1/0", "check tablespace 1 target");
+        TEST_RESULT_STR_Z(
+            manifestLinkFind(
+                manifest, STRDEF("pg_data/pg_tblspc/gpdb_1"))->destination, "/all/gpdb_1/0", "check tablespace 1 link");
+        TEST_RESULT_STR_Z(
+            manifestTargetFind(manifest, STRDEF("pg_tblspc/gpdb_2"))->path, "/gpdb_2-3/1", "check tablespace 2 target");
+        TEST_RESULT_STR_Z(
+            manifestLinkFind(manifest, STRDEF("pg_data/pg_tblspc/gpdb_2"))->destination, "/gpdb_2-3/1", "check tablespace 2 link");
+
+        TEST_RESULT_LOG(
+            "P00   INFO: map tablespace 'pg_tblspc/gpdb_1' to '/all/gpdb_1/0'\n"
+            "P00   INFO: map tablespace 'pg_tblspc/gpdb_2' to '/gpdb_2-3/1'");
+
+        // Remap all tablespaces with tablespace-map-all
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptTablespaceMapAll, "/all2");
+
+        hrnCfgArgRawZ(argList, cfgOptFork, "GPDB");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_RESULT_VOID(restoreManifestMap(manifest), "remap tablespaces");
+        TEST_RESULT_STR_Z(
+            manifestTargetFind(manifest, STRDEF("pg_tblspc/gpdb_1"))->path, "/all2/gpdb_1/0", "check tablespace 1 target");
+        TEST_RESULT_STR_Z(
+            manifestLinkFind(
+                manifest, STRDEF("pg_data/pg_tblspc/gpdb_1"))->destination, "/all2/gpdb_1/0", "check tablespace 1 link");
+        TEST_RESULT_STR_Z(
+            manifestTargetFind(manifest, STRDEF("pg_tblspc/gpdb_2"))->path, "/all2/gpdb_ts2/1", "check tablespace 2 target");
+        TEST_RESULT_STR_Z(
+            manifestLinkFind(
+                manifest, STRDEF("pg_data/pg_tblspc/gpdb_2"))->destination, "/all2/gpdb_ts2/1", "check tablespace 2 link");
+
+        TEST_RESULT_LOG(
+            "P00   INFO: map tablespace 'pg_tblspc/gpdb_1' to '/all2/gpdb_1/0'\n"
+            "P00   INFO: map tablespace 'pg_tblspc/gpdb_2' to '/all2/gpdb_ts2/1'");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid link");
 

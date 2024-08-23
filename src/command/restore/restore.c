@@ -528,6 +528,11 @@ restoreManifestMap(Manifest *const manifest)
                     // Remap tablespace if a mapping was found
                     if (tablespacePath != NULL)
                     {
+                        // We'll need to append dbid to the path for Greenplum. Currently, nothing really stores a correct dbid of
+                        // a segment that was used, so just retrieve the last folder as a segment number.
+                        if (cfgOptionStrId(cfgOptFork) == CFGOPTVAL_FORK_GPDB)
+                            tablespacePath = strNewFmt("%s/%s", strZ(tablespacePath), strBaseZ(target->path));
+
                         LOG_INFO_FMT("map tablespace '%s' to '%s'", strZ(target->name), strZ(tablespacePath));
 
                         manifestTargetUpdate(manifest, target->name, tablespacePath, NULL);
