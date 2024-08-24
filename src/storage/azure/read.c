@@ -53,8 +53,8 @@ storageReadAzureOpen(THIS_VOID)
         {
             this->httpResponse = storageAzureRequestP(
                 this->storage, HTTP_VERB_GET_STR, .path = this->interface.name,
-                .query = this->interface.version ?
-                    httpQueryPut(httpQueryNewP(), STRDEF("versionid"), this->interface.versionId) : NULL,
+                .query =
+                    this->interface.version ? httpQueryPut(httpQueryNewP(), STRDEF("versionid"), this->interface.versionId) : NULL,
                 .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
                 .allowMissing = true, .contentIo = true);
         }

@@ -499,11 +499,13 @@ storageAzureListInternal(
                         // Skip this version if it is newer than the time limit
                         if (infoLast.timeModified > limitTime)
                         {
-//                            fprintf(stdout, "!!!  REJECT %s\n", strZ(xmlNodeContent(xmlNodeChild(property, AZURE_XML_TAG_LAST_MODIFIED_STR, true))));fflush(stdout);
+//                            fprintf(stdout, "!!!  REJECT %s\n", strZ(xmlNodeContent(xmlNodeChild(property,
+// AZURE_XML_TAG_LAST_MODIFIED_STR, true))));fflush(stdout);
                             continue;
                         }
 
-//                        fprintf(stdout, "!!!  KEEP %s\n", strZ(xmlNodeContent(xmlNodeChild(property, AZURE_XML_TAG_LAST_MODIFIED_STR, true))));fflush(stdout);
+//                        fprintf(stdout, "!!!  KEEP %s\n", strZ(xmlNodeContent(xmlNodeChild(property,
+// AZURE_XML_TAG_LAST_MODIFIED_STR, true))));fflush(stdout);
                     }
 
                     // Update last name and set exists
