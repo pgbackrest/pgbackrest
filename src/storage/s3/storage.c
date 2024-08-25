@@ -782,7 +782,7 @@ storageS3ListInternal(
                             continue;
 
                         // If most recent version is a delete marker then the file will not be returned
-                        const bool deleteMarker = strEqZ(xmlNodeName(fileNode), S3_XML_TAG_DELETE_MARKER_STR);
+                        const bool deleteMarker = strEq(xmlNodeName(fileNode), S3_XML_TAG_DELETE_MARKER_STR);
 
                         if (deleteMarker)
                         {
