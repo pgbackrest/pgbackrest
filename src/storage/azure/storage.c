@@ -32,12 +32,14 @@ Azure query tokens
 STRING_STATIC(AZURE_QUERY_MARKER_STR,                               "marker");
 STRING_EXTERN(AZURE_QUERY_COMP_STR,                                 AZURE_QUERY_COMP);
 STRING_STATIC(AZURE_QUERY_DELIMITER_STR,                            "delimiter");
+STRING_STATIC(AZURE_QUERY_INCLUDE_STR,                              "include");
 STRING_STATIC(AZURE_QUERY_PREFIX_STR,                               "prefix");
 STRING_EXTERN(AZURE_QUERY_RESTYPE_STR,                              AZURE_QUERY_RESTYPE);
 STRING_STATIC(AZURE_QUERY_SIG_STR,                                  "sig");
 
 STRING_STATIC(AZURE_QUERY_VALUE_LIST_STR,                           "list");
 STRING_EXTERN(AZURE_QUERY_VALUE_CONTAINER_STR,                      AZURE_QUERY_VALUE_CONTAINER);
+STRING_STATIC(AZURE_QUERY_VALUE_VERSIONS_STR,                       "versions");
 
 /***********************************************************************************************************************************
 XML tags
@@ -50,6 +52,7 @@ STRING_STATIC(AZURE_XML_TAG_LAST_MODIFIED_STR,                      "Last-Modifi
 STRING_STATIC(AZURE_XML_TAG_NEXT_MARKER_STR,                        "NextMarker");
 STRING_STATIC(AZURE_XML_TAG_NAME_STR,                               "Name");
 STRING_STATIC(AZURE_XML_TAG_PROPERTIES_STR,                         "Properties");
+STRING_STATIC(AZURE_XML_TAG_VERSION_ID_STR,                         "VersionId");
 
 /***********************************************************************************************************************************
 Object type
@@ -372,11 +375,9 @@ storageAzureListInternal(
         if (!strEmpty(queryPrefix))
             httpQueryAdd(query, AZURE_QUERY_PREFIX_STR, queryPrefix);
 
-        // httpQueryAdd(query, STRDEF("maxresults"), STRDEF("1")); // !!! REMOVE
-
         // Add versions
         if (limitTime != 0)
-            httpQueryAdd(query, STRDEF("include") /* !!! MAKE THIS A CONST */, STRDEF("versions"));
+            httpQueryAdd(query, AZURE_QUERY_INCLUDE_STR, AZURE_QUERY_VALUE_VERSIONS_STR);
 
         // Store last info so it can be updated across requests for versioning
         String *const nameLast = strNew();
@@ -408,11 +409,6 @@ storageAzureListInternal(
                 // Else get the response immediately from a sync request
                 else
                     response = storageAzureRequestP(this, HTTP_VERB_GET_STR, .query = query);
-
-                // if (limitTime != 0)
-                // {
-                //     fprintf(stdout, "!!!XML: %s\n", strZ(strNewBuf(httpResponseContent(response))));fflush(stdout);
-                // }
 
                 const XmlNode *const xmlRoot = xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response)));
 
@@ -473,11 +469,6 @@ storageAzureListInternal(
                     if (!strEmpty(basePrefix))
                         name = strSub(name, strSize(basePrefix));
 
-                    // if (!strEq(name, nameLast))
-                    // {
-                    //     fprintf(stdout, "!!!NAME %s\n", strZ(name));fflush(stdout);
-                    // }
-
                     // Return info for last file if new file
                     if (infoLast.exists && !strEq(name, nameLast))
                     {
@@ -498,14 +489,7 @@ storageAzureListInternal(
 
                         // Skip this version if it is newer than the time limit
                         if (infoLast.timeModified > limitTime)
-                        {
-//                            fprintf(stdout, "!!!  REJECT %s\n", strZ(xmlNodeContent(xmlNodeChild(property,
-// AZURE_XML_TAG_LAST_MODIFIED_STR, true))));fflush(stdout);
                             continue;
-                        }
-
-//                        fprintf(stdout, "!!!  KEEP %s\n", strZ(xmlNodeContent(xmlNodeChild(property,
-// AZURE_XML_TAG_LAST_MODIFIED_STR, true))));fflush(stdout);
                     }
 
                     // Update last name and set exists
@@ -524,7 +508,11 @@ storageAzureListInternal(
                                 xmlNodeContent(xmlNodeChild(property, AZURE_XML_TAG_LAST_MODIFIED_STR, true)));
                         }
                         else
-                            strCat(strTrunc(versionIdLast), xmlNodeContent(xmlNodeChild(fileNode, STRDEF("VersionId"), true)));
+                        {
+                            strCat(
+                                strTrunc(versionIdLast),
+                                xmlNodeContent(xmlNodeChild(fileNode, AZURE_XML_TAG_VERSION_ID_STR, true)));
+                        }
                     }
                 }
             }

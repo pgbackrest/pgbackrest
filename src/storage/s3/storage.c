@@ -47,6 +47,7 @@ STRING_STATIC(S3_QUERY_DELETE_STR,                                  "delete");
 STRING_STATIC(S3_QUERY_DELIMITER_STR,                               "delimiter");
 STRING_STATIC(S3_QUERY_LIST_TYPE_STR,                               "list-type");
 STRING_STATIC(S3_QUERY_PREFIX_STR,                                  "prefix");
+STRING_STATIC(S3_QUERY_VERSIONS_STR,                                "versions");
 
 STRING_STATIC(S3_QUERY_VALUE_LIST_TYPE_2_STR,                       "2");
 
@@ -56,6 +57,7 @@ XML tags
 STRING_STATIC(S3_XML_TAG_COMMON_PREFIXES_STR,                       "CommonPrefixes");
 STRING_STATIC(S3_XML_TAG_CONTENTS_STR,                              "Contents");
 STRING_STATIC(S3_XML_TAG_DELETE_STR,                                "Delete");
+STRING_STATIC(S3_XML_TAG_DELETE_MARKER_STR,                         "DeleteMarker");
 STRING_STATIC(S3_XML_TAG_ERROR_STR,                                 "Error");
 STRING_STATIC(S3_XML_TAG_IS_TRUNCATED_STR,                          "IsTruncated");
 STRING_STATIC(S3_XML_TAG_KEY_STR,                                   "Key");
@@ -66,6 +68,8 @@ STRING_STATIC(S3_XML_TAG_OBJECT_STR,                                "Object");
 STRING_STATIC(S3_XML_TAG_PREFIX_STR,                                "Prefix");
 STRING_STATIC(S3_XML_TAG_QUIET_STR,                                 "Quiet");
 STRING_STATIC(S3_XML_TAG_SIZE_STR,                                  "Size");
+STRING_STATIC(S3_XML_TAG_VERSION_STR,                               "Version");
+STRING_STATIC(S3_XML_TAG_VERSION_ID_STR,                            "VersionId");
 
 /***********************************************************************************************************************************
 AWS authentication v4 constants
@@ -663,7 +667,7 @@ storageS3ListInternal(
 
         // Use list type 2 or versions as specified
         if (limitTime != 0)
-            httpQueryAdd(query, STRDEF("versions") /* !!! MAKE THIS A CONST */, STRDEF(""));
+            httpQueryAdd(query, S3_QUERY_VERSIONS_STR, EMPTY_STR);
         else
             httpQueryAdd(query, S3_QUERY_LIST_TYPE_STR, S3_QUERY_VALUE_LIST_TYPE_2_STR);
 
@@ -745,8 +749,8 @@ storageS3ListInternal(
                 if (limitTime != 0)
                 {
                     StringList *const nameList = strLstNew();
-                    strLstAddZ(nameList, "Version");
-                    strLstAddZ(nameList, "DeleteMarker");
+                    strLstAdd(nameList, S3_XML_TAG_VERSION_STR);
+                    strLstAdd(nameList, S3_XML_TAG_DELETE_MARKER_STR);
 
                     fileList = xmlNodeChildListMulti(xmlRoot, nameList);
                 }
@@ -778,7 +782,7 @@ storageS3ListInternal(
                             continue;
 
                         // If most recent version is a delete marker then the file will not be returned
-                        const bool deleteMarker = strEqZ(xmlNodeName(fileNode), "DeleteMarker");
+                        const bool deleteMarker = strEqZ(xmlNodeName(fileNode), S3_XML_TAG_DELETE_MARKER_STR);
 
                         if (deleteMarker)
                         {
@@ -802,7 +806,7 @@ storageS3ListInternal(
                     if (level >= storageInfoLevelBasic)
                     {
                         if (limitTime != 0)
-                            info.versionId = xmlNodeContent(xmlNodeChild(fileNode, STRDEF("VersionId"), true));
+                            info.versionId = xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_VERSION_ID_STR, true));
                         else
                         {
                             info.timeModified = storageS3CvtTime(

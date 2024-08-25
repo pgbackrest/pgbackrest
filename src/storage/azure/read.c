@@ -11,6 +11,11 @@ Azure Storage Read
 #include "storage/read.h"
 
 /***********************************************************************************************************************************
+Azure query tokens
+***********************************************************************************************************************************/
+STRING_STATIC(AZURE_QUERY_VERSION_ID_STR,                           "versionid");
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct StorageReadAzure
@@ -54,7 +59,8 @@ storageReadAzureOpen(THIS_VOID)
             this->httpResponse = storageAzureRequestP(
                 this->storage, HTTP_VERB_GET_STR, .path = this->interface.name,
                 .query =
-                    this->interface.version ? httpQueryPut(httpQueryNewP(), STRDEF("versionid"), this->interface.versionId) : NULL,
+                    this->interface.version ?
+                        httpQueryPut(httpQueryNewP(), AZURE_QUERY_VERSION_ID_STR, this->interface.versionId) : NULL,
                 .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
                 .allowMissing = true, .contentIo = true);
         }

@@ -82,6 +82,7 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
         {
             result = storageS3New(
                 cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write,
+                // !!! PUT THIS IN STORAGE HELPER WITH A BETTER ERROR MESSAGE
                 cfgOptionTest(cfgOptLimitTime) ? cvtZToTime(strZ(cfgOptionStr(cfgOptLimitTime))) : 0,
                 pathExpressionCallback, cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint,
                 (StorageS3UriStyle)cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx), cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx),
