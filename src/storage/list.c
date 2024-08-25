@@ -51,8 +51,7 @@ typedef struct StorageListInfo
     {
         uint64_t size;                                              // Size (path/link is 0)
         time_t timeModified;                                        // Time file was last modified
-        // !!! WOULD BE NICE TO SPLIT THESE OUT FOR SPACE SAVINGS
-        const char *versionId;                                      // Version id when versioning enabled !!! REMOVE THIS?
+        const char *versionId;                                      // Version id when versioning enabled
     } basic;
 
     // Set when info type >= storageInfoLevelDetail (undefined at lower levels)

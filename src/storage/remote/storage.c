@@ -210,6 +210,8 @@ storageRemoteList(THIS_VOID, const String *const path, const StorageInfoLevel le
         FUNCTION_LOG_PARAM(TIME, param.limitTime);
     FUNCTION_LOG_END();
 
+    // !!! MAKE VERSIONS WORK
+
     ASSERT(this != NULL);
     ASSERT(path != NULL);
 
@@ -275,6 +277,8 @@ storageRemoteNewRead(THIS_VOID, const String *const file, const bool ignoreMissi
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
+
+    // !!! MAKE VERSIONS WORK
 
     FUNCTION_LOG_RETURN(
         STORAGE_READ,

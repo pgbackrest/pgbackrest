@@ -4,7 +4,6 @@ Storage Helper Test Harness
 #include "build.auto.h"
 
 #include "common/debug.h"
-#include "common/time.h"
 #include "storage/posix/read.h"
 #include "storage/posix/write.h"
 #include "storage/storage.h"
@@ -53,8 +52,6 @@ static struct HrnStorageHelperLocal
 Constants
 ***********************************************************************************************************************************/
 #define HRN_STORAGE_TEST_SECRET                                     ".pgbfs"
-// STRING_STATIC(HRN_STORAGE_TEST_SECRET_STR,                          HRN_STORAGE_TEST_SECRET); !!!
-
 #define STORAGE_TEST_TYPE                                           STRID5("test", 0xa4cb40)
 
 /***********************************************************************************************************************************
@@ -713,9 +710,7 @@ storageRepoGet(const unsigned int repoIdx, const bool write)
     {
         FUNCTION_HARNESS_RETURN(
             STORAGE,
-            hrnStorageTestNew(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write,
-                cfgOptionTest(cfgOptLimitTime) ? cvtZToTime(strZ(cfgOptionStr(cfgOptLimitTime))) : 0, storageRepoPathExpression));
+            hrnStorageTestNew(cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoLimitTime(), storageRepoPathExpression));
     }
 
     FUNCTION_HARNESS_RETURN(STORAGE, storageRepoGet_SHIMMED(repoIdx, write));

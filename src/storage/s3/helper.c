@@ -12,6 +12,7 @@ S3 Storage Helper
 #include "config/config.h"
 #include "storage/posix/storage.h"
 #include "storage/s3/helper.h"
+#include "storage/helper.h"
 
 /**********************************************************************************************************************************/
 FN_EXTERN Storage *
@@ -81,10 +82,8 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = storageS3New(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write,
-                // !!! PUT THIS IN STORAGE HELPER WITH A BETTER ERROR MESSAGE
-                cfgOptionTest(cfgOptLimitTime) ? cvtZToTime(strZ(cfgOptionStr(cfgOptLimitTime))) : 0,
-                pathExpressionCallback, cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint,
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoLimitTime(), pathExpressionCallback,
+                cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint,
                 (StorageS3UriStyle)cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx), cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx),
                 keyType, cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KmsKeyId, repoIdx),

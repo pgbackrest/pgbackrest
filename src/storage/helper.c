@@ -477,6 +477,15 @@ storageRepoWrite(void)
     FUNCTION_TEST_RETURN_CONST(STORAGE, storageRepoIdxWrite(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
 }
 
+/**********************************************************************************************************************************/
+FN_EXTERN time_t
+storageRepoLimitTime(void)
+{
+    FUNCTION_TEST_VOID();
+
+    FUNCTION_TEST_RETURN(TIME, cfgOptionTest(cfgOptLimitTime) ? cvtZToTime(strZ(cfgOptionStr(cfgOptLimitTime))) : 0);
+}
+
 /***********************************************************************************************************************************
 Spool storage path expression
 ***********************************************************************************************************************************/
