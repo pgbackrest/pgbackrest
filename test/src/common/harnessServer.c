@@ -343,7 +343,8 @@ hrnServerRun(IoRead *const read, const HrnServerProtocol protocol, const unsigne
                 }
                 CATCH(FileReadError)
                 {
-                    THROW_FMT(AssertError, "server expected '%s' but got short read '%s'", strZ(expected), strZ(strNewBuf(buffer)));
+                    THROW_FMT(
+                        AssertError, "server expected:\n'%s' but got short read:\n'%s'", strZ(expected), strZ(strNewBuf(buffer)));
                 }
                 TRY_END();
 
@@ -358,7 +359,7 @@ hrnServerRun(IoRead *const read, const HrnServerProtocol protocol, const unsigne
 
                 // Error if actual does not match expected
                 if (!strEq(actual, expected))
-                    THROW_FMT(AssertError, "server expected '%s' but got '%s'", strZ(expected), strZ(actual));
+                    THROW_FMT(AssertError, "server expected:\n'%s' but got:\n'%s'", strZ(expected), strZ(actual));
 
                 break;
             }

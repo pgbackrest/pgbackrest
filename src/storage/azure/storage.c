@@ -513,7 +513,7 @@ storageAzureListInternal(
                     infoLast.exists = true;
 
                     // Add basic info if requested (no need to add type info since file is default type)
-                    if (infoLast.exists && level >= storageInfoLevelBasic)
+                    if (level >= storageInfoLevelBasic)
                     {
                         infoLast.size = cvtZToUInt64(
                             strZ(xmlNodeContent(xmlNodeChild(property, AZURE_XML_TAG_CONTENT_LENGTH_STR, true))));

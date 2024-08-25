@@ -1027,6 +1027,124 @@ testRun(void)
                 TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to time limited");
+
+                hrnServerScriptClose(service);
+
+                hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
+                hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:54:09+00");
+                HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+                TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("list with time limit");
+
+                testRequestP(
+                    service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&include=versions&prefix=path%2Fto%2F&restype=container");
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<EnumerationResults>"
+                        "    <Blobs>"
+                        "        <Blob>"
+                        "            <Name>path/to/test1.txt</Name>"
+                        "            <VersionId>2008-10-12T17:50:30.0000000Z</VersionId>"
+                        "            <Properties>"
+                        "                <Last-Modified>Mon, 12 Oct 2008 17:50:30 GMT</Last-Modified>"
+                        "                <Content-Length>787</Content-Length>"
+                        "            </Properties>"
+                        "        </Blob>"
+                        "        <BlobPrefix>"
+                        "            <Name>path/to/path1/</Name>"
+                        "        </BlobPrefix>"
+                        "    </Blobs>"
+                        "    <NextMarker>ueGcxLPRx1Tr</NextMarker>"
+                        "</EnumerationResults>");
+
+                testRequestP(
+                    service, HTTP_VERB_GET,
+                    "?comp=list&delimiter=%2F&include=versions&marker=ueGcxLPRx1Tr&prefix=path%2Fto%2F&restype=container");
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<EnumerationResults>"
+                        "    <Blobs>"
+                        "        <Blob>"
+                        "            <Name>path/to/test1.txt</Name>"
+                        "            <VersionId>2009-10-12T17:50:30.0000000Z</VersionId>"
+                        "            <Properties>"
+                        "                <Last-Modified>Mon, 12 Oct 2009 17:50:30 GMT</Last-Modified>"
+                        "                <Content-Length>787</Content-Length>"
+                        "            </Properties>"
+                        "        </Blob>"
+                        "        <Blob>"
+                        "            <Name>path/to/test1.txt</Name>"
+                        "            <Properties>"
+                        "                <Last-Modified>Mon, 12 Oct 2025 17:50:30 GMT</Last-Modified>"
+                        "            </Properties>"
+                        "        </Blob>"
+                        "    </Blobs>"
+                        "    <NextMarker/>"
+                        "</EnumerationResults>");
+
+                TEST_STORAGE_LIST(
+                    storage, "/path/to",
+                    "path1/\n"
+                    "test1.txt {s=787, t=1760291430, v=2009-10-12T17:50:30.0000000Z}\n",
+                    .level = storageInfoLevelBasic, .noRecurse = true);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file with time limit");
+
+                testRequestP(
+                    service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&include=versions&restype=container");
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<EnumerationResults>"
+                        "    <Blobs>"
+                        "        <Blob>"
+                        "            <Name>file.txt</Name>"
+                        "            <VersionId>2009-10-12T17:50:30.0000000Z</VersionId>"
+                        "            <Properties>"
+                        "                <Last-Modified>Mon, 12 Oct 2009 17:50:30 GMT</Last-Modified>"
+                        "                <Content-Length>787</Content-Length>"
+                        "            </Properties>"
+                        "        </Blob>"
+                        "    </Blobs>"
+                        "    <NextMarker/>"
+                        "</EnumerationResults>");
+
+                testRequestP(service, HTTP_VERB_GET, "/file.txt?versionid=2009-10-12T17%3A50%3A30.0000000Z");
+                testResponseP(service, .content = "123456");
+
+                TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt")))), "123456", "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get missing file with time limit");
+
+                testRequestP(
+                    service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&include=versions&restype=container");
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<EnumerationResults>"
+                        "    <Blobs>"
+                        "    </Blobs>"
+                        "    <NextMarker/>"
+                        "</EnumerationResults>");
+
+                TEST_RESULT_PTR(
+                    storageGetP(storageNewReadP(storage, STRDEF("missing_file"), .ignoreMissing = true)), NULL, "missing file");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 hrnServerScriptEnd(service);
             }
             HRN_FORK_PARENT_END();
