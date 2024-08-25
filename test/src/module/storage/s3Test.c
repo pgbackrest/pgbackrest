@@ -1460,7 +1460,8 @@ testRun(void)
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                        "    <IsTruncated>false</IsTruncated>"
+                        "    <IsTruncated>true</IsTruncated>"
+                        "    <NextContinuationToken>1ueG</NextContinuationToken>"
                         "    <DeleteMarker>"
                         "        <Key>path/to/test_file</Key>"
                         "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
@@ -1469,6 +1470,15 @@ testRun(void)
                         "        <Key>path/to/test_file</Key>"
                         "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
                         "    </Version>"
+                        "</ListBucketResult>");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/?continuation-token=1ueG&delimiter=%2F&prefix=path%2Fto%2F&versions=");
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
                         "    <Version>"
                         "        <Key>path/to/test_file</Key>"
                         "        <LastModified>2024-08-04T02:54:09.000Z</LastModified>"
@@ -1483,10 +1493,6 @@ testRun(void)
                         "        <Key>path/to/test_file2</Key>"
                         "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
                         "    </Version>"
-                        "    <DeleteMarker>"
-                        "        <Key>path/to/test_file</Key>"
-                        "        <LastModified>2024-08-04T02:54:09.000Z</LastModified>"
-                        "    </DeleteMarker>"
                         "   <CommonPrefixes>"
                         "       <Prefix>path/to/test_path/</Prefix>"
                         "   </CommonPrefixes>"

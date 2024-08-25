@@ -473,7 +473,7 @@ storageAzureListInternal(
                     if (infoLast.exists && !strEq(name, nameLast))
                     {
                         callback(callbackData, &infoLast);
-                        infoLast.exists = true;
+                        infoLast.exists = false;
                     }
 
                     // If filtering by time exclude versions that are newer than limitTime. Note that the API does not provide

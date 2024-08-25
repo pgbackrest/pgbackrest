@@ -675,6 +675,14 @@ storageS3ListInternal(
         if (!strEmpty(queryPrefix))
             httpQueryAdd(query, S3_QUERY_PREFIX_STR, queryPrefix);
 
+        // Store last info so it can be updated across requests for versioning
+        String *const nameLast = strNew();
+        String *const versionIdLast = strNew();
+        StorageInfo infoLast = {.level = level, .name = nameLast};
+
+        if (limitTime != 0)
+            infoLast.versionId = versionIdLast;
+
         // Loop as long as a continuation token returned
         HttpRequest *request = NULL;
 
@@ -757,28 +765,35 @@ storageS3ListInternal(
                 else
                     fileList = xmlNodeChildList(xmlRoot, S3_XML_TAG_CONTENTS_STR);
 
-                const String *nameLast = NULL;
-
                 for (unsigned int fileIdx = 0; fileIdx < xmlNodeLstSize(fileList); fileIdx++)
                 {
                     const XmlNode *const fileNode = xmlNodeLstGet(fileList, fileIdx);
 
-                    // Get file name
-                    StorageInfo info =
+                    // Get file name and strip off the base prefix when present
+                    const String *name = xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_KEY_STR, true));
+
+                    if (!strEmpty(basePrefix))
+                        name = strSub(name, strSize(basePrefix));
+
+                    // Return info for last file if new file
+                    if (infoLast.exists && !strEq(name, nameLast))
                     {
-                        .level = level,
-                        .name = xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_KEY_STR, true)),
-                        .exists = true,
-                    };
+                        callback(callbackData, &infoLast);
+                        infoLast.exists = false;
+                    }
 
                     // If filtering by time
                     if (limitTime != 0)
                     {
                         // Skip later versions
-                        info.timeModified = storageS3CvtTime(
+                        infoLast.timeModified = storageS3CvtTime(
                             xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_LAST_MODIFIED_STR, true)));
 
-                        if (info.timeModified > limitTime)
+                        if (infoLast.timeModified > limitTime)
+                            continue;
+
+                        // If a version has already been returned (or delete marker found) then skip this version
+                        if (strEq(infoLast.name, name))
                             continue;
 
                         // If most recent version is a delete marker then the file will not be returned
@@ -786,43 +801,41 @@ storageS3ListInternal(
 
                         if (deleteMarker)
                         {
-                            nameLast = info.name;
+                            strCat(strTrunc(nameLast), name);
+                            infoLast.exists = false;
                             continue;
                         }
-
-                        // If a version has already been return (or delete marker found) then skip this version
-                        if (strEq(info.name, nameLast))
-                            continue;
-
-                        // Store last name to skip remaining versions
-                        nameLast = info.name;
                     }
 
-                    // Strip off the base prefix when present
-                    if (!strEmpty(basePrefix))
-                        info.name = strSub(info.name, strSize(basePrefix));
+                    // Update last name and set exists
+                    strCat(strTrunc(nameLast), name);
+                    infoLast.exists = true;
 
                     // Add basic info if requested (no need to add type info since file is default type)
                     if (level >= storageInfoLevelBasic)
                     {
                         if (limitTime != 0)
-                            info.versionId = xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_VERSION_ID_STR, true));
+                        {
+                            strCat(
+                                strTrunc(versionIdLast), xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_VERSION_ID_STR, true)));
+                        }
                         else
                         {
-                            info.timeModified = storageS3CvtTime(
+                            infoLast.timeModified = storageS3CvtTime(
                                 xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_LAST_MODIFIED_STR, true)));
                         }
 
-                        info.size = cvtZToUInt64(strZ(xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_SIZE_STR, true))));
+                        infoLast.size = cvtZToUInt64(strZ(xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_SIZE_STR, true))));
                     }
-
-                    // Callback with info
-                    callback(callbackData, &info);
                 }
             }
             MEM_CONTEXT_TEMP_END();
         }
         while (request != NULL);
+
+        // Callback with last info if it exists
+        if (infoLast.exists)
+            callback(callbackData, &infoLast);
     }
     MEM_CONTEXT_TEMP_END();
 
