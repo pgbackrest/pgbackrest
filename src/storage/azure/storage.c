@@ -314,7 +314,7 @@ storageAzureRequest(StorageAzure *const this, const String *const verb, const St
 /***********************************************************************************************************************************
 General function for listing files to be used by other list routines
 
-Documentation for the list format is found at: https://learn.microsoft.com/en-us/rest/api/storageservices/list-blobs
+Based on the documentation at https://learn.microsoft.com/en-us/rest/api/storageservices/list-blobs
 ***********************************************************************************************************************************/
 static void
 storageAzureListInternal(

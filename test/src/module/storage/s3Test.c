@@ -1507,7 +1507,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get file with time limit");
 
-                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&prefix=path%2Fto%2F&versions=");
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&prefix=path%2F3%2F&versions=");
                 testResponseP(
                     service,
                     .content =
@@ -1515,25 +1515,25 @@ testRun(void)
                         "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
                         "    <IsTruncated>false</IsTruncated>"
                         "    <Version>"
-                        "        <Key>path/to/test_file</Key>"
+                        "        <Key>path/3/test_file</Key>"
                         "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
                         "    </Version>"
                         "    <Version>"
-                        "        <Key>path/to/test_file</Key>"
+                        "        <Key>path/3/test_file</Key>"
                         "        <LastModified>2024-08-04T02:54:09.000Z</LastModified>"
                         "        <Size>6</Size>"
                         "        <VersionId>bbbb</VersionId>"
                         "    </Version>"
                         "   <CommonPrefixes>"
-                        "       <Prefix>path/to/test_path/</Prefix>"
+                        "       <Prefix>path/3/test_path/</Prefix>"
                         "   </CommonPrefixes>"
                         "</ListBucketResult>");
 
-                testRequestP(service, s3, HTTP_VERB_GET, "/path/to/test_file?versionId=bbbb");
+                testRequestP(service, s3, HTTP_VERB_GET, "/path/3/test_file?versionId=bbbb");
                 testResponseP(service, .content = "123456");
 
                 TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("/path/to/test_file")))), "123456", "get file");
+                    strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("/path/3/test_file")))), "123456", "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get missing file with time limit");

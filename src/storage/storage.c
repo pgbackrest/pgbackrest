@@ -296,8 +296,7 @@ storageInfo(const Storage *const this, const String *const fileExp, StorageInfoP
             if (this->limitTime != 0)
             {
                 // Find the version to read using the cache
-                const String *const path = storagePathP(this, fileExp);
-
+                const String *const path = strPath(file);
                 StorageListCache *cache = lstFind(this->cacheList, &path);
 
                 if (cache == NULL)
@@ -305,7 +304,7 @@ storageInfo(const Storage *const this, const String *const fileExp, StorageInfoP
                     MEM_CONTEXT_OBJ_BEGIN(this->cacheList)
                     {
                         StorageList *const list = storageInterfaceListP(
-                            storageDriver(this), strPath(path), storageInfoLevelBasic, .limitTime = this->limitTime);
+                            storageDriver(this), path, storageInfoLevelBasic, .limitTime = this->limitTime);
 
                         if (list != NULL)
                             storageLstSort(list, sortOrderAsc);
@@ -322,7 +321,7 @@ storageInfo(const Storage *const this, const String *const fileExp, StorageInfoP
 
                 if (cache->list != NULL)
                 {
-                    result = storageLstFind(cache->list, strBase(path));
+                    result = storageLstFind(cache->list, strBase(file));
                     ASSERT(!result.exists || result.type != storageTypeFile || result.versionId != NULL);
                 }
             }

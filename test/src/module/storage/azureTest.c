@@ -1129,18 +1129,6 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get missing file with time limit");
 
-                testRequestP(
-                    service, HTTP_VERB_GET, "?comp=list&delimiter=%2F&include=versions&restype=container");
-                testResponseP(
-                    service,
-                    .content =
-                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                        "<EnumerationResults>"
-                        "    <Blobs>"
-                        "    </Blobs>"
-                        "    <NextMarker/>"
-                        "</EnumerationResults>");
-
                 TEST_RESULT_PTR(
                     storageGetP(storageNewReadP(storage, STRDEF("missing_file"), .ignoreMissing = true)), NULL, "missing file");
 
