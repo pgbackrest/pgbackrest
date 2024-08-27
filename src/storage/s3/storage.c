@@ -3,6 +3,7 @@ S3 Storage
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 #include "common/crypto/hash.h"
@@ -16,6 +17,7 @@ S3 Storage
 #include "common/type/json.h"
 #include "common/type/object.h"
 #include "common/type/xml.h"
+#include "storage/posix/storage.h"
 #include "storage/s3/read.h"
 #include "storage/s3/write.h"
 
@@ -110,7 +112,8 @@ struct StorageS3
     HttpClient *credHttpClient;                                     // HTTP client to service credential requests
     const String *credHost;                                         // Credentials host
     const String *credRole;                                         // Role to use for credential requests
-    const String *webIdToken;                                       // Token to use for credential requests
+    const String *webIdTokenFile;                                   // The file containing the token to use for web-id credential
+                                                                    // requests
     time_t credExpirationTime;                                      // Time the temporary credentials expire
 
     // Current signing key and date it is valid for
@@ -386,13 +389,17 @@ storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // We load the token from the given file for each request since the token can be updated during the middle
+        // of a long-running execution.
+        const String *webIdToken = strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), this->webIdTokenFile)));
+
         // Get credentials
         HttpQuery *const query = httpQueryNewP();
         httpQueryAdd(query, STRDEF("Action"), STRDEF("AssumeRoleWithWebIdentity"));
         httpQueryAdd(query, STRDEF("RoleArn"), this->credRole);
         httpQueryAdd(query, STRDEF("RoleSessionName"), STRDEF(PROJECT_NAME));
         httpQueryAdd(query, STRDEF("Version"), STRDEF("2011-06-15"));
-        httpQueryAdd(query, STRDEF("WebIdentityToken"), this->webIdToken);
+        httpQueryAdd(query, STRDEF("WebIdentityToken"), webIdToken);
 
         HttpRequest *const request = httpRequestNewP(
             this->credHttpClient, HTTP_VERB_GET_STR, FSLASH_STR, .header = header, .query = query);
@@ -1097,7 +1104,7 @@ storageS3New(
     const String *const path, const bool write, StoragePathExpressionCallback pathExpressionFunction, const String *const bucket,
     const String *const endPoint, const StorageS3UriStyle uriStyle, const String *const region, const StorageS3KeyType keyType,
     const String *const accessKey, const String *const secretAccessKey, const String *const securityToken,
-    const String *const kmsKeyId, const String *sseCustomerKey, const String *const credRole, const String *const webIdToken,
+    const String *const kmsKeyId, const String *sseCustomerKey, const String *const credRole, const String *const webIdTokenFile,
     const size_t partSize, const KeyValue *const tag, const String *host, const unsigned int port, const TimeMSec timeout,
     const bool verifyPeer, const String *const caFile, const String *const caPath)
 {
@@ -1116,7 +1123,7 @@ storageS3New(
         FUNCTION_TEST_PARAM(STRING, kmsKeyId);
         FUNCTION_TEST_PARAM(STRING, sseCustomerKey);
         FUNCTION_TEST_PARAM(STRING, credRole);
-        FUNCTION_TEST_PARAM(STRING, webIdToken);
+        FUNCTION_TEST_PARAM(STRING, webIdTokenFile);
         FUNCTION_LOG_PARAM(SIZE, partSize);
         FUNCTION_LOG_PARAM(KEY_VALUE, tag);
         FUNCTION_LOG_PARAM(STRING, host);
@@ -1192,10 +1199,10 @@ storageS3New(
             {
                 ASSERT(accessKey == NULL && secretAccessKey == NULL && securityToken == NULL);
                 ASSERT(credRole != NULL);
-                ASSERT(webIdToken != NULL);
+                ASSERT(webIdTokenFile != NULL);
 
                 this->credRole = strDup(credRole);
-                this->webIdToken = strDup(webIdToken);
+                this->webIdTokenFile = strDup(webIdTokenFile);
                 this->credHost = S3_STS_HOST_STR;
                 this->credExpirationTime = time(NULL);
                 this->credHttpClient = httpClientNew(
