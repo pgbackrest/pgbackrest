@@ -58,6 +58,9 @@ storageRemoteInfoGet(StorageRemoteInfoData *const data, PackRead *const read, St
     if (info->type == storageTypeFile)
         info->size = pckReadU64P(read);
 
+    // Read version
+    info->versionId = pckReadStrP(read);
+
     // Read fields needed for detail level
     if (info->level >= storageInfoLevelDetail)
     {
@@ -210,8 +213,6 @@ storageRemoteList(THIS_VOID, const String *const path, const StorageInfoLevel le
         FUNCTION_LOG_PARAM(TIME, param.limitTime);
     FUNCTION_LOG_END();
 
-    // !!! MAKE VERSIONS WORK
-
     ASSERT(this != NULL);
     ASSERT(path != NULL);
 
@@ -223,6 +224,7 @@ storageRemoteList(THIS_VOID, const String *const path, const StorageInfoLevel le
 
         pckWriteStrP(commandParam, path);
         pckWriteU32P(commandParam, level);
+        pckWriteTimeP(commandParam, param.limitTime);
 
         // Read list
         StorageRemoteInfoData parseData = {.memContext = memContextCurrent()};
@@ -284,7 +286,7 @@ storageRemoteNewRead(THIS_VOID, const String *const file, const bool ignoreMissi
         STORAGE_READ,
         storageReadRemoteNew(
             this, this->client, file, ignoreMissing, this->compressLevel > 0 ? param.compressible : false, this->compressLevel,
-            param.offset, param.limit));
+            param.offset, param.limit, param.version, param.versionId));
 }
 
 /**********************************************************************************************************************************/

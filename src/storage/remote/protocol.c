@@ -208,6 +208,9 @@ storageRemoteInfoProtocolPut(
     if (info->type == storageTypeFile)
         pckWriteU64P(write, info->size);
 
+    // Write version
+    pckWriteStrP(write, info->versionId);
+
     // Write fields needed for detail level
     if (info->level >= storageInfoLevelDetail)
     {
@@ -336,8 +339,10 @@ storageRemoteListProtocol(PackRead *const param)
     {
         const String *const path = pckReadStrP(param);
         const StorageInfoLevel level = (StorageInfoLevel)pckReadU32P(param);
+        const time_t limitTime = pckReadTimeP(param);
+
         StorageRemoteInfoProtocolWriteData writeData = {0};
-        StorageList *const list = storageInterfaceListP(storageRemoteProtocolLocal.driver, path, level);
+        StorageList *const list = storageInterfaceListP(storageRemoteProtocolLocal.driver, path, level, .limitTime = limitTime);
         PackWrite *const data = protocolServerResultData(result);
 
         // Indicate whether or not the path was found
@@ -421,11 +426,14 @@ storageRemoteReadOpenProtocol(PackRead *const param)
         const bool ignoreMissing = pckReadBoolP(param);
         const uint64_t offset = pckReadU64P(param);
         const Variant *const limit = pckReadNullP(param) ? NULL : VARUINT64(pckReadU64P(param));
+        const bool version = pckReadBoolP(param);
+        const String *const versionId = pckReadStrP(param);
         const Pack *const filter = pckReadPackP(param);
 
         // Create the read object
         StorageRead *const fileRead = storageInterfaceNewReadP(
-            storageRemoteProtocolLocal.driver, file, ignoreMissing, .offset = offset, .limit = limit);
+            storageRemoteProtocolLocal.driver, file, ignoreMissing, .offset = offset, .limit = limit, .version = version,
+            .versionId = versionId);
 
         // Set filter group based on passed filters
         storageRemoteFilterGroup(ioReadFilterGroup(storageReadIo(fileRead)), filter);

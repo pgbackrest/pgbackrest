@@ -439,6 +439,8 @@ cfgLoadUpdateOption(void)
         }
     }
 
+    // !!! IF LIMIT-TIME IS SET THEN REPO MUST BE SET (EVEN IF IT IS DEFAULTED?)
+
     FUNCTION_LOG_RETURN_VOID();
 }
 
