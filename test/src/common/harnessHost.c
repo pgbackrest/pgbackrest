@@ -90,6 +90,7 @@ static struct HrnHostLocal
     bool blockIncr;                                                 // Block incremental enabled?
     bool archiveAsync;                                              // Async archiving enabled?
     bool nonVersionSpecific;                                        // Run non version-specific tests?
+    bool versioning;                                                // Is versioning enabled in the repo storage?
 
     List *hostList;                                                 // List of hosts
 } hrnHostLocal;
@@ -1037,6 +1038,13 @@ hrnHostRepoTotal(void)
     FUNCTION_HARNESS_RETURN(UINT, hrnHostLocal.repoTotal);
 }
 
+bool
+hrnHostRepoVersioning(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RETURN(UINT, hrnHostLocal.versioning);
+}
+
 /**********************************************************************************************************************************/
 void
 hrnHostConfigUpdate(const HrnHostConfigUpdateParam param)
@@ -1318,8 +1326,16 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
         }
 
         case STORAGE_S3_TYPE:
+        {
             storageS3RequestP((StorageS3 *)storageDriver(hrnHostRepo1Storage(repo)), HTTP_VERB_PUT_STR, FSLASH_STR);
+            storageS3RequestP(
+                (StorageS3 *)storageDriver(hrnHostRepo1Storage(repo)), HTTP_VERB_PUT_STR, FSLASH_STR,
+                .query = httpQueryAdd(httpQueryNewP(), STRDEF("versioning"), STRDEF("")),
+                .content = BUFSTRDEF("<VersioningConfiguration><Status>Enabled</Status></VersioningConfiguration>"));
+
+            hrnHostLocal.versioning = true;
             break;
+        }
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

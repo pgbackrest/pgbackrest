@@ -189,7 +189,7 @@ storagePgGet(const unsigned int pgIdx, const bool write)
     if (!pgIsLocal(pgIdx))
     {
         result = storageRemoteNew(
-            STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, NULL,
+            STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, 0, NULL,
             protocolRemoteGet(protocolStorageTypePg, pgIdx), cfgOptionUInt(cfgOptCompressLevelNetwork));
     }
     // Use Posix storage
@@ -360,7 +360,7 @@ storageRepoGet(const unsigned int repoIdx, const bool write)
     if (!repoIsLocal(repoIdx))
     {
         result = storageRemoteNew(
-            STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression,
+            STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoLimitTime(), storageRepoPathExpression,
             protocolRemoteGet(protocolStorageTypeRepo, repoIdx), cfgOptionUInt(cfgOptCompressLevelNetwork));
     }
     // Use local storage

@@ -355,7 +355,7 @@ testRun(void)
             HRN_HOST_WAL_SWITCH(pg1);
         }
 
-        // Store the time so it can be used in a later test
+        // Store the timeline so it can be used in a later test
         const char *const xidTimeline = strZ(
             pckReadStrP(
                 hrnHostSqlValue(
@@ -380,6 +380,11 @@ testRun(void)
             // Check that backup recovered to the expected target
             TEST_HOST_SQL_ONE_STR_Z(pg1, "select message from status", TEST_STATUS_TIME);
         }
+
+        // Store the time where the entire timeline captured above exists so it can be used in a later test. We need to capture this
+        // later to be sure that all the timeline WAL has been archived.
+        const char *const xidTime = strZ(pckReadStrP(hrnHostSqlValue(pg1, "select current_timestamp::text")));
+        TEST_LOG_FMT("xid time = %s", xidTime);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("primary restore (time xid, exclusive)");
@@ -420,7 +425,21 @@ testRun(void)
             // Stop the cluster
             HRN_HOST_PG_STOP(pg1);
 
-            TEST_HOST_BR(pg1, CFGCMD_RESTORE, .option = zNewFmt("--delta --type=standby --target-timeline=%s", xidTimeline));
+            // If repo is versioned then delete the repo to test limit-time
+            if (hrnHostRepoVersioning())
+            {
+                // Stop pgbackrest
+                TEST_HOST_BR(repo, CFGCMD_STOP);
+
+                // Delete stanza
+                TEST_HOST_BR(repo, CFGCMD_STANZA_DELETE);
+            }
+
+            TEST_HOST_BR(
+                pg1, CFGCMD_RESTORE,
+                .option = zNewFmt(
+                    "--delta --type=standby --target-timeline=%s%s", xidTimeline,
+                    hrnHostRepoVersioning() ? zNewFmt(" --repo=1 --limit-time=\"%s\"", xidTime) : ""));
             HRN_HOST_PG_START(pg1);
 
             // Check that backup recovered to the expected target
@@ -428,7 +447,7 @@ testRun(void)
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
-        if (hrnHostNonVersionSpecific())
+        if (!hrnHostRepoVersioning() && hrnHostNonVersionSpecific())
         {
             TEST_TITLE("stanza-delete --force with pgbackrest stopped");
 

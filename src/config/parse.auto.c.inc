@@ -2714,17 +2714,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                     // opt/limit-time
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                      // opt/limit-time
         ),                                                                                                         // opt/limit-time
-                                                                                                                   // opt/limit-time
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                           // opt/limit-time
-        (                                                                                                          // opt/limit-time
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/limit-time
-            PARSE_RULE_OPTION_COMMAND(Info)                                                                        // opt/limit-time
-            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                    // opt/limit-time
-            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                     // opt/limit-time
-            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                      // opt/limit-time
-            PARSE_RULE_OPTION_COMMAND(Restore)                                                                     // opt/limit-time
-            PARSE_RULE_OPTION_COMMAND(Verify)                                                                      // opt/limit-time
-        ),                                                                                                         // opt/limit-time
     ),                                                                                                             // opt/limit-time
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                                // opt/link-all

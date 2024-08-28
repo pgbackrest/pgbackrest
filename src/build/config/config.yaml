@@ -879,6 +879,10 @@ option:
       repo-ls: {}
       restore: {}
       verify: {}
+    command-role:
+      async: {}
+      main: {}
+      local: {}
 
   lock-path:
     section: global

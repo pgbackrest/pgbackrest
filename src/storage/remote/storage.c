@@ -463,13 +463,14 @@ static const StorageInterface storageInterfaceRemote =
 
 FN_EXTERN Storage *
 storageRemoteNew(
-    const mode_t modeFile, const mode_t modePath, const bool write, StoragePathExpressionCallback pathExpressionFunction,
-    ProtocolClient *const client, const unsigned int compressLevel)
+    const mode_t modeFile, const mode_t modePath, const bool write, const time_t limitTime,
+    StoragePathExpressionCallback pathExpressionFunction, ProtocolClient *const client, const unsigned int compressLevel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MODE, modeFile);
         FUNCTION_LOG_PARAM(MODE, modePath);
         FUNCTION_LOG_PARAM(BOOL, write);
+        FUNCTION_LOG_PARAM(TIME, limitTime);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, client);
         FUNCTION_LOG_PARAM(UINT, compressLevel);
@@ -511,5 +512,5 @@ storageRemoteNew(
 
     FUNCTION_LOG_RETURN(
         STORAGE,
-        storageNew(STORAGE_REMOTE_TYPE, path, modeFile, modePath, write, 0, pathExpressionFunction, this, this->interface));
+        storageNew(STORAGE_REMOTE_TYPE, path, modeFile, modePath, write, limitTime, pathExpressionFunction, this, this->interface));
 }

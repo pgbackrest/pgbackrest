@@ -52,7 +52,7 @@ testRun(void)
                 TEST_ASSIGN(
                     storageRemote,
                     storageRemoteNew(
-                        STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL,
+                        STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, 0, NULL,
                         protocolRemoteGet(protocolStorageTypeRepo, 0), cfgOptionUInt(cfgOptCompressLevelNetwork)),
                     "new storage 1");
 
@@ -64,7 +64,7 @@ testRun(void)
                 TEST_ASSIGN(
                     storageRemote,
                     storageRemoteNew(
-                        STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL,
+                        STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, 0, NULL,
                         protocolRemoteGet(protocolStorageTypeRepo, 0), cfgOptionUInt(cfgOptCompressLevelNetwork)),
                     "new storage 2");
 
@@ -99,7 +99,7 @@ testRun(void)
                 TEST_ASSIGN(
                     storageRemote,
                     storageRemoteNew(
-                        STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL,
+                        STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, 0, NULL,
                         protocolRemoteGet(protocolStorageTypePg, 0), cfgOptionUInt(cfgOptCompressLevelNetwork)),
                     "new storage 3");
 

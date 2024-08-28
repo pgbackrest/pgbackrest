@@ -450,6 +450,9 @@ HrnHost *hrnHostRepo(void);
 // Repo total
 unsigned int hrnHostRepoTotal(void);
 
+// Does the primary repo have versioning enabled?
+bool hrnHostRepoVersioning(void);
+
 // Get a host by name
 HrnHost *hrnHostGet(StringId id);
 

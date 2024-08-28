@@ -178,7 +178,7 @@ testRun(void)
 
                 // Create remote storage
                 Storage *storageRemote = storageRemoteNew(
-                    STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL, client, 1);
+                    STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, 0, NULL, client, 1);
 
                 TimeMSec timeBegin = timeMSec();
 
