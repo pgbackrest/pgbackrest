@@ -3,7 +3,6 @@ S3 Storage
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <stdlib.h>
 #include <string.h>
 
 #include "common/crypto/hash.h"
@@ -112,8 +111,7 @@ struct StorageS3
     HttpClient *credHttpClient;                                     // HTTP client to service credential requests
     const String *credHost;                                         // Credentials host
     const String *credRole;                                         // Role to use for credential requests
-    const String *webIdTokenFile;                                   // The file containing the token to use for web-id credential
-                                                                    // requests
+    const String *webIdTokenFile;                                   // File containing token to use for web-id credential requests
     time_t credExpirationTime;                                      // Time the temporary credentials expire
 
     // Current signing key and date it is valid for
@@ -389,9 +387,9 @@ storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // We load the token from the given file for each request since the token can be updated during the middle
-        // of a long-running execution.
-        const String *webIdToken = strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), this->webIdTokenFile)));
+        // Load the token from the given file for each request since the token may be updated during execution
+        const String *const webIdToken = strNewBuf(
+            storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), this->webIdTokenFile)));
 
         // Get credentials
         HttpQuery *const query = httpQueryNewP();
