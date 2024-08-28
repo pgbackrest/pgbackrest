@@ -933,7 +933,7 @@ testRun(void)
 
                 #define TEST_SERVICE_ROLE                           "arn:aws:iam::123456789012:role/TestRole"
                 #define TEST_SERVICE_TOKEN                          "TOKEN"
-                #define TEST_SERVICE_TOKEN_FILE                     TEST_PATH "web-id-token"
+                #define TEST_SERVICE_TOKEN_FILE                     TEST_PATH "/web-id-token"
                 #define TEST_SERVICE_URI                                                                                           \
                     "/?Action=AssumeRoleWithWebIdentity&RoleArn=arn%3Aaws%3Aiam%3A%3A123456789012%3Arole%2FTestRole"               \
                         "&RoleSessionName=pgBackRest&Version=2011-06-15&WebIdentityToken=" TEST_SERVICE_TOKEN
