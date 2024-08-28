@@ -330,7 +330,7 @@ hrnServerRun(IoRead *const read, const HrnServerProtocol protocol, const unsigne
 
                 TRY_BEGIN()
                 {
-                    // Read one byte at a time so we can error with the partial data
+                    // Read one byte at a time so we can error with partial data
                     Buffer *const bufferOne = bufNew(1);
 
                     for (size_t size = 1; size <= bufSize(buffer); size++)
