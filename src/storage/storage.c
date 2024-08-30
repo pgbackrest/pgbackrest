@@ -360,6 +360,7 @@ storageNewItr(const Storage *const this, const String *const pathExp, StorageNew
         FUNCTION_LOG_PARAM(BOOL, param.nullOnMissing);
         FUNCTION_LOG_PARAM(ENUM, param.sortOrder);
         FUNCTION_LOG_PARAM(STRING, param.expression);
+        FUNCTION_LOG_PARAM(BOOL, param.recurse);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);

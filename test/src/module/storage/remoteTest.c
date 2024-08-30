@@ -571,7 +571,7 @@ testRun(void)
         // Check the repo via the local test storage to ensure the remote wrote it, then remove via the remote and confirm removed
         TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo128/%s", strZ(path))), true, "path exists");
         TEST_RESULT_VOID(storagePathRemoveP(storageRepoWrite, path), "remote remove path");
-        // TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo128/%s", strZ(path))), false, "path removed");
+        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo128/%s", strZ(path))), false, "path removed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remove recursive");
@@ -581,7 +581,7 @@ testRun(void)
             "new path and file");
 
         TEST_RESULT_VOID(storagePathRemoveP(storageRepoWrite, STRDEF("testpath"), .recurse = true), "remove missing path");
-        // TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo128/%s", strZ(path))), false, "recurse path removed");
+        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo128/%s", strZ(path))), false, "recurse path removed");
     }
 
     // *****************************************************************************************************************************

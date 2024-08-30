@@ -321,8 +321,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdStoragePut() and cmdStorageGet()"))
     {
-        hrnStorageHelperRepoShimSet(true);
-
         // Set buffer size small so copy loops get exercised
         size_t oldBufferSize = ioBufferSize();
         ioBufferSizeSet(8);
@@ -823,8 +821,6 @@ testRun(void)
 
         // Reset buffer size
         ioBufferSizeSet(oldBufferSize);
-
-        hrnStorageHelperRepoShimSet(false);
     }
 
     // *****************************************************************************************************************************
