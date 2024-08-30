@@ -18,4 +18,7 @@ hrnTimeMSecSetOne(const TimeMSec time)
     hrnTimeMSecSet(&time, 1);
 }
 
+// Sleep remainder of the current second
+void hrnSleepRemainder(void);
+
 #endif

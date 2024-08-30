@@ -20,6 +20,8 @@ Test Restore Command
 #include "common/harnessPostgres.h"
 #include "common/harnessProtocol.h"
 #include "common/harnessStorage.h"
+#include "common/harnessStorageHelper.h"
+#include "common/harnessTime.h"
 
 /***********************************************************************************************************************************
 Special string constants
@@ -3100,6 +3102,8 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("cmdBackup() and cmdRestore()"))
     {
+        hrnStorageHelperRepoShimSet(true);
+
         const String *pgPath = STRDEF(TEST_PATH "/pg");
         const String *repoPath = STRDEF(TEST_PATH "/repo");
 
@@ -3216,6 +3220,29 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("delta restore with block incr");
 
+        // Get last diff backup label and truncate bundle/1
+        hrnSleepRemainder();
+
+        StringList *backupList = storageListP(
+            storageRepo(), STORAGE_REPO_BACKUP_STR, .expression = backupRegExpP(.full = true));
+        strLstSort(backupList, sortOrderDesc);
+        const String *backupFull = strLstGet(backupList, 0);
+
+        HRN_STORAGE_PUT(storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/bundle/1", strZ(backupFull))), NULL);
+
+        // Make sure restore fails with the invalid file
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
+        hrnCfgArgRawBool(argList, cfgOptDelta, true);
+        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_ERROR(cmdRestore(), CryptoError, "raised from local-1 shim protocol: cipher header missing");
+
         // Use detail log level to catch block incremental restore message
         harnessLogLevelSet(logLevelDetail);
 
@@ -3229,14 +3256,12 @@ testRun(void)
 
         HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation);
 
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
-        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
-        hrnCfgArgRawBool(argList, cfgOptDelta, true);
-        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
-        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+        // For this restore to succeed we need to set limit time using the timestamp on backup.info
+        String *limitTime = strNewTimeP(
+            "%Y-%m-%d %H:%M:%S+00", storageInfoP(storageRepo(), INFO_BACKUP_PATH_FILE_STR).timeModified, .utc = true);
+
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        hrnCfgArgRaw(argList, cfgOptLimitTime, limitTime);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(cmdRestore(), "restore");
@@ -3256,6 +3281,8 @@ testRun(void)
 
         // Check that file was restored to full size with a partial write
         TEST_RESULT_LOG_EMPTY_OR_CONTAINS(", bi 128KB/256KB, ");
+
+        hrnStorageHelperRepoShimSet(true);
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
