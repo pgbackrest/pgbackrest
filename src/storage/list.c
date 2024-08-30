@@ -34,7 +34,8 @@ typedef struct StorageListInfo
         const char *name;                                           // Name of path/file/link
     } exists;
 
-    // Mode is only provided at detail level but is included here to save space on 64-bit architectures
+    // Set when info type >= storageInfoLevelType (undefined at lower levels). Mode is only provided at higher detail levels but
+    // included here to save space on 64-bit architectures
     struct
     {
         // Set when info type >= storageInfoLevelType (undefined at lower levels)
