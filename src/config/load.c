@@ -439,7 +439,9 @@ cfgLoadUpdateOption(void)
         }
     }
 
-    // !!! IF LIMIT-TIME IS SET THEN REPO MUST BE SET (EVEN IF IT IS DEFAULTED?)
+    // A repo must be specified when limiting time
+    if (cfgOptionTest(cfgOptLimitTime) && cfgOptionSource(cfgOptRepo) == cfgSourceDefault)
+        THROW_FMT(OptionInvalidError, "option '" CFGOPT_LIMIT_TIME "' not valid without option '" CFGOPT_REPO "'");
 
     FUNCTION_LOG_RETURN_VOID();
 }

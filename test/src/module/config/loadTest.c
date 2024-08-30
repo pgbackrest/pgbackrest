@@ -492,6 +492,22 @@ testRun(void)
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 1);
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("repo is set when limit-time is set");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-08 12:12:12+00");
+        TEST_ERROR(hrnCfgLoadP(cfgCmdInfo, argList), OptionInvalidError, "option 'limit-time' not valid without option 'repo'");
+
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        TEST_ERROR(
+            hrnCfgLoadP(cfgCmdArchiveGet, argList), OptionInvalidError, "option 'limit-time' not valid without option 'repo'");
+
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compress-type=none when compress=n");
 
         argList = strLstNew();

@@ -280,8 +280,6 @@ storageRemoteNewRead(THIS_VOID, const String *const file, const bool ignoreMissi
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    // !!! MAKE VERSIONS WORK
-
     FUNCTION_LOG_RETURN(
         STORAGE_READ,
         storageReadRemoteNew(

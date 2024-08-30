@@ -2617,7 +2617,11 @@
 
     <!-- ======================================================================================================================= -->
     <section id="limit-time" if="!{[object-any-all]}" depend="/s3-support">
-        <title>!!!</title>
+        <title>Limit Time for Repository</title>
+
+        <option-description key="limit-time"/>
+
+        <p>To demonstrate this feature the <id>demo</id> stanza in the <proper>S3</proper> repo is deleted.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Delete stanza in <proper>S3</proper> repository</title>
@@ -2637,6 +2641,8 @@
             </execute>
         </execute-list>
 
+        <p>Once the stanza is deleted the <cmd>info</cmd> command will show the repository in an error state.</p>
+
         <execute-list host="{[host-pg1]}">
             <title>Error on info</title>
 
@@ -2645,6 +2651,20 @@
                 <exe-highlight>missing stanza data</exe-highlight>
             </execute>
         </execute-list>
+
+        <p>However, since the storage is versioned, it is possible to look at the repository at a time before the stanza was deleted. Finding the limit time can be tricky depending on the situation, but in this case the time when the stanza was deleted can be determined by checking when <file>backup.info</file> was deleted.</p>
+
+        <execute-list host="{[host-s3]}">
+            <title>Use <id>mc</id> to list versions of <file>backup.info</file> in the bucket</title>
+
+            <execute user="root" user-force="y" output="y">
+                <exe-cmd>mc ls --versions s3/{[s3-bucket]}/{[s3-repo]}/backup/demo/backup.info</exe-cmd>
+                <exe-cmd-extra>--insecure</exe-cmd-extra>
+                <exe-highlight>backup\.info$</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <p>Now the <cmd>info</cmd> command can be run with a limit time that will show the repository before it was deleted.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Info with limit time</title>
@@ -2655,6 +2675,8 @@
                 <exe-highlight>full backup</exe-highlight>
             </execute>
         </execute-list>
+
+        <p>If the required backup is shown by the <cmd>info</cmd> command then it can be restored using the same limit time.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Restore with limit time</title>
