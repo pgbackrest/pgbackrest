@@ -381,8 +381,8 @@ testRun(void)
             TEST_HOST_SQL_ONE_STR_Z(pg1, "select message from status", TEST_STATUS_TIME);
         }
 
-        // Store the time where the entire timeline captured above exists so it can be used in a later test. We need to capture this
-        // later to be sure that all the timeline WAL has been archived.
+        // Store the time where the entire timeline captured in xidTimeline above exists so it can be used in a later test. We need
+        // to capture this here (instead of above) to be sure that all the timeline WAL has been archived.
         const char *const xidTime = strZ(pckReadStrP(hrnHostSqlValue(pg1, "select current_timestamp::text")));
         TEST_LOG_FMT("xid time = %s", xidTime);
 

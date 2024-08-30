@@ -52,6 +52,7 @@ storageReadGcsOpen(THIS_VOID)
 
     bool result = false;
 
+    // Read if not versioned or if versionId is not null
     if (!this->interface.version || this->interface.versionId != NULL)
     {
         // Request the file
