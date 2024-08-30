@@ -563,25 +563,25 @@ testRun(void)
     {
         const String *path = STRDEF("testpath");
         storagePathCreateP(storageTest, STRDEF("repo128"));
-        TEST_RESULT_VOID(storagePathCreateP(storageRepoWrite, path), "new path");
+        TEST_RESULT_VOID(storagePathCreateP(storagePgWrite, path), "new path");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remote remove path");
 
-        // Check the repo via the local test storage to ensure the remote wrote it, then remove via the remote and confirm removed
-        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo128/%s", strZ(path))), true, "path exists");
-        TEST_RESULT_VOID(storagePathRemoveP(storageRepoWrite, path), "remote remove path");
-        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo128/%s", strZ(path))), false, "path removed");
+        // Check pg via the local test storage to ensure the remote wrote it, then remove via the remote and confirm removed
+        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("pg256/%s", strZ(path))), true, "path exists");
+        TEST_RESULT_VOID(storagePathRemoveP(storagePgWrite, path), "remote remove path");
+        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("pg256/%s", strZ(path))), false, "path removed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remove recursive");
 
         TEST_RESULT_VOID(
-            storagePutP(storageNewWriteP(storageRepoWrite, strNewFmt("%s/file.txt", strZ(path))), BUFSTRDEF("TEST")),
+            storagePutP(storageNewWriteP(storagePgWrite, strNewFmt("%s/file.txt", strZ(path))), BUFSTRDEF("TEST")),
             "new path and file");
 
-        TEST_RESULT_VOID(storagePathRemoveP(storageRepoWrite, STRDEF("testpath"), .recurse = true), "remove missing path");
-        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("repo128/%s", strZ(path))), false, "recurse path removed");
+        TEST_RESULT_VOID(storagePathRemoveP(storagePgWrite, STRDEF("testpath"), .recurse = true), "remove missing path");
+        TEST_RESULT_BOOL(storagePathExistsP(storageTest, strNewFmt("pg256/%s", strZ(path))), false, "recurse path removed");
     }
 
     // *****************************************************************************************************************************
