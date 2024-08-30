@@ -19,6 +19,7 @@ Test Backup Command
 #include "common/harnessPq.h"
 #include "common/harnessProtocol.h"
 #include "common/harnessStorage.h"
+#include "common/harnessTime.h"
 
 /***********************************************************************************************************************************
 Get a list of all files in the backup and a redacted version of the manifest that can be tested against a static string
@@ -2012,7 +2013,7 @@ testRun(void)
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        sleepMSec(MSEC_PER_SEC - (timeMSec() % MSEC_PER_SEC));
+        hrnSleepRemainder();
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VR2");
 
         TEST_RESULT_VOID(hrnCmdBackup(), "backup");
