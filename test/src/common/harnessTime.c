@@ -38,6 +38,26 @@ hrnTimeMSecSet(const TimeMSec *const timeList, const size_t timeListSize)
 }
 
 /**********************************************************************************************************************************/
+void
+hrnSleepRemainder(void)
+{
+    FUNCTION_HARNESS_VOID();
+
+    TimeMSec target;
+
+    do
+    {
+        const TimeMSec current = timeMSec();
+        target = (current / 1000 + 1) * 1000;
+
+        sleepMSec(target - current);
+    }
+    while (timeMSec() < target);
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 TimeMSec
 timeMSec(void)
 {

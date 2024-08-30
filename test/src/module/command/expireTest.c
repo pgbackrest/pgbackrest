@@ -10,6 +10,7 @@ Test Expire Command
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
 #include "common/harnessStorage.h"
+#include "common/harnessTime.h"
 
 /***********************************************************************************************************************************
 Helper functions
@@ -151,7 +152,7 @@ testRun(void)
 
     // Sleep the remainder of the current second. If cmdExpire() gets the same time as timeNow then expiration won't work as
     // expected in the tests.
-    sleepMSec(MSEC_PER_SEC - (timeMSec() % MSEC_PER_SEC));
+    hrnSleepRemainder();
 
     // *****************************************************************************************************************************
     if (testBegin("expireBackup()"))
