@@ -298,6 +298,7 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawZ(argList, cfgOptOutput, "json");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:54:09+00");
         HRN_CFG_LOAD(cfgCmdRepoLs, argList);
 

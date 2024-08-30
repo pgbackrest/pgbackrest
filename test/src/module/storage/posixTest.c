@@ -1750,6 +1750,7 @@ testRun(void)
         TEST_TITLE("list with limit");
 
         StringList *argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:53:20+00");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
@@ -1761,6 +1762,7 @@ testRun(void)
             .level = storageInfoLevelBasic);
 
         argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:54:09+00");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
@@ -1784,6 +1786,7 @@ testRun(void)
         TEST_TITLE("get with limit");
 
         argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:53:20+00");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
@@ -1795,6 +1798,7 @@ testRun(void)
         TEST_STORAGE_GET(storageRepo(), "missing/test2", NULL, .nullOnMissing = true);
 
         argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:54:59+00");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
@@ -1876,6 +1880,7 @@ testRun(void)
         TEST_TITLE("list with limit");
 
         argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:54:09+00");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
@@ -1890,6 +1895,7 @@ testRun(void)
             .level = storageInfoLevelBasic);
 
         argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
         hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:54:59+00");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 

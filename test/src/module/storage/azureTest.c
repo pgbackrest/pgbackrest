@@ -1032,6 +1032,7 @@ testRun(void)
                 hrnServerScriptClose(service);
 
                 hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
+                hrnCfgArgRawZ(argList, cfgOptRepo, "1");
                 hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:54:09+00");
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
