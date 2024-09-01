@@ -401,7 +401,7 @@ infoBackupData(const InfoBackup *const this, const unsigned int backupDataIdx)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-infoBackupDataAdd(const InfoBackup *const this, const Manifest *const manifest)
+infoBackupDataAdd(InfoBackup *const this, const Manifest *const manifest)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INFO_BACKUP, this);
@@ -516,7 +516,7 @@ infoBackupDataAdd(const InfoBackup *const this, const Manifest *const manifest)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-infoBackupDataAnnotationSet(const InfoBackup *const this, const String *const backupLabel, const KeyValue *const newAnnotationKv)
+infoBackupDataAnnotationSet(InfoBackup *const this, const String *const backupLabel, const KeyValue *const newAnnotationKv)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO_BACKUP, this);
@@ -567,7 +567,7 @@ infoBackupDataAnnotationSet(const InfoBackup *const this, const String *const ba
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-infoBackupDataDelete(const InfoBackup *const this, const String *const backupDeleteLabel)
+infoBackupDataDelete(InfoBackup *const this, const String *const backupDeleteLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INFO_BACKUP, this);
