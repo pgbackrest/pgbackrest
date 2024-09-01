@@ -53,9 +53,9 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
         // Get role and token
         const StorageS3KeyType keyType = (StorageS3KeyType)cfgOptionIdxStrId(cfgOptRepoS3KeyType, repoIdx);
         const String *role = cfgOptionIdxStrNull(cfgOptRepoS3Role, repoIdx);
-        const String *webIdToken = NULL;
+        const String *webIdTokenFile = NULL;
 
-        // If web identity authentication then load the role and token from environment variables documented here:
+        // If web identity authentication then load the role and token filename from environment variables documented here:
         // https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts-technical-overview.html
         if (keyType == storageS3KeyTypeWebId)
         {
@@ -75,7 +75,7 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
             }
 
             role = strNewZ(roleZ);
-            webIdToken = strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), STR(webIdTokenFileZ))));
+            webIdTokenFile = strNewZ(webIdTokenFileZ);
         }
 
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -86,7 +86,7 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
                 (StorageS3UriStyle)cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx), cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx),
                 keyType, cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KmsKeyId, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoS3SseCustomerKey, repoIdx), role, webIdToken,
+                cfgOptionIdxStrNull(cfgOptRepoS3SseCustomerKey, repoIdx), role, webIdTokenFile,
                 (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx),
                 cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), host, port, ioTimeoutMs(),
                 cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
