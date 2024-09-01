@@ -9,7 +9,7 @@ SFTP Storage File Write
 #include "common/log.h"
 #include "common/user.h"
 #include "storage/sftp/write.h"
-#include "storage/write.intern.h"
+#include "storage/write.h"
 
 /***********************************************************************************************************************************
 Object type

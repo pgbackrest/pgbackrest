@@ -88,6 +88,9 @@ Init Function
 // Init with new configuration
 FN_EXTERN void cfgInit(Config *config);
 
+// Has the configuration been initialized?
+FN_EXTERN bool cfgInited(void);
+
 /***********************************************************************************************************************************
 Command Functions
 ***********************************************************************************************************************************/

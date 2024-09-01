@@ -20,19 +20,6 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // *****************************************************************************************************************************
-    if (testBegin("cmdRepoCreate()"))
-    {
-        StringList *argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
-        HRN_CFG_LOAD(cfgCmdRepoCreate, argList);
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("noop on non-S3 storage");
-
-        TEST_RESULT_VOID(cmdRepoCreate(), "repo create");
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("cmdStorageList() and storageListRender()"))
     {
         StringList *argList = strLstNew();
@@ -147,6 +134,8 @@ testRun(void)
             // {uncrustify_on}
             "check output");
 
+        HRN_SYSTEM("rm -f " TEST_PATH "/repo/link " TEST_PATH "/repo/pipe");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("reverse sort");
 
@@ -155,7 +144,7 @@ testRun(void)
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "path and file (text)");
-        TEST_RESULT_STR_Z(strNewBuf(output), "pipe\nlink\nbbb\naaa\n", "check output");
+        TEST_RESULT_STR_Z(strNewBuf(output), "bbb\naaa\n", "check output");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("recurse");
@@ -165,7 +154,7 @@ testRun(void)
         output = bufNew(0);
         cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "filter");
-        TEST_RESULT_STR_Z(strNewBuf(output), "pipe\nlink\nbbb/ccc\nbbb\naaa\n", "check output");
+        TEST_RESULT_STR_Z(strNewBuf(output), "bbb/ccc\nbbb\naaa\n", "check output");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("filter");

@@ -50,7 +50,7 @@ typedef struct IoReadPub
 
 // Driver for the read object
 FN_INLINE_ALWAYS void *
-ioReadDriver(IoRead *const this)
+ioReadDriver(const IoRead *const this)
 {
     return THIS_PUB(IoRead)->driver;
 }

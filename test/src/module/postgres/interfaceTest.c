@@ -61,7 +61,7 @@ testRun(void)
             "HINT: is this version of PostgreSQL supported?");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_94), 942, "9.4 control version");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_11), 1100, "11 control version");
-        TEST_RESULT_UINT(pgControlVersion(PG_VERSION_17), 1300, "17 control version");
+        TEST_RESULT_UINT(pgControlVersion(PG_VERSION_17), 1700, "17 control version");
     }
 
     // *****************************************************************************************************************************
@@ -231,7 +231,7 @@ testRun(void)
         TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "check system id");
         TEST_RESULT_UINT(info.version, PG_VERSION_17, "check version");
-        TEST_RESULT_UINT(info.catalogVersion, 202405161, "check catalog version");
+        TEST_RESULT_UINT(info.catalogVersion, 202406281, "check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
         TEST_RESULT_UINT(info.pageSize, pgPageSize32, "check page size");

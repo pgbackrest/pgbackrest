@@ -330,13 +330,21 @@ hrnServerRun(IoRead *const read, const HrnServerProtocol protocol, const unsigne
 
                 TRY_BEGIN()
                 {
-                    ioRead(ioSessionIoReadP(serverSession), buffer);
+                    // Read one byte at a time so we can error with partial data
+                    Buffer *const bufferOne = bufNew(1);
+
+                    for (size_t size = 1; size <= bufSize(buffer); size++)
+                    {
+                        ioReadSmall(ioSessionIoReadP(serverSession), bufferOne);
+
+                        bufCat(buffer, bufferOne);
+                        bufUsedZero(bufferOne);
+                    }
                 }
                 CATCH(FileReadError)
                 {
-                    // If nothing was read then throw the original error
-                    if (bufEmpty(buffer))
-                        THROW_FMT(AssertError, "server expected '%s' but got EOF", strZ(expected));
+                    THROW_FMT(
+                        AssertError, "server expected:\n'%s' but got short read:\n'%s'", strZ(expected), strZ(strNewBuf(buffer)));
                 }
                 TRY_END();
 
@@ -351,7 +359,7 @@ hrnServerRun(IoRead *const read, const HrnServerProtocol protocol, const unsigne
 
                 // Error if actual does not match expected
                 if (!strEq(actual, expected))
-                    THROW_FMT(AssertError, "server expected '%s' but got '%s'", strZ(expected), strZ(actual));
+                    THROW_FMT(AssertError, "server expected:\n'%s' but got:\n'%s'", strZ(expected), strZ(actual));
 
                 break;
             }

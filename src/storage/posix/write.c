@@ -14,7 +14,7 @@ Posix Storage File write
 #include "common/type/object.h"
 #include "common/user.h"
 #include "storage/posix/write.h"
-#include "storage/write.intern.h"
+#include "storage/write.h"
 
 /***********************************************************************************************************************************
 Object type

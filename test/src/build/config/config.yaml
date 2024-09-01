@@ -65,6 +65,14 @@ option:
     command:
       test: {}
 
+  help:
+    type: boolean
+    default: false
+    command:
+      help: {}
+    command-role:
+      main: {}
+
   neutral-umask:
     type: boolean
     internal: true
@@ -122,6 +130,14 @@ option:
     required: false
     command:
       test: {}
+
+  version:
+    type: boolean
+    default: false
+    command:
+      help: {}
+    command-role:
+      main: {}
 
   vm:
     type: string

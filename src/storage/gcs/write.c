@@ -11,7 +11,7 @@ GCS Storage File Write
 #include "common/type/keyValue.h"
 #include "common/type/object.h"
 #include "storage/gcs/write.h"
-#include "storage/write.intern.h"
+#include "storage/write.h"
 
 /***********************************************************************************************************************************
 GCS query tokens

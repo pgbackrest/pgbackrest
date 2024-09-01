@@ -237,12 +237,12 @@ pgbackrest/test/test.pl --dry-run
 
     P00   INFO: test begin on x86_64 - log level info
     P00   INFO: clean autogenerate code
---> P00   INFO: 81 tests selected
+--> P00   INFO: 83 tests selected
                 
-    P00   INFO: P1-T01/81 - vm=none, module=common, test=error
-           [filtered 78 lines of output]
-    P00   INFO: P1-T80/81 - vm=none, module=performance, test=type
-    P00   INFO: P1-T81/81 - vm=none, module=performance, test=storage
+    P00   INFO: P1-T01/83 - vm=none, module=common, test=error
+           [filtered 80 lines of output]
+    P00   INFO: P1-T82/83 - vm=none, module=performance, test=type
+    P00   INFO: P1-T83/83 - vm=none, module=performance, test=storage
 --> P00   INFO: DRY RUN COMPLETED SUCCESSFULLY
 ```
 
@@ -263,7 +263,7 @@ pgbackrest/test/test.pl --vm-out --module=common --test=wait
                 
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
                 
-        P00   INFO: test command begin 2.52: [common/wait] --log-level=info --no-log-timestamp --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --vm=none --vm-id=0
+        P00   INFO: test command begin 2.53.1: [common/wait] --log-level=info --no-log-timestamp --repo-path=/home/vagrant/test/repo --scale=1 --test-path=/home/vagrant/test --vm=none --vm-id=0
         P00   INFO: test command end: completed successfully
         run 1 - waitNew(), waitMore, and waitFree()
                       L0018     expect AssertError: assertion 'waitTime <= 999999000' failed
@@ -310,7 +310,6 @@ pgbackrest/test/test.pl --vm-out --module=common --test=wait
     
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
     P00   INFO: tested modules have full coverage
-    P00   INFO: writing C coverage report
     P00   INFO: TESTS COMPLETED SUCCESSFULLY
 ```
 
@@ -334,7 +333,6 @@ pgbackrest/test/test.pl --module=postgres
     P00   INFO: P1-T1/2 - vm=none, module=postgres, test=client
     P00   INFO: P1-T2/2 - vm=none, module=postgres, test=interface
     P00   INFO: tested modules have full coverage
-    P00   INFO: writing C coverage report
     P00   INFO: TESTS COMPLETED SUCCESSFULLY
 ```
 
@@ -349,7 +347,7 @@ pgbackrest/test/test.pl --vm-build --vm=u20
 --- output ---
 
     P00   INFO: test begin on x86_64 - log level info
-    P00   INFO: Using cached pgbackrest/test:u20-base-20240425A image (c3fc7cc1956c5eb10995119deed7a21b92dd07a7) ...
+    P00   INFO: Using cached pgbackrest/test:u20-base-20240612A image (a754f9acc98c79a0b0ad3a39a140a752a27ac5e7) ...
     P00   INFO: Building pgbackrest/test:u20-test image ...
     P00   INFO: Build Complete
 ```
@@ -371,9 +369,6 @@ pgbackrest/test/test.pl --vm=u20 --module=postgres --test=interface --run=2
     P00   INFO: 1 test selected
                 
     P00   INFO: P1-T1/1 - vm=u20, module=postgres, test=interface, run=2
-    P00   INFO: no code modules had all tests run required for coverage
-    P00   INFO: tested modules have full coverage
-    P00   INFO: writing C coverage report
     P00   INFO: TESTS COMPLETED SUCCESSFULLY
 ```
 

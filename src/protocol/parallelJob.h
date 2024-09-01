@@ -29,7 +29,7 @@ typedef enum
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN ProtocolParallelJob *protocolParallelJobNew(const Variant *key, ProtocolCommand *command);
+FN_EXTERN ProtocolParallelJob *protocolParallelJobNew(const Variant *key, StringId command, PackWrite *param);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -37,7 +37,8 @@ Getters/Setters
 typedef struct ProtocolParallelJobPub
 {
     const Variant *key;                                             // Unique key used to identify the job
-    ProtocolCommand *command;                                       // Command to be executed
+    StringId command;                                               // Command to be executed
+    PackWrite *param;                                               // Command parameters
     unsigned int processId;                                         // Process that executed this job
     ProtocolParallelJobState state;                                 // Current state of the job
     int code;                                                       // Non-zero result indicates an error
@@ -46,10 +47,17 @@ typedef struct ProtocolParallelJobPub
 } ProtocolParallelJobPub;
 
 // Job command
-FN_INLINE_ALWAYS ProtocolCommand *
+FN_INLINE_ALWAYS StringId
 protocolParallelJobCommand(const ProtocolParallelJob *const this)
 {
     return THIS_PUB(ProtocolParallelJob)->command;
+}
+
+// Job command parameters
+FN_INLINE_ALWAYS PackWrite *
+protocolParallelJobParam(const ProtocolParallelJob *const this)
+{
+    return THIS_PUB(ProtocolParallelJob)->param;
 }
 
 // Job error

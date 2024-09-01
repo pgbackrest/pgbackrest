@@ -10,7 +10,7 @@ Azure Storage File Write
 #include "common/type/object.h"
 #include "common/type/xml.h"
 #include "storage/azure/write.h"
-#include "storage/write.intern.h"
+#include "storage/write.h"
 
 /***********************************************************************************************************************************
 Azure HTTP headers

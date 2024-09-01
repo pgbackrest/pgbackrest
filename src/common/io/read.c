@@ -64,7 +64,7 @@ ioReadOpen(IoRead *const this)
     ASSERT(ioFilterGroupSize(this->pub.filterGroup) == 0 || !ioReadBlock(this));
 
     // Open if the driver has an open function
-    const bool result = this->pub.interface.open != NULL ? this->pub.interface.open(this->pub.driver) : true;
+    const bool result = ioReadInterface(this)->open != NULL ? ioReadInterface(this)->open(ioReadDriver(this)) : true;
 
     // Only open the filter group if the read was opened
     if (result)
@@ -92,7 +92,7 @@ ioReadEofDriver(const IoRead *const this)
     ASSERT(this != NULL);
     ASSERT(this->pub.opened && !this->pub.closed);
 
-    FUNCTION_LOG_RETURN(BOOL, this->pub.interface.eof != NULL ? this->pub.interface.eof(this->pub.driver) : false);
+    FUNCTION_LOG_RETURN(BOOL, ioReadInterface(this)->eof != NULL ? ioReadInterface(this)->eof(ioReadDriver(this)) : false);
 }
 
 /**********************************************************************************************************************************/
@@ -133,7 +133,7 @@ ioReadInternal(IoRead *const this, Buffer *const buffer, const bool block)
                     if (ioReadBlock(this) && bufRemains(this->input) > bufRemains(buffer))
                         bufLimitSet(this->input, bufRemains(buffer));
 
-                    this->pub.interface.read(this->pub.driver, this->input, block);
+                    ioReadInterface(this)->read(ioReadDriver(this), this->input, block);
                     bufLimitClear(this->input);
                 }
                 // Set input to NULL and flush (no need to actually free the buffer here as it will be freed with the mem context)
@@ -421,8 +421,8 @@ ioReadReady(IoRead *const this, const IoReadReadyParam param)
 
     bool result = true;
 
-    if (this->pub.interface.ready != NULL)
-        result = this->pub.interface.ready(this->pub.driver, param.error);
+    if (ioReadInterface(this)->ready != NULL)
+        result = ioReadInterface(this)->ready(ioReadDriver(this), param.error);
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
@@ -478,8 +478,8 @@ ioReadClose(IoRead *const this)
     ioFilterGroupClose(this->pub.filterGroup);
 
     // Close the driver if there is a close function
-    if (this->pub.interface.close != NULL)
-        this->pub.interface.close(this->pub.driver);
+    if (ioReadInterface(this)->close != NULL)
+        ioReadInterface(this)->close(ioReadDriver(this));
 
 #ifdef DEBUG
     this->pub.closed = true;
@@ -498,5 +498,5 @@ ioReadFd(const IoRead *const this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(INT, this->pub.interface.fd == NULL ? -1 : this->pub.interface.fd(this->pub.driver));
+    FUNCTION_LOG_RETURN(INT, ioReadInterface(this)->fd == NULL ? -1 : ioReadInterface(this)->fd(ioReadDriver(this)));
 }

@@ -18,7 +18,6 @@ Command constants
 #define CFGCMD_HELP                                                 "help"
 #define CFGCMD_INFO                                                 "info"
 #define CFGCMD_MANIFEST                                             "manifest"
-#define CFGCMD_REPO_CREATE                                          "repo-create"
 #define CFGCMD_REPO_GET                                             "repo-get"
 #define CFGCMD_REPO_LS                                              "repo-ls"
 #define CFGCMD_REPO_PUT                                             "repo-put"
@@ -34,7 +33,7 @@ Command constants
 #define CFGCMD_VERIFY                                               "verify"
 #define CFGCMD_VERSION                                              "version"
 
-#define CFG_COMMAND_TOTAL                                           24
+#define CFG_COMMAND_TOTAL                                           23
 
 /***********************************************************************************************************************************
 Option group constants
@@ -79,6 +78,7 @@ Option constants
 #define CFGOPT_EXPIRE_AUTO                                          "expire-auto"
 #define CFGOPT_FILTER                                               "filter"
 #define CFGOPT_FORCE                                                "force"
+#define CFGOPT_HELP                                                 "help"
 #define CFGOPT_IGNORE_MISSING                                       "ignore-missing"
 #define CFGOPT_IO_TIMEOUT                                           "io-timeout"
 #define CFGOPT_JOB_RETRY                                            "job-retry"
@@ -136,8 +136,9 @@ Option constants
 #define CFGOPT_TLS_SERVER_PORT                                      "tls-server-port"
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
+#define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            181
+#define CFG_OPTION_TOTAL                                            183
 
 /***********************************************************************************************************************************
 Option value constants
@@ -353,7 +354,6 @@ typedef enum
     cfgCmdHelp,
     cfgCmdInfo,
     cfgCmdManifest,
-    cfgCmdRepoCreate,
     cfgCmdRepoGet,
     cfgCmdRepoLs,
     cfgCmdRepoPut,
@@ -368,7 +368,6 @@ typedef enum
     cfgCmdStop,
     cfgCmdVerify,
     cfgCmdVersion,
-    cfgCmdNone,
 } ConfigCommand;
 
 /***********************************************************************************************************************************
@@ -420,6 +419,7 @@ typedef enum
     cfgOptExpireAuto,
     cfgOptFilter,
     cfgOptForce,
+    cfgOptHelp,
     cfgOptIgnoreMissing,
     cfgOptIoTimeout,
     cfgOptJobRetry,
@@ -566,6 +566,7 @@ typedef enum
     cfgOptTlsServerPort,
     cfgOptType,
     cfgOptVerbose,
+    cfgOptVersion,
 } ConfigOption;
 
 #endif
