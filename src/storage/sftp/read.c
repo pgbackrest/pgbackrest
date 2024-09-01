@@ -8,7 +8,7 @@ SFTP Storage Read
 #include "common/debug.h"
 #include "common/io/session.h"
 #include "common/log.h"
-#include "storage/read.intern.h"
+#include "storage/read.h"
 #include "storage/sftp/read.h"
 
 /***********************************************************************************************************************************

@@ -180,22 +180,22 @@ testRun(void)
     if (testBegin("lstRemoveIdx()"))
     {
         ASSERT(TEST_SCALE <= 10000);
-        int testMax = 1000000 * (int)TEST_SCALE;
+        uint64_t testMax = (uint64_t)1000000 * TEST_SCALE;
 
         // Generate a large list of values (use int instead of string so there fewer allocations)
         List *list = lstNewP(sizeof(int));
 
-        for (int listIdx = 0; listIdx < testMax; listIdx++)
+        for (uint64_t listIdx = 0; listIdx < testMax; listIdx++)
             lstAdd(list, &listIdx);
 
         ASSERT(lstSize(list) == (unsigned int)testMax);
 
-        TEST_LOG_FMT("generated %d item list", testMax);
+        TEST_LOG_FMT("generated %" PRIu64 " item list", testMax);
 
         // Remove all values from index 0
         TimeMSec timeBegin = timeMSec();
 
-        for (int listIdx = 0; listIdx < testMax; listIdx++)
+        for (uint64_t listIdx = 0; listIdx < testMax; listIdx++)
             lstRemoveIdx(list, 0);
 
         TEST_LOG_FMT("remove completed in %ums", (unsigned int)(timeMSec() - timeBegin));
@@ -248,7 +248,7 @@ testRun(void)
 
             *driver = (StorageTestManifestNewBuild)
             {
-                .interface = storageInterfaceTestDummy,
+                .interface = hrnStorageInterfaceDummy,
                 .fileTotal = 100000 * (unsigned int)TEST_SCALE,
             };
         }

@@ -34,9 +34,8 @@ cvtCharToZ(const char value, char *const buffer, const size_t bufferSize)
     return (size_t)snprintf(buffer, bufferSize, "%c", value);
 }
 
-// Convert double to zero-terminated string and vice versa
+// Convert double to zero-terminated string
 FN_EXTERN size_t cvtDoubleToZ(double value, char *buffer, size_t bufferSize);
-FN_EXTERN double cvtZToDouble(const char *value);
 
 // Convert int to zero-terminated string and vice versa
 FN_EXTERN size_t cvtIntToZ(int value, char *buffer, size_t bufferSize);
@@ -109,6 +108,10 @@ typedef struct CvtTimeToZParam
 
 FN_EXTERN FN_STRFTIME(1) size_t cvtTimeToZ(
     const char *format, time_t value, char *buffer, size_t bufferSize, CvtTimeToZParam param);
+
+// Convert zero-terminated string with the following format to time_t:
+// ^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}((\,|\.)[0-9]{1,6})?((\+|\-)[0-9]{2}(:?)([0-9]{2})?)?$
+FN_EXTERN time_t cvtZToTime(const char *time);
 
 // Convert uint to zero-terminated string and vice versa
 FN_EXTERN size_t cvtUIntToZ(unsigned int value, char *buffer, size_t bufferSize);

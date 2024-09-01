@@ -21,11 +21,6 @@ typedef struct IoWrite IoWrite;
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-typedef struct IoWritePub
-{
-    IoFilterGroup *filterGroup;                                     // IO filters
-} IoWritePub;
-
 // Filter group. Filters must be set before open and cannot be reset
 FN_INLINE_ALWAYS IoFilterGroup *
 ioWriteFilterGroup(IoWrite *const this)

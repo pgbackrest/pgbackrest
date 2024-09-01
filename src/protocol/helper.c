@@ -5,6 +5,7 @@ Protocol Helper
 
 #include <string.h>
 
+#include "command/lock.h"
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/exec.h"
@@ -75,7 +76,7 @@ protocolHelperInit(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-repoIsLocal(unsigned int repoIdx)
+repoIsLocal(const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, repoIdx);
@@ -97,7 +98,7 @@ repoIsLocalVerify(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-repoIsLocalVerifyIdx(unsigned int repoIdx)
+repoIsLocalVerifyIdx(const unsigned int repoIdx)
 {
     FUNCTION_TEST_VOID();
 
@@ -109,7 +110,7 @@ repoIsLocalVerifyIdx(unsigned int repoIdx)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-pgIsLocal(unsigned int pgIdx)
+pgIsLocal(const unsigned int pgIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgIdx);
@@ -134,7 +135,7 @@ pgIsLocalVerify(void)
 Get the command line required for local protocol execution
 ***********************************************************************************************************************************/
 static StringList *
-protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostIdx, unsigned int processId)
+protocolLocalParam(const ProtocolStorageType protocolStorageType, const unsigned int hostIdx, const unsigned int processId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_ID, protocolStorageType);
@@ -147,7 +148,7 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostIdx
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Option replacements
-        KeyValue *optionReplace = kvNew();
+        KeyValue *const optionReplace = kvNew();
 
         // Add the process id -- used when more than one process will be called
         kvPut(optionReplace, VARSTRDEF(CFGOPT_PROCESS), VARUINT(processId));
@@ -186,7 +187,8 @@ protocolLocalParam(ProtocolStorageType protocolStorageType, unsigned int hostIdx
 // Helper to execute the local process. This is a separate function solely so that it can be shimmed during testing.
 static void
 protocolLocalExec(
-    ProtocolHelperClient *helper, ProtocolStorageType protocolStorageType, unsigned int hostIdx, unsigned int processId)
+    ProtocolHelperClient *const helper, const ProtocolStorageType protocolStorageType, const unsigned int hostIdx,
+    const unsigned int processId)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, helper);
@@ -232,7 +234,7 @@ protocolLocalExec(
 }
 
 FN_EXTERN ProtocolClient *
-protocolLocalGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx, unsigned int processId)
+protocolLocalGet(const ProtocolStorageType protocolStorageType, const unsigned int hostIdx, const unsigned int processId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_ID, protocolStorageType);
@@ -281,7 +283,7 @@ Free the protocol client and underlying exec'd process. Log any errors as warnin
 while closing a local/remote that has already completed its work. The warning will be an indication that something is not right.
 ***********************************************************************************************************************************/
 static void
-protocolHelperClientFree(ProtocolHelperClient *protocolHelperClient)
+protocolHelperClientFree(ProtocolHelperClient *const protocolHelperClient)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, protocolHelperClient);
@@ -326,7 +328,7 @@ protocolHelperClientFree(ProtocolHelperClient *protocolHelperClient)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-protocolLocalFree(unsigned int processId)
+protocolLocalFree(const unsigned int processId)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, processId);
@@ -412,6 +414,11 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
         {
             TRY_BEGIN()
             {
+                // Get parameter list from the client. This needs to happen even if we cannot authorize the client so that the
+                // session id gets set for the error.
+                const ProtocolServerRequestResult command = protocolServerRequest(result);
+                CHECK(FormatError, command.id == PROTOCOL_COMMAND_CONFIG, "expected config command");
+
                 // Get list of authorized stanzas for this client
                 CHECK(AssertError, cfgOptionTest(cfgOptTlsServerAuth), "missing auth data");
 
@@ -422,10 +429,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
                 if (clientAuthList == NULL)
                     THROW(AccessError, "access denied");
 
-                // Get parameter list from the client and load it
-                const ProtocolServerCommandGetResult command = protocolServerCommandGet(result);
-                CHECK(FormatError, command.id == PROTOCOL_COMMAND_CONFIG, "expected config command");
-
+                // Load parameter list from the client
                 StringList *const paramList = pckReadStrLstP(pckReadNew(command.param));
                 strLstInsert(paramList, 0, cfgExe());
                 cfgLoad(strLstSize(paramList), strLstPtr(paramList));
@@ -442,7 +446,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
             TRY_END();
 
             // Ack the config command
-            protocolServerDataEndPut(result);
+            protocolServerResponseP(result);
 
             // Move result to prior context and move session into result so there is only one return value
             protocolServerMove(result, memContextPrior());
@@ -451,8 +455,12 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
         // Else the client can only detect that the server is alive
         else
         {
-            // Send a data end message and return a NULL server. Do not waste time looking at what the client wrote.
-            protocolServerDataEndPut(result);
+            // A noop command should have been received
+            const ProtocolServerRequestResult command = protocolServerRequest(result);
+            CHECK(FormatError, command.id == PROTOCOL_COMMAND_NOOP, "expected config command");
+
+            // Send a data end message and return a NULL server
+            protocolServerResponseP(result);
 
             // Set result to NULL so there is no server for the caller to use. The TLS session will be freed when the temp mem
             // context ends.
@@ -468,7 +476,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
 Get the command line required for remote protocol execution
 ***********************************************************************************************************************************/
 static StringList *
-protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
+protocolRemoteParam(const ProtocolStorageType protocolStorageType, const unsigned int hostIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_ID, protocolStorageType);
@@ -480,30 +488,31 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Is this a repo remote?
-        bool isRepo = protocolStorageType == protocolStorageTypeRepo;
+        const bool isRepo = protocolStorageType == protocolStorageTypeRepo;
 
         // Option replacements
-        KeyValue *optionReplace = kvNew();
+        KeyValue *const optionReplace = kvNew();
 
         // Replace config options with the host versions
-        unsigned int optConfig = isRepo ? cfgOptRepoHostConfig : cfgOptPgHostConfig;
+        const unsigned int optConfig = isRepo ? cfgOptRepoHostConfig : cfgOptPgHostConfig;
 
         kvPut(
             optionReplace, VARSTRDEF(CFGOPT_CONFIG),
             cfgOptionIdxSource(optConfig, hostIdx) != cfgSourceDefault ? VARSTR(cfgOptionIdxStr(optConfig, hostIdx)) : NULL);
 
-        unsigned int optConfigIncludePath = isRepo ? cfgOptRepoHostConfigIncludePath : cfgOptPgHostConfigIncludePath;
+        const unsigned int optConfigIncludePath = isRepo ? cfgOptRepoHostConfigIncludePath : cfgOptPgHostConfigIncludePath;
 
         kvPut(
             optionReplace, VARSTRDEF(CFGOPT_CONFIG_INCLUDE_PATH),
             cfgOptionIdxSource(optConfigIncludePath, hostIdx) != cfgSourceDefault ?
                 VARSTR(cfgOptionIdxStr(optConfigIncludePath, hostIdx)) : NULL);
 
-        unsigned int optConfigPath = isRepo ? cfgOptRepoHostConfigPath : cfgOptPgHostConfigPath;
+        const unsigned int optConfigPath = isRepo ? cfgOptRepoHostConfigPath : cfgOptPgHostConfigPath;
 
         kvPut(
             optionReplace, VARSTRDEF(CFGOPT_CONFIG_PATH),
-            cfgOptionIdxSource(optConfigPath, hostIdx) != cfgSourceDefault ? VARSTR(cfgOptionIdxStr(optConfigPath, hostIdx)) : NULL);
+            cfgOptionIdxSource(optConfigPath, hostIdx) != cfgSourceDefault ?
+                VARSTR(cfgOptionIdxStr(optConfigPath, hostIdx)) : NULL);
 
         // Update/remove repo/pg options that are sent to the remote
         for (ConfigOption optionId = 0; optionId < CFG_OPTION_TOTAL; optionId++)
@@ -542,7 +551,9 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
                 // Remove unrequired/defaulted pg options when the remote type is repo since they won't be used
                 if (protocolStorageType == protocolStorageTypeRepo)
                 {
-                    remove = !cfgParseOptionRequired(cfgCommand(), optionId) || cfgParseOptionDefault(cfgCommand(), optionId) != NULL;
+                    remove =
+                        !cfgParseOptionRequired(cfgCommand(), optionId) ||
+                        cfgParseOptionDefault(cfgCommand(), optionId) != NULL;
                 }
                 // Move pg options to host index 0 (key 1) so they will be in the default index on the remote host
                 else
@@ -599,6 +610,10 @@ protocolRemoteParam(ProtocolStorageType protocolStorageType, unsigned int hostId
         // Add the remote type
         kvPut(optionReplace, VARSTRDEF(CFGOPT_REMOTE_TYPE), VARSTR(strIdToStr(protocolStorageType)));
 
+        // Add lock required on the remote
+        if (cfgLockRemoteRequired())
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOCK), varNewVarLst(varLstNewStrLst(cmdLockList())));
+
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = cfgExecParam(cfgCommand(), cfgCmdRoleRemote, optionReplace, false, true);
@@ -619,12 +634,12 @@ protocolRemoteParamSsh(const ProtocolStorageType protocolStorageType, const unsi
         FUNCTION_LOG_PARAM(UINT, hostIdx);
     FUNCTION_LOG_END();
 
-    StringList *result = strLstNew();
+    StringList *const result = strLstNew();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Is this a repo remote?
-        bool isRepo = protocolStorageType == protocolStorageTypeRepo;
+        const bool isRepo = protocolStorageType == protocolStorageTypeRepo;
 
         // Fixed parameters for ssh command
         strLstAddZ(result, "-o");
@@ -635,7 +650,7 @@ protocolRemoteParamSsh(const ProtocolStorageType protocolStorageType, const unsi
         strLstAddZ(result, "PasswordAuthentication=no");
 
         // Append port if specified
-        ConfigOption optHostPort = isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort;
+        const ConfigOption optHostPort = isRepo ? cfgOptRepoHostPort : cfgOptPgHostPort;
 
         if (cfgOptionIdxTest(optHostPort, hostIdx))
         {
@@ -649,7 +664,7 @@ protocolRemoteParamSsh(const ProtocolStorageType protocolStorageType, const unsi
             strZ(cfgOptionIdxStr(isRepo ? cfgOptRepoHost : cfgOptPgHost, hostIdx)));
 
         // Add remote command and parameters
-        StringList *paramList = protocolRemoteParam(protocolStorageType, hostIdx);
+        StringList *const paramList = protocolRemoteParam(protocolStorageType, hostIdx);
 
         strLstInsert(paramList, 0, cfgOptionIdxStr(isRepo ? cfgOptRepoHostCmd : cfgOptPgHostCmd, hostIdx));
         strLstAdd(result, strLstJoin(paramList, " "));
@@ -767,10 +782,10 @@ protocolRemoteExec(
                 TRY_BEGIN()
                 {
                     // Pass parameters to server
-                    ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_CONFIG);
-                    pckWriteStrLstP(protocolCommandParam(command), protocolRemoteParam(protocolStorageType, hostIdx));
-                    protocolClientExecute(helper->client, command, false);
-                    protocolCommandFree(command);
+                    PackWrite *const param = protocolPackNew();
+
+                    pckWriteStrLstP(param, protocolRemoteParam(protocolStorageType, hostIdx));
+                    protocolClientRequestP(helper->client, PROTOCOL_COMMAND_CONFIG, .param = param);
                 }
                 CATCH_ANY()
                 {
@@ -792,7 +807,7 @@ protocolRemoteExec(
 }
 
 FN_EXTERN ProtocolClient *
-protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
+protocolRemoteGet(const ProtocolStorageType protocolStorageType, const unsigned int hostIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_ID, protocolStorageType);
@@ -800,7 +815,7 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
     FUNCTION_LOG_END();
 
     // Is this a repo remote?
-    bool isRepo = protocolStorageType == protocolStorageTypeRepo;
+    const bool isRepo = protocolStorageType == protocolStorageTypeRepo;
 
     protocolHelperInit();
 
@@ -821,15 +836,11 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
     // Determine protocol id for the remote. If the process option is set then use that since we want the remote protocol id to
     // match the local protocol id. Otherwise set to 0 since the remote is being started from a main process and there should only
     // be one remote per host.
-    unsigned int processId = 0;
-
-    if (cfgOptionTest(cfgOptProcess))
-        processId = cfgOptionUInt(cfgOptProcess);
-
+    const unsigned int processId = cfgOptionTest(cfgOptProcess) ? cfgOptionUInt(cfgOptProcess) : 0;
     CHECK(AssertError, hostIdx < protocolHelper.clientRemoteSize, "invalid host");
 
     // Create protocol object
-    ProtocolHelperClient *protocolHelperClient = &protocolHelper.clientRemote[hostIdx];
+    ProtocolHelperClient *const protocolHelperClient = &protocolHelper.clientRemote[hostIdx];
 
     if (protocolHelperClient->client == NULL)
     {
@@ -844,11 +855,11 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
             if (isRepo && cfgOptionIdxStrId(cfgOptRepoCipherType, hostIdx) == cipherTypeNone)
             {
                 // Options to query
-                VariantList *param = varLstNew();
+                VariantList *const param = varLstNew();
                 varLstAdd(param, varNewStrZ(cfgOptionIdxName(cfgOptRepoCipherType, hostIdx)));
                 varLstAdd(param, varNewStrZ(cfgOptionIdxName(cfgOptRepoCipherPass, hostIdx)));
 
-                VariantList *optionList = configOptionRemote(protocolHelperClient->client, param);
+                const VariantList *const optionList = configOptionRemote(protocolHelperClient->client, param);
 
                 if (varUInt64(varLstGet(optionList, 0)) != cipherTypeNone)
                 {
@@ -865,7 +876,7 @@ protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostIdx)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-protocolRemoteFree(unsigned int hostIdx)
+protocolRemoteFree(const unsigned int hostIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, hostIdx);

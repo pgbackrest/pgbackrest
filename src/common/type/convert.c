@@ -13,6 +13,7 @@ Convert C Types
 
 #include "common/debug.h"
 #include "common/macro.h"
+#include "common/time.h"
 #include "common/type/convert.h"
 
 /***********************************************************************************************************************************
@@ -159,24 +160,6 @@ cvtDoubleToZ(const double value, char *const buffer, const size_t bufferSize)
 
     // Return string length
     FUNCTION_TEST_RETURN(SIZE, (size_t)(end - buffer + 1));
-}
-
-FN_EXTERN double
-cvtZToDouble(const char *const value)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRINGZ, value);
-    FUNCTION_TEST_END();
-
-    ASSERT(value != NULL);
-
-    double result = 0;
-    sscanf(value, "%lf", &result);
-
-    if (result == 0 && strcmp(value, "0") != 0)
-        THROW_FMT(FormatError, "unable to convert string '%s' to double", value);
-
-    FUNCTION_TEST_RETURN(DOUBLE, result);
 }
 
 /**********************************************************************************************************************************/
@@ -391,6 +374,110 @@ cvtTimeToZ(const char *const format, const time_t value, char *const buffer, con
         THROW(AssertError, "buffer overflow");
 
     FUNCTION_TEST_RETURN(SIZE, result);
+}
+
+/**********************************************************************************************************************************/
+// Helper to convert a time part, e.g. year
+static int
+cvtZNToTimePart(const char *const time, const char *const part, const size_t partSize)
+{
+    int result = 0;
+    int power = 1;
+
+    for (size_t partIdx = partSize - 1; partIdx < partSize; partIdx--)
+    {
+        if (!isdigit(part[partIdx]))
+            THROW_FMT(FormatError, "invalid date/time %s", time);
+
+        result += (part[partIdx] - '0') * power;
+        power *= 10;
+    }
+
+    return result;
+}
+
+FN_EXTERN time_t
+cvtZToTime(const char *const time)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, time);
+    FUNCTION_TEST_END();
+
+    ASSERT(time != NULL);
+
+    // Validate structure of date/time
+    if (strlen(time) < 19 || time[4] != '-' || time[7] != '-' || time[10] != ' ' || time[13] != ':' || time[16] != ':')
+        THROW_FMT(FormatError, "invalid date/time %s", time);
+
+    // Parse date/time
+    const int year = cvtZNToTimePart(time, time, 4);
+    const int month = cvtZNToTimePart(time, time + 5, 2);
+    const int day = cvtZNToTimePart(time, time + 8, 2);
+    const int hour = cvtZNToTimePart(time, time + 11, 2);
+    const int minute = cvtZNToTimePart(time, time + 14, 2);
+    const int second = cvtZNToTimePart(time, time + 17, 2);
+
+    // Confirm date and time parts are valid
+    datePartsValid(year, month, day);
+    timePartsValid(hour, minute, second);
+
+    // Consume milliseconds when present (they are omitted from the result)
+    const char *part = time + 19;
+
+    if ((*part == '.' || *part == ',') && strlen(part) >= 2)
+    {
+        part++;
+
+        while (*part != 0 && isdigit(*part))
+            part++;
+    }
+
+    // Add timezone offset when present
+    if ((*part == '+' || *part == '-') && strlen(part) >= 3)
+    {
+        const int offsetHour = cvtZNToTimePart(time, part + 1, 2) * (*part == '-' ? -1 : 1);
+        part += 3;
+
+        // Offset separator is optional
+        if (*part == ':')
+            part++;
+
+        // Offset minutes are optional
+        int offsetMinute = 0;
+
+        if (strlen(part) == 2)
+        {
+            offsetMinute = cvtZNToTimePart(time, part, 2);
+            part += 2;
+        }
+
+        // Make sure there is nothing left over
+        if (*part != 0)
+            THROW_FMT(FormatError, "invalid date/time %s", time);
+
+        FUNCTION_TEST_RETURN(
+            TIME, epochFromParts(year, month, day, hour, minute, second, tzOffsetSeconds(offsetHour, offsetMinute)));
+    }
+
+    // Make sure there is nothing left over
+    if (*part != 0)
+        THROW_FMT(FormatError, "invalid date/time %s", time);
+
+    // If no timezone was specified then use the current timezone. Set tm_isdst to -1 to force mktime to consider if DST. For
+    // example, if system time is America/New_York then 2019-09-14 20:02:49 was a time in DST so the Epoch value should be
+    // 1568505769 (and not 1568509369 which would be 2019-09-14 21:02:49 - an hour too late).
+    struct tm timePart =
+    {
+        .tm_year = year - 1900,
+        .tm_mon = month - 1,
+        .tm_mday = day,
+        .tm_hour = hour,
+        .tm_min = minute,
+        .tm_sec = second,
+        .tm_isdst = -1,
+    };
+
+    FUNCTION_TEST_RETURN(TIME, mktime(&timePart));
 }
 
 /**********************************************************************************************************************************/

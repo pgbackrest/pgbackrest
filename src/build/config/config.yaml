@@ -93,12 +93,6 @@ command:
     log-file: false
     log-level-default: DEBUG
 
-  repo-create:
-    command-role:
-      remote: {}
-    internal: true
-    log-file: false
-
   repo-get:
     command-role:
       remote: {}
@@ -143,18 +137,21 @@ command:
   stanza-create:
     command-role:
       remote: {}
+    lock-remote-required: true
     lock-required: true
     lock-type: all
 
   stanza-delete:
     command-role:
       remote: {}
+    lock-remote-required: true
     lock-required: true
     lock-type: all
 
   stanza-upgrade:
     command-role:
       remote: {}
+    lock-remote-required: true
     lock-required: true
     lock-type: all
 
@@ -307,6 +304,14 @@ option:
     command-role:
       main: {}
 
+  help:
+    type: boolean
+    default: false
+    command:
+      help: {}
+    command-role:
+      main: {}
+
   online:
     type: boolean
     default: true
@@ -387,8 +392,6 @@ option:
       info:
         required: false
       manifest: {}
-      repo-create:
-        required: false
       repo-get:
         required: false
       repo-ls:
@@ -510,6 +513,14 @@ option:
     command-role:
       main: {}
 
+  version:
+    type: boolean
+    default: false
+    command:
+      help: {}
+    command-role:
+      main: {}
+
   # Command-line only local/remote options
   #---------------------------------------------------------------------------------------------------------------------------------
   exec-id:
@@ -530,7 +541,6 @@ option:
       check: {}
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -542,6 +552,20 @@ option:
       verify: {}
     command-role:
       local: {}
+      remote: {}
+
+  lock:
+    type: list
+    internal: true
+    required: false
+    command:
+      annotate: {}
+      archive-push: {}
+      backup: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+    command-role:
       remote: {}
 
   remote-type:
@@ -559,7 +583,6 @@ option:
       check: {}
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -637,8 +660,8 @@ option:
   archive-timeout:
     section: global
     type: time
-    default: 60
-    allow-range: [0.1, 86400]
+    default: 1m
+    allow-range: [100ms, 1d]
     command:
       archive-get: {}
       archive-push: {}
@@ -679,7 +702,6 @@ option:
       expire: {}
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -703,7 +725,6 @@ option:
       check: {}
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -787,14 +808,13 @@ option:
   db-timeout:
     section: global
     type: time
-    default: 1800
-    allow-range: [0.1, 604800]
+    default: 30m
+    allow-range: [100ms, 7d]
     command:
       archive-get: {}
       archive-push: {}
       backup: {}
       check: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -816,8 +836,8 @@ option:
   io-timeout:
     section: global
     type: time
-    default: 60
-    allow-range: [0.1, 3600]
+    default: 1m
+    allow-range: [100ms, 1h]
     command: buffer-size
 
   job-retry:
@@ -842,8 +862,14 @@ option:
   job-retry-interval:
     inherit: job-retry
     type: time
-    default: 15
-    allow-range: [0, 900]
+    default: 15s
+    allow-range: [0s, 15m]
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      restore: {}
+      verify: {}
 
   lock-path:
     section: global
@@ -874,7 +900,6 @@ option:
       backup: {}
       check: {}
       expire: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -905,8 +930,8 @@ option:
   protocol-timeout:
     section: global
     type: time
-    default: 1830
-    allow-range: [0.1, 604800]
+    default: 31m
+    allow-range: [100ms, 7d]
     command:
       annotate: {}
       archive-get: {}
@@ -915,7 +940,6 @@ option:
       check: {}
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -1054,7 +1078,7 @@ option:
   log-level-stderr:
     section: global
     type: string-id
-    default: warn
+    default: off
     allow-list: log-level-console
 
   log-path:
@@ -1074,7 +1098,6 @@ option:
       check: {}
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -1105,7 +1128,7 @@ option:
     section: global
     type: size
     default: 128MiB
-    allow-range: [0, 4PiB]
+    allow-range: [0B, 4PiB]
     command:
       archive-get: {}
     command-role:
@@ -1135,7 +1158,7 @@ option:
     section: global
     type: size
     required: false
-    allow-range: [0, 4PiB]
+    allow-range: [0B, 4PiB]
     command:
       archive-push: {}
     command-role:
@@ -1260,7 +1283,7 @@ option:
     section: global
     type: size
     default: 1GiB
-    allow-range: [1, 1TiB]
+    allow-range: [1B, 1TiB]
     command:
       backup: {}
     command-role:
@@ -1667,10 +1690,6 @@ option:
         command-role:
           main: {}
           remote: {}
-      repo-create:
-        command-role:
-          main: {}
-          remote: {}
       repo-get:
         command-role:
           main: {}
@@ -1729,7 +1748,6 @@ option:
         internal: true
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -1789,10 +1807,6 @@ option:
           main: {}
           remote: {}
       manifest:
-        command-role:
-          main: {}
-          remote: {}
-      repo-create:
         command-role:
           main: {}
           remote: {}
@@ -2123,7 +2137,6 @@ option:
       check: {}
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}

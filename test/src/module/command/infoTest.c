@@ -238,7 +238,7 @@ testRun(void)
             {
                 lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"));
                 TEST_RESULT_BOOL(
-                    lockAcquireP(cmdLockFileName(STRDEF("stanza1"), lockTypeBackup)), true, "create backup/expire lock");
+                    lockAcquireP(cmdLockFileName(STRDEF("stanza1"), lockTypeBackup, 1)), true, "create backup/expire lock");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -429,7 +429,7 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                String *lockFileName = cmdLockFileName(STRDEF("stanza1"), lockTypeBackup);
+                String *lockFileName = cmdLockFileName(STRDEF("stanza1"), lockTypeBackup, 1);
                 lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("777-afafafaf"));
                 TEST_RESULT_BOOL(lockAcquireP(lockFileName), true, "create backup/expire lock");
                 TEST_RESULT_VOID(lockWriteP(lockFileName), "write lock data");
@@ -1039,7 +1039,7 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                String *lockFileName = cmdLockFileName(STRDEF("stanza2"), lockTypeBackup);
+                String *lockFileName = cmdLockFileName(STRDEF("stanza2"), lockTypeBackup, 1);
                 lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"));
                 TEST_RESULT_BOOL(lockAcquireP(lockFileName), true, "create backup/expire lock");
                 TEST_RESULT_VOID(
@@ -1483,10 +1483,31 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                String *lockFileName = cmdLockFileName(STRDEF("stanza2"), lockTypeBackup);
                 lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"));
-                TEST_RESULT_BOOL(lockAcquireP(lockFileName), true, "create backup/expire lock");
-                TEST_RESULT_VOID(lockWriteP(lockFileName, .percentComplete = VARUINT(5555)), "write lock data");
+
+                String *lockFileStanza1Repo1 = cmdLockFileName(STRDEF("stanza1"), lockTypeBackup, 1);
+                TEST_RESULT_BOOL(lockAcquireP(lockFileStanza1Repo1), true, "create backup/expire lock");
+                TEST_RESULT_VOID(
+                    lockWriteP(
+                        lockFileStanza1Repo1, .size = VARUINT64(3159000), .sizeComplete = VARUINT64(1754830),
+                        .percentComplete = VARUINT(5555)),
+                    "write lock data");
+
+                String *lockFileStanza1Repo2 = cmdLockFileName(STRDEF("stanza1"), lockTypeBackup, 2);
+                TEST_RESULT_BOOL(lockAcquireP(lockFileStanza1Repo2), true, "create backup/expire lock");
+                TEST_RESULT_VOID(
+                    lockWriteP(
+                        lockFileStanza1Repo2, .size = VARUINT64(3159000), .sizeComplete = VARUINT64(2369250),
+                        .percentComplete = VARUINT(7500)),
+                    "write lock data");
+
+                String *lockFileStanza2Repo1 = cmdLockFileName(STRDEF("stanza2"), lockTypeBackup, 1);
+                TEST_RESULT_BOOL(lockAcquireP(lockFileStanza2Repo1), true, "create backup/expire lock");
+                TEST_RESULT_VOID(
+                    lockWriteP(
+                        lockFileStanza2Repo1, .size = VARUINT64(3159000), .sizeComplete = VARUINT64(1754830),
+                        .percentComplete = VARUINT(5555)),
+                    "write lock data");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -1507,7 +1528,7 @@ testRun(void)
                 TEST_RESULT_STR_Z(
                     infoRender(),
                     "stanza: stanza1\n"
-                    "    status: ok\n"
+                    "    status: ok (backup/expire running - 65.27% complete)\n"
                     "    cipher: mixed\n"
                     "        repo1: none\n"
                     "        repo2: aes-256-cbc\n"
@@ -1526,14 +1547,14 @@ testRun(void)
                     "            wal start/stop: 000000010000000000000003 / 000000020000000000000003\n"
                     "            database size: 19.2MB, database backup size: 8.2KB\n"
                     "            repo1: backup set size: 2.3MB, backup size: 346B\n"
-                    "            backup reference list: 20181119-152138F\n"
+                    "            backup reference total: 1 full\n"
                     "\n"
                     "        incr backup: 20181119-152138F_20181119-152155I\n"
                     "            timestamp start/stop: 2018-11-19 15:21:55+00 / 2018-11-19 15:21:57+00\n"
                     "            wal start/stop: n/a\n"
                     "            database size: 19.2MB, database backup size: 8.2KB\n"
                     "            repo1: backup set size: 2.3MB, backup size: 346B\n"
-                    "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
+                    "            backup reference total: 1 full, 1 diff\n"
                     "\n"
                     "    db (current)\n"
                     "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
@@ -1556,7 +1577,7 @@ testRun(void)
                     "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
                     "            database size: 19.2MB, database backup size: 8.2KB\n"
                     "            repo1: backup size: 346B\n"
-                    "            backup reference list: 20201116-155000F\n"
+                    "            backup reference total: 1 full\n"
                     "\n"
                     "stanza: stanza2\n"
                     "    status: mixed (backup/expire running - 55.55% complete)\n"
@@ -2544,14 +2565,14 @@ testRun(void)
             "            wal start/stop: 000000010000000000000003 / 000000020000000000000003\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
             "            repo1: backup set size: 2.3MB, backup size: 346B\n"
-            "            backup reference list: 20181119-152138F\n"
+            "            backup reference total: 1 full\n"
             "\n"
             "        incr backup: 20181119-152138F_20181119-152155I\n"
             "            timestamp start/stop: 2018-11-19 15:21:55+00 / 2018-11-19 15:21:57+00\n"
             "            wal start/stop: n/a\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
             "            repo1: backup set size: 2.3MB, backup size: 346B\n"
-            "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
+            "            backup reference total: 1 full, 1 diff\n"
             "\n"
             "    db (current)\n"
             "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
@@ -2567,7 +2588,7 @@ testRun(void)
             "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
             "            repo1: backup size: 346B\n"
-            "            backup reference list: 20201116-155000F\n",
+            "            backup reference total: 1 full\n",
             "text - multi-repo, valid backups only on repo1");
 
         // Remove archives for prior backup so archiveMin prior DB == NULL but backupList > 0 (edge case)
@@ -2576,6 +2597,53 @@ testRun(void)
 
         HRN_STORAGE_PATH_REMOVE(
             storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/9.4-1", .recurse = true, .comment = "remove archives on db prior");
+
+        HRN_INFO_PUT(
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/stanza1/" INFO_BACKUP_FILE,
+            "[backup:current]\n"
+            "20201116-155000F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.30\","
+            "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000003\","
+            "\"backup-info-repo-size\":3159000,\"backup-info-repo-size-delta\":3100,\"backup-info-size\":26897000,"
+            "\"backup-info-size-delta\":26897020,\"backup-timestamp-start\":1605541800,\"backup-timestamp-stop\":1605541802,"
+            "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":true,"
+            "\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":false,"
+            "\"option-online\":true}\n"
+            "20201116-155000F_20201119-152100I={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.30\","
+            "\"backup-annotation\":{\"extra key\":\"this is an annotation\",\"source\":\"this is another annotation\"},"
+            "\"backup-archive-start\":\"000000010000000000000005\",\"backup-archive-stop\":\"000000010000000000000005\","
+            "\"backup-error\":false,\"backup-info-repo-size\":2369186,"
+            "\"backup-info-repo-size-delta\":346,\"backup-info-repo-size-map\":100,\"backup-info-repo-size-map-delta\":12"
+            ",\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,\"backup-lsn-start\":\"285/89000028\","
+            "\"backup-prior\":\"20201116-155000F\",\"backup-reference\":[\"20201116-155000F\"],"
+            "\"backup-timestamp-start\":1605799260,\"backup-timestamp-stop\":1605799263,\"backup-type\":\"incr\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20201116-155000F_20201120-152100I={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.30\","
+            "\"backup-annotation\":{\"extra key\":\"this is an annotation\",\"source\":\"this is another annotation\"},"
+            "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000006\","
+            "\"backup-error\":false,\"backup-info-repo-size\":2369186,"
+            "\"backup-info-repo-size-delta\":346,\"backup-info-repo-size-map\":100,\"backup-info-repo-size-map-delta\":12"
+            ",\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,\"backup-lsn-start\":\"285/89000028\","
+            "\"backup-prior\":\"20201116-155000F_20201119-152100I\","
+            "\"backup-reference\":[\"20201116-155000F\",\"20201116-155000F_20201119-152100I\"],"
+            "\"backup-timestamp-start\":1605799260,\"backup-timestamp-stop\":1605799263,\"backup-type\":\"incr\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "\n"
+            "[db]\n"
+            "db-catalog-version=201510051\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"9.5\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089"
+            ",\"db-version\":\"9.5\"}\n",
+            .comment = "put backup info to file - stanza1, repo1");
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -2587,29 +2655,6 @@ testRun(void)
             "        repo1: none\n"
             "        repo2: aes-256-cbc\n"
             "\n"
-            "    db (prior)\n"
-            "        wal archive min/max (9.4): none present\n"
-            "\n"
-            "        full backup: 20181119-152138F\n"
-            "            timestamp start/stop: 2018-11-19 15:21:38+00 / 2018-11-19 15:21:39+00\n"
-            "            wal start/stop: 000000010000000000000002 / 000000010000000000000002\n"
-            "            database size: 19.2MB, database backup size: 19.2MB\n"
-            "            repo1: backup set size: 2.3MB, backup size: 2.3MB\n"
-            "\n"
-            "        diff backup: 20181119-152138F_20181119-152152D\n"
-            "            timestamp start/stop: 2018-11-19 15:21:52+00 / 2018-11-19 15:21:55+00\n"
-            "            wal start/stop: 000000010000000000000003 / 000000020000000000000003\n"
-            "            database size: 19.2MB, database backup size: 8.2KB\n"
-            "            repo1: backup set size: 2.3MB, backup size: 346B\n"
-            "            backup reference list: 20181119-152138F\n"
-            "\n"
-            "        incr backup: 20181119-152138F_20181119-152155I\n"
-            "            timestamp start/stop: 2018-11-19 15:21:55+00 / 2018-11-19 15:21:57+00\n"
-            "            wal start/stop: n/a\n"
-            "            database size: 19.2MB, database backup size: 8.2KB\n"
-            "            repo1: backup set size: 2.3MB, backup size: 346B\n"
-            "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
-            "\n"
             "    db (current)\n"
             "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
             "\n"
@@ -2624,7 +2669,14 @@ testRun(void)
             "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
             "            repo1: backup size: 346B\n"
-            "            backup reference list: 20201116-155000F\n",
+            "            backup reference total: 1 full\n"
+            "\n"
+            "        incr backup: 20201116-155000F_20201120-152100I\n"
+            "            timestamp start/stop: 2020-11-19 15:21:00+00 / 2020-11-19 15:21:03+00\n"
+            "            wal start/stop: 000000010000000000000006 / 000000010000000000000006\n"
+            "            database size: 19.2MB, database backup size: 8.2KB\n"
+            "            repo1: backup size: 346B\n"
+            "            backup reference total: 1 full, 1 incr\n",
             "text - multi-repo, prior backup: no archives but backups (code coverage)");
 
         // -------------------------------------------------------------------------------------------------------------------------

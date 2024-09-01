@@ -35,6 +35,11 @@
     <contributor-id type="github">disco-stu</contributor-id>
 </contributor>
 
+<contributor id="ahmed112212">
+    <contributor-name-display>ahmed112212</contributor-name-display>
+    <contributor-id type="github">ahmed112212</contributor-id>
+</contributor>
+
 <contributor id="aleksandr.rogozin">
     <contributor-name-display>Aleksandr Rogozin</contributor-name-display>
     <contributor-id type="github">arogozin</contributor-id>
@@ -1068,6 +1073,11 @@
     <contributor-id type="github">ViperRu</contributor-id>
 </contributor>
 
+<contributor id="vitalii.zurian">
+    <contributor-name-display>Vitalii Zurian</contributor-name-display>
+    <contributor-id type="github">thecatontheflat</contributor-id>
+</contributor>
+
 <contributor id="vitaliy.kukharik">
     <contributor-name-display>Vitaliy Kukharik</contributor-name-display>
     <contributor-id type="github">vitabaks</contributor-id>
@@ -1086,6 +1096,10 @@
 <contributor id="vthriller">
     <contributor-name-display>vthriller</contributor-name-display>
     <contributor-id type="github">vthriller</contributor-id>
+</contributor>
+
+<contributor id="will.m">
+    <contributor-name-display>Will M</contributor-name-display>
 </contributor>
 
 <contributor id="william.cox">

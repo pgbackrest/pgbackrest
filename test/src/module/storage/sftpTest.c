@@ -240,7 +240,8 @@ testRun(void)
             "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
             " --repo-sftp-public-key-file to be provided\n"
             "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to generate the"
-            " keypair");
+            " keypair\n"
+            "HINT: check authorization log on the SFTP server");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("fingerprint mismatch");
@@ -586,7 +587,8 @@ testRun(void)
             "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
             " --repo-sftp-public-key-file to be provided\n"
             "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to generate the"
-            " keypair");
+            " keypair\n"
+            "HINT: check authorization log on the SFTP server");
         TEST_RESULT_BOOL(
             unsetenv("PGBACKREST_REPO1_SFTP_PRIVATE_KEY_PASSPHRASE"), 0, "unset PGBACKREST_REPO1_SFTP_PRIVATE_KEY_PASSPHRASE");
 
@@ -2036,7 +2038,8 @@ testRun(void)
             "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
             " --repo-sftp-public-key-file to be provided\n"
             "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to generate the"
-            " keypair");
+            " keypair\n"
+            "HINT: check authorization log on the SFTP server");
 
         TEST_RESULT_BOOL(
             unsetenv("PGBACKREST_REPO1_SFTP_PRIVATE_KEY_PASSPHRASE"), 0, "unset PGBACKREST_REPO1_SFTP_PRIVATE_KEY_PASSPHRASE");
@@ -4113,7 +4116,7 @@ testRun(void)
         TEST_ERROR(storagePathCreateP(storageTest, STRDEF("sub1")), PathCreateError, "timeout stat'ing path '" TEST_PATH "/sub1'");
         TEST_ERROR(
             storagePathCreateP(storageTest, STRDEF("sub1"), .errorOnExists = true), PathCreateError,
-            "unable to create path '" TEST_PATH "/sub1': path already exists");
+            "sftp error unable to create path '" TEST_PATH "/sub1': path already exists");
 
         // NOTE: if operating against an actual sftp server, a neutral umask is required to get the proper permissions.
         // Without the neutral umask, permissions were 0775.
@@ -4155,9 +4158,12 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/subfail\",488]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_FILE_ALREADY_EXISTS},
+            {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/subfail\",0]", .resultInt = LIBSSH2_ERROR_NONE},
             // Error on already exists
             {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/subfail\",488]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_FILE_ALREADY_EXISTS},
+            {.function = HRNLIBSSH2_SFTP_STAT_EX, .param = "[\"" TEST_PATH "/subfail\",0]", .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_FILE_ALREADY_EXISTS},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
@@ -4182,7 +4188,7 @@ testRun(void)
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("subfail")), "do not throw error on already exists");
         TEST_ERROR(
             storagePathCreateP(storageTest, STRDEF("subfail"), .errorOnExists = true), PathCreateError,
-            "sftp error unable to create path '" TEST_PATH "/subfail': libssh2 error [-31]: sftp error [11]");
+            "sftp error unable to create path '" TEST_PATH "/subfail': path already exists");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 #else
@@ -4680,7 +4686,7 @@ testRun(void)
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
-        TEST_RESULT_VOID(storageReadSftpClose((StorageReadSftp *)file->driver), "close file");
+        TEST_RESULT_VOID(storageReadSftpClose((StorageReadSftp *)ioReadDriver(storageReadIo(file))), "close file");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -4708,7 +4714,7 @@ testRun(void)
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
-        close(ioSessionFd(((StorageReadSftp *)file->driver)->storage->ioSession));
+        close(ioSessionFd(((StorageReadSftp *)ioReadDriver(storageReadIo(file)))->storage->ioSession));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -4736,8 +4742,8 @@ testRun(void)
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
-        ((StorageReadSftp *)file->driver)->sftpHandle = NULL;
-        TEST_RESULT_VOID(storageReadSftpClose((StorageReadSftp *)file->driver), "close file null sftpHandle");
+        ((StorageReadSftp *)ioReadDriver(storageReadIo(file)))->sftpHandle = NULL;
+        TEST_RESULT_VOID(storageReadSftpClose(ioReadDriver(storageReadIo(file))), "close file null sftpHandle");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -4770,7 +4776,7 @@ testRun(void)
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
         TEST_ERROR(
-            storageReadSftpClose((StorageReadSftp *)file->driver), FileCloseError,
+            storageReadSftpClose(ioReadDriver(storageReadIo(file))), FileCloseError,
             "timeout closing file '" TEST_PATH "/readtest.txt': libssh2 error [-37]");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -4804,7 +4810,7 @@ testRun(void)
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
         TEST_ERROR(
-            storageReadSftpClose((StorageReadSftp *)file->driver), FileCloseError,
+            storageReadSftpClose(ioReadDriver(storageReadIo(file))), FileCloseError,
             "unable to close file '" TEST_PATH "/readtest.txt' after read: libssh2 errno [-31]: sftp errno [4]");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -4837,7 +4843,7 @@ testRun(void)
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
         TEST_ERROR(
-            storageReadSftpClose((StorageReadSftp *)file->driver), FileCloseError,
+            storageReadSftpClose(ioReadDriver(storageReadIo(file))), FileCloseError,
             "unable to close file '" TEST_PATH "/readtest.txt' after read: libssh2 errno [-29]");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -4869,7 +4875,7 @@ testRun(void)
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
         TEST_ERROR(
-            storageReadSftp(((StorageReadSftp *)file->driver), outBuffer, false), FileReadError,
+            storageReadSftp(ioReadDriver(storageReadIo(file)), outBuffer, false), FileReadError,
             "unable to read '" TEST_PATH "/readtest.txt': sftp errno [4]");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -4901,7 +4907,7 @@ testRun(void)
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
         TEST_ERROR(
-            storageReadSftp(((StorageReadSftp *)file->driver), outBuffer, false), FileReadError,
+            storageReadSftp(ioReadDriver(storageReadIo(file)), outBuffer, false), FileReadError,
             "unable to read '" TEST_PATH "/readtest.txt': libssh2 error [-29]");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -5245,7 +5251,6 @@ testRun(void)
              .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",\"" TEST_PATH "/sub1/testfile\",7]",
              .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
             {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_CONNECTION_LOST},
-            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_CONNECTION_LOST},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
 
@@ -5266,6 +5271,50 @@ testRun(void)
         TEST_ERROR_FMT(
             ioWriteClose(storageWriteIo(file)), FileCloseError,
             "unable to move '%s' to '%s': libssh2 error [-31]: sftp error [7]", strZ(fileNameTmp), strZ(fileName));
+
+        memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("sftp remove existing file on rename - LIBSSH2_FX_FILE_ALREADY_EXISTS");
+
+        hrnLibSsh2ScriptSet((HrnLibSsh2 [])
+        {
+            HRNLIBSSH2_MACRO_STARTUP(),
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .resultNull = true,
+             .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_NO_SUCH_FILE},
+            {.function = HRNLIBSSH2_SFTP_MKDIR_EX, .param = "[\"" TEST_PATH "/sub1\",488]"},
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",26,416,0]"},
+            {.function = HRNLIBSSH2_SFTP_FSYNC, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE, .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SFTP_RENAME_EX,
+             .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",\"" TEST_PATH "/sub1/testfile\",7]",
+             .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL},
+            {.function = HRNLIBSSH2_SFTP_LAST_ERROR, .resultUInt = LIBSSH2_FX_FILE_ALREADY_EXISTS},
+            {.function = HRNLIBSSH2_SFTP_UNLINK_EX, .param = "[\"" TEST_PATH "/sub1/testfile\"]", .resultInt = LIBSSH2_ERROR_NONE},
+            {.function = HRNLIBSSH2_SFTP_RENAME_EX,
+             .param = "[\"" TEST_PATH "/sub1/testfile.pgbackrest.tmp\",\"" TEST_PATH "/sub1/testfile\",7]",
+             .resultInt = LIBSSH2_ERROR_NONE},
+            HRNLIBSSH2_MACRO_SHUTDOWN()
+        });
+
+        storageTest = storageSftpNewP(
+            cfgOptionIdxStr(cfgOptRepoPath, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHost, repoIdx),
+            cfgOptionIdxUInt(cfgOptRepoSftpHostPort, repoIdx), cfgOptionIdxStr(cfgOptRepoSftpHostUser, repoIdx),
+            cfgOptionUInt64(cfgOptIoTimeout), cfgOptionIdxStr(cfgOptRepoSftpPrivateKeyFile, repoIdx),
+            cfgOptionIdxStrId(cfgOptRepoSftpHostKeyHashType, repoIdx), .modeFile = STORAGE_MODE_FILE_DEFAULT,
+            .modePath = STORAGE_MODE_PATH_DEFAULT, .keyPub = cfgOptionIdxStrNull(cfgOptRepoSftpPublicKeyFile, repoIdx),
+            .keyPassphrase = cfgOptionIdxStrNull(cfgOptRepoSftpPrivateKeyPassphrase, repoIdx),
+            .hostFingerprint = cfgOptionIdxStrNull(cfgOptRepoSftpHostFingerprint, repoIdx),
+            .hostKeyCheckType = cfgOptionIdxStrId(cfgOptRepoSftpHostKeyCheckType, repoIdx),
+            .knownHosts = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoSftpKnownHost, repoIdx)), .write = true);
+
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file (defaults)");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
+        TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
+        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -5497,7 +5546,7 @@ testRun(void)
         ((StorageSftp *)storageDriver(storageTest))->interface.pathSync = malloc(1);
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noAtomic = true, .noSyncPath = false), "new write file");
-        ((StorageWriteSftp *)file->driver)->interface.syncFile = false;
+        ((StorageWriteSftp *)ioWriteDriver(storageWriteIo(file)))->interface.syncFile = false;
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
@@ -5537,7 +5586,7 @@ testRun(void)
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
 
         // Make sftpHandle NULL
-        ((StorageWriteSftp *)file->driver)->sftpHandle = NULL;
+        ((StorageWriteSftp *)ioWriteDriver(storageWriteIo(file)))->sftpHandle = NULL;
 
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
 
@@ -6712,14 +6761,14 @@ testRun(void)
         TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "no data to load");
         TEST_RESULT_UINT(bufUsed(outBuffer), 0, "buffer is empty");
 
-        TEST_RESULT_VOID(storageReadSftp(file->driver, outBuffer, true), "no data to load from driver either");
+        TEST_RESULT_VOID(storageReadSftp(ioReadDriver(storageReadIo(file)), outBuffer, true), "no data to load from driver either");
         TEST_RESULT_UINT(bufUsed(outBuffer), 0, "buffer is empty");
 
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "check file contents (all loaded)");
 
         TEST_RESULT_BOOL(ioReadEof(storageReadIo(file)), true, "eof");
         TEST_RESULT_BOOL(ioReadEof(storageReadIo(file)), true, "still eof");
-        TEST_RESULT_BOOL(storageReadSftpEof((StorageReadSftp *)file->driver), true, "storageReadSftpEof eof true");
+        TEST_RESULT_BOOL(storageReadSftpEof(ioReadDriver(storageReadIo(file))), true, "storageReadSftpEof eof true");
 
         TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "close file");
 

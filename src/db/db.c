@@ -30,7 +30,7 @@ struct Db
     DbPub pub;                                                      // Publicly accessible variables
     PgClient *client;                                               // Local PostgreSQL client
     ProtocolClient *remoteClient;                                   // Protocol client for remote db queries
-    unsigned int remoteIdx;                                         // Index provided by the remote on open for subsequent calls
+    ProtocolClientSession *session;                                 // Protocol session for requests
     const Storage *storage;                                         // PostgreSQL storage
     const String *applicationName;                                  // Used to identify this connection in PostgreSQL
     time_t pingTimeLast;                                            // Last time cluster was pinged
@@ -50,11 +50,7 @@ dbFreeResource(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_CLOSE);
-    pckWriteU32P(protocolCommandParam(command), this->remoteIdx);
-
-    protocolClientExecute(this->remoteClient, command, false);
-    protocolCommandFree(command);
+    protocolClientSessionFree(this->session);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -83,6 +79,7 @@ dbNew(PgClient *const client, ProtocolClient *const remoteClient, const Storage 
                 .memContext = memContextCurrent(),
             },
             .remoteClient = remoteClient,
+            .session = remoteClient != NULL ? protocolClientSessionNewP(remoteClient, PROTOCOL_COMMAND_DB) : NULL,
             .storage = storage,
             .applicationName = strDup(applicationName),
         };
@@ -117,14 +114,12 @@ dbQuery(Db *const this, const PgClientQueryResult resultType, const String *cons
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_DB_QUERY);
-            PackWrite *const param = protocolCommandParam(command);
+            PackWrite *const param = protocolPackNew();
 
-            pckWriteU32P(param, this->remoteIdx);
             pckWriteStrIdP(param, resultType);
             pckWriteStrP(param, query);
 
-            PackRead *const read = protocolClientExecute(this->remoteClient, command, true);
+            PackRead *const read = protocolClientSessionRequestP(this->session, .param = param);
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
@@ -240,8 +235,7 @@ dbOpen(Db *const this)
         // Open the connection
         if (this->remoteClient != NULL)
         {
-            ProtocolCommand *command = protocolCommandNew(PROTOCOL_COMMAND_DB_OPEN);
-            this->remoteIdx = pckReadU32P(protocolClientExecute(this->remoteClient, command, true));
+            protocolClientSessionOpenP(this->session);
 
             // Set a callback to notify the remote when a connection is closed
             memContextCallbackSet(this->pub.memContext, dbFreeResource, this);
@@ -382,8 +376,10 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Acquire the backup advisory lock to make sure that backups are not running from multiple backup servers against the same
-        // database cluster. This lock helps make the stop-auto option safe.
-        if (!pckReadBoolP(dbQueryColumn(this, STRDEF("select pg_catalog.pg_try_advisory_lock(" PG_BACKUP_ADVISORY_LOCK ")::bool"))))
+        // database cluster when PostgreSQL <= 9.5. This lock helps make the stop-auto option safe. On PostgreSQL > 9.5 multiple
+        // backups are allowed on the same cluster.
+        if (dbPgVersion(this) <= PG_VERSION_95 &&
+            !pckReadBoolP(dbQueryColumn(this, STRDEF("select pg_catalog.pg_try_advisory_lock(" PG_BACKUP_ADVISORY_LOCK ")::bool"))))
         {
             THROW(
                 LockAcquireError,

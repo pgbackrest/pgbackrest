@@ -39,7 +39,7 @@ typedef struct ArchiveRange
 Given a backup label, expire a backup and all its dependents (if any).
 ***********************************************************************************************************************************/
 static StringList *
-expireBackup(const InfoBackup *const infoBackup, const String *const backupLabel, const unsigned int repoIdx)
+expireBackup(InfoBackup *const infoBackup, const String *const backupLabel, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -93,7 +93,7 @@ expireBackup(const InfoBackup *const infoBackup, const String *const backupLabel
 Function to expire a selected backup (and all its dependents) regardless of retention rules.
 ***********************************************************************************************************************************/
 static unsigned int
-expireAdhocBackup(const InfoBackup *const infoBackup, const String *const backupLabel, const unsigned int repoIdx)
+expireAdhocBackup(InfoBackup *const infoBackup, const String *const backupLabel, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -170,7 +170,7 @@ expireAdhocBackup(const InfoBackup *const infoBackup, const String *const backup
 Expire differential backups
 ***********************************************************************************************************************************/
 static unsigned int
-expireDiffBackup(const InfoBackup *const infoBackup, const unsigned int repoIdx)
+expireDiffBackup(InfoBackup *const infoBackup, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -227,7 +227,7 @@ expireDiffBackup(const InfoBackup *const infoBackup, const unsigned int repoIdx)
 Expire full backups
 ***********************************************************************************************************************************/
 static unsigned int
-expireFullBackup(const InfoBackup *const infoBackup, const unsigned int repoIdx)
+expireFullBackup(InfoBackup *const infoBackup, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -278,7 +278,7 @@ expireFullBackup(const InfoBackup *const infoBackup, const unsigned int repoIdx)
 Expire backups based on time
 ***********************************************************************************************************************************/
 static unsigned int
-expireTimeBasedBackup(const InfoBackup *const infoBackup, const time_t minTimestamp, const unsigned int repoIdx)
+expireTimeBasedBackup(InfoBackup *const infoBackup, const time_t minTimestamp, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);

@@ -65,6 +65,14 @@ option:
     command:
       test: {}
 
+  help:
+    type: boolean
+    default: false
+    command:
+      help: {}
+    command-role:
+      main: {}
+
   neutral-umask:
     type: boolean
     internal: true
@@ -98,7 +106,7 @@ option:
     type: integer
     internal: true
     default: 1
-    allow-range: [1, 1000000000000]
+    allow-range: [1, 1000000000]
     command:
       test: {}
 
@@ -122,6 +130,14 @@ option:
     required: false
     command:
       test: {}
+
+  version:
+    type: boolean
+    default: false
+    command:
+      help: {}
+    command-role:
+      main: {}
 
   vm:
     type: string
@@ -171,8 +187,9 @@ option:
   config-path: {type: string, required: false, command: {noop: {}}}
   config-include-path: {
     type: string, default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH, default-literal: true, command: {noop: {}}}
-  job-retry: {type: string, required: false, deprecate: {job-retry-old: {}}, command: {noop: {}}}
+  job-retry: {type: time, default: 0, deprecate: {job-retry-old: {}}, command: {noop: {}}}
   job-retry-interval: {type: string, required: false, command: {noop: {}}}
+  lock: {type: list, required: false, command: {noop: {}}}
   log-level-file: {type: string, required: false, command: {noop: {}}}
   log-level-stderr: {type: string, required: false, command: {noop: {}}}
   pg: {type: string, required: false, command: {noop: {}}}

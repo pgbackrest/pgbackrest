@@ -19,6 +19,7 @@ Test Backup Command
 #include "common/harnessPq.h"
 #include "common/harnessProtocol.h"
 #include "common/harnessStorage.h"
+#include "common/harnessTime.h"
 
 /***********************************************************************************************************************************
 Get a list of all files in the backup and a redacted version of the manifest that can be tested against a static string
@@ -1823,7 +1824,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("report job error");
 
-        ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), protocolCommandNew(strIdFromZ("x")));
+        ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("key"), strIdFromZ("x"), NULL);
         protocolParallelJobErrorSet(job, errorTypeCode(&AssertError), STRDEF("error message"));
 
         unsigned int currentPercentComplete = 0;
@@ -1837,7 +1838,7 @@ testRun(void)
         TEST_TITLE("report host/100% progress on noop result");
 
         // Create job that skips file
-        job = protocolParallelJobNew(VARSTRDEF("pg_data/test"), protocolCommandNew(strIdFromZ("x")));
+        job = protocolParallelJobNew(VARSTRDEF("pg_data/test"), strIdFromZ("x"), NULL);
 
         PackWrite *const resultPack = protocolPackNew();
         pckWriteStrP(resultPack, STRDEF("pg_data/test"));
@@ -2012,7 +2013,7 @@ testRun(void)
         hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        sleepMSec(MSEC_PER_SEC - (timeMSec() % MSEC_PER_SEC));
+        hrnSleepRemainder();
         HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "VR2");
 
         TEST_RESULT_VOID(hrnCmdBackup(), "backup");

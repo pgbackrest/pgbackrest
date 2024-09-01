@@ -96,10 +96,9 @@ cfgLoadUpdateOption(void)
     {
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
         {
-            // If the repo is local and either posix, cifs or sftp
+            // If the repo is local and either posix or cifs
             if (!cfgOptionIdxTest(cfgOptRepoHost, optionIdx) &&
                 (cfgOptionIdxStrId(cfgOptRepoType, optionIdx) == STORAGE_POSIX_TYPE ||
-                 cfgOptionIdxStrId(cfgOptRepoType, optionIdx) == STORAGE_SFTP_TYPE ||
                  cfgOptionIdxStrId(cfgOptRepoType, optionIdx) == STORAGE_CIFS_TYPE))
             {
                 // Ensure a local repo does not have the same path as another local repo of the same type
@@ -526,57 +525,53 @@ cfgLoad(const unsigned int argListSize, const char *argList[])
         if (cfgOptionValid(cfgOptNeutralUmask) && cfgOptionBool(cfgOptNeutralUmask))
             umask(0000);
 
-        // If a command is set
-        if (cfgCommand() != cfgCmdNone)
+        // Initialize TCP settings
+        if (cfgOptionValid(cfgOptSckKeepAlive))
         {
-            // Initialize TCP settings
-            if (cfgOptionValid(cfgOptSckKeepAlive))
-            {
-                sckInit(
-                    cfgOptionBool(cfgOptSckBlock),
-                    cfgOptionBool(cfgOptSckKeepAlive),
-                    cfgOptionTest(cfgOptTcpKeepAliveCount) ? cfgOptionInt(cfgOptTcpKeepAliveCount) : 0,
-                    cfgOptionTest(cfgOptTcpKeepAliveIdle) ? cfgOptionInt(cfgOptTcpKeepAliveIdle) : 0,
-                    cfgOptionTest(cfgOptTcpKeepAliveInterval) ? cfgOptionInt(cfgOptTcpKeepAliveInterval) : 0);
-            }
-
-            // Set IO buffer size
-            if (cfgOptionValid(cfgOptBufferSize))
-                ioBufferSizeSet(cfgOptionUInt(cfgOptBufferSize));
-
-            // Set IO timeout
-            if (cfgOptionValid(cfgOptIoTimeout))
-                ioTimeoutMsSet(cfgOptionUInt64(cfgOptIoTimeout));
-
-            // Open the log file if this command logs to a file
-            cfgLoadLogFile();
-
-            // Create the exec-id used to identify all locals and remotes spawned by this process. This allows lock contention to be
-            // easily resolved and makes it easier to associate processes from various logs.
-            if (cfgOptionValid(cfgOptExecId) && !cfgOptionTest(cfgOptExecId))
-            {
-                // Generate some random bytes
-                uint32_t execRandom;
-                cryptoRandomBytes((unsigned char *)&execRandom, sizeof(execRandom));
-
-                // Format a string with the pid and the random bytes to serve as the exec id
-                cfgOptionSet(cfgOptExecId, cfgSourceParam, VARSTR(strNewFmt("%d-%08x", getpid(), execRandom)));
-            }
-
-            // Begin the command
-            cmdBegin();
-
-            // Initialize the lock module
-            if (cfgOptionTest(cfgOptLockPath))
-                lockInit(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptExecId));
-
-            // Acquire a lock if this command requires a lock
-            if (cfgLockType() != lockTypeNone && !cfgCommandHelp() && cfgLockRequired())
-                cmdLockAcquireP();
-
-            // Update options that have complex rules
-            cfgLoadUpdateOption();
+            sckInit(
+                cfgOptionBool(cfgOptSckBlock),
+                cfgOptionBool(cfgOptSckKeepAlive),
+                cfgOptionTest(cfgOptTcpKeepAliveCount) ? cfgOptionInt(cfgOptTcpKeepAliveCount) : 0,
+                cfgOptionTest(cfgOptTcpKeepAliveIdle) ? cfgOptionInt(cfgOptTcpKeepAliveIdle) : 0,
+                cfgOptionTest(cfgOptTcpKeepAliveInterval) ? cfgOptionInt(cfgOptTcpKeepAliveInterval) : 0);
         }
+
+        // Set IO buffer size (use the default for help to lower memory usage)
+        if (cfgOptionValid(cfgOptBufferSize) && !cfgCommandHelp())
+            ioBufferSizeSet(cfgOptionUInt(cfgOptBufferSize));
+
+        // Set IO timeout
+        if (cfgOptionValid(cfgOptIoTimeout))
+            ioTimeoutMsSet(cfgOptionUInt64(cfgOptIoTimeout));
+
+        // Open the log file if this command logs to a file
+        cfgLoadLogFile();
+
+        // Create the exec-id used to identify all locals and remotes spawned by this process. This allows lock contention to be
+        // easily resolved and makes it easier to associate processes from various logs.
+        if (cfgOptionValid(cfgOptExecId) && !cfgOptionTest(cfgOptExecId))
+        {
+            // Generate some random bytes
+            uint32_t execRandom;
+            cryptoRandomBytes((unsigned char *)&execRandom, sizeof(execRandom));
+
+            // Format a string with the pid and the random bytes to serve as the exec id
+            cfgOptionSet(cfgOptExecId, cfgSourceParam, VARSTR(strNewFmt("%d-%08x", getpid(), execRandom)));
+        }
+
+        // Begin the command
+        cmdBegin();
+
+        // Initialize the lock module
+        if (cfgOptionTest(cfgOptLockPath))
+            lockInit(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptExecId));
+
+        // Acquire a lock if this command requires a lock
+        if (cfgLockType() != lockTypeNone && !cfgCommandHelp() && cfgLockRequired())
+            cmdLockAcquireP();
+
+        // Update options that have complex rules
+        cfgLoadUpdateOption();
     }
     MEM_CONTEXT_TEMP_END();
 

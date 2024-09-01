@@ -747,7 +747,7 @@ testRun(void)
                 TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
                 TEST_RESULT_BOOL(storageWriteTruncate(write), true, "file will be truncated");
 
-                TEST_RESULT_VOID(storageWriteS3Close(write->driver), "close file again");
+                TEST_RESULT_VOID(storageWriteS3Close(ioWriteDriver(storageWriteIo(write))), "close file again");
 
                 // Check that temp credentials were changed
                 TEST_RESULT_STR_Z(driver->accessKey, "xx", "check access key");
@@ -933,6 +933,7 @@ testRun(void)
 
                 #define TEST_SERVICE_ROLE                           "arn:aws:iam::123456789012:role/TestRole"
                 #define TEST_SERVICE_TOKEN                          "TOKEN"
+                #define TEST_SERVICE_TOKEN_FILE                     TEST_PATH "/web-id-token"
                 #define TEST_SERVICE_URI                                                                                           \
                     "/?Action=AssumeRoleWithWebIdentity&RoleArn=arn%3Aaws%3Aiam%3A%3A123456789012%3Arole%2FTestRole"               \
                         "&RoleSessionName=pgBackRest&Version=2011-06-15&WebIdentityToken=" TEST_SERVICE_TOKEN
@@ -950,7 +951,7 @@ testRun(void)
                     "</AssumeRoleWithWebIdentityResponse>"
                 // {uncrustify_on}
 
-                HRN_STORAGE_PUT_Z(storagePosixNewP(TEST_PATH_STR, .write = true), "web-id-token", TEST_SERVICE_TOKEN);
+                HRN_STORAGE_PUT_Z(storagePosixNewP(TEST_PATH_STR, .write = true), TEST_SERVICE_TOKEN_FILE, TEST_SERVICE_TOKEN);
 
                 argList = strLstDup(commonArgList);
                 hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
@@ -967,13 +968,13 @@ testRun(void)
                     storageRepoGet(0, true), OptionInvalidError,
                     "option 'repo1-s3-key-type' is 'web-id' but 'AWS_ROLE_ARN' and 'AWS_WEB_IDENTITY_TOKEN_FILE' are not set");
 
-                setenv("AWS_WEB_IDENTITY_TOKEN_FILE", TEST_PATH "/web-id-token", true);
+                setenv("AWS_WEB_IDENTITY_TOKEN_FILE", TEST_SERVICE_TOKEN_FILE, true);
 
                 s3 = storageRepoGet(0, true);
                 driver = (StorageS3 *)storageDriver(s3);
 
                 TEST_RESULT_STR_Z(driver->credRole, TEST_SERVICE_ROLE, "check role");
-                TEST_RESULT_STR_Z(driver->webIdToken, TEST_SERVICE_TOKEN, "check token");
+                TEST_RESULT_STR_Z(driver->webIdTokenFile, TEST_SERVICE_TOKEN_FILE, "check token file");
 
                 // Set partSize to a small value for testing
                 driver->partSize = 16;

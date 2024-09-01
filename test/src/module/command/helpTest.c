@@ -137,6 +137,23 @@ testRun(void)
         StringList *argList = NULL;
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("version");
+
+        const char *versionOnly = zNewFmt("%s\n", helpVersion);
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "version");
+        TEST_RESULT_VOID(testCfgLoad(argList), "version from version command");
+        TEST_RESULT_STR_Z(helpRender(helpData), versionOnly, "check text");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "--version");
+        TEST_RESULT_VOID(testCfgLoad(argList), "version from version option");
+        TEST_RESULT_STR_Z(helpRender(helpData), versionOnly, "check text");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("general invocation");
 
         argList = strLstNew();
@@ -148,6 +165,13 @@ testRun(void)
         strLstAddZ(argList, "/path/to/pgbackrest");
         strLstAddZ(argList, "help");
         TEST_RESULT_VOID(testCfgLoad(argList), "help from help command");
+        TEST_RESULT_STR_Z(helpRender(helpData), generalHelp, "check text");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "--version");
+        strLstAddZ(argList, "--help");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help from help option");
         TEST_RESULT_STR_Z(helpRender(helpData), generalHelp, "check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -244,13 +268,13 @@ testRun(void)
             "                                      files [default=/etc/pgbackrest]\n"
             "  --delta                             restore or backup using checksums\n"
             "                                      [default=n]\n"
-            "  --io-timeout                        I/O timeout [default=60]\n"
+            "  --io-timeout                        I/O timeout [default=1m]\n"
             "  --lock-path                         path where lock files are stored\n"
             "                                      [default=/tmp/pgbackrest]\n"
             "  --neutral-umask                     use a neutral umask [default=y]\n"
             "  --process-max                       max processes to use for\n"
             "                                      compress/transfer [default=1]\n"
-            "  --protocol-timeout                  protocol timeout [default=1830]\n"
+            "  --protocol-timeout                  protocol timeout [default=31m]\n"
             "  --sck-keep-alive                    keep-alive enable [default=y]\n"
             "  --stanza                            defines the stanza\n"
             "  --tcp-keep-alive-count              keep-alive count\n"
@@ -261,7 +285,7 @@ testRun(void)
             "\n"
             "  --log-level-console                 level for console logging [default=warn]\n"
             "  --log-level-file                    level for file logging [default=info]\n"
-            "  --log-level-stderr                  level for stderr logging [default=warn]\n"
+            "  --log-level-stderr                  level for stderr logging [default=off]\n"
             "  --log-path                          path where log files are stored\n"
             "                                      [default=/var/log/pgbackrest]\n"
             "  --log-subprocess                    enable logging in subprocesses [default=n]\n"
