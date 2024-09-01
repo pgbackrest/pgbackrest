@@ -16,8 +16,6 @@ Object type
 struct IoWrite
 {
     IoWritePub pub;                                                 // Publicly accessible variables
-    void *driver;                                                   // Driver object
-    IoWriteInterface interface;                                     // Driver interface
     Buffer *output;                                                 // Output buffer
 
 #ifdef DEBUG
@@ -45,10 +43,10 @@ ioWriteNew(void *const driver, const IoWriteInterface interface)
         {
             .pub =
             {
+                .driver = objMoveToInterface(driver, this, memContextPrior()),
+                .interface = interface,
                 .filterGroup = ioFilterGroupNew(),
             },
-            .driver = objMoveToInterface(driver, this, memContextPrior()),
-            .interface = interface,
             .output = bufNew(ioBufferSize()),
         };
     }
@@ -68,8 +66,8 @@ ioWriteOpen(IoWrite *const this)
     ASSERT(this != NULL);
     ASSERT(!this->opened && !this->closed);
 
-    if (this->interface.open != NULL)
-        this->interface.open(this->driver);
+    if (ioWriteInterface(this)->open != NULL)
+        ioWriteInterface(this)->open(ioWriteDriver(this));
 
     // Track whether filters were added to prevent flush() from being called later since flush() won't work with most filters
 #ifdef DEBUG
@@ -108,7 +106,7 @@ ioWrite(IoWrite *const this, const Buffer *const buffer)
             // Write data if the buffer is full
             if (bufRemains(this->output) == 0)
             {
-                this->interface.write(this->driver, this->output);
+                ioWriteInterface(this)->write(ioWriteDriver(this), this->output);
                 bufUsedZero(this->output);
             }
         }
@@ -149,8 +147,8 @@ ioWriteReady(IoWrite *const this, const IoWriteReadyParam param)
 
     bool result = true;
 
-    if (this->interface.ready != NULL)
-        result = this->interface.ready(this->driver, param.error);
+    if (ioWriteInterface(this)->ready != NULL)
+        result = ioWriteInterface(this)->ready(ioWriteDriver(this), param.error);
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
@@ -224,7 +222,7 @@ ioWriteFlush(IoWrite *const this)
 
     if (!bufEmpty(this->output))
     {
-        this->interface.write(this->driver, this->output);
+        ioWriteInterface(this)->write(ioWriteDriver(this), this->output);
         bufUsedZero(this->output);
     }
 
@@ -250,7 +248,7 @@ ioWriteClose(IoWrite *const this)
         // Write data if the buffer is full or if this is the last buffer to be written
         if (bufRemains(this->output) == 0 || (ioFilterGroupDone(this->pub.filterGroup) && !bufEmpty(this->output)))
         {
-            this->interface.write(this->driver, this->output);
+            ioWriteInterface(this)->write(ioWriteDriver(this), this->output);
             bufUsedZero(this->output);
         }
     }
@@ -260,8 +258,8 @@ ioWriteClose(IoWrite *const this)
     ioFilterGroupClose(this->pub.filterGroup);
 
     // Close the driver if there is a close function
-    if (this->interface.close != NULL)
-        this->interface.close(this->driver);
+    if (ioWriteInterface(this)->close != NULL)
+        ioWriteInterface(this)->close(ioWriteDriver(this));
 
 #ifdef DEBUG
     this->closed = true;
@@ -280,5 +278,5 @@ ioWriteFd(const IoWrite *const this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(INT, this->interface.fd == NULL ? -1 : this->interface.fd(this->driver));
+    FUNCTION_LOG_RETURN(INT, ioWriteInterface(this)->fd == NULL ? -1 : ioWriteInterface(this)->fd(ioWriteDriver(this)));
 }

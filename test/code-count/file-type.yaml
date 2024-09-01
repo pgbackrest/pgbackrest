@@ -639,6 +639,10 @@ doc/xml/release/2024/2.52.xml:
   class: doc/source
   type: xml
 
+doc/xml/release/2024/2.53.1.xml:
+  class: doc/source
+  type: xml
+
 doc/xml/release/2024/2.53.xml:
   class: doc/source
   type: xml
@@ -1096,14 +1100,6 @@ src/command/repo/common.c:
   type: c
 
 src/command/repo/common.h:
-  class: core
-  type: c/h
-
-src/command/repo/create.c:
-  class: core
-  type: c
-
-src/command/repo/create.h:
   class: core
   type: c/h
 

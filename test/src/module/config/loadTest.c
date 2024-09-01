@@ -118,27 +118,6 @@ testRun(void)
             "local repo1 and repo2 paths are both '/var/lib/pgbackrest' but must be different");
 
         // -------------------------------------------------------------------------------------------------------------------------
-#ifdef HAVE_LIBSSH2
-        TEST_TITLE("local default repo paths for sftp repo type must be different");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
-        hrnCfgArgKeyRawStrId(argList, cfgOptRepoType, 1, STORAGE_SFTP_TYPE);
-        hrnCfgArgKeyRawStrId(argList, cfgOptRepoType, 2, STORAGE_SFTP_TYPE);
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostUser, 1, "user1");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostUser, 2, "user2");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHost, 1, "host1");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHost, 2, "host2");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostKeyHashType, 1, "sha1");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostKeyHashType, 2, "md5");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpPrivateKeyFile, 1, "/keyfile1");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpPrivateKeyFile, 2, "/keyfile2");
-        TEST_ERROR(
-            hrnCfgLoadP(cfgCmdInfo, argList), OptionInvalidValueError,
-            "local repo1 and repo2 paths are both '/var/lib/pgbackrest' but must be different");
-#endif // HAVE_LIBSSH2
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("local repo paths same but types different");
 
         argList = strLstNew();
@@ -883,8 +862,10 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "off");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
 
+        ioBufferSizeSet(333);
+
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command for backup");
-        TEST_RESULT_UINT(ioBufferSize(), 1048576, "buffer size set to option default");
+        TEST_RESULT_UINT(ioBufferSize(), 333, "buffer size not updated by help command");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("help command for help");
@@ -894,8 +875,10 @@ testRun(void)
         strLstAddZ(argList, "help");
         strLstAddZ(argList, "help");
 
+        ioBufferSizeSet(333);
+
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
-        TEST_RESULT_UINT(ioBufferSize(), 1048576, "buffer size set to option default");
+        TEST_RESULT_UINT(ioBufferSize(), 333, "buffer size not updated by help command");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command takes lock and opens log file and uses custom tcp settings");

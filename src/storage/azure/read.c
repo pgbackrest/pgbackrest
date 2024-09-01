@@ -8,7 +8,7 @@ Azure Storage Read
 #include "common/log.h"
 #include "common/type/object.h"
 #include "storage/azure/read.h"
-#include "storage/read.intern.h"
+#include "storage/read.h"
 
 /***********************************************************************************************************************************
 Object type

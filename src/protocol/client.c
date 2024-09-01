@@ -312,7 +312,7 @@ protocolClientFreeResource(THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN ProtocolClient *
-protocolClientNew(const String *name, const String *service, IoRead *read, IoWrite *write)
+protocolClientNew(const String *const name, const String *const service, IoRead *const read, IoWrite *const write)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, name);
@@ -424,7 +424,7 @@ protocolClientRequest(ProtocolClient *const this, const StringId command, const 
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-protocolClientNoOp(ProtocolClient *this)
+protocolClientNoOp(ProtocolClient *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, this);

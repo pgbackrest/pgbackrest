@@ -254,6 +254,16 @@ helpRender(const Buffer *const helpData)
 
     String *const result = strCatZ(strNew(), PROJECT_NAME " " PROJECT_VERSION);
 
+    // Display version only
+    if (!cfgCommandHelp() &&
+        ((cfgCommand() == cfgCmdHelp && cfgOptionBool(cfgOptVersion) && !cfgOptionBool(cfgOptHelp)) ||
+         cfgCommand() == cfgCmdVersion))
+    {
+        strCatChr(result, '\n');
+
+        FUNCTION_LOG_RETURN(STRING, result);
+    }
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Set a small buffer size to minimize memory usage
@@ -287,7 +297,7 @@ helpRender(const Buffer *const helpData)
         const String *more = NULL;
 
         // Display general help
-        if (cfgCommand() == cfgCmdNone)
+        if (!cfgCommandHelp())
         {
             strCatZ(
                 result,

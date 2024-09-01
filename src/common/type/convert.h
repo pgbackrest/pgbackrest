@@ -109,6 +109,10 @@ typedef struct CvtTimeToZParam
 FN_EXTERN FN_STRFTIME(1) size_t cvtTimeToZ(
     const char *format, time_t value, char *buffer, size_t bufferSize, CvtTimeToZParam param);
 
+// Convert zero-terminated string with the following format to time_t:
+// ^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}((\,|\.)[0-9]{1,6})?((\+|\-)[0-9]{2}(:?)([0-9]{2})?)?$
+FN_EXTERN time_t cvtZToTime(const char *time);
+
 // Convert uint to zero-terminated string and vice versa
 FN_EXTERN size_t cvtUIntToZ(unsigned int value, char *buffer, size_t bufferSize);
 FN_EXTERN unsigned int cvtZToUInt(const char *value);

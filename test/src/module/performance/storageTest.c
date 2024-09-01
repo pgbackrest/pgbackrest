@@ -147,7 +147,7 @@ testRun(void)
 
                     *driver = (StorageTestPerfList)
                     {
-                        .interface = storageInterfaceTestDummy,
+                        .interface = hrnStorageInterfaceDummy,
                         .fileTotal = fileTotal,
                     };
                 }

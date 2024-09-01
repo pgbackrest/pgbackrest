@@ -1,5 +1,30 @@
 <release date="XXXX-XX-XX" version="2.54dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2399"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Summarize backup reference list for <cmd>info</cmd> command text output.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2428"/>
+                <github-pull-request id="2429"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="brent.graveland"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Refresh web-id token for each <proper>S3</proper> authentication.</p>
+            </release-item>
+        </release-improvement-list>
+
         <release-development-list>
             <release-item>
                 <github-pull-request id="2108"/>

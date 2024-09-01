@@ -258,7 +258,7 @@ storageRemoteList(THIS_VOID, const String *const path, const StorageInfoLevel le
 
 /**********************************************************************************************************************************/
 static StorageRead *
-storageRemoteNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInterfaceNewReadParam param)
+storageRemoteNewRead(THIS_VOID, const String *const file, const bool ignoreMissing, const StorageInterfaceNewReadParam param)
 {
     THIS(StorageRemote);
 
@@ -283,8 +283,7 @@ storageRemoteNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageI
 
 /**********************************************************************************************************************************/
 static StorageWrite *
-storageRemoteNewWrite(
-    THIS_VOID, const String *file, StorageInterfaceNewWriteParam param)
+storageRemoteNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNewWriteParam param)
 {
     THIS(StorageRemote);
 
@@ -318,7 +317,8 @@ storageRemoteNewWrite(
 /**********************************************************************************************************************************/
 static void
 storageRemotePathCreate(
-    THIS_VOID, const String *path, bool errorOnExists, bool noParentCreate, mode_t mode, StorageInterfacePathCreateParam param)
+    THIS_VOID, const String *const path, const bool errorOnExists, const bool noParentCreate, const mode_t mode,
+    const StorageInterfacePathCreateParam param)
 {
     THIS(StorageRemote);
 
@@ -352,7 +352,7 @@ storageRemotePathCreate(
 
 /**********************************************************************************************************************************/
 static bool
-storageRemotePathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
+storageRemotePathRemove(THIS_VOID, const String *const path, const bool recurse, const StorageInterfacePathRemoveParam param)
 {
     THIS(StorageRemote);
 
@@ -384,7 +384,7 @@ storageRemotePathRemove(THIS_VOID, const String *path, bool recurse, StorageInte
 
 /**********************************************************************************************************************************/
 static void
-storageRemotePathSync(THIS_VOID, const String *path, StorageInterfacePathSyncParam param)
+storageRemotePathSync(THIS_VOID, const String *const path, const StorageInterfacePathSyncParam param)
 {
     THIS(StorageRemote);
 
@@ -412,7 +412,7 @@ storageRemotePathSync(THIS_VOID, const String *path, StorageInterfacePathSyncPar
 
 /**********************************************************************************************************************************/
 static void
-storageRemoteRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam param)
+storageRemoteRemove(THIS_VOID, const String *const file, const StorageInterfaceRemoveParam param)
 {
     THIS(StorageRemote);
 

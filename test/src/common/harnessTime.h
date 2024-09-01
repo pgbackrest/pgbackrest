@@ -12,4 +12,7 @@ Functions
 // Set times to be returned from timeMSec()
 void hrnTimeMSecSet(const TimeMSec *timeList, size_t timeListSize);
 
+// Sleep remainder of the current second
+void hrnSleepRemainder(void);
+
 #endif

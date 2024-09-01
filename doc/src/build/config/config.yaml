@@ -45,6 +45,14 @@ option:
       - 512KiB
       - 1MiB
 
+  help:
+    type: boolean
+    default: false
+    command:
+      help: {}
+    command-role:
+      main: {}
+
   neutral-umask:
     type: boolean
     internal: true
@@ -55,6 +63,14 @@ option:
     default: pgbackrest
     command:
       build: {}
+
+  version:
+    type: boolean
+    default: false
+    command:
+      help: {}
+    command-role:
+      main: {}
 
   # Logging options
   #---------------------------------------------------------------------------------------------------------------------------------

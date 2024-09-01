@@ -17,7 +17,7 @@ struct ProtocolParallelJob
 
 /**********************************************************************************************************************************/
 FN_EXTERN ProtocolParallelJob *
-protocolParallelJobNew(const Variant *key, const StringId command, PackWrite *const param)
+protocolParallelJobNew(const Variant *const key, const StringId command, PackWrite *const param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(VARIANT, key);
@@ -45,7 +45,7 @@ protocolParallelJobNew(const Variant *key, const StringId command, PackWrite *co
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const String *message)
+protocolParallelJobErrorSet(ProtocolParallelJob *const this, const int code, const String *const message)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, this);
@@ -69,7 +69,7 @@ protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const String *m
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processId)
+protocolParallelJobProcessIdSet(ProtocolParallelJob *const this, const unsigned int processId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, this);
@@ -103,7 +103,7 @@ protocolParallelJobResultSet(ProtocolParallelJob *const this, PackRead *const re
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-protocolParallelJobStateSet(ProtocolParallelJob *this, ProtocolParallelJobState state)
+protocolParallelJobStateSet(ProtocolParallelJob *const this, const ProtocolParallelJobState state)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, this);

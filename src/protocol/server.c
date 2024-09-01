@@ -45,7 +45,7 @@ typedef struct ProtocolServerSession
 
 /**********************************************************************************************************************************/
 FN_EXTERN ProtocolServer *
-protocolServerNew(const String *name, const String *service, IoRead *read, IoWrite *write)
+protocolServerNew(const String *const name, const String *const service, IoRead *const read, IoWrite *const write)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, name);
@@ -123,7 +123,7 @@ protocolServerResponse(ProtocolServer *const this, const ProtocolServerResponseP
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-protocolServerError(ProtocolServer *this, int code, const String *message, const String *stack)
+protocolServerError(ProtocolServer *this, const int code, const String *const message, const String *const stack)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
@@ -167,7 +167,7 @@ protocolServerRequest(ProtocolServer *const this)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         PackRead *const request = pckReadNewIo(this->read);
-        ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(request);
+        const ProtocolMessageType type = (ProtocolMessageType)pckReadU32P(request);
 
         CHECK(FormatError, type == protocolMessageTypeRequest, "expected request message");
 
@@ -193,7 +193,7 @@ protocolServerRequest(ProtocolServer *const this)
 /**********************************************************************************************************************************/
 FN_EXTERN void
 protocolServerProcess(
-    ProtocolServer *this, const VariantList *retryInterval, const ProtocolServerHandler *const handlerList,
+    ProtocolServer *const this, const VariantList *const retryInterval, const ProtocolServerHandler *const handlerList,
     const unsigned int handlerListSize)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

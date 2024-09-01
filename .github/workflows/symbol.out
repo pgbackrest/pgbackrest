@@ -33,5 +33,4 @@ data_start
 environ@GLIBC_2.2.5
 main
 stderr@GLIBC_2.2.5
-stdout@GLIBC_2.2.5
 xmlFree@LIBXML2_2.4.30
