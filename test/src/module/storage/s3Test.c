@@ -951,7 +951,7 @@ testRun(void)
                     "</AssumeRoleWithWebIdentityResponse>"
                 // {uncrustify_on}
 
-                HRN_STORAGE_PUT_Z(storagePosixNewP(TEST_PATH_STR, .write = true), "web-id-token", TEST_SERVICE_TOKEN);
+                HRN_STORAGE_PUT_Z(storagePosixNewP(TEST_PATH_STR, .write = true), TEST_SERVICE_TOKEN_FILE, TEST_SERVICE_TOKEN);
 
                 argList = strLstDup(commonArgList);
                 hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
