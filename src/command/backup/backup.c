@@ -202,6 +202,10 @@ backupInit(const InfoBackup *const infoBackup)
     {
         const DbGetResult dbInfo = dbGet(backupStandby == CFGOPTVAL_BACKUP_STANDBY_N, true, backupStandby);
 
+        // If no standby was found but using the primary is allowed then warn and proceed
+        if (backupStandby == CFGOPTVAL_BACKUP_STANDBY_PREFER && dbInfo.standby == NULL)
+            LOG_WARN("unable to find a standby to perform the backup, using primary instead");
+
         result->pgIdxPrimary = dbInfo.primaryIdx;
         result->dbPrimary = dbInfo.primary;
 
