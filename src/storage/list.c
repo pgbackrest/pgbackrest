@@ -150,7 +150,7 @@ storageLstInsert(StorageList *const this, const unsigned int idx, const StorageI
             }
 
             case storageInfoLevelType:
-                listInfo.type.type = (uint8_t)info->type;
+                listInfo.type.type = info->type;
 
             default:
                 break;
