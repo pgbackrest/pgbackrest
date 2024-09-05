@@ -720,9 +720,25 @@ testRun(void)
         TEST_ASSIGN(
             infoBackup, infoBackupPgSet(infoBackup, PG_VERSION_11, 6739907367085689196, hrnPgCatalogVersion(PG_VERSION_11)),
             "upgrade db");
+        TEST_RESULT_BOOL(infoBackup->pub.updated, true, "info updated");
         TEST_RESULT_VOID(
             infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
             "save backup info");
+        TEST_RESULT_BOOL(infoBackup->pub.updated, false, "info not updated");
+
+        // Update backup.info timestamp to the past so we can detect if it is updated
+        const time_t timeBeforeSave = time(NULL) - 1;
+        HRN_STORAGE_TIME(storageRepo(), INFO_BACKUP_PATH_FILE, timeBeforeSave);
+
+        TEST_RESULT_VOID(
+            infoBackupSaveFile(infoBackup, storageRepoWrite(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
+            "save backup again");
+
+        // Check that timestamp was not updated
+        TEST_RESULT_INT(
+            storageInfoP(storageRepo(), INFO_BACKUP_PATH_FILE_STR).timeModified, timeBeforeSave, "backup.info was not updated");
+
+        // Reload infoBackup to be sure it was updated
         infoBackup = NULL;
         TEST_ASSIGN(
             infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL),
