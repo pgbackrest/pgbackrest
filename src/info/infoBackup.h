@@ -90,6 +90,7 @@ typedef struct InfoBackupPub
     MemContext *memContext;                                         // Mem context
     InfoPg *infoPg;                                                 // Contents of the DB data
     List *backup;                                                   // List of current backups and their associated data
+    bool updated;                                                   // Has the info been updated since the last save?
 } InfoBackupPub;
 
 // PostgreSQL info

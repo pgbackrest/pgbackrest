@@ -57,6 +57,7 @@ infoBackupNewInternal(void)
         {
             .memContext = memContextCurrent(),
             .backup = lstNewP(sizeof(InfoBackupData), .comparator = lstComparatorStr),
+            .updated = true,
         },
     };
 
@@ -246,6 +247,7 @@ infoBackupNewLoad(IoRead *const read)
     {
         this = infoBackupNewInternal();
         this->pub.infoPg = infoPgNewLoad(read, infoPgBackup, infoBackupLoadCallback, this);
+        this->pub.updated = false;
     }
     OBJ_NEW_END();
 
@@ -381,6 +383,7 @@ infoBackupPgSet(
     FUNCTION_LOG_END();
 
     this->pub.infoPg = infoPgSet(infoBackupPg(this), infoPgBackup, pgVersion, pgSystemId, pgCatalogVersion);
+    this->pub.updated = true;
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, this);
 }
@@ -511,6 +514,8 @@ infoBackupDataAdd(InfoBackup *const this, const Manifest *const manifest)
     }
     MEM_CONTEXT_TEMP_END();
 
+    this->pub.updated = true;
+
     FUNCTION_LOG_RETURN_VOID();
 }
 
@@ -562,6 +567,8 @@ infoBackupDataAnnotationSet(InfoBackup *const this, const String *const backupLa
     }
     MEM_CONTEXT_END();
 
+    this->pub.updated = true;
+
     FUNCTION_TEST_RETURN_VOID();
 }
 
@@ -583,6 +590,8 @@ infoBackupDataDelete(InfoBackup *const this, const String *const backupDeleteLab
         if (strCmp(backupData.backupLabel, backupDeleteLabel) == 0)
             lstRemoveIdx(this->pub.backup, idx);
     }
+
+    this->pub.updated = true;
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -877,19 +886,24 @@ infoBackupSaveFile(
     ASSERT(fileName != NULL);
     ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    if (infoBackup->pub.updated)
     {
-        // Write output into a buffer since it needs to be saved to storage twice
-        Buffer *const buffer = bufNew(ioBufferSize());
-        IoWrite *const write = ioBufferWriteNew(buffer);
-        cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherType, cipherModeEncrypt, cipherPass);
-        infoBackupSave(infoBackup, write);
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Write output into a buffer since it needs to be saved to storage twice
+            Buffer *const buffer = bufNew(ioBufferSize());
+            IoWrite *const write = ioBufferWriteNew(buffer);
+            cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherType, cipherModeEncrypt, cipherPass);
+            infoBackupSave(infoBackup, write);
 
-        // Save the file and make a copy
-        storagePutP(storageNewWriteP(storage, fileName), buffer);
-        storagePutP(storageNewWriteP(storage, strNewFmt("%s" INFO_COPY_EXT, strZ(fileName))), buffer);
+            // Save the file and make a copy
+            storagePutP(storageNewWriteP(storage, fileName), buffer);
+            storagePutP(storageNewWriteP(storage, strNewFmt("%s" INFO_COPY_EXT, strZ(fileName))), buffer);
+        }
+        MEM_CONTEXT_TEMP_END();
+
+        infoBackup->pub.updated = false;
     }
-    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }

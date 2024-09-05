@@ -23,6 +23,17 @@
 
                 <p>Refresh web-id token for each <proper>S3</proper> authentication.</p>
             </release-item>
+
+            <release-item>
+                <github-pull-request id="2403"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Save <file>backup.info</file> only when contents have changed.</p>
+            </release-item>
         </release-improvement-list>
 
         <release-development-list>
