@@ -321,6 +321,8 @@
                             <p>Versioned storage is supported by <proper>S3</proper>, <proper>GCS</proper>, and <proper>Azure</proper> but is generally not enabled by default. In addition to enabling versioning, it may be useful to enable object locking for <proper>S3</proper> and soft delete for <proper>GCS</proper> or <proper>Azure</proper>.</p>
 
                             <p>When the <br-option>limit-time</br-option> option is specified then the <br-option>repo</br-option> option must also be provided. It is likely that not all repository types will support versioning and in general it makes sense to target a single repository for recovery.</p>
+
+                            <p>Note comparisons to the storage timestamp are &lt;= the timestamp provided and milliseconds are truncated from the timestamp when provided.</p>
                         </text>
 
                         <example>2024-08-08 12:12:12+00</example>
