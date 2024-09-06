@@ -83,7 +83,6 @@ Option constants
 #define CFGOPT_IO_TIMEOUT                                           "io-timeout"
 #define CFGOPT_JOB_RETRY                                            "job-retry"
 #define CFGOPT_JOB_RETRY_INTERVAL                                   "job-retry-interval"
-#define CFGOPT_LIMIT_TIME                                           "limit-time"
 #define CFGOPT_LINK_ALL                                             "link-all"
 #define CFGOPT_LINK_MAP                                             "link-map"
 #define CFGOPT_LOCK                                                 "lock"
@@ -110,6 +109,7 @@ Option constants
 #define CFGOPT_REFERENCE                                            "reference"
 #define CFGOPT_REMOTE_TYPE                                          "remote-type"
 #define CFGOPT_REPO                                                 "repo"
+#define CFGOPT_REPO_TARGET_TIME                                     "repo-target-time"
 #define CFGOPT_REPORT                                               "report"
 #define CFGOPT_RESUME                                               "resume"
 #define CFGOPT_SCK_BLOCK                                            "sck-block"
@@ -425,7 +425,6 @@ typedef enum
     cfgOptIoTimeout,
     cfgOptJobRetry,
     cfgOptJobRetryInterval,
-    cfgOptLimitTime,
     cfgOptLinkAll,
     cfgOptLinkMap,
     cfgOptLock,
@@ -540,6 +539,7 @@ typedef enum
     cfgOptRepoStorageTag,
     cfgOptRepoStorageUploadChunkSize,
     cfgOptRepoStorageVerifyTls,
+    cfgOptRepoTargetTime,
     cfgOptRepoType,
     cfgOptReport,
     cfgOptResume,

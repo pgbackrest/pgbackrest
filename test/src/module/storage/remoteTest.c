@@ -759,7 +759,7 @@ testRun(void)
             storagePutP(storageNewWriteP(storageRepoWrite, STRDEF("test1"), .timeModified = 1724734626), BUFSTRDEF("test1a")),
             "write test again");
 
-        storageRepo->limitTime = 1724734626;
+        storageRepo->targetTime = 1724734626;
         storageRepo->cacheList = lstNewP(sizeof(StorageListCache), .comparator = lstComparatorStr);
 
         TEST_STORAGE_LIST(
@@ -769,7 +769,7 @@ testRun(void)
         TEST_STORAGE_GET(storageRepo, "test1", "test1a");
         TEST_RESULT_INT(storageInfoP(storageRepo, STRDEF("test1")).timeModified, 1724734626, "check time");
 
-        storageRepo->limitTime = 1724734625;
+        storageRepo->targetTime = 1724734625;
         storageRepo->cacheList = lstNewP(sizeof(StorageListCache), .comparator = lstComparatorStr);
 
         TEST_STORAGE_LIST(

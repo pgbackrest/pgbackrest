@@ -190,8 +190,8 @@ typedef struct StorageInterfaceListParam
     // anything that matches the expression exactly.
     const String *expression;
 
-    // Limit versions to <= the specified time
-    time_t limitTime;
+    // Target max version <= the specified time
+    time_t targetTime;
 } StorageInterfaceListParam;
 
 typedef StorageList *StorageInterfaceList(
@@ -310,10 +310,10 @@ typedef struct StorageInterface
 } StorageInterface;
 
 #define storageNewP(type, path, modeFile, modePath, write, pathExpressionFunction, driver, ...)                                    \
-    storageNew(type, path, modeFile, modePath, write, limitTime, pathExpressionFunction, driver, (StorageInterface){__VA_ARGS__})
+    storageNew(type, path, modeFile, modePath, write, targetTime, pathExpressionFunction, driver, (StorageInterface){__VA_ARGS__})
 
 FN_EXTERN Storage *storageNew(
-    StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write, time_t limitTime,
+    StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write, time_t targetTime,
     StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface);
 
 /***********************************************************************************************************************************

@@ -425,7 +425,7 @@ testRun(void)
             // Stop the cluster
             HRN_HOST_PG_STOP(pg1);
 
-            // If repo is versioned then delete the repo to test limit-time
+            // If repo is versioned then delete the repo to test repo-target-time
             if (hrnHostRepoVersioning())
             {
                 // Stop pgbackrest
@@ -439,7 +439,7 @@ testRun(void)
                 pg1, CFGCMD_RESTORE,
                 .option = zNewFmt(
                     "--delta --type=standby --target-timeline=%s%s", xidTimeline,
-                    hrnHostRepoVersioning() ? zNewFmt(" --repo=1 --limit-time=\"%s\"", xidTime) : ""));
+                    hrnHostRepoVersioning() ? zNewFmt(" --repo=1 --repo-target-time=\"%s\"", xidTime) : ""));
             HRN_HOST_PG_START(pg1);
 
             // Check that backup recovered to the expected target

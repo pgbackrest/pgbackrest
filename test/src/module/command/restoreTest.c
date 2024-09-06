@@ -3256,12 +3256,12 @@ testRun(void)
 
         HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation);
 
-        // For this restore to succeed we need to set limit time using the timestamp on backup.info
-        String *limitTime = strNewTimeP(
+        // For this restore to succeed we need to set target time using the timestamp on backup.info
+        String *targetTime = strNewTimeP(
             "%Y-%m-%d %H:%M:%S+00", storageInfoP(storageRepo(), INFO_BACKUP_PATH_FILE_STR).timeModified, .utc = true);
 
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
-        hrnCfgArgRaw(argList, cfgOptLimitTime, limitTime);
+        hrnCfgArgRaw(argList, cfgOptRepoTargetTime, targetTime);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(cmdRestore(), "restore");

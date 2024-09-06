@@ -1751,7 +1751,7 @@ testRun(void)
 
         StringList *argList = strLstDup(argListBase);
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
-        hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:53:20+00");
+        hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-04 02:53:20+00");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         TEST_STORAGE_LIST(
@@ -1763,7 +1763,7 @@ testRun(void)
 
         argList = strLstDup(argListBase);
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
-        hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:54:09+00");
+        hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-04 02:54:09+00");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         TEST_STORAGE_LIST(
@@ -1787,7 +1787,7 @@ testRun(void)
 
         argList = strLstDup(argListBase);
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
-        hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:53:20+00");
+        hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-04 02:53:20+00");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         TEST_STORAGE_GET(storageRepo(), "test1", "test1");
@@ -1799,7 +1799,7 @@ testRun(void)
 
         argList = strLstDup(argListBase);
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
-        hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:54:59+00");
+        hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-04 02:54:59+00");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         TEST_STORAGE_GET(storageRepo(), "test1", "test1a");
@@ -1881,7 +1881,7 @@ testRun(void)
 
         argList = strLstDup(argListBase);
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
-        hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:54:09+00");
+        hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-04 02:54:09+00");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         TEST_STORAGE_LIST(
@@ -1896,7 +1896,7 @@ testRun(void)
 
         argList = strLstDup(argListBase);
         hrnCfgArgRawZ(argList, cfgOptRepo, "1");
-        hrnCfgArgRawZ(argList, cfgOptLimitTime, "2024-08-04 02:54:59+00");
+        hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-04 02:54:59+00");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         TEST_STORAGE_LIST(

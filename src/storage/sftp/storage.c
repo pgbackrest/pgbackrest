@@ -644,7 +644,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
-    ASSERT(param.limitTime == 0);
+    ASSERT(param.targetTime == 0);
 
     StorageList *result = NULL;
 

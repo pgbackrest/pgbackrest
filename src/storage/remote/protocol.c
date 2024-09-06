@@ -339,10 +339,10 @@ storageRemoteListProtocol(PackRead *const param)
     {
         const String *const path = pckReadStrP(param);
         const StorageInfoLevel level = (StorageInfoLevel)pckReadU32P(param);
-        const time_t limitTime = pckReadTimeP(param);
+        const time_t targetTime = pckReadTimeP(param);
 
         StorageRemoteInfoProtocolWriteData writeData = {0};
-        StorageList *const list = storageInterfaceListP(storageRemoteProtocolLocal.driver, path, level, .limitTime = limitTime);
+        StorageList *const list = storageInterfaceListP(storageRemoteProtocolLocal.driver, path, level, .targetTime = targetTime);
         PackWrite *const data = protocolServerResultData(result);
 
         // Indicate whether or not the path was found

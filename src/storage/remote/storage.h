@@ -16,7 +16,7 @@ Storage type
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN Storage *storageRemoteNew(
-    mode_t modeFile, mode_t modePath, bool write, time_t limitTime, StoragePathExpressionCallback pathExpressionFunction,
+    mode_t modeFile, mode_t modePath, bool write, time_t targetTime, StoragePathExpressionCallback pathExpressionFunction,
     ProtocolClient *client, unsigned int compressLevel);
 
 #endif

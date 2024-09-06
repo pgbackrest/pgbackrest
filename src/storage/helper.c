@@ -360,7 +360,7 @@ storageRepoGet(const unsigned int repoIdx, const bool write)
     if (!repoIsLocal(repoIdx))
     {
         result = storageRemoteNew(
-            STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoLimitTime(), storageRepoPathExpression,
+            STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoTargetTime(), storageRepoPathExpression,
             protocolRemoteGet(protocolStorageTypeRepo, repoIdx), cfgOptionUInt(cfgOptCompressLevelNetwork));
     }
     // Use local storage
@@ -479,11 +479,11 @@ storageRepoWrite(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN time_t
-storageRepoLimitTime(void)
+storageRepoTargetTime(void)
 {
     FUNCTION_TEST_VOID();
 
-    FUNCTION_TEST_RETURN(TIME, cfgOptionTest(cfgOptLimitTime) ? cvtZToTime(strZ(cfgOptionStr(cfgOptLimitTime))) : 0);
+    FUNCTION_TEST_RETURN(TIME, cfgOptionTest(cfgOptRepoTargetTime) ? cvtZToTime(strZ(cfgOptionStr(cfgOptRepoTargetTime))) : 0);
 }
 
 /***********************************************************************************************************************************

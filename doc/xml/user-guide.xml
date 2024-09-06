@@ -2616,10 +2616,10 @@
     </section>
 
     <!-- ======================================================================================================================= -->
-    <section id="limit-time" if="!{[object-any-all]}" depend="/s3-support">
-        <title>Limit Time for Repository</title>
+    <section id="repo-target-time" if="!{[object-any-all]}" depend="/s3-support">
+        <title>Target Time for Repository</title>
 
-        <option-description key="limit-time"/>
+        <option-description key="repo-target-time"/>
 
         <p>To demonstrate this feature the <id>demo</id> stanza in the <proper>S3</proper> repo is deleted.</p>
 
@@ -2652,7 +2652,7 @@
             </execute>
         </execute-list>
 
-        <p>However, since the storage is versioned, it is possible to look at the repository at a time before the stanza was deleted. Finding the limit time can be tricky depending on the situation, but in this case the time when the stanza was deleted can be determined by checking when <file>backup.info</file> was deleted.</p>
+        <p>However, since the storage is versioned, it is possible to look at the repository at a time before the stanza was deleted. Finding the target time can be tricky depending on the situation, but in this case the time when the stanza was deleted can be determined by checking when <file>backup.info</file> was deleted.</p>
 
         <execute-list host="{[host-s3]}">
             <title>Use <id>mc</id> to list versions of <file>backup.info</file> in the bucket</title>
@@ -2664,26 +2664,26 @@
             </execute>
         </execute-list>
 
-        <p>Now the <cmd>info</cmd> command can be run with a limit time that will show the repository before it was deleted.</p>
+        <p>Now the <cmd>info</cmd> command can be run with a target time that will show the repository before it was deleted.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Info with limit time</title>
+            <title>Info with target time</title>
 
             <execute user="postgres" output="y">
                 <exe-cmd>{[project-exe]} --stanza={[postgres-cluster-demo]} --repo=3
-                --limit-time="{[limit-recovery-timestamp]}" info</exe-cmd>
+                --repo-target-time="{[limit-recovery-timestamp]}" info</exe-cmd>
                 <exe-highlight>full backup</exe-highlight>
             </execute>
         </execute-list>
 
-        <p>If the required backup is shown by the <cmd>info</cmd> command then it can be restored using the same limit time.</p>
+        <p>If the required backup is shown by the <cmd>info</cmd> command then it can be restored using the same target time.</p>
 
         <execute-list host="{[host-pg1]}">
-            <title>Restore with limit time</title>
+            <title>Restore with target time</title>
 
             <execute user="postgres" output="y">
                 <exe-cmd>{[project-exe]} --stanza={[postgres-cluster-demo]} --repo=3 --delta
-                --limit-time="{[limit-recovery-timestamp]}" --log-level-console=info restore</exe-cmd>
+                --repo-target-time="{[limit-recovery-timestamp]}" --log-level-console=info restore</exe-cmd>
                 <exe-highlight> restore backup set </exe-highlight>
              </execute>
             <execute user="root">

@@ -867,23 +867,6 @@ option:
       restore: {}
       verify: {}
 
-  limit-time:
-    section: global
-    type: string
-    required: false
-    command:
-      archive-get: {}
-      info: {}
-      manifest: {}
-      repo-get: {}
-      repo-ls: {}
-      restore: {}
-      verify: {}
-    command-role:
-      async: {}
-      main: {}
-      local: {}
-
   lock-path:
     section: global
     type: path
@@ -2587,3 +2570,20 @@ option:
         - azure
         - gcs
         - s3
+
+  repo-target-time:
+    section: global
+    type: string
+    required: false
+    command:
+      archive-get: {}
+      info: {}
+      manifest: {}
+      repo-get: {}
+      repo-ls: {}
+      restore: {}
+      verify: {}
+    command-role:
+      async: {}
+      main: {}
+      local: {}

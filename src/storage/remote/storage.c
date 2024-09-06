@@ -210,7 +210,7 @@ storageRemoteList(THIS_VOID, const String *const path, const StorageInfoLevel le
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(ENUM, level);
-        FUNCTION_LOG_PARAM(TIME, param.limitTime);
+        FUNCTION_LOG_PARAM(TIME, param.targetTime);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -224,7 +224,7 @@ storageRemoteList(THIS_VOID, const String *const path, const StorageInfoLevel le
 
         pckWriteStrP(commandParam, path);
         pckWriteU32P(commandParam, level);
-        pckWriteTimeP(commandParam, param.limitTime);
+        pckWriteTimeP(commandParam, param.targetTime);
 
         // Read list
         StorageRemoteInfoData parseData = {.memContext = memContextCurrent()};
@@ -461,14 +461,14 @@ static const StorageInterface storageInterfaceRemote =
 
 FN_EXTERN Storage *
 storageRemoteNew(
-    const mode_t modeFile, const mode_t modePath, const bool write, const time_t limitTime,
+    const mode_t modeFile, const mode_t modePath, const bool write, const time_t targetTime,
     StoragePathExpressionCallback pathExpressionFunction, ProtocolClient *const client, const unsigned int compressLevel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MODE, modeFile);
         FUNCTION_LOG_PARAM(MODE, modePath);
         FUNCTION_LOG_PARAM(BOOL, write);
-        FUNCTION_LOG_PARAM(TIME, limitTime);
+        FUNCTION_LOG_PARAM(TIME, targetTime);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, client);
         FUNCTION_LOG_PARAM(UINT, compressLevel);
@@ -510,5 +510,6 @@ storageRemoteNew(
 
     FUNCTION_LOG_RETURN(
         STORAGE,
-        storageNew(STORAGE_REMOTE_TYPE, path, modeFile, modePath, write, limitTime, pathExpressionFunction, this, this->interface));
+        storageNew(
+            STORAGE_REMOTE_TYPE, path, modeFile, modePath, write, targetTime, pathExpressionFunction, this, this->interface));
 }

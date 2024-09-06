@@ -624,7 +624,7 @@ General function for listing files to be used by other list routines
 static void
 storageS3ListInternal(
     StorageS3 *const this, const String *const path, const StorageInfoLevel level, const String *const expression,
-    const bool recurse, const time_t limitTime, StorageListCallback callback, void *const callbackData)
+    const bool recurse, const time_t targetTime, StorageListCallback callback, void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
@@ -632,7 +632,7 @@ storageS3ListInternal(
         FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(STRING, expression);
         FUNCTION_LOG_PARAM(BOOL, recurse);
-        FUNCTION_LOG_PARAM(TIME, limitTime);
+        FUNCTION_LOG_PARAM(TIME, targetTime);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
@@ -671,7 +671,7 @@ storageS3ListInternal(
             httpQueryAdd(query, S3_QUERY_DELIMITER_STR, FSLASH_STR);
 
         // Use list type 2 or versions as specified
-        if (limitTime != 0)
+        if (targetTime != 0)
             httpQueryAdd(query, S3_QUERY_VERSIONS_STR, EMPTY_STR);
         else
             httpQueryAdd(query, S3_QUERY_LIST_TYPE_STR, S3_QUERY_VALUE_LIST_TYPE_2_STR);
@@ -685,7 +685,7 @@ storageS3ListInternal(
         String *const versionIdLast = strNew();
         StorageInfo infoLast = {.level = level, .name = nameLast};
 
-        if (limitTime != 0)
+        if (targetTime != 0)
             infoLast.versionId = versionIdLast;
 
         // Loop as long as a continuation token returned
@@ -759,7 +759,7 @@ storageS3ListInternal(
                 // Get file list
                 const XmlNodeList *fileList;
 
-                if (limitTime != 0)
+                if (targetTime != 0)
                 {
                     StringList *const nameList = strLstNew();
                     strLstAdd(nameList, S3_XML_TAG_VERSION_STR);
@@ -788,13 +788,13 @@ storageS3ListInternal(
                     }
 
                     // If filtering by time
-                    if (limitTime != 0)
+                    if (targetTime != 0)
                     {
                         // Skip later versions
                         infoLast.timeModified = storageS3CvtTime(
                             xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_LAST_MODIFIED_STR, true)));
 
-                        if (infoLast.timeModified > limitTime)
+                        if (infoLast.timeModified > targetTime)
                             continue;
 
                         // If a version has already been returned (or delete marker found) then skip this version
@@ -819,7 +819,7 @@ storageS3ListInternal(
                     // Add basic info if requested (no need to add type info since file is default type)
                     if (level >= storageInfoLevelBasic)
                     {
-                        if (limitTime != 0)
+                        if (targetTime != 0)
                         {
                             strCat(
                                 strTrunc(versionIdLast), xmlNodeContent(xmlNodeChild(fileNode, S3_XML_TAG_VERSION_ID_STR, true)));
@@ -915,7 +915,7 @@ storageS3List(THIS_VOID, const String *const path, const StorageInfoLevel level,
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(STRING, param.expression);
-        FUNCTION_LOG_PARAM(TIME, param.limitTime);
+        FUNCTION_LOG_PARAM(TIME, param.targetTime);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -924,7 +924,7 @@ storageS3List(THIS_VOID, const String *const path, const StorageInfoLevel level,
     StorageList *const result = storageLstNew(level);
 
     storageS3ListInternal(
-        this, path, level, param.expression, false, param.limitTime, storageS3ListCallback, result);
+        this, path, level, param.expression, false, param.targetTime, storageS3ListCallback, result);
 
     FUNCTION_LOG_RETURN(STORAGE_LIST, result);
 }
@@ -1173,7 +1173,7 @@ static const StorageInterface storageInterfaceS3 =
 
 FN_EXTERN Storage *
 storageS3New(
-    const String *const path, const bool write, const time_t limitTime, StoragePathExpressionCallback pathExpressionFunction,
+    const String *const path, const bool write, const time_t targetTime, StoragePathExpressionCallback pathExpressionFunction,
     const String *const bucket, const String *const endPoint, const StorageS3UriStyle uriStyle, const String *const region,
     const StorageS3KeyType keyType, const String *const accessKey, const String *const secretAccessKey,
     const String *const securityToken, const String *const kmsKeyId, const String *sseCustomerKey, const String *const credRole,
@@ -1183,7 +1183,7 @@ storageS3New(
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(BOOL, write);
-        FUNCTION_LOG_PARAM(TIME, limitTime);
+        FUNCTION_LOG_PARAM(TIME, targetTime);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(STRING, bucket);
         FUNCTION_LOG_PARAM(STRING, endPoint);
@@ -1319,5 +1319,5 @@ storageS3New(
     OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(
-        STORAGE, storageNew(STORAGE_S3_TYPE, path, 0, 0, write, limitTime, pathExpressionFunction, this, this->interface));
+        STORAGE, storageNew(STORAGE_S3_TYPE, path, 0, 0, write, targetTime, pathExpressionFunction, this, this->interface));
 }

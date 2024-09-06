@@ -439,9 +439,9 @@ cfgLoadUpdateOption(void)
         }
     }
 
-    // A repo must be specified when limiting time
-    if (cfgOptionTest(cfgOptLimitTime) && cfgOptionSource(cfgOptRepo) == cfgSourceDefault)
-        THROW_FMT(OptionInvalidError, "option '" CFGOPT_LIMIT_TIME "' not valid without option '" CFGOPT_REPO "'");
+    // A repo must be specified when targeting time
+    if (cfgOptionTest(cfgOptRepoTargetTime) && cfgOptionSource(cfgOptRepo) == cfgSourceDefault)
+        THROW_FMT(OptionInvalidError, "option '" CFGOPT_REPO_TARGET_TIME "' not valid without option '" CFGOPT_REPO "'");
 
     FUNCTION_LOG_RETURN_VOID();
 }

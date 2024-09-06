@@ -201,7 +201,7 @@ storagePosixList(THIS_VOID, const String *const path, const StorageInfoLevel lev
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
-    ASSERT(param.limitTime == 0);
+    ASSERT(param.targetTime == 0);
 
     StorageList *result = NULL;
 

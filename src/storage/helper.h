@@ -58,8 +58,8 @@ FN_EXTERN const Storage *storageRepoIdxWrite(unsigned int repoIdx);
 FN_EXTERN const Storage *storageRepo(void);
 FN_EXTERN const Storage *storageRepoWrite(void);
 
-// Return limit time for repository storage, if any
-FN_EXTERN time_t storageRepoLimitTime(void);
+// Return target time for repository storage, if any
+FN_EXTERN time_t storageRepoTargetTime(void);
 
 // Spool storage
 FN_EXTERN const Storage *storageSpool(void);

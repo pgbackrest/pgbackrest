@@ -82,7 +82,7 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = storageS3New(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoLimitTime(), pathExpressionCallback,
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoTargetTime(), pathExpressionCallback,
                 cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint,
                 (StorageS3UriStyle)cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx), cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx),
                 keyType, cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx),

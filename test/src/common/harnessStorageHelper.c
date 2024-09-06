@@ -403,7 +403,7 @@ hrnStorageTestList(THIS_VOID, const String *const path, const StorageInfoLevel l
         FUNCTION_HARNESS_PARAM(HRN_STORAGE_TEST, this);
         FUNCTION_HARNESS_PARAM(STRING, path);
         FUNCTION_HARNESS_PARAM(ENUM, level);
-        FUNCTION_HARNESS_PARAM(TIME, param.limitTime);
+        FUNCTION_HARNESS_PARAM(TIME, param.targetTime);
     FUNCTION_HARNESS_END();
 
     ASSERT(this != NULL);
@@ -417,7 +417,7 @@ hrnStorageTestList(THIS_VOID, const String *const path, const StorageInfoLevel l
     {
         result = storageLstNew(level);
 
-        if (param.limitTime != 0)
+        if (param.targetTime != 0)
         {
             // Get just the paths
             for (unsigned int listIdx = 0; listIdx < storageLstSize(list); listIdx++)
@@ -450,7 +450,7 @@ hrnStorageTestList(THIS_VOID, const String *const path, const StorageInfoLevel l
                         StorageInfo versionInfo = storageLstGet(versionList, versionIdx);
 
                         // Return version if within the time limit
-                        if (versionInfo.timeModified <= param.limitTime)
+                        if (versionInfo.timeModified <= param.targetTime)
                         {
                             // If the most recent version is a delete marker then skip the file
                             if (strEndsWithZ(versionInfo.name, ".delete"))
@@ -654,12 +654,12 @@ hrnStorageTestRemove(THIS_VOID, const String *const file, const StorageInterface
 
 static Storage *
 hrnStorageTestNew(
-    const String *const path, const bool write, const time_t limitTime, StoragePathExpressionCallback pathExpressionFunction)
+    const String *const path, const bool write, const time_t targetTime, StoragePathExpressionCallback pathExpressionFunction)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STRING, path);
         FUNCTION_HARNESS_PARAM(BOOL, write);
-        FUNCTION_HARNESS_PARAM(TIME, limitTime);
+        FUNCTION_HARNESS_PARAM(TIME, targetTime);
         FUNCTION_HARNESS_PARAM(FUNCTIONP, pathExpressionFunction);
     FUNCTION_HARNESS_END();
 
@@ -691,7 +691,7 @@ hrnStorageTestNew(
     FUNCTION_HARNESS_RETURN(
         STORAGE,
         storageNew(
-            STORAGE_TEST_TYPE, path, STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, limitTime,
+            STORAGE_TEST_TYPE, path, STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, targetTime,
             pathExpressionFunction, this, this->interface));
 }
 
@@ -710,7 +710,7 @@ storageRepoGet(const unsigned int repoIdx, const bool write)
     {
         FUNCTION_HARNESS_RETURN(
             STORAGE,
-            hrnStorageTestNew(cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoLimitTime(), storageRepoPathExpression));
+            hrnStorageTestNew(cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoTargetTime(), storageRepoPathExpression));
     }
 
     FUNCTION_HARNESS_RETURN(STORAGE, storageRepoGet_SHIMMED(repoIdx, write));

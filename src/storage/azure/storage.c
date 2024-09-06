@@ -319,7 +319,7 @@ Based on the documentation at https://learn.microsoft.com/en-us/rest/api/storage
 static void
 storageAzureListInternal(
     StorageAzure *const this, const String *const path, const StorageInfoLevel level, const String *const expression,
-    const bool recurse, const time_t limitTime, const StorageListCallback callback, void *const callbackData)
+    const bool recurse, const time_t targetTime, const StorageListCallback callback, void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, this);
@@ -327,7 +327,7 @@ storageAzureListInternal(
         FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(STRING, expression);
         FUNCTION_LOG_PARAM(BOOL, recurse);
-        FUNCTION_LOG_PARAM(TIME, limitTime);
+        FUNCTION_LOG_PARAM(TIME, targetTime);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
@@ -376,7 +376,7 @@ storageAzureListInternal(
             httpQueryAdd(query, AZURE_QUERY_PREFIX_STR, queryPrefix);
 
         // Add versions
-        if (limitTime != 0)
+        if (targetTime != 0)
             httpQueryAdd(query, AZURE_QUERY_INCLUDE_STR, AZURE_QUERY_VALUE_VERSIONS_STR);
 
         // Store last info so it can be updated across requests for versioning
@@ -384,7 +384,7 @@ storageAzureListInternal(
         String *const versionIdLast = strNew();
         StorageInfo infoLast = {.level = level, .name = nameLast};
 
-        if (limitTime != 0)
+        if (targetTime != 0)
             infoLast.versionId = versionIdLast;
 
         // Loop as long as a continuation marker returned
@@ -476,19 +476,19 @@ storageAzureListInternal(
                         infoLast.exists = false;
                     }
 
-                    // If filtering by time exclude versions that are newer than limitTime. Note that the API does not provide
+                    // If filtering by time exclude versions that are newer than targetTime. Note that the API does not provide
                     // reliable delete markers so the filtering will also show files that have been deleted rather than replaced
                     // with a new version. The problem with the delete markers is that Creation-Time/Last-Modified are set equal to
                     // the times in the last version so we don't know when the file was deleted. It might be possible to use
                     // VersionId for this purpose, since it appears to be a timestamp, but the field is described as "opaque" in the
                     // documentation so it does not seem to be a good idea to use it.
-                    if (limitTime != 0)
+                    if (targetTime != 0)
                     {
                         infoLast.timeModified = httpDateToTime(
                             xmlNodeContent(xmlNodeChild(property, AZURE_XML_TAG_LAST_MODIFIED_STR, true)));
 
                         // Skip this version if it is newer than the time limit
-                        if (infoLast.timeModified > limitTime)
+                        if (infoLast.timeModified > targetTime)
                             continue;
                     }
 
@@ -502,7 +502,7 @@ storageAzureListInternal(
                         infoLast.size = cvtZToUInt64(
                             strZ(xmlNodeContent(xmlNodeChild(property, AZURE_XML_TAG_CONTENT_LENGTH_STR, true))));
 
-                        if (limitTime == 0)
+                        if (targetTime == 0)
                         {
                             infoLast.timeModified = httpDateToTime(
                                 xmlNodeContent(xmlNodeChild(property, AZURE_XML_TAG_LAST_MODIFIED_STR, true)));
@@ -590,7 +590,7 @@ storageAzureList(THIS_VOID, const String *const path, const StorageInfoLevel lev
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(STRING, param.expression);
-        FUNCTION_LOG_PARAM(TIME, param.limitTime);
+        FUNCTION_LOG_PARAM(TIME, param.targetTime);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -598,7 +598,7 @@ storageAzureList(THIS_VOID, const String *const path, const StorageInfoLevel lev
 
     StorageList *const result = storageLstNew(level);
 
-    storageAzureListInternal(this, path, level, param.expression, false, param.limitTime, storageAzureListCallback, result);
+    storageAzureListInternal(this, path, level, param.expression, false, param.targetTime, storageAzureListCallback, result);
 
     FUNCTION_LOG_RETURN(STORAGE_LIST, result);
 }
@@ -764,7 +764,7 @@ static const StorageInterface storageInterfaceAzure =
 
 FN_EXTERN Storage *
 storageAzureNew(
-    const String *const path, const bool write, const time_t limitTime, StoragePathExpressionCallback pathExpressionFunction,
+    const String *const path, const bool write, const time_t targetTime, StoragePathExpressionCallback pathExpressionFunction,
     const String *const container, const String *const account, const StorageAzureKeyType keyType, const String *const key,
     const size_t blockSize, const KeyValue *const tag, const String *const endpoint, const StorageAzureUriStyle uriStyle,
     const unsigned int port, const TimeMSec timeout, const bool verifyPeer, const String *const caFile, const String *const caPath)
@@ -772,7 +772,7 @@ storageAzureNew(
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(BOOL, write);
-        FUNCTION_LOG_PARAM(TIME, limitTime);
+        FUNCTION_LOG_PARAM(TIME, targetTime);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(STRING, container);
         FUNCTION_TEST_PARAM(STRING, account);
@@ -846,5 +846,5 @@ storageAzureNew(
     OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(
-        STORAGE, storageNew(STORAGE_AZURE_TYPE, path, 0, 0, write, limitTime, pathExpressionFunction, this, this->interface));
+        STORAGE, storageNew(STORAGE_AZURE_TYPE, path, 0, 0, write, targetTime, pathExpressionFunction, this, this->interface));
 }

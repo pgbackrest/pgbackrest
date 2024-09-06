@@ -21,7 +21,7 @@ struct StorageIterator
     StorageInfoLevel level;                                         // Info level
     bool recurse;                                                   // Recurse into paths
     SortOrder sortOrder;                                            // Sort order
-    time_t limitTime;                                               // List version <= time
+    time_t targetTime;                                              // List max version <= time
     const String *expression;                                       // Match expression
     RegExp *regExp;                                                 // Parsed match expression
 
@@ -66,7 +66,7 @@ storageItrPathAdd(StorageIterator *const this, const String *const pathSub)
         // Get path content
         StorageList *const list = storageInterfaceListP(
             this->driver, pathSub == NULL ? this->path : strNewFmt("%s/%s", strZ(this->path), strZ(pathSub)), this->level,
-            .expression = this->expression, .limitTime = this->limitTime);
+            .expression = this->expression, .targetTime = this->targetTime);
 
         // If path exists
         if (list != NULL)
@@ -112,7 +112,7 @@ storageItrPathAdd(StorageIterator *const this, const String *const pathSub)
 FN_EXTERN StorageIterator *
 storageItrNew(
     void *const driver, const String *const path, const StorageInfoLevel level, const bool errorOnMissing, const bool nullOnMissing,
-    const bool recurse, const SortOrder sortOrder, const time_t limitTime, const String *const expression)
+    const bool recurse, const SortOrder sortOrder, const time_t targetTime, const String *const expression)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM_P(VOID, driver);
@@ -122,7 +122,7 @@ storageItrNew(
         FUNCTION_LOG_PARAM(BOOL, nullOnMissing);
         FUNCTION_LOG_PARAM(BOOL, recurse);
         FUNCTION_LOG_PARAM(ENUM, sortOrder);
-        FUNCTION_LOG_PARAM(TIME, limitTime);
+        FUNCTION_LOG_PARAM(TIME, targetTime);
         FUNCTION_LOG_PARAM(STRING, expression);
     FUNCTION_LOG_END();
 
@@ -145,7 +145,7 @@ storageItrNew(
                 .level = level,
                 .recurse = recurse,
                 .sortOrder = sortOrder,
-                .limitTime = limitTime,
+                .targetTime = targetTime,
                 .expression = strDup(expression),
                 .stack = lstNewP(sizeof(StorageIteratorInfo *)),
                 .nameNext = strNew(),
