@@ -322,7 +322,7 @@
 
                             <p>When the <br-option>limit-time</br-option> option is specified then the <br-option>repo</br-option> option must also be provided. It is likely that not all repository types will support versioning and in general it makes sense to target a single repository for recovery.</p>
 
-                            <p>Note comparisons to the storage timestamp are &lt;= the timestamp provided and milliseconds are truncated from the timestamp when provided.</p>
+                            <p>Note that comparisons to the storage timestamp are &lt;= the timestamp provided and milliseconds are truncated from the timestamp when provided.</p>
                         </text>
 
                         <example>2024-08-08 12:12:12+00</example>
