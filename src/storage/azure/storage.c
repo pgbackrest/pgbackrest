@@ -476,7 +476,7 @@ storageAzureListInternal(
                         infoLast.exists = false;
                     }
 
-                    // If filtering by time exclude versions that are newer than targetTime. Note that the API does not provide
+                    // If targeting by time exclude versions that are newer than targetTime. Note that the API does not provide
                     // reliable delete markers so the filtering will also show files that have been deleted rather than replaced
                     // with a new version. The problem with the delete markers is that Creation-Time/Last-Modified are set equal to
                     // the times in the last version so we don't know when the file was deleted. It might be possible to use

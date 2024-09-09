@@ -790,7 +790,7 @@ storageGcsListInternal(
                             infoLast.exists = false;
                         }
 
-                        // If filtering by time exclude versions that are newer than targetTime. Note that the API does not provide
+                        // If targeting by time exclude versions that are newer than targetTime. Note that the API does not provide
                         // delete markers so the filtering will also show files that have been deleted rather than replaced with a
                         // new version.
                         if (targetTime != 0)

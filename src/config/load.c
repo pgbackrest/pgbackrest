@@ -439,7 +439,9 @@ cfgLoadUpdateOption(void)
         }
     }
 
-    // A repo must be specified when targeting time
+    // A repo must be specified when targeting time. Not all repo types support versioning so rather than try to skip repos in that
+    // case it seems to be easier to just target a specific repo. Also, depending on the type of corruption, different repos might
+    // require different target times.
     if (cfgOptionTest(cfgOptRepoTargetTime) && cfgOptionSource(cfgOptRepo) == cfgSourceDefault)
         THROW_FMT(OptionInvalidError, "option '" CFGOPT_REPO_TARGET_TIME "' not valid without option '" CFGOPT_REPO "'");
 

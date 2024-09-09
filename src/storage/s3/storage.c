@@ -787,7 +787,7 @@ storageS3ListInternal(
                         infoLast.exists = false;
                     }
 
-                    // If filtering by time
+                    // If targeting by time
                     if (targetTime != 0)
                     {
                         // Skip later versions
