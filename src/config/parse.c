@@ -123,6 +123,7 @@ typedef struct ParseRuleOption
 {
     const char *name;                                               // Name
     unsigned int type : 4;                                          // e.g. string, int, boolean
+    bool boolLike : 1;                                              // Option accepts y/n and can be treated as bool?
     bool beta : 1;                                                  // Is the option a beta feature?
     bool negate : 1;                                                // Can the option be negated on the command line?
     bool reset : 1;                                                 // Can the option be reset on the command line?
@@ -166,6 +167,9 @@ typedef enum
 
 #define PARSE_RULE_OPTION_TYPE(typeParam)                                                                                          \
     .type = cfgOptType##typeParam
+
+#define PARSE_RULE_OPTION_BOOL_LIKE(boolLikeParam)                                                                                 \
+    .boolLike = boolLikeParam
 
 #define PARSE_RULE_OPTION_BETA(betaParam)                                                                                          \
     .beta = betaParam
@@ -1671,10 +1675,12 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                     THROW_FMT(OptionInvalidError, "invalid option '--%s'", arg);
 
                 // If the option may have an argument (arguments are optional for boolean options)
+                const ParseRuleOption *const ruleOption = &parseRuleOption[option.id];
+
                 if (!option.negate && !option.reset)
                 {
                     // Handle boolean (only y/n allowed as argument)
-                    if (parseRuleOption[option.id].type == cfgOptTypeBoolean)
+                    if (ruleOption->type == cfgOptTypeBoolean)
                     {
                         // Validate argument/set negate when argument present
                         if (optionArg != NULL)
@@ -1688,19 +1694,34 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                             }
                         }
                     }
-                    // If no argument was found with the option then try the next argument
+                    // If no argument was found with the option then try the next argument (unless bool-like)
                     else if (optionArg == NULL)
                     {
-                        // Error if there are no more arguments in the list
-                        if (argListIdx == argListSize - 1)
+                        // If bool-like then set arg to y
+                        if (ruleOption->boolLike)
+                        {
+                            optionArg = Y_STR;
+                        }
+                        // Else if there are no more arguments in the list
+                        else if (argListIdx == argListSize - 1)
+                        {
                             THROW_FMT(OptionInvalidError, "option '--%s' requires an argument", strZ(optionName));
-
-                        optionArg = strNewZ(argList[++argListIdx]);
+                        }
+                        // Else get arg
+                        else
+                            optionArg = strNewZ(argList[++argListIdx]);
                     }
                 }
                 // Else error if an argument was found with the option
                 else if (optionArg != NULL)
                     THROW_FMT(OptionInvalidError, "option '%s' does not allow an argument", strZ(optionName));
+
+                // if negated and bool-like then set to n
+                if (option.negate && ruleOption->boolLike)
+                {
+                    option.negate = false;
+                    optionArg = N_STR;
+                }
 
                 // Error if this option is secure and cannot be passed on the command line
                 if (cfgParseOptionSecure(option.id))

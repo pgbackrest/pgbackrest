@@ -125,6 +125,7 @@ struct BldCfgOption
     const String *name;                                             // Name
     const String *type;                                             // Option type, e.g. integer
     const String *section;                                          // Option section, i.e. stanza or global
+    bool boolLike;                                                  // Option accepts y/n and can be treated as bool?
     bool internal;                                                  // Is the option internal?
     bool beta;                                                      // Is the option beta?
     bool required;                                                  // Is the option required?
