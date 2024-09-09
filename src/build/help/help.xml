@@ -1376,6 +1376,14 @@
 
                         <text>
                             <p>Enable backup from standby to reduce load on the primary cluster. This option requires that both the <host>primary</host> and <host>standby</host> hosts be configured.</p>
+
+                            <p>The following modes are supported:</p>
+
+                            <list>
+                                <list-item><id>y</id> - Standby is required for backup.</list-item>
+                                <list-item><id>prefer</id> - Backup from standby if available otherwise backup from primary.</list-item>
+                                <list-item><id>n</id> - Backup from primary only.</list-item>
+                            </list>
                         </text>
 
                         <example>y</example>
