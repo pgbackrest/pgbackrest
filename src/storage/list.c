@@ -207,7 +207,7 @@ storageLstGet(const StorageList *const this, const unsigned int idx)
         }
 
         case storageInfoLevelType:
-            result.type = (StorageType)listInfo->type.type;
+            result.type = listInfo->type.type;
 
         default:
             break;
