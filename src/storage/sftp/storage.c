@@ -13,6 +13,7 @@ SFTP Storage
 #include "common/regExp.h"
 #include "common/user.h"
 #include "storage/posix/storage.h"
+#include "storage/sftp/common.h"
 #include "storage/sftp/read.h"
 #include "storage/sftp/storage.intern.h"
 #include "storage/sftp/write.h"
@@ -301,7 +302,8 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
                 THROW_FMT(
                     ServiceError, "failed to shutdown sftpSession: libssh2 errno [%d]%s", rc,
                     rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                        strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+                        strZ(strNewFmt(": sftp errno [%lu] %s", libssh2_sftp_last_error(this->sftpSession),
+                                libssh2SftpErrorMsg(libssh2_sftp_last_error(this->sftpSession)))) : "");
             else
                 THROW_FMT(
                     ServiceError, "timeout shutting down sftpSession: libssh2 errno [%d]", rc);
@@ -363,7 +365,8 @@ storageSftpEvalLibSsh2Error(
     THROWP_FMT(
         errorType, "%s%s%s%s", message != NULL ? zNewFmt("%s%s", strZ(message), ssh2Errno == 0 ? "" : ": ") : "",
         ssh2Errno == 0 ? "" : zNewFmt("libssh2 error [%d]", ssh2Errno),
-        ssh2Errno == LIBSSH2_ERROR_SFTP_PROTOCOL ? zNewFmt(": sftp error [%" PRIu64 "]", sftpErrno) : "",
+        ssh2Errno == LIBSSH2_ERROR_SFTP_PROTOCOL ?
+        zNewFmt(": sftp error [%" PRIu64 "] %s", sftpErrno, libssh2SftpErrorMsg(sftpErrno)) : "",
         hint != NULL ? zNewFmt("\n%s", strZ(hint)) : "");
 
     FUNCTION_TEST_NO_RETURN();
@@ -1008,8 +1011,8 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
                                 else
                                 {
                                     THROW_FMT(
-                                        PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE " libssh sftp [%" PRIu64 "]", strZ(file),
-                                        sftpErrno);
+                                        PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE " libssh sftp [%" PRIu64 "] %s", strZ(file),
+                                        sftpErrno, libssh2SftpErrorMsg(sftpErrno));
                                 }
                             }
                             else
@@ -1043,7 +1046,8 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
                 const uint64_t sftpErrno = libssh2_sftp_last_error(this->sftpSession);
 
                 if (sftpErrno != LIBSSH2_FX_NO_SUCH_FILE)
-                    THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE " sftp error [%" PRIu64 "]", strZ(path), sftpErrno);
+                    THROW_FMT(
+                        PathRemoveError, STORAGE_ERROR_PATH_REMOVE " sftp error [%" PRIu64 "] %s", strZ(path), sftpErrno, libssh2SftpErrorMsg(sftpErrno));
 
                 // Path does not exist
                 result = false;
