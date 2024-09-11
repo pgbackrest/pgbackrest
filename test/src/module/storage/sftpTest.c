@@ -6908,8 +6908,9 @@ testRun(void)
 
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true), "new write file");
         TEST_ERROR_FMT(
-            ioWriteOpen(storageWriteIo(file)), FileOpenError, STORAGE_ERROR_WRITE_OPEN ": libssh2 error [-31]: sftp error [3]"
-            " LIBSSH2_FX_PERMISSION_DENIED", strZ(fileNoPerm));
+            ioWriteOpen(storageWriteIo(file)),
+            FileOpenError, STORAGE_ERROR_WRITE_OPEN ": libssh2 error [-31]: sftp error [3] LIBSSH2_FX_PERMISSION_DENIED",
+            strZ(fileNoPerm));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
