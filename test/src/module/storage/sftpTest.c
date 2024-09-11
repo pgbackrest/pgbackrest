@@ -7886,6 +7886,39 @@ testRun(void)
 #endif // HAVE_LIBSSH2
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("libssh2SftpErrorMsg()"))
+    {
+#ifdef HAVE_LIBSSH2
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("libssh2SftpErrorMsg()");
+
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_EOF), "LIBSSH2_FX_EOF", "LIBSSH2_FX_EOF");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_FAILURE), "LIBSSH2_FX_FAILURE", "LIBSSH2_FX_FAILURE");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_BAD_MESSAGE), "LIBSSH2_FX_BAD_MESSAGE", "LIBSSH2_FX_BAD_MESSAGE");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_NO_CONNECTION), "LIBSSH2_FX_NO_CONNECTION", "LIBSSH2_FX_NO_CONNECTION");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_OP_UNSUPPORTED), "LIBSSH2_FX_OP_UNSUPPORTED", "LIBSSH2_FX_OP_UNSUPPORTED");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_INVALID_HANDLE), "LIBSSH2_FX_INVALID_HANDLE", "LIBSSH2_FX_INVALID_HANDLE");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_NO_SUCH_PATH), "LIBSSH2_FX_NO_SUCH_PATH", "LIBSSH2_FX_NO_SUCH_PATH");
+        TEST_RESULT_Z(
+            libssh2SftpErrorMsg(
+                LIBSSH2_FX_FILE_ALREADY_EXISTS), "LIBSSH2_FX_FILE_ALREADY_EXISTS", "LIBSSH2_FX_FILE_ALREADY_EXISTS");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_WRITE_PROTECT), "LIBSSH2_FX_WRITE_PROTECT", "LIBSSH2_FX_WRITE_PROTECT");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_NO_MEDIA), "LIBSSH2_FX_NO_MEDIA", "LIBSSH2_FX_NO_MEDIA");
+        TEST_RESULT_Z(
+            libssh2SftpErrorMsg(
+                LIBSSH2_FX_NO_SPACE_ON_FILESYSTEM), "LIBSSH2_FX_NO_SPACE_ON_FILESYSTEM", "LIBSSH2_FX_NO_SPACE_ON_FILESYSTEM");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_QUOTA_EXCEEDED), "LIBSSH2_FX_QUOTA_EXCEEDED", "LIBSSH2_FX_QUOTA_EXCEEDED");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_LOCK_CONFLICT), "LIBSSH2_FX_LOCK_CONFLICT", "LIBSSH2_FX_LOCK_CONFLICT");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_DIR_NOT_EMPTY), "LIBSSH2_FX_DIR_NOT_EMPTY", "LIBSSH2_FX_DIR_NOT_EMPTY");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_NOT_A_DIRECTORY), "LIBSSH2_FX_NOT_A_DIRECTORY", "LIBSSH2_FX_NOT_A_DIRECTORY");
+        TEST_RESULT_Z(
+            libssh2SftpErrorMsg(LIBSSH2_FX_INVALID_FILENAME), "LIBSSH2_FX_INVALID_FILENAME", "LIBSSH2_FX_INVALID_FILENAME");
+#else
+        TEST_LOG(PROJECT_NAME " not built with sftp support");
+#endif // HAVE_LIBSSH2
+    }
+
 #ifdef HAVE_LIBSSH2
     hrnFdReadyShimUninstall();
     hrnSckClientOpenShimUninstall();

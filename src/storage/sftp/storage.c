@@ -303,7 +303,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
                     ServiceError, "failed to shutdown sftpSession: libssh2 errno [%d]%s", rc,
                     rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
                         strZ(strNewFmt(": sftp errno [%lu] %s", libssh2_sftp_last_error(this->sftpSession),
-                                libssh2SftpErrorMsg(libssh2_sftp_last_error(this->sftpSession)))) : "");
+                                       libssh2SftpErrorMsg(libssh2_sftp_last_error(this->sftpSession)))) : "");
             else
                 THROW_FMT(
                     ServiceError, "timeout shutting down sftpSession: libssh2 errno [%d]", rc);
@@ -366,7 +366,7 @@ storageSftpEvalLibSsh2Error(
         errorType, "%s%s%s%s", message != NULL ? zNewFmt("%s%s", strZ(message), ssh2Errno == 0 ? "" : ": ") : "",
         ssh2Errno == 0 ? "" : zNewFmt("libssh2 error [%d]", ssh2Errno),
         ssh2Errno == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-        zNewFmt(": sftp error [%" PRIu64 "] %s", sftpErrno, libssh2SftpErrorMsg(sftpErrno)) : "",
+            zNewFmt(": sftp error [%" PRIu64 "] %s", sftpErrno, libssh2SftpErrorMsg(sftpErrno)) : "",
         hint != NULL ? zNewFmt("\n%s", strZ(hint)) : "");
 
     FUNCTION_TEST_NO_RETURN();

@@ -10,6 +10,6 @@ libssh2Sftp Common
 Functions
 ***********************************************************************************************************************************/
 // Process libssh2 sftp errors
-FN_EXTERN const char * libssh2SftpErrorMsg(const uint64_t error);
+FN_EXTERN const char *libssh2SftpErrorMsg(const uint64_t error);
 
 #endif
