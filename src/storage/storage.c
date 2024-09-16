@@ -93,7 +93,7 @@ storageNew(
         // If time limit is requested then versioning must be supported
         CHECK(AssertError, targetTime == 0 || storageFeature(this, storageFeatureVersioning), "versioning required for time limit");
 
-        // If time limit is requested then storage must be write-only
+        // If time limit is requested then storage must be read-only
         CHECK(AssertError, targetTime == 0 || !write, "time limit requires read-only storage");
 
         // If path sync feature is enabled then path feature must be enabled

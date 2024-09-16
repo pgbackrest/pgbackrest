@@ -119,9 +119,11 @@ typedef struct StorageInterfaceNewReadParam
     // Limit bytes read from the file. NULL for no limit.
     const Variant *limit;
 
-    // File version to read (NULL for current version)
-    bool version;
-    const String *versionId;
+    // Target a specific file version. This requires a boolean as well as the versionId because file missing is indicated when the
+    // file is opened rather than when it is created. So if version = true and versionId = NULL then the file will be reported as
+    // missing on open.
+    bool version;                                                   // Target a file version
+    const String *versionId;                                        // Id when targeting a version (NULL if version is missing)
 } StorageInterfaceNewReadParam;
 
 typedef StorageRead *StorageInterfaceNewRead(
