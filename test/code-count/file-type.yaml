@@ -1767,6 +1767,14 @@ src/common/memContext.h:
   class: core
   type: c/h
 
+src/common/partialRestore.c:
+  class: core
+  type: c
+
+src/common/partialRestore.h:
+  class: core
+  type: c/h
+
 src/common/regExp.c:
   class: core
   type: c
@@ -3036,6 +3044,10 @@ test/src/module/common/logTest.c:
   type: c
 
 test/src/module/common/memContextTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/partialRestoreTest.c:
   class: test/module
   type: c
 

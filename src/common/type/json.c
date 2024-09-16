@@ -210,7 +210,7 @@ jsonReadTypeNext(JsonRead *const this)
 /***********************************************************************************************************************************
 Read the next type ignoring a single comma before the type
 ***********************************************************************************************************************************/
-static JsonType
+FN_EXTERN JsonType
 jsonReadTypeNextIgnoreComma(JsonRead *const this)
 {
     FUNCTION_TEST_BEGIN();

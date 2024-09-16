@@ -208,6 +208,8 @@ testRun(void)
             "  --db-exclude                        restore excluding the specified databases\n"
             "  --db-include                        restore only specified databases\n"
             "                                      [current=db1, db2]\n"
+            "  --filter                            the absolute path to the JSON file with\n"
+            "                                      information about the tables to restore\n"
             "  --force                             force a restore [default=n]\n"
             "  --link-all                          restore all symlinks [default=n]\n"
             "  --link-map                          modify the destination of a symlink\n"

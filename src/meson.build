@@ -215,6 +215,7 @@ src_pgbackrest = [
 	'common/io/tls/server.c',
 	'common/io/tls/session.c',
 	'common/lock.c',
+	'common/partialRestore.c',
 	'common/stat.c',
 	'common/type/json.c',
 	'common/type/string.c',
