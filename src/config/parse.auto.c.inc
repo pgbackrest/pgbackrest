@@ -2413,8 +2413,10 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                        // opt/filter
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                 // opt/filter
         (                                                                                                              // opt/filter
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                      // opt/filter
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                                        // opt/filter
             PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                          // opt/filter
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                         // opt/filter
         ),                                                                                                             // opt/filter
     ),                                                                                                                 // opt/filter
     // -----------------------------------------------------------------------------------------------------------------------------

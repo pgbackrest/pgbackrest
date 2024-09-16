@@ -40,6 +40,7 @@ Read Functions
 // Read next JSON type. This is based on an examination of the first character so there may be an error when the type is read, but
 // the type will not change.
 FN_EXTERN JsonType jsonReadTypeNext(JsonRead *this);
+FN_EXTERN JsonType jsonReadTypeNextIgnoreComma(JsonRead *this);
 
 // Read array begin/end
 FN_EXTERN void jsonReadArrayBegin(JsonRead *this);
