@@ -182,7 +182,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoHardlink), cfgSourceConfig, "repo-hardlink is source config");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 3, "compress-level is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceConfig, "compress-level is source config");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "backup-standby not is set");
+        TEST_RESULT_UINT(cfgOptionStrId(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_N, "backup-standby not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBackupStandby), cfgSourceDefault, "backup-standby is source default");
         TEST_RESULT_INT(cfgOptionInt64(cfgOptBufferSize), 65536, "buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceConfig, "backup-standby is source config");
@@ -1678,6 +1678,33 @@ testRun(void)
             cfgCommandParam(), "000000010000000200000003\n/path/to/wal/RECOVERYWAL\n", "check command arguments");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("bool-like");
+
+        StringList *argListBase = strLstNew();
+        strLstAddZ(argListBase, TEST_BACKREST_EXE);
+        strLstAddZ(argListBase, "backup");
+        strLstAddZ(argListBase, "--stanza=test");
+        strLstAddZ(argListBase, "--pg1-path=/");
+
+        argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--no-backup-standby");
+
+        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "negate");
+        TEST_RESULT_UINT(cfgOptionStrId(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_N, "backup-standby is n");
+
+        argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--backup-standby");
+
+        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "no arg");
+        TEST_RESULT_UINT(cfgOptionStrId(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_Y, "backup-standby is y");
+
+        argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--backup-standby=prefer");
+
+        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "prefer arg");
+        TEST_RESULT_UINT(cfgOptionStrId(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_PREFER, "backup-standby is prefer");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("various configuration settings");
 
         argList = strLstNew();
@@ -1880,7 +1907,7 @@ testRun(void)
         TEST_RESULT_INT(varInt64(cfgOptionVar(cfgOptRepoRetentionFull)), 55, "repo-retention-full as variant");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 3, "compress-level is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceConfig, "compress-level is source config");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "backup-standby not is set");
+        TEST_RESULT_UINT(cfgOptionStrId(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_N, "backup-standby not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBackupStandby), cfgSourceDefault, "backup-standby is source default");
         TEST_RESULT_BOOL(cfgOptionIdxReset(cfgOptBackupStandby, 0), true, "backup-standby was reset");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), true, "delta is set");

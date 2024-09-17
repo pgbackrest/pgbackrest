@@ -2,6 +2,17 @@
     <release-core-list>
         <release-improvement-list>
             <release-item>
+                <github-pull-request id="2378"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Allow requested standby backup to proceed with no standby.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2399"/>
 
                 <release-item-contributor-list>
@@ -33,6 +44,17 @@
                 </release-item-contributor-list>
 
                 <p>Save <file>backup.info</file> only when contents have changed.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2436"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Remove limitation on reading files in parallel during restore.</p>
             </release-item>
         </release-improvement-list>
 

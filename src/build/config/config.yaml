@@ -212,6 +212,10 @@ optionGroup:
 #      defined for the option command override, then they override command roles defined for the option (rule 2) above)
 #      and all roles defined for the command (rule 1) above).
 #
+# bool-like:
+#   Used to convert a boolean to a string or string-id type. It can be used as a boolean (e.g. --option or option=y) and the
+#   boolean values will be mapped to y/n. Otherwise it is used just as a string or string-id type.
+#
 # required:
 #   In global section:
 #     true - if the option does not have a default, then setting required in the global section means all commands listed in
@@ -1226,8 +1230,13 @@ option:
 
   backup-standby:
     section: global
-    type: boolean
-    default: false
+    type: string-id
+    bool-like: true
+    default: n
+    allow-list:
+      - n
+      - prefer
+      - y
     command:
       backup: {}
       check: {}
