@@ -1,5 +1,19 @@
 <release date="XXXX-XX-XX" version="2.54dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <release-feature-list>
+            <release-item>
+                <github-pull-request id="2404"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Allow repositories on versioned storage to be read at a target time.</p>
+            </release-item>
+        </release-feature-list>
+
         <release-improvement-list>
             <release-item>
                 <github-pull-request id="2378"/>
