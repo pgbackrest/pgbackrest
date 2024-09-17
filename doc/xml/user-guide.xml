@@ -1443,6 +1443,31 @@
         </section>
 
         <!-- =================================================================================================================== -->
+        <section id="configuration-recommendations">
+            <title>Configuration Recommendations</title>
+
+            <p><backrest/> has a number of useful options that are not enabled by default to maintain backward compatibility in the repository. However, when creating a new repository the following options are recommended. They can also be used on an existing repository with the caveat that older versions of <backrest/> will not be able to read the repository. This incompatibility depends on when the feature was introduced, which will be noted in the list below.</p>
+
+            <list>
+                <list-item><br-option>compress-type</br-option> - determines the compression algorithm used by the <cmd>backup</cmd> and <cmd>archive-push</cmd> commands. The default is <id>gz</id> (Gzip) but <id>zst</id> (Zstandard) is recommended because it is much faster and provides compression similar to <id>gz</id>. <id>zst</id> has been supported by the <br-option>compress-type</br-option> option since <link url="release.html#2.27">v2.27</link>. See <link page="configuration" section="/section-general/option-compress-type">Compress Type</link> for more details.</list-item>
+
+                <list-item><br-option>repo-bundle</br-option> - combines small files during backup to save space and improve the speed of both the <cmd>backup</cmd> and <cmd>restore</cmd> commands, especially on object stores. The <br-option>repo-bundle</br-option> option was introduced in <link url="release.html#2.39">v2.39</link>. See <link section="/backup/bundle">File Bundling</link> for more details.</list-item>
+
+                <list-item><br-option>repo-block</br-option> - stores only the portions of of files that have changed rather than the entire file during <id>diff</id>/<id>incr</id> <cmd>backup</cmd>. This saves space and increases the speed of the <cmd>backup</cmd>. The <br-option>repo-block</br-option> option was introduced in <link url="release.html#2.46">v2.46</link> but at least <link url="release.html#2.52.1">v2.52.1</link> is recommended. See <link section="/backup/block">Block Incremental</link> for more details.</list-item>
+            </list>
+
+            <p>There are other recommended options that are not enabled by default because they require additional configuration or because the default is safe (but not optimal). These options are available in all v2 versions of <backrest/>.</p>
+
+            <list>
+                <list-item><br-option>process-max</br-option> - determines how many processes will be used for commands. The default is 1, which is almost never the appropriate value. Each command uses <br-option>process-max</br-option> differently so refer to each command's documentation for details on usage.</list-item>
+
+                <list-item><br-option>archive-async</br-option> - archives WAL files to the repository in batch which greatly increases archiving speed. It is not enabled by default because it requires a spool path to be created. See <link section="/async-archiving">Asynchronous Archiving</link> for more details.</list-item>
+
+                <list-item><br-option>backup-standby</br-option> - performs the backup on a standby rather than the primary to reduce load on the primary. It is not enabled by default because it requires additional configuration and the presence of one or more standby hosts. See <link section="/standby-backup">Backup from a Standby</link> for more details.</list-item>
+            </list>
+        </section>
+
+        <!-- =================================================================================================================== -->
         <section id="perform-backup">
             <title>Perform a Backup</title>
 
