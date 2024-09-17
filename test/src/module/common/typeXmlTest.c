@@ -47,6 +47,7 @@ testRun(void)
 
         XmlNode *rootNode = NULL;
         TEST_ASSIGN(rootNode, xmlDocumentRoot(xmlDocument), "get root node");
+        TEST_RESULT_STR_Z(xmlNodeName(rootNode), "ListBucketResult", "root node name");
 
         XmlNode *nodeMaxKeys = NULL;
         TEST_ASSIGN(nodeMaxKeys, xmlNodeChild(rootNode, STRDEF("MaxKeys"), true), "get max keys");
@@ -71,6 +72,18 @@ testRun(void)
             xmlNodeContent(xmlNodeChild(xmlNodeLstGet(list, 1), STRDEF("Key"), true)), "test2.txt",
             "    check Contents index 1 Key");
         TEST_RESULT_VOID(xmlNodeLstFree(list), "    free list");
+
+        StringList *nameList = strLstNew();
+        strLstAddZ(nameList, "IsTruncated");
+        strLstAddZ(nameList, "Contents");
+
+        TEST_ASSIGN(list, xmlNodeChildListMulti(rootNode, nameList), "create node multi list");
+        TEST_RESULT_STR_Z(
+            xmlNodeContent(xmlNodeLstGet(list, 0)), "false", "check IsTruncated index 0 Contents");
+        TEST_RESULT_STR_Z(
+            xmlNodeContent(xmlNodeChild(xmlNodeLstGet(list, 1), STRDEF("Key"), true)), "test1.txt", "check Contents index 1 Key");
+        TEST_RESULT_STR_Z(
+            xmlNodeContent(xmlNodeChild(xmlNodeLstGet(list, 2), STRDEF("Key"), true)), "test2.txt", "check Contents index 2 Key");
 
         TEST_ERROR(
             xmlNodeChildN(rootNode, STRDEF("Contents"), 2, true), FormatError,

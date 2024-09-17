@@ -90,6 +90,7 @@ static struct HrnHostLocal
     bool blockIncr;                                                 // Block incremental enabled?
     bool archiveAsync;                                              // Async archiving enabled?
     bool nonVersionSpecific;                                        // Run non version-specific tests?
+    bool versioning;                                                // Is versioning enabled in the repo storage?
 
     List *hostList;                                                 // List of hosts
 } hrnHostLocal;
@@ -703,7 +704,7 @@ hrnHostConfig(HrnHost *const this)
                         HrnHost *const azure = hrnHostGet(HRN_HOST_AZURE);
 
                         this->pub.repo1Storage = storageAzureNew(
-                            hrnHostRepo1Path(this), true, NULL, STRDEF(HRN_HOST_AZURE_CONTAINER), STRDEF(HRN_HOST_AZURE_ACCOUNT),
+                            hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_AZURE_CONTAINER), STRDEF(HRN_HOST_AZURE_ACCOUNT),
                             storageAzureKeyTypeShared, STRDEF(HRN_HOST_AZURE_KEY), 4 * 1024 * 1024, NULL, hrnHostIp(azure),
                             storageAzureUriStylePath, 443, ioTimeoutMs(), false, NULL, NULL);
                     }
@@ -725,7 +726,7 @@ hrnHostConfig(HrnHost *const this)
                         HrnHost *const gcs = hrnHostGet(HRN_HOST_GCS);
 
                         this->pub.repo1Storage = storageGcsNew(
-                            hrnHostRepo1Path(this), true, NULL, STRDEF(HRN_HOST_GCS_BUCKET), storageGcsKeyTypeToken,
+                            hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_GCS_BUCKET), storageGcsKeyTypeToken,
                             STRDEF(HRN_HOST_GCS_KEY), 4 * 1024 * 1024, NULL,
                             strNewFmt("%s:%d", strZ(hrnHostIp(gcs)), HRN_HOST_GCS_PORT), ioTimeoutMs(), false, NULL, NULL);
                     }
@@ -748,7 +749,7 @@ hrnHostConfig(HrnHost *const this)
                         HrnHost *const s3 = hrnHostGet(HRN_HOST_S3);
 
                         this->pub.repo1Storage = storageS3New(
-                            hrnHostRepo1Path(this), true, NULL, STRDEF(HRN_HOST_S3_BUCKET), STRDEF(HRN_HOST_S3_ENDPOINT),
+                            hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_S3_BUCKET), STRDEF(HRN_HOST_S3_ENDPOINT),
                             storageS3UriStyleHost, STR(HRN_HOST_S3_REGION), storageS3KeyTypeShared, STRDEF(HRN_HOST_S3_ACCESS_KEY),
                             STRDEF(HRN_HOST_S3_ACCESS_SECRET_KEY), NULL, NULL, NULL, NULL, NULL, 5 * 1024 * 1024, NULL,
                             hrnHostIp(s3), 443, ioTimeoutMs(), false, NULL, NULL);
@@ -1037,6 +1038,13 @@ hrnHostRepoTotal(void)
     FUNCTION_HARNESS_RETURN(UINT, hrnHostLocal.repoTotal);
 }
 
+bool
+hrnHostRepoVersioning(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RETURN(UINT, hrnHostLocal.versioning);
+}
+
 /**********************************************************************************************************************************/
 void
 hrnHostConfigUpdate(const HrnHostConfigUpdateParam param)
@@ -1318,8 +1326,16 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
         }
 
         case STORAGE_S3_TYPE:
+        {
             storageS3RequestP((StorageS3 *)storageDriver(hrnHostRepo1Storage(repo)), HTTP_VERB_PUT_STR, FSLASH_STR);
+            storageS3RequestP(
+                (StorageS3 *)storageDriver(hrnHostRepo1Storage(repo)), HTTP_VERB_PUT_STR, FSLASH_STR,
+                .query = httpQueryAdd(httpQueryNewP(), STRDEF("versioning"), STRDEF("")),
+                .content = BUFSTRDEF("<VersioningConfiguration><Status>Enabled</Status></VersioningConfiguration>"));
+
+            hrnHostLocal.versioning = true;
             break;
+        }
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

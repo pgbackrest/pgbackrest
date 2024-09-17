@@ -210,6 +210,8 @@ storageReadRemoteOpen(THIS_VOID)
         else
             pckWriteU64P(param, varUInt64(this->interface.limit));
 
+        pckWriteBoolP(param, this->interface.version);
+        pckWriteStrP(param, this->interface.versionId);
         pckWritePackP(param, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
 
         // If the file exists
@@ -258,7 +260,8 @@ storageReadRemoteClose(THIS_VOID)
 FN_EXTERN StorageRead *
 storageReadRemoteNew(
     StorageRemote *const storage, ProtocolClient *const client, const String *const name, const bool ignoreMissing,
-    const bool compressible, const unsigned int compressLevel, const uint64_t offset, const Variant *const limit)
+    const bool compressible, const unsigned int compressLevel, const uint64_t offset, const Variant *const limit,
+    const bool version, const String *const versionId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, storage);
@@ -269,6 +272,8 @@ storageReadRemoteNew(
         FUNCTION_LOG_PARAM(UINT, compressLevel);
         FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
+        FUNCTION_LOG_PARAM(BOOL, version);
+        FUNCTION_LOG_PARAM(STRING, versionId);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -292,6 +297,8 @@ storageReadRemoteNew(
                 .ignoreMissing = ignoreMissing,
                 .offset = offset,
                 .limit = varDup(limit),
+                .version = version,
+                .versionId = strDup(versionId),
 
                 .ioInterface = (IoReadInterface)
                 {

@@ -155,7 +155,7 @@ testRun(void)
 
                 driver->interface.list = storageTestPerfList;
 
-                Storage *storageTest = storageNew(strIdFromZ("test"), STRDEF("/"), 0, 0, false, NULL, driver, driver->interface);
+                Storage *storageTest = storageNew(strIdFromZ("test"), STRDEF("/"), 0, 0, false, 0, NULL, driver, driver->interface);
                 storageHelper.storageRepoWrite = memNew(sizeof(Storage *));
                 storageHelper.storageRepoWrite[0] = storageTest;
 
@@ -178,7 +178,7 @@ testRun(void)
 
                 // Create remote storage
                 Storage *storageRemote = storageRemoteNew(
-                    STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL, client, 1);
+                    STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, 0, NULL, client, 1);
 
                 TimeMSec timeBegin = timeMSec();
 

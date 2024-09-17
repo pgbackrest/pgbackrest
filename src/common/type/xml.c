@@ -183,6 +183,19 @@ xmlNodeContentSet(XmlNode *const this, const String *const content)
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN String *
+xmlNodeName(const XmlNode *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(XML_NODE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(STRING, strNewZ((char *)this->node->name));
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN XmlNodeList *
 xmlNodeChildList(const XmlNode *const this, const String *const name)
 {
@@ -199,6 +212,29 @@ xmlNodeChildList(const XmlNode *const this, const String *const name)
     for (xmlNodePtr currentNode = this->node->children; currentNode != NULL; currentNode = currentNode->next)
     {
         if (currentNode->type == XML_ELEMENT_NODE && strEqZ(name, (char *)currentNode->name))
+            xmlNodeLstAdd(list, currentNode);
+    }
+
+    FUNCTION_TEST_RETURN(XML_NODE_LIST, list);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN XmlNodeList *
+xmlNodeChildListMulti(const XmlNode *const this, const StringList *const nameList)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(XML_NODE, this);
+        FUNCTION_TEST_PARAM(STRING_LIST, nameList);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(nameList != NULL);
+
+    XmlNodeList *const list = xmlNodeLstNew();
+
+    for (xmlNodePtr currentNode = this->node->children; currentNode != NULL; currentNode = currentNode->next)
+    {
+        if (currentNode->type == XML_ELEMENT_NODE && strLstExists(nameList, STR((char *)currentNode->name)))
             xmlNodeLstAdd(list, currentNode);
     }
 

@@ -18,7 +18,7 @@ typedef struct XmlNodeList XmlNodeList;
 #include "common/memContext.h"
 #include "common/type/list.h"
 #include "common/type/object.h"
-#include "common/type/string.h"
+#include "common/type/stringList.h"
 
 /***********************************************************************************************************************************
 Document Constructors
@@ -77,9 +77,15 @@ xmlNodeChild(const XmlNode *const this, const String *const name, const bool err
 // List of child nodes
 FN_EXTERN XmlNodeList *xmlNodeChildList(const XmlNode *this, const String *name);
 
+// List of child nodes using multiple names
+FN_EXTERN XmlNodeList *xmlNodeChildListMulti(const XmlNode *this, const StringList *nameList);
+
 // Node content
 FN_EXTERN String *xmlNodeContent(const XmlNode *this);
 FN_EXTERN void xmlNodeContentSet(XmlNode *this, const String *content);
+
+// Node name
+FN_EXTERN String *xmlNodeName(const XmlNode *this);
 
 /***********************************************************************************************************************************
 Node List Getters

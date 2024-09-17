@@ -366,6 +366,7 @@ testRun(void)
             "  --repo-storage-upload-chunk-size    repository storage upload chunk size\n"
             "  --repo-storage-verify-tls           repository storage certificate verify\n"
             "                                      [default=y]\n"
+            "  --repo-target-time                  target time for repository\n"
             "  --repo-type                         type of storage used for the repository\n"
             "                                      [default=posix]\n"
             "\n"
