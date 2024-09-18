@@ -14,6 +14,7 @@ Restore Command
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/log.h"
+#include "common/partialRestore.h"
 #include "common/regExp.h"
 #include "common/user.h"
 #include "config/config.h"
@@ -2068,10 +2069,26 @@ restoreProcessQueue(const Manifest *const manifest, List **const queueList)
         MEM_CONTEXT_END();
 
         // Now put all files into the processing queues
+        const bool isFilterSet = cfgOptionTest(cfgOptFilter);
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
             const ManifestFilePack *const filePack = manifestFilePackGet(manifest, fileIdx);
             const ManifestFile file = manifestFileUnpack(manifest, filePack);
+
+            if (isFilterSet)
+            {
+                Oid dbNode, relNode;
+                Oid spcNode = DEFAULTTABLESPACE_OID;
+                if (
+                    // If this file is located in the default tablespace
+                    sscanf(strZ(file.name), MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/%u/%u", &dbNode, &relNode) == 2 ||
+                    // If this file is located in a non-built-in tablespace
+                    sscanf(strZ(file.name), MANIFEST_TARGET_PGTBLSPC "/%u/%*[^/]/%u/%u", &spcNode, &dbNode, &relNode) == 3)
+                {
+                    if (!isRelationNeeded(dbNode, spcNode, relNode))
+                        continue;
+                }
+            }
 
             // Find the target that contains this file
             unsigned int targetIdx = 0;
@@ -2472,6 +2489,12 @@ cmdRestore(void)
             storageRepoIdx(backupData.repoIdx),
             strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupData.backupSet)), backupData.repoCipherType,
             backupData.backupCipherPass);
+
+        if (cfgOptionTest(cfgOptFilter) &&
+            (cfgOptionStrId(cfgOptFork) != CFGOPTVAL_FORK_GPDB || manifestData(jobData.manifest)->pgVersion != PG_VERSION_94))
+        {
+            THROW(OptionInvalidError, "option '" CFGOPT_FILTER "' is supported on GPDB 6 only");
+        }
 
         // Remotes (if any) are no longer needed since the rest of the repository reads will be done by the local processes
         protocolFree();

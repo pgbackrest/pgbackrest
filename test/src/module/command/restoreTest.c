@@ -3392,6 +3392,152 @@ testRun(void)
 
         // Check that file was restored to full size with a partial write
         TEST_RESULT_LOG_EMPTY_OR_CONTAINS(", bi 128KB/256KB, ");
+        harnessLogLevelSet(logLevelWarn);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("restore filter");
+
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), NULL, .recurse = true);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_PATH_BASE "/1/40044");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_PATH_BASE "/1/40044_fsm");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_PATH_BASE "/1/40044_vm");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_PATH_BASE "/1/40045");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_PATH_BASE "/1/40045_fsm");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_PATH_BASE "/1/40045_vm");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_PATH_BASE "/1/" PG_FILE_PGVERSION);
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_PATH_BASE "/1/pg_filenode.map");
+        HRN_STORAGE_PUT_EMPTY(storageTest, "ts/GPDB_6_301908232/16416/20000");
+        HRN_STORAGE_PUT_EMPTY(storageTest, "ts/GPDB_6_301908232/16416/20000_fsm");
+        HRN_STORAGE_PUT_EMPTY(storageTest, "ts/GPDB_6_301908232/16416/20000_vm");
+        HRN_STORAGE_PUT_EMPTY(storageTest, "ts/GPDB_6_301908232/16416/20001");
+        HRN_STORAGE_PUT_EMPTY(storageTest, "ts/GPDB_6_301908232/16416/20001_fsm");
+        HRN_STORAGE_PUT_EMPTY(storageTest, "ts/GPDB_6_301908232/16416/20001_vm");
+        HRN_STORAGE_PUT_EMPTY(storageTest, "ts/GPDB_6_301908232/16416/" PG_FILE_PGVERSION);
+        HRN_STORAGE_PUT_EMPTY(storageTest, "ts/GPDB_6_301908232/16416/pg_filenode.map");
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), PG_PATH_PGTBLSPC);
+        THROW_ON_SYS_ERROR(
+            symlink(TEST_PATH "/ts", zNewFmt("%s/" PG_PATH_PGTBLSPC "/16415", strZ(pgPath))) == -1,
+            FileOpenError, "unable to create symlink");
+
+        // Create stanza
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "testGPDB");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
+        hrnCfgArgRawZ(argList, cfgOptFork, "GPDB");
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        // To write pg_control for GPDB the --fork option should be set
+        HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(
+            storagePgWrite(), PG_VERSION_94, 9420600, .systemId = 0xEFEFEFEFEF, .catalogVersion = 301908232,
+            .pageSize = 32768, .walSegmentSize = 64 * 1024 * 1024);
+        TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create");
+
+        // Backup
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "testGPDB");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
+        hrnCfgArgRawZ(argList, cfgOptFork, "GPDB");
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), NULL, .recurse = true);
+        HRN_STORAGE_PATH_REMOVE(storageTest, "ts/GPDB_6_301908232", .recurse = true);
+
+        HRN_STORAGE_PUT_Z(
+            storageTest, "restore_filter.json",
+            "["
+            "  {"
+            "    \"dbOid\": 1,"
+            "    \"tables\": ["
+            "      {"
+            "        \"tablespace\": 1663,"
+            "        \"relfilenode\": 40045"
+            "      }"
+            "    ]"
+            "  },"
+            "  {"
+            "    \"dbOid\": 16416,"
+            "    \"tables\": ["
+            "      {"
+            "        \"tablespace\": 16415,"
+            "        \"relfilenode\": 20000"
+            "      }"
+            "    ]"
+            "  }"
+            "]");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "testGPDB");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
+        hrnCfgArgRawZ(argList, cfgOptFilter, TEST_PATH "/restore_filter.json");
+        hrnCfgArgRawZ(argList, cfgOptFork, "GPDB");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_RESULT_VOID(cmdRestore(), "restore");
+
+        // base/1/40044* are filtered out
+        TEST_STORAGE_LIST(
+            storagePg(), NULL,
+            "base/\n"
+            "base/1/\n"
+            "base/1/40045\n"
+            "base/1/40045_fsm\n"
+            "base/1/40045_vm\n"
+            "base/1/" PG_FILE_PGVERSION "\n"
+            "base/1/pg_filenode.map\n"
+            "global/\n"
+            "global/pg_control\n"
+            PG_PATH_PGTBLSPC "/\n"
+            PG_PATH_PGTBLSPC "/16415>\n",
+            .level = storageInfoLevelType);
+
+        // 16416/20001* are filtered out
+        TEST_STORAGE_LIST(
+            storageTest, "ts/GPDB_6_301908232",
+            "16416/\n"
+            "16416/20000\n"
+            "16416/20000_fsm\n"
+            "16416/20000_vm\n"
+            "16416/" PG_FILE_PGVERSION "\n"
+            "16416/pg_filenode.map\n",
+            .level = storageInfoLevelType);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("restore filter is supported on GPDB 6 only");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
+        hrnCfgArgRawZ(argList, cfgOptFilter, TEST_PATH "/restore_filter.json");
+        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_ERROR(cmdRestore(), OptionInvalidError, "option 'filter' is supported on GPDB 6 only");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
+        hrnCfgArgRawZ(argList, cfgOptFilter, TEST_PATH "/restore_filter.json");
+        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+        hrnCfgArgRawZ(argList, cfgOptFork, "GPDB");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_ERROR(cmdRestore(), OptionInvalidError, "option 'filter' is supported on GPDB 6 only");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

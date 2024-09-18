@@ -111,7 +111,7 @@ buildFilterList(JsonRead *const json)
     return lstSort(result, sortOrderAsc);
 }
 
-FN_EXTERN __attribute__((unused)) bool
+FN_EXTERN bool
 isRelationNeeded(const Oid dbNode, const Oid spcNode, const Oid relNode)
 {
     if (!cfgOptionTest(cfgOptFilter))
