@@ -85,4 +85,19 @@
             </release-item>
         </release-development-list>
     </release-core-list>
+
+    <release-doc-list>
+        <release-feature-list>
+            <release-item>
+                <github-pull-request id="2446"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add performance tuning section to user guide.</p>
+            </release-item>
+        </release-feature-list>
+    </release-doc-list>
 </release>
