@@ -99,14 +99,14 @@ helpRenderText(
     const String *const text, const bool internal, const bool beta, const size_t indent, const bool indentFirst,
     const size_t length)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, text);
-        FUNCTION_LOG_PARAM(BOOL, internal);
-        FUNCTION_LOG_PARAM(BOOL, beta);
-        FUNCTION_LOG_PARAM(SIZE, indent);
-        FUNCTION_LOG_PARAM(BOOL, indentFirst);
-        FUNCTION_LOG_PARAM(SIZE, length);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, text);
+        FUNCTION_TEST_PARAM(BOOL, internal);
+        FUNCTION_TEST_PARAM(BOOL, beta);
+        FUNCTION_TEST_PARAM(SIZE, indent);
+        FUNCTION_TEST_PARAM(BOOL, indentFirst);
+        FUNCTION_TEST_PARAM(SIZE, length);
+    FUNCTION_TEST_END();
 
     ASSERT(text != NULL);
     ASSERT(length > 0);
@@ -153,7 +153,7 @@ helpRenderText(
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -162,10 +162,10 @@ Helper functions for helpRender() to output values as strings
 static String *
 helpRenderValueIdx(const ConfigOption optionId, const unsigned int optionIdx)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(ENUM, optionId);
-        FUNCTION_LOG_PARAM(UINT, optionIdx);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(UINT, optionIdx);
+    FUNCTION_TEST_END();
 
     String *result = NULL;
 
@@ -221,7 +221,7 @@ helpRenderValueIdx(const ConfigOption optionId, const unsigned int optionIdx)
         MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_LOG_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 static String *
@@ -285,9 +285,9 @@ typedef struct HelpOptionData
 static String *
 helpRender(const Buffer *const helpData)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(BUFFER, helpData);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, helpData);
+    FUNCTION_TEST_END();
 
     String *const result = strCatZ(strNew(), PROJECT_NAME " " PROJECT_VERSION);
 
@@ -298,7 +298,7 @@ helpRender(const Buffer *const helpData)
     {
         strCatChr(result, '\n');
 
-        FUNCTION_LOG_RETURN(STRING, result);
+        FUNCTION_TEST_RETURN(STRING, result);
     }
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -631,7 +631,7 @@ helpRender(const Buffer *const helpData)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
