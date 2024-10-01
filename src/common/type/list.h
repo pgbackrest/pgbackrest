@@ -109,6 +109,13 @@ Functions
 // Clear items from a list
 FN_EXTERN List *lstClear(List *this);
 
+// Sets the list size to 0 for fast cleanup.
+FN_INLINE_ALWAYS void
+lstClearFast(List *const this)
+{
+    THIS_PUB(List)->listSize = 0;
+}
+
 // Get an item from the list
 FN_EXTERN void *lstGet(const List *this, unsigned int listIdx);
 FN_EXTERN void *lstGetLast(const List *this);

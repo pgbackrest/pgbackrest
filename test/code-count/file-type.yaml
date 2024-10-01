@@ -1955,6 +1955,30 @@ src/common/wait.h:
   class: core
   type: c/h
 
+src/common/walFilter/walFilter.c:
+  class: core
+  type: c
+
+src/common/walFilter/walFilter.h:
+  class: core
+  type: c/h
+
+src/common/walFilter/postgresCommon.h:
+  class: core
+  type: c/h
+
+src/common/walFilter/versions/recordProcessGPDB6.c:
+  class: core
+  type: c
+
+src/common/walFilter/versions/recordProcessGPDB6.h:
+  class: core
+  type: c/h
+
+src/common/walFilter/versions/xlogInfoGPDB6.h:
+  class: core
+  type: c/h
+
 src/config/common.c:
   class: core
   type: c
@@ -3120,6 +3144,10 @@ test/src/module/common/userTest.c:
   type: c
 
 test/src/module/common/waitTest.c:
+  class: test/module
+  type: c
+
+test/src/module/common/walFilterTest.c:
   class: test/module
   type: c
 

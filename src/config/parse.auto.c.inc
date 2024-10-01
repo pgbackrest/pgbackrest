@@ -2136,6 +2136,17 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(cfgCmdRepoLs)                                                                    // opt/filter
             PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                                   // opt/filter
         ),                                                                                                             // opt/filter
+                                                                                                                       // opt/filter
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                                // opt/filter
+        (                                                                                                              // opt/filter
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                                // opt/filter
+        ),                                                                                                             // opt/filter
+                                                                                                                       // opt/filter
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                                // opt/filter
+        (                                                                                                              // opt/filter
+            PARSE_RULE_OPTION_COMMAND(cfgCmdArchiveGet)                                                                // opt/filter
+            PARSE_RULE_OPTION_COMMAND(cfgCmdRestore)                                                                   // opt/filter
+        ),                                                                                                             // opt/filter
     ),                                                                                                                 // opt/filter
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                                   // opt/force

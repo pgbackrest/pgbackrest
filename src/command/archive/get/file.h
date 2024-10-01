@@ -27,6 +27,8 @@ typedef struct ArchiveGetFileResult
     StringList *warnList;                                           // Warnings from a successful operation
 } ArchiveGetFileResult;
 
+FN_EXTERN bool buildArchiveGetPipeLine(IoFilterGroup *group, const ArchiveGetFile *file);
+
 FN_EXTERN ArchiveGetFileResult archiveGetFile(
     const Storage *storage, const String *request, const List *actualList, const String *walDestination);
 

@@ -243,6 +243,7 @@ hrnPgControlToBuffer(const unsigned int controlVersion, const unsigned int crc, 
 
     // Set defaults if values are not passed
     pgControl.pageSize = pgControl.pageSize == 0 ? pgPageSize8 : pgControl.pageSize;
+    pgControl.walPageSize = pgControl.walPageSize == 0 ? pgPageSize8 : pgControl.walPageSize;
     pgControl.walSegmentSize =
         pgControl.walSegmentSize == UINT_MAX ?
             0 : (pgControl.walSegmentSize == 0 ? PG_WAL_SEGMENT_SIZE_DEFAULT : pgControl.walSegmentSize);

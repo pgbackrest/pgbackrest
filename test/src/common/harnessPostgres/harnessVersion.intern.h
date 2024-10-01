@@ -61,6 +61,7 @@ Create a pg_control file
                 .ThisTimeLineID = pgControl.timeline,                                                                              \
             },                                                                                                                     \
             .blcksz = pgControl.pageSize,                                                                                          \
+            .xlog_blcksz = pgControl.walPageSize,                                                                                  \
             .xlog_seg_size = pgControl.walSegmentSize,                                                                             \
             .data_checksum_version = pgControl.pageChecksumVersion,                                                                \
         };                                                                                                                         \

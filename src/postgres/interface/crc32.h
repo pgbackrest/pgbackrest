@@ -18,4 +18,10 @@ FN_EXTERN uint32_t crc32One(const unsigned char *data, size_t size);
 // Generate CRC-32C checksum (required by >= 9.5)
 FN_EXTERN uint32_t crc32cOne(const unsigned char *data, size_t size);
 
+FN_EXTERN uint32_t crc32cInit(void);
+
+FN_EXTERN uint32_t crc32cComp(uint32_t crc, const unsigned char *data, size_t size);
+
+FN_EXTERN uint32_t crc32cFinish(uint32_t crc);
+
 #endif

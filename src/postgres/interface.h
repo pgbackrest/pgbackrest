@@ -104,6 +104,7 @@ typedef struct PgControl
     uint32_t timeline;                                              // Current timeline
 
     PgPageSize pageSize;
+    PgPageSize walPageSize;
     unsigned int walSegmentSize;
 
     unsigned int pageChecksumVersion;                               // Page checksum version (0 if no checksum, 1 if checksum)

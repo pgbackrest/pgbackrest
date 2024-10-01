@@ -10,6 +10,7 @@ Test Archive Get Command
 #include "common/harnessPostgres.h"
 #include "common/harnessProtocol.h"
 #include "common/harnessStorage.h"
+#include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -1183,6 +1184,106 @@ testRun(void)
 
         // Check that the ok file was removed
         TEST_STORAGE_LIST_EMPTY(storageSpool(), STORAGE_SPOOL_ARCHIVE_IN);
+    }
+
+    if (testBegin("wal Filter"))
+    {
+        StringList *const baseArgList = strLstNew();
+        hrnCfgArgRawZ(baseArgList, cfgOptStanza, "test1");
+        hrnCfgArgRawZ(baseArgList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(baseArgList, cfgOptRepoPath, TEST_PATH "/repo");
+        hrnCfgArgRawZ(baseArgList, cfgOptFilter, "recovery_filter.json");
+        hrnCfgArgRawZ(baseArgList, cfgOptFork, CFGOPTVAL_FORK_GPDB_Z);
+
+        StringList *argList = strLstDup(baseArgList);
+
+        strLstAddZ(argList, "000000010000000100000001");
+        strLstAddZ(argList, TEST_PATH "/pg/pg_wal/RECOVERYXLOG");
+
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_wal");
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=7374327172765320188\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":" HRN_PG_SYSTEMID_94_Z ",\"db-version\":\"9.4\"}");
+
+        HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(
+            storagePgWrite(), PG_VERSION_94, 9420600, .systemId = HRN_PG_SYSTEMID_94, .catalogVersion = 301908232,
+            .pageSize = pgPageSize32, .walSegmentSize = 64 * 1024 * 1024, .walPageSize = pgPageSize32);
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/9.4-1/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+
+        TEST_TITLE("pass filter option");
+
+        TEST_RESULT_VOID(cmdArchiveGet(), "archive-get");
+
+        TEST_RESULT_LOG("P00   INFO: found 000000010000000100000001 in the repo1: 9.4-1 archive");
+
+        HRN_STORAGE_REMOVE(
+            storageRepoWrite(),
+            STORAGE_REPO_ARCHIVE "/9.4-1/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+
+        TEST_TITLE("pass filter option");
+
+        argList = strLstDup(baseArgList);
+        strLstAddZ(argList, "00000001.history");
+        strLstAddZ(argList, TEST_PATH "/pg/pg_wal/RECOVERYXLOG");
+
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_ARCHIVE "/9.4-1/00000001.history");
+        TEST_RESULT_VOID(cmdArchiveGet(), "archive-get");
+
+        TEST_RESULT_LOG("P00   INFO: found 00000001.history in the repo1: 9.4-1 archive");
+
+        TEST_TITLE("async wal filter");
+
+        argList = strLstDup(baseArgList);
+
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
+        strLstAddZ(argList, "000000010000000100000002");
+        strLstAddZ(argList, TEST_PATH "/pg/pg_wal/RECOVERYXLOG");
+
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        Buffer *walSegmentBuffer = bufNew(64 * 1024 * 1024);
+        memset(bufPtr(walSegmentBuffer), 0, 64 * 1024 * 1024);
+        bufUsedInc(walSegmentBuffer, 64 * 1024 * 1024);
+
+        HRN_STORAGE_PUT(
+            storageRepoWrite(),
+            STORAGE_REPO_ARCHIVE "/9.4-1/000000010000000100000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+            walSegmentBuffer);
+
+        // A test that the wal filter is applied with async archive-get.
+        TEST_ERROR(
+            cmdArchiveGet(), FileReadError,
+            "raised from local-1 protocol: unable to get 000000010000000100000002:\n"
+            "repo1: 9.4-1/0000000100000001/000000010000000100000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"
+            " [FormatError] 0/0 - wrong page magic");
+
+        TEST_TITLE("Test error on the buffer is smaller than the WAL page size.");
+
+        argList = strLstDup(baseArgList);
+
+        hrnCfgArgRawZ(argList, cfgOptBufferSize, "16KiB");
+        strLstAddZ(argList, "000000010000000100000002");
+        strLstAddZ(argList, TEST_PATH "/pg/pg_wal/RECOVERYXLOG");
+
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        TEST_ERROR(
+            cmdArchiveGet(), ConfigError,
+            "The buffer must be greater than or equal to the page size of the WAL file. Page size: 32KB, buffer size: 16KB.");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

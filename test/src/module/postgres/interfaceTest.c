@@ -92,7 +92,7 @@ testRun(void)
             "HINT: calculated 0x%x but expected value is 0xfadefade\n"
             "HINT: is pg_control corrupt?\n"
             "HINT: does pg_control have a different layout than expected?",
-            (uint32_t)(TEST_BIG_ENDIAN() ? 0x4e206eeb : (TEST_64BIT() ? 0x4ad387b2 : 0x3ca3a1ec)));
+            (uint32_t)(TEST_BIG_ENDIAN() ? 0xd5cd6cda : (TEST_64BIT() ? 0x88c0a002 : 0xfeb0865c)));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid CRC on force control version");
@@ -106,7 +106,7 @@ testRun(void)
             "HINT: checksum values may be misleading due to forced version scan\n"
             "HINT: is pg_control corrupt?\n"
             "HINT: does pg_control have a different layout than expected?",
-            (uint32_t)(TEST_BIG_ENDIAN() ? 0x27dc2b85 : (TEST_64BIT() ? 0xa9264d94 : 0xb371302a)));
+            (uint32_t)(TEST_BIG_ENDIAN() ? 0x26aedad2 : (TEST_64BIT() ? 0x2cc8815d : 0xecd11bb2)));
 
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
@@ -155,6 +155,13 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_95, .pageSize = 64 * 1024);
+
+        TEST_ERROR(
+            pgControlFromFile(storageTest, NULL), FormatError,
+            "page size is 65536 but only 1024, 2048, 4096, 8192, 16384, and 32768 are supported");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_95, .walPageSize = 64 * 1024);
 
         TEST_ERROR(
             pgControlFromFile(storageTest, NULL), FormatError,
@@ -242,6 +249,88 @@ testRun(void)
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
         TEST_RESULT_UINT(info.pageSize, pgPageSize32, "check page size");
+
+        TEST_TITLE("check all valid wal page sizes");
+
+        HRN_PG_CONTROL_PUT(
+            storageTest, PG_VERSION_94, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_94),
+            .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .walPageSize = pgPageSize8);
+
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
+        TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_94, "   check version");
+        TEST_RESULT_UINT(info.catalogVersion, 201409291, "   check catalog version");
+        TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
+        TEST_RESULT_UINT(info.timeline, 88, "check timeline");
+        TEST_RESULT_UINT(info.pageSize, pgPageSize8, "check page size");
+        TEST_RESULT_UINT(info.walPageSize, pgPageSize8, "check page size");
+        TEST_RESULT_UINT(info.pageChecksumVersion, 0, "check page checksum");
+
+        HRN_PG_CONTROL_PUT(
+            storageTest, PG_VERSION_96, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_96),
+            .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .walPageSize = pgPageSize1, .pageChecksumVersion = 1);
+
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
+        TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_96, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 201608131, "check catalog version");
+        TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
+        TEST_RESULT_UINT(info.timeline, 88, "check timeline");
+        TEST_RESULT_UINT(info.pageSize, pgPageSize8, "check page size");
+        TEST_RESULT_UINT(info.walPageSize, pgPageSize1, "check page size");
+        TEST_RESULT_UINT(info.pageChecksumVersion, 1, "check page checksum");
+
+        HRN_PG_CONTROL_PUT(
+            storageTest, PG_VERSION_12, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_12),
+            .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .walPageSize = pgPageSize2);
+
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
+        TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_12, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 201909212, "check catalog version");
+        TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
+        TEST_RESULT_UINT(info.timeline, 88, "check timeline");
+        TEST_RESULT_UINT(info.pageSize, pgPageSize8, "check page size");
+        TEST_RESULT_UINT(info.walPageSize, pgPageSize2, "check page size");
+
+        HRN_PG_CONTROL_PUT(
+            storageTest, PG_VERSION_14, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_14),
+            .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .walPageSize = pgPageSize4);
+
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
+        TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_14, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 202107181, "check catalog version");
+        TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
+        TEST_RESULT_UINT(info.timeline, 88, "check timeline");
+        TEST_RESULT_UINT(info.pageSize, pgPageSize8, "check page size");
+        TEST_RESULT_UINT(info.walPageSize, pgPageSize4, "check page size");
+
+        HRN_PG_CONTROL_PUT(
+            storageTest, PG_VERSION_16, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_16),
+            .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .walPageSize = pgPageSize16);
+
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
+        TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_16, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 202307071, "check catalog version");
+        TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
+        TEST_RESULT_UINT(info.timeline, 88, "check timeline");
+        TEST_RESULT_UINT(info.pageSize, pgPageSize8, "check page size");
+        TEST_RESULT_UINT(info.walPageSize, pgPageSize16, "check page size");
+
+        HRN_PG_CONTROL_PUT(
+            storageTest, PG_VERSION_17, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_17),
+            .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .walPageSize = pgPageSize32);
+
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
+        TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_17, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 202405161, "check catalog version");
+        TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
+        TEST_RESULT_UINT(info.timeline, 88, "check timeline");
+        TEST_RESULT_UINT(info.pageSize, pgPageSize8, "check page size");
+        TEST_RESULT_UINT(info.walPageSize, pgPageSize32, "check page size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("force control version");

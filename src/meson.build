@@ -220,6 +220,8 @@ src_pgbackrest = [
 	'common/type/json.c',
 	'common/type/string.c',
 	'common/type/xml.c',
+	'common/walFilter/walFilter.c',
+	'common/walFilter/versions/recordProcessGPDB6.c',
 	'config/config.c',
 	'config/exec.c',
 	'config/load.c',

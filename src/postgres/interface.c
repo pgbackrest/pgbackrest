@@ -343,6 +343,8 @@ pgControlFromBuffer(const Buffer *const controlFile, const String *const pgVersi
     // Check the page size
     pgPageSizeCheck(result.pageSize);
 
+    pgPageSizeCheck(result.walPageSize);
+
     // Check the checksum version
     if (result.pageChecksumVersion != 0 && result.pageChecksumVersion != PG_DATA_CHECKSUM_VERSION)
     {
