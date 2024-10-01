@@ -11,10 +11,37 @@ Archive Get File
 #include "common/debug.h"
 #include "common/io/filter/group.h"
 #include "common/log.h"
+#include "common/partialRestore.h"
+#include "common/walFilter/walFilter.h"
 #include "config/config.h"
 #include "info/infoArchive.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
+
+/**********************************************************************************************************************************/
+FN_EXTERN bool
+buildArchiveGetPipeLine(IoFilterGroup *const group, const ArchiveGetFile *const file)
+{
+    bool compressible = true;
+
+    // If there is a cipher then add the decrypt filter
+    if (file->cipherType != cipherTypeNone)
+    {
+        ioFilterGroupAdd(group, cipherBlockNewP(cipherModeDecrypt, file->cipherType, BUFSTR(file->cipherPassArchive)));
+        compressible = false;
+    }
+
+    // If file is compressed then add the decompression filter
+    CompressType compressType = compressTypeFromName(file->file);
+
+    if (compressType != compressTypeNone)
+    {
+        ioFilterGroupAdd(group, decompressFilterP(compressType));
+        compressible = false;
+    }
+
+    return compressible;
+}
 
 /**********************************************************************************************************************************/
 FN_EXTERN ArchiveGetFileResult
@@ -39,12 +66,27 @@ archiveGetFile(
     // Check all files in the actual list and return as soon as one is copied
     bool copied = false;
 
+    PgControl pgControl;
+    bool isFilterRequired = false;
+    if (cfgOptionTest(cfgOptFilter) && walIsSegment(request))
+    {
+        pgControl = pgControlFromFile(storagePg(), cfgOptionStrNull(cfgOptPgVersionForce));
+
+        if (pgControl.walPageSize > cfgOptionUInt(cfgOptBufferSize))
+        {
+            THROW_FMT(
+                ConfigError,
+                "The buffer must be greater than or equal to the page size of the WAL file. Page size: %s, buffer size: %s.",
+                strZ(strSizeFormat(pgControl.walPageSize)),
+                strZ(strSizeFormat(cfgOptionUInt(cfgOptBufferSize))));
+        }
+
+        isFilterRequired = true;
+    }
+
     for (unsigned int actualIdx = 0; actualIdx < lstSize(actualList); actualIdx++)
     {
         const ArchiveGetFile *const actual = lstGet(actualList, actualIdx);
-
-        // Is the file compressible during the copy?
-        bool compressible = true;
 
         TRY_BEGIN()
         {
@@ -53,24 +95,14 @@ archiveGetFile(
                 StorageWrite *const destination = storageNewWriteP(
                     storage, walDestination, .noCreatePath = true, .noSyncFile = true, .noSyncPath = true, .noAtomic = true);
 
-                // If there is a cipher then add the decrypt filter
-                if (actual->cipherType != cipherTypeNone)
+                // Is the file compressible during the copy?
+                bool compressible = buildArchiveGetPipeLine(ioWriteFilterGroup(storageWriteIo(destination)), actual);
+
+                if (isFilterRequired)
                 {
-                    ioFilterGroupAdd(
-                        ioWriteFilterGroup(storageWriteIo(destination)),
-                        cipherBlockNewP(cipherModeDecrypt, actual->cipherType, BUFSTR(actual->cipherPassArchive)));
-                    compressible = false;
+                    ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(destination)),
+                                     walFilterNew(pgControl, actual));
                 }
-
-                // If file is compressed then add the decompression filter
-                CompressType compressType = compressTypeFromName(actual->file);
-
-                if (compressType != compressTypeNone)
-                {
-                    ioFilterGroupAdd(ioWriteFilterGroup(storageWriteIo(destination)), decompressFilterP(compressType));
-                    compressible = false;
-                }
-
                 // Copy the file
                 storageCopyP(
                     storageNewReadP(

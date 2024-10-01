@@ -637,6 +637,8 @@ option:
       repo-ls: {}
     command-role:
       main: {}
+      async: {}
+      local: {}
 
   ignore-missing:
     type: boolean

@@ -62,6 +62,9 @@ testRun(void)
         TEST_RESULT_BOOL(lstRemove(list, &string2), true, "    remove string2");
         TEST_RESULT_BOOL(lstRemove(list, &string2), false, "    unable to remove string2");
         TEST_RESULT_PTR(lstFind(list, &string2), NULL, "    unable to find string2");
+
+        lstClearFast(list);
+        TEST_RESULT_UINT(lstSize(list), 0, "list fast clear");
     }
 
     // *****************************************************************************************************************************

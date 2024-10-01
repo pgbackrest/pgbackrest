@@ -100,3 +100,24 @@ crc32cOne(const unsigned char *data, size_t size)
 
     return result ^ 0xffffffff;
 }
+
+// crc32c calculation in a few steps. this is needed to calculate the crc32c for XRecord.
+FN_EXTERN uint32_t
+crc32cInit(void)
+{
+    return 0xffffffff;
+}
+
+FN_EXTERN uint32_t
+crc32cComp(uint32_t crc, const unsigned char *data, size_t size)
+{
+    while (size--)
+        crc = crc32c_lookup[(crc ^ *data++) & 0xFF] ^ (crc >> 8);
+    return crc;
+}
+
+FN_EXTERN uint32_t
+crc32cFinish(uint32_t crc)
+{
+    return crc ^ 0xffffffff;
+}
