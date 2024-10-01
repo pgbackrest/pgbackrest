@@ -57,7 +57,8 @@ hrnGpdbWalInsertXRecord(
     if (bufUsed(walBuffer) == 0)
     {
         // This is first record
-        XLogLongPageHeaderData longHeader = {0};
+        // Workaround gcc bug 53119
+        XLogLongPageHeaderData longHeader = {{0}};
         longHeader.std.xlp_magic = param.magic;
         longHeader.std.xlp_info = XLP_LONG_HEADER;
         longHeader.std.xlp_tli = 1;
