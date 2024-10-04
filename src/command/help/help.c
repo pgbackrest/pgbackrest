@@ -240,7 +240,6 @@ helpRenderValue(const ConfigOption optionId)
             for (unsigned int optionIdx = 1; optionIdx < cfgOptionGroupIdxTotal(cfgOptionGroupId(optionId)); optionIdx++)
             {
                 const String *const value = helpRenderValueIdx(optionId, optionIdx);
-                // fprintf(stdout, "!!!RESULT %s VALUE %s\n", strZNull(result), strZNull(value));fflush(stdout);
 
                 if (!strEq(result, value))
                 {
