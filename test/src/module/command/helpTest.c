@@ -587,7 +587,7 @@ testRun(void)
         TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check admonition text");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("multiple current values");
+        TEST_TITLE("multiple current values (with one missing)");
 
         optionHelp = zNewFmt(
             "%s - 'restore' command - 'repo-host' option help\n"
