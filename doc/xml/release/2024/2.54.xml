@@ -50,6 +50,17 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2453"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Correctly display current values for indexed options in help.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2403"/>
 
                 <release-item-contributor-list>
