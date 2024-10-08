@@ -170,8 +170,6 @@
         <!-- Hosts -->
         <variable key="host-image">pgbackrest/doc:{[os-type]}</variable>
 
-        <variable key="host-option">-v /sys/fs/cgroup:/sys/fs/cgroup:rw -v /tmp/$(mktemp -d):/run</variable>
-
         <!-- Limit host memory to check for memory leaks. Some environments do not allow memory to be set so allow disabling. -->
         <variable key="host-mem-limit">y</variable>
         <variable key="host-mem" if="'{[host-mem-limit]}' eq 'y'">-m 512m</variable>
@@ -360,20 +358,7 @@
     </host-define>
 
     <host-define if="{[os-type-is-rhel]}" image="{[host-image]}" from="{[os-image]}">
-        ENV container docker
-
         {[copy-ca-cert]}
-
-        RUN mkdir -p /lib/systemd/system/sysinit.target.wants &amp;&amp; \
-            (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == \
-            systemd-tmpfiles-setup.service ] || rm -f $i; done); \
-            rm -f /lib/systemd/system/multi-user.target.wants/*;\
-            rm -f /etc/systemd/system/*.wants/*;\
-            rm -f /lib/systemd/system/local-fs.target.wants/*; \
-            rm -f /lib/systemd/system/sockets.target.wants/*udev*; \
-            rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
-            rm -f /lib/systemd/system/basic.target.wants/*;\
-            rm -f /lib/systemd/system/anaconda.target.wants/*;
 
         VOLUME [ "/sys/fs/cgroup" ]
 
@@ -410,6 +395,14 @@
         RUN dnf install -y https://packages.microsoft.com/config/rhel/8/packages-microsoft-prod.rpm
         RUN dnf install -y azure-cli
 
+        # Install systemctl replacement that works without systemd running
+        ENV SYSCTL_REP_VER=1.5.8066
+        RUN wget -q -O - https://github.com/gdraheim/docker-systemctl-replacement/archive/refs/tags/v${SYSCTL_REP_VER?}.tar.gz | \
+            tar zx -C /root
+        RUN rm -f /usr/bin/systemctl
+        RUN cp /root/docker-systemctl-replacement-${SYSCTL_REP_VER?}/files/docker/systemctl3.py /usr/bin/systemctl
+        RUN rm -rf /root/docker-systemctl-replacement-${SYSCTL_REP_VER?}
+
         # Create an ssh key for root so all hosts can ssh to each other as root
         RUN \ {[ssh-key-install]}
 
@@ -420,14 +413,6 @@
         RUN adduser -n {[host-user]} &amp;&amp; \
             echo '{[host-user]}        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/{[host-user]}
 
-        # Enable the user session service so logons are allowed
-        RUN echo "[Install]" >> /usr/lib/systemd/system/systemd-user-sessions.service &amp;&amp; \
-            echo "[WantedBy=default.target]" >> /usr/lib/systemd/system/systemd-user-sessions.service &amp;&amp; \
-            systemctl enable systemd-user-sessions.service &amp;&amp; \
-            mkdir -p /etc/systemd/system/default.target.wants &amp;&amp; \
-            ln -s /usr/lib/systemd/system/systemd-user-sessions.service \
-                /etc/systemd/system/default.target.wants/systemd-user-sessions.service
-
         # Set locale
         RUN echo en_US.UTF-8 UTF-8 > /etc/locale.conf
 
@@ -435,7 +420,7 @@
         ENV PATH=/usr/pgsql-{[pg-version]}/bin:$PATH
         ENV PKG_CONFIG_PATH=/usr/pgsql-{[pg-version]}/lib/pkgconfig:$PKG_CONFIG_PATH
 
-        CMD ["/usr/sbin/init"]
+        ENTRYPOINT rm -rf /run/nologin &amp;&amp; /usr/sbin/sshd -D
     </host-define>
 
     <!-- ======================================================================================================================= -->
@@ -917,7 +902,7 @@
         <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="{[s3-image]}" os="{[os-type]}" option="-v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443" update-hosts="n"/>
 
         <!-- Create SFTP server first to allow it time to boot before being used -->
-        <host-add id="{[host-sftp-id]}" name="{[host-sftp]}" user="{[host-sftp-user]}" image="{[host-sftp-image]}" os="{[os-type]}" mount="{[host-sftp-mount]}" option="{[host-mem]} {[host-option]}"/>
+        <host-add id="{[host-sftp-id]}" name="{[host-sftp]}" user="{[host-sftp-user]}" image="{[host-sftp-image]}" os="{[os-type]}" mount="{[host-sftp-mount]}"/>
 
         <p>This user guide is intended to be followed sequentially from beginning to end &amp;mdash; each section depends on the last. For example, the <link section="/restore">Restore</link> section relies on setup that is performed in the <link section="/quickstart">Quick Start</link> section. Once <backrest/> is up and running then skipping around is possible but following the user guide in order is recommended the first time through.</p>
 
@@ -1017,7 +1002,7 @@
 
         <p>Installing <backrest/> from a package is preferable to building from source. See <link section="/installation">Installation</link> for more information about packages.</p>
 
-        <host-add id="{[host-build-id]}" name="{[host-build]}" user="{[host-build-user]}" image="{[host-build-image]}" os="{[os-type]}" mount="{[host-build-mount]}" option="{[host-option]}"/>
+        <host-add id="{[host-build-id]}" name="{[host-build]}" user="{[host-build-user]}" image="{[host-build-image]}" os="{[os-type]}" mount="{[host-build-mount]}"/>
 
         <p>When building from source it is best to use a build host rather than building on production. Many of the tools required for the build should generally not be installed in production. <backrest/> consists of a single executable so it is easy to copy to a new host once it is built.</p>
 
@@ -1104,7 +1089,7 @@
 
         <p>A new host named <host>{[host-pg1]}</host> is created to contain the demo cluster and run <backrest/> examples.</p>
 
-        <host-add id="{[host-pg1-id]}" name="{[host-pg1]}" user="{[host-pg1-user]}" image="{[host-pg1-image]}" os="{[os-type]}" mount="{[host-pg1-mount]}" option="{[host-mem]} {[host-option]}"/>
+        <host-add id="{[host-pg1-id]}" name="{[host-pg1]}" user="{[host-pg1-user]}" image="{[host-pg1-image]}" os="{[os-type]}" mount="{[host-pg1-mount]}" option="{[host-mem]}"/>
 
         <!-- <execute-list if="{[pg-version]} >= 11" host="{[host-pg1]}">
             <title>Create <user>{[br-user]}</user> user</title>
@@ -1583,7 +1568,7 @@
 
                 <execute if="{[os-type-is-rhel]}" user="root" output="y" err-expect="3">
                     <exe-cmd>{[pg-cluster-check]}</exe-cmd>
-                    <exe-highlight>Failed to start PostgreSQL</exe-highlight>
+                    <exe-highlight>failed</exe-highlight>
                 </execute>
             </execute-list>
 
@@ -2734,7 +2719,7 @@
 
             <admonition type="note">The <backrest/> version installed on the <host>repository</host> host must exactly match the version installed on the <postgres/> host.</admonition>
 
-            <host-add id="{[host-repo1-id]}" name="{[host-repo1]}" user="{[host-repo1-user]}" image="{[host-repo1-image]}" os="{[os-type]}" mount="{[host-repo1-mount]}" option="{[host-mem]} {[host-option]}"/>
+            <host-add id="{[host-repo1-id]}" name="{[host-repo1]}" user="{[host-repo1-user]}" image="{[host-repo1-image]}" os="{[os-type]}" mount="{[host-repo1-mount]}" option="{[host-mem]}"/>
 
             <p>The <user>{[br-user]}</user> user is created to own the <backrest/> repository. Any user can own the repository but it is best not to use <user>postgres</user> (if it exists) to avoid confusion.</p>
 
@@ -3158,7 +3143,7 @@
 
             <p>A new host named <host>{[host-pg2]}</host> is created to run the standby.</p>
 
-            <host-add id="{[host-pg2-id]}" name="{[host-pg2]}" user="{[host-pg2-user]}" image="{[host-pg2-image]}" os="{[os-type]}" mount="{[host-pg2-mount]}" option="{[host-mem]} {[host-option]}"/>
+            <host-add id="{[host-pg2-id]}" name="{[host-pg2]}" user="{[host-pg2-user]}" image="{[host-pg2-image]}" os="{[os-type]}" mount="{[host-pg2-mount]}" option="{[host-mem]}"/>
 
             <!-- <execute-list if="{[pg-version]} >= 11" host="{[host-pg2]}">
                 <title>Create <user>{[br-user]}</user> user</title>
@@ -3549,7 +3534,7 @@
 
             <p>A new host named <host>{[host-pgalt]}</host> is created to run the new primary.</p>
 
-            <host-add id="{[host-pgalt-id]}" name="{[host-pgalt]}" user="{[host-pgalt-user]}" image="{[host-pgalt-image]}" os="{[os-type]}" mount="{[host-pgalt-mount]}" option="{[host-mem]} {[host-option]}"/>
+            <host-add id="{[host-pgalt-id]}" name="{[host-pgalt]}" user="{[host-pgalt-user]}" image="{[host-pgalt-image]}" os="{[os-type]}" mount="{[host-pgalt-mount]}" option="{[host-mem]}"/>
 
             <block id="br-install">
                 <block-variable-replace key="br-install-host">{[host-pgalt]}</block-variable-replace>
@@ -4354,7 +4339,7 @@
         <execute-list host="{[host-pg1]}">
             <title>Check configuration</title>
 
-            <execute user="postgres" output="n" filter="n">
+            <execute user="root" output="n" filter="n">
                 <exe-cmd>{[pg-cluster-check-upgrade]}</exe-cmd>
             </execute>
 
