@@ -18,6 +18,8 @@ Shim install state
 static struct
 {
     bool localShimFdReady;                                          // Is shim installed?
+    bool localShimFdReadyOne;                                       // Should the shim run once?
+    bool localShimFdReadyOneResult;                                 // Shim result for single run
 } hrnFdStatic;
 
 /***********************************************************************************************************************************
@@ -35,9 +37,18 @@ fdReady(int fd, bool read, bool write, TimeMSec timeout)
 
     bool result;
 
-    if (hrnFdStatic.localShimFdReady)
+    // If shim will run once then return the requested result
+    if (hrnFdStatic.localShimFdReadyOne)
     {
-        // When shim is installed return false if read and write are both true, otherwise return true
+        hrnFdStatic.localShimFdReadyOne = false;
+        result = hrnFdStatic.localShimFdReadyOneResult;
+
+        fprintf(stdout, "!!! fdReady result %d\n", result);fflush(stdout);
+
+    }
+    // Else if shim is installed return false if read and write are both true, otherwise return true
+    else if (hrnFdStatic.localShimFdReady)
+    {
         result = !(read && write);
     }
     // Else call normal function
@@ -65,6 +76,20 @@ hrnFdReadyShimUninstall(void)
     FUNCTION_HARNESS_VOID();
 
     hrnFdStatic.localShimFdReady = false;
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+hrnFdReadyShimOne(const bool result)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(BOOL, result);
+    FUNCTION_HARNESS_END();
+
+    hrnFdStatic.localShimFdReadyOne = true;
+    hrnFdStatic.localShimFdReadyOneResult = result;
 
     FUNCTION_HARNESS_RETURN_VOID();
 }

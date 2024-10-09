@@ -8,3 +8,6 @@ Functions
 // Install/uninstall shim
 void hrnFdReadyShimInstall(void);
 void hrnFdReadyShimUninstall(void);
+
+// Use shim for one call
+void hrnFdReadyShimOne(bool result);

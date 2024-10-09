@@ -4,7 +4,6 @@ Postgres Client
 #include "build.auto.h"
 
 #include <libpq-fe.h>
-#include <sys/poll.h>
 
 #include "common/debug.h"
 #include "common/io/fd.h"
@@ -200,7 +199,7 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
             PQconsumeInput(this->connection);
             busy = PQisBusy(this->connection);
         }
-        while (busy && (fdReadyRead(PQsocket(this->connection), pgClientTimeout(this)) || waitMore(wait)));
+        while (busy && (fdReadyRead(PQsocket(this->connection), 0) || waitMore(wait)));
 
         // If the query is still busy after the timeout attempt to cancel
         if (busy)

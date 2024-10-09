@@ -13,6 +13,7 @@ Pq Test Harness
 #include "common/type/string.h"
 #include "common/type/variantList.h"
 
+#include "common/harnessFd.h"
 #include "common/harnessPq.h"
 #include "common/harnessTest.h"
 
@@ -267,6 +268,21 @@ int
 PQisBusy(PGconn *conn)
 {
     return hrnPqScriptRun(HRN_PQ_ISBUSY, NULL, (HrnPqScript *)conn)->resultInt;
+}
+
+/***********************************************************************************************************************************
+Shim for PQsocket()
+***********************************************************************************************************************************/
+int
+PQsocket(const PGconn *conn)
+{
+    int result = hrnPqScriptRun(HRN_PQ_SOCKET, NULL, (HrnPqScript *)conn)->resultInt;
+
+    fprintf(stdout, "!!! socket result %d\n", result);fflush(stdout);
+
+    hrnFdReadyShimOne(result == true);
+
+    return result;
 }
 
 /***********************************************************************************************************************************
