@@ -292,6 +292,12 @@ unit:
         total: 6
         feature: IO
         harness: pack
+        harness:
+          name: fd
+          shim:
+            common/io/fd:
+              function:
+                - fdReady
 
         coverage:
           - common/io/bufferRead
@@ -624,12 +630,6 @@ unit:
         harness:
           name: libSsh2
           integration: false
-        harness:
-          name: fd
-          shim:
-            common/io/fd:
-              function:
-                - fdReady
 
         coverage:
           - storage/sftp/helper
