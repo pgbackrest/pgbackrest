@@ -43,8 +43,9 @@ fdReady(int fd, bool read, bool write, TimeMSec timeout)
         hrnFdStatic.localShimFdReadyOne = false;
         result = hrnFdStatic.localShimFdReadyOneResult;
 
-        fprintf(stdout, "!!! fdReady result %d\n", result);fflush(stdout);
-
+        // If result is false sleep the full timeout
+        if (!result)
+            sleepMSec(timeout);
     }
     // Else if shim is installed return false if read and write are both true, otherwise return true
     else if (hrnFdStatic.localShimFdReady)

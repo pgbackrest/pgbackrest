@@ -199,7 +199,7 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
             PQconsumeInput(this->connection);
             busy = PQisBusy(this->connection);
         }
-        while (busy && (fdReadyRead(PQsocket(this->connection), 0) || waitMore(wait)));
+        while (busy && fdReadyRead(PQsocket(this->connection), waitRemains(wait)));
 
         // If the query is still busy after the timeout attempt to cancel
         if (busy)

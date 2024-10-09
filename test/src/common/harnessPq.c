@@ -278,8 +278,6 @@ PQsocket(const PGconn *conn)
 {
     int result = hrnPqScriptRun(HRN_PQ_SOCKET, NULL, (HrnPqScript *)conn)->resultInt;
 
-    fprintf(stdout, "!!! socket result %d\n", result);fflush(stdout);
-
     hrnFdReadyShimOne(result == true);
 
     return result;
