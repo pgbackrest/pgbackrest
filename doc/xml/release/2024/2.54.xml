@@ -1,5 +1,23 @@
 <release date="XXXX-XX-XX" version="2.54dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="2458"/>
+                <github-pull-request id="2459"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="antoine.millet"/>
+                    <release-item-contributor id="thibault.vincent"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                    <!-- Actually tester, but we don't have a tag for that yet -->
+                    <release-item-reviewer id="antoine.millet"/>
+                </release-item-contributor-list>
+
+                <p>Fix <postgres/> query performance for large datasets.</p>
+            </release-item>
+        </release-bug-list>
+
         <release-feature-list>
             <release-item>
                 <github-pull-request id="2404"/>
