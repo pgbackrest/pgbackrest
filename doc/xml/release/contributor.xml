@@ -85,6 +85,11 @@
     <contributor-id type="github">andr-sokolov</contributor-id>
 </contributor>
 
+<contributor id="antoine.millet">
+    <contributor-name-display>Antoine Millet</contributor-name-display>
+    <contributor-id type="github">NaPs</contributor-id>
+</contributor>
+
 <contributor id="anton.glushakov">
     <contributor-name-display>Anton Glushakov</contributor-name-display>
     <contributor-id type="github">glushakov</contributor-id>
@@ -983,6 +988,11 @@
 <contributor id="tanel.suurhans">
     <contributor-name-display>Tanel Suurhans</contributor-name-display>
     <contributor-id type="github">tanelsuurhans</contributor-id>
+</contributor>
+
+<contributor id="thibault.vincent">
+    <contributor-name-display>Thibault Vincent</contributor-name-display>
+    <contributor-id type="github">npdgm</contributor-id>
 </contributor>
 
 <contributor id="tim.garton">
