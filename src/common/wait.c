@@ -55,6 +55,58 @@ waitNew(const TimeMSec waitTime)
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN TimeMSec
+waitRemains(Wait *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(WAIT, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    TimeMSec result = 0;
+
+    // If sleep is 0 then the wait time has already ended
+    if (this->sleepTime > 0)
+    {
+        // Get the elapsed time
+        const TimeMSec elapsedTime = timeMSec() - this->beginTime;
+
+        // Is there more time to go?
+        if (elapsedTime < this->waitTime)
+        {
+            // Calculate remaining time
+            result = this->waitTime - elapsedTime;
+
+            // Calculate sleep time as a sum of current and last (a Fibonacci-type sequence)
+            TimeMSec sleepTime = this->sleepTime + this->sleepPrevTime;
+
+            // Make sure sleep time does not go beyond remaining time (this won't be negative because of the if condition above)
+            if (sleepTime > result)
+                sleepTime = result;
+
+            // Store new sleep times
+            this->sleepPrevTime = this->sleepTime;
+            this->sleepTime = sleepTime;
+        }
+        // Else are there retries left?
+        else if (this->retry != 0)
+        {
+            result = this->sleepTime;
+        }
+        // Else set sleep to zero
+        else
+            this->sleepTime = 0;
+
+        // Decrement retries
+        if (this->retry > 0)
+            this->retry--;
+    }
+
+    FUNCTION_LOG_RETURN(TIME_MSEC, result);
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN bool
 waitMore(Wait *const this)
 {
@@ -66,51 +118,11 @@ waitMore(Wait *const this)
 
     bool result = false;
 
-    // If sleep is 0 then the wait time has already ended
-    if (this->sleepTime > 0)
+    // If time remains in the wait then sleep
+    if (waitRemains(this) > 0)
     {
-        // Get the elapsed time
-        const TimeMSec elapsedTime = timeMSec() - this->beginTime;
-
-        // Is there more time to go?
-        if (elapsedTime < this->waitTime)
-        {
-            // Calculate remaining sleep time
-            const TimeMSec remainTime = this->waitTime - elapsedTime;
-
-            // Calculate sleep time as a sum of current and last (a Fibonacci-type sequence)
-            TimeMSec sleepTime = this->sleepTime + this->sleepPrevTime;
-
-            // Make sure sleep time does not go beyond remaining time (this won't be negative because of the if condition above)
-            if (sleepTime > remainTime)
-                sleepTime = remainTime;
-
-            // Sleep required amount
-            sleepMSec(sleepTime);
-
-            // Store new sleep times
-            this->sleepPrevTime = this->sleepTime;
-            this->sleepTime = sleepTime;
-        }
-        // Else are there retries left?
-        else if (this->retry != 0)
-        {
-            // Sleep using the last calculated time
-            sleepMSec(this->sleepTime);
-        }
-        // Else set sleep to zero so call will return false
-        else
-            this->sleepTime = 0;
-
-        // Caller can continue processing
-        if (this->sleepTime > 0)
-        {
-            // Decrement retries
-            if (this->retry != 0)
-                this->retry--;
-
-            result = true;
-        }
+        sleepMSec(this->sleepTime);
+        result = true;
     }
 
     FUNCTION_LOG_RETURN(BOOL, result);

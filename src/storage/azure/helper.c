@@ -9,6 +9,7 @@ Azure Storage Helper
 #include "common/log.h"
 #include "config/config.h"
 #include "storage/azure/helper.h"
+#include "storage/helper.h"
 
 /**********************************************************************************************************************************/
 FN_EXTERN Storage *
@@ -77,7 +78,7 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = storageAzureNew(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, pathExpressionCallback,
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoTargetTime(), pathExpressionCallback,
                 cfgOptionIdxStr(cfgOptRepoAzureContainer, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureAccount, repoIdx), keyType, key,
                 (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx),
                 cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), endpoint, uriStyle, port, ioTimeoutMs(),

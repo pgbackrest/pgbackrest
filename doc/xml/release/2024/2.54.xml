@@ -1,5 +1,42 @@
 <release date="XXXX-XX-XX" version="2.54dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <commit subject="Move fd module shim to io module test."/>
+                <commit subject="Allow fdReady() shim to be run only once with a specified return value."/>
+                <commit subject="Refactor Wait object to expose remaining wait as waitRemains()."/>
+                <commit subject="Fix PostgreSQL query performance for large datasets.">
+                    <github-issue id="2458"/>
+                    <github-pull-request id="2459"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="antoine.millet"/>
+                    <release-item-contributor id="thibault.vincent"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                    <!-- Actually tester, but we don't have a tag for that yet -->
+                    <release-item-reviewer id="antoine.millet"/>
+                </release-item-contributor-list>
+
+                <p>Fix <postgres/> query performance for large datasets.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <github-pull-request id="2404"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Allow repositories on versioned storage to be read at a target time.</p>
+            </release-item>
+        </release-feature-list>
+
         <release-improvement-list>
             <release-item>
                 <github-pull-request id="2378"/>
@@ -33,6 +70,17 @@
                 </release-item-contributor-list>
 
                 <p>Refresh web-id token for each <proper>S3</proper> authentication.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2453"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Correctly display current values for indexed options in help.</p>
             </release-item>
 
             <release-item>
@@ -71,4 +119,19 @@
             </release-item>
         </release-development-list>
     </release-core-list>
+
+    <release-doc-list>
+        <release-feature-list>
+            <release-item>
+                <github-pull-request id="2446"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add performance tuning section to user guide.</p>
+            </release-item>
+        </release-feature-list>
+    </release-doc-list>
 </release>

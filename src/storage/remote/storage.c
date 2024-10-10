@@ -58,6 +58,9 @@ storageRemoteInfoGet(StorageRemoteInfoData *const data, PackRead *const read, St
     if (info->type == storageTypeFile)
         info->size = pckReadU64P(read);
 
+    // Read version
+    info->versionId = pckReadStrP(read);
+
     // Read fields needed for detail level
     if (info->level >= storageInfoLevelDetail)
     {
@@ -207,7 +210,7 @@ storageRemoteList(THIS_VOID, const String *const path, const StorageInfoLevel le
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(ENUM, level);
-        (void)param;                                                // No parameters are used
+        FUNCTION_LOG_PARAM(TIME, param.targetTime);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -221,6 +224,7 @@ storageRemoteList(THIS_VOID, const String *const path, const StorageInfoLevel le
 
         pckWriteStrP(commandParam, path);
         pckWriteU32P(commandParam, level);
+        pckWriteTimeP(commandParam, param.targetTime);
 
         // Read list
         StorageRemoteInfoData parseData = {.memContext = memContextCurrent()};
@@ -269,6 +273,8 @@ storageRemoteNewRead(THIS_VOID, const String *const file, const bool ignoreMissi
         FUNCTION_LOG_PARAM(BOOL, param.compressible);
         FUNCTION_LOG_PARAM(UINT64, param.offset);
         FUNCTION_LOG_PARAM(VARIANT, param.limit);
+        FUNCTION_LOG_PARAM(BOOL, param.version);
+        FUNCTION_LOG_PARAM(STRING, param.versionId);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -278,7 +284,7 @@ storageRemoteNewRead(THIS_VOID, const String *const file, const bool ignoreMissi
         STORAGE_READ,
         storageReadRemoteNew(
             this, this->client, file, ignoreMissing, this->compressLevel > 0 ? param.compressible : false, this->compressLevel,
-            param.offset, param.limit));
+            param.offset, param.limit, param.version, param.versionId));
 }
 
 /**********************************************************************************************************************************/
@@ -455,13 +461,14 @@ static const StorageInterface storageInterfaceRemote =
 
 FN_EXTERN Storage *
 storageRemoteNew(
-    const mode_t modeFile, const mode_t modePath, const bool write, StoragePathExpressionCallback pathExpressionFunction,
-    ProtocolClient *const client, const unsigned int compressLevel)
+    const mode_t modeFile, const mode_t modePath, const bool write, const time_t targetTime,
+    StoragePathExpressionCallback pathExpressionFunction, ProtocolClient *const client, const unsigned int compressLevel)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MODE, modeFile);
         FUNCTION_LOG_PARAM(MODE, modePath);
         FUNCTION_LOG_PARAM(BOOL, write);
+        FUNCTION_LOG_PARAM(TIME, targetTime);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, client);
         FUNCTION_LOG_PARAM(UINT, compressLevel);
@@ -502,5 +509,7 @@ storageRemoteNew(
     OBJ_NEW_END();
 
     FUNCTION_LOG_RETURN(
-        STORAGE, storageNew(STORAGE_REMOTE_TYPE, path, modeFile, modePath, write, pathExpressionFunction, this, this->interface));
+        STORAGE,
+        storageNew(
+            STORAGE_REMOTE_TYPE, path, modeFile, modePath, write, targetTime, pathExpressionFunction, this, this->interface));
 }

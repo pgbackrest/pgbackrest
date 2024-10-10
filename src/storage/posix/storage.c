@@ -201,6 +201,7 @@ storagePosixList(THIS_VOID, const String *const path, const StorageInfoLevel lev
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
+    ASSERT(param.targetTime == 0);
 
     StorageList *result = NULL;
 
@@ -356,6 +357,8 @@ storagePosixNewRead(THIS_VOID, const String *const file, const bool ignoreMissin
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
+    ASSERT(!param.version);
+    ASSERT(param.versionId == NULL);
 
     FUNCTION_LOG_RETURN(STORAGE_READ, storageReadPosixNew(this, file, ignoreMissing, param.offset, param.limit));
 }
@@ -631,7 +634,8 @@ storagePosixNewInternal(
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE, storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, this, this->interface));
+    FUNCTION_LOG_RETURN(
+        STORAGE, storageNew(type, path, modeFile, modePath, write, 0, pathExpressionFunction, this, this->interface));
 }
 
 FN_EXTERN Storage *

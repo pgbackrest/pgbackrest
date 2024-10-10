@@ -25,6 +25,9 @@ FN_EXTERN Wait *waitNew(TimeMSec waitTime);
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Return the remaining time left
+FN_EXTERN TimeMSec waitRemains(Wait *this);
+
 // Wait and return true if the caller has more time/retries left
 FN_EXTERN bool waitMore(Wait *this);
 

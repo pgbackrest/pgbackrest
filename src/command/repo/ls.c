@@ -62,6 +62,9 @@ storageListRenderInfo(const StorageInfo *const info, IoWrite *const write, const
         {
             ioWriteStr(write, strNewFmt(",\"size\":%" PRIu64, info->size));
             ioWriteStr(write, strNewFmt(",\"time\":%" PRId64, (int64_t)info->timeModified));
+
+            if (info->versionId != NULL)
+                ioWriteStr(write, strNewFmt(",\"version\":%s", strZ(jsonFromVar(VARSTR(info->versionId)))));
         }
 
         if (info->type == storageTypeLink)

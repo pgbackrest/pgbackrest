@@ -64,7 +64,7 @@ freebsd_14_task:
 # ----------------------------------------------------------------------------------------------------------------------------------
 macos_ventura_task:
   osx_instance:
-    image: ghcr.io/cirruslabs/macos-ventura-base:latest
+    image: ghcr.io/cirruslabs/macos-runner:sonoma
 
   environment:
     LDFLAGS: -L/opt/homebrew/opt/openssl@1.1/lib -L/opt/homebrew/opt/libpq/lib -L/opt/homebrew/opt/libxml2/lib -L/opt/homebrew/opt/libyaml/lib

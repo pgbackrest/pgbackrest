@@ -10,6 +10,7 @@ S3 Storage Helper
 #include "common/io/io.h"
 #include "common/log.h"
 #include "config/config.h"
+#include "storage/helper.h"
 #include "storage/posix/storage.h"
 #include "storage/s3/helper.h"
 
@@ -81,7 +82,7 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = storageS3New(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, pathExpressionCallback,
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoTargetTime(), pathExpressionCallback,
                 cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint,
                 (StorageS3UriStyle)cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx), cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx),
                 keyType, cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx),

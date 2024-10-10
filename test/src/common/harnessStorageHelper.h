@@ -1,13 +1,15 @@
 /***********************************************************************************************************************************
-Harness for Fd Testing
+Storage Helper Test Harness
+
+Helper functions for testing storage and related functions.
 ***********************************************************************************************************************************/
+#ifndef TEST_COMMON_HARNESS_STORAGE_HELPER_H
+#define TEST_COMMON_HARNESS_STORAGE_HELPER_H
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Install/uninstall shim
-void hrnFdReadyShimInstall(void);
-void hrnFdReadyShimUninstall(void);
+// Enable/disable test storage driver for repo storage
+void hrnStorageHelperRepoShimSet(bool enabled);
 
-// Use shim for one call
-void hrnFdReadyShimOne(bool result);
+#endif

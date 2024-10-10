@@ -170,8 +170,6 @@
         <!-- Hosts -->
         <variable key="host-image">pgbackrest/doc:{[os-type]}</variable>
 
-        <variable key="host-option">-v /sys/fs/cgroup:/sys/fs/cgroup:rw -v /tmp/$(mktemp -d):/run</variable>
-
         <!-- Limit host memory to check for memory leaks. Some environments do not allow memory to be set so allow disabling. -->
         <variable key="host-mem-limit">y</variable>
         <variable key="host-mem" if="'{[host-mem-limit]}' eq 'y'">-m 512m</variable>
@@ -360,20 +358,7 @@
     </host-define>
 
     <host-define if="{[os-type-is-rhel]}" image="{[host-image]}" from="{[os-image]}">
-        ENV container docker
-
         {[copy-ca-cert]}
-
-        RUN mkdir -p /lib/systemd/system/sysinit.target.wants &amp;&amp; \
-            (cd /lib/systemd/system/sysinit.target.wants/; for i in *; do [ $i == \
-            systemd-tmpfiles-setup.service ] || rm -f $i; done); \
-            rm -f /lib/systemd/system/multi-user.target.wants/*;\
-            rm -f /etc/systemd/system/*.wants/*;\
-            rm -f /lib/systemd/system/local-fs.target.wants/*; \
-            rm -f /lib/systemd/system/sockets.target.wants/*udev*; \
-            rm -f /lib/systemd/system/sockets.target.wants/*initctl*; \
-            rm -f /lib/systemd/system/basic.target.wants/*;\
-            rm -f /lib/systemd/system/anaconda.target.wants/*;
 
         VOLUME [ "/sys/fs/cgroup" ]
 
@@ -397,7 +382,7 @@
             ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key
 
         # Install PGDG PostgreSQL repository
-        RUN rpm -ivh https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
+        RUN rpm -ivh https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-`uname -m`/pgdg-redhat-repo-latest.noarch.rpm
 
         # Disable default PostgreSQL repository
         RUN command -v dnf >/dev/null 2>&amp;1 &amp;&amp; dnf -qy module disable postgresql || true
@@ -410,6 +395,14 @@
         RUN dnf install -y https://packages.microsoft.com/config/rhel/8/packages-microsoft-prod.rpm
         RUN dnf install -y azure-cli
 
+        # Install systemctl replacement that works without systemd running
+        ENV SYSCTL_REP_VER=1.5.8066
+        RUN wget -q -O - https://github.com/gdraheim/docker-systemctl-replacement/archive/refs/tags/v${SYSCTL_REP_VER?}.tar.gz | \
+            tar zx -C /root
+        RUN rm -f /usr/bin/systemctl
+        RUN cp /root/docker-systemctl-replacement-${SYSCTL_REP_VER?}/files/docker/systemctl3.py /usr/bin/systemctl
+        RUN rm -rf /root/docker-systemctl-replacement-${SYSCTL_REP_VER?}
+
         # Create an ssh key for root so all hosts can ssh to each other as root
         RUN \ {[ssh-key-install]}
 
@@ -420,14 +413,6 @@
         RUN adduser -n {[host-user]} &amp;&amp; \
             echo '{[host-user]}        ALL=(ALL)       NOPASSWD: ALL' > /etc/sudoers.d/{[host-user]}
 
-        # Enable the user session service so logons are allowed
-        RUN echo "[Install]" >> /usr/lib/systemd/system/systemd-user-sessions.service &amp;&amp; \
-            echo "[WantedBy=default.target]" >> /usr/lib/systemd/system/systemd-user-sessions.service &amp;&amp; \
-            systemctl enable systemd-user-sessions.service &amp;&amp; \
-            mkdir -p /etc/systemd/system/default.target.wants &amp;&amp; \
-            ln -s /usr/lib/systemd/system/systemd-user-sessions.service \
-                /etc/systemd/system/default.target.wants/systemd-user-sessions.service
-
         # Set locale
         RUN echo en_US.UTF-8 UTF-8 > /etc/locale.conf
 
@@ -435,7 +420,7 @@
         ENV PATH=/usr/pgsql-{[pg-version]}/bin:$PATH
         ENV PKG_CONFIG_PATH=/usr/pgsql-{[pg-version]}/lib/pkgconfig:$PKG_CONFIG_PATH
 
-        CMD ["/usr/sbin/init"]
+        ENTRYPOINT rm -rf /run/nologin &amp;&amp; /usr/sbin/sshd -D
     </host-define>
 
     <!-- ======================================================================================================================= -->
@@ -817,7 +802,7 @@
                 <exe-cmd>mc --insecure alias set s3 https://127.0.0.1 {[s3-key]} {[s3-key-secret]}</exe-cmd>
             </execute>
             <execute user="root" user-force="y">
-                <exe-cmd>mc --insecure mb s3/{[s3-bucket]}</exe-cmd>
+                <exe-cmd>mc --insecure mb --with-versioning s3/{[s3-bucket]}</exe-cmd>
             </execute>
         </execute-list>
 
@@ -917,7 +902,7 @@
         <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="{[s3-image]}" os="{[os-type]}" option="-v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443" update-hosts="n"/>
 
         <!-- Create SFTP server first to allow it time to boot before being used -->
-        <host-add id="{[host-sftp-id]}" name="{[host-sftp]}" user="{[host-sftp-user]}" image="{[host-sftp-image]}" os="{[os-type]}" mount="{[host-sftp-mount]}" option="{[host-mem]} {[host-option]}"/>
+        <host-add id="{[host-sftp-id]}" name="{[host-sftp]}" user="{[host-sftp-user]}" image="{[host-sftp-image]}" os="{[os-type]}" mount="{[host-sftp-mount]}"/>
 
         <p>This user guide is intended to be followed sequentially from beginning to end &amp;mdash; each section depends on the last. For example, the <link section="/restore">Restore</link> section relies on setup that is performed in the <link section="/quickstart">Quick Start</link> section. Once <backrest/> is up and running then skipping around is possible but following the user guide in order is recommended the first time through.</p>
 
@@ -1017,7 +1002,7 @@
 
         <p>Installing <backrest/> from a package is preferable to building from source. See <link section="/installation">Installation</link> for more information about packages.</p>
 
-        <host-add id="{[host-build-id]}" name="{[host-build]}" user="{[host-build-user]}" image="{[host-build-image]}" os="{[os-type]}" mount="{[host-build-mount]}" option="{[host-option]}"/>
+        <host-add id="{[host-build-id]}" name="{[host-build]}" user="{[host-build-user]}" image="{[host-build-image]}" os="{[os-type]}" mount="{[host-build-mount]}"/>
 
         <p>When building from source it is best to use a build host rather than building on production. Many of the tools required for the build should generally not be installed in production. <backrest/> consists of a single executable so it is easy to copy to a new host once it is built.</p>
 
@@ -1104,7 +1089,7 @@
 
         <p>A new host named <host>{[host-pg1]}</host> is created to contain the demo cluster and run <backrest/> examples.</p>
 
-        <host-add id="{[host-pg1-id]}" name="{[host-pg1]}" user="{[host-pg1-user]}" image="{[host-pg1-image]}" os="{[os-type]}" mount="{[host-pg1-mount]}" option="{[host-mem]} {[host-option]}"/>
+        <host-add id="{[host-pg1-id]}" name="{[host-pg1]}" user="{[host-pg1-user]}" image="{[host-pg1-image]}" os="{[os-type]}" mount="{[host-pg1-mount]}" option="{[host-mem]}"/>
 
         <!-- <execute-list if="{[pg-version]} >= 11" host="{[host-pg1]}">
             <title>Create <user>{[br-user]}</user> user</title>
@@ -1443,6 +1428,31 @@
         </section>
 
         <!-- =================================================================================================================== -->
+        <section id="performance-tuning">
+            <title>Performance Tuning</title>
+
+            <p><backrest/> has a number of performance options that are not enabled by default to maintain backward compatibility in the repository. However, when creating a new repository the following options are recommended. They can also be used on an existing repository with the caveat that older versions of <backrest/> will not be able to read the repository. This incompatibility depends on when the feature was introduced, which will be noted in the list below.</p>
+
+            <list>
+                <list-item><br-option>compress-type</br-option> - determines the compression algorithm used by the <cmd>backup</cmd> and <cmd>archive-push</cmd> commands. The default is <id>gz</id> (Gzip) but <id>zst</id> (Zstandard) is recommended because it is much faster and provides compression similar to <id>gz</id>. <id>zst</id> has been supported by the <br-option>compress-type</br-option> option since <link url="release.html#2.27">v2.27</link>. See <link page="configuration" section="/section-general/option-compress-type">Compress Type</link> for more details.</list-item>
+
+                <list-item><br-option>repo-bundle</br-option> - combines small files during backup to save space and improve the speed of both the <cmd>backup</cmd> and <cmd>restore</cmd> commands, especially on object stores. The <br-option>repo-bundle</br-option> option was introduced in <link url="release.html#2.39">v2.39</link>. See <link section="/backup/bundle">File Bundling</link> for more details.</list-item>
+
+                <list-item><br-option>repo-block</br-option> - stores only the portions of of files that have changed rather than the entire file during <id>diff</id>/<id>incr</id> <cmd>backup</cmd>. This saves space and increases the speed of the <cmd>backup</cmd>. The <br-option>repo-block</br-option> option was introduced in <link url="release.html#2.46">v2.46</link> but at least <link url="release.html#2.52.1">v2.52.1</link> is recommended. See <link section="/backup/block">Block Incremental</link> for more details.</list-item>
+            </list>
+
+            <p>There are other performance options that are not enabled by default because they require additional configuration or because the default is safe (but not optimal). These options are available in all v2 versions of <backrest/>.</p>
+
+            <list>
+                <list-item><br-option>process-max</br-option> - determines how many processes will be used for commands. The default is 1, which is almost never the appropriate value. Each command uses <br-option>process-max</br-option> differently so refer to each command's documentation for details on usage.</list-item>
+
+                <list-item><br-option>archive-async</br-option> - archives WAL files to the repository in batch which greatly increases archiving speed. It is not enabled by default because it requires a spool path to be created. See <link section="/async-archiving">Asynchronous Archiving</link> for more details.</list-item>
+
+                <list-item><br-option>backup-standby</br-option> - performs the backup on a standby rather than the primary to reduce load on the primary. It is not enabled by default because it requires additional configuration and the presence of one or more standby hosts. See <link section="/standby-backup">Backup from a Standby</link> for more details.</list-item>
+            </list>
+        </section>
+
+        <!-- =================================================================================================================== -->
         <section id="perform-backup">
             <title>Perform a Backup</title>
 
@@ -1558,7 +1568,7 @@
 
                 <execute if="{[os-type-is-rhel]}" user="root" output="y" err-expect="3">
                     <exe-cmd>{[pg-cluster-check]}</exe-cmd>
-                    <exe-highlight>Failed to start PostgreSQL</exe-highlight>
+                    <exe-highlight>failed</exe-highlight>
                 </execute>
             </execute-list>
 
@@ -2519,6 +2529,7 @@
                             "s3:PutObject",
                             "s3:PutObjectTagging",
                             "s3:GetObject",
+                            "s3:GetObjectVersion",
                             "s3:DeleteObject"
                         ],
                         "Resource": [
@@ -2549,6 +2560,9 @@
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} --repo=3
                     --log-level-console=info backup</exe-cmd>
                 <exe-highlight>no prior backup exists|full backup size</exe-highlight>
+            </execute>
+            <execute user="postgres" show="n" variable-key="limit-recovery-timestamp">
+                <exe-cmd>psql -Atc "select date_trunc('seconds', current_timestamp)"</exe-cmd>
             </execute>
         </execute-list>
     </section>
@@ -2613,6 +2627,83 @@
     </section>
 
     <!-- ======================================================================================================================= -->
+    <section id="repo-target-time" if="!{[object-any-all]}" depend="/s3-support">
+        <title>Target Time for Repository</title>
+
+        <option-description key="repo-target-time"/>
+
+        <p>To demonstrate this feature the <id>demo</id> stanza in the <proper>S3</proper> repo is deleted.</p>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Delete stanza in <proper>S3</proper> repository</title>
+
+            <execute user="root">
+                <exe-cmd>{[pg-cluster-stop]}</exe-cmd>
+            </execute>
+            <execute user="postgres" output="y">
+                <exe-cmd>{[project-exe]} --stanza={[postgres-cluster-demo]} stop</exe-cmd>
+            </execute>
+            <!-- Make sure the delete is done in a new second -->
+            <execute user="postgres" show="n">
+                <exe-cmd>sleep 1</exe-cmd>
+            </execute>
+            <execute user="postgres" output="y">
+                <exe-cmd>{[project-exe]} --stanza={[postgres-cluster-demo]} --repo=3 stanza-delete</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <p>Once the stanza is deleted the <cmd>info</cmd> command will show the repository in an error state.</p>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Error on info</title>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>{[project-exe]} --stanza={[postgres-cluster-demo]} --repo=3 info</exe-cmd>
+                <exe-highlight>missing stanza data</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <p>However, since the storage is versioned, it is possible to look at the repository at a time before the stanza was deleted. Finding the target time can be tricky depending on the situation, but in this case the time when the stanza was deleted can be determined by checking when <file>backup.info</file> was deleted.</p>
+
+        <execute-list host="{[host-s3]}">
+            <title>Use <id>mc</id> to list versions of <file>backup.info</file> in the bucket</title>
+
+            <execute user="root" user-force="y" output="y">
+                <exe-cmd>mc ls --versions s3/{[s3-bucket]}/{[s3-repo]}/backup/demo/backup.info</exe-cmd>
+                <exe-cmd-extra>--insecure</exe-cmd-extra>
+                <exe-highlight>backup\.info$</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <p>Now the <cmd>info</cmd> command can be run with a target time that will show the repository before it was deleted.</p>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Info with target time</title>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>{[project-exe]} --stanza={[postgres-cluster-demo]} --repo=3
+                --repo-target-time="{[limit-recovery-timestamp]}" info</exe-cmd>
+                <exe-highlight>full backup</exe-highlight>
+            </execute>
+        </execute-list>
+
+        <p>If the required backup is shown by the <cmd>info</cmd> command then it can be restored using the same target time.</p>
+
+        <execute-list host="{[host-pg1]}">
+            <title>Restore with target time</title>
+
+            <execute user="postgres" output="y">
+                <exe-cmd>{[project-exe]} --stanza={[postgres-cluster-demo]} --repo=3 --delta
+                --repo-target-time="{[limit-recovery-timestamp]}" --log-level-console=info restore</exe-cmd>
+                <exe-highlight> restore backup set </exe-highlight>
+             </execute>
+            <execute user="root">
+                <exe-cmd>{[pg-cluster-start]}</exe-cmd>
+            </execute>
+        </execute-list>
+    </section>
+
+    <!-- ======================================================================================================================= -->
     <section id="repo-host" depend="/quickstart/configure-archiving">
         <title>Dedicated Repository Host</title>
 
@@ -2628,7 +2719,7 @@
 
             <admonition type="note">The <backrest/> version installed on the <host>repository</host> host must exactly match the version installed on the <postgres/> host.</admonition>
 
-            <host-add id="{[host-repo1-id]}" name="{[host-repo1]}" user="{[host-repo1-user]}" image="{[host-repo1-image]}" os="{[os-type]}" mount="{[host-repo1-mount]}" option="{[host-mem]} {[host-option]}"/>
+            <host-add id="{[host-repo1-id]}" name="{[host-repo1]}" user="{[host-repo1-user]}" image="{[host-repo1-image]}" os="{[os-type]}" mount="{[host-repo1-mount]}" option="{[host-mem]}"/>
 
             <p>The <user>{[br-user]}</user> user is created to own the <backrest/> repository. Any user can own the repository but it is best not to use <user>postgres</user> (if it exists) to avoid confusion.</p>
 
@@ -3052,7 +3143,7 @@
 
             <p>A new host named <host>{[host-pg2]}</host> is created to run the standby.</p>
 
-            <host-add id="{[host-pg2-id]}" name="{[host-pg2]}" user="{[host-pg2-user]}" image="{[host-pg2-image]}" os="{[os-type]}" mount="{[host-pg2-mount]}" option="{[host-mem]} {[host-option]}"/>
+            <host-add id="{[host-pg2-id]}" name="{[host-pg2]}" user="{[host-pg2-user]}" image="{[host-pg2-image]}" os="{[os-type]}" mount="{[host-pg2-mount]}" option="{[host-mem]}"/>
 
             <!-- <execute-list if="{[pg-version]} >= 11" host="{[host-pg2]}">
                 <title>Create <user>{[br-user]}</user> user</title>
@@ -3443,7 +3534,7 @@
 
             <p>A new host named <host>{[host-pgalt]}</host> is created to run the new primary.</p>
 
-            <host-add id="{[host-pgalt-id]}" name="{[host-pgalt]}" user="{[host-pgalt-user]}" image="{[host-pgalt-image]}" os="{[os-type]}" mount="{[host-pgalt-mount]}" option="{[host-mem]} {[host-option]}"/>
+            <host-add id="{[host-pgalt-id]}" name="{[host-pgalt]}" user="{[host-pgalt-user]}" image="{[host-pgalt-image]}" os="{[os-type]}" mount="{[host-pgalt-mount]}" option="{[host-mem]}"/>
 
             <block id="br-install">
                 <block-variable-replace key="br-install-host">{[host-pgalt]}</block-variable-replace>
@@ -4248,7 +4339,7 @@
         <execute-list host="{[host-pg1]}">
             <title>Check configuration</title>
 
-            <execute user="postgres" output="n" filter="n">
+            <execute user="root" output="n" filter="n">
                 <exe-cmd>{[pg-cluster-check-upgrade]}</exe-cmd>
             </execute>
 

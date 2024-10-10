@@ -109,6 +109,7 @@ Option constants
 #define CFGOPT_REFERENCE                                            "reference"
 #define CFGOPT_REMOTE_TYPE                                          "remote-type"
 #define CFGOPT_REPO                                                 "repo"
+#define CFGOPT_REPO_TARGET_TIME                                     "repo-target-time"
 #define CFGOPT_REPORT                                               "report"
 #define CFGOPT_RESUME                                               "resume"
 #define CFGOPT_SCK_BLOCK                                            "sck-block"
@@ -138,7 +139,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            183
+#define CFG_OPTION_TOTAL                                            184
 
 /***********************************************************************************************************************************
 Option value constants
@@ -545,6 +546,7 @@ typedef enum
     cfgOptRepoStorageTag,
     cfgOptRepoStorageUploadChunkSize,
     cfgOptRepoStorageVerifyTls,
+    cfgOptRepoTargetTime,
     cfgOptRepoType,
     cfgOptReport,
     cfgOptResume,

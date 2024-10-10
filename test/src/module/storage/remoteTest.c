@@ -15,6 +15,7 @@ Test Remote Storage
 #include "common/harnessPack.h"
 #include "common/harnessProtocol.h"
 #include "common/harnessStorage.h"
+#include "common/harnessTime.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -65,6 +66,8 @@ testRun(void)
     const Storage *const storagePgWrite = storagePgGet(1, true);
 
     // Load configuration and get repo remote storage
+    hrnStorageHelperRepoShimSet(true);
+
     argList = strLstNew();
     hrnCfgArgRawZ(argList, cfgOptStanza, "db");
     hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "20");
@@ -77,7 +80,7 @@ testRun(void)
     HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleLocal);
 
     const Storage *const storageRepoWrite = storageRepoGet(0, true);
-    const Storage *const storageRepo = storageRepoGet(0, false);
+    Storage *const storageRepo = storageRepoGet(0, false);
 
     // Create a file larger than the remote buffer size
     Buffer *contentBuf = bufNew(ioBufferSize() * 2);
@@ -744,6 +747,37 @@ testRun(void)
             FileOpenError,
             "raised from remote-0 shim protocol: unable to create hardlink '" TEST_PATH "/pg256/latest' to"
             " '" TEST_PATH "/pg256/20181119-152138F': [1] Operation not permitted");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("Versioning"))
+    {
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageRepoWrite, STRDEF("test1"), .timeModified = 1724734625), BUFSTRDEF("test1")),
+            "write test file");
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageRepoWrite, STRDEF("test1"), .timeModified = 1724734626), BUFSTRDEF("test1a")),
+            "write test again");
+
+        storageRepo->targetTime = 1724734626;
+        storageRepo->cacheList = lstNewP(sizeof(StorageListCache), .comparator = lstComparatorStr);
+
+        TEST_STORAGE_LIST(
+            storageRepo, NULL,
+            "test1 {s=6, t=1724734626, v=v0002}\n",
+            .level = storageInfoLevelBasic);
+        TEST_STORAGE_GET(storageRepo, "test1", "test1a");
+        TEST_RESULT_INT(storageInfoP(storageRepo, STRDEF("test1")).timeModified, 1724734626, "check time");
+
+        storageRepo->targetTime = 1724734625;
+        storageRepo->cacheList = lstNewP(sizeof(StorageListCache), .comparator = lstComparatorStr);
+
+        TEST_STORAGE_LIST(
+            storageRepo, NULL,
+            "test1 {s=5, t=1724734625, v=v0001}\n",
+            .level = storageInfoLevelBasic);
+        TEST_STORAGE_GET(storageRepo, "test1", "test1");
+        TEST_RESULT_INT(storageInfoP(storageRepo, STRDEF("test1")).timeModified, 1724734625, "check time");
     }
 
     // When clients are freed by protocolClientFree() they do not wait for a response. We need to wait for a response here to be

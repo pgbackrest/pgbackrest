@@ -177,7 +177,12 @@ referenceConfigurationRender(const BldCfg *const bldCfg, const BldHlp *const bld
                 const BldCfgOption *const optCfg = lstFind(bldCfg->optList, &optHlp->name);
                 ASSERT(optCfg != NULL);
 
+                // Skip if option does not belong in this section
                 if (!strEq(optHlp->section == NULL ? STRDEF("general") : optHlp->section, section->id))
+                    continue;
+
+                // Skip if option is command-line only
+                if (strEq(optCfg->section, SECTION_COMMAND_LINE_STR))
                     continue;
 
                 // Skip if option is internal

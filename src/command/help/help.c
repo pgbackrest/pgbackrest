@@ -99,14 +99,14 @@ helpRenderText(
     const String *const text, const bool internal, const bool beta, const size_t indent, const bool indentFirst,
     const size_t length)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STRING, text);
-        FUNCTION_LOG_PARAM(BOOL, internal);
-        FUNCTION_LOG_PARAM(BOOL, beta);
-        FUNCTION_LOG_PARAM(SIZE, indent);
-        FUNCTION_LOG_PARAM(BOOL, indentFirst);
-        FUNCTION_LOG_PARAM(SIZE, length);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, text);
+        FUNCTION_TEST_PARAM(BOOL, internal);
+        FUNCTION_TEST_PARAM(BOOL, beta);
+        FUNCTION_TEST_PARAM(SIZE, indent);
+        FUNCTION_TEST_PARAM(BOOL, indentFirst);
+        FUNCTION_TEST_PARAM(SIZE, length);
+    FUNCTION_TEST_END();
 
     ASSERT(text != NULL);
     ASSERT(length > 0);
@@ -153,23 +153,23 @@ helpRenderText(
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
-Helper function for helpRender() to output values as strings
+Helper functions for helpRender() to output values as strings
 ***********************************************************************************************************************************/
 static String *
-helpRenderValue(const ConfigOption optionId, const unsigned int optionIdx)
+helpRenderValueIdx(const ConfigOption optionId, const unsigned int optionIdx)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(ENUM, optionId);
-        FUNCTION_LOG_PARAM(UINT, optionIdx);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(UINT, optionIdx);
+    FUNCTION_TEST_END();
 
     String *result = NULL;
 
-    if (cfgOptionIdxSource(optionId, 0) != cfgSourceDefault)
+    if (cfgOptionIdxSource(optionId, optionIdx) != cfgSourceDefault)
     {
         result = strNew();
 
@@ -221,7 +221,43 @@ helpRenderValue(const ConfigOption optionId, const unsigned int optionIdx)
         MEM_CONTEXT_TEMP_END();
     }
 
-    FUNCTION_LOG_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
+static String *
+helpRenderValue(const ConfigOption optionId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+    FUNCTION_TEST_END();
+
+    String *result = helpRenderValueIdx(optionId, 0);
+
+    if (cfgOptionGroup(optionId))
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            for (unsigned int optionIdx = 1; optionIdx < cfgOptionGroupIdxTotal(cfgOptionGroupId(optionId)); optionIdx++)
+            {
+                const String *const value = helpRenderValueIdx(optionId, optionIdx);
+
+                if (!strEq(result, value))
+                {
+                    MEM_CONTEXT_PRIOR_BEGIN()
+                    {
+                        strFree(result);
+                        result = strNewZ("<multi>");
+                    }
+                    MEM_CONTEXT_PRIOR_END();
+
+                    break;
+                }
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /***********************************************************************************************************************************
@@ -248,9 +284,9 @@ typedef struct HelpOptionData
 static String *
 helpRender(const Buffer *const helpData)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(BUFFER, helpData);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, helpData);
+    FUNCTION_TEST_END();
 
     String *const result = strCatZ(strNew(), PROJECT_NAME " " PROJECT_VERSION);
 
@@ -261,7 +297,7 @@ helpRender(const Buffer *const helpData)
     {
         strCatChr(result, '\n');
 
-        FUNCTION_LOG_RETURN(STRING, result);
+        FUNCTION_TEST_RETURN(STRING, result);
     }
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -476,7 +512,7 @@ helpRender(const Buffer *const helpData)
 
                         // Output current and default values if they exist
                         const String *const defaultValue = cfgOptionDefault(optionId);
-                        const String *const value = helpRenderValue(optionId, 0);
+                        const String *const value = helpRenderValue(optionId);
 
                         if (value != NULL || defaultValue != NULL)
                         {
@@ -544,14 +580,35 @@ helpRender(const Buffer *const helpData)
 
                 // Output current and default values if they exist
                 const String *const defaultValue = cfgOptionDefault(option.id);
-                const String *const value = helpRenderValue(option.id, 0);
+                const String *const value = helpRenderValue(option.id);
 
                 if (value != NULL || defaultValue != NULL)
                 {
                     strCat(result, LF_STR);
 
                     if (value != NULL)
-                        strCatFmt(result, "current: %s\n", cfgParseOptionSecure(option.id) ? "<redacted>" : strZ(value));
+                    {
+                        strCatZ(result, "current:");
+
+                        if (cfgParseOptionSecure(option.id))
+                            strCatZ(result, " <redacted>\n");
+                        else if (!strEqZ(value, "<multi>"))
+                            strCatFmt(result, " %s\n", strZ(value));
+                        else
+                        {
+                            const unsigned int groupId = cfgOptionGroupId(option.id);
+
+                            strCatChr(result, '\n');
+
+                            for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(groupId); optionIdx++)
+                            {
+                                const String *const value = helpRenderValueIdx(option.id, optionIdx);
+
+                                if (value != NULL)
+                                    strCatFmt(result, "  %s: %s\n", cfgOptionGroupName(groupId, optionIdx), strZ(value));
+                            }
+                        }
+                    }
 
                     if (defaultValue != NULL)
                         strCatFmt(result, "default: %s\n", strZ(defaultValue));
@@ -573,7 +630,7 @@ helpRender(const Buffer *const helpData)
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN(STRING, result);
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/

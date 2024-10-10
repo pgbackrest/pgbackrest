@@ -308,14 +308,14 @@ testRun(void)
             "  --repo-cipher-pass                  repository cipher passphrase\n"
             "                                      [current=<redacted>]\n"
             "  --repo-cipher-type                  cipher used to encrypt the repository\n"
-            "                                      [current=aes-256-cbc, default=none]\n"
+            "                                      [current=<multi>, default=none]\n"
             "  --repo-gcs-bucket                   GCS repository bucket\n"
             "  --repo-gcs-endpoint                 GCS repository endpoint\n"
             "                                      [default=storage.googleapis.com]\n"
             "  --repo-gcs-key                      GCS repository key\n"
             "  --repo-gcs-key-type                 GCS repository key type [default=service]\n"
             "  --repo-host                         repository host when operating remotely\n"
-            "                                      [current=backup.example.net]\n"
+            "                                      [current=<multi>]\n"
             "  --repo-host-ca-file                 repository host certificate authority file\n"
             "  --repo-host-ca-path                 repository host certificate authority path\n"
             "  --repo-host-cert-file               repository host certificate file\n"
@@ -366,6 +366,7 @@ testRun(void)
             "  --repo-storage-upload-chunk-size    repository storage upload chunk size\n"
             "  --repo-storage-verify-tls           repository storage certificate verify\n"
             "                                      [default=y]\n"
+            "  --repo-target-time                  target time for repository\n"
             "  --repo-type                         type of storage used for the repository\n"
             "                                      [default=posix]\n"
             "\n"
@@ -382,7 +383,8 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptBufferSize, "32768");
         hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
         hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
-        hrnCfgArgRawZ(argList, cfgOptRepoHost, "backup.example.net");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 1, "backup.example.net");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 2, "dr.test.org");
         hrnCfgArgRawZ(argList, cfgOptLinkMap, "/link1=/dest1");
         hrnCfgArgRawZ(argList, cfgOptLinkMap, "/link2=/dest2");
         hrnCfgArgRawZ(argList, cfgOptDbInclude, "db1");
@@ -583,6 +585,61 @@ testRun(void)
         strLstAddZ(argList, "repo-retention-archive");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for backup command, repo-retention-archive option");
         TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check admonition text");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multiple current values (with one missing)");
+
+        optionHelp = zNewFmt(
+            "%s - 'restore' command - 'repo-host' option help\n"
+            "\n"
+            "Repository host when operating remotely.\n"
+            "\n"
+            "When backing up and archiving to a locally mounted filesystem this setting is\n"
+            "not required.\n"
+            "\n"
+            "current:\n"
+            "  repo1: backup.example.net\n"
+            "  repo3: dr.test.org\n"
+            "\n"
+            "deprecated name: backup-host\n",
+            helpVersion);
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 1, "backup.example.net");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 3, "dr.test.org");
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "restore");
+        strLstAddZ(argList, "repo-host");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for restore command, repo-host option");
+        TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check text");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multiple current values (with one unset)");
+
+        optionHelp = zNewFmt(
+            "%s - 'restore' command - 'repo-host' option help\n"
+            "\n"
+            "Repository host when operating remotely.\n"
+            "\n"
+            "When backing up and archiving to a locally mounted filesystem this setting is\n"
+            "not required.\n"
+            "\n"
+            "current:\n"
+            "  repo3: dr.test.org\n"
+            "\n"
+            "deprecated name: backup-host\n",
+            helpVersion);
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "s3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 3, "dr.test.org");
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "restore");
+        strLstAddZ(argList, "repo-host");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for restore command, repo-host option");
+        TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check text");
     }
 
     // *****************************************************************************************************************************
