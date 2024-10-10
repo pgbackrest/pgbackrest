@@ -104,6 +104,17 @@
 
                 <p>Remove limitation on reading files in parallel during restore.</p>
             </release-item>
+
+            <release-item>
+                <github-pull-request id="2439"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve <proper>SFTP</proper> error messages.</p>
+            </release-item>
         </release-improvement-list>
 
         <release-development-list>
