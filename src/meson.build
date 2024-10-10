@@ -260,7 +260,6 @@ src_pgbackrest = [
     'storage/s3/read.c',
     'storage/s3/storage.c',
     'storage/s3/write.c',
-    'storage/sftp/common.c',
     'storage/sftp/helper.c',
     'storage/sftp/read.c',
     'storage/sftp/storage.c',

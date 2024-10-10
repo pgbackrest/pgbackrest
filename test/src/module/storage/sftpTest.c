@@ -2159,11 +2159,11 @@ testRun(void)
         TEST_ERROR_FMT(
             storageExistsP(storageTest, fileNoPerm),
             FileOpenError,
-            STORAGE_ERROR_INFO ": libssh2 error [-31]: sftp error [3] LIBSSH2_FX_PERMISSION_DENIED", strZ(fileNoPerm));
+            STORAGE_ERROR_INFO ": libssh2 error [-31]: sftp error [3] permission denied", strZ(fileNoPerm));
         TEST_ERROR_FMT(
             storagePathExistsP(storageTest, fileNoPerm),
             FileOpenError,
-            STORAGE_ERROR_INFO ": libssh2 error [-31]: sftp error [3] LIBSSH2_FX_PERMISSION_DENIED", strZ(fileNoPerm));
+            STORAGE_ERROR_INFO ": libssh2 error [-31]: sftp error [3] permission denied", strZ(fileNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file and path");
@@ -2233,7 +2233,7 @@ testRun(void)
         TEST_ERROR_FMT(
             storageInfoP(storageTest, fileNoPerm),
             FileOpenError,
-            STORAGE_ERROR_INFO ": libssh2 error [-31]: sftp error [3] LIBSSH2_FX_PERMISSION_DENIED", strZ(fileNoPerm));
+            STORAGE_ERROR_INFO ": libssh2 error [-31]: sftp error [3] permission denied", strZ(fileNoPerm));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -2569,8 +2569,7 @@ testRun(void)
         // libssh2_sftp_symlink_ex fail link destination followLink false
         TEST_ERROR_FMT(
             storageInfoP(storageTest, linkName, .followLink = false), FileReadError,
-            "unable to get destination for link '" TEST_PATH "/testlink': libssh2 error [-31]: sftp error [21]"
-            " LIBSSH2_FX_LINK_LOOP");
+            "unable to get destination for link '" TEST_PATH "/testlink': libssh2 error [-31]: sftp error [21] link loop");
 
         // --------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("info - pipe");
@@ -2778,12 +2777,12 @@ testRun(void)
 
         TEST_ERROR_FMT(
             storageNewItrP(storageTest, pathNoPerm, .errorOnMissing = true), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: sftp error [3] LIBSSH2_FX_PERMISSION_DENIED", strZ(pathNoPerm));
+            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: sftp error [3] permission denied", strZ(pathNoPerm));
 
         // Should still error even when ignore missing
         TEST_ERROR_FMT(
             storageNewItrP(storageTest, pathNoPerm), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: sftp error [3] LIBSSH2_FX_PERMISSION_DENIED", strZ(pathNoPerm));
+            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: sftp error [3] permission denied", strZ(pathNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("helper function - storageSftpListEntry()");
@@ -3744,12 +3743,12 @@ testRun(void)
 
         TEST_ERROR_FMT(
             storageListP(storageTest, pathNoPerm, .errorOnMissing = true), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: sftp error [3] LIBSSH2_FX_PERMISSION_DENIED", strZ(pathNoPerm));
+            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: sftp error [3] permission denied", strZ(pathNoPerm));
 
         // Should still error even when ignore missing
         TEST_ERROR_FMT(
             storageListP(storageTest, pathNoPerm), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: sftp error [3] LIBSSH2_FX_PERMISSION_DENIED", strZ(pathNoPerm));
+            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: sftp error [3] permission denied", strZ(pathNoPerm));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -4129,8 +4128,7 @@ testRun(void)
 
         TEST_ERROR(
             storagePathCreateP(storageTest, STRDEF("sub3/sub4"), .noParentCreate = true), PathCreateError,
-            "sftp error unable to create path '" TEST_PATH "/sub3/sub4': libssh2 error [-31]: sftp error [2]"
-            " LIBSSH2_FX_NO_SUCH_FILE");
+            "sftp error unable to create path '" TEST_PATH "/sub3/sub4': libssh2 error [-31]: sftp error [2] no such file");
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("sub3/sub4")), "create sub3/sub4");
 
         // LIBSSH2_ERROR_EAGAIN timeout fail
@@ -4189,8 +4187,7 @@ testRun(void)
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("subfail")), "timeout success");
         TEST_ERROR(
             storagePathCreateP(storageTest, STRDEF("subfail"), .noParentCreate = true), PathCreateError,
-            "sftp error unable to create path '" TEST_PATH "/subfail': libssh2 error [-31]: sftp error [3]"
-            " LIBSSH2_FX_PERMISSION_DENIED");
+            "sftp error unable to create path '" TEST_PATH "/subfail': libssh2 error [-31]: sftp error [3] permission denied");
         TEST_RESULT_VOID(storagePathCreateP(storageTest, STRDEF("subfail")), "do not throw error on already exists");
         TEST_ERROR(
             storagePathCreateP(storageTest, STRDEF("subfail"), .errorOnExists = true), PathCreateError,
@@ -4398,10 +4395,10 @@ testRun(void)
         // Mimic creation of pathRemove2 mode 700
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove2), PathRemoveError,
-            STORAGE_ERROR_PATH_REMOVE " sftp error [3] LIBSSH2_FX_PERMISSION_DENIED", strZ(pathRemove2));
+            STORAGE_ERROR_PATH_REMOVE " sftp error [3] permission denied", strZ(pathRemove2));
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: sftp error [3] LIBSSH2_FX_PERMISSION_DENIED", strZ(pathRemove2));
+            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: sftp error [3] permission denied", strZ(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - subpath permission denied");
@@ -4409,7 +4406,7 @@ testRun(void)
         // Mimic chmod 777 pathRemove1
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove2, .recurse = true), PathOpenError,
-            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: sftp error [3] LIBSSH2_FX_PERMISSION_DENIED", strZ(pathRemove2));
+            STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: sftp error [3] permission denied", strZ(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - file in subpath, permission denied");
@@ -4420,7 +4417,7 @@ testRun(void)
         TEST_ERROR_FMT(
             storagePathRemoveP(
                 storageTest, pathRemove1, .recurse = true), PathRemoveError,
-            STORAGE_ERROR_PATH_REMOVE " sftp error [3] LIBSSH2_FX_PERMISSION_DENIED", strZ(pathRemove2));
+            STORAGE_ERROR_PATH_REMOVE " sftp error [3] permission denied", strZ(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - path with subpath and file removed");
@@ -4442,7 +4439,7 @@ testRun(void)
         TEST_ERROR_FMT(
             storagePathRemoveP(
                 storageTest, pathRemove1, .recurse = true), PathRemoveError,
-            STORAGE_ERROR_PATH_REMOVE_FILE " libssh sftp [7] LIBSSH2_FX_CONNECTION_LOST", strZ(pathRemove2));
+            STORAGE_ERROR_PATH_REMOVE_FILE " libssh sftp [7] connection lost", strZ(pathRemove2));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -4964,7 +4961,7 @@ testRun(void)
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true, .noCreatePath = false), "new write file");
         TEST_ERROR_FMT(
             ioWriteOpen(storageWriteIo(file)), FileOpenError,
-            STORAGE_ERROR_WRITE_OPEN ": libssh2 error [-31]: sftp error [3] LIBSSH2_FX_PERMISSION_DENIED", strZ(fileNoPerm));
+            STORAGE_ERROR_WRITE_OPEN ": libssh2 error [-31]: sftp error [3] permission denied", strZ(fileNoPerm));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -5276,7 +5273,7 @@ testRun(void)
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
         TEST_ERROR_FMT(
             ioWriteClose(storageWriteIo(file)), FileCloseError,
-            "unable to move '%s' to '%s': libssh2 error [-31]: sftp error [7] LIBSSH2_FX_CONNECTION_LOST", strZ(fileNameTmp),
+            "unable to move '%s' to '%s': libssh2 error [-31]: sftp error [7] connection lost", strZ(fileNameTmp),
             strZ(fileName));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -6367,7 +6364,7 @@ testRun(void)
             .knownHosts = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoSftpKnownHost, repoIdx)), .write = true);
 
         TEST_ERROR(storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = true), FileRemoveError,
-                   "unable to remove '/missing': libssh2 error [-31]: sftp error [2] LIBSSH2_FX_NO_SUCH_FILE");
+                   "unable to remove '/missing': libssh2 error [-31]: sftp error [2] no such file");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -6397,7 +6394,7 @@ testRun(void)
             .knownHosts = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoSftpKnownHost, repoIdx)), .write = true);
 
         TEST_ERROR(storageRemoveP(storageTest, STRDEF("missing")), FileRemoveError,
-                   "unable to remove '/missing': libssh2 error [-31]: sftp error [7] LIBSSH2_FX_CONNECTION_LOST");
+                   "unable to remove '/missing': libssh2 error [-31]: sftp error [7] connection lost");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -6566,7 +6563,7 @@ testRun(void)
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName, .noSyncFile = true), "storageWriteSftpOpen sftp error");
         TEST_ERROR_FMT(
             ioWriteOpen(storageWriteIo(file)), FileOpenError,
-            STORAGE_ERROR_WRITE_OPEN ": libssh2 error [-31]: sftp error [3] LIBSSH2_FX_PERMISSION_DENIED", strZ(fileName));
+            STORAGE_ERROR_WRITE_OPEN ": libssh2 error [-31]: sftp error [3] permission denied", strZ(fileName));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -6666,7 +6663,7 @@ testRun(void)
         TEST_ERROR_FMT(
             ioReadOpen(storageReadIo(file)),
             FileOpenError,
-            STORAGE_ERROR_READ_OPEN ": libssh2 error [-31]: sftp error [3] LIBSSH2_FX_PERMISSION_DENIED", strZ(fileNoPerm));
+            STORAGE_ERROR_READ_OPEN ": libssh2 error [-31]: sftp error [3] permission denied", strZ(fileNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file missing");
@@ -6909,7 +6906,7 @@ testRun(void)
         TEST_ASSIGN(file, storageNewWriteP(storageTest, fileNoPerm, .noAtomic = true), "new write file");
         TEST_ERROR_FMT(
             ioWriteOpen(storageWriteIo(file)),
-            FileOpenError, STORAGE_ERROR_WRITE_OPEN ": libssh2 error [-31]: sftp error [3] LIBSSH2_FX_PERMISSION_DENIED",
+            FileOpenError, STORAGE_ERROR_WRITE_OPEN ": libssh2 error [-31]: sftp error [3] permission denied",
             strZ(fileNoPerm));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -7691,7 +7688,7 @@ testRun(void)
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "assign storage");
         TEST_ERROR_FMT(
             memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest))), ServiceError,
-            "failed to shutdown sftpSession: libssh2 errno [-31]: sftp errno [7] LIBSSH2_FX_CONNECTION_LOST");
+            "failed to shutdown sftpSession: libssh2 errno [-31]: sftp errno [7] connection lost");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storageSftpLibSsh2SessionFreeResource() sftp shutdown failure EAGAIN");
@@ -7868,19 +7865,19 @@ testRun(void)
                 LIBSSH2_ERROR_SFTP_PROTOCOL, 16, &FileRemoveError,
                 strNewFmt("unable to move '%s' to '%s'", "BOGUS", "NOT BOGUS"), STRDEF("HINT")),
             FileRemoveError,
-            "unable to move 'BOGUS' to 'NOT BOGUS': libssh2 error [-31]: sftp error [16] LIBSSH2_FX_UNKNOWN_PRINCIPAL\n"
+            "unable to move 'BOGUS' to 'NOT BOGUS': libssh2 error [-31]: sftp error [16] unknown principal\n"
             "HINT");
         TEST_ERROR_FMT(
             storageSftpEvalLibSsh2Error(
                 LIBSSH2_ERROR_SFTP_PROTOCOL, 16, &FileRemoveError,
                 strNewFmt("unable to move '%s' to '%s'", "BOGUS", "NOT BOGUS"), NULL),
             FileRemoveError,
-            "unable to move 'BOGUS' to 'NOT BOGUS': libssh2 error [-31]: sftp error [16] LIBSSH2_FX_UNKNOWN_PRINCIPAL");
+            "unable to move 'BOGUS' to 'NOT BOGUS': libssh2 error [-31]: sftp error [16] unknown principal");
         TEST_ERROR_FMT(
             storageSftpEvalLibSsh2Error(
                 LIBSSH2_ERROR_SFTP_PROTOCOL, 16, &FileRemoveError, NULL, NULL),
             FileRemoveError,
-            "libssh2 error [-31]: sftp error [16] LIBSSH2_FX_UNKNOWN_PRINCIPAL");
+            "libssh2 error [-31]: sftp error [16] unknown principal");
 #else
         TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
@@ -7893,27 +7890,24 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("libssh2SftpErrorMsg()");
 
-        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_EOF), "LIBSSH2_FX_EOF", "LIBSSH2_FX_EOF");
-        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_FAILURE), "LIBSSH2_FX_FAILURE", "LIBSSH2_FX_FAILURE");
-        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_BAD_MESSAGE), "LIBSSH2_FX_BAD_MESSAGE", "LIBSSH2_FX_BAD_MESSAGE");
-        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_NO_CONNECTION), "LIBSSH2_FX_NO_CONNECTION", "LIBSSH2_FX_NO_CONNECTION");
-        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_OP_UNSUPPORTED), "LIBSSH2_FX_OP_UNSUPPORTED", "LIBSSH2_FX_OP_UNSUPPORTED");
-        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_INVALID_HANDLE), "LIBSSH2_FX_INVALID_HANDLE", "LIBSSH2_FX_INVALID_HANDLE");
-        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_NO_SUCH_PATH), "LIBSSH2_FX_NO_SUCH_PATH", "LIBSSH2_FX_NO_SUCH_PATH");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_EOF), "eof", "LIBSSH2_FX_EOF");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_FAILURE), "failure", "LIBSSH2_FX_FAILURE");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_BAD_MESSAGE), "bad message", "LIBSSH2_FX_BAD_MESSAGE");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_NO_CONNECTION), "no connection", "LIBSSH2_FX_NO_CONNECTION");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_OP_UNSUPPORTED), "operation unsupported", "LIBSSH2_FX_OP_UNSUPPORTED");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_INVALID_HANDLE), "invalid handle", "LIBSSH2_FX_INVALID_HANDLE");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_NO_SUCH_PATH), "no such path", "LIBSSH2_FX_NO_SUCH_PATH");
         TEST_RESULT_Z(
-            libssh2SftpErrorMsg(
-                LIBSSH2_FX_FILE_ALREADY_EXISTS), "LIBSSH2_FX_FILE_ALREADY_EXISTS", "LIBSSH2_FX_FILE_ALREADY_EXISTS");
-        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_WRITE_PROTECT), "LIBSSH2_FX_WRITE_PROTECT", "LIBSSH2_FX_WRITE_PROTECT");
-        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_NO_MEDIA), "LIBSSH2_FX_NO_MEDIA", "LIBSSH2_FX_NO_MEDIA");
+            libssh2SftpErrorMsg(LIBSSH2_FX_FILE_ALREADY_EXISTS), "file already exists", "LIBSSH2_FX_FILE_ALREADY_EXISTS");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_WRITE_PROTECT), "write protect", "LIBSSH2_FX_WRITE_PROTECT");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_NO_MEDIA), "no media", "LIBSSH2_FX_NO_MEDIA");
         TEST_RESULT_Z(
-            libssh2SftpErrorMsg(
-                LIBSSH2_FX_NO_SPACE_ON_FILESYSTEM), "LIBSSH2_FX_NO_SPACE_ON_FILESYSTEM", "LIBSSH2_FX_NO_SPACE_ON_FILESYSTEM");
-        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_QUOTA_EXCEEDED), "LIBSSH2_FX_QUOTA_EXCEEDED", "LIBSSH2_FX_QUOTA_EXCEEDED");
-        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_LOCK_CONFLICT), "LIBSSH2_FX_LOCK_CONFLICT", "LIBSSH2_FX_LOCK_CONFLICT");
-        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_DIR_NOT_EMPTY), "LIBSSH2_FX_DIR_NOT_EMPTY", "LIBSSH2_FX_DIR_NOT_EMPTY");
-        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_NOT_A_DIRECTORY), "LIBSSH2_FX_NOT_A_DIRECTORY", "LIBSSH2_FX_NOT_A_DIRECTORY");
-        TEST_RESULT_Z(
-            libssh2SftpErrorMsg(LIBSSH2_FX_INVALID_FILENAME), "LIBSSH2_FX_INVALID_FILENAME", "LIBSSH2_FX_INVALID_FILENAME");
+            libssh2SftpErrorMsg(LIBSSH2_FX_NO_SPACE_ON_FILESYSTEM), "no space on filesystem", "LIBSSH2_FX_NO_SPACE_ON_FILESYSTEM");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_QUOTA_EXCEEDED), "quota exceeded", "LIBSSH2_FX_QUOTA_EXCEEDED");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_LOCK_CONFLICT), "lock conflict", "LIBSSH2_FX_LOCK_CONFLICT");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_DIR_NOT_EMPTY), "directory not empty", "LIBSSH2_FX_DIR_NOT_EMPTY");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_NOT_A_DIRECTORY), "not a directory", "LIBSSH2_FX_NOT_A_DIRECTORY");
+        TEST_RESULT_Z(libssh2SftpErrorMsg(LIBSSH2_FX_INVALID_FILENAME), "invalid filename", "LIBSSH2_FX_INVALID_FILENAME");
 #else
         TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2

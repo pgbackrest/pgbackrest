@@ -632,7 +632,6 @@ unit:
           integration: false
 
         coverage:
-          - storage/sftp/common
           - storage/sftp/helper
           - storage/sftp/read
           - storage/sftp/storage

@@ -13,7 +13,6 @@ SFTP Storage
 #include "common/regExp.h"
 #include "common/user.h"
 #include "storage/posix/storage.h"
-#include "storage/sftp/common.h"
 #include "storage/sftp/read.h"
 #include "storage/sftp/storage.intern.h"
 #include "storage/sftp/write.h"
@@ -91,6 +90,113 @@ storageSftpKnownHostKeyType(const int hostKeyType)
     }
 
     FUNCTION_TEST_RETURN(INT, result);
+}
+
+/***********************************************************************************************************************************
+Return error message based on error code
+***********************************************************************************************************************************/
+static const char *
+libssh2SftpErrorMsg(const uint64_t error)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT64, error);
+    FUNCTION_TEST_END();
+
+    const char *result;
+
+    // SFTP error status codes (returned by libssh2_sftp_last_error()
+    switch (error)
+    {
+        case LIBSSH2_FX_EOF:
+            result = "eof";
+            break;
+
+        case LIBSSH2_FX_NO_SUCH_FILE:
+            result = "no such file";
+            break;
+
+        case LIBSSH2_FX_PERMISSION_DENIED:
+            result = "permission denied";
+            break;
+
+        case LIBSSH2_FX_FAILURE:
+            result = "failure";
+            break;
+
+        case LIBSSH2_FX_BAD_MESSAGE:
+            result = "bad message";
+            break;
+
+        case LIBSSH2_FX_NO_CONNECTION:
+            result = "no connection";
+            break;
+
+        case LIBSSH2_FX_CONNECTION_LOST:
+            result = "connection lost";
+            break;
+
+        case LIBSSH2_FX_OP_UNSUPPORTED:
+            result = "operation unsupported";
+            break;
+
+        case LIBSSH2_FX_INVALID_HANDLE:
+            result = "invalid handle";
+            break;
+
+        case LIBSSH2_FX_NO_SUCH_PATH:
+            result = "no such path";
+            break;
+
+        case LIBSSH2_FX_FILE_ALREADY_EXISTS:
+            result = "file already exists";
+            break;
+
+        case LIBSSH2_FX_WRITE_PROTECT:
+            result = "write protect";
+            break;
+
+        case LIBSSH2_FX_NO_MEDIA:
+            result = "no media";
+            break;
+
+        case LIBSSH2_FX_NO_SPACE_ON_FILESYSTEM:
+            result = "no space on filesystem";
+            break;
+
+        case LIBSSH2_FX_QUOTA_EXCEEDED:
+            result = "quota exceeded";
+            break;
+
+        case LIBSSH2_FX_UNKNOWN_PRINCIPAL:
+            result = "unknown principal";
+            break;
+
+        case LIBSSH2_FX_LOCK_CONFLICT:
+            result = "lock conflict";
+            break;
+
+        case LIBSSH2_FX_DIR_NOT_EMPTY:
+            result = "directory not empty";
+            break;
+
+        case LIBSSH2_FX_NOT_A_DIRECTORY:
+            result = "not a directory";
+            break;
+
+        case LIBSSH2_FX_INVALID_FILENAME:
+            result = "invalid filename";
+            break;
+
+        case LIBSSH2_FX_LINK_LOOP:
+            result = "link loop";
+            break;
+
+        default:
+            result = "unknown error";
+            break;
+    }
+
+    FUNCTION_TEST_RETURN_CONST(STRINGZ, result);
 }
 
 /***********************************************************************************************************************************
