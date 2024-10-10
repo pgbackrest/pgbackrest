@@ -1155,8 +1155,11 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
                 const uint64_t sftpErrno = libssh2_sftp_last_error(this->sftpSession);
 
                 if (sftpErrno != LIBSSH2_FX_NO_SUCH_FILE)
+                {
                     THROW_FMT(
-                        PathRemoveError, STORAGE_ERROR_PATH_REMOVE " sftp error [%" PRIu64 "] %s", strZ(path), sftpErrno, libssh2SftpErrorMsg(sftpErrno));
+                        PathRemoveError, STORAGE_ERROR_PATH_REMOVE " sftp error [%" PRIu64 "] %s", strZ(path), sftpErrno,
+                        libssh2SftpErrorMsg(sftpErrno));
+                }
 
                 // Path does not exist
                 result = false;

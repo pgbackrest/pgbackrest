@@ -4417,7 +4417,7 @@ testRun(void)
         TEST_ERROR_FMT(
             storagePathRemoveP(
                 storageTest, pathRemove1, .recurse = true), PathRemoveError,
-            STORAGE_ERROR_PATH_REMOVE " sftp error [3] permission denied", strZ(pathRemove2));
+                STORAGE_ERROR_PATH_REMOVE " sftp error [3] permission denied", strZ(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - path with subpath and file removed");
@@ -4431,7 +4431,7 @@ testRun(void)
         TEST_ERROR_FMT(
             storagePathRemoveP(
                 storageTest, pathRemove1, .recurse = true), PathRemoveError,
-            STORAGE_ERROR_PATH_REMOVE_FILE " libssh ssh [-7]", strZ(pathRemove2));
+                STORAGE_ERROR_PATH_REMOVE_FILE " libssh ssh [-7]", strZ(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - other than LIBSSH2_FX_FAILURE/LIBSSH2_FX_PERMISSION_DENIED");
@@ -4439,7 +4439,7 @@ testRun(void)
         TEST_ERROR_FMT(
             storagePathRemoveP(
                 storageTest, pathRemove1, .recurse = true), PathRemoveError,
-            STORAGE_ERROR_PATH_REMOVE_FILE " libssh sftp [7] connection lost", strZ(pathRemove2));
+                STORAGE_ERROR_PATH_REMOVE_FILE " libssh sftp [7] connection lost", strZ(pathRemove2));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -7871,13 +7871,10 @@ testRun(void)
             storageSftpEvalLibSsh2Error(
                 LIBSSH2_ERROR_SFTP_PROTOCOL, 16, &FileRemoveError,
                 strNewFmt("unable to move '%s' to '%s'", "BOGUS", "NOT BOGUS"), NULL),
-            FileRemoveError,
-            "unable to move 'BOGUS' to 'NOT BOGUS': libssh2 error [-31]: sftp error [16] unknown principal");
+            FileRemoveError, "unable to move 'BOGUS' to 'NOT BOGUS': libssh2 error [-31]: sftp error [16] unknown principal");
         TEST_ERROR_FMT(
-            storageSftpEvalLibSsh2Error(
-                LIBSSH2_ERROR_SFTP_PROTOCOL, 16, &FileRemoveError, NULL, NULL),
-            FileRemoveError,
-            "libssh2 error [-31]: sftp error [16] unknown principal");
+            storageSftpEvalLibSsh2Error(LIBSSH2_ERROR_SFTP_PROTOCOL, 16, &FileRemoveError, NULL, NULL),
+            FileRemoveError, "libssh2 error [-31]: sftp error [16] unknown principal");
 #else
         TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
