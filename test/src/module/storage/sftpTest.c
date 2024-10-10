@@ -4415,9 +4415,8 @@ testRun(void)
 
         // Mimic "sudo chmod 755 %s && sudo touch %s && sudo chmod 777 %s", strZ(pathRemove2), strZ(fileRemove), strZ(fileRemove));
         TEST_ERROR_FMT(
-            storagePathRemoveP(
-                storageTest, pathRemove1, .recurse = true), PathRemoveError,
-                STORAGE_ERROR_PATH_REMOVE " sftp error [3] permission denied", strZ(pathRemove2));
+            storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError,
+            STORAGE_ERROR_PATH_REMOVE " sftp error [3] permission denied", strZ(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - path with subpath and file removed");
@@ -4429,17 +4428,15 @@ testRun(void)
         TEST_TITLE("path remove - path with subpath ssh fail on unlink");
 
         TEST_ERROR_FMT(
-            storagePathRemoveP(
-                storageTest, pathRemove1, .recurse = true), PathRemoveError,
-                STORAGE_ERROR_PATH_REMOVE_FILE " libssh ssh [-7]", strZ(pathRemove2));
+            storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError,
+            STORAGE_ERROR_PATH_REMOVE_FILE " libssh ssh [-7]", strZ(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - other than LIBSSH2_FX_FAILURE/LIBSSH2_FX_PERMISSION_DENIED");
 
         TEST_ERROR_FMT(
-            storagePathRemoveP(
-                storageTest, pathRemove1, .recurse = true), PathRemoveError,
-                STORAGE_ERROR_PATH_REMOVE_FILE " libssh sftp [7] connection lost", strZ(pathRemove2));
+            storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError,
+            STORAGE_ERROR_PATH_REMOVE_FILE " libssh sftp [7] connection lost", strZ(pathRemove2));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
