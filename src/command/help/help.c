@@ -261,6 +261,45 @@ helpRenderValue(const ConfigOption optionId)
 }
 
 /***********************************************************************************************************************************
+Determine if the first character of a summary should be lower-case
+***********************************************************************************************************************************/
+static String *
+helpRenderSummary(const String *const summary)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, summary);
+    FUNCTION_TEST_END();
+
+    ASSERT(summary != NULL);
+
+    // Strip final period off summary
+    String *const result = strCatN(strNew(), summary, strSize(summary) - 1);
+
+    // Lower-case first letter if first word does not appear to be an acronym or proper name
+    unsigned int totalLetter = 0;
+    unsigned int totalCapital = 0;
+
+    for (unsigned int resultIdx = 0; resultIdx < strSize(result); resultIdx++)
+    {
+        const char resultChar = strZ(result)[resultIdx];
+
+        if (resultChar == ' ')
+            break;
+
+        if (isalpha(resultChar))
+            totalLetter++;
+
+        if (isupper(resultChar))
+            totalCapital++;
+    }
+
+    if (totalCapital == 1 && totalCapital != totalLetter)
+        strFirstLower(result);
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
+/***********************************************************************************************************************************
 Render help to a string
 ***********************************************************************************************************************************/
 // Stored unpacked command data
@@ -501,14 +540,7 @@ helpRender(const Buffer *const helpData)
                     for (unsigned int optionIdx = 0; optionIdx < varLstSize(optionList); optionIdx++)
                     {
                         const ConfigOption optionId = varUInt(varLstGet(optionList, optionIdx));
-
-                        // Get option summary and lower-case first letter if it does not appear to be part of an acronym
-                        String *const summary = strCatN(
-                            strNew(), optionData[optionId].summary, strSize(optionData[optionId].summary) - 1);
-                        ASSERT(strSize(summary) > 1);
-
-                        if (!isupper(strZ(summary)[1]) && isalpha(strZ(summary)[1]))
-                            strFirstLower(summary);
+                        String *const summary = helpRenderSummary(optionData[optionId].summary);
 
                         // Output current and default values if they exist
                         const String *const defaultValue = cfgOptionDefault(optionId);

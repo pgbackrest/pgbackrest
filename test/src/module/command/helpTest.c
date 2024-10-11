@@ -96,7 +96,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("helpRenderText()"))
+    if (testBegin("helpRenderText() and helpRenderSummary()"))
     {
         TEST_RESULT_STR_Z(
             helpRenderText(STRDEF("this is a short sentence"), false, false, 0, false, 80), "this is a short sentence", "one line");
@@ -129,6 +129,8 @@ testRun(void)
             "  NOT USE IN\n"
             "  PRODUCTION.",
             "two paragraphs, indent first, internal");
+
+        TEST_RESULT_STR_Z(helpRenderSummary(STRDEF("Summary.")), "summary", "render summary");
     }
 
     // *****************************************************************************************************************************
@@ -372,7 +374,7 @@ testRun(void)
             "\n"
             "Stanza Options:\n"
             "\n"
-            "  --pg-path                           postgreSQL data directory\n"
+            "  --pg-path                           PostgreSQL data directory\n"
             "\n"
             "Use 'pgbackrest help restore [option]' for more information.\n");
 
