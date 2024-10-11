@@ -404,7 +404,10 @@ helpRender(const Buffer *const helpData)
                 strCatFmt(
                     result, "    %s%*s%s\n", cfgParseCommandName(commandId),
                     (int)(commandSizeMax - strlen(cfgParseCommandName(commandId)) + 2), "",
-                    strZ(helpRenderText(commandData[commandId].summary, false, false, commandSizeMax + 6, false, CONSOLE_WIDTH)));
+                    strZ(
+                        helpRenderText(
+                            helpRenderSummary(commandData[commandId].summary), false, false, commandSizeMax + 6, false,
+                            CONSOLE_WIDTH)));
             }
 
             // Construct message for more help
