@@ -565,6 +565,38 @@ testRun(void)
             HRN_FORK_PARENT_END();
         }
         HRN_FORK_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("sckServerNew() retries bind()");
+
+        HRN_FORK_BEGIN(.timeout = 5000)
+        {
+            const unsigned int testPort = hrnServerPortNext();
+
+            HRN_FORK_CHILD_BEGIN(.prefix = "server")
+            {
+                // Bind port and notify parent
+                IoServer *server = sckServerNew(STRDEF("127.0.0.1"), testPort, 5000);
+                HRN_FORK_CHILD_NOTIFY_PUT();
+
+                // Sleep 1000ms then close port
+                sleepMSec(1000);
+                objFree(server);
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN(.prefix = "client")
+            {
+                // Wait for parent to bind port before attempting to bind
+                HRN_FORK_PARENT_NOTIFY_GET(0);
+                TEST_ERROR(
+                    sckServerNew(STRDEF("127.0.0.1"), testPort, 100), FileOpenError,
+                    "unable to bind socket: [98] Address already in use");
+                TEST_RESULT_VOID(sckServerNew(STRDEF("127.0.0.1"), testPort, 5000), "bind succeeds with enough retries");
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
     }
 
     // Additional coverage not provided by testing with actual certificates
