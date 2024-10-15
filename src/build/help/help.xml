@@ -1903,7 +1903,7 @@
                         <summary><postgres/> data directory.</summary>
 
                         <text>
-                            <p>This should be the same as the <setting>data_directory</setting> setting in <file>postgresql.conf</file>. Even though this value can be read from <file>postgresql.conf</file> or <postgres/> it is prudent to set it in case those resources are not available during a restore or offline backup scenario.</p>
+                            <p>This should be the same as the <setting>data_directory</setting> reported by <postgres/>. Even though this value can be read from various places, it is prudent to set it in case those resources are not available during a restore or offline backup scenario.</p>
 
                             <p>The <setting>pg-path</setting> option is tested against the value reported by <postgres/> on every online backup so it should always be current.</p>
                         </text>
