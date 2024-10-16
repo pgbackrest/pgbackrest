@@ -553,8 +553,6 @@ eval
 
             if ($strFile eq 'doc/doc.pl' ||
                 $strFile eq 'doc/release.pl' ||
-                $strFile eq 'src/build/install-sh' ||
-                $strFile eq 'src/configure' ||
                 $strFile eq 'test/ci.pl' ||
                 $strFile eq 'test/test.pl' ||
                 $hManifest->{$strFile}{type} eq 'd')

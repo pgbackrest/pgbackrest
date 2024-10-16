@@ -671,18 +671,6 @@ meson_options.txt:
   class: build
   type: meson
 
-src/Makefile.in:
-  class: build
-  type: make
-
-src/build.auto.h.in:
-  class: core
-  type: c/h
-
-src/build/aclocal.m4:
-  class: build
-  type: make
-
 src/build/common/exec.c:
   class: build
   type: c
@@ -739,14 +727,6 @@ src/build/common/yaml.h:
   class: build
   type: c/h
 
-src/build/config.guess:
-  class: build
-  type: make
-
-src/build/config.sub:
-  class: build
-  type: make
-
 src/build/config/config.yaml:
   class: build
   type: yaml
@@ -766,10 +746,6 @@ src/build/config/render.c:
 src/build/config/render.h:
   class: build
   type: c/h
-
-src/build/configure.ac:
-  class: build
-  type: make
 
 src/build/error/error.yaml:
   class: build
@@ -793,7 +769,7 @@ src/build/error/render.h:
 
 src/build/help/help.xml:
   class: build
-  type: make
+  type: xml
 
 src/build/help/parse.c:
   class: build
@@ -810,10 +786,6 @@ src/build/help/render.c:
 src/build/help/render.h:
   class: build
   type: c/h
-
-src/build/install-sh:
-  class: build
-  type: make
 
 src/build/main.c:
   class: build
@@ -2030,10 +2002,6 @@ src/config/protocol.c:
 src/config/protocol.h:
   class: core
   type: c/h
-
-src/configure:
-  class: build
-  type: make
 
 src/db/db.c:
   class: core
