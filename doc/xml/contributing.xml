@@ -551,7 +551,7 @@ HRN_FORK_BEGIN()
             "    cipher: none\n"
             "\n"
             "    db (current)\n"
-            "        wal archive min/max (9.4): none present\n",
+            "        wal archive min/max (9.6): none present\n",
             "text - single stanza, no valid backups, backup/expire lock detected");
 
         // Notify child to release lock

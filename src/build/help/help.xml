@@ -2455,7 +2455,7 @@
 
                             <list>
                                 <list-item><id>default</id> - recover to the end of the archive stream.</list-item>
-                                <list-item><id>immediate</id> - recover only until the database becomes consistent. This option is only supported on <postgres/> &gt;= 9.4.</list-item>
+                                <list-item><id>immediate</id> - recover only until the database becomes consistent.</list-item>
                                 <list-item><id>lsn</id> - recover to the LSN (Log Sequence Number) specified in <br-option>--target</br-option>. This option is only supported on <postgres/> &gt;= 10.</list-item>
                                 <list-item><id>name</id> - recover the restore point specified in <br-option>--target</br-option>.</list-item>
                                 <list-item><id>xid</id> - recover to the transaction id specified in <br-option>--target</br-option>.</list-item>

@@ -267,8 +267,8 @@ testRun(void)
 
         // Two standbys found but no primary
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_94, "/pgdata", true, NULL, NULL),
-            HRN_PQ_SCRIPT_OPEN_GE_93(8, "dbname='postgres' port=5433", PG_VERSION_94, "/pgdata", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_95, "/pgdata", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_93(8, "dbname='postgres' port=5433", PG_VERSION_95, "/pgdata", true, NULL, NULL),
 
             HRN_PQ_SCRIPT_CLOSE(8),
             HRN_PQ_SCRIPT_CLOSE(1));
@@ -598,9 +598,9 @@ testRun(void)
         TEST_TITLE("checkDbConfig() version mismatch");
 
         TEST_ERROR(
-            checkDbConfig(PG_VERSION_94, db.primaryIdx, db.primary, false), DbMismatchError,
+            checkDbConfig(PG_VERSION_95, db.primaryIdx, db.primary, false), DbMismatchError,
             "version '" PG_VERSION_11_Z "' and path '" TEST_PATH "/pg' queried from cluster do not match version '"
-            PG_VERSION_94_Z "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/global/pg_control'\n"
+            PG_VERSION_95_Z "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/global/pg_control'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -754,7 +754,7 @@ testRun(void)
         // Version mismatch
         TEST_ERROR(
             checkStanzaInfoPg(
-                storageRepoIdx(0), PG_VERSION_94, HRN_PG_SYSTEMID_94, cfgOptionIdxStrId(cfgOptRepoCipherType, 0),
+                storageRepoIdx(0), PG_VERSION_95, HRN_PG_SYSTEMID_95, cfgOptionIdxStrId(cfgOptRepoCipherType, 0),
                 cfgOptionIdxStr(cfgOptRepoCipherPass, 0)),
             FileInvalidError,
             "backup and archive info files exist but do not match the database\n"

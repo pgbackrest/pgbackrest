@@ -563,10 +563,10 @@ testRun(void)
         TEST_TITLE("pgControl and database match");
 
         // Create pg_control
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_94);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_95);
 
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_94, TEST_PATH "/pg", false, NULL, NULL));
+            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_95, TEST_PATH "/pg", false, NULL, NULL));
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - db online");
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
@@ -584,7 +584,7 @@ testRun(void)
 
         HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_94, TEST_PATH "/pg", false, NULL, NULL));
+            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_95, TEST_PATH "/pg", false, NULL, NULL));
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - db online");
         TEST_RESULT_LOG(
@@ -637,7 +637,7 @@ testRun(void)
         HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_13);
 
         // Create pg_control for standby
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_94);
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_95);
 
         HRN_PQ_SCRIPT_SET(
             HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_13, TEST_PATH "/pg", true, NULL, NULL),

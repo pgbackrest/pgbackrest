@@ -28,18 +28,18 @@ testRun(void)
         // File with section to ignore
         const Buffer *contentLoad = harnessInfoChecksumZ(
             "[db]\n"
-            "db-catalog-version=201409291\n"
+            "db-catalog-version=201510051\n"
             "db-control-version=942\n"
             "db-id=1\n"
             "db-system-id=6569239123849665679\n"
-            "db-version=\"9.4\"\n"
+            "db-version=\"9.5\"\n"
             "\n"
             "[ignore-section]\n"
             "key1=\"value1\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
-            ",\"db-version\":\"9.4\"}\n");
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"9.5\"}\n");
 
         InfoBackup *infoBackup = NULL;
 
@@ -63,7 +63,7 @@ testRun(void)
         Buffer *contentCompare = bufNew(0);
 
         TEST_ASSIGN(
-            infoBackup, infoBackupNew(PG_VERSION_94, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_94), NULL),
+            infoBackup, infoBackupNew(PG_VERSION_95, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_95), NULL),
             "infoBackupNew() - no cipher sub");
         TEST_RESULT_VOID(infoBackupSave(infoBackup, ioBufferWriteNew(contentCompare)), "save backup info from new");
         TEST_RESULT_STR(strNewBuf(contentCompare), strNewBuf(contentSave), "check save");
@@ -99,13 +99,13 @@ testRun(void)
 
         InfoPgData infoPgData = {0};
         TEST_RESULT_VOID(
-            infoBackupPgSet(infoBackup, PG_VERSION_94, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_94)),
+            infoBackupPgSet(infoBackup, PG_VERSION_95, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_95)),
             "add another infoPg");
         TEST_RESULT_INT(infoPgDataTotal(infoBackupPg(infoBackup)), 2, "history incremented");
         TEST_ASSIGN(infoPgData, infoPgDataCurrent(infoBackupPg(infoBackup)), "get current infoPgData");
-        TEST_RESULT_INT(infoPgData.version, PG_VERSION_94, "version set");
+        TEST_RESULT_INT(infoPgData.version, PG_VERSION_95, "version set");
         TEST_RESULT_UINT(infoPgData.systemId, 6569239123849665679, "systemId set");
-        TEST_RESULT_UINT(infoPgData.catalogVersion, 201409291, "catalogVersion set");
+        TEST_RESULT_UINT(infoPgData.catalogVersion, 201510051, "catalogVersion set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("object free");
@@ -144,15 +144,15 @@ testRun(void)
             "\"option-checksum-page\":false,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "\n"
             "[db]\n"
-            "db-catalog-version=201409291\n"
+            "db-catalog-version=201510051\n"
             "db-control-version=942\n"
             "db-id=1\n"
             "db-system-id=6569239123849665679\n"
-            "db-version=\"9.4\"\n"
+            "db-version=\"9.5\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
-            ",\"db-version\":\"9.4\"}\n");
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"9.5\"}\n");
 
         TEST_ASSIGN(infoBackup, infoBackupNewLoad(ioBufferReadNew(contentLoad)), "new backup info");
 
@@ -265,11 +265,11 @@ testRun(void)
         #define TEST_MANIFEST_BACKUPDB                                                                                             \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=201409291\n"                                                                                       \
+            "db-catalog-version=201510051\n"                                                                                       \
             "db-control-version=942\n"                                                                                             \
             "db-id=1\n"                                                                                                            \
             "db-system-id=6569239123849665679\n"                                                                                   \
-            "db-version=\"9.4\"\n"
+            "db-version=\"9.5\"\n"
 
         #define TEST_MANIFEST_FILE_DEFAULT                                                                                         \
             "\n"                                                                                                                   \
@@ -942,15 +942,15 @@ testRun(void)
             "\"option-online\":true}\n"
             "\n"
             "[db]\n"
-            "db-catalog-version=201409291\n"
+            "db-catalog-version=201510051\n"
             "db-control-version=942\n"
             "db-id=1\n"
             "db-system-id=6569239123849665679\n"
-            "db-version=\"9.4\"\n"
+            "db-version=\"9.5\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
-            ",\"db-version\":\"9.4\"}\n");
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"9.5\"}\n");
 
         InfoBackup *infoBackup;
         StringList *dependencyList;
