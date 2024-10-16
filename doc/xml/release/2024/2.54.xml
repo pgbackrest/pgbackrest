@@ -133,5 +133,20 @@
                 <p>Add performance tuning section to user guide.</p>
             </release-item>
         </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <github-issue id="2464"/>
+                <github-pull-request id="2467"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="gurucubano"/>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Clarify source for <setting>data_directory</setting>.</p>
+            </release-item>
+        </release-improvement-list>
     </release-doc-list>
 </release>
