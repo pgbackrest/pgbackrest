@@ -187,23 +187,3 @@ Commit and push to integration:
 git commit -m "Begin v2.15 development."
 git push origin integration
 ```
-
-## Update automake/config scripts
-
-These scripts are required by `src/config` and should be updated after each release, when needed. Note that these files are updated very infrequently.
-
-Check the latest version of `automake` and see if it is > `1.16.5`:
-```
-https://git.savannah.gnu.org/gitweb/?p=automake.git
-```
-
-If so, update the version above and copy `lib/install-sh` from the `automake` repo to the `pgbackrest` repo at `[repo]/src/build/install-sh`:
-```
-wget -O pgbackrest/src/build/install-sh '[URL]'
-```
-
-Get the latest versions of `config.sub` and `config.guess`. These files are not versioned so the newest version is pulled at the beginning of the release cycle to allow time to test stability.
-```
-wget -O pgbackrest/src/build/config.guess 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
-wget -O pgbackrest/src/build/config.sub 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
-```

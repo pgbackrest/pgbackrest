@@ -175,7 +175,7 @@ jobs:
           languages: ${{matrix.language}}
 
       - name: Build
-        run: ${GITHUB_WORKSPACE?}/src/configure && make -j 2
+        run: meson setup ${HOME?}/build ${GITHUB_WORKSPACE?} && ninja -C ${HOME?}/build
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
