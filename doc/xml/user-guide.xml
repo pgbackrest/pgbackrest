@@ -1150,7 +1150,7 @@
 
             <p>The name 'demo' describes the purpose of this cluster accurately so that will also make a good stanza name.</p>
 
-            <p><backrest/> needs to know where the base data directory for the <postgres/> cluster is located. The path can be requested from <postgres/> directly but in a recovery scenario the <postgres/> process will not be available. During backups the value supplied to <backrest/> will be compared against the path that <postgres/> is running on and they must be equal or the backup will return an error. Make sure that <br-option>pg-path</br-option> is exactly equal to <pg-option>data_directory</pg-option> in <file>postgresql.conf</file>.</p>
+            <p><backrest/> needs to know where the base data directory for the <postgres/> cluster is located. The path can be requested from <postgres/> directly but in a recovery scenario the <postgres/> process will not be available. During backups the value supplied to <backrest/> will be compared against the path that <postgres/> is running on and they must be equal or the backup will return an error. Make sure that <br-option>pg-path</br-option> is exactly equal to <pg-option>data_directory</pg-option> as reported by <postgres/>.</p>
 
             <p>By default {[user-guide-os]} stores clusters in <path>{[pg-path-default]}</path> so it is easy to determine the correct path for the data directory.</p>
 
