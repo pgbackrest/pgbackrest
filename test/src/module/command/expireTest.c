@@ -1,5 +1,7 @@
 /***********************************************************************************************************************************
 Test Expire Command
+
+NOTE: references to 9.4 are intentionally included in this test to ensure that expire will work with no longer supported versions.
 ***********************************************************************************************************************************/
 #include <unistd.h>
 
