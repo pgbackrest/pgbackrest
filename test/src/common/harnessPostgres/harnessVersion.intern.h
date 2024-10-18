@@ -16,7 +16,7 @@ Get the catalog version
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 #define HRN_PG_INTERFACE_CATALOG_VERSION(version)                                                                                  \
     uint32_t                                                                                                                       \
@@ -32,7 +32,7 @@ Create a pg_control file
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 #define HRN_PG_INTERFACE_CONTROL_TEST(version)                                                                                     \
     void                                                                                                                           \
@@ -56,11 +56,7 @@ Create a pg_control file
             .data_checksum_version = pgControl.pageChecksumVersion,                                                                \
         };                                                                                                                         \
                                                                                                                                    \
-        ((ControlFileData *)buffer)->crc =                                                                                         \
-            crc == 0 ?                                                                                                             \
-                (PG_VERSION > PG_VERSION_94 ?                                                                                      \
-                    crc32cOne(buffer, offsetof(ControlFileData, crc)) : crc32One(buffer, offsetof(ControlFileData, crc))) :        \
-                crc;                                                                                                               \
+        ((ControlFileData *)buffer)->crc = crc == 0 ? crc32cOne(buffer, offsetof(ControlFileData, crc)) : crc;                     \
     }
 
 #endif
@@ -70,7 +66,7 @@ Create a WAL file
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 #define HRN_PG_INTERFACE_WAL_TEST(version)                                                                                         \
     void                                                                                                                           \

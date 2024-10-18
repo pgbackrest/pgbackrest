@@ -1500,14 +1500,14 @@ testRun(void)
             storagePathP(storage, STRDEF(STORAGE_REPO_ARCHIVE "/simple")), TEST_PATH "/archive/db/simple",
             "check simple path");
         TEST_RESULT_STR_Z(
-            storagePathP(storage, STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/700000007000000070000000")),
-            TEST_PATH "/archive/db/9.4-1/7000000070000000/700000007000000070000000", "check segment path");
+            storagePathP(storage, STRDEF(STORAGE_REPO_ARCHIVE "/17-1/700000007000000070000000")),
+            TEST_PATH "/archive/db/17-1/7000000070000000/700000007000000070000000", "check segment path");
         TEST_RESULT_STR_Z(
-            storagePathP(storage, STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/00000008.history")),
-            TEST_PATH "/archive/db/9.4-1/00000008.history", "check history path");
+            storagePathP(storage, STRDEF(STORAGE_REPO_ARCHIVE "/17-1/00000008.history")),
+            TEST_PATH "/archive/db/17-1/00000008.history", "check history path");
         TEST_RESULT_STR_Z(
-            storagePathP(storage, STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/000000010000014C0000001A.00000028.backup")),
-            TEST_PATH "/archive/db/9.4-1/000000010000014C/000000010000014C0000001A.00000028.backup",
+            storagePathP(storage, STRDEF(STORAGE_REPO_ARCHIVE "/17-1/000000010000014C0000001A.00000028.backup")),
+            TEST_PATH "/archive/db/17-1/000000010000014C/000000010000014C0000001A.00000028.backup",
             "check archive backup path");
         TEST_RESULT_STR_Z(storagePathP(storage, STORAGE_REPO_BACKUP_STR), TEST_PATH "/backup/db", "check backup path");
 

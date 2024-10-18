@@ -386,15 +386,15 @@ testRun(void)
             walSegmentNext(STRDEF("000000010000000100000001"), 16 * 1024 * 1024, PG_VERSION_10), "000000010000000100000002",
             "get next");
         TEST_RESULT_STR_Z(
-            walSegmentNext(STRDEF("0000000100000001000000FE"), 16 * 1024 * 1024, PG_VERSION_94), "0000000100000001000000FF",
+            walSegmentNext(STRDEF("0000000100000001000000FE"), 16 * 1024 * 1024, PG_VERSION_95), "0000000100000001000000FF",
             "get next");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check overflow by version");
 
         TEST_RESULT_STR_Z(
-            walSegmentNext(STRDEF("0000009900000001000000FF"), 16 * 1024 * 1024, PG_VERSION_94), "000000990000000200000000",
-            "get next overflow >= 9.4");
+            walSegmentNext(STRDEF("0000009900000001000000FF"), 16 * 1024 * 1024, PG_VERSION_95), "000000990000000200000000",
+            "get next overflow >= 9.5");
         TEST_RESULT_STR_Z(
             walSegmentNext(STRDEF("000000010000000100000003"), 1024 * 1024 * 1024, PG_VERSION_11), "000000010000000200000000",
             "get next overflow >= 11/1GB");
@@ -410,16 +410,16 @@ testRun(void)
         TEST_TITLE("single segment");
 
         TEST_RESULT_STRLST_Z(
-            walSegmentRange(STRDEF("000000010000000100000000"), 16 * 1024 * 1024, PG_VERSION_94, 1), "000000010000000100000000\n",
+            walSegmentRange(STRDEF("000000010000000100000000"), 16 * 1024 * 1024, PG_VERSION_95, 1), "000000010000000100000000\n",
             "get single");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check range by version");
 
         TEST_RESULT_STRLST_Z(
-            walSegmentRange(STRDEF("0000000100000001000000FD"), 16 * 1024 * 1024, PG_VERSION_94, 4),
+            walSegmentRange(STRDEF("0000000100000001000000FD"), 16 * 1024 * 1024, PG_VERSION_95, 4),
             "0000000100000001000000FD\n0000000100000001000000FE\n0000000100000001000000FF\n000000010000000200000000\n",
-            "get range >= 9.4");
+            "get range >= 9.5");
         TEST_RESULT_STRLST_Z(
             walSegmentRange(STRDEF("000000080000000A00000000"), 1024 * 1024 * 1024, PG_VERSION_11, 8),
             "000000080000000A00000000\n000000080000000A00000001\n000000080000000A00000002\n000000080000000A00000003\n"
@@ -445,8 +445,8 @@ testRun(void)
 
         TEST_RESULT_STRLST_Z(strLstSort(list, sortOrderAsc), "9.6-1\n10-4\n11-10\n", "sort ascending");
 
-        strLstAddZ(list, "9.4-2");
-        TEST_RESULT_STRLST_Z(strLstSort(list, sortOrderDesc), "11-10\n10-4\n9.4-2\n9.6-1\n", "sort descending");
+        strLstAddZ(list, "17-1");
+        TEST_RESULT_STRLST_Z(strLstSort(list, sortOrderDesc), "11-10\n10-4\n9.6-1\n17-1\n", "sort descending");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

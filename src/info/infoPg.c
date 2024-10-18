@@ -308,8 +308,7 @@ infoPgSaveCallback(void *const data, const String *const sectionNext, InfoSave *
         if (saveData->infoPg->type == infoPgBackup)
         {
             infoSaveValue(infoSaveData, INFO_SECTION_DB, INFO_KEY_DB_CATALOG_VERSION, jsonFromVar(VARUINT(pgData.catalogVersion)));
-            infoSaveValue(
-                infoSaveData, INFO_SECTION_DB, INFO_KEY_DB_CONTROL_VERSION, jsonFromVar(VARUINT(pgControlVersion(pgData.version))));
+            infoSaveValue(infoSaveData, INFO_SECTION_DB, INFO_KEY_DB_CONTROL_VERSION, jsonFromVar(VARUINT(pgData.controlVersion)));
         }
 
         infoSaveValue(infoSaveData, INFO_SECTION_DB, INFO_KEY_DB_ID, jsonFromVar(VARUINT(pgData.id)));

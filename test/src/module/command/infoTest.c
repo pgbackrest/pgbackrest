@@ -1,5 +1,7 @@
 /***********************************************************************************************************************************
 Test Info Command
+
+NOTE: references to 9.4 are intentionally included in this test to ensure that info will work with no longer supported versions.
 ***********************************************************************************************************************************/
 #include "common/crypto/cipherBlock.h"
 #include "common/io/bufferRead.h"

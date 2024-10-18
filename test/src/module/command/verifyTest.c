@@ -36,12 +36,12 @@ testRun(void)
     uint64_t fileSize = 7;
     const Buffer *fileChecksum = bufNewDecode(encodingHex, STRDEF("d1cd8a7d11daa26814b93eb604e1d49ab4b43770"));
 
-    #define TEST_BACKUP_DB1_94                                                                                                     \
-        "db-catalog-version=201409291\n"                                                                                           \
+    #define TEST_BACKUP_DB1_95                                                                                                     \
+        "db-catalog-version=201510051\n"                                                                                           \
         "db-control-version=942\n"                                                                                                 \
         "db-id=1\n"                                                                                                                \
-        "db-system-id=" HRN_PG_SYSTEMID_94_Z "\n"                                                                                  \
-        "db-version=\"9.4\"\n"
+        "db-system-id=" HRN_PG_SYSTEMID_95_Z "\n"                                                                                  \
+        "db-version=\"9.5\"\n"
 
     #define TEST_BACKUP_DB2_11                                                                                                     \
         "db-catalog-version=201707211\n"                                                                                           \
@@ -80,8 +80,8 @@ testRun(void)
         "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
 
     #define TEST_BACKUP_DB1_HISTORY                                                                                                \
-        "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":" HRN_PG_SYSTEMID_94_Z ","                \
-            "\"db-version\":\"9.4\"}"
+        "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":" HRN_PG_SYSTEMID_95_Z ","                \
+            "\"db-version\":\"9.5\"}"
 
     #define TEST_BACKUP_DB2_HISTORY                                                                                                \
         "2={\"db-catalog-version\":201707211,\"db-control-version\":1100,\"db-system-id\":" HRN_PG_SYSTEMID_11_Z ","               \
@@ -104,11 +104,11 @@ testRun(void)
     #define TEST_ARCHIVE_INFO_BASE                                                                                                 \
         "[db]\n"                                                                                                                   \
         "db-id=1\n"                                                                                                                \
-        "db-system-id=" HRN_PG_SYSTEMID_94_Z "\n"                                                                                  \
-        "db-version=\"9.4\"\n"                                                                                                     \
+        "db-system-id=" HRN_PG_SYSTEMID_95_Z "\n"                                                                                  \
+        "db-version=\"9.5\"\n"                                                                                                     \
         "\n"                                                                                                                       \
         "[db:history]\n"                                                                                                           \
-        "1={\"db-id\":" HRN_PG_SYSTEMID_94_Z ",\"db-version\":\"9.4\"}"
+        "1={\"db-id\":" HRN_PG_SYSTEMID_95_Z ",\"db-version\":\"9.5\"}"
 
     #define TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE                                                                                   \
         "[db]\n"                                                                                                                   \
@@ -117,7 +117,7 @@ testRun(void)
         "db-version=\"11\"\n"                                                                                                      \
         "\n"                                                                                                                       \
         "[db:history]\n"                                                                                                           \
-        "1={\"db-id\":" HRN_PG_SYSTEMID_94_Z ",\"db-version\":\"9.4\"}\n"                                                          \
+        "1={\"db-id\":" HRN_PG_SYSTEMID_95_Z ",\"db-version\":\"9.5\"}\n"                                                          \
         "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"
 
     #define TEST_MANIFEST_HEADER                                                                                                   \
@@ -131,11 +131,11 @@ testRun(void)
     #define TEST_MANIFEST_DB_94                                                                                                    \
         "\n"                                                                                                                       \
         "[backup:db]\n"                                                                                                            \
-        "db-catalog-version=201409291\n"                                                                                           \
+        "db-catalog-version=201510051\n"                                                                                           \
         "db-control-version=942\n"                                                                                                 \
         "db-id=1\n"                                                                                                                \
-        "db-system-id=" HRN_PG_SYSTEMID_94_Z "\n"                                                                                  \
-        "db-version=\"9.4\"\n"
+        "db-system-id=" HRN_PG_SYSTEMID_95_Z "\n"                                                                                  \
+        "db-version=\"9.5\"\n"
 
     #define TEST_MANIFEST_OPTION_ALL                                                                                               \
         "\n"                                                                                                                       \
@@ -234,7 +234,7 @@ testRun(void)
             "db-catalog-version=201608131\n"
             "db-control-version=960\n"
             "db-id=1\n"
-            "db-system-id=" HRN_PG_SYSTEMID_94_Z "\n"               // 9.4 system id is used so version will trigger error
+            "db-system-id=" HRN_PG_SYSTEMID_95_Z "\n"               // 9.5 system id is used so version will trigger error
             "db-version=\"9.6\"\n"
             TEST_MANIFEST_OPTION_ALL
             TEST_MANIFEST_TARGET
@@ -257,7 +257,7 @@ testRun(void)
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest.copy'"
             " for read\n"
             "P00   INFO: '20181119-152138F' may not be recoverable - PG data (id 1, version 9.6, system-id"
-            " " HRN_PG_SYSTEMID_94_Z ") is not in the backup.info history, skipping");
+            " " HRN_PG_SYSTEMID_95_Z ") is not in the backup.info history, skipping");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("rerun test with db-system-id invalid and no main");
@@ -268,11 +268,11 @@ testRun(void)
             TEST_MANIFEST_HEADER
             "\n"
             "[backup:db]\n"
-            "db-catalog-version=201409291\n"
+            "db-catalog-version=201510051\n"
             "db-control-version=942\n"
             "db-id=1\n"
             "db-system-id=0\n"
-            "db-version=\"9.4\"\n"
+            "db-version=\"9.5\"\n"
             TEST_MANIFEST_OPTION_ALL
             TEST_MANIFEST_TARGET
             TEST_MANIFEST_DB
@@ -291,7 +291,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest' for read\n"
             "P00 DETAIL: 20181119-152138F/backup.manifest is missing or unusable, using copy\n"
-            "P00   INFO: '20181119-152138F' may not be recoverable - PG data (id 1, version 9.4, system-id 0) is not in the"
+            "P00   INFO: '20181119-152138F' may not be recoverable - PG data (id 1, version 9.5, system-id 0) is not in the"
             " backup.info history, skipping");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -302,11 +302,11 @@ testRun(void)
             TEST_MANIFEST_HEADER
             "\n"
             "[backup:db]\n"
-            "db-catalog-version=201409291\n"
+            "db-catalog-version=201510051\n"
             "db-control-version=942\n"
             "db-id=0\n"
-            "db-system-id=" HRN_PG_SYSTEMID_94_Z "\n"
-            "db-version=\"9.4\"\n"
+            "db-system-id=" HRN_PG_SYSTEMID_95_Z "\n"
+            "db-version=\"9.5\"\n"
             TEST_MANIFEST_OPTION_ALL
             TEST_MANIFEST_TARGET
             TEST_MANIFEST_DB
@@ -325,8 +325,8 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest' for read\n"
             "P00 DETAIL: 20181119-152138F/backup.manifest is missing or unusable, using copy\n"
-            "P00   INFO: '20181119-152138F' may not be recoverable - PG data (id 0, version 9.4, system-id"
-            " " HRN_PG_SYSTEMID_94_Z ") is not in the backup.info history, skipping");
+            "P00   INFO: '20181119-152138F' may not be recoverable - PG data (id 0, version 9.5, system-id"
+            " " HRN_PG_SYSTEMID_95_Z ") is not in the backup.info history, skipping");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("missing main manifest, errored copy");
@@ -394,7 +394,7 @@ testRun(void)
 
         VerifyArchiveResult archiveResult =
         {
-            .archiveId = strNewZ("9.4-1"),
+            .archiveId = strNewZ("9.5-1"),
             .walRangeList = lstNewP(sizeof(VerifyWalRange), .comparator = lstComparatorStr),
         };
         List *archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator = archiveIdComparator);
@@ -405,7 +405,7 @@ testRun(void)
         TEST_TITLE("Single WAL");
 
         archiveIdResult->pgWalInfo.size = HRN_PG_WAL_SEGMENT_SIZE_DEFAULT;
-        archiveIdResult->pgWalInfo.version = PG_VERSION_94;
+        archiveIdResult->pgWalInfo.version = PG_VERSION_95;
 
         strLstAddZ(walFileList, "000000020000000200000000-daa497dba64008db824607940609ba1cd7c6c501.gz");
 
@@ -430,7 +430,7 @@ testRun(void)
         TEST_RESULT_UINT(errTotal, 1, "duplicate WAL error");
         TEST_RESULT_UINT(strLstSize(walFileList), 0, "all WAL removed from WAL file list");
         TEST_RESULT_UINT(lstSize(archiveIdResult->walRangeList), 0, "no range");
-        TEST_RESULT_LOG("P00   INFO: duplicate WAL '000000020000000200000000' for '9.4-1' exists, skipping");
+        TEST_RESULT_LOG("P00   INFO: duplicate WAL '000000020000000200000000' for '9.5-1' exists, skipping");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("duplicates at beginning and end of list are removed");
@@ -457,8 +457,8 @@ testRun(void)
         TEST_RESULT_STR_Z(walRangeResult->start, "0000000200000001000000FD", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
         TEST_RESULT_LOG(
-            "P00   INFO: duplicate WAL '000000020000000100000000' for '9.4-1' exists, skipping\n"
-            "P00   INFO: duplicate WAL '000000020000000200000001' for '9.4-1' exists, skipping");
+            "P00   INFO: duplicate WAL '000000020000000100000000' for '9.5-1' exists, skipping\n"
+            "P00   INFO: duplicate WAL '000000020000000200000001' for '9.5-1' exists, skipping");
     }
 
     // *****************************************************************************************************************************
@@ -507,7 +507,7 @@ testRun(void)
                         "db-version=\"11\"\n"
                         "\n"
                         "[db:history]\n"
-                        "1={\"db-id\":6625592122879095777,\"db-version\":\"9.4\"}\n"
+                        "1={\"db-id\":6625592122879095777,\"db-version\":\"9.5\"}\n"
                         "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))),
             "archive.info history system id mismatch");
 
@@ -529,7 +529,7 @@ testRun(void)
                         "db-version=\"11\"\n"
                         "\n"
                         "[db:history]\n"
-                        "1={\"db-id\":" HRN_PG_SYSTEMID_94_Z ",\"db-version\":\"9.5\"}\n"
+                        "1={\"db-id\":" HRN_PG_SYSTEMID_95_Z ",\"db-version\":\"9.6\"}\n"
                         "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))),
             "archive.info history version mismatch");
 
@@ -551,7 +551,7 @@ testRun(void)
                         "db-version=\"11\"\n"
                         "\n"
                         "[db:history]\n"
-                        "3={\"db-id\":" HRN_PG_SYSTEMID_94_Z ",\"db-version\":\"9.4\"}\n"
+                        "3={\"db-id\":" HRN_PG_SYSTEMID_95_Z ",\"db-version\":\"9.5\"}\n"
                         "2={\"db-id\":" HRN_PG_SYSTEMID_11_Z ",\"db-version\":\"11\"}"))),
             "archive.info history id mismatch");
 
@@ -580,7 +580,7 @@ testRun(void)
         strLstAddZ(backupList, "20181119-152138F");
         strLstAddZ(backupList, "20181119-152900F");
         StringList *archiveIdList = strLstComparatorSet(strLstNew(), archiveIdComparator);
-        strLstAddZ(archiveIdList, "9.4-1");
+        strLstAddZ(archiveIdList, "9.5-1");
         strLstAddZ(archiveIdList, "11-2");
 
         unsigned int errTotal = 0;
@@ -721,7 +721,7 @@ testRun(void)
             TEST_BACKUP_DB1_CURRENT_FULL1
             "\n"
             "[db]\n"
-            TEST_BACKUP_DB1_94
+            TEST_BACKUP_DB1_95
             "\n"
             "[db:history]\n"
             TEST_BACKUP_DB1_HISTORY,
@@ -782,7 +782,7 @@ testRun(void)
             "P00   INFO: stanza: db\n"
             "            status: error\n"
             "            backup info file and archive info file do not match\n"
-            "            archive: id = 1, version = 9.4, system-id = 10000000000000090400\n"
+            "            archive: id = 1, version = 9.5, system-id = 10000000000000090500\n"
             "            backup : id = 2, version = 11, system-id = 10000000000000110000\n"
             "            HINT: this may be a symptom of repository corruption!");
 
@@ -971,7 +971,7 @@ testRun(void)
             .comment = "remove duplicate WAL");
 
         HRN_STORAGE_PATH_CREATE(
-            storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/9.4-1", .comment = "empty path for old archiveId");
+            storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/9.5-1", .comment = "empty path for old archiveId");
         HRN_STORAGE_PATH_CREATE(
             storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/11-2/0000000100000000", .comment = "empty timeline path");
 
@@ -1002,7 +1002,7 @@ testRun(void)
             "    checksum invalid: 1, size invalid: 1", "verifyProcess() no text, no verbose");
         TEST_RESULT_LOG(
             "P00 DETAIL: no backups exist in the repo\n"
-            "P00 DETAIL: archive path '9.4-1' is empty\n"
+            "P00 DETAIL: archive path '9.5-1' is empty\n"
             "P00 DETAIL: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
             "P01   INFO: invalid checksum"
             " '11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
@@ -1023,7 +1023,7 @@ testRun(void)
             verifyProcess(cfgOptionBool(cfgOptVerbose)),
             "stanza: db\n"
             "status: error\n"
-            "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
+            "  archiveId: 9.5-1, total WAL checked: 0, total valid WAL: 0\n"
             "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
             "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n"
             "  backup: none found",
@@ -1045,7 +1045,7 @@ testRun(void)
             verifyProcess(cfgOptionBool(cfgOptVerbose)),
             "stanza: db\n"
             "status: error\n"
-            "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
+            "  archiveId: 9.5-1, total WAL checked: 0, total valid WAL: 0\n"
             "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
             "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n"
             "  backup: none found", "verify text output, verbose, with verify failures");
@@ -1261,7 +1261,7 @@ testRun(void)
         // Check output of verify command stored in file
         TEST_STORAGE_GET(storageTest, strZ(stdoutFile), "", .remove = true);
         TEST_RESULT_LOG(
-            "P00 DETAIL: archive path '9.4-1' is empty\n"
+            "P00 DETAIL: archive path '9.5-1' is empty\n"
             "P00 DETAIL: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
             "P01   INFO: invalid checksum"
             " '11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
