@@ -188,7 +188,7 @@ pgbackrest/test/test.pl --code-count
 
 Commit and push to integration:
 ```
-git commit -m "Begin v2.15 development."
+git commit -m "Begin v2.15.0 development."
 git push origin integration
 ```
 

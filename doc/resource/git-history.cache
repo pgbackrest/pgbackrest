@@ -1,5 +1,11 @@
 [
     {
+        "commit": "1e5f46b7d9626eadfcf99d08cb984a74085ee0c8",
+        "date": "2024-10-21 08:57:43 +0300",
+        "subject": "v2.54.0: Target Time for Versioned Storage",
+        "body": "NOTE TO PACKAGERS: This is last feature release to support the autoconf/make build. Please migrate to meson if you have not already done so. 2.54.X patch releases (if any) will continue to support autoconf/make.\n\nBug Fixes:\n\n* Fix PostgreSQL query performance for large datasets. (Fixed by Thibault Vincent, David Steele. Reviewed by David Christensen, Antoine Millet. Reported by Antoine Millet.)\n\nFeatures:\n\n* Allow repositories on versioned storage to be read at a target time. (Reviewed by Stefan Fercot, David Christensen.)\n* Allow requested standby backup to proceed with no standby. (Reviewed by Stefan Fercot.)\n\nImprovements:\n\n* Summarize backup reference list for info command text output. (Contributed by Stefan Fercot. Reviewed by David Steele.)\n* Refresh web-id token for each S3 authentication. (Contributed by Brent Graveland. Reviewed by David Steele.)\n* Correctly display current values for indexed options in help. (Reviewed by David Christensen.)\n* Save backup.info only when contents have changed. (Reviewed by Stefan Fercot.)\n* Remove limitation on reading files in parallel during restore. (Reviewed by David Christensen.)\n* Improve SFTP error messages. (Contributed by Reid Thompson. Reviewed by David Steele.)\n\nDocumentation Features:\n\n* Add performance tuning section to user guide. (Reviewed by Stefan Fercot.)\n\nDocumentation Improvements:\n\n* Clarify source for data_directory. (Contributed by Stefan Fercot. Reviewed by David Steele. Suggested by Matthias.)\n* Better logic for deciding when a summary should be lower-cased. (Suggested by Daniel Westermann.)"
+    },
+    {
         "commit": "7effca0d0995844b3b3b89d568c3c8cee7b9ef1e",
         "date": "2024-10-20 20:28:54 +0300",
         "subject": "Update CI tests for ppc64le/s390x architectures.",
