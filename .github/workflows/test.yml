@@ -80,10 +80,8 @@ jobs:
     strategy:
       matrix:
         include:
-          - arch: ppc64le
-            distro: ubuntu20.04
-          - arch: s390x
-            distro: ubuntu20.04
+          - image: '--platform=linux/ppc64le ubuntu:20.04'
+          - image: '--platform=linux/s390x ubuntu:20.04'
 
     steps:
       - name: Checkout Code
@@ -95,8 +93,7 @@ jobs:
         uses: uraimo/run-on-arch-action@v2
         id: runcmd
         with:
-          arch: ${{matrix.arch}}
-          distro: ${{matrix.distro}}
+          base_image: ${{matrix.image}}
 
           # Cache builds
           githubToken: ${{github.token}}
