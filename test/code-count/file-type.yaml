@@ -647,7 +647,11 @@ doc/xml/release/2024/2.53.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2024/2.54.xml:
+doc/xml/release/2024/2.54.0.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2025/2.55.0.xml:
   class: doc/source
   type: xml
 
@@ -670,18 +674,6 @@ meson.build:
 meson_options.txt:
   class: build
   type: meson
-
-src/Makefile.in:
-  class: build
-  type: make
-
-src/build.auto.h.in:
-  class: core
-  type: c/h
-
-src/build/aclocal.m4:
-  class: build
-  type: make
 
 src/build/common/exec.c:
   class: build
@@ -739,14 +731,6 @@ src/build/common/yaml.h:
   class: build
   type: c/h
 
-src/build/config.guess:
-  class: build
-  type: make
-
-src/build/config.sub:
-  class: build
-  type: make
-
 src/build/config/config.yaml:
   class: build
   type: yaml
@@ -766,10 +750,6 @@ src/build/config/render.c:
 src/build/config/render.h:
   class: build
   type: c/h
-
-src/build/configure.ac:
-  class: build
-  type: make
 
 src/build/error/error.yaml:
   class: build
@@ -793,7 +773,7 @@ src/build/error/render.h:
 
 src/build/help/help.xml:
   class: build
-  type: make
+  type: xml
 
 src/build/help/parse.c:
   class: build
@@ -810,10 +790,6 @@ src/build/help/render.c:
 src/build/help/render.h:
   class: build
   type: c/h
-
-src/build/install-sh:
-  class: build
-  type: make
 
 src/build/main.c:
   class: build
@@ -2031,10 +2007,6 @@ src/config/protocol.h:
   class: core
   type: c/h
 
-src/configure:
-  class: build
-  type: make
-
 src/db/db.c:
   class: core
   type: c
@@ -2840,6 +2812,14 @@ test/src/common/harnessStorage.c:
   type: c
 
 test/src/common/harnessStorage.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessStorageHelper.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessStorageHelper.h:
   class: test/harness
   type: c/h
 

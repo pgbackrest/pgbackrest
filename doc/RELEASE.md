@@ -1,5 +1,9 @@
 # Release Build Instructions
 
+## Update CI container builds
+
+If there have been PostgreSQL minor releases since the last pgBackRest release then update the CI containers to include the latest releases. This should be committed before the release.
+
 ## Create a branch to test the release
 
 ```
@@ -14,7 +18,7 @@ Edit the latest release in `doc/xml/release.xml`, e.g.:
 ```
 to:
 ```
-        <release date="2019-05-20" version="2.14" title="Bug Fix and Improvements">
+        <release date="2019-05-20" version="2.14.0" title="Bug Fix and Improvements">
 ```
 
 Edit version in `src/version.h`, e.g.:
@@ -23,7 +27,7 @@ Edit version in `src/version.h`, e.g.:
 ```
 to:
 ```
-#define PROJECT_VERSION                                             "2.14"
+#define PROJECT_VERSION                                             "2.14.0"
 ```
 
 ## Update code counts
@@ -91,7 +95,7 @@ pgbackrest/doc/release.pl --deploy
 
 Create release notes based on the pattern in prior git commits (this should be automated at some point), e.g.
 ```
-v2.14: Bug Fix and Improvements
+v2.14.0: Bug Fix and Improvements
 
 Bug Fixes:
 
@@ -117,7 +121,7 @@ Push release commit to main once CI testing is complete.
 
 Create release notes based on pattern in prior releases (this should be automated at some point), e.g.
 ```
-v2.14: Bug Fix and Improvements
+v2.14.0: Bug Fix and Improvements
 
 **Bug Fixes**:
 
@@ -138,7 +142,7 @@ The first line will be the release title and the rest will be the body. The tag 
 ## Push web documentation to main and deploy
 ```
 cd pgbackrest/doc/site
-git commit -m "v2.14 documentation."
+git commit -m "v2.14.0 documentation."
 git push origin main
 ```
 
@@ -165,7 +169,7 @@ Add new release in `doc/xml/release.xml`, e.g.:
 
 Edit version in `src/version.h`, e.g.:
 ```
-#define PROJECT_VERSION                                             "2.14"
+#define PROJECT_VERSION                                             "2.14.0"
 ```
 to:
 ```
@@ -184,26 +188,6 @@ pgbackrest/test/test.pl --code-count
 
 Commit and push to integration:
 ```
-git commit -m "Begin v2.15 development."
+git commit -m "Begin v2.15.0 development."
 git push origin integration
-```
-
-## Update automake/config scripts
-
-These scripts are required by `src/config` and should be updated after each release, when needed. Note that these files are updated very infrequently.
-
-Check the latest version of `automake` and see if it is > `1.16.5`:
-```
-https://git.savannah.gnu.org/gitweb/?p=automake.git
-```
-
-If so, update the version above and copy `lib/install-sh` from the `automake` repo to the `pgbackrest` repo at `[repo]/src/build/install-sh`:
-```
-wget -O pgbackrest/src/build/install-sh '[URL]'
-```
-
-Get the latest versions of `config.sub` and `config.guess`. These files are not versioned so the newest version is pulled at the beginning of the release cycle to allow time to test stability.
-```
-wget -O pgbackrest/src/build/config.guess 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
-wget -O pgbackrest/src/build/config.sub 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
 ```
