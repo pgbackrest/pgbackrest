@@ -1541,7 +1541,7 @@ verifyProcess(const bool verboseText)
                     .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
                 sortOrderAsc);
 
-            // Get a list of archive Ids in the repo (e.g. 9.4-1, 10-2, etc) sorted ascending by the db-id (number after the dash)
+            // Get a list of archive Ids in the repo (e.g. 9.6-1, 10-2, etc) sorted ascending by the db-id (number after the dash)
             jobData.archiveIdList = strLstSort(
                 strLstComparatorSet(
                     storageListP(storage, STORAGE_REPO_ARCHIVE_STR, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),

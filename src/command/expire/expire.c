@@ -448,7 +448,7 @@ removeExpiredArchive(const InfoBackup *const infoBackup, const bool timeBasedFul
                     cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
                 const InfoPg *const infoArchivePgData = infoArchivePg(infoArchive);
 
-                // Get a list of archive directories (e.g. 9.4-1, 10-2, etc) sorted by the db-id (number after the dash).
+                // Get a list of archive directories (e.g. 9.6-1, 10-2, etc) sorted by the db-id (number after the dash).
                 const StringList *const listArchiveDisk = strLstSort(
                     strLstComparatorSet(
                         storageListP(
@@ -506,7 +506,7 @@ removeExpiredArchive(const InfoBackup *const infoBackup, const bool timeBasedFul
                         const unsigned int archivePgId = cvtZToUInt(strrchr(strZ(archiveId), '-') + 1);
 
                         // From the global list of backups to retain, create a list of backups, oldest to newest, associated with
-                        // this archiveId (e.g. 9.4-1), e.g. If globalBackupRetention has 4F, 3F, 2F, 1F then
+                        // this archiveId (e.g. 9.6-1), e.g. If globalBackupRetention has 4F, 3F, 2F, 1F then
                         // localBackupRetentionList will have 1F, 2F, 3F, 4F (assuming they all have same history id)
                         for (unsigned int retentionIdx = strLstSize(globalBackupRetentionList) - 1;
                              (int)retentionIdx >= 0; retentionIdx--)

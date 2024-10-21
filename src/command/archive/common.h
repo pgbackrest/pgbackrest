@@ -82,7 +82,7 @@ FN_EXTERN void archiveAsyncStatusErrorWrite(ArchiveMode archiveMode, const Strin
 // Execute the async process. This function will only return in the calling process and the implementation is platform dependent.
 FN_EXTERN void archiveAsyncExec(ArchiveMode archiveMode, const StringList *commandExec);
 
-// Comparator function for sorting archive ids by the database history id (the number after the dash) e.g. 9.4-1, 10-2
+// Comparator function for sorting archive ids by the database history id (the number after the dash) e.g. 9.6-1, 10-2
 FN_EXTERN int archiveIdComparator(const void *item1, const void *item2);
 
 // Is the segment partial?

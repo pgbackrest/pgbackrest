@@ -46,7 +46,6 @@ STRING_STATIC(RESTORE_COMMAND_STR,                                  RESTORE_COMM
 #define RECOVERY_TARGET_TIMELINE                                    "recovery_target_timeline"
 #define RECOVERY_TARGET_TIMELINE_CURRENT                            "current"
 
-#define PAUSE_AT_RECOVERY_TARGET                                    "pause_at_recovery_target"
 #define STANDBY_MODE                                                "standby_mode"
 STRING_STATIC(STANDBY_MODE_STR,                                     STANDBY_MODE);
 
@@ -1101,8 +1100,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
 
         // Skip the tablespace_map file when present so PostgreSQL does not rewrite links in pg_tblspc. The tablespace links will be
         // created after paths are cleaned.
-        if (manifestFileExists(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP)) &&
-            manifestData(manifest)->pgVersion >= PG_VERSION_TABLESPACE_MAP)
+        if (manifestFileExists(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP)))
         {
             LOG_DETAIL_FMT("skip '" PG_FILE_TABLESPACEMAP "' -- tablespace links will be created based on mappings");
             manifestFileRemove(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP));
@@ -1561,32 +1559,14 @@ restoreRecoveryOption(const unsigned int pgVersion)
                 kvPut(result, VARSTRZ(RECOVERY_TARGET_INCLUSIVE), VARSTR(FALSE_STR));
         }
 
-        // Write pause_at_recovery_target/recovery_target_action
+        // Write recovery_target_action
         if (cfgOptionTest(cfgOptTargetAction))
         {
             const StringId targetAction = cfgOptionStrId(cfgOptTargetAction);
 
             if (targetAction != CFGOPTVAL_TARGET_ACTION_PAUSE)
             {
-                // Write recovery_target on supported PostgreSQL versions
-                if (pgVersion >= PG_VERSION_RECOVERY_TARGET_ACTION)
-                {
-                    kvPut(result, VARSTRZ(RECOVERY_TARGET_ACTION), VARSTR(strIdToStr(targetAction)));
-                }
-                // Else write pause_at_recovery_target on supported PostgreSQL versions
-                else
-                {
-                    // Shutdown action is not supported with pause_at_recovery_target setting
-                    if (targetAction == CFGOPTVAL_TARGET_ACTION_SHUTDOWN)
-                    {
-                        THROW_FMT(
-                            OptionInvalidError,
-                            CFGOPT_TARGET_ACTION "=" CFGOPTVAL_TARGET_ACTION_SHUTDOWN_Z " is only available in PostgreSQL >= %s",
-                            strZ(pgVersionToStr(PG_VERSION_RECOVERY_TARGET_ACTION)));
-                    }
-
-                    kvPut(result, VARSTRZ(PAUSE_AT_RECOVERY_TARGET), VARSTR(FALSE_STR));
-                }
+                kvPut(result, VARSTRZ(RECOVERY_TARGET_ACTION), VARSTR(strIdToStr(targetAction)));
             }
         }
 

@@ -83,7 +83,7 @@ testRun(void)
                     HRN_PQ_SCRIPT_OPEN(1, "dbname='testdb' port=5432"),
                     HRN_PQ_SCRIPT_SET_SEARCH_PATH(1),
                     HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(1),
-                    HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_94, TEST_PATH "/pg", NULL, NULL),
+                    HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_95, TEST_PATH "/pg", NULL, NULL),
                     HRN_PQ_SCRIPT_SET_APPLICATION_NAME(1),
                     HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false),
                     HRN_PQ_SCRIPT_CLOSE(1),
@@ -91,7 +91,7 @@ testRun(void)
                     HRN_PQ_SCRIPT_OPEN(1, "dbname='testdb' port=5432"),
                     HRN_PQ_SCRIPT_SET_SEARCH_PATH(1),
                     HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(1),
-                    HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_94, TEST_PATH "/pg", NULL, NULL),
+                    HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_95, TEST_PATH "/pg", NULL, NULL),
                     HRN_PQ_SCRIPT_SET_APPLICATION_NAME(1),
                     HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false),
                     HRN_PQ_SCRIPT_CREATE_RESTORE_POINT(1, "2/3"),
@@ -130,7 +130,7 @@ testRun(void)
                 HRN_CFG_LOAD(cfgCmdBackup, argList);
 
                 // Create control file
-                HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_94);
+                HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_95);
 
                 // Create client
                 ProtocolClient *client = NULL;
@@ -204,7 +204,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // Create control file
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_94, .checkpoint = pgLsnFromStr(STRDEF("1/1")));
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_95, .checkpoint = pgLsnFromStr(STRDEF("1/1")));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when unable to select any pg_settings");
@@ -680,7 +680,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // Create control file
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_94);
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_95);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error connecting to primary");
@@ -706,7 +706,7 @@ testRun(void)
             HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432 user='bob'"),
             HRN_PQ_SCRIPT_SET_SEARCH_PATH(1),
             HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(1),
-            HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_94, TEST_PATH "/pg", NULL, NULL),
+            HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_95, TEST_PATH "/pg", NULL, NULL),
             HRN_PQ_SCRIPT_SET_APPLICATION_NAME(1),
             HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, true),
             HRN_PQ_SCRIPT_CLOSE(1));
@@ -723,7 +723,7 @@ testRun(void)
             HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432 user='bob'"),
             HRN_PQ_SCRIPT_SET_SEARCH_PATH(1),
             HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(1),
-            HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_94, TEST_PATH "/pg", NULL, NULL),
+            HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_95, TEST_PATH "/pg", NULL, NULL),
             HRN_PQ_SCRIPT_SET_APPLICATION_NAME(1),
             HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false),
             HRN_PQ_SCRIPT_CLOSE(1));
@@ -736,7 +736,7 @@ testRun(void)
 
         HRN_PQ_SCRIPT_SET(
             HRN_PQ_SCRIPT_OPEN_GE_93(
-                1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_94, TEST_PATH "/pg1", false, NULL, NULL),
+                1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
             HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ASSIGN(result, dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary only");
@@ -745,7 +745,7 @@ testRun(void)
         TEST_RESULT_BOOL(result.primary != NULL, true, "check primary");
         TEST_RESULT_INT(result.standbyIdx, 0, "check standby id");
         TEST_RESULT_BOOL(result.standby == NULL, true, "check standby");
-        TEST_RESULT_INT(dbPgVersion(result.primary), PG_VERSION_94, "version set");
+        TEST_RESULT_INT(dbPgVersion(result.primary), PG_VERSION_95, "version set");
         TEST_RESULT_STR_Z(dbPgDataPath(result.primary), TEST_PATH "/pg1", "path set");
 
         TEST_RESULT_VOID(dbFree(result.primary), "free primary");
