@@ -1,5 +1,315 @@
 [
     {
+        "commit": "7effca0d0995844b3b3b89d568c3c8cee7b9ef1e",
+        "date": "2024-10-20 20:28:54 +0300",
+        "subject": "Update CI tests for ppc64le/s390x architectures.",
+        "body": "The action suddenly broken and this appears to be the best work around according to https://github.com/uraimo/run-on-arch-action/issues/155.\n\nUnfortunately the tests take almost twice and long to run, probably because the container needs to be built from scratch."
+    },
+    {
+        "commit": "9ba2db017348d304f96ce89592fc01f29197e136",
+        "date": "2024-10-16 12:41:26 +0300",
+        "subject": "Clarify source for data_directory."
+    },
+    {
+        "commit": "f76da03eb674af8c05d90abf5c2a7f246f8c9c01",
+        "date": "2024-10-16 12:14:12 +0300",
+        "subject": "Update CI containers to include newest PostgreSQL patch releases."
+    },
+    {
+        "commit": "bd0480ca7d6e5ee56a53a2887d893c41f1a8d132",
+        "date": "2024-10-16 11:07:21 +0300",
+        "subject": "Move SFTP test off of PostgreSQL version tested by 32-bit.",
+        "body": "There have been occasional SFTP authentication failures on 32-bit. We are planning to drop 32-bit support so it does not seem worth chasing these errors down and they are likely timing issues anyway."
+    },
+    {
+        "commit": "65dfe2407d0c358209a01f06cd4326d0a80d1acb",
+        "date": "2024-10-12 10:06:40 +0300",
+        "subject": "Retry socket bind.",
+        "body": "In the case of a rapid restart it is possible that the socket may not be immediately available, so retry until it becomes available.\n\nThis is particularly useful for testing where sockets are bound and released very rapidly."
+    },
+    {
+        "commit": "ed72c6f9a1b156b64e05a8fc5e236e6568657d0a",
+        "date": "2024-10-11 12:05:23 +0300",
+        "subject": "Render command help summaries the same as option help summaries.",
+        "body": "Option help summaries do not have initial capitals (except in special cases) and final periods so it makes sense to render the command summaries the same way.\n\nUse the same function for both so they are consistent."
+    },
+    {
+        "commit": "eb2f279a2998d1ed893c5d8984590ab4997a5f32",
+        "date": "2024-10-11 11:53:34 +0300",
+        "subject": "Better logic for deciding when a summary should be lower-cased.",
+        "body": "The old logic would lower-case PostgreSQL which looked odd. This should be more robust for anything that looks like a proper name of acronym."
+    },
+    {
+        "commit": "70bda2cfb21130eb589a87cb419fb5f22a71c78a",
+        "date": "2024-10-10 11:17:35 +0300",
+        "subject": "Improve SFTP error messages.",
+        "body": "The numbers by themselves weren't very informative and required looking into the libssh2_sftp.h header file for the definition."
+    },
+    {
+        "commit": "c8ccaaa755993e3fd5e87148bd0a991acb3050c3",
+        "date": "2024-10-10 09:48:43 +0300",
+        "subject": "Fix PostgreSQL query performance for large datasets.",
+        "body": "The asynchronous logic used to implement the query timeout was misusing PQisBusy(), which caused the wait handler to throttle the consumption of command results. It could introduce a large delay on a query up to `db-timeout` because of the back-off sequence.\r\n\r\nFollowing the recommendation of libpq, fix by polling the client socket for data availability and then continue consuming results and checking for command busyness."
+    },
+    {
+        "commit": "33fa3965616b1432e5d1d59c489302fa4891a39e",
+        "date": "2024-10-09 17:57:52 +0300",
+        "subject": "Refactor Wait object to expose remaining wait as waitRemains().",
+        "body": "This is useful for code that has its own wait mechanism, e.g. poll(), but still needs a way to track overall time elapsed.\n\nTo keep it simple waitRemains() is called by waitMore()."
+    },
+    {
+        "commit": "77ae753ef59bd40b9867be21e8519093786c3b85",
+        "date": "2024-10-09 17:48:00 +0300",
+        "subject": "Allow fdReady() shim to be run only once with a specified return value.",
+        "body": "This allows more targeted testing than the prior (still supported) approach."
+    },
+    {
+        "commit": "6ac4e8dd78f16e93300f7747c4bc8fa8e1a0558b",
+        "date": "2024-10-09 10:46:45 +0300",
+        "subject": "Move fd module shim to io module test.",
+        "body": "The shim is needed in an earlier test and this is a more logical place for it anyway."
+    },
+    {
+        "commit": "1020bc117ab2e116abb41eebd40216726a3d2561",
+        "date": "2024-10-08 18:15:34 +0300",
+        "subject": "Shuffle PostgreSQL versions between test containers.",
+        "body": "Ubuntu 20.04 has been having consistent errors starting PostgreSQL 10 so move 9.5 to this container instead. An older version makes sense with an older distro.\n\nAlso move PostgreSQL 12 from RHEL 8 since this version will be EOL soon."
+    },
+    {
+        "commit": "b50ad48fd44ba958a6a71ac0c5fe1b113968e577",
+        "date": "2024-10-08 11:01:55 +0300",
+        "subject": "Use systemctl replacement to generate documentation.",
+        "body": "Containers are notoriously unfriendly to systemctl (really systemd) but we prefer to use systemctl to make our documentation as accurate as possible. This replacement performs all the functions of systemctl without requiring systemd, which great simplifies container configuration and allows the documentation build to work in more environments."
+    },
+    {
+        "commit": "1ebdcd611d1724feedb23f9de854819ec5499c9f",
+        "date": "2024-10-08 10:28:01 +0300",
+        "subject": "Use output path for temp config files during documentation build.",
+        "body": "Putting the files in the user's home directory was too Linux-centric."
+    },
+    {
+        "commit": "b3ca2e34823b28862d999f87c4d7346707952a5b",
+        "date": "2024-10-05 09:41:50 +0300",
+        "subject": "Correctly display current values for indexed options in help.",
+        "body": "The current value for an indexed option was always for the first index, e.g. pg1-path. This is likely legacy from before indexing was added (and faithfully copied over from Perl, apparently).\r\n\r\nFix this by enumerating the current values in the option help and displaying <multi> in the option list when more than one value exists."
+    },
+    {
+        "commit": "047e3d0ed95d882b00e2da1640e78e3ba06e1d51",
+        "date": "2024-10-02 19:49:15 +0300",
+        "subject": "Finalize catalog number for PostgreSQL 17 release."
+    },
+    {
+        "commit": "9f97269678091cc43a15920cf8eab34b231ae431",
+        "date": "2024-10-02 18:02:15 +0300",
+        "subject": "Use `uname -m` to get architecture for RHEL package in user guide."
+    },
+    {
+        "commit": "d4ed1884ea5ce54e05f84ab1aacdfc0385538c06",
+        "date": "2024-09-24 12:33:19 +0300",
+        "subject": "Reduce logging for help functions.",
+        "body": "Full debug/trace logging in production is unlikely to be useful but does use space in the binary.\n\nReduce logging to be useful for testing but not be deployed in production."
+    },
+    {
+        "commit": "cd7711f5e6306778427ced8b796da09398e08015",
+        "date": "2024-09-20 15:58:18 +0300",
+        "subject": "Update Cirrus CI MacOS running to Sonoma."
+    },
+    {
+        "commit": "278319eba3444070123d3f0f277be9234604d937",
+        "date": "2024-09-20 15:49:26 +0300",
+        "subject": "Add performance tuning section to user guide.",
+        "body": "We frequently tell users to enable to these options but they are spread through the documentation and not at all obvious. Hopefully putting them in the quick start will make them more visible and also provide an easy place to link."
+    },
+    {
+        "commit": "f73c6382752ca8cad43a412a03b6b5f34cf94984",
+        "date": "2024-09-20 15:21:38 +0300",
+        "subject": "Skip command-line options in configuration reference.",
+        "body": "Options that are only valid on the command-line should not appear in the configuration reference because it implies that they can be added to pgbackrest.conf, which is not the case.\n\nMost command-line options were already excluded because they lacked a section, but a few were slipping through."
+    },
+    {
+        "commit": "b19134dccd5d0dab87b5d45b443f481df00370b1",
+        "date": "2024-09-17 10:51:21 +0300",
+        "subject": "Allow repositories on versioned storage to be read at a target time.",
+        "body": "This feature allows the archive-get, info, repo-get, repo-ls, restore, and verify commands to operate at a point-in-time on versioned buckets in Azure, GCS, and S3. This allows recovery even if a repository has been accidentally or maliciously deleted or corrupted."
+    },
+    {
+        "commit": "46c1297be344909e900be596a865064233da9f87",
+        "date": "2024-09-09 15:47:23 +0300",
+        "subject": "Remove limitation on reading files in parallel during restore.",
+        "body": "This restriction prevented multiple files being read from a remote simultaneously, which was not supported by the protocol. Although the limitation only applied to remotes, it was applied in all cases for testing purposes and because we planned to fix it.\r\n\r\nProtocol command multiplexing added in df8cbc91 allows files to be read simultaneously from a remote so this restriction is no longer required.\r\n\r\nNote that there is a test for this condition since the prior code had coverage. It might be tricky to ensure that test doesn't go away, but in general we should have enough tests in place to ensure simultaneous reads function as expected."
+    },
+    {
+        "commit": "a42629f87ab70ffaee8d1241eb50c5ea7154a87d",
+        "date": "2024-09-09 12:56:52 +0300",
+        "subject": "Allow requested standby backup to proceed with no standby.",
+        "body": "Add a \"prefer\" value to the backup-standby option to allow the backup to proceed when no standby is found. Note that this will not help if the standby is responding but fails to sync with the primary after the backup has started.\r\n\r\nIntroduce a new option modifier, bool-like, that allows a boolean option to be converted to a string or string-id option while still allowing the option to act like a boolean on the command-line, e.g. --no-backup-standby."
+    },
+    {
+        "commit": "b454b9e403526b1f352df964d9206c27d2397df3",
+        "date": "2024-09-05 11:38:42 +0300",
+        "subject": "Save backup.info only when contents have changed.",
+        "body": "This prevents backup.info from being saved again when expire does not make any changes.\n\nMore importantly, as we look to support versioning on object stores, it will be much easier to determine a good point-in-time to use for restore if there are no extraneous saves of backup.info."
+    },
+    {
+        "commit": "83802ded8c5560a097757c420d0753c50d0edbb3",
+        "date": "2024-09-01 12:51:27 +0700",
+        "subject": "Remove invalid const keywords from info/infoBackup module.",
+        "body": "In these functions infoBackup was marked as const even though it was modified in the function. This was allowed by the compiler because the infoBackup struct was not being directly modified but it still goes against our coding conventions."
+    },
+    {
+        "commit": "95a4b9e10a3f7a26ebaae22fc6abd79cee14189a",
+        "date": "2024-09-01 11:21:56 +0700",
+        "subject": "Refresh web-id token for each S3 authentication.",
+        "body": "The token file pointed to by the AWS_WEB_IDENTITY_TOKEN_FILE environment variable was read once at startup, but for long operations the token might expire before completion.\r\n\r\nInstead read the token on each S3 authentication so the current token is always used."
+    },
+    {
+        "commit": "d204bac75d3020251c52c9b7892b47c5b3e7f018",
+        "date": "2024-08-30 16:23:55 +0700",
+        "subject": "Refactor storage/remote module to move more repository storage tests.",
+        "body": "Move tests missed in 3b3886f3."
+    },
+    {
+        "commit": "0b4371f3ecead992e6140251c658e9fed56a8f37",
+        "date": "2024-08-30 16:02:04 +0700",
+        "subject": "Update comment in storage/list module.",
+        "body": "This aligns better with other comments in the area."
+    },
+    {
+        "commit": "3b3886f3b81776adfe3fd4970e977f56d0c2b02f",
+        "date": "2024-08-30 16:00:07 +0700",
+        "subject": "Refactor storage/remote module to move repository storage tests.",
+        "body": "Move tests that use functions that are not valid for non-Posix repositories to pg storage.\n\nThis allows for a test storage driver that only implements functions required for repositories."
+    },
+    {
+        "commit": "b3fed2cfcf4562dde52be28c35e20d7d38171564",
+        "date": "2024-08-30 15:44:43 +0700",
+        "subject": "Simplify command/repo tests.",
+        "body": "Reduce the number of tests that use links and special files. This simplifies future versioning tests."
+    },
+    {
+        "commit": "94e21893e8b43ef9080246feba5fa89d39e67f0c",
+        "date": "2024-08-30 15:39:03 +0700",
+        "subject": "Add hrnSleepRemainder() to time test harness.",
+        "body": "This function replaces some ad hoc implementations in the tests."
+    },
+    {
+        "commit": "c40dd5ae41ae800a031715a60c91dd839b39905d",
+        "date": "2024-08-28 11:07:52 +0700",
+        "subject": "Improve reporting of partial reads in server test harness.",
+        "body": "Previously partial reads would be reported as an EOF which was not very helpful.\n\nAlso update error formatting to make requests easier to compare."
+    },
+    {
+        "commit": "2ce01e57d3f2f294efe9a9ac6c7d357342796a13",
+        "date": "2024-08-20 20:57:06 +0700",
+        "subject": "Refactor interface/driver getters for IoRead/Write and StorageRead/Write.",
+        "body": "Add getters where needed and remove the unused driver member from the StorageRead/Write objects. The new getters are only required for testing but they don't compromise the core code."
+    },
+    {
+        "commit": "a71d88481c60178de1c10dac2a0d306959675999",
+        "date": "2024-08-20 20:34:40 +0700",
+        "subject": "Improve TEST_STORAGE_GET() to allow testing of missing files.",
+        "body": "Previously a missing file would always throw an error. Now there is the option to return NULL for missing files."
+    },
+    {
+        "commit": "4eab64fcd926c2b5741d4b44f8b9d9144bf1e3a5",
+        "date": "2024-08-20 20:14:32 +0700",
+        "subject": "Improve file removal performed after each unit test.",
+        "body": "The rm would miss files beginning with a dot which are being used going forward for the versioning test driver.\n\nInstead use find since it will delete all files."
+    },
+    {
+        "commit": "f6aaa3672b851fa8e70942f332a633f3b42babb7",
+        "date": "2024-08-20 11:03:24 +0700",
+        "subject": "Merge v2.53.1 release."
+    },
+    {
+        "commit": "2b29fe9337e9b2cbde26915c8bfb999b4010560c",
+        "date": "2024-08-17 12:58:55 +0700",
+        "subject": "Move getEpoch() to cvtZToTime() and refactor.",
+        "body": "This function will be needed elsewhere going forward and in any case it makes sense to move this out of the restore module.\n\nRefactor to avoid dependency on a regular expression."
+    },
+    {
+        "commit": "60f96429b8f58827e3f2d6cd96dc1f6e1725c90c",
+        "date": "2024-08-16 10:56:07 +0700",
+        "subject": "Fix segfault on delayed connection errors.",
+        "body": "Connection errors could cause a segfault if the error was delayed enough to pass the initial call to sckClientOpenWait() and the error was instead thrown by a subsequent call to sckClientOpenWait(), which was not correctly initializing a variable required for error handling.\r\n\r\nWhile this can be produced fairly easily in a test environment, I was unable to craft a unit test to hit this exact condition, probably due to timing. The new code still has full coverage and I added several comments to help prevent regressions."
+    },
+    {
+        "commit": "04ef43d9ed3e1900a85f0df9475ce6dc04dc9c5f",
+        "date": "2024-08-13 13:45:24 +0800",
+        "subject": "Skip local repository duplicate check for SFTP.",
+        "body": "This check does not make sense for SFTP since the repository will never be local."
+    },
+    {
+        "commit": "80c9b3001c8f4689837d46783d348a2c839645c0",
+        "date": "2024-08-13 11:53:12 +0800",
+        "subject": "PostgreSQL 17beta3 support.",
+        "body": "This release changed the control and WAL format, which is very unusual for a beta. Update control and WAL versions/structs to match."
+    },
+    {
+        "commit": "ed9b0c260a6e1f05a17d5d2b86c274afdd2d1b05",
+        "date": "2024-08-13 11:43:05 +0800",
+        "subject": "Fix permissions when restore run as root user.",
+        "body": "When restore was run as the root user the pg_control file would end up with root permissions. This bug was introduced in e634fd8. Fix this by directly overwriting the pg_control temp file rather than doing an atomic write that updates permissions. Also update other parameters to more closely match similar calls.\r\n\r\nThere was also an adjacent error where restore as the root user would fail if the base path did not exist. Fix this by ignoring the missing path since it will be created later and this logic is just trying to find an alternate user for permissions if the user in the manifest does not exist."
+    },
+    {
+        "commit": "57663536493bfa917e4b1c37d221697a0ddb7a73",
+        "date": "2024-08-02 15:47:30 +0700",
+        "subject": "Use Posix driver to complete dummy storage driver.",
+        "body": "Instead of stub functions, use the Posix driver to make the dummy storage driver interface more functional."
+    },
+    {
+        "commit": "b306f83493cc859ad15c8f175fc6db2321b79340",
+        "date": "2024-07-31 18:53:02 +0700",
+        "subject": "Summarize backup reference list for info command text output.",
+        "body": "The backup reference list can be very long so it seems better to summarize the list by default for text output and keep the full list when --set is specified."
+    },
+    {
+        "commit": "c42d484c9d76dfb2baa7b9b462870441e8ad37a0",
+        "date": "2024-07-30 12:48:32 +0700",
+        "subject": "Fix typo in user guide."
+    },
+    {
+        "commit": "8d6bceb5416a702d010fd5db4be9d6dc294cb1d9",
+        "date": "2024-07-23 16:39:02 +0700",
+        "subject": "Refactor config parse to remove none command, add version/help options.",
+        "body": "The none command was a bit confusing since it was only valid when parsing failed but still needed to be added to various switches and logic. Replace with cfgInited() which should make it clearer what state configuration is in.\n\nMake the default command help and convert --version and --help to real options.\n\nCombine version and help output into a single function to simplify processing in main.\n\nAdditional reformatting and a bit of refactoring."
+    },
+    {
+        "commit": "6c757366c2c7221a9fd571495fa2ec82b4d4da2f",
+        "date": "2024-07-23 11:50:12 +0700",
+        "subject": "Simplify main() functions in core, doc, and test.",
+        "body": "This refactor simplifies the main() functions and puts the more commonly run commands first.\n\nFor core main() also remove code duplication in local/remote role handling."
+    },
+    {
+        "commit": "faee89206776287a2ba000c43f28ac6479d33689",
+        "date": "2024-07-23 11:10:54 +0700",
+        "subject": "Do not allow help for command roles other than main.",
+        "body": "Previously requesting help for roles other than main would result in a segfault since help.auto.c.inc does not include such help.\n\nPrevent this by erroring when a user requests help for roles other than main.\n\nThis is a bug but it is unlikely to have ever been seen in the field and in any case it has a very low severity since it only impacts a corner-case for the help command."
+    },
+    {
+        "commit": "ee70c2e26e63ee6299de5a9ca20a3d1ddea036b1",
+        "date": "2024-07-22 14:17:47 +0700",
+        "subject": "Remove internal repo-create command.",
+        "body": "This command was used by the Perl integration tests to create buckets for storage types that required it. Now that the integration tests are written in C they can simply use the same code to create buckets.\n\nThe command was also used in the documentation but there it seems more appropriate to use the corresponding vendor CLI."
+    },
+    {
+        "commit": "55ca41e13784ef5fdafdb02444969ceb1a699744",
+        "date": "2024-07-22 12:43:54 +0700",
+        "subject": "Update protocol and storage/remote modules to recent coding standards.",
+        "body": "Add const as appropriate."
+    },
+    {
+        "commit": "df8cbc91c348bc2f746767c87ac5626460fb6f39",
+        "date": "2024-07-22 11:48:32 +0700",
+        "subject": "Protocol command multiplexing.",
+        "body": "Previously it was not possible to read or write two files at the same time on the same remote because the protocol was entirely taken over by the read or write command. Multiple reads are required to make restores efficient when a list of bundled files is being read but blocks need to be retrieved from a separate file or a different part of the same file.\r\n\r\nImprove that situation with sessions that allow related commands to be run with shared state. Also break read/write into separate requests (rather than pushing all data at once) so they can be multiplexed.\r\n\r\nThe disadvantage for read/write is that they now require more back and forth to transfer a file. This is mitigated by sending asynchronous read/write requests to keep both server and client as busy as possible. Reads that can fit into a single buffer are optimized to transfer in a single command. Reads that transfer the entire file can also skip the close command since it is implicit on end-of-file.\r\n\r\nThese changes allow the protocol to be simplified to provide one response per request, which makes the data end message obsolete. Any data sent for the request is now added to the parameters so no data needs to be sent separately to the server outside the request parameters.\r\n\r\nAlso update the Db protocol to use the new sessions. Previously this code had tracked its own sessions."
+    },
+    {
+        "commit": "e7f4e8d8004f609ab0edda5d7183ccb3e6c55b6a",
+        "date": "2024-07-22 09:42:33 +0700",
+        "subject": "Begin v2.54 development."
+    },
+    {
         "commit": "6e8a45f650e303fe74a1e34ee8e76a193dbc6c4a",
         "date": "2024-07-22 09:33:31 +0700",
         "subject": "v2.53: Concurrent Backups"

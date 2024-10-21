@@ -4,7 +4,7 @@
 project(
     'pgbackrest',
     ['c'],
-    version: '2.54dev',
+    version: '2.54.0',
     license: 'MIT',
     meson_version: '>=0.47',
     default_options: [
