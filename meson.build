@@ -67,6 +67,9 @@ warning_enable = [
     # Warn about anything that depends on the “size of” a function type or of void
     '-Wpointer-arith',
 
+    # Warn if anything is declared more than once in the same scope, even when the extra declaration is valid and changes nothing
+    '-Wredundant-decls',
+
     # Warn if a function is declared or defined without specifying the argument types
     '-Wstrict-prototypes',
 
