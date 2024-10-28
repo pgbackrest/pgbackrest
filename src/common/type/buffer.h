@@ -174,21 +174,31 @@ will result in a segfault.
 
 By convention all buffer constant identifiers are appended with _BUF.
 ***********************************************************************************************************************************/
+// This struct must be kept in sync with BufferPub (except for const qualifiers)
+typedef struct BufferPubConst
+{
+    size_t sizeAlloc;                                               // Allocated size of the buffer
+    size_t size;                                                    // Reported size of the buffer
+    bool sizeLimit;                                                 // Is the size limited to make the buffer appear smaller?
+    size_t used;                                                    // Amount of buffer used
+    const unsigned char *buffer;                                    // Buffer
+} BufferPubConst;
+
 // Create a buffer constant inline from an unsigned char[]
 #define BUF(bufferParam, sizeParam)                                                                                                \
-    ((const Buffer *)&(const BufferPub){.size = sizeParam, .used = sizeParam, .buffer = (unsigned char *)bufferParam})
+    ((const Buffer *)&(const BufferPubConst){.size = sizeParam, .used = sizeParam, .buffer = (const unsigned char *)bufferParam})
 
 // Create a buffer constant inline from a non-constant zero-terminated string
 #define BUFSTRZ(stringz)                                                                                                           \
-    BUF((unsigned char *)stringz, strlen(stringz))
+    BUF((const unsigned char *)stringz, strlen(stringz))
 
 // Create a buffer constant inline from a String
 #define BUFSTR(string)                                                                                                             \
-    BUF((unsigned char *)strZ(string), strSize(string))
+    BUF((const unsigned char *)strZ(string), strSize(string))
 
 // Create a buffer constant inline from a constant zero-terminated string
 #define BUFSTRDEF(stringdef)                                                                                                       \
-    BUF((unsigned char *)stringdef, (sizeof(stringdef) - 1))
+    BUF((const unsigned char *)stringdef, (sizeof(stringdef) - 1))
 
 // Used to define buffer constants that will be externed using BUFFER_DECLARE(). Must be used in a .c file.
 #define BUFFER_EXTERN(name, ...)                                                                                                   \

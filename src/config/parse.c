@@ -213,7 +213,7 @@ typedef enum
 #define PARSE_RULE_OPTION_COMMAND(commandParam)                                                                                    \
     | (1 << cfgCmd##commandParam)
 
-#define PARSE_RULE_STRPUB(value)                                    {.buffer = (char *)value, .size = sizeof(value) - 1}
+#define PARSE_RULE_STRPUB(value)                                    {.buffer = (const char *)value, .size = sizeof(value) - 1}
 
 // Macros used to define optional parse rules in pack format
 #define PARSE_RULE_VARINT_01(value)                                                                                                \

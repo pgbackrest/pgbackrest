@@ -1247,7 +1247,8 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
     String *const configVal = strNew();
 
     strCat(
-        configVal, bldCfgRenderValueRender(OPT_TYPE_STRING_STR, ruleValMap, label, "StringPub", "String", "Str", "STR", "val/str"));
+        configVal,
+        bldCfgRenderValueRender(OPT_TYPE_STRING_STR, ruleValMap, label, "StringPubConst", "String", "Str", "STR", "val/str"));
     strCat(
         configVal,
         bldCfgRenderValueRender(OPT_TYPE_STRING_ID_STR, ruleValMap, label, "StringId", "StringId", "StrId", "STRID", "val/strid"));

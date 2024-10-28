@@ -600,7 +600,7 @@ testRun(void)
             COMMENT_BLOCK_END "\n"
             "#define PARSE_RULE_VAL_STR(value)                                   PARSE_RULE_U32_1(parseRuleValStr##value)\n"
             "\n"
-            "static const StringPub parseRuleValueStr[] =\n"
+            "static const StringPubConst parseRuleValueStr[] =\n"
             "{\n"
             "    PARSE_RULE_STRPUB(\"/include\"),\n"
             "    PARSE_RULE_STRPUB(\"0\"),\n"
