@@ -50,7 +50,7 @@ typedef struct CipherBlock
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN void
+static void
 cipherBlockToLog(const CipherBlock *const this, StringStatic *const debugLog)
 {
     strStcFmt(debugLog, "{inputSame: %s, done: %s}", cvtBoolToConstZ(this->inputSame), cvtBoolToConstZ(this->done));

@@ -8,6 +8,7 @@ Help Command
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "command/help/help.h"
 #include "common/compress/bz2/decompress.h"
 #include "common/debug.h"
 #include "common/io/bufferRead.h"

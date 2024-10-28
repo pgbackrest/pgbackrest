@@ -6,6 +6,7 @@ Build Command
 #include "build/config/parse.h"
 #include "build/help/parse.h"
 #include "command/build/build.h"
+#include "command/build/reference.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "storage/posix/storage.h"

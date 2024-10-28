@@ -10,6 +10,7 @@ Storage Helper Test Harness
 
 #include "common/harnessDebug.h"
 #include "common/harnessStorage.h"
+#include "common/harnessStorageHelper.h"
 
 /***********************************************************************************************************************************
 Include shimmed C modules

@@ -61,6 +61,9 @@ warning_enable = [
     # Warn if the format string requires an unsigned argument and the argument is signed and vice versa
     '-Wformat-signedness',
 
+    # Warn if a global function is defined without a previous prototype declaration
+    '-Wmissing-prototypes',
+
     # Warn about anything that depends on the “size of” a function type or of void
     '-Wpointer-arith',
 

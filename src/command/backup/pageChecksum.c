@@ -34,7 +34,7 @@ typedef struct PageChecksum
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN void
+static void
 pageChecksumToLog(const PageChecksum *const this, StringStatic *const debugLog)
 {
     strStcFmt(debugLog, "{valid: %s, align: %s}", cvtBoolToConstZ(this->valid), cvtBoolToConstZ(this->align));

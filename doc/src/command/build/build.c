@@ -3,6 +3,7 @@ Build Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include "command/build/build.h"
 #include "command/build/man.h"
 #include "command/build/reference.h"
 #include "common/debug.h"

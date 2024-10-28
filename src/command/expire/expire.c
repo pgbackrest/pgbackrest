@@ -6,6 +6,7 @@ Expire Command
 #include "command/archive/common.h"
 #include "command/backup/common.h"
 #include "command/control/common.h"
+#include "command/expire/expire.h"
 #include "common/debug.h"
 #include "common/regExp.h"
 #include "common/time.h"

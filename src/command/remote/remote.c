@@ -9,6 +9,7 @@ Remote Command
 #include "command/backup/pageChecksum.h"
 #include "command/control/common.h"
 #include "command/lock.h"
+#include "command/remote/remote.h"
 #include "command/restore/blockChecksum.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"

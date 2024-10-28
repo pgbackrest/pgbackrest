@@ -17,6 +17,7 @@ Render Help
 #include "build/common/render.h"
 #include "build/config/parse.h"
 #include "build/help/parse.h"
+#include "build/help/render.h"
 
 /***********************************************************************************************************************************
 Render xml as text

@@ -113,18 +113,12 @@ STRING_EXTERN(TEST_GROUP_STR, TEST_GROUP);
 // Is log expect testing enabled?
 #define TEST_LOG_EXPECT                                             {[C_TEST_LOG_EXPECT]}
 
-#ifdef HRN_FEATURE_LOG
-#include "common/harnessLog.h"
-void harnessLogLevelDefaultSet(LogLevel logLevel);
-#endif
-
 #ifdef HRN_FEATURE_MEMCONTEXT
 #include "common/memContext.h"
 #endif
 
 #ifdef HRN_FEATURE_LOG
 #include "common/harnessLog.h"
-void harnessLogLevelDefaultSet(LogLevel logLevel);
 #endif
 
 {[C_TEST_INCLUDE]}

@@ -6,6 +6,7 @@ Local Command
 #include "command/archive/get/protocol.h"
 #include "command/archive/push/protocol.h"
 #include "command/backup/protocol.h"
+#include "command/local/local.h"
 #include "command/restore/protocol.h"
 #include "command/verify/protocol.h"
 #include "common/debug.h"

@@ -102,7 +102,7 @@ protocolClientSessionFindIdx(const ProtocolClient *const this, const uint64_t se
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
+static void
 protocolClientRequestInternal(ProtocolClientSession *const this, const ProtocolCommandType type, PackWrite *const param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);

@@ -15,6 +15,7 @@ Log Test Harness
 #include "common/type/stringList.h"
 
 #include "common/harnessDebug.h"
+#include "common/harnessLog.h"
 #include "common/harnessTest.h"
 
 /***********************************************************************************************************************************
@@ -64,6 +65,8 @@ harnessLogOpen(const char *logFile, int flags, int mode)
 /***********************************************************************************************************************************
 Initialize log for testing
 ***********************************************************************************************************************************/
+#ifdef HRN_FEATURE_LOG
+
 void
 harnessLogInit(void)
 {
@@ -78,6 +81,8 @@ harnessLogInit(void)
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
+
+#endif
 
 /**********************************************************************************************************************************/
 void
@@ -169,6 +174,8 @@ Change default test log level
 
 Set the default log level for output to the console (for testing).
 ***********************************************************************************************************************************/
+#ifdef HRN_FEATURE_LOG
+
 void
 harnessLogLevelDefaultSet(LogLevel logLevel)
 {
@@ -181,6 +188,8 @@ hrnLogProcessIdSet(unsigned int processId)
 {
     logProcessId = processId;
 }
+
+#endif
 
 /***********************************************************************************************************************************
 Load log result from file into the log buffer
@@ -445,6 +454,8 @@ harnessLogResultEmptyOrContains(const char *const contains)
 /***********************************************************************************************************************************
 Make sure nothing is left in the log after all tests have completed
 ***********************************************************************************************************************************/
+#ifdef HRN_FEATURE_LOG
+
 void
 harnessLogFinal(void)
 {
@@ -461,3 +472,5 @@ harnessLogFinal(void)
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
+
+#endif

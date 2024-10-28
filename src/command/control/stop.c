@@ -11,6 +11,7 @@ Stop Command
 #include <unistd.h>
 
 #include "command/control/common.h"
+#include "command/control/stop.h"
 #include "common/debug.h"
 #include "common/lock.h"
 #include "common/type/convert.h"

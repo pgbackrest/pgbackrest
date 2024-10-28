@@ -1551,7 +1551,7 @@ logic to this critical path code.
 // Helper to check that option values are valid for conditional builds. This is a bit tricky since the distros used for unit testing
 // have all possible features enabled, so this is split out to allow it to be tested independently. The loop variable is
 // intentionally integrated into this function to make it obvious if it is omitted from the caller.
-FN_EXTERN bool
+static bool
 cfgParseOptionValueCondition(
     bool more, PackRead *const allowList, const bool allowListFound, const unsigned int optionId, const unsigned int optionKeyIdx,
     const String *const valueAllow)
