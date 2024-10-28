@@ -62,14 +62,14 @@ Getters/Setters
 FN_INLINE_ALWAYS BlockMapItem *
 blockMapGet(const BlockMap *const this, const unsigned int mapIdx)
 {
-    return (BlockMapItem *)lstGet((List *const)this, mapIdx);
+    return (BlockMapItem *)lstGet((const List *const)this, mapIdx);
 }
 
 // Block map size
 FN_INLINE_ALWAYS unsigned int
 blockMapSize(const BlockMap *const this)
 {
-    return lstSize((List *const)this);
+    return lstSize((const List *const)this);
 }
 
 /***********************************************************************************************************************************

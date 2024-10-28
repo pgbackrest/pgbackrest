@@ -109,7 +109,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *const input)
                     // Check that the entire page is zero
                     for (unsigned int pageIdx = 0; pageIdx < this->pageSize / sizeof(size_t); pageIdx++)
                     {
-                        if (((size_t *)pageHeader)[pageIdx] != 0)
+                        if (((const size_t *)pageHeader)[pageIdx] != 0)
                         {
                             pageValid = false;
                             break;

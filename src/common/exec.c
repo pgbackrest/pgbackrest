@@ -155,7 +155,7 @@ then the original error should be rethrown.
 ***********************************************************************************************************************************/
 // Helper to throw status error
 static void
-execCheckStatusError(Exec *const this, const int status, const String *const output)
+execCheckStatusError(Exec *const this, int status, const String *const output)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_LOG_PARAM(EXEC, this);
@@ -173,7 +173,7 @@ execCheckStatusError(Exec *const this, const int status, const String *const out
 
 // Helper to throw signal error
 static void
-execCheckSignalError(Exec *const this, const int status)
+execCheckSignalError(Exec *const this, int status)
 {
     THROW_FMT(ExecuteError, "%s terminated unexpectedly on signal %d", strZ(this->name), WTERMSIG(status));
 }
@@ -353,8 +353,12 @@ execOpen(Exec *const this)
         // Assign stderr to the input side of the error pipe
         PIPE_DUP2(pipeError, 1, STDERR_FILENO);
 
-        // Execute the binary. This statement will not return if it is successful
-        execvp(strZ(execCommand(this)), (char **const)strLstPtr(this->param));
+        // Execute the binary. This statement will not return if it is successful. execvp() requires non-const parameters because it
+        // modifies them after the fork.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
+        execvp(strZ(execCommand(this)), UNCONSTIFY(char **, strLstPtr(this->param)));
+#pragma GCC diagnostic pop
 
         // If we got here then there was an error. We can't use a throw as we normally would because we have already shutdown
         // logging and we don't want to execute exit paths that might free parent resources which we still have references to.

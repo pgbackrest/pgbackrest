@@ -35,7 +35,7 @@ Getters/Setters
 FN_INLINE_ALWAYS unsigned int
 varLstSize(const VariantList *const this)
 {
-    return lstSize((List *)this);
+    return lstSize((const List *)this);
 }
 
 // Is the list empty?
@@ -60,7 +60,7 @@ varLstAdd(VariantList *const this, Variant *const data)
 FN_INLINE_ALWAYS Variant *
 varLstGet(const VariantList *const this, const unsigned int listIdx)
 {
-    return *(Variant **)lstGet((List *)this, listIdx);
+    return *(Variant **)lstGet((const List *)this, listIdx);
 }
 
 // Move to new parent mem context

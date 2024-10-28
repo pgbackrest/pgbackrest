@@ -1104,7 +1104,7 @@ pckReadStr(PackRead *const this, PckReadStrParam param)
         while (strSize(result) != sizeExpected)
         {
             const size_t sizeRead = pckReadBuffer(this, sizeExpected - strSize(result));
-            strCatZN(result, (char *)this->bufferPtr + this->bufferPos, sizeRead);
+            strCatZN(result, (const char *)this->bufferPtr + this->bufferPos, sizeRead);
             this->bufferPos += sizeRead;
         }
     }
@@ -1746,8 +1746,8 @@ pckWritePack(PackWrite *const this, const Pack *const value, const PckWritePackP
         ASSERT(value != NULL);
 
         pckWriteTag(this, pckTypeMapPack, param.id, 0);
-        pckWriteU64Internal(this, bufUsed((Buffer *)value));
-        pckWriteBuffer(this, (Buffer *)value);
+        pckWriteU64Internal(this, bufUsed((const Buffer *)value));
+        pckWriteBuffer(this, (const Buffer *)value);
     }
 
     FUNCTION_TEST_RETURN(PACK_WRITE, this);

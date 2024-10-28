@@ -320,8 +320,12 @@ tlsClientOpen(THIS_VOID)
             tlsSession = SSL_new(this->context);
             cryptoError(tlsSession == NULL, "unable to create TLS session");
 
-            // Set server host name used for validation
+            // Set server host name used for validation. The exception here is necessary for MacOS which for some reason defines the
+            // host name parameter as void * rather than const char * as on most platforms.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
             cryptoError(SSL_set_tlsext_host_name(tlsSession, strZ(this->host)) != 1, "unable to set TLS host name");
+#pragma GCC diagnostic pop
 
             // Open TLS session
             TRY_BEGIN()

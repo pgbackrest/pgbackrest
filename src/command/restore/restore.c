@@ -686,8 +686,8 @@ restoreManifestOwner(const Manifest *const manifest, const String **const rootRe
         StringList *const groupList = strLstNew();
 
         RESTORE_MANIFEST_OWNER_GET(File, );
-        RESTORE_MANIFEST_OWNER_GET(Link, *(ManifestLink *));
-        RESTORE_MANIFEST_OWNER_GET(Path, *(ManifestPath *));
+        RESTORE_MANIFEST_OWNER_GET(Link, *(const ManifestLink *));
+        RESTORE_MANIFEST_OWNER_GET(Path, *(const ManifestPath *));
 
         // Update users and groups in the manifest (this can only be done as root)
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1855,8 +1855,8 @@ restoreProcessQueueComparator(const void *const item1, const void *const item2)
     ASSERT(item2 != NULL);
 
     // Unpack files
-    const ManifestFile file1 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack **)item1);
-    const ManifestFile file2 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack **)item2);
+    const ManifestFile file1 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack *const *)item1);
+    const ManifestFile file2 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack *const *)item2);
 
     // Zero length files should be ordered at the end
     if (file1.size == 0)

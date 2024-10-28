@@ -478,7 +478,7 @@ strCatBuf(String *const this, const Buffer *const buffer)
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
 
-    FUNCTION_TEST_RETURN(STRING, strCatZN(this, (char *)bufPtrConst(buffer), bufUsed(buffer)));
+    FUNCTION_TEST_RETURN(STRING, strCatZN(this, (const char *)bufPtrConst(buffer), bufUsed(buffer)));
 }
 
 /**********************************************************************************************************************************/

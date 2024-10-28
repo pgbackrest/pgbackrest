@@ -46,7 +46,7 @@ bldHlpRenderXmlNode(const xmlNodePtr xml)
 
     for (xmlNodePtr currentNode = xml->children; currentNode != NULL; currentNode = currentNode->next)
     {
-        const String *const name = STR((char *)currentNode->name);
+        const String *const name = STR((const char *)currentNode->name);
 
         if (currentNode->type == XML_ELEMENT_NODE)
         {

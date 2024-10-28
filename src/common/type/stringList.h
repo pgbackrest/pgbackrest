@@ -53,7 +53,7 @@ strLstComparatorSet(StringList *const this, ListComparator *const comparator)
 FN_INLINE_ALWAYS unsigned int
 strLstSize(const StringList *const this)
 {
-    return lstSize((List *)this);
+    return lstSize((const List *)this);
 }
 
 // Is the list empty?
@@ -92,7 +92,7 @@ FN_EXTERN String *strLstAddIfMissing(StringList *this, const String *string);
 FN_INLINE_ALWAYS bool
 strLstExists(const StringList *const this, const String *const string)
 {
-    return lstExists((List *)this, &string);
+    return lstExists((const List *)this, &string);
 }
 
 // Find string index in the list
@@ -114,7 +114,7 @@ FN_EXTERN String *strLstInsert(StringList *this, unsigned int listIdx, const Str
 FN_INLINE_ALWAYS String *
 strLstGet(const StringList *const this, const unsigned int listIdx)
 {
-    return *(String **)lstGet((List *)this, listIdx);
+    return *(String **)lstGet((const List *)this, listIdx);
 }
 
 // Join a list of strings into a single string using the specified separator and quote with specified quote character

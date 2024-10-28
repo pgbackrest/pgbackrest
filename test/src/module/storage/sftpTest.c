@@ -121,8 +121,7 @@ testRun(void)
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_EAGAIN},
             {.function = HRNLIBSSH2_SESSION_BLOCK_DIRECTIONS, .resultInt = SSH2_BLOCK_WRITING},
             {.function = HRNLIBSSH2_SESSION_HANDSHAKE, .param = HANDSHAKE_PARAM, .resultInt = LIBSSH2_ERROR_BAD_SOCKET},
-            {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .resultInt = LIBSSH2_ERROR_BAD_SOCKET,
-             .errMsg = (char *)"Bad socket provided"},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .resultInt = LIBSSH2_ERROR_BAD_SOCKET, .errMsg = "Bad socket provided"},
             {.function = NULL}
         });
 
@@ -296,7 +295,7 @@ testRun(void)
             {.function = HRNLIBSSH2_KNOWNHOST_INIT, .resultNull = true},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_ALLOC},
             {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .resultInt = LIBSSH2_ERROR_ALLOC,
-             .errMsg = (char *)"Unable to allocate memory for known-hosts collection"},
+             .errMsg = "Unable to allocate memory for known-hosts collection"},
             {.function = NULL}
         });
 
@@ -851,7 +850,7 @@ testRun(void)
             {.function = HRNLIBSSH2_KNOWNHOST_INIT, .resultNull = true},
             {.function = HRNLIBSSH2_SESSION_LAST_ERRNO, .resultInt = LIBSSH2_ERROR_ALLOC},
             {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .resultInt = LIBSSH2_ERROR_ALLOC,
-             .errMsg = (char *)"Unable to allocate memory for known-hosts collection"},
+             .errMsg = "Unable to allocate memory for known-hosts collection"},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",
              .resultInt = 0},
@@ -917,7 +916,7 @@ testRun(void)
              .resultInt = LIBSSH2_ERROR_FILE},
             {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_FILE},
-            {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .errMsg = (char *)"Failed to open file", .resultInt = LIBSSH2_ERROR_FILE},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .errMsg = "Failed to open file", .resultInt = LIBSSH2_ERROR_FILE},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",
              .resultInt = 0},
@@ -986,7 +985,7 @@ testRun(void)
              .resultInt = LIBSSH2_ERROR_FILE},
             {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_FILE},
-            {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .errMsg = (char *)"Failed to open file", .resultInt = LIBSSH2_ERROR_FILE},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .errMsg = "Failed to open file", .resultInt = LIBSSH2_ERROR_FILE},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",
              .resultInt = 0},
@@ -1038,7 +1037,7 @@ testRun(void)
             {.function = HRNLIBSSH2_KNOWNHOST_INIT},
             {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_KNOWN_HOSTS},
-            {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .errMsg = (char *)"Failed to parse known hosts file",
+            {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .errMsg = "Failed to parse known hosts file",
              .resultInt = LIBSSH2_ERROR_KNOWN_HOSTS},
             {.function = HRNLIBSSH2_USERAUTH_PUBLICKEY_FROMFILE_EX,
              .param = "[\"" TEST_USER "\"," TEST_USER_LEN ",\"" KEYPUB_CSTR "\",\"" KEYPRIV_CSTR "\",null]",
@@ -1084,10 +1083,10 @@ testRun(void)
              .resultInt = LIBSSH2_ERROR_NONE},
             {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" KNOWNHOSTS2_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_FILE},
-            {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .errMsg = (char *)"Failed to open file", .resultInt = LIBSSH2_ERROR_FILE},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .errMsg = "Failed to open file", .resultInt = LIBSSH2_ERROR_FILE},
             {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" ETC_KNOWNHOSTS_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_FILE},
-            {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .errMsg = (char *)"Failed to open file", .resultInt = LIBSSH2_ERROR_FILE},
+            {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .errMsg = "Failed to open file", .resultInt = LIBSSH2_ERROR_FILE},
             {.function = HRNLIBSSH2_KNOWNHOST_READFILE, .param = "[\"" ETC_KNOWNHOSTS2_FILE_CSTR "\",1]",
              .resultInt = LIBSSH2_ERROR_FILE},
             {.function = HRNLIBSSH2_SESSION_LAST_ERROR, .resultInt = LIBSSH2_ERROR_FILE},

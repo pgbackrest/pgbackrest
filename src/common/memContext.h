@@ -79,7 +79,7 @@ FN_EXTERN void *memNew(size_t size);
 FN_EXTERN void *memNewPtrArray(size_t size);
 
 // Reallocate to the new size. Original buffer pointer is undefined on return.
-FN_EXTERN void *memResize(const void *buffer, size_t size);
+FN_EXTERN void *memResize(void *buffer, size_t size);
 
 // Free memory allocation
 FN_EXTERN void memFree(void *buffer);

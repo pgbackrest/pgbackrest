@@ -208,7 +208,7 @@ pgControlCrcValidate(const Buffer *const controlFile, const PgInterface *const i
     {
         // Calculate CRC and retrieve expected CRC
         const uint32_t crcCalculated = crc32cOne(bufPtrConst(controlFile), result);
-        const uint32_t crcExpected = *((uint32_t *)(bufPtrConst(controlFile) + result));
+        const uint32_t crcExpected = *((const uint32_t *)(bufPtrConst(controlFile) + result));
 
         // If CRC does not match
         if (crcCalculated != crcExpected)

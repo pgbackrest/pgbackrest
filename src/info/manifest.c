@@ -264,7 +264,7 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
     *(StringPub *)result = (StringPub){.size = (unsigned int)strSize(file->name), .buffer = (char *)result + sizeof(StringPub)};
     size_t resultPos = sizeof(StringPub);
 
-    memcpy(result + resultPos, (uint8_t *)strZ(file->name), nameSize);
+    memcpy(result + resultPos, (const uint8_t *)strZ(file->name), nameSize);
     resultPos += nameSize;
 
     // Copy pack data
@@ -282,7 +282,7 @@ manifestFilePack(const Manifest *const manifest, const ManifestFile *const file)
         };
 
         resultPos += sizeof(StringPub);
-        memcpy(result + resultPos, (uint8_t *)strZ(file->checksumPageErrorList), strSize(file->checksumPageErrorList) + 1);
+        memcpy(result + resultPos, (const uint8_t *)strZ(file->checksumPageErrorList), strSize(file->checksumPageErrorList) + 1);
     }
 
     FUNCTION_TEST_RETURN_TYPE_P(ManifestFilePack, (ManifestFilePack *)result);
@@ -3099,7 +3099,7 @@ manifestFileUpdate(Manifest *const this, const ManifestFile *const file)
 /***********************************************************************************************************************************
 Link functions and getters/setters
 ***********************************************************************************************************************************/
-FN_EXTERN const ManifestLink *
+FN_EXTERN ManifestLink *
 manifestLinkFind(const Manifest *const this, const String *const name)
 {
     FUNCTION_TEST_BEGIN();
@@ -3110,12 +3110,12 @@ manifestLinkFind(const Manifest *const this, const String *const name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    const ManifestLink *const result = lstFind(this->pub.linkList, &name);
+    ManifestLink *const result = lstFind(this->pub.linkList, &name);
 
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest link list", strZ(name));
 
-    FUNCTION_TEST_RETURN_CONST(MANIFEST_LINK, result);
+    FUNCTION_TEST_RETURN(MANIFEST_LINK, result);
 }
 
 FN_EXTERN void
@@ -3148,7 +3148,7 @@ manifestLinkUpdate(const Manifest *const this, const String *const name, const S
     ASSERT(name != NULL);
     ASSERT(destination != NULL);
 
-    ManifestLink *const link = (ManifestLink *)manifestLinkFind(this, name);
+    ManifestLink *const link = (ManifestLink *const)manifestLinkFind(this, name);
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.linkList))
     {
@@ -3212,7 +3212,7 @@ manifestPathPg(const String *const manifestPath)
 /***********************************************************************************************************************************
 Target functions and getters/setters
 ***********************************************************************************************************************************/
-FN_EXTERN const ManifestTarget *
+FN_EXTERN ManifestTarget *
 manifestTargetFind(const Manifest *const this, const String *const name)
 {
     FUNCTION_TEST_BEGIN();
@@ -3223,12 +3223,12 @@ manifestTargetFind(const Manifest *const this, const String *const name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    const ManifestTarget *const result = lstFind(this->pub.targetList, &name);
+    ManifestTarget *const result = lstFind(this->pub.targetList, &name);
 
     if (result == NULL)
         THROW_FMT(AssertError, "unable to find '%s' in manifest target list", strZ(name));
 
-    FUNCTION_TEST_RETURN_CONST(MANIFEST_TARGET, result);
+    FUNCTION_TEST_RETURN(MANIFEST_TARGET, result);
 }
 
 FN_EXTERN String *

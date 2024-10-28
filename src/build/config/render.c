@@ -564,19 +564,20 @@ bldCfgRenderValueAdd(const String *optType, const bool literal, const String *co
 FN_EXTERN int
 bldCfgRenderComparatorInt(const void *const int64Ptr1, const void *const int64Ptr2)
 {
-    return LST_COMPARATOR_CMP(cvtZToInt64(strZ(*(const String **)int64Ptr1)), cvtZToInt64(strZ(*(const String **)int64Ptr2)));
+    return LST_COMPARATOR_CMP(
+        cvtZToInt64(strZ(*(const String *const *)int64Ptr1)), cvtZToInt64(strZ(*(const String *const *)int64Ptr2)));
 }
 
 FN_EXTERN int
 bldCfgRenderComparatorSize(const void *const sizePtr1, const void *const sizePtr2)
 {
-    return LST_COMPARATOR_CMP(cfgParseSize(*(const String **)sizePtr1), cfgParseSize(*(const String **)sizePtr2));
+    return LST_COMPARATOR_CMP(cfgParseSize(*(const String *const *)sizePtr1), cfgParseSize(*(const String *const *)sizePtr2));
 }
 
 FN_EXTERN int
 bldCfgRenderComparatorTime(const void *const timePtr1, const void *const timePtr2)
 {
-    return LST_COMPARATOR_CMP(cfgParseTime(*(const String **)timePtr1), cfgParseTime(*(const String **)timePtr2));
+    return LST_COMPARATOR_CMP(cfgParseTime(*(const String *const *)timePtr1), cfgParseTime(*(const String *const *)timePtr2));
 }
 
 static String *

@@ -349,13 +349,13 @@ hrnServerRun(IoRead *const read, const HrnServerProtocol protocol, const unsigne
                 TRY_END();
 
                 // Treat any ? characters as wildcards so variable elements (e.g. auth hashes) can be ignored
-                String *actual = strNewBuf(buffer);
-
-                for (unsigned int actualIdx = 0; actualIdx < strSize(actual); actualIdx++)
+                for (unsigned int bufferIdx = 0; bufferIdx < bufUsed(buffer); bufferIdx++)
                 {
-                    if (strZ(expected)[actualIdx] == '?')
-                        ((char *)strZ(actual))[actualIdx] = '?';
+                    if (strZ(expected)[bufferIdx] == '?')
+                        bufPtr(buffer)[bufferIdx] = '?';
                 }
+
+                const String *actual = strNewBuf(buffer);
 
                 // Error if actual does not match expected
                 if (!strEq(actual, expected))

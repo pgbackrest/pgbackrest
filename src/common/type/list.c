@@ -84,7 +84,7 @@ lstComparatorStr(const void *const item1, const void *const item2)
     ASSERT(item1 != NULL);
     ASSERT(item2 != NULL);
 
-    FUNCTION_TEST_RETURN(INT, strCmp(*(String **)item1, *(String **)item2));
+    FUNCTION_TEST_RETURN(INT, strCmp(*(const String *const *)item1, *(const String *const *)item2));
 }
 
 /**********************************************************************************************************************************/
@@ -99,8 +99,8 @@ lstComparatorInt(const void *const intPtr1, const void *const intPtr2)
     ASSERT(intPtr1 != NULL);
     ASSERT(intPtr2 != NULL);
 
-    const int int1 = *(int *)intPtr1;
-    const int int2 = *(int *)intPtr2;
+    const int int1 = *(const int *)intPtr1;
+    const int int2 = *(const int *)intPtr2;
 
     FUNCTION_TEST_RETURN(INT, LST_COMPARATOR_CMP(int1, int2));
 }
@@ -117,8 +117,8 @@ lstComparatorUInt(const void *const uintPtr1, const void *const uintPtr2)
     ASSERT(uintPtr1 != NULL);
     ASSERT(uintPtr2 != NULL);
 
-    const unsigned int uint1 = *(unsigned int *)uintPtr1;
-    const unsigned int uint2 = *(unsigned int *)uintPtr2;
+    const unsigned int uint1 = *(const unsigned int *)uintPtr1;
+    const unsigned int uint2 = *(const unsigned int *)uintPtr2;
 
     FUNCTION_TEST_RETURN(INT, LST_COMPARATOR_CMP(uint1, uint2));
 }
@@ -135,7 +135,7 @@ lstComparatorZ(const void *const item1, const void *const item2)
     ASSERT(item1 != NULL);
     ASSERT(item2 != NULL);
 
-    FUNCTION_TEST_RETURN(INT, strcmp(*(char **)item1, *(char **)item2));
+    FUNCTION_TEST_RETURN(INT, strcmp(*(const char *const *)item1, *(const char *const *)item2));
 }
 
 /***********************************************************************************************************************************
@@ -237,8 +237,8 @@ lstFindIdx(const List *const this, const void *const item)
     FUNCTION_TEST_RETURN(UINT, result == NULL ? LIST_NOT_FOUND : lstIdx(this, result));
 }
 
-FN_EXTERN void *
-lstFindDefault(const List *const this, const void *const item, void *const itemDefault)
+FN_EXTERN const void *
+lstFindDefault(const List *const this, const void *const item, const void *const itemDefault)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, this);
@@ -251,7 +251,7 @@ lstFindDefault(const List *const this, const void *const item, void *const itemD
 
     void *const result = lstFind(this, item);
 
-    FUNCTION_TEST_RETURN_P(VOID, result == NULL ? itemDefault : result);
+    FUNCTION_TEST_RETURN_CONST_P(VOID, result == NULL ? itemDefault : result);
 }
 
 /**********************************************************************************************************************************/
@@ -267,9 +267,9 @@ lstIdx(const List *const this, const void *const item)
     ASSERT(item != NULL);
 
     // Item pointers should always be aligned with the beginning of an item in the list
-    ASSERT((size_t)((unsigned char *const)item - this->list) % this->itemSize == 0);
+    ASSERT((size_t)((const unsigned char *const)item - this->list) % this->itemSize == 0);
 
-    const size_t result = (size_t)((unsigned char *const)item - this->list) / this->itemSize;
+    const size_t result = (size_t)((const unsigned char *const)item - this->list) / this->itemSize;
 
     // Item pointers should always be in range
     ASSERT(result < lstSize(this));

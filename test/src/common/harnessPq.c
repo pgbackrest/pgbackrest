@@ -218,7 +218,7 @@ Shim for PQstatus()
 ConnStatusType
 PQstatus(const PGconn *conn)
 {
-    return (ConnStatusType)hrnPqScriptRun(HRN_PQ_STATUS, NULL, (HrnPqScript *)conn)->resultInt;
+    return (ConnStatusType)hrnPqScriptRun(HRN_PQ_STATUS, NULL, (const HrnPqScript *)conn)->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -227,7 +227,12 @@ Shim for PQerrorMessage()
 char *
 PQerrorMessage(const PGconn *conn)
 {
-    return (char *)hrnPqScriptRun(HRN_PQ_ERRORMESSAGE, NULL, (HrnPqScript *)conn)->resultZ;
+    // Const error messages are used for testing but the function requires them to be returned non-const. This should be safe
+    // because the value is never modified by the calling function. If that changes, there will be a segfault during testing.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
+    return UNCONSTIFY(char *, hrnPqScriptRun(HRN_PQ_ERRORMESSAGE, NULL, (const HrnPqScript *)conn)->resultZ);
+#pragma GCC diagnostic pop
 }
 
 /***********************************************************************************************************************************
@@ -276,7 +281,7 @@ Shim for PQsocket()
 int
 PQsocket(const PGconn *conn)
 {
-    int result = hrnPqScriptRun(HRN_PQ_SOCKET, NULL, (HrnPqScript *)conn)->resultInt;
+    int result = hrnPqScriptRun(HRN_PQ_SOCKET, NULL, (const HrnPqScript *)conn)->resultInt;
 
     hrnFdReadyShimOne(result == true);
 
@@ -340,7 +345,7 @@ Shim for PQresultStatus()
 ExecStatusType
 PQresultStatus(const PGresult *res)
 {
-    return (ExecStatusType)hrnPqScriptRun(HRN_PQ_RESULTSTATUS, NULL, (HrnPqScript *)res)->resultInt;
+    return (ExecStatusType)hrnPqScriptRun(HRN_PQ_RESULTSTATUS, NULL, (const HrnPqScript *)res)->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -349,7 +354,12 @@ Shim for PQresultErrorMessage()
 char *
 PQresultErrorMessage(const PGresult *res)
 {
-    return (char *)hrnPqScriptRun(HRN_PQ_RESULTERRORMESSAGE, NULL, (HrnPqScript *)res)->resultZ;
+    // Const error messages are used for testing but the function requires them to be returned non-const. This should be safe
+    // because the value is never modified by the calling function. If that changes, there will be a segfault during testing.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
+    return UNCONSTIFY(char *, hrnPqScriptRun(HRN_PQ_RESULTERRORMESSAGE, NULL, (const HrnPqScript *)res)->resultZ);
+#pragma GCC diagnostic pop
 }
 
 /***********************************************************************************************************************************
@@ -358,7 +368,7 @@ Shim for PQntuples()
 int
 PQntuples(const PGresult *res)
 {
-    return hrnPqScriptRun(HRN_PQ_NTUPLES, NULL, (HrnPqScript *)res)->resultInt;
+    return hrnPqScriptRun(HRN_PQ_NTUPLES, NULL, (const HrnPqScript *)res)->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -367,7 +377,7 @@ Shim for PQnfields()
 int
 PQnfields(const PGresult *res)
 {
-    return hrnPqScriptRun(HRN_PQ_NFIELDS, NULL, (HrnPqScript *)res)->resultInt;
+    return hrnPqScriptRun(HRN_PQ_NFIELDS, NULL, (const HrnPqScript *)res)->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -378,7 +388,7 @@ PQgetisnull(const PGresult *res, int tup_num, int field_num)
 {
     return hrnPqScriptRun(
         HRN_PQ_GETISNULL, varLstAdd(varLstAdd(varLstNew(), varNewInt(tup_num)), varNewInt(field_num)),
-        (HrnPqScript *)res)->resultInt;
+        (const HrnPqScript *)res)->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -387,7 +397,7 @@ Shim for PQftype()
 Oid
 PQftype(const PGresult *res, int field_num)
 {
-    return (Oid)hrnPqScriptRun(HRN_PQ_FTYPE, varLstAdd(varLstNew(), varNewInt(field_num)), (HrnPqScript *)res)->resultInt;
+    return (Oid)hrnPqScriptRun(HRN_PQ_FTYPE, varLstAdd(varLstNew(), varNewInt(field_num)), (const HrnPqScript *)res)->resultInt;
 }
 
 /***********************************************************************************************************************************
@@ -396,8 +406,16 @@ Shim for PQgetvalue()
 char *
 PQgetvalue(const PGresult *res, int tup_num, int field_num)
 {
-    return (char *)hrnPqScriptRun(
-        HRN_PQ_GETVALUE, varLstAdd(varLstAdd(varLstNew(), varNewInt(tup_num)), varNewInt(field_num)), (HrnPqScript *)res)->resultZ;
+    // Const values are used for testing but the function requires them to be returned non-const. This should be safe because the
+    // value is never modified by the calling function. If that changes, there will be a segfault during testing.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
+    return UNCONSTIFY(
+        char *,
+        hrnPqScriptRun(
+            HRN_PQ_GETVALUE, varLstAdd(varLstAdd(varLstNew(), varNewInt(tup_num)), varNewInt(field_num)),
+            (const HrnPqScript *)res)->resultZ);
+#pragma GCC diagnostic pop
 }
 
 /***********************************************************************************************************************************

@@ -413,7 +413,7 @@ httpRequestMultiAdd(
                     THROW(AssertError, "unable to construct unique boundary");
 
                 bufCatC(
-                    this->boundaryRaw, (unsigned char *)HTTP_MULTIPART_BOUNDARY_EXTRA,
+                    this->boundaryRaw, (const unsigned char *)HTTP_MULTIPART_BOUNDARY_EXTRA,
                     bufUsed(this->boundaryRaw) - HTTP_MULTIPART_BOUNDARY_INIT_SIZE, HTTP_MULTIPART_BOUNDARY_NEXT);
             }
 

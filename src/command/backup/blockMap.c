@@ -76,8 +76,8 @@ lstComparatorBlockMapReference(const void *const blockMapRef1, const void *const
     ASSERT(blockMapRef1 != NULL);
     ASSERT(blockMapRef2 != NULL);
 
-    const unsigned int reference1 = ((BlockMapReference *)blockMapRef1)->reference;
-    const unsigned int reference2 = ((BlockMapReference *)blockMapRef2)->reference;
+    const unsigned int reference1 = ((const BlockMapReference *)blockMapRef1)->reference;
+    const unsigned int reference2 = ((const BlockMapReference *)blockMapRef2)->reference;
 
     FUNCTION_TEST_RETURN(INT, LST_COMPARATOR_CMP(reference1, reference2));
 }

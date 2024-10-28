@@ -23,7 +23,8 @@ xmlDocumentNewParam(const String *const rootNode, const XmlDocumentNewParam para
     if (param.dtdName != NULL)
     {
         ASSERT(param.dtdFile != NULL);
-        xmlCreateIntSubset(result->xml, (unsigned char *)strZ(param.dtdName), NULL, (unsigned char *)strZ(param.dtdFile));
+        xmlCreateIntSubset(
+            result->xml, (const unsigned char *)strZ(param.dtdName), NULL, (const unsigned char *)strZ(param.dtdFile));
     }
 
     FUNCTION_TEST_RETURN(XML_DOCUMENT, result);
@@ -42,7 +43,7 @@ xmlNodeAttribute(const XmlNode *this, const String *name)
     ASSERT(name != NULL);
 
     String *result = NULL;
-    xmlChar *const value = xmlGetProp(this->node, (unsigned char *)strZ(name));
+    xmlChar *const value = xmlGetProp(this->node, (const unsigned char *)strZ(name));
 
     if (value != NULL)
     {
@@ -67,7 +68,7 @@ xmlNodeAttributeSet(XmlNode *const this, const String *const name, const String 
     ASSERT(name != NULL);
     ASSERT(value != NULL);
 
-    xmlSetProp(this->node, (unsigned char *)strZ(name), (unsigned char *)strZ(value));
+    xmlSetProp(this->node, (const unsigned char *)strZ(name), (const unsigned char *)strZ(value));
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -97,13 +98,14 @@ xmlNodeChildAdd(XmlNode *const this, const XmlNode *const child)
 
             if (currentNode->node->type == XML_ELEMENT_NODE)
             {
-                XmlNode *const node = xmlNodeAdd(this, STR((char *)currentNode->node->name));
+                XmlNode *const node = xmlNodeAdd(this, STR((const char *)currentNode->node->name));
 
                 // Copy node attributes
                 for (xmlAttrPtr currentAttr = currentNode->node->properties; currentAttr != NULL; currentAttr = currentAttr->next)
                 {
                     xmlNodeAttributeSet(
-                        node, STR((char *)currentAttr->name), xmlNodeAttribute(currentNode, STR((char *)currentAttr->name)));
+                        node, STR((const char *)currentAttr->name),
+                        xmlNodeAttribute(currentNode, STR((const char *)currentAttr->name)));
                 }
 
                 // Recurse to copy child nodes
@@ -113,7 +115,7 @@ xmlNodeChildAdd(XmlNode *const this, const XmlNode *const child)
             {
                 CHECK_FMT(
                     AssertError, currentNode->node->type == XML_TEXT_NODE, "unknown type %u in node '%s'", currentNode->node->type,
-                    (char *)currentNode->node->name);
+                    currentNode->node->name);
 
                 xmlNodeContentSet(this, xmlNodeContent(currentNode));
             }

@@ -318,7 +318,7 @@ FN_INLINE_ALWAYS const ManifestDb *
 manifestDbFindDefault(const Manifest *const this, const String *const name, const ManifestDb *const dbDefault)
 {
     ASSERT_INLINE(name != NULL);
-    return lstFindDefault(THIS_PUB(Manifest)->dbList, &name, (void *)dbDefault);
+    return lstFindDefault(THIS_PUB(Manifest)->dbList, &name, (const void *)dbDefault);
 }
 
 FN_INLINE_ALWAYS unsigned int
@@ -399,14 +399,14 @@ manifestLink(const Manifest *const this, const unsigned int linkIdx)
 }
 
 FN_EXTERN void manifestLinkAdd(Manifest *this, const ManifestLink *link);
-FN_EXTERN const ManifestLink *manifestLinkFind(const Manifest *this, const String *name);
+FN_EXTERN ManifestLink *manifestLinkFind(const Manifest *this, const String *name);
 
 // If the link requested is not found in the list, return the default passed rather than throw an error
 FN_INLINE_ALWAYS const ManifestLink *
 manifestLinkFindDefault(const Manifest *const this, const String *const name, const ManifestLink *const linkDefault)
 {
     ASSERT_INLINE(name != NULL);
-    return lstFindDefault(THIS_PUB(Manifest)->linkList, &name, (void *)linkDefault);
+    return lstFindDefault(THIS_PUB(Manifest)->linkList, &name, (const void *)linkDefault);
 }
 
 FN_EXTERN void manifestLinkRemove(const Manifest *this, const String *name);
@@ -435,7 +435,7 @@ FN_INLINE_ALWAYS const ManifestPath *
 manifestPathFindDefault(const Manifest *const this, const String *const name, const ManifestPath *const pathDefault)
 {
     ASSERT_INLINE(name != NULL);
-    return lstFindDefault(THIS_PUB(Manifest)->pathList, &name, (void *)pathDefault);
+    return lstFindDefault(THIS_PUB(Manifest)->pathList, &name, (const void *)pathDefault);
 }
 
 // Data directory relative path for any manifest file/link/path/target name
@@ -457,14 +457,14 @@ manifestTarget(const Manifest *const this, const unsigned int targetIdx)
 }
 
 FN_EXTERN void manifestTargetAdd(Manifest *this, const ManifestTarget *target);
-FN_EXTERN const ManifestTarget *manifestTargetFind(const Manifest *this, const String *name);
+FN_EXTERN ManifestTarget *manifestTargetFind(const Manifest *this, const String *name);
 
 // If the target requested is not found in the list, return the default passed rather than throw an error
 FN_INLINE_ALWAYS const ManifestTarget *
 manifestTargetFindDefault(const Manifest *const this, const String *const name, const ManifestTarget *const targetDefault)
 {
     ASSERT_INLINE(name != NULL);
-    return lstFindDefault(THIS_PUB(Manifest)->targetList, &name, (void *)targetDefault);
+    return lstFindDefault(THIS_PUB(Manifest)->targetList, &name, (const void *)targetDefault);
 }
 
 // Base target, i.e. the target that is the data directory

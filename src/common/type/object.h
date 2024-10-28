@@ -84,7 +84,7 @@ lstSize(const List *const this)
 
 The macro also ensures that this != NULL so there is no need to do that in the calling function.
 ***********************************************************************************************************************************/
-#define THIS_PUB(type)                                              ((type##Pub *)thisNotNull(this))
+#define THIS_PUB(type)                                              ((const type##Pub *)thisNotNull(this))
 
 FN_INLINE_ALWAYS const void *
 thisNotNull(const void *const this)

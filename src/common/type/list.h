@@ -118,7 +118,7 @@ FN_EXTERN void *lstGetLast(const List *this);
 
 // Find an item in the list
 FN_EXTERN void *lstFind(const List *this, const void *item);
-FN_EXTERN void *lstFindDefault(const List *this, const void *item, void *itemDefault);
+FN_EXTERN const void *lstFindDefault(const List *this, const void *item, const void *itemDefault);
 FN_EXTERN unsigned int lstFindIdx(const List *this, const void *item);
 
 // Does an item exist in the list?

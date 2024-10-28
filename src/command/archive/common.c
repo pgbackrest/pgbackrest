@@ -264,10 +264,14 @@ archiveAsyncExec(const ArchiveMode archiveMode, const StringList *const commandE
         for (int fd = 3; fd < 1024; fd++)
             close(fd);
 
-        // Execute the binary. This statement will not return if it is successful.
+        // Execute the binary. This statement will not return if it is successful. execvp() requires non-const parameters because it
+        // modifies them after the fork.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
         THROW_ON_SYS_ERROR_FMT(
-            execvp(strZ(strLstGet(commandExec, 0)), (char **const)strLstPtr(commandExec)) == -1, ExecuteError,
+            execvp(strZ(strLstGet(commandExec, 0)), UNCONSTIFY(char **, strLstPtr(commandExec))) == -1, ExecuteError,
             "unable to execute asynchronous '%s'", archiveMode == archiveModeGet ? CFGCMD_ARCHIVE_GET : CFGCMD_ARCHIVE_PUSH);
+#pragma GCC diagnostic pop
     }
 
 #ifdef DEBUG_EXEC_TIME
@@ -297,11 +301,11 @@ archiveAsyncExec(const ArchiveMode archiveMode, const StringList *const commandE
 FN_EXTERN int
 archiveIdComparator(const void *const archiveId1, const void *const archiveId2)
 {
-    ASSERT(strstr(strZ(*(String **)archiveId1), "-") != NULL);
-    ASSERT(strstr(strZ(*(String **)archiveId2), "-") != NULL);
+    ASSERT(strstr(strZ(*(const String *const *)archiveId1), "-") != NULL);
+    ASSERT(strstr(strZ(*(const String *const *)archiveId2), "-") != NULL);
 
-    const int id1 = cvtZToInt(strstr(strZ(*(String **)archiveId1), "-") + 1);
-    const int id2 = cvtZToInt(strstr(strZ(*(String **)archiveId2), "-") + 1);
+    const int id1 = cvtZToInt(strstr(strZ(*(const String *const *)archiveId1), "-") + 1);
+    const int id2 = cvtZToInt(strstr(strZ(*(const String *const *)archiveId2), "-") + 1);
 
     return LST_COMPARATOR_CMP(id1, id2);
 }

@@ -1310,7 +1310,7 @@ storageSftpNew(
             // requires twice as much space (hashSize * 2) as the raw version.
             char fingerprint[256];
 
-            encodeToStr(encodingHex, (unsigned char *)binaryFingerprint, hashSize, fingerprint);
+            encodeToStr(encodingHex, (const unsigned char *)binaryFingerprint, hashSize, fingerprint);
 
             if (strcmp(fingerprint, strZ(param.hostFingerprint)) != 0)
             {

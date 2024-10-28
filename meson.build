@@ -40,6 +40,9 @@ endif
 ####################################################################################################################################
 # Enable as many additional warnings as possible to catch potential errors
 warning_enable = [
+    # Warn whenever a pointer is cast so as to remove a type qualifier from the target type
+    '-Wcast-qual',
+
     # Warn for implicit conversions that may alter a value
     '-Wconversion',
 
