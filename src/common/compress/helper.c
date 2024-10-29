@@ -12,6 +12,7 @@ Compression Helper
 #include "common/compress/gz/compress.h"
 #include "common/compress/gz/decompress.h"
 #include "common/compress/helper.h"
+#include "common/compress/helper.intern.h"
 #include "common/compress/lz4/common.h"
 #include "common/compress/lz4/compress.h"
 #include "common/compress/lz4/decompress.h"

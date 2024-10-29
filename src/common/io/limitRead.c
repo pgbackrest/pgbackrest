@@ -5,6 +5,7 @@ Read Chunked I/O
 
 #include "common/debug.h"
 #include "common/io/bufferRead.h"
+#include "common/io/limitRead.h"
 #include "common/io/read.h"
 #include "common/log.h"
 #include "common/type/object.h"

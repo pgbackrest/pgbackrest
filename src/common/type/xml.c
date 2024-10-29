@@ -116,7 +116,7 @@ xmlNodeAdd(XmlNode *const this, const String *const name)
     ASSERT(this != NULL);
     ASSERT(name != NULL);
 
-    XmlNode *const result = xmlNodeNew(xmlNewNode(NULL, BAD_CAST strZ(name)));
+    XmlNode *const result = xmlNodeNew(xmlNewNode(NULL, (const xmlChar *)strZ(name)));
     xmlAddChild(this->node, result->node);
 
     FUNCTION_TEST_RETURN(XML_NODE, result);
@@ -177,7 +177,7 @@ xmlNodeContentSet(XmlNode *const this, const String *const content)
     ASSERT(this != NULL);
     ASSERT(content != NULL);
 
-    xmlAddChild(this->node, xmlNewText(BAD_CAST strZ(content)));
+    xmlAddChild(this->node, xmlNewText((const xmlChar *)strZ(content)));
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -192,7 +192,7 @@ xmlNodeName(const XmlNode *const this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(STRING, strNewZ((char *)this->node->name));
+    FUNCTION_TEST_RETURN(STRING, strNewZ((const char *)this->node->name));
 }
 
 /**********************************************************************************************************************************/
@@ -211,7 +211,7 @@ xmlNodeChildList(const XmlNode *const this, const String *const name)
 
     for (xmlNodePtr currentNode = this->node->children; currentNode != NULL; currentNode = currentNode->next)
     {
-        if (currentNode->type == XML_ELEMENT_NODE && strEqZ(name, (char *)currentNode->name))
+        if (currentNode->type == XML_ELEMENT_NODE && strEqZ(name, (const char *)currentNode->name))
             xmlNodeLstAdd(list, currentNode);
     }
 
@@ -234,7 +234,7 @@ xmlNodeChildListMulti(const XmlNode *const this, const StringList *const nameLis
 
     for (xmlNodePtr currentNode = this->node->children; currentNode != NULL; currentNode = currentNode->next)
     {
-        if (currentNode->type == XML_ELEMENT_NODE && strLstExists(nameList, STR((char *)currentNode->name)))
+        if (currentNode->type == XML_ELEMENT_NODE && strLstExists(nameList, STR((const char *)currentNode->name)))
             xmlNodeLstAdd(list, currentNode);
     }
 
@@ -259,7 +259,7 @@ xmlNodeChildN(const XmlNode *const this, const String *const name, const unsigne
 
     for (xmlNodePtr currentNode = this->node->children; currentNode != NULL; currentNode = currentNode->next)
     {
-        if (currentNode->type == XML_ELEMENT_NODE && strEqZ(name, (char *)currentNode->name))
+        if (currentNode->type == XML_ELEMENT_NODE && strEqZ(name, (const char *)currentNode->name))
         {
             if (childIdx == index)
             {
@@ -312,13 +312,13 @@ xmlDocumentNew(const String *const rootName)
     {
         *this = (XmlDocument)
         {
-            .xml = xmlNewDoc(BAD_CAST "1.0"),
+            .xml = xmlNewDoc((const xmlChar *)"1.0"),
         };
 
         // Set callback to ensure xml document is freed
         memContextCallbackSet(objMemContext(this), xmlDocumentFreeResource, this);
 
-        this->pub.root = xmlNodeNew(xmlNewNode(NULL, BAD_CAST strZ(rootName)));
+        this->pub.root = xmlNodeNew(xmlNewNode(NULL, (const xmlChar *)strZ(rootName)));
         xmlDocSetRootElement(this->xml, xmlDocumentRoot(this)->node);
     }
     OBJ_NEW_END();

@@ -7,4 +7,9 @@ Harness for PostgreSQL Interface (see PG_VERSION for version)
 
 #include "common/harnessPostgres/harnessVersion.intern.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-prototypes"
+
 HRN_PG_INTERFACE(160);
+
+#pragma GCC diagnostic pop

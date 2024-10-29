@@ -19,7 +19,7 @@ Define the console width - use a fixed width of 80 since this should be safe on 
 /***********************************************************************************************************************************
 Basic variable replacement. This only handles a few cases but will error in case of unknown variables.
 ***********************************************************************************************************************************/
-String *
+static String *
 referenceManReplace(String *const string)
 {
     FUNCTION_TEST_BEGIN();

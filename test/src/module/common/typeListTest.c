@@ -9,7 +9,7 @@ Test sort comparator
 static int
 testComparator(const void *item1, const void *item2)
 {
-    return LST_COMPARATOR_CMP(*(int *)item1, *(int *)item2);
+    return LST_COMPARATOR_CMP(*(const int *)item1, *(const int *)item2);
 }
 
 /***********************************************************************************************************************************
@@ -56,7 +56,7 @@ testRun(void)
         TEST_RESULT_PTR(lstFindDefault(list, &string3, (void *)1), (void *)1, "    find string3 returns default");
         TEST_RESULT_BOOL(lstExists(list, &string3), false, "    string3 does not exist");
         TEST_RESULT_STR_Z(*(String **)lstFind(list, &string2), "string2", "    find string2");
-        TEST_RESULT_STR_Z(*(String **)lstFindDefault(list, &string2, NULL), "string2", "    find string2 no default");
+        TEST_RESULT_STR_Z(*(const String *const *)lstFindDefault(list, &string2, NULL), "string2", "    find string2 no default");
         TEST_RESULT_BOOL(lstExists(list, &string2), true, "    string2 exists");
 
         TEST_RESULT_BOOL(lstRemove(list, &string2), true, "    remove string2");

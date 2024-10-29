@@ -206,9 +206,9 @@ storageGcsAuthJwt(StorageGcs *const this, const time_t timeBegin)
                     (uint64_t)timeBegin + 3600, (uint64_t)timeBegin)));
 
         // Sign with RSA key
-        volatile BIO *bio = NULL;
-        volatile EVP_PKEY *privateKey = NULL;
-        volatile EVP_MD_CTX *sign = NULL;
+        BIO *volatile bio = NULL;
+        EVP_PKEY *volatile privateKey = NULL;
+        EVP_MD_CTX *volatile sign = NULL;
 
         cryptoInit();
 
@@ -216,26 +216,25 @@ storageGcsAuthJwt(StorageGcs *const this, const time_t timeBegin)
         {
             // Load key
             bio = BIO_new(BIO_s_mem());
-            BIO_write((BIO *)bio, strZ(privateKeyRaw), (int)strSize(privateKeyRaw));
+            BIO_write(bio, strZ(privateKeyRaw), (int)strSize(privateKeyRaw));
 
-            privateKey = PEM_read_bio_PrivateKey((BIO *)bio, NULL, NULL, NULL);
+            privateKey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
             cryptoError(privateKey == NULL, "unable to read PEM");
 
             // Create signature
             sign = EVP_MD_CTX_create();
+            cryptoError(EVP_DigestSignInit(sign, NULL, EVP_sha256(), NULL, privateKey) <= 0, "unable to init");
             cryptoError(
-                EVP_DigestSignInit((EVP_MD_CTX *)sign, NULL, EVP_sha256(), NULL, (EVP_PKEY *)privateKey) <= 0, "unable to init");
-            cryptoError(
-                EVP_DigestSignUpdate((EVP_MD_CTX *)sign, (unsigned char *)strZ(result), (unsigned int)strSize(result)) <= 0,
+                EVP_DigestSignUpdate(sign, (const unsigned char *)strZ(result), (unsigned int)strSize(result)) <= 0,
                 "unable to update");
 
             size_t signatureLen = 0;
-            cryptoError(EVP_DigestSignFinal((EVP_MD_CTX *)sign, NULL, &signatureLen) <= 0, "unable to get size");
+            cryptoError(EVP_DigestSignFinal(sign, NULL, &signatureLen) <= 0, "unable to get size");
 
             Buffer *const signature = bufNew(signatureLen);
             bufUsedSet(signature, bufSize(signature));
 
-            cryptoError(EVP_DigestSignFinal((EVP_MD_CTX *)sign, bufPtr(signature), &signatureLen) <= 0, "unable to finalize");
+            cryptoError(EVP_DigestSignFinal(sign, bufPtr(signature), &signatureLen) <= 0, "unable to finalize");
 
             // Add dot delimiter and signature
             strCatChr(result, '.');
@@ -243,9 +242,9 @@ storageGcsAuthJwt(StorageGcs *const this, const time_t timeBegin)
         }
         FINALLY()
         {
-            BIO_free((BIO *)bio);
-            EVP_MD_CTX_free((EVP_MD_CTX *)sign);
-            EVP_PKEY_free((EVP_PKEY *)privateKey);
+            BIO_free(bio);
+            EVP_MD_CTX_free(sign);
+            EVP_PKEY_free(privateKey);
         }
         TRY_END();
     }

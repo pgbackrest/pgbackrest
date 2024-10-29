@@ -7,6 +7,7 @@ Test Command
 
 #include "build/common/exec.h"
 #include "command/test/build.h"
+#include "command/test/test.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "config/config.h"

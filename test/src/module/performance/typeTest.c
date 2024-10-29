@@ -31,7 +31,7 @@ Test sort comparator
 static int
 testComparator(const void *item1, const void *item2)
 {
-    return LST_COMPARATOR_CMP(*(int *)item1, *(int *)item2);
+    return LST_COMPARATOR_CMP(*(const int *)item1, *(const int *)item2);
 }
 
 /***********************************************************************************************************************************

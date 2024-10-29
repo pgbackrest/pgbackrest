@@ -53,7 +53,7 @@ typedef struct ManifestBlockDeltaBlock
     unsigned char checksum[XX_HASH_SIZE_MAX];                       // Checksum of the block
 } ManifestBlockDeltaBlock;
 
-FN_EXTERN List *
+static List *
 cmdManifestBlockDelta(
     const BlockMap *const blockMap, const size_t blockSize, const size_t checksumSize, const Buffer *const blockChecksum)
 {

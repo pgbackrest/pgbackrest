@@ -4,6 +4,7 @@ Repository Remove Command
 #include "build.auto.h"
 
 #include "command/repo/common.h"
+#include "command/repo/rm.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"

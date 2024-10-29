@@ -4,6 +4,7 @@ Stanza Commands Handler
 #include "build.auto.h"
 
 #include "command/check/common.h"
+#include "command/stanza/common.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "config/config.h"

@@ -127,33 +127,37 @@ testBldShim(const String *const shimC, const StringList *const functionList)
                     ASSERT(inIdx > 0);
                     found = true;
 
-                    // If static then build a declaration so the function is able to call itself
+                    // For static functions add a forward declaration with the original name so the function can be called from the
+                    // module. For extern functions add a forward declaration with the shimmed name so there is no warning from
+                    // missing-prototypes.
+                    strCatChr(result, ' ');
+
                     if (strBeginsWithZ(strLstGet(inList, inIdx - 1), "static "))
-                    {
-                        strCatChr(result, ' ');
                         strCat(result, in);
-                        unsigned int scanIdx = inIdx + 1;
+                    else
+                        strCatFmt(result, "%s_SHIMMED%s", strZ(function), strZ(strSub(in, strSize(function))));
 
-                        while (true)
-                        {
-                            // In a properly formatted C file the end of the list can never be reached
-                            ASSERT(scanIdx < strLstSize(inList));
+                    unsigned int scanIdx = inIdx + 1;
 
-                            const String *const scan = strLstGet(inList, scanIdx);
+                    while (true)
+                    {
+                        // In a properly formatted C file the end of the list can never be reached
+                        ASSERT(scanIdx < strLstSize(inList));
 
-                            if (strEqZ(scan, "{"))
-                                break;
+                        const String *const scan = strLstGet(inList, scanIdx);
 
-                            if (strEndsWithZ(strLstGet(inList, scanIdx - 1), ","))
-                                strCatChr(result, ' ');
+                        if (strEqZ(scan, "{"))
+                            break;
 
-                            strCat(result, strTrim(strDup(scan)));
-                            scanIdx++;
-                        }
+                        if (strEndsWithZ(strLstGet(inList, scanIdx - 1), ","))
+                            strCatChr(result, ' ');
 
-                        strCatZ(result, "; ");
-                        strCat(result, strLstGet(inList, inIdx - 1));
+                        strCat(result, strTrim(strDup(scan)));
+                        scanIdx++;
                     }
+
+                    strCatZ(result, "; ");
+                    strCat(result, strLstGet(inList, inIdx - 1));
 
                     // Alter the function name so it can be shimmed
                     strCatFmt(result, "\n%s_SHIMMED%s", strZ(function), strZ(strSub(in, strSize(function))));

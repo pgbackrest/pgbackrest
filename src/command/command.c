@@ -6,6 +6,7 @@ Common Command Routines
 #include <inttypes.h>
 #include <string.h>
 
+#include "command/command.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"

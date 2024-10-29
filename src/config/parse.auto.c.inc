@@ -9,7 +9,7 @@ Rule Strings
 ***********************************************************************************************************************************/
 #define PARSE_RULE_VAL_STR(value)                                   PARSE_RULE_U32_1(parseRuleValStr##value)
 
-static const StringPub parseRuleValueStr[] =
+static const StringPubConst parseRuleValueStr[] =
 {
     PARSE_RULE_STRPUB("/tmp/pgbackrest"),                                                                                 // val/str
     PARSE_RULE_STRPUB("/var/lib/pgbackrest"),                                                                             // val/str

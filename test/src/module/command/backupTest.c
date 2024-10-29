@@ -2170,9 +2170,8 @@ testRun(void)
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
                 storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), 0, true, false, false, false, NULL, NULL, NULL);
-            ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
-            manifestResumeData->backupType = backupTypeFull;
+            manifestResume->pub.data.backupType = backupTypeFull;
             const String *resumeLabel = backupLabelCreate(backupTypeFull, NULL, backupTimeStart);
             manifestBackupLabelSet(manifestResume, resumeLabel);
 
@@ -2249,10 +2248,9 @@ testRun(void)
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
                 storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), 0, true, false, false, false, NULL, NULL, NULL);
-            ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
-            manifestResumeData->backupType = backupTypeFull;
-            manifestResumeData->backupOptionCompressType = compressTypeGz;
+            manifestResume->pub.data.backupType = backupTypeFull;
+            manifestResume->pub.data.backupOptionCompressType = compressTypeGz;
             const String *resumeLabel = backupLabelCreate(backupTypeFull, NULL, backupTimeStart);
             manifestBackupLabelSet(manifestResume, resumeLabel);
 
@@ -2314,6 +2312,8 @@ testRun(void)
                         storageRepoWrite(),
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(resumeLabel)))));
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
             // Disable storageFeaturePath so paths will not be created before files are copied
             ((Storage *)storageRepoWrite())->pub.interface.feature ^= 1 << storageFeaturePath;
 
@@ -2327,6 +2327,7 @@ testRun(void)
             // Enable storage features
             ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeaturePath;
             ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeaturePathSync;
+#pragma GCC diagnostic pop
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute exclusive backup start: backup begins after the next regular checkpoint completes\n"
@@ -2407,9 +2408,8 @@ testRun(void)
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
                 storagePg(), PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), 0, true, false, false, false, NULL, NULL, NULL);
-            ManifestData *manifestResumeData = (ManifestData *)manifestData(manifestResume);
 
-            manifestResumeData->backupOptionCompressType = compressTypeGz;
+            manifestResume->pub.data.backupOptionCompressType = compressTypeGz;
             const String *resumeLabel = backupLabelCreate(backupTypeFull, NULL, backupTimeStart - 100000);
             manifestBackupLabelSet(manifestResume, resumeLabel);
             strLstAddZ(manifestResume->pub.referenceList, "BOGUS");
@@ -2462,7 +2462,7 @@ testRun(void)
                 strZ(storagePathP(storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/pg_data/pipe", strZ(resumeLabel)))));
 
             // Save the resume manifest with full type
-            manifestResumeData->backupType = backupTypeFull;
+            manifestResume->pub.data.backupType = backupTypeFull;
 
             manifestSave(
                 manifestResume,
@@ -2532,7 +2532,7 @@ testRun(void)
             HRN_STORAGE_REMOVE(storageRepoWrite(), "backup/test1/20191003-105321F/backup.manifest");
 
             // Save the resume manifest with diff type
-            manifestResumeData->backupType = backupTypeDiff;
+            manifestResume->pub.data.backupType = backupTypeDiff;
 
             manifestSave(
                 manifestResume,
@@ -2983,6 +2983,8 @@ testRun(void)
                 zNewFmt("pg1-tblspc/32768/%s/1/5", strZ(pgTablespaceId(PG_VERSION_11, hrnPgCatalogVersion(PG_VERSION_11)))),
                 .timeModified = backupTimeStart);
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
             // Disable storageFeatureSymLink so tablespace (and latest) symlinks will not be created
             ((Storage *)storageRepoWrite())->pub.interface.feature ^= 1 << storageFeatureSymLink;
 
@@ -2996,6 +2998,7 @@ testRun(void)
             // Reset storage features
             ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeatureSymLink;
             ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeatureHardLink;
+#pragma GCC diagnostic pop
 
             TEST_RESULT_LOG(
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
@@ -3607,7 +3610,7 @@ testRun(void)
             // Load the previous manifest and null out the checksum-page option to be sure it gets set to false in this backup
             const String *manifestPriorFile = STRDEF(STORAGE_REPO_BACKUP "/20191103-165320F/" BACKUP_MANIFEST_FILE);
             Manifest *manifestPrior = manifestNewLoad(storageReadIo(storageNewReadP(storageRepo(), manifestPriorFile)));
-            ((ManifestData *)manifestData(manifestPrior))->backupOptionChecksumPage = NULL;
+            manifestPrior->pub.data.backupOptionChecksumPage = NULL;
             manifestSave(manifestPrior, storageWriteIo(storageNewWriteP(storageRepoWrite(), manifestPriorFile)));
 
             // Load options

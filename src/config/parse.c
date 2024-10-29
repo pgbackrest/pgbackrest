@@ -42,11 +42,6 @@ Standard config file name and old default path and name
 STRING_STATIC(PGBACKREST_CONFIG_ORIG_PATH_FILE_STR,                 PGBACKREST_CONFIG_ORIG_PATH_FILE);
 
 /***********************************************************************************************************************************
-In some environments this will not be externed
-***********************************************************************************************************************************/
-extern char **environ;
-
-/***********************************************************************************************************************************
 Mem context and local variables
 ***********************************************************************************************************************************/
 static struct ConfigParseLocal
@@ -213,7 +208,7 @@ typedef enum
 #define PARSE_RULE_OPTION_COMMAND(commandParam)                                                                                    \
     | (1 << cfgCmd##commandParam)
 
-#define PARSE_RULE_STRPUB(value)                                    {.buffer = (char *)value, .size = sizeof(value) - 1}
+#define PARSE_RULE_STRPUB(value)                                    {.buffer = (const char *)value, .size = sizeof(value) - 1}
 
 // Macros used to define optional parse rules in pack format
 #define PARSE_RULE_VARINT_01(value)                                                                                                \
@@ -1551,7 +1546,7 @@ logic to this critical path code.
 // Helper to check that option values are valid for conditional builds. This is a bit tricky since the distros used for unit testing
 // have all possible features enabled, so this is split out to allow it to be tested independently. The loop variable is
 // intentionally integrated into this function to make it obvious if it is omitted from the caller.
-FN_EXTERN bool
+static bool
 cfgParseOptionValueCondition(
     bool more, PackRead *const allowList, const bool allowListFound, const unsigned int optionId, const unsigned int optionKeyIdx,
     const String *const valueAllow)

@@ -11,6 +11,7 @@ Archive Get Command
 
 #include "command/archive/common.h"
 #include "command/archive/get/file.h"
+#include "command/archive/get/get.h"
 #include "command/archive/get/protocol.h"
 #include "command/command.h"
 #include "command/lock.h"

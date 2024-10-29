@@ -59,14 +59,6 @@ static struct HarnessTestLocal
 } harnessTestLocal;
 
 /***********************************************************************************************************************************
-Extern functions
-***********************************************************************************************************************************/
-#ifdef HRN_FEATURE_LOG
-void harnessLogInit(void);
-void harnessLogFinal(void);
-#endif
-
-/***********************************************************************************************************************************
 Initialize harness
 ***********************************************************************************************************************************/
 void
@@ -298,12 +290,12 @@ hrnDiff(const char *expected, const char *actual)
     // Write expected file
     char expectedFile[1024];
     snprintf(expectedFile, sizeof(expectedFile), "%s/diff.expected", hrnPath());
-    hrnFileWrite(expectedFile, (unsigned char *)expected, strlen(expected));
+    hrnFileWrite(expectedFile, (const unsigned char *)expected, strlen(expected));
 
     // Write actual file
     char actualFile[1024];
     snprintf(actualFile, sizeof(actualFile), "%s/diff.actual", hrnPath());
-    hrnFileWrite(actualFile, (unsigned char *)actual, strlen(actual));
+    hrnFileWrite(actualFile, (const unsigned char *)actual, strlen(actual));
 
     // Perform diff
     char command[2560];

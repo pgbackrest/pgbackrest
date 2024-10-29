@@ -299,7 +299,7 @@ hrnHostExecBr(HrnHost *const this, const char *const command, const HrnHostExecB
 }
 
 /**********************************************************************************************************************************/
-void
+static void
 hrnHostPgConf(HrnHost *const this)
 {
     FUNCTION_HARNESS_BEGIN();

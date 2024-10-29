@@ -233,7 +233,7 @@ varBool(const Variant *const this)
     ASSERT(this != NULL);
     ASSERT(varType(this) == varTypeBool);
 
-    FUNCTION_TEST_RETURN(BOOL, ((VariantBool *)this)->pub.data);
+    FUNCTION_TEST_RETURN(BOOL, ((const VariantBool *)this)->pub.data);
 }
 
 FN_EXTERN bool
@@ -339,7 +339,7 @@ varInt(const Variant *const this)
     ASSERT(this != NULL);
     ASSERT(varType(this) == varTypeInt);
 
-    FUNCTION_TEST_RETURN(INT, ((VariantInt *)this)->pub.data);
+    FUNCTION_TEST_RETURN(INT, ((const VariantInt *)this)->pub.data);
 }
 
 FN_EXTERN int
@@ -452,7 +452,7 @@ varInt64(const Variant *const this)
     ASSERT(this != NULL);
     ASSERT(varType(this) == varTypeInt64);
 
-    FUNCTION_TEST_RETURN(INT64, ((VariantInt64 *)this)->pub.data);
+    FUNCTION_TEST_RETURN(INT64, ((const VariantInt64 *)this)->pub.data);
 }
 
 FN_EXTERN int64_t
@@ -549,7 +549,7 @@ varUInt(const Variant *const this)
     ASSERT(this != NULL);
     ASSERT(varType(this) == varTypeUInt);
 
-    FUNCTION_TEST_RETURN(UINT, ((VariantUInt *)this)->pub.data);
+    FUNCTION_TEST_RETURN(UINT, ((const VariantUInt *)this)->pub.data);
 }
 
 FN_EXTERN unsigned int
@@ -671,7 +671,7 @@ varUInt64(const Variant *const this)
     ASSERT(this != NULL);
     ASSERT(varType(this) == varTypeUInt64);
 
-    FUNCTION_TEST_RETURN(UINT64, ((VariantUInt64 *)this)->pub.data);
+    FUNCTION_TEST_RETURN(UINT64, ((const VariantUInt64 *)this)->pub.data);
 }
 
 FN_EXTERN uint64_t
@@ -781,7 +781,7 @@ varKv(const Variant *const this)
     if (this != NULL)
     {
         ASSERT(varType(this) == varTypeKeyValue);
-        result = ((VariantKeyValue *)this)->data;
+        result = ((const VariantKeyValue *)this)->data;
     }
 
     FUNCTION_TEST_RETURN(KEY_VALUE, result);
@@ -874,7 +874,7 @@ varStr(const Variant *const this)
     if (this != NULL)
     {
         ASSERT(varType(this) == varTypeString);
-        result = ((VariantString *)this)->pub.data;
+        result = ((const VariantString *)this)->pub.data;
     }
 
     FUNCTION_TEST_RETURN(STRING, result);
@@ -981,7 +981,7 @@ varVarLst(const Variant *const this)
     if (this != NULL)
     {
         ASSERT(varType(this) == varTypeVariantList);
-        result = ((VariantVariantList *)this)->data;
+        result = ((const VariantVariantList *)this)->data;
     }
 
     FUNCTION_TEST_RETURN(VARIANT_LIST, result);

@@ -10,6 +10,7 @@ Configuration Load
 #include "common/io/io.h"
 #include "common/log.h"
 #include "config/config.intern.h"
+#include "config/load.h"
 #include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************

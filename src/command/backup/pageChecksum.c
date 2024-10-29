@@ -34,7 +34,7 @@ typedef struct PageChecksum
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
-FN_EXTERN void
+static void
 pageChecksumToLog(const PageChecksum *const this, StringStatic *const debugLog)
 {
     strStcFmt(debugLog, "{valid: %s, align: %s}", cvtBoolToConstZ(this->valid), cvtBoolToConstZ(this->align));
@@ -109,7 +109,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *const input)
                     // Check that the entire page is zero
                     for (unsigned int pageIdx = 0; pageIdx < this->pageSize / sizeof(size_t); pageIdx++)
                     {
-                        if (((size_t *)pageHeader)[pageIdx] != 0)
+                        if (((const size_t *)pageHeader)[pageIdx] != 0)
                         {
                             pageValid = false;
                             break;

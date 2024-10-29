@@ -44,7 +44,7 @@ FN_EXTERN Buffer *xmlDocumentBuf(const XmlDocument *this);
 FN_INLINE_ALWAYS XmlNode *
 xmlDocumentRoot(const XmlDocument *const this)
 {
-    return ((XmlDocumentPub *const)this)->root;
+    return ((const XmlDocumentPub *const)this)->root;
 }
 
 /***********************************************************************************************************************************
@@ -94,14 +94,14 @@ Node List Getters
 FN_INLINE_ALWAYS XmlNode *
 xmlNodeLstGet(const XmlNodeList *const this, const unsigned int listIdx)
 {
-    return *(XmlNode **)lstGet((List *const)this, listIdx);
+    return *(XmlNode **)lstGet((const List *const)this, listIdx);
 }
 
 // Node list size
 FN_INLINE_ALWAYS unsigned int
 xmlNodeLstSize(const XmlNodeList *const this)
 {
-    return lstSize((List *const)this);
+    return lstSize((const List *const)this);
 }
 
 /***********************************************************************************************************************************

@@ -40,6 +40,9 @@ endif
 ####################################################################################################################################
 # Enable as many additional warnings as possible to catch potential errors
 warning_enable = [
+    # Warn whenever a pointer is cast so as to remove a type qualifier from the target type
+    '-Wcast-qual',
+
     # Warn for implicit conversions that may alter a value
     '-Wconversion',
 
@@ -48,6 +51,9 @@ warning_enable = [
 
     # Warn when an if-else has identical branches
     '-Wduplicated-branches',
+
+    # Warn if floating-point values are used in equality comparisons
+    '--Wfloat-equal',
 
     # Warn if the format string is not a string literal and cannot be checked
     '-Wformat-nonliteral',
@@ -58,8 +64,17 @@ warning_enable = [
     # Warn if the format string requires an unsigned argument and the argument is signed and vice versa
     '-Wformat-signedness',
 
+    # Warn about uninitialized variables which are initialized with themselves
+    '-Winit-self',
+
+    # Warn if a global function is defined without a previous prototype declaration
+    '-Wmissing-prototypes',
+
     # Warn about anything that depends on the “size of” a function type or of void
     '-Wpointer-arith',
+
+    # Warn if anything is declared more than once in the same scope, even when the extra declaration is valid and changes nothing
+    '-Wredundant-decls',
 
     # Warn if a function is declared or defined without specifying the argument types
     '-Wstrict-prototypes',

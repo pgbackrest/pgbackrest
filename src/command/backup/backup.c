@@ -1746,8 +1746,8 @@ backupProcessQueueComparator(const void *const item1, const void *const item2)
     ASSERT(item2 != NULL);
 
     // Unpack files
-    const ManifestFile file1 = manifestFileUnpack(backupProcessQueueComparatorManifest, *(const ManifestFilePack **)item1);
-    const ManifestFile file2 = manifestFileUnpack(backupProcessQueueComparatorManifest, *(const ManifestFilePack **)item2);
+    const ManifestFile file1 = manifestFileUnpack(backupProcessQueueComparatorManifest, *(const ManifestFilePack *const *)item1);
+    const ManifestFile file2 = manifestFileUnpack(backupProcessQueueComparatorManifest, *(const ManifestFilePack *const *)item2);
 
     // If the size differs then that's enough to determine order
     if (!backupProcessQueueComparatorBundle || file1.size > backupProcessQueueComparatorBundleLimit ||
