@@ -1013,8 +1013,6 @@ testRun(void)
         TEST_RESULT_INT(lstat(TEST_PATH "/test-archive-get-async.log", &statLog), 0, "check log file exists");
 
         cmdLockReleaseP();
-
-        // !!! Add tests for help/version with invalid env var and/or config var
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

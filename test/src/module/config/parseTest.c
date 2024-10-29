@@ -2314,6 +2314,29 @@ testRun(void)
                 "HINT: if pgBackRest was installed from a package, does the package support this feature?\n"
                 "HINT: if pgBackRest was built from source, were the required development packages installed?");
         }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+#ifdef TEST_CONTAINER_REQUIRED
+        TEST_TITLE("version and help (without command) does not load config or read env");
+        {
+            HRN_SYSTEM(
+                "echo '[global' | sudo tee " PGBACKREST_CONFIG_ORIG_PATH_FILE
+                " && sudo chmod 600 " PGBACKREST_CONFIG_ORIG_PATH_FILE);
+
+            argList = strLstNew();
+            strLstAddZ(argList, TEST_BACKREST_EXE);
+            strLstAddZ(argList, "help");
+            strLstAddZ(argList, "backup");
+
+            TEST_ERROR(
+                cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true),
+                FileOpenError, "unable to open file '/etc/pgbackrest.conf' for read: [13] Permission denied");
+
+            argList = strLstNew();
+            HRN_CFG_LOAD(cfgCmdHelp, argList);
+            HRN_CFG_LOAD(cfgCmdVersion, argList);
+        }
+#endif
     }
 
     // *****************************************************************************************************************************
