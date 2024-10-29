@@ -52,6 +52,9 @@ warning_enable = [
     # Warn when an if-else has identical branches
     '-Wduplicated-branches',
 
+    # Warn if floating-point values are used in equality comparisons
+    '--Wfloat-equal',
+
     # Warn if the format string is not a string literal and cannot be checked
     '-Wformat-nonliteral',
 
@@ -60,6 +63,9 @@ warning_enable = [
 
     # Warn if the format string requires an unsigned argument and the argument is signed and vice versa
     '-Wformat-signedness',
+
+    # Warn about uninitialized variables which are initialized with themselves
+    '-Winit-self',
 
     # Warn if a global function is defined without a previous prototype declaration
     '-Wmissing-prototypes',
