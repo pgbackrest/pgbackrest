@@ -389,7 +389,7 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
     FUNCTION_LOG_PARAM_PP(typeName, param)
 
 #define FUNCTION_TEST_END()                                                                                                        \
-        (void)FUNCTION_TEST_BEGIN_exists; /* CHECK for presense of FUNCTION_TEST_BEGIN*() */                                       \
+        (void)FUNCTION_TEST_BEGIN_exists; /* CHECK for presence of FUNCTION_TEST_BEGIN*() */                                       \
                                                                                                                                    \
         stackTraceTestStart();                                                                                                     \
     }
@@ -401,7 +401,7 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
 #define FUNCTION_TEST_RETURN_TYPE_BASE(typePre, type, typePost, ...)                                                               \
     do                                                                                                                             \
     {                                                                                                                              \
-        (void)FUNCTION_TEST_BEGIN_exists; /* CHECK for presense of FUNCTION_TEST_BEGIN*() */                                       \
+        (void)FUNCTION_TEST_BEGIN_exists; /* CHECK for presence of FUNCTION_TEST_BEGIN*() */                                       \
                                                                                                                                    \
         typePre type typePost FUNCTION_TEST_result = __VA_ARGS__;                                                                  \
                                                                                                                                    \
