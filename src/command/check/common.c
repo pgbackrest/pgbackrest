@@ -128,10 +128,10 @@ checkStanzaInfoPg(
     const String *const cipherPass)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(UINT, pgVersion);
-        FUNCTION_LOG_PARAM(UINT64, pgSystemId);
-        FUNCTION_LOG_PARAM(STRING_ID, cipherType);
+        FUNCTION_TEST_PARAM(STORAGE, storage);
+        FUNCTION_TEST_PARAM(UINT, pgVersion);
+        FUNCTION_TEST_PARAM(UINT64, pgSystemId);
+        FUNCTION_TEST_PARAM(STRING_ID, cipherType);
         FUNCTION_TEST_PARAM(STRING, cipherPass);
     FUNCTION_TEST_END();
 

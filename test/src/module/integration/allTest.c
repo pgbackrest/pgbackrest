@@ -20,17 +20,16 @@ Test definition
 static HrnHostTestDefine testMatrix[] =
 {
     // {uncrustify_off - struct alignment}
-    {.pg = "9.4", .repo =  "pg2", .tls = 0, .stg = "azure", .enc = 1, .cmp =  "lz4", .rt = 1, .bnd = 1, .bi = 0, .fi = 0},
     {.pg = "9.5", .repo = "repo", .tls = 1, .stg =    "s3", .enc = 0, .cmp =  "bz2", .rt = 1, .bnd = 1, .bi = 1, .fi = 1},
-    {.pg = "9.6", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1, .fi = 0},
+    {.pg = "9.6", .repo = "repo", .tls = 0, .stg = "azure", .enc = 0, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1, .fi = 0},
     {.pg =  "10", .repo =  "pg2", .tls = 0, .stg =  "sftp", .enc = 1, .cmp =   "gz", .rt = 1, .bnd = 1, .bi = 0, .fi = 1},
     {.pg =  "11", .repo = "repo", .tls = 1, .stg =   "gcs", .enc = 0, .cmp =  "zst", .rt = 2, .bnd = 0, .bi = 0, .fi = 1},
     {.pg =  "12", .repo = "repo", .tls = 0, .stg =    "s3", .enc = 1, .cmp =  "lz4", .rt = 1, .bnd = 1, .bi = 1, .fi = 0},
-    {.pg =  "13", .repo =  "pg2", .tls = 1, .stg =  "sftp", .enc = 0, .cmp =  "zst", .rt = 1, .bnd = 1, .bi = 1, .fi = 0},
+    {.pg =  "13", .repo =  "pg2", .tls = 1, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0, .fi = 0},
     {.pg =  "14", .repo = "repo", .tls = 0, .stg =   "gcs", .enc = 0, .cmp =  "lz4", .rt = 1, .bnd = 1, .bi = 0, .fi = 1},
-    {.pg =  "15", .repo =  "pg2", .tls = 0, .stg = "azure", .enc = 0, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1, .fi = 0},
-    {.pg =  "16", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0, .fi = 0},
-    {.pg =  "17", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0, .fi = 1},
+    {.pg =  "15", .repo =  "pg2", .tls = 0, .stg = "azure", .enc = 1, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1, .fi = 0},
+    {.pg =  "16", .repo = "repo", .tls = 0, .stg =  "sftp", .enc = 0, .cmp =  "zst", .rt = 1, .bnd = 1, .bi = 1, .fi = 1},
+    {.pg =  "17", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0, .fi = 0},
     // {uncrustify_on}
 };
 
@@ -136,8 +135,48 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("standby restore");
         {
-            TEST_HOST_BR(
-                pg2, CFGCMD_RESTORE, .option = zNewFmt("--type=standby --tablespace-map=ts1='%s'", strZ(hrnHostPgTsPath(pg2))));
+            // If the repo is running on pg2 then switch the user to root to test restoring as root. Use this configuration so the
+            // repo is local and root does not need to be configured for TLS or SSH.
+            const char *user = NULL;
+
+            if (pg2 == repo)
+            {
+                user = "root";
+
+                // Create the pg/ts directory so it will not be created with root permissions
+                HRN_STORAGE_PATH_CREATE(hrnHostDataStorage(pg2), strZ(hrnHostPgTsPath(pg2)), .mode = 0700);
+
+                // Create the restore log file so it will not be created with root permissions
+                HRN_STORAGE_PUT_EMPTY(hrnHostDataStorage(pg2), zNewFmt("%s/test-restore.log", strZ(hrnHostLogPath(pg2))));
+            }
+
+            // Run restore
+            const char *option = zNewFmt("--type=standby --tablespace-map=ts1='%s'", strZ(hrnHostPgTsPath(pg2)));
+            TEST_HOST_BR(pg2, CFGCMD_RESTORE, .option = option, .user = user);
+
+            // If the repo is running on pg2 then perform additional ownership tests
+            if (pg2 == repo)
+            {
+                // Update some ownership to root
+                hrnHostExecP(
+                    pg2,
+                    strNewFmt(
+                        "chown %s:%s %s &&"
+                        "chown %s:%s %s/" PG_PATH_GLOBAL " &&"
+                        "chown %s:%s %s/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL,
+                        user, user, strZ(hrnHostPgDataPath(pg2)), user, user, strZ(hrnHostPgDataPath(pg2)), user, user,
+                        strZ(hrnHostPgDataPath(pg2))),
+                    .user = STRDEF(user));
+
+                // Expect an error when running without root since permissions cannot be updated
+                TEST_HOST_BR(
+                    pg2, CFGCMD_RESTORE, .option = zNewFmt("--delta %s", option), .user = NULL,
+                    .resultExpect = errorTypeCode(&FileOpenError));
+
+                // Running as root fixes the ownership
+                TEST_HOST_BR(pg2, CFGCMD_RESTORE, .option = zNewFmt("--delta %s", option), .user = user);
+            }
+
             HRN_HOST_PG_START(pg2);
 
             // Check standby
@@ -334,7 +373,7 @@ testRun(void)
             HRN_HOST_WAL_SWITCH(pg1);
         }
 
-        // Store the time so it can be used in a later test
+        // Store the timeline so it can be used in a later test
         const char *const xidTimeline = strZ(
             pckReadStrP(
                 hrnHostSqlValue(
@@ -359,6 +398,11 @@ testRun(void)
             // Check that backup recovered to the expected target
             TEST_HOST_SQL_ONE_STR_Z(pg1, "select message from status", TEST_STATUS_TIME);
         }
+
+        // Store the time where the entire timeline captured in xidTimeline above exists so it can be used in a later test. We need
+        // to capture this here (instead of above) to be sure that all the timeline WAL has been archived.
+        const char *const xidTime = strZ(pckReadStrP(hrnHostSqlValue(pg1, "select current_timestamp::text")));
+        TEST_LOG_FMT("xid time = %s", xidTime);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("primary restore (time xid, exclusive)");
@@ -399,7 +443,21 @@ testRun(void)
             // Stop the cluster
             HRN_HOST_PG_STOP(pg1);
 
-            TEST_HOST_BR(pg1, CFGCMD_RESTORE, .option = zNewFmt("--delta --type=standby --target-timeline=%s", xidTimeline));
+            // If repo is versioned then delete the repo to test repo-target-time
+            if (hrnHostRepoVersioning())
+            {
+                // Stop pgbackrest
+                TEST_HOST_BR(repo, CFGCMD_STOP);
+
+                // Delete stanza
+                TEST_HOST_BR(repo, CFGCMD_STANZA_DELETE);
+            }
+
+            TEST_HOST_BR(
+                pg1, CFGCMD_RESTORE,
+                .option = zNewFmt(
+                    "--delta --type=standby --target-timeline=%s%s", xidTimeline,
+                    hrnHostRepoVersioning() ? zNewFmt(" --repo=1 --repo-target-time=\"%s\"", xidTime) : ""));
             HRN_HOST_PG_START(pg1);
 
             // Check that backup recovered to the expected target
@@ -407,7 +465,7 @@ testRun(void)
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
-        if (hrnHostNonVersionSpecific())
+        if (!hrnHostRepoVersioning() && hrnHostNonVersionSpecific())
         {
             TEST_TITLE("stanza-delete --force with pgbackrest stopped");
 

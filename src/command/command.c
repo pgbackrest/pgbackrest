@@ -6,6 +6,7 @@ Common Command Routines
 #include <inttypes.h>
 #include <string.h>
 
+#include "command/command.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -163,7 +164,7 @@ cmdBegin(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    ASSERT(cfgCommand() != cfgCmdNone);
+    ASSERT(cfgInited());
 
     // This is fairly expensive log message to generate so skip it if it won't be output
     if (logAny(cfgLogLevelDefault()))
@@ -198,7 +199,7 @@ cmdEnd(const int code, const String *const errorMessage)
         FUNCTION_LOG_PARAM(STRING, errorMessage);
     FUNCTION_LOG_END();
 
-    ASSERT(cfgCommand() != cfgCmdNone);
+    ASSERT(cfgInited());
 
     // Skip this log message if it won't be output. It's not too expensive but since we skipped cmdBegin(), may as well.
     if (logAny(cfgLogLevelDefault()))

@@ -36,6 +36,7 @@ Function constants
 #define HRN_PQ_RESULTERRORMESSAGE                                   "PQresultErrorMessage"
 #define HRN_PQ_RESULTSTATUS                                         "PQresultStatus"
 #define HRN_PQ_SENDQUERY                                            "PQsendQuery"
+#define HRN_PQ_SOCKET                                               "PQsocket"
 #define HRN_PQ_STATUS                                               "PQstatus"
 
 /***********************************************************************************************************************************

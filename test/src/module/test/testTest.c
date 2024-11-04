@@ -188,7 +188,7 @@ testRun(void)
             "          - doc/command/build/build\n"
             "\n"
             "integration:\n"
-            "  - name: mock\n"
+            "  - name: integration\n"
             "    test:\n"
             "      - name: all\n"
             "        total: 2\n"
@@ -502,12 +502,13 @@ testRun(void)
         HRN_STORAGE_PUT_Z(storageTest, "repo/test/src/common/shim.c", strZ(shimC));
         HRN_STORAGE_PUT_Z(
             storageTest, "repo/test/src/common/shim2.c",
+            "int noShimFunc3(void);"
             "int noShimFunc3(void)\n"
             "{\n"
             "    return 888;\n"
             "}\n");
 
-        strReplace(shimC, STRDEF("int\nshimFunc(void)"), STRDEF("int\nshimFunc_SHIMMED(void)"));
+        strReplace(shimC, STRDEF("int\nshimFunc(void)"), STRDEF("int shimFunc_SHIMMED(void); int\nshimFunc_SHIMMED(void)"));
         strReplace(
             shimC, STRDEF("static int\nshimFunc2("),
             STRDEF("static int shimFunc2(int param1, int param2); static int\nshimFunc2_SHIMMED("));

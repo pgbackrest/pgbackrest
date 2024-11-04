@@ -57,6 +57,7 @@ infoBackupNewInternal(void)
         {
             .memContext = memContextCurrent(),
             .backup = lstNewP(sizeof(InfoBackupData), .comparator = lstComparatorStr),
+            .updated = true,
         },
     };
 
@@ -246,6 +247,7 @@ infoBackupNewLoad(IoRead *const read)
     {
         this = infoBackupNewInternal();
         this->pub.infoPg = infoPgNewLoad(read, infoPgBackup, infoBackupLoadCallback, this);
+        this->pub.updated = false;
     }
     OBJ_NEW_END();
 
@@ -381,6 +383,7 @@ infoBackupPgSet(
     FUNCTION_LOG_END();
 
     this->pub.infoPg = infoPgSet(infoBackupPg(this), infoPgBackup, pgVersion, pgSystemId, pgCatalogVersion);
+    this->pub.updated = true;
 
     FUNCTION_LOG_RETURN(INFO_BACKUP, this);
 }
@@ -401,7 +404,7 @@ infoBackupData(const InfoBackup *const this, const unsigned int backupDataIdx)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-infoBackupDataAdd(const InfoBackup *const this, const Manifest *const manifest)
+infoBackupDataAdd(InfoBackup *const this, const Manifest *const manifest)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INFO_BACKUP, this);
@@ -511,12 +514,14 @@ infoBackupDataAdd(const InfoBackup *const this, const Manifest *const manifest)
     }
     MEM_CONTEXT_TEMP_END();
 
+    this->pub.updated = true;
+
     FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-infoBackupDataAnnotationSet(const InfoBackup *const this, const String *const backupLabel, const KeyValue *const newAnnotationKv)
+infoBackupDataAnnotationSet(InfoBackup *const this, const String *const backupLabel, const KeyValue *const newAnnotationKv)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO_BACKUP, this);
@@ -562,12 +567,14 @@ infoBackupDataAnnotationSet(const InfoBackup *const this, const String *const ba
     }
     MEM_CONTEXT_END();
 
+    this->pub.updated = true;
+
     FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-infoBackupDataDelete(const InfoBackup *const this, const String *const backupDeleteLabel)
+infoBackupDataDelete(InfoBackup *const this, const String *const backupDeleteLabel)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INFO_BACKUP, this);
@@ -583,6 +590,8 @@ infoBackupDataDelete(const InfoBackup *const this, const String *const backupDel
         if (strCmp(backupData.backupLabel, backupDeleteLabel) == 0)
             lstRemoveIdx(this->pub.backup, idx);
     }
+
+    this->pub.updated = true;
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -877,19 +886,24 @@ infoBackupSaveFile(
     ASSERT(fileName != NULL);
     ASSERT((cipherType == cipherTypeNone && cipherPass == NULL) || (cipherType != cipherTypeNone && cipherPass != NULL));
 
-    MEM_CONTEXT_TEMP_BEGIN()
+    if (infoBackup->pub.updated)
     {
-        // Write output into a buffer since it needs to be saved to storage twice
-        Buffer *const buffer = bufNew(ioBufferSize());
-        IoWrite *const write = ioBufferWriteNew(buffer);
-        cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherType, cipherModeEncrypt, cipherPass);
-        infoBackupSave(infoBackup, write);
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            // Write output into a buffer since it needs to be saved to storage twice
+            Buffer *const buffer = bufNew(ioBufferSize());
+            IoWrite *const write = ioBufferWriteNew(buffer);
+            cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherType, cipherModeEncrypt, cipherPass);
+            infoBackupSave(infoBackup, write);
 
-        // Save the file and make a copy
-        storagePutP(storageNewWriteP(storage, fileName), buffer);
-        storagePutP(storageNewWriteP(storage, strNewFmt("%s" INFO_COPY_EXT, strZ(fileName))), buffer);
+            // Save the file and make a copy
+            storagePutP(storageNewWriteP(storage, fileName), buffer);
+            storagePutP(storageNewWriteP(storage, strNewFmt("%s" INFO_COPY_EXT, strZ(fileName))), buffer);
+        }
+        MEM_CONTEXT_TEMP_END();
+
+        infoBackup->pub.updated = false;
     }
-    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }

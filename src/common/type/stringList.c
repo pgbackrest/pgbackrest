@@ -287,7 +287,7 @@ strLstFindIdx(const StringList *const this, const String *const string, const St
     ASSERT(this != NULL);
     ASSERT(string != NULL);
 
-    const unsigned int result = lstFindIdx((List *)this, &string);
+    const unsigned int result = lstFindIdx((const List *)this, &string);
 
     if (result == LIST_NOT_FOUND && param.required)
         THROW_FMT(AssertError, "unable to find '%s' in string list", strZ(string));

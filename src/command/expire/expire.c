@@ -6,6 +6,7 @@ Expire Command
 #include "command/archive/common.h"
 #include "command/backup/common.h"
 #include "command/control/common.h"
+#include "command/expire/expire.h"
 #include "common/debug.h"
 #include "common/regExp.h"
 #include "common/time.h"
@@ -39,7 +40,7 @@ typedef struct ArchiveRange
 Given a backup label, expire a backup and all its dependents (if any).
 ***********************************************************************************************************************************/
 static StringList *
-expireBackup(const InfoBackup *const infoBackup, const String *const backupLabel, const unsigned int repoIdx)
+expireBackup(InfoBackup *const infoBackup, const String *const backupLabel, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -93,12 +94,12 @@ expireBackup(const InfoBackup *const infoBackup, const String *const backupLabel
 Function to expire a selected backup (and all its dependents) regardless of retention rules.
 ***********************************************************************************************************************************/
 static unsigned int
-expireAdhocBackup(const InfoBackup *const infoBackup, const String *const backupLabel, const unsigned int repoIdx)
+expireAdhocBackup(InfoBackup *const infoBackup, const String *const backupLabel, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
         FUNCTION_LOG_PARAM(STRING, backupLabel);
-        FUNCTION_TEST_PARAM(UINT, repoIdx);
+        FUNCTION_LOG_PARAM(UINT, repoIdx);
     FUNCTION_LOG_END();
 
     ASSERT(infoBackup != NULL);
@@ -170,7 +171,7 @@ expireAdhocBackup(const InfoBackup *const infoBackup, const String *const backup
 Expire differential backups
 ***********************************************************************************************************************************/
 static unsigned int
-expireDiffBackup(const InfoBackup *const infoBackup, const unsigned int repoIdx)
+expireDiffBackup(InfoBackup *const infoBackup, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -227,7 +228,7 @@ expireDiffBackup(const InfoBackup *const infoBackup, const unsigned int repoIdx)
 Expire full backups
 ***********************************************************************************************************************************/
 static unsigned int
-expireFullBackup(const InfoBackup *const infoBackup, const unsigned int repoIdx)
+expireFullBackup(InfoBackup *const infoBackup, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -278,7 +279,7 @@ expireFullBackup(const InfoBackup *const infoBackup, const unsigned int repoIdx)
 Expire backups based on time
 ***********************************************************************************************************************************/
 static unsigned int
-expireTimeBasedBackup(const InfoBackup *const infoBackup, const time_t minTimestamp, const unsigned int repoIdx)
+expireTimeBasedBackup(InfoBackup *const infoBackup, const time_t minTimestamp, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -448,7 +449,7 @@ removeExpiredArchive(const InfoBackup *const infoBackup, const bool timeBasedFul
                     cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
                 const InfoPg *const infoArchivePgData = infoArchivePg(infoArchive);
 
-                // Get a list of archive directories (e.g. 9.4-1, 10-2, etc) sorted by the db-id (number after the dash).
+                // Get a list of archive directories (e.g. 9.6-1, 10-2, etc) sorted by the db-id (number after the dash).
                 const StringList *const listArchiveDisk = strLstSort(
                     strLstComparatorSet(
                         storageListP(
@@ -506,7 +507,7 @@ removeExpiredArchive(const InfoBackup *const infoBackup, const bool timeBasedFul
                         const unsigned int archivePgId = cvtZToUInt(strrchr(strZ(archiveId), '-') + 1);
 
                         // From the global list of backups to retain, create a list of backups, oldest to newest, associated with
-                        // this archiveId (e.g. 9.4-1), e.g. If globalBackupRetention has 4F, 3F, 2F, 1F then
+                        // this archiveId (e.g. 9.6-1), e.g. If globalBackupRetention has 4F, 3F, 2F, 1F then
                         // localBackupRetentionList will have 1F, 2F, 3F, 4F (assuming they all have same history id)
                         for (unsigned int retentionIdx = strLstSize(globalBackupRetentionList) - 1;
                              (int)retentionIdx >= 0; retentionIdx--)

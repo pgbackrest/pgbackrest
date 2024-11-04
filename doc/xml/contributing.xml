@@ -551,7 +551,7 @@ HRN_FORK_BEGIN()
             "    cipher: none\n"
             "\n"
             "    db (current)\n"
-            "        wal archive min/max (9.4): none present\n",
+            "        wal archive min/max (9.6): none present\n",
             "text - single stanza, no valid backups, backup/expire lock detected");
 
         // Notify child to release lock
@@ -719,7 +719,7 @@ run 8/1 ------------- L2285 no current backups
                 <list-item><id>command-role</id> - defines the processes for which the option is valid. <code>main</code> indicates the option will be used by the main process and not be passed on to other local/remote processes.</list-item>
             </list>
 
-            <p>At compile time, the <file>config.auto.h</file> file will be generated to contain the constants used for options in the code. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with <code>cfgOpt</code>, e.g. <code>repo-path</code> becomes <code>cfgOptRepoPath</code>.</p>
+            <p>When <file>test.pl</file> is run the <file>config.auto.h</file> file will be generated to contain the constants used for options in the code. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with <code>cfgOpt</code>, e.g. <code>repo-path</code> becomes <code>cfgOptRepoPath</code>.</p>
         </section>
 
         <!-- =================================================================================================================== -->

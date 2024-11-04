@@ -9,6 +9,7 @@ Test Posix/CIFS Storage
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
 #include "common/harnessStorage.h"
+#include "common/harnessTime.h"
 
 /***********************************************************************************************************************************
 Test function for path expression
@@ -946,7 +947,8 @@ testRun(void)
         HRN_SYSTEM_FMT("touch %s", strZ(fileName));
 
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
-        TEST_RESULT_INT(ioReadFd(storageReadIo(file)), ((StorageReadPosix *)file->driver)->fd, "check read fd");
+        TEST_RESULT_INT(
+            ioReadFd(storageReadIo(file)), ((StorageReadPosix *)ioReadDriver(storageReadIo(file)))->fd, "check read fd");
         TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "close file");
     }
 
@@ -976,7 +978,8 @@ testRun(void)
             storageNewWriteP(storageTest, fileName, .user = TEST_USER_STR, .group = TEST_GROUP_STR, .timeModified = 1),
             "new write file (defaults)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
-        TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), ((StorageWritePosix *)file->driver)->fd, "check write fd");
+        TEST_RESULT_INT(
+            ioWriteFd(storageWriteIo(file)), ((StorageWritePosix *)ioWriteDriver(storageWriteIo(file)))->fd, "check write fd");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
         TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0750, "check path mode");
         TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0640, "check file mode");
@@ -1023,7 +1026,7 @@ testRun(void)
             "new write file (set mode)");
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
-        TEST_RESULT_VOID(storageWritePosixClose(file->driver), "close file again");
+        TEST_RESULT_VOID(storageWritePosixClose(ioWriteDriver(storageWriteIo(file))), "close file again");
         TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0700, "check path mode");
         TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0600, "check file mode");
     }
@@ -1209,13 +1212,13 @@ testRun(void)
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
 
         // Close the file descriptor so operations will fail
-        close(((StorageReadPosix *)file->driver)->fd);
+        close(((StorageReadPosix *)ioReadDriver(storageReadIo(file)))->fd);
 
         TEST_ERROR_FMT(
             ioRead(storageReadIo(file), outBuffer), FileReadError, "unable to read '%s': [9] Bad file descriptor", strZ(fileName));
 
         // Set file descriptor to -1 so the close on free will not fail
-        ((StorageReadPosix *)file->driver)->fd = -1;
+        ((StorageReadPosix *)ioReadDriver(storageReadIo(file)))->fd = -1;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("incremental load");
@@ -1258,7 +1261,8 @@ testRun(void)
         TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "no data to load");
         TEST_RESULT_UINT(bufUsed(outBuffer), 0, "buffer is empty");
 
-        TEST_RESULT_VOID(storageReadPosix(file->driver, outBuffer, true), "no data to load from driver either");
+        TEST_RESULT_VOID(
+            storageReadPosix(ioReadDriver(storageReadIo(file)), outBuffer, true), "no data to load from driver either");
         TEST_RESULT_UINT(bufUsed(outBuffer), 0, "buffer is empty");
 
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "check file contents (all loaded)");
@@ -1329,25 +1333,25 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
 
         // Close the file descriptor so operations will fail
-        close(((StorageWritePosix *)file->driver)->fd);
+        close(((StorageWritePosix *)ioWriteDriver(storageWriteIo(file)))->fd);
         storageRemoveP(storageTest, fileTmp, .errorOnMissing = true);
 
         TEST_ERROR_FMT(
-            storageWritePosix(file->driver, buffer), FileWriteError, "unable to write '%s.pgbackrest.tmp': [9] Bad file descriptor",
-            strZ(fileName));
+            storageWritePosix(ioWriteDriver(storageWriteIo(file)), buffer), FileWriteError,
+            "unable to write '%s.pgbackrest.tmp': [9] Bad file descriptor", strZ(fileName));
         TEST_ERROR_FMT(
-            storageWritePosixClose(file->driver), FileSyncError, STORAGE_ERROR_WRITE_SYNC ": [9] Bad file descriptor",
-            strZ(fileTmp));
+            storageWritePosixClose(ioWriteDriver(storageWriteIo(file))), FileSyncError,
+            STORAGE_ERROR_WRITE_SYNC ": [9] Bad file descriptor", strZ(fileTmp));
 
         // Disable file sync so close() can be reached
-        ((StorageWritePosix *)file->driver)->interface.syncFile = false;
+        ((StorageWritePosix *)ioWriteDriver(storageWriteIo(file)))->interface.syncFile = false;
 
         TEST_ERROR_FMT(
-            storageWritePosixClose(file->driver), FileCloseError, STORAGE_ERROR_WRITE_CLOSE ": [9] Bad file descriptor",
-            strZ(fileTmp));
+            storageWritePosixClose(ioWriteDriver(storageWriteIo(file))), FileCloseError,
+            STORAGE_ERROR_WRITE_CLOSE ": [9] Bad file descriptor", strZ(fileTmp));
 
         // Set file descriptor to -1 so the close on free with not fail
-        ((StorageWritePosix *)file->driver)->fd = -1;
+        ((StorageWritePosix *)ioWriteDriver(storageWriteIo(file)))->fd = -1;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("fail rename in close");
@@ -1364,7 +1368,7 @@ testRun(void)
             strZ(fileTmp), strZ(fileName));
 
         // Set file descriptor to -1 so the close on free with not fail
-        ((StorageWritePosix *)file->driver)->fd = -1;
+        ((StorageWritePosix *)ioWriteDriver(storageWriteIo(file)))->fd = -1;
 
         storageRemoveP(storageTest, fileName, .errorOnMissing = true);
 
@@ -1496,14 +1500,14 @@ testRun(void)
             storagePathP(storage, STRDEF(STORAGE_REPO_ARCHIVE "/simple")), TEST_PATH "/archive/db/simple",
             "check simple path");
         TEST_RESULT_STR_Z(
-            storagePathP(storage, STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/700000007000000070000000")),
-            TEST_PATH "/archive/db/9.4-1/7000000070000000/700000007000000070000000", "check segment path");
+            storagePathP(storage, STRDEF(STORAGE_REPO_ARCHIVE "/17-1/700000007000000070000000")),
+            TEST_PATH "/archive/db/17-1/7000000070000000/700000007000000070000000", "check segment path");
         TEST_RESULT_STR_Z(
-            storagePathP(storage, STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/00000008.history")),
-            TEST_PATH "/archive/db/9.4-1/00000008.history", "check history path");
+            storagePathP(storage, STRDEF(STORAGE_REPO_ARCHIVE "/17-1/00000008.history")),
+            TEST_PATH "/archive/db/17-1/00000008.history", "check history path");
         TEST_RESULT_STR_Z(
-            storagePathP(storage, STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1/000000010000014C0000001A.00000028.backup")),
-            TEST_PATH "/archive/db/9.4-1/000000010000014C/000000010000014C0000001A.00000028.backup",
+            storagePathP(storage, STRDEF(STORAGE_REPO_ARCHIVE "/17-1/000000010000014C0000001A.00000028.backup")),
+            TEST_PATH "/archive/db/17-1/000000010000014C/000000010000014C0000001A.00000028.backup",
             "check archive backup path");
         TEST_RESULT_STR_Z(storagePathP(storage, STORAGE_REPO_BACKUP_STR), TEST_PATH "/backup/db", "check backup path");
 
@@ -1681,6 +1685,229 @@ testRun(void)
 
         // Test the path sync function -- pass a bogus path to ensure that this is a noop
         TEST_RESULT_VOID(storagePathSyncP(storage, STRDEF(BOGUS_STR)), "path sync is a noop");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("HrnStorageTest"))
+    {
+        hrnStorageHelperRepoShimSet(true);
+
+        StringList *argListBase = strLstNew();
+        hrnCfgArgRawZ(argListBase, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argListBase, cfgOptRepoPath, TEST_PATH);
+        HRN_CFG_LOAD(cfgCmdInfo, argListBase);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write file with version");
+
+        const TimeMSec timeOld = 1722740000000;
+        const TimeMSec timeMid = 1722740049000;
+        const TimeMSec timeNew = 1722740099000;
+
+        hrnTimeMSecSetOne(timeOld);
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test1")), BUFSTRDEF("test1")), "write version");
+        hrnTimeMSecSetOne(timeMid);
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test1")), BUFSTRDEF("test1")), "write version");
+        hrnTimeMSecSetOne(timeNew);
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test1")), BUFSTRDEF("test1a")), "write version");
+        hrnTimeMSecSetOne(timeOld);
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test2")), BUFSTRDEF("test2")), "write version");
+        hrnTimeMSecSetOne(timeNew);
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test2")), BUFSTRDEF("test2")), "write version");
+        hrnTimeMSecSetOne(timeOld);
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("test3")), BUFSTRDEF("test3")), "write version");
+        hrnTimeMSecSetOne(timeMid);
+        TEST_RESULT_VOID(storageRemoveP(storageRepoWrite(), STRDEF("test3")), "remove version");
+
+        // Raw list to show structure
+        TEST_STORAGE_LIST(
+            storageTest, NULL,
+            ".pgbfs/\n"
+            ".pgbfs/test1/\n"
+            ".pgbfs/test1/v0001 {s=5, t=1722740000}\n"
+            ".pgbfs/test1/v0002 {s=5, t=1722740049}\n"
+            ".pgbfs/test1/v0003 {s=6, t=1722740099}\n"
+            ".pgbfs/test2/\n"
+            ".pgbfs/test2/v0001 {s=5, t=1722740000}\n"
+            ".pgbfs/test2/v0002 {s=5, t=1722740099}\n"
+            ".pgbfs/test3/\n"
+            ".pgbfs/test3/v0001 {s=5, t=1722740000}\n"
+            ".pgbfs/test3/v0002.delete {s=0, t=1722740049}\n"
+            "test1 {s=6, t=1722740099}\n"
+            "test2 {s=5, t=1722740099}\n",
+            .level = storageInfoLevelBasic);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("list without limit");
+
+        TEST_STORAGE_LIST(
+            storageRepo(), NULL,
+            "test1 {s=6, t=1722740099}\n"
+            "test2 {s=5, t=1722740099}\n",
+            .level = storageInfoLevelBasic);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("list with limit");
+
+        StringList *argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-04 02:53:20+00");
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        TEST_STORAGE_LIST(
+            storageRepo(), NULL,
+            "test1 {s=5, t=1722740000, v=v0001}\n"
+            "test2 {s=5, t=1722740000, v=v0001}\n"
+            "test3 {s=5, t=1722740000, v=v0001}\n",
+            .level = storageInfoLevelBasic);
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-04 02:54:09+00");
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        TEST_STORAGE_LIST(
+            storageRepo(), NULL,
+            "test1 {s=5, t=1722740049, v=v0002}\n"
+            "test2 {s=5, t=1722740000, v=v0001}\n",
+            .level = storageInfoLevelBasic);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get without limit");
+
+        argList = strLstDup(argListBase);
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        TEST_STORAGE_GET(storageRepo(), "test1", "test1a");
+        TEST_STORAGE_GET(storageRepo(), "test2", "test2");
+        TEST_STORAGE_GET(storageRepo(), "test3", NULL, .nullOnMissing = true);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get with limit");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-04 02:53:20+00");
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        TEST_STORAGE_GET(storageRepo(), "test1", "test1");
+        TEST_RESULT_INT(storageInfoP(storageRepo(), STRDEF("test1")).timeModified, 1722740000, "test1 time");
+        TEST_RESULT_UINT(storageInfoP(storageRepo(), STRDEF("test1")).size, 5, "test1 size");
+        TEST_STORAGE_GET(storageRepo(), "test1", "test1");
+        TEST_STORAGE_GET(storageRepo(), "test2", "test2");
+        TEST_STORAGE_GET(storageRepo(), "missing/test2", NULL, .nullOnMissing = true);
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-04 02:54:59+00");
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        TEST_STORAGE_GET(storageRepo(), "test1", "test1a");
+        TEST_RESULT_INT(storageInfoP(storageRepo(), STRDEF("test1")).timeModified, 1722740099, "test1 time");
+        TEST_RESULT_UINT(storageInfoP(storageRepo(), STRDEF("test1")).size, 6, "test1 size");
+        TEST_STORAGE_GET(storageRepo(), "test2", "test2");
+        TEST_STORAGE_GET(storageRepo(), "test3", NULL, .nullOnMissing = true);
+
+        TEST_ERROR(
+            storageGetP(storageNewReadP(storageRepo(), STRDEF("test3"))), FileMissingError,
+            "unable to open missing file '" TEST_PATH "/test3' for read");
+
+        TEST_ERROR(storageRemoveP(storageRepoWrite(), NULL), AssertError, "time limit requires read-only storage");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("path remove");
+
+        argList = strLstDup(argListBase);
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        hrnTimeMSecSetOne(timeMid);
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("sub1/test4")), BUFSTRDEF("test4")), "write version");
+        hrnTimeMSecSetOne(timeMid);
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageRepoWrite(), STRDEF("sub1/sub2/test5")), BUFSTRDEF("test5")), "write version");
+
+        hrnTimeMSecSetOne(timeNew);
+        TEST_RESULT_VOID(storagePathRemoveP(storageRepoWrite(), STRDEF("sub1"), .recurse = true), "remove sub1");
+
+        // Raw list to show structure
+        TEST_STORAGE_LIST(
+            storageTest, NULL,
+            ".pgbfs/\n"
+            ".pgbfs/test1/\n"
+            ".pgbfs/test1/v0001 {s=5, t=1722740000}\n"
+            ".pgbfs/test1/v0002 {s=5, t=1722740049}\n"
+            ".pgbfs/test1/v0003 {s=6, t=1722740099}\n"
+            ".pgbfs/test2/\n"
+            ".pgbfs/test2/v0001 {s=5, t=1722740000}\n"
+            ".pgbfs/test2/v0002 {s=5, t=1722740099}\n"
+            ".pgbfs/test3/\n"
+            ".pgbfs/test3/v0001 {s=5, t=1722740000}\n"
+            ".pgbfs/test3/v0002.delete {s=0, t=1722740049}\n"
+            "sub1/\n"
+            "sub1/.pgbfs/\n"
+            "sub1/.pgbfs/test4/\n"
+            "sub1/.pgbfs/test4/v0001 {s=5, t=1722740049}\n"
+            "sub1/.pgbfs/test4/v0002.delete {s=0, t=1722740099}\n"
+            "sub1/sub2/\n"
+            "sub1/sub2/.pgbfs/\n"
+            "sub1/sub2/.pgbfs/test5/\n"
+            "sub1/sub2/.pgbfs/test5/v0001 {s=5, t=1722740049}\n"
+            "sub1/sub2/.pgbfs/test5/v0002.delete {s=0, t=1722740099}\n"
+            "test1 {s=6, t=1722740099}\n"
+            "test2 {s=5, t=1722740099}\n",
+            .level = storageInfoLevelBasic);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("list without limit");
+
+        argList = strLstDup(argListBase);
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        TEST_STORAGE_GET(storageRepo(), "test1", "test1a");
+        TEST_STORAGE_GET(storageRepo(), "test2", "test2");
+        TEST_STORAGE_GET(storageRepo(), "test3", NULL, .nullOnMissing = true);
+
+        TEST_STORAGE_LIST(
+            storageRepo(), NULL,
+            "sub1/\n"
+            "sub1/sub2/\n"
+            "test1 {s=6, t=1722740099}\n"
+            "test2 {s=5, t=1722740099}\n",
+            .level = storageInfoLevelBasic);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("list with limit");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-04 02:54:09+00");
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        TEST_STORAGE_LIST(
+            storageRepo(), NULL,
+            "sub1/\n"
+            "sub1/sub2/\n"
+            "sub1/sub2/test5 {s=5, t=1722740049, v=v0001}\n"
+            "sub1/test4 {s=5, t=1722740049, v=v0001}\n"
+            "test1 {s=5, t=1722740049, v=v0002}\n"
+            "test2 {s=5, t=1722740000, v=v0001}\n",
+            .level = storageInfoLevelBasic);
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-04 02:54:59+00");
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        TEST_STORAGE_LIST(
+            storageRepo(), NULL,
+            "sub1/\n"
+            "sub1/sub2/\n"
+            "test1 {s=6, t=1722740099, v=v0003}\n"
+            "test2 {s=5, t=1722740099, v=v0002}\n",
+            .level = storageInfoLevelBasic);
+
+        hrnStorageHelperRepoShimSet(false);
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

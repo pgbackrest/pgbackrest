@@ -557,7 +557,7 @@ sub backrestConfig
                 }
             }
 
-            my $strLocalFile = '/home/' . DOC_USER . '/data/pgbackrest.conf';
+            my $strLocalFile = abs_path(dirname($0)) . '/output/pgbackrest.conf';
 
             # Save the ini file
             $self->{oManifest}->storage()->put($strLocalFile, iniRender($self->{config}{$strHostName}{$$hCacheKey{file}}, true));
@@ -655,7 +655,7 @@ sub postgresConfig
                 confess &log(ERROR, "cannot configure postgres on host ${strHostName} because the host does not exist");
             }
 
-            my $strLocalFile = '/home/' . DOC_USER . '/data/postgresql.conf';
+            my $strLocalFile = abs_path(dirname($0)) . '/output/postgresql.conf';
             $oHost->copyFrom($$hCacheKey{file}, $strLocalFile);
 
             if (!defined(${$self->{'pg-config'}}{$strHostName}{$$hCacheKey{file}}{base}) && $self->{bExe})

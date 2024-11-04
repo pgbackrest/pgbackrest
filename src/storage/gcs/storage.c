@@ -48,6 +48,7 @@ STRING_EXTERN(GCS_QUERY_NAME_STR,                                   GCS_QUERY_NA
 STRING_STATIC(GCS_QUERY_PAGE_TOKEN_STR,                             "pageToken");
 STRING_STATIC(GCS_QUERY_PREFIX_STR,                                 "prefix");
 STRING_EXTERN(GCS_QUERY_UPLOAD_ID_STR,                              GCS_QUERY_UPLOAD_ID);
+STRING_EXTERN(GCS_QUERY_VERSIONS_STR,                               "versions");
 
 /***********************************************************************************************************************************
 JSON tokens
@@ -59,6 +60,7 @@ VARIANT_STRDEF_STATIC(GCS_JSON_ERROR_DESCRIPTION_VAR,               "error_descr
 VARIANT_STRDEF_STATIC(GCS_JSON_EXPIRES_IN_VAR,                      "expires_in");
 #define GCS_JSON_ITEMS                                              "items"
 VARIANT_STRDEF_STATIC(GCS_JSON_ITEMS_VAR,                           GCS_JSON_ITEMS);
+VARIANT_STRDEF_EXTERN(GCS_JSON_GENERATION_VAR,                      GCS_JSON_GENERATION);
 VARIANT_STRDEF_EXTERN(GCS_JSON_MD5_HASH_VAR,                        GCS_JSON_MD5_HASH);
 VARIANT_STRDEF_EXTERN(GCS_JSON_NAME_VAR,                            GCS_JSON_NAME);
 #define GCS_JSON_NEXT_PAGE_TOKEN                                    "nextPageToken"
@@ -71,13 +73,6 @@ VARIANT_STRDEF_STATIC(GCS_JSON_TOKEN_TYPE_VAR,                      "token_type"
 VARIANT_STRDEF_STATIC(GCS_JSON_TOKEN_URI_VAR,                       "token_uri");
 #define GCS_JSON_UPDATED                                            "updated"
 VARIANT_STRDEF_STATIC(GCS_JSON_UPDATED_VAR,                         GCS_JSON_UPDATED);
-
-// Fields required when listing files
-#define GCS_FIELD_LIST                                                                                                             \
-    GCS_JSON_NEXT_PAGE_TOKEN "," GCS_JSON_PREFIXES "," GCS_JSON_ITEMS "(" GCS_JSON_NAME
-
-STRING_STATIC(GCS_FIELD_LIST_MIN_STR,                               GCS_FIELD_LIST ")");
-STRING_STATIC(GCS_FIELD_LIST_MAX_STR,                               GCS_FIELD_LIST "," GCS_JSON_SIZE "," GCS_JSON_UPDATED ")");
 
 /***********************************************************************************************************************************
 Statistics constants
@@ -211,9 +206,9 @@ storageGcsAuthJwt(StorageGcs *const this, const time_t timeBegin)
                     (uint64_t)timeBegin + 3600, (uint64_t)timeBegin)));
 
         // Sign with RSA key
-        volatile BIO *bio = NULL;
-        volatile EVP_PKEY *privateKey = NULL;
-        volatile EVP_MD_CTX *sign = NULL;
+        BIO *volatile bio = NULL;
+        EVP_PKEY *volatile privateKey = NULL;
+        EVP_MD_CTX *volatile sign = NULL;
 
         cryptoInit();
 
@@ -221,26 +216,25 @@ storageGcsAuthJwt(StorageGcs *const this, const time_t timeBegin)
         {
             // Load key
             bio = BIO_new(BIO_s_mem());
-            BIO_write((BIO *)bio, strZ(privateKeyRaw), (int)strSize(privateKeyRaw));
+            BIO_write(bio, strZ(privateKeyRaw), (int)strSize(privateKeyRaw));
 
-            privateKey = PEM_read_bio_PrivateKey((BIO *)bio, NULL, NULL, NULL);
+            privateKey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
             cryptoError(privateKey == NULL, "unable to read PEM");
 
             // Create signature
             sign = EVP_MD_CTX_create();
+            cryptoError(EVP_DigestSignInit(sign, NULL, EVP_sha256(), NULL, privateKey) <= 0, "unable to init");
             cryptoError(
-                EVP_DigestSignInit((EVP_MD_CTX *)sign, NULL, EVP_sha256(), NULL, (EVP_PKEY *)privateKey) <= 0, "unable to init");
-            cryptoError(
-                EVP_DigestSignUpdate((EVP_MD_CTX *)sign, (unsigned char *)strZ(result), (unsigned int)strSize(result)) <= 0,
+                EVP_DigestSignUpdate(sign, (const unsigned char *)strZ(result), (unsigned int)strSize(result)) <= 0,
                 "unable to update");
 
             size_t signatureLen = 0;
-            cryptoError(EVP_DigestSignFinal((EVP_MD_CTX *)sign, NULL, &signatureLen) <= 0, "unable to get size");
+            cryptoError(EVP_DigestSignFinal(sign, NULL, &signatureLen) <= 0, "unable to get size");
 
             Buffer *const signature = bufNew(signatureLen);
             bufUsedSet(signature, bufSize(signature));
 
-            cryptoError(EVP_DigestSignFinal((EVP_MD_CTX *)sign, bufPtr(signature), &signatureLen) <= 0, "unable to finalize");
+            cryptoError(EVP_DigestSignFinal(sign, bufPtr(signature), &signatureLen) <= 0, "unable to finalize");
 
             // Add dot delimiter and signature
             strCatChr(result, '.');
@@ -248,13 +242,9 @@ storageGcsAuthJwt(StorageGcs *const this, const time_t timeBegin)
         }
         FINALLY()
         {
-            BIO_free((BIO *)bio);
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-            EVP_MD_CTX_cleanup((EVP_MD_CTX *)sign);
-#else
-            EVP_MD_CTX_free((EVP_MD_CTX *)sign);
-#endif
-            EVP_PKEY_free((EVP_PKEY *)privateKey);
+            BIO_free(bio);
+            EVP_MD_CTX_free(sign);
+            EVP_PKEY_free(privateKey);
         }
         TRY_END();
     }
@@ -592,6 +582,8 @@ storageGcsRequest(StorageGcs *const this, const String *const verb, const Storag
 
 /***********************************************************************************************************************************
 General function for listing files to be used by other list routines
+
+Based on the documentation at https://cloud.google.com/storage/docs/json_api/v1/objects/list
 ***********************************************************************************************************************************/
 // Helper to convert YYYY-MM-DDTHH:MM:SS.MSECZ format to time_t. This format is very nearly ISO-8601 except for the inclusion of
 // milliseconds, which are discarded here.
@@ -626,7 +618,7 @@ storageGcsInfoFile(StorageInfo *const info, const KeyValue *const file)
 static void
 storageGcsListInternal(
     StorageGcs *const this, const String *const path, const StorageInfoLevel level, const String *const expression,
-    const bool recurse, StorageListCallback callback, void *const callbackData)
+    const bool recurse, const time_t targetTime, StorageListCallback callback, void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_GCS, this);
@@ -634,6 +626,7 @@ storageGcsListInternal(
         FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(STRING, expression);
         FUNCTION_LOG_PARAM(BOOL, recurse);
+        FUNCTION_LOG_PARAM(TIME, targetTime);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
@@ -675,8 +668,35 @@ storageGcsListInternal(
         if (!strEmpty(queryPrefix))
             httpQueryAdd(query, GCS_QUERY_PREFIX_STR, queryPrefix);
 
-        // Add fields to limit the amount of data returned
-        httpQueryAdd(query, GCS_QUERY_FIELDS_STR, level >= storageInfoLevelBasic ? GCS_FIELD_LIST_MAX_STR : GCS_FIELD_LIST_MIN_STR);
+        // Specify fields to limit the amount of data returned
+        String *const fields = strCatZ(
+            strNew(), GCS_JSON_NEXT_PAGE_TOKEN "," GCS_JSON_PREFIXES "," GCS_JSON_ITEMS "(" GCS_JSON_NAME);
+
+        if (level >= storageInfoLevelBasic || targetTime != 0)
+        {
+            if (level >= storageInfoLevelBasic)
+                strCatZ(fields, "," GCS_JSON_SIZE);
+
+            strCatZ(fields, "," GCS_JSON_UPDATED);
+
+            if (targetTime != 0)
+                strCatZ(fields, "," GCS_JSON_GENERATION);
+        }
+
+        strCatChr(fields, ')');
+        httpQueryAdd(query, GCS_QUERY_FIELDS_STR, fields);
+
+        // Add versions
+        if (targetTime != 0)
+            httpQueryAdd(query, GCS_QUERY_VERSIONS_STR, TRUE_STR);
+
+        // Store last info so it can be updated across requests for versioning
+        String *const nameLast = strNew();
+        String *const versionIdLast = strNew();
+        StorageInfo infoLast = {.level = level, .name = nameLast};
+
+        if (targetTime != 0)
+            infoLast.versionId = versionIdLast;
 
         // Loop as long as a continuation marker returned
         HttpRequest *request = NULL;
@@ -755,35 +775,54 @@ storageGcsListInternal(
                         const KeyValue *const file = varKv(varLstGet(fileList, fileIdx));
                         CHECK(FormatError, file != NULL, "file missing");
 
-                        // Get file name
-                        StorageInfo info =
-                        {
-                            .level = level,
-                            .name = varStr(kvGet(file, GCS_JSON_NAME_VAR)),
-                            .exists = true,
-                        };
+                        // Get file name and strip off the base prefix when present
+                        const String *name = varStr(kvGet(file, GCS_JSON_NAME_VAR));
+                        CHECK(FormatError, name != NULL, "file name missing");
 
-                        CHECK(FormatError, info.name != NULL, "file name missing");
-
-                        // Strip off the base prefix when present
                         if (!strEmpty(basePrefix))
-                            info.name = strSub(info.name, strSize(basePrefix));
+                            name = strSub(name, strSize(basePrefix));
+
+                        // Return info for last file if new file
+                        if (infoLast.exists && !strEq(name, nameLast))
+                        {
+                            callback(callbackData, &infoLast);
+                            infoLast.exists = false;
+                        }
+
+                        // If targeting by time exclude versions that are newer than targetTime. Note that the API does not provide
+                        // delete markers so the filtering will also show files that have been deleted rather than replaced with a
+                        // new version.
+                        if (targetTime != 0)
+                        {
+                            infoLast.timeModified = storageGcsCvtTime(varStr(kvGet(file, GCS_JSON_UPDATED_VAR)));
+
+                            // Skip this version if it is newer than the time limit
+                            if (infoLast.timeModified > targetTime)
+                                continue;
+                        }
+
+                        // Update last name and set exists
+                        strCat(strTrunc(nameLast), name);
+                        infoLast.exists = true;
 
                         // Add basic level info if requested
                         if (level >= storageInfoLevelBasic)
                         {
-                            info.type = storageTypeFile;
-                            storageGcsInfoFile(&info, file);
-                        }
+                            storageGcsInfoFile(&infoLast, file);
 
-                        // Callback with info
-                        callback(callbackData, &info);
+                            if (targetTime != 0)
+                                strCat(strTrunc(versionIdLast), varStr(kvGet(file, GCS_JSON_GENERATION_VAR)));
+                        }
                     }
                 }
             }
             MEM_CONTEXT_TEMP_END();
         }
         while (request != NULL);
+
+        // Callback with last info if it exists
+        if (infoLast.exists)
+            callback(callbackData, &infoLast);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -861,6 +900,7 @@ storageGcsList(THIS_VOID, const String *const path, const StorageInfoLevel level
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(STRING, param.expression);
+        FUNCTION_LOG_PARAM(TIME, param.targetTime);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -868,7 +908,7 @@ storageGcsList(THIS_VOID, const String *const path, const StorageInfoLevel level
 
     StorageList *const result = storageLstNew(level);
 
-    storageGcsListInternal(this, path, level, param.expression, false, storageGcsListCallback, result);
+    storageGcsListInternal(this, path, level, param.expression, false, param.targetTime, storageGcsListCallback, result);
 
     FUNCTION_LOG_RETURN(STORAGE_LIST, result);
 }
@@ -885,12 +925,15 @@ storageGcsNewRead(THIS_VOID, const String *const file, const bool ignoreMissing,
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(UINT64, param.offset);
         FUNCTION_LOG_PARAM(VARIANT, param.limit);
+        FUNCTION_LOG_PARAM(BOOL, param.version);
+        FUNCTION_LOG_PARAM(STRING, param.versionId);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadGcsNew(this, file, ignoreMissing, param.offset, param.limit));
+    FUNCTION_LOG_RETURN(
+        STORAGE_READ, storageReadGcsNew(this, file, ignoreMissing, param.offset, param.limit, param.version, param.versionId));
 }
 
 /**********************************************************************************************************************************/
@@ -1081,7 +1124,7 @@ storageGcsPathRemove(THIS_VOID, const String *const path, const bool recurse, co
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            storageGcsListInternal(this, path, storageInfoLevelType, NULL, true, storageGcsPathRemoveCallback, &data);
+            storageGcsListInternal(this, path, storageInfoLevelType, NULL, true, 0, storageGcsPathRemoveCallback, &data);
 
             // Call if there is more to be removed
             if (data.contentList != NULL)
@@ -1122,6 +1165,8 @@ storageGcsRemove(THIS_VOID, const String *const file, const StorageInterfaceRemo
 /**********************************************************************************************************************************/
 static const StorageInterface storageInterfaceGcs =
 {
+    .feature = 1 << storageFeatureVersioning,
+
     .info = storageGcsInfo,
     .list = storageGcsList,
     .newRead = storageGcsNewRead,
@@ -1132,14 +1177,15 @@ static const StorageInterface storageInterfaceGcs =
 
 FN_EXTERN Storage *
 storageGcsNew(
-    const String *const path, const bool write, StoragePathExpressionCallback pathExpressionFunction, const String *const bucket,
-    const StorageGcsKeyType keyType, const String *const key, const size_t chunkSize, const KeyValue *const tag,
-    const String *const endpoint, const TimeMSec timeout, const bool verifyPeer, const String *const caFile,
-    const String *const caPath)
+    const String *const path, const bool write, const time_t targetTime, StoragePathExpressionCallback pathExpressionFunction,
+    const String *const bucket, const StorageGcsKeyType keyType, const String *const key, const size_t chunkSize,
+    const KeyValue *const tag, const String *const endpoint, const TimeMSec timeout, const bool verifyPeer,
+    const String *const caFile, const String *const caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(BOOL, write);
+        FUNCTION_LOG_PARAM(TIME, targetTime);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(STRING, bucket);
         FUNCTION_LOG_PARAM(STRING_ID, keyType);
@@ -1258,5 +1304,6 @@ storageGcsNew(
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE, storageNew(STORAGE_GCS_TYPE, path, 0, 0, write, pathExpressionFunction, this, this->interface));
+    FUNCTION_LOG_RETURN(
+        STORAGE, storageNew(STORAGE_GCS_TYPE, path, 0, 0, write, targetTime, pathExpressionFunction, this, this->interface));
 }

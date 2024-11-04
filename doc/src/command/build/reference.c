@@ -6,6 +6,7 @@ Build Command
 #include "build/config/parse.h"
 #include "build/help/parse.h"
 #include "command/build/build.h"
+#include "command/build/reference.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "storage/posix/storage.h"
@@ -177,7 +178,12 @@ referenceConfigurationRender(const BldCfg *const bldCfg, const BldHlp *const bld
                 const BldCfgOption *const optCfg = lstFind(bldCfg->optList, &optHlp->name);
                 ASSERT(optCfg != NULL);
 
+                // Skip if option does not belong in this section
                 if (!strEq(optHlp->section == NULL ? STRDEF("general") : optHlp->section, section->id))
+                    continue;
+
+                // Skip if option is command-line only
+                if (strEq(optCfg->section, SECTION_COMMAND_LINE_STR))
                     continue;
 
                 // Skip if option is internal

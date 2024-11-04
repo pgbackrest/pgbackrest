@@ -83,7 +83,7 @@ testRun(void)
                     HRN_PQ_SCRIPT_OPEN(1, "dbname='testdb' port=5432"),
                     HRN_PQ_SCRIPT_SET_SEARCH_PATH(1),
                     HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(1),
-                    HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_94, TEST_PATH "/pg", NULL, NULL),
+                    HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_95, TEST_PATH "/pg", NULL, NULL),
                     HRN_PQ_SCRIPT_SET_APPLICATION_NAME(1),
                     HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false),
                     HRN_PQ_SCRIPT_CLOSE(1),
@@ -91,7 +91,7 @@ testRun(void)
                     HRN_PQ_SCRIPT_OPEN(1, "dbname='testdb' port=5432"),
                     HRN_PQ_SCRIPT_SET_SEARCH_PATH(1),
                     HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(1),
-                    HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_94, TEST_PATH "/pg", NULL, NULL),
+                    HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_95, TEST_PATH "/pg", NULL, NULL),
                     HRN_PQ_SCRIPT_SET_APPLICATION_NAME(1),
                     HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false),
                     HRN_PQ_SCRIPT_CREATE_RESTORE_POINT(1, "2/3"),
@@ -130,7 +130,7 @@ testRun(void)
                 HRN_CFG_LOAD(cfgCmdBackup, argList);
 
                 // Create control file
-                HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_94);
+                HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_95);
 
                 // Create client
                 ProtocolClient *client = NULL;
@@ -151,7 +151,6 @@ testRun(void)
                     TRY_BEGIN()
                     {
                         TEST_RESULT_VOID(dbOpen(db), "open db");
-                        TEST_RESULT_UINT(db->remoteIdx, 0, "check remote idx");
                         TEST_RESULT_VOID(dbFree(db), "free db");
                         db = NULL;
                     }
@@ -170,7 +169,6 @@ testRun(void)
                     TRY_BEGIN()
                     {
                         TEST_RESULT_VOID(dbOpen(db), "open db");
-                        TEST_RESULT_UINT(db->remoteIdx, 1, "check idx");
                         TEST_RESULT_STR_Z(dbWalSwitch(db), "000000030000000200000003", "wal switch");
                         TEST_RESULT_UINT(dbDbTimeout(db), 777000, "check timeout");
                         TEST_RESULT_VOID(memContextCallbackClear(db->pub.memContext), "clear context so close is not called");
@@ -206,7 +204,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // Create control file
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_94, .checkpoint = pgLsnFromStr(STRDEF("1/1")));
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_95, .checkpoint = pgLsnFromStr(STRDEF("1/1")));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when unable to select any pg_settings");
@@ -250,7 +248,7 @@ testRun(void)
             HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(
-            dbGet(true, true, false), DbConnectError,
+            dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), DbConnectError,
             "unable to find primary cluster - cannot proceed\n"
             "HINT: are all available clusters in recovery?");
 
@@ -269,7 +267,7 @@ testRun(void)
             HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='backupdb' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL));
 
         DbGetResult db = {0};
-        TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
+        TEST_ASSIGN(db, dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary");
 
         // Get start time
         HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_TIME_QUERY(1, 1000));
@@ -325,7 +323,7 @@ testRun(void)
         HRN_PQ_SCRIPT_SET(
             HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='backupdb' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL));
 
-        TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
+        TEST_ASSIGN(db, dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary");
 
         // Start backup when backup is in progress
         HRN_PQ_SCRIPT_SET(
@@ -361,11 +359,10 @@ testRun(void)
         HRN_PQ_SCRIPT_SET(
             HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='backupdb' port=5432", PG_VERSION_96, TEST_PATH "/pg1", false, NULL, NULL));
 
-        TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
+        TEST_ASSIGN(db, dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary");
 
         // Start backup with timeline error
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
             HRN_PQ_SCRIPT_CURRENT_WAL_LE_96(1, "000000020000000300000002"),
             HRN_PQ_SCRIPT_START_BACKUP_96(1, false, "3/3", "000000020000000300000003"));
 
@@ -374,7 +371,6 @@ testRun(void)
 
         // Start backup with checkpoint error
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
             HRN_PQ_SCRIPT_CURRENT_WAL_LE_96(1, "000000010000000400000003"),
             HRN_PQ_SCRIPT_START_BACKUP_96(1, false, "4/4", "000000010000000400000004"));
 
@@ -384,7 +380,6 @@ testRun(void)
 
         // Start backup
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
             HRN_PQ_SCRIPT_CURRENT_WAL_LE_96(1, "000000010000000300000002"),
             HRN_PQ_SCRIPT_START_BACKUP_96(1, false, "3/3", "000000010000000300000003"));
 
@@ -426,7 +421,7 @@ testRun(void)
             HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
             HRN_PQ_SCRIPT_OPEN_GE_93(2, "dbname='postgres' port=5433", PG_VERSION_95, TEST_PATH "/pg2", true, NULL, NULL));
 
-        TEST_ASSIGN(db, dbGet(false, true, true), "get primary and standby");
+        TEST_ASSIGN(db, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_Y), "get primary and standby");
 
         // Start backup
         HRN_PQ_SCRIPT_SET(
@@ -487,14 +482,13 @@ testRun(void)
             HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_10, TEST_PATH "/pg1", false, NULL, NULL),
             HRN_PQ_SCRIPT_OPEN_GE_96(2, "dbname='postgres' port=5433", PG_VERSION_10, TEST_PATH "/pg2", true, NULL, NULL));
 
-        TEST_ASSIGN(db, dbGet(false, true, true), "get primary and standby");
+        TEST_ASSIGN(db, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_Y), "get primary and standby");
 
         TEST_RESULT_UINT(dbPgControl(db.primary).timeline, 5, "check primary timeline");
         TEST_RESULT_UINT(dbPgControl(db.standby).timeline, 5, "check standby timeline");
 
         // Start backup
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
             HRN_PQ_SCRIPT_CURRENT_WAL_GE_10(1, "000000050000000500000005"),
             HRN_PQ_SCRIPT_START_BACKUP_GE_10(1, false, "5/5", "000000050000000500000005"),
 
@@ -614,11 +608,10 @@ testRun(void)
         HRN_PQ_SCRIPT_SET(
             HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_14, TEST_PATH "/pg1", false, NULL, NULL));
 
-        TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
+        TEST_ASSIGN(db, dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary");
 
         // Start backup
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
             HRN_PQ_SCRIPT_CURRENT_WAL_GE_10(1, "000000050000000500000004"),
             HRN_PQ_SCRIPT_START_BACKUP_GE_10(1, false, "5/5", "000000050000000500000005"));
 
@@ -647,11 +640,10 @@ testRun(void)
         HRN_PQ_SCRIPT_SET(
             HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg1", false, NULL, NULL));
 
-        TEST_ASSIGN(db, dbGet(true, true, false), "get primary");
+        TEST_ASSIGN(db, dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary");
 
         // Start backup
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
             HRN_PQ_SCRIPT_CURRENT_WAL_GE_10(1, "000000060000000600000005"),
             HRN_PQ_SCRIPT_START_BACKUP_GE_15(1, false, "6/6", "000000060000000600000006"));
 
@@ -688,7 +680,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // Create control file
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_94);
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_95);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error connecting to primary");
@@ -700,7 +692,7 @@ testRun(void)
             {.function = HRN_PQ_FINISH});
 
         TEST_ERROR(
-            dbGet(true, true, false), DbConnectError,
+            dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), DbConnectError,
             "unable to find primary cluster - cannot proceed\n"
             "HINT: are all available clusters in recovery?");
         TEST_RESULT_LOG(
@@ -714,13 +706,13 @@ testRun(void)
             HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432 user='bob'"),
             HRN_PQ_SCRIPT_SET_SEARCH_PATH(1),
             HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(1),
-            HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_94, TEST_PATH "/pg", NULL, NULL),
+            HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_95, TEST_PATH "/pg", NULL, NULL),
             HRN_PQ_SCRIPT_SET_APPLICATION_NAME(1),
             HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, true),
             HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(
-            dbGet(true, true, false), DbConnectError,
+            dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), DbConnectError,
             "unable to find primary cluster - cannot proceed\n"
             "HINT: are all available clusters in recovery?");
 
@@ -731,28 +723,29 @@ testRun(void)
             HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432 user='bob'"),
             HRN_PQ_SCRIPT_SET_SEARCH_PATH(1),
             HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(1),
-            HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_94, TEST_PATH "/pg", NULL, NULL),
+            HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_95, TEST_PATH "/pg", NULL, NULL),
             HRN_PQ_SCRIPT_SET_APPLICATION_NAME(1),
             HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false),
             HRN_PQ_SCRIPT_CLOSE(1));
 
-        TEST_ERROR(dbGet(false, false, true), DbConnectError, "unable to find standby cluster - cannot proceed");
+        TEST_ERROR(
+            dbGet(false, false, CFGOPTVAL_BACKUP_STANDBY_Y), DbConnectError, "unable to find standby cluster - cannot proceed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("primary cluster found");
 
         HRN_PQ_SCRIPT_SET(
             HRN_PQ_SCRIPT_OPEN_GE_93(
-                1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_94, TEST_PATH "/pg1", false, NULL, NULL),
+                1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
             HRN_PQ_SCRIPT_CLOSE(1));
 
-        TEST_ASSIGN(result, dbGet(true, true, false), "get primary only");
+        TEST_ASSIGN(result, dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary only");
 
         TEST_RESULT_INT(result.primaryIdx, 0, "check primary id");
         TEST_RESULT_BOOL(result.primary != NULL, true, "check primary");
         TEST_RESULT_INT(result.standbyIdx, 0, "check standby id");
         TEST_RESULT_BOOL(result.standby == NULL, true, "check standby");
-        TEST_RESULT_INT(dbPgVersion(result.primary), PG_VERSION_94, "version set");
+        TEST_RESULT_INT(dbPgVersion(result.primary), PG_VERSION_95, "version set");
         TEST_RESULT_STR_Z(dbPgDataPath(result.primary), TEST_PATH "/pg1", "path set");
 
         TEST_RESULT_VOID(dbFree(result.primary), "free primary");
@@ -778,7 +771,7 @@ testRun(void)
             HRN_PQ_SCRIPT_CLOSE(1),
             HRN_PQ_SCRIPT_CLOSE(8));
 
-        TEST_ERROR(dbGet(true, true, false), DbConnectError, "more than one primary cluster found");
+        TEST_ERROR(dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), DbConnectError, "more than one primary cluster found");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("two standbys found but no primary");
@@ -791,7 +784,7 @@ testRun(void)
             HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(
-            dbGet(false, true, false), DbConnectError,
+            dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_N), DbConnectError,
             "unable to find primary cluster - cannot proceed\n"
             "HINT: are all available clusters in recovery?");
 
@@ -805,7 +798,7 @@ testRun(void)
             HRN_PQ_SCRIPT_CLOSE(8),
             HRN_PQ_SCRIPT_CLOSE(1));
 
-        TEST_ASSIGN(result, dbGet(false, false, false), "get standbys");
+        TEST_ASSIGN(result, dbGet(false, false, CFGOPTVAL_BACKUP_STANDBY_N), "get standbys");
 
         TEST_RESULT_INT(result.primaryIdx, 0, "check primary id");
         TEST_RESULT_BOOL(result.primary == NULL, true, "check primary");
@@ -847,7 +840,7 @@ testRun(void)
             HRN_PQ_SCRIPT_CLOSE(8),
             HRN_PQ_SCRIPT_CLOSE(1));
 
-        TEST_ASSIGN(result, dbGet(false, true, false), "get primary and standy");
+        TEST_ASSIGN(result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary and standy");
 
         hrnLogReplaceAdd("(could not connect to server|connection to server on socket).*$", NULL, "PG ERROR", false);
         TEST_RESULT_LOG(
@@ -862,6 +855,40 @@ testRun(void)
         TEST_RESULT_STR_Z(dbWalSwitch(result.primary), "000000010000000200000003", "wal switch");
         TEST_RESULT_INT(result.standbyIdx, 0, "check standby id");
         TEST_RESULT_BOOL(result.standby != NULL, true, "check standby");
+
+        TEST_RESULT_VOID(dbFree(result.primary), "free primary");
+        TEST_RESULT_VOID(dbFree(result.standby), "free standby");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("primary found and standby skipped");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH "/pg1");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 4, TEST_PATH "/pg4");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 4, "5433");
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        HRN_PQ_SCRIPT_SET(
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_12, TEST_PATH "/pg1", false, NULL, NULL),
+
+            // pg4 error
+            {.session = 4, .function = HRN_PQ_CONNECTDB, .param = "[\"dbname='postgres' port=5433\"]"},
+            {.session = 4, .function = HRN_PQ_STATUS, .resultInt = CONNECTION_BAD},
+            {.session = 4, .function = HRN_PQ_ERRORMESSAGE, .resultZ = "error"},
+            {.session = 4, .function = HRN_PQ_FINISH},
+
+            HRN_PQ_SCRIPT_CLOSE(1));
+
+        TEST_ASSIGN(result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_PREFER), "get primary and try standby");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: unable to check pg4: [DbConnectError] unable to connect to 'dbname='postgres' port=5433': error");
+
+        TEST_RESULT_INT(result.primaryIdx, 0, "check primary idx");
+        TEST_RESULT_BOOL(result.primary != NULL, true, "check primary");
+        TEST_RESULT_BOOL(result.standby == NULL, true, "check standby was not found");
 
         TEST_RESULT_VOID(dbFree(result.primary), "free primary");
         TEST_RESULT_VOID(dbFree(result.standby), "free standby");

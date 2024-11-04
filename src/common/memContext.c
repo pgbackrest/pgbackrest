@@ -868,7 +868,7 @@ memNewPtrArray(const size_t size)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void *
-memResize(const void *const buffer, const size_t size)
+memResize(void *const buffer, const size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, buffer);
@@ -1127,7 +1127,7 @@ memContextSize(const MemContext *const this)
 
     // Size of struct and extra
     size_t total = 0;
-    const unsigned char *offset = (unsigned char *)(this + 1) + this->allocExtra;
+    const unsigned char *offset = (const unsigned char *)(this + 1) + this->allocExtra;
 
     // Size of child contexts
     if (this->childQty == memQtyOne)
@@ -1195,7 +1195,7 @@ memContextSize(const MemContext *const this)
     if (this->callbackQty != memQtyNone)
         offset += sizeof(MemContextCallbackOne);
 
-    FUNCTION_TEST_RETURN(SIZE, (size_t)(offset - (unsigned char *)this) + total);
+    FUNCTION_TEST_RETURN(SIZE, (size_t)(offset - (const unsigned char *)this) + total);
 }
 
 #endif // DEBUG

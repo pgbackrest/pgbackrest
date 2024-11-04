@@ -15,6 +15,7 @@
                 <option id="compress-level-network"><summary></summary><text><p></p></text></option>
                 <option id="job-retry"><summary></summary><text><p></p></text></option>
                 <option id="job-retry-interval"><summary></summary><text><p></p></text></option>
+                <option id="lock"><summary></summary><text><p></p></text></option>
                 <option id="log-level-file"><summary></summary><text><p></p></text></option>
                 <option id="log-level-stderr"><summary></summary><text><p></p></text></option>
                 <option id="repo"><summary></summary><text><p></p></text></option>
@@ -227,8 +228,30 @@
                 <summary>Get help.</summary>
 
                 <text>
-                    <p>Three levels of help are provided. If no command is specified then general help will be displayed. If a command is specified (e.g. <cmd>pgbackrest help backup</cmd>) then a full description of the command will be displayed along with a list of valid options. If an option is specified in addition to a command (e.g. <cmd>pgbackrest help backup type</cmd>) then a full description of the option as it applies to the command will be displayed.</p>
+                    <p>Three levels of help are provided. If no command is specified then general help will be displayed. If a command is specified (e.g. <cmd>test-pgbackrest help test</cmd>) then a full description of the command will be displayed along with a list of valid options. If an option is specified in addition to a command (e.g. <cmd>pgbackrest help test vm</cmd>) then a full description of the option as it applies to the command will be displayed.</p>
                 </text>
+
+                <option-list>
+                    <option id="help" name="Display Help">
+                        <summary>Display help.</summary>
+
+                        <text>
+                            <p>Displays help even if the <cmd>help</cmd> command is not specified and overrides the <br-option>--version</br-option> option.</p>
+                        </text>
+
+                        <example>y</example>
+                    </option>
+
+                    <option id="version" name="Display Version">
+                        <summary>Display version.</summary>
+
+                        <text>
+                            <p>Displays version even if the <cmd>version</cmd> or <cmd>help</cmd> command is not specified.</p>
+                        </text>
+
+                        <example>y</example>
+                    </option>
+                </option-list>
             </command>
 
             <!-- Noop command holds options that must be defined but we don't need -->

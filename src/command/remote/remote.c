@@ -9,6 +9,7 @@ Remote Command
 #include "command/backup/pageChecksum.h"
 #include "command/control/common.h"
 #include "command/lock.h"
+#include "command/remote/remote.h"
 #include "command/restore/blockChecksum.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
@@ -66,7 +67,7 @@ cmdRemote(ProtocolServer *const server)
         TRY_BEGIN()
         {
             // Get the command. No need to check parameters since we know this is the first noop.
-            CHECK(FormatError, protocolServerCommandGet(server).id == PROTOCOL_COMMAND_NOOP, "noop expected");
+            CHECK(FormatError, protocolServerRequest(server).id == PROTOCOL_COMMAND_NOOP, "noop expected");
 
             // Only try the lock if this is process 0, i.e. the remote started from the main process
             if (cfgOptionUInt(cfgOptProcess) == 0)
@@ -83,7 +84,7 @@ cmdRemote(ProtocolServer *const server)
             }
 
             // Notify the client of success
-            protocolServerDataEndPut(server);
+            protocolServerResponseP(server);
             success = true;
         }
         CATCH_ANY()

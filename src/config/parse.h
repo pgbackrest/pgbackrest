@@ -20,19 +20,24 @@ Prefix for environment variables
 #define PGBACKREST_ENV_SIZE                                         (sizeof(PGBACKREST_ENV) - 1)
 
 /***********************************************************************************************************************************
+In some environments this will not be extern'd
+***********************************************************************************************************************************/
+extern char **environ;
+
+/***********************************************************************************************************************************
 Option type enum
 ***********************************************************************************************************************************/
 typedef enum
 {
+    cfgOptTypeInteger,                                              // Signed 64-bit integer
+    cfgOptTypeSize,                                                 // Size, e.g. 1m, 2gb
+    cfgOptTypeTime,                                                 // Time in seconds, e.g. 23, 1.5
+    cfgOptTypeStringId,                                             // StringId
+    cfgOptTypeString,                                               // String
+    cfgOptTypePath,                                                 // Path string with validation
     cfgOptTypeBoolean,                                              // Boolean
     cfgOptTypeHash,                                                 // Associative array, e.g. key1=val1,key2=val2
-    cfgOptTypeInteger,                                              // Signed 64-bit integer
     cfgOptTypeList,                                                 // String list, e.g. val1,val2
-    cfgOptTypePath,                                                 // Path string with validation
-    cfgOptTypeSize,                                                 // Size, e.g. 1m, 2gb
-    cfgOptTypeString,                                               // String
-    cfgOptTypeStringId,                                             // StringId
-    cfgOptTypeTime,                                                 // Time in seconds, e.g. 23, 1.5
 } ConfigOptionType;
 
 /***********************************************************************************************************************************

@@ -25,7 +25,7 @@ Restore Command
 #include "protocol/helper.h"
 #include "protocol/parallel.h"
 #include "storage/helper.h"
-#include "storage/write.intern.h"
+#include "storage/write.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -46,7 +46,6 @@ STRING_STATIC(RESTORE_COMMAND_STR,                                  RESTORE_COMM
 #define RECOVERY_TARGET_TIMELINE                                    "recovery_target_timeline"
 #define RECOVERY_TARGET_TIMELINE_CURRENT                            "current"
 
-#define PAUSE_AT_RECOVERY_TARGET                                    "pause_at_recovery_target"
 #define STANDBY_MODE                                                "standby_mode"
 STRING_STATIC(STANDBY_MODE_STR,                                     STANDBY_MODE);
 
@@ -91,104 +90,6 @@ restorePathValidate(void)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Get epoch time from formatted string
-***********************************************************************************************************************************/
-static time_t
-getEpoch(const String *const targetTime)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING, targetTime);
-    FUNCTION_LOG_END();
-
-    ASSERT(targetTime != NULL);
-
-    time_t result = 0;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        // Build the regex to accept formats: YYYY-MM-DD HH:MM:SS with optional msec (up to 6 digits and separated from minutes by
-        // a comma or period), optional timezone offset +/- HH or HHMM or HH:MM, where offset boundaries are UTC-12 to UTC+14
-        const String *const expression = STRDEF(
-            "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}((\\,|\\.)[0-9]{1,6})?((\\+|\\-)[0-9]{2}(:?)([0-9]{2})?)?$");
-        RegExp *const regExp = regExpNew(expression);
-
-        // If the target-recovery time matches the regular expression then validate it
-        if (regExpMatch(regExp, targetTime))
-        {
-            // Strip off the date and time and put the remainder into another string
-            const String *const datetime = strSubN(targetTime, 0, 19);
-
-            const int dtYear = cvtZSubNToInt(strZ(datetime), 0, 4);
-            const int dtMonth = cvtZSubNToInt(strZ(datetime), 5, 2);
-            const int dtDay = cvtZSubNToInt(strZ(datetime), 8, 2);
-            const int dtHour = cvtZSubNToInt(strZ(datetime), 11, 2);
-            const int dtMinute = cvtZSubNToInt(strZ(datetime), 14, 2);
-            const int dtSecond = cvtZSubNToInt(strZ(datetime), 17, 2);
-
-            // Confirm date and time parts are valid
-            datePartsValid(dtYear, dtMonth, dtDay);
-            timePartsValid(dtHour, dtMinute, dtSecond);
-
-            const String *const timeTargetZone = strSub(targetTime, 19);
-
-            // Find the + or - indicating a timezone offset was provided (there may be milliseconds before the timezone, so need to
-            // skip). If a timezone offset was not provided, then local time is assumed.
-            int idxSign = strChr(timeTargetZone, '+');
-
-            if (idxSign == -1)
-                idxSign = strChr(timeTargetZone, '-');
-
-            if (idxSign != -1)
-            {
-                const String *const timezoneOffset = strSub(timeTargetZone, (size_t)idxSign);
-
-                // Include the sign with the hour
-                const int tzHour = cvtZSubNToInt(strZ(timezoneOffset), 0, 3);
-                int tzMinute = 0;
-
-                // If minutes are included in timezone offset then extract the minutes based on whether a colon separates them from
-                // the hour
-                if (strSize(timezoneOffset) > 3)
-                    tzMinute = cvtZSubNToInt(strZ(timezoneOffset), 3 + (strChr(timezoneOffset, ':') == -1 ? 0 : 1), 2);
-
-                result = epochFromParts(dtYear, dtMonth, dtDay, dtHour, dtMinute, dtSecond, tzOffsetSeconds(tzHour, tzMinute));
-            }
-            // If there is no timezone offset, then assume it is local time
-            else
-            {
-                // Set tm_isdst to -1 to force mktime to consider if DST. For example, if system time is America/New_York then
-                // 2019-09-14 20:02:49 was a time in DST so the Epoch value should be 1568505769 (and not 1568509369 which would be
-                // 2019-09-14 21:02:49 - an hour too late)
-                struct tm time =
-                {
-                    .tm_sec = dtSecond,
-                    .tm_min = dtMinute,
-                    .tm_hour = dtHour,
-                    .tm_mday = dtDay,
-                    .tm_mon = dtMonth - 1,
-                    .tm_year = dtYear - 1900,
-                    .tm_isdst = -1,
-                };
-
-                result = mktime(&time);
-            }
-        }
-        else
-        {
-            THROW_FMT(
-                FormatError,
-                "automatic backup set selection cannot be performed with provided time '%s'\n"
-                "HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or HH:MM)"
-                " - if timezone is omitted, local time is assumed (for UTC use +00)",
-                strZ(targetTime));
-        }
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN(TIME, result);
 }
 
 /***********************************************************************************************************************************
@@ -263,7 +164,22 @@ restoreBackupSet(void)
         if (cfgOptionSource(cfgOptSet) == cfgSourceDefault)
         {
             if (targetType == CFGOPTVAL_TYPE_TIME)
-                target.time = getEpoch(cfgOptionStr(cfgOptTarget));
+            {
+                TRY_BEGIN()
+                {
+                    target.time = cvtZToTime(strZ(cfgOptionStr(cfgOptTarget)));
+                }
+                CATCH_ANY()
+                {
+                    THROW_FMT(
+                        FormatError,
+                        "automatic backup set selection cannot be performed with provided time '%s'\n"
+                        "HINT: time format must be YYYY-MM-DD HH:MM:SS with optional msec and optional timezone (+/- HH or HHMM or"
+                        " HH:MM) - if timezone is omitted, local time is assumed (for UTC use +00)",
+                        strZ(cfgOptionStr(cfgOptTarget)));
+                }
+                TRY_END();
+            }
             else if (targetType == CFGOPTVAL_TYPE_LSN)
                 target.lsn = pgLsnFromStr(cfgOptionStr(cfgOptTarget));
         }
@@ -770,15 +686,15 @@ restoreManifestOwner(const Manifest *const manifest, const String **const rootRe
         StringList *const groupList = strLstNew();
 
         RESTORE_MANIFEST_OWNER_GET(File, );
-        RESTORE_MANIFEST_OWNER_GET(Link, *(ManifestLink *));
-        RESTORE_MANIFEST_OWNER_GET(Path, *(ManifestPath *));
+        RESTORE_MANIFEST_OWNER_GET(Link, *(const ManifestLink *));
+        RESTORE_MANIFEST_OWNER_GET(Path, *(const ManifestPath *));
 
         // Update users and groups in the manifest (this can only be done as root)
         // -------------------------------------------------------------------------------------------------------------------------
         if (userRoot())
         {
             // Get user/group info from data directory to use for invalid user/groups
-            StorageInfo pathInfo = storageInfoP(storagePg(), manifestTargetBase(manifest)->path);
+            StorageInfo pathInfo = storageInfoP(storagePg(), manifestTargetBase(manifest)->path, .ignoreMissing = true);
 
             // If user/group is null then set it to root
             if (pathInfo.user == NULL)                                                                              // {vm_covered}
@@ -1184,8 +1100,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
 
         // Skip the tablespace_map file when present so PostgreSQL does not rewrite links in pg_tblspc. The tablespace links will be
         // created after paths are cleaned.
-        if (manifestFileExists(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP)) &&
-            manifestData(manifest)->pgVersion >= PG_VERSION_TABLESPACE_MAP)
+        if (manifestFileExists(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP)))
         {
             LOG_DETAIL_FMT("skip '" PG_FILE_TABLESPACEMAP "' -- tablespace links will be created based on mappings");
             manifestFileRemove(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_TABLESPACEMAP));
@@ -1644,32 +1559,14 @@ restoreRecoveryOption(const unsigned int pgVersion)
                 kvPut(result, VARSTRZ(RECOVERY_TARGET_INCLUSIVE), VARSTR(FALSE_STR));
         }
 
-        // Write pause_at_recovery_target/recovery_target_action
+        // Write recovery_target_action
         if (cfgOptionTest(cfgOptTargetAction))
         {
             const StringId targetAction = cfgOptionStrId(cfgOptTargetAction);
 
             if (targetAction != CFGOPTVAL_TARGET_ACTION_PAUSE)
             {
-                // Write recovery_target on supported PostgreSQL versions
-                if (pgVersion >= PG_VERSION_RECOVERY_TARGET_ACTION)
-                {
-                    kvPut(result, VARSTRZ(RECOVERY_TARGET_ACTION), VARSTR(strIdToStr(targetAction)));
-                }
-                // Else write pause_at_recovery_target on supported PostgreSQL versions
-                else
-                {
-                    // Shutdown action is not supported with pause_at_recovery_target setting
-                    if (targetAction == CFGOPTVAL_TARGET_ACTION_SHUTDOWN)
-                    {
-                        THROW_FMT(
-                            OptionInvalidError,
-                            CFGOPT_TARGET_ACTION "=" CFGOPTVAL_TARGET_ACTION_SHUTDOWN_Z " is only available in PostgreSQL >= %s",
-                            strZ(pgVersionToStr(PG_VERSION_RECOVERY_TARGET_ACTION)));
-                    }
-
-                    kvPut(result, VARSTRZ(PAUSE_AT_RECOVERY_TARGET), VARSTR(FALSE_STR));
-                }
+                kvPut(result, VARSTRZ(RECOVERY_TARGET_ACTION), VARSTR(strIdToStr(targetAction)));
             }
         }
 
@@ -1958,8 +1855,8 @@ restoreProcessQueueComparator(const void *const item1, const void *const item2)
     ASSERT(item2 != NULL);
 
     // Unpack files
-    const ManifestFile file1 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack **)item1);
-    const ManifestFile file2 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack **)item2);
+    const ManifestFile file1 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack *const *)item1);
+    const ManifestFile file2 = manifestFileUnpack(restoreProcessQueueComparatorManifest, *(const ManifestFilePack *const *)item2);
 
     // Zero length files should be ordered at the end
     if (file1.size == 0)
@@ -2309,7 +2206,6 @@ restoreJobCallback(void *const data, const unsigned int clientIdx)
         RestoreJobData *const jobData = data;
 
         // Determine where to begin scanning the queue (we'll stop when we get back here)
-        ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_RESTORE_FILE);
         PackWrite *param = NULL;
         int queueIdx = (int)(clientIdx % lstSize(jobData->queueList));
         const int queueEnd = queueIdx;
@@ -2334,7 +2230,7 @@ restoreJobCallback(void *const data, const unsigned int clientIdx)
                 // Add common parameters before first file
                 if (param == NULL)
                 {
-                    param = protocolCommandParam(command);
+                    param = protocolPackNew();
 
                     if (file.bundleId != 0)
                     {
@@ -2414,7 +2310,8 @@ restoreJobCallback(void *const data, const unsigned int clientIdx)
                 // Assign job to result
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    result = protocolParallelJobNew(bundleId != 0 ? VARUINT64(bundleId) : VARSTR(fileName), command);
+                    result = protocolParallelJobNew(
+                        bundleId != 0 ? VARUINT64(bundleId) : VARSTR(fileName), PROTOCOL_COMMAND_RESTORE_FILE, param);
                 }
                 MEM_CONTEXT_PRIOR_END();
 
@@ -2618,7 +2515,7 @@ cmdRestore(void)
                 storagePutP(
                     storageNewWriteP(
                         storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT),
-                        .modeFile = pgControlFile.mode, .timeModified = pgControlFile.timestamp),
+                        .timeModified = pgControlFile.timestamp, .noAtomic = true, .noCreatePath = true, .noSyncPath = true),
                     pgControlBuffer);
             }
 

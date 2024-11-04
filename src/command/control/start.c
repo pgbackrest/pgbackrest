@@ -4,6 +4,7 @@ Start Command
 #include "build.auto.h"
 
 #include "command/control/common.h"
+#include "command/control/start.h"
 #include "common/debug.h"
 #include "config/config.h"
 #include "storage/helper.h"

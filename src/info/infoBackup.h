@@ -90,6 +90,7 @@ typedef struct InfoBackupPub
     MemContext *memContext;                                         // Mem context
     InfoPg *infoPg;                                                 // Contents of the DB data
     List *backup;                                                   // List of current backups and their associated data
+    bool updated;                                                   // Has the info been updated since the last save?
 } InfoBackupPub;
 
 // PostgreSQL info
@@ -138,13 +139,13 @@ infoBackupDataTotal(const InfoBackup *const this)
 Functions
 ***********************************************************************************************************************************/
 // Add backup to the current list
-FN_EXTERN void infoBackupDataAdd(const InfoBackup *this, const Manifest *manifest);
+FN_EXTERN void infoBackupDataAdd(InfoBackup *this, const Manifest *manifest);
 
 // Set Annotation in the backup data for a specific backup label
-FN_EXTERN void infoBackupDataAnnotationSet(const InfoBackup *this, const String *const backupLabel, const KeyValue *annotationKv);
+FN_EXTERN void infoBackupDataAnnotationSet(InfoBackup *this, const String *const backupLabel, const KeyValue *annotationKv);
 
 // Delete backup from the current backup list
-FN_EXTERN void infoBackupDataDelete(const InfoBackup *this, const String *backupDeleteLabel);
+FN_EXTERN void infoBackupDataDelete(InfoBackup *this, const String *backupDeleteLabel);
 
 // Given a backup label, get the dependency list
 FN_EXTERN StringList *infoBackupDataDependentList(const InfoBackup *this, const String *backupLabel);

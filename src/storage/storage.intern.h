@@ -118,6 +118,12 @@ typedef struct StorageInterfaceNewReadParam
 
     // Limit bytes read from the file. NULL for no limit.
     const Variant *limit;
+
+    // Target a specific file version. This requires a boolean as well as the versionId because file missing is indicated when the
+    // file is opened rather than when it is created. So if version = true and versionId = NULL then the file will be reported as
+    // missing on open.
+    bool version;                                                   // Target a file version
+    const String *versionId;                                        // Id when targeting a version (NULL if version is missing)
 } StorageInterfaceNewReadParam;
 
 typedef StorageRead *StorageInterfaceNewRead(
@@ -185,6 +191,9 @@ typedef struct StorageInterfaceListParam
     // using the prefix returned from regExpPrefix(). This may cause extra results to be sent to the callback but won't exclude
     // anything that matches the expression exactly.
     const String *expression;
+
+    // Target max version <= the specified time
+    time_t targetTime;
 } StorageInterfaceListParam;
 
 typedef StorageList *StorageInterfaceList(
@@ -303,10 +312,10 @@ typedef struct StorageInterface
 } StorageInterface;
 
 #define storageNewP(type, path, modeFile, modePath, write, pathExpressionFunction, driver, ...)                                    \
-    storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, (StorageInterface){__VA_ARGS__})
+    storageNew(type, path, modeFile, modePath, write, targetTime, pathExpressionFunction, driver, (StorageInterface){__VA_ARGS__})
 
 FN_EXTERN Storage *storageNew(
-    StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write,
+    StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write, time_t targetTime,
     StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface);
 
 /***********************************************************************************************************************************

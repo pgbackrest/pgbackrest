@@ -631,11 +631,27 @@ doc/xml/release/2024/2.51.xml:
   class: doc/source
   type: xml
 
+doc/xml/release/2024/2.52.1.xml:
+  class: doc/source
+  type: xml
+
 doc/xml/release/2024/2.52.xml:
   class: doc/source
   type: xml
 
+doc/xml/release/2024/2.53.1.xml:
+  class: doc/source
+  type: xml
+
 doc/xml/release/2024/2.53.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2024/2.54.0.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2025/2.55.0.xml:
   class: doc/source
   type: xml
 
@@ -658,18 +674,6 @@ meson.build:
 meson_options.txt:
   class: build
   type: meson
-
-src/Makefile.in:
-  class: build
-  type: make
-
-src/build.auto.h.in:
-  class: core
-  type: c/h
-
-src/build/aclocal.m4:
-  class: build
-  type: make
 
 src/build/common/exec.c:
   class: build
@@ -727,14 +731,6 @@ src/build/common/yaml.h:
   class: build
   type: c/h
 
-src/build/config.guess:
-  class: build
-  type: make
-
-src/build/config.sub:
-  class: build
-  type: make
-
 src/build/config/config.yaml:
   class: build
   type: yaml
@@ -754,10 +750,6 @@ src/build/config/render.c:
 src/build/config/render.h:
   class: build
   type: c/h
-
-src/build/configure.ac:
-  class: build
-  type: make
 
 src/build/error/error.yaml:
   class: build
@@ -781,7 +773,7 @@ src/build/error/render.h:
 
 src/build/help/help.xml:
   class: build
-  type: make
+  type: xml
 
 src/build/help/parse.c:
   class: build
@@ -798,10 +790,6 @@ src/build/help/render.c:
 src/build/help/render.h:
   class: build
   type: c/h
-
-src/build/install-sh:
-  class: build
-  type: make
 
 src/build/main.c:
   class: build
@@ -1059,6 +1047,14 @@ src/command/local/local.h:
   class: core
   type: c/h
 
+src/command/lock.c:
+  class: core
+  type: c
+
+src/command/lock.h:
+  class: core
+  type: c/h
+
 src/command/manifest/manifest.c:
   class: core
   type: c
@@ -1080,14 +1076,6 @@ src/command/repo/common.c:
   type: c
 
 src/command/repo/common.h:
-  class: core
-  type: c/h
-
-src/command/repo/create.c:
-  class: core
-  type: c
-
-src/command/repo/create.h:
   class: core
   type: c/h
 
@@ -2019,10 +2007,6 @@ src/config/protocol.h:
   class: core
   type: c/h
 
-src/configure:
-  class: build
-  type: make
-
 src/db/db.c:
   class: core
   type: c
@@ -2156,14 +2140,6 @@ src/protocol/client.c:
   type: c
 
 src/protocol/client.h:
-  class: core
-  type: c/h
-
-src/protocol/command.c:
-  class: core
-  type: c
-
-src/protocol/command.h:
   class: core
   type: c/h
 
@@ -2747,10 +2723,6 @@ test/src/common/harnessPostgres.h:
   class: test/harness
   type: c/h
 
-test/src/common/harnessPostgres/harness094.c:
-  class: test/harness
-  type: c
-
 test/src/common/harnessPostgres/harness095.c:
   class: test/harness
   type: c
@@ -2840,6 +2812,14 @@ test/src/common/harnessStorage.c:
   type: c
 
 test/src/common/harnessStorage.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessStorageHelper.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessStorageHelper.h:
   class: test/harness
   type: c/h
 
@@ -2952,6 +2932,10 @@ test/src/module/command/infoTest.c:
   type: c
 
 test/src/module/command/localTest.c:
+  class: test/module
+  type: c
+
+test/src/module/command/lockTest.c:
   class: test/module
   type: c
 

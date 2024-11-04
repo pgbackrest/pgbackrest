@@ -25,14 +25,24 @@ struct Storage
     mode_t modeFile;
     mode_t modePath;
     bool write;
+    time_t targetTime;                                              // Target repo reads by time
+    List *cacheList;                                                // Storage cache
     StoragePathExpressionCallback *pathExpressionFunction;
 };
+
+// Storage list cache
+typedef struct StorageListCache
+{
+    String *path;                                                   // Path
+    StorageList *list;                                              // List
+} StorageListCache;
 
 /**********************************************************************************************************************************/
 FN_EXTERN Storage *
 storageNew(
     const StringId type, const String *const path, const mode_t modeFile, const mode_t modePath, const bool write,
-    StoragePathExpressionCallback pathExpressionFunction, void *const driver, const StorageInterface interface)
+    const time_t targetTime, StoragePathExpressionCallback pathExpressionFunction, void *const driver,
+    const StorageInterface interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING_ID, type);
@@ -40,6 +50,7 @@ storageNew(
         FUNCTION_LOG_PARAM(MODE, modeFile);
         FUNCTION_LOG_PARAM(MODE, modePath);
         FUNCTION_LOG_PARAM(BOOL, write);
+        FUNCTION_LOG_PARAM(TIME, targetTime);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM_P(VOID, driver);
         FUNCTION_LOG_PARAM(STORAGE_INTERFACE, interface);
@@ -71,8 +82,19 @@ storageNew(
             .modeFile = modeFile,
             .modePath = modePath,
             .write = write,
+            .targetTime = targetTime,
             .pathExpressionFunction = pathExpressionFunction,
         };
+
+        // Create storage cache list
+        if (this->targetTime != 0)
+            this->cacheList = lstNewP(sizeof(StorageListCache), .comparator = lstComparatorStr);
+
+        // If time limit is requested then versioning must be supported
+        CHECK(AssertError, targetTime == 0 || storageFeature(this, storageFeatureVersioning), "versioning required for time limit");
+
+        // If time limit is requested then storage must be read-only
+        CHECK(AssertError, targetTime == 0 || !write, "time limit requires read-only storage");
 
         // If path sync feature is enabled then path feature must be enabled
         CHECK(
@@ -257,7 +279,7 @@ storageInfo(const Storage *const this, const String *const fileExp, StorageInfoP
         // Build the path
         const String *const file = storagePathP(this, fileExp, .noEnforce = param.noPathEnforce);
 
-        // Call driver function
+        // Set level when default
         if (param.level == storageInfoLevelDefault)
             param.level = storageFeature(this, storageFeatureInfoDetail) ? storageInfoLevelDetail : storageInfoLevelBasic;
 
@@ -269,7 +291,43 @@ storageInfo(const Storage *const this, const String *const fileExp, StorageInfoP
         }
         // Else call the driver
         else
-            result = storageInterfaceInfoP(storageDriver(this), file, param.level, .followLink = param.followLink);
+        {
+            // If targeting by time
+            if (this->targetTime != 0)
+            {
+                // Find the version to read using the cache
+                const String *const path = strPath(file);
+                StorageListCache *cache = lstFind(this->cacheList, &path);
+
+                if (cache == NULL)
+                {
+                    MEM_CONTEXT_OBJ_BEGIN(this->cacheList)
+                    {
+                        StorageList *const list = storageInterfaceListP(
+                            storageDriver(this), path, storageInfoLevelBasic, .targetTime = this->targetTime);
+
+                        if (list != NULL)
+                            storageLstSort(list, sortOrderAsc);
+
+                        cache = memNew(sizeof(StorageListCache));
+                        *cache = (StorageListCache){.path = strDup(path), .list = list};
+
+                        lstAdd(this->cacheList, cache);
+                    }
+                    MEM_CONTEXT_OBJ_END();
+
+                    lstSort(this->cacheList, sortOrderAsc);
+                }
+
+                if (cache->list != NULL)
+                {
+                    result = storageLstFind(cache->list, strBase(file));
+                    ASSERT(!result.exists || result.type != storageTypeFile || result.versionId != NULL);
+                }
+            }
+            else
+                result = storageInterfaceInfoP(storageDriver(this), file, param.level, .followLink = param.followLink);
+        }
 
         // Error if the file missing and not ignoring
         if (!result.exists && !param.ignoreMissing)
@@ -320,7 +378,7 @@ storageNewItr(const Storage *const this, const String *const pathExp, StorageNew
         result = storageItrMove(
             storageItrNew(
                 storageDriver(this), storagePathP(this, pathExp), param.level, param.errorOnMissing, param.nullOnMissing,
-                param.recurse, param.sortOrder, param.expression),
+                param.recurse, param.sortOrder, this->targetTime, param.expression),
             memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
@@ -452,14 +510,26 @@ storageNewRead(const Storage *const this, const String *const fileExp, const Sto
     ASSERT(this != NULL);
     ASSERT(param.limit == NULL || varType(param.limit) == varTypeUInt64);
 
-    StorageRead *result;
+    StorageRead *result = NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        const String *const path = storagePathP(this, fileExp);
+        const String *versionId = NULL;
+
+        // If targeting by time
+        if (this->targetTime != 0)
+        {
+            versionId = storageInfoP(this, fileExp, .ignoreMissing = true).versionId;
+
+            if (versionId == NULL && !param.ignoreMissing)
+                THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(path));
+        }
+
         result = storageReadMove(
             storageInterfaceNewReadP(
-                storageDriver(this), storagePathP(this, fileExp), param.ignoreMissing, .compressible = param.compressible,
-                .offset = param.offset, .limit = param.limit),
+                storageDriver(this), path, param.ignoreMissing, .compressible = param.compressible, .offset = param.offset,
+                .limit = param.limit, .version = this->targetTime != 0, .versionId = versionId),
             memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();

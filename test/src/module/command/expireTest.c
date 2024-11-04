@@ -1,5 +1,7 @@
 /***********************************************************************************************************************************
 Test Expire Command
+
+NOTE: references to 9.4 are intentionally included in this test to ensure that expire will work with no longer supported versions.
 ***********************************************************************************************************************************/
 #include <unistd.h>
 
@@ -10,6 +12,7 @@ Test Expire Command
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
 #include "common/harnessStorage.h"
+#include "common/harnessTime.h"
 
 /***********************************************************************************************************************************
 Helper functions
@@ -151,7 +154,7 @@ testRun(void)
 
     // Sleep the remainder of the current second. If cmdExpire() gets the same time as timeNow then expiration won't work as
     // expected in the tests.
-    sleepMSec(MSEC_PER_SEC - (timeMSec() % MSEC_PER_SEC));
+    hrnSleepRemainder();
 
     // *****************************************************************************************************************************
     if (testBegin("expireBackup()"))
@@ -1090,6 +1093,10 @@ testRun(void)
         hrnCfgArgRawZ(argList2, cfgOptSet, "20201119-123456F_20201119-234567I");
         HRN_CFG_LOAD(cfgCmdExpire, argList2);
 
+        // Update backup.info timestamp to the past so we can detect if it is updated
+        const time_t timeBeforeExpire = time(NULL) - 1;
+        HRN_STORAGE_TIME(storageRepo(), INFO_BACKUP_PATH_FILE, timeBeforeExpire);
+
         TEST_RESULT_VOID(cmdExpire(), "label format OK but backup does not exist on any repo");
         TEST_RESULT_LOG(
             "P00   INFO: repo1: 10-2 no archive to remove\n"
@@ -1097,6 +1104,9 @@ testRun(void)
             "            HINT: run the info command and confirm the backup is listed\n"
             "P00   INFO: repo2: 9.4-1 no archive to remove\n"
             "P00   INFO: repo2: 10-2 no archive to remove");
+
+        TEST_RESULT_INT(
+            storageInfoP(storageRepo(), INFO_BACKUP_PATH_FILE_STR).timeModified, timeBeforeExpire, "backup.info was not updated");
 
         // Rerun on single repo
         hrnCfgArgRawZ(argList2, cfgOptRepo, "1");

@@ -41,6 +41,7 @@ typedef struct HrnBackupPqScriptParam
     VAR_PARAM_HEADER;
     bool startFast;                                                 // Start backup fast
     bool backupStandby;                                             // Backup from standby
+    bool backupStandbyError;                                        // Standby errors on backup from standby
     bool errorAfterStart;                                           // Error after backup start
     bool errorAfterCopyStart;                                       // Error after backup copy start
     bool noWal;                                                     // Don't write test WAL segments

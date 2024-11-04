@@ -316,6 +316,7 @@ String *hrnHostExec(HrnHost *this, const String *command, HrnHostExecParam param
 typedef struct HrnHostExecBrParam
 {
     VAR_PARAM_HEADER;
+    const char *user;                                               // User to execute command
     const char *option;                                             // Options
     const char *param;                                              // Parameters
     int resultExpect;                                               // Expected result, if not 0
@@ -452,6 +453,9 @@ HrnHost *hrnHostRepo(void);
 
 // Repo total
 unsigned int hrnHostRepoTotal(void);
+
+// Does the primary repo have versioning enabled?
+bool hrnHostRepoVersioning(void);
 
 // Get a host by name
 HrnHost *hrnHostGet(StringId id);

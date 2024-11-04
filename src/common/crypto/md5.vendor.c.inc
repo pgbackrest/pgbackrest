@@ -87,7 +87,7 @@ typedef struct {
  */
 #if defined(__i386__) || defined(__x86_64__) || defined(__vax__)
 #define SET(n) \
-	(*(MD5_u32plus *)&ptr[(n) * 4])
+	(*(const MD5_u32plus *)&ptr[(n) * 4])
 #define GET(n) \
 	SET(n)
 #else

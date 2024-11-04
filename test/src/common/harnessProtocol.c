@@ -97,7 +97,8 @@ Shim protocolLocalExec() to provide coverage as detailed in the hrnProtocolLocal
 ***********************************************************************************************************************************/
 static void
 protocolLocalExec(
-    ProtocolHelperClient *helper, ProtocolStorageType protocolStorageType, unsigned int hostIdx, unsigned int processId)
+    ProtocolHelperClient *const helper, ProtocolStorageType const protocolStorageType, const unsigned int hostIdx,
+    const unsigned int processId)
 {
     // Call the shim when installed
     if (hrnProtocolStatic.localShim)
@@ -125,7 +126,7 @@ protocolLocalExec(
 
             // Load configuration
             StringList *const paramList = protocolLocalParam(protocolStorageType, hostIdx, processId);
-            hrnCfgLoadP(cfgCmdNone, paramList, .noStd = true);
+            hrnCfgLoadP(CFG_COMMAND_TOTAL, paramList, .noStd = true);
 
             // Change log process id to aid in debugging
             hrnLogProcessIdSet(processId);
@@ -194,7 +195,8 @@ Shim protocolRemoteExec() to provide coverage as detailed in the hrnProtocolRemo
 ***********************************************************************************************************************************/
 static void
 protocolRemoteExec(
-    ProtocolHelperClient *helper, ProtocolStorageType protocolStorageType, unsigned int hostIdx, unsigned int processId)
+    ProtocolHelperClient *const helper, const ProtocolStorageType protocolStorageType, const unsigned int hostIdx,
+    const unsigned int processId)
 {
     // Call the shim when installed
     if (hrnProtocolStatic.remoteShim)
@@ -222,7 +224,7 @@ protocolRemoteExec(
 
             // Load configuration
             StringList *const paramList = protocolRemoteParam(protocolStorageType, hostIdx);
-            hrnCfgLoadP(cfgCmdNone, paramList, .noStd = true);
+            hrnCfgLoadP(CFG_COMMAND_TOTAL, paramList, .noStd = true);
 
             // Change log process id to aid in debugging
             hrnLogProcessIdSet(processId);
@@ -235,7 +237,7 @@ protocolRemoteExec(
             protocolServerProcess(server, NULL, hrnProtocolStatic.remoteHandlerList, hrnProtocolStatic.remoteHandlerListSize);
 
             // Put an end message here to sync with the client to ensure that coverage data is written before exiting
-            protocolServerDataEndPut(server);
+            protocolServerResponseP(server);
 
             // Exit when done
             exit(0);

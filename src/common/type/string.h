@@ -244,8 +244,16 @@ will result in a segfault due to modifying read-only memory.
 
 By convention all string constant identifiers are appended with _STR.
 ***********************************************************************************************************************************/
+// This struct must be kept in sync with StringPub (except for const qualifiers)
+typedef struct StringPubConst
+{
+    uint64_t size : 32;                                             // Actual size of the string
+    uint64_t extra : 32;                                            // Extra space allocated for expansion
+    const char *buffer;                                             // String buffer
+} StringPubConst;
+
 #define STR_SIZE(bufferParam, sizeParam)                                                                                           \
-    ((const String *const)&(const StringPub){.buffer = (char *)(bufferParam), .size = (unsigned int)(sizeParam)})
+    ((const String *const)&(const StringPubConst){.buffer = (const char *const)(bufferParam), .size = (unsigned int)(sizeParam)})
 
 // Create a String constant inline from any zero-terminated string
 #define STR(buffer)                                                                                                                \

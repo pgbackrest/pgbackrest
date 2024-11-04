@@ -1,13 +1,15 @@
 /***********************************************************************************************************************************
-Repository Create Command
+Storage Helper Test Harness
+
+Helper functions for testing storage and related functions.
 ***********************************************************************************************************************************/
-#ifndef COMMAND_REPO_CREATE_H
-#define COMMAND_REPO_CREATE_H
+#ifndef TEST_COMMON_HARNESS_STORAGE_HELPER_H
+#define TEST_COMMON_HARNESS_STORAGE_HELPER_H
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Create the repository (create path, bucket, etc.)
-FN_EXTERN void cmdRepoCreate(void);
+// Enable/disable test storage driver for repo storage
+void hrnStorageHelperRepoShimSet(bool enabled);
 
 #endif

@@ -16,7 +16,7 @@ alpha/beta/rc period without needing to be updated, unless of course the actual 
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 #ifdef CATALOG_VERSION_NO_MAX
 
@@ -27,9 +27,9 @@ alpha/beta/rc period without needing to be updated, unless of course the actual 
         ASSERT(controlFile != NULL);                                                                                               \
                                                                                                                                    \
         return                                                                                                                     \
-            ((ControlFileData *)controlFile)->pg_control_version == PG_CONTROL_VERSION &&                                          \
-            ((ControlFileData *)controlFile)->catalog_version_no >= CATALOG_VERSION_NO &&                                          \
-            ((ControlFileData *)controlFile)->catalog_version_no < (CATALOG_VERSION_NO / 100000 + 1) * 100000;                     \
+            ((const ControlFileData *)controlFile)->pg_control_version == PG_CONTROL_VERSION &&                                    \
+            ((const ControlFileData *)controlFile)->catalog_version_no >= CATALOG_VERSION_NO &&                                    \
+            ((const ControlFileData *)controlFile)->catalog_version_no < (CATALOG_VERSION_NO / 100000 + 1) * 100000;               \
     }
 
 #else
@@ -41,8 +41,8 @@ alpha/beta/rc period without needing to be updated, unless of course the actual 
         ASSERT(controlFile != NULL);                                                                                               \
                                                                                                                                    \
         return                                                                                                                     \
-            ((ControlFileData *)controlFile)->pg_control_version == PG_CONTROL_VERSION &&                                          \
-            ((ControlFileData *)controlFile)->catalog_version_no == CATALOG_VERSION_NO;                                            \
+            ((const ControlFileData *)controlFile)->pg_control_version == PG_CONTROL_VERSION &&                                    \
+            ((const ControlFileData *)controlFile)->catalog_version_no == CATALOG_VERSION_NO;                                      \
     }
 
 #endif
@@ -54,7 +54,7 @@ Read the version specific pg_control into a general data structure
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 #define PG_INTERFACE_CONTROL(version)                                                                                              \
     static PgControl                                                                                                               \
@@ -64,14 +64,14 @@ Read the version specific pg_control into a general data structure
                                                                                                                                    \
         return (PgControl)                                                                                                         \
         {                                                                                                                          \
-            .systemId = ((ControlFileData *)controlFile)->system_identifier,                                                       \
-            .catalogVersion = ((ControlFileData *)controlFile)->catalog_version_no,                                                \
-            .checkpoint = ((ControlFileData *)controlFile)->checkPoint,                                                            \
-            .checkpointTime = (time_t)((ControlFileData *)controlFile)->checkPointCopy.time,                                       \
-            .timeline = ((ControlFileData *)controlFile)->checkPointCopy.ThisTimeLineID,                                           \
-            .pageSize = ((ControlFileData *)controlFile)->blcksz,                                                                  \
-            .walSegmentSize = ((ControlFileData *)controlFile)->xlog_seg_size,                                                     \
-            .pageChecksumVersion = ((ControlFileData *)controlFile)->data_checksum_version,                                        \
+            .systemId = ((const ControlFileData *)controlFile)->system_identifier,                                                 \
+            .catalogVersion = ((const ControlFileData *)controlFile)->catalog_version_no,                                          \
+            .checkpoint = ((const ControlFileData *)controlFile)->checkPoint,                                                      \
+            .checkpointTime = (time_t)((const ControlFileData *)controlFile)->checkPointCopy.time,                                 \
+            .timeline = ((const ControlFileData *)controlFile)->checkPointCopy.ThisTimeLineID,                                     \
+            .pageSize = ((const ControlFileData *)controlFile)->blcksz,                                                            \
+            .walSegmentSize = ((const ControlFileData *)controlFile)->xlog_seg_size,                                               \
+            .pageChecksumVersion = ((const ControlFileData *)controlFile)->data_checksum_version,                                  \
         };                                                                                                                         \
     }
 
@@ -82,7 +82,7 @@ Get control crc offset
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 #define PG_INTERFACE_CONTROL_CRC_OFFSET(version)                                                                                   \
     static size_t                                                                                                                  \
@@ -114,7 +114,7 @@ Get the control version
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 #define PG_INTERFACE_CONTROL_VERSION(version)                                                                                      \
     static uint32_t                                                                                                                \
@@ -130,7 +130,7 @@ Determine if the supplied WAL is for this version of PostgreSQL
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 #define PG_INTERFACE_WAL_IS(version)                                                                                               \
     static bool                                                                                                                    \
@@ -138,7 +138,7 @@ Determine if the supplied WAL is for this version of PostgreSQL
     {                                                                                                                              \
         ASSERT(walFile != NULL);                                                                                                   \
                                                                                                                                    \
-        return ((XLogPageHeaderData *)walFile)->xlp_magic == XLOG_PAGE_MAGIC;                                                      \
+        return ((const XLogPageHeaderData *)walFile)->xlp_magic == XLOG_PAGE_MAGIC;                                                \
     }
 
 #endif
@@ -148,7 +148,7 @@ Read the version specific WAL header into a general data structure
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 #define PG_INTERFACE_WAL(version)                                                                                                  \
     static PgWal                                                                                                                   \
@@ -158,8 +158,8 @@ Read the version specific WAL header into a general data structure
                                                                                                                                    \
         return (PgWal)                                                                                                             \
         {                                                                                                                          \
-            .systemId = ((XLogLongPageHeaderData *)walFile)->xlp_sysid,                                                            \
-            .size = ((XLogLongPageHeaderData *)walFile)->xlp_seg_size,                                                             \
+            .systemId = ((const XLogLongPageHeaderData *)walFile)->xlp_sysid,                                                      \
+            .size = ((const XLogLongPageHeaderData *)walFile)->xlp_seg_size,                                                       \
         };                                                                                                                         \
     }
 

@@ -48,10 +48,10 @@ storageLstSize(const StorageList *const this)
 }
 
 // List size
-FN_INLINE_ALWAYS void
+FN_INLINE_ALWAYS StorageList *
 storageLstSort(StorageList *const this, const SortOrder sortOrder)
 {
-    lstSort(THIS_PUB(StorageList)->list, sortOrder);
+    return (StorageList *)lstSort(THIS_PUB(StorageList)->list, sortOrder);
 }
 
 /***********************************************************************************************************************************
@@ -69,6 +69,9 @@ storageLstAdd(StorageList *const this, const StorageInfo *const info)
 
 // Get info. Note that StorageInfo pointer members (e.g. name) will be undefined after the next call to storageLstGet().
 FN_EXTERN StorageInfo storageLstGet(const StorageList *this, unsigned int idx);
+
+// Find info. Note that StorageInfo pointer members (e.g. name) will be undefined after the next call to storageLstGet().
+FN_EXTERN StorageInfo storageLstFind(const StorageList *this, const String *name);
 
 // Move to a new parent mem context
 FN_INLINE_ALWAYS StorageList *

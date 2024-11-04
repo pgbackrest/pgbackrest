@@ -59,14 +59,6 @@ static struct HarnessTestLocal
 } harnessTestLocal;
 
 /***********************************************************************************************************************************
-Extern functions
-***********************************************************************************************************************************/
-#ifdef HRN_FEATURE_LOG
-void harnessLogInit(void);
-void harnessLogFinal(void);
-#endif
-
-/***********************************************************************************************************************************
 Initialize harness
 ***********************************************************************************************************************************/
 void
@@ -154,8 +146,8 @@ testBegin(const char *name)
             // Clear out the test directory so the next test starts clean
             char buffer[2048];
             snprintf(
-                buffer, sizeof(buffer), "%schmod -R 700 %s/" "* > /dev/null 2>&1;%srm -rf %s/" "*", testContainer() ? "sudo " : "",
-                testPath(), testContainer() ? "sudo " : "", testPath());
+                buffer, sizeof(buffer), "%schmod -R 700 %s/" "* > /dev/null 2>&1;%sfind %s -mindepth 1 -delete",
+                testContainer() ? "sudo " : "", testPath(), testContainer() ? "sudo " : "", testPath());
 
             if (system(buffer) != 0)
             {
@@ -166,8 +158,8 @@ testBegin(const char *name)
 
             // Clear out the data directory so the next test starts clean
             snprintf(
-                buffer, sizeof(buffer), "%schmod -R 700 %s/" "* > /dev/null 2>&1;%srm -rf %s/" "*", testContainer() ? "sudo " : "",
-                hrnPath(), testContainer() ? "sudo " : "", hrnPath());
+                buffer, sizeof(buffer), "%schmod -R 700 %s/" "* > /dev/null 2>&1;%sfind %s -mindepth 1 -delete",
+                testContainer() ? "sudo " : "", hrnPath(), testContainer() ? "sudo " : "", hrnPath());
 
             if (system(buffer) != 0)
             {
@@ -298,12 +290,12 @@ hrnDiff(const char *expected, const char *actual)
     // Write expected file
     char expectedFile[1024];
     snprintf(expectedFile, sizeof(expectedFile), "%s/diff.expected", hrnPath());
-    hrnFileWrite(expectedFile, (unsigned char *)expected, strlen(expected));
+    hrnFileWrite(expectedFile, (const unsigned char *)expected, strlen(expected));
 
     // Write actual file
     char actualFile[1024];
     snprintf(actualFile, sizeof(actualFile), "%s/diff.actual", hrnPath());
-    hrnFileWrite(actualFile, (unsigned char *)actual, strlen(actual));
+    hrnFileWrite(actualFile, (const unsigned char *)actual, strlen(actual));
 
     // Perform diff
     char command[2560];

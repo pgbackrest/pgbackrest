@@ -101,22 +101,14 @@ unit:
           - common/assert: noCode
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: mem-context
-        total: 8
-        feature: memContext
-
-        coverage:
-          - common/memContext
-
-        depend:
-          - common/type/convert
-
-      # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-convert
         total: 12
 
         coverage:
           - common/type/convert
+
+        depend:
+          - common/time
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: time
@@ -130,6 +122,14 @@ unit:
 
         coverage:
           - common/time
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: mem-context
+        total: 8
+        feature: memContext
+
+        coverage:
+          - common/memContext
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: encode
@@ -292,6 +292,12 @@ unit:
         total: 6
         feature: IO
         harness: pack
+        harness:
+          name: fd
+          shim:
+            common/io/fd:
+              function:
+                - fdReady
 
         coverage:
           - common/io/bufferRead
@@ -352,7 +358,10 @@ unit:
       - name: crypto
         total: 4
         feature: STORAGE
-        harness: storage
+        harness:
+          name: storage
+          shim:
+            storage/posix/storage: ~
 
         coverage:
           - common/crypto/cipherBlock
@@ -436,6 +445,12 @@ unit:
             common/lock:
               function:
                 - lockInit
+        harness:
+          name: storageHelper
+          shim:
+            storage/helper:
+              function:
+                - storageRepoGet
 
         coverage:
           - common/lock
@@ -453,7 +468,6 @@ unit:
           - postgres/interface/crc32
           - postgres/interface/page
           - protocol/client
-          - protocol/command
           - protocol/helper
           - protocol/server
           - storage/helper
@@ -481,7 +495,6 @@ unit:
 
         coverage:
           - protocol/client
-          - protocol/command
           - protocol/helper
           - protocol/parallel
           - protocol/parallelJob
@@ -534,7 +547,7 @@ unit:
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: posix
-        total: 23
+        total: 24
 
         coverage:
           - storage/cifs/helper
@@ -551,7 +564,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote
-        total: 10
+        total: 11
 
         coverage:
           - storage/remote/read
@@ -562,6 +575,7 @@ unit:
           - storage/storage
 
         include:
+          - protocol/client
           - storage/read
           - storage/write
 
@@ -612,16 +626,10 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: sftp
-        total: 19
+        total: 20
         harness:
           name: libSsh2
           integration: false
-        harness:
-          name: fd
-          shim:
-            common/io/fd:
-              function:
-                - fdReady
 
         coverage:
           - storage/sftp/helper
@@ -938,7 +946,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
-        total: 15
+        total: 14
 
         coverage:
           - command/restore/blockChecksum
@@ -961,7 +969,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: repo
-        total: 4
+        total: 3
 
         coverage:
           - command/repo/common
@@ -969,11 +977,6 @@ unit:
           - command/repo/ls
           - command/repo/put
           - command/repo/rm
-
-        include:
-          # command/repo/create is currently for testing purposes only so coverage is not provided except in integration. In the
-          # future this will probably be rolled into a custom object store server implementation.
-          - command/repo/create
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: verify

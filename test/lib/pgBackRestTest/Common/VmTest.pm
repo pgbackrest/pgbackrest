@@ -40,6 +40,7 @@ use constant VM_IMAGE                                               => 'image';
     push @EXPORT, qw(VM_IMAGE);
 use constant VM_OS_BASE                                             => 'os-base';
     push @EXPORT, qw(VM_OS_BASE);
+use constant VMDEF_PG_REPO                                          => 'pg-repo';
 use constant VMDEF_PGSQL_BIN                                        => 'psql-bin';
     push @EXPORT, qw(VMDEF_PGSQL_BIN);
 use constant VMDEF_WITH_LZ4                                         => 'with-lz4';
@@ -74,8 +75,8 @@ use constant VM_ALL                                                 => 'all';
 use constant VM_NONE                                                => 'none';
     push @EXPORT, qw(VM_NONE);
 
-use constant VM_D10                                                 => 'd10';
-    push @EXPORT, qw(VM_D10);
+use constant VM_D11                                                 => 'd11';
+    push @EXPORT, qw(VM_D11);
 use constant VM_RH8                                                 => 'rh8';
     push @EXPORT, qw(VM_RH8);
 use constant VM_F40                                                 => 'f40';
@@ -85,16 +86,8 @@ use constant VM_U20                                                 => 'u20';
 use constant VM_U22                                                 => 'u22';
     push @EXPORT, qw(VM_U22);
 
-# VM aliases for run matrices (numbered oldest to newest)
-use constant VM2                                                    => VM_D10;
-    push @EXPORT, qw(VM2);
-use constant VM3                                                    => VM_RH8;
-    push @EXPORT, qw(VM3);
-use constant VM4                                                    => VM_U22;
-    push @EXPORT, qw(VM4);
-
 # List of default test VMs
-use constant VM_LIST                                                => (VM2, VM3, VM4);
+use constant VM_LIST                                                => (VM_U20, VM_D11, VM_RH8, VM_U22);
     push @EXPORT, qw(VM_LIST);
 
 my $oyVm =
@@ -120,29 +113,25 @@ my $oyVm =
         ],
     },
 
-    # Debian 10
-    &VM_D10 =>
+    # Debian 11
+    &VM_D11 =>
     {
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_IMAGE => 'i386/debian:10',
+        &VM_IMAGE => 'debian:11',
         &VM_ARCH => VM_ARCH_I386,
+        &VMDEF_PG_REPO => false,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
         &VMDEF_WITH_ZST => true,
 
         &VM_DB =>
         [
-            PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_96,
-            PG_VERSION_10,
+            PG_VERSION_13,
         ],
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_94,
-            PG_VERSION_96,
-            PG_VERSION_10,
+            PG_VERSION_13,
         ],
     },
 
@@ -159,19 +148,18 @@ my $oyVm =
 
         &VM_DB =>
         [
-            PG_VERSION_12,
             PG_VERSION_13,
             PG_VERSION_14,
             PG_VERSION_15,
             PG_VERSION_16,
+            PG_VERSION_17,
         ],
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_12,
-            PG_VERSION_13,
             PG_VERSION_14,
             PG_VERSION_15,
+            PG_VERSION_16,
         ],
     },
 
@@ -189,10 +177,11 @@ my $oyVm =
 
         &VM_DB =>
         [
-            PG_VERSION_12,
             PG_VERSION_13,
             PG_VERSION_14,
             PG_VERSION_15,
+            PG_VERSION_16,
+            PG_VERSION_17,
         ],
 
         &VM_DB_TEST =>
@@ -214,7 +203,6 @@ my $oyVm =
 
         &VM_DB =>
         [
-            PG_VERSION_94,
             PG_VERSION_95,
             PG_VERSION_96,
             PG_VERSION_10,
@@ -223,13 +211,14 @@ my $oyVm =
             PG_VERSION_13,
             PG_VERSION_14,
             PG_VERSION_15,
+            PG_VERSION_16,
+            PG_VERSION_17,
         ],
 
         &VM_DB_TEST =>
         [
             PG_VERSION_95,
             PG_VERSION_96,
-            PG_VERSION_15,
         ],
     },
 
@@ -246,7 +235,6 @@ my $oyVm =
 
         &VM_DB =>
         [
-            PG_VERSION_94,
             PG_VERSION_95,
             PG_VERSION_96,
             PG_VERSION_10,
@@ -261,9 +249,9 @@ my $oyVm =
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_95,
+            PG_VERSION_10,
             PG_VERSION_11,
-            PG_VERSION_16,
+            PG_VERSION_12,
             PG_VERSION_17,
         ],
     },
@@ -338,21 +326,23 @@ sub vmValid
 push @EXPORT, qw(vmValid);
 
 ####################################################################################################################################
-# Which vm to use for the test matrix. If one of the standard four, then use that, else use VM4.
+# vmPgRepo
 ####################################################################################################################################
-sub vmTest
+sub vmPgRepo
 {
     my $strVm = shift;
 
-    if (grep(/^$strVm$/, VM_LIST))
+    vmValid($strVm);
+
+    if (!defined($oyVm->{$strVm}{&VMDEF_PG_REPO}))
     {
-        return $strVm;
+        return true;
     }
 
-    return VM4;
+    return $oyVm->{$strVm}{&VMDEF_PG_REPO};
 }
 
-push @EXPORT, qw(vmTest);
+push @EXPORT, qw(vmPgRepo);
 
 ####################################################################################################################################
 # vmGet

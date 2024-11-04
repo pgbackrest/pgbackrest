@@ -186,9 +186,17 @@ sckServerNew(const String *const address, const unsigned int port, const TimeMSe
         strCat(this->name, addrInfoToName(this->address, this->port, addressFound));
 
         // Bind the address
-        THROW_ON_SYS_ERROR(
-            bind(this->socket, addressFound->ai_addr, addressFound->ai_addrlen) == -1, FileOpenError,
-            "unable to bind socket");
+        Wait *const wait = waitNew(timeout);
+        int result;
+
+        do
+        {
+            result = bind(this->socket, addressFound->ai_addr, addressFound->ai_addrlen);
+
+            if (result == -1 && !waitMore(wait))
+                THROW_SYS_ERROR(FileOpenError, "unable to bind socket");
+        }
+        while (result == -1);
 
         // Listen for client connections. It might be a good idea to make the backlog configurable but this value seems OK for now.
         THROW_ON_SYS_ERROR(listen(this->socket, 100) == -1, FileOpenError, "unable to listen on socket");

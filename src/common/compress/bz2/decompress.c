@@ -88,7 +88,10 @@ bz2DecompressProcess(THIS_VOID, const Buffer *const compressed, Buffer *const un
         this->stream.avail_in = (unsigned int)bufUsed(compressed);
 
         // bzip2 does not accept const input buffers
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
         this->stream.next_in = (char *)UNCONSTIFY(unsigned char *, bufPtrConst(compressed));
+#pragma GCC diagnostic pop
     }
 
     this->stream.avail_out = (unsigned int)bufRemains(uncompressed);

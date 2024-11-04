@@ -207,10 +207,8 @@ pgControlCrcValidate(const Buffer *const controlFile, const PgInterface *const i
     do
     {
         // Calculate CRC and retrieve expected CRC
-        const uint32_t crcCalculated =
-            interface->version > PG_VERSION_94 ?
-                crc32cOne(bufPtrConst(controlFile), result) : crc32One(bufPtrConst(controlFile), result);
-        const uint32_t crcExpected = *((uint32_t *)(bufPtrConst(controlFile) + result));
+        const uint32_t crcCalculated = crc32cOne(bufPtrConst(controlFile), result);
+        const uint32_t crcExpected = *((const uint32_t *)(bufPtrConst(controlFile) + result));
 
         // If CRC does not match
         if (crcCalculated != crcExpected)
@@ -261,9 +259,7 @@ pgControlCrcUpdate(Buffer *const controlFile, const unsigned int pgVersion, cons
     ASSERT(pgVersion != 0);
     ASSERT(crcOffset != 0);
 
-    *((uint32_t *)(bufPtr(controlFile) + crcOffset)) =
-        pgVersion > PG_VERSION_94 ?
-            crc32cOne(bufPtrConst(controlFile), crcOffset) : crc32One(bufPtrConst(controlFile), crcOffset);
+    *((uint32_t *)(bufPtr(controlFile) + crcOffset)) = crc32cOne(bufPtrConst(controlFile), crcOffset);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -743,7 +739,7 @@ pgVersionFromStr(const String *const version)
 
     ASSERT(version != NULL);
 
-    // If format not number.number (9.4) or number only (10) then error. No check for valid/supported PG version is on purpose.
+    // If format not number.number (9.6) or number only (10) then error. No check for valid/supported PG version is on purpose.
     if (!regExpMatchOne(STRDEF("^[0-9]+[.]*[0-9]+$"), version))
         THROW_FMT(AssertError, "version %s format is invalid", strZ(version));
 

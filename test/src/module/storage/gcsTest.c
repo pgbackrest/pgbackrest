@@ -259,7 +259,7 @@ testRun(void)
             storage,
             (StorageGcs *)storageDriver(
                 storageGcsNew(
-                    STRDEF("/repo"), false, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
+                    STRDEF("/repo"), false, 0, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
                     NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
             "read-only gcs storage - service key");
         TEST_RESULT_STR_Z(httpUrlHost(storage->authUrl), "test.com", "check host");
@@ -284,7 +284,7 @@ testRun(void)
             storage,
             (StorageGcs *)storageDriver(
                 storageGcsNew(
-                    STRDEF("/repo"), true, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
+                    STRDEF("/repo"), true, 0, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
                     NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
             "read/write gcs storage - service key");
 
@@ -568,7 +568,7 @@ testRun(void)
                 TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
                 TEST_RESULT_BOOL(storageWriteTruncate(write), true, "file will be truncated");
 
-                TEST_RESULT_VOID(storageWriteGcsClose(write->driver), "close file again");
+                TEST_RESULT_VOID(storageWriteGcsClose(ioWriteDriver(storageWriteIo(write))), "close file again");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write zero-length file");
@@ -1113,6 +1113,138 @@ testRun(void)
                 testResponseP(service, .content = "{}");
 
                 TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), "remove");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to target time");
+
+                hrnServerScriptClose(service);
+
+                hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
+                hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+                hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-04 02:54:09+00");
+                HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+                TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("list with time limit (basic)");
+
+                testRequestP(
+                    service, HTTP_VERB_GET,
+                    .query =
+                        "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%2Csize%2Cupdated%2Cgeneration%29"
+                        "&prefix=path%2Fto%2F&versions=true");
+                testResponseP(
+                    service,
+                    .content =
+                        "{"
+                        "  \"nextPageToken\": \"ueGx\","
+                        "  \"prefixes\": ["
+                        "     \"path/to/path1/\""
+                        "  ],"
+                        "  \"items\": ["
+                        "    {"
+                        "      \"name\": \"path/to/test1.txt\","
+                        "      \"updated\": \"2024-08-04T02:54:01.999Z\","
+                        "      \"size\": \"999\","
+                        "      \"generation\": \"1724645450428444\""
+                        "    }"
+                        "  ]"
+                        "}");
+
+                testRequestP(
+                    service, HTTP_VERB_GET,
+                    .query =
+                        "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%2Csize%2Cupdated%2Cgeneration%29"
+                        "&pageToken=ueGx&prefix=path%2Fto%2F&versions=true");
+                testResponseP(
+                    service,
+                    .content =
+                        "{"
+                        "  \"prefixes\": ["
+                        "     \"path/to/path2/\""
+                        "  ],"
+                        "  \"items\": ["
+                        "    {"
+                        "      \"name\": \"path/to/test1.txt\","
+                        "      \"updated\": \"2024-08-04T02:54:09.123Z\","
+                        "      \"size\": \"787\","
+                        "      \"generation\": \"1724645450428555\""
+                        "    },"
+                        "    {"
+                        "      \"name\": \"path/to/test1.txt\","
+                        "      \"updated\": \"2024-08-04T02:54:10.123Z\""
+                        "    }"
+                        "  ]"
+                        "}");
+
+                TEST_STORAGE_LIST(
+                    storage, "/path/to",
+                    "path1/\n"
+                    "path2/\n"
+                    "test1.txt {s=787, t=1722740050, v=1724645450428555}\n",
+                    .level = storageInfoLevelBasic, .noRecurse = true);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("list with time limit (exists)");
+
+                testRequestP(
+                    service, HTTP_VERB_GET,
+                    .query =
+                        "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%2Cupdated%2Cgeneration%29"
+                        "&prefix=path%2Fto%2F&versions=true");
+                testResponseP(
+                    service,
+                    .content =
+                        "{"
+                        "  \"items\": ["
+                        "    {"
+                        "      \"name\": \"path/to/test1.txt\","
+                        "      \"updated\": \"2024-08-04T02:54:09.999Z\","
+                        "      \"generation\": \"1724645450428444\""
+                        "    }"
+                        "  ]"
+                        "}");
+
+                TEST_STORAGE_LIST(
+                    storage, "/path/to",
+                    "test1.txt\n",
+                    .noRecurse = true);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file with time limit");
+
+                testRequestP(
+                    service, HTTP_VERB_GET,
+                    .query =
+                        "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%2Csize%2Cupdated%2Cgeneration%29"
+                        "&versions=true");
+                testResponseP(
+                    service,
+                    .content =
+                        "{"
+                        "  \"items\": ["
+                        "    {"
+                        "      \"name\": \"file.txt\","
+                        "      \"updated\": \"2024-08-04T02:54:09.999Z\","
+                        "      \"size\": \"6\","
+                        "      \"generation\": \"1724645450428444\""
+                        "    }"
+                        "  ]"
+                        "}");
+
+                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media?generation=1724645450428444");
+                testResponseP(service, .content = "123456");
+
+                TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt")))), "123456", "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get missing file with time limit");
+
+                TEST_RESULT_PTR(
+                    storageGetP(storageNewReadP(storage, STRDEF("missing_file"), .ignoreMissing = true)), NULL, "missing file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 hrnServerScriptEnd(service);

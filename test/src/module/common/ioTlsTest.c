@@ -565,13 +565,46 @@ testRun(void)
             HRN_FORK_PARENT_END();
         }
         HRN_FORK_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("sckServerNew() retries bind()");
+
+        HRN_FORK_BEGIN(.timeout = 5000)
+        {
+            const unsigned int testPort = hrnServerPortNext();
+
+            HRN_FORK_CHILD_BEGIN(.prefix = "server")
+            {
+                // Bind port and notify parent
+                IoServer *server = sckServerNew(STRDEF("127.0.0.1"), testPort, 5000);
+                HRN_FORK_CHILD_NOTIFY_PUT();
+
+                // Sleep 1000ms then close port
+                sleepMSec(1000);
+                objFree(server);
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN(.prefix = "client")
+            {
+                // Wait for parent to bind port before attempting to bind
+                HRN_FORK_PARENT_NOTIFY_GET(0);
+                TEST_ERROR(
+                    sckServerNew(STRDEF("127.0.0.1"), testPort, 100), FileOpenError,
+                    "unable to bind socket: [98] Address already in use");
+                TEST_RESULT_VOID(sckServerNew(STRDEF("127.0.0.1"), testPort, 5000), "bind succeeds with enough retries");
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
     }
 
     // Additional coverage not provided by testing with actual certificates
     // *****************************************************************************************************************************
-    if (testBegin("tlsAsn1ToStr(), tlsClientHostVerify(), and tlsClientHostVerifyName()"))
+    if (testBegin("tlsAsn1ToStr/Buf(), tlsClientHostVerify(), tlsClientHostVerifyName(), and tlsClientHostVerifyIpAddr()"))
     {
         TEST_ERROR(tlsAsn1ToStr(NULL), CryptoError, "TLS certificate name entry is missing");
+        TEST_ERROR(tlsAsn1ToBuf(NULL), CryptoError, "TLS certificate name entry is missing");
 
         TEST_ERROR(
             tlsClientHostVerifyName(
@@ -582,6 +615,14 @@ testRun(void)
         TEST_RESULT_BOOL(tlsClientHostVerifyName(STRDEF("host"), STRDEF("**")), false, "invalid pattern");
         TEST_RESULT_BOOL(tlsClientHostVerifyName(STRDEF("host"), STRDEF("*.")), false, "invalid pattern");
         TEST_RESULT_BOOL(tlsClientHostVerifyName(STRDEF("a.bogus.host.com"), STRDEF("*.host.com")), false, "invalid host");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("tlsClientHostVerifyIpAddr()");
+
+        TEST_RESULT_BOOL(tlsClientHostVerifyIPAddr(STRDEF("127.0.0.1"), bufNewC("\x7F\0\0", 3)), false, "invalid len");
+        TEST_RESULT_BOOL(tlsClientHostVerifyIPAddr(STRDEF("127.0.0.1"), bufNewC("\x7F\0\0\x02", 4)), false, "ipv4 no match");
+        TEST_RESULT_BOOL(
+            tlsClientHostVerifyIPAddr(STRDEF("::1"), bufNewC("\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\x02", 16)), false, "ipv6 no match");
     }
 
     // *****************************************************************************************************************************
@@ -815,6 +856,19 @@ testRun(void)
                     "open connection");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("match ipv4");
+
+                hrnServerScriptAccept(tls);
+                hrnServerScriptClose(tls);
+
+                TEST_RESULT_VOID(
+                    ioClientOpen(
+                        tlsClientNewP(
+                            sckClientNew(STRDEF("127.0.0.1"), testPort, 5000, 5000), STRDEF("127.0.0.1"), 0, 0, true,
+                            .caFile = STRDEF(HRN_SERVER_CA))),
+                    "open connection");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("unable to find matching hostname in certificate");
 
                 hrnServerScriptAccept(tls);
@@ -853,6 +907,47 @@ testRun(void)
                 TEST_RESULT_VOID(
                     ioClientOpen(
                         tlsClientNewP(sckClientNew(STRDEF("localhost"), testPort, 5000, 5000), STRDEF("X"), 0, 0, false)),
+                    "open connection");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                hrnServerScriptEnd(tls);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+
+        // Server on IPv6
+        // -------------------------------------------------------------------------------------------------------------------------
+        HRN_FORK_BEGIN()
+        {
+            const unsigned int testPort = hrnServerPortNext();
+
+            HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
+            {
+                // Start server to test various certificate errors
+                TEST_RESULT_VOID(
+                    hrnServerRunP(
+                        HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort, .certificate = STRDEF(HRN_SERVER_CERT),
+                        .key = STRDEF(HRN_SERVER_KEY), .address = STRDEF("::1")),
+                    "tls alt name ipv6 server");
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN(.prefix = "test client", .timeout = 1000)
+            {
+                IoWrite *const tls = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("match ipv6");
+
+                hrnServerScriptAccept(tls);
+                hrnServerScriptClose(tls);
+
+                TEST_RESULT_VOID(
+                    ioClientOpen(
+                        tlsClientNewP(
+                            sckClientNew(STRDEF("::1"), testPort, 5000, 5000), STRDEF("::1"), 0, 0, true,
+                            .caFile = STRDEF(HRN_SERVER_CA))),
                     "open connection");
 
                 // -----------------------------------------------------------------------------------------------------------------

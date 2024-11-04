@@ -244,8 +244,10 @@ hrnServerRun(IoRead *const read, const HrnServerProtocol protocol, const unsigne
         FUNCTION_HARNESS_PARAM(IO_READ, read);
         FUNCTION_HARNESS_PARAM(ENUM, protocol);
         FUNCTION_HARNESS_PARAM(UINT, port);
+        FUNCTION_HARNESS_PARAM(STRING, param.ca);
         FUNCTION_HARNESS_PARAM(STRING, param.certificate);
         FUNCTION_HARNESS_PARAM(STRING, param.key);
+        FUNCTION_HARNESS_PARAM(STRING, param.address);
     FUNCTION_HARNESS_END();
 
     ASSERT(read != NULL);
@@ -268,7 +270,7 @@ hrnServerRun(IoRead *const read, const HrnServerProtocol protocol, const unsigne
         tlsServer = tlsServerNew(STRDEF(HRN_SERVER_HOST), param.ca, param.key, param.certificate, 5000);
     }
 
-    IoServer *socketServer = sckServerNew(STRDEF("127.0.0.1"), port, 5000);
+    IoServer *socketServer = sckServerNew(param.address == NULL ? STRDEF("127.0.0.1") : param.address, port, 5000);
 
     // Loop until no more commands
     IoSession *serverSession = NULL;
@@ -328,28 +330,36 @@ hrnServerRun(IoRead *const read, const HrnServerProtocol protocol, const unsigne
 
                 TRY_BEGIN()
                 {
-                    ioRead(ioSessionIoReadP(serverSession), buffer);
+                    // Read one byte at a time so we can error with partial data
+                    Buffer *const bufferOne = bufNew(1);
+
+                    for (size_t size = 1; size <= bufSize(buffer); size++)
+                    {
+                        ioReadSmall(ioSessionIoReadP(serverSession), bufferOne);
+
+                        bufCat(buffer, bufferOne);
+                        bufUsedZero(bufferOne);
+                    }
                 }
                 CATCH(FileReadError)
                 {
-                    // If nothing was read then throw the original error
-                    if (bufEmpty(buffer))
-                        THROW_FMT(AssertError, "server expected '%s' but got EOF", strZ(expected));
+                    THROW_FMT(
+                        AssertError, "server expected:\n'%s' but got short read:\n'%s'", strZ(expected), strZ(strNewBuf(buffer)));
                 }
                 TRY_END();
 
                 // Treat any ? characters as wildcards so variable elements (e.g. auth hashes) can be ignored
-                String *actual = strNewBuf(buffer);
-
-                for (unsigned int actualIdx = 0; actualIdx < strSize(actual); actualIdx++)
+                for (unsigned int bufferIdx = 0; bufferIdx < bufUsed(buffer); bufferIdx++)
                 {
-                    if (strZ(expected)[actualIdx] == '?')
-                        ((char *)strZ(actual))[actualIdx] = '?';
+                    if (strZ(expected)[bufferIdx] == '?')
+                        bufPtr(buffer)[bufferIdx] = '?';
                 }
+
+                const String *actual = strNewBuf(buffer);
 
                 // Error if actual does not match expected
                 if (!strEq(actual, expected))
-                    THROW_FMT(AssertError, "server expected '%s' but got '%s'", strZ(expected), strZ(actual));
+                    THROW_FMT(AssertError, "server expected:\n'%s' but got:\n'%s'", strZ(expected), strZ(actual));
 
                 break;
             }

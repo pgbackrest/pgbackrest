@@ -126,7 +126,7 @@ typedef struct HrnLibSsh2
     TimeMSec sleep;                                                 // Sleep specified milliseconds before returning from function
     size_t len;                                                     // libssh2_session_hostkey len
     int type;                                                       // libssh2_session_hostkey type
-    char *errMsg;                                                   // libssh2_session_last_error error msg
+    const char *errMsg;                                             // libssh2_session_last_error error msg
 } HrnLibSsh2;
 
 /***********************************************************************************************************************************

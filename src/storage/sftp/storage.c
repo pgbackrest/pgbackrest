@@ -93,6 +93,113 @@ storageSftpKnownHostKeyType(const int hostKeyType)
 }
 
 /***********************************************************************************************************************************
+Return error message based on error code
+***********************************************************************************************************************************/
+static const char *
+libssh2SftpErrorMsg(const uint64_t error)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT64, error);
+    FUNCTION_TEST_END();
+
+    const char *result;
+
+    // SFTP error status codes (returned by libssh2_sftp_last_error()
+    switch (error)
+    {
+        case LIBSSH2_FX_EOF:
+            result = "eof";
+            break;
+
+        case LIBSSH2_FX_NO_SUCH_FILE:
+            result = "no such file";
+            break;
+
+        case LIBSSH2_FX_PERMISSION_DENIED:
+            result = "permission denied";
+            break;
+
+        case LIBSSH2_FX_FAILURE:
+            result = "failure";
+            break;
+
+        case LIBSSH2_FX_BAD_MESSAGE:
+            result = "bad message";
+            break;
+
+        case LIBSSH2_FX_NO_CONNECTION:
+            result = "no connection";
+            break;
+
+        case LIBSSH2_FX_CONNECTION_LOST:
+            result = "connection lost";
+            break;
+
+        case LIBSSH2_FX_OP_UNSUPPORTED:
+            result = "operation unsupported";
+            break;
+
+        case LIBSSH2_FX_INVALID_HANDLE:
+            result = "invalid handle";
+            break;
+
+        case LIBSSH2_FX_NO_SUCH_PATH:
+            result = "no such path";
+            break;
+
+        case LIBSSH2_FX_FILE_ALREADY_EXISTS:
+            result = "file already exists";
+            break;
+
+        case LIBSSH2_FX_WRITE_PROTECT:
+            result = "write protect";
+            break;
+
+        case LIBSSH2_FX_NO_MEDIA:
+            result = "no media";
+            break;
+
+        case LIBSSH2_FX_NO_SPACE_ON_FILESYSTEM:
+            result = "no space on filesystem";
+            break;
+
+        case LIBSSH2_FX_QUOTA_EXCEEDED:
+            result = "quota exceeded";
+            break;
+
+        case LIBSSH2_FX_UNKNOWN_PRINCIPAL:
+            result = "unknown principal";
+            break;
+
+        case LIBSSH2_FX_LOCK_CONFLICT:
+            result = "lock conflict";
+            break;
+
+        case LIBSSH2_FX_DIR_NOT_EMPTY:
+            result = "directory not empty";
+            break;
+
+        case LIBSSH2_FX_NOT_A_DIRECTORY:
+            result = "not a directory";
+            break;
+
+        case LIBSSH2_FX_INVALID_FILENAME:
+            result = "invalid filename";
+            break;
+
+        case LIBSSH2_FX_LINK_LOOP:
+            result = "link loop";
+            break;
+
+        default:
+            result = "unknown error";
+            break;
+    }
+
+    FUNCTION_TEST_RETURN_CONST(STRINGZ, result);
+}
+
+/***********************************************************************************************************************************
 Return a match failed message based on known host check failure type
 ***********************************************************************************************************************************/
 static const char *
@@ -301,7 +408,8 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
                 THROW_FMT(
                     ServiceError, "failed to shutdown sftpSession: libssh2 errno [%d]%s", rc,
                     rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                        strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
+                        strZ(strNewFmt(": sftp errno [%lu] %s", libssh2_sftp_last_error(this->sftpSession),
+                                       libssh2SftpErrorMsg(libssh2_sftp_last_error(this->sftpSession)))) : "");
             else
                 THROW_FMT(
                     ServiceError, "timeout shutting down sftpSession: libssh2 errno [%d]", rc);
@@ -363,7 +471,8 @@ storageSftpEvalLibSsh2Error(
     THROWP_FMT(
         errorType, "%s%s%s%s", message != NULL ? zNewFmt("%s%s", strZ(message), ssh2Errno == 0 ? "" : ": ") : "",
         ssh2Errno == 0 ? "" : zNewFmt("libssh2 error [%d]", ssh2Errno),
-        ssh2Errno == LIBSSH2_ERROR_SFTP_PROTOCOL ? zNewFmt(": sftp error [%" PRIu64 "]", sftpErrno) : "",
+        ssh2Errno == LIBSSH2_ERROR_SFTP_PROTOCOL ?
+            zNewFmt(": sftp error [%" PRIu64 "] %s", sftpErrno, libssh2SftpErrorMsg(sftpErrno)) : "",
         hint != NULL ? zNewFmt("\n%s", strZ(hint)) : "");
 
     FUNCTION_TEST_NO_RETURN();
@@ -644,6 +753,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
 
     ASSERT(this != NULL);
     ASSERT(path != NULL);
+    ASSERT(param.targetTime == 0);
 
     StorageList *result = NULL;
 
@@ -818,6 +928,8 @@ storageSftpNewRead(THIS_VOID, const String *const file, const bool ignoreMissing
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
+    ASSERT(!param.version);
+    ASSERT(param.versionId == NULL);
 
     FUNCTION_LOG_RETURN(
         STORAGE_READ,
@@ -901,7 +1013,7 @@ storageSftpPathCreate(
             const uint64_t sftpErrno = libssh2_sftp_last_error(this->sftpSession);
 
             // libssh2 may return LIBSSH2_FX_FAILURE if the directory already exists
-            if (sftpErrno == LIBSSH2_FX_FAILURE)
+            if (sftpErrno == LIBSSH2_FX_FAILURE || sftpErrno == LIBSSH2_FX_FILE_ALREADY_EXISTS)
             {
                 // Check if the directory already exists
                 LIBSSH2_SFTP_ATTRIBUTES attr;
@@ -921,7 +1033,7 @@ storageSftpPathCreate(
                 {
                     storageSftpEvalLibSsh2Error(
                         rc, libssh2_sftp_last_error(this->sftpSession), &PathCreateError,
-                        strNewFmt("unable to create path '%s': path already exists", strZ(path)), NULL);
+                        strNewFmt("sftp error unable to create path '%s': path already exists", strZ(path)), NULL);
                 }
             }
             // If the parent path does not exist then create it if allowed
@@ -934,7 +1046,7 @@ storageSftpPathCreate(
 
                 strFree(pathParent);
             }
-            else if (sftpErrno != LIBSSH2_FX_FILE_ALREADY_EXISTS || errorOnExists)
+            else
             {
                 storageSftpEvalLibSsh2Error(
                     rc, sftpErrno, &PathCreateError, strNewFmt("sftp error unable to create path '%s'", strZ(path)), NULL);
@@ -1008,8 +1120,8 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
                                 else
                                 {
                                     THROW_FMT(
-                                        PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE " libssh sftp [%" PRIu64 "]", strZ(file),
-                                        sftpErrno);
+                                        PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE " libssh sftp [%" PRIu64 "] %s", strZ(file),
+                                        sftpErrno, libssh2SftpErrorMsg(sftpErrno));
                                 }
                             }
                             else
@@ -1043,7 +1155,11 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
                 const uint64_t sftpErrno = libssh2_sftp_last_error(this->sftpSession);
 
                 if (sftpErrno != LIBSSH2_FX_NO_SUCH_FILE)
-                    THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE " sftp error [%" PRIu64 "]", strZ(path), sftpErrno);
+                {
+                    THROW_FMT(
+                        PathRemoveError, STORAGE_ERROR_PATH_REMOVE " sftp error [%" PRIu64 "] %s", strZ(path), sftpErrno,
+                        libssh2SftpErrorMsg(sftpErrno));
+                }
 
                 // Path does not exist
                 result = false;
@@ -1194,7 +1310,7 @@ storageSftpNew(
             // requires twice as much space (hashSize * 2) as the raw version.
             char fingerprint[256];
 
-            encodeToStr(encodingHex, (unsigned char *)binaryFingerprint, hashSize, fingerprint);
+            encodeToStr(encodingHex, (const unsigned char *)binaryFingerprint, hashSize, fingerprint);
 
             if (strcmp(fingerprint, strZ(param.hostFingerprint)) != 0)
             {
@@ -1343,7 +1459,8 @@ storageSftpNew(
                     "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
                     " --repo-sftp-public-key-file to be provided\n"
                     "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to"
-                    " generate the keypair"));
+                    " generate the keypair\n"
+                    "HINT: check authorization log on the SFTP server"));
         }
 
         // Init the sftp session
@@ -1374,7 +1491,7 @@ storageSftpNew(
         STORAGE,
         storageNew(
             STORAGE_SFTP_TYPE, path, param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile,
-            param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, param.pathExpressionFunction,
+            param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, 0, param.pathExpressionFunction,
             this, this->interface));
 }
 

@@ -8,14 +8,15 @@ Host Harness
 #include "common/crypto/common.h"
 #include "common/error/retry.h"
 #include "common/io/io.h"
+#include "common/type/json.h"
 #include "common/wait.h"
 #include "config/config.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
-#include "storage/azure/storage.h"
-#include "storage/gcs/storage.h"
+#include "storage/azure/storage.intern.h"
+#include "storage/gcs/storage.intern.h"
 #include "storage/posix/storage.h"
-#include "storage/s3/storage.h"
+#include "storage/s3/storage.intern.h"
 #include "storage/sftp/storage.h"
 
 #include "common/harnessDebug.h"
@@ -90,6 +91,7 @@ static struct HrnHostLocal
     bool archiveAsync;                                              // Async archiving enabled?
     bool fullIncr;                                                  // Full/incr enabled?
     bool nonVersionSpecific;                                        // Run non version-specific tests?
+    bool versioning;                                                // Is versioning enabled in the repo storage?
 
     List *hostList;                                                 // List of hosts
 } hrnHostLocal;
@@ -266,6 +268,7 @@ hrnHostExecBr(HrnHost *const this, const char *const command, const HrnHostExecB
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(HRN_HOST, this);
         FUNCTION_HARNESS_PARAM(STRINGZ, command);
+        FUNCTION_HARNESS_PARAM(STRINGZ, param.user);
         FUNCTION_HARNESS_PARAM(STRINGZ, param.option);
         FUNCTION_HARNESS_PARAM(STRINGZ, param.param);
         FUNCTION_HARNESS_PARAM(INT, param.resultExpect);
@@ -278,6 +281,7 @@ hrnHostExecBr(HrnHost *const this, const char *const command, const HrnHostExecB
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        const String *const user = param.user == NULL ? NULL : STR(param.user);
         String *const commandStr = strCatFmt(strNew(), "pgbackrest --stanza=" HRN_STANZA);
 
         if (param.option != NULL)
@@ -288,7 +292,7 @@ hrnHostExecBr(HrnHost *const this, const char *const command, const HrnHostExecB
         if (param.param != NULL)
             strCatFmt(commandStr, " %s", param.param);
 
-        strCat(result, hrnHostExecP(this, commandStr, .resultExpect = param.resultExpect));
+        strCat(result, hrnHostExecP(this, commandStr, .user = user, .resultExpect = param.resultExpect));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -296,7 +300,7 @@ hrnHostExecBr(HrnHost *const this, const char *const command, const HrnHostExecB
 }
 
 /**********************************************************************************************************************************/
-void
+static void
 hrnHostPgConf(HrnHost *const this)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -625,7 +629,6 @@ hrnHostConfig(HrnHost *const this)
         // Log options
         strCatZ(config, "\n");
         strCatFmt(config, "log-path=%s\n", strZ(hrnHostLogPath(this)));
-        strCatZ(config, "log-level-stderr=off\n");
         strCatZ(config, "log-level-console=warn\n");
         strCatZ(config, "log-level-file=detail\n");
         strCatZ(config, "log-subprocess=n\n");
@@ -705,7 +708,7 @@ hrnHostConfig(HrnHost *const this)
                         HrnHost *const azure = hrnHostGet(HRN_HOST_AZURE);
 
                         this->pub.repo1Storage = storageAzureNew(
-                            hrnHostRepo1Path(this), true, NULL, STRDEF(HRN_HOST_AZURE_CONTAINER), STRDEF(HRN_HOST_AZURE_ACCOUNT),
+                            hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_AZURE_CONTAINER), STRDEF(HRN_HOST_AZURE_ACCOUNT),
                             storageAzureKeyTypeShared, STRDEF(HRN_HOST_AZURE_KEY), 4 * 1024 * 1024, NULL, hrnHostIp(azure),
                             storageAzureUriStylePath, 443, ioTimeoutMs(), false, NULL, NULL);
                     }
@@ -727,7 +730,7 @@ hrnHostConfig(HrnHost *const this)
                         HrnHost *const gcs = hrnHostGet(HRN_HOST_GCS);
 
                         this->pub.repo1Storage = storageGcsNew(
-                            hrnHostRepo1Path(this), true, NULL, STRDEF(HRN_HOST_GCS_BUCKET), storageGcsKeyTypeToken,
+                            hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_GCS_BUCKET), storageGcsKeyTypeToken,
                             STRDEF(HRN_HOST_GCS_KEY), 4 * 1024 * 1024, NULL,
                             strNewFmt("%s:%d", strZ(hrnHostIp(gcs)), HRN_HOST_GCS_PORT), ioTimeoutMs(), false, NULL, NULL);
                     }
@@ -750,7 +753,7 @@ hrnHostConfig(HrnHost *const this)
                         HrnHost *const s3 = hrnHostGet(HRN_HOST_S3);
 
                         this->pub.repo1Storage = storageS3New(
-                            hrnHostRepo1Path(this), true, NULL, STRDEF(HRN_HOST_S3_BUCKET), STRDEF(HRN_HOST_S3_ENDPOINT),
+                            hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_S3_BUCKET), STRDEF(HRN_HOST_S3_ENDPOINT),
                             storageS3UriStyleHost, STR(HRN_HOST_S3_REGION), storageS3KeyTypeShared, STRDEF(HRN_HOST_S3_ACCESS_KEY),
                             STRDEF(HRN_HOST_S3_ACCESS_SECRET_KEY), NULL, NULL, NULL, NULL, NULL, 5 * 1024 * 1024, NULL,
                             hrnHostIp(s3), 443, ioTimeoutMs(), false, NULL, NULL);
@@ -1046,6 +1049,13 @@ hrnHostRepoTotal(void)
     FUNCTION_HARNESS_RETURN(UINT, hrnHostLocal.repoTotal);
 }
 
+bool
+hrnHostRepoVersioning(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RETURN(UINT, hrnHostLocal.versioning);
+}
+
 /**********************************************************************************************************************************/
 void
 hrnHostConfigUpdate(const HrnHostConfigUpdateParam param)
@@ -1262,7 +1272,7 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
                     MEM_CONTEXT_PRIOR_BEGIN()
                     {
                         hrnHostNewP(
-                            HRN_HOST_S3, containerName, STRDEF("minio/minio:RELEASE.2023-09-30T07-02-29Z"), .option = option,
+                            HRN_HOST_S3, containerName, STRDEF("minio/minio:RELEASE.2024-07-15T19-02-30Z"), .option = option,
                             .param = param, .noUpdateHosts = true);
                     }
                     MEM_CONTEXT_PRIOR_END();
@@ -1302,11 +1312,42 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
     // Write pgBackRest configuration for hosts
     hrnHostConfigUpdateP();
 
-    // Create the repo for object stores
-    if (hrnHostLocal.storage == STORAGE_AZURE_TYPE || hrnHostLocal.storage == STORAGE_GCS_TYPE ||
-        hrnHostLocal.storage == STORAGE_S3_TYPE)
+    // Create the bucket/container for object stores
+    switch (hrnHostLocal.storage)
     {
-        hrnHostExecBrP(repo, CFGCMD_REPO_CREATE, .option = "--repo=1");
+        case STORAGE_AZURE_TYPE:
+        {
+            storageAzureRequestP(
+                (StorageAzure *)storageDriver(hrnHostRepo1Storage(repo)), HTTP_VERB_PUT_STR,
+                .query = httpQueryAdd(httpQueryNewP(), AZURE_QUERY_RESTYPE_STR, AZURE_QUERY_VALUE_CONTAINER_STR));
+
+            break;
+        }
+
+        case STORAGE_GCS_TYPE:
+        {
+            JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
+            jsonWriteStr(jsonWriteKeyZ(json, GCS_JSON_NAME), STRDEF(HRN_HOST_GCS_BUCKET));
+            jsonWriteObjectEnd(json);
+
+            storageGcsRequestP(
+                (StorageGcs *)storageDriver(hrnHostRepo1Storage(repo)), HTTP_VERB_POST_STR, .noBucket = true,
+                .content = BUFSTR(jsonWriteResult(json)));
+
+            break;
+        }
+
+        case STORAGE_S3_TYPE:
+        {
+            storageS3RequestP((StorageS3 *)storageDriver(hrnHostRepo1Storage(repo)), HTTP_VERB_PUT_STR, FSLASH_STR);
+            storageS3RequestP(
+                (StorageS3 *)storageDriver(hrnHostRepo1Storage(repo)), HTTP_VERB_PUT_STR, FSLASH_STR,
+                .query = httpQueryAdd(httpQueryNewP(), STRDEF("versioning"), STRDEF("")),
+                .content = BUFSTRDEF("<VersioningConfiguration><Status>Enabled</Status></VersioningConfiguration>"));
+
+            hrnHostLocal.versioning = true;
+            break;
+        }
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

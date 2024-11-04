@@ -6,6 +6,7 @@ Repository List Command
 #include <unistd.h>
 
 #include "command/repo/common.h"
+#include "command/repo/ls.h"
 #include "common/debug.h"
 #include "common/io/fdWrite.h"
 #include "common/log.h"
@@ -62,6 +63,9 @@ storageListRenderInfo(const StorageInfo *const info, IoWrite *const write, const
         {
             ioWriteStr(write, strNewFmt(",\"size\":%" PRIu64, info->size));
             ioWriteStr(write, strNewFmt(",\"time\":%" PRId64, (int64_t)info->timeModified));
+
+            if (info->versionId != NULL)
+                ioWriteStr(write, strNewFmt(",\"version\":%s", strZ(jsonFromVar(VARSTR(info->versionId)))));
         }
 
         if (info->type == storageTypeLink)

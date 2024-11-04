@@ -32,7 +32,7 @@ Types from src/include/c.h
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 typedef int64_t int64;
 
@@ -42,7 +42,7 @@ typedef int64_t int64;
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 /* MultiXactId must be equivalent to TransactionId, to fit in t_xmax */
 typedef TransactionId MultiXactId;
@@ -53,7 +53,7 @@ typedef TransactionId MultiXactId;
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 typedef uint32 MultiXactOffset;
 
@@ -67,7 +67,7 @@ Types from src/include/pgtime.h
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 /*
  * The API of this library is generally similar to the corresponding
@@ -86,7 +86,7 @@ Types from src/include/postgres_ext.h
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 /*
  * Object ID is a fundamental type in Postgres.
@@ -107,10 +107,6 @@ Types from src/include/port/pg_crc32.h
 
 typedef uint32 pg_crc32c;
 
-#elif PG_VERSION >= PG_VERSION_94
-
-typedef uint32 pg_crc32;
-
 #endif
 
 /***********************************************************************************************************************************
@@ -121,7 +117,7 @@ Types from src/include/access/xlogdefs.h
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 /*
  * Pointer to a location in the XLOG.  These pointers are 64 bits wide,
@@ -135,7 +131,7 @@ typedef uint64 XLogRecPtr;
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 /*
  * TimeLineID (TLI) - identifies different database histories to prevent
@@ -169,7 +165,7 @@ Types from src/include/catalog/catversion.h
  */
 
 /*							yyyymmddN */
-#define CATALOG_VERSION_NO	202405161
+#define CATALOG_VERSION_NO	202406281
 
 #elif PG_VERSION >= PG_VERSION_16
 
@@ -288,19 +284,6 @@ Types from src/include/catalog/catversion.h
 /*							yyyymmddN */
 #define CATALOG_VERSION_NO	201510051
 
-#elif PG_VERSION >= PG_VERSION_94
-
-/*
- * We could use anything we wanted for version numbers, but I recommend
- * following the "YYYYMMDDN" style often used for DNS zone serial numbers.
- * YYYYMMDD are the date of the change, and N is the number of the change
- * on that day.  (Hopefully we'll never commit ten independent sets of
- * catalog changes on the same day...)
- */
-
-/*							yyyymmddN */
-#define CATALOG_VERSION_NO	201409291
-
 #endif
 
 /***********************************************************************************************************************************
@@ -333,6 +316,11 @@ Types from src/include/catalog/pg_control.h
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
+#elif PG_VERSION >= PG_VERSION_17
+
+/* Version identifier for this pg_control format */
+#define PG_CONTROL_VERSION	1700
+
 #elif PG_VERSION >= PG_VERSION_13
 
 /* Version identifier for this pg_control format */
@@ -358,7 +346,7 @@ Types from src/include/catalog/pg_control.h
 /* Version identifier for this pg_control format */
 #define PG_CONTROL_VERSION	960
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 /* Version identifier for this pg_control format */
 #define PG_CONTROL_VERSION	942
@@ -379,6 +367,45 @@ Types from src/include/catalog/pg_control.h
 // CheckPoint Type
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
+
+#elif PG_VERSION >= PG_VERSION_17
+
+/*
+ * Body of CheckPoint XLOG records.  This is declared here because we keep
+ * a copy of the latest one in pg_control for possible disaster recovery.
+ * Changing this struct requires a PG_CONTROL_VERSION bump.
+ */
+typedef struct CheckPoint
+{
+	XLogRecPtr	redo;			/* next RecPtr available when we began to
+								 * create CheckPoint (i.e. REDO start point) */
+	TimeLineID	ThisTimeLineID; /* current TLI */
+	TimeLineID	PrevTimeLineID; /* previous TLI, if this record begins a new
+								 * timeline (equals ThisTimeLineID otherwise) */
+	bool		fullPageWrites; /* current full_page_writes */
+	int			wal_level;		/* current wal_level */
+	FullTransactionId nextXid;	/* next free transaction ID */
+	Oid			nextOid;		/* next free OID */
+	MultiXactId nextMulti;		/* next free MultiXactId */
+	MultiXactOffset nextMultiOffset;	/* next free MultiXact offset */
+	TransactionId oldestXid;	/* cluster-wide minimum datfrozenxid */
+	Oid			oldestXidDB;	/* database with minimum datfrozenxid */
+	MultiXactId oldestMulti;	/* cluster-wide minimum datminmxid */
+	Oid			oldestMultiDB;	/* database with minimum datminmxid */
+	pg_time_t	time;			/* time stamp of checkpoint */
+	TransactionId oldestCommitTsXid;	/* oldest Xid with valid commit
+										 * timestamp */
+	TransactionId newestCommitTsXid;	/* newest Xid with valid commit
+										 * timestamp */
+
+	/*
+	 * Oldest XID still running. This is only needed to initialize hot standby
+	 * mode from an online checkpoint, so we only bother calculating this for
+	 * online checkpoints and only when wal_level is replica. Otherwise it's
+	 * set to InvalidTransactionId.
+	 */
+	TransactionId oldestActiveXid;
+} CheckPoint;
 
 #elif PG_VERSION >= PG_VERSION_14
 
@@ -534,48 +561,13 @@ typedef struct CheckPoint
 	TransactionId oldestActiveXid;
 } CheckPoint;
 
-#elif PG_VERSION >= PG_VERSION_94
-
-/*
- * Body of CheckPoint XLOG records.  This is declared here because we keep
- * a copy of the latest one in pg_control for possible disaster recovery.
- * Changing this struct requires a PG_CONTROL_VERSION bump.
- */
-typedef struct CheckPoint
-{
-	XLogRecPtr	redo;			/* next RecPtr available when we began to
-								 * create CheckPoint (i.e. REDO start point) */
-	TimeLineID	ThisTimeLineID; /* current TLI */
-	TimeLineID	PrevTimeLineID; /* previous TLI, if this record begins a new
-								 * timeline (equals ThisTimeLineID otherwise) */
-	bool		fullPageWrites; /* current full_page_writes */
-	uint32		nextXidEpoch;	/* higher-order bits of nextXid */
-	TransactionId nextXid;		/* next free XID */
-	Oid			nextOid;		/* next free OID */
-	MultiXactId nextMulti;		/* next free MultiXactId */
-	MultiXactOffset nextMultiOffset;	/* next free MultiXact offset */
-	TransactionId oldestXid;	/* cluster-wide minimum datfrozenxid */
-	Oid			oldestXidDB;	/* database with minimum datfrozenxid */
-	MultiXactId oldestMulti;	/* cluster-wide minimum datminmxid */
-	Oid			oldestMultiDB;	/* database with minimum datminmxid */
-	pg_time_t	time;			/* time stamp of checkpoint */
-
-	/*
-	 * Oldest XID still running. This is only needed to initialize hot standby
-	 * mode from an online checkpoint, so we only bother calculating this for
-	 * online checkpoints and only when wal_level is hot_standby. Otherwise
-	 * it's set to InvalidTransactionId.
-	 */
-	TransactionId oldestActiveXid;
-} CheckPoint;
-
 #endif
 
 // DBState enum
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 /*
  * System status indicator.  Note this is stored in pg_control; if you change
@@ -1431,7 +1423,7 @@ typedef struct ControlFileData
 	pg_crc32c	crc;
 } ControlFileData;
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 /*
  * Contents of pg_control.
@@ -1582,7 +1574,7 @@ Types from src/include/access/xlog_internal.h
 
 #elif PG_VERSION >= PG_VERSION_17
 
-#define XLOG_PAGE_MAGIC 0xD115	/* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD116	/* can be used as WAL version indicator */
 
 #elif PG_VERSION >= PG_VERSION_16
 
@@ -1620,10 +1612,6 @@ Types from src/include/access/xlog_internal.h
 
 #define XLOG_PAGE_MAGIC 0xD087	/* can be used as WAL version indicator */
 
-#elif PG_VERSION >= PG_VERSION_94
-
-#define XLOG_PAGE_MAGIC 0xD07E	/* can be used as WAL version indicator */
-
 #endif
 
 // XLogPageHeaderData type
@@ -1651,7 +1639,7 @@ typedef struct XLogPageHeaderData
 	uint32		xlp_rem_len;	/* total len of remaining data for record */
 } XLogPageHeaderData;
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 /*
  * Each page of XLOG file has a header like this:
@@ -1681,7 +1669,7 @@ typedef struct XLogPageHeaderData
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 /*
  * When the XLP_LONG_HEADER flag is set, we store additional fields in the
@@ -1702,7 +1690,7 @@ typedef struct XLogLongPageHeaderData
 // ---------------------------------------------------------------------------------------------------------------------------------
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_94
+#elif PG_VERSION >= PG_VERSION_95
 
 /* This flag indicates a "long" page header */
 #define XLP_LONG_HEADER				0x0002

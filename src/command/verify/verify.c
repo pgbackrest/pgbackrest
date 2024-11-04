@@ -370,11 +370,11 @@ verifyManifestFile(
     unsigned int *const jobErrorTotal)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_TEST_PARAM_P(VERIFY_BACKUP_RESULT, backupResult);  // The result set for the backup being processed
+        FUNCTION_LOG_PARAM_P(VERIFY_BACKUP_RESULT, backupResult);   // The result set for the backup being processed
         FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Passphrase to access the manifest file
         FUNCTION_LOG_PARAM(BOOL, currentBackup);                    // Is this possibly a backup currently in progress?
-        FUNCTION_TEST_PARAM(INFO_PG, pgHistory);                    // Database history
-        FUNCTION_TEST_PARAM_P(UINT, jobErrorTotal);                 // Pointer to the overall job error total
+        FUNCTION_LOG_PARAM(INFO_PG, pgHistory);                     // Database history
+        FUNCTION_LOG_PARAM_P(UINT, jobErrorTotal);                  // Pointer to the overall job error total
     FUNCTION_LOG_END();
 
     Manifest *result = NULL;
@@ -754,8 +754,7 @@ verifyArchive(VerifyJobData *const jobData)
                             encodingHex, strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX));
 
                         // Set up the job
-                        ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
-                        PackWrite *const param = protocolCommandParam(command);
+                        PackWrite *const param = protocolPackNew();
 
                         pckWriteStrP(param, filePathName);
                         pckWriteBoolP(param, false);
@@ -769,7 +768,7 @@ verifyArchive(VerifyJobData *const jobData)
 
                         MEM_CONTEXT_PRIOR_BEGIN()
                         {
-                            result = protocolParallelJobNew(VARSTR(jobKey), command);
+                            result = protocolParallelJobNew(VARSTR(jobKey), PROTOCOL_COMMAND_VERIFY_FILE, param);
                         }
                         MEM_CONTEXT_PRIOR_END();
 
@@ -980,8 +979,8 @@ verifyBackup(VerifyJobData *const jobData)
                         if (fileBackupLabel != NULL)
                         {
                             // Set up the job
-                            ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
-                            PackWrite *const param = protocolCommandParam(command);
+                            PackWrite *const param = protocolPackNew();
+
                             const String *const filePathName = backupFileRepoPathP(
                                 fileBackupLabel, .manifestName = fileData.name, .bundleId = fileData.bundleId,
                                 .compressType = manifestData(jobData->manifest)->backupOptionCompressType,
@@ -1021,7 +1020,7 @@ verifyBackup(VerifyJobData *const jobData)
 
                             MEM_CONTEXT_PRIOR_BEGIN()
                             {
-                                result = protocolParallelJobNew(VARSTR(jobKey), command);
+                                result = protocolParallelJobNew(VARSTR(jobKey), PROTOCOL_COMMAND_VERIFY_FILE, param);
                             }
                             MEM_CONTEXT_PRIOR_END();
                         }
@@ -1470,7 +1469,7 @@ static String *
 verifyProcess(const bool verboseText)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_TEST_PARAM(BOOL, verboseText);                     // Is verbose output requested?
+        FUNCTION_LOG_PARAM(BOOL, verboseText);                      // Is verbose output requested?
     FUNCTION_LOG_END();
 
     String *const result = strNew();
@@ -1542,7 +1541,7 @@ verifyProcess(const bool verboseText)
                     .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
                 sortOrderAsc);
 
-            // Get a list of archive Ids in the repo (e.g. 9.4-1, 10-2, etc) sorted ascending by the db-id (number after the dash)
+            // Get a list of archive Ids in the repo (e.g. 9.6-1, 10-2, etc) sorted ascending by the db-id (number after the dash)
             jobData.archiveIdList = strLstSort(
                 strLstComparatorSet(
                     storageListP(storage, STORAGE_REPO_ARCHIVE_STR, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),

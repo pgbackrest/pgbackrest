@@ -15,16 +15,16 @@ Backup Protocol Handler
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
-backupFileProtocol(PackRead *const param, ProtocolServer *const server)
+FN_EXTERN ProtocolServerResult *
+backupFileProtocol(PackRead *const param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
-        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
     ASSERT(param != NULL);
-    ASSERT(server != NULL);
+
+    ProtocolServerResult *const result = protocolServerResultNewP();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -79,37 +79,34 @@ backupFileProtocol(PackRead *const param, ProtocolServer *const server)
         }
 
         // Backup file
-        const List *const result = backupFile(
+        const List *const resultList = backupFile(
             repoFile, bundleId, bundleRaw, blockIncrReference, repoFileCompressType, repoFileCompressLevel, cipherType, cipherPass,
             pgVersionForce, pageSize, fileList);
 
         // Return result
-        PackWrite *const resultPack = protocolPackNew();
+        PackWrite *const data = protocolServerResultData(result);
 
-        for (unsigned int resultIdx = 0; resultIdx < lstSize(result); resultIdx++)
+        for (unsigned int resultIdx = 0; resultIdx < lstSize(resultList); resultIdx++)
         {
-            const BackupFileResult *const fileResult = lstGet(result, resultIdx);
+            const BackupFileResult *const fileResult = lstGet(resultList, resultIdx);
 
             ASSERT(
                 fileResult->backupCopyResult == backupCopyResultSkip || fileResult->copySize != 0 ||
                 bufEq(fileResult->copyChecksum, HASH_TYPE_SHA1_ZERO_BUF));
 
-            pckWriteStrP(resultPack, fileResult->manifestFile);
-            pckWriteU32P(resultPack, fileResult->backupCopyResult);
-            pckWriteBoolP(resultPack, fileResult->repoInvalid);
-            pckWriteU64P(resultPack, fileResult->copySize);
-            pckWriteU64P(resultPack, fileResult->bundleOffset);
-            pckWriteU64P(resultPack, fileResult->blockIncrMapSize);
-            pckWriteU64P(resultPack, fileResult->repoSize);
-            pckWriteBinP(resultPack, fileResult->copyChecksum);
-            pckWriteBinP(resultPack, fileResult->repoChecksum);
-            pckWritePackP(resultPack, fileResult->pageChecksumResult);
+            pckWriteStrP(data, fileResult->manifestFile);
+            pckWriteU32P(data, fileResult->backupCopyResult);
+            pckWriteBoolP(data, fileResult->repoInvalid);
+            pckWriteU64P(data, fileResult->copySize);
+            pckWriteU64P(data, fileResult->bundleOffset);
+            pckWriteU64P(data, fileResult->blockIncrMapSize);
+            pckWriteU64P(data, fileResult->repoSize);
+            pckWriteBinP(data, fileResult->copyChecksum);
+            pckWriteBinP(data, fileResult->repoChecksum);
+            pckWritePackP(data, fileResult->pageChecksumResult);
         }
-
-        protocolServerDataPut(server, resultPack);
-        protocolServerDataEndPut(server);
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(PROTOCOL_SERVER_RESULT, result);
 }

@@ -118,27 +118,6 @@ testRun(void)
             "local repo1 and repo2 paths are both '/var/lib/pgbackrest' but must be different");
 
         // -------------------------------------------------------------------------------------------------------------------------
-#ifdef HAVE_LIBSSH2
-        TEST_TITLE("local default repo paths for sftp repo type must be different");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
-        hrnCfgArgKeyRawStrId(argList, cfgOptRepoType, 1, STORAGE_SFTP_TYPE);
-        hrnCfgArgKeyRawStrId(argList, cfgOptRepoType, 2, STORAGE_SFTP_TYPE);
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostUser, 1, "user1");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostUser, 2, "user2");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHost, 1, "host1");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHost, 2, "host2");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostKeyHashType, 1, "sha1");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostKeyHashType, 2, "md5");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpPrivateKeyFile, 1, "/keyfile1");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpPrivateKeyFile, 2, "/keyfile2");
-        TEST_ERROR(
-            hrnCfgLoadP(cfgCmdInfo, argList), OptionInvalidValueError,
-            "local repo1 and repo2 paths are both '/var/lib/pgbackrest' but must be different");
-#endif // HAVE_LIBSSH2
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("local repo paths same but types different");
 
         argList = strLstNew();
@@ -235,11 +214,11 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
         hrnCfgArgRawZ(argList, cfgOptDbTimeout, "100000");
-        hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "50.5");
+        hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "50500ms");
         TEST_ERROR(
             hrnCfgLoadP(cfgCmdCheck, argList), OptionInvalidValueError,
-            "'50.5' is not valid for 'protocol-timeout' option\n"
-            "HINT 'protocol-timeout' option (50.5) should be greater than 'db-timeout' option (100000).");
+            "'50500ms' is not valid for 'protocol-timeout' option\n"
+            "HINT 'protocol-timeout' option (50500ms) should be greater than 'db-timeout' option (100000).");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("very small protocol-timeout triggers db-timeout special handling");
@@ -511,6 +490,24 @@ testRun(void)
 
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 1);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 1);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("repo is set when repo-target-time is set");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-08 12:12:12+00");
+        TEST_ERROR(
+            hrnCfgLoadP(cfgCmdInfo, argList), OptionInvalidError, "option 'repo-target-time' not valid without option 'repo'");
+
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        TEST_ERROR(
+            hrnCfgLoadP(cfgCmdArchiveGet, argList), OptionInvalidError,
+            "option 'repo-target-time' not valid without option 'repo'");
+
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compress-type=none when compress=n");
@@ -823,7 +820,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptLogLevelConsole, "off");
         hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, "off");
         hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "off");
-        hrnCfgArgRawZ(argList, cfgOptIoTimeout, "95.5");
+        hrnCfgArgRawZ(argList, cfgOptIoTimeout, "95500ms");
         strLstAddZ(argList, CFGCMD_ARCHIVE_GET);
 
         umask(0111);
@@ -883,8 +880,10 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "off");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
 
+        ioBufferSizeSet(333);
+
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command for backup");
-        TEST_RESULT_UINT(ioBufferSize(), 1048576, "buffer size set to option default");
+        TEST_RESULT_UINT(ioBufferSize(), 333, "buffer size not updated by help command");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("help command for help");
@@ -894,8 +893,10 @@ testRun(void)
         strLstAddZ(argList, "help");
         strLstAddZ(argList, "help");
 
+        ioBufferSizeSet(333);
+
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
-        TEST_RESULT_UINT(ioBufferSize(), 1048576, "buffer size set to option default");
+        TEST_RESULT_UINT(ioBufferSize(), 333, "buffer size not updated by help command");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command takes lock and opens log file and uses custom tcp settings");

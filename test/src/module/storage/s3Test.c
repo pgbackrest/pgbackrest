@@ -747,7 +747,7 @@ testRun(void)
                 TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
                 TEST_RESULT_BOOL(storageWriteTruncate(write), true, "file will be truncated");
 
-                TEST_RESULT_VOID(storageWriteS3Close(write->driver), "close file again");
+                TEST_RESULT_VOID(storageWriteS3Close(ioWriteDriver(storageWriteIo(write))), "close file again");
 
                 // Check that temp credentials were changed
                 TEST_RESULT_STR_Z(driver->accessKey, "xx", "check access key");
@@ -933,6 +933,7 @@ testRun(void)
 
                 #define TEST_SERVICE_ROLE                           "arn:aws:iam::123456789012:role/TestRole"
                 #define TEST_SERVICE_TOKEN                          "TOKEN"
+                #define TEST_SERVICE_TOKEN_FILE                     TEST_PATH "/web-id-token"
                 #define TEST_SERVICE_URI                                                                                           \
                     "/?Action=AssumeRoleWithWebIdentity&RoleArn=arn%3Aaws%3Aiam%3A%3A123456789012%3Arole%2FTestRole"               \
                         "&RoleSessionName=pgBackRest&Version=2011-06-15&WebIdentityToken=" TEST_SERVICE_TOKEN
@@ -950,7 +951,7 @@ testRun(void)
                     "</AssumeRoleWithWebIdentityResponse>"
                 // {uncrustify_on}
 
-                HRN_STORAGE_PUT_Z(storagePosixNewP(TEST_PATH_STR, .write = true), "web-id-token", TEST_SERVICE_TOKEN);
+                HRN_STORAGE_PUT_Z(storagePosixNewP(TEST_PATH_STR, .write = true), TEST_SERVICE_TOKEN_FILE, TEST_SERVICE_TOKEN);
 
                 argList = strLstDup(commonArgList);
                 hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
@@ -967,13 +968,13 @@ testRun(void)
                     storageRepoGet(0, true), OptionInvalidError,
                     "option 'repo1-s3-key-type' is 'web-id' but 'AWS_ROLE_ARN' and 'AWS_WEB_IDENTITY_TOKEN_FILE' are not set");
 
-                setenv("AWS_WEB_IDENTITY_TOKEN_FILE", TEST_PATH "/web-id-token", true);
+                setenv("AWS_WEB_IDENTITY_TOKEN_FILE", TEST_SERVICE_TOKEN_FILE, true);
 
                 s3 = storageRepoGet(0, true);
                 driver = (StorageS3 *)storageDriver(s3);
 
                 TEST_RESULT_STR_Z(driver->credRole, TEST_SERVICE_ROLE, "check role");
-                TEST_RESULT_STR_Z(driver->webIdToken, TEST_SERVICE_TOKEN, "check token");
+                TEST_RESULT_STR_Z(driver->webIdTokenFile, TEST_SERVICE_TOKEN_FILE, "check token file");
 
                 // Set partSize to a small value for testing
                 driver->partSize = 16;
@@ -1435,6 +1436,132 @@ testRun(void)
                 testResponseP(service, .code = 204);
 
                 TEST_RESULT_VOID(storageRemoveP(s3, STRDEF("/path/to/test.txt")), "remove");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to time limited");
+
+                hrnServerScriptClose(service);
+
+                argList = strLstDup(commonArgList);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
+                hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
+                hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+                hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-04 02:54:09+00");
+                HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+                s3 = storageRepoGet(0, false);
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("list with time limit");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&prefix=path%2Fto%2F&versions=");
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>true</IsTruncated>"
+                        "    <NextContinuationToken>1ueG</NextContinuationToken>"
+                        "    <DeleteMarker>"
+                        "        <Key>path/to/test_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
+                        "    </DeleteMarker>"
+                        "    <Version>"
+                        "        <Key>path/to/test_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
+                        "    </Version>"
+                        "</ListBucketResult>");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/?continuation-token=1ueG&delimiter=%2F&prefix=path%2Fto%2F&versions=");
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
+                        "    <Version>"
+                        "        <Key>path/to/test_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:09.000Z</LastModified>"
+                        "        <Size>737</Size>"
+                        "        <VersionId>bbbb</VersionId>"
+                        "    </Version>"
+                        "    <Version>"
+                        "        <Key>path/to/test_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:09.000Z</LastModified>"
+                        "    </Version>"
+                        "    <Version>"
+                        "        <Key>path/to/test_file2</Key>"
+                        "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
+                        "    </Version>"
+                        "   <CommonPrefixes>"
+                        "       <Prefix>path/to/test_path/</Prefix>"
+                        "   </CommonPrefixes>"
+                        "</ListBucketResult>");
+
+                TEST_STORAGE_LIST(
+                    s3, "/path/to",
+                    "test_file {s=737, t=1722740049, v=bbbb}\n"
+                    "test_path/\n",
+                    .level = storageInfoLevelBasic, .noRecurse = true);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file with time limit");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&prefix=path%2F3%2F&versions=");
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
+                        "    <Version>"
+                        "        <Key>path/3/test_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
+                        "    </Version>"
+                        "    <Version>"
+                        "        <Key>path/3/test_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:09.000Z</LastModified>"
+                        "        <Size>6</Size>"
+                        "        <VersionId>bbbb</VersionId>"
+                        "    </Version>"
+                        "   <CommonPrefixes>"
+                        "       <Prefix>path/3/test_path/</Prefix>"
+                        "   </CommonPrefixes>"
+                        "</ListBucketResult>");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/path/3/test_file?versionId=bbbb");
+                testResponseP(service, .content = "123456");
+
+                TEST_RESULT_STR_Z(
+                    strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("/path/3/test_file")))), "123456", "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get missing file with time limit");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&versions=");
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
+                        "    <Version>"
+                        "        <Key>missing_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
+                        "    </Version>"
+                        "    <DeleteMarker>"
+                        "        <Key>missing_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:09.000Z</LastModified>"
+                        "    </DeleteMarker>"
+                        "    <CommonPrefixes>"
+                        "       <Prefix>test_path/</Prefix>"
+                        "    </CommonPrefixes>"
+                        "</ListBucketResult>");
+
+                TEST_RESULT_PTR(
+                    storageGetP(storageNewReadP(s3, STRDEF("missing_file"), .ignoreMissing = true)), NULL, "missing file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 hrnServerScriptEnd(service);

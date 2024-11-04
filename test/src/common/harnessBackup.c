@@ -311,7 +311,22 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
             if (pgVersion <= PG_VERSION_95)
                 HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_OPEN_GE_93(2, "dbname='postgres' port=5433", pgVersion, pg2Path, true, NULL, NULL));
             else
-                HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_OPEN_GE_96(2, "dbname='postgres' port=5433", pgVersion, pg2Path, true, NULL, NULL));
+            {
+                if (param.backupStandbyError)
+                {
+                    HRN_PQ_SCRIPT_ADD(
+                        {.session = 2, .function = HRN_PQ_CONNECTDB, .param = "[\"dbname='postgres' port=5433\"]"},
+                        {.session = 2, .function = HRN_PQ_STATUS, .resultInt = CONNECTION_BAD},
+                        {.session = 2, .function = HRN_PQ_ERRORMESSAGE, .resultZ = "error"});
+
+                    param.backupStandby = false;
+                }
+                else
+                {
+                    HRN_PQ_SCRIPT_ADD(
+                        HRN_PQ_SCRIPT_OPEN_GE_96(2, "dbname='postgres' port=5433", pgVersion, pg2Path, true, NULL, NULL));
+                }
+            }
         }
 
         // Get start time
@@ -343,12 +358,12 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
             }
         }
 
-        // Advisory lock
-        HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true));
-
-        // Check if backup is in progress (only for exclusive backup)
+        // Get advisory lock and check if backup is in progress (only for exclusive backup)
         if (pgVersion <= PG_VERSION_95)
+        {
+            HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true));
             HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_IN_BACKUP(1, false));
+        }
 
         // Perform archive check
         if (!param.noArchiveCheck)

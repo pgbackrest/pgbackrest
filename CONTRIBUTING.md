@@ -237,12 +237,12 @@ pgbackrest/test/test.pl --dry-run
 
     P00   INFO: test begin on x86_64 - log level info
     P00   INFO: clean autogenerate code
---> P00   INFO: 81 tests selected
+--> P00   INFO: 83 tests selected
                 
-    P00   INFO: P1-T01/81 - vm=none, module=common, test=error
-           [filtered 78 lines of output]
-    P00   INFO: P1-T80/81 - vm=none, module=performance, test=type
-    P00   INFO: P1-T81/81 - vm=none, module=performance, test=storage
+    P00   INFO: P1-T01/83 - vm=none, module=common, test=error
+           [filtered 80 lines of output]
+    P00   INFO: P1-T82/83 - vm=none, module=performance, test=type
+    P00   INFO: P1-T83/83 - vm=none, module=performance, test=storage
 --> P00   INFO: DRY RUN COMPLETED SUCCESSFULLY
 ```
 
@@ -263,7 +263,7 @@ pgbackrest/test/test.pl --vm-out --module=common --test=wait
                 
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
                 
-        P00   INFO: test command begin 2.52: [common/wait] --log-level=info --no-log-timestamp --repo-path=/home/vagrant/test/repo --test-path=/home/vagrant/test --vm=none --vm-id=0
+        P00   INFO: test command begin 2.54.0: [common/wait] --log-level=info --no-log-timestamp --repo-path=/home/vagrant/test/repo --scale=1 --test-path=/home/vagrant/test --vm=none --vm-id=0
         P00   INFO: test command end: completed successfully
         run 1 - waitNew(), waitMore, and waitFree()
                       L0018     expect AssertError: assertion 'waitTime <= 999999000' failed
@@ -306,11 +306,17 @@ pgbackrest/test/test.pl --vm-out --module=common --test=wait
                       L0085         upper range check
                       L0087         free wait
         
+        run 1/5 ----- L0090 waitRemainder()
+                      L0092     new wait = 500ms
+                      L0093     check initial wait remainder
+                      L0094     check initial wait remainder
+                      L0098     check updated wait remainder
+                      L0099     check updated wait remainder
+        
         TESTS COMPLETED SUCCESSFULLY
     
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
     P00   INFO: tested modules have full coverage
-    P00   INFO: writing C coverage report
     P00   INFO: TESTS COMPLETED SUCCESSFULLY
 ```
 
@@ -334,7 +340,6 @@ pgbackrest/test/test.pl --module=postgres
     P00   INFO: P1-T1/2 - vm=none, module=postgres, test=client
     P00   INFO: P1-T2/2 - vm=none, module=postgres, test=interface
     P00   INFO: tested modules have full coverage
-    P00   INFO: writing C coverage report
     P00   INFO: TESTS COMPLETED SUCCESSFULLY
 ```
 
@@ -349,7 +354,7 @@ pgbackrest/test/test.pl --vm-build --vm=u20
 --- output ---
 
     P00   INFO: test begin on x86_64 - log level info
-    P00   INFO: Using cached pgbackrest/test:u20-base-20240425A image (c3fc7cc1956c5eb10995119deed7a21b92dd07a7) ...
+    P00   INFO: Using cached pgbackrest/test:u20-base-20241016A image (711ee90bf3ea0e8bb054285193811266b9b1f2f3) ...
     P00   INFO: Building pgbackrest/test:u20-test image ...
     P00   INFO: Build Complete
 ```
@@ -371,9 +376,6 @@ pgbackrest/test/test.pl --vm=u20 --module=postgres --test=interface --run=2
     P00   INFO: 1 test selected
                 
     P00   INFO: P1-T1/1 - vm=u20, module=postgres, test=interface, run=2
-    P00   INFO: no code modules had all tests run required for coverage
-    P00   INFO: tested modules have full coverage
-    P00   INFO: writing C coverage report
     P00   INFO: TESTS COMPLETED SUCCESSFULLY
 ```
 
@@ -495,7 +497,7 @@ HRN_FORK_BEGIN()
             "    cipher: none\n"
             "\n"
             "    db (current)\n"
-            "        wal archive min/max (9.4): none present\n",
+            "        wal archive min/max (9.6): none present\n",
             "text - single stanza, no valid backups, backup/expire lock detected");
 
         // Notify child to release lock
@@ -642,7 +644,7 @@ repo-test-type:
 
 - `command-role` - defines the processes for which the option is valid. `main` indicates the option will be used by the main process and not be passed on to other local/remote processes.
 
-At compile time, the `config.auto.h` file will be generated to contain the constants used for options in the code. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with `cfgOpt`, e.g. `repo-path` becomes `cfgOptRepoPath`.
+When `test.pl` is run the `config.auto.h` file will be generated to contain the constants used for options in the code. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with `cfgOpt`, e.g. `repo-path` becomes `cfgOptRepoPath`.
 
 ### help.xml
 

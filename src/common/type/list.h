@@ -49,6 +49,9 @@ FN_EXTERN int lstComparatorStr(const void *item1, const void *item2);
 // General purpose list comparator for unsigned int or structs with an unsigned int as the first member
 FN_EXTERN int lstComparatorUInt(const void *item1, const void *item2);
 
+// General purpose list comparator for int or structs with an int as the first member
+FN_EXTERN int lstComparatorInt(const void *item1, const void *item2);
+
 // General purpose list comparator for zero-terminated strings or structs with a zero-terminated string as the first member
 FN_EXTERN int lstComparatorZ(const void *item1, const void *item2);
 
@@ -115,7 +118,7 @@ FN_EXTERN void *lstGetLast(const List *this);
 
 // Find an item in the list
 FN_EXTERN void *lstFind(const List *this, const void *item);
-FN_EXTERN void *lstFindDefault(const List *this, const void *item, void *itemDefault);
+FN_EXTERN const void *lstFindDefault(const List *this, const void *item, const void *itemDefault);
 FN_EXTERN unsigned int lstFindIdx(const List *this, const void *item);
 
 // Does an item exist in the list?
