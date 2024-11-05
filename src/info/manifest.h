@@ -307,6 +307,9 @@ FN_EXTERN void manifestSave(Manifest *this, IoWrite *write);
 // Validate a completed manifest. Use strict mode only when saving the manifest after a backup.
 FN_EXTERN void manifestValidate(Manifest *this, bool strict);
 
+// Enable delta if timestamp anomalies are found
+FN_EXTERN void manifestDeltaCheck(Manifest *this, const Manifest *manifestPrior);
+
 /***********************************************************************************************************************************
 Db functions and getters/setters
 ***********************************************************************************************************************************/

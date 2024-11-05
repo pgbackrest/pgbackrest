@@ -1568,6 +1568,61 @@ manifestBuildValidate(Manifest *const this, const bool delta, const time_t copyS
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
+manifestDeltaCheck(Manifest *const this, const Manifest *const manifestPrior)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(MANIFEST, this);
+        FUNCTION_LOG_PARAM(MANIFEST, manifestPrior);
+    FUNCTION_LOG_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Check for anomalies between manifests if delta is not already enabled
+        if (!varBool(this->pub.data.backupOptionDelta))
+        {
+            for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
+            {
+                const ManifestFile file = manifestFile(this, fileIdx);
+
+                // If file was found in prior manifest then perform checks
+                if (manifestFileExists(manifestPrior, file.name))
+                {
+                    const ManifestFile filePrior = manifestFileFind(manifestPrior, file.name);
+
+                    // Check for timestamp earlier than the prior backup
+                    if (file.timestamp < filePrior.timestamp)
+                    {
+                        LOG_WARN_FMT(
+                            "file '%s' has timestamp earlier than prior backup (prior %" PRId64 ", current %" PRId64 "), enabling"
+                            " delta checksum",
+                            strZ(manifestPathPg(file.name)), (int64_t)filePrior.timestamp, (int64_t)file.timestamp);
+
+                        this->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
+                        break;
+                    }
+
+                    // Check for size change with no timestamp change
+                    if (file.sizeOriginal != filePrior.sizeOriginal && file.timestamp == filePrior.timestamp)
+                    {
+                        LOG_WARN_FMT(
+                            "file '%s' has same timestamp (%" PRId64 ") as prior but different size (prior %" PRIu64 ", current"
+                            " %" PRIu64 "), enabling delta checksum",
+                            strZ(manifestPathPg(file.name)), (int64_t)file.timestamp, filePrior.sizeOriginal, file.sizeOriginal);
+
+                        this->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
 manifestBuildIncr(
     Manifest *const this, const Manifest *const manifestPrior, const BackupType type, const String *const archiveStart)
 {
@@ -1623,45 +1678,8 @@ manifestBuildIncr(
             this->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
         }
 
-        // Check for anomalies between manifests if delta is not already enabled. This can't be combined with the main comparison
-        // loop below because delta changes the behavior of that loop.
-        if (!varBool(this->pub.data.backupOptionDelta))
-        {
-            for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
-            {
-                const ManifestFile file = manifestFile(this, fileIdx);
-
-                // If file was found in prior manifest then perform checks
-                if (manifestFileExists(manifestPrior, file.name))
-                {
-                    const ManifestFile filePrior = manifestFileFind(manifestPrior, file.name);
-
-                    // Check for timestamp earlier than the prior backup
-                    if (file.timestamp < filePrior.timestamp)
-                    {
-                        LOG_WARN_FMT(
-                            "file '%s' has timestamp earlier than prior backup (prior %" PRId64 ", current %" PRId64 "), enabling"
-                            " delta checksum",
-                            strZ(manifestPathPg(file.name)), (int64_t)filePrior.timestamp, (int64_t)file.timestamp);
-
-                        this->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
-                        break;
-                    }
-
-                    // Check for size change with no timestamp change
-                    if (file.sizeOriginal != filePrior.sizeOriginal && file.timestamp == filePrior.timestamp)
-                    {
-                        LOG_WARN_FMT(
-                            "file '%s' has same timestamp (%" PRId64 ") as prior but different size (prior %" PRIu64 ", current"
-                            " %" PRIu64 "), enabling delta checksum",
-                            strZ(manifestPathPg(file.name)), (int64_t)file.timestamp, filePrior.sizeOriginal, file.sizeOriginal);
-
-                        this->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
-                        break;
-                    }
-                }
-            }
-        }
+        // Enable delta if when there are timestamp anomalies
+        manifestDeltaCheck(this, manifestPrior);
 
         // Find files to (possibly) reference in the prior manifest
         const bool delta = varBool(this->pub.data.backupOptionDelta);

@@ -942,12 +942,13 @@ backupResumeCleanRecurse(
 
 // Helper to clean invalid paths/files/links out of the resumable backup path
 static void
-backupResumeClean(Manifest *const manifest, const Manifest *const manifestResume, const bool resume)
+backupResumeClean(Manifest *const manifest, const Manifest *const manifestResume, const bool resume, const bool delta)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
         FUNCTION_LOG_PARAM(MANIFEST, manifestResume);
         FUNCTION_LOG_PARAM(BOOL, resume);
+        FUNCTION_LOG_PARAM(BOOL, delta);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -967,7 +968,7 @@ backupResumeClean(Manifest *const manifest, const Manifest *const manifestResume
 
         backupResumeCleanRecurse(
             storageNewItrP(storageRepo(), backupPath, .sortOrder = sortOrderAsc), manifest, manifestResume,
-            compressTypeEnum(cfgOptionStrId(cfgOptCompressType)), cfgOptionBool(cfgOptDelta), resume, backupPath, NULL);
+            compressTypeEnum(cfgOptionStrId(cfgOptCompressType)), delta, resume, backupPath, NULL);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1129,7 +1130,7 @@ backupResume(Manifest *const manifest, const String *const cipherPassBackup)
                 "resumable backup %s of same type exists -- invalid files will be removed then the backup will resume",
                 strZ(manifestData(manifestResume)->backupLabel));
 
-            backupResumeClean(manifest, manifestResume, true);
+            backupResumeClean(manifest, manifestResume, true, cfgOptionBool(cfgOptDelta));
         }
         // Else generate a new label for the backup
         else
@@ -2792,7 +2793,8 @@ cmdBackup(void)
         if (cfgOptionStrId(cfgOptType) == backupTypeFull && manifestPrior != NULL)
         {
             LOG_INFO("full/incr backup cleanup");
-            backupResumeClean(manifest, manifestPrior, false);
+            manifestDeltaCheck(manifest, manifestPrior);
+            backupResumeClean(manifest, manifestPrior, false, varBool(manifestData(manifest)->backupOptionDelta));
             LOG_INFO("full/incr backup final copy");
         }
         // Else normal resume
