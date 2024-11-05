@@ -3460,13 +3460,19 @@ testRun(void)
 
             HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksumVersion = 0, .walSegmentSize = 2 * 1024 * 1024);
 
-            // File removed before final copy. This file will still end up in the final backup since it was not changed when the
-            // final manifest was built. This is OK since it will be removed during replay.
+            // File removed before final copy
             file = bufNew(BLOCK_MIN_SIZE + 1);
             memset(bufPtr(file), 71, bufSize(file));
             bufUsedSet(file, bufSize(file));
 
             HRN_STORAGE_PUT(storagePgWrite(), "rm-before-final-cp", file, .timeModified = backupTimeStart - 120);
+
+            // Bundled file removed before final copy
+            file = bufNew(BLOCK_MIN_SIZE);
+            memset(bufPtr(file), 22, bufSize(file));
+            bufUsedSet(file, bufSize(file));
+
+            HRN_STORAGE_PUT(storagePgWrite(), "rm-bnd-before-final-cp", file, .timeModified = backupTimeStart - 120);
 
             // File time will change before the final copy and cause a delta
             Buffer *fileTimeChange = bufNew(BLOCK_MIN_SIZE + 1);
@@ -3502,22 +3508,18 @@ testRun(void)
                 {.op = hrnBackupScriptOpUpdate, .after = true, .file = storagePathP(storagePg(), STRDEF("time-change")),
                  .content = fileTimeChange, .time = backupTimeStart - 121},
                 {.op = hrnBackupScriptOpRemove, .after = true, .file = storagePathP(storagePg(), STRDEF("rm-after-prelim-cp"))},
+                {.op = hrnBackupScriptOpRemove, .exec = 2, .file = storagePathP(storagePg(), STRDEF("rm-bnd-before-final-cp"))},
                 {.op = hrnBackupScriptOpRemove, .exec = 2, .file = storagePathP(storagePg(), STRDEF("rm-before-final-cp"))});
             hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
-            // Remove extra file that will end up in the backup because it was removed by the database after it was already written
-            // in phase 1. !!!
-            HRN_STORAGE_REMOVE(
-                storageRepoWrite(), STORAGE_REPO_BACKUP "/20191103-165320F/pg_data/rm-before-final-cp", .errorOnMissing = true);
-
             TEST_RESULT_LOG(
                 "P00   INFO: full/incr backup preliminary copy of files last modified before 2019-11-03 16:51:20\n"
                 "P00   INFO: backup '20191103-165320F' cannot be resumed: partially deleted by prior resume or invalid\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, 27.27%) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/rm-after-prelim-cp (8KB, 36.36%) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/time-change (8KB, 45.45%) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/rm-before-final-cp (8KB, 54.54%) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, 24.99%) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/rm-after-prelim-cp (8KB, 33.33%) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/time-change (8KB, 41.66%) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/rm-before-final-cp (8KB, 49.99%) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DBF06000000000, lsn = 5dbf060/0\n"
                 "P00   INFO: check archive for segment 0000000105DBF06000000000\n"
@@ -3528,11 +3530,12 @@ testRun(void)
                 " (missing in manifest)\n"
                 "P00   INFO: full/incr backup final copy\n"
                 "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/empty\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, 56.24%) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, 74.99%) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/below-fi-limit (8KB, 81.24%) checksum [SHA1]\n"
-                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/time-change (8KB, 87.49%) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, 52.93%) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, 70.58%) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/below-fi-limit (8KB, 76.46%) checksum [SHA1]\n"
+                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/time-change (8KB, 82.35%) checksum [SHA1]\n"
                 "P01 DETAIL: skip file removed by database " TEST_PATH "/pg1/rm-before-final-cp\n"
+                "P01 DETAIL: skip file removed by database " TEST_PATH "/pg1/rm-bnd-before-final-cp\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/0, 8KB, 99.99%) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/8192, 2B, 100.00%) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"

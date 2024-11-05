@@ -124,20 +124,14 @@ backupFile(
                         fileResult->backupCopyResult = backupCopyResultSkip;
                 }
 
-                // On resume check the manifest file
-                if (file->manifestFileResume)
+                // On resume check the manifest file if is still exists in pg
+                if (file->manifestFileResume && fileResult->backupCopyResult != backupCopyResultSkip)
                 {
                     // Resumed files should never have a reference to a prior backup
                     ASSERT(!file->manifestFileHasReference);
 
-                    // If the file is missing from pg, then remove it from the repo (backupJobResult() will remove it from the
-                    // manifest)
-                    if (fileResult->backupCopyResult == backupCopyResultSkip)
-                    {
-                        storageRemoveP(storageRepoWrite(), repoFile);
-                    }
-                    // Else if the pg file matches or is unknown because delta was not performed then check the repo file
-                    else if (!file->pgFileDelta || pgFileMatch)
+                    // If the pg file matches or is unknown because delta was not performed then check the repo file
+                    if (!file->pgFileDelta || pgFileMatch)
                     {
                         // Generate checksum/size for the repo file
                         IoRead *const read = storageReadIo(storageNewReadP(storageRepo(), repoFile));
@@ -434,6 +428,11 @@ backupFile(
                     else
                         fileResult->backupCopyResult = backupCopyResultSkip;
                 }
+
+                // Remove the file if it was skipped and not bundled. The file will not always exist, but does need to be removed in
+                // the case where the file existed before a resume or in the preliminary phase of a full/incr backup.
+                if (fileResult->backupCopyResult == backupCopyResultSkip && bundleId == 0)
+                    storageRemoveP(storageRepoWrite(), repoFile);
             }
             MEM_CONTEXT_TEMP_END();
         }
