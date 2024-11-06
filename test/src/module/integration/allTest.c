@@ -44,6 +44,9 @@ Test statuses
 
 #define TEST_RESTORE_POINT                                          "pgbackrest"
 
+#define UPDATE_SPOOL_PATH() \
+    hrnHostConfigUpdateP(.archiveAsync = BOOL_TRUE_VAR, .spoolPathPostfix = VARSTR(STRDEF(STRINGIFY(__COUNTER__))))
+
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
@@ -288,6 +291,9 @@ testRun(void)
             // Stop the cluster
             HRN_HOST_PG_STOP(pg1);
 
+            // Set unique spool path
+            UPDATE_SPOOL_PATH();
+
             // Restore
             TEST_HOST_BR(pg1, CFGCMD_RESTORE, .option = zNewFmt("--force --repo=%u", hrnHostRepoTotal()));
             HRN_HOST_PG_START(pg1);
@@ -304,6 +310,9 @@ testRun(void)
 
             // Stop the cluster and try again
             HRN_HOST_PG_STOP(pg1);
+
+            // Set unique spool path
+            UPDATE_SPOOL_PATH();
 
             // Restore
             TEST_HOST_BR(pg1, CFGCMD_RESTORE, .option = "--delta --type=immediate --target-action=promote --db-exclude=exclude_me");
@@ -338,6 +347,9 @@ testRun(void)
             // Stop the cluster
             HRN_HOST_PG_STOP(pg1);
 
+            // Set unique spool path
+            UPDATE_SPOOL_PATH();
+
             // Restore
             TEST_HOST_BR(
                 pg1, CFGCMD_RESTORE,
@@ -370,6 +382,9 @@ testRun(void)
             // Stop the cluster
             HRN_HOST_PG_STOP(pg1);
 
+            // Set unique spool path
+            UPDATE_SPOOL_PATH();
+
             // Restore
             TEST_HOST_BR(
                 pg1, CFGCMD_RESTORE,
@@ -391,6 +406,9 @@ testRun(void)
             // Stop the cluster
             HRN_HOST_PG_STOP(pg1);
 
+            // Set unique spool path
+            UPDATE_SPOOL_PATH();
+
             // Restore
             TEST_HOST_BR(
                 pg1, CFGCMD_RESTORE,
@@ -408,6 +426,9 @@ testRun(void)
         {
             // Stop the cluster
             HRN_HOST_PG_STOP(pg1);
+
+            // Set unique spool path
+            UPDATE_SPOOL_PATH();
 
             // Restore
             TEST_HOST_BR(
@@ -433,6 +454,9 @@ testRun(void)
                 // Delete stanza
                 TEST_HOST_BR(repo, CFGCMD_STANZA_DELETE);
             }
+
+            // Set unique spool path
+            UPDATE_SPOOL_PATH();
 
             TEST_HOST_BR(
                 pg1, CFGCMD_RESTORE,

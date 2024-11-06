@@ -467,6 +467,7 @@ typedef struct HrnHostConfigUpdateParam
 {
     VAR_PARAM_HEADER;
     const Variant *archiveAsync;                                    // Update async archiving?
+    const Variant *spoolPathPostfix;                                // Postfix for the spool path
 } HrnHostConfigUpdateParam;
 
 #define hrnHostConfigUpdateP(...)                                                                                                  \
