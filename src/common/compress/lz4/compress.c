@@ -5,8 +5,6 @@ Developed against version r131 using the documentation in https://github.com/lz4
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#ifdef HAVE_LIBLZ4
-
 #include <lz4frame.h>
 #include <stdio.h>
 #include <string.h>
@@ -294,5 +292,3 @@ lz4CompressNew(const int level, const bool raw)
             LZ4_COMPRESS_FILTER_TYPE, this, paramList, .done = lz4CompressDone, .inOut = lz4CompressProcess,
             .inputSame = lz4CompressInputSame));
 }
-
-#endif // HAVE_LIBLZ4

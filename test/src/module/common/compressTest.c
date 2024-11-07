@@ -313,7 +313,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("lz4"))
     {
-#ifdef HAVE_LIBLZ4
         // Run standard test suite
         testSuite(compressTypeLz4, "lz4 -dc", 4);
 
@@ -351,9 +350,6 @@ testRun(void)
 
         TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, lz4DecompressToLog, buffer, sizeof(buffer)), "lz4DecompressToLog");
         TEST_RESULT_Z(buffer, "{inputSame: true, inputOffset: 999, frameDone false, done: true}", "check log");
-#else
-        TEST_ERROR(compressTypePresent(compressTypeLz4), OptionInvalidValueError, "pgBackRest not built with lz4 support");
-#endif // HAVE_LIBLZ4
     }
 
     // *****************************************************************************************************************************

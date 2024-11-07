@@ -1888,84 +1888,92 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
         if (!param.noResetLogLevel && config->commandRole == cfgCmdRoleMain)
             logInit(logLevelWarn, logLevelOff, logLevelOff, false, 0, 1, false);
 
+        // Determine whether any options should be loaded from the environment or config files. The help and version commands do
+        // not use any non command-line options so they can skip this step. This prevents basic help or version from failing if,
+        // e.g. the process does not have access to load the config file or there is an invalid option in the environment.
+        const bool optionLoad = config->command != cfgCmdHelp && config->command != cfgCmdVersion;
+
         // Phase 2: parse environment variables
         // -------------------------------------------------------------------------------------------------------------------------
-        unsigned int environIdx = 0;
-
-        // Loop through all environment variables and look for our env vars by matching the prefix
-        while (environ[environIdx] != NULL)
+        if (optionLoad)
         {
-            const char *keyValue = environ[environIdx];
-            environIdx++;
+            unsigned int environIdx = 0;
 
-            if (strstr(keyValue, PGBACKREST_ENV) == keyValue)
+            // Loop through all environment variables and look for our env vars by matching the prefix
+            while (environ[environIdx] != NULL)
             {
-                // Find the first = char
-                const char *const equalPtr = strchr(keyValue, '=');
-                ASSERT(equalPtr != NULL);
+                const char *keyValue = environ[environIdx];
+                environIdx++;
 
-                // Get key and value
-                const String *const key = strReplaceChr(
-                    strLower(strNewZN(keyValue + PGBACKREST_ENV_SIZE, (size_t)(equalPtr - (keyValue + PGBACKREST_ENV_SIZE)))),
-                    '_', '-');
-                const String *const value = STR(equalPtr + 1);
-
-                // Find the option
-                CfgParseOptionResult option = cfgParseOptionP(key);
-
-                // Warn if the option not found
-                if (!option.found)
+                if (strstr(keyValue, PGBACKREST_ENV) == keyValue)
                 {
-                    LOG_WARN_FMT("environment contains invalid option '%s'", strZ(key));
-                    continue;
-                }
-                // Warn if negate option found in env
-                else if (option.negate)
-                {
-                    LOG_WARN_FMT("environment contains invalid negate option '%s'", strZ(key));
-                    continue;
-                }
-                // Warn if reset option found in env
-                else if (option.reset)
-                {
-                    LOG_WARN_FMT("environment contains invalid reset option '%s'", strZ(key));
-                    continue;
-                }
+                    // Find the first = char
+                    const char *const equalPtr = strchr(keyValue, '=');
+                    ASSERT(equalPtr != NULL);
 
-                // Continue if the option is not valid for this command
-                if (!cfgParseOptionValid(config->command, config->commandRole, option.id))
-                    continue;
+                    // Get key and value
+                    const String *const key = strReplaceChr(
+                        strLower(strNewZN(keyValue + PGBACKREST_ENV_SIZE, (size_t)(equalPtr - (keyValue + PGBACKREST_ENV_SIZE)))),
+                        '_', '-');
+                    const String *const value = STR(equalPtr + 1);
 
-                if (strSize(value) == 0)
-                    THROW_FMT(OptionInvalidValueError, "environment variable '%s' must have a value", strZ(key));
+                    // Find the option
+                    CfgParseOptionResult option = cfgParseOptionP(key);
 
-                // Continue if the option has already been specified on the command line
-                ParseOptionValue *optionValue = parseOptionIdxValue(parseOptionList, option.id, option.keyIdx);
+                    // Warn if the option not found
+                    if (!option.found)
+                    {
+                        LOG_WARN_FMT("environment contains invalid option '%s'", strZ(key));
+                        continue;
+                    }
+                    // Warn if negate option found in env
+                    else if (option.negate)
+                    {
+                        LOG_WARN_FMT("environment contains invalid negate option '%s'", strZ(key));
+                        continue;
+                    }
+                    // Warn if reset option found in env
+                    else if (option.reset)
+                    {
+                        LOG_WARN_FMT("environment contains invalid reset option '%s'", strZ(key));
+                        continue;
+                    }
 
-                if (optionValue->found)
-                    continue;
+                    // Continue if the option is not valid for this command
+                    if (!cfgParseOptionValid(config->command, config->commandRole, option.id))
+                        continue;
 
-                optionValue->found = true;
-                optionValue->source = cfgSourceConfig;
+                    if (strSize(value) == 0)
+                        THROW_FMT(OptionInvalidValueError, "environment variable '%s' must have a value", strZ(key));
 
-                // Convert boolean to string
-                if (cfgParseOptionType(option.id) == cfgOptTypeBoolean)
-                {
-                    if (strEqZ(value, "n"))
-                        optionValue->negate = true;
-                    else if (!strEqZ(value, "y"))
-                        THROW_FMT(OptionInvalidValueError, "environment boolean option '%s' must be 'y' or 'n'", strZ(key));
-                }
-                // Else split list/hash into separate values
-                else if (option.multi)
-                {
-                    optionValue->valueList = strLstNewSplitZ(value, ":");
-                }
-                // Else add the string value
-                else
-                {
-                    optionValue->valueList = strLstNew();
-                    strLstAdd(optionValue->valueList, value);
+                    // Continue if the option has already been specified on the command line
+                    ParseOptionValue *optionValue = parseOptionIdxValue(parseOptionList, option.id, option.keyIdx);
+
+                    if (optionValue->found)
+                        continue;
+
+                    optionValue->found = true;
+                    optionValue->source = cfgSourceConfig;
+
+                    // Convert boolean to string
+                    if (cfgParseOptionType(option.id) == cfgOptTypeBoolean)
+                    {
+                        if (strEqZ(value, "n"))
+                            optionValue->negate = true;
+                        else if (!strEqZ(value, "y"))
+                            THROW_FMT(OptionInvalidValueError, "environment boolean option '%s' must be 'y' or 'n'", strZ(key));
+                    }
+                    // Else split list/hash into separate values
+                    else if (option.multi)
+                    {
+                        optionValue->valueList = strLstNewSplitZ(value, ":");
+                    }
+                    // Else add the string value
+                    else
+                    {
+                        optionValue->valueList = strLstNew();
+                        strLstAdd(optionValue->valueList, value);
+                    }
                 }
             }
         }
@@ -1973,7 +1981,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
         // Phase 3: parse config file unless --no-config passed
         // -------------------------------------------------------------------------------------------------------------------------
         // Load the configuration file(s)
-        if (!param.noConfigLoad)
+        if (!param.noConfigLoad && optionLoad)
         {
             const String *const configString = cfgFileLoad(
                 storage, parseOptionList,

@@ -170,10 +170,8 @@ endif
 # Find required bz2 library
 lib_bz2 = cc.find_library('bz2')
 
-# Find optional lz4 library
+# Find required lz4 library
 lib_lz4 = dependency('liblz4')
-
-configuration.set('HAVE_LIBLZ4', true, description: 'Is liblz4 present?')
 
 # Find required openssl library
 lib_openssl = dependency('openssl', version : '>=1.1.1')
