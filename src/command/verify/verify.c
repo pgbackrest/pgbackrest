@@ -370,11 +370,11 @@ verifyManifestFile(
     unsigned int *const jobErrorTotal)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_TEST_PARAM_P(VERIFY_BACKUP_RESULT, backupResult);  // The result set for the backup being processed
+        FUNCTION_LOG_PARAM_P(VERIFY_BACKUP_RESULT, backupResult);   // The result set for the backup being processed
         FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Passphrase to access the manifest file
         FUNCTION_LOG_PARAM(BOOL, currentBackup);                    // Is this possibly a backup currently in progress?
-        FUNCTION_TEST_PARAM(INFO_PG, pgHistory);                    // Database history
-        FUNCTION_TEST_PARAM_P(UINT, jobErrorTotal);                 // Pointer to the overall job error total
+        FUNCTION_LOG_PARAM(INFO_PG, pgHistory);                     // Database history
+        FUNCTION_LOG_PARAM_P(UINT, jobErrorTotal);                  // Pointer to the overall job error total
     FUNCTION_LOG_END();
 
     Manifest *result = NULL;
@@ -1469,7 +1469,7 @@ static String *
 verifyProcess(const bool verboseText)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_TEST_PARAM(BOOL, verboseText);                     // Is verbose output requested?
+        FUNCTION_LOG_PARAM(BOOL, verboseText);                      // Is verbose output requested?
     FUNCTION_LOG_END();
 
     String *const result = strNew();

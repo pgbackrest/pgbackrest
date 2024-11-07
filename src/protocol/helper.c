@@ -350,7 +350,7 @@ protocolServerAuthorize(const String *authListStr, const String *const stanza)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, authListStr);
-        FUNCTION_LOG_PARAM(STRING, stanza);
+        FUNCTION_TEST_PARAM(STRING, stanza);
     FUNCTION_TEST_END();
 
     ASSERT(authListStr != NULL);

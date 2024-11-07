@@ -99,7 +99,7 @@ expireAdhocBackup(InfoBackup *const infoBackup, const String *const backupLabel,
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
         FUNCTION_LOG_PARAM(STRING, backupLabel);
-        FUNCTION_TEST_PARAM(UINT, repoIdx);
+        FUNCTION_LOG_PARAM(UINT, repoIdx);
     FUNCTION_LOG_END();
 
     ASSERT(infoBackup != NULL);

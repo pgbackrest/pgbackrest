@@ -798,7 +798,7 @@ option:
       - none
       - bz2
       - gz
-      - lz4: HAVE_LIBLZ4
+      - lz4
       - zst: HAVE_LIBZST
     command: compress
     command-role:

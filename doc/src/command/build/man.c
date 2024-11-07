@@ -23,7 +23,7 @@ static String *
 referenceManReplace(String *const string)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM(STRING, string);
+        FUNCTION_TEST_PARAM(STRING, string);
     FUNCTION_TEST_END();
 
     String *const result = strCat(strNew(), string);
@@ -49,8 +49,8 @@ static size_t
 referenceManMaxWidth(const size_t widthMax, const String *const string)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM(SIZE, widthMax);
-        FUNCTION_LOG_PARAM(STRING, string);
+        FUNCTION_TEST_PARAM(SIZE, widthMax);
+        FUNCTION_TEST_PARAM(STRING, string);
     FUNCTION_TEST_END();
 
     if (strSize(string) > widthMax)

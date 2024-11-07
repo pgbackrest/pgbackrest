@@ -158,7 +158,7 @@ static void
 execCheckStatusError(Exec *const this, int status, const String *const output)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM(EXEC, this);
+        FUNCTION_TEST_PARAM(EXEC, this);
         FUNCTION_TEST_PARAM(INT, status);
         FUNCTION_TEST_PARAM(STRING, output);
     FUNCTION_TEST_END();
