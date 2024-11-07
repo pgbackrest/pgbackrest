@@ -3,8 +3,6 @@ LZ4 Decompress
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#ifdef HAVE_LIBLZ4
-
 #include <lz4frame.h>
 #include <stdio.h>
 
@@ -181,5 +179,3 @@ lz4DecompressNew(const bool raw)
             LZ4_DECOMPRESS_FILTER_TYPE, this, NULL, .done = lz4DecompressDone, .inOut = lz4DecompressProcess,
             .inputSame = lz4DecompressInputSame));
 }
-
-#endif // HAVE_LIBLZ4

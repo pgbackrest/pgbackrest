@@ -81,7 +81,6 @@ static const struct CompressHelperLocal
         .typeId = STRID6("lz4", 0x2068c1),
         .type = STRDEF(LZ4_EXT),
         .ext = STRDEF("." LZ4_EXT),
-#ifdef HAVE_LIBLZ4
         .compressType = LZ4_COMPRESS_FILTER_TYPE,
         .compressNew = lz4CompressNew,
         .decompressType = LZ4_DECOMPRESS_FILTER_TYPE,
@@ -89,7 +88,6 @@ static const struct CompressHelperLocal
         .levelDefault = LZ4_COMPRESS_LEVEL_DEFAULT,
         .levelMin = LZ4_COMPRESS_LEVEL_MIN,
         .levelMax = LZ4_COMPRESS_LEVEL_MAX,
-#endif
     },
     {
         .typeId = STRID5("zst", 0x527a0),
