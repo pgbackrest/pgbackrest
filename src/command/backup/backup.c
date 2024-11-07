@@ -2691,9 +2691,10 @@ cmdBackup(void)
 
         // Check if there is a prior manifest when backup type is diff/incr
         Manifest *manifestPrior = backupBuildIncrPrior(infoBackup);
-        uint64_t copySizePrelim = 0;
 
         // Perform preliminary copy of full/incr backup
+        uint64_t copySizePrelim = 0;
+
         if (cfgOptionStrId(cfgOptType) == backupTypeFull && cfgOptionBool(cfgOptBackupFullIncr))
         {
             ASSERT(manifestPrior == NULL);
