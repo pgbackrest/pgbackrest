@@ -289,6 +289,13 @@ hrnHostExecBr(HrnHost *const this, const char *const command, const HrnHostExecB
 
         strCatFmt(commandStr, " %s", command);
 
+        if (strcmp(command, CFGCMD_RESTORE) == 0)
+        {
+            static uint32_t restoreNum = 0;
+            // Set unique spool path
+            strCatFmt(commandStr, " --spool-path=%s/%u", strZ(hrnHostSpoolPath(this)), restoreNum++);
+        }
+
         if (param.param != NULL)
             strCatFmt(commandStr, " %s", param.param);
 
