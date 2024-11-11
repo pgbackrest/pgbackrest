@@ -288,7 +288,7 @@ hrnHostExecBr(HrnHost *const this, const char *const command, const HrnHostExecB
 
         strCatFmt(commandStr, " %s", command);
 
-        if (strcmp(command, CFGCMD_RESTORE) == 0)
+        if (strcmp(command, CFGCMD_RESTORE) == 0 && hrnHostLocal.archiveAsync)
         {
             static uint32_t restoreNum = 0;
             // Set unique spool path
