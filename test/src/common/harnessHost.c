@@ -85,6 +85,7 @@ static struct HrnHostLocal
     CipherType cipherType;                                          // Cipher type
     const String *cipherPass;                                       // Cipher passphrase
     unsigned int repoTotal;                                         // Repository total
+    unsigned int restoreTotal;                                      // Restore counter used to name spool path
     bool tls;                                                       // Use TLS instead of SSH?
     bool bundle;                                                    // Bundling enabled?
     bool blockIncr;                                                 // Block incremental enabled?
@@ -288,12 +289,9 @@ hrnHostExecBr(HrnHost *const this, const char *const command, const HrnHostExecB
 
         strCatFmt(commandStr, " %s", command);
 
+        // Set unique spool path
         if (strcmp(command, CFGCMD_RESTORE) == 0 && hrnHostLocal.archiveAsync)
-        {
-            static uint32_t restoreNum = 0;
-            // Set unique spool path
-            strCatFmt(commandStr, " --spool-path=%s/%u", strZ(hrnHostSpoolPath(this)), restoreNum++);
-        }
+            strCatFmt(commandStr, " --spool-path=%s/%u", strZ(hrnHostSpoolPath(this)), hrnHostLocal.restoreTotal++);
 
         if (param.param != NULL)
             strCatFmt(commandStr, " %s", param.param);
