@@ -145,7 +145,7 @@ hrnHostNew(const StringId id, const String *const container, const String *const
             this->pub.pgLogFile = strNewFmt("%s/postgresql.log", strZ(hrnHostLogPath(this)));
             this->pub.repo1Path = strNewFmt("%s/repo1", strZ(hrnHostDataPath(this)));
             this->pub.repo2Path = strNewFmt("%s/repo2", strZ(hrnHostDataPath(this)));
-            this->pub.spoolPath = strNewFmt("%s/spool", strZ(hrnHostDataPath(this)));
+            this->pub.spoolPath = strNewFmt("%s/spool/0000", strZ(hrnHostDataPath(this)));
         }
 
         MEM_CONTEXT_TEMP_BEGIN()
@@ -291,7 +291,10 @@ hrnHostExecBr(HrnHost *const this, const char *const command, const HrnHostExecB
 
         // Set unique spool path
         if (strcmp(command, CFGCMD_RESTORE) == 0 && hrnHostLocal.archiveAsync)
-            strCatFmt(commandStr, " --spool-path=%s/%u", strZ(hrnHostSpoolPath(this)), hrnHostLocal.restoreTotal++);
+        {
+            this->pub.spoolPath = strNewFmt("%s/spool/%04u", strZ(hrnHostDataPath(this)), hrnHostLocal.restoreTotal++);
+            hrnHostConfigUpdateP();
+        }
 
         if (param.param != NULL)
             strCatFmt(commandStr, " %s", param.param);
