@@ -342,6 +342,7 @@ unit:
           - common/compress/zst/common
           - common/compress/zst/compress
           - common/compress/zst/decompress
+          - common/compress/common
           - common/compress/helper
 
         depend:

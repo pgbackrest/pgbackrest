@@ -767,8 +767,8 @@ option:
   compress-level-network:
     section: global
     type: integer
-    default: 3
-    allow-range: [0, 9]
+    default: 1
+    allow-range: [0, 12]
     command:
       annotate: {}
       archive-get: {}

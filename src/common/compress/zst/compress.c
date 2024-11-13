@@ -7,6 +7,7 @@ ZST Compress
 
 #include <zstd.h>
 
+#include "common/compress/common.h"
 #include "common/compress/zst/common.h"
 #include "common/compress/zst/compress.h"
 #include "common/debug.h"
@@ -189,24 +190,10 @@ zstCompressNew(const int level, const bool raw)
     }
     OBJ_NEW_END();
 
-    // Create param list
-    Pack *paramList;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        PackWrite *const packWrite = pckWriteNewP();
-
-        pckWriteI32P(packWrite, level);
-        pckWriteEndP(packWrite);
-
-        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
-    }
-    MEM_CONTEXT_TEMP_END();
-
     FUNCTION_LOG_RETURN(
         IO_FILTER,
         ioFilterNewP(
-            ZST_COMPRESS_FILTER_TYPE, this, paramList, .done = zstCompressDone, .inOut = zstCompressProcess,
+            ZST_COMPRESS_FILTER_TYPE, this, compressParamList(level, raw), .done = zstCompressDone, .inOut = zstCompressProcess,
             .inputSame = zstCompressInputSame));
 }
 

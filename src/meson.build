@@ -89,6 +89,7 @@ src_build_code = [
     'build/postgres/parse.c',
     'build/postgres/render.c',
     'build/main.c',
+    'common/compress/common.c',
     'common/compress/bz2/common.c',
     'common/compress/bz2/compress.c',
 ]
@@ -168,6 +169,7 @@ src_pgbackrest = [
     'command/verify/file.c',
     'command/verify/protocol.c',
     'command/verify/verify.c',
+    'common/compress/common.c',
     'common/compress/helper.c',
     'common/compress/bz2/common.c',
     'common/compress/bz2/compress.c',
