@@ -6,9 +6,9 @@ BZ2 Decompress
 #include <bzlib.h>
 #include <stdio.h>
 
-#include "common/compress/common.h"
 #include "common/compress/bz2/common.h"
 #include "common/compress/bz2/decompress.h"
+#include "common/compress/common.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.h"
 #include "common/log.h"
