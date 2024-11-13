@@ -383,7 +383,7 @@ bldCfgRenderScalar(const String *const scalar, const String *const optType)
         return strNewFmt("PARSE_RULE_VAL_BOOL_%s", strEqZ(scalar, "true") ? "TRUE" : "FALSE");
 
     if (strEq(optType, OPT_TYPE_INTEGER_STR))
-        return strNewFmt("PARSE_RULE_VAL_INT(%s)", strZ(scalar));
+        return strNewFmt("PARSE_RULE_VAL_INT(%s)", strZ(bldCfgRenderEnumStr(scalar)));
 
     if (strEq(optType, OPT_TYPE_SIZE_STR))
         return strNewFmt("PARSE_RULE_VAL_SIZE(%s)", strZ(scalar));
@@ -686,7 +686,7 @@ bldCfgRenderValueRender(
         bldCfgRenderLf(resultEnum, ruleValIdx != 0);
         strCatFmt(resultEnum, "    parseRuleVal%s", abbr);
 
-        if (strEq(optType, OPT_TYPE_STRING_STR))
+        if (strEq(optType, OPT_TYPE_STRING_STR) || strEq(optType, OPT_TYPE_INTEGER_STR))
             strCatFmt(resultEnum, "%s,", strZ(bldCfgRenderEnumStr(strLstGet(ruleValList, ruleValIdx))));
         else
             strCatFmt(resultEnum, "%s,", strZ(bldEnum("", strLstGet(ruleValList, ruleValIdx))));
