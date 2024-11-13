@@ -31,6 +31,7 @@ src_doc = [
     '../../src/command/exit.c',
     '../../src/command/help/help.c',
     '../../src/command/lock.c',
+    '../../src/common/compress/common.c',
     '../../src/common/compress/bz2/common.c',
     '../../src/common/compress/bz2/compress.c',
     '../../src/common/compress/bz2/decompress.c',

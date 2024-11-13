@@ -8,6 +8,7 @@ BZ2 Decompress
 
 #include "common/compress/bz2/common.h"
 #include "common/compress/bz2/decompress.h"
+#include "common/compress/common.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.h"
 #include "common/log.h"
@@ -171,6 +172,6 @@ bz2DecompressNew(const bool raw)
     FUNCTION_LOG_RETURN(
         IO_FILTER,
         ioFilterNewP(
-            BZ2_DECOMPRESS_FILTER_TYPE, this, NULL, .done = bz2DecompressDone, .inOut = bz2DecompressProcess,
+            BZ2_DECOMPRESS_FILTER_TYPE, this, decompressParamList(raw), .done = bz2DecompressDone, .inOut = bz2DecompressProcess,
             .inputSame = bz2DecompressInputSame));
 }
