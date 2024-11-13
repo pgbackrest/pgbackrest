@@ -768,7 +768,7 @@ option:
     section: global
     type: integer
     default: 1
-    allow-range: [0, 12]
+    allow-range: [-5, 12]
     command:
       annotate: {}
       archive-get: {}

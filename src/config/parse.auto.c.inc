@@ -11,6 +11,7 @@ Rule Strings
 
 static const StringPubConst parseRuleValueStr[] =
 {
+    PARSE_RULE_STRPUB("-5"),                                                                                              // val/str
     PARSE_RULE_STRPUB("/tmp/pgbackrest"),                                                                                 // val/str
     PARSE_RULE_STRPUB("/var/lib/pgbackrest"),                                                                             // val/str
     PARSE_RULE_STRPUB("/var/log/pgbackrest"),                                                                             // val/str
@@ -134,6 +135,7 @@ static const StringPubConst parseRuleValueStr[] =
 
 typedef enum
 {
+    parseRuleValStrQT_DS_5_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_FS_tmp_FS_pgbackrest_QT,                                                                       // val/str/enum
     parseRuleValStrQT_FS_var_FS_lib_FS_pgbackrest_QT,                                                                // val/str/enum
     parseRuleValStrQT_FS_var_FS_log_FS_pgbackrest_QT,                                                                // val/str/enum
@@ -456,6 +458,7 @@ Rule Ints
 
 static const int parseRuleValueInt[] =
 {
+    -5,                                                                                                                   // val/int
     0,                                                                                                                    // val/int
     1,                                                                                                                    // val/int
     2,                                                                                                                    // val/int
@@ -477,6 +480,7 @@ static const int parseRuleValueInt[] =
 
 static const uint8_t parseRuleValueIntStrMap[] =
 {
+    parseRuleValStrQT_DS_5_QT,                                                                                     // val/int/strmap
     parseRuleValStrQT_0_QT,                                                                                        // val/int/strmap
     parseRuleValStrQT_1_QT,                                                                                        // val/int/strmap
     parseRuleValStrQT_2_QT,                                                                                        // val/int/strmap
@@ -498,6 +502,7 @@ static const uint8_t parseRuleValueIntStrMap[] =
 
 typedef enum
 {
+    parseRuleValIntDS_5,                                                                                             // val/int/enum
     parseRuleValInt0,                                                                                                // val/int/enum
     parseRuleValInt1,                                                                                                // val/int/enum
     parseRuleValInt2,                                                                                                // val/int/enum
@@ -1834,7 +1839,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                          // opt/compress-level-network
                 PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                        // opt/compress-level-network
                 (                                                                                      // opt/compress-level-network
-                    PARSE_RULE_VAL_INT(0),                                                             // opt/compress-level-network
+                    PARSE_RULE_VAL_INT(DS_5),                                                          // opt/compress-level-network
                     PARSE_RULE_VAL_INT(12),                                                            // opt/compress-level-network
                 ),                                                                                     // opt/compress-level-network
                                                                                                        // opt/compress-level-network

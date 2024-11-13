@@ -1377,6 +1377,26 @@ testRun(void)
         strLstAddZ(argList, TEST_BACKREST_EXE);
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/db");
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptCompressLevelNetwork, "-6");
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+        TEST_ERROR(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidValueError,
+            "'-6' is out of range for 'compress-level-network' option\n"
+            "HINT: allowed range is -5 to 12 inclusive");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptCompressLevelNetwork, "-5");
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevelNetwork), -5, "compress level is set");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptProcessMax, "65536");
         strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
