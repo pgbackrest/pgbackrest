@@ -1678,7 +1678,7 @@ manifestBuildIncr(
             this->pub.data.backupOptionDelta = BOOL_TRUE_VAR;
         }
 
-        // Enable delta if when there are timestamp anomalies
+        // Enable delta if/when there are timestamp anomalies
         manifestDeltaCheck(this, manifestPrior);
 
         // Find files to (possibly) reference in the prior manifest

@@ -682,7 +682,8 @@ backupBuildIncr(
 
     bool result = false;
 
-    // No incremental if no prior manifest
+    // Build the incremental if there is a prior manifest -- except when backup type is full, which indicates a full/incr backup
+    // and is handled elsewhere
     if (manifestPrior != NULL && cfgOptionStrId(cfgOptType) != backupTypeFull)
     {
         MEM_CONTEXT_TEMP_BEGIN()
@@ -2328,7 +2329,7 @@ backupProcess(
             manifestSaveSize = cfgOptionUInt64(cfgOptManifestSaveThreshold);
 
         // Process jobs
-        uint64_t sizeProgress = 0 + copySizePrelim;
+        uint64_t sizeProgress = copySizePrelim;
 
         // Initialize percent complete and bytes completed/total
         unsigned int currentPercentComplete = 0;
@@ -2711,7 +2712,8 @@ cmdBackup(void)
                 // Calculate the expected size of the final copy
                 uint64_t copySizeFinal = backupManifestCopySize(manifestPrelim);
 
-                // Remove files that do not need to be considered for the preliminary copy
+                // Remove files that do not need to be considered for the preliminary copy because they were modified after the
+                // calculated limit time and are therefore likely to be modified during the backup
                 time_t timestampCopyStart = backupData->checkpointTime - backupFullIncrLimit(infoBackup);
 
                 manifestBuildFullIncr(

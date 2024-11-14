@@ -278,7 +278,7 @@ FN_EXTERN void manifestBuildValidate(Manifest *this, bool delta, time_t copyStar
 // Create a diff/incr backup by comparing to a previous backup manifest
 FN_EXTERN void manifestBuildIncr(Manifest *this, const Manifest *prior, BackupType type, const String *archiveStart);
 
-// Filter files required for the preliminary copy of a full/incr backup
+// Filter existing file list to remove files not required for the preliminary copy of a full/incr backup
 FN_EXTERN void manifestBuildFullIncr(Manifest *this, time_t timeLimit, uint64_t bundleLimit);
 
 // Set remaining values before the final save
@@ -307,7 +307,8 @@ FN_EXTERN void manifestSave(Manifest *this, IoWrite *write);
 // Validate a completed manifest. Use strict mode only when saving the manifest after a backup.
 FN_EXTERN void manifestValidate(Manifest *this, bool strict);
 
-// Enable delta if timestamp anomalies are found
+// Enable delta backup if timestamp anomalies are found, e.g. if a file has changed size since the prior backup but the timestamp
+// has not changed
 FN_EXTERN void manifestDeltaCheck(Manifest *this, const Manifest *manifestPrior);
 
 /***********************************************************************************************************************************

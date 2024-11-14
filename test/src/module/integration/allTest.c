@@ -89,7 +89,7 @@ testRun(void)
         const unsigned int ts1Oid = pckReadU32P(hrnHostSqlValue(pg1, "select oid from pg_tablespace where spcname = 'ts1'"));
         TEST_LOG_FMT("ts1 tablespace oid = %u", ts1Oid);
 
-        // When full/incr set some modified timestamps in the past so full/incr is enabled
+        // When full/incr is enabled, set some modified timestamps in the past so full/incr will find some files
         if (hrnHostFullIncr())
         {
             const StringList *const fileList = storageListP(hrnHostPgStorage(pg1), STRDEF("base/1"));
