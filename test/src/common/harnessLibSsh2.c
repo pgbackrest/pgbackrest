@@ -23,14 +23,14 @@ libssh2 shim error prefix
 /***********************************************************************************************************************************
 Script that defines how shim functions operate
 ***********************************************************************************************************************************/
-HrnLibSsh2 hrnLibSsh2Script[1024];
-bool hrnLibSsh2ScriptDone = true;
-unsigned int hrnLibSsh2ScriptIdx;
+static HrnLibSsh2 hrnLibSsh2Script[1024];
+static bool hrnLibSsh2ScriptDone = true;
+static unsigned int hrnLibSsh2ScriptIdx;
 
 // If there is a script failure change the behavior of cleanup functions to return immediately so the real error will be reported
 // rather than a bogus scripting error during cleanup
-bool hrnLibSsh2ScriptFail;
-char hrnLibSsh2ScriptError[4096];
+static bool hrnLibSsh2ScriptFail;
+static char hrnLibSsh2ScriptError[4096];
 
 /***********************************************************************************************************************************
 Set libssh2 script

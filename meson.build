@@ -70,6 +70,9 @@ warning_enable = [
     # Warn if a global function is defined without a previous prototype declaration
     '-Wmissing-prototypes',
 
+    # Warn if a global variable is defined without a previous declaration
+    '-Wmissing-variable-declarations',
+
     # Warn about anything that depends on the “size of” a function type or of void
     '-Wpointer-arith',
 
