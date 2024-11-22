@@ -345,7 +345,7 @@ cfgOptionKeyToIdx(const ConfigOption optionId, const unsigned int key)
     {
         const unsigned int groupId = cfgOptionGroupId(optionId);
 
-        // Seach the group for the key
+        // Search the group for the key
         for (; result < cfgOptionGroupIdxTotal(groupId); result++)
         {
             if (configLocal->optionGroup[groupId].indexMap[result] == key - 1)
@@ -639,7 +639,7 @@ cfgOptionIdxReset(const ConfigOption optionId, const unsigned int optionIdx)
 }
 
 /**********************************************************************************************************************************/
-// Helper to enforce contraints when getting options
+// Helper to enforce constraints when getting options
 static const ConfigOptionValue *
 cfgOptionIdxInternal(
     const ConfigOption optionId, const unsigned int optionIdx, const ConfigOptionDataType typeRequested, const bool nullAllowed)

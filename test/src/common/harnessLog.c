@@ -351,7 +351,7 @@ hrnLogReplace(void)
                         if (!regExpMatch(logReplace->regExpSub, match))
                         {
                             THROW_FMT(
-                                AssertError, "unable to find sub expression '%s' in '%s' extracted with expresion '%s'",
+                                AssertError, "unable to find sub expression '%s' in '%s' extracted with expression '%s'",
                                 strZ(logReplace->expressionSub), strZ(match), strZ(logReplace->expression));
                         }
 

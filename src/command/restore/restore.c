@@ -1808,7 +1808,7 @@ restoreRecoveryWrite(const Manifest *const manifest, const StorageInfo *const fi
         // If recovery type is preserve then leave recovery file as it is
         if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_PRESERVE)
         {
-            // Determine which file recovery setttings will be written to
+            // Determine which file recovery settings will be written to
             const String *const recoveryFile =
                 pgVersion >= PG_VERSION_RECOVERY_GUC ? PG_FILE_POSTGRESQLAUTOCONF_STR : PG_FILE_RECOVERYCONF_STR;
 

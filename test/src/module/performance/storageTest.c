@@ -76,7 +76,7 @@ testIoRateProcess(THIS_VOID, const Buffer *input)
     THIS(TestIoRate);
 
     // Determine the elapsed time since the filter began processing data. The begin time is not set in the constructor because an
-    // unknown amount of time can elapse between the filter being created and acually used.
+    // unknown amount of time can elapse between the filter being created and actually used.
     uint64_t timeElapsed = 0;
 
     if (this->timeBegin == 0)

@@ -170,7 +170,7 @@ storageRemoteFeatureProtocol(PackRead *const param)
 }
 
 /**********************************************************************************************************************************/
-typedef struct StorageRemoteInfoProcotolWriteData
+typedef struct StorageRemoteInfoProtocolWriteData
 {
     time_t timeModifiedLast;                                        // timeModified from last call
     mode_t modeLast;                                                // mode from last call

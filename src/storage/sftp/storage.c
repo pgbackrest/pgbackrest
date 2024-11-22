@@ -297,7 +297,7 @@ storageSftpUpdateKnownHostsFile(
                 // Missing known_hosts file will return LIBSSH2_ERROR_FILE. Possibly issues other than missing may return this.
                 if (rc == LIBSSH2_ERROR_FILE)
                 {
-                    // If user's known_hosts file is non-existant, create an empty one for libssh2 to operate on
+                    // If user's known_hosts file is non-existent, create an empty one for libssh2 to operate on
                     const Storage *const sshStorage =
                         storagePosixNewP(
                             strNewFmt("%s%s", strZ(userHome()), "/.ssh"), .modeFile = 0600, .modePath = 0700, .write = true);

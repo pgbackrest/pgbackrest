@@ -786,7 +786,7 @@ testRun(void)
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("knownhost_init WARN host key checking disabled, unsecure connections, hostKeyCheckType = no");
+        TEST_TITLE("knownhost_init WARN host key checking disabled, insecure connections, hostKeyCheckType = no");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {

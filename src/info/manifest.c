@@ -1472,7 +1472,7 @@ manifestNewBuild(
                     // The filename must have characters
                     ASSERT(relationFileId[0] != '\0');
 
-                    // Store the last relation so it does not need to be found everytime
+                    // Store the last relation so it does not need to be found every time
                     if (strcmp(lastRelationFileId, relationFileId) != 0)
                     {
                         // Determine if the relation is unlogged
