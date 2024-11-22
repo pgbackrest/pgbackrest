@@ -380,7 +380,7 @@ void hrnHostSqlExec(HrnHost *this, const String *statement);
         hrnHostSqlExec(this, STR(statement));                                                                                      \
     } while (0)
 
-// Query a single value
+// Query a single values
 FN_INLINE_ALWAYS PackRead *
 hrnHostSqlValue(HrnHost *const this, const char *const statement)
 {
