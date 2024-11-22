@@ -117,7 +117,8 @@ isRelationNeeded(const Oid dbNode, const Oid spcNode, const Oid relNode)
     if (!cfgOptionTest(cfgOptFilter))
         return true;
 
-    if (pgDbIsSystemId(dbNode) && pgDbIsSystemId(relNode))
+    // Restore all system objects.
+    if (pgDbIsSystemId(relNode))
         return true;
 
     static List *filterList = NULL;
@@ -145,7 +146,5 @@ isRelationNeeded(const Oid dbNode, const Oid spcNode, const Oid relNode)
     if (db == NULL)
         return false;
 
-    return
-        pgDbIsSystemId(relNode) ||
-        lstExists(db->tables, &(Table){.spcNode = spcNode, .relNode = relNode});
+    return lstExists(db->tables, &(Table){.spcNode = spcNode, .relNode = relNode});
 }
