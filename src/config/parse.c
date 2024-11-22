@@ -590,7 +590,7 @@ cfgParseOption(const String *const optionCandidate, const CfgParseOptionParam pa
         if (dashPtr == optionName)
             THROW_FMT(OptionInvalidError, "option '%s' cannot begin with a dash", strZ(optionCandidate));
 
-        // Check if the first dash is preceeded by a numeric key and keep a tally of the key
+        // Check if the first dash is preceded by a numeric key and keep a tally of the key
         char *numberPtr = dashPtr;
         unsigned int multiplier = 1;
 
@@ -938,7 +938,7 @@ cfgParseOptionalRule(
             {
                 PackRead *const groupList = pckReadNewC(ruleOption->pack, ruleOption->packSize);
 
-                // Seach for a matching group
+                // Search for a matching group
                 do
                 {
                     // Get the group pack

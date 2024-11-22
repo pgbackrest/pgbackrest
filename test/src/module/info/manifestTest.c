@@ -631,7 +631,7 @@ testRun(void)
         // Version
         HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "12\n", .modeFile = 0600, .timeModified = 1565282100);
 
-        // Tablespace link errors when correct verion not found
+        // Tablespace link errors when correct version not found
         TEST_ERROR(
             manifestNewBuild(
                 storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), 0, false, false, false, false, NULL, NULL, NULL),

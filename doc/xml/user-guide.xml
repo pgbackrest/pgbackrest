@@ -227,7 +227,7 @@
         <!-- Data used to demonstrate backup/restore operations -->
         <variable key="test-table-data">Important Data</variable>
 
-        <!-- Database cluster commmands -->
+        <!-- Database cluster commands -->
         <variable key="pg-cluster-wait">sleep 2</variable>
 
         <variable key="pg-cluster-create" if="{[os-type-is-debian]}">pg_createcluster {[pg-version]} {[postgres-cluster-demo]}</variable>

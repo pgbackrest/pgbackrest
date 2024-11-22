@@ -71,7 +71,7 @@ Function constants
 /***********************************************************************************************************************************
 Macros for defining groups of functions that implement commands
 ***********************************************************************************************************************************/
-// Set of functions mimicking libssh2 inititialization and authorization
+// Set of functions mimicking libssh2 initialization and authorization
 #define HRNLIBSSH2_MACRO_STARTUP()                                                                                                 \
     {.function = HRNLIBSSH2_INIT, .param = "[0]", .resultInt = 0},                                                                 \
     {.function = HRNLIBSSH2_SESSION_INIT_EX, .param = "[null,null,null,null]"},                                                    \

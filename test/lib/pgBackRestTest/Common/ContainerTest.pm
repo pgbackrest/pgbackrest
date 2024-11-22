@@ -538,7 +538,7 @@ sub containerBuild
             }
         }
 
-        # Add path to lastest version of postgres
+        # Add path to latest version of postgres
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
         {
             $strScript .=
