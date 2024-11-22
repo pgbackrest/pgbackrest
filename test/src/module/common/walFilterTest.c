@@ -1782,7 +1782,6 @@ testRun(void)
                 {2000, 20001, 48457},
                 // should pass filter
                 {2000, 20001, 5445},
-                // should be filter out
                 {2000, 20003, 1000}
             };
 
@@ -1813,7 +1812,7 @@ testRun(void)
                 {RM_XLOG_ID, XLOG_NOOP,        sizeof(RelFileNode), &nodes[7]},
                 {RM_XLOG_ID, XLOG_NOOP,        sizeof(RelFileNode), &nodes[8]},
                 {RM_HEAP_ID, XLOG_HEAP_INSERT, sizeof(RelFileNode), &nodes[9]},
-                {RM_XLOG_ID, XLOG_NOOP, sizeof(RelFileNode), &nodes[10]},
+                {RM_HEAP_ID, XLOG_HEAP_INSERT, sizeof(RelFileNode), &nodes[10]},
             };
 
             buildWalP(wal, records, LENGTH_OF(records), 0);

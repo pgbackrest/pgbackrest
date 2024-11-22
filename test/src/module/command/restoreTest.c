@@ -3406,6 +3406,9 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_PATH_BASE "/1/40045_vm");
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_PATH_BASE "/1/" PG_FILE_PGVERSION);
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_PATH_BASE "/1/pg_filenode.map");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_PATH_BASE "/2/11976");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_PATH_BASE "/2/11976_fsm");
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_PATH_BASE "/2/11976_vm");
         HRN_STORAGE_PUT_EMPTY(storageTest, "ts/GPDB_6_301908232/16416/20000");
         HRN_STORAGE_PUT_EMPTY(storageTest, "ts/GPDB_6_301908232/16416/20000_fsm");
         HRN_STORAGE_PUT_EMPTY(storageTest, "ts/GPDB_6_301908232/16416/20000_vm");
@@ -3485,6 +3488,7 @@ testRun(void)
         TEST_RESULT_VOID(cmdRestore(), "restore");
 
         // base/1/40044* are filtered out
+        // base/2/11976* are restored
         TEST_STORAGE_LIST(
             storagePg(), NULL,
             "base/\n"
@@ -3494,6 +3498,10 @@ testRun(void)
             "base/1/40045_vm\n"
             "base/1/" PG_FILE_PGVERSION "\n"
             "base/1/pg_filenode.map\n"
+            "base/2/\n"
+            "base/2/11976\n"
+            "base/2/11976_fsm\n"
+            "base/2/11976_vm\n"
             "global/\n"
             "global/pg_control\n"
             PG_PATH_PGTBLSPC "/\n"
