@@ -124,7 +124,7 @@ backupFile(
                         fileResult->backupCopyResult = backupCopyResultSkip;
                 }
 
-                // On resume check the manifest file if is still exists in pg
+                // On resume check the manifest file if it still exists in pg
                 if (file->manifestFileResume && fileResult->backupCopyResult != backupCopyResultSkip)
                 {
                     // Resumed files should never have a reference to a prior backup
