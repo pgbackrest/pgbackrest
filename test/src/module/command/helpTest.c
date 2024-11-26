@@ -260,7 +260,7 @@ testRun(void)
             "  --cmd                               pgBackRest command\n"
             "                                      [default=/path/to/pgbackrest]\n"
             "  --cmd-ssh                           SSH client command [default=ssh]\n"
-            "  --compress-level-network            network compression level [default=3]\n"
+            "  --compress-level-network            network compression level [default=1]\n"
             "  --config                            pgBackRest configuration file\n"
             "                                      [default=/etc/pgbackrest/pgbackrest.conf]\n"
             "  --config-include-path               path to additional pgBackRest\n"

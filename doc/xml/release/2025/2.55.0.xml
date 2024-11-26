@@ -18,6 +18,17 @@
 
         <release-improvement-list>
             <release-item>
+                <github-pull-request id="2488"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Use <proper>lz4</proper> for protocol compression.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2472"/>
 
                 <release-item-contributor-list>
