@@ -196,7 +196,7 @@ storageReadRemoteOpen(THIS_VOID)
         {
             ioFilterGroupAdd(
                 ioReadFilterGroup(storageReadIo(this->read)),
-                compressFilterP(compressTypeGz, (int)this->interface.compressLevel, .raw = true));
+                compressFilterP(compressTypeLz4, (int)this->interface.compressLevel, .raw = true));
         }
 
         PackWrite *const param = protocolPackNew();
@@ -225,7 +225,7 @@ storageReadRemoteOpen(THIS_VOID)
 
             // If the file is compressible add decompression filter locally
             if (this->interface.compressible)
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), decompressFilterP(compressTypeGz, .raw = true));
+                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), decompressFilterP(compressTypeLz4, .raw = true));
 
             // Read the first block or eof
             storageReadRemoteInternal(this, packRead);

@@ -55,7 +55,10 @@ storageWriteRemoteOpen(THIS_VOID)
     {
         // If the file is compressible add decompression filter on the remote
         if (this->interface.compressible)
-            ioFilterGroupInsert(ioWriteFilterGroup(storageWriteIo(this->write)), 0, decompressFilterP(compressTypeGz));
+        {
+            ioFilterGroupInsert(
+                ioWriteFilterGroup(storageWriteIo(this->write)), 0, decompressFilterP(compressTypeLz4, .raw = true));
+        }
 
         PackWrite *const param = protocolPackNew();
 
@@ -81,7 +84,7 @@ storageWriteRemoteOpen(THIS_VOID)
         {
             ioFilterGroupAdd(
                 ioWriteFilterGroup(storageWriteIo(this->write)),
-                compressFilterP(compressTypeGz, (int)this->interface.compressLevel));
+                compressFilterP(compressTypeLz4, (int)this->interface.compressLevel, .raw = true));
         }
     }
     MEM_CONTEXT_TEMP_END();

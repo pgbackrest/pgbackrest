@@ -11,6 +11,7 @@ Rule Strings
 
 static const StringPubConst parseRuleValueStr[] =
 {
+    PARSE_RULE_STRPUB("-5"),                                                                                              // val/str
     PARSE_RULE_STRPUB("/tmp/pgbackrest"),                                                                                 // val/str
     PARSE_RULE_STRPUB("/var/lib/pgbackrest"),                                                                             // val/str
     PARSE_RULE_STRPUB("/var/log/pgbackrest"),                                                                             // val/str
@@ -21,6 +22,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("1"),                                                                                               // val/str
     PARSE_RULE_STRPUB("100ms"),                                                                                           // val/str
     PARSE_RULE_STRPUB("1024"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("12"),                                                                                              // val/str
     PARSE_RULE_STRPUB("128KiB"),                                                                                          // val/str
     PARSE_RULE_STRPUB("128MiB"),                                                                                          // val/str
     PARSE_RULE_STRPUB("15m"),                                                                                             // val/str
@@ -41,7 +43,6 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("256"),                                                                                             // val/str
     PARSE_RULE_STRPUB("256KiB"),                                                                                          // val/str
     PARSE_RULE_STRPUB("2MiB"),                                                                                            // val/str
-    PARSE_RULE_STRPUB("3"),                                                                                               // val/str
     PARSE_RULE_STRPUB("30m"),                                                                                             // val/str
     PARSE_RULE_STRPUB("31m"),                                                                                             // val/str
     PARSE_RULE_STRPUB("32"),                                                                                              // val/str
@@ -59,7 +60,6 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("8432"),                                                                                            // val/str
     PARSE_RULE_STRPUB("8KiB"),                                                                                            // val/str
     PARSE_RULE_STRPUB("8MiB"),                                                                                            // val/str
-    PARSE_RULE_STRPUB("9"),                                                                                               // val/str
     PARSE_RULE_STRPUB("900"),                                                                                             // val/str
     PARSE_RULE_STRPUB("999"),                                                                                             // val/str
     PARSE_RULE_STRPUB("9999999"),                                                                                         // val/str
@@ -135,6 +135,7 @@ static const StringPubConst parseRuleValueStr[] =
 
 typedef enum
 {
+    parseRuleValStrQT_DS_5_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_FS_tmp_FS_pgbackrest_QT,                                                                       // val/str/enum
     parseRuleValStrQT_FS_var_FS_lib_FS_pgbackrest_QT,                                                                // val/str/enum
     parseRuleValStrQT_FS_var_FS_log_FS_pgbackrest_QT,                                                                // val/str/enum
@@ -145,6 +146,7 @@ typedef enum
     parseRuleValStrQT_1_QT,                                                                                          // val/str/enum
     parseRuleValStrQT_100ms_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_1024_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_12_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_128KiB_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_128MiB_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_15m_QT,                                                                                        // val/str/enum
@@ -165,7 +167,6 @@ typedef enum
     parseRuleValStrQT_256_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_256KiB_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_2MiB_QT,                                                                                       // val/str/enum
-    parseRuleValStrQT_3_QT,                                                                                          // val/str/enum
     parseRuleValStrQT_30m_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_31m_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_32_QT,                                                                                         // val/str/enum
@@ -183,7 +184,6 @@ typedef enum
     parseRuleValStrQT_8432_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_8KiB_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_8MiB_QT,                                                                                       // val/str/enum
-    parseRuleValStrQT_9_QT,                                                                                          // val/str/enum
     parseRuleValStrQT_900_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_999_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_9999999_QT,                                                                                    // val/str/enum
@@ -458,11 +458,11 @@ Rule Ints
 
 static const int parseRuleValueInt[] =
 {
+    -5,                                                                                                                   // val/int
     0,                                                                                                                    // val/int
     1,                                                                                                                    // val/int
     2,                                                                                                                    // val/int
-    3,                                                                                                                    // val/int
-    9,                                                                                                                    // val/int
+    12,                                                                                                                   // val/int
     22,                                                                                                                   // val/int
     32,                                                                                                                   // val/int
     256,                                                                                                                  // val/int
@@ -480,11 +480,11 @@ static const int parseRuleValueInt[] =
 
 static const uint8_t parseRuleValueIntStrMap[] =
 {
+    parseRuleValStrQT_DS_5_QT,                                                                                     // val/int/strmap
     parseRuleValStrQT_0_QT,                                                                                        // val/int/strmap
     parseRuleValStrQT_1_QT,                                                                                        // val/int/strmap
     parseRuleValStrQT_2_QT,                                                                                        // val/int/strmap
-    parseRuleValStrQT_3_QT,                                                                                        // val/int/strmap
-    parseRuleValStrQT_9_QT,                                                                                        // val/int/strmap
+    parseRuleValStrQT_12_QT,                                                                                       // val/int/strmap
     parseRuleValStrQT_22_QT,                                                                                       // val/int/strmap
     parseRuleValStrQT_32_QT,                                                                                       // val/int/strmap
     parseRuleValStrQT_256_QT,                                                                                      // val/int/strmap
@@ -502,11 +502,11 @@ static const uint8_t parseRuleValueIntStrMap[] =
 
 typedef enum
 {
+    parseRuleValIntDS_5,                                                                                             // val/int/enum
     parseRuleValInt0,                                                                                                // val/int/enum
     parseRuleValInt1,                                                                                                // val/int/enum
     parseRuleValInt2,                                                                                                // val/int/enum
-    parseRuleValInt3,                                                                                                // val/int/enum
-    parseRuleValInt9,                                                                                                // val/int/enum
+    parseRuleValInt12,                                                                                               // val/int/enum
     parseRuleValInt22,                                                                                               // val/int/enum
     parseRuleValInt32,                                                                                               // val/int/enum
     parseRuleValInt256,                                                                                              // val/int/enum
@@ -1885,13 +1885,13 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                          // opt/compress-level-network
                 PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                        // opt/compress-level-network
                 (                                                                                      // opt/compress-level-network
-                    PARSE_RULE_VAL_INT(0),                                                             // opt/compress-level-network
-                    PARSE_RULE_VAL_INT(9),                                                             // opt/compress-level-network
+                    PARSE_RULE_VAL_INT(DS_5),                                                          // opt/compress-level-network
+                    PARSE_RULE_VAL_INT(12),                                                            // opt/compress-level-network
                 ),                                                                                     // opt/compress-level-network
                                                                                                        // opt/compress-level-network
                 PARSE_RULE_OPTIONAL_DEFAULT                                                            // opt/compress-level-network
                 (                                                                                      // opt/compress-level-network
-                    PARSE_RULE_VAL_INT(3),                                                             // opt/compress-level-network
+                    PARSE_RULE_VAL_INT(1),                                                             // opt/compress-level-network
                 ),                                                                                     // opt/compress-level-network
             ),                                                                                         // opt/compress-level-network
         ),                                                                                             // opt/compress-level-network
