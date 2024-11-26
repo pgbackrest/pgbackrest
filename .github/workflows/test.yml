@@ -47,7 +47,7 @@ jobs:
           - param: test --vm=u22 --param=c-only --param=no-coverage --param=no-back-trace
 
           # All unit tests on the newest gcc available
-          - param: test --vm=f40 --param=c-only --param=no-valgrind --param=no-coverage --param=no-performance
+          - param: test --vm=f41 --param=c-only --param=no-valgrind --param=no-coverage --param=no-performance
 
           # RHEL documentation
           - param: doc --vm=rh8

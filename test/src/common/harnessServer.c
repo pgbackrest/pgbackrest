@@ -47,7 +47,7 @@ Constants
 /***********************************************************************************************************************************
 Local data
 ***********************************************************************************************************************************/
-struct HrnServerLocal
+static struct HrnServerLocal
 {
     unsigned int portOffsetNext;                                    // Next server port offset to be returned
 } hrnServerLocal;

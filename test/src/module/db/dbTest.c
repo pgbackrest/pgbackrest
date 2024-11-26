@@ -296,7 +296,7 @@ testRun(void)
         HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_DATABASE_LIST_1(1, "test1"));
         TEST_RESULT_STR_Z(hrnPackToStr(dbList(db.primary)), "1:array:[1:u32:16384, 2:str:test1, 3:u32:13777]", "check db list");
 
-        // Get tablespace ist
+        // Get tablespace list
         HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_TABLESPACE_LIST_0(1));
         TEST_RESULT_STR_Z(hrnPackToStr(dbTablespaceList(db.primary)), "", "check tablespace list");
 
@@ -840,7 +840,7 @@ testRun(void)
             HRN_PQ_SCRIPT_CLOSE(8),
             HRN_PQ_SCRIPT_CLOSE(1));
 
-        TEST_ASSIGN(result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary and standy");
+        TEST_ASSIGN(result, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary and standby");
 
         hrnLogReplaceAdd("(could not connect to server|connection to server on socket).*$", NULL, "PG ERROR", false);
         TEST_RESULT_LOG(

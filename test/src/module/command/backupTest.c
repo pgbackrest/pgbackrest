@@ -3147,7 +3147,7 @@ testRun(void)
             memset(bufPtr(relationAfter), 0, bufSize(relationAfter));
             bufUsedSet(relationAfter, bufSize(relationAfter));
 
-            // Run backup. Make sure that the timeline selected converts to hexdecimal that can't be interpreted as decimal.
+            // Run backup. Make sure that the timeline selected converts to hexadecimal that can't be interpreted as decimal.
             HRN_BACKUP_SCRIPT_SET(
                 {.op = hrnBackupScriptOpUpdate, .file = storagePathP(storagePg(), STRDEF(PG_PATH_BASE "/1/1")),
                  .time = backupTimeStart, .content = relationAfter});

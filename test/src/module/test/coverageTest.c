@@ -170,7 +170,7 @@ testRun(void)
             /* 06 */ "    logLevelAny = logLevelStdOut;\n"
             /* 07 */ "\n"
             /* 08 */ "    if (logLevelStdErr > logLevelAny)\n"
-            /* 09 */ "        logLevelAny = logLevelStdErr;\n"
+            /* 09 */ "        FUNCTION_LOG_RETURN_VOID();\n"
             /* 10 */ "\n"
             /* 11 */ "    if (logLevelFile > logLevelAny && logFdFile != -1)\n"
             /* 12 */ "        logLevelAny = logLevelFile;\n"
@@ -275,6 +275,16 @@ testRun(void)
                                 "\"count\": 7,"
                                 "\"junk\": 0,"
                                 "\"line_number\": 8"
+                            "},"
+                            "{"
+                                "\"branches\": [],"
+                                "\"count\": 1,"
+                                "\"line_number\": 9"
+                            "},"
+                            "{"
+                                "\"branches\": [],"
+                                "\"count\": 1,"
+                                "\"line_number\": 14"
                             "},"
                             "{"
                                 "\"branches\": [],"
@@ -408,7 +418,7 @@ testRun(void)
 
         TEST_RESULT_INT(testCvgGenerate(pathRepo, pathTest, STRDEF("vm"), true, moduleList), 2, "generate");
         TEST_RESULT_LOG(
-            "P00   WARN: module 'src/common/log.c' is not fully covered (3/8 lines, 1/2 branches)\n"
+            "P00   WARN: module 'src/common/log.c' is not fully covered (4/9 lines, 1/2 branches)\n"
             "P00   WARN: module 'src/common/log2.c' is not fully covered (2/2 lines, 1/2 branches)");
 
         TEST_STORAGE_GET(
@@ -417,7 +427,7 @@ testRun(void)
             "    <table-cell>common</table-cell>\n"
             "    <table-cell>2/3 (66.67%)</table-cell>\n"
             "    <table-cell>2/4 (50.00%)</table-cell>\n"
-            "    <table-cell>5/10 (50.00%)</table-cell>\n"
+            "    <table-cell>6/11 (54.55%)</table-cell>\n"
             "</table-row>\n"
             "\n"
             "<table-row>\n"
@@ -431,7 +441,7 @@ testRun(void)
             "    <table-cell>TOTAL</table-cell>\n"
             "    <table-cell>3/4 (75.00%)</table-cell>\n"
             "    <table-cell>2/4 (50.00%)</table-cell>\n"
-            "    <table-cell>6/11 (54.55%)</table-cell>\n"
+            "    <table-cell>7/12 (58.33%)</table-cell>\n"
             "</table-row>\n");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -439,7 +449,7 @@ testRun(void)
 
         TEST_RESULT_INT(testCvgGenerate(pathRepo, pathTest, STRDEF("vm"), false, moduleList), 2, "generate");
         TEST_RESULT_LOG(
-            "P00   WARN: module 'src/common/log.c' is not fully covered (4/8 lines, 1/2 branches)\n"
+            "P00   WARN: module 'src/common/log.c' is not fully covered (5/9 lines, 1/2 branches)\n"
             "P00   WARN: module 'src/common/log2.c' is not fully covered (2/2 lines, 1/2 branches)");
 
         TEST_STORAGE_GET(
@@ -474,7 +484,7 @@ testRun(void)
             TEST_CVG_HTML_RPT_LINE_PRE "8" TEST_CVG_HTML_RPT_BRANCH_UNCOVERED_PRE "[+ -]" TEST_CVG_HTML_RPT_BRANCH_UNCOVERED_POST
             TEST_CVG_HTML_RPT_CODE "    if (logLevelStdErr > logLevelAny)" TEST_CVG_HTML_RPT_LINE_POST
             TEST_CVG_HTML_RPT_LINE_PRE "9" TEST_CVG_HTML_RPT_BRANCH_COVERED
-            TEST_CVG_HTML_RPT_CODE "        logLevelAny = logLevelStdErr;" TEST_CVG_HTML_RPT_LINE_POST
+            TEST_CVG_HTML_RPT_CODE "        FUNCTION_LOG_RETURN_VOID();" TEST_CVG_HTML_RPT_LINE_POST
             TEST_CVG_HTML_RPT_LINE_PRE "10" TEST_CVG_HTML_RPT_BRANCH_COVERED
             TEST_CVG_HTML_RPT_CODE "" TEST_CVG_HTML_RPT_LINE_POST
             TEST_CVG_HTML_RPT_LINE_PRE "11" TEST_CVG_HTML_RPT_BRANCH_COVERED

@@ -275,7 +275,7 @@ hrnFileWrite(const char *fileName, const unsigned char *buffer, size_t bufferSiz
 }
 
 /**********************************************************************************************************************************/
-char harnessDiffBuffer[256 * 1024];
+static char harnessDiffBuffer[256 * 1024];
 
 const char *
 hrnDiff(const char *expected, const char *actual)

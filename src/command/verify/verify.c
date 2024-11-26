@@ -109,7 +109,7 @@ typedef struct VerifyBackupResult
     List *invalidFileList;                                          // List of invalid files found in the backup
 } VerifyBackupResult;
 
-// Job data stucture for processing and results collection
+// Job data structure for processing and results collection
 typedef struct VerifyJobData
 {
     MemContext *memContext;                                         // Context for memory allocations in this struct
@@ -855,7 +855,7 @@ verifyBackup(VerifyJobData *const jobData)
                 VerifyBackupResult *const backupResult = lstGetLast(jobData->backupResultList);
 
                 // If currentBackup is set (meaning the newest backup label on disk was not in the db:current section when the
-                // backup.info file was read) and this is the same label, then set inProgessBackup to true, else false.
+                // backup.info file was read) and this is the same label, then set inProgressBackup to true, else false.
                 // inProgressBackup may be changed in verifyManifestFile if a main backup.manifest exists since that would indicate
                 // the backup completed during the verify process.
                 const bool inProgressBackup = strEq(jobData->currentBackup, backupResult->backupLabel);

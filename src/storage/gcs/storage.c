@@ -48,7 +48,7 @@ STRING_EXTERN(GCS_QUERY_NAME_STR,                                   GCS_QUERY_NA
 STRING_STATIC(GCS_QUERY_PAGE_TOKEN_STR,                             "pageToken");
 STRING_STATIC(GCS_QUERY_PREFIX_STR,                                 "prefix");
 STRING_EXTERN(GCS_QUERY_UPLOAD_ID_STR,                              GCS_QUERY_UPLOAD_ID);
-STRING_EXTERN(GCS_QUERY_VERSIONS_STR,                               "versions");
+STRING_STATIC(GCS_QUERY_VERSIONS_STR,                               "versions");
 
 /***********************************************************************************************************************************
 JSON tokens

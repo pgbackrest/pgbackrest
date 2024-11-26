@@ -8,6 +8,7 @@ Based on the documentation at https://github.com/madler/zlib/blob/master/zlib.h
 #include <stdio.h>
 #include <zlib.h>
 
+#include "common/compress/common.h"
 #include "common/compress/gz/common.h"
 #include "common/compress/gz/compress.h"
 #include "common/debug.h"
@@ -188,24 +189,9 @@ gzCompressNew(const int level, const bool raw)
     }
     OBJ_NEW_END();
 
-    // Create param list
-    Pack *paramList;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        PackWrite *const packWrite = pckWriteNewP();
-
-        pckWriteI32P(packWrite, level);
-        pckWriteBoolP(packWrite, raw);
-        pckWriteEndP(packWrite);
-
-        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
-    }
-    MEM_CONTEXT_TEMP_END();
-
     FUNCTION_LOG_RETURN(
         IO_FILTER,
         ioFilterNewP(
-            GZ_COMPRESS_FILTER_TYPE, this, paramList, .done = gzCompressDone, .inOut = gzCompressProcess,
+            GZ_COMPRESS_FILTER_TYPE, this, compressParamList(level, raw), .done = gzCompressDone, .inOut = gzCompressProcess,
             .inputSame = gzCompressInputSame));
 }

@@ -248,7 +248,7 @@
     {
         "commit": "80c9b3001c8f4689837d46783d348a2c839645c0",
         "date": "2024-08-13 11:53:12 +0800",
-        "subject": "PostgreSQL 17beta3 support.",
+        "subject": "PostgreSQL 17 support.",
         "body": "This release changed the control and WAL format, which is very unusual for a beta. Update control and WAL versions/structs to match."
     },
     {
@@ -578,7 +578,7 @@
     {
         "commit": "dfc14b193454b3003c10eb2d021699cbd6294004",
         "date": "2024-05-27 11:13:16 +1000",
-        "subject": "v2.52: PostgreSQL 17 Support"
+        "subject": "v2.52: PostgreSQL 17beta1 Support"
     },
     {
         "commit": "899b8927888f3930f07f5607902d0493bd3b8f05",
@@ -713,7 +713,7 @@
     {
         "commit": "fb22f04555fecfa143354372ec3543ab186c131d",
         "date": "2024-04-18 10:56:24 +1000",
-        "subject": "PostgreSQL 17 support.",
+        "subject": "PostgreSQL 17beta1 support.",
         "body": "Add catalog version and WAL magic for PostgreSQL 17."
     },
     {

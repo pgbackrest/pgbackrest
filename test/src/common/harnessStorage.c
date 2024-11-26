@@ -60,7 +60,7 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
     // Add compression extension if one exists
     compressExtCat(fileFull, param.compressType);
 
-    // Declare an information filter for displaying paramaters to the output
+    // Declare an information filter for displaying parameters to the output
     String *const filter = strNew();
 
     StorageRead *read = storageNewReadP(storage, fileFull, .ignoreMissing = param.nullOnMissing);
@@ -111,7 +111,7 @@ testStorageExists(const Storage *const storage, const char *const file, const Te
     printf("file exists '%s'", strZ(fileFull));
     hrnTestResultComment(param.comment);
 
-    hrnTestResultBool(storageExistsP(storage, fileFull), true);
+    hrnTestResultBool(storageExistsP(storage, fileFull, .timeout = param.timeout), true);
 
     if (param.remove)
         storageRemoveP(storage, fileFull, .errorOnMissing = true);
@@ -373,7 +373,7 @@ hrnStoragePut(
     StorageWrite *destination = storageNewWriteP(storage, fileStr, .modeFile = param.modeFile, .timeModified = param.timeModified);
     IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(destination));
 
-    // Declare an information filter for displaying paramaters to the output
+    // Declare an information filter for displaying parameters to the output
     String *const filter = strNew();
 
     // Add mode to output information filter

@@ -2048,7 +2048,7 @@ testRun(void)
     {
         const String *pgPath = STRDEF(TEST_PATH "/pg");
         const String *repoPath = STRDEF(TEST_PATH "/repo");
-        const String *repoPathEncrpyt = STRDEF(TEST_PATH "/repo-encrypt");
+        const String *repoPathEncrypt = STRDEF(TEST_PATH "/repo-encrypt");
 
         // Set log level to detail
         harnessLogLevelSet(logLevelDetail);
@@ -2081,7 +2081,7 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
-        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPathEncrpyt);
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPathEncrypt);
         hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         hrnCfgArgRawZ(argList, cfgOptSet, "20161219-212741F");
         hrnCfgArgKeyRawStrId(argList, cfgOptRepoCipherType, 2, cipherTypeAes256Cbc);
@@ -2204,7 +2204,7 @@ testRun(void)
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 1, repoPath);
-        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPathEncrpyt);
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPathEncrypt);
         hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         hrnCfgArgRawZ(argList, cfgOptType, "preserve");
         hrnCfgArgRawZ(argList, cfgOptSet, "20161219-212741F");
@@ -2951,11 +2951,11 @@ testRun(void)
         HRN_STORAGE_PUT_Z(storagePgWrite(), "base/1/2", BOGUS_STR);
         HRN_STORAGE_MODE(storagePgWrite(), "base/1/2", 0600);
 
-        // Covert pg_wal to a path so it will be removed
+        // Convert pg_wal to a path so it will be removed
         HRN_STORAGE_REMOVE(storagePgWrite(), "pg_wal");
         HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_wal");
 
-        // Covert pg_hba.conf to a path so it will be removed
+        // Convert pg_hba.conf to a path so it will be removed
         HRN_STORAGE_REMOVE(storagePgWrite(), "pg_hba.conf");
         HRN_STORAGE_PUT_Z(storagePgWrite(), "pg_hba.conf", BOGUS_STR);
 

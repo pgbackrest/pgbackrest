@@ -228,7 +228,7 @@ nearest try block.
 Use the MEM_CONTEXT*() macros when possible rather than reimplement the boilerplate for every memory context block.
 ***********************************************************************************************************************************/
 // Create a new mem context in the current mem context. The new context must be either kept with memContextKeep() or discarded with
-// memContextDisard() before switching back from the parent context.
+// memContextDiscard() before switching back from the parent context.
 typedef struct MemContextNewParam
 {
     VAR_PARAM_HEADER;
