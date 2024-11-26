@@ -20,6 +20,9 @@ void harnessLogFinal(void);
 // Add log replacement
 void hrnLogReplaceAdd(const char *expression, const char *expressionSub, const char *replacement, bool version);
 
+// Remove a log replacement
+void hrnLogReplaceRemove(const char *expression);
+
 // Clear (remove) all log replacements
 void hrnLogReplaceClear(void);
 

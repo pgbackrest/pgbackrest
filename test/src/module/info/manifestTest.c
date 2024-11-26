@@ -468,6 +468,11 @@ testRun(void)
                     TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
+        // Build full/incr manifest
+        TEST_RESULT_VOID(manifestBuildFullIncr(manifest, 1565282100, 0), "build full/incr manifest");
+        TEST_RESULT_UINT(manifestFileTotal(manifest), 1, "check file total");
+        TEST_RESULT_BOOL(manifestFileExists(manifest, STRDEF("pg_data/PG_VERSION")), true, "check for PG_VERSION");
+
         // Remove pg_xlog and the directory that archive_status link pointed to
         HRN_STORAGE_PATH_REMOVE(storagePgWrite, "pg_xlog", .recurse = true);
         HRN_STORAGE_PATH_REMOVE(storageTest, "archivestatus", .recurse = true);
@@ -847,6 +852,14 @@ testRun(void)
                     "pg_data/pg_xlog={}\n"
                     TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
+
+        // Build full/incr manifest
+        TEST_RESULT_VOID(manifestBuildFullIncr(manifest, 1565282101, 2), "build full/incr manifest");
+        TEST_RESULT_UINT(manifestFileTotal(manifest), 2, "check file total");
+        TEST_RESULT_BOOL(manifestFileExists(manifest, STRDEF("pg_data/PG_VERSION")), true, "check for PG_VERSION");
+        TEST_RESULT_BOOL(
+            manifestFileExists(manifest, STRDEF("pg_data/pg_xlog/000000020000000000000002")), true,
+            "check for pg_xlog/000000020000000000000002");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on link to pg_data");

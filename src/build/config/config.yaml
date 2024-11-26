@@ -1228,6 +1228,21 @@ option:
       list:
         - true
 
+  backup-full-incr:
+    section: global
+    type: boolean
+    default: false
+    internal: true
+    command:
+      backup:
+        depend:
+          option: online
+          default: false
+          list:
+            - true
+    command-role:
+      main: {}
+
   backup-standby:
     section: global
     type: string-id

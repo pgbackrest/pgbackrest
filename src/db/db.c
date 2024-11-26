@@ -701,7 +701,7 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
             {
                 // Build the query
                 const String *const query = strNewFmt(
-                    "select (checkpoint_%s > '%s')::bool as targetReached,\n"
+                    "select (checkpoint_%s >= '%s')::bool as targetReached,\n"
                     "       checkpoint_%s::text as checkpointLsn\n"
                     "  from pg_catalog.pg_control_checkpoint()",
                     lsnName, strZ(targetLsn), lsnName);

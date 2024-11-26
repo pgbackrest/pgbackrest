@@ -304,6 +304,32 @@ hrnLogReplaceAdd(const char *expression, const char *expressionSub, const char *
     FUNCTION_HARNESS_RETURN_VOID();
 }
 
+void
+hrnLogReplaceRemove(const char *const expression)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, expression);
+    FUNCTION_HARNESS_END();
+
+    unsigned int replaceIdx = 0;
+
+    for (; replaceIdx < lstSize(harnessLog.replaceList); replaceIdx++)
+    {
+        const HarnessLogReplace *const logReplace = lstGet(harnessLog.replaceList, replaceIdx);
+
+        if (strEqZ(logReplace->expression, expression))
+        {
+            lstRemoveIdx(harnessLog.replaceList, replaceIdx);
+            break;
+        }
+    }
+
+    if (replaceIdx == lstSize(harnessLog.replaceList))
+        THROW_FMT(AssertError, "expression '%s' not found in replace list", expression);
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 void
 hrnLogReplaceClear(void)

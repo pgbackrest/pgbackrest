@@ -110,8 +110,8 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
-            storageTest, PG_VERSION_11, .systemId = 0xFACEFACE, .checkpoint = 0xEEFFEEFFAABBAABB, .timeline = 47,
-            .walSegmentSize = 1024 * 1024);
+            storageTest, PG_VERSION_11, .systemId = 0xFACEFACE, .checkpoint = 0xEEFFEEFFAABBAABB, .checkpointTime = 555,
+            .timeline = 47, .walSegmentSize = 1024 * 1024);
 
         PgControl info = {0};
         TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info v11");
@@ -119,6 +119,7 @@ testRun(void)
         TEST_RESULT_UINT(info.version, PG_VERSION_11, "   check version");
         TEST_RESULT_UINT(info.catalogVersion, 201809051, "   check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xEEFFEEFFAABBAABB, "check checkpoint");
+        TEST_RESULT_INT(info.checkpointTime, 555, "check checkpoint time");
         TEST_RESULT_UINT(info.timeline, 47, "check timeline");
 
         // -------------------------------------------------------------------------------------------------------------------------

@@ -73,6 +73,7 @@ hrnBackupScriptAdd(const HrnBackupScript *const script, const unsigned int scrip
 
             hrnBackupLocal.script[hrnBackupLocal.scriptSize] = script[scriptIdx];
             hrnBackupLocal.script[hrnBackupLocal.scriptSize].file = strDup(script[scriptIdx].file);
+            hrnBackupLocal.script[hrnBackupLocal.scriptSize].exec = script[scriptIdx].exec == 0 ? 1 : script[scriptIdx].exec;
 
             if (script[scriptIdx].content != NULL)
                 hrnBackupLocal.script[hrnBackupLocal.scriptSize].content = bufDup(script[scriptIdx].content);
@@ -87,14 +88,96 @@ void
 hrnBackupScriptSet(const HrnBackupScript *const script, const unsigned int scriptSize)
 {
     if (hrnBackupLocal.scriptSize != 0)
-        THROW(AssertError, "previous pq script has not yet completed");
+        THROW(AssertError, "previous backup script has not yet completed");
 
     hrnBackupScriptAdd(script, scriptSize);
 }
 
 /**********************************************************************************************************************************/
 static void
-backupProcess(const BackupData *const backupData, Manifest *const manifest, const String *const cipherPassBackup)
+backupProcessScript(const bool after)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(BOOL, after);
+    FUNCTION_HARNESS_END();
+
+    // If any file changes are scripted then make them
+    if (hrnBackupLocal.scriptSize != 0)
+    {
+        bool done = true;
+
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            Storage *const storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
+
+            for (unsigned int scriptIdx = 0; scriptIdx < hrnBackupLocal.scriptSize; scriptIdx++)
+            {
+                // Do not perform ops that have already run
+                if (hrnBackupLocal.script[scriptIdx].exec != 0)
+                {
+                    // Perform ops for this exec
+                    if (hrnBackupLocal.script[scriptIdx].exec == 1)
+                    {
+                        if (hrnBackupLocal.script[scriptIdx].after == after)
+                        {
+                            switch (hrnBackupLocal.script[scriptIdx].op)
+                            {
+                                // Remove file
+                                case hrnBackupScriptOpRemove:
+                                    storageRemoveP(storageTest, hrnBackupLocal.script[scriptIdx].file);
+                                    break;
+
+                                // Update file
+                                case hrnBackupScriptOpUpdate:
+                                    storagePutP(
+                                        storageNewWriteP(
+                                            storageTest, hrnBackupLocal.script[scriptIdx].file,
+                                            .timeModified = hrnBackupLocal.script[scriptIdx].time),
+                                        hrnBackupLocal.script[scriptIdx].content == NULL ?
+                                            BUFSTRDEF("") : hrnBackupLocal.script[scriptIdx].content);
+                                    break;
+
+                                default:
+                                    THROW_FMT(
+                                        AssertError, "unknown backup script op '%s'",
+                                        strZ(strIdToStr(hrnBackupLocal.script[scriptIdx].op)));
+                            }
+
+                            hrnBackupLocal.script[scriptIdx].exec = 0;
+                        }
+                        // Preserve op for after exec
+                        else
+                            done = false;
+                    }
+                    // Decrement exec count (and preserve op for next exec)
+                    else
+                    {
+                        // Only decrement when the after exec has run
+                        if (after)
+                            hrnBackupLocal.script[scriptIdx].exec--;
+
+                        done = false;
+                    }
+                }
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
+
+        // Free script if all ops have been completed
+        if (done)
+        {
+            memContextFree(hrnBackupLocal.memContext);
+            hrnBackupLocal.scriptSize = 0;
+        }
+    }
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+static void
+backupProcess(
+    const BackupData *const backupData, Manifest *const manifest, const bool preliminary, const String *const cipherPassBackup,
+    const uint64_t copySizePrelim, const uint64_t copySizeFinal)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(BACKUP_DATA, backupData);
@@ -102,46 +185,9 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
         FUNCTION_HARNESS_PARAM(STRING, cipherPassBackup);
     FUNCTION_HARNESS_END();
 
-    // If any file changes are scripted then make them
-    if (hrnBackupLocal.scriptSize != 0)
-    {
-        MEM_CONTEXT_TEMP_BEGIN()
-        {
-            Storage *const storageTest = storagePosixNewP(strNewZ(testPath()), .write = true);
-
-            for (unsigned int scriptIdx = 0; scriptIdx < hrnBackupLocal.scriptSize; scriptIdx++)
-            {
-                switch (hrnBackupLocal.script[scriptIdx].op)
-                {
-                    // Remove file
-                    case hrnBackupScriptOpRemove:
-                        storageRemoveP(storageTest, hrnBackupLocal.script[scriptIdx].file);
-                        break;
-
-                    // Update file
-                    case hrnBackupScriptOpUpdate:
-                        storagePutP(
-                            storageNewWriteP(
-                                storageTest, hrnBackupLocal.script[scriptIdx].file,
-                                .timeModified = hrnBackupLocal.script[scriptIdx].time),
-                            hrnBackupLocal.script[scriptIdx].content == NULL ?
-                                BUFSTRDEF("") : hrnBackupLocal.script[scriptIdx].content);
-                        break;
-
-                    default:
-                        THROW_FMT(
-                            AssertError, "unknown backup script op '%s'", strZ(strIdToStr(hrnBackupLocal.script[scriptIdx].op)));
-                }
-            }
-        }
-        MEM_CONTEXT_TEMP_END();
-
-        // Free script
-        memContextFree(hrnBackupLocal.memContext);
-        hrnBackupLocal.scriptSize = 0;
-    }
-
-    backupProcess_SHIMMED(backupData, manifest, cipherPassBackup);
+    backupProcessScript(false);
+    backupProcess_SHIMMED(backupData, manifest, preliminary, cipherPassBackup, copySizePrelim, copySizeFinal);
+    backupProcessScript(true);
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
@@ -201,6 +247,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
 
         // Save pg_control with updated info
         pgControl.checkpoint = lsnStart;
+        pgControl.checkpointTime = backupTimeStart - 60;
         pgControl.timeline = param.timeline;
 
         HRN_STORAGE_PUT(
@@ -285,6 +332,32 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
         // Get start time
         HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_TIME_QUERY(1, (int64_t)backupTimeStart * 1000));
 
+        // First phase of full/incr backup
+        const bool backupfullIncr =
+            param.fullIncr || (cfgOptionBool(cfgOptBackupFullIncr) && cfgOptionStrId(cfgOptType) == backupTypeFull);
+
+        if (backupfullIncr)
+        {
+            // Tablespace check
+            if (tablespace)
+                HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_TABLESPACE_LIST_1(1, 32768, "tblspc32768"));
+            else
+                HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_TABLESPACE_LIST_0(1));
+
+            if (!param.fullIncrNoOp)
+            {
+                // Wait for standby to sync
+                if (param.backupStandby)
+                    HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_REPLAY_WAIT_96(2, lsnStartStr));
+
+                // Ping to check standby mode
+                HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false));
+
+                if (param.backupStandby)
+                    HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_STANDBY_QUERY(2, true));
+            }
+        }
+
         // Get advisory lock and check if backup is in progress (only for exclusive backup)
         if (pgVersion <= PG_VERSION_95)
         {
@@ -343,11 +416,15 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
             // Continue if there is no error after start
             if (!param.errorAfterStart)
             {
-                // Ping to check standby mode
-                HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false));
+                // If full/incr then the first ping has already been done
+                if (!backupfullIncr || param.fullIncrNoOp)
+                {
+                    // Ping to check standby mode
+                    HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false));
 
-                if (param.backupStandby)
-                    HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_STANDBY_QUERY(2, true));
+                    if (param.backupStandby)
+                        HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_STANDBY_QUERY(2, true));
+                }
 
                 // Continue if there is no error after copy start
                 if (!param.errorAfterCopyStart)

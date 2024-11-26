@@ -50,6 +50,20 @@
                 <p>Remove <proper>autoconf</proper>/<proper>make</proper> build.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-pull-request id="2306"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Full/incremental backup method.</p>
+            </release-item>
+        </release-development-list>
     </release-core-list>
 
     <release-test-list>

@@ -67,6 +67,7 @@ Read the version specific pg_control into a general data structure
             .systemId = ((const ControlFileData *)controlFile)->system_identifier,                                                 \
             .catalogVersion = ((const ControlFileData *)controlFile)->catalog_version_no,                                          \
             .checkpoint = ((const ControlFileData *)controlFile)->checkPoint,                                                      \
+            .checkpointTime = (time_t)((const ControlFileData *)controlFile)->checkPointCopy.time,                                 \
             .timeline = ((const ControlFileData *)controlFile)->checkPointCopy.ThisTimeLineID,                                     \
             .pageSize = ((const ControlFileData *)controlFile)->blcksz,                                                            \
             .walSegmentSize = ((const ControlFileData *)controlFile)->xlog_seg_size,                                               \

@@ -534,7 +534,7 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam,                                                                                                      \
         .function = HRN_PQ_SENDQUERY,                                                                                              \
         .param = zNewFmt(                                                                                                          \
-            "[\"select (checkpoint_" lsnNameParam " > '%s')::bool as targetReached,\\n"                                            \
+            "[\"select (checkpoint_" lsnNameParam " >= '%s')::bool as targetReached,\\n"                                           \
             "       checkpoint_" lsnNameParam "::text as checkpointLsn\\n"                                                         \
             "  from pg_catalog.pg_control_checkpoint()\"]", targetLsnParam),                                                       \
         .resultInt = 1, .sleep = sleepParam},                                                                                      \
