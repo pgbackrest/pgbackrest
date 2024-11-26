@@ -223,7 +223,8 @@ testRun(void)
         HRN_HOST_WAL_SWITCH(pg1);
 
         TEST_STORAGE_EXISTS(
-            hrnHostDataStorage(pg1), zNewFmt("%s/" HRN_STANZA "-archive-push-async.log", strZ(hrnHostLogPath(pg1))));
+            hrnHostDataStorage(pg1), zNewFmt("%s/" HRN_STANZA "-archive-push-async.log", strZ(hrnHostLogPath(pg1))),
+            .timeout = 5000);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("setup time target");

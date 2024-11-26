@@ -46,6 +46,7 @@ typedef struct TestStorageExistsParam
     VAR_PARAM_HEADER;
     bool remove;                                                    // Remove file after testing?
     const char *comment;                                            // Comment
+    TimeMSec timeout;                                               // Wait for file to exist
 } TestStorageExistsParam;
 
 #define TEST_STORAGE_EXISTS(storage, file, ...)                                                                                    \

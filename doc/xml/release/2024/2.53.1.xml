@@ -1,4 +1,4 @@
-<release date="2024-08-19" version="2.53.1" title="PostgreSQL 17beta3 Support">
+<release date="2024-08-19" version="2.53.1" title="PostgreSQL 17 Support">
     <release-core-list>
         <release-bug-list>
             <release-item>
@@ -47,7 +47,7 @@
                     <release-item-contributor id="david.steele"/>
                 </release-item-contributor-list>
 
-                <p><proper>PostgreSQL</proper> 17beta3 support.</p>
+                <p><proper>PostgreSQL</proper> 17 support.</p>
             </release-item>
         </release-improvement-list>
     </release-core-list>

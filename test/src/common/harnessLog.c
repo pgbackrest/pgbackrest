@@ -26,9 +26,9 @@ Include shimmed C modules
 /***********************************************************************************************************************************
 Log settings for testing
 ***********************************************************************************************************************************/
-LogLevel logLevelTest = logLevelInfo;
-LogLevel logLevelTestDefault = logLevelOff;
-bool logDryRunTest = false;
+static LogLevel logLevelTest = logLevelInfo;
+static LogLevel logLevelTestDefault = logLevelOff;
+static bool logDryRunTest = false;
 
 /***********************************************************************************************************************************
 Name of file where logs are stored for testing
@@ -38,7 +38,7 @@ static char logFile[1024];
 /***********************************************************************************************************************************
 Buffer where log results are loaded for comparison purposes
 ***********************************************************************************************************************************/
-char harnessLogBuffer[256 * 1024];
+static char harnessLogBuffer[256 * 1024];
 
 /***********************************************************************************************************************************
 Open a log file -- centralized here for error handling
@@ -351,7 +351,7 @@ hrnLogReplace(void)
                         if (!regExpMatch(logReplace->regExpSub, match))
                         {
                             THROW_FMT(
-                                AssertError, "unable to find sub expression '%s' in '%s' extracted with expresion '%s'",
+                                AssertError, "unable to find sub expression '%s' in '%s' extracted with expression '%s'",
                                 strZ(logReplace->expressionSub), strZ(match), strZ(logReplace->expression));
                         }
 

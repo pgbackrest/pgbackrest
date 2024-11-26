@@ -265,7 +265,7 @@ sub process
             $oCommandOption->{&CONFIG_HELP_INTERNAL} =
                 cfgDefineCommand()->{$strCommand}{&CFGDEF_INTERNAL} ? true : $oOptionDefine->{$strOption}{&CFGDEF_INTERNAL};
 
-            # If internal is defined for the option/command it overrides everthing else
+            # If internal is defined for the option/command it overrides everything else
             if (defined($oOptionDefine->{$strOption}{&CFGDEF_COMMAND}{$strCommand}{&CFGDEF_INTERNAL}))
             {
                 $oCommandOption->{&CONFIG_HELP_INTERNAL} =
