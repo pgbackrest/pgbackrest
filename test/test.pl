@@ -74,7 +74,6 @@ test.pl [options]
    --container-only     only run tests that must be run in a container
    --no-performance     do not run performance tests
    --gen-only           only run auto-generation
-   --min-gen            only run required code generation
    --gen-check          check that auto-generated files are correct (used in CI to detect changes)
    --code-count         generate code counts
    --no-back-trace      don't run backrace on C unit tests (may be slow with valgrind)
@@ -158,7 +157,6 @@ my $bContainerOnly = false;
 my $bNoPerformance = false;
 my $bGenOnly = false;
 my $bGenCheck = false;
-my $bMinGen = false;
 my $bCodeCount = false;
 my $bProfile = false;
 my $bNoBackTrace = false;
@@ -207,7 +205,6 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-performance' => \$bNoPerformance,
             'gen-only' => \$bGenOnly,
             'gen-check' => \$bGenCheck,
-            'min-gen' => \$bMinGen,
             'code-count' => \$bCodeCount,
             'code-format' => \$bCodeFormat,
             'code-format-check' => \$bCodeFormatCheck,
@@ -248,14 +245,6 @@ eval
     {
         syswrite(*STDOUT, "invalid parameter\n\n");
         pod2usage();
-    }
-
-    ################################################################################################################################
-    # Disable code generation on dry-run
-    ################################################################################################################################
-    if ($bDryRun)
-    {
-        $bMinGen = true;
     }
 
     ################################################################################################################################
@@ -471,7 +460,7 @@ eval
     # Create the repo path -- this should hopefully prevent obvious rsync errors below
     $oStorageTest->pathCreate($strRepoCachePath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
-    # Auto-generate code files (if --min-gen specified then do minimum required)
+    # Auto-generate code files (if --dry-run specified then do minimum required)
     #-------------------------------------------------------------------------------------------------------------------------------
     my $strBuildPath = "${strTestPath}/build/none";
     my $strBuildNinja = "${strBuildPath}/build.ninja";
@@ -481,9 +470,9 @@ eval
     # Setup build if it does not exist
     my $strGenerateCommand =
         "ninja -C ${strBuildPath} src/build-code" .
-        ($bMinGen ? '' : " && \\\n${strBuildPath}/src/build-code config ${strBackRestBase}/src") .
-        ($bMinGen ? '' : " && \\\n${strBuildPath}/src/build-code error ${strBackRestBase}/src") .
-        ($bMinGen ? '' : " && \\\n${strBuildPath}/src/build-code postgres-version ${strBackRestBase}/src") .
+        ($bDryRun ? '' : " && \\\n${strBuildPath}/src/build-code config ${strBackRestBase}/src") .
+        ($bDryRun ? '' : " && \\\n${strBuildPath}/src/build-code error ${strBackRestBase}/src") .
+        ($bDryRun ? '' : " && \\\n${strBuildPath}/src/build-code postgres-version ${strBackRestBase}/src") .
         " && \\\n${strBuildPath}/src/build-code postgres ${strBackRestBase}/src ${strRepoCachePath}" .
         " && \\\nninja -C ${strBuildPath} test/src/test-pgbackrest";
 
