@@ -122,8 +122,17 @@ do
    check_backup $i
 done
 
+# Determine version
+GP_VERSION_NUM=$(pg_config --gp_version | cut -c 11)
+
+# GPDB 7 doesn't need gp_pitr extension, but needs --target-action=promote
+if [ $GP_VERSION_NUM -le 6 ]; then
+    psql -c "create extension gp_pitr;"
+    RESTORE_OPTIONS=""
+else
+    RESTORE_OPTIONS="--target-action=promote"
+fi
 # Creating a distributed restore point..."
-psql -c "create extension gp_pitr;"
 psql -c "select gp_create_restore_point('test_pitr');"
 psql -c "select gp_switch_wal();"
 
@@ -138,7 +147,7 @@ rm -rf "${MIRROR1:?}/"* "${MIRROR2:?}/"* "${MIRROR3:?}/"* "$DATADIR/standby/"*
 # Restoring cluster
 for i in -1 0 1 2
 do 
-    pgbackrest --stanza=seg$i --type=name --target=test_pitr restore
+    pgbackrest --stanza=seg$i --type=name --target=test_pitr $RESTORE_OPTIONS restore
 done
 
 # Configuring mirrors after primary restore

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -exo pipefail
 
-DOCKERIMAGE="${1:-hub.adsw.io/library/gpdb6_regress:latest}"
+DOCKERIMAGE="${1:-hub.adsw.io/library/gpdb6_u22:latest}"
 ARCH="${2:-x86-64}"
 SCRIPT_PATH="$(dirname "$(realpath -s "$0")")"
 PROJECT_ROOT="$(dirname "$SCRIPT_PATH")"

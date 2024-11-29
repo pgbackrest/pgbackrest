@@ -9,8 +9,9 @@ It is preferable to have a container build from GPDB repo's [Dockerfile](https:/
 **Launch**
 To run the tests, execute the script:
 ```
-<path_to_pgbackrest>/arenadata/run_docker.sh <image_id> [arch type]
+<path_to_pgbackrest>/arenadata/run_docker.sh <image_name> [arch type]
 ```
 [arch type] stands for CPU architecture. Default value is x86-64. This argument is needed only for log files namings.
+[image_name] supports both GPDB 6 (`hub.adsw.io/library/gpdb6_u22:latest`) and GPDB 7 (`hub.adsw.io/library/gpdb7_u22:latest`).
 
 After launching the container the test scripts from `scripts` directory are executed. The logs will be stored in `<path_to_pgbackrest>/arenadata/logs` directory.
