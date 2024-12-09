@@ -735,7 +735,7 @@ backupManifestCopySize(Manifest *const manifest)
 Get the last full backup time in order to set the limit for full/incr preliminary copy
 ***********************************************************************************************************************************/
 static time_t
-backupFullIncrLimit(InfoBackup *const infoBackup)
+backupFullIncrLimit(const InfoBackup *const infoBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
