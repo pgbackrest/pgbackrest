@@ -18,7 +18,10 @@
 
         <release-improvement-list>
             <release-item>
-                <github-pull-request id="2488"/>
+                <commit subject="Use lz4 for protocol compression.">
+                    <github-pull-request id="2488"/>
+                </commit>
+                <commit subject="Remove reference to disabling network compression in the documentation."/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>

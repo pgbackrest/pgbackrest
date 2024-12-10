@@ -249,7 +249,7 @@
                         <summary>Network compression level.</summary>
 
                         <text>
-                            <p>Sets the network compression level when <setting>compress-type=none</setting> and the command is not run on the same host as the repository. Compression is used to reduce network traffic but can be disabled by setting <setting>compress-level-network=0</setting>. When <setting>compress-type</setting> does not equal <id>none</id> the <setting>compress-level-network</setting> setting is ignored and <setting>compress-level</setting> is used instead so that the file is only compressed once.</p>
+                            <p>Sets the network compression level when <setting>compress-type=none</setting> and the command is not run on the same host as the repository. Compression is used to reduce network traffic. When <setting>compress-type</setting> does not equal <id>none</id> the <setting>compress-level-network</setting> setting is ignored and <setting>compress-level</setting> is used instead so that the file is only compressed once.</p>
                         </text>
 
                         <allow>0-9</allow>
