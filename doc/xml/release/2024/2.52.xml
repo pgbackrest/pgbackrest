@@ -1,4 +1,4 @@
-<release date="2024-05-27" version="2.52" title="PostgreSQL 17 Support">
+<release date="2024-05-27" version="2.52" title="PostgreSQL 17beta1 Support">
     <release-core-list>
         <text>
             <p><b>NOTE TO PACKAGERS</b>: The build system for <backrest/> is now <proper>meson</proper>. The <proper>autoconf</proper>/<proper>make</proper> build will not receive any new features and will be removed after a few releases.</p>
@@ -37,7 +37,7 @@
                     <release-item-reviewer id="stefan.fercot"/>
                 </release-item-contributor-list>
 
-                <p><proper>PostgreSQL</proper> 17 support.</p>
+                <p><proper>PostgreSQL</proper> 17beta1 support.</p>
             </release-item>
         </release-feature-list>
 
