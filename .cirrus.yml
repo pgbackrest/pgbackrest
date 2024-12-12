@@ -67,13 +67,13 @@ macos_ventura_task:
     image: ghcr.io/cirruslabs/macos-runner:sonoma
 
   environment:
-    LDFLAGS: -L/opt/homebrew/opt/openssl@1.1/lib -L/opt/homebrew/opt/libpq/lib -L/opt/homebrew/opt/libxml2/lib -L/opt/homebrew/opt/libyaml/lib
-    CPPFLAGS: -I/opt/homebrew/opt/openssl@1.1/include -I/opt/homebrew/opt/libpq/include -I/opt/homebrew/opt/libxml2/include/libxml2 -I/opt/homebrew/opt/libyaml/include
+    LDFLAGS: -L/opt/homebrew/opt/openssl@3/lib -L/opt/homebrew/opt/libpq/lib -L/opt/homebrew/opt/libxml2/lib -L/opt/homebrew/opt/libyaml/lib
+    CPPFLAGS: -I/opt/homebrew/opt/openssl@3/include -I/opt/homebrew/opt/libpq/include -I/opt/homebrew/opt/libxml2/include/libxml2 -I/opt/homebrew/opt/libyaml/include
     PERL5LIB: /opt/homebrew/opt/perl5/lib/perl5
-    PKG_CONFIG_PATH: /opt/homebrew/opt/libpq/lib/pkgconfig:/opt/homebrew/opt/openssl@1.1/lib/pkgconfig
+    PKG_CONFIG_PATH: /opt/homebrew/opt/libpq/lib/pkgconfig:/opt/homebrew/opt/openssl@3/lib/pkgconfig
 
   install_script:
-     - brew install -q pkg-config openssl@1.1 libpq libxml2 libyaml meson
+     - brew install -q pkg-config openssl@3 libpq libxml2 libyaml meson
 
   script:
     - cd ..
