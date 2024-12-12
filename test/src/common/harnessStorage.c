@@ -111,7 +111,7 @@ testStorageExists(const Storage *const storage, const char *const file, const Te
     printf("file exists '%s'", strZ(fileFull));
     hrnTestResultComment(param.comment);
 
-    hrnTestResultBool(storageExistsP(storage, fileFull), true);
+    hrnTestResultBool(storageExistsP(storage, fileFull, .timeout = param.timeout), true);
 
     if (param.remove)
         storageRemoveP(storage, fileFull, .errorOnMissing = true);
