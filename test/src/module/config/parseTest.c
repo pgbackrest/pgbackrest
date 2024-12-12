@@ -2314,6 +2314,52 @@ testRun(void)
                 "HINT: if pgBackRest was installed from a package, does the package support this feature?\n"
                 "HINT: if pgBackRest was built from source, were the required development packages installed?");
         }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("version and help (without command) do not load env");
+        {
+            argList = strLstNew();
+            strLstAddZ(argList, "backup");
+            setenv("PGBACKREST_INVALID", "xxx", true);
+
+            // Warn on invalid env var
+            HRN_CFG_LOAD(cfgCmdHelp, argList);
+            TEST_RESULT_LOG("P00   WARN: environment contains invalid option 'invalid'");
+
+            // No warning for invalid env var
+            argList = strLstNew();
+            HRN_CFG_LOAD(cfgCmdHelp, argList);
+            HRN_CFG_LOAD(cfgCmdVersion, argList);
+
+            unsetenv("PGBACKREST_INVALID");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+#ifdef TEST_CONTAINER_REQUIRED
+        TEST_TITLE("version and help (without command) do not load config or read env");
+        {
+            HRN_SYSTEM(
+                "echo '[global' | sudo tee " PGBACKREST_CONFIG_ORIG_PATH_FILE
+                " && sudo chmod 600 " PGBACKREST_CONFIG_ORIG_PATH_FILE);
+
+            argList = strLstNew();
+            strLstAddZ(argList, TEST_BACKREST_EXE);
+            strLstAddZ(argList, "help");
+            strLstAddZ(argList, "backup");
+
+            // Error on unreadable config
+            TEST_ERROR(
+                cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true),
+                FileOpenError, "unable to open file '/etc/pgbackrest.conf' for read: [13] Permission denied");
+
+            // No error on unreadable config
+            argList = strLstNew();
+            HRN_CFG_LOAD(cfgCmdHelp, argList);
+            HRN_CFG_LOAD(cfgCmdVersion, argList);
+
+            HRN_SYSTEM("sudo rm " PGBACKREST_CONFIG_ORIG_PATH_FILE);
+        }
+#endif
     }
 
     // *****************************************************************************************************************************
