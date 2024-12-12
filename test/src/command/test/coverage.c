@@ -1024,19 +1024,28 @@ testCvgGenerate(
             "\\{\\+{0,1}(%s%s)[^_]", coverageSummary ? "uncoverable" : "uncover(ed|able)",
             strEqZ(vm, "none") ? "|vm_covered" : "");
         RegExp *const regExpLine = regExpNew(regExpLineStr);
+        RegExp *const regExpLog = regExpNew(STRDEF("\\s+FUNCTION_(LOG|TEST)_(VOID|BEGIN|END|PARAM(|_P|_PP))\\("));
 
         for (unsigned int fileIdx = 0; fileIdx < lstSize(coverage->fileList); fileIdx++)
         {
             MEM_CONTEXT_TEMP_BEGIN()
             {
+                unsigned int lineIdx = 0;
                 const TestCoverageFile *const file = lstGet(coverage->fileList, fileIdx);
                 const StringList *const lineTextList = strLstNewSplitZ(
                     strNewBuf(storageGetP(storageNewReadP(storageTest, strNewFmt("repo/%s", strZ(file->name))))), "\n");
 
-                for (unsigned int lineIdx = 0; lineIdx < lstSize(file->lineList); lineIdx++)
+                while (lineIdx < lstSize(file->lineList))
                 {
                     ASSERT(lineIdx < strLstSize(lineTextList));
                     TestCoverageLine *const line = lstGet(file->lineList, lineIdx);
+
+                    // Remove covered lines for debug logging. These are not very interesting for coverage reporting.
+                    if (line->hit != 0 && regExpMatch(regExpLog, strLstGet(lineTextList, line->no - 1)))
+                    {
+                        lstRemoveIdx(file->lineList, lineIdx);
+                        continue;
+                    }
 
                     // If not covered then check for line coverage exceptions
                     if (line->hit == 0 && regExpMatch(regExpLine, strLstGet(lineTextList, line->no - 1)))
@@ -1049,6 +1058,8 @@ testCvgGenerate(
                         lstFree(line->branchList);
                         line->branchList = NULL;
                     }
+
+                    lineIdx++;
                 }
             }
             MEM_CONTEXT_TEMP_END();
