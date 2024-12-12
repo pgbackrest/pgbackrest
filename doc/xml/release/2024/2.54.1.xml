@@ -16,4 +16,20 @@
             </release-item>
         </release-bug-list>
     </release-core-list>
+
+    <release-test-list>
+        <release-improvement-list>
+            <release-item>
+                <github-issue id="2463"/>
+                <github-pull-request id="2481"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="viktor.kurilko"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Stabilize async archiving in integration tests.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-test-list>
 </release>
