@@ -85,6 +85,7 @@ static struct HrnHostLocal
     CipherType cipherType;                                          // Cipher type
     const String *cipherPass;                                       // Cipher passphrase
     unsigned int repoTotal;                                         // Repository total
+    unsigned int restoreTotal;                                      // Restore counter used to name spool path
     bool tls;                                                       // Use TLS instead of SSH?
     bool bundle;                                                    // Bundling enabled?
     bool blockIncr;                                                 // Block incremental enabled?
@@ -144,7 +145,7 @@ hrnHostNew(const StringId id, const String *const container, const String *const
             this->pub.pgLogFile = strNewFmt("%s/postgresql.log", strZ(hrnHostLogPath(this)));
             this->pub.repo1Path = strNewFmt("%s/repo1", strZ(hrnHostDataPath(this)));
             this->pub.repo2Path = strNewFmt("%s/repo2", strZ(hrnHostDataPath(this)));
-            this->pub.spoolPath = strNewFmt("%s/spool", strZ(hrnHostDataPath(this)));
+            this->pub.spoolPath = strNewFmt("%s/spool/0000", strZ(hrnHostDataPath(this)));
         }
 
         MEM_CONTEXT_TEMP_BEGIN()
@@ -287,6 +288,13 @@ hrnHostExecBr(HrnHost *const this, const char *const command, const HrnHostExecB
             strCatFmt(commandStr, " %s", param.option);
 
         strCatFmt(commandStr, " %s", command);
+
+        // Set unique spool path
+        if (strcmp(command, CFGCMD_RESTORE) == 0 && hrnHostLocal.archiveAsync)
+        {
+            this->pub.spoolPath = strNewFmt("%s/spool/%04u", strZ(hrnHostDataPath(this)), hrnHostLocal.restoreTotal++);
+            hrnHostConfigUpdateP();
+        }
 
         if (param.param != NULL)
             strCatFmt(commandStr, " %s", param.param);
