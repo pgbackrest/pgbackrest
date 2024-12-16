@@ -1,5 +1,73 @@
 [
     {
+        "commit": "359de9eb616572ac16a54d6c6d98e31a63e7fd05",
+        "date": "2024-12-15 11:28:46 -0500",
+        "subject": "Rephrase invitation to star on Github."
+    },
+    {
+        "commit": "f30efbe86dcb1529b9f2b5dcc0456fa65903473f",
+        "date": "2024-12-12 15:26:37 -0500",
+        "subject": "Change \"find\" to \"visit\" in introduction."
+    },
+    {
+        "commit": "46360d1ed4521a1a635bd98b9ac87d35430a16f9",
+        "date": "2024-12-12 14:36:11 -0500",
+        "subject": "Update release notes for PostgreSQL 17 support.",
+        "body": "Accurately reflect when different versions of PostgreSQL were supported since an update was required for beta3."
+    },
+    {
+        "commit": "dd424ba290f6f1d97a0e704273e5c190b9221d9a",
+        "date": "2024-12-12 14:28:44 -0500",
+        "subject": "Update Fedora test image to Fedora 41."
+    },
+    {
+        "commit": "b9e8a885962a62dd4ad6d2599bb283f4035457c6",
+        "date": "2024-12-12 14:22:24 -0500",
+        "subject": "Add wait for async archive log exists check in integration test.",
+        "body": "They may be a small delay before the log exists, especially on slower platforms. Add a wait so the test does not fail in this case."
+    },
+    {
+        "commit": "b90ce9eb8c7cd9e9b131477a377249a3d3fda181",
+        "date": "2024-12-12 14:04:56 -0500",
+        "subject": "Stabilize async archiving in integration tests.",
+        "body": "The integration tests could fail if:\n\n1. After restoring the PostgreSQL instance the recovery process starts, which calls asynchronous archive-get.\n2. After archive-get checks the existence of the queue directory, but before writing the WAL file, there are restores when the next test is begun, which leads to the deletion of the queue directory.\n3. Since the directory no longer exists, writing the WAL file will fail, and archive-get will write the error file to the queue.\n4. A new PostgreSQL instance will start and the recovery process will begin, which requests the WAL file.\n5. The new archive-get looks into the queue directory, finds the error file, and throws out the error, after which the PostgreSQL recovery fails because the previous archive-get background process has not finished yet.\n\nThis patch fixes the problem by using a separate spool directory for each test."
+    },
+    {
+        "commit": "3fa450f3a1626473162440eb4b4300e61c6a6d50",
+        "date": "2024-12-12 13:50:56 -0500",
+        "subject": "Exclude function void return logging macros from coverage reporting.",
+        "body": "As in 355e27d6, it makes sense to exclude FUNCTION_(LOG|TEST)_RETURN_VOID() macros when then they are on the last line of a function because in this case they are a noop (but are still used for debugging)."
+    },
+    {
+        "commit": "8d6911898afd75c586ef70c6d8559b1e5959a155",
+        "date": "2024-12-12 13:41:55 -0500",
+        "subject": "Fix issue with version/help commands attempting to load pgbackrest.conf.",
+        "body": "8d6bceb5 refactored version/help to operate more like regular commands in part to simplify the implementation of --version and --help. Unfortunately this had the side effect of these commands also loading pgbackrest.conf which would lead to an error if the file could not be read or parsed.\n\nAdd a filter to prevent version or help from loading pgbackrest.conf. Also prevent reads from the env to stop any warnings or errors from that source."
+    },
+    {
+        "commit": "38cecf9443cd03bb1dacd41163143d7365d648f4",
+        "date": "2024-12-12 13:31:52 -0500",
+        "subject": "Exclude function logging macros from coverage reporting.",
+        "body": "It makes sense to exclude these from reporting since they are always covered when the function is covered and they are purely for debugging."
+    },
+    {
+        "commit": "12042c607e5e265e16c5b8ba9306887d6cb86a75",
+        "date": "2024-12-12 13:22:07 -0500",
+        "subject": "Fix misplaced volatile qualifiers in GCS authorization JWT generation.",
+        "body": "The volatile qualifiers should be on the pointers that are stored on the stack, not on the structures that are allocated by OpenSSL functions.\n\nAlso remove all the casts that were required when volatile was in wrong place."
+    },
+    {
+        "commit": "c6a2bfa55a84b05130497ca681309d8070cefd64",
+        "date": "2024-12-12 11:54:05 -0500",
+        "subject": "Update Cirrus MacOS runner to OpenSSL 3.",
+        "body": "OpenSSL 1.1 is no longer available in HomeBrew."
+    },
+    {
+        "commit": "f3c41ee8316e64e1ae35cba78b6d8cee118590be",
+        "date": "2024-12-12 11:50:14 -0500",
+        "subject": "Begin v2.54.1 development."
+    },
+    {
         "commit": "1e5f46b7d9626eadfcf99d08cb984a74085ee0c8",
         "date": "2024-10-21 08:57:43 +0300",
         "subject": "v2.54.0: Target Time for Versioned Storage",
