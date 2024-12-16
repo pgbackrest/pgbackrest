@@ -260,8 +260,8 @@
 <table-row>
     <table-cell>config</table-cell>
     <table-cell>93/93 (100.0%)</table-cell>
-    <table-cell>992/992 (100.0%)</table-cell>
-    <table-cell>1624/1624 (100.0%)</table-cell>
+    <table-cell>1000/1000 (100.0%)</table-cell>
+    <table-cell>1626/1626 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
@@ -324,7 +324,7 @@
     <table-cell>storage/gcs</table-cell>
     <table-cell>34/34 (100.0%)</table-cell>
     <table-cell>176/176 (100.0%)</table-cell>
-    <table-cell>579/579 (100.0%)</table-cell>
+    <table-cell>578/578 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
@@ -358,6 +358,6 @@
 <table-row>
     <table-cell>TOTAL</table-cell>
     <table-cell>1679/1679 (100.0%)</table-cell>
-    <table-cell>10667/10668 (99.99%)</table-cell>
-    <table-cell>25319/25319 (100.0%)</table-cell>
+    <table-cell>10675/10676 (99.99%)</table-cell>
+    <table-cell>25320/25320 (100.0%)</table-cell>
 </table-row>
