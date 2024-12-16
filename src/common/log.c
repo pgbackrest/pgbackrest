@@ -246,7 +246,7 @@ logFileSet(const char *const logFile)
 
         if (logFdFile == -1)
         {
-            int errNo = errno;
+            const int errNo = errno;
             LOG_WARN_FMT(
                 "unable to open log file '%s': %s\nNOTE: process will continue without log file.", logFile, strerror(errNo));
             result = false;
