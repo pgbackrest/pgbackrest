@@ -1164,7 +1164,7 @@
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
-            <p><backrest/> configuration files follow the Windows INI convention. Sections are denoted by text in brackets and key/value pairs are contained in each section. Lines beginning with <id>#</id> are ignored and can be used as comments.</p>
+            <p><backrest/> configuration files follow a Windows INI-like convention. Sections are denoted by text in brackets and key/value pairs are contained in each section. Lines beginning with <id>#</id> are ignored and can be used as comments. Quoting is not supported and whitespace is trimmed from keys and values. Sections will be merged if they appear more than once.</p>
 
             <p>There are multiple ways the <backrest/> configuration files can be loaded:</p>
             <list>
@@ -1175,7 +1175,7 @@
                 <list-item><br-option>config-path</br-option> is specified: this setting will override the base path for the default location of the config file and/or the base path of the default config-include-path setting unless the config and/or config-include-path option is explicitly set.</list-item>
             </list>
 
-            <p>The files are concatenated as if they were one big file; order doesn't matter, but there is precedence based on sections. The precedence (highest to lowest) is:</p>
+            <p>Files are concatenated as if they were one big file and each file must be valid individually. This means sections must be specified in each file where they are needed to store a key/value. Order doesn't matter but there is precedence based on sections. The precedence (highest to lowest) is:</p>
 
             <list>
                 <list-item>[<i>stanza</i>:<i>command</i>]</list-item>
