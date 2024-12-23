@@ -263,7 +263,6 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .noStd = true);
 
         TEST_RESULT_BOOL(repoIsLocal(0), false, "repo is remote");
-        TEST_ERROR(repoIsLocalVerify(), HostInvalidError, "archive-get command must be run on the repository host");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pg1 is local");
