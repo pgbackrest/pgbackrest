@@ -38,10 +38,6 @@ FN_EXTERN void pgIsLocalVerify(void);
 // Is the repository local?
 FN_EXTERN bool repoIsLocal(unsigned int repoIdx);
 
-// Error if the repository is not local
-FN_EXTERN void repoIsLocalVerify(void);
-FN_EXTERN void repoIsLocalVerifyIdx(unsigned int repoIdx);
-
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
