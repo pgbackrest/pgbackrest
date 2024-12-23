@@ -449,6 +449,7 @@ storageRemoteRemove(THIS_VOID, const String *const file, const StorageInterfaceR
 static const StorageInterface storageInterfaceRemote =
 {
     .info = storageRemoteInfo,
+    .linkCreate = storageRemoteLinkCreate,
     .list = storageRemoteList,
     .newRead = storageRemoteNewRead,
     .newWrite = storageRemoteNewWrite,
@@ -456,7 +457,6 @@ static const StorageInterface storageInterfaceRemote =
     .pathRemove = storageRemotePathRemove,
     .pathSync = storageRemotePathSync,
     .remove = storageRemoteRemove,
-    .linkCreate = storageRemoteLinkCreate,
 };
 
 FN_EXTERN Storage *
