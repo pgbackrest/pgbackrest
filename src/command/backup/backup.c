@@ -2659,9 +2659,6 @@ cmdBackup(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
-    // Verify the repo is local
-    repoIsLocalVerify();
-
     // Test for stop file
     lockStopTest();
 

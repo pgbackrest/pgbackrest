@@ -1691,6 +1691,7 @@ option:
         command-role:
           main: {}
           local: {}
+          remote: {}
       check:
         command-role:
           remote: {}
@@ -1810,6 +1811,7 @@ option:
         command-role:
           main: {}
           local: {}
+          remote: {}
       check:
         command-role:
           main: {}
@@ -2149,6 +2151,7 @@ option:
       annotate: {}
       archive-get: {}
       archive-push: {}
+      backup: {}
       check: {}
       info: {}
       manifest: {}
