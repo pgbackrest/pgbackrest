@@ -2838,7 +2838,7 @@ cmdBackup(void)
         // The primary protocol connection won't be used anymore so free it. This needs to happen after backupArchiveCheckCopy() so
         // the backup lock is held on the remote which allows conditional archiving based on the backup lock. Any further access to
         // the primary storage object may result in an error (likely eof).
-        protocolRemoteFree(backupData->pgIdxPrimary);
+        // protocolRemoteFree(backupData->pgIdxPrimary);
 
         // Complete the backup
         LOG_INFO_FMT("new backup label = %s", strZ(manifestData(manifest)->backupLabel));
