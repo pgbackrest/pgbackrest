@@ -742,6 +742,7 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
         PARSE_RULE_COMMAND_ROLE_VALID_LIST                                                                             // cmd/expire
         (                                                                                                              // cmd/expire
             PARSE_RULE_COMMAND_ROLE(Main)                                                                              // cmd/expire
+            PARSE_RULE_COMMAND_ROLE(Remote)                                                                            // cmd/expire
         ),                                                                                                             // cmd/expire
     ),                                                                                                                 // cmd/expire
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -1546,6 +1547,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                       // opt/beta
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                            // opt/beta
             PARSE_RULE_OPTION_COMMAND(Check)                                                                             // opt/beta
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                            // opt/beta
             PARSE_RULE_OPTION_COMMAND(Info)                                                                              // opt/beta
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                                          // opt/beta
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                           // opt/beta
@@ -1624,6 +1626,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                     // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(Check)                                                                      // opt/buffer-size
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                     // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(Info)                                                                       // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                                   // opt/buffer-size
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                    // opt/buffer-size
@@ -1996,6 +1999,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                     // opt/config
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                          // opt/config
             PARSE_RULE_OPTION_COMMAND(Check)                                                                           // opt/config
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                          // opt/config
             PARSE_RULE_OPTION_COMMAND(Info)                                                                            // opt/config
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                                        // opt/config
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                         // opt/config
@@ -2075,6 +2079,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                        // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(Backup)                                                             // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(Check)                                                              // opt/config-include-path
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                             // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(Info)                                                               // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                           // opt/config-include-path
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                            // opt/config-include-path
@@ -2154,6 +2159,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                // opt/config-path
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                     // opt/config-path
             PARSE_RULE_OPTION_COMMAND(Check)                                                                      // opt/config-path
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                     // opt/config-path
             PARSE_RULE_OPTION_COMMAND(Info)                                                                       // opt/config-path
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                                   // opt/config-path
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                    // opt/config-path
@@ -2398,6 +2404,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                    // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                         // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(Check)                                                                          // opt/exec-id
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                         // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(Info)                                                                           // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                                       // opt/exec-id
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                        // opt/exec-id
@@ -2600,6 +2607,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                 // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                      // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(Check)                                                                       // opt/io-timeout
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                      // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(Info)                                                                        // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                                    // opt/io-timeout
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                     // opt/io-timeout
@@ -2855,6 +2863,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                   // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                  // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                       // opt/lock-path
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                       // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(Info)                                                                         // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                      // opt/lock-path
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                 // opt/lock-path
@@ -2929,6 +2938,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                          // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(Backup)                                                               // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(Check)                                                                // opt/log-level-console
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                               // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(Info)                                                                 // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                             // opt/log-level-console
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                              // opt/log-level-console
@@ -3020,6 +3030,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                             // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                  // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(Check)                                                                   // opt/log-level-file
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                  // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(Info)                                                                    // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                                // opt/log-level-file
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                 // opt/log-level-file
@@ -3111,6 +3122,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                           // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(Check)                                                                 // opt/log-level-stderr
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(Info)                                                                  // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                              // opt/log-level-stderr
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                               // opt/log-level-stderr
@@ -3202,6 +3214,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                   // opt/log-path
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                        // opt/log-path
             PARSE_RULE_OPTION_COMMAND(Check)                                                                         // opt/log-path
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                        // opt/log-path
             PARSE_RULE_OPTION_COMMAND(Info)                                                                          // opt/log-path
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                                      // opt/log-path
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                       // opt/log-path
@@ -3359,6 +3372,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                              // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                   // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(Check)                                                                    // opt/log-timestamp
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                   // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(Info)                                                                     // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                                 // opt/log-timestamp
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                  // opt/log-timestamp
@@ -3467,6 +3481,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                              // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                   // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(Check)                                                                    // opt/neutral-umask
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                   // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                  // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                   // opt/neutral-umask
             PARSE_RULE_OPTION_COMMAND(RepoPut)                                                                  // opt/neutral-umask
@@ -9801,6 +9816,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                  // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                       // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(Check)                                                                        // opt/sck-block
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                       // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(Info)                                                                         // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                                     // opt/sck-block
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                      // opt/sck-block
@@ -9880,6 +9896,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                             // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                  // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(Check)                                                                   // opt/sck-keep-alive
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                  // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(Info)                                                                    // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                                // opt/sck-keep-alive
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                 // opt/sck-keep-alive
@@ -10108,6 +10125,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                     // opt/stanza
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                          // opt/stanza
             PARSE_RULE_OPTION_COMMAND(Check)                                                                           // opt/stanza
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                          // opt/stanza
             PARSE_RULE_OPTION_COMMAND(Info)                                                                            // opt/stanza
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                                        // opt/stanza
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                         // opt/stanza
@@ -10407,6 +10425,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                       // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(Backup)                                                            // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(Check)                                                             // opt/tcp-keep-alive-count
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                            // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(Info)                                                              // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                          // opt/tcp-keep-alive-count
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                           // opt/tcp-keep-alive-count
@@ -10492,6 +10511,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                        // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(Backup)                                                             // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(Check)                                                              // opt/tcp-keep-alive-idle
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                             // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(Info)                                                               // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                           // opt/tcp-keep-alive-idle
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                            // opt/tcp-keep-alive-idle
@@ -10577,6 +10597,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                    // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(Backup)                                                         // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(Check)                                                          // opt/tcp-keep-alive-interval
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                         // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(Info)                                                           // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                       // opt/tcp-keep-alive-interval
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                        // opt/tcp-keep-alive-interval

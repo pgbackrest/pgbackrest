@@ -72,6 +72,8 @@ command:
     log-file: false
 
   expire:
+    command-role:
+      remote: {}
     lock-required: true
     lock-type: backup
 
