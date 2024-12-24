@@ -1266,7 +1266,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("call remote free before any remotes exist");
 
-        TEST_RESULT_VOID(protocolRemoteFree(1), "free remote (non exist)");
+        TEST_RESULT_VOID(protocolHelperFree(NULL), "free remote (non exist)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("free local that does not exist");
@@ -1295,7 +1295,6 @@ testRun(void)
 
         TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0), "get remote protocol");
         TEST_RESULT_PTR(protocolRemoteGet(protocolStorageTypeRepo, 0), client, "get remote cached protocol");
-        TEST_RESULT_PTR(protocolHelper.clientRemote[0].client, client, "check position in cache");
         TEST_RESULT_VOID(protocolKeepAlive(), "keep alive");
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects again");
@@ -1324,7 +1323,6 @@ testRun(void)
 
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoCipherPass), "acbd", "check cipher pass before");
         TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0), "get remote protocol");
-        TEST_RESULT_PTR(protocolHelper.clientRemote[0].client, client, "check position in cache");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoCipherPass), "acbd", "check cipher pass after");
 
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");

@@ -53,8 +53,8 @@ FN_EXTERN void protocolLocalFree(unsigned int protocolId);
 // Remote protocol client
 FN_EXTERN ProtocolClient *protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId);
 
-// Free (shutdown) a remote
-FN_EXTERN void protocolRemoteFree(unsigned int hostId);
+// Free (shutdown) a local/remote client
+FN_EXTERN void protocolHelperFree(ProtocolClient *client);
 
 // Initialize a server
 FN_EXTERN ProtocolServer *protocolServer(IoServer *const tlsServer, IoSession *const socketSession);
