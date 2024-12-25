@@ -2672,6 +2672,9 @@ cmdBackup(void)
                 cfgOptionGroupName(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
         }
 
+        // Get the repo storage in case it is remote and encryption settings need to be pulled down
+        storageRepo();
+
         // Build block incremental maps using defaults and/or user-specified options
         const ManifestBlockIncrMap blockIncrMap = backupBlockIncrMap();
 
