@@ -4128,6 +4128,68 @@ testRun(void)
                 "compare file list");
         }
 
+        // Ensure that disabling bundling does not break the backup. In particular this ensures the bundleRaw setting is preserved.
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("online 11 incr backup with comp/enc which disables bundling");
+
+        backupTimeStart = BACKUP_EPOCH + 3450000;
+
+        {
+            // Load options
+            StringList *argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+            hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+            hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
+            hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+            hrnCfgArgRawStrId(argList, cfgOptType, backupTypeIncr);
+            hrnCfgArgRawZ(argList, cfgOptCompressType, "bz2");
+            hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+            hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            // Run backup
+            hrnBackupPqScriptP(
+                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
+                .cipherPass = TEST_CIPHER_PASS, .walTotal = 1, .walSwitch = false);
+            TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+
+            TEST_RESULT_LOG(
+                "P00   INFO: last backup label = 20191108-080000F_20191110-153320D, version = 2.55dev\n"
+                "P00   WARN: incr backup cannot alter compress-type option to 'bz2', reset to value in 20191108-080000F_20191110-153320D\n"
+                "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: backup start archive = 0000000105DC8F1000000000, lsn = 5dc8f10/0\n"
+                "P00   INFO: check archive for prior segment 0000000105DC8F0F000007FF\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (8KB, [PCT]) checksum [SHA1]\n"
+                "P00 DETAIL: reference pg_data/PG_VERSION to 20191108-080000F\n"
+                "P00 DETAIL: reference pg_data/block-age-multiplier to 20191108-080000F_20191110-153320D\n"
+                "P00 DETAIL: reference pg_data/block-age-to-zero to 20191108-080000F_20191110-153320D\n"
+                "P00 DETAIL: reference pg_data/block-incr-grow to 20191108-080000F_20191110-153320D\n"
+                "P00 DETAIL: reference pg_data/block-incr-wayback to 20191108-080000F\n"
+                "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
+                "P00   INFO: backup stop archive = 0000000105DC8F1000000000, lsn = 5dc8f10/100000\n"
+                "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
+                "P00   INFO: check archive for segment(s) 0000000105DC8F1000000000:0000000105DC8F1000000000\n"
+                "P00   INFO: new backup label = 20191108-080000F_20191111-052640I\n"
+                "P00   INFO: incr backup size = [SIZE], file total = 7");
+
+            TEST_RESULT_STR_Z(
+                testBackupValidateP(
+                    storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest"), .cipherType = cipherTypeAes256Cbc,
+                    .cipherPass = TEST_CIPHER_PASS),
+                ".> {d=20191108-080000F_20191111-052640I}\n"
+                "pg_data/backup_label.gz {s=17, ts=+2}\n"
+                "pg_data/global/pg_control.gz {s=8192}\n"
+                "20191108-080000F/bundle/1/pg_data/PG_VERSION {s=2, ts=-650000}\n"
+                "20191108-080000F_20191110-153320D/bundle/1/pg_data/block-age-multiplier {s=32768, m=1:{0,1}, ts=-136400}\n"
+                "20191108-080000F_20191110-153320D/bundle/1/pg_data/block-age-to-zero {s=16384, ts=-222800}\n"
+                "20191108-080000F_20191110-153320D/bundle/1/pg_data/block-incr-grow {s=49152, m=0:{0,1},1:{0,1,2,3}, ts=-250000}\n"
+                "20191108-080000F/pg_data/block-incr-wayback.pgbi {s=16384, m=0:{0,1}, ts=-222800}\n"
+                "--------\n"
+                "[backup:target]\n"
+                "pg_data={\"path\":\"/home/vagrant/test/test-0/pg1\",\"type\":\"path\"}\n",
+                "compare file list");
+        }
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("online 11 full backup with enc");
 
