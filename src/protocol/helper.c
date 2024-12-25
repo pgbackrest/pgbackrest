@@ -848,8 +848,6 @@ protocolRemoteGet(const ProtocolStorageType protocolStorageType, const unsigned 
 
     if (protocolHelperClient == NULL)
     {
-        fprintf(stdout, "!!! CREATE\n");fflush(stdout);
-
         MEM_CONTEXT_BEGIN(protocolHelper.memContext)
         {
             ProtocolHelperClient protocolHelperClientAdd =
