@@ -657,6 +657,20 @@ hrnHostConfig(HrnHost *const this)
                 strCatFmt(config, "spool-path=%s\n", strZ(hrnHostSpoolPath(this)));
             }
 
+            if (hrnHostLocal.bundle)
+            {
+                strCatZ(config, "repo1-bundle=y\n");
+                // Set bundle size/limit smaller for testing
+                strCatZ(config, "repo1-bundle-size=1MiB\n");
+                strCatZ(config, "repo1-bundle-limit=64KiB\n");
+            }
+
+            if (hrnHostLocal.blockIncr)
+            {
+                ASSERT(hrnHostLocal.bundle);
+                strCatZ(config, "repo1-block=y\n");
+            }
+
             // Recovery options
             const char *const primary = hrnHostId(this) == HRN_HOST_PG1 ? HRN_HOST_PG2_Z : HRN_HOST_PG1_Z;
 
