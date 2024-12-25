@@ -46,25 +46,21 @@ hrnProtocolClientCleanup(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
-    if (protocolHelper.memContext != NULL)
+    if (protocolHelper.clientList != NULL)
     {
         // Cleanup remotes
-        for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)
+        while (lstSize(protocolHelper.clientList) > 0)
         {
-            // Cleanup remote client
-            if (protocolHelper.clientRemote[clientIdx].client != NULL)
-            {
-                memContextCallbackClear(objMemContext(protocolHelper.clientRemote[clientIdx].client));
-                protocolClientFree(protocolHelper.clientRemote[clientIdx].client);
-                protocolHelper.clientRemote[clientIdx].client = NULL;
-            }
+            ProtocolHelperClient *const clientHelper = lstGet(protocolHelper.clientList, 0);
 
-            // Cleanup remote exec
-            if (protocolHelper.clientRemote[clientIdx].exec != NULL)
+            memContextCallbackClear(objMemContext(clientHelper->client));
+            protocolClientFree(clientHelper->client);
+            lstRemoveIdx(protocolHelper.clientList, 0);
+
+            if (clientHelper->exec != NULL)
             {
-                memContextCallbackClear(objMemContext(protocolHelper.clientRemote[clientIdx].exec));
-                execFree(protocolHelper.clientRemote[clientIdx].exec);
-                protocolHelper.clientRemote[clientIdx].exec = NULL;
+                memContextCallbackClear(objMemContext(clientHelper->exec));
+                execFree(clientHelper->exec);
             }
         }
 

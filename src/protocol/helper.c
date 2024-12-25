@@ -56,9 +56,6 @@ static struct
     MemContext *memContext;                                         // Mem context for protocol helper
     List *clientList;                                               // Client List
 
-    unsigned int clientRemoteSize;                                  // Remote clients
-    ProtocolHelperClient *clientRemote;
-
     unsigned int clientLocalSize;                                   // Local clients
     ProtocolHelperClient *clientLocal;
 } protocolHelper;
@@ -844,7 +841,6 @@ protocolRemoteGet(const ProtocolStorageType protocolStorageType, const unsigned 
     // match the local protocol id. Otherwise set to 0 since the remote is being started from a main process and there should only
     // be one remote per host.
     const unsigned int processId = cfgOptionTest(cfgOptProcess) ? cfgOptionUInt(cfgOptProcess) : 0;
-    CHECK(AssertError, hostIdx < protocolHelper.clientRemoteSize, "invalid host");
 
     // Create protocol object
     ProtocolHelperClient *protocolHelperClient = protocolHelperClientGet(
