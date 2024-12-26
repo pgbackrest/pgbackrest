@@ -63,26 +63,6 @@ hrnProtocolClientCleanup(void)
                 execFree(clientHelper->exec);
             }
         }
-
-        // Cleanup locals
-        for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientLocalSize; clientIdx++)
-        {
-            // Cleanup local client
-            if (protocolHelper.clientLocal[clientIdx].client != NULL)
-            {
-                memContextCallbackClear(objMemContext(protocolHelper.clientLocal[clientIdx].client));
-                protocolClientFree(protocolHelper.clientLocal[clientIdx].client);
-                protocolHelper.clientLocal[clientIdx].client = NULL;
-            }
-
-            // Cleanup local exec
-            if (protocolHelper.clientLocal[clientIdx].exec != NULL)
-            {
-                memContextCallbackClear(objMemContext(protocolHelper.clientLocal[clientIdx].exec));
-                execFree(protocolHelper.clientLocal[clientIdx].exec);
-                protocolHelper.clientLocal[clientIdx].exec = NULL;
-            }
-        }
     }
 
     FUNCTION_LOG_RETURN_VOID();

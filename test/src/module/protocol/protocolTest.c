@@ -1266,12 +1266,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("call remote free before any remotes exist");
 
-        TEST_RESULT_VOID(protocolHelperFree(NULL), "free remote (non exist)");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("free local that does not exist");
-
-        TEST_RESULT_VOID(protocolLocalFree(2), "free");
+        TEST_RESULT_VOID(protocolHelperFree(NULL), "free remote (non-existing)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("call keep alive free before any remotes exist");
@@ -1293,9 +1288,26 @@ testRun(void)
 
         TEST_RESULT_VOID(protocolFree(), "free protocol objects before anything has been created");
 
+        TEST_RESULT_PTR(protocolRemoteGet(protocolStorageTypeRepo, 0, false), NULL, "get remote cached protocol (no create)");
         TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0, true), "get remote protocol");
         TEST_RESULT_PTR(protocolRemoteGet(protocolStorageTypeRepo, 0, true), client, "get remote cached protocol");
+
+        TEST_RESULT_PTR(protocolHelperClientGet(protocolClientLocal, protocolStorageTypePg, 0, 0), NULL, "cache miss");
+        TEST_RESULT_PTR(protocolHelperClientGet(protocolClientRemote, protocolStorageTypePg, 0, 0), NULL, "cache miss");
+        TEST_RESULT_PTR(protocolHelperClientGet(protocolClientRemote, protocolStorageTypeRepo, 0, 1), NULL, "cache miss");
+
+        // Add a fake local protocol to ensure noops are only sent to remotes
+        ProtocolHelperClient protocolHelperClientAdd =
+        {
+            .type = protocolClientLocal,
+            .storageType = protocolStorageTypePg,
+        };
+
+        lstInsert(protocolHelper.clientList, 0, &protocolHelperClientAdd);
+
         TEST_RESULT_VOID(protocolKeepAlive(), "keep alive");
+        lstRemoveIdx(protocolHelper.clientList, 0);
+
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects again");
 
@@ -1325,7 +1337,19 @@ testRun(void)
         TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0, true), "get remote protocol");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoCipherPass), "acbd", "check cipher pass after");
 
-        TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
+        // Remove the client from the client list so it is not found
+        ProtocolHelperClient clientHelper = *(ProtocolHelperClient *)lstGet(protocolHelper.clientList, 0);
+        lstRemoveIdx(protocolHelper.clientList, 0);
+
+        TEST_RESULT_VOID(protocolHelperFree(client), "free missing remote protocol object");
+
+        // Add client back so it can be removed -- also add a fake client that will be skipped
+        lstAdd(protocolHelper.clientList, &(ProtocolHelperClient){0});
+        lstAdd(protocolHelper.clientList, &clientHelper);
+
+        TEST_RESULT_VOID(protocolHelperFree(client), "free remote protocol object");
+
+        lstRemoveIdx(protocolHelper.clientList, 0);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("start protocol with remote encryption settings");
@@ -1390,7 +1414,6 @@ testRun(void)
 
         TEST_ASSIGN(client, protocolLocalGet(protocolStorageTypeRepo, 0, 1), "get local protocol");
         TEST_RESULT_PTR(protocolLocalGet(protocolStorageTypeRepo, 0, 1), client, "get local cached protocol");
-        TEST_RESULT_PTR(protocolHelper.clientLocal[0].client, client, "check location in cache");
 
         TEST_RESULT_VOID(protocolFree(), "free local and remote protocol objects");
     }
