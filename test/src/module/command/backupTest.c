@@ -4186,7 +4186,7 @@ testRun(void)
                 "20191108-080000F/pg_data/block-incr-wayback.pgbi {s=16384, m=0:{0,1}, ts=-222800}\n"
                 "--------\n"
                 "[backup:target]\n"
-                "pg_data={\"path\":\"/home/vagrant/test/test-0/pg1\",\"type\":\"path\"}\n",
+                "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n",
                 "compare file list");
         }
 
