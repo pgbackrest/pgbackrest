@@ -823,13 +823,13 @@ protocolRemoteExec(
     FUNCTION_TEST_RETURN_VOID();
 }
 
-// !!! Add create flag here
 FN_EXTERN ProtocolClient *
-protocolRemoteGet(const ProtocolStorageType protocolStorageType, const unsigned int hostIdx)
+protocolRemoteGet(const ProtocolStorageType protocolStorageType, const unsigned int hostIdx, const bool create)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_ID, protocolStorageType);
         FUNCTION_LOG_PARAM(UINT, hostIdx);
+        FUNCTION_LOG_PARAM(BOOL, create);
     FUNCTION_LOG_END();
 
     // Is this a repo remote?
@@ -846,7 +846,7 @@ protocolRemoteGet(const ProtocolStorageType protocolStorageType, const unsigned 
     ProtocolHelperClient *protocolHelperClient = protocolHelperClientGet(
         protocolClientRemote, protocolStorageType, hostIdx, processId);
 
-    if (protocolHelperClient == NULL)
+    if (protocolHelperClient == NULL && create)
     {
         MEM_CONTEXT_BEGIN(protocolHelper.memContext)
         {
@@ -884,7 +884,7 @@ protocolRemoteGet(const ProtocolStorageType protocolStorageType, const unsigned 
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_LOG_RETURN(PROTOCOL_CLIENT, protocolHelperClient->client);
+    FUNCTION_LOG_RETURN(PROTOCOL_CLIENT, protocolHelperClient != NULL ? protocolHelperClient->client : NULL);
 }
 
 /**********************************************************************************************************************************/

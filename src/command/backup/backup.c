@@ -2817,7 +2817,7 @@ cmdBackup(void)
         if (backupData->dbStandby != NULL)
         {
             dbFree(backupData->dbStandby);
-            // protocolRemoteFree(backupData->pgIdxStandby);
+            protocolHelperFree(protocolRemoteGet(protocolStorageTypePg, backupData->pgIdxStandby, false));
         }
 
         // Stop the backup
@@ -2841,7 +2841,7 @@ cmdBackup(void)
         // The primary protocol connection won't be used anymore so free it. This needs to happen after backupArchiveCheckCopy() so
         // the backup lock is held on the remote which allows conditional archiving based on the backup lock. Any further access to
         // the primary storage object may result in an error (likely eof).
-        // !!! protocolRemoteFree(backupData->pgIdxPrimary);
+        protocolHelperFree(protocolRemoteGet(protocolStorageTypePg, backupData->pgIdxPrimary, false));
 
         // Complete the backup
         LOG_INFO_FMT("new backup label = %s", strZ(manifestData(manifest)->backupLabel));

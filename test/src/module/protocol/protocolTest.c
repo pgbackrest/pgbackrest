@@ -1293,8 +1293,8 @@ testRun(void)
 
         TEST_RESULT_VOID(protocolFree(), "free protocol objects before anything has been created");
 
-        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0), "get remote protocol");
-        TEST_RESULT_PTR(protocolRemoteGet(protocolStorageTypeRepo, 0), client, "get remote cached protocol");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0, true), "get remote protocol");
+        TEST_RESULT_PTR(protocolRemoteGet(protocolStorageTypeRepo, 0, true), client, "get remote cached protocol");
         TEST_RESULT_VOID(protocolKeepAlive(), "keep alive");
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects again");
@@ -1322,7 +1322,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleLocal);
 
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoCipherPass), "acbd", "check cipher pass before");
-        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0), "get remote protocol");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0, true), "get remote protocol");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoCipherPass), "acbd", "check cipher pass after");
 
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
@@ -1354,11 +1354,11 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         TEST_RESULT_PTR(cfgOptionIdxStrNull(cfgOptRepoCipherPass, 0), NULL, "check repo1 cipher pass before");
-        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0), "get repo1 remote protocol");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0, true), "get repo1 remote protocol");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoCipherPass, 0), "dcba", "check repo1 cipher pass after");
 
         TEST_RESULT_PTR(cfgOptionIdxStrNull(cfgOptRepoCipherPass, 1), NULL, "check repo2 cipher pass before");
-        TEST_RESULT_VOID(protocolRemoteGet(protocolStorageTypeRepo, 1), "get repo2 remote protocol");
+        TEST_RESULT_VOID(protocolRemoteGet(protocolStorageTypeRepo, 1, true), "get repo2 remote protocol");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoCipherPass, 1), "xxxx", "check repo2 cipher pass after");
 
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
@@ -1375,7 +1375,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypePg, 0), "get remote protocol");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypePg, 0, true), "get remote protocol");
 
         TEST_RESULT_VOID(protocolFree(), "free local and remote protocol objects");
 

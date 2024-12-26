@@ -51,7 +51,7 @@ FN_EXTERN ProtocolClient *protocolLocalGet(ProtocolStorageType protocolStorageTy
 FN_EXTERN void protocolLocalFree(unsigned int protocolId);
 
 // Remote protocol client
-FN_EXTERN ProtocolClient *protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId);
+FN_EXTERN ProtocolClient *protocolRemoteGet(ProtocolStorageType protocolStorageType, unsigned int hostId, bool create);
 
 // Free (shutdown) a local/remote client
 FN_EXTERN void protocolHelperFree(ProtocolClient *client);
