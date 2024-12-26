@@ -2608,13 +2608,13 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
         {
             infoSaveValue(
                 infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_BUNDLE, jsonFromVar(VARBOOL(manifest->pub.data.bundle)));
+        }
 
-            if (manifest->pub.data.bundleRaw)
-            {
-                infoSaveValue(
-                    infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_BUNDLE_RAW,
-                    jsonFromVar(VARBOOL(manifest->pub.data.bundleRaw)));
-            }
+        if (manifest->pub.data.bundleRaw)
+        {
+            infoSaveValue(
+                infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_BUNDLE_RAW,
+                jsonFromVar(VARBOOL(manifest->pub.data.bundleRaw)));
         }
 
         infoSaveValue(
