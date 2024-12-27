@@ -38,7 +38,7 @@ dbGetIdx(const unsigned int pgIdx)
                 NULL, storagePgIdx(pgIdx), applicationName);
         }
         else
-            result = dbNew(NULL, protocolRemoteGet(protocolStorageTypePg, pgIdx), storagePgIdx(pgIdx), applicationName);
+            result = dbNew(NULL, protocolRemoteGet(protocolStorageTypePg, pgIdx, true), storagePgIdx(pgIdx), applicationName);
 
         dbMove(result, memContextPrior());
     }

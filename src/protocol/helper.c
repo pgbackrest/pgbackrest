@@ -33,8 +33,18 @@ STRING_EXTERN(PROTOCOL_SERVICE_REMOTE_STR,                          PROTOCOL_SER
 /***********************************************************************************************************************************
 Local variables
 ***********************************************************************************************************************************/
+typedef enum
+{
+    protocolClientLocal = STRID5("local", 0xc08dec0),
+    protocolClientRemote = STRID5("remote", 0xb47b4b20),
+} ProtocolClientType;
+
 typedef struct ProtocolHelperClient
 {
+    ProtocolClientType type;                                        // Client type
+    ProtocolStorageType storageType;                                // Storage type
+    unsigned int hostIdx;                                           // Host index
+    unsigned int processId;                                         // Process id displayed in logs
     Exec *exec;                                                     // Executed client
     IoClient *ioClient;                                             // Io client, e.g. TlsClient
     IoSession *ioSession;                                           // Io session, e.g. TlsSession
@@ -44,12 +54,7 @@ typedef struct ProtocolHelperClient
 static struct
 {
     MemContext *memContext;                                         // Mem context for protocol helper
-
-    unsigned int clientRemoteSize;                                  // Remote clients
-    ProtocolHelperClient *clientRemote;
-
-    unsigned int clientLocalSize;                                   // Local clients
-    ProtocolHelperClient *clientLocal;
+    List *clientList;                                               // Client List
 } protocolHelper;
 
 /***********************************************************************************************************************************
@@ -67,11 +72,38 @@ protocolHelperInit(void)
             MEM_CONTEXT_NEW_BEGIN("ProtocolHelper", .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
             {
                 protocolHelper.memContext = MEM_CONTEXT_NEW();
+                protocolHelper.clientList = lstNewP(sizeof(ProtocolHelperClient));
             }
             MEM_CONTEXT_NEW_END();
         }
         MEM_CONTEXT_END();
     }
+}
+
+/***********************************************************************************************************************************
+Init local mem context and data structure
+***********************************************************************************************************************************/
+static ProtocolHelperClient *
+protocolHelperClientGet(ProtocolClientType type, ProtocolStorageType storageType, unsigned int hostIdx, unsigned int processId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_ID, type);
+        FUNCTION_TEST_PARAM(STRING_ID, storageType);
+        FUNCTION_TEST_PARAM(UINT, hostIdx);
+        FUNCTION_TEST_PARAM(UINT, processId);
+    FUNCTION_TEST_END();
+
+    ASSERT(protocolHelper.clientList != NULL);
+
+    for (unsigned int clientIdx = 0; clientIdx < lstSize(protocolHelper.clientList); clientIdx++)
+    {
+        ProtocolHelperClient *const match = lstGet(protocolHelper.clientList, clientIdx);
+
+        if (match->type == type && match->storageType == storageType && match->hostIdx == hostIdx && match->processId == processId)
+            FUNCTION_TEST_RETURN_P(VOID, match);
+    }
+
+    FUNCTION_TEST_RETURN_P(VOID, NULL);
 }
 
 /**********************************************************************************************************************************/
@@ -244,30 +276,24 @@ protocolLocalGet(const ProtocolStorageType protocolStorageType, const unsigned i
 
     protocolHelperInit();
 
-    // Allocate the client cache
-    if (protocolHelper.clientLocalSize == 0)
-    {
-        MEM_CONTEXT_BEGIN(protocolHelper.memContext)
-        {
-            protocolHelper.clientLocalSize = cfgOptionUInt(cfgOptProcessMax) + 1;
-            protocolHelper.clientLocal = memNew(protocolHelper.clientLocalSize * sizeof(ProtocolHelperClient));
-
-            for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientLocalSize; clientIdx++)
-                protocolHelper.clientLocal[clientIdx] = (ProtocolHelperClient){.exec = NULL};
-        }
-        MEM_CONTEXT_END();
-    }
-
-    ASSERT(processId <= protocolHelper.clientLocalSize);
-
     // Create protocol object
-    ProtocolHelperClient *protocolHelperClient = &protocolHelper.clientLocal[processId - 1];
+    ProtocolHelperClient *protocolHelperClient = protocolHelperClientGet(
+        protocolClientLocal, protocolStorageType, hostIdx, processId);
 
-    if (protocolHelperClient->client == NULL)
+    if (protocolHelperClient == NULL)
     {
         MEM_CONTEXT_BEGIN(protocolHelper.memContext)
         {
-            protocolLocalExec(protocolHelperClient, protocolStorageType, hostIdx, processId);
+            ProtocolHelperClient protocolHelperClientAdd =
+            {
+                .type = protocolClientLocal,
+                .storageType = protocolStorageType,
+                .hostIdx = hostIdx,
+                .processId = processId,
+            };
+
+            protocolLocalExec(&protocolHelperClientAdd, protocolStorageType, hostIdx, processId);
+            protocolHelperClient = lstAdd(protocolHelper.clientList, &protocolHelperClientAdd);
         }
         MEM_CONTEXT_END();
 
@@ -289,56 +315,31 @@ protocolHelperClientFree(ProtocolHelperClient *const protocolHelperClient)
         FUNCTION_LOG_PARAM_P(VOID, protocolHelperClient);
     FUNCTION_LOG_END();
 
-    if (protocolHelperClient->client != NULL)
+    // Try to shutdown the protocol but only warn on error
+    TRY_BEGIN()
     {
-        // Try to shutdown the protocol but only warn on error
-        TRY_BEGIN()
-        {
-            protocolClientFree(protocolHelperClient->client);
-        }
-        CATCH_ANY()
-        {
-            LOG_WARN(errorMessage());
-        }
-        TRY_END();
-
-        // Try to end the child process but only warn on error
-        TRY_BEGIN()
-        {
-            execFree(protocolHelperClient->exec);
-        }
-        CATCH_ANY()
-        {
-            LOG_WARN(errorMessage());
-        }
-        TRY_END();
-
-        // Free the io client/session (there should be no errors)
-        ioSessionFree(protocolHelperClient->ioSession);
-        ioClientFree(protocolHelperClient->ioClient);
-
-        protocolHelperClient->ioSession = NULL;
-        protocolHelperClient->ioClient = NULL;
-        protocolHelperClient->client = NULL;
-        protocolHelperClient->exec = NULL;
+        protocolClientFree(protocolHelperClient->client);
     }
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN void
-protocolLocalFree(const unsigned int processId)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(UINT, processId);
-    FUNCTION_LOG_END();
-
-    if (protocolHelper.clientLocal != NULL)
+    CATCH_ANY()
     {
-        ASSERT(processId <= protocolHelper.clientLocalSize);
-        protocolHelperClientFree(&protocolHelper.clientLocal[processId - 1]);
+        LOG_WARN(errorMessage());
     }
+    TRY_END();
+
+    // Try to end the child process but only warn on error
+    TRY_BEGIN()
+    {
+        execFree(protocolHelperClient->exec);
+    }
+    CATCH_ANY()
+    {
+        LOG_WARN(errorMessage());
+    }
+    TRY_END();
+
+    // Free the io client/session (there should be no errors)
+    ioSessionFree(protocolHelperClient->ioSession);
+    ioClientFree(protocolHelperClient->ioClient);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -585,7 +586,12 @@ protocolRemoteParam(const ProtocolStorageType protocolStorageType, const unsigne
 
         // Set repo default so the remote only operates on a single repo
         if (protocolStorageType == protocolStorageTypeRepo)
+        {
             kvPut(optionReplace, VARSTRDEF(CFGOPT_REPO), VARUINT(cfgOptionGroupIdxToKey(cfgOptGrpRepo, hostIdx)));
+        }
+        // Else remove repo selection when the remote is pg
+        else
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_REPO), NULL);
 
         // Add the process id if not set. This means that the remote is being started from the main process and should always get a
         // process id of 0.
@@ -807,11 +813,12 @@ protocolRemoteExec(
 }
 
 FN_EXTERN ProtocolClient *
-protocolRemoteGet(const ProtocolStorageType protocolStorageType, const unsigned int hostIdx)
+protocolRemoteGet(const ProtocolStorageType protocolStorageType, const unsigned int hostIdx, const bool create)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_ID, protocolStorageType);
         FUNCTION_LOG_PARAM(UINT, hostIdx);
+        FUNCTION_LOG_PARAM(BOOL, create);
     FUNCTION_LOG_END();
 
     // Is this a repo remote?
@@ -819,34 +826,29 @@ protocolRemoteGet(const ProtocolStorageType protocolStorageType, const unsigned 
 
     protocolHelperInit();
 
-    // Allocate the client cache
-    if (protocolHelper.clientRemoteSize == 0)
-    {
-        MEM_CONTEXT_BEGIN(protocolHelper.memContext)
-        {
-            protocolHelper.clientRemoteSize = cfgOptionGroupIdxTotal(isRepo ? cfgOptGrpRepo : cfgOptGrpPg) + 1;
-            protocolHelper.clientRemote = memNew(protocolHelper.clientRemoteSize * sizeof(ProtocolHelperClient));
-
-            for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)
-                protocolHelper.clientRemote[clientIdx] = (ProtocolHelperClient){.exec = NULL};
-        }
-        MEM_CONTEXT_END();
-    }
-
     // Determine protocol id for the remote. If the process option is set then use that since we want the remote protocol id to
     // match the local protocol id. Otherwise set to 0 since the remote is being started from a main process and there should only
     // be one remote per host.
     const unsigned int processId = cfgOptionTest(cfgOptProcess) ? cfgOptionUInt(cfgOptProcess) : 0;
-    CHECK(AssertError, hostIdx < protocolHelper.clientRemoteSize, "invalid host");
 
     // Create protocol object
-    ProtocolHelperClient *const protocolHelperClient = &protocolHelper.clientRemote[hostIdx];
+    ProtocolHelperClient *protocolHelperClient = protocolHelperClientGet(
+        protocolClientRemote, protocolStorageType, hostIdx, processId);
 
-    if (protocolHelperClient->client == NULL)
+    if (protocolHelperClient == NULL && create)
     {
         MEM_CONTEXT_BEGIN(protocolHelper.memContext)
         {
-            protocolRemoteExec(protocolHelperClient, protocolStorageType, hostIdx, processId);
+            ProtocolHelperClient protocolHelperClientAdd =
+            {
+                .type = protocolClientRemote,
+                .storageType = protocolStorageType,
+                .hostIdx = hostIdx,
+                .processId = processId,
+            };
+
+            protocolRemoteExec(&protocolHelperClientAdd, protocolStorageType, hostIdx, processId);
+            protocolHelperClient = lstAdd(protocolHelper.clientList, &protocolHelperClientAdd);
 
             // Send noop to catch initialization errors
             protocolClientNoOp(protocolHelperClient->client);
@@ -871,19 +873,32 @@ protocolRemoteGet(const ProtocolStorageType protocolStorageType, const unsigned 
         MEM_CONTEXT_END();
     }
 
-    FUNCTION_LOG_RETURN(PROTOCOL_CLIENT, protocolHelperClient->client);
+    FUNCTION_LOG_RETURN(PROTOCOL_CLIENT, protocolHelperClient != NULL ? protocolHelperClient->client : NULL);
 }
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-protocolRemoteFree(const unsigned int hostIdx)
+protocolHelperFree(ProtocolClient *const client)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(UINT, hostIdx);
+        FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, client);
     FUNCTION_LOG_END();
 
-    if (protocolHelper.clientRemote != NULL)
-        protocolHelperClientFree(&protocolHelper.clientRemote[hostIdx]);
+    if (client != NULL && protocolHelper.clientList != NULL)
+    {
+        for (unsigned int clientIdx = 0; clientIdx < lstSize(protocolHelper.clientList); clientIdx++)
+        {
+            ProtocolHelperClient *const match = lstGet(protocolHelper.clientList, clientIdx);
+
+            if (match->client == client)
+            {
+                protocolHelperClientFree(match);
+                lstRemoveIdx(protocolHelper.clientList, clientIdx);
+
+                break;
+            }
+        }
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -894,12 +909,14 @@ protocolKeepAlive(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    if (protocolHelper.memContext != NULL)
+    if (protocolHelper.clientList)
     {
-        for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)
+        for (unsigned int clientIdx = 0; clientIdx < lstSize(protocolHelper.clientList); clientIdx++)
         {
-            if (protocolHelper.clientRemote[clientIdx].client != NULL)
-                protocolClientNoOp(protocolHelper.clientRemote[clientIdx].client);
+            ProtocolHelperClient *const match = lstGet(protocolHelper.clientList, clientIdx);
+
+            if (match->type == protocolClientRemote)
+                protocolClientNoOp(match->client);
         }
     }
 
@@ -912,15 +929,13 @@ protocolFree(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    if (protocolHelper.memContext != NULL)
+    if (protocolHelper.clientList != NULL)
     {
-        // Free remotes
-        for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)
-            protocolRemoteFree(clientIdx);
-
-        // Free locals
-        for (unsigned int clientIdx = 1; clientIdx <= protocolHelper.clientLocalSize; clientIdx++)
-            protocolLocalFree(clientIdx);
+        while (lstSize(protocolHelper.clientList) > 0)
+        {
+            protocolHelperClientFree(lstGet(protocolHelper.clientList, 0));
+            lstRemoveIdx(protocolHelper.clientList, 0);
+        }
     }
 
     FUNCTION_LOG_RETURN_VOID();

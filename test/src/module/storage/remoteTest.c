@@ -784,7 +784,7 @@ testRun(void)
     // sure coverage data has been written by the remote. We also need to make sure that the mem context callback is cleared so that
     // protocolClientFreeResource() will not be called and send another exit. protocolFree() is still required to free the client
     // objects.
-    ProtocolClient *client = protocolRemoteGet(protocolStorageTypeRepo, 0);
+    ProtocolClient *client = protocolRemoteGet(protocolStorageTypeRepo, 0, true);
 
     memContextCallbackClear(objMemContext(client));
 
@@ -793,7 +793,7 @@ testRun(void)
 
     protocolClientRequestP(client, PROTOCOL_COMMAND_EXIT);
 
-    client = protocolRemoteGet(protocolStorageTypePg, 1);
+    client = protocolRemoteGet(protocolStorageTypePg, 1, true);
 
     for (unsigned int sessionIdx = 0; sessionIdx < lstSize(client->sessionList); sessionIdx++)
         memContextCallbackClear(objMemContext(*(ProtocolClientSession **)lstGet(client->sessionList, sessionIdx)));

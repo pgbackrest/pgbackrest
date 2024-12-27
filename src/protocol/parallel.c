@@ -199,6 +199,7 @@ protocolParallelProcess(ProtocolParallel *const this)
                 {
                     // Get a new job
                     ProtocolParallelJob *const job = this->callbackFunction(this->callbackData, clientIdx);
+                    ProtocolClient *const client = *(ProtocolClient **)lstGet(this->clientList, clientIdx);
 
                     // If a new job was found
                     if (job != NULL)
@@ -208,8 +209,7 @@ protocolParallelProcess(ProtocolParallel *const this)
 
                         // Put command
                         ProtocolClientSession *const session = protocolClientSessionNewP(
-                            *(ProtocolClient **)lstGet(this->clientList, clientIdx), protocolParallelJobCommand(job),
-                            .async = true);
+                            client, protocolParallelJobCommand(job), .async = true);
                         protocolClientSessionRequestAsyncP(session, .param = protocolParallelJobParam(job));
 
                         // Set client id and running state
@@ -221,7 +221,7 @@ protocolParallelProcess(ProtocolParallel *const this)
                     }
                     // Else no more jobs for this client so free it
                     else
-                        protocolLocalFree(clientIdx + 1);
+                        protocolHelperFree(client);
                 }
                 MEM_CONTEXT_END();
             }

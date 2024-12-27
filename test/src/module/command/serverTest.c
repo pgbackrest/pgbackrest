@@ -48,29 +48,32 @@ testRun(void)
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
                 // Client 1
+                ProtocolClient *clientRemote = protocolRemoteGet(protocolStorageTypeRepo, 0, true);
                 const Storage *storageRemote = NULL;
                 TEST_ASSIGN(
                     storageRemote,
                     storageRemoteNew(
                         STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, 0, NULL,
-                        protocolRemoteGet(protocolStorageTypeRepo, 0), cfgOptionUInt(cfgOptCompressLevelNetwork)),
+                        protocolRemoteGet(protocolStorageTypeRepo, 0, true), cfgOptionUInt(cfgOptCompressLevelNetwork)),
                     "new storage 1");
 
                 HRN_STORAGE_PUT_Z(storageRemote, "client1.txt", "CLIENT1");
 
-                TEST_RESULT_VOID(protocolRemoteFree(0), "free client 1");
+                TEST_RESULT_VOID(protocolHelperFree(clientRemote), "free client 1");
 
                 // Client 2
+                clientRemote = protocolRemoteGet(protocolStorageTypeRepo, 0, true);
+
                 TEST_ASSIGN(
                     storageRemote,
                     storageRemoteNew(
                         STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, 0, NULL,
-                        protocolRemoteGet(protocolStorageTypeRepo, 0), cfgOptionUInt(cfgOptCompressLevelNetwork)),
+                        protocolRemoteGet(protocolStorageTypeRepo, 0, true), cfgOptionUInt(cfgOptCompressLevelNetwork)),
                     "new storage 2");
 
                 HRN_STORAGE_PUT_Z(storageRemote, "client2.txt", "CLIENT2");
 
-                TEST_RESULT_VOID(protocolRemoteFree(0), "free client 2");
+                TEST_RESULT_VOID(protocolHelperFree(clientRemote), "free client 2");
 
                 // Notify parent on exit
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -95,17 +98,19 @@ testRun(void)
                 HRN_CFG_LOAD(cfgCmdBackup, argList, .role = cfgCmdRoleLocal);
 
                 // Client 3
+                ProtocolClient *const clientRemote = protocolRemoteGet(protocolStorageTypePg, 0, true);
                 const Storage *storageRemote = NULL;
+
                 TEST_ASSIGN(
                     storageRemote,
                     storageRemoteNew(
                         STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, 0, NULL,
-                        protocolRemoteGet(protocolStorageTypePg, 0), cfgOptionUInt(cfgOptCompressLevelNetwork)),
+                        protocolRemoteGet(protocolStorageTypePg, 0, true), cfgOptionUInt(cfgOptCompressLevelNetwork)),
                     "new storage 3");
 
                 HRN_STORAGE_PUT_Z(storageRemote, "client3.txt", "CLIENT3");
 
-                TEST_RESULT_VOID(protocolRemoteFree(0), "free client 3");
+                TEST_RESULT_VOID(protocolHelperFree(clientRemote), "free client 3");
 
                 // Notify parent on exit
                 HRN_FORK_CHILD_NOTIFY_PUT();
