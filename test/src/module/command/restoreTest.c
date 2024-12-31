@@ -2044,6 +2044,28 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("timeline*()"))
+    {
+        StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, STRDEF(TEST_PATH "/repo"));
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("timelineLatest()");
+
+        TEST_RESULT_UINT(timelineLatest(storageRepoIdx(0), STRDEF("17-1"), 1), 1, "no history files");
+
+        HRN_STORAGE_PUT_Z(storageTest, "repo/archive/test1/17-1/00000009.history", "8\t0/4000000\tcomment");
+        HRN_STORAGE_PUT_Z(storageTest, "repo/archive/test1/17-1/0000000A.history", "9\t0/5000000\tcomment");
+        HRN_STORAGE_PUT_Z(storageTest, "repo/archive/test1/17-1/0000000B.history", "10\t0/6000000\tcomment");
+
+        TEST_RESULT_UINT(timelineLatest(storageRepoIdx(0), STRDEF("17-1"), 8), 11, "timeline < history files");
+        TEST_RESULT_UINT(timelineLatest(storageRepoIdx(0), STRDEF("17-1"), 12), 12, "timeline >= history files");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cmdRestore()"))
     {
         const String *pgPath = STRDEF(TEST_PATH "/pg");

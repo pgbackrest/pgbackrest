@@ -1151,6 +1151,10 @@ src/command/restore/restore.c:
   class: core
   type: c
 
+src/command/restore/timeline.c:
+  class: core
+  type: c
+
 src/command/restore/restore.h:
   class: core
   type: c/h

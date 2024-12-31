@@ -947,7 +947,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
-        total: 14
+        total: 15
 
         coverage:
           - command/restore/blockChecksum
@@ -955,6 +955,7 @@ unit:
           - command/restore/file
           - command/restore/protocol
           - command/restore/restore
+          - command/restore/timeline
 
         include:
           - common/user
