@@ -118,29 +118,6 @@ repoIsLocal(const unsigned int repoIdx)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
-repoIsLocalVerify(void)
-{
-    FUNCTION_TEST_VOID();
-
-    repoIsLocalVerifyIdx(cfgOptionGroupIdxDefault(cfgOptGrpRepo));
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN void
-repoIsLocalVerifyIdx(const unsigned int repoIdx)
-{
-    FUNCTION_TEST_VOID();
-
-    if (!repoIsLocal(repoIdx))
-        THROW_FMT(HostInvalidError, "%s command must be run on the repository host", cfgCommandName());
-
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
 FN_EXTERN bool
 pgIsLocal(const unsigned int pgIdx)
 {

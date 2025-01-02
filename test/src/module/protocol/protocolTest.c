@@ -252,11 +252,6 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .noStd = true);
 
         TEST_RESULT_BOOL(repoIsLocal(0), true, "repo is local");
-        TEST_RESULT_VOID(repoIsLocalVerify(), "local verified");
-        TEST_RESULT_VOID(repoIsLocalVerifyIdx(0), "local by index verified");
-        TEST_ERROR(
-            repoIsLocalVerifyIdx(cfgOptionGroupIdxTotal(cfgOptGrpRepo) - 1), HostInvalidError,
-            "archive-get command must be run on the repository host");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("single-repo - command invalid on remote");
@@ -268,7 +263,6 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .noStd = true);
 
         TEST_RESULT_BOOL(repoIsLocal(0), false, "repo is remote");
-        TEST_ERROR(repoIsLocalVerify(), HostInvalidError, "archive-get command must be run on the repository host");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pg1 is local");

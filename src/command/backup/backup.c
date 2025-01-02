@@ -2659,9 +2659,6 @@ cmdBackup(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
-    // Verify the repo is local
-    repoIsLocalVerify();
-
     // Test for stop file
     lockStopTest();
 
@@ -2674,6 +2671,9 @@ cmdBackup(void)
                 "repo option not specified, defaulting to %s",
                 cfgOptionGroupName(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
         }
+
+        // Get the repo storage in case it is remote and encryption settings need to be pulled down
+        storageRepo();
 
         // Build block incremental maps using defaults and/or user-specified options
         const ManifestBlockIncrMap blockIncrMap = backupBlockIncrMap();
