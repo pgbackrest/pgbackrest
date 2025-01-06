@@ -2724,6 +2724,7 @@ cmdBackup(void)
 
             MEM_CONTEXT_TEMP_BEGIN()
             {
+                // Checkpoint when start-fast enabled
                 if (cfgOptionBool(cfgOptStartFast))
                     dbCheckpoint(backupData->dbPrimary);
 

@@ -338,6 +338,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
 
         if (backupfullIncr)
         {
+            // Checkpoint if start-fast
             if (param.startFast)
                 HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_CHECKPOINT(1));
 
@@ -347,6 +348,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
             else
                 HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_TABLESPACE_LIST_0(1));
 
+            // Time to calculate limit from
             HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_TIME_QUERY(1, (int64_t)backupTimeStart * 1000));
 
             if (!param.fullIncrNoOp)
