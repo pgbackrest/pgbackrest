@@ -132,7 +132,7 @@ FN_EXTERN void dbReplayWait(Db *this, const String *targetLsn, uint32_t targetTi
 FN_EXTERN void dbCheckpoint(Db *this);
 
 // Check that the cluster is alive and correctly configured during the backup
-FN_EXTERN void dbPing(Db *const this, bool force);
+FN_EXTERN void dbPing(Db *this, bool force);
 
 // Epoch time on the PostgreSQL host in ms
 FN_EXTERN TimeMSec dbTimeMSec(Db *this);
