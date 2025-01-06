@@ -338,6 +338,9 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
 
         if (backupfullIncr)
         {
+            if (param.startFast)
+                HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_CHECKPOINT(1));
+
             // Tablespace check
             if (tablespace)
                 HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_TABLESPACE_LIST_1(1, 32768, "tblspc32768"));

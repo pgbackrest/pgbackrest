@@ -2702,6 +2702,9 @@ cmdBackup(void)
 
             MEM_CONTEXT_TEMP_BEGIN()
             {
+                if (cfgOptionBool(cfgOptStartFast))
+                    dbCheckpoint(backupData->dbPrimary);
+
                 // Build the manifest
                 Manifest *const manifestPrelim = manifestNewBuild(
                     backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, timestampStart,
