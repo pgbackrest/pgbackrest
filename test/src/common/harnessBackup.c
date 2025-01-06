@@ -347,6 +347,8 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
             else
                 HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_TABLESPACE_LIST_0(1));
 
+            HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_TIME_QUERY(1, (int64_t)backupTimeStart * 1000));
+
             if (!param.fullIncrNoOp)
             {
                 // Wait for standby to sync
