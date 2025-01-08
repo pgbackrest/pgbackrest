@@ -729,6 +729,7 @@ option:
       archive-push: {}
       backup: {}
       check: {}
+      expire: {}
       info: {}
       manifest: {}
       repo-get: {}

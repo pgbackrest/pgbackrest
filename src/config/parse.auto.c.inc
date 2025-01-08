@@ -1711,6 +1711,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                        // opt/cmd
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                             // opt/cmd
             PARSE_RULE_OPTION_COMMAND(Check)                                                                              // opt/cmd
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                             // opt/cmd
             PARSE_RULE_OPTION_COMMAND(Info)                                                                               // opt/cmd
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                                           // opt/cmd
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                            // opt/cmd
@@ -1754,6 +1755,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                    // opt/cmd-ssh
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                         // opt/cmd-ssh
             PARSE_RULE_OPTION_COMMAND(Check)                                                                          // opt/cmd-ssh
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                         // opt/cmd-ssh
             PARSE_RULE_OPTION_COMMAND(Info)                                                                           // opt/cmd-ssh
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                                       // opt/cmd-ssh
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                        // opt/cmd-ssh
