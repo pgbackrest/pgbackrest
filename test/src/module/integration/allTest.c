@@ -277,6 +277,9 @@ testRun(void)
             // backups for <= 9.5 will stop the prior backup
             HRN_HOST_SQL_EXEC(pg1, "update status set message = '" TEST_STATUS_INCR "'");
             TEST_HOST_BR(pg1, CFGCMD_BACKUP, .option = "--type=incr --delta --stop-auto");
+
+            // Check that expire works remotely (increase full retention to make it a noop)
+            TEST_HOST_BR(pg1, CFGCMD_EXPIRE, .option = "--repo1-retention-full=99");
         }
 
         // Get exclude_me database oid
