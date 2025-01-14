@@ -1,4 +1,19 @@
 <release date="XXXX-XX-XX" version="2.54.2dev" title="Under Development">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-pull-request id="2511"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Fix issue after disabling bundling with block incremental enabled.</p>
+            </release-item>
+        </release-bug-list>
+    </release-core-list>
+
     <release-doc-list>
         <release-improvement-list>
             <release-item>
