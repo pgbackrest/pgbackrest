@@ -974,6 +974,7 @@ testRun(void)
     {
         #define TEST_MANIFEST_HEADER_PRE                                                                                           \
             "[backup]\n"                                                                                                           \
+            "backup-bundle-raw=true\n"                                                                                             \
             "backup-label=null\n"                                                                                                  \
             "backup-prior=\"20190101-010101F\"\n"
 
