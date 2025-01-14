@@ -1,2 +1,15 @@
 <release date="XXXX-XX-XX" version="2.54.2dev" title="Under Development">
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="paul.bierly"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="paul.bierly"/>
+                </release-item-contributor-list>
+
+                <p>Clarify behavior of multiple configuration files.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
 </release>
