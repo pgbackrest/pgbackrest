@@ -217,6 +217,8 @@ Option value constants
 #define CFGOPTVAL_OUTPUT_JSON_Z                                     "json"
 #define CFGOPTVAL_OUTPUT_NONE                                       STRID5("none", 0x2b9ee0)
 #define CFGOPTVAL_OUTPUT_NONE_Z                                     "none"
+#define CFGOPTVAL_OUTPUT_NUM                                        STRID5("num", 0x36ae0)
+#define CFGOPTVAL_OUTPUT_NUM_Z                                      "num"
 #define CFGOPTVAL_OUTPUT_TEXT                                       STRID5("text", 0xa60b40)
 #define CFGOPTVAL_OUTPUT_TEXT_Z                                     "text"
 

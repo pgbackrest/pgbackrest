@@ -2725,6 +2725,18 @@
                 <text>
                     <p>Displays installed <backrest/> version.</p>
                 </text>
+
+                <option-list>
+                    <option id="output" name="Output">
+                        <summary>Output type.</summary>
+
+                        <text>
+                            <p>Output may be text (default) or num to display the installed <backrest/> version as an integer.</p>
+                        </text>
+
+                        <example>num</example>
+                    </option>
+                </option-list>
             </command>
 
             <command id="stanza-create" name="Stanza Create">

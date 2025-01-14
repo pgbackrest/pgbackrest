@@ -335,9 +335,19 @@ helpRender(const Buffer *const helpData)
         ((cfgCommand() == cfgCmdHelp && cfgOptionBool(cfgOptVersion) && !cfgOptionBool(cfgOptHelp)) ||
          cfgCommand() == cfgCmdVersion))
     {
-        strCatChr(result, '\n');
-
-        FUNCTION_TEST_RETURN(STRING, result);
+        if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_NUM)
+        {
+            // Format PROJECT_VERSION as 6-digits integer. Should handle the case where we have "2.55dev", "2.55" or "2.55.0".
+            int major = 0, minor = 0, patch = 0;
+            sscanf(PROJECT_VERSION, "%d.%d.%d", &major, &minor, &patch);
+            int projectVersionNum = (major * 10000) + (minor * 100) + patch;
+            FUNCTION_TEST_RETURN(STRING, strNewFmt("%06d\n", projectVersionNum));
+        }
+        else
+        {
+            strCatChr(result, '\n');
+            FUNCTION_TEST_RETURN(STRING, result);
+        }
     }
 
     MEM_CONTEXT_TEMP_BEGIN()

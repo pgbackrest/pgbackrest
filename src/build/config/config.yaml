@@ -335,6 +335,11 @@ option:
         allow-list:
           - none
           - text
+      version:
+        default: text
+        allow-list:
+          - num
+          - text
     allow-list:
       - text
       - json
