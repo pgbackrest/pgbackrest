@@ -17,6 +17,7 @@ Help Command
 #include "common/memContext.h"
 #include "common/type/pack.h"
 #include "config/config.intern.h"
+#include "config/config.h"
 #include "config/parse.h"
 #include "version.h"
 
