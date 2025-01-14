@@ -1187,7 +1187,7 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
         hrnHostLocal.pgVersion = pgVersionFromStr(STR(testDef->pg));
         hrnHostLocal.repoHost = strIdFromZ(testDef->repo);
         hrnHostLocal.storage = strIdFromZ(testDef->stg);
-        hrnHostLocal.compressType = compressTypeFromName(STR(testDef->cmp));
+        hrnHostLocal.compressType = compressTypeEnum(strIdFromZ(testDef->cmp));
         hrnHostLocal.cipherType = testDef->enc ? cipherTypeAes256Cbc : cipherTypeNone;
         hrnHostLocal.cipherPass = testDef->enc ? strNewZ(HRN_CIPHER_PASSPHRASE) : NULL;
         hrnHostLocal.repoTotal = testDef->rt;
