@@ -75,15 +75,15 @@ jobs:
   # expensive, but this at least shows that the build works and some of the more complex tests run. In particular, it is good to
   # test on one big-endian architecture to be sure that checksums are correct.
   arch:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
         include:
           - arch: ppc64le
-            distro: ubuntu20.04
+            distro: ubuntu22.04
           - arch: s390x
-            distro: ubuntu20.04
+            distro: ubuntu22.04
 
     steps:
       - name: Checkout Code
@@ -112,7 +112,7 @@ jobs:
 
   # Run meson unity build to check for errors, unused functions, and externed functions
   unity:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout Code
@@ -149,7 +149,7 @@ jobs:
           cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl test --param=code-format-check
 
   codeql:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     permissions:
       actions: read
@@ -167,7 +167,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Packages
-        run: sudo apt-get install -y --no-install-recommends libyaml-dev
+        run: sudo apt-get install -y --no-install-recommends libyaml-dev libbz2-dev
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
