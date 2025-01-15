@@ -128,6 +128,9 @@ FN_EXTERN Pack *dbList(Db *this);
 // Waits for replay on the standby to equal the target LSN
 FN_EXTERN void dbReplayWait(Db *this, const String *targetLsn, uint32_t targetTimeline, TimeMSec timeout);
 
+// Checkpoint the cluster
+FN_EXTERN void dbCheckpoint(Db *this);
+
 // Check that the cluster is alive and correctly configured during the backup
 FN_EXTERN void dbPing(Db *this, bool force);
 
