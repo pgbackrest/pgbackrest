@@ -60,6 +60,9 @@ historyParse(const String *const history)
                 .lsn = pgLsnFromStr(strLstGet(split, 1)),
             };
 
+            ASSERT(historyItem.lsn > 0);
+            ASSERT(historyItem.timeline > 0);
+
             lstAdd(result, &historyItem);
         }
     }
@@ -69,10 +72,36 @@ historyParse(const String *const history)
 }
 
 /**********************************************************************************************************************************/
-// static unsigned int
-// historyLoad(const Storage *const storageRepo, const String *const archiveId, const char *const historyFile)
-// {
-// }
+static List *
+historyLoad(const Storage *const storageRepo, const String *const archiveId, const unsigned int timeline)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, storageRepo);
+        FUNCTION_LOG_PARAM(STRING, archiveId);
+        FUNCTION_LOG_PARAM(UINT, timeline);
+    FUNCTION_LOG_END();
+
+    List *result;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *const historyFile = strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%08X.history", strZ(archiveId), timeline);
+        const Buffer *const history = storageGetP(storageNewReadP(storageRepo, historyFile));
+
+        TRY_BEGIN()
+        {
+            result = lstMove(historyParse(strNewBuf(history)), memContextPrior());
+        }
+        CATCH_ANY()
+        {
+            THROW_FMT(FormatError, "unable to parse '%s': %s", strZ(storagePathP(storageRepo, historyFile)), errorMessage());
+        }
+        TRY_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(LIST, result);
+}
 
 /**********************************************************************************************************************************/
 static unsigned int
@@ -172,8 +201,31 @@ timelineVerify(
             // Only proceed if target timeline is not the current timeline
             if (timelineTarget != timelineCurrent)
             {
-                (void)historyParse;
-                (void)timelineVerify;
+                // Search through the history for the target timeline to make sure it includes the current timeline
+                const List *const historyList = historyLoad(storageRepo, archiveId, timelineTarget);
+                uint64_t timelineFound = 0;
+
+                for (unsigned int historyIdx = 0; historyIdx < lstSize(historyList); historyIdx++)
+                {
+                    const HistoryItem *const historyItem = lstGet(historyList, historyIdx);
+
+                    if (lsnCurrent < historyItem->lsn)
+                    {
+                        timelineFound = historyItem->timeline;
+
+                        // !!!
+                        if (timelineFound != timelineCurrent)
+                        {
+                            THROW_FMT(FormatError, "!!!WRONG FOUND");
+                        }
+
+                        break;
+                    }
+                }
+
+                // !!!
+                if (timelineFound == 0)
+                    THROW_FMT(FormatError, "!!!NO FOUND");
             }
         }
         MEM_CONTEXT_TEMP_END();

@@ -2053,16 +2053,58 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("timelineLatest()");
+        TEST_TITLE("timelineVerify()");
 
-        TEST_RESULT_UINT(timelineLatest(storageRepoIdx(0), STRDEF("17-1"), 1), 1, "no history files");
+        TEST_RESULT_VOID(
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_11, 1, 0xA1, NULL),
+            "follow current timeline because of version");
+        TEST_RESULT_VOID(
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_11, 1, 0xA1, STRDEF("latest")),
+            "follow latest timeline as requested");
+        TEST_RESULT_VOID(
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, NULL),
+            "follow latest timeline because of version");
+        TEST_RESULT_VOID(
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, STRDEF("current")),
+            "follow current timeline as requested");
+        TEST_RESULT_VOID(
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, STRDEF("1")),
+            "follow requested timeline (same as current)");
+        TEST_RESULT_VOID(
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 0x10, 0xA1, STRDEF("0x10")),
+            "follow requested hex timeline (same as current)");
+        TEST_ERROR(
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 0x10, 0xA1, STRDEF("bogus")), FormatError,
+            "invalid target timeline 'bogus'");
 
-        HRN_STORAGE_PUT_Z(storageTest, "repo/archive/test1/17-1/00000009.history", "8\t0/4000000\tcomment");
-        HRN_STORAGE_PUT_Z(storageTest, "repo/archive/test1/17-1/0000000A.history", "9\t0/5000000\tcomment");
-        HRN_STORAGE_PUT_Z(storageTest, "repo/archive/test1/17-1/0000000B.history", "10\t0/6000000\tcomment");
+        HRN_STORAGE_PUT_Z(storageTest, "repo/archive/test1/17-1/00000009.history", "8");
+        TEST_ERROR(
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 8, 0xA1, STRDEF("9")), FormatError,
+            "unable to parse '" TEST_PATH "/repo/archive/test1/17-1/00000009.history': invalid history line format '8'");
 
-        TEST_RESULT_UINT(timelineLatest(storageRepoIdx(0), STRDEF("17-1"), 8), 11, "timeline < history files");
-        TEST_RESULT_UINT(timelineLatest(storageRepoIdx(0), STRDEF("17-1"), 12), 12, "timeline >= history files");
+        HRN_STORAGE_PUT_Z(
+            storageTest, "repo/archive/test1/17-1/0000000A.history",
+            "# comment\n"
+            "8\t0/4000000\tcomment\n"
+            "9\t0/5000000\tcomment\n");
+        TEST_RESULT_VOID(
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 10, 0x4FFFFFF, NULL), "follow current timeline");
+        TEST_RESULT_VOID(
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, NULL), "follow latest timeline");
+        TEST_RESULT_VOID(
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, STRDEF("10")), "target timeline found");
+        TEST_ERROR(
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x5000000, STRDEF("10")), FormatError,
+            "!!!NO FOUND");
+
+        HRN_STORAGE_PUT_Z(
+            storageTest, "repo/archive/test1/17-1/0000000B.history",
+            "7\t0/4000000\tcomment\n"
+            "8\t0/5000000\tcomment\n");
+        TEST_ERROR(
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 7, 0x4FFFFFF, STRDEF("11")), FormatError,
+            "!!!WRONG FOUND");
+
     }
 
     // *****************************************************************************************************************************
