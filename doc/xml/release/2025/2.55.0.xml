@@ -2,7 +2,10 @@
     <release-core-list>
         <release-bug-list>
             <release-item>
-                <github-pull-request id="2511"/>
+                <commit subject="Fix issue after disabling bundling with block incremental enabled.">
+                    <github-pull-request id="2511"/>
+                </commit>
+                <commit subject="Replace constant version with macro in backup test module."/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
