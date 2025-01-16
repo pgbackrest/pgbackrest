@@ -1865,6 +1865,8 @@ testRun(void)
 
         Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_12, STRDEF("/pg"));
         manifest->pub.data.backupOptionOnline = true;
+        manifest->pub.data.archiveStart = strNewZ("000000010000000000000007");
+        manifest->pub.data.lsnStart = strNewZ("0/7000028");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when standby_mode setting is present");
@@ -2104,7 +2106,6 @@ testRun(void)
         TEST_ERROR(
             timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 7, 0x4FFFFFF, STRDEF("11")), FormatError,
             "!!!WRONG FOUND");
-
     }
 
     // *****************************************************************************************************************************
@@ -2169,6 +2170,8 @@ testRun(void)
             manifest->pub.data.backupTimestampStart = 1482182860;
             manifest->pub.data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
             manifest->pub.data.backupOptionOnline = true;
+            manifest->pub.data.archiveStart = strNewZ("000000010000000000000007");
+            manifest->pub.data.lsnStart = strNewZ("0/7000028");
 
             // Data directory
             HRN_MANIFEST_TARGET_ADD(manifest, .name = MANIFEST_TARGET_PGDATA, .path = strZ(pgPath));
@@ -2541,6 +2544,8 @@ testRun(void)
             manifest->pub.data.backupType = backupTypeIncr;
             manifest->pub.data.blockIncr = true;
             manifest->pub.data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
+            manifest->pub.data.archiveStart = strNewZ("000000010000000000000007");
+            manifest->pub.data.lsnStart = strNewZ("0/7000028");
 
             manifest->pub.referenceList = strLstNew();
             strLstAddZ(manifest->pub.referenceList, TEST_LABEL_FULL);

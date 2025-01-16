@@ -11,6 +11,7 @@ Restore Command
 #include "command/restore/file.h"
 #include "command/restore/protocol.h"
 #include "command/restore/restore.h"
+#include "command/restore/timeline.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/log.h"
@@ -2369,6 +2370,18 @@ cmdRestore(void)
         // an error if wal_level=minimal.
         if (!manifestData(jobData.manifest)->backupOptionOnline && cfgOptionSource(cfgOptType) == cfgSourceDefault)
             cfgOptionSet(cfgOptType, cfgSourceParam, VARUINT64(CFGOPTVAL_TYPE_NONE));
+
+        // Verify that the selected timeline is valid for the backup -- including current and latest timelines
+        if (manifestData(jobData.manifest)->backupOptionOnline)
+        {
+            const ManifestData *const data = manifestData(jobData.manifest);
+
+            timelineVerify(
+                storageRepoIdx(backupData.repoIdx),
+                strNewFmt("%s-%u", strZ(pgVersionToStr(data->pgVersion)), data->pgId), data->pgVersion,
+                cvtZToUIntBase(strZ(strSubN(data->archiveStart, 0, 8)), 16), pgLsnFromStr(data->lsnStart),
+                cfgOptionStrNull(cfgOptTargetTimeline));
+        }
 
         // Validate manifest. Don't use strict mode because we'd rather ignore problems that won't affect a restore.
         manifestValidate(jobData.manifest, false);
