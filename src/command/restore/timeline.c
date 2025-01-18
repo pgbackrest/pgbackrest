@@ -193,7 +193,7 @@ timelineVerify(
                 }
                 CATCH_ANY()
                 {
-                    THROW_FMT(FormatError, "invalid target timeline '%s'", strZ(timelineTargetStr));
+                    THROW_FMT(DbMismatchError, "invalid target timeline '%s'", strZ(timelineTargetStr));
                 }
                 TRY_END();
             }
@@ -216,7 +216,7 @@ timelineVerify(
                         // !!!
                         if (timelineFound != timelineCurrent)
                         {
-                            THROW_FMT(FormatError, "!!!WRONG FOUND");
+                            THROW_FMT(DbMismatchError, "!!!WRONG FOUND");
                         }
 
                         break;
@@ -225,7 +225,7 @@ timelineVerify(
 
                 // !!!
                 if (timelineFound == 0)
-                    THROW_FMT(FormatError, "!!!NO FOUND");
+                    THROW_FMT(DbMismatchError, "!!!NO FOUND");
             }
         }
         MEM_CONTEXT_TEMP_END();

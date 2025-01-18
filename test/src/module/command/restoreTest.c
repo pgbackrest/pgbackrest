@@ -2076,7 +2076,7 @@ testRun(void)
             timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 0x10, 0xA1, STRDEF("0x10")),
             "follow requested hex timeline (same as current)");
         TEST_ERROR(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 0x10, 0xA1, STRDEF("bogus")), FormatError,
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 0x10, 0xA1, STRDEF("bogus")), DbMismatchError,
             "invalid target timeline 'bogus'");
 
         HRN_STORAGE_PUT_Z(storageTest, "repo/archive/test1/17-1/00000009.history", "8");
@@ -2096,7 +2096,7 @@ testRun(void)
         TEST_RESULT_VOID(
             timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, STRDEF("10")), "target timeline found");
         TEST_ERROR(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x5000000, STRDEF("10")), FormatError,
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x5000000, STRDEF("10")), DbMismatchError,
             "!!!NO FOUND");
 
         HRN_STORAGE_PUT_Z(
@@ -2104,7 +2104,7 @@ testRun(void)
             "7\t0/4000000\tcomment\n"
             "8\t0/5000000\tcomment\n");
         TEST_ERROR(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 7, 0x4FFFFFF, STRDEF("11")), FormatError,
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 7, 0x4FFFFFF, STRDEF("11")), DbMismatchError,
             "!!!WRONG FOUND");
     }
 
