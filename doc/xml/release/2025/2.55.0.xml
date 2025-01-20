@@ -1,21 +1,5 @@
 <release date="XXXX-XX-XX" version="2.55dev" title="UNDER DEVELOPMENT">
     <release-core-list>
-        <release-bug-list>
-            <release-item>
-                <commit subject="Fix issue after disabling bundling with block incremental enabled.">
-                    <github-pull-request id="2511"/>
-                </commit>
-                <commit subject="Replace constant version with macro in backup test module."/>
-
-                <release-item-contributor-list>
-                    <release-item-contributor id="david.steele"/>
-                    <release-item-reviewer id="david.christensen"/>
-                </release-item-contributor-list>
-
-                <p>Fix issue after disabling bundling with block incremental enabled.</p>
-            </release-item>
-        </release-bug-list>
-
         <release-improvement-list>
             <release-item>
                 <commit subject="Use lz4 for protocol compression.">
@@ -68,18 +52,4 @@
             </release-item>
         </release-development-list>
     </release-core-list>
-
-    <release-doc-list>
-        <release-improvement-list>
-            <release-item>
-                <release-item-contributor-list>
-                    <release-item-ideator id="paul.bierly"/>
-                    <release-item-contributor id="david.steele"/>
-                    <release-item-reviewer id="paul.bierly"/>
-                </release-item-contributor-list>
-
-                <p>Clarify behavior of multiple configuration files.</p>
-            </release-item>
-        </release-improvement-list>
-    </release-doc-list>
 </release>
