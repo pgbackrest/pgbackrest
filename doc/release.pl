@@ -209,7 +209,7 @@ eval
                     '        "subject": ' . trim((JSON::PP->new()->allow_nonref()->pretty())->encode($rhGitLog->{subject}));
 
                 # Skip the body if it is empty or a release (since we already have the release note content)
-                if ($rhGitLog->{subject} !~ /^v[0-9]{1,2}\.[0-9]{1,2}\: /g && defined($rhGitLog->{body}))
+                if ($rhGitLog->{subject} !~ /^v[0-9]{1,2}\.[0-9]{1,2}(\.[0-9]+){0,1}\: /g && defined($rhGitLog->{body}))
                 {
                     $strGitLog .=
                         ",\n" .

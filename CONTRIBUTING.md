@@ -263,7 +263,7 @@ pgbackrest/test/test.pl --vm-out --module=common --test=wait
                 
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
                 
-        P00   INFO: test command begin 2.54.1: [common/wait] --log-level=info --no-log-timestamp --repo-path=/home/vagrant/test/repo --scale=1 --test-path=/home/vagrant/test --vm=none --vm-id=0
+        P00   INFO: test command begin 2.54.2: [common/wait] --log-level=info --no-log-timestamp --repo-path=/home/vagrant/test/repo --scale=1 --test-path=/home/vagrant/test --vm=none --vm-id=0
         P00   INFO: test command end: completed successfully
         run 1 - waitNew(), waitMore, and waitFree()
                       L0018     expect AssertError: assertion 'waitTime <= 999999000' failed
@@ -497,7 +497,7 @@ HRN_FORK_BEGIN()
             "    cipher: none\n"
             "\n"
             "    db (current)\n"
-            "        wal archive min/max (9.6): none present\n",
+            "        wal archive min/max (9.4): none present\n",
             "text - single stanza, no valid backups, backup/expire lock detected");
 
         // Notify child to release lock
