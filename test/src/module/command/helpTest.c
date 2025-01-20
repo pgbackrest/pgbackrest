@@ -186,7 +186,13 @@ testRun(void)
             "\n"
             "Get version.\n"
             "\n"
-            "Displays installed pgBackRest version.\n");
+            "Displays installed pgBackRest version.\n"
+            "\n"
+            "Command Options:\n"
+            "\n"
+            "  --output  output type [default=text]\n"
+            "\n"
+            "Use 'pgbackrest help version [option]' for more information.\n");
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
