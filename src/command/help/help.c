@@ -9,6 +9,7 @@ Help Command
 #include <unistd.h>
 
 #include "command/help/help.h"
+#include "command/info/info.h"
 #include "common/compress/bz2/decompress.h"
 #include "common/debug.h"
 #include "common/io/bufferRead.h"
@@ -337,13 +338,7 @@ helpRender(const Buffer *const helpData)
          cfgCommand() == cfgCmdVersion))
     {
         if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_NUM)
-        {
-            // Format PROJECT_VERSION as 6-digits integer. Should handle the case where we have "2.55dev", "2.55" or "2.55.0".
-            int major = 0, minor = 0, patch = 0;
-            sscanf(PROJECT_VERSION, "%d.%d.%d", &major, &minor, &patch);
-            int projectVersionNum = (major * 10000) + (minor * 100) + patch;
-            FUNCTION_TEST_RETURN(STRING, strNewFmt("%06d\n", projectVersionNum));
-        }
+            FUNCTION_TEST_RETURN(STRING, strNewZ(versionNumRender(PROJECT_VERSION)));
         else
         {
             strCatChr(result, '\n');

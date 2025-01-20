@@ -717,7 +717,7 @@ backupList(
 /***********************************************************************************************************************************
 Render backrest text version (in PROJECT_VERSION style) as 6-digits number format
 ***********************************************************************************************************************************/
-static const char *
+FN_EXTERN const char *
 versionNumRender(const char *const versionStr)
 {
     FUNCTION_TEST_BEGIN();
