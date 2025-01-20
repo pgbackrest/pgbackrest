@@ -35,6 +35,7 @@ VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MIN_VAR,                          "min");
 VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MAX_VAR,                          "max");
 VARIANT_STRDEF_STATIC(BACKREST_KEY_FORMAT_VAR,                      "format");
 VARIANT_STRDEF_STATIC(BACKREST_KEY_VERSION_VAR,                     "version");
+VARIANT_STRDEF_STATIC(BACKREST_KEY_VERSION_NUM_VAR,                 "version-num");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_ANNOTATION_VAR,                    "annotation");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_BACKREST_VAR,                      "backrest");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_ERROR_VAR,                         "error");
@@ -714,6 +715,29 @@ backupList(
 }
 
 /***********************************************************************************************************************************
+Render backrest text version (in PROJECT_VERSION style) as 6-digits number format
+***********************************************************************************************************************************/
+static const char *
+versionNumRender(const char *const versionStr)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, versionStr);
+    FUNCTION_TEST_END();
+
+    // The conversion should handle the case where we have "2.55dev", "2.55" or "2.55.0".
+    if (regExpMatchOne(STRDEF("^[0-9]+\\.[0-9]+(\\.[0-9]+)?(dev)?$"), STRDEF(versionStr)))
+    {
+        int major = 0, minor = 0, patch = 0;
+        sscanf(versionStr, "%d.%d.%d", &major, &minor, &patch);
+        int projectVersionNum = (major * 10000) + (minor * 100) + patch;
+
+        FUNCTION_TEST_RETURN(STRINGZ, zNewFmt("%06d", projectVersionNum));
+    }
+    else
+        FUNCTION_TEST_RETURN(STRINGZ, NULL);
+}
+
+/***********************************************************************************************************************************
 Set the stanza data for each stanza found in the repo
 ***********************************************************************************************************************************/
 static VariantList *
@@ -857,6 +881,11 @@ stanzaInfoList(
             kvPut(varKv(stanzaInfo), KEY_CIPHER_VAR, VARSTR(strIdToStr(stanzaCipherType)));
         else
             kvPut(varKv(stanzaInfo), KEY_CIPHER_VAR, VARSTRDEF(INFO_STANZA_MIXED));
+
+        // Set backrest section
+        KeyValue *const backrestInfo = kvPutKv(varKv(stanzaInfo), BACKUP_KEY_BACKREST_VAR);
+        kvPut(backrestInfo, BACKREST_KEY_VERSION_VAR, varNewStrZ(PROJECT_VERSION));
+        kvPut(backrestInfo, BACKREST_KEY_VERSION_NUM_VAR, varNewStrZ(versionNumRender(PROJECT_VERSION)));
 
         varLstAdd(result, stanzaInfo);
     }
