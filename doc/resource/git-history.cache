@@ -1,5 +1,43 @@
 [
     {
+        "commit": "c7a5b4cac24c936e6d8027011b3d5f752215cb94",
+        "date": "2025-01-14 12:50:27 -0500",
+        "subject": "Update LICENSE.txt and PostgreSQL copyright for 2025."
+    },
+    {
+        "commit": "dbc6f2875356ec16cf4883830a0d7b00204752ee",
+        "date": "2025-01-14 12:40:44 -0500",
+        "subject": "Fix issue after disabling bundling with block incremental enabled.",
+        "body": "When bundling and block incremental are both enabled the bundleRaw flag is set to indicate that headers are omitted (whenever possible) for encryption and compression. This is intended to save space, especially when there are very large numbers of small files.\n\nIf bundling is disabled this flag needs to be preserved so that existing bundles from prior backups are read correctly. However, the prior code was only saving the flag when bundling was enabled, which caused prior backups to be unreadable if bundling was disabled.\n\nFix so that the flag is preserved and backups are not broken."
+    },
+    {
+        "commit": "18fcd2a376f041f18c2f384664eb0edb158cb4ff",
+        "date": "2025-01-14 12:16:42 -0500",
+        "subject": "Fix compression type in integration tests.",
+        "body": "Due to this bug the compression type in integration tests was always set to none. There are sufficient other tests for compression that this was not masking any bugs, but it was obviously not ideal."
+    },
+    {
+        "commit": "5da2df4a933f04d5fb9a3b6c7c59529f3afa805b",
+        "date": "2025-01-14 12:07:44 -0500",
+        "subject": "Clarify behavior of multiple configuration files."
+    },
+    {
+        "commit": "85eb9f355805fcbf3837022db2b315d79f943a96",
+        "date": "2025-01-14 11:51:27 -0500",
+        "subject": "Clarify that unhandled errors may occur in edge cases."
+    },
+    {
+        "commit": "17ed08ba8603bb14519537b362fdbc8407201af8",
+        "date": "2025-01-14 11:41:21 -0500",
+        "subject": "Update runner versions on Github actions.",
+        "body": "Ubuntu 20.04 will be EOL soon so update all actions that are using it. Update other actions as far as possible without making too many changes."
+    },
+    {
+        "commit": "cdc25b63284fa243295bd49b247d50e6e7e82bfc",
+        "date": "2025-01-14 11:39:44 -0500",
+        "subject": "Begin v2.54.2 development."
+    },
+    {
         "commit": "9b72bfd9b2d63aef346c0f696c4913beb02afd65",
         "date": "2024-12-16 10:41:06 -0500",
         "subject": "v2.54.1: Bug Fix"
