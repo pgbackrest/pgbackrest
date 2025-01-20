@@ -448,6 +448,52 @@ walSegmentNext(const String *const walSegment, const size_t walSegmentSize, cons
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN int
+walSegmentDist(const String *const walSegmentA, const String *const walSegmentB, const size_t walSegmentSize, const unsigned int pgVersion)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STRING, walSegmentA);
+        FUNCTION_LOG_PARAM(STRING, walSegmentB);
+        FUNCTION_LOG_PARAM(SIZE, walSegmentSize);
+        FUNCTION_LOG_PARAM(UINT, pgVersion);
+    FUNCTION_LOG_END();
+
+    ASSERT(walSegmentA != NULL);
+    ASSERT(walSegmentB != NULL);
+    ASSERT(strSize(walSegmentA) == 24);
+    ASSERT(strSize(walSegmentB) == 24);
+    ASSERT(UINT32_MAX % walSegmentSize == walSegmentSize - 1);
+    ASSERT(pgVersion >= PG_VERSION_11 || walSegmentSize == pgWalSegmentSizeDefault(pgVersion));
+
+    // Extract WAL parts
+    uint32_t timelineA, timelineB;
+    uint32_t majorA, majorB;
+    uint32_t minorA, minorB;
+    int64_t posA, posB;
+    int64_t majorStep = (int64_t)UINT32_MAX / (int64_t)walSegmentSize;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        timelineA = pgTimelineFromWalSegment(walSegmentA);
+        majorA = (uint32_t)strtol(strZ(strSubN(walSegmentA, 8, 8)), NULL, 16);
+        minorA = (uint32_t)strtol(strZ(strSubN(walSegmentA, 16, 8)), NULL, 16);
+
+        timelineB = pgTimelineFromWalSegment(walSegmentB);
+        majorB = (uint32_t)strtol(strZ(strSubN(walSegmentB, 8, 8)), NULL, 16);
+        minorB = (uint32_t)strtol(strZ(strSubN(walSegmentB, 16, 8)), NULL, 16);
+
+        ASSERT(timelineA == timelineB);
+
+        posA = majorA * majorStep + minorA;
+        posB = majorB * majorStep + minorB;
+        ASSERT(INT_MIN <= posB - posA && posB - posA <= INT32_MAX);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(INT, (int)(posB - posA));
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN StringList *
 walSegmentRange(
     const String *const walSegmentBegin, const size_t walSegmentSize, const unsigned int pgVersion, const unsigned int range)

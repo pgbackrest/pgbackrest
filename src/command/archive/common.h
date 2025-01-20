@@ -101,4 +101,7 @@ FN_EXTERN String *walSegmentNext(const String *walSegment, size_t walSegmentSize
 FN_EXTERN StringList *walSegmentRange(
     const String *walSegmentBegin, size_t walSegmentSize, unsigned int pgVersion, unsigned int range);
 
+// Find distance between two WAL segments. If A < B returns a positive number, if B > A - negative.
+FN_EXTERN int walSegmentDist(const String *const walSegmentA, const String *const walSegmentB, const size_t walSegmentSize, const unsigned int pgVersion);
+
 #endif
