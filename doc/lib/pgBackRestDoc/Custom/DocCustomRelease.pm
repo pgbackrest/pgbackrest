@@ -522,7 +522,6 @@ sub docGet
         $oReleaseSection->nodeAdd('subsubtitle')->textSet($strDateOut);
 
         # Add release sections
-        my $bAdditionalNotes = false;
         my $bReleaseNote = false;
 
         my $hSectionType =
@@ -552,12 +551,6 @@ sub docGet
 
                     if ($oRelease->nodeGet($strSectionType)->nodeTest($strItemType))
                     {
-                        if ($strSectionType ne XML_RELEASE_CORE_LIST && !$bAdditionalNotes)
-                        {
-                            $oReleaseSection->nodeAdd('subtitle')->textSet('Additional Notes');
-                            $bAdditionalNotes = true;
-                        }
-
                         # Add release note if present
                         if (!$bReleaseNote && defined($oRelease->nodeGet($strSectionType)->textGet(false)))
                         {
