@@ -18,7 +18,7 @@ Assert that encoding type is valid. This needs to be kept up to date with the la
 /***********************************************************************************************************************************
 Base64 encoding/decoding
 ***********************************************************************************************************************************/
-static const char encodeBase64Lookup[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static const char encodeBase64Lookup[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static void
 encodeToStrBase64(const unsigned char *const source, const size_t sourceSize, char *const destination)
@@ -221,7 +221,7 @@ decodeToBinSizeBase64(const char *const source)
 /***********************************************************************************************************************************
 Base64Url encoding
 ***********************************************************************************************************************************/
-static const char encodeBase64LookupUrl[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+static const char encodeBase64LookupUrl[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
 static void
 encodeToStrBase64Url(const unsigned char *const source, const size_t sourceSize, char *const destination)
