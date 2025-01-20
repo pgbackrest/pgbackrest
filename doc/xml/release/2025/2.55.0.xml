@@ -50,6 +50,15 @@
 
                 <p>Full/incremental backup method.</p>
             </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="john.naylor"/>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve hex encode performance with bytewise lookup.</p>
+            </release-item>
         </release-development-list>
     </release-core-list>
 </release>
