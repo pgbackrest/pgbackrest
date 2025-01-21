@@ -270,7 +270,7 @@ protocolClientResponseInternal(ProtocolClientSession *const this)
         protocolClientError(this->client, type, packRead);
         CHECK(FormatError, type == protocolMessageTypeResponse, "expected response message");
 
-        // Return result the the caller
+        // Return result the caller
         result = objMove(packRead, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();

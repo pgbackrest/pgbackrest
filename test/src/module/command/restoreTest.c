@@ -2101,16 +2101,20 @@ testRun(void)
             timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, STRDEF("10"), cipherTypeNone, NULL),
             "target timeline found");
         TEST_ERROR(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x5000000, STRDEF("10"), cipherTypeNone, NULL),
-            DbMismatchError, "!!!NO FOUND");
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x6000000, STRDEF("10"), cipherTypeNone, NULL),
+            DbMismatchError,
+            "target timeline A forked from backup timeline 9 at 0/5000000 which is before backup lsn of 0/6000000\n"
+            "HINT: was the backup made after the target timeline forked?\n"
+            "HINT: was the target timeline accidentally created by promoting a standby?");
 
         HRN_STORAGE_PUT_Z(
             storageTest, "repo/archive/test1/17-1/0000000B.history",
             "7\t0/4000000\tcomment\n"
             "8\t0/5000000\tcomment\n");
         TEST_ERROR(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 7, 0x4FFFFFF, STRDEF("11"), cipherTypeNone, NULL),
-            DbMismatchError, "!!!WRONG FOUND");
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 6, 0x4FFFFFF, STRDEF("11"), cipherTypeNone, NULL),
+            DbMismatchError, "backup timeline 6, lsn 0/4ffffff is not in the history of target timeline B\n"
+            "HINT: was the target timeline created by promoting from a timeline < latest?");
     }
 
     // *****************************************************************************************************************************

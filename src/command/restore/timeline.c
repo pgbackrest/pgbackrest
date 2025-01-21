@@ -153,15 +153,15 @@ STRING_STATIC(TIMELINE_LATEST_STR,                                  "latest");
 FN_EXTERN void
 timelineVerify(
     const Storage *const storageRepo, const String *const archiveId, const unsigned int pgVersion,
-    const unsigned int timelineCurrent, const uint64_t lsnCurrent, const String *timelineTargetStr, const CipherType cipherType,
+    const unsigned int timelineBackup, const uint64_t lsnBackup, const String *timelineTargetStr, const CipherType cipherType,
     const String *const cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storageRepo);
         FUNCTION_LOG_PARAM(STRING, archiveId);
         FUNCTION_LOG_PARAM(UINT, pgVersion);
-        FUNCTION_LOG_PARAM(UINT, timelineCurrent);
-        FUNCTION_LOG_PARAM(UINT64, lsnCurrent);
+        FUNCTION_LOG_PARAM(UINT, timelineBackup);
+        FUNCTION_LOG_PARAM(UINT64, lsnBackup);
         FUNCTION_LOG_PARAM(STRING_ID, cipherType);
         FUNCTION_LOG_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
@@ -169,8 +169,8 @@ timelineVerify(
     ASSERT(storageRepo != NULL);
     ASSERT(archiveId != NULL);
     ASSERT(pgVersion != 0);
-    ASSERT(timelineCurrent > 0);
-    ASSERT(lsnCurrent > 0);
+    ASSERT(timelineBackup > 0);
+    ASSERT(lsnBackup > 0);
 
     // If timeline target is not specified then set based on the default by PostgreSQL version
     if (timelineTargetStr == NULL)
@@ -188,11 +188,11 @@ timelineVerify(
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Determine timeline target in order to load the history file. If target timeline is latest scan the history files to
-            // find the the most recent. If a target timeline is a number then parse it.
+            // find the most recent. If a target timeline is a number then parse it.
             unsigned int timelineTarget;
 
             if (strEq(timelineTargetStr, TIMELINE_LATEST_STR))
-                timelineTarget = timelineLatest(storageRepo, archiveId, timelineCurrent);
+                timelineTarget = timelineLatest(storageRepo, archiveId, timelineBackup);
             else
             {
                 TRY_BEGIN()
@@ -210,34 +210,71 @@ timelineVerify(
             }
 
             // Only proceed if target timeline is not the current timeline
-            if (timelineTarget != timelineCurrent)
+            if (timelineTarget != timelineBackup)
             {
                 // Search through the history for the target timeline to make sure it includes the current timeline. This follows
                 // the logic in PostgreSQL's readTimeLineHistory() and tliOfPointInHistory() but is a bit simplified for our usage.
                 const List *const historyList = historyLoad(storageRepo, archiveId, timelineTarget, cipherType, cipherPass);
-                uint64_t timelineFound = 0;
+                unsigned int timelineFound = 0;
 
                 for (unsigned int historyIdx = 0; historyIdx < lstSize(historyList); historyIdx++)
                 {
                     const HistoryItem *const historyItem = lstGet(historyList, historyIdx);
 
-                    if (lsnCurrent < historyItem->lsn)
+                    // If current timeline exists in the target timeline's history before the fork LSN then restore can proceed
+                    if (historyItem->timeline == timelineBackup && lsnBackup < historyItem->lsn)
                     {
-                        timelineFound = historyItem->timeline;
-
-                        // !!!
-                        if (timelineFound != timelineCurrent)
-                        {
-                            THROW_FMT(DbMismatchError, "!!!WRONG FOUND");
-                        }
-
+                        timelineFound = timelineBackup;
                         break;
                     }
                 }
 
-                // !!!
+                // Error when the timeline was not found or not found in the expected range
                 if (timelineFound == 0)
-                    THROW_FMT(DbMismatchError, "!!!NO FOUND");
+                {
+                    uint64_t lsnFound = 0;
+
+                    // Check if timeline exists but did not fork off when expected
+                    for (unsigned int historyIdx = 0; historyIdx < lstSize(historyList); historyIdx++)
+                    {
+                        const HistoryItem *const historyItem = lstGet(historyList, historyIdx);
+
+                        if (historyItem->timeline == timelineBackup)
+                        {
+                            timelineFound = timelineBackup;
+                            lsnFound = historyItem->lsn;
+                        }
+                    }
+
+                    // The timeline was found but it forked off earlier than the backup LSN. This covers the common case where a
+                    // standby is promoted by accident, which creates a new timeline, and then the user tries to restore a backup
+                    // from the original primary that was made after the new timeline was created. Since PostgreSQL >= 12 will
+                    // always try to follow the latest timeline this restore will fail since there is no path to the target
+                    // timeline.
+                    if (timelineFound != 0)
+                    {
+                        ASSERT(lsnFound != 0);
+
+                        THROW_FMT(
+                            DbMismatchError,
+                            "target timeline %X forked from backup timeline %X at %s which is before backup lsn of %s\n"
+                            "HINT: was the backup made after the target timeline forked?\n"
+                            "HINT: was the target timeline accidentally created by promoting a standby?",
+                            timelineTarget, timelineBackup, strZ(pgLsnToStr(lsnFound)), strZ(pgLsnToStr(lsnBackup)));
+                    }
+                    // Else the backup timeline was not found at all. This less common case occurs when, for example, a restore from
+                    // timeline 4 results in timeline 7 being created on promotion because 5 and 6 have already been created by
+                    // prior promotions and then the user tries to restore a backup from timeline 5 with a target of timeline 7.
+                    // There is no relationship between timeline 5 and 7 in this case at any LSN range.
+                    else
+                    {
+                        THROW_FMT(
+                            DbMismatchError,
+                            "backup timeline %X, lsn %s is not in the history of target timeline %X\n"
+                            "HINT: was the target timeline created by promoting from a timeline < latest?",
+                            timelineBackup, strZ(pgLsnToStr(lsnBackup)), timelineTarget);
+                    }
+                }
             }
         }
         MEM_CONTEXT_TEMP_END();
