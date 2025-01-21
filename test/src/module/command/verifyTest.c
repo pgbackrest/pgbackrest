@@ -1962,5 +1962,143 @@ testRun(void)
             "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFE, wal stop: 000000020000000700000FFE");
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("verifyProcess(), text, verbose, --set"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        // Load Parameters
+        StringList *argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptOutput, "text");
+        hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
+        hrnCfgArgRawZ(argList, cfgOptSet, "20181119-152900F_20181119-152909D");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("--set with a valid backup label");
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE, .comment = "valid archive.info");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
+            .comment = "valid archive.info.copy");
+
+        #define TEST_BACKUP_DB1_CURRENT_FULL3_DIFF1                                                                                \
+            "20181119-152900F_20181119-152909D={"                                                                                  \
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","                                                              \
+            "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000007\","          \
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"                                           \
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"                                                   \
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","                 \
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"             \
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+
+        #undef TEST_BACKUP_INFO
+        #define TEST_BACKUP_INFO                                                                                                   \
+            "[backup:current]\n"                                                                                                   \
+            TEST_BACKUP_DB1_CURRENT_FULL3                                                                                          \
+            TEST_BACKUP_DB1_CURRENT_FULL3_DIFF1                                                                                    \
+            "\n"                                                                                                                   \
+            "[db]\n"                                                                                                               \
+            TEST_BACKUP_DB2_11                                                                                                     \
+            "\n"                                                                                                                   \
+            "[db:history]\n"                                                                                                       \
+            TEST_BACKUP_DB1_HISTORY                                                                                                \
+            "\n"                                                                                                                   \
+            TEST_BACKUP_DB2_HISTORY
+
+        HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_BACKUP_INFO);
+        HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_BACKUP_INFO);
+
+        // Create valid full backup for DB1
+        #define TEST_MANIFEST_FULL_DB1                                                                                             \
+            TEST_MANIFEST_HEADER                                                                                                   \
+            TEST_MANIFEST_DB_94                                                                                                    \
+            TEST_MANIFEST_OPTION_ALL                                                                                               \
+            TEST_MANIFEST_TARGET                                                                                                   \
+            TEST_MANIFEST_DB                                                                                                       \
+            TEST_MANIFEST_FILE                                                                                                     \
+            TEST_MANIFEST_FILE_DEFAULT                                                                                             \
+            TEST_MANIFEST_LINK                                                                                                     \
+            TEST_MANIFEST_LINK_DEFAULT                                                                                             \
+            TEST_MANIFEST_PATH                                                                                                     \
+            TEST_MANIFEST_PATH_DEFAULT
+
+        // Write manifests for full backup
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE, TEST_MANIFEST_FULL_DB1,
+            .comment = "valid manifest - full");
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, TEST_MANIFEST_FULL_DB1,
+            .comment = "valid manifest copy - full");
+
+        // Create valid diff backup for DB1
+        #define TEST_MANIFEST_DIFF_DB1                                                                                             \
+            TEST_MANIFEST_HEADER                                                                                                   \
+            TEST_MANIFEST_DB_94                                                                                                    \
+            TEST_MANIFEST_OPTION_ALL                                                                                               \
+            TEST_MANIFEST_TARGET                                                                                                   \
+            TEST_MANIFEST_DB                                                                                                       \
+            "\n"                                                                                                                   \
+            "[target:file]\n"                                                                                                      \
+            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"reference\":\"20181119-152900F\""     \
+                ",\"size\":4,\"timestamp\":1565282114}\n"                                                                          \
+            TEST_MANIFEST_FILE_DEFAULT                                                                                             \
+            TEST_MANIFEST_LINK                                                                                                     \
+            TEST_MANIFEST_LINK_DEFAULT                                                                                             \
+            TEST_MANIFEST_PATH                                                                                                     \
+            TEST_MANIFEST_PATH_DEFAULT
+
+        // Write manifests for diff backup
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F_20181119-152909D/" BACKUP_MANIFEST_FILE,
+            TEST_MANIFEST_DIFF_DB1, .comment = "valid manifest - diff");
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F_20181119-152909D/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
+            TEST_MANIFEST_DIFF_DB1, .comment = "valid manifest copy - diff");
+
+        // Put the file referenced by both backups into the full backup
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/pg_data/PG_VERSION", fileContents);
+
+        // Should only check the diff backup because of --set, no mention of full backup
+        TEST_RESULT_STR_Z(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            "stanza: db\n"
+            "status: error\n"
+            "  archiveId: none found\n"
+            "  backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 1, total valid files: 0\n"
+            "    missing: 0, checksum invalid: 1, size invalid: 0, other: 0", "--set with a valid backup label\n");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: no archives exist in the repo\n"
+            "P01   INFO: invalid checksum '20181119-152900F/pg_data/PG_VERSION'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("--set with invalid backup label");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptOutput, "text");
+        hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
+        hrnCfgArgRawZ(argList, cfgOptSet, "20181119-152900F_20181119-152910D");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        TEST_ERROR(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            BackupSetInvalidError,
+            "backup set 20181119-152900F_20181119-152910D is not valid");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("--set with backup label of incorrect format");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptOutput, "text");
+        hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
+        hrnCfgArgRawZ(argList, cfgOptSet, "BOGUS");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        TEST_ERROR(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            OptionInvalidValueError,
+            "'BOGUS' is not a valid backup label format");
+    }
+
     FUNCTION_HARNESS_RETURN_VOID();
 }
