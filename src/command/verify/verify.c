@@ -568,16 +568,16 @@ verifyUpdateWalFilesMissing(
 
             ASSERT(strCmp(backup->archiveStart, backup->archiveStop) <= 0);
 
-            const String *const anyMissing = missingStart? missingStart : missingStop;
+            const String *const anyMissing = missingStart ? missingStart : missingStop;
             bool wrongTimeline = !strEq(strSubN(anyMissing, 0, 8), strSubN(backup->archiveStart, 0, 8));
             bool backupIsBeforeRange = missingStart && strCmp(backup->archiveStop, missingStart) < 0;
             bool backupIsAfterRange = missingStop && strCmp(missingStop, backup->archiveStart) <= 0;
             if (wrongTimeline || backupIsBeforeRange || backupIsAfterRange)
                 continue;
-            
+
             const String *const backupStopExclusive = walSegmentNext(backup->archiveStop, (size_t)archiveIdResult->pgWalInfo.size, archiveIdResult->pgWalInfo.version);
             const String *const overlapStart = missingStart && strCmp(backup->archiveStart, missingStart) < 0 ? missingStart : backup->archiveStart;
-            const String *const overlapEnd = missingStop && strCmp(backupStopExclusive, missingStop) > 0 ? missingStop: backupStopExclusive;
+            const String *const overlapEnd = missingStop && strCmp(backupStopExclusive, missingStop) > 0 ? missingStop : backupStopExclusive;
             int overlapSize = walSegmentDist(overlapStart, overlapEnd, (size_t)archiveIdResult->pgWalInfo.size, archiveIdResult->pgWalInfo.version);
             ASSERT(overlapSize >= 0);
 
@@ -698,7 +698,7 @@ verifyCreateArchiveIdRange(
         }
 
         // Initialize the range if it has not yet been initialized and continue to next
-        const String *const nextSegment = walRange == NULL? NULL : walSegmentNext(walRange->stop, (size_t)archiveIdResult->pgWalInfo.size, archiveIdResult->pgWalInfo.version);
+        const String *const nextSegment = walRange == NULL ? NULL : walSegmentNext(walRange->stop, (size_t)archiveIdResult->pgWalInfo.size, archiveIdResult->pgWalInfo.version);
         if (nextSegment == NULL || !strEq(nextSegment, walSegment))
         {
             // Add the initialized wal range to the range list
@@ -1211,8 +1211,6 @@ verifyJobCallback(void *const data, const unsigned int clientIdx)
         if (result == NULL)
             result = verifyArchive(jobData);
     }
-
-    
 
     FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, result);
 }
@@ -1744,7 +1742,7 @@ verifyProcess(const bool verboseText)
 
                                         // Add invalid file to the WAL range
                                         const String *const walSegment = strSubN(
-                                                strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE);
+                                            strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE);
                                         verifyAddInvalidWalFile(
                                             archiveIdResult->walRangeList, verifyResult, filePathName, walSegment);
                                         verifyUpdateWalInvalid(jobData.backupResultList, archiveIdResult, walSegment);
