@@ -2371,8 +2371,6 @@ cmdRestore(void)
                 cfgOptionIdxStrId(cfgOptRepoCipherType, backupData.repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoCipherPass, backupData.repoIdx));
 
-            (void)archiveInfo; // !!!
-
             timelineVerify(
                 storageRepoIdx(backupData.repoIdx),
                 strNewFmt("%s-%u", strZ(pgVersionToStr(data->pgVersion)), data->pgId), data->pgVersion,

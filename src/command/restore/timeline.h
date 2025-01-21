@@ -4,6 +4,7 @@ Timeline Management
 #ifndef COMMAND_RESTORE_TIMELINE_H
 #define COMMAND_RESTORE_TIMELINE_H
 
+#include "common/crypto/common.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************

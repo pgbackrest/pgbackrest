@@ -2282,6 +2282,7 @@ testRun(void)
         HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB);
 
         // Store archive.info to repo1 - repo1 will be selected because of the priority order
+        infoArchive = infoArchiveNew(PG_VERSION_95, 6569239123849665679, NULL);
         infoArchiveSaveFile(infoArchive, storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeNone, NULL);
 
         hrnCfgArgRawZ(argList, cfgOptTargetTimeline, "0xff");
@@ -2455,8 +2456,8 @@ testRun(void)
         TEST_STORAGE_GET(storagePg(), PG_FILE_PGVERSION, "BOG\n", .comment = "check PG_VERSION was not restored");
 
         // Cleanup
-        HRN_STORAGE_PATH_REMOVE(storageRepoIdxWrite(1), NULL, .recurse = true);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
+        HRN_STORAGE_PATH_REMOVE(storageRepoIdxWrite(1), NULL, .recurse = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full restore with force");

@@ -9,6 +9,7 @@ Timeline Management
 #include <unistd.h>
 
 #include "command/restore/timeline.h"
+#include "common/crypto/cipherBlock.h"
 #include "common/log.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
@@ -90,7 +91,9 @@ historyLoad(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         const String *const historyFile = strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%08X.history", strZ(archiveId), timeline);
-        const Buffer *const history = storageGetP(storageNewReadP(storageRepo, historyFile));
+        StorageRead *const storageRead = storageNewReadP(storageRepo, historyFile);
+        cipherBlockFilterGroupAdd(ioReadFilterGroup(storageReadIo(storageRead)), cipherType, cipherModeDecrypt, cipherPass);
+        const Buffer *const history = storageGetP(storageRead);
 
         TRY_BEGIN()
         {
