@@ -452,19 +452,9 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("removeExpiredArchive() & cmdExpire()"))
     {
-        TEST_TITLE("check repo local");
-
-        // Load Parameters
-        StringList *argList = strLstDup(argListAvoidWarn);
-        hrnCfgArgRawZ(argList, cfgOptRepoHost, "/repo/not/local");
-        HRN_CFG_LOAD(cfgCmdExpire, argList);
-
-        TEST_ERROR(cmdExpire(), HostInvalidError, "expire command must be run on the repository host");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check stop file");
 
-        argList = strLstDup(argListAvoidWarn);
+        StringList *argList = strLstDup(argListAvoidWarn);
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
         // Create the stop file

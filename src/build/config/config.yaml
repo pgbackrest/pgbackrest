@@ -72,6 +72,9 @@ command:
     log-file: false
 
   expire:
+    command-role:
+      remote: {}
+    lock-remote-required: true
     lock-required: true
     lock-type: backup
 
@@ -539,6 +542,7 @@ option:
       archive-push: {}
       backup: {}
       check: {}
+      expire: {}
       info: {}
       manifest: {}
       repo-get: {}
@@ -562,6 +566,7 @@ option:
       annotate: {}
       archive-push: {}
       backup: {}
+      expire: {}
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
@@ -581,6 +586,7 @@ option:
       archive-push: {}
       backup: {}
       check: {}
+      expire: {}
       info: {}
       manifest: {}
       repo-get: {}
@@ -723,6 +729,7 @@ option:
       archive-push: {}
       backup: {}
       check: {}
+      expire: {}
       info: {}
       manifest: {}
       repo-get: {}
@@ -775,6 +782,7 @@ option:
       archive-push: {}
       backup: {}
       check: {}
+      expire: {}
       info: {}
       manifest: {}
       repo-get: {}
@@ -815,6 +823,7 @@ option:
       archive-push: {}
       backup: {}
       check: {}
+      expire: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -938,6 +947,7 @@ option:
       archive-push: {}
       backup: {}
       check: {}
+      expire: {}
       info: {}
       manifest: {}
       repo-get: {}
@@ -1096,6 +1106,7 @@ option:
       archive-push: {}
       backup: {}
       check: {}
+      expire: {}
       info: {}
       manifest: {}
       repo-get: {}
@@ -1691,12 +1702,14 @@ option:
         command-role:
           main: {}
           local: {}
+          remote: {}
       check:
         command-role:
           remote: {}
       expire:
         command-role:
           main: {}
+          remote: {}
       info:
         command-role:
           main: {}
@@ -1810,6 +1823,7 @@ option:
         command-role:
           main: {}
           local: {}
+          remote: {}
       check:
         command-role:
           main: {}
@@ -1817,6 +1831,7 @@ option:
       expire:
         command-role:
           main: {}
+          remote: {}
       info:
         command-role:
           main: {}
@@ -2149,7 +2164,9 @@ option:
       annotate: {}
       archive-get: {}
       archive-push: {}
+      backup: {}
       check: {}
+      expire: {}
       info: {}
       manifest: {}
       repo-get: {}
