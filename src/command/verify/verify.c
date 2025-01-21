@@ -537,6 +537,9 @@ verifyPgHistory(const InfoPg *const archiveInfoPg, const InfoPg *const backupInf
     FUNCTION_TEST_RETURN_VOID();
 }
 
+/***********************************************************************************************************************************
+Update walInvalid counts backups affected by a range of missing WAL segments
+***********************************************************************************************************************************/
 static void
 verifyUpdateWalFilesMissing(
     const List *const backupList, const VerifyArchiveResult *const archiveIdResult, const String *const missingStart, const String *const missingStop, unsigned int *const jobErrorTotal)
@@ -592,6 +595,9 @@ verifyUpdateWalFilesMissing(
     FUNCTION_TEST_RETURN_VOID();
 }
 
+/***********************************************************************************************************************************
+Update walInvalid counts backups affected by invalid WAL segment
+***********************************************************************************************************************************/
 static void
 verifyUpdateWalInvalid(
     const List *const backupList, const VerifyArchiveResult *const archiveIdResult, const String *const walSegment)
