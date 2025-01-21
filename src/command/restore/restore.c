@@ -19,6 +19,7 @@ Restore Command
 #include "common/user.h"
 #include "config/config.h"
 #include "config/exec.h"
+#include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "info/manifest.h"
 #include "postgres/interface.h"
@@ -2365,12 +2366,19 @@ cmdRestore(void)
         if (manifestData(jobData.manifest)->backupOptionOnline)
         {
             const ManifestData *const data = manifestData(jobData.manifest);
+            const InfoArchive *const archiveInfo = infoArchiveLoadFile(
+                storageRepoIdx(backupData.repoIdx), INFO_ARCHIVE_PATH_FILE_STR,
+                cfgOptionIdxStrId(cfgOptRepoCipherType, backupData.repoIdx),
+                cfgOptionIdxStrNull(cfgOptRepoCipherPass, backupData.repoIdx));
+
+            (void)archiveInfo; // !!!
 
             timelineVerify(
                 storageRepoIdx(backupData.repoIdx),
                 strNewFmt("%s-%u", strZ(pgVersionToStr(data->pgVersion)), data->pgId), data->pgVersion,
                 cvtZToUIntBase(strZ(strSubN(data->archiveStart, 0, 8)), 16), pgLsnFromStr(data->lsnStart),
-                cfgOptionStrNull(cfgOptTargetTimeline));
+                cfgOptionStrNull(cfgOptTargetTimeline), cfgOptionIdxStrId(cfgOptRepoCipherType, backupData.repoIdx),
+                infoArchiveCipherPass(archiveInfo));
         }
 
         // Remotes (if any) are no longer needed since the rest of the repository reads will be done by the local processes

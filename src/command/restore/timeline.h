@@ -12,6 +12,6 @@ Functions
 // Verify that target timeline is valid
 FN_EXTERN void timelineVerify(
     const Storage *storageRepo, const String *archiveId, unsigned int pgVersion, unsigned int timelineCurrent,
-    uint64_t lsnCurrent, const String *timelineTargetStr);
+    uint64_t lsnCurrent, const String *timelineTargetStr, CipherType cipherType, const String *cipherPass);
 
 #endif

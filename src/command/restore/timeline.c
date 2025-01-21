@@ -73,12 +73,16 @@ historyParse(const String *const history)
 
 /**********************************************************************************************************************************/
 static List *
-historyLoad(const Storage *const storageRepo, const String *const archiveId, const unsigned int timeline)
+historyLoad(
+    const Storage *const storageRepo, const String *const archiveId, const unsigned int timeline, const CipherType cipherType,
+    const String *const cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storageRepo);
         FUNCTION_LOG_PARAM(STRING, archiveId);
         FUNCTION_LOG_PARAM(UINT, timeline);
+        FUNCTION_LOG_PARAM(STRING_ID, cipherType);
+        FUNCTION_LOG_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
     List *result;
@@ -94,7 +98,9 @@ historyLoad(const Storage *const storageRepo, const String *const archiveId, con
         }
         CATCH_ANY()
         {
-            THROW_FMT(FormatError, "unable to parse '%s': %s", strZ(storagePathP(storageRepo, historyFile)), errorMessage());
+            THROW_FMT(
+                FormatError, "invalid timeline '%X' at '%s': %s", timeline, strZ(storagePathP(storageRepo, historyFile)),
+                errorMessage());
         }
         TRY_END();
     }
@@ -144,7 +150,8 @@ STRING_STATIC(TIMELINE_LATEST_STR,                                  "latest");
 FN_EXTERN void
 timelineVerify(
     const Storage *const storageRepo, const String *const archiveId, const unsigned int pgVersion,
-    const unsigned int timelineCurrent, const uint64_t lsnCurrent, const String *timelineTargetStr)
+    const unsigned int timelineCurrent, const uint64_t lsnCurrent, const String *timelineTargetStr, const CipherType cipherType,
+    const String *const cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storageRepo);
@@ -152,7 +159,8 @@ timelineVerify(
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT, timelineCurrent);
         FUNCTION_LOG_PARAM(UINT64, lsnCurrent);
-        FUNCTION_LOG_PARAM(STRING, timelineTargetStr);
+        FUNCTION_LOG_PARAM(STRING_ID, cipherType);
+        FUNCTION_LOG_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
 
     ASSERT(storageRepo != NULL);
@@ -201,8 +209,9 @@ timelineVerify(
             // Only proceed if target timeline is not the current timeline
             if (timelineTarget != timelineCurrent)
             {
-                // Search through the history for the target timeline to make sure it includes the current timeline
-                const List *const historyList = historyLoad(storageRepo, archiveId, timelineTarget);
+                // Search through the history for the target timeline to make sure it includes the current timeline. This follows
+                // the logic in PostgreSQL's readTimeLineHistory() and tliOfPointInHistory() but is a bit simplified for our usage.
+                const List *const historyList = historyLoad(storageRepo, archiveId, timelineTarget, cipherType, cipherPass);
                 uint64_t timelineFound = 0;
 
                 for (unsigned int historyIdx = 0; historyIdx < lstSize(historyList); historyIdx++)

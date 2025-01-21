@@ -2058,31 +2058,33 @@ testRun(void)
         TEST_TITLE("timelineVerify()");
 
         TEST_RESULT_VOID(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_11, 1, 0xA1, NULL),
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_11, 1, 0xA1, NULL, cipherTypeNone, NULL),
             "follow current timeline because of version");
         TEST_RESULT_VOID(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_11, 1, 0xA1, STRDEF("latest")),
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_11, 1, 0xA1, STRDEF("latest"), cipherTypeNone, NULL),
             "follow latest timeline as requested");
         TEST_RESULT_VOID(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, NULL),
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, NULL, cipherTypeNone, NULL),
             "follow latest timeline because of version");
         TEST_RESULT_VOID(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, STRDEF("current")),
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, STRDEF("current"), cipherTypeNone, NULL),
             "follow current timeline as requested");
         TEST_RESULT_VOID(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, STRDEF("1")),
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, STRDEF("1"), cipherTypeNone, NULL),
             "follow requested timeline (same as current)");
         TEST_RESULT_VOID(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 0x10, 0xA1, STRDEF("0x10")),
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 0x10, 0xA1, STRDEF("0x10"), cipherTypeNone, NULL),
             "follow requested hex timeline (same as current)");
         TEST_ERROR(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 0x10, 0xA1, STRDEF("bogus")), DbMismatchError,
-            "invalid target timeline 'bogus'");
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 0x10, 0xA1, STRDEF("bogus"), cipherTypeNone, NULL),
+            DbMismatchError, "invalid target timeline 'bogus'");
 
         HRN_STORAGE_PUT_Z(storageTest, "repo/archive/test1/17-1/00000009.history", "8");
         TEST_ERROR(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 8, 0xA1, STRDEF("9")), FormatError,
-            "unable to parse '" TEST_PATH "/repo/archive/test1/17-1/00000009.history': invalid history line format '8'");
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 8, 0xA1, STRDEF("9"), cipherTypeNone, NULL),
+            FormatError,
+            "invalid timeline '9' at '" TEST_PATH "/repo/archive/test1/17-1/00000009.history':"
+            " invalid history line format '8'");
 
         HRN_STORAGE_PUT_Z(
             storageTest, "repo/archive/test1/17-1/0000000A.history",
@@ -2090,22 +2092,25 @@ testRun(void)
             "8\t0/4000000\tcomment\n"
             "9\t0/5000000\tcomment\n");
         TEST_RESULT_VOID(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 10, 0x4FFFFFF, NULL), "follow current timeline");
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 10, 0x4FFFFFF, NULL, cipherTypeNone, NULL),
+            "follow current timeline");
         TEST_RESULT_VOID(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, NULL), "follow latest timeline");
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, NULL, cipherTypeNone, NULL),
+            "follow latest timeline");
         TEST_RESULT_VOID(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, STRDEF("10")), "target timeline found");
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, STRDEF("10"), cipherTypeNone, NULL),
+            "target timeline found");
         TEST_ERROR(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x5000000, STRDEF("10")), DbMismatchError,
-            "!!!NO FOUND");
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x5000000, STRDEF("10"), cipherTypeNone, NULL),
+            DbMismatchError, "!!!NO FOUND");
 
         HRN_STORAGE_PUT_Z(
             storageTest, "repo/archive/test1/17-1/0000000B.history",
             "7\t0/4000000\tcomment\n"
             "8\t0/5000000\tcomment\n");
         TEST_ERROR(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 7, 0x4FFFFFF, STRDEF("11")), DbMismatchError,
-            "!!!WRONG FOUND");
+            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 7, 0x4FFFFFF, STRDEF("11"), cipherTypeNone, NULL),
+            DbMismatchError, "!!!WRONG FOUND");
     }
 
     // *****************************************************************************************************************************
@@ -2230,6 +2235,11 @@ testRun(void)
             storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n[cipher]\ncipher-pass=\""
             TEST_CIPHER_PASS_MANIFEST "\"\n\n" TEST_RESTORE_BACKUP_INFO_DB, .cipherType = cipherTypeAes256Cbc);
 
+        // Write archive.info to the encrypted repo
+        InfoArchive *infoArchive = infoArchiveNew(PG_VERSION_95, 6569239123849665679, STRDEF(TEST_CIPHER_PASS_ARCHIVE));
+        infoArchiveSaveFile(
+            infoArchive, storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS));
+
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
         TEST_RESULT_LOG(
@@ -2266,6 +2276,22 @@ testRun(void)
             .level = storageInfoLevelBasic, .includeDot = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid timeline");
+
+        // Store backup.info to repo1 - repo1 will be selected because of the priority order
+        HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB);
+
+        // Store archive.info to repo1 - repo1 will be selected because of the priority order
+        infoArchiveSaveFile(infoArchive, storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeNone, NULL);
+
+        hrnCfgArgRawZ(argList, cfgOptTargetTimeline, "0xff");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_ERROR(
+            cmdRestore(), FileMissingError,
+            "unable to open missing file '" TEST_PATH "/repo/archive/test1/9.5-0/000000FF.history' for read");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full restore with delta force");
 
         argList = strLstNew();
@@ -2283,9 +2309,6 @@ testRun(void)
 
         // Munge PGDATA mode so it gets fixed
         HRN_STORAGE_MODE(storagePg(), NULL, 0777);
-
-        // Store backup.info to repo1 - repo1 will be selected because of the priority order
-        HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB);
 
         // Make sure existing backup.manifest file is ignored
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), BACKUP_MANIFEST_FILE);
@@ -2432,8 +2455,8 @@ testRun(void)
         TEST_STORAGE_GET(storagePg(), PG_FILE_PGVERSION, "BOG\n", .comment = "check PG_VERSION was not restored");
 
         // Cleanup
-        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
         HRN_STORAGE_PATH_REMOVE(storageRepoIdxWrite(1), NULL, .recurse = true);
+        hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full restore with force");
