@@ -20,6 +20,7 @@ Verify contents of the repository.
 #include "common/io/fdWrite.h"
 #include "common/io/io.h"
 #include "common/log.h"
+#include "common/regExp.h"
 #include "config/config.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
@@ -1534,19 +1535,54 @@ verifyProcess(const bool verboseText)
                 .backupResultList = lstNewP(sizeof(VerifyBackupResult), .comparator = lstComparatorStr),
             };
 
-            // Get a list of backups in the repo sorted ascending
-            jobData.backupList = strLstSort(
-                storageListP(
-                    storage, STORAGE_REPO_BACKUP_STR,
-                    .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
-                sortOrderAsc);
+            // Use backup label if specified via --set.
+            const String *backupLabel = cfgOptionStrNull(cfgOptSet);
+            const String *backupRegExpStr = backupRegExpP(.full = true, .differential = true, .incremental = true);
+            bool backupLabelInvalid = false;
+            if (backupLabel != NULL)
+            {
+                if (!regExpMatchOne(backupRegExpStr, backupLabel))
+                {
+                    strCatFmt(resultStr, "\n  '%s' is not a valid backup label format", strZ(backupLabel));
+                    errorTotal++;
+                    backupLabelInvalid = true;
+                }
+                else
+                {
+                    backupRegExpStr = strNewFmt("^%s$", strZ(backupLabel));
+                }
+            }
 
-            // Get a list of archive Ids in the repo (e.g. 9.6-1, 10-2, etc) sorted ascending by the db-id (number after the dash)
-            jobData.archiveIdList = strLstSort(
-                strLstComparatorSet(
-                    storageListP(storage, STORAGE_REPO_ARCHIVE_STR, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
-                    archiveIdComparator),
-                sortOrderAsc);
+            // Get a list of backups in the repo sorted ascending
+            if (!backupLabelInvalid)
+            {
+                jobData.backupList = strLstSort(
+                    storageListP(
+                        storage, STORAGE_REPO_BACKUP_STR,
+                        .expression = backupRegExpStr),
+                    sortOrderAsc);
+            }
+            else
+                jobData.backupList = strLstNew();
+
+            if (!backupLabelInvalid && backupLabel != NULL && strLstEmpty(jobData.backupList))
+            {
+                strCatFmt(resultStr, "\n  Backup set %s is not valid", strZ(backupLabel));
+                errorTotal++;
+                backupLabelInvalid = true;
+            }
+
+            // Get a list of archive Ids in the repo (e.g. 9.4-1, 10-2, etc) sorted ascending by the db-id (number after the dash)
+            if (!backupLabelInvalid)
+            {
+                jobData.archiveIdList = strLstSort(
+                    strLstComparatorSet(
+                        storageListP(storage, STORAGE_REPO_ARCHIVE_STR, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
+                        archiveIdComparator),
+                    sortOrderAsc);
+            }
+            else
+                jobData.archiveIdList = strLstNew();
 
             // Only begin processing if there are some archives or backups in the repo
             if (!strLstEmpty(jobData.archiveIdList) || !strLstEmpty(jobData.backupList))
@@ -1699,7 +1735,7 @@ verifyProcess(const bool verboseText)
                 // Report results
                 resultStr = verifyRender(jobData.archiveIdResultList, jobData.backupResultList, verboseText);
             }
-            else
+            else if (!backupLabelInvalid)
                 strCatZ(resultStr, "\n    no archives or backups exist in the repo");
 
             errorTotal += jobData.jobErrorTotal;
