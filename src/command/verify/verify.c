@@ -20,6 +20,7 @@ Verify contents of the repository.
 #include "common/io/fdWrite.h"
 #include "common/io/io.h"
 #include "common/log.h"
+#include "common/regExp.h"
 #include "config/config.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
@@ -1535,12 +1536,25 @@ verifyProcess(const bool verboseText)
                 .backupResultList = lstNewP(sizeof(VerifyBackupResult), .comparator = lstComparatorStr),
             };
 
+            // Use backup label if specified via --set.
+            const String *backupLabel = cfgOptionStrNull(cfgOptSet);
+            const String *backupRegExpStr = backupRegExpP(.full = true, .differential = true, .incremental = true);
+            if (backupLabel != NULL)
+            {
+                if (!regExpMatchOne(backupRegExpStr, backupLabel))
+                    THROW_FMT(OptionInvalidValueError, "'%s' is not a valid backup label format", strZ(backupLabel));
+                backupRegExpStr = strNewFmt("^%s$", strZ(backupLabel));
+            }
+
             // Get a list of backups in the repo sorted ascending
             jobData.backupList = strLstSort(
                 storageListP(
                     storage, STORAGE_REPO_BACKUP_STR,
-                    .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
+                    .expression = backupRegExpStr),
                 sortOrderAsc);
+
+            if (backupLabel != NULL && strLstEmpty(jobData.backupList))
+                THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strZ(backupLabel));
 
             // Get a list of archive Ids in the repo (e.g. 9.4-1, 10-2, etc) sorted ascending by the db-id (number after the dash)
             jobData.archiveIdList = strLstSort(
