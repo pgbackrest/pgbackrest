@@ -181,8 +181,7 @@ testRun(void)
 
             // Promote the standby to create a new timeline that can be used to test timeline verification. Once the new timeline
             // has been created restore again to get the standby back on the same timeline as the primary.
-            HRN_HOST_SQL_EXEC(pg2, "select pg_promote()");
-
+            HRN_HOST_PG_PROMOTE(pg2);
             HRN_HOST_PG_STOP(pg2);
             TEST_HOST_BR(pg2, CFGCMD_RESTORE, .option = zNewFmt("%s --delta --target-timeline=current", option));
             HRN_HOST_PG_START(pg2);
