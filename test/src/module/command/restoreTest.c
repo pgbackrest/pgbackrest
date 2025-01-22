@@ -1821,7 +1821,13 @@ testRun(void)
             restoreRecoveryConf(PG_VERSION_95, restoreLabel),
             RECOVERY_SETTING_HEADER
             "restore_command = 'my_restore_command'\n"
-            "standby_mode = 'on'\n"
+            "standby_mode = 'on'\n",
+            "check recovery options");
+
+        TEST_RESULT_STR_Z(
+            restoreRecoveryConf(PG_VERSION_12, restoreLabel),
+            RECOVERY_SETTING_HEADER
+            "restore_command = 'my_restore_command'\n"
             "recovery_target_timeline = 'current'\n",
             "check recovery options");
 
