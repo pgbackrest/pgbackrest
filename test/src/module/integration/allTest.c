@@ -325,8 +325,10 @@ testRun(void)
             // Stop the cluster
             HRN_HOST_PG_STOP(pg1);
 
-            // Restore fails because timeline 2 was created before the backup selected for restore
-            TEST_HOST_BR(pg1, CFGCMD_RESTORE, .option = "--delta", .resultExpect = errorTypeCode(&DbMismatchError));
+            // Restore fails because timeline 2 was created before the backup selected for restore. Specify target timeline latest
+            // because PostgreSQL < 12 defaults to current.
+            TEST_HOST_BR(
+                pg1, CFGCMD_RESTORE, .option = "--delta --target-timeline=latest", .resultExpect = errorTypeCode(&DbMismatchError));
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
