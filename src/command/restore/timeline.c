@@ -11,6 +11,7 @@ Timeline Management
 #include "command/restore/timeline.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/log.h"
+#include "config/config.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
@@ -157,8 +158,8 @@ STRING_STATIC(TIMELINE_LATEST_STR,                                  "latest");
 FN_EXTERN void
 timelineVerify(
     const Storage *const storageRepo, const String *const archiveId, const unsigned int pgVersion,
-    const unsigned int timelineBackup, const uint64_t lsnBackup, const String *timelineTargetStr, const CipherType cipherType,
-    const String *const cipherPass)
+    const unsigned int timelineBackup, const uint64_t lsnBackup, const StringId recoveryType, const String *timelineTargetStr,
+    const CipherType cipherType, const String *const cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, storageRepo);
@@ -166,6 +167,8 @@ timelineVerify(
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT, timelineBackup);
         FUNCTION_LOG_PARAM(UINT64, lsnBackup);
+        FUNCTION_LOG_PARAM(STRING_ID, recoveryType);
+        FUNCTION_LOG_PARAM(STRING, timelineTargetStr);
         FUNCTION_LOG_PARAM(STRING_ID, cipherType);
         FUNCTION_LOG_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
@@ -176,10 +179,12 @@ timelineVerify(
     ASSERT(timelineBackup > 0);
     ASSERT(lsnBackup > 0);
 
-    // If timeline target is not specified then set based on the default by PostgreSQL version
+    // If timeline target is not specified then set based on the default by PostgreSQL version. Force timeline to current when the
+    // recovery type is immediate since no timeline switch will be needed but PostgreSQL will error if there is a problem with the
+    // latest timeline.
     if (timelineTargetStr == NULL)
     {
-        if (pgVersion <= PG_VERSION_11)
+        if (pgVersion <= PG_VERSION_11 || recoveryType == CFGOPTVAL_TYPE_IMMEDIATE)
             timelineTargetStr = TIMELINE_CURRENT_STR;
         else
             timelineTargetStr = TIMELINE_LATEST_STR;

@@ -2375,8 +2375,8 @@ cmdRestore(void)
                 storageRepoIdx(backupData.repoIdx),
                 strNewFmt("%s-%u", strZ(pgVersionToStr(data->pgVersion)), data->pgId), data->pgVersion,
                 cvtZToUIntBase(strZ(strSubN(data->archiveStart, 0, 8)), 16), pgLsnFromStr(data->lsnStart),
-                cfgOptionStrNull(cfgOptTargetTimeline), cfgOptionIdxStrId(cfgOptRepoCipherType, backupData.repoIdx),
-                infoArchiveCipherPass(archiveInfo));
+                cfgOptionStrId(cfgOptType), cfgOptionStrNull(cfgOptTargetTimeline),
+                cfgOptionIdxStrId(cfgOptRepoCipherType, backupData.repoIdx), infoArchiveCipherPass(archiveInfo));
         }
 
         // Remotes (if any) are no longer needed since the rest of the repository reads will be done by the local processes

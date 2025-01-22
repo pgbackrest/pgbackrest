@@ -2058,30 +2058,44 @@ testRun(void)
         TEST_TITLE("timelineVerify()");
 
         TEST_RESULT_VOID(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_11, 1, 0xA1, NULL, cipherTypeNone, NULL),
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_11, 1, 0xA1, CFGOPTVAL_TYPE_DEFAULT, NULL, cipherTypeNone, NULL),
             "follow current timeline because of version");
         TEST_RESULT_VOID(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_11, 1, 0xA1, STRDEF("latest"), cipherTypeNone, NULL),
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_11, 1, 0xA1, CFGOPTVAL_TYPE_DEFAULT, STRDEF("latest"), cipherTypeNone,
+                NULL),
             "follow latest timeline as requested");
         TEST_RESULT_VOID(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, NULL, cipherTypeNone, NULL),
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, CFGOPTVAL_TYPE_DEFAULT, NULL, cipherTypeNone, NULL),
             "follow latest timeline because of version");
         TEST_RESULT_VOID(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, STRDEF("current"), cipherTypeNone, NULL),
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, CFGOPTVAL_TYPE_DEFAULT, STRDEF("current"),
+                cipherTypeNone, NULL),
             "follow current timeline as requested");
         TEST_RESULT_VOID(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, STRDEF("1"), cipherTypeNone, NULL),
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, CFGOPTVAL_TYPE_DEFAULT, STRDEF("1"), cipherTypeNone,
+                NULL),
             "follow requested timeline (same as current)");
         TEST_RESULT_VOID(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 0x10, 0xA1, STRDEF("0x10"), cipherTypeNone, NULL),
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 0x10, 0xA1, CFGOPTVAL_TYPE_DEFAULT, STRDEF("0x10"),
+                cipherTypeNone, NULL),
             "follow requested hex timeline (same as current)");
         TEST_ERROR(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 0x10, 0xA1, STRDEF("bogus"), cipherTypeNone, NULL),
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 0x10, 0xA1, CFGOPTVAL_TYPE_DEFAULT, STRDEF("bogus"),
+                cipherTypeNone, NULL),
             DbMismatchError, "invalid target timeline 'bogus'");
 
         HRN_STORAGE_PUT_Z(storageTest, "repo/archive/test1/17-1/00000009.history", "8");
         TEST_ERROR(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 8, 0xA1, STRDEF("9"), cipherTypeNone, NULL),
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 8, 0xA1, CFGOPTVAL_TYPE_DEFAULT, STRDEF("9"), cipherTypeNone,
+                NULL),
             FormatError,
             "invalid timeline '9' at '" TEST_PATH "/repo/archive/test1/17-1/00000009.history':"
             " invalid history line format '8'");
@@ -2092,16 +2106,28 @@ testRun(void)
             "8\t0/4000000\tcomment\n"
             "9\t0/5000000\tcomment\n");
         TEST_RESULT_VOID(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 10, 0x4FFFFFF, NULL, cipherTypeNone, NULL),
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 10, 0x4FFFFFF, CFGOPTVAL_TYPE_DEFAULT, NULL, cipherTypeNone,
+                NULL),
             "follow current timeline");
         TEST_RESULT_VOID(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, NULL, cipherTypeNone, NULL),
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, CFGOPTVAL_TYPE_IMMEDIATE, NULL, cipherTypeNone,
+                NULL),
+            "follow current timeline (based on type immediate)");
+        TEST_RESULT_VOID(
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, CFGOPTVAL_TYPE_DEFAULT, NULL, cipherTypeNone, NULL),
             "follow latest timeline");
         TEST_RESULT_VOID(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, STRDEF("10"), cipherTypeNone, NULL),
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, CFGOPTVAL_TYPE_DEFAULT, STRDEF("10"),
+                cipherTypeNone, NULL),
             "target timeline found");
         TEST_ERROR(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x6000000, STRDEF("10"), cipherTypeNone, NULL),
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x6000000, CFGOPTVAL_TYPE_DEFAULT, STRDEF("10"),
+                cipherTypeNone, NULL),
             DbMismatchError,
             "target timeline A forked from backup timeline 9 at 0/5000000 which is before backup lsn of 0/6000000\n"
             "HINT: was the target timeline created by accidentally promoting a standby?\n"
@@ -2112,7 +2138,9 @@ testRun(void)
             "7\t0/4000000\tcomment\n"
             "8\t0/5000000\tcomment\n");
         TEST_ERROR(
-            timelineVerify(storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 6, 0x4FFFFFF, STRDEF("11"), cipherTypeNone, NULL),
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 6, 0x4FFFFFF, CFGOPTVAL_TYPE_DEFAULT, STRDEF("11"),
+                cipherTypeNone, NULL),
             DbMismatchError, "backup timeline 6, lsn 0/4ffffff is not in the history of target timeline B\n"
             "HINT: was the target timeline created by promoting from a timeline < latest?");
     }
