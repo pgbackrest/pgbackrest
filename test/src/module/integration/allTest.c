@@ -8,6 +8,7 @@ Real Integration Test
 #include "info/infoBackup.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
+#include "storage/helper.h"
 
 #include "common/harnessErrorRetry.h"
 #include "common/harnessHost.h"
@@ -182,6 +183,10 @@ testRun(void)
             // Promote the standby to create a new timeline that can be used to test timeline verification. Once the new timeline
             // has been created restore again to get the standby back on the same timeline as the primary.
             HRN_HOST_PG_PROMOTE(pg2);
+            TEST_STORAGE_EXISTS(
+                hrnHostRepo1Storage(repo),
+                zNewFmt("archive/" HRN_STANZA "/%s-1/00000002.history", strZ(pgVersionToStr(hrnHostPgVersion()))), .timeout = 5000);
+
             HRN_HOST_PG_STOP(pg2);
             TEST_HOST_BR(pg2, CFGCMD_RESTORE, .option = zNewFmt("%s --delta --target-timeline=current", option));
             HRN_HOST_PG_START(pg2);
