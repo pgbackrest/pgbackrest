@@ -1575,7 +1575,7 @@ restoreRecoveryOption(const unsigned int pgVersion)
         {
             // Do not set current when PostgreSQL < 12 since this is the default and if current is explicitly set it acts as latest
             if (pgVersion >= PG_VERSION_12 || !strEqZ(cfgOptionStr(cfgOptTargetTimeline), RECOVERY_TARGET_TIMELINE_CURRENT))
-            kvPut(result, VARSTRZ(RECOVERY_TARGET_TIMELINE), VARSTR(cfgOptionStr(cfgOptTargetTimeline)));
+                kvPut(result, VARSTRZ(RECOVERY_TARGET_TIMELINE), VARSTR(cfgOptionStr(cfgOptTargetTimeline)));
         }
         // Else explicitly set target timeline to "current" when type=immediate and PostgreSQL >= 12. We do this because
         // type=immediate means there won't be any actual attempt to change timelines, but if we leave the target timeline as the
