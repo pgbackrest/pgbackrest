@@ -16,7 +16,7 @@ Timeline Management
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
-Parse a history file
+Parse history file
 ***********************************************************************************************************************************/
 typedef struct HistoryItem
 {
@@ -73,7 +73,7 @@ historyParse(const String *const history)
 }
 
 /***********************************************************************************************************************************
-Load a history file
+Load history file
 ***********************************************************************************************************************************/
 static List *
 historyLoad(
@@ -185,8 +185,8 @@ timelineVerify(
             timelineTargetStr = TIMELINE_LATEST_STR;
     }
 
-    // If target timeline is not current then verify that the timeline is valid based on current timeline and lsn. Following the
-    // current timeline is guaranteed as long as the WAL is available -- no history file required.
+    // If target timeline is not current then verify that the timeline is valid based on backup timeline and lsn. Following the
+    // current/backup timeline is guaranteed as long as the WAL is available -- no history file required.
     if (!strEq(timelineTargetStr, TIMELINE_CURRENT_STR))
     {
         MEM_CONTEXT_TEMP_BEGIN()
@@ -213,10 +213,10 @@ timelineVerify(
                 TRY_END();
             }
 
-            // Only proceed if target timeline is not the current timeline
+            // Only proceed if target timeline is not the backup timeline
             if (timelineTarget != timelineBackup)
             {
-                // Search through the history for the target timeline to make sure it includes the current timeline. This follows
+                // Search through the history for the target timeline to make sure it includes the backup timeline. This follows
                 // the logic in PostgreSQL's readTimeLineHistory() and tliOfPointInHistory() but is a bit simplified for our usage.
                 const List *const historyList = historyLoad(storageRepo, archiveId, timelineTarget, cipherType, cipherPass);
                 unsigned int timelineFound = 0;
@@ -225,7 +225,7 @@ timelineVerify(
                 {
                     const HistoryItem *const historyItem = lstGet(historyList, historyIdx);
 
-                    // If current timeline exists in the target timeline's history before the fork LSN then restore can proceed
+                    // If backup timeline exists in the target timeline's history before the fork LSN then restore can proceed
                     if (historyItem->timeline == timelineBackup && lsnBackup < historyItem->lsn)
                     {
                         timelineFound = timelineBackup;
@@ -262,8 +262,8 @@ timelineVerify(
                         THROW_FMT(
                             DbMismatchError,
                             "target timeline %X forked from backup timeline %X at %s which is before backup lsn of %s\n"
-                            "HINT: was the backup made after the target timeline forked?\n"
-                            "HINT: was the target timeline accidentally created by promoting a standby?",
+                            "HINT: was the target timeline created by accidentally promoting a standby?\n"
+                            "HINT: was the backup made after the target timeline was created?",
                             timelineTarget, timelineBackup, strZ(pgLsnToStr(lsnFound)), strZ(pgLsnToStr(lsnBackup)));
                     }
                     // Else the backup timeline was not found at all. This less common case occurs when, for example, a restore from
