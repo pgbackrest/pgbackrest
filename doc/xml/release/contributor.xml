@@ -560,6 +560,11 @@
     <contributor-id type="github">precision-software</contributor-id>
 </contributor>
 
+<contributor id="john.naylor">
+    <contributor-name-display>John Naylor</contributor-name-display>
+    <contributor-id type="github">j-naylor</contributor-id>
+</contributor>
+
 <contributor id="jordan.english">
     <contributor-name-display>Jordan English</contributor-name-display>
     <contributor-id type="github">jordanenglish</contributor-id>

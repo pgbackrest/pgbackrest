@@ -153,7 +153,7 @@ testRun(void)
         TEST_TITLE("encode");
 
         const unsigned char *encode = (const unsigned char *)"string_to_encode\r\n";
-        char destinationEncode[256];
+        char destinationEncode[513];
 
         encodeToStr(encodingHex, encode, 1, destinationEncode);
         TEST_RESULT_Z(destinationEncode, "73", "1 character encode");
@@ -188,6 +188,20 @@ testRun(void)
         TEST_RESULT_VOID(
             encodeToStr(encodingHex, destinationDecode, decodeToBinSize(encodingHex, decodeMixed), destinationEncode), "encode");
         TEST_RESULT_Z(destinationEncode, "0123456789aabbccddeeff", "check encoded hex");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("decode/encode all values");
+
+        unsigned char decodedAll[256];
+
+        for (unsigned int decodeIdx = 0; decodeIdx < sizeof(decodedAll); decodeIdx++)
+            decodedAll[decodeIdx] = (unsigned char)decodeIdx;
+
+        encodeToStr(encodingHex, decodedAll, sizeof(decodedAll), destinationEncode);
+        TEST_RESULT_UINT(strlen(destinationEncode), 512, "all values encoded size");
+        TEST_RESULT_INT(memcmp(destinationEncode, encodeHexLookup, 512), 0, "all values encoded");
+        decodeToBin(encodingHex, destinationEncode, destinationDecode);
+        TEST_RESULT_INT(memcmp(decodedAll, destinationDecode, sizeof(decodedAll)), 0, "all values decoded");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("decode errors");

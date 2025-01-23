@@ -26,6 +26,11 @@ push @EXPORT, qw(PROJECT_CONF);
 # Defines the current version of the BackRest executable. The version number is used to track features but does not affect what
 # repositories or manifests can be read - that's the job of the format number.
 #-----------------------------------------------------------------------------------------------------------------------------------
+push @EXPORT, qw(PROJECT_VERSION_MAJOR);
+push @EXPORT, qw(PROJECT_VERSION_MINOR);
+push @EXPORT, qw(PROJECT_VERSION_PATCH);
+push @EXPORT, qw(PROJECT_VERSION_SUFFIX);
+
 push @EXPORT, qw(PROJECT_VERSION);
 
 # Repository Format Number
@@ -46,7 +51,6 @@ my $strProjectInfo = ${new pgBackRestTest::Common::Storage(
 
 foreach my $strLine (split("\n", $strProjectInfo))
 {
-
     if ($strLine =~ /^#define PROJECT_NAME/)
     {
         eval("use constant PROJECT_NAME => " . (split(" ", $strLine))[-1]);
@@ -56,14 +60,30 @@ foreach my $strLine (split("\n", $strProjectInfo))
         eval("use constant PROJECT_EXE => " . (split(" ", $strLine))[-1]);
         eval("use constant PROJECT_CONF => " . (split(" ", $strLine))[-1] . " . \'.conf\'");
     }
-    elsif ($strLine =~ /^#define PROJECT_VERSION/)
+    elsif ($strLine =~ /^#define PROJECT_VERSION_MAJOR/)
     {
-        eval("use constant PROJECT_VERSION => " . (split(" ", $strLine))[-1]);
+        eval("use constant PROJECT_VERSION_MAJOR => \"" . (split(" ", $strLine))[-1] . "\"");
+    }
+    elsif ($strLine =~ /^#define PROJECT_VERSION_MINOR/)
+    {
+        eval("use constant PROJECT_VERSION_MINOR => " . (split(" ", $strLine))[-1]);
+    }
+    elsif ($strLine =~ /^#define PROJECT_VERSION_PATCH/)
+    {
+        eval("use constant PROJECT_VERSION_PATCH => " . (split(" ", $strLine))[-1]);
+    }
+    elsif ($strLine =~ /^#define PROJECT_VERSION_SUFFIX/)
+    {
+        eval("use constant PROJECT_VERSION_SUFFIX => " . (split(" ", $strLine))[-1]);
     }
     elsif ($strLine =~ /^#define REPOSITORY_FORMAT/)
     {
         eval("use constant REPOSITORY_FORMAT => " . (split(" ", $strLine))[-1]);
     }
 }
+
+eval(
+    'use constant PROJECT_VERSION => "' . PROJECT_VERSION_MAJOR() . '.' . PROJECT_VERSION_MINOR() . '.' . PROJECT_VERSION_PATCH() .
+    PROJECT_VERSION_SUFFIX() . '"');
 
 1;
