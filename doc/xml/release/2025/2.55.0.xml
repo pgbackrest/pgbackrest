@@ -1,5 +1,18 @@
 <release date="XXXX-XX-XX" version="2.55dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-pull-request id="2533"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Do not set <br-option>recovery_target_timeline=current</br-option> for PostgreSQL &amp;lt; 12.</p>
+            </release-item>
+        </release-bug-list>
+
         <release-improvement-list>
             <release-item>
                 <github-pull-request id="2512"/>
