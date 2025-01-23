@@ -4428,7 +4428,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION                                                                                          // opt/pg-socket-path
     (                                                                                                          // opt/pg-socket-path
         PARSE_RULE_OPTION_NAME("pg-socket-path"),                                                              // opt/pg-socket-path
-        PARSE_RULE_OPTION_TYPE(Path),                                                                          // opt/pg-socket-path
+        PARSE_RULE_OPTION_TYPE(String),                                                                        // opt/pg-socket-path
         PARSE_RULE_OPTION_RESET(true),                                                                         // opt/pg-socket-path
         PARSE_RULE_OPTION_REQUIRED(false),                                                                     // opt/pg-socket-path
         PARSE_RULE_OPTION_SECTION(Stanza),                                                                     // opt/pg-socket-path
