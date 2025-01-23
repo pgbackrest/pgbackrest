@@ -42,4 +42,7 @@ Software version
     STRINGIFY(PROJECT_VERSION_MAJOR) "." STRINGIFY(PROJECT_VERSION_MINOR) "." STRINGIFY(PROJECT_VERSION_PATCH)                     \
     PROJECT_VERSION_SUFFIX
 
+#define PROJECT_VERSION_NUM                                                                                                        \
+    ((unsigned int)((PROJECT_VERSION_MAJOR * 1000000) + (PROJECT_VERSION_MINOR * 1000) + PROJECT_VERSION_PATCH))
+
 #endif

@@ -9,7 +9,6 @@ Help Command
 #include <unistd.h>
 
 #include "command/help/help.h"
-#include "command/info/info.h"
 #include "common/compress/bz2/decompress.h"
 #include "common/debug.h"
 #include "common/io/bufferRead.h"
@@ -18,7 +17,6 @@ Help Command
 #include "common/memContext.h"
 #include "common/type/pack.h"
 #include "config/config.intern.h"
-#include "config/config.h"
 #include "config/parse.h"
 #include "version.h"
 
@@ -337,8 +335,8 @@ helpRender(const Buffer *const helpData)
         ((cfgCommand() == cfgCmdHelp && cfgOptionBool(cfgOptVersion) && !cfgOptionBool(cfgOptHelp)) ||
          cfgCommand() == cfgCmdVersion))
     {
-        if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_NUM)
-            FUNCTION_TEST_RETURN(STRING, strNewZ(versionNumRender(PROJECT_VERSION)));
+        if (cfgCommand() == cfgCmdVersion && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_NUM)
+            FUNCTION_TEST_RETURN(STRING, strNewFmt("%u", PROJECT_VERSION_NUM));
         else
         {
             strCatChr(result, '\n');
