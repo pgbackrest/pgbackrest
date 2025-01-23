@@ -21,7 +21,7 @@ Parse history file
 ***********************************************************************************************************************************/
 typedef struct HistoryItem
 {
-    unsigned int timeline;                                          // parent timeline
+    unsigned int timeline;                                          // Parent timeline
     uint64_t lsn;                                                   // Boundary lsn
 } HistoryItem;
 
