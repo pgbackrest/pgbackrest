@@ -26,6 +26,11 @@ push @EXPORT, qw(PROJECT_CONF);
 # Defines the current version of the BackRest executable. The version number is used to track features but does not affect what
 # repositories or manifests can be read - that's the job of the format number.
 #-----------------------------------------------------------------------------------------------------------------------------------
+push @EXPORT, qw(PROJECT_VERSION_MAJOR);
+push @EXPORT, qw(PROJECT_VERSION_MINOR);
+push @EXPORT, qw(PROJECT_VERSION_PATCH);
+push @EXPORT, qw(PROJECT_VERSION_SUFFIX);
+
 push @EXPORT, qw(PROJECT_VERSION);
 
 # Repository Format Number
@@ -43,7 +48,6 @@ require pgBackRestTest::Common::StoragePosix;
 
 my $strProjectInfo = ${new pgBackRestTest::Common::Storage(
     dirname(dirname(abs_path($0))), new pgBackRestTest::Common::StoragePosix())->get('src/version.h')};
-my $strVersion = "";
 
 foreach my $strLine (split("\n", $strProjectInfo))
 {
@@ -58,25 +62,28 @@ foreach my $strLine (split("\n", $strProjectInfo))
     }
     elsif ($strLine =~ /^#define PROJECT_VERSION_MAJOR/)
     {
-        $strVersion = (split(" ", $strLine))[-1];
+        eval("use constant PROJECT_VERSION_MAJOR => \"" . (split(" ", $strLine))[-1] . "\"");
     }
     elsif ($strLine =~ /^#define PROJECT_VERSION_MINOR/)
     {
-        $strVersion .= '.' . (split(" ", $strLine))[-1];
+        eval("use constant PROJECT_VERSION_MINOR => " . (split(" ", $strLine))[-1]);
     }
     elsif ($strLine =~ /^#define PROJECT_VERSION_PATCH/)
     {
-        $strVersion .= '.' . (split(" ", $strLine))[-1];
+        eval("use constant PROJECT_VERSION_PATCH => " . (split(" ", $strLine))[-1]);
     }
     elsif ($strLine =~ /^#define PROJECT_VERSION_SUFFIX/)
     {
-        $strVersion .= substr((split(" ", $strLine))[-1], 1);
-        eval("use constant PROJECT_VERSION => \"${strVersion}");
+        eval("use constant PROJECT_VERSION_SUFFIX => " . (split(" ", $strLine))[-1]);
     }
     elsif ($strLine =~ /^#define REPOSITORY_FORMAT/)
     {
         eval("use constant REPOSITORY_FORMAT => " . (split(" ", $strLine))[-1]);
     }
 }
+
+eval(
+    'use constant PROJECT_VERSION => "' . PROJECT_VERSION_MAJOR() . '.' . PROJECT_VERSION_MINOR() . '.' . PROJECT_VERSION_PATCH() .
+    PROJECT_VERSION_SUFFIX() . '"');
 
 1;

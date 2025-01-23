@@ -38,8 +38,6 @@ Software version
 #define PROJECT_VERSION_PATCH                                       0
 #define PROJECT_VERSION_SUFFIX                                      "dev"
 
-#define PROJECT_VERSION                                                                                                            \
-    STRINGIFY(PROJECT_VERSION_MAJOR) "." STRINGIFY(PROJECT_VERSION_MINOR) "." STRINGIFY(PROJECT_VERSION_PATCH)                     \
-    PROJECT_VERSION_SUFFIX
+#define PROJECT_VERSION                                             "2.55.0dev"
 
 #endif
