@@ -715,29 +715,6 @@ backupList(
 }
 
 /***********************************************************************************************************************************
-Render backrest text version (in PROJECT_VERSION style) as 6-digits number format
-***********************************************************************************************************************************/
-FN_EXTERN const char *
-versionNumRender(const char *const versionStr)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRINGZ, versionStr);
-    FUNCTION_TEST_END();
-
-    // The conversion should handle the case where we have "2.55dev", "2.55" or "2.55.0".
-    if (regExpMatchOne(STRDEF("^[0-9]+\\.[0-9]+(\\.[0-9]+)?(dev)?$"), STRDEF(versionStr)))
-    {
-        int major = 0, minor = 0, patch = 0;
-        sscanf(versionStr, "%d.%d.%d", &major, &minor, &patch);
-        int projectVersionNum = (major * 10000) + (minor * 100) + patch;
-
-        FUNCTION_TEST_RETURN(STRINGZ, zNewFmt("%06d", projectVersionNum));
-    }
-    else
-        FUNCTION_TEST_RETURN(STRINGZ, NULL);
-}
-
-/***********************************************************************************************************************************
 Set the stanza data for each stanza found in the repo
 ***********************************************************************************************************************************/
 static VariantList *
@@ -885,7 +862,7 @@ stanzaInfoList(
         // Set backrest section
         KeyValue *const backrestInfo = kvPutKv(varKv(stanzaInfo), BACKUP_KEY_BACKREST_VAR);
         kvPut(backrestInfo, BACKREST_KEY_VERSION_VAR, varNewStrZ(PROJECT_VERSION));
-        kvPut(backrestInfo, BACKREST_KEY_VERSION_NUM_VAR, varNewStrZ(versionNumRender(PROJECT_VERSION)));
+        kvPut(backrestInfo, BACKREST_KEY_VERSION_NUM_VAR, VARUINT(PROJECT_VERSION_NUM));
 
         varLstAdd(result, stanzaInfo);
     }
