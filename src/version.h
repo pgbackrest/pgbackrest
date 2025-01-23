@@ -39,8 +39,6 @@ Software version
 #define PROJECT_VERSION_SUFFIX                                      "dev"
 
 #define PROJECT_VERSION                                             "2.55.0dev"
-
-#define PROJECT_VERSION_NUM                                                                                                        \
-    ((unsigned int)((PROJECT_VERSION_MAJOR * 1000000) + (PROJECT_VERSION_MINOR * 1000) + PROJECT_VERSION_PATCH))
+#define PROJECT_VERSION_NUM                                         2055000
 
 #endif

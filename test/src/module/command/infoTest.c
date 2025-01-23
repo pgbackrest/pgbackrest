@@ -51,14 +51,14 @@ testRun(void)
         hrnCfgArgRawZ(argListStanzaOpt, cfgOptStanza, "stanza1");
         HRN_CFG_LOAD(cfgCmdInfo, argListStanzaOpt);
         TEST_RESULT_STR_Z(
-            infoRender(), zNewFmt(
+            infoRender(),
             // {uncrustify_off - indentation}
             "["
                 "{"
                     "\"archive\":[],"
                     "\"backrest\":{"
                         "\"version\":\"" PROJECT_VERSION "\","
-                        "\"version-num\":%u"
+                        "\"version-num\":" STRINGIFY(PROJECT_VERSION_NUM)
                     "},"
                     "\"backup\":[],"
                     "\"cipher\":\"none\","
@@ -82,7 +82,7 @@ testRun(void)
                 "}"
             "]",
             // {uncrustify_on}
-            PROJECT_VERSION_NUM), "json - empty repo, stanza option specified");
+            "json - empty repo, stanza option specified");
 
         StringList *argListTextStanzaOpt = strLstDup(argListText);
         hrnCfgArgRawZ(argListTextStanzaOpt, cfgOptStanza, "stanza1");
@@ -108,14 +108,14 @@ testRun(void)
 
         HRN_CFG_LOAD(cfgCmdInfo, argList);
         TEST_RESULT_STR_Z(
-            infoRender(), zNewFmt(
+            infoRender(),
             // {uncrustify_off - indentation}
             "["
                 "{"
                     "\"archive\":[],"
                     "\"backrest\":{"
                         "\"version\":\"" PROJECT_VERSION "\","
-                        "\"version-num\":%u"
+                        "\"version-num\":" STRINGIFY(PROJECT_VERSION_NUM)
                     "},"
                     "\"backup\":[],"
                     "\"cipher\":\"none\","
@@ -139,7 +139,7 @@ testRun(void)
                 "}"
             "]",
             // {uncrustify_on}
-            PROJECT_VERSION_NUM), "json - missing stanza data");
+            "json - missing stanza data");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info file exists, but archive.info does not");
@@ -161,14 +161,14 @@ testRun(void)
             ",\"db-version\":\"9.6\"}\n");
 
         TEST_RESULT_STR_Z(
-            infoRender(), zNewFmt(
+            infoRender(),
             // {uncrustify_off - indentation}
             "["
                 "{"
                     "\"archive\":[],"
                     "\"backrest\":{"
                         "\"version\":\"" PROJECT_VERSION "\","
-                        "\"version-num\":%u"
+                        "\"version-num\":" STRINGIFY(PROJECT_VERSION_NUM)
                     "},"
                     "\"backup\":[],"
                     "\"cipher\":\"none\","
@@ -203,7 +203,7 @@ testRun(void)
                 "}"
             "]",
             // {uncrustify_on}
-            PROJECT_VERSION_NUM), "json - other error, single repo");
+            "json - other error, single repo");
 
         HRN_CFG_LOAD(cfgCmdInfo, argListTextStanzaOpt);
         TEST_RESULT_STR_Z(
@@ -271,7 +271,7 @@ testRun(void)
 
                 HRN_CFG_LOAD(cfgCmdInfo, argList);
                 TEST_RESULT_STR_Z(
-                    infoRender(), zNewFmt(
+                    infoRender(),
                     // {uncrustify_off - indentation}
                     "["
                         "{"
@@ -288,7 +288,7 @@ testRun(void)
                             "],"
                             "\"backrest\":{"
                                 "\"version\":\"" PROJECT_VERSION "\","
-                                "\"version-num\":%u"
+                                "\"version-num\":" STRINGIFY(PROJECT_VERSION_NUM)
                             "},"
                              "\"backup\":[],"
                              "\"cipher\":\"none\","
@@ -325,7 +325,7 @@ testRun(void)
                         "}"
                     "]",
                     // {uncrustify_on}
-                    PROJECT_VERSION_NUM), "json - single stanza, no valid backups, backup/expire lock detected");
+                    "json - single stanza, no valid backups, backup/expire lock detected");
 
                 HRN_CFG_LOAD(cfgCmdInfo, argListText);
                 TEST_RESULT_STR_Z(
@@ -469,7 +469,7 @@ testRun(void)
 
                 HRN_CFG_LOAD(cfgCmdInfo, argList);
                 TEST_RESULT_STR_Z(
-                    infoRender(), zNewFmt(
+                    infoRender(),
                     // {uncrustify_off - indentation}
                     "["
                         "{"
@@ -504,7 +504,7 @@ testRun(void)
                             "],"
                             "\"backrest\":{"
                                 "\"version\":\"" PROJECT_VERSION "\","
-                                "\"version-num\":%u"
+                                "\"version-num\":" STRINGIFY(PROJECT_VERSION_NUM)
                             "},"
                              "\"backup\":["
                                 "{"
@@ -608,7 +608,6 @@ testRun(void)
                         "}"
                     "]",
                     // {uncrustify_on}
-                    PROJECT_VERSION_NUM),
                     "json - single stanza, valid backup, no priors, no archives in latest DB, backup/expire lock detected");
 
                 HRN_CFG_LOAD(cfgCmdInfo, argListText);
@@ -1088,7 +1087,7 @@ testRun(void)
 
                 HRN_CFG_LOAD(cfgCmdInfo, argListMultiRepoJson);
                 TEST_RESULT_STR_Z(
-                    infoRender(), zNewFmt(
+                    infoRender(),
                     // {uncrustify_off - indentation}
                     "["
                         "{"
@@ -1123,7 +1122,7 @@ testRun(void)
                             "],"
                             "\"backrest\":{"
                                 "\"version\":\"" PROJECT_VERSION "\","
-                                "\"version-num\":%u"
+                                "\"version-num\":" STRINGIFY(PROJECT_VERSION_NUM)
                             "},"
                             "\"backup\":["
                                 "{"
@@ -1384,7 +1383,7 @@ testRun(void)
                             "],"
                             "\"backrest\":{"
                                 "\"version\":\"" PROJECT_VERSION "\","
-                                "\"version-num\":%u"
+                                "\"version-num\":" STRINGIFY(PROJECT_VERSION_NUM)
                             "},"
                              "\"backup\":[],"
                              "\"cipher\":\"mixed\","
@@ -1435,7 +1434,7 @@ testRun(void)
                             "],"
                             "\"backrest\":{"
                                 "\"version\":\"" PROJECT_VERSION "\","
-                                "\"version-num\":%u"
+                                "\"version-num\":" STRINGIFY(PROJECT_VERSION_NUM)
                             "},"
                             "\"backup\":["
                                 "{"
@@ -1505,7 +1504,6 @@ testRun(void)
                         "}"
                     "]",
                     // {uncrustify_on}
-                    PROJECT_VERSION_NUM, PROJECT_VERSION_NUM, PROJECT_VERSION_NUM),
                     "json - multiple stanzas, some with valid backups, archives in latest DB, backup lock held on one stanza");
 
                 // Notify child to release lock
@@ -1672,14 +1670,14 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
-            infoRender(), zNewFmt(
+            infoRender(),
             // {uncrustify_off - indentation}
             "["
                 "{"
                     "\"archive\":[],"
                     "\"backrest\":{"
                         "\"version\":\"" PROJECT_VERSION "\","
-                        "\"version-num\":%u"
+                        "\"version-num\":" STRINGIFY(PROJECT_VERSION_NUM)
                     "},"
                     "\"backup\":[],"
                     "\"cipher\":\"mixed\","
@@ -1711,7 +1709,7 @@ testRun(void)
                 "}"
             "]",
             // {uncrustify_on}
-            PROJECT_VERSION_NUM), "json, multi-repo, backup not found");
+            "json, multi-repo, backup not found");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo: backup set requested on single repo, with 1 checksum error");
@@ -1758,7 +1756,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
-            infoRender(), zNewFmt(
+            infoRender(),
             // {uncrustify_off - indentation}
             "["
                 "{"
@@ -1784,7 +1782,7 @@ testRun(void)
                     "],"
                     "\"backrest\":{"
                         "\"version\":\"" PROJECT_VERSION "\","
-                        "\"version-num\":%u"
+                        "\"version-num\":" STRINGIFY(PROJECT_VERSION_NUM)
                     "},"
                     "\"backup\":["
                         "{"
@@ -1867,7 +1865,7 @@ testRun(void)
                 "}"
             "]",
             // {uncrustify_on}
-            PROJECT_VERSION_NUM), "json - backup set requested");
+            "json - backup set requested");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo: filter by backup type");
@@ -1955,7 +1953,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
-            infoRender(), zNewFmt(
+            infoRender(),
             // {uncrustify_off - indentation}
             "["
                 "{"
@@ -1990,7 +1988,7 @@ testRun(void)
                     "],"
                     "\"backrest\":{"
                         "\"version\":\"" PROJECT_VERSION "\","
-                        "\"version-num\":%u"
+                        "\"version-num\":" STRINGIFY(PROJECT_VERSION_NUM)
                     "},"
                     "\"backup\":["
                         "{"
@@ -2086,7 +2084,6 @@ testRun(void)
                 "}"
             "]",
             // {uncrustify_on}
-            PROJECT_VERSION_NUM),
             "json - multi-repo, backup set requested, found on repo2, report stanza and db over all repos");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2165,7 +2162,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
-            infoRender(), zNewFmt(
+            infoRender(),
             // {uncrustify_off - indentation}
             "["
                 "{"
@@ -2191,7 +2188,7 @@ testRun(void)
                     "],"
                     "\"backrest\":{"
                         "\"version\":\"" PROJECT_VERSION "\","
-                        "\"version-num\":%u"
+                        "\"version-num\":" STRINGIFY(PROJECT_VERSION_NUM)
                     "},"
                     "\"backup\":["
                         "{"
@@ -2270,7 +2267,7 @@ testRun(void)
                 "}"
             "]",
             // {uncrustify_on}
-            PROJECT_VERSION_NUM), "json - backup set requested, no links");
+            "json - backup set requested, no links");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup set requested but no databases, no checksum error");
@@ -2346,7 +2343,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
-            infoRender(), zNewFmt(
+            infoRender(),
             // {uncrustify_off - indentation}
             "["
                 "{"
@@ -2372,7 +2369,7 @@ testRun(void)
                     "],"
                     "\"backrest\":{"
                         "\"version\":\"" PROJECT_VERSION "\","
-                        "\"version-num\":%u"
+                        "\"version-num\":" STRINGIFY(PROJECT_VERSION_NUM)
                     "},"
                     "\"backup\":["
                         "{"
@@ -2447,7 +2444,7 @@ testRun(void)
                 "}"
             "]",
             // {uncrustify_on}
-            PROJECT_VERSION_NUM), "json - backup set requested, no db and no checksum error");
+            "json - backup set requested, no db and no checksum error");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup set requested with missing backup lsn stop location");
@@ -2501,7 +2498,7 @@ testRun(void)
         hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza2");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
         TEST_RESULT_STR_Z(
-            infoRender(), zNewFmt(
+            infoRender(),
             // {uncrustify_off - indentation}
             "["
                 "{"
@@ -2518,7 +2515,7 @@ testRun(void)
                     "],"
                     "\"backrest\":{"
                         "\"version\":\"" PROJECT_VERSION "\","
-                        "\"version-num\":%u"
+                        "\"version-num\":" STRINGIFY(PROJECT_VERSION_NUM)
                     "},"
                      "\"backup\":[],"
                      "\"cipher\":\"mixed\","
@@ -2557,7 +2554,7 @@ testRun(void)
                 "}"
             "]",
             // {uncrustify_on}
-            PROJECT_VERSION_NUM), "json - multiple stanzas - selected found, repo1");
+            "json - multiple stanzas - selected found, repo1");
 
         argList2 = strLstDup(argListMultiRepo);
         hrnCfgArgRawZ(argList2, cfgOptStanza, "stanza2");
@@ -2918,7 +2915,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
         TEST_RESULT_STR_Z(
-            infoRender(), zNewFmt(
+            infoRender(),
             // {uncrustify_off - indentation}
             "["
                 "{"
@@ -2953,7 +2950,7 @@ testRun(void)
                     "],"
                     "\"backrest\":{"
                         "\"version\":\"" PROJECT_VERSION "\","
-                        "\"version-num\":%u"
+                        "\"version-num\":" STRINGIFY(PROJECT_VERSION_NUM)
                     "},"
                     "\"backup\":["
                         "{"
@@ -3095,7 +3092,7 @@ testRun(void)
                 "}"
             "]",
             // {uncrustify_on}
-            PROJECT_VERSION_NUM), "json - multi-repo, database mismatch, repo2 stanza-upgrade needed");
+            "json - multi-repo, database mismatch, repo2 stanza-upgrade needed");
 
         // Crypto error
         // -------------------------------------------------------------------------------------------------------------------------
@@ -3478,14 +3475,14 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         TEST_RESULT_STR_Z(
-            infoRender(), zNewFmt(
+            infoRender(),
             // {uncrustify_off - indentation}
             "["
                 "{"
                     "\"archive\":[],"
                     "\"backrest\":{"
                         "\"version\":\"" PROJECT_VERSION "\","
-                        "\"version-num\":%u"
+                        "\"version-num\":" STRINGIFY(PROJECT_VERSION_NUM)
                     "},"
                     "\"backup\":[],"
                     "\"cipher\":\"none\","
@@ -3510,7 +3507,7 @@ testRun(void)
                 "}"
             "]",
             // {uncrustify_on}
-            PROJECT_VERSION_NUM), "json - invalid stanza");
+            "json - invalid stanza");
 
         argList = strLstNew();
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/repo2");
