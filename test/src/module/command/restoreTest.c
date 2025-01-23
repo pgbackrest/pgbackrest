@@ -2137,6 +2137,7 @@ testRun(void)
             DbMismatchError,
             "target timeline A forked from backup timeline 9 at 0/5000000 which is before backup lsn of 0/6000000\n"
             "HINT: was the target timeline created by accidentally promoting a standby?\n"
+            "HINT: was the target timeline created by testing a restore without --archive-mode=off?\n"
             "HINT: was the backup made after the target timeline was created?");
 
         HRN_STORAGE_PUT_Z(

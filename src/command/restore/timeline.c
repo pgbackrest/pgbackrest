@@ -268,6 +268,7 @@ timelineVerify(
                             DbMismatchError,
                             "target timeline %X forked from backup timeline %X at %s which is before backup lsn of %s\n"
                             "HINT: was the target timeline created by accidentally promoting a standby?\n"
+                            "HINT: was the target timeline created by testing a restore without --archive-mode=off?\n"
                             "HINT: was the backup made after the target timeline was created?",
                             timelineTarget, timelineBackup, strZ(pgLsnToStr(lsnFound)), strZ(pgLsnToStr(lsnBackup)));
                     }
