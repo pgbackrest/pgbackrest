@@ -33,6 +33,13 @@ will be invalid unless migration functions are written.
 /***********************************************************************************************************************************
 Software version
 ***********************************************************************************************************************************/
-#define PROJECT_VERSION                                             "2.55dev"
+#define PROJECT_VERSION_MAJOR                                       2
+#define PROJECT_VERSION_MINOR                                       55
+#define PROJECT_VERSION_PATCH                                       0
+#define PROJECT_VERSION_SUFFIX                                      "dev"
+
+#define PROJECT_VERSION                                                                                                            \
+    STRINGIFY(PROJECT_VERSION_MAJOR) "." STRINGIFY(PROJECT_VERSION_MINOR) "." STRINGIFY(PROJECT_VERSION_PATCH)                     \
+    PROJECT_VERSION_SUFFIX
 
 #endif

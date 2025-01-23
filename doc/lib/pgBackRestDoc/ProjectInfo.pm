@@ -43,10 +43,10 @@ require pgBackRestTest::Common::StoragePosix;
 
 my $strProjectInfo = ${new pgBackRestTest::Common::Storage(
     dirname(dirname(abs_path($0))), new pgBackRestTest::Common::StoragePosix())->get('src/version.h')};
+my $strVersion = "";
 
 foreach my $strLine (split("\n", $strProjectInfo))
 {
-
     if ($strLine =~ /^#define PROJECT_NAME/)
     {
         eval("use constant PROJECT_NAME => " . (split(" ", $strLine))[-1]);
@@ -56,9 +56,22 @@ foreach my $strLine (split("\n", $strProjectInfo))
         eval("use constant PROJECT_EXE => " . (split(" ", $strLine))[-1]);
         eval("use constant PROJECT_CONF => " . (split(" ", $strLine))[-1] . " . \'.conf\'");
     }
-    elsif ($strLine =~ /^#define PROJECT_VERSION/)
+    elsif ($strLine =~ /^#define PROJECT_VERSION_MAJOR/)
     {
-        eval("use constant PROJECT_VERSION => " . (split(" ", $strLine))[-1]);
+        $strVersion = (split(" ", $strLine))[-1];
+    }
+    elsif ($strLine =~ /^#define PROJECT_VERSION_MINOR/)
+    {
+        $strVersion .= '.' . (split(" ", $strLine))[-1];
+    }
+    elsif ($strLine =~ /^#define PROJECT_VERSION_PATCH/)
+    {
+        $strVersion .= '.' . (split(" ", $strLine))[-1];
+    }
+    elsif ($strLine =~ /^#define PROJECT_VERSION_SUFFIX/)
+    {
+        $strVersion .= substr((split(" ", $strLine))[-1], 1);
+        eval("use constant PROJECT_VERSION => \"${strVersion}");
     }
     elsif ($strLine =~ /^#define REPOSITORY_FORMAT/)
     {
