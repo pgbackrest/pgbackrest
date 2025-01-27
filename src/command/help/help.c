@@ -580,9 +580,9 @@ helpRender(const Buffer *const helpData)
                     }
                 }
 
-                // Construct message for more help if there are options
-                if (optionSizeMax > 0)
-                    more = strNewFmt("%s [option]", commandName);
+                // Construct message for more help
+                ASSERT(optionSizeMax > 0);
+                more = strNewFmt("%s [option]", commandName);
             }
             // Else option help for the specified command
             else
