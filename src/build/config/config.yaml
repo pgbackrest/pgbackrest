@@ -345,6 +345,7 @@ option:
         allow-list:
           - none
           - text
+          - json
     allow-list:
       - text
       - json
