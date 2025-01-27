@@ -1076,3 +1076,92 @@ strSizeFormat(const uint64_t size)
 
     FUNCTION_TEST_RETURN(STRING, result);
 }
+
+/**********************************************************************************************************************************/
+FN_EXTERN String *
+strEscape(const String *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+    FUNCTION_TEST_END();
+
+    String *ret = strNew();
+
+    // Track portion of string with no escapes
+    const char *valuePtr = strZ(this);
+    const char *noEscape = NULL;
+    size_t noEscapeSize = 0;
+
+    for (unsigned int valueIdx = 0; valueIdx < strSize(this); valueIdx++)
+    {
+        switch (*valuePtr)
+        {
+            case '"':
+            case '\\':
+            case '\n':
+            case '\r':
+            case '\t':
+            case '\b':
+            case '\f':
+            {
+                // Copy portion of string without escapes
+                if (noEscapeSize > 0)
+                {
+                    strCatZN(ret, noEscape, noEscapeSize);
+                    noEscapeSize = 0;
+                }
+
+                switch (*valuePtr)
+                {
+                    case '"':
+                        strCatZ(ret, "\\\"");
+                        break;
+
+                    case '\\':
+                        strCatZ(ret, "\\\\");
+                        break;
+
+                    case '\n':
+                        strCatZ(ret, "\\n");
+                        break;
+
+                    case '\r':
+                        strCatZ(ret, "\\r");
+                        break;
+
+                    case '\t':
+                        strCatZ(ret, "\\t");
+                        break;
+
+                    case '\b':
+                        strCatZ(ret, "\\b");
+                        break;
+
+                    case '\f':
+                        strCatZ(ret, "\\f");
+                        break;
+                }
+
+                break;
+            }
+
+            default:
+            {
+                // If escape string is zero size then start it
+                if (noEscapeSize == 0)
+                    noEscape = valuePtr;
+
+                noEscapeSize++;
+                break;
+            }
+        }
+
+        valuePtr++;
+    }
+
+    // Copy portion of string without escapes
+    if (noEscapeSize > 0)
+        strCatZN(ret, noEscape, noEscapeSize);
+
+    FUNCTION_TEST_RETURN(STRING, ret);
+}
