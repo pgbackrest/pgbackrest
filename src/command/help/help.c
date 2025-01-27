@@ -336,7 +336,7 @@ helpRender(const Buffer *const helpData)
          cfgCommand() == cfgCmdVersion))
     {
         if (cfgCommand() == cfgCmdVersion && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_NUM)
-            FUNCTION_TEST_RETURN(STRING, strNewFmt("%d", PROJECT_VERSION_NUM));
+            FUNCTION_TEST_RETURN(STRING, strCatFmt(strTrunc(result), "%d", PROJECT_VERSION_NUM));
         else
         {
             strCatChr(result, '\n');

@@ -151,6 +151,20 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "version");
+        hrnCfgArgRawZ(argList, cfgOptOutput, "text");
+        TEST_RESULT_VOID(testCfgLoad(argList), "version text output from version command");
+        TEST_RESULT_STR_Z(helpRender(helpData), versionOnly, "check text");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "version");
+        hrnCfgArgRawZ(argList, cfgOptOutput, "num");
+        TEST_RESULT_VOID(testCfgLoad(argList), "version num output from version command");
+        TEST_RESULT_STR_Z(helpRender(helpData), zNewFmt("%d", PROJECT_VERSION_NUM), "check text");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
         strLstAddZ(argList, "--version");
         TEST_RESULT_VOID(testCfgLoad(argList), "version from version option");
         TEST_RESULT_STR_Z(helpRender(helpData), versionOnly, "check text");
