@@ -1688,6 +1688,8 @@
                             <p>Tablespaces are restored into their original locations by default. This behavior can be modified for each tablespace with the <setting>tablespace-map</setting> option, but it is sometimes preferable to remap all tablespaces to a new directory all at once. This is particularly useful for development or staging systems that may not have the same storage layout as the original system where the backup was generated.</p>
 
                             <p>The path specified will be the parent path used to create all the tablespaces in the backup.</p>
+
+                            <admonition type="caution">Tablespaces created after the backup started will not be mapped. Make a new backup after a tablespace is created if tablespace mapping is required.</admonition>
                         </text>
 
                         <example>/data/tablespace</example>
