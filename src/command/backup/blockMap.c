@@ -485,7 +485,7 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output, const size_t bl
             {
                 ASSERT(
                     superBlock == blockMapGet(this, blockIdx) ||
-                    blockMapGet(this, blockIdx)->block == blockMapGet(this, blockIdx - 1)->block + 1);
+                    (blockIdx > 0 && (blockMapGet(this, blockIdx)->block == blockMapGet(this, blockIdx - 1)->block + 1)));
 
                 ioWrite(output, BUF(blockMapGet(this, blockIdx)->checksum, checksumSize));
             }
