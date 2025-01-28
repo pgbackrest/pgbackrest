@@ -243,7 +243,7 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
             }
             else
             {
-                // Throw error if no tuples
+                // If no tuples then the result is an error
                 if (resultStatus != PGRES_TUPLES_OK)
                 {
                     THROW_FMT(
