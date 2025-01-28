@@ -21,6 +21,7 @@ subdir('command/help')
 src_test = [
     '../../src/build/common/exec.c',
     '../../src/build/common/json.c',
+    '../../src/build/common/regExp.c',
     '../../src/build/common/render.c',
     '../../src/build/common/string.c',
     '../../src/build/common/yaml.c',
@@ -43,6 +44,7 @@ src_test = [
     'command/test/build.c',
     'command/test/coverage.c',
     'command/test/define.c',
+    'command/test/lint.c',
     'command/test/test.c',
     'config/load.c',
     'main.c',

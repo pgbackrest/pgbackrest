@@ -20,6 +20,7 @@ subdir('command/help')
 ####################################################################################################################################
 src_doc = [
     '../../src/build/common/json.c',
+    '../../src/build/common/regExp.c',
     '../../src/build/common/render.c',
     '../../src/build/common/string.c',
     '../../src/build/common/xml.c',
