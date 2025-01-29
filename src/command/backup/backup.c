@@ -1774,7 +1774,7 @@ Check that the clusters are alive and correctly configured during the backup
 static void
 backupDbPing(const BackupData *const backupData, const bool force)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(BOOL, force);
     FUNCTION_LOG_END();

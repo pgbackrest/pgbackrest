@@ -740,7 +740,7 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
 FN_EXTERN void
 dbPing(Db *const this, const bool force)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(DB, this);
         FUNCTION_LOG_PARAM(BOOL, force);
     FUNCTION_LOG_END();
