@@ -16,6 +16,7 @@
                 <github-pull-request id="2539"/>
 
                 <release-item-contributor-list>
+                    <release-item-ideator id="susantha.bathige"/>
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="stefan.fercot"/>
                 </release-item-contributor-list>
