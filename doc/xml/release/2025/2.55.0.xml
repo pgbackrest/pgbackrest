@@ -11,6 +11,18 @@
 
                 <p>Do not set <br-option>recovery_target_timeline=current</br-option> for PostgreSQL &amp;lt; 12.</p>
             </release-item>
+
+            <release-item>
+                <github-pull-request id="2539"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="susantha.bathige"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix error reporting for queries with no results.</p>
+            </release-item>
         </release-bug-list>
 
         <release-improvement-list>
