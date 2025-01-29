@@ -990,16 +990,7 @@
 
             <p>Upgrading from <proper>v2.x</proper> to <proper>v2.y</proper> is straight-forward. The repository format has not changed, so for most installations it is simply a matter of installing binaries for the new version. It is also possible to downgrade if you have not used new features that are unsupported by the older version.</p>
 
-            <p>CAUTION: The local and remote software versions must match exactly, and so should be upgraded together. If there is a mismatch, then WAL archiving and backups will not function until that is corrected. In such a case, the below error will be reported:</p>
-
-            <execute skip="y">
-                <exe-cmd>
-                    status: error (other)
-                            [ProtocolError] expected value '2.x' for greeting key 'version' but got '2.y'
-                            HINT: is the same version of pgBackRest installed on the local and remote host?
-                </exe-cmd>
-            </execute>
-
+            <admonition type="important">The local and remote <backrest/> versions must match exactly so they should be upgraded together. If there is a mismatch, WAL archiving and backups will not function until the versions match. In such a case, the following error will be reported: <id>[ProtocolError] expected value '2.x' for greeting key 'version' but got '2.y'</id>.</admonition>
         </section>
     </section>
 
