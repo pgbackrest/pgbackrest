@@ -1640,7 +1640,7 @@ option:
   pg-socket-path:
     section: stanza
     group: pg
-    type: path
+    type: string
     required: false
     command: pg-database
     depend: pg-database
