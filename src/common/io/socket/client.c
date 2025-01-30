@@ -240,7 +240,8 @@ sckClientOpen(THIS_VOID)
             }
             CATCH_ANY()
             {
-                ASSERT(openData != NULL);
+                // Cast is required to prevent Coverity from complaining about side effects of using volatile in an assertion
+                ASSERT((SckClientOpenData *)openData != NULL);
 
                 // Close socket
                 close(openData->fd);
