@@ -84,6 +84,17 @@ option:
     command:
       test: {}
 
+  output:
+    type: string-id
+    default: text
+    command:
+      version: {}
+    allow-list:
+      - num
+      - text
+    command-role:
+      main: {}
+
   pg-version:
     type: string
     default: invalid
