@@ -466,6 +466,30 @@ hrnHostPgStop(HrnHost *const this)
 }
 
 /**********************************************************************************************************************************/
+void
+hrnHostPgPromote(HrnHost *const this)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(HRN_HOST, this);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(this != NULL);
+    ASSERT(hrnHostIsPg(this));
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Promote pg
+        const String *const command = strNewFmt(
+            "%s/pg_ctl promote -D '%s' -s -w", strZ(hrnHostPgBinPath(this)), strZ(hrnHostPgDataPath(this)));
+
+        hrnHostExecP(this, command);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 PackRead *
 hrnHostSql(HrnHost *const this, const String *const statement, const PgClientQueryResult resultType)
 {

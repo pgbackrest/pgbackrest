@@ -1871,6 +1871,8 @@ testRun(void)
 
         Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_12, STRDEF("/pg"));
         manifest->pub.data.backupOptionOnline = true;
+        manifest->pub.data.archiveStart = strNewZ("000000010000000000000007");
+        manifest->pub.data.lsnStart = strNewZ("0/7000028");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when standby_mode setting is present");
@@ -2050,6 +2052,107 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("timeline*()"))
+    {
+        StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, STRDEF(TEST_PATH "/repo"));
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("timelineVerify()");
+
+        TEST_RESULT_VOID(
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_11, 1, 0xA1, CFGOPTVAL_TYPE_DEFAULT, NULL, cipherTypeNone, NULL),
+            "follow current timeline because of version");
+        TEST_RESULT_VOID(
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_11, 1, 0xA1, CFGOPTVAL_TYPE_DEFAULT, STRDEF("latest"), cipherTypeNone,
+                NULL),
+            "follow latest timeline as requested");
+        TEST_RESULT_VOID(
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, CFGOPTVAL_TYPE_DEFAULT, NULL, cipherTypeNone, NULL),
+            "follow latest timeline because of version");
+        TEST_RESULT_VOID(
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, CFGOPTVAL_TYPE_DEFAULT, STRDEF("current"),
+                cipherTypeNone, NULL),
+            "follow current timeline as requested");
+        TEST_RESULT_VOID(
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 1, 0xA1, CFGOPTVAL_TYPE_DEFAULT, STRDEF("1"), cipherTypeNone,
+                NULL),
+            "follow requested timeline (same as current)");
+        TEST_RESULT_VOID(
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 0x10, 0xA1, CFGOPTVAL_TYPE_DEFAULT, STRDEF("0x10"),
+                cipherTypeNone, NULL),
+            "follow requested hex timeline (same as current)");
+        TEST_ERROR(
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 0x10, 0xA1, CFGOPTVAL_TYPE_DEFAULT, STRDEF("bogus"),
+                cipherTypeNone, NULL),
+            DbMismatchError, "invalid target timeline 'bogus'");
+
+        HRN_STORAGE_PUT_Z(storageTest, "repo/archive/test1/17-1/00000009.history", "8");
+        TEST_ERROR(
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 8, 0xA1, CFGOPTVAL_TYPE_DEFAULT, STRDEF("9"), cipherTypeNone,
+                NULL),
+            FormatError,
+            "invalid timeline '9' at '" TEST_PATH "/repo/archive/test1/17-1/00000009.history':"
+            " invalid history line format '8'");
+
+        HRN_STORAGE_PUT_Z(
+            storageTest, "repo/archive/test1/17-1/0000000A.history",
+            "# comment\n"
+            "8\t0/4000000\tcomment\n"
+            "9\t0/5000000\tcomment\n");
+        TEST_RESULT_VOID(
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 10, 0x4FFFFFF, CFGOPTVAL_TYPE_DEFAULT, NULL, cipherTypeNone,
+                NULL),
+            "follow current timeline");
+        TEST_RESULT_VOID(
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, CFGOPTVAL_TYPE_IMMEDIATE, NULL, cipherTypeNone,
+                NULL),
+            "follow current timeline (based on type immediate)");
+        TEST_RESULT_VOID(
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, CFGOPTVAL_TYPE_DEFAULT, NULL, cipherTypeNone, NULL),
+            "follow latest timeline");
+        TEST_RESULT_VOID(
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x4FFFFFF, CFGOPTVAL_TYPE_DEFAULT, STRDEF("10"),
+                cipherTypeNone, NULL),
+            "target timeline found");
+        TEST_ERROR(
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 9, 0x6000000, CFGOPTVAL_TYPE_DEFAULT, STRDEF("10"),
+                cipherTypeNone, NULL),
+            DbMismatchError,
+            "target timeline A forked from backup timeline 9 at 0/5000000 which is before backup lsn of 0/6000000\n"
+            "HINT: was the target timeline created by accidentally promoting a standby?\n"
+            "HINT: was the target timeline created by testing a restore without --archive-mode=off?\n"
+            "HINT: was the backup made after the target timeline was created?");
+
+        HRN_STORAGE_PUT_Z(
+            storageTest, "repo/archive/test1/17-1/0000000B.history",
+            "7\t0/4000000\tcomment\n"
+            "8\t0/5000000\tcomment\n");
+        TEST_ERROR(
+            timelineVerify(
+                storageRepoIdx(0), STRDEF("17-1"), PG_VERSION_12, 6, 0x4FFFFFF, CFGOPTVAL_TYPE_DEFAULT, STRDEF("11"),
+                cipherTypeNone, NULL),
+            DbMismatchError, "backup timeline 6, lsn 0/4ffffff is not in the history of target timeline B\n"
+            "HINT: was the target timeline created by promoting from a timeline < latest?");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cmdRestore()"))
     {
         const String *pgPath = STRDEF(TEST_PATH "/pg");
@@ -2111,6 +2214,8 @@ testRun(void)
             manifest->pub.data.backupTimestampStart = 1482182860;
             manifest->pub.data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
             manifest->pub.data.backupOptionOnline = true;
+            manifest->pub.data.archiveStart = strNewZ("000000010000000000000007");
+            manifest->pub.data.lsnStart = strNewZ("0/7000028");
 
             // Data directory
             HRN_MANIFEST_TARGET_ADD(manifest, .name = MANIFEST_TARGET_PGDATA, .path = strZ(pgPath));
@@ -2169,6 +2274,11 @@ testRun(void)
             storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n[cipher]\ncipher-pass=\""
             TEST_CIPHER_PASS_MANIFEST "\"\n\n" TEST_RESTORE_BACKUP_INFO_DB, .cipherType = cipherTypeAes256Cbc);
 
+        // Write archive.info to the encrypted repo
+        InfoArchive *infoArchive = infoArchiveNew(PG_VERSION_95, 6569239123849665679, STRDEF(TEST_CIPHER_PASS_ARCHIVE));
+        infoArchiveSaveFile(
+            infoArchive, storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS));
+
         TEST_RESULT_VOID(cmdRestore(), "successful restore");
 
         TEST_RESULT_LOG(
@@ -2205,6 +2315,23 @@ testRun(void)
             .level = storageInfoLevelBasic, .includeDot = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid timeline");
+
+        // Store backup.info to repo1 - repo1 will be selected because of the priority order
+        HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB);
+
+        // Store archive.info to repo1 - repo1 will be selected because of the priority order
+        infoArchive = infoArchiveNew(PG_VERSION_95, 6569239123849665679, NULL);
+        infoArchiveSaveFile(infoArchive, storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeNone, NULL);
+
+        hrnCfgArgRawZ(argList, cfgOptTargetTimeline, "0xff");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        TEST_ERROR(
+            cmdRestore(), FileMissingError,
+            "unable to open missing file '" TEST_PATH "/repo/archive/test1/9.5-0/000000FF.history' for read");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full restore with delta force");
 
         argList = strLstNew();
@@ -2222,9 +2349,6 @@ testRun(void)
 
         // Munge PGDATA mode so it gets fixed
         HRN_STORAGE_MODE(storagePg(), NULL, 0777);
-
-        // Store backup.info to repo1 - repo1 will be selected because of the priority order
-        HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB);
 
         // Make sure existing backup.manifest file is ignored
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), BACKUP_MANIFEST_FILE);
@@ -2483,6 +2607,8 @@ testRun(void)
             manifest->pub.data.backupType = backupTypeIncr;
             manifest->pub.data.blockIncr = true;
             manifest->pub.data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
+            manifest->pub.data.archiveStart = strNewZ("000000010000000000000007");
+            manifest->pub.data.lsnStart = strNewZ("0/7000028");
 
             manifest->pub.referenceList = strLstNew();
             strLstAddZ(manifest->pub.referenceList, TEST_LABEL_FULL);

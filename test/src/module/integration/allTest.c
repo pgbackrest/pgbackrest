@@ -8,6 +8,7 @@ Real Integration Test
 #include "info/infoBackup.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
+#include "storage/helper.h"
 
 #include "common/harnessErrorRetry.h"
 #include "common/harnessHost.h"
@@ -179,6 +180,17 @@ testRun(void)
 
             HRN_HOST_PG_START(pg2);
 
+            // Promote the standby to create a new timeline that can be used to test timeline verification. Once the new timeline
+            // has been created restore again to get the standby back on the same timeline as the primary.
+            HRN_HOST_PG_PROMOTE(pg2);
+            TEST_STORAGE_EXISTS(
+                hrnHostRepo1Storage(repo),
+                zNewFmt("archive/" HRN_STANZA "/%s-1/00000002.history", strZ(pgVersionToStr(hrnHostPgVersion()))), .timeout = 5000);
+
+            HRN_HOST_PG_STOP(pg2);
+            TEST_HOST_BR(pg2, CFGCMD_RESTORE, .option = zNewFmt("%s --delta --target-timeline=current", option));
+            HRN_HOST_PG_START(pg2);
+
             // Check standby
             TEST_HOST_BR(pg2, CFGCMD_CHECK);
 
@@ -308,13 +320,24 @@ testRun(void)
         TEST_LOG("name target = " TEST_RESTORE_POINT);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("primary restore (default target)");
+        TEST_TITLE("primary restore fails on timeline verification");
         {
             // Stop the cluster
             HRN_HOST_PG_STOP(pg1);
 
-            // Restore
-            TEST_HOST_BR(pg1, CFGCMD_RESTORE, .option = zNewFmt("--force --repo=%u", hrnHostRepoTotal()));
+            // Restore fails because timeline 2 was created before the backup selected for restore. Specify target timeline latest
+            // because PostgreSQL < 12 defaults to current.
+            TEST_HOST_BR(
+                pg1, CFGCMD_RESTORE, .option = "--delta --target-timeline=latest", .resultExpect = errorTypeCode(&DbMismatchError));
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("primary restore (default target)");
+        {
+            // Restore on current timeline to skip the invalid timeline unrelated to the backup
+            TEST_HOST_BR(
+                pg1, CFGCMD_RESTORE,
+                .option = zNewFmt("--force --target-timeline=current --repo=%u", hrnHostRepoTotal()));
             HRN_HOST_PG_START(pg1);
 
             // Check that backup recovered to the expected target
@@ -330,7 +353,8 @@ testRun(void)
             // Stop the cluster and try again
             HRN_HOST_PG_STOP(pg1);
 
-            // Restore
+            // Restore immediate and promote -- this avoids checking the invalid timeline since immediate recovery is always along
+            // the current timeline. The promotion will create a new timeline so subsequent tests will pass timeline verification.
             TEST_HOST_BR(pg1, CFGCMD_RESTORE, .option = "--delta --type=immediate --target-action=promote --db-exclude=exclude_me");
             HRN_HOST_PG_START(pg1);
 

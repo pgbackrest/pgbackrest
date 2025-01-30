@@ -159,6 +159,7 @@ src_pgbackrest = [
     'command/restore/file.c',
     'command/restore/protocol.c',
     'command/restore/restore.c',
+    'command/restore/timeline.c',
     'command/remote/remote.c',
     'command/server/ping.c',
     'command/server/server.c',
