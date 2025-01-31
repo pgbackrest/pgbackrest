@@ -34,13 +34,25 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptOutput, "json");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
+        StringList *argListProgressOnly = strLstDup(argList);
+        hrnCfgArgRawZ(argListProgressOnly, cfgOptProgressOnly, "y");
+
+        StringList *argListTextProgressOnly = strLstDup(argListText);
+        hrnCfgArgRawZ(argListTextProgressOnly, cfgOptProgressOnly, "y");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no stanzas have been created");
 
         TEST_RESULT_STR_Z(infoRender(), "[]", "json - repo but no stanzas");
 
+        HRN_CFG_LOAD(cfgCmdInfo, argListProgressOnly);
+        TEST_RESULT_STR_Z(infoRender(), "[]", "json (progress only) - repo but no stanzas");
+
         HRN_CFG_LOAD(cfgCmdInfo, argListText);
         TEST_RESULT_STR_Z(infoRender(), "No stanzas exist in the repository.\n", "text - no stanzas");
+
+        HRN_CFG_LOAD(cfgCmdInfo, argListTextProgressOnly);
+        TEST_RESULT_STR_Z(infoRender(), "No stanzas exist in the repository.\n", "text (progress only) - no stanzas");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("repo is still empty but stanza option is specified");
@@ -81,6 +93,28 @@ testRun(void)
             // {uncrustify_on}
             "json - empty repo, stanza option specified");
 
+        StringList *argListProgressOnlyStanzaOpt = strLstDup(argListProgressOnly);
+        hrnCfgArgRawZ(argListProgressOnlyStanzaOpt, cfgOptStanza, "stanza1");
+        HRN_CFG_LOAD(cfgCmdInfo, argListProgressOnlyStanzaOpt);
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            // {uncrustify_off - indentation}
+            "["
+                "{"
+                    "\"name\":\"stanza1\","
+                    "\"status\":{"
+                        "\"code\":1,"
+                        "\"lock\":{"
+                            "\"backup\":{\"held\":false},"
+                            "\"restore\":{\"held\":false}"
+                        "},"
+                        "\"message\":\"missing stanza path\""
+                    "}"
+                "}"
+            "]",
+            // {uncrustify_on}
+            "json (progress only) - empty repo, stanza option specified");
+
         StringList *argListTextStanzaOpt = strLstDup(argListText);
         hrnCfgArgRawZ(argListTextStanzaOpt, cfgOptStanza, "stanza1");
         HRN_CFG_LOAD(cfgCmdInfo, argListTextStanzaOpt);
@@ -90,12 +124,22 @@ testRun(void)
             "    status: error (missing stanza path)\n",
             "text - empty repo, stanza option specified");
 
+        StringList *argListTextProgressOnlyStanzaOpt = strLstDup(argListTextProgressOnly);
+        hrnCfgArgRawZ(argListTextProgressOnlyStanzaOpt, cfgOptStanza, "stanza1");
+        HRN_CFG_LOAD(cfgCmdInfo, argListTextProgressOnlyStanzaOpt);
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: error (missing stanza path)\n",
+            "text (progress only) - empty repo, stanza option specified");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza path exists but is empty");
 
         HRN_STORAGE_PATH_CREATE(storageRepoWrite(), STORAGE_REPO_ARCHIVE, .comment = "create repo stanza archive path");
         HRN_STORAGE_PATH_CREATE(storageRepoWrite(), STORAGE_REPO_BACKUP, .comment = "create repo stanza backup path");
 
+        HRN_CFG_LOAD(cfgCmdInfo, argListTextStanzaOpt);
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza1\n"
@@ -103,7 +147,16 @@ testRun(void)
             "    cipher: none\n",
             "text - missing stanza data");
 
-        HRN_CFG_LOAD(cfgCmdInfo, argList);
+        // In progress-only mode, the info command skips additional checks,
+        // verifying only the availability of the stanza. The status will be `ok`.
+        HRN_CFG_LOAD(cfgCmdInfo, argListTextProgressOnlyStanzaOpt);
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: ok\n",
+            "text (progress only) - missing stanza data");
+
+        HRN_CFG_LOAD(cfgCmdInfo, argListStanzaOpt);
         TEST_RESULT_STR_Z(
             infoRender(),
             // {uncrustify_off - indentation}
@@ -137,6 +190,28 @@ testRun(void)
             // {uncrustify_on}
             "json - missing stanza data");
 
+        // In progress-only mode, the info command skips additional checks,
+        // verifying only the availability of the stanza. The status will be `ok`.
+        HRN_CFG_LOAD(cfgCmdInfo, argListProgressOnlyStanzaOpt);
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            // {uncrustify_off - indentation}
+            "["
+                "{"
+                    "\"name\":\"stanza1\","
+                    "\"status\":{"
+                        "\"code\":0,"
+                        "\"lock\":{"
+                            "\"backup\":{\"held\":false},"
+                            "\"restore\":{\"held\":false}"
+                        "},"
+                        "\"message\":\"ok\""
+                    "}"
+                "}"
+            "]",
+            // {uncrustify_on}
+            "json (progress only) - missing stanza data");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("backup.info file exists, but archive.info does not");
 
@@ -156,6 +231,7 @@ testRun(void)
             "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679"
             ",\"db-version\":\"9.6\"}\n");
 
+        HRN_CFG_LOAD(cfgCmdInfo, argListStanzaOpt);
         TEST_RESULT_STR_Z(
             infoRender(),
             // {uncrustify_off - indentation}
@@ -474,6 +550,16 @@ testRun(void)
             "    status: error (missing stanza path)\n",
             "text - multi-repo, requested stanza missing on selected repo");
 
+        StringList *argList2ProgressOnly = strLstDup(argList2);
+        hrnCfgArgRawZ(argList2ProgressOnly, cfgOptProgressOnly, "y");
+        HRN_CFG_LOAD(cfgCmdInfo, argList2ProgressOnly);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: error (missing stanza path)\n",
+            "text (progress only) - multi-repo, requested stanza missing on selected repo");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("multi-repo - WAL segment on repo1");
 
@@ -497,6 +583,17 @@ testRun(void)
             "    db (current)\n"
             "        wal archive min/max (9.6): 000000030000000000000001/000000030000000000000001\n",
             "text - multi-repo, single stanza, one wal segment");
+
+        argList2ProgressOnly = strLstDup(argList2);
+        hrnCfgArgRawZ(argList2ProgressOnly, cfgOptProgressOnly, "y");
+        HRN_CFG_LOAD(cfgCmdInfo, argList2ProgressOnly);
+        // In progress-only mode, the info command skips additional checks,
+        // verifying only the availability of the stanza. The status will be `ok`.
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: ok\n",
+            "text (progress only) - multi-repo, single stanza, one wal segment");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("coverage for stanzaStatus branches && percent complete null");
@@ -724,6 +821,26 @@ testRun(void)
                     // {uncrustify_on}
                     "json - single stanza, valid backup, no priors, no archives in latest DB, backup/expire lock detected");
 
+                HRN_CFG_LOAD(cfgCmdInfo, argListProgressOnly);
+                TEST_RESULT_STR_Z(
+                    infoRender(),
+                    // {uncrustify_off - indentation}
+                    "["
+                        "{"
+                            "\"name\":\"stanza1\","
+                            "\"status\":{"
+                                "\"code\":0,"
+                                "\"lock\":{"
+                                    "\"backup\":{\"held\":true},"
+                                    "\"restore\":{\"held\":false}"
+                                "},"
+                                "\"message\":\"ok\""
+                            "}"
+                        "}"
+                    "]",
+                    // {uncrustify_on}
+                    "json (progress only) - single stanza, valid backup, no priors, no archives in latest DB, backup/expire lock detected");
+
                 HRN_CFG_LOAD(cfgCmdInfo, argListText);
                 TEST_RESULT_STR_Z(
                     infoRender(),
@@ -749,6 +866,13 @@ testRun(void)
                     "            database size: 25.7MB, database backup size: 25.7MB\n"
                     "            repo1: backup set size: 3MB, backup size: 3KB\n",
                     "text - single stanza, valid backup, no priors, no archives in latest DB, backup/expire lock detected");
+
+                HRN_CFG_LOAD(cfgCmdInfo, argListTextProgressOnly);
+                TEST_RESULT_STR_Z(
+                    infoRender(),
+                    "stanza: stanza1\n"
+                    "    status: ok (backup/expire running)\n",
+                    "text (progress only) - single stanza, valid backup, no priors, no archives in latest DB, backup/expire lock detected");
 
                 // Notify child to release lock
                 HRN_FORK_PARENT_NOTIFY_PUT(0);
@@ -932,6 +1056,26 @@ testRun(void)
                     // {uncrustify_on}
                     "json - single stanza, valid backup, no priors, no archives in latest DB, restore lock detected");
 
+                HRN_CFG_LOAD(cfgCmdInfo, argListProgressOnly);
+                TEST_RESULT_STR_Z(
+                    infoRender(),
+                    // {uncrustify_off - indentation}
+                    "["
+                        "{"
+                            "\"name\":\"stanza1\","
+                            "\"status\":{"
+                                "\"code\":0,"
+                                "\"lock\":{"
+                                    "\"backup\":{\"held\":false},"
+                                    "\"restore\":{\"held\":true,\"size\":3159000,\"size-cplt\":1435765}"
+                                "},"
+                                "\"message\":\"ok\""
+                            "}"
+                        "}"
+                    "]",
+                    // {uncrustify_on}
+                    "json (progress only) - single stanza, valid backup, no priors, no archives in latest DB, restore lock detected");
+
                 HRN_CFG_LOAD(cfgCmdInfo, argListText);
                 TEST_RESULT_STR_Z(
                     infoRender(),
@@ -957,6 +1101,13 @@ testRun(void)
                     "            database size: 25.7MB, database backup size: 25.7MB\n"
                     "            repo1: backup set size: 3MB, backup size: 3KB\n",
                     "text - single stanza, valid backup, no priors, no archives in latest DB, restore lock detected");
+
+                HRN_CFG_LOAD(cfgCmdInfo, argListTextProgressOnly);
+                TEST_RESULT_STR_Z(
+                    infoRender(),
+                    "stanza: stanza1\n"
+                    "    status: ok (restore running - 45.44% complete)\n",
+                    "text (progress only) - single stanza, valid backup, no priors, no archives in latest DB, restore lock detected");
 
                 // Notify child to release lock
                 HRN_FORK_PARENT_NOTIFY_PUT(0);
@@ -1402,6 +1553,12 @@ testRun(void)
 
         StringList *argListMultiRepoJson = strLstDup(argListMultiRepo);
         hrnCfgArgRawZ(argListMultiRepoJson, cfgOptOutput, "json");
+
+        StringList *argListMultiRepoProgressOnly = strLstDup(argListMultiRepo);
+        hrnCfgArgRawZ(argListMultiRepoProgressOnly, cfgOptProgressOnly, "y");
+
+        StringList *argListMultiRepoJsonProgressOnly = strLstDup(argListMultiRepoJson);
+        hrnCfgArgRawZ(argListMultiRepoJsonProgressOnly, cfgOptProgressOnly, "y");
 
         HRN_FORK_BEGIN()
         {
@@ -1922,6 +2079,59 @@ testRun(void)
                     // {uncrustify_on}
                     "json - multiple stanzas, some with valid backups, archives in latest DB, backup lock held on one stanza");
 
+                HRN_CFG_LOAD(cfgCmdInfo, argListMultiRepoJsonProgressOnly);
+                TEST_RESULT_STR_Z(
+                    infoRender(),
+                    // {uncrustify_off - indentation}
+                    "["
+                        "{"
+                            "\"name\":\"stanza1\","
+                            "\"status\":{"
+                                "\"code\":0,"
+                                "\"lock\":{"
+                                    "\"backup\":{\"held\":false},"
+                                    "\"restore\":{\"held\":false}"
+                                "},"
+                                "\"message\":\"ok\""
+                            "}"
+                        "},"
+                        "{"
+                            "\"name\":\"stanza2\","
+                            "\"status\":{"
+                                "\"code\":0,"
+                                "\"lock\":{"
+                                    "\"backup\":{\"held\":true,\"size\":3159000,\"size-cplt\":1435765},"
+                                    "\"restore\":{\"held\":false}"
+                                "},"
+                                "\"message\":\"ok\""
+                            "}"
+                        "},"
+                        "{"
+                            "\"name\":\"stanza3\","
+                            "\"status\":{"
+                                "\"code\":0,"
+                                "\"lock\":{"
+                                    "\"backup\":{\"held\":false},"
+                                    "\"restore\":{\"held\":false}"
+                                "},"
+                                "\"message\":\"ok\""
+                            "}"
+                        "},"
+                        "{"
+                            "\"name\":\"stanza4\","
+                            "\"status\":{"
+                                "\"code\":0,"
+                                "\"lock\":{"
+                                    "\"backup\":{\"held\":false},"
+                                    "\"restore\":{\"held\":true,\"size\":3159000,\"size-cplt\":389820}"
+                                "},"
+                                "\"message\":\"ok\""
+                            "}"
+                        "}"
+                    "]",
+                    // {uncrustify_on}
+                    "json (progress only) - multiple stanzas, some with valid backups, archives in latest DB, backup lock held on one stanza");
+
                 // Notify child to release lock
                 HRN_FORK_PARENT_NOTIFY_PUT(0);
                 HRN_FORK_PARENT_NOTIFY_PUT(1);
@@ -2091,6 +2301,22 @@ testRun(void)
                     "    db (current)\n"
                     "        wal archive min/max (9.4): none present\n",
                     "text - multiple stanzas, multi-repo with valid backups, backup lock held on one stanza");
+
+                HRN_CFG_LOAD(cfgCmdInfo, argListMultiRepoProgressOnly);
+                TEST_RESULT_STR_Z(
+                    infoRender(),
+                    "stanza: stanza1\n"
+                    "    status: ok (backup/expire running - 65.27% complete)\n"
+                    "\n"
+                    "stanza: stanza2\n"
+                    "    status: ok (backup/expire running - 55.55% complete)\n"
+                    "\n"
+                    "stanza: stanza3\n"
+                    "    status: ok\n"
+                    "\n"
+                    "stanza: stanza4\n"
+                    "    status: ok (restore running - 12.33% complete)\n",
+                    "text (progress only) - multiple stanzas, multi-repo with valid backups, backup lock held on one stanza");
 
                 // Notify child to release lock
                 HRN_FORK_PARENT_NOTIFY_PUT(0);
@@ -3919,6 +4145,16 @@ testRun(void)
             "    cipher: none\n",
             "text - invalid stanza");
 
+        StringList *argListProgressOnly = strLstDup(argList);
+        hrnCfgArgRawZ(argListProgressOnly, cfgOptProgressOnly, "y");
+        HRN_CFG_LOAD(cfgCmdInfo, argListProgressOnly);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: [invalid]\n"
+            "    status: error (other)\n",
+            "text (progress only) - invalid stanza");
+
         hrnCfgArgRawZ(argList, cfgOptOutput, "json");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
@@ -3956,6 +4192,28 @@ testRun(void)
             // {uncrustify_on}
             "json - invalid stanza");
 
+        hrnCfgArgRawZ(argListProgressOnly, cfgOptOutput, "json");
+        HRN_CFG_LOAD(cfgCmdInfo, argListProgressOnly);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            // {uncrustify_off - indentation}
+            "["
+                "{"
+                    "\"name\":\"[invalid]\","
+                    "\"status\":{"
+                        "\"code\":99,"
+                        "\"lock\":{"
+                            "\"backup\":{\"held\":false},"
+                            "\"restore\":{\"held\":false}"
+                        "},"
+                        "\"message\":\"other\""
+                    "}"
+                "}"
+            "]",
+            // {uncrustify_on}
+            "json (progress only) - invalid stanza");
+
         argList = strLstNew();
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/repo2");
         hrnCfgArgRawZ(argList, cfgOptStanza, "stanza1");
@@ -3968,6 +4226,16 @@ testRun(void)
             "            [PathOpenError] unable to list file info for path '" TEST_PATH "/repo2/backup': [13] Permission denied\n"
             "    cipher: none\n",
             "text - stanza requested");
+
+        argListProgressOnly = strLstDup(argList);
+        hrnCfgArgRawZ(argListProgressOnly, cfgOptProgressOnly, "y");
+        HRN_CFG_LOAD(cfgCmdInfo, argListProgressOnly);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: error (other)\n",
+            "text (progress only) - stanza requested");
 
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo");
         HRN_CFG_LOAD(cfgCmdInfo, argList);
@@ -3982,6 +4250,15 @@ testRun(void)
             "        repo2: error (missing stanza path)\n"
             "    cipher: none\n",
             "text - stanza repo structure exists");
+
+        hrnCfgArgKeyRawZ(argListProgressOnly, cfgOptRepoPath, 2, TEST_PATH "/repo");
+        HRN_CFG_LOAD(cfgCmdInfo, argListProgressOnly);
+
+        TEST_RESULT_STR_Z(
+            infoRender(),
+            "stanza: stanza1\n"
+            "    status: error (different across repos)\n",
+            "text (progress only) - stanza repo structure exists");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
