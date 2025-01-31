@@ -13,6 +13,7 @@ typedef enum
 {
     lockTypeArchive,
     lockTypeBackup,
+    lockTypeRestore,
     lockTypeAll,
     lockTypeNone,
 } LockType;

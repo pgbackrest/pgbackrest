@@ -45,6 +45,7 @@ static const char *const lockTypeName[] =
 {
     "archive",                                                      // lockTypeArchive
     "backup",                                                       // lockTypeBackup
+    "restore",                                                      // lockTypeRestore
 };
 
 /***********************************************************************************************************************************
@@ -303,9 +304,9 @@ lockWriteData(const LockType lockType, const LockWriteDataParam param)
 
         jsonWriteObjectEnd(json);
 
-        if (lockType == lockTypeBackup && lockLocal.held)
+        if ((lockType == lockTypeBackup || lockType == lockTypeRestore) && lockLocal.held)
         {
-            // Seek to beginning of backup lock file
+            // Seek to beginning of backup/restore lock file
             THROW_ON_SYS_ERROR_FMT(
                 lseek(lockLocal.file[lockType].fd, 0, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, (uint64_t)0,
                 strZ(lockLocal.file[lockType].name));
