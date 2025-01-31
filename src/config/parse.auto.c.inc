@@ -4426,6 +4426,30 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                        // opt/process-max
     ),                                                                                                            // opt/process-max
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                           // opt/progress-only
+    (                                                                                                           // opt/progress-only
+        PARSE_RULE_OPTION_NAME("progress-only"),                                                                // opt/progress-only
+        PARSE_RULE_OPTION_TYPE(cfgOptTypeBoolean),                                                              // opt/progress-only
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                       // opt/progress-only
+        PARSE_RULE_OPTION_SECTION(cfgSectionCommandLine),                                                       // opt/progress-only
+                                                                                                                // opt/progress-only
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                          // opt/progress-only
+        (                                                                                                       // opt/progress-only
+            PARSE_RULE_OPTION_COMMAND(cfgCmdInfo)                                                               // opt/progress-only
+        ),                                                                                                      // opt/progress-only
+                                                                                                                // opt/progress-only
+        PARSE_RULE_OPTIONAL                                                                                     // opt/progress-only
+        (                                                                                                       // opt/progress-only
+            PARSE_RULE_OPTIONAL_GROUP                                                                           // opt/progress-only
+            (                                                                                                   // opt/progress-only
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                     // opt/progress-only
+                (                                                                                               // opt/progress-only
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                                  // opt/progress-only
+                ),                                                                                              // opt/progress-only
+            ),                                                                                                  // opt/progress-only
+        ),                                                                                                      // opt/progress-only
+    ),                                                                                                          // opt/progress-only
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                        // opt/protocol-timeout
     (                                                                                                        // opt/protocol-timeout
         PARSE_RULE_OPTION_NAME("protocol-timeout"),                                                          // opt/protocol-timeout
@@ -11065,6 +11089,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptPgVersionForce,                                                                                       // opt-resolve-order
     cfgOptProcess,                                                                                              // opt-resolve-order
     cfgOptProcessMax,                                                                                           // opt-resolve-order
+    cfgOptProgressOnly,                                                                                         // opt-resolve-order
     cfgOptProtocolTimeout,                                                                                      // opt-resolve-order
     cfgOptRaw,                                                                                                  // opt-resolve-order
     cfgOptRecurse,                                                                                              // opt-resolve-order

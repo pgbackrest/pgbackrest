@@ -102,6 +102,7 @@ Option constants
 #define CFGOPT_PG_VERSION_FORCE                                     "pg-version-force"
 #define CFGOPT_PROCESS                                              "process"
 #define CFGOPT_PROCESS_MAX                                          "process-max"
+#define CFGOPT_PROGRESS_ONLY                                        "progress-only"
 #define CFGOPT_PROTOCOL_TIMEOUT                                     "protocol-timeout"
 #define CFGOPT_RAW                                                  "raw"
 #define CFGOPT_RECOVERY_OPTION                                      "recovery-option"
@@ -137,7 +138,7 @@ Option constants
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 
-#define CFG_OPTION_TOTAL                                            181
+#define CFG_OPTION_TOTAL                                            182
 
 /***********************************************************************************************************************************
 Option value constants
@@ -466,6 +467,7 @@ typedef enum
     cfgOptPgVersionForce,
     cfgOptProcess,
     cfgOptProcessMax,
+    cfgOptProgressOnly,
     cfgOptProtocolTimeout,
     cfgOptRaw,
     cfgOptRecoveryOption,
