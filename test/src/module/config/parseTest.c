@@ -2084,7 +2084,8 @@ testRun(void)
         TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, VARSTRDEF("a"))), "b", "check recovery option");
         TEST_ASSIGN(recoveryKv, varKv(cfgOptionIdxVar(cfgOptRecoveryOption, 0)), "get recovery options");
         TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, VARSTRDEF("c"))), "de=fg hi", "check recovery option");
-        TEST_RESULT_BOOL(cfgLockRequired(), false, "restore command does not require lock");
+        TEST_RESULT_BOOL(cfgLockRequired(), true, "restore command requires lock");
+        TEST_RESULT_UINT(cfgLockType(), lockTypeRestore, "restore command requires restore lock type");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("recovery options, config file");

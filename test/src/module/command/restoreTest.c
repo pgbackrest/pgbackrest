@@ -19,6 +19,7 @@ Test Restore Command
 #include "common/harnessManifest.h"
 #include "common/harnessPostgres.h"
 #include "common/harnessProtocol.h"
+#include "common/harnessRestore.h"
 #include "common/harnessStorage.h"
 #include "common/harnessStorageHelper.h"
 #include "common/harnessTime.h"
@@ -2158,6 +2159,51 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("restoreJobResult()"))
+    {
+        // Set log level to detail
+        harnessLogLevelSet(logLevelDetail);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("report host/100% progress on noop result");
+
+        // Create job that skips file
+        ProtocolParallelJob *job = protocolParallelJobNew(VARSTRDEF("pg_data/test"), strIdFromZ("x"), NULL);
+
+        PackWrite *const resultPack = protocolPackNew();
+        pckWriteStrP(resultPack, STRDEF("pg_data/test"));
+        pckWriteU32P(resultPack, restoreResultZero);
+        // No more fields need to be written since noop will ignore them anyway
+        pckWriteEndP(resultPack);
+
+        protocolParallelJobResultSet(job, pckReadNew(pckWriteResult(resultPack)));
+
+        // Create manifest with file
+        Manifest *manifest = NULL;
+
+        OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
+        {
+            manifest = manifestNewInternal();
+
+            HRN_MANIFEST_TARGET_ADD(manifest, .name = MANIFEST_TARGET_PGDATA, .path = "pg_data");
+            HRN_MANIFEST_FILE_ADD(manifest, .name = "pg_data/test");
+        }
+        OBJ_NEW_END();
+
+        unsigned int currentPercentComplete = 4567;
+
+        lockInit(TEST_PATH_STR, cfgOptionStr(cfgOptExecId));
+        TEST_RESULT_VOID(cmdLockAcquireP(), "acquire restore lock");
+
+        TEST_RESULT_UINT(
+            restoreJobResult(manifest, job, NULL, 0, 0,
+                             &currentPercentComplete), 0, "log noop result");
+        TEST_RESULT_VOID(cmdLockReleaseP(), "release restore lock");
+
+        TEST_RESULT_LOG("P00 DETAIL: restore file pg_data/test (0B, 100.00%)");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cmdRestore()"))
     {
         const String *pgPath = STRDEF(TEST_PATH "/pg");
@@ -2187,7 +2233,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptPgHost, "pg1");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_ERROR(cmdRestore(), HostInvalidError, "restore command must be run on the PostgreSQL host");
+        TEST_ERROR(hrnCmdRestore(), HostInvalidError, "restore command must be run on the PostgreSQL host");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full restore without delta, multi-repo");
@@ -2277,7 +2323,7 @@ testRun(void)
             storageRepoIdxWrite(1), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n[cipher]\ncipher-pass=\""
             TEST_CIPHER_PASS_MANIFEST "\"\n\n" TEST_RESTORE_BACKUP_INFO_DB, .cipherType = cipherTypeAes256Cbc);
 
-        TEST_RESULT_VOID(cmdRestore(), "successful restore");
+        TEST_RESULT_VOID(hrnCmdRestore(), "successful restore");
 
         TEST_RESULT_LOG(
             zNewFmt(
@@ -2421,7 +2467,7 @@ testRun(void)
         #undef TEST_PGDATA
         #undef TEST_REPO_PATH
 
-        cmdRestore();
+        hrnCmdRestore();
 
         TEST_RESULT_LOG(
             "P00   INFO: repo1: restore backup set 20161219-212741F, recovery will start at 2016-12-19 21:27:40\n"
@@ -2434,15 +2480,15 @@ testRun(void)
             "P00 DETAIL: remove special file '" TEST_PATH "/pg/pipe'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_tblspc/1' to '" TEST_PATH "/ts/1'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/pg_tblspc/1/16384'\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.auto.conf (15B, 44.12%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.auto.conf (15B, 44.11%)"
             " checksum 37a0c84d42c3ec3d08c311cec2cef2a7ab55a7c3\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf (10B, 73.53%) checksum"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf (10B, 73.52%) checksum"
             " 1a49a3c2240449fee1422e4afcf44d5b96378511\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches size 4 and modification time 1482182860"
             " (4B, 85.29%) checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/size-mismatch (1B, 88.24%) checksum"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/size-mismatch (1B, 88.23%) checksum"
             " c032adc1ff629c9b66f22749ad667e6beadf144b\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/tablespace_map (0B, 88.24%)\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/tablespace_map (0B, 88.23%)\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (4B, 100.00%)"
             " checksum 8dbabb96e032b8d9f1993c0e4b9141e71ade01a1\n"
             "P00   WARN: recovery type is preserve but recovery file does not exist at '" TEST_PATH "/pg/recovery.conf'\n"
@@ -2499,7 +2545,7 @@ testRun(void)
         hrnCfgArgRawBool(argList, cfgOptForce, true);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        cmdRestore();
+        hrnCmdRestore();
 
         TEST_RESULT_LOG(
             "P00   INFO: repo1: restore backup set 20161219-212741F, recovery will start at 2016-12-19 21:27:40\n"
@@ -2892,7 +2938,7 @@ testRun(void)
         // Add a few bogus links to be deleted
         THROW_ON_SYS_ERROR(symlink("../wal", zNewFmt("%s/pg_wal2", strZ(pgPath))) == -1, FileOpenError, "unable to create symlink");
 
-        TEST_RESULT_VOID(cmdRestore(), "successful restore");
+        TEST_RESULT_VOID(hrnCmdRestore(), "successful restore");
 
         TEST_RESULT_LOG_FMT(
             "P00   INFO: repo1: restore backup set 20161219-212741F_20161219-212918I\n"
@@ -3087,7 +3133,7 @@ testRun(void)
             storageWriteIo(
                 storageNewWriteP(storageRepoWrite(), STRDEF(STORAGE_REPO_BACKUP "/" TEST_LABEL "/" BACKUP_MANIFEST_FILE))));
 
-        TEST_RESULT_VOID(cmdRestore(), "successful restore");
+        TEST_RESULT_VOID(hrnCmdRestore(), "successful restore");
 
         TEST_RESULT_LOG_FMT(
             "P00   INFO: repo2: restore backup set 20161219-212741F_20161219-212918I, recovery will start at [TIME]\n"
@@ -3184,7 +3230,7 @@ testRun(void)
         harnessLogLevelSet(logLevelWarn);
 
         TEST_ERROR(
-            cmdRestore(), FileMissingError,
+            hrnCmdRestore(), FileMissingError,
             "raised from local-1 shim protocol: unable to open missing file"
             " '" TEST_PATH "/repo/backup/test1/20161219-212741F_20161219-212918I/pg_data/global/pg_control' for read\n"
             "[RETRY DETAIL OMITTED]");
@@ -3296,7 +3342,7 @@ testRun(void)
         hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_RESULT_VOID(cmdRestore(), "restore");
+        TEST_RESULT_VOID(hrnCmdRestore(), "restore");
 
         TEST_STORAGE_LIST(
             storagePg(), NULL,
@@ -3335,7 +3381,7 @@ testRun(void)
         hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_ERROR(cmdRestore(), CryptoError, "raised from local-1 shim protocol: cipher header missing");
+        TEST_ERROR(hrnCmdRestore(), CryptoError, "raised from local-1 shim protocol: cipher header missing");
 
         // Use detail log level to catch block incremental restore message
         harnessLogLevelSet(logLevelDetail);
@@ -3358,7 +3404,7 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptRepoTargetTime, targetTime);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_RESULT_VOID(cmdRestore(), "restore");
+        TEST_RESULT_VOID(hrnCmdRestore(), "restore");
 
         TEST_STORAGE_LIST(
             storagePg(), NULL,
@@ -3470,7 +3516,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptFork, "GPDB");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_RESULT_VOID(cmdRestore(), "restore");
+        TEST_RESULT_VOID(hrnCmdRestore(), "restore");
 
         // base/1/40044* are filtered out
         // base/2/11976* are restored
@@ -3517,7 +3563,7 @@ testRun(void)
         hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_ERROR(cmdRestore(), OptionInvalidError, "option 'filter' is supported on GPDB 6 only");
+        TEST_ERROR(hrnCmdRestore(), OptionInvalidError, "option 'filter' is supported on GPDB 6 only");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -3530,7 +3576,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptFork, "GPDB");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
-        TEST_ERROR(cmdRestore(), OptionInvalidError, "option 'filter' is supported on GPDB 6 only");
+        TEST_ERROR(hrnCmdRestore(), OptionInvalidError, "option 'filter' is supported on GPDB 6 only");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

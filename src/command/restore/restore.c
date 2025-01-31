@@ -8,6 +8,7 @@ Restore Command
 #include <time.h>
 #include <unistd.h>
 
+#include "command/lock.h"
 #include "command/restore/file.h"
 #include "command/restore/protocol.h"
 #include "command/restore/restore.h"
@@ -2083,7 +2084,7 @@ restoreFilePgPath(const Manifest *const manifest, const String *const manifestNa
 static uint64_t
 restoreJobResult(
     const Manifest *const manifest, ProtocolParallelJob *const job, RegExp *const zeroExp, const uint64_t sizeTotal,
-    uint64_t sizeRestored)
+    uint64_t sizeRestored, unsigned int *const currentPercentComplete)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(MANIFEST, manifest);
@@ -2091,6 +2092,7 @@ restoreJobResult(
         FUNCTION_LOG_PARAM(REGEXP, zeroExp);
         FUNCTION_LOG_PARAM(UINT64, sizeTotal);
         FUNCTION_LOG_PARAM(UINT64, sizeRestored);
+        FUNCTION_LOG_PARAM_P(UINT, currentPercentComplete);
     FUNCTION_LOG_END();
 
     ASSERT(manifest != NULL);
@@ -2101,6 +2103,7 @@ restoreJobResult(
         MEM_CONTEXT_TEMP_BEGIN()
         {
             PackRead *const jobResult = protocolParallelJobResult(job);
+            unsigned int percentComplete = 0;
 
             while (!pckReadNullP(jobResult))
             {
@@ -2172,13 +2175,26 @@ restoreJobResult(
 
                 // Add size and percent complete
                 sizeRestored += file.size;
-                strCatFmt(log, "%s, %.2lf%%)", strZ(strSizeFormat(file.size)), (double)sizeRestored * 100.00 / (double)sizeTotal);
+
+                // Store percentComplete as an integer
+                percentComplete = sizeTotal == 0 ? 10000 : (unsigned int)(((double)sizeRestored / (double)sizeTotal) * 10000);
+
+                strCatFmt(log, "%s, %u.%02u%%)", strZ(strSizeFormat(file.size)), percentComplete / 100, percentComplete % 100);
 
                 // If not zero-length add the checksum
                 if (file.size != 0 && !zeroed)
                     strCatFmt(log, " checksum %s", strZ(strNewEncode(encodingHex, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE))));
 
                 LOG_DETAIL_PID(protocolParallelJobProcessId(job), strZ(log));
+            }
+
+            // Update currentPercentComplete and lock file when the change is significant enough
+            if (percentComplete - *currentPercentComplete > 10)
+            {
+                *currentPercentComplete = percentComplete;
+                cmdLockWriteP(
+                    .percentComplete = VARUINT(*currentPercentComplete), .sizeComplete = VARUINT64(sizeRestored),
+                    .size = VARUINT64(sizeTotal));
             }
         }
         MEM_CONTEXT_TEMP_END();
@@ -2472,6 +2488,12 @@ cmdRestore(void)
         // Process jobs
         uint64_t sizeRestored = 0;
 
+        // Initialize percent complete and bytes completed/total
+        unsigned int currentPercentComplete = 0;
+        cmdLockWriteP(
+            .percentComplete = VARUINT(currentPercentComplete), .sizeComplete = VARUINT64(sizeRestored),
+            .size = VARUINT64(sizeTotal));
+
         MEM_CONTEXT_TEMP_RESET_BEGIN()
         {
             do
@@ -2481,7 +2503,8 @@ cmdRestore(void)
                 for (unsigned int jobIdx = 0; jobIdx < completed; jobIdx++)
                 {
                     sizeRestored = restoreJobResult(
-                        jobData.manifest, protocolParallelResult(parallelExec), jobData.zeroExp, sizeTotal, sizeRestored);
+                        jobData.manifest, protocolParallelResult(parallelExec), jobData.zeroExp, sizeTotal, sizeRestored,
+                        &currentPercentComplete);
                 }
 
                 // Reset the memory context occasionally so we don't use too much memory or slow down processing

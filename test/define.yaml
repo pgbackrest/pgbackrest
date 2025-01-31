@@ -974,7 +974,9 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
-        total: 14
+        total: 15
+
+        harness: restore
 
         coverage:
           - command/restore/blockChecksum

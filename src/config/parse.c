@@ -64,7 +64,7 @@ typedef struct ParseRuleCommand
     unsigned int commandRoleValid : CFG_COMMAND_ROLE_TOTAL;         // Valid for the command role?
     bool lockRequired : 1;                                          // Is an immediate lock required?
     bool lockRemoteRequired : 1;                                    // Is a lock required on the remote?
-    unsigned int lockType : 2;                                      // Lock type required
+    unsigned int lockType : 3;                                      // Lock type required
     bool logFile : 1;                                               // Will the command log to a file?
     unsigned int logLevelDefault : 4;                               // Default log level
     bool parameterAllowed : 1;                                      // Command-line parameters are allowed

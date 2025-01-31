@@ -21,8 +21,9 @@ Lock type names
 ***********************************************************************************************************************************/
 static const char *const lockTypeName[] =
 {
-    "archive",                                                      // lockTypeArchive
-    "backup",                                                       // lockTypeBackup
+    "archive",                                                       // lockTypeArchive
+    "backup",                                                        // lockTypeBackup
+    "restore",                                                       // lockTypeRestore
 };
 
 /***********************************************************************************************************************************
@@ -140,7 +141,7 @@ cmdLockRead(const LockType lockType, const String *const stanza, const unsigned 
         FUNCTION_LOG_PARAM(UINT, repoIdx);
     FUNCTION_LOG_END();
 
-    ASSERT(lockType == lockTypeBackup);
+    ASSERT(lockType == lockTypeBackup || lockType == lockTypeRestore);
     ASSERT(stanza != NULL);
 
     FUNCTION_AUDIT_STRUCT();
