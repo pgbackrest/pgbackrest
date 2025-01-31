@@ -1646,29 +1646,65 @@ verifyProcess(const bool verboseText)
             // Use backup label if specified via --set.
             const String *backupLabel = cfgOptionStrNull(cfgOptSet);
             const String *backupRegExpStr = backupRegExpP(.full = true, .differential = true, .incremental = true);
+            bool backupLabelInvalid = false;
             if (backupLabel != NULL)
             {
                 if (!regExpMatchOne(backupRegExpStr, backupLabel))
-                    THROW_FMT(OptionInvalidValueError, "'%s' is not a valid backup label format", strZ(backupLabel));
-                backupRegExpStr = strNewFmt("^%s$", strZ(backupLabel));
+                {
+                    if (json)
+                    {
+                        strLstAddFmt(errorList, "'%s' is not a valid backup label format", strZ(backupLabel));
+                    }
+                    else
+                    {
+                        strCatFmt(resultStr, "\n  '%s' is not a valid backup label format", strZ(backupLabel));
+                    }
+                    errorTotal++;
+                    backupLabelInvalid = true;
+                }
+                else
+                {
+                    backupRegExpStr = strNewFmt("^%s$", strZ(backupLabel));
+                }
             }
 
             // Get a list of backups in the repo sorted ascending
-            jobData.backupList = strLstSort(
-                storageListP(
-                    storage, STORAGE_REPO_BACKUP_STR,
-                    .expression = backupRegExpStr),
-                sortOrderAsc);
+            if (!backupLabelInvalid)
+            {
+                jobData.backupList = strLstSort(
+                    storageListP(
+                        storage, STORAGE_REPO_BACKUP_STR,
+                        .expression = backupRegExpStr),
+                    sortOrderAsc);
+            }
+            else
+                jobData.backupList = strLstNew();
 
-            if (backupLabel != NULL && strLstEmpty(jobData.backupList))
-                THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strZ(backupLabel));
+            if (!backupLabelInvalid && backupLabel != NULL && strLstEmpty(jobData.backupList))
+            {
+                if (json)
+                {
+                    strLstAddFmt(errorList, "Backup set %s is not valid", strZ(backupLabel));
+                }
+                else
+                {
+                    strCatFmt(resultStr, "\n  Backup set %s is not valid", strZ(backupLabel));
+                }
+                errorTotal++;
+                backupLabelInvalid = true;
+            }
 
             // Get a list of archive Ids in the repo (e.g. 9.4-1, 10-2, etc) sorted ascending by the db-id (number after the dash)
-            jobData.archiveIdList = strLstSort(
-                strLstComparatorSet(
-                    storageListP(storage, STORAGE_REPO_ARCHIVE_STR, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
-                    archiveIdComparator),
-                sortOrderAsc);
+            if (!backupLabelInvalid)
+            {
+                jobData.archiveIdList = strLstSort(
+                    strLstComparatorSet(
+                        storageListP(storage, STORAGE_REPO_ARCHIVE_STR, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
+                        archiveIdComparator),
+                    sortOrderAsc);
+            }
+            else
+                jobData.archiveIdList = strLstNew();
 
             // Only begin processing if there are some archives or backups in the repo
             if (!strLstEmpty(jobData.archiveIdList) || !strLstEmpty(jobData.backupList))
@@ -1821,7 +1857,7 @@ verifyProcess(const bool verboseText)
                 // Report results
                 resultStr = verifyRender(jobData.archiveIdResultList, jobData.backupResultList, verboseText, json);
             }
-            else
+            else if (!backupLabelInvalid)
             {
                 if (!json)
                 {

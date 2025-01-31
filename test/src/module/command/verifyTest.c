@@ -2693,10 +2693,29 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptSet, "20181119-152900F_20181119-152910D");
         HRN_CFG_LOAD(cfgCmdVerify, argList);
 
-        TEST_ERROR(
+        TEST_RESULT_STR_Z(
             verifyProcess(cfgOptionBool(cfgOptVerbose)),
-            BackupSetInvalidError,
-            "backup set 20181119-152900F_20181119-152910D is not valid");
+            "stanza: db\n"
+            "status: error\n"
+            "  Backup set 20181119-152900F_20181119-152910D is not valid",
+            "--set with invalid backup label, text");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptOutput, "json");
+        hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
+        hrnCfgArgRawZ(argList, cfgOptSet, "20181119-152900F_20181119-152910D");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        TEST_RESULT_STR_Z(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            "{\n"
+            "  \"stanza\": \"db\",\n"
+            "  \"status\": \"error\",\n"
+            "  \"errors\": [\n"
+            "    \"Backup set 20181119-152900F_20181119-152910D is not valid\"\n"
+            "  ]\n"
+            "}\n",
+            "--set with invalid backup label, json");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("--set with backup label of incorrect format");
@@ -2707,10 +2726,29 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptSet, "BOGUS");
         HRN_CFG_LOAD(cfgCmdVerify, argList);
 
-        TEST_ERROR(
+        TEST_RESULT_STR_Z(
             verifyProcess(cfgOptionBool(cfgOptVerbose)),
-            OptionInvalidValueError,
-            "'BOGUS' is not a valid backup label format");
+            "stanza: db\n"
+            "status: error\n"
+            "  'BOGUS' is not a valid backup label format",
+            "--set with backup label of incorrect format, text");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptOutput, "json");
+        hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
+        hrnCfgArgRawZ(argList, cfgOptSet, "BOGUS");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        TEST_RESULT_STR_Z(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            "{\n"
+            "  \"stanza\": \"db\",\n"
+            "  \"status\": \"error\",\n"
+            "  \"errors\": [\n"
+            "    \"'BOGUS' is not a valid backup label format\"\n"
+            "  ]\n"
+            "}\n",
+            "--set with backup label of incorrect format, json");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
