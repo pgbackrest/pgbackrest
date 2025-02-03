@@ -386,6 +386,313 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("verifyUpdateWalFilesMissing()"))
+    {
+        List *backupList = lstNewP(sizeof(VerifyBackupResult), .comparator = lstComparatorStr);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("Single backup");
+
+        VerifyBackupResult backup = {
+            .backupLabel = strNewZ("1"),
+            .status = backupValid,
+            .pgId = 1,
+            .pgVersion = PG_VERSION_94,
+            .archiveStart = strNewZ("000000020000000200000001"),
+            .archiveStop = strNewZ("000000020000000200000003"),
+            .walInvalidCount = 0,
+        };
+        lstAdd(backupList, &backup);
+
+        VerifyArchiveResult archiveResult = {
+            .archiveId = strNewZ("9.4-1"),
+            .pgWalInfo = {
+                .version = PG_VERSION_94,
+                .size = 16 * 1024 * 1024,
+            }
+        };
+
+        const String *missingStart = strNewZ("000000020000000200000002");
+        const String *missingStop = strNewZ("000000020000000200000003");
+        unsigned int jobErrorTotal = 0;
+
+        TEST_RESULT_VOID(verifyUpdateWalFilesMissing(backupList, &archiveResult, missingStart, missingStop, &jobErrorTotal), "mark WAL range as missing");
+        TEST_RESULT_UINT(jobErrorTotal, 1, "found error");
+        VerifyBackupResult *backupResult = lstGet(backupList, 0);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 1, "counted WAL");
+
+        missingStart = strNewZ("000000020000000200000002");
+        missingStop = strNewZ("000000020000000200000002");
+
+        TEST_RESULT_VOID(verifyUpdateWalFilesMissing(backupList, &archiveResult, missingStart, missingStop, &jobErrorTotal), "mark WAL range as missing");
+        TEST_RESULT_UINT(jobErrorTotal, 1, "no error");
+        backupResult = lstGet(backupList, 0);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 1, "not counted WAL");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("Two backups");
+
+        backup = (VerifyBackupResult){
+            .backupLabel = strNewZ("2"),
+            .status = backupValid,
+            .pgId = 1,
+            .pgVersion = PG_VERSION_94,
+            .archiveStart = strNewZ("000000020000000200000004"),
+            .archiveStop = strNewZ("000000020000000200000005"),
+            .walInvalidCount = 0,
+        };
+        lstAdd(backupList, &backup);
+
+        missingStart = strNewZ("000000020000000200000002");
+        missingStop = strNewZ("000000020000000200000003");
+
+        TEST_RESULT_VOID(verifyUpdateWalFilesMissing(backupList, &archiveResult, missingStart, missingStop, &jobErrorTotal), "mark WAL range as missing");
+        TEST_RESULT_UINT(jobErrorTotal, 2, "found error");
+        backupResult = lstGet(backupList, 0);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 2, "counted WAL");
+        backupResult = lstGet(backupList, 1);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 0, "not counted WAL");
+
+        missingStart = strNewZ("000000020000000200000002");
+        missingStop = strNewZ("000000020000000200000005");
+
+        TEST_RESULT_VOID(verifyUpdateWalFilesMissing(backupList, &archiveResult, missingStart, missingStop, &jobErrorTotal), "mark WAL range as missing");
+        TEST_RESULT_UINT(jobErrorTotal, 5, "found error");
+        backupResult = lstGet(backupList, 0);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 4, "counted WAL");
+        backupResult = lstGet(backupList, 1);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 1, "counted WAL");
+
+        missingStart = NULL;
+        missingStop = strNewZ("000000020000000200000005");
+
+        TEST_RESULT_VOID(verifyUpdateWalFilesMissing(backupList, &archiveResult, missingStart, missingStop, &jobErrorTotal), "mark WAL range as missing");
+        TEST_RESULT_UINT(jobErrorTotal, 9, "found error");
+        backupResult = lstGet(backupList, 0);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 7, "counted WAL");
+        backupResult = lstGet(backupList, 1);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 2, "counted WAL");
+
+        missingStart = strNewZ("000000020000000200000002");
+        missingStop = NULL;
+
+        TEST_RESULT_VOID(verifyUpdateWalFilesMissing(backupList, &archiveResult, missingStart, missingStop, &jobErrorTotal), "mark WAL range as missing");
+        TEST_RESULT_UINT(jobErrorTotal, 13, "found error");
+        backupResult = lstGet(backupList, 0);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 9, "counted WAL");
+        backupResult = lstGet(backupList, 1);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 4, "counted WAL");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("Backups without ranges");
+
+        backup = (VerifyBackupResult){
+            .backupLabel = strNewZ("3"),
+            .status = backupValid,
+            .pgId = 1,
+            .pgVersion = PG_VERSION_94,
+            .walInvalidCount = 0,
+        };
+        lstAdd(backupList, &backup);
+
+        backup = (VerifyBackupResult){
+            .backupLabel = strNewZ("3"),
+            .status = backupValid,
+            .pgId = 1,
+            .pgVersion = PG_VERSION_94,
+            .walInvalidCount = 0,
+            .archiveStart = strNewZ("000000020000000200000005"),
+        };
+        lstAdd(backupList, &backup);
+
+        TEST_RESULT_VOID(verifyUpdateWalFilesMissing(backupList, &archiveResult, missingStart, missingStop, &jobErrorTotal), "mark WAL range as missing");
+        TEST_RESULT_UINT(jobErrorTotal, 17, "found error");
+        backupResult = lstGet(backupList, 0);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 11, "counted WAL");
+        backupResult = lstGet(backupList, 1);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 6, "counted WAL");
+        backupResult = lstGet(backupList, 2);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 0, "not counted WAL");
+        backupResult = lstGet(backupList, 3);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 0, "not counted WAL");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("Multiple archives");
+
+        backup = (VerifyBackupResult){
+            .backupLabel = strNewZ("2"),
+            .status = backupValid,
+            .pgId = 2,
+            .pgVersion = PG_VERSION_94,
+            .archiveStart = strNewZ("000000020000000200000004"),
+            .archiveStop = strNewZ("000000020000000200000005"),
+            .walInvalidCount = 0,
+        };
+        lstAdd(backupList, &backup);
+
+        TEST_RESULT_VOID(verifyUpdateWalFilesMissing(backupList, &archiveResult, missingStart, missingStop, &jobErrorTotal), "mark WAL range as missing");
+        TEST_RESULT_UINT(jobErrorTotal, 21, "found error");
+        backupResult = lstGet(backupList, 0);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 13, "counted WAL");
+        backupResult = lstGet(backupList, 1);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 8, "counted WAL");
+        backupResult = lstGet(backupList, 2);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 0, "not counted WAL");
+        backupResult = lstGet(backupList, 3);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 0, "not counted WAL");
+        backupResult = lstGet(backupList, 4);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 0, "not counted WAL");
+
+        archiveResult.archiveId = strNewZ("9.4-2");
+        TEST_RESULT_VOID(verifyUpdateWalFilesMissing(backupList, &archiveResult, missingStart, missingStop, &jobErrorTotal), "mark WAL range as missing");
+        TEST_RESULT_UINT(jobErrorTotal, 23, "found error");
+        backupResult = lstGet(backupList, 0);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 13, "not counted WAL");
+        backupResult = lstGet(backupList, 1);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 8, "not counted WAL");
+        backupResult = lstGet(backupList, 2);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 0, "not counted WAL");
+        backupResult = lstGet(backupList, 3);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 0, "not counted WAL");
+        backupResult = lstGet(backupList, 4);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 2, "counted WAL");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("verifyUpdateWalInvalid()"))
+    {
+        List *backupList = lstNewP(sizeof(VerifyBackupResult), .comparator = lstComparatorStr);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("Single backup");
+
+        VerifyBackupResult backup = {
+            .backupLabel = strNewZ("1"),
+            .status = backupValid,
+            .pgId = 1,
+            .pgVersion = PG_VERSION_94,
+            .archiveStart = strNewZ("000000020000000200000001"),
+            .archiveStop = strNewZ("000000020000000200000003"),
+            .walInvalidCount = 0,
+        };
+        lstAdd(backupList, &backup);
+
+        const String *archiveId = strNewZ("9.4-1");
+        const String *walSegment = strNewZ("000000020000000200000002");
+
+        TEST_RESULT_VOID(verifyUpdateWalInvalid(backupList, archiveId, walSegment), "mark WAL as invalid");
+        VerifyBackupResult *backupResult = lstGet(backupList, 0);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 1, "counted WAL");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("Two backups");
+
+        backup = (VerifyBackupResult){
+            .backupLabel = strNewZ("2"),
+            .status = backupValid,
+            .pgId = 1,
+            .pgVersion = PG_VERSION_94,
+            .archiveStart = strNewZ("000000020000000200000004"),
+            .archiveStop = strNewZ("000000020000000200000005"),
+            .walInvalidCount = 0,
+        };
+        lstAdd(backupList, &backup);
+
+        TEST_RESULT_VOID(verifyUpdateWalInvalid(backupList, archiveId, walSegment), "mark WAL as invalid");
+        backupResult = lstGet(backupList, 0);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 2, "counted WAL");
+        backupResult = lstGet(backupList, 1);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 0, "not counted WAL");
+
+        walSegment = strNewZ("000000020000000200000004");
+
+        TEST_RESULT_VOID(verifyUpdateWalInvalid(backupList, archiveId, walSegment), "mark WAL as invalid");
+        backupResult = lstGet(backupList, 0);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 2, "not counted WAL");
+        backupResult = lstGet(backupList, 1);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 1, "counted WAL");
+
+        walSegment = strNewZ("000000020000000200000005");
+
+        TEST_RESULT_VOID(verifyUpdateWalInvalid(backupList, archiveId, walSegment), "mark WAL as invalid");
+        backupResult = lstGet(backupList, 0);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 2, "not counted WAL");
+        backupResult = lstGet(backupList, 1);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 2, "counted WAL");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("Backups without ranges");
+
+        backup = (VerifyBackupResult){
+            .backupLabel = strNewZ("3"),
+            .status = backupValid,
+            .pgId = 1,
+            .pgVersion = PG_VERSION_94,
+            .walInvalidCount = 0,
+        };
+        lstAdd(backupList, &backup);
+
+        backup = (VerifyBackupResult){
+            .backupLabel = strNewZ("3"),
+            .status = backupValid,
+            .pgId = 1,
+            .pgVersion = PG_VERSION_94,
+            .walInvalidCount = 0,
+            .archiveStart = strNewZ("000000020000000200000005"),
+        };
+        lstAdd(backupList, &backup);
+
+        TEST_RESULT_VOID(verifyUpdateWalInvalid(backupList, archiveId, walSegment), "mark WAL as invalid");
+        backupResult = lstGet(backupList, 0);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 2, "not counted WAL");
+        backupResult = lstGet(backupList, 1);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 3, "counted WAL");
+        backupResult = lstGet(backupList, 2);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 0, "not counted WAL");
+        backupResult = lstGet(backupList, 3);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 0, "not counted WAL");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("Multiple archives");
+
+        backup = (VerifyBackupResult){
+            .backupLabel = strNewZ("2"),
+            .status = backupValid,
+            .pgId = 2,
+            .pgVersion = PG_VERSION_94,
+            .archiveStart = strNewZ("000000020000000200000004"),
+            .archiveStop = strNewZ("000000020000000200000005"),
+            .walInvalidCount = 0,
+        };
+        lstAdd(backupList, &backup);
+
+        TEST_RESULT_VOID(verifyUpdateWalInvalid(backupList, archiveId, walSegment), "mark WAL as invalid");
+        backupResult = lstGet(backupList, 0);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 2, "not counted WAL");
+        backupResult = lstGet(backupList, 1);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 4, "counted WAL");
+        backupResult = lstGet(backupList, 2);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 0, "not counted WAL");
+        backupResult = lstGet(backupList, 3);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 0, "not counted WAL");
+        backupResult = lstGet(backupList, 4);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 0, "not counted WAL");
+
+        archiveId = strNewZ("9.4-2");
+        TEST_RESULT_VOID(verifyUpdateWalInvalid(backupList, archiveId, walSegment), "mark WAL as invalid");
+        backupResult = lstGet(backupList, 0);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 2, "not counted WAL");
+        backupResult = lstGet(backupList, 1);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 4, "not counted WAL");
+        backupResult = lstGet(backupList, 2);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 0, "not counted WAL");
+        backupResult = lstGet(backupList, 3);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 0, "not counted WAL");
+        backupResult = lstGet(backupList, 4);
+        TEST_RESULT_UINT(backupResult->walInvalidCount, 1, "counted WAL");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("verifyCreateArchiveIdRange()"))
     {
         VerifyWalRange *walRangeResult = NULL;
@@ -648,6 +955,7 @@ testRun(void)
             "      \"missing\": 0,\n"
             "      \"checksumInvalid\": 0,\n"
             "      \"sizeInvalid\": 0,\n"
+            "      \"walInvalid\": 0,\n"
             "      \"other\": 0\n"
             "    }\n"
             "  ],\n"
@@ -690,6 +998,7 @@ testRun(void)
             "      \"missing\": 1,\n"
             "      \"checksumInvalid\": 0,\n"
             "      \"sizeInvalid\": 0,\n"
+            "      \"walInvalid\": 0,\n"
             "      \"other\": 0\n"
             "    }\n"
             "  ],\n"
@@ -702,6 +1011,7 @@ testRun(void)
             "      \"missing\": 1,\n"
             "      \"checksumInvalid\": 0,\n"
             "      \"sizeInvalid\": 0,\n"
+            "      \"walInvalid\": 0,\n"
             "      \"other\": 0\n"
             "    }\n"
             "  ]",
@@ -1347,6 +1657,7 @@ testRun(void)
             "      \"missing\": 0,\n"
             "      \"checksumInvalid\": 0,\n"
             "      \"sizeInvalid\": 0,\n"
+            "      \"walInvalid\": 0,\n"
             "      \"other\": 0\n"
             "    },\n"
             "    {\n"
@@ -1356,6 +1667,7 @@ testRun(void)
             "      \"missing\": 0,\n"
             "      \"checksumInvalid\": 1,\n"
             "      \"sizeInvalid\": 1,\n"
+            "      \"walInvalid\": 0,\n"
             "      \"other\": 0\n"
             "    }\n"
             "  ],\n"
@@ -1383,7 +1695,7 @@ testRun(void)
             "status: error\n"
             "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
             "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
-            "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n"
+            "    missing: 0, checksum invalid: 1, size invalid: 1, wal invalid: 0, other: 0\n"
             "  backup: none found",
             "verbose, with failures");
         TEST_RESULT_LOG(
@@ -1412,6 +1724,7 @@ testRun(void)
             "      \"missing\": 0,\n"
             "      \"checksumInvalid\": 0,\n"
             "      \"sizeInvalid\": 0,\n"
+            "      \"walInvalid\": 0,\n"
             "      \"other\": 0\n"
             "    },\n"
             "    {\n"
@@ -1421,6 +1734,7 @@ testRun(void)
             "      \"missing\": 0,\n"
             "      \"checksumInvalid\": 1,\n"
             "      \"sizeInvalid\": 1,\n"
+            "      \"walInvalid\": 0,\n"
             "      \"other\": 0\n"
             "    }\n"
             "  ],\n"
@@ -1447,7 +1761,7 @@ testRun(void)
             "status: error\n"
             "  archiveId: 9.4-1, total WAL checked: 0, total valid WAL: 0\n"
             "  archiveId: 11-2, total WAL checked: 4, total valid WAL: 2\n"
-            "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n"
+            "    missing: 0, checksum invalid: 1, size invalid: 1, wal invalid: 0, other: 0\n"
             "  backup: none found", "verify text output, verbose, with verify failures");
         TEST_RESULT_LOG(
             "P01   INFO: invalid checksum"
@@ -1741,6 +2055,385 @@ testRun(void)
             "P01   INFO: invalid result UNPROCESSEDBACKUP/pg_data/testother: [41] raised from local-1 shim protocol:"
             " unable to open file '" TEST_PATH "/repo/backup/db/UNPROCESSEDBACKUP/pg_data/testother' for read: [13]"
             " Permission denied");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("valid info files - WAL file errors");
+
+        // Load Parameters - single default repo
+        argList = strLstDup(argListBase);
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0),
+            STORAGE_REPO_ARCHIVE "/11-2/0000000400000008/000000040000000800000003-656817043007aa2100c44c712bcb456db705dab9",
+            walBuffer, .modeFile = 0200, .comment = "WAL - file not readable");
+
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0),
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000400000008/000000040000000800000002-%s", walBufferSha1), walBuffer,
+            .comment = "valid WAL");
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0),
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000400000008/000000040000000800000004-%s", walBufferSha1), walBuffer,
+            .comment = "valid WAL");
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0),
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000400000008/000000040000000800000005-%s", walBufferSha1), walBuffer,
+            .comment = "valid WAL");
+        // Skip WAL 000000040000000800000006
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0),
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000400000008/000000040000000800000007-%s", walBufferSha1), walBuffer,
+            .comment = "valid WAL");
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0),
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000400000008/000000040000000800000008-%s", walBufferSha1), walBuffer,
+            .comment = "valid WAL");
+
+        HRN_STORAGE_PATH_REMOVE(
+            storageRepoIdxWrite(0),
+            STORAGE_REPO_BACKUP "/20181119-152800F/",
+            .recurse = true,
+            .comment = "remove old backups");
+        HRN_STORAGE_PATH_REMOVE(
+            storageRepoIdxWrite(0),
+            STORAGE_REPO_BACKUP "/20181119-152810F/",
+            .recurse = true,
+            .comment = "remove old backups");
+        HRN_STORAGE_PATH_REMOVE(
+            storageRepoIdxWrite(0),
+            STORAGE_REPO_BACKUP "/20181119-152900F_20181119-152909D/",
+            .recurse = true,
+            .comment = "remove old backups");
+        HRN_STORAGE_PATH_REMOVE(
+            storageRepoIdxWrite(0),
+            STORAGE_REPO_BACKUP "/UNPROCESSEDBACKUP/",
+            .recurse = true,
+            .comment = "remove old backups");
+
+        // Write manifests for full backup containing unreadable file
+        manifestContent = strNewFmt(
+            "[backup]\n"
+            "backup-archive-start=\"000000040000000800000002\"\n"
+            "backup-archive-stop=\"000000040000000800000004\"\n"
+            "backup-label=\"20181119-152900F\"\n"
+            "backup-timestamp-copy-start=0\n"
+            "backup-timestamp-start=0\n"
+            "backup-timestamp-stop=0\n"
+            "backup-type=\"full\"\n"
+            "\n"
+            "[backup:db]\n"
+            TEST_BACKUP_DB2_11
+            TEST_MANIFEST_OPTION_ALL
+            TEST_MANIFEST_TARGET
+            TEST_MANIFEST_DB
+            "\n"
+            "[target:file]\n"
+            "pg_data/testvalid={\"checksum\":\"%s\",\"size\":7,\"timestamp\":1565282114}\n"
+            TEST_MANIFEST_FILE_DEFAULT
+            TEST_MANIFEST_LINK
+            TEST_MANIFEST_LINK_DEFAULT
+            TEST_MANIFEST_PATH
+            TEST_MANIFEST_PATH_DEFAULT,
+            strZ(strNewEncode(encodingHex, fileChecksum)));
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE, strZ(manifestContent),
+            .comment = "valid manifest");
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
+            strZ(manifestContent), .comment = "valid manifest copy");
+        HRN_STORAGE_PUT_Z(
+            storageRepoIdxWrite(0), STORAGE_REPO_BACKUP "/20181119-152900F/pg_data/testvalid", fileContents,
+            .comment = "put valid file");
+
+        // Write manifests for full backup containing only valid WAL files
+        manifestContent = strNewFmt(
+            "[backup]\n"
+            "backup-archive-start=\"000000040000000800000004\"\n"
+            "backup-archive-stop=\"000000040000000800000005\"\n"
+            "backup-label=\"20181119-153000F\"\n"
+            "backup-timestamp-copy-start=0\n"
+            "backup-timestamp-start=0\n"
+            "backup-timestamp-stop=0\n"
+            "backup-type=\"full\"\n"
+            "\n"
+            "[backup:db]\n"
+            TEST_BACKUP_DB2_11
+            TEST_MANIFEST_OPTION_ALL
+            TEST_MANIFEST_TARGET
+            TEST_MANIFEST_DB
+            "\n"
+            "[target:file]\n"
+            "pg_data/testvalid={\"checksum\":\"%s\",\"size\":7,\"timestamp\":1565282114}\n"
+            TEST_MANIFEST_FILE_DEFAULT
+            TEST_MANIFEST_LINK
+            TEST_MANIFEST_LINK_DEFAULT
+            TEST_MANIFEST_PATH
+            TEST_MANIFEST_PATH_DEFAULT,
+            strZ(strNewEncode(encodingHex, fileChecksum)));
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), STORAGE_REPO_BACKUP "/20181119-153000F/" BACKUP_MANIFEST_FILE, strZ(manifestContent),
+            .comment = "valid manifest");
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), STORAGE_REPO_BACKUP "/20181119-153000F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
+            strZ(manifestContent), .comment = "valid manifest copy");
+        HRN_STORAGE_PUT_Z(
+            storageRepoIdxWrite(0), STORAGE_REPO_BACKUP "/20181119-153000F/pg_data/testvalid", fileContents,
+            .comment = "put valid file");
+
+        // Write manifests for full backup containing missing WAL file
+        manifestContent = strNewFmt(
+            "[backup]\n"
+            "backup-archive-start=\"000000040000000800000006\"\n"
+            "backup-archive-stop=\"000000040000000800000007\"\n"
+            "backup-label=\"20181119-153100F\"\n"
+            "backup-timestamp-copy-start=0\n"
+            "backup-timestamp-start=0\n"
+            "backup-timestamp-stop=0\n"
+            "backup-type=\"full\"\n"
+            "\n"
+            "[backup:db]\n"
+            TEST_BACKUP_DB2_11
+            TEST_MANIFEST_OPTION_ALL
+            TEST_MANIFEST_TARGET
+            TEST_MANIFEST_DB
+            "\n"
+            "[target:file]\n"
+            "pg_data/testvalid={\"checksum\":\"%s\",\"size\":7,\"timestamp\":1565282114}\n"
+            TEST_MANIFEST_FILE_DEFAULT
+            TEST_MANIFEST_LINK
+            TEST_MANIFEST_LINK_DEFAULT
+            TEST_MANIFEST_PATH
+            TEST_MANIFEST_PATH_DEFAULT,
+            strZ(strNewEncode(encodingHex, fileChecksum)));
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), STORAGE_REPO_BACKUP "/20181119-153100F/" BACKUP_MANIFEST_FILE, strZ(manifestContent),
+            .comment = "valid manifest");
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), STORAGE_REPO_BACKUP "/20181119-153100F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
+            strZ(manifestContent), .comment = "valid manifest copy");
+        HRN_STORAGE_PUT_Z(
+            storageRepoIdxWrite(0), STORAGE_REPO_BACKUP "/20181119-153100F/pg_data/testvalid", fileContents,
+            .comment = "put valid file");
+
+        // Write manifests for full backup containing missing WAL file and no files
+        manifestContent = strNewFmt(
+            "[backup]\n"
+            "backup-archive-start=\"000000040000000800000006\"\n"
+            "backup-archive-stop=\"000000040000000800000007\"\n"
+            "backup-label=\"20181119-153200F\"\n"
+            "backup-timestamp-copy-start=0\n"
+            "backup-timestamp-start=0\n"
+            "backup-timestamp-stop=0\n"
+            "backup-type=\"full\"\n"
+            "\n"
+            "[backup:db]\n"
+            TEST_BACKUP_DB2_11
+            TEST_MANIFEST_OPTION_ALL
+            TEST_MANIFEST_TARGET
+            TEST_MANIFEST_DB);
+
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), STORAGE_REPO_BACKUP "/20181119-153200F/" BACKUP_MANIFEST_FILE, strZ(manifestContent),
+            .comment = "valid manifest");
+        HRN_INFO_PUT(
+            storageRepoIdxWrite(0), STORAGE_REPO_BACKUP "/20181119-153200F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
+            strZ(manifestContent), .comment = "valid manifest copy");
+
+        // Set log level to capture ranges
+        harnessLogLevelSet(logLevelDetail);
+
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptVerbose), false, "verbose is false");
+        TEST_RESULT_BOOL((cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT), false, "text is false");
+
+        // Redirect stdout to a file
+        stdoutSave = dup(STDOUT_FILENO);
+        stdoutFile = STRDEF(TEST_PATH "/stdout.info");
+
+        THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
+
+        // Not in a test wrapper to avoid writing to stdout
+        cmdVerify();
+
+        // Restore normal stdout
+        dup2(stdoutSave, STDOUT_FILENO);
+
+        // Check output of verify command stored in file
+        TEST_STORAGE_GET(storageTest, strZ(stdoutFile), "", .remove = true);
+        TEST_RESULT_LOG(
+            "P00 DETAIL: archive path '9.4-1' is empty\n"
+            "P00 DETAIL: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
+            "P01   INFO: invalid checksum"
+            " '11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
+            "P01   INFO: invalid size"
+            " '11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
+            "P01   INFO: invalid result"
+            " 11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9: [41] raised from "
+            "local-1 shim protocol: unable to open file '" TEST_PATH "/repo/archive/db"
+            "/11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read:"
+            " [13] Permission denied\n"
+            "P01   INFO: invalid result"
+            " 11-2/0000000400000008/000000040000000800000003-656817043007aa2100c44c712bcb456db705dab9: [41] raised from "
+            "local-1 shim protocol: unable to open file '" TEST_PATH "/repo/archive/db"
+            "/11-2/0000000400000008/000000040000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read:"
+            " [13] Permission denied\n"
+            "P00   INFO: backup '20181119-153200F' manifest does not contain any target files to verify\n"
+            "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000\n"
+            "P00 DETAIL: archiveId: 11-2, wal start: 000000020000000800000002, wal stop: 000000020000000800000003\n"
+            "P00 DETAIL: archiveId: 11-2, wal start: 000000030000000000000000, wal stop: 000000030000000000000001\n"
+            "P00 DETAIL: archiveId: 11-2, wal start: 000000040000000800000002, wal stop: 000000040000000800000005\n"
+            "P00 DETAIL: archiveId: 11-2, wal start: 000000040000000800000007, wal stop: 000000040000000800000008\n"
+            "P00   INFO: stanza: db\n"
+            "            status: error\n"
+            "              archiveId: 11-2, total WAL checked: 14, total valid WAL: 10\n"
+            "                checksum invalid: 1, size invalid: 1, other: 2\n"
+            "              backup: 20181119-152900F, status: invalid, total files checked: 1, total valid files: 1\n"
+            "                wal invalid: 1\n"
+            "              backup: 20181119-153100F, status: invalid, total files checked: 1, total valid files: 1\n"
+            "                wal invalid: 1\n"
+            "              backup: 20181119-153200F, status: invalid, total files checked: 0, total valid files: 0\n"
+            "                wal invalid: 1");
+
+        harnessLogLevelReset();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("text output, not verbose, with WAL file errors");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptOutput, "text");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        // Verify text output, not verbose, with WAL file errors
+        TEST_RESULT_STR_Z(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            "stanza: db\n"
+            "status: error\n"
+            "  archiveId: 11-2, total WAL checked: 14, total valid WAL: 10\n"
+            "    checksum invalid: 1, size invalid: 1, other: 2\n"
+            "  backup: 20181119-152900F, status: invalid, total files checked: 1, total valid files: 1\n"
+            "    wal invalid: 1\n"
+            "  backup: 20181119-153100F, status: invalid, total files checked: 1, total valid files: 1\n"
+            "    wal invalid: 1\n"
+            "  backup: 20181119-153200F, status: invalid, total files checked: 0, total valid files: 0\n"
+            "    wal invalid: 1", "verify text output, not verbose, with WAL file errors");
+        TEST_RESULT_LOG(
+            "P01   INFO: invalid checksum"
+            " '11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
+            "P01   INFO: invalid size"
+            " '11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
+            "P01   INFO: invalid result"
+            " 11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9: [41] raised from "
+            "local-1 shim protocol: unable to open file '" TEST_PATH "/repo/archive/db"
+            "/11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read:"
+            " [13] Permission denied\n"
+            "P01   INFO: invalid result"
+            " 11-2/0000000400000008/000000040000000800000003-656817043007aa2100c44c712bcb456db705dab9: [41] raised from "
+            "local-1 shim protocol: unable to open file '" TEST_PATH "/repo/archive/db"
+            "/11-2/0000000400000008/000000040000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read:"
+            " [13] Permission denied\n"
+            "P00   INFO: backup '20181119-153200F' manifest does not contain any target files to verify");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("json output, not verbose, with WAL file errors");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptOutput, "json");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        // Verify text output, not verbose, with WAL file errors
+        TEST_RESULT_STR_Z(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            "{\n"
+            "  \"stanza\": \"db\",\n"
+            "  \"status\": \"error\",\n"
+            "  \"archives\": [\n"
+            "    {\n"
+            "      \"archiveId\": \"9.4-1\",\n"
+            "      \"checked\": 0,\n"
+            "      \"valid\": 0,\n"
+            "      \"missing\": 0,\n"
+            "      \"checksumInvalid\": 0,\n"
+            "      \"sizeInvalid\": 0,\n"
+            "      \"walInvalid\": 0,\n"
+            "      \"other\": 0\n"
+            "    },\n"
+            "    {\n"
+            "      \"archiveId\": \"11-2\",\n"
+            "      \"checked\": 14,\n"
+            "      \"valid\": 10,\n"
+            "      \"missing\": 0,\n"
+            "      \"checksumInvalid\": 1,\n"
+            "      \"sizeInvalid\": 1,\n"
+            "      \"walInvalid\": 0,\n"
+            "      \"other\": 2\n"
+            "    }\n"
+            "  ],\n"
+            "  \"backups\": [\n"
+            "    {\n"
+            "      \"label\": \"20181119-152900F\",\n"
+            "      \"status\": \"invalid\",\n"
+            "      \"checked\": 1,\n"
+            "      \"valid\": 1,\n"
+            "      \"missing\": 0,\n"
+            "      \"checksumInvalid\": 0,\n"
+            "      \"sizeInvalid\": 0,\n"
+            "      \"walInvalid\": 1,\n"
+            "      \"other\": 0\n"
+            "    },\n"
+            "    {\n"
+            "      \"label\": \"20181119-153000F\",\n"
+            "      \"status\": \"valid\",\n"
+            "      \"checked\": 1,\n"
+            "      \"valid\": 1,\n"
+            "      \"missing\": 0,\n"
+            "      \"checksumInvalid\": 0,\n"
+            "      \"sizeInvalid\": 0,\n"
+            "      \"walInvalid\": 0,\n"
+            "      \"other\": 0\n"
+            "    },\n"
+            "    {\n"
+            "      \"label\": \"20181119-153100F\",\n"
+            "      \"status\": \"invalid\",\n"
+            "      \"checked\": 1,\n"
+            "      \"valid\": 1,\n"
+            "      \"missing\": 0,\n"
+            "      \"checksumInvalid\": 0,\n"
+            "      \"sizeInvalid\": 0,\n"
+            "      \"walInvalid\": 1,\n"
+            "      \"other\": 0\n"
+            "    },\n"
+            "    {\n"
+            "      \"label\": \"20181119-153200F\",\n"
+            "      \"status\": \"invalid\",\n"
+            "      \"checked\": 0,\n"
+            "      \"valid\": 0,\n"
+            "      \"missing\": 0,\n"
+            "      \"checksumInvalid\": 0,\n"
+            "      \"sizeInvalid\": 0,\n"
+            "      \"walInvalid\": 1,\n"
+            "      \"other\": 0\n"
+            "    }\n"
+            "  ]\n"
+            "}\n", "verify json output, not verbose, with WAL file errors");
+        TEST_RESULT_LOG(
+            "P01   INFO: invalid checksum"
+            " '11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
+            "P01   INFO: invalid size"
+            " '11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\n"
+            "P01   INFO: invalid result"
+            " 11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9: [41] raised from "
+            "local-1 shim protocol: unable to open file '" TEST_PATH "/repo/archive/db"
+            "/11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read:"
+            " [13] Permission denied\n"
+            "P01   INFO: invalid result"
+            " 11-2/0000000400000008/000000040000000800000003-656817043007aa2100c44c712bcb456db705dab9: [41] raised from "
+            "local-1 shim protocol: unable to open file '" TEST_PATH "/repo/archive/db"
+            "/11-2/0000000400000008/000000040000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read:"
+            " [13] Permission denied\n"
+            "P00   INFO: backup '20181119-153200F' manifest does not contain any target files to verify");
     }
 
     // *****************************************************************************************************************************
@@ -1792,6 +2485,7 @@ testRun(void)
             "      \"missing\": 0,\n"
             "      \"checksumInvalid\": 0,\n"
             "      \"sizeInvalid\": 0,\n"
+            "      \"walInvalid\": 0,\n"
             "      \"other\": 0\n"
             "    }\n"
             "  ]\n"
@@ -2201,9 +2895,9 @@ testRun(void)
             "status: error\n"
             "  archiveId: none found\n"
             "  backup: 20181119-152900F, status: invalid, total files checked: 2, total valid files: 0\n"
-            "    missing: 0, checksum invalid: 2, size invalid: 0, other: 0\n"
+            "    missing: 0, checksum invalid: 2, size invalid: 0, wal invalid: 0, other: 0\n"
             "  backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 2, total valid files: 1\n"
-            "    missing: 0, checksum invalid: 1, size invalid: 0, other: 0\n", .remove = true);
+            "    missing: 0, checksum invalid: 1, size invalid: 0, wal invalid: 0, other: 0\n", .remove = true);
         TEST_RESULT_LOG(
             "P01   INFO: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
             "P01   INFO: invalid checksum '20181119-152900F/pg_data/biind.pgbi'\n"
@@ -2211,10 +2905,10 @@ testRun(void)
             "            status: error\n"
             "              archiveId: none found\n"
             "              backup: 20181119-152900F, status: invalid, total files checked: 2, total valid files: 0\n"
-            "                missing: 0, checksum invalid: 2, size invalid: 0, other: 0\n"
+            "                missing: 0, checksum invalid: 2, size invalid: 0, wal invalid: 0, other: 0\n"
             "              backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 2,"
             " total valid files: 1\n"
-            "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0");
+            "                missing: 0, checksum invalid: 1, size invalid: 0, wal invalid: 0, other: 0");
     }
 
     // *****************************************************************************************************************************
@@ -2344,6 +3038,7 @@ testRun(void)
             "      \"missing\": 0,\n"
             "      \"checksumInvalid\": 2,\n"
             "      \"sizeInvalid\": 0,\n"
+            "      \"walInvalid\": 0,\n"
             "      \"other\": 0\n"
             "    },\n"
             "    {\n"
@@ -2354,6 +3049,7 @@ testRun(void)
             "      \"missing\": 0,\n"
             "      \"checksumInvalid\": 1,\n"
             "      \"sizeInvalid\": 0,\n"
+            "      \"walInvalid\": 0,\n"
             "      \"other\": 0\n"
             "    }\n"
             "  ]\n"
@@ -2452,7 +3148,7 @@ testRun(void)
             "stanza: db\n"
             "status: ok\n"
             "  archiveId: 11-2, total WAL checked: 2, total valid WAL: 2\n"
-            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, wal invalid: 0, other: 0\n"
             "  backup: none found",
             "verify none output, verbose, with no failures");
         TEST_RESULT_LOG(
@@ -2568,7 +3264,7 @@ testRun(void)
             "stanza: db\n"
             "status: ok\n"
             "  archiveId: 11-2, total WAL checked: 1, total valid WAL: 1\n"
-            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, wal invalid: 0, other: 0\n"
             "  backup: none found", "verify text output, verbose, with no failures");
         TEST_RESULT_LOG(
             "P00 DETAIL: no backups exist in the repo\n"
@@ -2679,7 +3375,7 @@ testRun(void)
             "status: error\n"
             "  archiveId: none found\n"
             "  backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 1, total valid files: 0\n"
-            "    missing: 0, checksum invalid: 1, size invalid: 0, other: 0", "--set with a valid backup label\n");
+            "    missing: 0, checksum invalid: 1, size invalid: 0, wal invalid: 0, other: 0", "--set with a valid backup label\n");
         TEST_RESULT_LOG(
             "P00 DETAIL: no archives exist in the repo\n"
             "P01   INFO: invalid checksum '20181119-152900F/pg_data/PG_VERSION'");

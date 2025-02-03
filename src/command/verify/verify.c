@@ -108,6 +108,7 @@ typedef struct VerifyBackupResult
     String *archiveStart;                                           // First WAL segment in the backup
     String *archiveStop;                                            // Last WAL segment in the backup
     List *invalidFileList;                                          // List of invalid files found in the backup
+    unsigned int walInvalidCount;                                   // Total number of invalid WAL segment files in the backup
 } VerifyBackupResult;
 
 // Job data stucture for processing and results collection
@@ -530,6 +531,146 @@ verifyPgHistory(const InfoPg *const archiveInfoPg, const InfoPg *const backupInf
             {
                 THROW(FormatError, strZ(errMsg));
             }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Update walInvalidCount in backups affected by a range of missing WAL segments.
+***********************************************************************************************************************************/
+static void
+verifyUpdateWalFilesMissing(
+    const List *const backupList, const VerifyArchiveResult *const archiveIdResult,
+    const String *const missingStart, const String *const missingStop, unsigned int *const jobErrorTotal)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST, backupList);                          // List of VerifyBackupResults, to be updated
+        FUNCTION_TEST_PARAM_P(VERIFY_ARCHIVE_RESULT, archiveIdResult);  // Current VerifyArchiveResult
+        FUNCTION_TEST_PARAM(STRING, missingStart);                      // Start of the range of missing files, inclusive. NULL
+                                                                        // means "from the start"
+        FUNCTION_TEST_PARAM(STRING, missingStop);                       // End of the range of missing files, exclusive. NULL means
+                                                                        // "to the end"
+        FUNCTION_TEST_PARAM_P(UINT, jobErrorTotal);                     // Pointer to the overall job error total
+    FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
+
+    ASSERT(backupList != NULL);
+    ASSERT(archiveIdResult != NULL);
+    ASSERT(missingStart == NULL || missingStop == NULL || strCmp(missingStart, missingStop) <= 0);
+    ASSERT(missingStart != NULL || missingStop != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        for (unsigned int backupIdx = 0; backupIdx < lstSize(backupList); backupIdx++)
+        {
+            VerifyBackupResult *backup = lstGet(backupList, backupIdx);
+            // Tests do not set archiveStart and archiveStop for most backups, so we skip them.
+            // An actual backup created by pgbackrest would have these fields specified.
+            if (backup->archiveStart == NULL || backup->archiveStop == NULL)
+                continue;
+
+            // Check if this backup corresponds to the current archiveId
+            String *const version = pgVersionToStr(backup->pgVersion);
+            String *const archiveId = strNewFmt("%s-%u", strZ(version), backup->pgId);
+            if (!strEq(archiveId, archiveIdResult->archiveId))
+                continue;
+
+            // We assume [start, stop] forms a valid range
+            ASSERT(strCmp(backup->archiveStart, backup->archiveStop) <= 0);
+
+            // We do not process backups from the wrong timeline
+            const String *const anyMissing = missingStart ? missingStart : missingStop;
+            const String *const missingTimeline = strSubN(anyMissing, 0, 8);
+            const String *const backupTimeline = strSubN(backup->archiveStart, 0, 8);
+            bool wrongTimeline = !strEq(missingTimeline, backupTimeline);
+            // Backups have inclusive ranges, so [A, B] is placed before [C, D) if B < C (so A <= B < C < D)
+            // but [A, B] is placed after [C, D) if D <= A (so C < D <= A <= B).
+            // We skip any backups that don't overlap the range with missing files.
+            bool backupIsBeforeRange = missingStart && strCmp(backup->archiveStop, missingStart) < 0;
+            bool backupIsAfterRange = missingStop && strCmp(missingStop, backup->archiveStart) <= 0;
+            if (wrongTimeline || backupIsBeforeRange || backupIsAfterRange)
+                continue;
+
+            // Convert inclusive range [start, stop] to exclusive [start, stop+1)
+            const String *const backupStopExclusive =
+                walSegmentNext(backup->archiveStop, (size_t)archiveIdResult->pgWalInfo.size, archiveIdResult->pgWalInfo.version);
+            // Overlap of ranges [A, B) and [C, D) is [max(A, C), min(B, D))
+            // Since NULLs in missing file range corresponds to negative/positive infinity,
+            // we can simply choose the other value if NULL is present.
+            // Then the size of the overlap is simply min(B, D) - max(A, C)
+            const String *const overlapStart = missingStart && strCmp(backup->archiveStart, missingStart) < 0 ?
+                                                   missingStart : backup->archiveStart;
+            const String *const overlapEnd = missingStop && strCmp(backupStopExclusive, missingStop) > 0 ?
+                                                 missingStop : backupStopExclusive;
+            int overlapSize = walSegmentDist(overlapStart, overlapEnd,
+                                             (size_t)archiveIdResult->pgWalInfo.size,
+                                             archiveIdResult->pgWalInfo.version);
+            ASSERT(overlapSize >= 0);
+
+            if (overlapSize > 0)
+            {
+                backup->walInvalidCount += (unsigned int)overlapSize;
+                *jobErrorTotal += (unsigned int)overlapSize;
+                backup->status = backupInvalid;
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Update walInvalidCount in backups affected by invalid WAL segment
+***********************************************************************************************************************************/
+static void
+verifyUpdateWalInvalid(
+    const List *const backupList, const String *const archiveId, const String *const walSegment)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST, backupList);      // List of VerifyBackupResults, to be updated
+        FUNCTION_TEST_PARAM(STRING, archiveId);     // Archive ID of the current archive
+        FUNCTION_TEST_PARAM(STRING, walSegment);    // Invalid WAL segment to be accounted for
+    FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
+
+    ASSERT(backupList != NULL);
+    ASSERT(archiveId != NULL);
+    ASSERT(walSegment != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        for (unsigned int backupIdx = 0; backupIdx < lstSize(backupList); backupIdx++)
+        {
+            VerifyBackupResult *backup = lstGet(backupList, backupIdx);
+            // Tests do not set archiveStart and archiveStop for most backups, so we skip them.
+            // An actual backup created by pgbackrest would have these fields specified.
+            if (backup->archiveStart == NULL || backup->archiveStop == NULL)
+                continue;
+
+            // Check if this backup corresponds to the current archiveId
+            String *const version = pgVersionToStr(backup->pgVersion);
+            String *const thisArchiveId = strNewFmt("%s-%u", strZ(version), backup->pgId);
+            if (!strEq(thisArchiveId, archiveId))
+                continue;
+
+            // We assume [start, stop] forms a valid range
+            ASSERT(strCmp(backup->archiveStart, backup->archiveStop) <= 0);
+
+            // X is before [A, B] if X < A, and after [A, B] if B < X.
+            // This also accounts for segment and range being in different timelines.
+            bool segmentIsBeforeBackup = strCmp(walSegment, backup->archiveStart) < 0;
+            bool segmentIsAfterBackup = strCmp(backup->archiveStop, walSegment) < 0;
+            if (segmentIsBeforeBackup || segmentIsAfterBackup)
+                continue;
+
+            backup->walInvalidCount++;
+            backup->status = backupInvalid;
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -1285,13 +1426,14 @@ Create file errors string
 static String *
 verifyCreateFileErrorsStr(
     const unsigned int errMissing, const unsigned int errChecksum, const unsigned int errSize, const unsigned int errOther,
-    const bool verboseText)
+    const unsigned int walInvalid, const bool verboseText)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, errMissing);                      // Number of files missing
         FUNCTION_TEST_PARAM(UINT, errChecksum);                     // Number of files with checksum errors
         FUNCTION_TEST_PARAM(UINT, errSize);                         // Number of files with invalid size
         FUNCTION_TEST_PARAM(UINT, errOther);                        // Number of files with other errors
+        FUNCTION_TEST_PARAM(UINT, walInvalid);                      // Number of invalid WAL files
         FUNCTION_TEST_PARAM(BOOL, verboseText);                     // Is verbose output requested
     FUNCTION_TEST_END();
 
@@ -1301,10 +1443,11 @@ verifyCreateFileErrorsStr(
     {
         // List all if verbose text, otherwise only list if type has errors
         strCatFmt(
-            result, "\n    %s%s%s%s",
+            result, "\n    %s%s%s%s%s",
             verboseText || errMissing ? zNewFmt("missing: %u, ", errMissing) : "",
             verboseText || errChecksum ? zNewFmt("checksum invalid: %u, ", errChecksum) : "",
             verboseText || errSize ? zNewFmt("size invalid: %u, ", errSize) : "",
+            verboseText || walInvalid ? zNewFmt("wal invalid: %u, ", walInvalid) : "",
             verboseText || errOther ? zNewFmt("other: %u", errOther) : "");
 
         // Clean up trailing comma when necessary
@@ -1413,13 +1556,14 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
                               "\n      \"missing\": %u,"
                               "\n      \"checksumInvalid\": %u,"
                               "\n      \"sizeInvalid\": %u,"
+                              "\n      \"walInvalid\": 0,"
                               "\n      \"other\": %u\n    }",
                               errMissing, errChecksum, errSize, errOther);
                 }
                 // Create/append file errors string
                 else if (verboseText || errMissing + errChecksum + errSize + errOther > 0)
                 {
-                    const String *errorStr = verifyCreateFileErrorsStr(errMissing, errChecksum, errSize, errOther, verboseText);
+                    const String *errorStr = verifyCreateFileErrorsStr(errMissing, errChecksum, errSize, errOther, 0, verboseText);
                     strCat(result, errorStr);
                 }
             }
@@ -1431,6 +1575,7 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
                             "\n      \"missing\": 0,"
                             "\n      \"checksumInvalid\": 0,"
                             "\n      \"sizeInvalid\": 0,"
+                            "\n      \"walInvalid\": 0,"
                             "\n      \"other\": 0\n    }");
                 }
             }
@@ -1490,12 +1635,13 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
                     strZ(backupResult->backupLabel), status, backupResult->totalFileVerify, backupResult->totalFileValid);
             }
 
-            if (backupResult->totalFileVerify > 0)
+            if (backupResult->totalFileVerify > 0 || backupResult->walInvalidCount > 0)
             {
                 unsigned int errMissing = 0;
                 unsigned int errChecksum = 0;
                 unsigned int errSize = 0;
                 unsigned int errOther = 0;
+                unsigned int walInvalid = backupResult->walInvalidCount;
 
                 for (unsigned int invalidIdx = 0; invalidIdx < lstSize(backupResult->invalidFileList); invalidIdx++)
                 {
@@ -1519,12 +1665,13 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
                         ",\n      \"missing\": %u,"
                         "\n      \"checksumInvalid\": %u,"
                         "\n      \"sizeInvalid\": %u,"
+                        "\n      \"walInvalid\": %u,"
                         "\n      \"other\": %u\n    }",
-                        errMissing, errChecksum, errSize, errOther);
+                        errMissing, errChecksum, errSize, walInvalid, errOther);
                 }
-                else if (verboseText || errMissing + errChecksum + errSize + errOther > 0)
+                else if (verboseText || errMissing + errChecksum + errSize + errOther + walInvalid > 0)
                 {
-                    strCat(result, verifyCreateFileErrorsStr(errMissing, errChecksum, errSize, errOther, verboseText));
+                    strCat(result, verifyCreateFileErrorsStr(errMissing, errChecksum, errSize, errOther, walInvalid, verboseText));
                 }
             }
             else
@@ -1535,6 +1682,7 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
                             ",\n      \"missing\": 0,"
                             "\n      \"checksumInvalid\": 0,"
                             "\n      \"sizeInvalid\": 0,"
+                            "\n      \"walInvalid\": 0,"
                             "\n      \"other\": 0\n    }");
                 }
             }
@@ -1852,7 +2000,38 @@ verifyProcess(const bool verboseText)
                 }
                 MEM_CONTEXT_TEMP_END();
 
-                // ??? Need to do the final reconciliation - checking backup required WAL against, valid WAL
+                // Final reconciliation - checking backups against WAL errors and missing WAL files
+                for (unsigned int archiveIdx = 0; archiveIdx < lstSize(jobData.archiveIdResultList); archiveIdx++)
+                {
+                    const VerifyArchiveResult *const archiveIdResult = lstGet(jobData.archiveIdResultList, archiveIdx);
+                    // First missing file after the previous WAL range
+                    const String *gapStart = NULL;
+                    for (unsigned int rangeIdx = 0; rangeIdx < lstSize(archiveIdResult->walRangeList); rangeIdx++)
+                    {
+                        const VerifyWalRange *const range = lstGet(archiveIdResult->walRangeList, rangeIdx);
+                        // Process all the WAL errors in this range
+                        for (unsigned int invalidFileIdx = 0; invalidFileIdx < lstSize(range->invalidFileList); invalidFileIdx++)
+                        {
+                            // Find the proper WAL segment name to update the backup invalidWalCounts
+                            const VerifyInvalidFile *const invalidFile = lstGet(range->invalidFileList, invalidFileIdx);
+                            const StringList *const filePathLst = strLstNewSplit(invalidFile->fileName, FSLASH_STR);
+                            const String *const fileName =
+                                strSubN(strLstGet(filePathLst, strLstSize(filePathLst) - 1), 0, WAL_SEGMENT_NAME_SIZE);
+                            verifyUpdateWalInvalid(jobData.backupResultList, archiveIdResult->archiveId, fileName);
+                        }
+
+                        // Process the missing files between the WAL ranges
+                        verifyUpdateWalFilesMissing(jobData.backupResultList, archiveIdResult,
+                                                    gapStart, range->start, &jobData.jobErrorTotal);
+                        gapStart = walSegmentNext(range->stop, (size_t) archiveIdResult->pgWalInfo.size,
+                                                  archiveIdResult->pgWalInfo.version);
+                    }
+
+                    // If we had at least one WAL range, mark all files after the last range as missing
+                    if (gapStart != NULL)
+                        verifyUpdateWalFilesMissing(jobData.backupResultList, archiveIdResult,
+                                                    gapStart, NULL, &jobData.jobErrorTotal);
+                }
 
                 // Report results
                 resultStr = verifyRender(jobData.archiveIdResultList, jobData.backupResultList, verboseText, json);
