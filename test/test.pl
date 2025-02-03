@@ -435,6 +435,23 @@ eval
 
     buildPutDiffers($oStorageBackRest, "${strBackRestBase}/meson.build", $strMesonBuildNew);
 
+    # Auto-generate version for version.h
+    #-------------------------------------------------------------------------------------------------------------------------------
+    my $strVersionCOld = ${$oStorageTest->get("${strBackRestBase}/src/version.h")};
+    my $strVersionCNew;
+
+    foreach my $strLine (split("\n", $strVersionCOld))
+    {
+        if ($strLine =~ /^#define PROJECT_VERSION /)
+        {
+            $strLine = "#define PROJECT_VERSION" . (' ' x 45) . '"' . PROJECT_VERSION . '"';
+        }
+
+        $strVersionCNew .= "${strLine}\n";
+    }
+
+    buildPutDiffers($oStorageBackRest, "${strBackRestBase}/src/version.h", $strVersionCNew);
+
     # Start build container if vm is not none
     #-------------------------------------------------------------------------------------------------------------------------------
     if ($strVm ne VM_NONE)

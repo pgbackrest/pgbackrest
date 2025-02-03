@@ -243,16 +243,17 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
             }
             else
             {
-                if (resultType == pgClientQueryResultNone)
-                    THROW_FMT(DbQueryError, "no result expected from '%s'", strZ(query));
-
-                // Expect some rows to be returned
+                // If no tuples then the result is an error
                 if (resultStatus != PGRES_TUPLES_OK)
                 {
                     THROW_FMT(
                         DbQueryError, "unable to execute query '%s': %s", strZ(query),
                         strZ(strTrim(strNewZ(PQresultErrorMessage(pgResult)))));
                 }
+
+                // Expect some rows to be returned
+                if (resultType == pgClientQueryResultNone)
+                    THROW_FMT(DbQueryError, "no result expected from '%s'", strZ(query));
 
                 // Fetch row and column values
                 PackWrite *const pack = pckWriteNewP();

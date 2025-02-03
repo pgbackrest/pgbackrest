@@ -206,6 +206,8 @@ ioFilterGroupOpen(IoFilterGroup *const this)
 
             // If this is not the last output filter then create a new output buffer for it. The output buffer for the last filter
             // will be provided to the process function.
+            ASSERT(ioFilterGroupSize(this) != 0);
+
             if (ioFilterOutput(filterData->filter) && filterIdx < ioFilterGroupSize(this) - 1)
             {
                 filterData->output = bufNew(ioBufferSize());

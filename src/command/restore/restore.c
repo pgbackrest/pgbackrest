@@ -583,7 +583,9 @@ restoreManifestMap(Manifest *const manifest)
         // If all links are not being restored then check for links that were not remapped and remove them
         if (!cfgOptionBool(cfgOptLinkAll))
         {
-            for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(manifest); targetIdx++)
+            unsigned int targetIdx = 0;
+
+            while (targetIdx < manifestTargetTotal(manifest))
             {
                 const ManifestTarget *const target = manifestTarget(manifest, targetIdx);
 
@@ -605,9 +607,11 @@ restoreManifestMap(Manifest *const manifest)
 
                         manifestLinkRemove(manifest, target->name);
                         manifestTargetRemove(manifest, target->name);
-                        targetIdx--;
+                        continue;
                     }
                 }
+
+                targetIdx++;
             }
         }
     }

@@ -43,7 +43,6 @@ src_common = files(
     'common/io/write.c',
     'common/log.c',
     'common/memContext.c',
-    'common/regExp.c',
     'common/stackTrace.c',
     'common/time.c',
     'common/type/blob.c',
@@ -76,6 +75,7 @@ src_common = files(
 # Build code target
 ####################################################################################################################################
 src_build_code = [
+    'build/common/regExp.c',
     'build/common/render.c',
     'build/common/string.c',
     'build/common/xml.c',
@@ -218,6 +218,7 @@ src_pgbackrest = [
     'common/io/tls/server.c',
     'common/io/tls/session.c',
     'common/lock.c',
+    'common/regExp.c',
     'common/stat.c',
     'common/type/json.c',
     'common/type/string.c',

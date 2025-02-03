@@ -46,6 +46,34 @@ git commit -m "Release test"
 git push origin release-ci
 ```
 
+## Run Coverity
+
+- Prepare Coverity build directory (update version/paths as required):
+```
+mkdir scratch-coverity
+tar -xvf ~/Downloads/cov-analysis-linux-arm64-2024.6.1.tar.gz --strip-components=1 -C ~/Documents/Code/pgbackrest/test/
+export COVERITY_TOKEN=?
+export COVERITY_EMAIL=?
+export COVERITY_VERSION=?
+```
+
+- Clean directories and run Coverity:
+```
+rm -rf .cache/ccache && rm -rf build && rm -rf pgbackrest.tgz && rm -rf cov-int
+meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug build pgbackrest
+pgbackrest/test/scratch-coverity/bin/cov-build --dir cov-int ninja -C build
+tar czvf pgbackrest.tgz cov-int
+```
+
+- Upload results:
+```
+curl --form token=${COVERITY_TOKEN?} --form email="${COVERITY_EMAIL?}" --form file=@pgbackrest.tgz \
+    --form version="${COVERITY_VERSION?}" --form description="dev build" \
+    "https://scan.coverity.com/builds?project=pgbackrest%2Fpgbackrest"
+```
+
+Check issues at https://scan.coverity.com/projects/pgbackrest-pgbackrest then fix and repeat Coverity runs as needed.
+
 ## Perform stress testing on release
 
 - Build the documentation with stress testing enabled:

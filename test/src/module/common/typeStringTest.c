@@ -12,7 +12,7 @@ Test enum and function to ensure 64-bit enums work properly
 typedef enum
 {
     testStringIdEnumAes256Cbc = STRID5("aes-256-cbc", 0xc43dfbbcdcca10),
-    testStringIdEnumRemote = STRID6("remote", 0x1543cd1521),
+    testStringIdEnumRemote = STRID6("remote9", 0x251543cd1521),
     testStringIdEnumTest = STRID5("test", 0xa4cb40),
 } TestStringIdEnum;
 
@@ -712,7 +712,7 @@ testRun(void)
         TEST_RESULT_STR_Z(strIdToStr(testStringIdEnumFunc(testStringIdEnumAes256Cbc)), "aes-256-cbc", "pass to enum param");
 
         TestStringIdEnum testEnum = testStringIdEnumRemote;
-        TEST_RESULT_STR_Z(strIdToStr(testEnum), "remote", "assign to enum");
+        TEST_RESULT_STR_Z(strIdToStr(testEnum), "remote9", "assign to enum");
 
         TEST_RESULT_STR_Z(strIdToStr(testStringIdEnumTest), "test", "pass to StringId param");
 
