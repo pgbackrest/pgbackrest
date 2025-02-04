@@ -1095,6 +1095,9 @@ testRun(void)
         TEST_TITLE("block incremental config map");
 
         TEST_ERROR(
+            backupBlockIncrMapSize(cfgOptRepoBlockSizeMap, 0, STRDEF("0")), OptionInvalidValueError,
+            "'0' is not valid for 'repo1-block-size-map' option");
+        TEST_ERROR(
             backupBlockIncrMapSize(cfgOptRepoBlockSizeMap, 0, STRDEF("Z")), OptionInvalidValueError,
             "'Z' is not valid for 'repo1-block-size-map' option");
         TEST_ERROR(

@@ -341,28 +341,27 @@ backupBlockIncrMapSize(const ConfigOption optionId, const unsigned int optionKey
         FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
 
-    unsigned int result = 0;
+    int64_t result;
 
     TRY_BEGIN()
     {
-        const int64_t valueI64 = cfgParseSize(value);
+        result = cfgParseSize(value);
 
-        if (valueI64 <= UINT_MAX)
-            result = (unsigned int)valueI64;
+        // Error if value is out of range (no need for an error message since that will be generated in the catch block)
+        if (result <= 0 || result > UINT_MAX)
+            THROW(OptionInvalidValueError, "");
     }
     CATCH_ANY()
-    {
-    }
-    TRY_END();
-
-    if (result == 0)
     {
         THROW_FMT(
             OptionInvalidValueError, "'%s' is not valid for '%s' option", strZ(value),
             cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
     }
+    TRY_END();
 
-    FUNCTION_TEST_RETURN(UINT, result);
+    ASSERT(result > 0 && result < UINT_MAX);
+
+    FUNCTION_TEST_RETURN(UINT, (unsigned int)result);
 }
 
 // Convert map checksum size
