@@ -489,6 +489,9 @@ backupListAdd(
     kvPut(backrestInfo, BACKREST_KEY_FORMAT_VAR, VARUINT(backupData->backrestFormat));
     kvPut(backrestInfo, BACKREST_KEY_VERSION_VAR, VARSTR(backupData->backrestVersion));
 
+    if (backupData->backrestVersionNum > 0)
+        kvPut(backrestInfo, BACKREST_KEY_VERSION_NUM_VAR, VARUINT(backupData->backrestVersionNum));
+
     // database section
     KeyValue *const dbInfo = kvPutKv(varKv(backupInfo), KEY_DATABASE_VAR);
 
@@ -859,7 +862,7 @@ stanzaInfoList(
         else
             kvPut(varKv(stanzaInfo), KEY_CIPHER_VAR, VARSTRDEF(INFO_STANZA_MIXED));
 
-        // Set backrest section
+        // Set backrest section - this will display the version of the locally running info command
         KeyValue *const backrestInfo = kvPutKv(varKv(stanzaInfo), BACKUP_KEY_BACKREST_VAR);
         kvPut(backrestInfo, BACKREST_KEY_VERSION_VAR, varNewStrZ(PROJECT_VERSION));
         kvPut(backrestInfo, BACKREST_KEY_VERSION_NUM_VAR, VARUINT(PROJECT_VERSION_NUM));

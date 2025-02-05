@@ -158,6 +158,9 @@ infoBackupLoadCallback(void *const data, const String *const section, const Stri
             info.backrestFormat = jsonReadUInt(jsonReadKeyRequireZ(json, INFO_KEY_FORMAT));
             info.backrestVersion = jsonReadStr(jsonReadKeyRequireZ(json, INFO_KEY_VERSION));
 
+            if (jsonReadKeyExpectZ(json, INFO_KEY_VERSION_NUM))
+                info.backrestVersionNum = jsonReadUInt(json);
+
             // Annotation
             if (jsonReadKeyExpectZ(json, INFO_BACKUP_KEY_BACKUP_ANNOTATION))
                 info.backupAnnotation = jsonReadVar(json);
@@ -283,6 +286,10 @@ infoBackupSaveCallback(void *const data, const String *const sectionNext, InfoSa
 
             jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_FORMAT), backupData.backrestFormat);
             jsonWriteStr(jsonWriteKeyZ(json, INFO_KEY_VERSION), backupData.backrestVersion);
+
+            // Don't store version as an integer if not defined previously already - would result in "backrest-version-num":0
+            if (backupData.backrestVersionNum > 0)
+                jsonWriteUInt(jsonWriteKeyZ(json, INFO_KEY_VERSION_NUM), backupData.backrestVersionNum);
 
             if (backupData.backupAnnotation != NULL)
                 jsonWriteVar(jsonWriteKeyZ(json, INFO_BACKUP_KEY_BACKUP_ANNOTATION), backupData.backupAnnotation);
@@ -455,6 +462,7 @@ infoBackupDataAdd(InfoBackup *const this, const Manifest *const manifest)
                 .backupLabel = strDup(manData->backupLabel),
                 .backrestFormat = REPOSITORY_FORMAT,
                 .backrestVersion = strDup(manData->backrestVersion),
+                .backrestVersionNum = PROJECT_VERSION_NUM,
                 .backupInfoRepoSize = backupRepoSize,
                 .backupInfoRepoSizeDelta = backupRepoSizeDelta,
                 .backupInfoSize = backupSize,

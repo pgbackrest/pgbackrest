@@ -364,6 +364,7 @@ infoSave(Info *const this, IoWrite *const write, InfoSaveCallback *const callbac
         callbackFunction(callbackData, STRDEF(INFO_SECTION_BACKREST), &data);
         infoSaveValue(&data, INFO_SECTION_BACKREST, INFO_KEY_FORMAT, jsonFromVar(VARUINT(REPOSITORY_FORMAT)));
         infoSaveValue(&data, INFO_SECTION_BACKREST, INFO_KEY_VERSION, jsonFromVar(VARSTRDEF(PROJECT_VERSION)));
+        infoSaveValue(&data, INFO_SECTION_BACKREST, INFO_KEY_VERSION_NUM, jsonFromVar(VARUINT(PROJECT_VERSION_NUM)));
 
         // Add cipher passphrase if defined
         if (infoCipherPass(this) != NULL)

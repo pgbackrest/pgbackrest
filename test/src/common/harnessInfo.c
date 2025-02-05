@@ -45,6 +45,8 @@ harnessInfoChecksum(const String *info)
         bufCat(result, BUFSTR(jsonFromVar(VARUINT(REPOSITORY_FORMAT))));
         bufCat(result, BUFSTRDEF("\nbackrest-version="));
         bufCat(result, BUFSTR(jsonFromVar(VARSTRDEF(PROJECT_VERSION))));
+        bufCat(result, BUFSTRDEF("\nbackrest-version-num="));
+        bufCat(result, BUFSTR(jsonFromVar(VARUINT(PROJECT_VERSION_NUM))));
         bufCat(result, BUFSTRDEF("\n\n"));
         bufCat(result, BUFSTR(info));
 
