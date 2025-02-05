@@ -46,6 +46,7 @@ typedef struct InfoBackupData
     const String *backupLabel;                                      // backupLabel must be first to allow for built-in list sorting
     unsigned int backrestFormat;
     const String *backrestVersion;
+    unsigned int backrestVersionNum;
     Variant *backupAnnotation;                                      // Backup annotations, if present
     const String *backupArchiveStart;
     const String *backupArchiveStop;
