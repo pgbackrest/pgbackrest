@@ -731,10 +731,10 @@ backupManifestCopySize(Manifest *const manifest)
 }
 
 /***********************************************************************************************************************************
-Get the last full backup time in order to set the limit for full/incr preliminary copy
+Get the last full backup duration in order to set the limit for full/incr preliminary copy
 ***********************************************************************************************************************************/
 static time_t
-backupFullIncrLimit(const InfoBackup *const infoBackup)
+backupLastFullDuration(const InfoBackup *const infoBackup)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -757,9 +757,31 @@ backupFullIncrLimit(const InfoBackup *const infoBackup)
         }
     }
 
-    // Round up to the nearest minute (ensures we do not have a zero limit). This is a bit imprecise since an interval exactly
-    // divisible by a minute will be rounded up another minute, but it seems fine for this purpose.
-    result = (result / SEC_PER_MIN + 1) * SEC_PER_MIN;
+    FUNCTION_LOG_RETURN(TIME, result);
+}
+
+/***********************************************************************************************************************************
+Calculate time limit for full/incr preliminary copy
+***********************************************************************************************************************************/
+static time_t
+backupFullIncrLimit(const time_t checkpointTime, const TimeMSec dbTime, const time_t lastFullDuration)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(TIME, checkpointTime);
+        FUNCTION_LOG_PARAM(TIME_MSEC, dbTime);
+        FUNCTION_LOG_PARAM(TIME, lastFullDuration);
+    FUNCTION_LOG_END();
+
+    ASSERT(checkpointTime != 0);
+    ASSERT(dbTime != 0);
+    ASSERT(lastFullDuration >= 0);
+
+    // Calculate the limit
+    time_t result = (time_t)(dbTime / MSEC_PER_SEC) - lastFullDuration;
+
+    // Limit must be at least one minute prior to the last checkpoint
+    if (result > checkpointTime - SEC_PER_MIN)
+        result = checkpointTime - SEC_PER_MIN;
 
     FUNCTION_LOG_RETURN(TIME, result);
 }
@@ -2701,6 +2723,10 @@ cmdBackup(void)
 
             MEM_CONTEXT_TEMP_BEGIN()
             {
+                // Checkpoint when start-fast enabled
+                if (cfgOptionBool(cfgOptStartFast))
+                    dbCheckpoint(backupData->dbPrimary);
+
                 // Build the manifest
                 Manifest *const manifestPrelim = manifestNewBuild(
                     backupData->storagePrimary, infoPg.version, infoPg.catalogVersion, timestampStart,
@@ -2713,7 +2739,8 @@ cmdBackup(void)
 
                 // Remove files that do not need to be considered for the preliminary copy because they were modified after the
                 // calculated limit time and are therefore likely to be modified during the backup
-                time_t timestampCopyStart = backupData->checkpointTime - backupFullIncrLimit(infoBackup);
+                const time_t timestampCopyStart = backupFullIncrLimit(
+                    backupData->checkpointTime, dbTimeMSec(backupData->dbPrimary), backupLastFullDuration(infoBackup));
 
                 manifestBuildFullIncr(
                     manifestPrelim, timestampCopyStart,

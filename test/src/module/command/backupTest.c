@@ -3990,7 +3990,7 @@ testRun(void)
 
             TEST_RESULT_LOG(
                 "P00   WARN: backup '20191108-080000F' missing manifest removed from backup.info\n"
-                "P00   INFO: full/incr backup preliminary copy of files last modified before 2019-11-08 11:44:40\n"
+                "P00   INFO: full/incr backup preliminary copy of files last modified before 2019-11-08 11:46:40\n"
                 "P00   WARN: resumable backup 20191108-080000F of same type exists -- invalid files will be removed then the backup"
                 " will resume\n"
                 "P00 DETAIL: remove path '" TEST_PATH "/repo/backup/test1/20191108-080000F/bundle' from resumed backup\n"
