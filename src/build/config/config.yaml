@@ -344,6 +344,14 @@ option:
     command-role:
       main: {}
 
+  progress-only:
+    type: boolean
+    default: false
+    command:
+      info: {}
+    command-role:
+      main: {}
+
   reference:
     type: string
     required: false

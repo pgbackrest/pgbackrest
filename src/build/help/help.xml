@@ -2582,6 +2582,17 @@
                         <example>json</example>
                     </option>
 
+                    <option id="progress-only" name="Progress Only">
+                        <summary>Get only progress information.</summary>
+
+                        <text>
+                            <p>Specifying this option as true displays only the progress details of the backup/expire process. As it skips repository access, it speeds up retrieving such information.</p>
+                            <p>Note that the info command with this option does not perform any additional checks, except for the availability of the stanza. To obtain comprehensive information, use the full version of the info command.</p>
+                        </text>
+
+                        <example>y</example>
+                    </option>
+
                     <option id="set" name="Set">
                         <summary>Backup set to detail.</summary>
 
