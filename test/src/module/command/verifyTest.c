@@ -953,7 +953,7 @@ testRun(void)
             TEST_BACKUP_DB1_CURRENT_FULL1
             "\n"
             "[db]\n"
-            TEST_BACKUP_DB1_94
+            TEST_BACKUP_DB1_95
             "\n"
             "[db:history]\n"
             TEST_BACKUP_DB1_HISTORY,
@@ -1023,7 +1023,7 @@ testRun(void)
                          "  \"status\": \"error\",\n"
                          "  \"errors\": [\n"
                          "    \"backup info file and archive info file do not match\\n"
-                         "archive: id = 1, version = 9.4, system-id = 10000000000000090400\\n"
+                         "archive: id = 1, version = 9.5, system-id = 10000000000000090500\\n"
                          "backup : id = 2, version = 11, system-id = 10000000000000110000\\n"
                          "HINT: this may be a symptom of repository corruption!\"\n"
                          "  ]\n"
@@ -1039,7 +1039,7 @@ testRun(void)
             "              \"status\": \"error\",\n"
             "              \"errors\": [\n"
             "                \"backup info file and archive info file do not match\\n"
-            "archive: id = 1, version = 9.4, system-id = 10000000000000090400\\n"
+            "archive: id = 1, version = 9.5, system-id = 10000000000000090500\\n"
             "backup : id = 2, version = 11, system-id = 10000000000000110000\\n"
             "HINT: this may be a symptom of repository corruption!\"\n"
             "              ]\n"
@@ -1341,7 +1341,7 @@ testRun(void)
             "  \"status\": \"error\",\n"
             "  \"archives\": [\n"
             "    {\n"
-            "      \"archiveId\": \"9.4-1\",\n"
+            "      \"archiveId\": \"9.5-1\",\n"
             "      \"checked\": 0,\n"
             "      \"valid\": 0,\n"
             "      \"missing\": 0,\n"
@@ -1406,7 +1406,7 @@ testRun(void)
             "  \"status\": \"error\",\n"
             "  \"archives\": [\n"
             "    {\n"
-            "      \"archiveId\": \"9.4-1\",\n"
+            "      \"archiveId\": \"9.5-1\",\n"
             "      \"checked\": 0,\n"
             "      \"valid\": 0,\n"
             "      \"missing\": 0,\n"
