@@ -1316,15 +1316,16 @@ verifyCreateFileErrorsStr(
 }
 
 /***********************************************************************************************************************************
-Render the results of the verify command
+Render the results of the verify command in plain text or json
 ***********************************************************************************************************************************/
 static String *
-verifyRender(const List *const archiveIdResultList, const List *const backupResultList, const bool verboseText)
+verifyRender(const List *const archiveIdResultList, const List *const backupResultList, const bool verboseText, const bool json)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, archiveIdResultList);             // Result list for all archive Ids in the repo
         FUNCTION_TEST_PARAM(LIST, backupResultList);                // Result list for all backups in the repo
         FUNCTION_TEST_PARAM(BOOL, verboseText);                     // Is verbose output requested?
+        FUNCTION_TEST_PARAM(BOOL, json);                            // Is JSON output requested?
     FUNCTION_TEST_END();
 
     FUNCTION_AUDIT_HELPER();
@@ -1335,19 +1336,40 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
     String *const result = strNew();
 
     // Render archive results
-    if (verboseText && lstEmpty(archiveIdResultList))
+
+    if (json)
+    {
+        strCatZ(result, "  \"archives\": [");
+    }
+
+    if (!json && verboseText && lstEmpty(archiveIdResultList))
+    {
         strCatZ(result, "\n  archiveId: none found");
+    }
     else
     {
+        bool archiveFound = false;
         for (unsigned int archiveIdx = 0; archiveIdx < lstSize(archiveIdResultList); archiveIdx++)
         {
             const VerifyArchiveResult *const archiveIdResult = lstGet(archiveIdResultList, archiveIdx);
 
-            if (verboseText || archiveIdResult->totalWalFile - archiveIdResult->totalValidWal != 0)
+            if (verboseText || json || archiveIdResult->totalWalFile - archiveIdResult->totalValidWal != 0)
             {
-                strCatFmt(
-                    result, "\n  archiveId: %s, total WAL checked: %u, total valid WAL: %u", strZ(archiveIdResult->archiveId),
-                    archiveIdResult->totalWalFile, archiveIdResult->totalValidWal);
+                if (json)
+                {
+                    strCatFmt(
+                        result, "%s\n    {\n      \"archiveId\": \"%s\",\n      \"checked\": %u,\n      \"valid\": %u,",
+                        archiveFound ? "," : "",
+                        strZ(archiveIdResult->archiveId),
+                        archiveIdResult->totalWalFile, archiveIdResult->totalValidWal);
+                    archiveFound = true;
+                }
+                else
+                {
+                    strCatFmt(
+                        result, "\n  archiveId: %s, total WAL checked: %u, total valid WAL: %u", strZ(archiveIdResult->archiveId),
+                        archiveIdResult->totalWalFile, archiveIdResult->totalValidWal);
+                }
             }
 
             if (archiveIdResult->totalWalFile > 0)
@@ -1384,16 +1406,44 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
                     }
                 }
 
+                if (json)
+                {
+                    strCatFmt(result,
+                              "\n      \"missing\": %u,"
+                              "\n      \"checksumInvalid\": %u,"
+                              "\n      \"sizeInvalid\": %u,"
+                              "\n      \"other\": %u\n    }",
+                              errMissing, errChecksum, errSize, errOther);
+                }
                 // Create/append file errors string
-                if (verboseText || errMissing + errChecksum + errSize + errOther > 0)
-                    strCat(result, verifyCreateFileErrorsStr(errMissing, errChecksum, errSize, errOther, verboseText));
+                else if (verboseText || errMissing + errChecksum + errSize + errOther > 0)
+                {
+                    const String *errorStr = verifyCreateFileErrorsStr(errMissing, errChecksum, errSize, errOther, verboseText);
+                    strCat(result, errorStr);
+                }
+            }
+            else
+            {
+                if (json)
+                {
+                    strCatZ(result,
+                            "\n      \"missing\": 0,"
+                            "\n      \"checksumInvalid\": 0,"
+                            "\n      \"sizeInvalid\": 0,"
+                            "\n      \"other\": 0\n    }");
+                }
             }
         }
     }
-
+    if (json)
+    {
+        strCatZ(result, "\n  ],\n  \"backups\": [");
+    }
     // Render backup results
-    if (verboseText && lstEmpty(backupResultList))
+    if (!json && verboseText && lstEmpty(backupResultList))
+    {
         strCatZ(result, "\n  backup: none found");
+    }
     else
     {
         for (unsigned int backupIdx = 0; backupIdx < lstSize(backupResultList); backupIdx++)
@@ -1424,7 +1474,15 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
                 }
             }
 
-            if (verboseText || (strcmp(status, "valid") != 0 && strcmp(status, "in-progress") != 0))
+            if (json)
+            {
+                strCatFmt(
+                    result,
+                    "%s\n    {\n      \"label\": \"%s\",\n      \"status\": \"%s\",\n      \"checked\": %u,\n      \"valid\": %u",
+                    backupIdx == 0 ? "" : ",",
+                    strZ(backupResult->backupLabel), status, backupResult->totalFileVerify, backupResult->totalFileValid);
+            }
+            else if (verboseText || (strcmp(status, "valid") != 0 && strcmp(status, "in-progress") != 0))
             {
                 strCatFmt(
                     result, "\n  backup: %s, status: %s, total files checked: %u, total valid files: %u",
@@ -1453,10 +1511,37 @@ verifyRender(const List *const archiveIdResultList, const List *const backupResu
                 }
 
                 // Create/append file errors string
-                if (verboseText || errMissing + errChecksum + errSize + errOther > 0)
+                if (json)
+                {
+                    strCatFmt(
+                        result,
+                        ",\n      \"missing\": %u,"
+                        "\n      \"checksumInvalid\": %u,"
+                        "\n      \"sizeInvalid\": %u,"
+                        "\n      \"other\": %u\n    }",
+                        errMissing, errChecksum, errSize, errOther);
+                }
+                else if (verboseText || errMissing + errChecksum + errSize + errOther > 0)
+                {
                     strCat(result, verifyCreateFileErrorsStr(errMissing, errChecksum, errSize, errOther, verboseText));
+                }
+            }
+            else
+            {
+                if (json)
+                {
+                    strCatZ(result,
+                            ",\n      \"missing\": 0,"
+                            "\n      \"checksumInvalid\": 0,"
+                            "\n      \"sizeInvalid\": 0,"
+                            "\n      \"other\": 0\n    }");
+                }
             }
         }
+    }
+    if (json)
+    {
+        strCatFmt(result, "\n  ]");
     }
 
     FUNCTION_TEST_RETURN(STRING, result);
@@ -1473,11 +1558,13 @@ verifyProcess(const bool verboseText)
     FUNCTION_LOG_END();
 
     String *const result = strNew();
+    bool json = cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         unsigned int errorTotal = 0;
         String *resultStr = strNew();
+        StringList *errorList = strLstNew();
 
         // Get the repo storage in case it is remote and encryption settings need to be pulled down
         const Storage *const storage = storageRepo();
@@ -1488,7 +1575,14 @@ verifyProcess(const bool verboseText)
         // If a usable backup.info file is not found, then report an error in the log
         if (backupInfo == NULL)
         {
-            strCatZ(resultStr, "\n  No usable backup.info file");
+            if (json)
+            {
+                strLstAddZ(errorList, "No usable backup.info file");
+            }
+            else
+            {
+                strCatZ(resultStr, "\n  No usable backup.info file");
+            }
             errorTotal++;
         }
 
@@ -1498,7 +1592,14 @@ verifyProcess(const bool verboseText)
         // If a usable archive.info file is not found, then report an error in the log
         if (archiveInfo == NULL)
         {
-            strCatZ(resultStr, "\n  No usable archive.info file");
+            if (json)
+            {
+                strLstAddZ(errorList, "No usable archive.info file");
+            }
+            else
+            {
+                strCatZ(resultStr, "\n  No usable archive.info file");
+            }
             errorTotal++;
         }
 
@@ -1512,7 +1613,14 @@ verifyProcess(const bool verboseText)
             }
             CATCH_ANY()
             {
-                strCatFmt(resultStr, "\n%s", errorMessage());
+                if (json)
+                {
+                    strLstAddZ(errorList, errorMessage());
+                }
+                else
+                {
+                    strCatFmt(resultStr, "\n%s", errorMessage());
+                }
                 errorTotal++;
             }
             TRY_END();
@@ -1697,16 +1805,44 @@ verifyProcess(const bool verboseText)
                 // ??? Need to do the final reconciliation - checking backup required WAL against, valid WAL
 
                 // Report results
-                resultStr = verifyRender(jobData.archiveIdResultList, jobData.backupResultList, verboseText);
+                resultStr = verifyRender(jobData.archiveIdResultList, jobData.backupResultList, verboseText, json);
             }
             else
-                strCatZ(resultStr, "\n    no archives or backups exist in the repo");
+            {
+                if (!json)
+                {
+                    strCatZ(resultStr, "\n    no archives or backups exist in the repo");
+                }
+            }
 
             errorTotal += jobData.jobErrorTotal;
         }
 
+        if (json)
+        {
+            strCatFmt(result, "{\n  \"stanza\": \"%s\",\n  \"status\": \"%s\"",
+                      strZ(cfgOptionStr(cfgOptStanza)),
+                      errorTotal > 0 ? VERIFY_STATUS_ERROR : VERIFY_STATUS_OK);
+
+            if (strSize(resultStr) > 0){
+                strCatFmt(result, ",\n%s", strZ(resultStr));
+            }
+
+            if (strLstSize(errorList) > 0)
+            {
+                strCatZ(result, ",\n  \"errors\": [");
+                for (unsigned int errIdx = 0; errIdx < strLstSize(errorList); errIdx++)
+                {
+                    const String *const err = strLstGet(errorList, errIdx);
+                    const String *const err_escaped = strEscape(err);
+                    strCatFmt(result, "%s\n    \"%s\"", errIdx > 0 ? "," : "", strZ(err_escaped));
+                }
+                strCatZ(result, "\n  ]");
+            }
+            strCatZ(result, "\n}\n");
+        }
         // If verbose output or errors then output results
-        if (verboseText || errorTotal > 0)
+        else if (verboseText || errorTotal > 0)
         {
             strCatFmt(
                 result, "stanza: %s\nstatus: %s%s", strZ(cfgOptionStr(cfgOptStanza)),
@@ -1735,7 +1871,8 @@ cmdVerify(void)
             LOG_INFO_FMT("%s", strZ(result));
 
             // Output to console when requested
-            if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT)
+            if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT
+                || cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON)
             {
                 ioFdWriteOneStr(STDOUT_FILENO, result);
                 ioFdWriteOneStr(STDOUT_FILENO, LF_STR);

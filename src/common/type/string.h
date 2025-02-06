@@ -218,6 +218,9 @@ FN_EXTERN String *strTrim(String *this);
 // Truncate the end of a string from the index provided to the current end (e.g. 123KB pass index of K returns 123)
 FN_EXTERN String *strTruncIdx(String *this, int idx);
 
+// Escape special characters in a string
+FN_EXTERN String *strEscape(const String *const this);
+
 // Truncate the string to zero size
 FN_INLINE_ALWAYS String *
 strTrunc(String *const this)
