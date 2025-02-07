@@ -2092,6 +2092,7 @@ testRun(void)
             "status: error\n"
             "  backup set 20181119-152900F_20181119-152910D is not valid",
             "--set with invalid backup label, text");
+        TEST_RESULT_LOG("");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("--set with backup label of incorrect format");
@@ -2108,9 +2109,103 @@ testRun(void)
             "status: error\n"
             "  'BOGUS' is not a valid backup label format",
             "--set with backup label of incorrect format, text");
+        TEST_RESULT_LOG("");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("--set with broken backup");
+        TEST_TITLE("--set with archive");
+
+        // Load Parameters - single default repo
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptOutput, "text");
+        hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
+        hrnCfgArgRawZ(argList, cfgOptSet, "20181119-153300F");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        // Create WAL file with just header info and small WAL size
+        Buffer *walBuffer = bufNew((size_t)(1024 * 1024));
+        bufUsedSet(walBuffer, bufSize(walBuffer));
+        memset(bufPtr(walBuffer), 0, bufSize(walBuffer));
+        HRN_PG_WAL_TO_BUFFER(walBuffer, PG_VERSION_11, .size = 1024 * 1024);
+        const char *walBufferSha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBuffer)));
+
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0),
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000500000007/000000050000000700000001-%s", walBufferSha1), walBuffer,
+            .comment = "valid WAL");
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0),
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000500000008/000000050000000800000002-%s", walBufferSha1), walBuffer,
+            .comment = "valid WAL");
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0),
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000500000008/000000050000000800000003-%s", walBufferSha1), walBuffer,
+            .comment = "valid WAL");
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0),
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000500000008/000000050000000800000004-%s", walBufferSha1), walBuffer,
+            .comment = "valid WAL");
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0),
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000500000008/000000050000000800000005-%s", walBufferSha1), walBuffer,
+            .comment = "valid WAL");
+        HRN_STORAGE_PUT(
+            storageRepoIdxWrite(0),
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000500000009/000000050000000900000006-%s", walBufferSha1), walBuffer,
+            .comment = "valid WAL");
+
+        // Write manifest for full backup using 2 WAL files
+        String *manifestContent = strNewFmt(
+            "[backup]\n"
+            "backup-archive-start=\"000000050000000800000003\"\n"
+            "backup-archive-stop=\"000000050000000800000004\"\n"
+            "backup-label=\"20181119-153300F\"\n"
+            "backup-timestamp-copy-start=0\n"
+            "backup-timestamp-start=0\n"
+            "backup-timestamp-stop=0\n"
+            "backup-type=\"full\"\n"
+            "\n"
+            "[backup:db]\n"
+            TEST_BACKUP_DB2_11
+            TEST_MANIFEST_OPTION_ALL
+            TEST_MANIFEST_TARGET
+            TEST_MANIFEST_DB
+            "\n"
+            "[target:file]\n"
+            "pg_data/testvalid={\"checksum\":\"%s\",\"size\":7,\"timestamp\":1565282114}\n"
+            TEST_MANIFEST_FILE_DEFAULT
+            TEST_MANIFEST_LINK
+            TEST_MANIFEST_LINK_DEFAULT
+            TEST_MANIFEST_PATH
+            TEST_MANIFEST_PATH_DEFAULT,
+            strZ(strNewEncode(encodingHex, fileChecksum)));
+
+        // Write manifests for backup
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-153300F/" BACKUP_MANIFEST_FILE, strZ(manifestContent),
+            .comment = "valid manifest - full");
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-153300F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(manifestContent),
+            .comment = "valid manifest copy - full");
+
+        // Put the file into the backup
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-153300F/pg_data/testvalid", fileContents);
+
+        // Should only check 2 WAL files
+        TEST_RESULT_STR_Z(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            "stanza: db\n"
+            "status: ok\n"
+            "  archiveId: 11-2, total WAL checked: 2, total valid WAL: 2\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "  backup: 20181119-153300F, status: valid, total files checked: 1, total valid files: 1\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0", "--set with a valid backup label\n");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: path '11-2/0000000500000007' does not contain any valid WAL to be processed\n"
+            "P00 DETAIL: path '11-2/0000000500000009' does not contain any valid WAL to be processed\n"
+            "P00 DETAIL: archiveId: 11-2, wal start: 000000050000000800000003, wal stop: 000000050000000800000004");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("--set with archive and broken backup");
 
         argList = strLstDup(argListBase);
         hrnCfgArgRawZ(argList, cfgOptOutput, "text");
@@ -2119,7 +2214,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdVerify, argList);
 
         // Write invalid manifest for backup
-        String *manifestContent = strNewZ(
+        manifestContent = strNewZ(
             "[backrest]\n"
             "backrest-format=1234\n");
 
@@ -2137,13 +2232,17 @@ testRun(void)
             verifyProcess(cfgOptionBool(cfgOptVerbose)),
             "stanza: db\n"
             "status: error\n"
-            "  archiveId: none found\n"
+            "  archiveId: 11-2, total WAL checked: 0, total valid WAL: 0\n"
             "  backup: 20181119-153400F, status: invalid, total files checked: 0, total valid files: 0",
             "--set with broken backup\n");
         TEST_RESULT_LOG(
             "P00 DETAIL: expected format 5 but found 1234\n"
             "P00 DETAIL: expected format 5 but found 1234\n"
-            "P00 DETAIL: no archives exist in the repo\n"
+            "P00 DETAIL: expected format 5 but found 1234\n"
+            "P00 DETAIL: expected format 5 but found 1234\n"
+            "P00 DETAIL: path '11-2/0000000500000007' does not contain any valid WAL to be processed\n"
+            "P00 DETAIL: path '11-2/0000000500000008' does not contain any valid WAL to be processed\n"
+            "P00 DETAIL: path '11-2/0000000500000009' does not contain any valid WAL to be processed\n"
             "P00 DETAIL: expected format 5 but found 1234\n"
             "P00 DETAIL: expected format 5 but found 1234");
     }
@@ -2269,15 +2368,17 @@ testRun(void)
             verifyProcess(cfgOptionBool(cfgOptVerbose)),
             "stanza: db\n"
             "status: ok\n"
-            "  archiveId: 11-1, total WAL checked: 4, total valid WAL: 4\n"
+            "  archiveId: 11-1, total WAL checked: 1, total valid WAL: 1\n"
             "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
             "  backup: 20191002-070640F, status: valid, total files checked: 6, total valid files: 6\n"
             "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
             "  backup: 20191002-070640F_20191003-105320D, status: valid, total files checked: 6, total valid files: 6\n"
             "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0", "--set with block incremental backup\n");
         TEST_RESULT_LOG(
-            "P00 DETAIL: archiveId: 11-1, wal start: 0000000105D944BF000000FF, wal stop: 0000000105D944C000000000\n"
-            "P00 DETAIL: archiveId: 11-1, wal start: 0000000105D95D2F000000FF, wal stop: 0000000105D95D3000000000");
+            "P00 DETAIL: path '11-1/0000000105D944BF' does not contain any valid WAL to be processed\n"
+            "P00 DETAIL: path '11-1/0000000105D944C0' does not contain any valid WAL to be processed\n"
+            "P00 DETAIL: path '11-1/0000000105D95D2F' does not contain any valid WAL to be processed\n"
+            "P00 DETAIL: archiveId: 11-1, wal start: 0000000105D95D3000000000, wal stop: 0000000105D95D3000000000");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
