@@ -4,12 +4,8 @@ GCS Storage Internal
 #ifndef STORAGE_GCS_STORAGE_INTERN_H
 #define STORAGE_GCS_STORAGE_INTERN_H
 
-/***********************************************************************************************************************************
-Object type
-***********************************************************************************************************************************/
-typedef struct StorageGcs StorageGcs;
-
 #include "common/io/http/request.h"
+#include "common/io/http/url.h"
 #include "storage/gcs/storage.h"
 
 /***********************************************************************************************************************************
@@ -29,6 +25,8 @@ STRING_DECLARE(GCS_QUERY_MEDIA_STR);
 STRING_DECLARE(GCS_QUERY_NAME_STR);
 #define GCS_QUERY_UPLOAD_ID                                         "upload_id"
 STRING_DECLARE(GCS_QUERY_UPLOAD_ID_STR);
+#define GCS_QUERY_USER_PROJECT                                      "userProject"
+STRING_DECLARE(GCS_QUERY_USER_PROJECT_STR);
 
 /***********************************************************************************************************************************
 JSON tokens
@@ -41,6 +39,33 @@ VARIANT_DECLARE(GCS_JSON_MD5_HASH_VAR);
 VARIANT_DECLARE(GCS_JSON_NAME_VAR);
 #define GCS_JSON_SIZE                                               "size"
 VARIANT_DECLARE(GCS_JSON_SIZE_VAR);
+
+/***********************************************************************************************************************************
+Object type
+***********************************************************************************************************************************/
+typedef struct StorageGcs
+{
+    STORAGE_COMMON_MEMBER;
+    HttpClient *httpClient;                                         // Http client to service requests
+    StringList *headerRedactList;                                   // List of headers to redact from logging
+    StringList *queryRedactList;                                    // List of query keys to redact from logging
+
+    bool write;                                                     // Storage is writable
+    const String *bucket;                                           // Bucket to store data in
+    const String *endpoint;                                         // Endpoint
+    size_t chunkSize;                                               // Block size for resumable upload
+    unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
+    const Buffer *tag;                                              // Tags to be applied to objects
+
+    const String *userProject;                                      // Project ID
+
+    StorageGcsKeyType keyType;                                      // Auth key type
+    const String *key;                                              // Key (value depends on key type)
+    String *token;                                                  // Token
+    time_t tokenTimeExpire;                                         // Token expiration time (if service auth)
+    HttpUrl *authUrl;                                               // URL for authentication server
+    HttpClient *authClient;                                         // Client to service auth requests
+} StorageGcs;
 
 /***********************************************************************************************************************************
 Multi-Part request data

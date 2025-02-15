@@ -2081,6 +2081,13 @@ option:
       list:
         - gcs
 
+  repo-gcs-user-project:
+    section: global
+    type: string
+    group: repo
+    required: false
+    command: repo-type
+
   repo-hardlink:
     section: global
     group: repo

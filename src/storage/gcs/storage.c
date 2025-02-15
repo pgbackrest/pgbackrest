@@ -14,7 +14,6 @@ GCS Storage
 #include "common/debug.h"
 #include "common/io/http/client.h"
 #include "common/io/http/common.h"
-#include "common/io/http/url.h"
 #include "common/io/socket/client.h"
 #include "common/io/tls/client.h"
 #include "common/log.h"
@@ -49,6 +48,7 @@ STRING_STATIC(GCS_QUERY_PAGE_TOKEN_STR,                             "pageToken")
 STRING_STATIC(GCS_QUERY_PREFIX_STR,                                 "prefix");
 STRING_EXTERN(GCS_QUERY_UPLOAD_ID_STR,                              GCS_QUERY_UPLOAD_ID);
 STRING_STATIC(GCS_QUERY_VERSIONS_STR,                               "versions");
+STRING_EXTERN(GCS_QUERY_USER_PROJECT_STR,                           "userProject");
 
 /***********************************************************************************************************************************
 JSON tokens
@@ -81,31 +81,6 @@ STRING_STATIC(GCS_STAT_REMOVE_STR,                                  "gcs.rm");
 STRING_STATIC(GCS_STAT_REMOVE_BATCH_STR,                            "gcs.rm.batch");
 STRING_STATIC(GCS_STAT_REMOVE_BATCH_PART_STR,                       "gcs.rm.batch.part");
 STRING_STATIC(GCS_STAT_REMOVE_BATCH_RETRY_STR,                      "gcs.rm.batch.retry");
-
-/***********************************************************************************************************************************
-Object type
-***********************************************************************************************************************************/
-struct StorageGcs
-{
-    STORAGE_COMMON_MEMBER;
-    HttpClient *httpClient;                                         // Http client to service requests
-    StringList *headerRedactList;                                   // List of headers to redact from logging
-    StringList *queryRedactList;                                    // List of query keys to redact from logging
-
-    bool write;                                                     // Storage is writable
-    const String *bucket;                                           // Bucket to store data in
-    const String *endpoint;                                         // Endpoint
-    size_t chunkSize;                                               // Block size for resumable upload
-    unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
-    const Buffer *tag;                                              // Tags to be applied to objects
-
-    StorageGcsKeyType keyType;                                      // Auth key type
-    const String *key;                                              // Key (value depends on key type)
-    String *token;                                                  // Token
-    time_t tokenTimeExpire;                                         // Token expiration time (if service auth)
-    HttpUrl *authUrl;                                               // URL for authentication server
-    HttpClient *authClient;                                         // Client to service auth requests
-};
 
 /***********************************************************************************************************************************
 Parse HTTP JSON response containing an authentication token and expiration
@@ -664,6 +639,9 @@ storageGcsListInternal(
         if (!recurse)
             httpQueryAdd(query, GCS_QUERY_DELIMITER_STR, FSLASH_STR);
 
+        if (this->userProject != NULL)
+            httpQueryAdd(query, GCS_QUERY_USER_PROJECT_STR, this->userProject);
+
         // Don't specify empty prefix because it is the default
         if (!strEmpty(queryPrefix))
             httpQueryAdd(query, GCS_QUERY_PREFIX_STR, queryPrefix);
@@ -849,12 +827,19 @@ storageGcsInfo(THIS_VOID, const String *const file, const StorageInfoLevel level
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Create query params.
+        HttpQuery *const query = httpQueryNewP();
+
+        httpQueryAdd(query, GCS_QUERY_FIELDS_STR,
+                level >= storageInfoLevelBasic ? STRDEF(GCS_JSON_SIZE "," GCS_JSON_UPDATED) : EMPTY_STR);
+
+        if (this->userProject != NULL)
+            httpQueryAdd(query, GCS_QUERY_USER_PROJECT_STR, this->userProject);
+
         // Attempt to get file info
         HttpResponse *const httpResponse = storageGcsRequestP(
             this, HTTP_VERB_GET_STR, .object = file, .allowMissing = true,
-            .query = httpQueryAdd(
-                httpQueryNewP(), GCS_QUERY_FIELDS_STR,
-                level >= storageInfoLevelBasic ? STRDEF(GCS_JSON_SIZE "," GCS_JSON_UPDATED) : EMPTY_STR));
+            .query = query);
 
         // Does the file exist?
         result.exists = httpResponseCodeOk(httpResponse);
@@ -1180,7 +1165,7 @@ storageGcsNew(
     const String *const path, const bool write, const time_t targetTime, StoragePathExpressionCallback pathExpressionFunction,
     const String *const bucket, const StorageGcsKeyType keyType, const String *const key, const size_t chunkSize,
     const KeyValue *const tag, const String *const endpoint, const TimeMSec timeout, const bool verifyPeer,
-    const String *const caFile, const String *const caPath)
+    const String *const caFile, const String *const caPath, const String *const userProject)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -1197,6 +1182,7 @@ storageGcsNew(
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
         FUNCTION_LOG_PARAM(STRING, caFile);
         FUNCTION_LOG_PARAM(STRING, caPath);
+        FUNCTION_LOG_PARAM(STRING, userProject);
     FUNCTION_LOG_END();
 
     ASSERT(path != NULL);
@@ -1214,6 +1200,7 @@ storageGcsNew(
             .keyType = keyType,
             .chunkSize = chunkSize,
             .deleteMax = STORAGE_GCS_DELETE_MAX,
+            .userProject = userProject,
         };
 
         // Create tag JSON buffer

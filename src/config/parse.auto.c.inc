@@ -6257,6 +6257,73 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                  // opt/repo-gcs-key-type
     ),                                                                                                      // opt/repo-gcs-key-type
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                   // opt/repo-gcs-user-project
+    (                                                                                                   // opt/repo-gcs-user-project
+        PARSE_RULE_OPTION_NAME("repo-gcs-user-project"),                                                // opt/repo-gcs-user-project
+        PARSE_RULE_OPTION_TYPE(String),                                                                 // opt/repo-gcs-user-project
+        PARSE_RULE_OPTION_RESET(true),                                                                  // opt/repo-gcs-user-project
+        PARSE_RULE_OPTION_REQUIRED(false),                                                              // opt/repo-gcs-user-project
+        PARSE_RULE_OPTION_SECTION(Global),                                                              // opt/repo-gcs-user-project
+        PARSE_RULE_OPTION_GROUP_ID(Repo),                                                               // opt/repo-gcs-user-project
+                                                                                                        // opt/repo-gcs-user-project
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                  // opt/repo-gcs-user-project
+        (                                                                                               // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                         // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                       // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                      // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                           // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(Check)                                                            // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                           // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(Info)                                                             // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                         // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                          // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                           // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                          // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                           // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                          // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                     // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                     // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                    // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                           // opt/repo-gcs-user-project
+        ),                                                                                              // opt/repo-gcs-user-project
+                                                                                                        // opt/repo-gcs-user-project
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                 // opt/repo-gcs-user-project
+        (                                                                                               // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                       // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                      // opt/repo-gcs-user-project
+        ),                                                                                              // opt/repo-gcs-user-project
+                                                                                                        // opt/repo-gcs-user-project
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                 // opt/repo-gcs-user-project
+        (                                                                                               // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                       // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                      // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                           // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                          // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                           // opt/repo-gcs-user-project
+        ),                                                                                              // opt/repo-gcs-user-project
+                                                                                                        // opt/repo-gcs-user-project
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                // opt/repo-gcs-user-project
+        (                                                                                               // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                         // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                       // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                      // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                           // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(Check)                                                            // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                           // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(Info)                                                             // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                         // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                          // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                           // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                          // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                           // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                          // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                     // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                     // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                    // opt/repo-gcs-user-project
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                           // opt/repo-gcs-user-project
+        ),                                                                                              // opt/repo-gcs-user-project
+    ),                                                                                                  // opt/repo-gcs-user-project
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                           // opt/repo-hardlink
     (                                                                                                           // opt/repo-hardlink
         PARSE_RULE_OPTION_NAME("repo-hardlink"),                                                                // opt/repo-hardlink
@@ -11266,6 +11333,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoBundleLimit,                                                                                      // opt-resolve-order
     cfgOptRepoBundleSize,                                                                                       // opt-resolve-order
     cfgOptRepoCipherType,                                                                                       // opt-resolve-order
+    cfgOptRepoGcsUserProject,                                                                                   // opt-resolve-order
     cfgOptRepoHardlink,                                                                                         // opt-resolve-order
     cfgOptRepoLocal,                                                                                            // opt-resolve-order
     cfgOptRepoPath,                                                                                             // opt-resolve-order
