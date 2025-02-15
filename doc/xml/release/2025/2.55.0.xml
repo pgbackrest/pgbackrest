@@ -127,6 +127,17 @@
     <release-doc-list>
         <release-improvement-list>
             <release-item>
+                <github-pull-request id="2541"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="greg.clough"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Clarify requirement for local/remote <backrest/> versions to match.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2538"/>
 
                 <release-item-contributor-list>
