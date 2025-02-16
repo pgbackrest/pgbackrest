@@ -63,13 +63,10 @@ storageReadGcsOpen(THIS_VOID)
             if (this->interface.versionId)
                 httpQueryAdd(query, varStr(GCS_JSON_GENERATION_VAR), this->interface.versionId);
 
-            if (this->storage->userProject != NULL)
-                httpQueryAdd(query, GCS_QUERY_USER_PROJECT_STR, this->storage->userProject);
-
             this->httpResponse = storageGcsRequestP(
                 this->storage, HTTP_VERB_GET_STR, .object = this->interface.name,
                 .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
-                .allowMissing = true, .contentIo = true, .query = query);
+                .allowMissing = true, .contentIo = true, .query = query, .userProject = true);
         }
         MEM_CONTEXT_OBJ_END();
 

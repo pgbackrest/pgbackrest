@@ -14,6 +14,7 @@ GCS Storage
 #include "common/debug.h"
 #include "common/io/http/client.h"
 #include "common/io/http/common.h"
+#include "common/io/http/url.h"
 #include "common/io/socket/client.h"
 #include "common/io/tls/client.h"
 #include "common/log.h"
@@ -48,7 +49,7 @@ STRING_STATIC(GCS_QUERY_PAGE_TOKEN_STR,                             "pageToken")
 STRING_STATIC(GCS_QUERY_PREFIX_STR,                                 "prefix");
 STRING_EXTERN(GCS_QUERY_UPLOAD_ID_STR,                              GCS_QUERY_UPLOAD_ID);
 STRING_STATIC(GCS_QUERY_VERSIONS_STR,                               "versions");
-STRING_EXTERN(GCS_QUERY_USER_PROJECT_STR,                           "userProject");
+STRING_STATIC(GCS_QUERY_USER_PROJECT_STR,                           "userProject");
 
 /***********************************************************************************************************************************
 JSON tokens
@@ -81,6 +82,32 @@ STRING_STATIC(GCS_STAT_REMOVE_STR,                                  "gcs.rm");
 STRING_STATIC(GCS_STAT_REMOVE_BATCH_STR,                            "gcs.rm.batch");
 STRING_STATIC(GCS_STAT_REMOVE_BATCH_PART_STR,                       "gcs.rm.batch.part");
 STRING_STATIC(GCS_STAT_REMOVE_BATCH_RETRY_STR,                      "gcs.rm.batch.retry");
+
+/***********************************************************************************************************************************
+Object type
+***********************************************************************************************************************************/
+struct StorageGcs
+{
+    STORAGE_COMMON_MEMBER;
+    HttpClient *httpClient;                                         // Http client to service requests
+    StringList *headerRedactList;                                   // List of headers to redact from logging
+    StringList *queryRedactList;                                    // List of query keys to redact from logging
+
+    bool write;                                                     // Storage is writable
+    const String *bucket;                                           // Bucket to store data in
+    const String *endpoint;                                         // Endpoint
+    size_t chunkSize;                                               // Block size for resumable upload
+    unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
+    const Buffer *tag;                                              // Tags to be applied to objects
+    const String *userProject;                                      // Project ID
+
+    StorageGcsKeyType keyType;                                      // Auth key type
+    const String *key;                                              // Key (value depends on key type)
+    String *token;                                                  // Token
+    time_t tokenTimeExpire;                                         // Token expiration time (if service auth)
+    HttpUrl *authUrl;                                               // URL for authentication server
+    HttpClient *authClient;                                         // Client to service auth requests
+};
 
 /***********************************************************************************************************************************
 Parse HTTP JSON response containing an authentication token and expiration
@@ -404,6 +431,7 @@ storageGcsRequestAsync(StorageGcs *const this, const String *const verb, Storage
         FUNCTION_LOG_PARAM(BOOL, param.upload);
         FUNCTION_LOG_PARAM(BOOL, param.noAuth);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
+        FUNCTION_LOG_PARAM(BOOL, param.userProject);
         FUNCTION_LOG_PARAM(STRING, param.path);
         FUNCTION_LOG_PARAM(STRING, param.object);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
@@ -473,6 +501,10 @@ storageGcsRequestAsync(StorageGcs *const this, const String *const verb, Storage
         // Make a copy of the query so it can be modified
         HttpQuery *const query = httpQueryDupP(param.query, .redactList = this->queryRedactList);
 
+        // Add user project
+        if (param.userProject && this->userProject != NULL)
+            httpQueryAdd(query, GCS_QUERY_USER_PROJECT_STR, this->userProject);
+
         // Generate authorization header
         if (!param.noAuth)
             storageGcsAuth(this, requestHeader);
@@ -533,6 +565,7 @@ storageGcsRequest(StorageGcs *const this, const String *const verb, const Storag
         FUNCTION_LOG_PARAM(BOOL, param.upload);
         FUNCTION_LOG_PARAM(BOOL, param.noAuth);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
+        FUNCTION_LOG_PARAM(BOOL, param.userProject);
         FUNCTION_LOG_PARAM(STRING, param.path);
         FUNCTION_LOG_PARAM(STRING, param.object);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
@@ -545,8 +578,8 @@ storageGcsRequest(StorageGcs *const this, const String *const verb, const Storag
 
     HttpRequest *const request = storageGcsRequestAsyncP(
         this, verb, .noBucket = param.noBucket, .upload = param.upload, .noAuth = param.noAuth, .tag = param.tag,
-        .path = param.path, .object = param.object, .header = param.header, .query = param.query, .content = param.content,
-        .contentList = param.contentList);
+        .userProject = param.userProject, .path = param.path, .object = param.object, .header = param.header, .query = param.query,
+        .content = param.content, .contentList = param.contentList);
     HttpResponse *const result = storageGcsResponseP(
         request, .allowMissing = param.allowMissing, .allowIncomplete = param.allowIncomplete, .contentIo = param.contentIo);
 
@@ -639,9 +672,6 @@ storageGcsListInternal(
         if (!recurse)
             httpQueryAdd(query, GCS_QUERY_DELIMITER_STR, FSLASH_STR);
 
-        if (this->userProject != NULL)
-            httpQueryAdd(query, GCS_QUERY_USER_PROJECT_STR, this->userProject);
-
         // Don't specify empty prefix because it is the default
         if (!strEmpty(queryPrefix))
             httpQueryAdd(query, GCS_QUERY_PREFIX_STR, queryPrefix);
@@ -697,7 +727,7 @@ storageGcsListInternal(
                 }
                 // Else get the response immediately from a sync request
                 else
-                    response = storageGcsRequestP(this, HTTP_VERB_GET_STR, .query = query);
+                    response = storageGcsRequestP(this, HTTP_VERB_GET_STR, .query = query, .userProject = true);
 
                 const KeyValue *const content = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
 
@@ -711,7 +741,7 @@ storageGcsListInternal(
                     // Store request in the outer temp context
                     MEM_CONTEXT_PRIOR_BEGIN()
                     {
-                        request = storageGcsRequestAsyncP(this, HTTP_VERB_GET_STR, .query = query);
+                        request = storageGcsRequestAsyncP(this, HTTP_VERB_GET_STR, .query = query, .userProject = true);
                     }
                     MEM_CONTEXT_PRIOR_END();
                 }
@@ -827,19 +857,12 @@ storageGcsInfo(THIS_VOID, const String *const file, const StorageInfoLevel level
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Create query params.
-        HttpQuery *const query = httpQueryNewP();
-
-        httpQueryAdd(query, GCS_QUERY_FIELDS_STR,
-                level >= storageInfoLevelBasic ? STRDEF(GCS_JSON_SIZE "," GCS_JSON_UPDATED) : EMPTY_STR);
-
-        if (this->userProject != NULL)
-            httpQueryAdd(query, GCS_QUERY_USER_PROJECT_STR, this->userProject);
-
         // Attempt to get file info
         HttpResponse *const httpResponse = storageGcsRequestP(
-            this, HTTP_VERB_GET_STR, .object = file, .allowMissing = true,
-            .query = query);
+            this, HTTP_VERB_GET_STR, .object = file, .allowMissing = true, .userProject = true,
+            .query = httpQueryAdd(
+                httpQueryNewP(), GCS_QUERY_FIELDS_STR,
+                level >= storageInfoLevelBasic ? STRDEF(GCS_JSON_SIZE "," GCS_JSON_UPDATED) : EMPTY_STR));
 
         // Does the file exist?
         result.exists = httpResponseCodeOk(httpResponse);

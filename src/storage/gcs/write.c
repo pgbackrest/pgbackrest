@@ -171,14 +171,11 @@ storageWriteGcsBlockAsync(StorageWriteGcs *const this, const bool done)
         httpQueryAdd(query, GCS_QUERY_NAME_STR, strSub(this->interface.name, 1));
         httpQueryAdd(query, GCS_QUERY_UPLOAD_TYPE_STR, GCS_QUERY_RESUMABLE_STR);
 
-        if (this->storage->userProject != NULL)
-            httpQueryAdd(query, GCS_QUERY_USER_PROJECT_STR, this->storage->userProject);
-
         // Get the upload id
         if (this->uploadId == NULL)
         {
             HttpResponse *response = storageGcsRequestP(
-                this->storage, HTTP_VERB_POST_STR, .upload = true, .tag = this->tag, .query = query);
+                this->storage, HTTP_VERB_POST_STR, .upload = true, .tag = this->tag, .userProject = true, .query = query);
 
             MEM_CONTEXT_OBJ_BEGIN(this)
             {

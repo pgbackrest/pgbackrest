@@ -260,7 +260,7 @@ testRun(void)
             (StorageGcs *)storageDriver(
                 storageGcsNew(
                     STRDEF("/repo"), false, 0, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
-                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
+                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL, NULL)),
             "read-only gcs storage - service key");
         TEST_RESULT_STR_Z(httpUrlHost(storage->authUrl), "test.com", "check host");
         TEST_RESULT_STR_Z(httpUrlPath(storage->authUrl), "/token", "check path");
@@ -285,7 +285,7 @@ testRun(void)
             (StorageGcs *)storageDriver(
                 storageGcsNew(
                     STRDEF("/repo"), true, 0, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
-                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
+                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL, NULL)),
             "read/write gcs storage - service key");
 
         TEST_RESULT_STR_Z(
