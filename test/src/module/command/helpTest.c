@@ -316,6 +316,7 @@ testRun(void)
             "                                      [default=storage.googleapis.com]\n"
             "  --repo-gcs-key                      GCS repository key\n"
             "  --repo-gcs-key-type                 GCS repository key type [default=service]\n"
+            "  --repo-gcs-user-project             GCS project ID\n"
             "  --repo-host                         repository host when operating remotely\n"
             "                                      [current=<multi>]\n"
             "  --repo-host-ca-file                 repository host certificate authority file\n"
