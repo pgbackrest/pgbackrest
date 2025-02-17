@@ -770,6 +770,8 @@ testRun(void)
         hrnCfgArgRawBool(argList, cfgOptDryRun, true);
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
+        harnessLogLevelSet(logLevelDetail);
+
         TEST_RESULT_VOID(cmdExpire(), "expire (dry-run) do not remove last backup in archive sub path or sub path");
 
         TEST_RESULT_BOOL(
@@ -781,9 +783,20 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: [DRY-RUN] repo1: expire full backup 20181119-152138F\n"
             "P00   INFO: [DRY-RUN] repo1: remove expired backup 20181119-152138F\n"
+            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F, start = 000000020000000000000002,"
+            " stop = 000000020000000000000002\n"
+            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F_20181119-152152D,"
+            " start = 000000020000000000000004, stop = 000000020000000000000005\n"
+            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F_20181119-152155I,"
+            " start = 000000020000000000000007, stop = 000000020000000000000007\n"
+            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F_20181119-152252D,"
+            " start = 000000020000000000000009\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 0000000100000000, stop = 0000000100000001\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000008\n"
+            "P00 DETAIL: [DRY-RUN] repo1: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
             "P00   INFO: [DRY-RUN] repo1: 10-2 no archive to remove");
+
+        harnessLogLevelReset();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire via backup command");
