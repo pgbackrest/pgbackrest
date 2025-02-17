@@ -431,7 +431,6 @@ storageGcsRequestAsync(StorageGcs *const this, const String *const verb, Storage
         FUNCTION_LOG_PARAM(BOOL, param.upload);
         FUNCTION_LOG_PARAM(BOOL, param.noAuth);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
-        FUNCTION_LOG_PARAM(BOOL, param.userProject);
         FUNCTION_LOG_PARAM(STRING, param.path);
         FUNCTION_LOG_PARAM(STRING, param.object);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
@@ -502,7 +501,7 @@ storageGcsRequestAsync(StorageGcs *const this, const String *const verb, Storage
         HttpQuery *const query = httpQueryDupP(param.query, .redactList = this->queryRedactList);
 
         // Add user project
-        if (param.userProject && this->userProject != NULL)
+        if (this->userProject != NULL)
             httpQueryAdd(query, GCS_QUERY_USER_PROJECT_STR, this->userProject);
 
         // Generate authorization header
@@ -565,7 +564,6 @@ storageGcsRequest(StorageGcs *const this, const String *const verb, const Storag
         FUNCTION_LOG_PARAM(BOOL, param.upload);
         FUNCTION_LOG_PARAM(BOOL, param.noAuth);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
-        FUNCTION_LOG_PARAM(BOOL, param.userProject);
         FUNCTION_LOG_PARAM(STRING, param.path);
         FUNCTION_LOG_PARAM(STRING, param.object);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
@@ -578,8 +576,8 @@ storageGcsRequest(StorageGcs *const this, const String *const verb, const Storag
 
     HttpRequest *const request = storageGcsRequestAsyncP(
         this, verb, .noBucket = param.noBucket, .upload = param.upload, .noAuth = param.noAuth, .tag = param.tag,
-        .userProject = param.userProject, .path = param.path, .object = param.object, .header = param.header, .query = param.query,
-        .content = param.content, .contentList = param.contentList);
+        .path = param.path, .object = param.object, .header = param.header, .query = param.query, .content = param.content,
+        .contentList = param.contentList);
     HttpResponse *const result = storageGcsResponseP(
         request, .allowMissing = param.allowMissing, .allowIncomplete = param.allowIncomplete, .contentIo = param.contentIo);
 
@@ -727,7 +725,7 @@ storageGcsListInternal(
                 }
                 // Else get the response immediately from a sync request
                 else
-                    response = storageGcsRequestP(this, HTTP_VERB_GET_STR, .query = query, .userProject = true);
+                    response = storageGcsRequestP(this, HTTP_VERB_GET_STR, .query = query);
 
                 const KeyValue *const content = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
 
@@ -741,7 +739,7 @@ storageGcsListInternal(
                     // Store request in the outer temp context
                     MEM_CONTEXT_PRIOR_BEGIN()
                     {
-                        request = storageGcsRequestAsyncP(this, HTTP_VERB_GET_STR, .query = query, .userProject = true);
+                        request = storageGcsRequestAsyncP(this, HTTP_VERB_GET_STR, .query = query);
                     }
                     MEM_CONTEXT_PRIOR_END();
                 }
@@ -859,7 +857,7 @@ storageGcsInfo(THIS_VOID, const String *const file, const StorageInfoLevel level
     {
         // Attempt to get file info
         HttpResponse *const httpResponse = storageGcsRequestP(
-            this, HTTP_VERB_GET_STR, .object = file, .allowMissing = true, .userProject = true,
+            this, HTTP_VERB_GET_STR, .object = file, .allowMissing = true,
             .query = httpQueryAdd(
                 httpQueryNewP(), GCS_QUERY_FIELDS_STR,
                 level >= storageInfoLevelBasic ? STRDEF(GCS_JSON_SIZE "," GCS_JSON_UPDATED) : EMPTY_STR));
@@ -1223,7 +1221,7 @@ storageGcsNew(
             .keyType = keyType,
             .chunkSize = chunkSize,
             .deleteMax = STORAGE_GCS_DELETE_MAX,
-            .userProject = userProject,
+            .userProject = strDup(userProject),
         };
 
         // Create tag JSON buffer

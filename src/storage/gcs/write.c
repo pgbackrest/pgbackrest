@@ -175,7 +175,7 @@ storageWriteGcsBlockAsync(StorageWriteGcs *const this, const bool done)
         if (this->uploadId == NULL)
         {
             HttpResponse *response = storageGcsRequestP(
-                this->storage, HTTP_VERB_POST_STR, .upload = true, .tag = this->tag, .userProject = true, .query = query);
+                this->storage, HTTP_VERB_POST_STR, .upload = true, .tag = this->tag, .query = query);
 
             MEM_CONTEXT_OBJ_BEGIN(this)
             {
