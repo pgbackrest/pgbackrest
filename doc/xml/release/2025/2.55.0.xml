@@ -78,6 +78,21 @@
             </release-item>
 
             <release-item>
+                <commit subject="Add detail logging to expire test."/>
+                <commit subject="Add detail logging for expired archive path.">
+                    <github-issue id="2543"/>
+                    <github-pull-request id="2559"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add detail logging for expired archive path.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2472"/>
 
                 <release-item-contributor-list>

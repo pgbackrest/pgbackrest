@@ -677,6 +677,10 @@ removeExpiredArchive(const InfoBackup *const infoBackup, const bool timeBasedFul
                                             .recurse = true);
                                     }
 
+                                    LOG_DETAIL_FMT(
+                                        "%s: %s remove archive path %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx),
+                                        strZ(archiveId), strZ(walPath));
+
                                     archiveExpire.total++;
                                     archiveExpire.stop = strDup(walPath);
 

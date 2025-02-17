@@ -791,6 +791,8 @@ testRun(void)
             " start = 000000020000000000000007, stop = 000000020000000000000007\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152800F_20181119-152252D,"
             " start = 000000020000000000000009\n"
+            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 remove archive path 0000000100000000\n"
+            "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 remove archive path 0000000100000001\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 0000000100000000, stop = 0000000100000001\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000020000000000000008, stop = 000000020000000000000008\n"
             "P00 DETAIL: [DRY-RUN] repo1: 10-2 archive retention on backup 20181119-152900F, start = 000000010000000000000003\n"
