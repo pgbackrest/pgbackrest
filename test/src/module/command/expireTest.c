@@ -768,8 +768,9 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "2");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchiveType, "diff");
         hrnCfgArgRawBool(argList, cfgOptDryRun, true);
-        harnessLogLevelSet(logLevelDetail);
         HRN_CFG_LOAD(cfgCmdExpire, argList);
+
+        harnessLogLevelSet(logLevelDetail);
 
         TEST_RESULT_VOID(cmdExpire(), "expire (dry-run) do not remove last backup in archive sub path or sub path");
 
