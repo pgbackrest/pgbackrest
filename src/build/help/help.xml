@@ -1054,6 +1054,16 @@
                         <example>bceb4f13-6939-4be3-910d-df54dee817b7</example>
                     </config-key>
 
+                    <config-key id="repo-s3-requester-pays" name="S3 Repository ">
+                        <summary>S3 Repository Requester Pays setting.</summary>
+
+                        <text>
+                            <p>Setting this option enables S3 requester pays.</p>
+                        </text>
+
+                        <example>n</example>
+                    </config-key>
+
                     <config-key id="repo-s3-uri-style" name="S3 Repository URI Style">
                         <summary>S3 URI Style.</summary>
 

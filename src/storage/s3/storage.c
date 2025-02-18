@@ -39,6 +39,8 @@ STRING_STATIC(S3_HEADER_SSECUSTKEY_AES256_STR,                      "AES256");
 STRING_STATIC(S3_HEADER_SSECUSTKEY_KEY_STR,                         "x-amz-server-side-encryption-customer-key");
 STRING_STATIC(S3_HEADER_SSECUSTKEY_KEY_MD5_STR,                     "x-amz-server-side-encryption-customer-key-md5");
 STRING_STATIC(S3_HEADER_TAGGING,                                    "x-amz-tagging");
+STRING_STATIC(S3_HEADER_REQUEST_PAYER,                              "x-amz-request-payer");
+STRING_STATIC(S3_HEADER_REQUEST_PAYER_STR,                          "requester");
 
 /***********************************************************************************************************************************
 S3 query tokens
@@ -110,6 +112,7 @@ struct StorageS3
     unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
     StorageS3UriStyle uriStyle;                                     // Path or host style URIs
     const String *bucketEndpoint;                                   // Set to {bucket}.{endpoint}
+    bool requesterPays;                                       // Set requester pays.
 
     // For retrieving temporary security credentials
     HttpClient *credHttpClient;                                     // HTTP client to service credential requests
@@ -477,6 +480,10 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
                 requestHeader, HTTP_HEADER_CONTENT_MD5_STR,
                 strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, param.content)));
         }
+
+        // Set requester pays when requested
+        if (this->requesterPays)
+            httpHeaderPut(requestHeader, S3_HEADER_REQUEST_PAYER, S3_HEADER_REQUEST_PAYER_STR);
 
         // Set KMS headers when requested
         if (param.sseKms && this->kmsKeyId != NULL)
@@ -1178,7 +1185,8 @@ storageS3New(
     const StorageS3KeyType keyType, const String *const accessKey, const String *const secretAccessKey,
     const String *const securityToken, const String *const kmsKeyId, const String *sseCustomerKey, const String *const credRole,
     const String *const webIdTokenFile, const size_t partSize, const KeyValue *const tag, const String *host,
-    const unsigned int port, const TimeMSec timeout, const bool verifyPeer, const String *const caFile, const String *const caPath)
+    const unsigned int port, const TimeMSec timeout, const bool verifyPeer, const String *const caFile, const String *const caPath,
+    const bool requesterPays)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -1228,7 +1236,7 @@ storageS3New(
             .uriStyle = uriStyle,
             .bucketEndpoint =
                 uriStyle == storageS3UriStyleHost ? strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)) : strDup(endPoint),
-
+            .requesterPays = requesterPays,
             // Force the signing key to be generated on the first run
             .signingKeyDate = YYYYMMDD_STR,
         };

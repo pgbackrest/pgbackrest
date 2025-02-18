@@ -347,6 +347,7 @@ testRun(void)
             "  --repo-s3-kms-key-id                S3 repository KMS key\n"
             "  --repo-s3-region                    S3 repository region\n"
             "  --repo-s3-role                      S3 repository role\n"
+            "  --repo-s3-requester-pays            S3 Repository Requester Pays setting\n"
             "  --repo-s3-sse-customer-key          S3 Repository SSE Customer Key\n"
             "  --repo-s3-token                     S3 repository security token\n"
             "  --repo-s3-uri-style                 S3 URI Style [default=host]\n"

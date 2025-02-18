@@ -2410,6 +2410,12 @@ option:
     required: false
     command: repo-type
 
+  repo-s3-requester-pays:
+    section: repo
+    inherit: repo-s3-bucket
+    required: false
+    type: boolean
+
   repo-s3-uri-style:
     section: global
     group: repo
