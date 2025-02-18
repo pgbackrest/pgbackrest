@@ -1086,6 +1086,23 @@ testRun(void)
         result = testFilter(filter, wal, bufSize(wal), bufSize(wal));
         TEST_RESULT_BOOL(bufEq(wal, result), true, "WAL not the same");
         MEM_CONTEXT_TEMP_END();
+
+        TEST_TITLE("long record with split header");
+        MEM_CONTEXT_TEMP_BEGIN();
+        filter = walFilterNew(pgControl, NULL);
+        {
+            wal = bufNew(1024 * 1024);
+            XRecordInfo walRecords[] = {
+                // Leave exactly 8 bytes free at the end of the page.
+                {RM_XLOG_ID, XLOG_NOOP, DEFAULT_GDPB_XLOG_PAGE_SIZE - SizeOfXLogLongPHD - SizeOfXLogRecord - 8},
+                {RM_XLOG_ID, XLOG_NOOP, DEFAULT_GDPB_XLOG_PAGE_SIZE * 2},
+                {RM_XLOG_ID, XLOG_NOOP, DEFAULT_GDPB_XLOG_PAGE_SIZE * 6}
+            };
+            buildWalP(wal, walRecords, LENGTH_OF(walRecords), 0);
+        }
+        result = testFilter(filter, wal, bufSize(wal), bufSize(wal));
+        TEST_RESULT_BOOL(bufEq(wal, result), true, "WAL not the same");
+        MEM_CONTEXT_TEMP_END();
     }
 
     if (testBegin("read invalid wal"))
