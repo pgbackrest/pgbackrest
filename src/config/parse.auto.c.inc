@@ -7910,8 +7910,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                  // opt/repo-s3-requester-pays
         PARSE_RULE_OPTION_NAME("repo-s3-requester-pays"),                                              // opt/repo-s3-requester-pays
         PARSE_RULE_OPTION_TYPE(Boolean),                                                               // opt/repo-s3-requester-pays
+        PARSE_RULE_OPTION_NEGATE(true),                                                                // opt/repo-s3-requester-pays
         PARSE_RULE_OPTION_RESET(true),                                                                 // opt/repo-s3-requester-pays
-        PARSE_RULE_OPTION_REQUIRED(false),                                                             // opt/repo-s3-requester-pays
+        PARSE_RULE_OPTION_REQUIRED(true),                                                              // opt/repo-s3-requester-pays
         PARSE_RULE_OPTION_SECTION(Global),                                                             // opt/repo-s3-requester-pays
         PARSE_RULE_OPTION_GROUP_ID(Repo),                                                              // opt/repo-s3-requester-pays
                                                                                                        // opt/repo-s3-requester-pays
@@ -7980,6 +7981,11 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 (                                                                                      // opt/repo-s3-requester-pays
                     PARSE_RULE_VAL_OPT(RepoType),                                                      // opt/repo-s3-requester-pays
                     PARSE_RULE_VAL_STRID(S3),                                                          // opt/repo-s3-requester-pays
+                ),                                                                                     // opt/repo-s3-requester-pays
+                                                                                                       // opt/repo-s3-requester-pays
+                PARSE_RULE_OPTIONAL_DEFAULT                                                            // opt/repo-s3-requester-pays
+                (                                                                                      // opt/repo-s3-requester-pays
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                         // opt/repo-s3-requester-pays
                 ),                                                                                     // opt/repo-s3-requester-pays
             ),                                                                                         // opt/repo-s3-requester-pays
         ),                                                                                             // opt/repo-s3-requester-pays

@@ -112,7 +112,7 @@ struct StorageS3
     unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
     StorageS3UriStyle uriStyle;                                     // Path or host style URIs
     const String *bucketEndpoint;                                   // Set to {bucket}.{endpoint}
-    bool requesterPays;                                       // Set requester pays.
+    bool requesterPays;                                             // Requester pays?
 
     // For retrieving temporary security credentials
     HttpClient *credHttpClient;                                     // HTTP client to service credential requests
@@ -1230,13 +1230,14 @@ storageS3New(
             .region = strDup(region),
             .keyType = keyType,
             .kmsKeyId = strDup(kmsKeyId),
+            .requesterPays = requesterPays,
             .sseCustomerKey = strDup(sseCustomerKey),
             .partSize = partSize,
             .deleteMax = STORAGE_S3_DELETE_MAX,
             .uriStyle = uriStyle,
             .bucketEndpoint =
                 uriStyle == storageS3UriStyleHost ? strNewFmt("%s.%s", strZ(bucket), strZ(endPoint)) : strDup(endPoint),
-            .requesterPays = requesterPays,
+
             // Force the signing key to be generated on the first run
             .signingKeyDate = YYYYMMDD_STR,
         };
