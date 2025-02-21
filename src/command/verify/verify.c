@@ -832,6 +832,60 @@ verifyCollectBackupRange(VerifyJobData *const jobData, const String *const backu
     FUNCTION_TEST_RETURN_VOID();
 }
 
+
+/***********************************************************************************************************************************
+Populate the WAL range to be verified later based on the specified backup
+***********************************************************************************************************************************/
+static void
+verifyCollectBlockDependencies(VerifyJobData *const jobData, const String *const backupLabel)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, jobData);       // Pointer to the job data
+        FUNCTION_TEST_PARAM(STRING, backupLabel);   // Label of a backup to use for WAL filtering
+    FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *const fileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
+
+        // Get the main manifest file
+        VerifyInfoFile verifyManifestInfo = verifyInfoFile(fileName, true, jobData->manifestCipherPass);
+        if (verifyManifestInfo.errorCode != 0)
+        {
+            // Attempt to read manifest copy instead
+            verifyManifestInfo = verifyInfoFile(strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT),
+                                                true, jobData->manifestCipherPass);
+        }
+
+        // If the manifest file has no error, process it
+        if (verifyManifestInfo.errorCode == 0)
+        {
+            const ManifestData *const manData = manifestData(verifyManifestInfo.manifest);
+
+            // Block incremental backups can depend on any referenced backups through block maps.
+            // This means we have to verify all referenced backups too.
+            // TODO: Make this more efficient by verifying only required blocks.
+            if (manData->blockIncr)
+            {
+                const StringList *const refList = manifestReferenceList(verifyManifestInfo.manifest);
+
+                MEM_CONTEXT_BEGIN(jobData->memContext)
+                {
+                    for (unsigned int refIdx = 0; refIdx < strLstSize(refList); refIdx++)
+                        strLstAddIfMissing(jobData->backupList, strLstGet(refList, refIdx));
+                }
+                MEM_CONTEXT_END();
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+
 /***********************************************************************************************************************************
 Return verify jobs for the archive
 ***********************************************************************************************************************************/
@@ -1938,6 +1992,7 @@ verifyProcess(const bool verboseText)
             // Enable archive filtering if --set option is specified
             if (!backupLabelInvalid && backupLabel != NULL)
             {
+                verifyCollectBlockDependencies(&jobData, backupLabel);
                 verifyCollectBackupRange(&jobData, backupLabel);
                 jobData.enableArchiveFilter = true;
             }
