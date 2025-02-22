@@ -688,7 +688,7 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
         }
 
         // Perform a checkpoint
-        dbExec(this, STRDEF("checkpoint"));
+        dbCheckpoint(this);
 
         // On PostgreSQL >= 9.6 the checkpoint location can be verified so loop until lsn has been reached or timeout
         if (dbPgVersion(this) >= PG_VERSION_96)
@@ -732,6 +732,21 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
             THROW_FMT(DbMismatchError, "standby is on timeline %u but expected %u", dbPgControl(this).timeline, targetTimeline);
     }
     MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+dbCheckpoint(Db *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(DB, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    dbExec(this, STRDEF("checkpoint"));
 
     FUNCTION_LOG_RETURN_VOID();
 }
