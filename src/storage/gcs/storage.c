@@ -498,7 +498,10 @@ storageGcsRequestAsync(StorageGcs *const this, const String *const verb, Storage
             content == NULL || bufEmpty(content) ? ZERO_STR : strNewFmt("%zu", bufUsed(content)));
 
         // Make a copy of the query so it can be modified
-        HttpQuery *const query = httpQueryDupP(param.query, .redactList = this->queryRedactList);
+        HttpQuery *const query =
+            this->userProject != NULL && param.query == NULL ?
+                httpQueryNewP(.redactList = this->queryRedactList) :
+                httpQueryDupP(param.query, .redactList = this->queryRedactList);
 
         // Add user project
         if (this->userProject != NULL)
