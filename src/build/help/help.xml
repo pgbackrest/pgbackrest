@@ -994,7 +994,7 @@
                         <summary>S3 repository KMS key.</summary>
 
                         <text>
-                            <p>Setting this option enables S3 server-side encryption using the specified AWS key management service key.</p>
+                            <p>Enables S3 server-side encryption using the specified AWS key management service key.</p>
                         </text>
 
                         <example>bceb4f13-6939-4be3-910d-df54dee817b7</example>
@@ -1048,7 +1048,7 @@
                         <summary>S3 repository SSE customer key.</summary>
 
                         <text>
-                            <p>Setting this option enables S3 server-side encryption using the specified customer key.</p>
+                            <p>Enables S3 server-side encryption using the specified customer key.</p>
                         </text>
 
                         <example>bceb4f13-6939-4be3-910d-df54dee817b7</example>
