@@ -528,6 +528,7 @@ typedef enum
     cfgOptRepoS3KeyType,
     cfgOptRepoS3KmsKeyId,
     cfgOptRepoS3Region,
+    cfgOptRepoS3RequesterPays,
     cfgOptRepoS3Role,
     cfgOptRepoS3SseCustomerKey,
     cfgOptRepoS3Token,
