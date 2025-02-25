@@ -722,7 +722,7 @@
                         <summary>GCS project ID.</summary>
 
                         <text>
-                            <p>GCS project ID used to determine billing of the requests.</p>
+                            <p>GCS project ID used to determine request billing.</p>
                         </text>
 
                         <example>my-project</example>
