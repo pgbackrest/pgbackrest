@@ -7906,6 +7906,91 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                     // opt/repo-s3-region
     ),                                                                                                         // opt/repo-s3-region
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                  // opt/repo-s3-requester-pays
+    (                                                                                                  // opt/repo-s3-requester-pays
+        PARSE_RULE_OPTION_NAME("repo-s3-requester-pays"),                                              // opt/repo-s3-requester-pays
+        PARSE_RULE_OPTION_TYPE(Boolean),                                                               // opt/repo-s3-requester-pays
+        PARSE_RULE_OPTION_NEGATE(true),                                                                // opt/repo-s3-requester-pays
+        PARSE_RULE_OPTION_RESET(true),                                                                 // opt/repo-s3-requester-pays
+        PARSE_RULE_OPTION_REQUIRED(true),                                                              // opt/repo-s3-requester-pays
+        PARSE_RULE_OPTION_SECTION(Global),                                                             // opt/repo-s3-requester-pays
+        PARSE_RULE_OPTION_GROUP_ID(Repo),                                                              // opt/repo-s3-requester-pays
+                                                                                                       // opt/repo-s3-requester-pays
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                 // opt/repo-s3-requester-pays
+        (                                                                                              // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                        // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                      // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                     // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                          // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(Check)                                                           // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                          // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(Info)                                                            // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                        // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                         // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                          // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                         // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                          // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                         // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                    // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                    // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                   // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                          // opt/repo-s3-requester-pays
+        ),                                                                                             // opt/repo-s3-requester-pays
+                                                                                                       // opt/repo-s3-requester-pays
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                // opt/repo-s3-requester-pays
+        (                                                                                              // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                      // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                     // opt/repo-s3-requester-pays
+        ),                                                                                             // opt/repo-s3-requester-pays
+                                                                                                       // opt/repo-s3-requester-pays
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                // opt/repo-s3-requester-pays
+        (                                                                                              // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                      // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                     // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                          // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                         // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                          // opt/repo-s3-requester-pays
+        ),                                                                                             // opt/repo-s3-requester-pays
+                                                                                                       // opt/repo-s3-requester-pays
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                               // opt/repo-s3-requester-pays
+        (                                                                                              // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                        // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                      // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                     // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                          // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(Check)                                                           // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                          // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(Info)                                                            // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                        // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                         // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                          // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                         // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                          // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                         // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                    // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                    // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                   // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                          // opt/repo-s3-requester-pays
+        ),                                                                                             // opt/repo-s3-requester-pays
+                                                                                                       // opt/repo-s3-requester-pays
+        PARSE_RULE_OPTIONAL                                                                            // opt/repo-s3-requester-pays
+        (                                                                                              // opt/repo-s3-requester-pays
+            PARSE_RULE_OPTIONAL_GROUP                                                                  // opt/repo-s3-requester-pays
+            (                                                                                          // opt/repo-s3-requester-pays
+                PARSE_RULE_OPTIONAL_DEPEND                                                             // opt/repo-s3-requester-pays
+                (                                                                                      // opt/repo-s3-requester-pays
+                    PARSE_RULE_VAL_OPT(RepoType),                                                      // opt/repo-s3-requester-pays
+                    PARSE_RULE_VAL_STRID(S3),                                                          // opt/repo-s3-requester-pays
+                ),                                                                                     // opt/repo-s3-requester-pays
+                                                                                                       // opt/repo-s3-requester-pays
+                PARSE_RULE_OPTIONAL_DEFAULT                                                            // opt/repo-s3-requester-pays
+                (                                                                                      // opt/repo-s3-requester-pays
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                         // opt/repo-s3-requester-pays
+                ),                                                                                     // opt/repo-s3-requester-pays
+            ),                                                                                         // opt/repo-s3-requester-pays
+        ),                                                                                             // opt/repo-s3-requester-pays
+    ),                                                                                                 // opt/repo-s3-requester-pays
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                            // opt/repo-s3-role
     (                                                                                                            // opt/repo-s3-role
         PARSE_RULE_OPTION_NAME("repo-s3-role"),                                                                  // opt/repo-s3-role
@@ -11342,6 +11427,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoS3KeyType,                                                                                        // opt-resolve-order
     cfgOptRepoS3KmsKeyId,                                                                                       // opt-resolve-order
     cfgOptRepoS3Region,                                                                                         // opt-resolve-order
+    cfgOptRepoS3RequesterPays,                                                                                  // opt-resolve-order
     cfgOptRepoS3Role,                                                                                           // opt-resolve-order
     cfgOptRepoS3SseCustomerKey,                                                                                 // opt-resolve-order
     cfgOptRepoS3Token,                                                                                          // opt-resolve-order

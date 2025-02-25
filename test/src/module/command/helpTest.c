@@ -346,6 +346,7 @@ testRun(void)
             "  --repo-s3-key-type                  S3 repository key type [default=shared]\n"
             "  --repo-s3-kms-key-id                S3 repository KMS key\n"
             "  --repo-s3-region                    S3 repository region\n"
+            "  --repo-s3-requester-pays            S3 repository requester pays [default=n]\n"
             "  --repo-s3-role                      S3 repository role\n"
             "  --repo-s3-sse-customer-key          S3 repository SSE customer key\n"
             "  --repo-s3-token                     S3 repository security token\n"

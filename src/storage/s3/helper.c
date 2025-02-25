@@ -91,7 +91,7 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
                 (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx),
                 cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), host, port, ioTimeoutMs(),
                 cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
+                cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx), cfgOptionIdxBool(cfgOptRepoS3RequesterPays, repoIdx));
         }
         MEM_CONTEXT_PRIOR_END();
     }

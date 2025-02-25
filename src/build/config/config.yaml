@@ -2410,6 +2410,17 @@ option:
     required: false
     command: repo-type
 
+  repo-s3-requester-pays:
+    section: global
+    group: repo
+    type: boolean
+    default: false
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - s3
+
   repo-s3-uri-style:
     section: global
     group: repo

@@ -49,6 +49,17 @@
 
                 <p>Verify recovery target timeline.</p>
             </release-item>
+
+            <release-item>
+                <github-pull-request id="2560"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="timothee.peignier"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add support for S3 requester pays.</p>
+            </release-item>
         </release-feature-list>
 
         <release-improvement-list>
