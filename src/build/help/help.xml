@@ -1058,7 +1058,7 @@
                         <summary>S3 repository requester pays.</summary>
 
                         <text>
-                            <p>Setting this option enables S3 requester pays.</p>
+                            <p>Enables S3 requester pays.</p>
                         </text>
 
                         <example>n</example>
