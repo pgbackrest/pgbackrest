@@ -1045,7 +1045,7 @@
                     </config-key>
 
                     <config-key id="repo-s3-sse-customer-key" name="S3 Repository SSE Customer Key">
-                        <summary>S3 Repository SSE Customer Key.</summary>
+                        <summary>S3 repository SSE customer key.</summary>
 
                         <text>
                             <p>Setting this option enables S3 server-side encryption using the specified customer key.</p>
