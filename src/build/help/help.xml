@@ -718,6 +718,16 @@
                         <example>auto</example>
                     </config-key>
 
+                    <config-key id="repo-gcs-user-project" name="GCS Repository Project ID">
+                        <summary>GCS project ID.</summary>
+
+                        <text>
+                            <p>GCS project ID used to determine request billing.</p>
+                        </text>
+
+                        <example>my-project</example>
+                    </config-key>
+
                     <config-key id="repo-host-type" name="Repository Host Protocol Type">
                         <summary>Repository host protocol type.</summary>
 
