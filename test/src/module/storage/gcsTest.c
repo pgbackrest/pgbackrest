@@ -1115,6 +1115,37 @@ testRun(void)
                 TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to user project");
+
+                hrnServerScriptClose(service);
+
+                StringList *argListUserProject = strLstDup(argList);
+                hrnCfgArgRawZ(argListUserProject, cfgOptRepoGcsUserProject, "usrprj");
+                hrnCfgArgRawZ(argListUserProject, cfgOptRepoRetentionFull, "1");
+                HRN_CFG_LOAD(cfgCmdExpire, argListUserProject);
+
+                TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("remove file");
+
+                testRequestP(service, HTTP_VERB_DELETE, .object = "path/to/test.txt", .query = "userProject=usrprj");
+                testResponseP(service);
+
+                TEST_RESULT_VOID(storageRemoveP(storage, STRDEF("/path/to/test.txt")), "remove");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("info for missing file");
+
+                testRequestP(service, HTTP_VERB_GET, .object = "BOGUS", .query = "fields=size%2Cupdated&userProject=usrprj");
+                testResponseP(service, .code = 404);
+
+                TEST_RESULT_BOOL(
+                    storageInfoP(storage, STRDEF("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("switch to target time");
 
                 hrnServerScriptClose(service);
@@ -1122,7 +1153,6 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
                 hrnCfgArgRawZ(argList, cfgOptRepo, "1");
                 hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-04 02:54:09+00");
-                hrnCfgArgRawZ(argList, cfgOptRepoGcsUserProject, "usrprj");
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
                 TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
@@ -1136,7 +1166,7 @@ testRun(void)
                     service, HTTP_VERB_GET,
                     .query =
                         "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%2Csize%2Cupdated%2Cgeneration%29"
-                        "&prefix=path%2Fto%2F&userProject=usrprj&versions=true");
+                        "&prefix=path%2Fto%2F&versions=true");
                 testResponseP(
                     service,
                     .content =
@@ -1159,7 +1189,7 @@ testRun(void)
                     service, HTTP_VERB_GET,
                     .query =
                         "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%2Csize%2Cupdated%2Cgeneration%29"
-                        "&pageToken=ueGx&prefix=path%2Fto%2F&userProject=usrprj&versions=true");
+                        "&pageToken=ueGx&prefix=path%2Fto%2F&versions=true");
                 testResponseP(
                     service,
                     .content =
@@ -1195,7 +1225,7 @@ testRun(void)
                     service, HTTP_VERB_GET,
                     .query =
                         "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%2Cupdated%2Cgeneration%29"
-                        "&prefix=path%2Fto%2F&userProject=usrprj&versions=true");
+                        "&prefix=path%2Fto%2F&versions=true");
                 testResponseP(
                     service,
                     .content =
@@ -1221,7 +1251,7 @@ testRun(void)
                     service, HTTP_VERB_GET,
                     .query =
                         "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%2Csize%2Cupdated%2Cgeneration%29"
-                        "&userProject=usrprj&versions=true");
+                        "&versions=true");
                 testResponseP(
                     service,
                     .content =
@@ -1236,9 +1266,7 @@ testRun(void)
                         "  ]"
                         "}");
 
-                testRequestP(
-                    service, HTTP_VERB_GET, .object = "file.txt",
-                    .query = "alt=media?generation=1724645450428444&userProject=usrprj");
+                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media?generation=1724645450428444");
                 testResponseP(service, .content = "123456");
 
                 TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt")))), "123456", "get file");
