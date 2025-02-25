@@ -51,14 +51,19 @@
             </release-item>
 
             <release-item>
-                <github-pull-request id="2560"/>
+                <commit subject="Add support for S3 requester pays.">
+                    <github-pull-request id="2560"/>
+                </commit>
+                <commit subject="Add support for GCS requester pays.">
+                    <github-pull-request id="2557"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="timothee.peignier"/>
                     <release-item-reviewer id="david.steele"/>
                 </release-item-contributor-list>
 
-                <p>Add support for S3 requester pays.</p>
+                <p>Add support for S3/GCS requester pays.</p>
             </release-item>
         </release-feature-list>
 
