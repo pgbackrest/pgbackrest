@@ -1,11 +1,14 @@
 /***********************************************************************************************************************************
 Test Verify Command
 ***********************************************************************************************************************************/
+#include "command/backup/protocol.h"
+#include "command/stanza/create.h"
 #include "common/io/bufferRead.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/posix/storage.h"
 
+#include "common/harnessBackup.h"
 #include "common/harnessConfig.h"
 #include "common/harnessInfo.h"
 #include "common/harnessPostgres.h"
@@ -25,7 +28,10 @@ testRun(void)
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // Install local command handler shim
-    static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_VERIFY_LIST};
+    static const ProtocolServerHandler testLocalHandlerList[] = {
+        PROTOCOL_SERVER_HANDLER_BACKUP_LIST
+        PROTOCOL_SERVER_HANDLER_VERIFY_LIST
+    };
     hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
 
     StringList *argListBase = strLstNew();
@@ -2102,6 +2108,131 @@ testRun(void)
             "status: error\n"
             "  'BOGUS' is not a valid backup label format",
             "--set with backup label of incorrect format, text");
+    }
+
+    if (testBegin("cmdBackup() and verifyProcess()"))
+    {
+        StringList *argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        // Created pg_control and PG_VERSION
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11);
+        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_Z, .timeModified = BACKUP_EPOCH);
+
+        TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create");
+        TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("full backup with block incr");
+
+        // Zeroed file large enough to use block incr
+        time_t timeBase = BACKUP_EPOCH;
+        Buffer *relation = bufNew(256 * 1024);
+        memset(bufPtr(relation), 0, bufSize(relation));
+        bufUsedSet(relation, bufSize(relation));
+
+        HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = timeBase - 2);
+
+        // Zeroed file large enough to use block incr (that will be truncated to zero before restore)
+        relation = bufNew(16 * 1024);
+        memset(bufPtr(relation), 0, bufSize(relation));
+        bufUsedSet(relation, bufSize(relation));
+
+        HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/44", relation, .timeModified = timeBase - 2);
+
+        // Add postgresql.auto.conf to contain recovery settings
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF, .timeModified = timeBase - 1);
+
+        // Backup
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+        hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
+        hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        hrnBackupPqScriptP(PG_VERSION_11, BACKUP_EPOCH);
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+        TEST_RESULT_LOG(
+            "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
+            "P00   INFO: backup start archive = 0000000105D944C000000000, lsn = 5d944c0/0\n"
+            "P00   INFO: check archive for prior segment 0000000105D944BF000000FF\n"
+            "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/postgresql.auto.conf\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/44 (bundle 1/0, 16KB, 5.71%) checksum 897256b6709e1a4da9daba92b6bde39ccfccd8c1\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (bundle 1/57, 256KB, 97.14%) checksum 2e000fa7e85759c7f4c254d4d9c33ef481e459a7\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/533, 8KB, 99.99%) checksum e5d9c9f6780f169861f2cf42eca4a5c1b43e108d\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/627, 2B, 100.00%) checksum 17ba0791499db908433b80f37c5fbc89b870084b\n"
+            "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
+            "P00   INFO: backup stop archive = 0000000105D944C000000000, lsn = 5d944c0/800000\n"
+            "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
+            "P00   INFO: check archive for segment(s) 0000000105D944C000000000:0000000105D944C000000000\n"
+            "P00   INFO: new backup label = 20191002-070640F\n"
+            "P00   INFO: full backup size = 280KB, file total = 6");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("diff backup with block incr");
+
+        // Update file /1/2 to use block map without adding a reference in manifest
+        relation = bufNew(256 * 1024);
+        memset(bufPtr(relation), 0, bufSize(relation));
+        memset(bufPtr(relation), 1, 1024);
+        bufUsedSet(relation, bufSize(relation));
+        HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = timeBase);
+
+        // Backup
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        hrnCfgArgRawStrId(argList, cfgOptType, backupTypeDiff);
+        hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
+        hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        hrnBackupPqScriptP(PG_VERSION_11, BACKUP_EPOCH + 100000);
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+        TEST_RESULT_LOG(
+            "P00   INFO: last backup label = 20191002-070640F, version = 2.52\n"
+            "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
+            "P00   INFO: backup start archive = 0000000105D95D3000000000, lsn = 5d95d30/0\n"
+            "P00   INFO: check archive for prior segment 0000000105D95D2F000000FF\n"
+            "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/postgresql.auto.conf\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (bundle 1/0, 256KB, 96.96%) checksum 463b4fee2546db2858da66249fee4ba16daa8553\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/237, 8KB, 100.00%) checksum 333809f5686518c9886e999db6884a3b84029899\n"
+            "P00 DETAIL: reference pg_data/PG_VERSION to 20191002-070640F\n"
+            "P00 DETAIL: reference pg_data/base/1/44 to 20191002-070640F\n"
+            "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
+            "P00   INFO: backup stop archive = 0000000105D95D3000000000, lsn = 5d95d30/800000\n"
+            "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
+            "P00   INFO: check archive for segment(s) 0000000105D95D3000000000:0000000105D95D3000000000\n"
+            "P00   INFO: new backup label = 20191002-070640F_20191003-105320D\n"
+            "P00   INFO: diff backup size = 264KB, file total = 6");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("verify with block incr");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptOutput, "text");
+        hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
+        hrnCfgArgRawZ(argList, cfgOptSet, "20191002-070640F_20191003-105320D");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        // Should check both backups because of block increment
+        TEST_RESULT_STR_Z(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            "stanza: db\n"
+            "status: ok\n"
+            "  archiveId: 11-1, total WAL checked: 4, total valid WAL: 4\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "  backup: 20191002-070640F_20191003-105320D, status: valid, total files checked: 6, total valid files: 6\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "  backup: 20191002-070640F, status: valid, total files checked: 6, total valid files: 6\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0", "--set with block incremental backup\n");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: archiveId: 11-1, wal start: 0000000105D944BF000000FF, wal stop: 0000000105D944C000000000\n"
+            "P00 DETAIL: archiveId: 11-1, wal start: 0000000105D95D2F000000FF, wal stop: 0000000105D95D3000000000");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
