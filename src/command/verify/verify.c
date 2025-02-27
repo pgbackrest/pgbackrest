@@ -668,12 +668,24 @@ verifyCollectBlockDependencies(VerifyJobData *const jobData, const String *const
         // If the manifest file has no error, process it
         if (verifyManifestInfo.errorCode == 0)
         {
-            const ManifestData *const manData = manifestData(verifyManifestInfo.manifest);
+            // Check files for block incremental
+            unsigned int manFileIdx = 0;
+            bool hasBlockIncr = false;
+            while (manFileIdx < manifestFileTotal(verifyManifestInfo.manifest))
+            {
+                ManifestFile manFile = manifestFile(verifyManifestInfo.manifest, manFileIdx);
+                if (manFile.blockIncrMapSize != 0)
+                {
+                    hasBlockIncr = true;
+                    break;
+                }
+                manFileIdx++;
+            }
 
             // Block incremental backups can depend on any referenced backups through block maps.
             // This means we have to verify all referenced backups too.
             // TODO: Make this more efficient by verifying only required blocks.
-            if (manData->blockIncr)
+            if (hasBlockIncr)
             {
                 const StringList *const refList = manifestReferenceList(verifyManifestInfo.manifest);
 
