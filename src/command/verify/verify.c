@@ -693,6 +693,7 @@ verifyCollectBlockDependencies(VerifyJobData *const jobData, const String *const
                 {
                     for (unsigned int refIdx = 0; refIdx < strLstSize(refList); refIdx++)
                         strLstAddIfMissing(jobData->backupList, strLstGet(refList, refIdx));
+                    strLstSort(jobData->backupList, sortOrderAsc);
                 }
                 MEM_CONTEXT_END();
             }
