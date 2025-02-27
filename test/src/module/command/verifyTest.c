@@ -2108,10 +2108,53 @@ testRun(void)
             "status: error\n"
             "  'BOGUS' is not a valid backup label format",
             "--set with backup label of incorrect format, text");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("--set with broken backup");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptOutput, "text");
+        hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
+        hrnCfgArgRawZ(argList, cfgOptSet, "20181119-153400F");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        // Write invalid manifest for backup
+        String *manifestContent = strNewZ(
+            "[backrest]\n"
+            "backrest-format=1234\n");
+
+        // Deliberately using HRN_STORAGE_PUT_Z instead of HRN_INFO_PUT to write an invalid manifest
+        HRN_STORAGE_PUT_Z(storageRepoWrite(),
+                          STORAGE_REPO_BACKUP "/20181119-153400F/" BACKUP_MANIFEST_FILE,
+                          strZ(manifestContent),
+                          .comment = "invalid manifest - full");
+        HRN_STORAGE_PUT_Z(storageRepoWrite(),
+                          STORAGE_REPO_BACKUP "/20181119-153400F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
+                          strZ(manifestContent),
+                          .comment = "invalid manifest copy - full");
+
+        TEST_RESULT_STR_Z(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            "stanza: db\n"
+            "status: error\n"
+            "  archiveId: none found\n"
+            "  backup: 20181119-153400F, status: invalid, total files checked: 0, total valid files: 0",
+            "--set with broken backup\n");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: expected format 5 but found 1234\n"
+            "P00 DETAIL: expected format 5 but found 1234\n"
+            "P00 DETAIL: no archives exist in the repo\n"
+            "P00 DETAIL: expected format 5 but found 1234\n"
+            "P00 DETAIL: expected format 5 but found 1234");
     }
 
     if (testBegin("cmdBackup() and verifyProcess()"))
     {
+        // The test expects the timezone to be UTC
+        hrnTzSet("UTC");
+        // Replace checksums since they can differ between architectures (e.g. 32/64 bit)
+        hrnLogReplaceAdd("\\) checksum [a-f0-9]{40}", "[a-f0-9]{40}$", "SHA1", false);
+
         StringList *argList = strLstDup(argListBase);
         hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg1");
         hrnCfgArgRawBool(argList, cfgOptOnline, false);
@@ -2119,7 +2162,7 @@ testRun(void)
 
         // Created pg_control and PG_VERSION
         HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11);
-        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_Z, .timeModified = BACKUP_EPOCH);
+        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_11_Z, .timeModified = BACKUP_EPOCH - 10);
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create");
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
@@ -2161,10 +2204,10 @@ testRun(void)
             "P00   INFO: backup start archive = 0000000105D944C000000000, lsn = 5d944c0/0\n"
             "P00   INFO: check archive for prior segment 0000000105D944BF000000FF\n"
             "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/postgresql.auto.conf\n"
-            "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/44 (bundle 1/0, 16KB, 5.71%) checksum 897256b6709e1a4da9daba92b6bde39ccfccd8c1\n"
-            "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (bundle 1/57, 256KB, 97.14%) checksum 2e000fa7e85759c7f4c254d4d9c33ef481e459a7\n"
-            "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/533, 8KB, 99.99%) checksum e5d9c9f6780f169861f2cf42eca4a5c1b43e108d\n"
-            "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/627, 2B, 100.00%) checksum 17ba0791499db908433b80f37c5fbc89b870084b\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/0, 2B, 0.00%) checksum [SHA1]\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/44 (bundle 1/10, 16KB, 5.71%) checksum [SHA1]\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (bundle 1/68, 256KB, 97.14%) checksum [SHA1]\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/544, 8KB, 100.00%) checksum [SHA1]\n"
             "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
             "P00   INFO: backup stop archive = 0000000105D944C000000000, lsn = 5d944c0/800000\n"
             "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
@@ -2199,8 +2242,8 @@ testRun(void)
             "P00   INFO: backup start archive = 0000000105D95D3000000000, lsn = 5d95d30/0\n"
             "P00   INFO: check archive for prior segment 0000000105D95D2F000000FF\n"
             "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/postgresql.auto.conf\n"
-            "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (bundle 1/0, 256KB, 96.96%) checksum 463b4fee2546db2858da66249fee4ba16daa8553\n"
-            "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/237, 8KB, 100.00%) checksum 333809f5686518c9886e999db6884a3b84029899\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (bundle 1/0, 256KB, 96.96%) checksum [SHA1]\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/237, 8KB, 100.00%) checksum [SHA1]\n"
             "P00 DETAIL: reference pg_data/PG_VERSION to 20191002-070640F\n"
             "P00 DETAIL: reference pg_data/base/1/44 to 20191002-070640F\n"
             "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
@@ -2209,6 +2252,8 @@ testRun(void)
             "P00   INFO: check archive for segment(s) 0000000105D95D3000000000:0000000105D95D3000000000\n"
             "P00   INFO: new backup label = 20191002-070640F_20191003-105320D\n"
             "P00   INFO: diff backup size = 264KB, file total = 6");
+
+        hrnLogReplaceClear();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verify with block incr");
@@ -2226,9 +2271,9 @@ testRun(void)
             "status: ok\n"
             "  archiveId: 11-1, total WAL checked: 4, total valid WAL: 4\n"
             "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
-            "  backup: 20191002-070640F_20191003-105320D, status: valid, total files checked: 6, total valid files: 6\n"
-            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
             "  backup: 20191002-070640F, status: valid, total files checked: 6, total valid files: 6\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0\n"
+            "  backup: 20191002-070640F_20191003-105320D, status: valid, total files checked: 6, total valid files: 6\n"
             "    missing: 0, checksum invalid: 0, size invalid: 0, other: 0", "--set with block incremental backup\n");
         TEST_RESULT_LOG(
             "P00 DETAIL: archiveId: 11-1, wal start: 0000000105D944BF000000FF, wal stop: 0000000105D944C000000000\n"
