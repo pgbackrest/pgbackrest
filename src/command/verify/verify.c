@@ -20,6 +20,7 @@ Verify contents of the repository.
 #include "common/io/fdWrite.h"
 #include "common/io/io.h"
 #include "common/log.h"
+#include "common/regExp.h"
 #include "config/config.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
@@ -634,6 +635,71 @@ verifyCreateArchiveIdRange(
         walFileIdx++;
     }
     while (walFileIdx < strLstSize(walFileList));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Check if backup is block incremental and populate backup list from its references
+***********************************************************************************************************************************/
+static void
+verifyCollectBlockDependencies(VerifyJobData *const jobData, const String *const backupLabel)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, jobData);       // Pointer to the job data
+        FUNCTION_TEST_PARAM(STRING, backupLabel);   // Label of a backup to check
+    FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *const fileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
+
+        // Get the main manifest file
+        VerifyInfoFile verifyManifestInfo = verifyInfoFile(fileName, true, jobData->manifestCipherPass);
+        if (verifyManifestInfo.errorCode != 0)
+        {
+            // Attempt to read manifest copy instead
+            verifyManifestInfo = verifyInfoFile(strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT),
+                                                true, jobData->manifestCipherPass);
+        }
+
+        // If the manifest file has no error, process it
+        if (verifyManifestInfo.errorCode == 0)
+        {
+            // Check files for block incremental
+            unsigned int manFileIdx = 0;
+            bool hasBlockIncr = false;
+            while (manFileIdx < manifestFileTotal(verifyManifestInfo.manifest))
+            {
+                ManifestFile manFile = manifestFile(verifyManifestInfo.manifest, manFileIdx);
+                if (manFile.blockIncrMapSize != 0)
+                {
+                    hasBlockIncr = true;
+                    break;
+                }
+                manFileIdx++;
+            }
+
+            // Block incremental backups can depend on any referenced backups through block maps.
+            // This means we have to verify all referenced backups too.
+            // TODO: Make this more efficient by verifying only required blocks.
+            if (hasBlockIncr)
+            {
+                const StringList *const refList = manifestReferenceList(verifyManifestInfo.manifest);
+
+                MEM_CONTEXT_BEGIN(jobData->memContext)
+                {
+                    for (unsigned int refIdx = 0; refIdx < strLstSize(refList); refIdx++)
+                        strLstAddIfMissing(jobData->backupList, strLstGet(refList, refIdx));
+                    strLstSort(jobData->backupList, sortOrderAsc);
+                }
+                MEM_CONTEXT_END();
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -1534,20 +1600,60 @@ verifyProcess(const bool verboseText)
                 .backupResultList = lstNewP(sizeof(VerifyBackupResult), .comparator = lstComparatorStr),
             };
 
+            // Use backup label if specified via --set.
+            const String *backupLabel = cfgOptionStrNull(cfgOptSet);
+            const String *backupRegExpStr = backupRegExpP(.full = true, .differential = true, .incremental = true);
+            bool backupLabelInvalid = false;
+            if (backupLabel != NULL)
+            {
+                if (!regExpMatchOne(backupRegExpStr, backupLabel))
+                {
+                    strCatFmt(resultStr, "\n  '%s' is not a valid backup label format", strZ(backupLabel));
+                    errorTotal++;
+                    backupLabelInvalid = true;
+                }
+                else
+                {
+                    backupRegExpStr = strNewFmt("^%s$", strZ(backupLabel));
+                }
+            }
+
             // Get a list of backups in the repo sorted ascending
-            jobData.backupList = strLstSort(
-                storageListP(
-                    storage, STORAGE_REPO_BACKUP_STR,
-                    .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
-                sortOrderAsc);
+            if (!backupLabelInvalid)
+            {
+                jobData.backupList = strLstSort(
+                    storageListP(
+                        storage, STORAGE_REPO_BACKUP_STR,
+                        .expression = backupRegExpStr),
+                    sortOrderAsc);
+            }
+            else
+                jobData.backupList = strLstNew();
 
-            // Get a list of archive Ids in the repo (e.g. 9.6-1, 10-2, etc) sorted ascending by the db-id (number after the dash)
-            jobData.archiveIdList = strLstSort(
-                strLstComparatorSet(
-                    storageListP(storage, STORAGE_REPO_ARCHIVE_STR, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
-                    archiveIdComparator),
-                sortOrderAsc);
+            if (!backupLabelInvalid && backupLabel != NULL && strLstEmpty(jobData.backupList))
+            {
+                strCatFmt(resultStr, "\n  Backup set %s is not valid", strZ(backupLabel));
+                errorTotal++;
+                backupLabelInvalid = true;
+            }
 
+            // Get a list of archive Ids in the repo (e.g. 9.4-1, 10-2, etc) sorted ascending by the db-id (number after the dash)
+            if (!backupLabelInvalid)
+            {
+                jobData.archiveIdList = strLstSort(
+                    strLstComparatorSet(
+                        storageListP(storage, STORAGE_REPO_ARCHIVE_STR, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
+                        archiveIdComparator),
+                    sortOrderAsc);
+            }
+            else
+                jobData.archiveIdList = strLstNew();
+
+            // Check for block map dependencies if --set option is specified
+            if (!backupLabelInvalid && backupLabel != NULL)
+            {
+                verifyCollectBlockDependencies(&jobData, backupLabel);
+            }
             // Only begin processing if there are some archives or backups in the repo
             if (!strLstEmpty(jobData.archiveIdList) || !strLstEmpty(jobData.backupList))
             {
@@ -1699,7 +1805,7 @@ verifyProcess(const bool verboseText)
                 // Report results
                 resultStr = verifyRender(jobData.archiveIdResultList, jobData.backupResultList, verboseText);
             }
-            else
+            else if (!backupLabelInvalid)
                 strCatZ(resultStr, "\n    no archives or backups exist in the repo");
 
             errorTotal += jobData.jobErrorTotal;
