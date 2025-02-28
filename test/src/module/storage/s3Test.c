@@ -33,6 +33,7 @@ typedef struct TestRequestParam
     const char *ttl;
     const char *token;
     const char *tag;
+    bool requesterPays;
 } TestRequestParam;
 
 #define testRequestP(write, s3, verb, path, ...)                                                                                   \
@@ -76,6 +77,9 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
             strCatZ(request, "range;");
 
         strCatZ(request, "x-amz-content-sha256;x-amz-date");
+
+        if (param.requesterPays)
+            strCatZ(request, ";x-amz-request-payer");
 
         if (securityToken != NULL)
             strCatZ(request, ";x-amz-security-token");
@@ -137,6 +141,10 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
         if (securityToken != NULL)
             strCatFmt(request, "x-amz-security-token:%s\r\n", securityToken);
     }
+
+    // Requestor pays
+    if (param.requesterPays)
+        strCatZ(request, "x-amz-request-payer:requester\r\n");
 
     // Add kms key
     if (param.kms != NULL)
@@ -1447,6 +1455,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
                 hrnCfgArgRawZ(argList, cfgOptRepo, "1");
                 hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-04 02:54:09+00");
+                hrnCfgArgRawBool(argList, cfgOptRepoS3RequesterPays, true);
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
                 s3 = storageRepoGet(0, false);
@@ -1456,7 +1465,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("list with time limit");
 
-                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&prefix=path%2Fto%2F&versions=");
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&prefix=path%2Fto%2F&versions=", .requesterPays = true);
                 testResponseP(
                     service,
                     .content =
@@ -1474,7 +1483,9 @@ testRun(void)
                         "    </Version>"
                         "</ListBucketResult>");
 
-                testRequestP(service, s3, HTTP_VERB_GET, "/?continuation-token=1ueG&delimiter=%2F&prefix=path%2Fto%2F&versions=");
+                testRequestP(
+                    service, s3, HTTP_VERB_GET, "/?continuation-token=1ueG&delimiter=%2F&prefix=path%2Fto%2F&versions=",
+                    .requesterPays = true);
                 testResponseP(
                     service,
                     .content =
@@ -1509,7 +1520,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get file with time limit");
 
-                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&prefix=path%2F3%2F&versions=");
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&prefix=path%2F3%2F&versions=", .requesterPays = true);
                 testResponseP(
                     service,
                     .content =
@@ -1531,7 +1542,7 @@ testRun(void)
                         "   </CommonPrefixes>"
                         "</ListBucketResult>");
 
-                testRequestP(service, s3, HTTP_VERB_GET, "/path/3/test_file?versionId=bbbb");
+                testRequestP(service, s3, HTTP_VERB_GET, "/path/3/test_file?versionId=bbbb", .requesterPays = true);
                 testResponseP(service, .content = "123456");
 
                 TEST_RESULT_STR_Z(
@@ -1540,7 +1551,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get missing file with time limit");
 
-                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&versions=");
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&versions=", .requesterPays = true);
                 testResponseP(
                     service,
                     .content =

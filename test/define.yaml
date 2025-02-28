@@ -718,11 +718,12 @@ unit:
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: test
-        total: 2
+        total: 3
 
         coverage:
           - test/command/test/build
           - test/command/test/define
+          - test/command/test/lint
           - test/command/test/test
 
       # ----------------------------------------------------------------------------------------------------------------------------
@@ -947,7 +948,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
-        total: 14
+        total: 15
 
         coverage:
           - command/restore/blockChecksum
@@ -955,6 +956,7 @@ unit:
           - command/restore/file
           - command/restore/protocol
           - command/restore/restore
+          - command/restore/timeline
 
         include:
           - common/user

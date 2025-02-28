@@ -718,6 +718,16 @@
                         <example>auto</example>
                     </config-key>
 
+                    <config-key id="repo-gcs-user-project" name="GCS Repository Project ID">
+                        <summary>GCS project ID.</summary>
+
+                        <text>
+                            <p>GCS project ID used to determine request billing.</p>
+                        </text>
+
+                        <example>my-project</example>
+                    </config-key>
+
                     <config-key id="repo-host-type" name="Repository Host Protocol Type">
                         <summary>Repository host protocol type.</summary>
 
@@ -994,7 +1004,7 @@
                         <summary>S3 repository KMS key.</summary>
 
                         <text>
-                            <p>Setting this option enables S3 server-side encryption using the specified AWS key management service key.</p>
+                            <p>Enables S3 server-side encryption using the specified AWS key management service key.</p>
                         </text>
 
                         <example>bceb4f13-6939-4be3-910d-df54dee817b7</example>
@@ -1045,13 +1055,23 @@
                     </config-key>
 
                     <config-key id="repo-s3-sse-customer-key" name="S3 Repository SSE Customer Key">
-                        <summary>S3 Repository SSE Customer Key.</summary>
+                        <summary>S3 repository SSE customer key.</summary>
 
                         <text>
-                            <p>Setting this option enables S3 server-side encryption using the specified customer key.</p>
+                            <p>Enables S3 server-side encryption using the specified customer key.</p>
                         </text>
 
                         <example>bceb4f13-6939-4be3-910d-df54dee817b7</example>
+                    </config-key>
+
+                    <config-key id="repo-s3-requester-pays" name="S3 Repository Requestor Pays">
+                        <summary>S3 repository requester pays.</summary>
+
+                        <text>
+                            <p>Enables S3 requester pays.</p>
+                        </text>
+
+                        <example>n</example>
                     </config-key>
 
                     <config-key id="repo-s3-uri-style" name="S3 Repository URI Style">
@@ -1688,6 +1708,8 @@
                             <p>Tablespaces are restored into their original locations by default. This behavior can be modified for each tablespace with the <setting>tablespace-map</setting> option, but it is sometimes preferable to remap all tablespaces to a new directory all at once. This is particularly useful for development or staging systems that may not have the same storage layout as the original system where the backup was generated.</p>
 
                             <p>The path specified will be the parent path used to create all the tablespaces in the backup.</p>
+
+                            <admonition type="caution">Tablespaces created after the backup started will not be mapped. Make a new backup after a tablespace is created if tablespace mapping is required.</admonition>
                         </text>
 
                         <example>/data/tablespace</example>

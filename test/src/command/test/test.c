@@ -7,6 +7,7 @@ Test Command
 
 #include "build/common/exec.h"
 #include "command/test/build.h"
+#include "command/test/lint.h"
 #include "command/test/test.h"
 #include "common/debug.h"
 #include "common/log.h"
@@ -75,6 +76,9 @@ cmdTest(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Linter
+        lintAll(pathRepo);
+
         // Find test
         ASSERT(moduleName != NULL);
 

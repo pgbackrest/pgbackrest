@@ -260,7 +260,7 @@ testRun(void)
             (StorageGcs *)storageDriver(
                 storageGcsNew(
                     STRDEF("/repo"), false, 0, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
-                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
+                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL, NULL)),
             "read-only gcs storage - service key");
         TEST_RESULT_STR_Z(httpUrlHost(storage->authUrl), "test.com", "check host");
         TEST_RESULT_STR_Z(httpUrlPath(storage->authUrl), "/token", "check path");
@@ -285,7 +285,7 @@ testRun(void)
             (StorageGcs *)storageDriver(
                 storageGcsNew(
                     STRDEF("/repo"), true, 0, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
-                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
+                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL, NULL)),
             "read/write gcs storage - service key");
 
         TEST_RESULT_STR_Z(
@@ -1113,6 +1113,37 @@ testRun(void)
                 testResponseP(service, .content = "{}");
 
                 TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), "remove");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to user project");
+
+                hrnServerScriptClose(service);
+
+                StringList *argListUserProject = strLstDup(argList);
+                hrnCfgArgRawZ(argListUserProject, cfgOptRepoGcsUserProject, "usrprj");
+                hrnCfgArgRawZ(argListUserProject, cfgOptRepoRetentionFull, "1");
+                HRN_CFG_LOAD(cfgCmdExpire, argListUserProject);
+
+                TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("remove file");
+
+                testRequestP(service, HTTP_VERB_DELETE, .object = "path/to/test.txt", .query = "userProject=usrprj");
+                testResponseP(service);
+
+                TEST_RESULT_VOID(storageRemoveP(storage, STRDEF("/path/to/test.txt")), "remove");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("info for missing file");
+
+                testRequestP(service, HTTP_VERB_GET, .object = "BOGUS", .query = "fields=size%2Cupdated&userProject=usrprj");
+                testResponseP(service, .code = 404);
+
+                TEST_RESULT_BOOL(
+                    storageInfoP(storage, STRDEF("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("switch to target time");

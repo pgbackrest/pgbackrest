@@ -466,6 +466,30 @@ hrnHostPgStop(HrnHost *const this)
 }
 
 /**********************************************************************************************************************************/
+void
+hrnHostPgPromote(HrnHost *const this)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(HRN_HOST, this);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(this != NULL);
+    ASSERT(hrnHostIsPg(this));
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Promote pg
+        const String *const command = strNewFmt(
+            "%s/pg_ctl promote -D '%s' -s -w", strZ(hrnHostPgBinPath(this)), strZ(hrnHostPgDataPath(this)));
+
+        hrnHostExecP(this, command);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 PackRead *
 hrnHostSql(HrnHost *const this, const String *const statement, const PgClientQueryResult resultType)
 {
@@ -740,7 +764,7 @@ hrnHostConfig(HrnHost *const this)
                         this->pub.repo1Storage = storageGcsNew(
                             hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_GCS_BUCKET), storageGcsKeyTypeToken,
                             STRDEF(HRN_HOST_GCS_KEY), 4 * 1024 * 1024, NULL,
-                            strNewFmt("%s:%d", strZ(hrnHostIp(gcs)), HRN_HOST_GCS_PORT), ioTimeoutMs(), false, NULL, NULL);
+                            strNewFmt("%s:%d", strZ(hrnHostIp(gcs)), HRN_HOST_GCS_PORT), ioTimeoutMs(), false, NULL, NULL, NULL);
                     }
                     MEM_CONTEXT_OBJ_END();
 
@@ -764,7 +788,7 @@ hrnHostConfig(HrnHost *const this)
                             hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_S3_BUCKET), STRDEF(HRN_HOST_S3_ENDPOINT),
                             storageS3UriStyleHost, STR(HRN_HOST_S3_REGION), storageS3KeyTypeShared, STRDEF(HRN_HOST_S3_ACCESS_KEY),
                             STRDEF(HRN_HOST_S3_ACCESS_SECRET_KEY), NULL, NULL, NULL, NULL, NULL, 5 * 1024 * 1024, NULL,
-                            hrnHostIp(s3), 443, ioTimeoutMs(), false, NULL, NULL);
+                            hrnHostIp(s3), 443, ioTimeoutMs(), false, NULL, NULL, NULL);
                     }
                     MEM_CONTEXT_OBJ_END();
 

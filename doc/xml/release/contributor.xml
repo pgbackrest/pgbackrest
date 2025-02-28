@@ -403,6 +403,11 @@
     <contributor-id type="github">gmustdie</contributor-id>
 </contributor>
 
+<contributor id="greg.clough">
+    <contributor-name-display>Greg Clough</contributor-name-display>
+    <contributor-id type="github">gclough</contributor-id>
+</contributor>
+
 <contributor id="greg.sabino.mullane">
     <contributor-name-display>Greg Sabino Mullane</contributor-name-display>
     <contributor-id type="github">turnstep</contributor-id>
@@ -998,6 +1003,10 @@
 <contributor id="stephen.frost">
     <contributor-name-display>Stephen Frost</contributor-name-display>
     <contributor-id type="github">sfrost</contributor-id>
+</contributor>
+
+<contributor id="susantha.bathige">
+    <contributor-name-display>Susantha Bathige</contributor-name-display>
 </contributor>
 
 <contributor id="t.anastacio">
