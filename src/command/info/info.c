@@ -35,7 +35,6 @@ VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MIN_VAR,                          "min");
 VARIANT_STRDEF_STATIC(ARCHIVE_KEY_MAX_VAR,                          "max");
 VARIANT_STRDEF_STATIC(BACKREST_KEY_FORMAT_VAR,                      "format");
 VARIANT_STRDEF_STATIC(BACKREST_KEY_VERSION_VAR,                     "version");
-VARIANT_STRDEF_STATIC(BACKREST_KEY_VERSION_NUM_VAR,                 "version-num");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_ANNOTATION_VAR,                    "annotation");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_BACKREST_VAR,                      "backrest");
 VARIANT_STRDEF_STATIC(BACKUP_KEY_ERROR_VAR,                         "error");
@@ -489,9 +488,6 @@ backupListAdd(
     kvPut(backrestInfo, BACKREST_KEY_FORMAT_VAR, VARUINT(backupData->backrestFormat));
     kvPut(backrestInfo, BACKREST_KEY_VERSION_VAR, VARSTR(backupData->backrestVersion));
 
-    if (backupData->backrestVersionNum > 0)
-        kvPut(backrestInfo, BACKREST_KEY_VERSION_NUM_VAR, VARUINT(backupData->backrestVersionNum));
-
     // database section
     KeyValue *const dbInfo = kvPutKv(varKv(backupInfo), KEY_DATABASE_VAR);
 
@@ -861,11 +857,6 @@ stanzaInfoList(
             kvPut(varKv(stanzaInfo), KEY_CIPHER_VAR, VARSTR(strIdToStr(stanzaCipherType)));
         else
             kvPut(varKv(stanzaInfo), KEY_CIPHER_VAR, VARSTRDEF(INFO_STANZA_MIXED));
-
-        // Set backrest section - this will display the version of the locally running info command
-        KeyValue *const backrestInfo = kvPutKv(varKv(stanzaInfo), BACKUP_KEY_BACKREST_VAR);
-        kvPut(backrestInfo, BACKREST_KEY_VERSION_VAR, varNewStrZ(PROJECT_VERSION));
-        kvPut(backrestInfo, BACKREST_KEY_VERSION_NUM_VAR, VARUINT(PROJECT_VERSION_NUM));
 
         varLstAdd(result, stanzaInfo);
     }

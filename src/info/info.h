@@ -20,7 +20,6 @@ Constants
 
 #define INFO_KEY_FORMAT                                             "backrest-format"
 #define INFO_KEY_VERSION                                            "backrest-version"
-#define INFO_KEY_VERSION_NUM                                        "backrest-version-num"
 
 /***********************************************************************************************************************************
 Function types for loading and saving
