@@ -31,7 +31,7 @@ will be invalid unless migration functions are written.
 #define REPOSITORY_FORMAT                                           5
 
 /***********************************************************************************************************************************
-Project version components. PROJECT_VERSION is automatically generated from the component parts.
+Project version components. PROJECT_VERSION and PROJECT_VERSION_NUM are automatically generated from the component parts.
 ***********************************************************************************************************************************/
 #define PROJECT_VERSION_MAJOR                                       2
 #define PROJECT_VERSION_MINOR                                       55
@@ -39,5 +39,6 @@ Project version components. PROJECT_VERSION is automatically generated from the 
 #define PROJECT_VERSION_SUFFIX                                      "dev"
 
 #define PROJECT_VERSION                                             "2.55.0dev"
+#define PROJECT_VERSION_NUM                                         2055000
 
 #endif

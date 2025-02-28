@@ -58,6 +58,17 @@ option:
     internal: true
     default: true
 
+  output:
+    type: string-id
+    default: text
+    command:
+      version: {}
+    allow-list:
+      - num
+      - text
+    command-role:
+      main: {}
+
   repo-path:
     type: string
     default: pgbackrest

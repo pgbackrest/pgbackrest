@@ -450,6 +450,13 @@ eval
             $strLine = "#define PROJECT_VERSION" . (' ' x 45) . '"' . PROJECT_VERSION . '"';
         }
 
+        if ($strLine =~ /^#define PROJECT_VERSION_NUM /)
+        {
+            $strLine =
+                "#define PROJECT_VERSION_NUM" . (' ' x 41) .
+                sprintf('%d%03d%03d', PROJECT_VERSION_MAJOR, PROJECT_VERSION_MINOR, PROJECT_VERSION_PATCH);
+        }
+
         $strVersionCNew .= "${strLine}\n";
     }
 
