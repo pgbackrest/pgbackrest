@@ -335,8 +335,9 @@ filterRecord(WalFilterState *const this)
     }
 
     this->record->xl_rmid = RM_XLOG_ID;
-    // Save 4 least significant bits which represent backup blocks flags.
-    this->record->xl_info = (uint8_t) (XLOG_NOOP | (this->record->xl_info & XLR_INFO_MASK));
+    this->record->xl_info = (uint8_t) XLOG_NOOP; // Clear backup blocks bits
+    // If the initial record has backup blocks, then treat them as rmgr-specific data
+    this->record->xl_len = this->record->xl_tot_len - (uint32) SizeOfXLogRecord;
     this->record->xl_crc = this->walInterface->xLogRecordChecksum(this->record, this->heapPageSize);
 }
 

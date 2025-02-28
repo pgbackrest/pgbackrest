@@ -1703,19 +1703,13 @@ testRun(void)
         }
         Buffer *expect_wal = bufNew(1024 * 1024);
         {
-            uint8_t info = XLOG_NOOP;
-            info |= XLR_BKP_BLOCK(0);
-            info |= XLR_BKP_BLOCK(1);
-            info |= XLR_BKP_BLOCK(2);
-            info |= XLR_BKP_BLOCK(3);
-
             uint32_t bodySize = sizeof(node1) + XLR_MAX_BKP_BLOCKS * (sizeof(BkpBlock) + DEFAULT_GDPB_PAGE_SIZE);
             char *body = memNew(bodySize);
             RelFileNode *node = (RelFileNode *) body;
             *node = node1;
             memset(body + sizeof(node1), 0, bodySize - sizeof(node1));
 
-            record = hrnGpdbCreateXRecordP(RM_XLOG_ID, info, bodySize, body, .xl_len = sizeof(node1));
+            record = hrnGpdbCreateXRecordP(RM_XLOG_ID, XLOG_NOOP, bodySize, body, .xl_len = bodySize);
             hrnGpdbWalInsertXRecordP(expect_wal, record, NO_FLAGS);
 
             record = hrnGpdbCreateXRecordP(0, XLOG_SWITCH, 0, NULL);
