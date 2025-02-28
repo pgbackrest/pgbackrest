@@ -65,6 +65,18 @@
 
                 <p>Add support for S3/GCS requester pays.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2410"/>
+                <github-pull-request id="2526"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add numeric output to <cmd>version</cmd> command.</p>
+            </release-item>
         </release-feature-list>
 
         <release-improvement-list>
