@@ -107,6 +107,7 @@ test.pl [options]
 
  VM Options:
    --vm                 docker container to build/test (e.g. rh8)
+   --vm-arch            docker container architecture
    --vm-build           build Docker containers
    --vm-force           force a rebuild of Docker containers
    --vm-out             Show VM output (default false)
@@ -143,6 +144,7 @@ my $bHelp = false;
 my $bQuiet = false;
 my $strPgVersion = 'minimal';
 my $strVm = VM_NONE;
+my $strVmArch;
 my $bVmBuild = false;
 my $bVmForce = false;
 my $bBuildOnly = false;
@@ -183,6 +185,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'log-level-test-file=s' => \$strLogLevelTestFile,
             'no-log-timestamp' => \$bNoLogTimestamp,
             'vm=s' => \$strVm,
+            'vm-arch=s' => \$strVmArch,
             'vm-out' => \$bVmOut,
             'vm-build' => \$bVmBuild,
             'vm-force' => \$bVmForce,
@@ -364,7 +367,7 @@ eval
     ################################################################################################################################
     if ($bVmBuild)
     {
-        containerBuild($oStorageBackRest, $strVm, $bVmForce);
+        containerBuild($oStorageBackRest, $strVm, $strVmArch, $bVmForce);
         exit 0;
     }
 
@@ -461,6 +464,9 @@ eval
 
     # Start build container if vm is not none
     #-------------------------------------------------------------------------------------------------------------------------------
+    my $strPlatform = defined($strVmArch) ? " --platform linux/${strVmArch}" : '';
+    my $strImage = containerRepo() . ":${strVm}-test" . (defined($strVmArch) ? "-${strVmArch}" : '-' . hostArch());
+
     if ($strVm ne VM_NONE)
     {
         my $strCCachePath = "${strTestPath}/ccache-0/${strVm}";
@@ -471,9 +477,9 @@ eval
         }
 
         executeTest(
-            "docker run -itd -h test-build --name=test-build" .
+            "docker run${strPlatform} -itd -h test-build --name=test-build" .
                 " -v ${strBackRestBase}:${strBackRestBase} -v ${strTestPath}:${strTestPath}" .
-                " -v ${strCCachePath}:/home/${\TEST_USER}/.ccache" . ' ' . containerRepo() . ":${strVm}-test",
+                " -v ${strCCachePath}:/home/${\TEST_USER}/.ccache" . " ${strImage}",
             {bSuppressStdErr => true});
     }
 
@@ -701,8 +707,8 @@ eval
                     if ($strVm ne VM_NONE)
                     {
                         executeTest(
-                            "docker run -itd -h test-build --name=test-build" .
-                            " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-test",
+                            "docker run${strPlatform} -itd -h test-build --name=test-build" .
+                            " -v ${strBackRestBase}:${strBackRestBase} ${strImage}",
                             {bSuppressStdErr => true});
                     }
 
@@ -785,8 +791,8 @@ eval
                     if ($strVm ne VM_NONE)
                     {
                         executeTest(
-                            "docker run -itd -h test-build --name=test-build" .
-                            " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-test",
+                            "docker run${strPlatform} -itd -h test-build --name=test-build" .
+                            " -v ${strBackRestBase}:${strBackRestBase} ${strImage}",
                             {bSuppressStdErr => true});
                     }
 
@@ -965,10 +971,10 @@ eval
             if (!defined($$oyProcess[$iVmIdx]) && $iTestIdx < @{$oyTestRun})
             {
                 my $oJob = new pgBackRestTest::Common::JobTest(
-                    $oStorageTest, $strBackRestBase, $strTestPath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut, $iVmIdx, $iVmMax,
-                    $strMakeCmd, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $strLogLevelTestFile, !$bNoLogTimestamp,
-                    $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoBackTrace, !$bNoValgrind, !$bNoCoverage, $bCoverageSummary,
-                    !$bNoOptimize, $bProfile, $iScale, $strTimeZone, !$bNoDebug, $bDebugTestTrace,
+                    $oStorageTest, $strBackRestBase, $strTestPath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut, $strPlatform,
+                    $strImage, $iVmIdx, $iVmMax, $strMakeCmd, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest,
+                    $strLogLevelTestFile, !$bNoLogTimestamp, $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoBackTrace, !$bNoValgrind,
+                    !$bNoCoverage, $bCoverageSummary, !$bNoOptimize, $bProfile, $iScale, $strTimeZone, !$bNoDebug, $bDebugTestTrace,
                     $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
                 $iTestIdx++;
 

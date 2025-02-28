@@ -10,11 +10,17 @@
 #
 # To upload a new image:
 # - docker login -u pgbackrest
-# - VM=XXX;DATE=YYYYMMDDX;BASE=pgbackrest/test:${VM?}-base;docker tag ${BASE?} ${BASE?}-${DATE?} && docker push ${BASE?}-${DATE?}
+# - DATE=YYYYMMDDX;VM=X;ARCH=X;BASE=pgbackrest/test:${VM?}-base-${ARCH?};docker tag ${BASE?} ${BASE?}-${DATE?} && docker push ${BASE?}-${DATE?}
 # **********************************************************************************************************************************
-20250123A:
+20250228A:
+  ppc64le:
+    u22: 28fa02cb370bbdacadf984afb215d3973ed5ab3e
+
+  s390x:
+    u22: f3e108dd7f808f6b0e82eadcfd72f585a7632530
+
   x86_64:
-    d11: f3bc523f10e873f85b889120ea08c6c53358cc47
+    d11: 01e6970744c2b2529a14832e92cb861c7da94308
     f41: ce870455184e991e0efd90176da1412f0f3f72a2
     rh8: 4d141c845abfbdbf402ba447cf2bd2e4357c8a63
     u20: 862159b4d2169a4752b106639ca0f47c1ebb1f86

@@ -1128,7 +1128,7 @@ hrnHostBuildRun(const int line, const StringId id)
         const bool isPg = strBeginsWithZ(name, "pg");
         const bool isRepo = id == hrnHostLocal.repoHost;
         const String *const container = strNewFmt("test-%u-%s", testIdx(), strZ(name));
-        const String *const image = strNewFmt("pgbackrest/test:%s-test", testVm());
+        const String *const image = strNewFmt("pgbackrest/test:%s-test-x86_64", testVm());
         const String *const dataPath = strNewFmt("%s/%s", testPath(), strZ(name));
         String *const option = strNewFmt(
             "-v '%s/cfg:/etc/pgbackrest:ro' -v '%s:/usr/bin/pgbackrest:ro' -v '%s:%s:ro'", strZ(dataPath), testProjectExe(),
@@ -1330,7 +1330,8 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
                     MEM_CONTEXT_PRIOR_BEGIN()
                     {
                         hrnHostNewP(
-                            HRN_HOST_SFTP, containerName, strNewFmt("pgbackrest/test:%s-test", testVm()), .noUpdateHosts = true);
+                            HRN_HOST_SFTP, containerName, strNewFmt("pgbackrest/test:%s-test-x86_64", testVm()),
+                            .noUpdateHosts = true);
                     }
                     MEM_CONTEXT_PRIOR_END();
 
