@@ -49,6 +49,7 @@ STRING_STATIC(GCS_QUERY_PAGE_TOKEN_STR,                             "pageToken")
 STRING_STATIC(GCS_QUERY_PREFIX_STR,                                 "prefix");
 STRING_EXTERN(GCS_QUERY_UPLOAD_ID_STR,                              GCS_QUERY_UPLOAD_ID);
 STRING_STATIC(GCS_QUERY_VERSIONS_STR,                               "versions");
+STRING_STATIC(GCS_QUERY_USER_PROJECT_STR,                           "userProject");
 
 /***********************************************************************************************************************************
 JSON tokens
@@ -98,6 +99,7 @@ struct StorageGcs
     size_t chunkSize;                                               // Block size for resumable upload
     unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
     const Buffer *tag;                                              // Tags to be applied to objects
+    const String *userProject;                                      // Project ID
 
     StorageGcsKeyType keyType;                                      // Auth key type
     const String *key;                                              // Key (value depends on key type)
@@ -496,7 +498,14 @@ storageGcsRequestAsync(StorageGcs *const this, const String *const verb, Storage
             content == NULL || bufEmpty(content) ? ZERO_STR : strNewFmt("%zu", bufUsed(content)));
 
         // Make a copy of the query so it can be modified
-        HttpQuery *const query = httpQueryDupP(param.query, .redactList = this->queryRedactList);
+        HttpQuery *const query =
+            this->userProject != NULL && param.query == NULL ?
+                httpQueryNewP(.redactList = this->queryRedactList) :
+                httpQueryDupP(param.query, .redactList = this->queryRedactList);
+
+        // Add user project
+        if (this->userProject != NULL)
+            httpQueryAdd(query, GCS_QUERY_USER_PROJECT_STR, this->userProject);
 
         // Generate authorization header
         if (!param.noAuth)
@@ -1180,7 +1189,7 @@ storageGcsNew(
     const String *const path, const bool write, const time_t targetTime, StoragePathExpressionCallback pathExpressionFunction,
     const String *const bucket, const StorageGcsKeyType keyType, const String *const key, const size_t chunkSize,
     const KeyValue *const tag, const String *const endpoint, const TimeMSec timeout, const bool verifyPeer,
-    const String *const caFile, const String *const caPath)
+    const String *const caFile, const String *const caPath, const String *const userProject)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -1197,6 +1206,7 @@ storageGcsNew(
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
         FUNCTION_LOG_PARAM(STRING, caFile);
         FUNCTION_LOG_PARAM(STRING, caPath);
+        FUNCTION_LOG_PARAM(STRING, userProject);
     FUNCTION_LOG_END();
 
     ASSERT(path != NULL);
@@ -1214,6 +1224,7 @@ storageGcsNew(
             .keyType = keyType,
             .chunkSize = chunkSize,
             .deleteMax = STORAGE_GCS_DELETE_MAX,
+            .userProject = strDup(userProject),
         };
 
         // Create tag JSON buffer

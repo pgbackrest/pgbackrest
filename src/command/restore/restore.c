@@ -11,6 +11,7 @@ Restore Command
 #include "command/restore/file.h"
 #include "command/restore/protocol.h"
 #include "command/restore/restore.h"
+#include "command/restore/timeline.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/log.h"
@@ -18,6 +19,7 @@ Restore Command
 #include "common/user.h"
 #include "config/config.h"
 #include "config/exec.h"
+#include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "info/manifest.h"
 #include "postgres/interface.h"
@@ -2365,6 +2367,23 @@ cmdRestore(void)
             storageRepoIdx(backupData.repoIdx),
             strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupData.backupSet)), backupData.repoCipherType,
             backupData.backupCipherPass);
+
+        // Verify that the selected timeline is valid for the backup -- including current and latest timelines
+        if (manifestData(jobData.manifest)->backupOptionOnline)
+        {
+            const ManifestData *const data = manifestData(jobData.manifest);
+            const InfoArchive *const archiveInfo = infoArchiveLoadFile(
+                storageRepoIdx(backupData.repoIdx), INFO_ARCHIVE_PATH_FILE_STR,
+                cfgOptionIdxStrId(cfgOptRepoCipherType, backupData.repoIdx),
+                cfgOptionIdxStrNull(cfgOptRepoCipherPass, backupData.repoIdx));
+
+            timelineVerify(
+                storageRepoIdx(backupData.repoIdx),
+                strNewFmt("%s-%u", strZ(pgVersionToStr(data->pgVersion)), data->pgId), data->pgVersion,
+                cvtZToUIntBase(strZ(strSubN(data->archiveStart, 0, 8)), 16), pgLsnFromStr(data->lsnStart),
+                cfgOptionStrId(cfgOptType), cfgOptionStrNull(cfgOptTargetTimeline),
+                cfgOptionIdxStrId(cfgOptRepoCipherType, backupData.repoIdx), infoArchiveCipherPass(archiveInfo));
+        }
 
         // Remotes (if any) are no longer needed since the rest of the repository reads will be done by the local processes
         protocolFree();

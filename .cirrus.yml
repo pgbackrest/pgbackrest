@@ -31,7 +31,7 @@ auto_cancellation: $CIRRUS_BRANCH != 'integration'
 # ----------------------------------------------------------------------------------------------------------------------------------
 freebsd_13_task:
   freebsd_instance:
-    image_family: freebsd-13-3
+    image_family: freebsd-13-5
     cpu: 4
     memory: 4G
 
@@ -48,7 +48,7 @@ freebsd_13_task:
 # ----------------------------------------------------------------------------------------------------------------------------------
 freebsd_14_task:
   freebsd_instance:
-    image_family: freebsd-14-0
+    image_family: freebsd-14-2
     cpu: 4
     memory: 4G
 

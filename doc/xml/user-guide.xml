@@ -720,8 +720,6 @@
             <backrest-config-option section="global" key="repo{[azure-setup-repo-id]}-azure-key">{[azure-key]}</backrest-config-option>
             <backrest-config-option section="global" key="repo{[azure-setup-repo-id]}-azure-container">{[azure-container]}</backrest-config-option>
             <backrest-config-option if="'{[azure-all]}' ne 'y'" section="global" key="repo{[azure-setup-repo-id]}-retention-full">4</backrest-config-option>
-
-            <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
 
         <execute-list if="'{[azure-local]}' eq 'y'" host="{[azure-setup-host]}" show="n">
@@ -756,8 +754,6 @@
             <backrest-config-option if="'{[gcs-key-type]}' ne 'service'" section="global" key="repo{[gcs-setup-repo-id]}-gcs-key-type">{[gcs-key-type]}</backrest-config-option>
             <backrest-config-option section="global" key="repo{[gcs-setup-repo-id]}-gcs-key">{[gcs-key]}</backrest-config-option>
             <backrest-config-option section="global" key="repo{[gcs-setup-repo-id]}-gcs-bucket">{[gcs-bucket]}</backrest-config-option>
-
-            <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
 
         <p>When running in <proper>GCE</proper> set <br-option>repo{[gcs-setup-repo-id]}-gcs-key-type=auto</br-option> to automatically authenticate using the instance service account.</p>
@@ -778,8 +774,6 @@
             <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-s3-endpoint">{[s3-endpoint]}</backrest-config-option>
             <backrest-config-option section="global" key="repo{[s3-setup-repo-id]}-s3-region">{[s3-region]}</backrest-config-option>
             <backrest-config-option if="'{[s3-all]}' ne 'y'" section="global" key="repo{[s3-setup-repo-id]}-retention-full">4</backrest-config-option>
-
-            <backrest-config-option section="global" key="process-max">4</backrest-config-option>
         </backrest-config>
 
         <execute-list if="'{[s3-local]}' eq 'y'" host="{[s3-setup-host]}" show="n">
@@ -989,6 +983,8 @@
             <title>Upgrading {[project]} from v2.x to v2.y</title>
 
             <p>Upgrading from <proper>v2.x</proper> to <proper>v2.y</proper> is straight-forward. The repository format has not changed, so for most installations it is simply a matter of installing binaries for the new version. It is also possible to downgrade if you have not used new features that are unsupported by the older version.</p>
+
+            <admonition type="important">The local and remote <backrest/> versions must match exactly so they should be upgraded together. If there is a mismatch, WAL archiving and backups will not function until the versions match. In such a case, the following error will be reported: <id>[ProtocolError] expected value '2.x' for greeting key 'version' but got '2.y'</id>.</admonition>
         </section>
     </section>
 
@@ -1419,7 +1415,7 @@
             <list>
                 <list-item><br-option>compress-type</br-option> - determines the compression algorithm used by the <cmd>backup</cmd> and <cmd>archive-push</cmd> commands. The default is <id>gz</id> (Gzip) but <id>zst</id> (Zstandard) is recommended because it is much faster and provides compression similar to <id>gz</id>. <id>zst</id> has been supported by the <br-option>compress-type</br-option> option since <link url="release.html#2.27">v2.27</link>. See <link page="configuration" section="/section-general/option-compress-type">Compress Type</link> for more details.</list-item>
 
-                <list-item><br-option>repo-bundle</br-option> - combines small files during backup to save space and improve the speed of both the <cmd>backup</cmd> and <cmd>restore</cmd> commands, especially on object stores. The <br-option>repo-bundle</br-option> option was introduced in <link url="release.html#2.39">v2.39</link>. See <link section="/backup/bundle">File Bundling</link> for more details.</list-item>
+                <list-item><br-option>repo-bundle</br-option> - combines small files during backup to save space and improve the speed of both the <cmd>backup</cmd> and <cmd>restore</cmd> commands, especially on object stores such as S3. The <br-option>repo-bundle</br-option> option was introduced in <link url="release.html#2.39">v2.39</link>. See <link section="/backup/bundle">File Bundling</link> for more details.</list-item>
 
                 <list-item><br-option>repo-block</br-option> - stores only the portions of of files that have changed rather than the entire file during <id>diff</id>/<id>incr</id> <cmd>backup</cmd>. This saves space and increases the speed of the <cmd>backup</cmd>. The <br-option>repo-block</br-option> option was introduced in <link url="release.html#2.46">v2.46</link> but at least <link url="release.html#2.52.1">v2.52.1</link> is recommended. See <link section="/backup/block">Block Incremental</link> for more details.</list-item>
             </list>
@@ -2435,7 +2431,7 @@
             </execute>
         </execute-list>
 
-        <p>File creation time in object stores is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file creation.</p>
+        <p>File creation time in Azure is relatively slow so <cmd>backup</cmd>/<cmd>restore</cmd> performance is improved by enabling <link section="/backup/bundle">file bundling</link>.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Backup the {[postgres-cluster-demo]} cluster</title>
@@ -2534,7 +2530,7 @@
             </execute>
         </execute-list>
 
-        <p>File creation time in object stores is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file creation.</p>
+        <p>File creation time in S3 is relatively slow so <cmd>backup</cmd>/<cmd>restore</cmd> performance is improved by enabling <link section="/backup/bundle">file bundling</link>.</p>
 
         <execute-list host="{[host-pg1]}">
             <title>Backup the {[postgres-cluster-demo]} cluster</title>
@@ -2606,7 +2602,7 @@
 
         <p>Commands are run exactly as if the repository were stored on a local disk.</p>
 
-        <p>File creation time in object stores is relatively slow so commands benefit by increasing <br-option>process-max</br-option> to parallelize file creation.</p>
+        <p>File creation time in GCS is relatively slow so <cmd>backup</cmd>/<cmd>restore</cmd> performance is improved by enabling <link section="/backup/bundle">file bundling</link>.</p>
     </section>
 
     <!-- ======================================================================================================================= -->

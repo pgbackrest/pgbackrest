@@ -338,6 +338,11 @@ option:
         allow-list:
           - none
           - text
+      version:
+        default: text
+        allow-list:
+          - num
+          - text
     allow-list:
       - text
       - json
@@ -2080,6 +2085,13 @@ option:
       list:
         - gcs
 
+  repo-gcs-user-project:
+    section: global
+    type: string
+    group: repo
+    required: false
+    command: repo-type
+
   repo-hardlink:
     section: global
     group: repo
@@ -2408,6 +2420,17 @@ option:
     inherit: repo-s3-key
     required: false
     command: repo-type
+
+  repo-s3-requester-pays:
+    section: global
+    group: repo
+    type: boolean
+    default: false
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - s3
 
   repo-s3-uri-style:
     section: global

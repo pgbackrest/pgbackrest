@@ -140,7 +140,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            185
+#define CFG_OPTION_TOTAL                                            187
 
 /***********************************************************************************************************************************
 Option value constants
@@ -217,6 +217,8 @@ Option value constants
 #define CFGOPTVAL_OUTPUT_JSON_Z                                     "json"
 #define CFGOPTVAL_OUTPUT_NONE                                       STRID5("none", 0x2b9ee0)
 #define CFGOPTVAL_OUTPUT_NONE_Z                                     "none"
+#define CFGOPTVAL_OUTPUT_NUM                                        STRID5("num", 0x36ae0)
+#define CFGOPTVAL_OUTPUT_NUM_Z                                      "num"
 #define CFGOPTVAL_OUTPUT_TEXT                                       STRID5("text", 0xa60b40)
 #define CFGOPTVAL_OUTPUT_TEXT_Z                                     "text"
 
@@ -499,6 +501,7 @@ typedef enum
     cfgOptRepoGcsEndpoint,
     cfgOptRepoGcsKey,
     cfgOptRepoGcsKeyType,
+    cfgOptRepoGcsUserProject,
     cfgOptRepoHardlink,
     cfgOptRepoHost,
     cfgOptRepoHostCaFile,
@@ -527,6 +530,7 @@ typedef enum
     cfgOptRepoS3KeyType,
     cfgOptRepoS3KmsKeyId,
     cfgOptRepoS3Region,
+    cfgOptRepoS3RequesterPays,
     cfgOptRepoS3Role,
     cfgOptRepoS3SseCustomerKey,
     cfgOptRepoS3Token,
