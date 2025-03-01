@@ -2090,7 +2090,7 @@ testRun(void)
             verifyProcess(cfgOptionBool(cfgOptVerbose)),
             "stanza: db\n"
             "status: error\n"
-            "  Backup set 20181119-152900F_20181119-152910D is not valid",
+            "  backup set 20181119-152900F_20181119-152910D is not valid",
             "--set with invalid backup label, text");
 
         // -------------------------------------------------------------------------------------------------------------------------
