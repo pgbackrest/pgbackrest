@@ -51,6 +51,17 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2544"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="maxim.michkov"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Allow verification of a specified backup.</p>
+            </release-item>
+
+            <release-item>
                 <commit subject="Add support for S3 requester pays.">
                     <github-pull-request id="2560"/>
                 </commit>
