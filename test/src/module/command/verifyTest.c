@@ -2237,7 +2237,7 @@ testRun(void)
         hrnBackupPqScriptP(PG_VERSION_11, BACKUP_EPOCH + 100000);
         TEST_RESULT_VOID(hrnCmdBackup(), "backup");
         TEST_RESULT_LOG(
-            "P00   INFO: last backup label = 20191002-070640F, version = 2.52\n"
+            "P00   INFO: last backup label = 20191002-070640F, version = " PROJECT_VERSION "\n"
             "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
             "P00   INFO: backup start archive = 0000000105D95D3000000000, lsn = 5d95d30/0\n"
             "P00   INFO: check archive for prior segment 0000000105D95D2F000000FF\n"
