@@ -654,16 +654,16 @@ verifyBlockDependencyCheck(VerifyJobData *const jobData, const String *const bac
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *const manifestFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
+        const String *const manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
 
         // Get the main manifest file
-        VerifyInfoFile verifyManifestInfo = verifyInfoFile(manifestFile, true, jobData->manifestCipherPass);
+        VerifyInfoFile verifyManifestInfo = verifyInfoFile(manifestFileName, true, jobData->manifestCipherPass);
 
         // On failure attempt to read manifest copy instead
         if (verifyManifestInfo.errorCode != 0)
         {
             verifyManifestInfo = verifyInfoFile(
-                strNewFmt("%s%s", strZ(manifestFile), INFO_COPY_EXT), true, jobData->manifestCipherPass);
+                strNewFmt("%s%s", strZ(manifestFileName), INFO_COPY_EXT), true, jobData->manifestCipherPass);
         }
 
         // If the manifest file has no error, process it
