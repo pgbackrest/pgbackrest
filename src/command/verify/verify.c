@@ -1625,8 +1625,6 @@ verifyProcess(const bool verboseText)
                 jobData.backupList = strLstSort(
                     storageListP(storage, STORAGE_REPO_BACKUP_STR, .expression = backupRegExpStr), sortOrderAsc);
             }
-            else
-                jobData.backupList = strLstNew();
 
             if (!backupLabelInvalid && backupLabel != NULL && strLstEmpty(jobData.backupList))
             {
@@ -1645,15 +1643,13 @@ verifyProcess(const bool verboseText)
                         archiveIdComparator),
                     sortOrderAsc);
             }
-            else
-                jobData.archiveIdList = strLstNew();
 
             // Check for block map dependencies if --set option is specified
             if (!backupLabelInvalid && backupLabel != NULL)
                 verifyBlockDependencyCheck(&jobData, backupLabel);
 
             // Only begin processing if there are some archives or backups in the repo
-            if (!strLstEmpty(jobData.archiveIdList) || !strLstEmpty(jobData.backupList))
+            if (!backupLabelInvalid && (!strLstEmpty(jobData.archiveIdList) || !strLstEmpty(jobData.backupList)))
             {
                 // Warn if there are no archives or there are no backups in the repo so that the callback need not try to
                 // distinguish between having processed all of the list or if the list was missing in the first place
