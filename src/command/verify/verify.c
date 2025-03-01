@@ -646,24 +646,24 @@ static void
 verifyBlockDependencyCheck(VerifyJobData *const jobData, const String *const backupLabel)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, jobData);       // Pointer to the job data
-        FUNCTION_TEST_PARAM(STRING, backupLabel);   // Label of backup to check
+        FUNCTION_TEST_PARAM_P(VOID, jobData);                       // Pointer to the job data
+        FUNCTION_TEST_PARAM(STRING, backupLabel);                   // Label of backup to check
     FUNCTION_TEST_END();
 
     FUNCTION_AUDIT_HELPER();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *const fileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
+        const String *const manifestFile = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
 
         // Get the main manifest file
-        VerifyInfoFile verifyManifestInfo = verifyInfoFile(fileName, true, jobData->manifestCipherPass);
+        VerifyInfoFile verifyManifestInfo = verifyInfoFile(manifestFile, true, jobData->manifestCipherPass);
 
         // On failure attempt to read manifest copy instead
         if (verifyManifestInfo.errorCode != 0)
         {
             verifyManifestInfo = verifyInfoFile(
-                strNewFmt("%s%s", strZ(fileName), INFO_COPY_EXT), true, jobData->manifestCipherPass);
+                strNewFmt("%s%s", strZ(manifestFile), INFO_COPY_EXT), true, jobData->manifestCipherPass);
         }
 
         // If the manifest file has no error, process it
