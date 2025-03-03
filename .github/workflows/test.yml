@@ -75,13 +75,13 @@ jobs:
   # expensive, but this at least shows that the build works and some of the more complex tests run. In particular, it is good to
   # test on one big-endian architecture to be sure that checksums are correct.
   arch:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     strategy:
       matrix:
         include:
-          - image: '--platform=linux/ppc64le ubuntu:22.04'
-          - image: '--platform=linux/s390x ubuntu:22.04'
+          - arch: 'ppc64le'
+          - arch: 's390x'
 
     steps:
       - name: Checkout Code
@@ -89,23 +89,19 @@ jobs:
         with:
           path: pgbackrest
 
+      - name: Install
+        run: |
+          sudo apt-get update
+          sudo DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y perl sudo libxml-checker-perl libyaml-perl rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config make gcc ccache meson git liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev
+          docker run --privileged --rm tonistiigi/binfmt --install all
+
+      - name: Build VM
+        run: ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm-build --vm=u22 --vm-arch=${{matrix.arch}}
+
       - name: Run Test
-        uses: uraimo/run-on-arch-action@v2
-        id: runcmd
-        with:
-          base_image: ${{matrix.image}}
-
-          # Cache builds
-          githubToken: ${{github.token}}
-
-          install: |
-            apt-get update
-            DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y perl sudo libxml-checker-perl libyaml-perl rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config make gcc ccache python3-distutils meson git liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev
-
-          run: |
-            git config --global --add safe.directory ${GITHUB_WORKSPACE?}/pgbackrest
-            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup
-            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --no-valgrind --no-coverage --no-optimize --build-max=2 --module=postgres --test=interface
+        run: |
+          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup
+          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --no-optimize --build-max=2 --module=postgres --test=interface
 
   # Run meson unity build to check for errors, unused functions, and externed functions
   unity:

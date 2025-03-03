@@ -335,9 +335,13 @@ helpRender(const Buffer *const helpData)
         ((cfgCommand() == cfgCmdHelp && cfgOptionBool(cfgOptVersion) && !cfgOptionBool(cfgOptHelp)) ||
          cfgCommand() == cfgCmdVersion))
     {
-        strCatChr(result, '\n');
-
-        FUNCTION_TEST_RETURN(STRING, result);
+        if (cfgCommand() == cfgCmdVersion && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_NUM)
+            FUNCTION_TEST_RETURN(STRING, strCatFmt(strTrunc(result), "%d", PROJECT_VERSION_NUM));
+        else
+        {
+            strCatChr(result, '\n');
+            FUNCTION_TEST_RETURN(STRING, result);
+        }
     }
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -576,9 +580,9 @@ helpRender(const Buffer *const helpData)
                     }
                 }
 
-                // Construct message for more help if there are options
-                if (optionSizeMax > 0)
-                    more = strNewFmt("%s [option]", commandName);
+                // Construct message for more help
+                ASSERT(optionSizeMax > 0);
+                more = strNewFmt("%s [option]", commandName);
             }
             // Else option help for the specified command
             else

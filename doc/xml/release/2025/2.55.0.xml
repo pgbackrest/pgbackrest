@@ -13,6 +13,19 @@
             </release-item>
 
             <release-item>
+                <github-issue id="2543"/>
+                <github-pull-request id="2554"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="ales.zeleny"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix expire archive range logging.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2539"/>
 
                 <release-item-contributor-list>
@@ -35,6 +48,34 @@
                 </release-item-contributor-list>
 
                 <p>Verify recovery target timeline.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add support for S3 requester pays.">
+                    <github-pull-request id="2560"/>
+                </commit>
+                <commit subject="Add support for GCS requester pays.">
+                    <github-pull-request id="2557"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="timothee.peignier"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add support for S3/GCS requester pays.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2410"/>
+                <github-pull-request id="2526"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add numeric output to <cmd>version</cmd> command.</p>
             </release-item>
         </release-feature-list>
 
@@ -62,6 +103,21 @@
                 </release-item-contributor-list>
 
                 <p>Use <proper>lz4</proper> for protocol compression.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add detail logging to expire test."/>
+                <commit subject="Add detail logging for expired archive path.">
+                    <github-issue id="2543"/>
+                    <github-pull-request id="2559"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add detail logging for expired archive path.</p>
             </release-item>
 
             <release-item>
@@ -113,6 +169,17 @@
 
     <release-doc-list>
         <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2541"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="greg.clough"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Clarify requirement for local/remote <backrest/> versions to match.</p>
+            </release-item>
+
             <release-item>
                 <github-pull-request id="2538"/>
 

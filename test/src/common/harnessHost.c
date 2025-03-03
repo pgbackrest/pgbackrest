@@ -764,7 +764,7 @@ hrnHostConfig(HrnHost *const this)
                         this->pub.repo1Storage = storageGcsNew(
                             hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_GCS_BUCKET), storageGcsKeyTypeToken,
                             STRDEF(HRN_HOST_GCS_KEY), 4 * 1024 * 1024, NULL,
-                            strNewFmt("%s:%d", strZ(hrnHostIp(gcs)), HRN_HOST_GCS_PORT), ioTimeoutMs(), false, NULL, NULL);
+                            strNewFmt("%s:%d", strZ(hrnHostIp(gcs)), HRN_HOST_GCS_PORT), ioTimeoutMs(), false, NULL, NULL, NULL);
                     }
                     MEM_CONTEXT_OBJ_END();
 
@@ -788,7 +788,7 @@ hrnHostConfig(HrnHost *const this)
                             hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_S3_BUCKET), STRDEF(HRN_HOST_S3_ENDPOINT),
                             storageS3UriStyleHost, STR(HRN_HOST_S3_REGION), storageS3KeyTypeShared, STRDEF(HRN_HOST_S3_ACCESS_KEY),
                             STRDEF(HRN_HOST_S3_ACCESS_SECRET_KEY), NULL, NULL, NULL, NULL, NULL, 5 * 1024 * 1024, NULL,
-                            hrnHostIp(s3), 443, ioTimeoutMs(), false, NULL, NULL);
+                            hrnHostIp(s3), 443, ioTimeoutMs(), false, NULL, NULL, NULL);
                     }
                     MEM_CONTEXT_OBJ_END();
 
@@ -1128,7 +1128,7 @@ hrnHostBuildRun(const int line, const StringId id)
         const bool isPg = strBeginsWithZ(name, "pg");
         const bool isRepo = id == hrnHostLocal.repoHost;
         const String *const container = strNewFmt("test-%u-%s", testIdx(), strZ(name));
-        const String *const image = strNewFmt("pgbackrest/test:%s-test", testVm());
+        const String *const image = strNewFmt("pgbackrest/test:%s-test-x86_64", testVm());
         const String *const dataPath = strNewFmt("%s/%s", testPath(), strZ(name));
         String *const option = strNewFmt(
             "-v '%s/cfg:/etc/pgbackrest:ro' -v '%s:/usr/bin/pgbackrest:ro' -v '%s:%s:ro'", strZ(dataPath), testProjectExe(),
@@ -1330,7 +1330,8 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
                     MEM_CONTEXT_PRIOR_BEGIN()
                     {
                         hrnHostNewP(
-                            HRN_HOST_SFTP, containerName, strNewFmt("pgbackrest/test:%s-test", testVm()), .noUpdateHosts = true);
+                            HRN_HOST_SFTP, containerName, strNewFmt("pgbackrest/test:%s-test-x86_64", testVm()),
+                            .noUpdateHosts = true);
                     }
                     MEM_CONTEXT_PRIOR_END();
 

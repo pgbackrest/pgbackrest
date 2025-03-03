@@ -151,6 +151,20 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "version");
+        hrnCfgArgRawZ(argList, cfgOptOutput, "text");
+        TEST_RESULT_VOID(testCfgLoad(argList), "version text output from version command");
+        TEST_RESULT_STR_Z(helpRender(helpData), versionOnly, "check text");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "version");
+        hrnCfgArgRawZ(argList, cfgOptOutput, "num");
+        TEST_RESULT_VOID(testCfgLoad(argList), "version num output from version command");
+        TEST_RESULT_STR_Z(helpRender(helpData), zNewFmt("%d", PROJECT_VERSION_NUM), "check text");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
         strLstAddZ(argList, "--version");
         TEST_RESULT_VOID(testCfgLoad(argList), "version from version option");
         TEST_RESULT_STR_Z(helpRender(helpData), versionOnly, "check text");
@@ -176,30 +190,11 @@ testRun(void)
         TEST_RESULT_VOID(testCfgLoad(argList), "help from help option");
         TEST_RESULT_STR_Z(helpRender(helpData), generalHelp, "check text");
 
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("version command");
-
-        const char *commandHelp = zNewFmt(
-            "%s%s",
-            helpVersion,
-            " - 'version' command help\n"
-            "\n"
-            "Get version.\n"
-            "\n"
-            "Displays installed pgBackRest version.\n");
-
-        argList = strLstNew();
-        strLstAddZ(argList, "/path/to/pgbackrest");
-        strLstAddZ(argList, "help");
-        strLstAddZ(argList, "version");
-        TEST_RESULT_VOID(testCfgLoad(argList), "help for version command");
-        TEST_RESULT_STR_Z(helpRender(helpData), commandHelp, "check text");
-
         // This test is broken up into multiple strings because C99 does not require compilers to support const strings > 4095 bytes
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("restore command");
 
-        commandHelp = zNewFmt(
+        const char *commandHelp = zNewFmt(
             "%s%s%s",
             helpVersion,
             " - 'restore' command help\n"
@@ -316,6 +311,7 @@ testRun(void)
             "                                      [default=storage.googleapis.com]\n"
             "  --repo-gcs-key                      GCS repository key\n"
             "  --repo-gcs-key-type                 GCS repository key type [default=service]\n"
+            "  --repo-gcs-user-project             GCS project ID\n"
             "  --repo-host                         repository host when operating remotely\n"
             "                                      [current=<multi>]\n"
             "  --repo-host-ca-file                 repository host certificate authority file\n"
@@ -346,8 +342,9 @@ testRun(void)
             "  --repo-s3-key-type                  S3 repository key type [default=shared]\n"
             "  --repo-s3-kms-key-id                S3 repository KMS key\n"
             "  --repo-s3-region                    S3 repository region\n"
+            "  --repo-s3-requester-pays            S3 repository requester pays [default=n]\n"
             "  --repo-s3-role                      S3 repository role\n"
-            "  --repo-s3-sse-customer-key          S3 Repository SSE Customer Key\n"
+            "  --repo-s3-sse-customer-key          S3 repository SSE customer key\n"
             "  --repo-s3-token                     S3 repository security token\n"
             "  --repo-s3-uri-style                 S3 URI Style [default=host]\n"
             "  --repo-sftp-host                    SFTP repository host\n"
