@@ -2603,6 +2603,17 @@ option:
       repo?-azure-port: {}
       repo?-s3-port: {}
 
+  repo-storage-protocol:
+    section: global
+    group: repo
+    type: string
+    default: https
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - s3
+
   repo-storage-tag:
     section: global
     group: repo

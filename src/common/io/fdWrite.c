@@ -77,8 +77,32 @@ ioFdWrite(THIS_VOID, const Buffer *const buffer)
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
 
-    THROW_ON_SYS_ERROR_FMT(
-        write(this->fd, bufPtrConst(buffer), bufUsed(buffer)) == -1, FileWriteError, "unable to write to %s", strZ(this->name));
+    size_t totalWritten = 0;
+    const uint8_t *bufferPtr = bufPtrConst(buffer);
+    size_t bufferRemaining = bufUsed(buffer);
+
+    while (bufferRemaining > 0)
+    {
+        ssize_t result = write(this->fd, bufferPtr + totalWritten, bufferRemaining);
+
+        if (result == -1)
+        {
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+            {
+                if (!ioFdWriteReady(this, true))
+                    THROW_FMT(FileWriteError, "timeout waiting for write buffer");
+                continue;
+            }
+
+            THROW_ON_SYS_ERROR_FMT(
+                true, FileWriteError,
+                "partial write to %s (%zu/%zu bytes)",
+                strZ(this->name), totalWritten, bufUsed(buffer));
+        }
+
+        totalWritten += (size_t) result;
+        bufferRemaining -= (size_t) result;
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }
