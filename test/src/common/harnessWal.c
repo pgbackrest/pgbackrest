@@ -53,6 +53,8 @@ hrnGpdbWalInsertXRecord(
 
     if (param.walPageSize == 0)
         param.walPageSize = DEFAULT_GDPB_XLOG_PAGE_SIZE;
+    if (param.segSize == 0)
+        param.segSize = GPDB6_XLOG_SEG_SIZE;
 
     if (bufUsed(walBuffer) == 0)
     {
@@ -62,10 +64,10 @@ hrnGpdbWalInsertXRecord(
         longHeader.std.xlp_magic = param.magic;
         longHeader.std.xlp_info = XLP_LONG_HEADER;
         longHeader.std.xlp_tli = 1;
-        longHeader.std.xlp_pageaddr = param.segno * GPDB6_XLOG_SEG_SIZE;
+        longHeader.std.xlp_pageaddr = param.segno * param.segSize;
         longHeader.std.xlp_rem_len = param.beginOffset;
         longHeader.xlp_sysid = 10000000000000090400ULL;
-        longHeader.xlp_seg_size = GPDB6_XLOG_SEG_SIZE;
+        longHeader.xlp_seg_size = param.segSize;
         longHeader.xlp_xlog_blcksz = param.walPageSize;
 
         if (flags & OVERWRITE)
@@ -86,7 +88,7 @@ hrnGpdbWalInsertXRecord(
         XLogPageHeaderData header = {0};
         header.xlp_magic = param.magic;
         header.xlp_tli = 1;
-        header.xlp_pageaddr = bufUsed(walBuffer);
+        header.xlp_pageaddr = param.segno * param.segSize + bufUsed(walBuffer);
         header.xlp_rem_len = 0;
 
         if (flags & COND_FLAG)
@@ -131,7 +133,12 @@ hrnGpdbWalInsertXRecord(
 
             bufUsedInc(walBuffer, toWrite);
             if (flags & INCOMPLETE_RECORD)
-                return;
+            {
+                if (param.incompletePosition == 0)
+                    return;
+                else
+                    param.incompletePosition--;
+            }
             if (wrote == totalLen)
                 break;
 
@@ -141,7 +148,7 @@ hrnGpdbWalInsertXRecord(
             header.xlp_magic = param.magic;
             header.xlp_info = !(flags & NO_COND_FLAG) ? XLP_FIRST_IS_CONTRECORD : 0;
             header.xlp_tli = 1;
-            header.xlp_pageaddr = param.segno * GPDB6_XLOG_SEG_SIZE + bufUsed(walBuffer);
+            header.xlp_pageaddr = param.segno * param.segSize + bufUsed(walBuffer);
 
             if (flags & ZERO_REM_LEN)
                 header.xlp_rem_len = 0;
