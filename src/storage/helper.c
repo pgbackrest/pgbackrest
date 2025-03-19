@@ -114,7 +114,9 @@ Initialize the stanza and error if it changes
 static void
 storageHelperStanzaInit(const bool stanzaRequired)
 {
-    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BOOL, stanzaRequired);
+    FUNCTION_TEST_END();
 
     // If the stanza is NULL and the storage has not already been initialized then initialize the stanza
     if (!storageHelper.stanzaInit)
