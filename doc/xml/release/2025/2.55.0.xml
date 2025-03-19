@@ -209,14 +209,19 @@
     <release-test-list>
         <release-development-list>
             <release-item>
-                <github-pull-request id="2573"/>
+                <commit subject="Fix comments in unit tests.">
+                    <github-pull-request id="2573"/>
+                </commit>
+                <commit subject="Fix test logging.">
+                    <github-pull-request id="2578"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="yegor.zhmak"/>
                     <release-item-reviewer id="david.steele"/>
                 </release-item-contributor-list>
 
-                <p>Fix comments in unit tests.</p>
+                <p>Fix test logging and comments in unit tests.</p>
             </release-item>
         </release-development-list>
     </release-test-list>
