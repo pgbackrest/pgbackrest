@@ -3304,11 +3304,14 @@ testRun(void)
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
         hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
-        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
-        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+
+        // Configure a bogus repo1 and restore from repo2 to ensure that restore correctly uses the selected repo
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/bogus");
+        hrnCfgArgKeyRaw(argList, cfgOptRepoPath, 2, repoPath);
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoCipherType, 2, "aes-256-cbc");
+        hrnCfgEnvKeyRawZ(cfgOptRepoCipherPass, 2, TEST_CIPHER_PASS);
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_VOID(cmdRestore(), "restore");
@@ -3329,6 +3332,17 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("delta restore with block incr");
 
+        // Restore configuration to repo1
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
+        hrnCfgArgRawBool(argList, cfgOptDelta, true);
+        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
+        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
         // Get last diff backup label and truncate bundle/1
         hrnSleepRemainder();
 
@@ -3340,16 +3354,6 @@ testRun(void)
         HRN_STORAGE_PUT(storageRepoWrite(), strZ(strNewFmt(STORAGE_REPO_BACKUP "/%s/bundle/1", strZ(backupFull))), NULL);
 
         // Make sure restore fails with the invalid file
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
-        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
-        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
-        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
-        hrnCfgArgRawBool(argList, cfgOptDelta, true);
-        hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
-        hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
-        HRN_CFG_LOAD(cfgCmdRestore, argList);
-
         TEST_ERROR(cmdRestore(), CryptoError, "raised from local-1 shim protocol: cipher header missing");
 
         // Use detail log level to catch block incremental restore message
