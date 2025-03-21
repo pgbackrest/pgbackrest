@@ -373,8 +373,7 @@ option:
       restore:
         default: latest
         required: true
-      verify:
-        internal: true
+      verify: {}
     command-role:
       main: {}
 
