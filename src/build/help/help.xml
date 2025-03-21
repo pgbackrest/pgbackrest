@@ -518,7 +518,7 @@
                         <text>
                             <p>Endpoint used to connect to the blob service. The default is generally correct unless using Azure Government.</p>
 
-                            <p>For custom/test configurations the <setting>repo-storage-ca-file</setting>, <setting>repo-storage-ca-path</setting>, <setting>repo-storage-host</setting>, <setting>repo-storage-port</setting>, and <setting>repo-storage-verify-tls</setting> options may be useful.</p>
+                            <p>For custom/test configurations the <setting>repo-storage-ca-file</setting>, <setting>repo-storage-ca-path</setting>, <setting>repo-storage-host</setting>, <setting>repo-storage-port</setting>, <setting>repo-storage-protocol</setting>, and <setting>repo-storage-verify-tls</setting> options may be useful.</p>
                         </text>
 
                         <example>blob.core.usgovcloudapi.net</example>
@@ -1028,7 +1028,7 @@
                         <text>
                             <p>The AWS endpoint should be valid for the selected region.</p>
 
-                            <p>For custom/test configurations the <setting>repo-storage-ca-file</setting>, <setting>repo-storage-ca-path</setting>, <setting>repo-storage-host</setting>, <setting>repo-storage-port</setting>, and <setting>repo-storage-verify-tls</setting> options may be useful.</p>
+                            <p>For custom/test configurations the <setting>repo-storage-ca-file</setting>, <setting>repo-storage-ca-path</setting>, <setting>repo-storage-host</setting>, <setting>repo-storage-port</setting>, <setting>repo-storage-protocol</setting>, and <setting>repo-storage-verify-tls</setting> options may be useful.</p>
                         </text>
 
                         <example>s3.amazonaws.com</example>
@@ -1234,6 +1234,16 @@
                         </text>
 
                         <example>9000</example>
+                    </config-key>
+
+                    <config-key id="repo-storage-protocol" name="Repository Storage Protocol">
+                        <summary>Repository storage protocol.</summary>
+
+                        <text>
+                            <p>Protocol to use when connecting to the storage (e.g. S3) endpoint (or host if specified).</p>
+                        </text>
+
+                        <example>https</example>
                     </config-key>
 
                     <config-key id="repo-storage-tag" name="Repository Storage Tag">
