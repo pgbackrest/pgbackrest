@@ -320,7 +320,7 @@ restoreFile(
                             // Open the super block list for read. Using one read for all super blocks is cheaper than reading from
                             // the file multiple times, which is especially noticeable on object stores.
                             StorageRead *const superBlockRead = storageNewReadP(
-                                storageRepo(),
+                                storageRepoIdx(repoIdx),
                                 backupFileRepoPathP(
                                     strLstGet(referenceList, read->reference), .manifestName = file->manifestFile,
                                     .bundleId = read->bundleId, .blockIncr = true),

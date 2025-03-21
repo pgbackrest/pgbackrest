@@ -40,6 +40,11 @@
     <contributor-id type="github">ahmed112212</contributor-id>
 </contributor>
 
+<contributor id="aleksander.lukasz">
+    <contributor-name-display>Aleksander &amp;Lstrok;ukasz</contributor-name-display>
+    <contributor-id type="github">aflukasz</contributor-id>
+</contributor>
+
 <contributor id="aleksandr.rogozin">
     <contributor-name-display>Aleksandr Rogozin</contributor-name-display>
     <contributor-id type="github">arogozin</contributor-id>
@@ -1154,6 +1159,11 @@
 <contributor id="wu.ning">
     <contributor-name-display>Wu Ning</contributor-name-display>
     <contributor-id type="github">50wu</contributor-id>
+</contributor>
+
+<contributor id="yegor.zhmak">
+    <contributor-name-display>Yegor Zhmak</contributor-name-display>
+    <contributor-id type="github">YegorZ</contributor-id>
 </contributor>
 
 <contributor id="yogesh.sharma">
