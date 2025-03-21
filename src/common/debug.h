@@ -339,6 +339,7 @@ Macros to return function results (or void)
         STACK_TRACE_POP(false);                                                                                                    \
                                                                                                                                    \
         LOG(FUNCTION_LOG_LEVEL(), 0, "=> void");                                                                                   \
+        return;                                                                                                                    \
     }                                                                                                                              \
     while (0)
 
