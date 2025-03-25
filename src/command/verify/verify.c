@@ -712,7 +712,7 @@ verifyBlockDependencyCheck(VerifyJobData *const jobData, const String *const bac
 Populate the WAL range to be verified later based on the specified backup
 ***********************************************************************************************************************************/
 static void
-verifyCollectBackupRange(VerifyJobData *const jobData, const String *const backupLabel)
+verifyBackupWALRange(VerifyJobData *const jobData, const String *const backupLabel)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, jobData);                       // Pointer to the job data
@@ -739,6 +739,7 @@ verifyCollectBackupRange(VerifyJobData *const jobData, const String *const backu
         if (verifyManifestInfo.errorCode == 0)
         {
             const ManifestData *const manData = manifestData(verifyManifestInfo.manifest);
+
             MEM_CONTEXT_BEGIN(jobData->memContext)
             {
                 jobData->archiveStart = strDup(manData->archiveStart);
@@ -746,9 +747,9 @@ verifyCollectBackupRange(VerifyJobData *const jobData, const String *const backu
             }
             MEM_CONTEXT_END();
         }
+        // Else we could not read the manifest, range is NULL, and no archives will be checked
         else
         {
-            // If we couldn't read the manifest, range is NULL and no archives will be checked.
             jobData->archiveStart = NULL;
             jobData->archiveStop = NULL;
         }
@@ -847,16 +848,19 @@ verifyArchive(VerifyJobData *const jobData)
                             while (strLstSize(jobData->walFileList) > 0)
                             {
                                 const String *const item = strLstGet(jobData->walFileList, 0);
+
                                 if (strCmp(strSubN(item, 0, WAL_SEGMENT_NAME_SIZE), jobData->archiveStart) < 0)
                                     jobData->walFileList = strLstRemoveIdx(jobData->walFileList, 0);
                                 else
                                     break;
                             }
+
                             // Skip WAL files that come after range
                             while (strLstSize(jobData->walFileList) > 0)
                             {
                                 unsigned int lastIdx = strLstSize(jobData->walFileList) - 1;
                                 const String *const item = strLstGet(jobData->walFileList, lastIdx);
+
                                 if (strCmp(strSubN(item, 0, WAL_SEGMENT_NAME_SIZE), jobData->archiveStop) > 0)
                                     jobData->walFileList = strLstRemoveIdx(jobData->walFileList, lastIdx);
                                 else
@@ -1729,7 +1733,8 @@ verifyProcess(const bool verboseText)
             if (!backupLabelInvalid && backupLabel != NULL)
             {
                 verifyBlockDependencyCheck(&jobData, backupLabel);
-                verifyCollectBackupRange(&jobData, backupLabel);
+                verifyBackupWALRange(&jobData, backupLabel);
+
                 jobData.enableArchiveFilter = true;
             }
 
