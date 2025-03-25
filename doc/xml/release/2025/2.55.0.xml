@@ -231,6 +231,19 @@
             </release-item>
 
             <release-item>
+                <github-issue id="2562"/>
+                <github-pull-request id="2583"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="antoine.beaupre"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="antoine.beaupre"/>
+                </release-item-contributor-list>
+
+                <p>Clarify behavior of <br-setting>--repo-retention-full-type</br-setting>.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2542"/>
 
                 <release-item-contributor-list>
