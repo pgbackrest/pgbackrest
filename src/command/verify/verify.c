@@ -658,27 +658,18 @@ verifyBackupSet(VerifyJobData *const jobData, const String *const backupLabel)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *const manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
-
-        // Get the main manifest file
-        VerifyInfoFile verifyManifestInfo = verifyInfoFile(manifestFileName, true, jobData->manifestCipherPass);
-
-        // On failure attempt to read manifest copy instead
-        if (verifyManifestInfo.errorCode != 0)
+        TRY_BEGIN()
         {
-            verifyManifestInfo = verifyInfoFile(
-                strNewFmt("%s%s", strZ(manifestFileName), INFO_COPY_EXT), true, jobData->manifestCipherPass);
-        }
+            const Manifest *const manifest = manifestLoadFile(
+                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)),
+                cfgOptionStrId(cfgOptRepoCipherType), jobData->manifestCipherPass);
 
-        // If the manifest file has no error, process it
-        if (verifyManifestInfo.errorCode == 0)
-        {
             // Check files for block incremental
             bool hasBlockIncr = false;
 
-            for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(verifyManifestInfo.manifest); fileIdx++)
+            for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
             {
-                const ManifestFile file = manifestFile(verifyManifestInfo.manifest, fileIdx);
+                const ManifestFile file = manifestFile(manifest, fileIdx);
 
                 if (file.blockIncrMapSize != 0)
                 {
@@ -691,7 +682,7 @@ verifyBackupSet(VerifyJobData *const jobData, const String *const backupLabel)
             // referenced backups as well. ??? Make this more efficient by verifying only required blocks.
             if (hasBlockIncr)
             {
-                const StringList *const referenceList = manifestReferenceList(verifyManifestInfo.manifest);
+                const StringList *const referenceList = manifestReferenceList(manifest);
 
                 MEM_CONTEXT_BEGIN(jobData->memContext)
                 {
@@ -706,18 +697,19 @@ verifyBackupSet(VerifyJobData *const jobData, const String *const backupLabel)
             // Save WAL range required to make the backup consistent
             MEM_CONTEXT_BEGIN(jobData->memContext)
             {
-                const ManifestData *const manData = manifestData(verifyManifestInfo.manifest);
+                const ManifestData *const manData = manifestData(manifest);
 
                 jobData->archiveStart = strDup(manData->archiveStart);
                 jobData->archiveStop = strDup(manData->archiveStop);
             }
             MEM_CONTEXT_END();
         }
-        else
+        CATCH_ANY()
         {
             jobData->archiveStart = NULL;
             jobData->archiveStop = NULL;
         }
+        TRY_END();
 
         jobData->enableArchiveFilter = true;
     }
