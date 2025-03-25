@@ -2709,10 +2709,10 @@
             </command>
 
             <command id="verify" name="Verify">
-                <summary>Verify contents of the repository.</summary>
+                <summary>Verify contents of a repository.</summary>
 
                 <text>
-                    <p>Verify determines if the backups and archives in the repository are valid.</p>
+                    <p>Verify determines if the backups and archives in a repository are valid.</p>
                 </text>
 
                 <option-list>
