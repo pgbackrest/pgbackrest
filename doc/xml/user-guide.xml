@@ -43,7 +43,7 @@
         <variable key="user-guide-subtitle" if="{[os-type-is-rhel]}">{[os-rhel-title]}</variable>
 
         <variable key="user-guide-os" if="{[os-type-is-debian]}">Debian/Ubuntu</variable>
-        <variable key="user-guide-os" if="{[os-type-is-rhel]}">RHEL 7-8</variable>
+        <variable key="user-guide-os" if="{[os-type-is-rhel]}">RHEL</variable>
 
         <variable key="pgbackrest-repo-path">/pgbackrest</variable>
 
