@@ -643,7 +643,8 @@ verifyCreateArchiveIdRange(
 }
 
 /***********************************************************************************************************************************
-Check if backup is block incremental and populate backup list from its references
+Check if backup is block incremental and populate backup list from its references and set the WAL range to verify based on WAL
+required to make the backup consistent.
 ***********************************************************************************************************************************/
 static void
 verifyBlockDependencyCheck(VerifyJobData *const jobData, const String *const backupLabel)
@@ -701,58 +702,24 @@ verifyBlockDependencyCheck(VerifyJobData *const jobData, const String *const bac
                 }
                 MEM_CONTEXT_END();
             }
-        }
-    }
-    MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
-Populate the WAL range to be verified later based on the specified backup
-***********************************************************************************************************************************/
-static void
-verifyBackupWALRange(VerifyJobData *const jobData, const String *const backupLabel)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, jobData);                       // Pointer to the job data
-        FUNCTION_TEST_PARAM(STRING, backupLabel);                   // Label of a backup to use for WAL filtering
-    FUNCTION_TEST_END();
-
-    FUNCTION_AUDIT_HELPER();
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        const String *const manifestFileName = strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel));
-
-        // Get the main manifest file
-        VerifyInfoFile verifyManifestInfo = verifyInfoFile(manifestFileName, true, jobData->manifestCipherPass);
-
-        // On failure attempt to read manifest copy instead
-        if (verifyManifestInfo.errorCode != 0)
-        {
-            verifyManifestInfo = verifyInfoFile(
-                strNewFmt("%s%s", strZ(manifestFileName), INFO_COPY_EXT), true, jobData->manifestCipherPass);
-        }
-
-        // If the manifest file has no error, then save WAL range of the backup
-        if (verifyManifestInfo.errorCode == 0)
-        {
-            const ManifestData *const manData = manifestData(verifyManifestInfo.manifest);
-
+            // Save WAL range required to make the backup consistent
             MEM_CONTEXT_BEGIN(jobData->memContext)
             {
+                const ManifestData *const manData = manifestData(verifyManifestInfo.manifest);
+
                 jobData->archiveStart = strDup(manData->archiveStart);
                 jobData->archiveStop = strDup(manData->archiveStop);
             }
             MEM_CONTEXT_END();
         }
-        // Else we could not read the manifest, range is NULL, and no archives will be checked
         else
         {
             jobData->archiveStart = NULL;
             jobData->archiveStop = NULL;
         }
+
+        jobData->enableArchiveFilter = true;
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1731,12 +1698,7 @@ verifyProcess(const bool verboseText)
 
             // Check for block map dependencies if --set option is specified
             if (!backupLabelInvalid && backupLabel != NULL)
-            {
                 verifyBlockDependencyCheck(&jobData, backupLabel);
-                verifyBackupWALRange(&jobData, backupLabel);
-
-                jobData.enableArchiveFilter = true;
-            }
 
             // Only begin processing if there are some archives or backups in the repo
             if (!backupLabelInvalid && (!strLstEmpty(jobData.archiveIdList) || !strLstEmpty(jobData.backupList)))
