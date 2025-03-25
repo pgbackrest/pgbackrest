@@ -647,7 +647,7 @@ Check if backup is block incremental and populate backup list from its reference
 required to make the backup consistent.
 ***********************************************************************************************************************************/
 static void
-verifyBlockDependencyCheck(VerifyJobData *const jobData, const String *const backupLabel)
+verifyBackupSet(VerifyJobData *const jobData, const String *const backupLabel)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, jobData);                       // Pointer to the job data
@@ -1698,7 +1698,7 @@ verifyProcess(const bool verboseText)
 
             // Check for block map dependencies if --set option is specified
             if (!backupLabelInvalid && backupLabel != NULL)
-                verifyBlockDependencyCheck(&jobData, backupLabel);
+                verifyBackupSet(&jobData, backupLabel);
 
             // Only begin processing if there are some archives or backups in the repo
             if (!backupLabelInvalid && (!strLstEmpty(jobData.archiveIdList) || !strLstEmpty(jobData.backupList)))
