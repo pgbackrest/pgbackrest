@@ -98,7 +98,7 @@
             </release-item>
 
             <release-item>
-                <p>Disable <id>-Wclobber</id> compiler warning because it is mostly useless but keep the rest of of <id>-Wextra</id>.</p>
+                <p>Disable <id>-Wclobber</id> compiler warning because it is mostly useless but keep the rest of <id>-Wextra</id>.</p>
             </release-item>
         </release-development-list>
     </release-core-list>
