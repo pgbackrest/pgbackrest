@@ -2,6 +2,21 @@
     <release-core-list>
         <release-bug-list>
             <release-item>
+                <github-issue id="2577"/>
+                <github-pull-request id="2579"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="aleksander.lukasz"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                    <!-- Actually tester, but we don't have a tag for that yet -->
+                    <release-item-reviewer id="aleksander.lukasz"/>
+                </release-item-contributor-list>
+
+                <p>Fix block incremental restore issue on non-default repository.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2533"/>
 
                 <release-item-contributor-list>
@@ -202,6 +217,19 @@
                 </release-item-contributor-list>
 
                 <p>Caveat <br-setting>--tablespace-map-all</br-setting> regarding tablespace creation.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2562"/>
+                <github-pull-request id="2583"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="antoine.beaupre"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="antoine.beaupre"/>
+                </release-item-contributor-list>
+
+                <p>Clarify behavior of <br-setting>--repo-retention-full-type</br-setting>.</p>
             </release-item>
 
             <release-item>

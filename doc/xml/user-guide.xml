@@ -14,8 +14,8 @@
         <variable key="os-rhel-title">RHEL</variable>
 
         <!-- Base PostgreSQL versions -->
-        <variable key="os-debian-pg-version">15</variable>
-        <variable key="os-rhel-pg-version">12</variable>
+        <variable key="os-debian-pg-version">16</variable>
+        <variable key="os-rhel-pg-version">13</variable>
 
         <!-- User-defined package to use in documentation (use "apt" to install the current PGDG apt package) -->
         <variable key="package">none</variable>
@@ -43,7 +43,7 @@
         <variable key="user-guide-subtitle" if="{[os-type-is-rhel]}">{[os-rhel-title]}</variable>
 
         <variable key="user-guide-os" if="{[os-type-is-debian]}">Debian/Ubuntu</variable>
-        <variable key="user-guide-os" if="{[os-type-is-rhel]}">RHEL 7-8</variable>
+        <variable key="user-guide-os" if="{[os-type-is-rhel]}">RHEL</variable>
 
         <variable key="pgbackrest-repo-path">/pgbackrest</variable>
 
@@ -70,8 +70,8 @@
 
         <variable key="pg-version-nodot" eval="y">my $version = '{[pg-version]}'; $version =~ s/\.//g; return $version;</variable>
 
-        <variable key="pg-version-upgrade" if="{[os-type-is-debian]}">16</variable>
-        <variable key="pg-version-upgrade" if="{[os-type-is-rhel]}">13</variable>
+        <variable key="pg-version-upgrade" if="{[os-type-is-debian]}">17</variable>
+        <variable key="pg-version-upgrade" if="{[os-type-is-rhel]}">14</variable>
         <variable key="pg-version-upgrade-nodot" eval="y">my $version = '{[pg-version-upgrade]}'; $version =~ s/\.//g; return $version;</variable>
 
         <variable key="pg-bin-path" if="{[os-type-is-debian]}">/usr/lib/postgresql/{[pg-version]}/bin</variable>

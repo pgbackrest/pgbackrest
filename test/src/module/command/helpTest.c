@@ -71,7 +71,7 @@ testRun(void)
         "    stanza-upgrade  upgrade a stanza\n"
         "    start           allow pgBackRest processes to run\n"
         "    stop            stop pgBackRest processes from running\n"
-        "    verify          verify contents of the repository\n"
+        "    verify          verify contents of a repository\n"
         "    version         get version\n"
         "\n"
         "Use 'pgbackrest help [command]' for more information.\n",
