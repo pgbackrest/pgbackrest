@@ -1184,7 +1184,7 @@ storageS3New(
     const String *const bucket, const String *const endPoint, const StorageS3UriStyle uriStyle, const String *const region,
     const StorageS3KeyType keyType, const String *const accessKey, const String *const secretAccessKey,
     const String *const securityToken, const String *const kmsKeyId, const String *sseCustomerKey, const String *const credRole,
-    const String *const webIdTokenFile, const size_t partSize, const KeyValue *const tag, const String *host,
+    const String *const webIdTokenFile, const size_t partSize, const KeyValue *const tag, const String *protocol, const String *host,
     const unsigned int port, const TimeMSec timeout, const bool verifyPeer, const String *const caFile, const String *const caPath,
     const bool requesterPays)
 {
@@ -1207,6 +1207,7 @@ storageS3New(
         FUNCTION_TEST_PARAM(STRING, webIdTokenFile);
         FUNCTION_LOG_PARAM(SIZE, partSize);
         FUNCTION_LOG_PARAM(KEY_VALUE, tag);
+        FUNCTION_LOG_PARAM(STRING, protocol);
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
@@ -1254,10 +1255,17 @@ storageS3New(
         if (host == NULL)
             host = this->bucketEndpoint;
 
-        this->httpClient = httpClientNew(
-            tlsClientNewP(
-                sckClientNew(host, port, timeout, timeout), host, timeout, timeout, verifyPeer, .caFile = caFile, .caPath = caPath),
-            timeout);
+        if (protocol == NULL)
+            protocol = STRDEF("https");
+
+        if (strEq(protocol, STRDEF("http")))
+           this->httpClient = httpClientNew(
+                sckClientNew(host, port, timeout, timeout), timeout);
+        else
+            this->httpClient = httpClientNew(
+                tlsClientNewP(
+                    sckClientNew(host, port, timeout, timeout), host, timeout, timeout, verifyPeer, .caFile = caFile, .caPath = caPath),
+                timeout);
 
         // Initialize authentication
         switch (this->keyType)
