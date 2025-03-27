@@ -71,7 +71,7 @@ testRun(void)
         "    stanza-upgrade  upgrade a stanza\n"
         "    start           allow pgBackRest processes to run\n"
         "    stop            stop pgBackRest processes from running\n"
-        "    verify          verify contents of the repository\n"
+        "    verify          verify contents of a repository\n"
         "    version         get version\n"
         "\n"
         "Use 'pgbackrest help [command]' for more information.\n",
@@ -151,6 +151,20 @@ testRun(void)
 
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "version");
+        hrnCfgArgRawZ(argList, cfgOptOutput, "text");
+        TEST_RESULT_VOID(testCfgLoad(argList), "version text output from version command");
+        TEST_RESULT_STR_Z(helpRender(helpData), versionOnly, "check text");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "version");
+        hrnCfgArgRawZ(argList, cfgOptOutput, "num");
+        TEST_RESULT_VOID(testCfgLoad(argList), "version num output from version command");
+        TEST_RESULT_STR_Z(helpRender(helpData), zNewFmt("%d", PROJECT_VERSION_NUM), "check text");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
         strLstAddZ(argList, "--version");
         TEST_RESULT_VOID(testCfgLoad(argList), "version from version option");
         TEST_RESULT_STR_Z(helpRender(helpData), versionOnly, "check text");
@@ -176,30 +190,11 @@ testRun(void)
         TEST_RESULT_VOID(testCfgLoad(argList), "help from help option");
         TEST_RESULT_STR_Z(helpRender(helpData), generalHelp, "check text");
 
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("version command");
-
-        const char *commandHelp = zNewFmt(
-            "%s%s",
-            helpVersion,
-            " - 'version' command help\n"
-            "\n"
-            "Get version.\n"
-            "\n"
-            "Displays installed pgBackRest version.\n");
-
-        argList = strLstNew();
-        strLstAddZ(argList, "/path/to/pgbackrest");
-        strLstAddZ(argList, "help");
-        strLstAddZ(argList, "version");
-        TEST_RESULT_VOID(testCfgLoad(argList), "help for version command");
-        TEST_RESULT_STR_Z(helpRender(helpData), commandHelp, "check text");
-
         // This test is broken up into multiple strings because C99 does not require compilers to support const strings > 4095 bytes
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("restore command");
 
-        commandHelp = zNewFmt(
+        const char *commandHelp = zNewFmt(
             "%s%s%s",
             helpVersion,
             " - 'restore' command help\n"

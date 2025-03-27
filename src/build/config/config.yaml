@@ -338,6 +338,11 @@ option:
         allow-list:
           - none
           - text
+      version:
+        default: text
+        allow-list:
+          - num
+          - text
     allow-list:
       - text
       - json
@@ -368,8 +373,7 @@ option:
       restore:
         default: latest
         required: true
-      verify:
-        internal: true
+      verify: {}
     command-role:
       main: {}
 

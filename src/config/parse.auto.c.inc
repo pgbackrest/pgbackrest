@@ -95,6 +95,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("n"),                                                                                               // val/str
     PARSE_RULE_STRPUB("name"),                                                                                            // val/str
     PARSE_RULE_STRPUB("none"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("num"),                                                                                             // val/str
     PARSE_RULE_STRPUB("off"),                                                                                             // val/str
     PARSE_RULE_STRPUB("path"),                                                                                            // val/str
     PARSE_RULE_STRPUB("pause"),                                                                                           // val/str
@@ -219,6 +220,7 @@ typedef enum
     parseRuleValStrQT_n_QT,                                                                                          // val/str/enum
     parseRuleValStrQT_name_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_none_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_num_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_off_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_path_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_pause_QT,                                                                                      // val/str/enum
@@ -293,6 +295,7 @@ static const StringId parseRuleValueStrId[] =
     STRID5("n", 0xe0),                                                                                                  // val/strid
     STRID5("name", 0x2b42e0),                                                                                           // val/strid
     STRID5("none", 0x2b9ee0),                                                                                           // val/strid
+    STRID5("num", 0x36ae0),                                                                                             // val/strid
     STRID5("off", 0x18cf0),                                                                                             // val/strid
     STRID5("path", 0x450300),                                                                                           // val/strid
     STRID5("pause", 0x59d4300),                                                                                         // val/strid
@@ -356,6 +359,7 @@ static const uint8_t parseRuleValueStrIdStrMap[] =
     parseRuleValStrQT_n_QT,                                                                                      // val/strid/strmap
     parseRuleValStrQT_name_QT,                                                                                   // val/strid/strmap
     parseRuleValStrQT_none_QT,                                                                                   // val/strid/strmap
+    parseRuleValStrQT_num_QT,                                                                                    // val/strid/strmap
     parseRuleValStrQT_off_QT,                                                                                    // val/strid/strmap
     parseRuleValStrQT_path_QT,                                                                                   // val/strid/strmap
     parseRuleValStrQT_pause_QT,                                                                                  // val/strid/strmap
@@ -419,6 +423,7 @@ typedef enum
     parseRuleValStrIdN,                                                                                            // val/strid/enum
     parseRuleValStrIdName,                                                                                         // val/strid/enum
     parseRuleValStrIdNone,                                                                                         // val/strid/enum
+    parseRuleValStrIdNum,                                                                                          // val/strid/enum
     parseRuleValStrIdOff,                                                                                          // val/strid/enum
     parseRuleValStrIdPath,                                                                                         // val/strid/enum
     parseRuleValStrIdPause,                                                                                        // val/strid/enum
@@ -3553,6 +3558,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Manifest)                                                                        // opt/output
             PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                          // opt/output
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                          // opt/output
+            PARSE_RULE_OPTION_COMMAND(Version)                                                                         // opt/output
         ),                                                                                                             // opt/output
                                                                                                                        // opt/output
         PARSE_RULE_OPTIONAL                                                                                            // opt/output
@@ -3573,6 +3579,25 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                            // opt/output
                 (                                                                                                      // opt/output
                     PARSE_RULE_VAL_STRID(None),                                                                        // opt/output
+                ),                                                                                                     // opt/output
+            ),                                                                                                         // opt/output
+                                                                                                                       // opt/output
+            PARSE_RULE_OPTIONAL_GROUP                                                                                  // opt/output
+            (                                                                                                          // opt/output
+                PARSE_RULE_FILTER_CMD                                                                                  // opt/output
+                (                                                                                                      // opt/output
+                    PARSE_RULE_VAL_CMD(Version),                                                                       // opt/output
+                ),                                                                                                     // opt/output
+                                                                                                                       // opt/output
+                PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                         // opt/output
+                (                                                                                                      // opt/output
+                    PARSE_RULE_VAL_STRID(Num),                                                                         // opt/output
+                    PARSE_RULE_VAL_STRID(Text),                                                                        // opt/output
+                ),                                                                                                     // opt/output
+                                                                                                                       // opt/output
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                            // opt/output
+                (                                                                                                      // opt/output
+                    PARSE_RULE_VAL_STRID(Text),                                                                        // opt/output
                 ),                                                                                                     // opt/output
             ),                                                                                                         // opt/output
                                                                                                                        // opt/output
