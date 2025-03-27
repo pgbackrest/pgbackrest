@@ -31,7 +31,7 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Parse the endpoint url
-        const HttpUrl *const url = httpUrlNewParseP(cfgOptionIdxStr(cfgOptRepoS3Endpoint, repoIdx), .type = httpProtocolTypeHttps);
+        const HttpUrl *const url = httpUrlNewParseP(cfgOptionIdxStr(cfgOptRepoS3Endpoint, repoIdx), .type = httpProtocolTypeAny);
         const String *const endPoint = httpUrlHost(url);
         unsigned int port = httpUrlPort(url);
 
@@ -41,7 +41,7 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
         if (cfgOptionIdxSource(cfgOptRepoStorageHost, repoIdx) != cfgSourceDefault)
         {
             const HttpUrl *const url = httpUrlNewParseP(
-                cfgOptionIdxStr(cfgOptRepoStorageHost, repoIdx), .type = httpProtocolTypeHttps);
+                cfgOptionIdxStr(cfgOptRepoStorageHost, repoIdx), .type = httpProtocolTypeAny);
 
             host = httpUrlHost(url);
             port = httpUrlPort(url);
@@ -79,6 +79,9 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
             webIdTokenFile = strNewZ(webIdTokenFileZ);
         }
 
+        const String* const protocol = httpUrlProtocolType(url) == httpProtocolTypeHttp ?
+            STRDEF("http") : STRDEF("https");
+
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = storageS3New(
@@ -89,7 +92,7 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
                 cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KmsKeyId, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoS3SseCustomerKey, repoIdx), role, webIdTokenFile,
                 (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx),
-                cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), host, port, ioTimeoutMs(),
+                cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), protocol, host, port, ioTimeoutMs(),
                 cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx), cfgOptionIdxBool(cfgOptRepoS3RequesterPays, repoIdx));
         }
