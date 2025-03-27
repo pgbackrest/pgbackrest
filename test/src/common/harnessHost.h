@@ -53,7 +53,6 @@ typedef struct HrnHostTestDefine
     unsigned int rt;                                                // Repository total
     bool bnd;                                                       // Bundling enabled?
     bool bi;                                                        // Block incremental enabled?
-    bool fi;                                                        // Full/incr backup?
 } HrnHostTestDefine;
 
 /***********************************************************************************************************************************
@@ -442,9 +441,6 @@ const String *hrnHostCipherPass(void);
 
 // Compress Type
 CompressType hrnHostCompressType(void);
-
-// Full/incr enabled
-bool hrnHostFullIncr(void);
 
 // Non version-specific testing enabled
 bool hrnHostNonVersionSpecific(void);

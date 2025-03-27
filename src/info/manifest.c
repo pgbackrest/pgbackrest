@@ -1567,7 +1567,7 @@ manifestBuildValidate(Manifest *const this, const bool delta, const time_t copyS
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
+static void
 manifestDeltaCheck(Manifest *const this, const Manifest *const manifestPrior)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -1762,51 +1762,6 @@ manifestBuildIncr(
         }
     }
     MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN void
-manifestBuildFullIncr(Manifest *const this, const time_t timeLimit, const uint64_t bundleLimit)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(MANIFEST, this);
-        FUNCTION_LOG_PARAM(TIME, timeLimit);
-        FUNCTION_LOG_PARAM(UINT64, bundleLimit);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(timeLimit > 0);
-    ASSERT(!this->pub.data.bundle || bundleLimit > 0);
-    ASSERT(this->pub.data.backupType == backupTypeFull);
-
-    MEM_CONTEXT_OBJ_BEGIN(this)
-    {
-        // New filtered file list to replace the old one
-        List *const fileList = lstNewP(sizeof(ManifestFilePack *), .comparator = lstComparatorStr);
-
-        MEM_CONTEXT_OBJ_BEGIN(fileList)
-        {
-            // Iterate all files
-            for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
-            {
-                const ManifestFile file = manifestFile(this, fileIdx);
-
-                // Keep files older than the time limit and not bundled
-                if (file.timestamp <= timeLimit && (!this->pub.data.bundle || file.size > bundleLimit))
-                {
-                    const ManifestFilePack *const filePack = manifestFilePack(this, &file);
-                    lstAdd(fileList, &filePack);
-                }
-            }
-        }
-        MEM_CONTEXT_OBJ_END();
-
-        lstFree(this->pub.fileList);
-        this->pub.fileList = fileList;
-    }
-    MEM_CONTEXT_OBJ_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }

@@ -2160,7 +2160,6 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
-            hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, true);
             hrnCfgArgRawBool(argList, cfgOptStopAuto, true);
             hrnCfgArgRawBool(argList, cfgOptCompress, false);
             hrnCfgArgRawBool(argList, cfgOptArchiveCheck, false);
@@ -2201,7 +2200,7 @@ testRun(void)
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(resumeLabel)))));
 
             // Run backup
-            hrnBackupPqScriptP(PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true, .fullIncrNoOp = true);
+            hrnBackupPqScriptP(PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true);
 
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
@@ -2545,7 +2544,7 @@ testRun(void)
                         storageRepoWrite(),
                         strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(resumeLabel)))));
 
-            // Backup errors on backup type
+            // Back errors on backup type
             hrnBackupPqScriptP(PG_VERSION_95, backupTimeStart);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
@@ -2597,7 +2596,6 @@ testRun(void)
             hrnCfgArgKeyRaw(argList, cfgOptPgPath, 1, pg1Path);
             hrnCfgArgKeyRaw(argList, cfgOptPgPath, 2, pg2Path);
             hrnCfgArgKeyRawZ(argList, cfgOptPgPort, 2, "5433");
-            hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, true);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawBool(argList, cfgOptCompress, false);
             hrnCfgArgRawBool(argList, cfgOptBackupStandby, true);
@@ -2610,7 +2608,7 @@ testRun(void)
 
             // Create file to copy from the standby. This file will be zero-length on the primary and non-zero-length on the standby
             // but no bytes will be copied.
-            HRN_STORAGE_PUT_EMPTY(storagePgIdxWrite(0), PG_PATH_BASE "/1/1", .timeModified = backupTimeStart - 7200);
+            HRN_STORAGE_PUT_EMPTY(storagePgIdxWrite(0), PG_PATH_BASE "/1/1", .timeModified = backupTimeStart);
             HRN_STORAGE_PUT_Z(storagePgIdxWrite(1), PG_PATH_BASE "/1/1", "1234");
 
             // Create file to copy from the standby. This file will be smaller on the primary than the standby and have no common
@@ -2634,19 +2632,13 @@ testRun(void)
             // Run backup but error on first archive check
             hrnBackupPqScriptP(
                 PG_VERSION_96, backupTimeStart, .noPriorWal = true, .backupStandby = true, .walCompressType = compressTypeGz,
-                .startFast = true, .fullIncr = true);
+                .startFast = true);
             TEST_ERROR(
                 hrnCmdBackup(), ArchiveTimeoutError,
                 "WAL segment 0000000105DA69BF000000FF was not archived before the 100ms timeout\n"
                 "HINT: check the archive_command to ensure that all options are correct (especially --stanza).\n"
                 "HINT: check the PostgreSQL server log for errors.\n"
                 "HINT: run the 'start' command if the stanza was previously stopped.");
-
-            TEST_RESULT_LOG(
-                "P00   WARN: no prior backup exists, incr backup has been changed to full");
-
-            // Remove halted backup so there's no resume
-            HRN_STORAGE_PATH_REMOVE(storageRepoWrite(), STORAGE_REPO_BACKUP "/20191016-042640F", .recurse = true);
 
             // Run backup but error on archive check
             hrnBackupPqScriptP(
@@ -2671,11 +2663,8 @@ testRun(void)
             const String *archiveInfoContent = strNewBuf(storageGetP(storageNewReadP(storageRepo(), INFO_ARCHIVE_PATH_FILE_STR)));
 
             // Run backup
-            HRN_CFG_LOAD(cfgCmdBackup, argList);
-
             hrnBackupPqScriptP(
-                PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompressType = compressTypeGz, .startFast = true,
-                .fullIncr = true);
+                PG_VERSION_96, backupTimeStart, .backupStandby = true, .walCompressType = compressTypeGz, .startFast = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Check archive.info/copy timestamp was updated but contents were not
@@ -2697,7 +2686,7 @@ testRun(void)
                 ".> {d=20191016-042640F}\n"
                 "pg_data/PG_VERSION {s=3}\n"
                 "pg_data/backup_label {s=17, ts=+2}\n"
-                "pg_data/base/1/1 {s=0, ts=-7200}\n"
+                "pg_data/base/1/1 {s=0}\n"
                 "pg_data/base/1/2 {s=2}\n"
                 "pg_data/base/1/3 {s=3, so=4}\n"
                 "pg_data/global/pg_control {s=8192}\n"
@@ -3006,8 +2995,7 @@ testRun(void)
             ((Storage *)storageRepoWrite())->pub.interface.feature ^= 1 << storageFeatureHardLink;
 
             // Run backup
-            hrnBackupPqScriptP(
-                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 3, .walSwitch = true);
+            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 3, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Reset storage features
@@ -3154,8 +3142,7 @@ testRun(void)
             HRN_BACKUP_SCRIPT_SET(
                 {.op = hrnBackupScriptOpUpdate, .file = storagePathP(storagePg(), STRDEF(PG_PATH_BASE "/1/1")),
                  .time = backupTimeStart, .content = relationAfter});
-            hrnBackupPqScriptP(
-                PG_VERSION_11, backupTimeStart, .timeline = 0x2C, .walTotal = 2, .walSwitch = true, .fullIncrNoOp = true);
+            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .timeline = 0x2C, .walTotal = 2, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3264,7 +3251,7 @@ testRun(void)
             // Run backup
             hrnBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .pgVersionForce = STRDEF("11"),
-                .walSwitch = true, .fullIncrNoOp = true);
+                .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3351,8 +3338,7 @@ testRun(void)
             HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "zero", .timeModified = backupTimeStart);
 
             // Run backup
-            hrnBackupPqScriptP(
-                PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true);
+            hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3414,28 +3400,25 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
-            hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, true);
             hrnCfgArgRawZ(argList, cfgOptCompressType, "none");
             hrnCfgArgRawBool(argList, cfgOptResume, false);
             hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
-            hrnCfgArgRawZ(argList, cfgOptRepoBundleLimit, "8kB");
+            hrnCfgArgRawZ(argList, cfgOptRepoBundleLimit, "23kB");
             hrnCfgArgRawBool(argList, cfgOptRepoBlock, true);
             hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MAX_FILE_SIZE) "b=" STRINGIFY(BLOCK_MAX_SIZE) "b");
             hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MIN_FILE_SIZE) "=" STRINGIFY(BLOCK_MIN_SIZE));
             hrnCfgArgRawZ(argList, cfgOptRepoBlockSizeMap, STRINGIFY(BLOCK_MID_FILE_SIZE) "=" STRINGIFY(BLOCK_MID_SIZE));
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-            // File that uses block incr and will grow (also updated before final pass)
-            Buffer *fileBlockIncrGrow = bufNew(BLOCK_MIN_SIZE * 3);
-            memset(bufPtr(fileBlockIncrGrow), 55, bufSize(fileBlockIncrGrow));
-            bufUsedSet(fileBlockIncrGrow, bufSize(fileBlockIncrGrow));
+            // File that uses block incr and will grow
+            Buffer *file = bufNew(BLOCK_MIN_SIZE * 3);
+            memset(bufPtr(file), 0, bufSize(file));
+            bufUsedSet(file, bufSize(file));
 
-            HRN_STORAGE_PUT(storagePgWrite(), "block-incr-grow", fileBlockIncrGrow, .timeModified = backupTimeStart - 7200);
-
-            memset(bufPtr(fileBlockIncrGrow), 0, bufSize(fileBlockIncrGrow));
+            HRN_STORAGE_PUT(storagePgWrite(), "block-incr-grow", file, .timeModified = backupTimeStart);
 
             // File that uses block incr and will not be resumed
-            Buffer *file = bufNew(BLOCK_MIN_SIZE * 3);
+            file = bufNew(BLOCK_MIN_SIZE * 3);
             memset(bufPtr(file), 0, bufSize(file));
             bufUsedSet(file, bufSize(file));
 
@@ -3443,7 +3426,7 @@ testRun(void)
 
             // Error when pg_control is missing after backup start
             HRN_BACKUP_SCRIPT_SET(
-                {.op = hrnBackupScriptOpRemove, .exec = 2, .file = storagePathP(storagePg(), STRDEF("global/pg_control"))});
+                {.op = hrnBackupScriptOpRemove, .file = storagePathP(storagePg(), STRDEF("global/pg_control"))});
             hrnBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true,
                 .errorAfterCopyStart = true);
@@ -3452,101 +3435,33 @@ testRun(void)
                 "raised from local-1 shim protocol: unable to open missing file '" TEST_PATH "/pg1/global/pg_control' for read");
 
             TEST_RESULT_LOG(
-                "P00   INFO: full/incr backup preliminary copy of files last modified before 2019-11-03 16:51:20\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DBF06000000000, lsn = 5dbf060/0\n"
                 "P00   INFO: check archive for segment 0000000105DBF06000000000\n"
-                "P00   INFO: full/incr backup cleanup\n"
-                "P00   INFO: full/incr backup final copy\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]");
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]");
 
             HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_11, .pageChecksumVersion = 0, .walSegmentSize = 2 * 1024 * 1024);
 
-            // File removed before final copy
-            file = bufNew(BLOCK_MIN_SIZE + 1);
-            memset(bufPtr(file), 71, bufSize(file));
-            bufUsedSet(file, bufSize(file));
-
-            HRN_STORAGE_PUT(storagePgWrite(), "rm-before-final-cp", file, .timeModified = backupTimeStart - 120);
-
-            // Bundled file removed before final copy
-            file = bufNew(BLOCK_MIN_SIZE);
-            memset(bufPtr(file), 22, bufSize(file));
-            bufUsedSet(file, bufSize(file));
-
-            HRN_STORAGE_PUT(storagePgWrite(), "rm-bnd-before-final-cp", file, .timeModified = backupTimeStart - 120);
-
-            // File time will change before the final copy and cause a delta
-            Buffer *fileTimeChange = bufNew(BLOCK_MIN_SIZE + 1);
-            memset(bufPtr(fileTimeChange), 0, bufSize(fileTimeChange));
-            bufUsedSet(fileTimeChange, bufSize(fileTimeChange));
-
-            HRN_STORAGE_PUT(storagePgWrite(), "time-change", fileTimeChange, .timeModified = backupTimeStart - 120);
-
-            // File removed after prelim copy and before final manifest build
-            file = bufNew(BLOCK_MIN_SIZE + 2);
-            memset(bufPtr(file), 71, bufSize(file));
-            bufUsedSet(file, bufSize(file));
-
-            HRN_STORAGE_PUT(storagePgWrite(), "rm-after-prelim-cp", file, .timeModified = backupTimeStart - 120);
-
-            // File just over the full/incr time limit
-            file = bufNew(BLOCK_MIN_SIZE + 3);
-            memset(bufPtr(file), 33, bufSize(file));
-            bufUsedSet(file, bufSize(file));
-
-            HRN_STORAGE_PUT(storagePgWrite(), "below-fi-limit", file, .timeModified = backupTimeStart - 119);
-
-            // Zero-length file that will not be copied due to bundling
-            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "empty", .timeModified = backupTimeStart - 119);
-
-            // Remove percentage log replacement to check progress reporting for full/incr
-            hrnLogReplaceRemove(", [0-9]{1,3}.[0-9]{1,2}%\\)");
-
             // Run backup
-            HRN_BACKUP_SCRIPT_SET(
-                {.op = hrnBackupScriptOpUpdate, .after = true, .file = storagePathP(storagePg(), STRDEF("block-incr-grow")),
-                 .content = fileBlockIncrGrow, .time = backupTimeStart},
-                {.op = hrnBackupScriptOpUpdate, .after = true, .file = storagePathP(storagePg(), STRDEF("time-change")),
-                 .content = fileTimeChange, .time = backupTimeStart - 121},
-                {.op = hrnBackupScriptOpRemove, .after = true, .file = storagePathP(storagePg(), STRDEF("rm-after-prelim-cp"))},
-                {.op = hrnBackupScriptOpRemove, .exec = 2, .file = storagePathP(storagePg(), STRDEF("rm-bnd-before-final-cp"))},
-                {.op = hrnBackupScriptOpRemove, .exec = 2, .file = storagePathP(storagePg(), STRDEF("rm-before-final-cp"))});
             hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
-                "P00   INFO: full/incr backup preliminary copy of files last modified before 2019-11-03 16:51:20\n"
-                "P00   INFO: backup '20191103-165320F' cannot be resumed: partially deleted by prior resume or invalid\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, 24.99%) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/rm-after-prelim-cp (8KB, 33.33%) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/time-change (8KB, 41.66%) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/rm-before-final-cp (8KB, 49.99%) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
                 "P00   INFO: backup start archive = 0000000105DBF06000000000, lsn = 5dbf060/0\n"
                 "P00   INFO: check archive for segment 0000000105DBF06000000000\n"
-                "P00   INFO: full/incr backup cleanup\n"
-                "P00   WARN: file 'time-change' has timestamp earlier than prior backup (prior 1572799880, current 1572799879),"
-                " enabling delta checksum\n"
-                "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191103-165320F/pg_data/rm-after-prelim-cp' from backup"
-                " (missing in manifest)\n"
-                "P00   INFO: full/incr backup final copy\n"
-                "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/empty\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, 52.93%) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, 70.58%) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/below-fi-limit (8KB, 76.46%) checksum [SHA1]\n"
-                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/time-change (8KB, 82.35%) checksum [SHA1]\n"
-                "P01 DETAIL: skip file removed by database " TEST_PATH "/pg1/rm-before-final-cp\n"
-                "P01 DETAIL: skip file removed by database " TEST_PATH "/pg1/rm-bnd-before-final-cp\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/0, 8KB, 99.99%) checksum [SHA1]\n"
-                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/8192, 2B, 100.00%) checksum [SHA1]\n"
+                "P00   INFO: backup '20191103-165320F' cannot be resumed: partially deleted by prior resume or invalid\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/0, 8KB, [PCT]) checksum [SHA1]\n"
+                "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/8192, 2B, [PCT]) checksum [SHA1]\n"
                 "P00   INFO: execute non-exclusive backup stop and wait for all WAL segments to archive\n"
                 "P00   INFO: backup stop archive = 0000000105DBF06000000001, lsn = 5dbf060/300000\n"
                 "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
                 "P00   INFO: check archive for segment(s) 0000000105DBF06000000000:0000000105DBF06000000001\n"
                 "P00   INFO: new backup label = 20191103-165320F\n"
-                "P00   INFO: full backup size = [SIZE], file total = 8");
+                "P00   INFO: full backup size = [SIZE], file total = 5");
 
             TEST_RESULT_STR_Z(
                 testBackupValidateP(storageRepo(), STRDEF(STORAGE_REPO_BACKUP "/latest")),
@@ -3554,22 +3469,12 @@ testRun(void)
                 "bundle/1/pg_data/PG_VERSION {s=2}\n"
                 "bundle/1/pg_data/global/pg_control {s=8192}\n"
                 "pg_data/backup_label {s=17, ts=+2}\n"
-                "pg_data/below-fi-limit {s=8195, ts=-119}\n"
                 "pg_data/block-incr-grow.pgbi {s=24576, m=0:{0,1,2}}\n"
                 "pg_data/block-incr-no-resume.pgbi {s=24576, m=0:{0,1,2}}\n"
-                "pg_data/time-change {s=8193, ts=-121}\n"
                 "--------\n"
                 "[backup:target]\n"
                 "pg_data={\"path\":\"" TEST_PATH "/pg1\",\"type\":\"path\"}\n",
                 "compare file list");
-
-            HRN_STORAGE_REMOVE(storagePgWrite(), "rm-before-final-cp");
-            HRN_STORAGE_REMOVE(storagePgWrite(), "time-change");
-            HRN_STORAGE_REMOVE(storagePgWrite(), "below-fi-limit");
-            HRN_STORAGE_REMOVE(storagePgWrite(), "empty");
-
-            // Replace progress reporting to reduce log churn
-            hrnLogReplaceAdd(", [0-9]{1,3}.[0-9]{1,2}%\\)", "[0-9].+%", "PCT", false);
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -3642,9 +3547,6 @@ testRun(void)
 
             HRN_STORAGE_PUT(storagePgWrite(), "grow-to-block-incr", file, .timeModified = backupTimeStart);
 
-            // Normal file that remains the same between backups
-            HRN_STORAGE_PUT_Z(storagePgWrite(), "normal-same", "SAME", .timeModified = backupTimeStart);
-
             // Run backup
             hrnBackupPqScriptP(PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeGz, .walTotal = 2, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
@@ -3658,10 +3560,6 @@ testRun(void)
                 " will resume\n"
                 "P00 DETAIL: remove path '" TEST_PATH "/repo/backup/test1/20191103-165320F/bundle' from resumed backup\n"
                 "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191103-165320F/pg_data/backup_label' from resumed"
-                " backup (missing in manifest)\n"
-                "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191103-165320F/pg_data/below-fi-limit' from resumed"
-                " backup (missing in manifest)\n"
-                "P00 DETAIL: remove file '" TEST_PATH "/repo/backup/test1/20191103-165320F/pg_data/time-change' from resumed"
                 " backup (missing in manifest)\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
                 "P00   WARN: resumed backup file pg_data/block-incr-no-resume did not have expected checksum"
@@ -3905,7 +3803,7 @@ testRun(void)
             // Run backup
             hrnBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
-                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2, .walSwitch = true, .fullIncrNoOp = true);
+                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             TEST_RESULT_LOG(
@@ -3952,7 +3850,6 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
-            hrnCfgArgRawBool(argList, cfgOptBackupFullIncr, true);
             hrnCfgArgRawBool(argList, cfgOptDelta, true);
             hrnCfgArgRawBool(argList, cfgOptRepoBundle, true);
             hrnCfgArgRawZ(argList, cfgOptRepoBundleLimit, "8KiB");
@@ -3990,7 +3887,9 @@ testRun(void)
 
             TEST_RESULT_LOG(
                 "P00   WARN: backup '20191108-080000F' missing manifest removed from backup.info\n"
-                "P00   INFO: full/incr backup preliminary copy of files last modified before 2019-11-08 11:44:40\n"
+                "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
+                "P00   INFO: backup start archive = 0000000105DC6A7000000000, lsn = 5dc6a70/0\n"
+                "P00   INFO: check archive for segment 0000000105DC6A7000000000\n"
                 "P00   WARN: resumable backup 20191108-080000F of same type exists -- invalid files will be removed then the backup"
                 " will resume\n"
                 "P00 DETAIL: remove path '" TEST_PATH "/repo/backup/test1/20191108-080000F/bundle' from resumed backup\n"
@@ -3998,13 +3897,6 @@ testRun(void)
                 " backup (missing in manifest)\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: checksum resumed file " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
-                "P00   INFO: execute non-exclusive backup start: backup begins after the next regular checkpoint completes\n"
-                "P00   INFO: backup start archive = 0000000105DC6A7000000000, lsn = 5dc6a70/0\n"
-                "P00   INFO: check archive for segment 0000000105DC6A7000000000\n"
-                "P00   INFO: full/incr backup cleanup\n"
-                "P00   INFO: full/incr backup final copy\n"
-                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/block-incr-no-resume (24KB, [PCT]) checksum [SHA1]\n"
-                "P01 DETAIL: match file from prior backup " TEST_PATH "/pg1/block-incr-grow (24KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/block-incr-wayback (16KB, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/0, 2B, [PCT]) checksum [SHA1]\n"
                 "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/24, 8KB, [PCT]) checksum [SHA1]\n"
@@ -4243,7 +4135,7 @@ testRun(void)
                  .time = backupTimeStart + 1, .content = fileGrow});
             hrnBackupPqScriptP(
                 PG_VERSION_11, backupTimeStart, .walCompressType = compressTypeNone, .cipherType = cipherTypeAes256Cbc,
-                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2, .walSwitch = true, .fullIncrNoOp = true);
+                .cipherPass = TEST_CIPHER_PASS, .walTotal = 2, .walSwitch = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Make sure that global/1 grew as expected but the extra bytes were not copied

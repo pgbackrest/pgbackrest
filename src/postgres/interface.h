@@ -101,7 +101,6 @@ typedef struct PgControl
     unsigned int catalogVersion;
 
     uint64_t checkpoint;                                            // Last checkpoint LSN
-    time_t checkpointTime;                                          // Last checkpoint time
     uint32_t timeline;                                              // Current timeline
 
     PgPageSize pageSize;
