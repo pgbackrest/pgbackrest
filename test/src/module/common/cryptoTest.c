@@ -384,8 +384,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_ASSIGN(hash, cryptoHashNew(hashTypeSha256), "create sha256 hash");
         TEST_RESULT_STR_Z(
-            strNewEncode(encodingHex, pckReadBinP(pckReadNew(ioFilterResult(hash)))), HASH_TYPE_SHA256_ZERO_HEX,
-            "    check empty hash");
+            strNewEncode(encodingHex, pckReadBinP(pckReadNew(ioFilterResult(hash)))), HASH_TYPE_SHA256_ZERO, "    check empty hash");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_RESULT_STR_Z(

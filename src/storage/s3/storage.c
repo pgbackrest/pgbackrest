@@ -28,9 +28,6 @@ Defaults
 /***********************************************************************************************************************************
 S3 HTTP headers
 ***********************************************************************************************************************************/
-STRING_STATIC(S3_HEADER_CHECKSUM_ALGORITHM_STR,                     "x-amz-checksum-algorithm");
-STRING_STATIC(S3_HEADER_CHECKSUM_ALGORITHM_SHA256_STR,              "SHA256");
-STRING_STATIC(S3_HEADER_CHECKSUM_SHA256_STR,                        "x-amz-checksum-sha256");
 STRING_STATIC(S3_HEADER_CONTENT_SHA256_STR,                         "x-amz-content-sha256");
 STRING_STATIC(S3_HEADER_DATE_STR,                                   "x-amz-date");
 STRING_STATIC(S3_HEADER_TOKEN_STR,                                  "x-amz-security-token");
@@ -455,6 +452,7 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
+        FUNCTION_LOG_PARAM(BOOL, param.contentMd5);
         FUNCTION_LOG_PARAM(BOOL, param.sseKms);
         FUNCTION_LOG_PARAM(BOOL, param.sseC);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
@@ -476,18 +474,14 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
             requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
             param.content == NULL || bufEmpty(param.content) ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
 
-        // Calculate sha256 header if there is content
-        const Buffer *contentSha256 = NULL;
-
-        if (param.content != NULL)
+        // Calculate content-md5 header if there is content
+        if (param.contentMd5)
         {
-            if (!bufEmpty(param.content))
-                contentSha256 = cryptoHashOne(hashTypeSha256, param.content);
+            ASSERT(param.content != NULL && !bufEmpty(param.content));
 
-            httpHeaderAdd(requestHeader, S3_HEADER_CHECKSUM_ALGORITHM_STR, S3_HEADER_CHECKSUM_ALGORITHM_SHA256_STR);
             httpHeaderAdd(
-                requestHeader, S3_HEADER_CHECKSUM_SHA256_STR,
-                bufEmpty(param.content) ? HASH_TYPE_SHA256_ZERO_BASE64_STR : strNewEncode(encodingBase64, contentSha256));
+                requestHeader, HTTP_HEADER_CONTENT_MD5_STR,
+                strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, param.content)));
         }
 
         // Set requester pays when requested
@@ -558,8 +552,10 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
         // Generate authorization header
         storageS3Auth(
             this, verb, path, param.query, strNewTimeP("%Y%m%dT%H%M%SZ", time(NULL), .utc = true), requestHeader,
-            param.content == NULL || bufEmpty(param.content) ?
-                HASH_TYPE_SHA256_ZERO_HEX_STR : strNewEncode(encodingHex, contentSha256));
+            strNewEncode(
+                encodingHex,
+                param.content == NULL || bufEmpty(param.content) ?
+                    HASH_TYPE_SHA256_ZERO_BUF : cryptoHashOne(hashTypeSha256, param.content)));
 
         // Send request
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -614,6 +610,7 @@ storageS3Request(StorageS3 *const this, const String *const verb, const String *
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
+        FUNCTION_LOG_PARAM(BOOL, param.contentMd5);
         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
         FUNCTION_LOG_PARAM(BOOL, param.contentIo);
         FUNCTION_LOG_PARAM(BOOL, param.sseKms);
@@ -622,8 +619,8 @@ storageS3Request(StorageS3 *const this, const String *const verb, const String *
     FUNCTION_LOG_END();
 
     HttpRequest *const request = storageS3RequestAsyncP(
-        this, verb, path, .header = param.header, .query = param.query, .content = param.content, .sseKms = param.sseKms,
-        .sseC = param.sseC, .tag = param.tag);
+        this, verb, path, .header = param.header, .query = param.query, .content = param.content, .contentMd5 = param.contentMd5,
+        .sseKms = param.sseKms, .sseC = param.sseC, .tag = param.tag);
     HttpResponse *const result = storageS3ResponseP(
         request, .allowMissing = param.allowMissing, .contentIo = param.contentIo);
 
@@ -1048,7 +1045,8 @@ storageS3PathRemoveInternal(StorageS3 *const this, HttpRequest *const request, X
         HttpQuery *const query = httpQueryAdd(httpQueryNewP(), S3_QUERY_DELETE_STR, EMPTY_STR);
         Buffer *const content = xmlDocumentBuf(xml);
 
-        result = storageS3RequestAsyncP(this, HTTP_VERB_POST_STR, FSLASH_STR, .query = query, .content = content);
+        result = storageS3RequestAsyncP(
+            this, HTTP_VERB_POST_STR, FSLASH_STR, .query = query, .content = content, .contentMd5 = true);
 
         httpQueryFree(query);
         bufFree(content);

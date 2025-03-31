@@ -34,6 +34,7 @@ typedef struct TestRequestParam
     const char *token;
     const char *tag;
     bool requesterPays;
+    bool contentMd5;
 } TestRequestParam;
 
 #define testRequestP(write, s3, verb, path, ...)                                                                                   \
@@ -68,13 +69,13 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
             "authorization:AWS4-HMAC-SHA256 Credential=%s/\?\?\?\?\?\?\?\?/us-east-1/s3/aws4_request,SignedHeaders=",
             param.accessKey == NULL ? strZ(driver->accessKey) : param.accessKey);
 
+        if (param.contentMd5)
+            strCatZ(request, "content-md5;");
+
         strCatZ(request, "host;");
 
         if (param.range != NULL)
             strCatZ(request, "range;");
-
-        if (param.content != NULL)
-            strCatZ(request, "x-amz-checksum-algorithm;x-amz-checksum-sha256;");
 
         strCatZ(request, "x-amz-content-sha256;x-amz-date");
 
@@ -104,6 +105,13 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
     // Add content-length
     strCatFmt(request, "content-length:%zu\r\n", param.content != NULL ? strlen(param.content) : 0);
 
+    // Add md5
+    if (param.contentMd5)
+    {
+        strCatFmt(
+            request, "content-md5:%s\r\n", strZ(strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, BUFSTRZ(param.content)))));
+    }
+
     // Add host
     if (s3 != NULL)
     {
@@ -119,14 +127,6 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
     if (param.range != NULL)
         strCatFmt(request, "range:bytes=%s\r\n", param.range);
 
-    // Add sha256
-    if (param.content != NULL)
-    {
-        strCatFmt(
-            request, "x-amz-checksum-algorithm:SHA256\r\nx-amz-checksum-sha256:%s\r\n",
-            strZ(strNewEncode(encodingBase64, cryptoHashOne(hashTypeSha256, BUFSTRZ(param.content)))));
-    }
-
     // Add content checksum and date if s3 service
     if (s3 != NULL)
     {
@@ -136,7 +136,7 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
             "x-amz-content-sha256:%s\r\n"
             "x-amz-date:????????T??????Z" "\r\n",
             param.content == NULL ?
-                HASH_TYPE_SHA256_ZERO_HEX : strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha256, BUFSTRZ(param.content)))));
+                HASH_TYPE_SHA256_ZERO : strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha256, BUFSTRZ(param.content)))));
 
         // Add security token
         if (securityToken != NULL)
@@ -338,7 +338,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storageS3Auth(
-                driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, STRDEF(HASH_TYPE_SHA256_ZERO_HEX)),
+                driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, STRDEF(HASH_TYPE_SHA256_ZERO)),
             "generate authorization");
         TEST_RESULT_STR_Z(
             httpHeaderGet(header, STRDEF("authorization")),
@@ -352,7 +352,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storageS3Auth(
-                driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, STRDEF(HASH_TYPE_SHA256_ZERO_HEX)),
+                driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, STRDEF(HASH_TYPE_SHA256_ZERO)),
             "generate authorization");
         TEST_RESULT_STR_Z(
             httpHeaderGet(header, STRDEF("authorization")),
@@ -367,7 +367,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storageS3Auth(
-                driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20180814T080808Z"), header, STRDEF(HASH_TYPE_SHA256_ZERO_HEX)),
+                driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20180814T080808Z"), header, STRDEF(HASH_TYPE_SHA256_ZERO)),
             "generate authorization");
         TEST_RESULT_STR_Z(
             httpHeaderGet(header, STRDEF("authorization")),
@@ -406,7 +406,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             storageS3Auth(
-                driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, STRDEF(HASH_TYPE_SHA256_ZERO_HEX)),
+                driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, STRDEF(HASH_TYPE_SHA256_ZERO)),
             "generate authorization");
         TEST_RESULT_STR_Z(
             httpHeaderGet(header, STRDEF("authorization")),
@@ -871,8 +871,6 @@ testRun(void)
                     "authorization: <redacted>\n"
                     "content-length: 205\n"
                     "host: bucket.s3.amazonaws.com\n"
-                    "x-amz-checksum-algorithm: SHA256\n"
-                    "x-amz-checksum-sha256: CDinnfvdwhKNKPtPqNYF4Kjm0TVQlAAPObbrP+/0ZB8=\n"
                     "x-amz-content-sha256: 0838a79dfbddc2128d28fb4fa8d605e0a8e6d1355094000f39b6eb3feff4641f\n"
                     "x-amz-date: <redacted>\n"
                     "x-amz-security-token: <redacted>\n"
@@ -1319,7 +1317,7 @@ testRun(void)
                         "</ListBucketResult>");
 
                 testRequestP(
-                    service, s3, HTTP_VERB_POST, "/bucket/?delete=",
+                    service, s3, HTTP_VERB_POST, "/bucket/?delete=", .contentMd5 = true,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<Delete><Quiet>true</Quiet>"
@@ -1380,7 +1378,7 @@ testRun(void)
                         "</ListBucketResult>");
 
                 testRequestP(
-                    service, s3, HTTP_VERB_POST, "/bucket/?delete=",
+                    service, s3, HTTP_VERB_POST, "/bucket/?delete=", .contentMd5 = true,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<Delete><Quiet>true</Quiet>"
@@ -1390,7 +1388,7 @@ testRun(void)
                 testResponseP(service);
 
                 testRequestP(
-                    service, s3, HTTP_VERB_POST, "/bucket/?delete=",
+                    service, s3, HTTP_VERB_POST, "/bucket/?delete=", .contentMd5 = true,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<Delete><Quiet>true</Quiet>"
@@ -1419,7 +1417,7 @@ testRun(void)
                         "</ListBucketResult>");
 
                 testRequestP(
-                    service, s3, HTTP_VERB_POST, "/bucket/?delete=",
+                    service, s3, HTTP_VERB_POST, "/bucket/?delete=", .contentMd5 = true,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<Delete><Quiet>true</Quiet>"
