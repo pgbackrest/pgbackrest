@@ -610,6 +610,11 @@
     <contributor-id type="github">huseynsnmz</contributor-id>
 </contributor>
 
+<contributor id="hyunkyu.han">
+    <contributor-name-display>hyunkyu han</contributor-name-display>
+    <contributor-id type="github">hancci</contributor-id>
+</contributor>
+
 <contributor id="jeanette.bromage">
     <contributor-name-display>Jeanette Bromage</contributor-name-display>
     <contributor-id type="github">JBromage</contributor-id>
@@ -758,6 +763,11 @@
 <contributor id="matt.kunkel">
     <contributor-name-display>Matt Kunkel</contributor-name-display>
     <contributor-id type="github">mtkunkel</contributor-id>
+</contributor>
+
+<contributor id="maxim.michkov">
+    <contributor-name-display>Maxim Michkov</contributor-name-display>
+    <contributor-id type="github">silent-observer</contributor-id>
 </contributor>
 
 <contributor id="mibiio">

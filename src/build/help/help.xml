@@ -1965,7 +1965,7 @@
                         <summary><postgres/> unix socket path.</summary>
 
                         <text>
-                            <p>The unix socket directory that was specified when <postgres/> was started. <backrest/> will automatically look in the standard location for your OS so there is usually no need to specify this setting unless the socket directory was explicitly modified with the <setting>unix_socket_directory</setting> setting in <file>postgresql.conf</file>.</p>
+                            <p>The unix socket directory that was specified when <postgres/> was started. <backrest/> will automatically look in the standard location for your OS so there is usually no need to specify this setting unless the socket directory was explicitly modified with the <setting>unix_socket_directories</setting> setting in <file>postgresql.conf</file>.</p>
                         </text>
 
                         <example>/var/run/postgresql</example>
