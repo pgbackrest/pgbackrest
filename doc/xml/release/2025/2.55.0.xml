@@ -265,6 +265,19 @@
                 <p>Update <setting>unix_socket_directory</setting> to <setting>unix_socket_directories</setting>.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-pull-request id="2585"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="albert.chae"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix instances of <quote>of of</quote>.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
 
     <release-test-list>
