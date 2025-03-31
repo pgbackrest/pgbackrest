@@ -150,7 +150,7 @@
         <variable key="gcs-key">/etc/pgbackrest/gcs-key.json</variable>
 
         <!-- S3 Settings -->
-        <variable key="s3-image">minio/minio:RELEASE.2024-07-15T19-02-30Z</variable>    <!-- Minio docker image -->
+        <variable key="s3-image">minio/minio:RELEASE.2025-03-12T18-04-18Z</variable>    <!-- Minio docker image -->
         <variable key="s3-all">n</variable>                         <!-- Build all the documentation with S3? -->
         <variable key="s3-local">y</variable>
         <variable key="s3-bucket">demo-bucket</variable>
