@@ -253,6 +253,17 @@
 
                 <p>Change <br-setting>--process-max</br-setting> recommendation for object stores to <br-setting>--repo-bundle</br-setting>.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2589"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="hyunkyu.han"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update <setting>unix_socket_directory</setting> to <setting>unix_socket_directories</setting>.</p>
+            </release-item>
         </release-improvement-list>
     </release-doc-list>
 
