@@ -2,6 +2,21 @@
     <release-core-list>
         <release-bug-list>
             <release-item>
+                <github-issue id="2577"/>
+                <github-pull-request id="2579"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="aleksander.lukasz"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                    <!-- Actually tester, but we don't have a tag for that yet -->
+                    <release-item-reviewer id="aleksander.lukasz"/>
+                </release-item-contributor-list>
+
+                <p>Fix block incremental restore issue on non-default repository.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2533"/>
 
                 <release-item-contributor-list>
@@ -48,6 +63,17 @@
                 </release-item-contributor-list>
 
                 <p>Verify recovery target timeline.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2544"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="maxim.michkov"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Allow verification of a specified backup.</p>
             </release-item>
 
             <release-item>
@@ -164,6 +190,17 @@
 
                 <p>Improve hex encode performance with bytewise lookup.</p>
             </release-item>
+
+            <release-item>
+                <github-pull-request id="2581"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="yegor.zhmak"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix missing <code>return</code> in <code>FUNCTION_LOG_RETURN_VOID()</code>.</p>
+            </release-item>
         </release-development-list>
     </release-core-list>
 
@@ -194,6 +231,19 @@
             </release-item>
 
             <release-item>
+                <github-issue id="2562"/>
+                <github-pull-request id="2583"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="antoine.beaupre"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="antoine.beaupre"/>
+                </release-item-contributor-list>
+
+                <p>Clarify behavior of <br-setting>--repo-retention-full-type</br-setting>.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2542"/>
 
                 <release-item-contributor-list>
@@ -205,4 +255,24 @@
             </release-item>
         </release-improvement-list>
     </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <commit subject="Fix comments in unit tests.">
+                    <github-pull-request id="2573"/>
+                </commit>
+                <commit subject="Fix test logging.">
+                    <github-pull-request id="2578"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="yegor.zhmak"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix test logging and comments in unit tests.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
 </release>
