@@ -28,6 +28,9 @@ Defaults
 /***********************************************************************************************************************************
 S3 HTTP headers
 ***********************************************************************************************************************************/
+STRING_STATIC(S3_HEADER_CHECKSUM_ALGORITHM_STR,                     "x-amz-checksum-algorithm");
+STRING_STATIC(S3_HEADER_CHECKSUM_ALGORITHM_SHA256_STR,              "SHA256");
+STRING_STATIC(S3_HEADER_CHECKSUM_SHA256_STR,                        "x-amz-checksum-sha256");
 STRING_STATIC(S3_HEADER_CONTENT_SHA256_STR,                         "x-amz-content-sha256");
 STRING_STATIC(S3_HEADER_DATE_STR,                                   "x-amz-date");
 STRING_STATIC(S3_HEADER_TOKEN_STR,                                  "x-amz-security-token");
@@ -473,12 +476,18 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
             requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
             param.content == NULL || bufEmpty(param.content) ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
 
-        // Calculate content-md5 header if there is content
+        // Calculate sha256 header if there is content
+        const Buffer *contentSha256 = NULL;
+
         if (param.content != NULL)
         {
+            if (!bufEmpty(param.content))
+                contentSha256 = cryptoHashOne(hashTypeSha256, param.content);
+
+            httpHeaderAdd(requestHeader, S3_HEADER_CHECKSUM_ALGORITHM_STR, S3_HEADER_CHECKSUM_ALGORITHM_SHA256_STR);
             httpHeaderAdd(
-                requestHeader, HTTP_HEADER_CONTENT_MD5_STR,
-                strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, param.content)));
+                requestHeader, S3_HEADER_CHECKSUM_SHA256_STR,
+                bufEmpty(param.content) ? HASH_TYPE_SHA256_ZERO_BASE64_STR : strNewEncode(encodingBase64, contentSha256));
         }
 
         // Set requester pays when requested
@@ -549,10 +558,8 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
         // Generate authorization header
         storageS3Auth(
             this, verb, path, param.query, strNewTimeP("%Y%m%dT%H%M%SZ", time(NULL), .utc = true), requestHeader,
-            strNewEncode(
-                encodingHex,
-                param.content == NULL || bufEmpty(param.content) ?
-                    HASH_TYPE_SHA256_ZERO_BUF : cryptoHashOne(hashTypeSha256, param.content)));
+            param.content == NULL || bufEmpty(param.content) ?
+                HASH_TYPE_SHA256_ZERO_HEX_STR : strNewEncode(encodingHex, contentSha256));
 
         // Send request
         MEM_CONTEXT_PRIOR_BEGIN()
