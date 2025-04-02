@@ -1735,10 +1735,10 @@
                         <text>
                             <p>Clients are authorized on the server by verifying their certificate and checking their certificate CN (Common Name) against a list on the server configured with the <br-option>tls-server-auth</br-option> option.</p>
 
-                            <p>A client CN can be authorized for as many stanzas as needed by repeating the <br-option>tls-server-auth</br-option> option, or for all stanzas by specifying <br-option>tls-server-auth=client-cn=*</br-option>. Wildcards may not be specified for the client CN.</p>
+                            <p>A client CN can be authorized for as many stanzas as needed by providing a comma-separated list to the <br-option>tls-server-auth</br-option> option or for all stanzas by specifying <br-option>tls-server-auth=client-cn=*</br-option>. Wildcards may not be specified for the client CN.</p>
                         </text>
 
-                        <example>client-cn=stanza1</example>
+                        <example>client-cn=stanza1,stanza2</example>
                     </config-key>
 
                     <config-key id="tls-server-ca-file" name="TLS Server Certificate Authorities">
