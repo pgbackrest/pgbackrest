@@ -2431,7 +2431,21 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                                         cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
                                 }
 
-                                kvPut(value, VARSTR(strNewZN(pair, (size_t)(equal - pair))), VARSTRZ(equal + 1));
+                                // Warn if a value will be overwritten
+                                const Variant *const key = VARSTR(strNewZN(pair, (size_t)(equal - pair)));
+                                const String *const old = varStr(kvGet(value, key));
+                                const Variant *const new = VARSTRZ(equal + 1);
+
+                                if (old != NULL)
+                                {
+                                    LOG_WARN_FMT(
+                                        "key '%s' value '%s' is overwritten with '%s' for '%s' option",
+                                        strZ(varStr(key)), strZ(old), strZ(varStr(new)),
+                                        cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
+                                }
+
+                                // Put the value (overwriting if the key already exists)
+                                kvPut(value, key, new);
                             }
 
                             configOptionValue->value.keyValue = value;

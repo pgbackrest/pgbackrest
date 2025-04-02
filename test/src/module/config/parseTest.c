@@ -2090,6 +2090,7 @@ testRun(void)
         strLstAddZ(argList, TEST_BACKREST_EXE);
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/db");
         hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "a=b");
+        hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "c=d");
         hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "c=de=fg hi");
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptJobRetry, "0");
@@ -2097,6 +2098,8 @@ testRun(void)
         TEST_RESULT_VOID(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true),
             TEST_COMMAND_RESTORE " command");
+
+        TEST_RESULT_LOG("P00   WARN: key 'c' value 'd' is overwritten with 'de=fg hi' for 'recovery-option' option");
 
         TEST_RESULT_PTR(cfgCommandJobRetry(), NULL, "no job retries");
 
@@ -2132,6 +2135,8 @@ testRun(void)
         TEST_RESULT_VOID(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true),
             TEST_COMMAND_RESTORE " command");
+
+        TEST_RESULT_LOG("P00   WARN: key 'hijk' value 'l' is overwritten with 'override' for 'recovery-option' option");
 
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");
         TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, VARSTRDEF("f"))), "g", "check recovery option");
