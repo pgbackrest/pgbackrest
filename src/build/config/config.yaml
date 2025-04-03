@@ -338,6 +338,7 @@ option:
         allow-list:
           - none
           - text
+          - json
       version:
         default: text
         allow-list:
