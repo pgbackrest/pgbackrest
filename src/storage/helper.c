@@ -486,6 +486,7 @@ FN_EXTERN time_t
 storageRepoTargetTime(void)
 {
     FUNCTION_TEST_VOID();
+
     FUNCTION_TEST_RETURN(TIME, cfgOptionTest(cfgOptRepoTargetTime) ? cvtZToTime(strZ(cfgOptionStr(cfgOptRepoTargetTime))) : 0);
 }
 

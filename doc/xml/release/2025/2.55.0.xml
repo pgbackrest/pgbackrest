@@ -294,6 +294,9 @@
                 <commit subject="Fix test logging.">
                     <github-pull-request id="2578"/>
                 </commit>
+                <commit subject="Fix test logging in storageHelperDryRunInit().">
+                    <github-pull-request id="2597"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="yegor.zhmak"/>
