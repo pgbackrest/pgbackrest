@@ -100,7 +100,9 @@ storageHelperInit(const StorageHelper *const helperList)
 FN_EXTERN void
 storageHelperDryRunInit(const bool dryRun)
 {
-    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BOOL, dryRun);
+    FUNCTION_TEST_END();
 
     storageHelper.dryRunInit = true;
     storageHelper.dryRun = dryRun;
