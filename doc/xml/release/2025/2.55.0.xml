@@ -206,6 +206,17 @@
 
                 <p>Fix missing <code>return</code> in <code>FUNCTION_LOG_RETURN_VOID()</code>.</p>
             </release-item>
+
+            <release-item>
+                <github-pull-request id="2596"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="yegor.zhmak"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Remove extraneous const from <code>cvtIntToZ()</code> prototype.</p>
+            </release-item>
         </release-development-list>
     </release-core-list>
 
