@@ -38,7 +38,7 @@ cvtCharToZ(const char value, char *const buffer, const size_t bufferSize)
 FN_EXTERN size_t cvtDoubleToZ(double value, char *buffer, size_t bufferSize);
 
 // Convert int to zero-terminated string and vice versa
-FN_EXTERN size_t cvtIntToZ(int value, char *buffer, size_t bufferSize);
+FN_EXTERN size_t cvtIntToZ(const int value, char *buffer, size_t bufferSize);
 FN_EXTERN int cvtZToInt(const char *value);
 FN_EXTERN int cvtZToIntBase(const char *value, int base);
 FN_EXTERN int cvtZSubNToIntBase(const char *value, size_t offset, size_t size, int base);
