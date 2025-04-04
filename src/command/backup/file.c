@@ -109,14 +109,17 @@ backupFile(
                         {
                             pgFileMatch = true;
 
-                            // If it matches then no need to copy the file
-                            MEM_CONTEXT_BEGIN(lstMemContext(result))
+                            // If it matches and is a reference to a previous backup then no need to copy the file
+                            if (file->manifestFileHasReference)
                             {
-                                fileResult->backupCopyResult = backupCopyResultNoOp;
-                                fileResult->copySize = file->pgFileSize;
-                                fileResult->copyChecksum = file->pgFileChecksum;
+                                MEM_CONTEXT_BEGIN(lstMemContext(result))
+                                {
+                                    fileResult->backupCopyResult = backupCopyResultNoOp;
+                                    fileResult->copySize = file->pgFileSize;
+                                    fileResult->copyChecksum = file->pgFileChecksum;
+                                }
+                                MEM_CONTEXT_END();
                             }
-                            MEM_CONTEXT_END();
                         }
                     }
                     // Else the source file is missing from the database so skip this file
@@ -124,14 +127,20 @@ backupFile(
                         fileResult->backupCopyResult = backupCopyResultSkip;
                 }
 
-                // On resume check the manifest file if it still exists in pg
-                if (file->manifestFileResume && fileResult->backupCopyResult != backupCopyResultSkip)
+                // On resume check the manifest file
+                if (file->manifestFileResume)
                 {
                     // Resumed files should never have a reference to a prior backup
                     ASSERT(!file->manifestFileHasReference);
 
-                    // If the pg file matches or is unknown because delta was not performed then check the repo file
-                    if (!file->pgFileDelta || pgFileMatch)
+                    // If the file is missing from pg, then remove it from the repo (backupJobResult() will remove it from the
+                    // manifest)
+                    if (fileResult->backupCopyResult == backupCopyResultSkip)
+                    {
+                        storageRemoveP(storageRepoWrite(), repoFile);
+                    }
+                    // Else if the pg file matches or is unknown because delta was not performed then check the repo file
+                    else if (!file->pgFileDelta || pgFileMatch)
                     {
                         // Generate checksum/size for the repo file
                         IoRead *const read = storageReadIo(storageNewReadP(storageRepo(), repoFile));
@@ -161,11 +170,7 @@ backupFile(
                         }
                         // Else copy when repo file is invalid
                         else
-                        {
-                            // Delta may have changed the result so set it back to copy
-                            fileResult->backupCopyResult = backupCopyResultCopy;
                             fileResult->repoInvalid = true;
-                        }
                     }
                 }
             }
@@ -428,11 +433,6 @@ backupFile(
                     else
                         fileResult->backupCopyResult = backupCopyResultSkip;
                 }
-
-                // Remove the file if it was skipped and not bundled. The file will not always exist, but does need to be removed in
-                // the case where the file existed before a resume or in the preliminary phase of a full/incr backup.
-                if (fileResult->backupCopyResult == backupCopyResultSkip && bundleId == 0)
-                    storageRemoveP(storageRepoWrite(), repoFile);
             }
             MEM_CONTEXT_TEMP_END();
         }

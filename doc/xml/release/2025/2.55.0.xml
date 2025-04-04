@@ -171,7 +171,12 @@
 
         <release-development-list>
             <release-item>
-                <github-pull-request id="2306"/>
+                <commit subject="Full/incremental backup method.">
+                    <github-pull-request id="2306"/>
+                </commit>
+                <commit subject='Revert "full/incremental backup method."'>
+                    <github-pull-request id="2588"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
@@ -179,7 +184,7 @@
                     <release-item-reviewer id="stefan.fercot"/>
                 </release-item-contributor-list>
 
-                <p>Full/incremental backup method.</p>
+                <p>Revert <quote>full/incremental backup method.</quote></p>
             </release-item>
 
             <release-item>
