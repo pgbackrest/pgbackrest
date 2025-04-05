@@ -351,7 +351,7 @@ protocolServerAuthorize(const String *authListStr, const String *const stanza)
         // Else check the stanza list for a match with the specified stanza. Each entry will need to be trimmed before comparing.
         else if (stanza != NULL)
         {
-            StringList *authList = strLstNewSplitZ(authListStr, ",");
+            const StringList *const authList = strLstNewSplitZ(authListStr, ",");
 
             for (unsigned int authListIdx = 0; authListIdx < strLstSize(authList); authListIdx++)
             {
