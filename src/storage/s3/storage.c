@@ -474,7 +474,7 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
             requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
             param.content == NULL || bufEmpty(param.content) ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
 
-        // Calculate content-md5 header if there is content
+        // Calculate content-md5 header when required
         if (param.contentMd5)
         {
             ASSERT(param.content != NULL && !bufEmpty(param.content));
