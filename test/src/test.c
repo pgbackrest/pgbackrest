@@ -110,6 +110,9 @@ STRING_EXTERN(TEST_GROUP_STR, TEST_GROUP);
 // Is this test running in a container?
 #define TEST_IN_CONTAINER                                           {[C_TEST_CONTAINER]}
 
+// Architecture of host
+#define TEST_ARCHITECTURE                                           "{[C_TEST_ARCHITECTURE]}"
+
 // Path to source -- used to construct __FILENAME__ tests
 #define TEST_PGB_PATH                                               "{[C_TEST_PGB_PATH]}"
 
@@ -208,6 +211,7 @@ main(int argListSize, const char *argList[])
         TEST_LOG_EXPECT,            // Is log expect testing enabled?
         {[C_TEST_IDX]},             // The 0-based index of this test
         {[C_TEST_TIMING]},          // Is timing enabled (may be disabled for reproducible documentation)
+        TEST_ARCHITECTURE,          // Test architecture
         TEST_PATH,                  // Path where tests write data
         TEST_USER,                  // User running the test
         TEST_VM,                    // VM for integration testing

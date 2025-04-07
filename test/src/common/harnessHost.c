@@ -1117,7 +1117,7 @@ hrnHostBuildRun(const int line, const StringId id)
         const bool isPg = strBeginsWithZ(name, "pg");
         const bool isRepo = id == hrnHostLocal.repoHost;
         const String *const container = strNewFmt("test-%u-%s", testIdx(), strZ(name));
-        const String *const image = strNewFmt("pgbackrest/test:%s-test-x86_64", testVm());
+        const String *const image = strNewFmt("pgbackrest/test:%s-test-%s", testVm(), testArchitecture());
         const String *const dataPath = strNewFmt("%s/%s", testPath(), strZ(name));
         String *const option = strNewFmt(
             "-v '%s/cfg:/etc/pgbackrest:ro' -v '%s:/usr/bin/pgbackrest:ro' -v '%s:%s:ro'", strZ(dataPath), testProjectExe(),

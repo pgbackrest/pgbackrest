@@ -37,6 +37,7 @@ static bool testContainerData = false;
 static bool testLogExpectData = false;
 static unsigned int testIdxData = 0;
 static bool testTiming = true;
+static const char *testArchitectureData = NULL;
 static const char *testPathData = NULL;
 static const char *testUserData = NULL;
 static const char *testVmData = NULL;
@@ -64,8 +65,9 @@ Initialize harness
 void
 hrnInit(
     const char *const testExe, const char *const testProjectExe, const bool testContainer, const bool testLogExpect,
-    const unsigned int testIdx, const bool timing, const char *const testPath, const char *const testUser, const char *const testVm,
-    const char *const testPgVersion,const char *const testDataPath, const char *const testRepoPath)
+    const unsigned int testIdx, const bool timing, const char *const architecture, const char *const testPath,
+    const char *const testUser, const char *const testVm, const char *const testPgVersion,const char *const testDataPath,
+    const char *const testRepoPath)
 {
     FUNCTION_HARNESS_VOID();
 
@@ -77,6 +79,7 @@ hrnInit(
     (void)testLogExpectData;
     testIdxData = testIdx;
     testTiming = timing;
+    testArchitectureData = architecture;
     testPathData = testPath;
     testUserData = testUser;
     testVmData = testVm;
@@ -749,6 +752,14 @@ testUser(void)
 {
     FUNCTION_HARNESS_VOID();
     FUNCTION_HARNESS_RETURN(STRINGZ, testUserData);
+}
+
+/**********************************************************************************************************************************/
+const char *
+testArchitecture(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RETURN(STRINGZ, testArchitectureData);
 }
 
 /**********************************************************************************************************************************/
