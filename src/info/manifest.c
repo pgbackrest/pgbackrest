@@ -804,11 +804,13 @@ manifestBuildBlockIncrSize(const ManifestBuildData *const buildData, const Manif
     size_t result = 0;
 
     // Search size map for the appropriate block size
-    for (unsigned int sizeIdx = 0; sizeIdx < buildData->blockIncrMap->sizeMapSize; sizeIdx++)
+    for (unsigned int sizeIdx = 0; sizeIdx < lstSize(buildData->blockIncrMap->sizeMap); sizeIdx++)
     {
-        if (file->size >= buildData->blockIncrMap->sizeMap[sizeIdx].fileSize)
+        const ManifestBlockIncrSizeMap *const sizeMap = lstGet(buildData->blockIncrMap->sizeMap, sizeIdx);
+
+        if (file->size >= sizeMap->fileSize)
         {
-            result = buildData->blockIncrMap->sizeMap[sizeIdx].blockSize;
+            result = sizeMap->blockSize;
             break;
         }
     }
@@ -818,11 +820,13 @@ manifestBuildBlockIncrSize(const ManifestBuildData *const buildData, const Manif
     {
         const time_t fileAge = buildData->manifest->pub.data.backupTimestampStart - file->timestamp;
 
-        for (unsigned int timeIdx = 0; timeIdx < buildData->blockIncrMap->ageMapSize; timeIdx++)
+        for (unsigned int ageIdx = 0; ageIdx < lstSize(buildData->blockIncrMap->ageMap); ageIdx++)
         {
-            if (fileAge >= (time_t)buildData->blockIncrMap->ageMap[timeIdx].fileAge)
+            const ManifestBlockIncrAgeMap *const ageMap = lstGet(buildData->blockIncrMap->ageMap, ageIdx);
+
+            if (fileAge >= (time_t)ageMap->fileAge)
             {
-                result *= buildData->blockIncrMap->ageMap[timeIdx].blockMultiplier;
+                result *= ageMap->blockMultiplier;
                 break;
             }
         }
@@ -846,11 +850,13 @@ manifestBuildBlockIncrChecksumSize(const ManifestBuildData *const buildData, con
     size_t result = BLOCK_INCR_CHECKSUM_SIZE_MIN;
 
     // Search checksum size map for larger value
-    for (unsigned int sizeIdx = 0; sizeIdx < buildData->blockIncrMap->checksumSizeMapSize; sizeIdx++)
+    for (unsigned int sizeIdx = 0; sizeIdx < lstSize(buildData->blockIncrMap->checksumSizeMap); sizeIdx++)
     {
-        if (blockSize >= buildData->blockIncrMap->checksumSizeMap[sizeIdx].blockSize)
+        const ManifestBlockIncrChecksumSizeMap *const sizeMap = lstGet(buildData->blockIncrMap->checksumSizeMap, sizeIdx);
+
+        if (blockSize >= sizeMap->blockSize)
         {
-            result = buildData->blockIncrMap->checksumSizeMap[sizeIdx].checksumSize;
+            result = sizeMap->checksumSize;
             break;
         }
     }

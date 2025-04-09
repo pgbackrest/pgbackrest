@@ -765,14 +765,11 @@ testRun(void)
             {.blockSize = 32 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 1},
         };
 
-        static const ManifestBlockIncrMap manifestBuildBlockIncrMap =
+        const ManifestBlockIncrMap manifestBuildBlockIncrMap =
         {
-            .sizeMap = manifestBlockIncrSizeMap,
-            .sizeMapSize = LENGTH_OF(manifestBlockIncrSizeMap),
-            .ageMap = manifestBlockIncrAgeMap,
-            .ageMapSize = LENGTH_OF(manifestBlockIncrAgeMap),
-            .checksumSizeMap = manifestBlockIncrChecksumSizeMap,
-            .checksumSizeMapSize = LENGTH_OF(manifestBlockIncrChecksumSizeMap),
+            .sizeMap = LSTDEF(manifestBlockIncrSizeMap),
+            .ageMap = LSTDEF(manifestBlockIncrAgeMap),
+            .checksumSizeMap = LSTDEF(manifestBlockIncrChecksumSizeMap),
         };
 
         // pg_wal not ignored

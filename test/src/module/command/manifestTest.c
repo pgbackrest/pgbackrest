@@ -27,7 +27,7 @@ testRun(void)
 
     // Install local command handler shim
     static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_BACKUP_LIST};
-    hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
+    hrnProtocolLocalShimInstall(LSTDEF(testLocalHandlerList));
 
     // Test storage
     const Storage *const storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);

@@ -559,7 +559,7 @@ testRun(void)
 
     // Install local command handler shim
     static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_BACKUP_LIST};
-    hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
+    hrnProtocolLocalShimInstall(LSTDEF(testLocalHandlerList));
 
     // The tests expect the timezone to be UTC
     hrnTzSet("UTC");

@@ -319,12 +319,9 @@ static const ManifestBlockIncrChecksumSizeMap manifestBlockIncrChecksumSizeMapDe
 // All maps
 static const ManifestBlockIncrMap manifestBlockIncrMap =
 {
-    .sizeMap = manifestBlockIncrSizeMapDefault,
-    .sizeMapSize = LENGTH_OF(manifestBlockIncrSizeMapDefault),
-    .ageMap = manifestBlockIncrAgeMapDefault,
-    .ageMapSize = LENGTH_OF(manifestBlockIncrAgeMapDefault),
-    .checksumSizeMap = manifestBlockIncrChecksumSizeMapDefault,
-    .checksumSizeMapSize = LENGTH_OF(manifestBlockIncrChecksumSizeMapDefault),
+    .sizeMap = LSTDEF(manifestBlockIncrSizeMapDefault),
+    .ageMap = LSTDEF(manifestBlockIncrAgeMapDefault),
+    .checksumSizeMap = LSTDEF(manifestBlockIncrChecksumSizeMapDefault),
 };
 
 // Convert map size
@@ -428,8 +425,7 @@ backupBlockIncrMap(void)
 
             lstSort(map, sortOrderDesc);
 
-            result.sizeMap = lstGet(map, 0);
-            result.sizeMapSize = lstSize(map);
+            result.sizeMap = map;
         }
 
         // Build age map
@@ -455,8 +451,7 @@ backupBlockIncrMap(void)
 
             lstSort(map, sortOrderDesc);
 
-            result.ageMap = lstGet(map, 0);
-            result.ageMapSize = lstSize(map);
+            result.ageMap = map;
         }
 
         // Build checksum size map
@@ -485,8 +480,7 @@ backupBlockIncrMap(void)
 
             lstSort(map, sortOrderDesc);
 
-            result.checksumSizeMap = lstGet(map, 0);
-            result.checksumSizeMapSize = lstSize(map);
+            result.checksumSizeMap = map;
         }
     }
 

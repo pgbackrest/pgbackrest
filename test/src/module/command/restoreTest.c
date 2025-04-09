@@ -155,7 +155,7 @@ testRun(void)
         PROTOCOL_SERVER_HANDLER_RESTORE_LIST
     };
 
-    hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
+    hrnProtocolLocalShimInstall(LSTDEF(testLocalHandlerList));
 
     // Create default storage object for testing
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);

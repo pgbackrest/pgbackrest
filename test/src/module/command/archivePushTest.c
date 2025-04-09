@@ -651,7 +651,7 @@ testRun(void)
 
         // Install local command handler shim
         static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_ARCHIVE_PUSH_LIST};
-        hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
+        hrnProtocolLocalShimInstall(LSTDEF(testLocalHandlerList));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command must be run on the pg host");

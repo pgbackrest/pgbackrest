@@ -19,7 +19,7 @@ Local Command
 /***********************************************************************************************************************************
 Command handlers
 ***********************************************************************************************************************************/
-static const ProtocolServerHandler commandLocalHandlerList[] =
+static const ProtocolServerHandler commandLocalHandler[] =
 {
     PROTOCOL_SERVER_HANDLER_ARCHIVE_GET_LIST
     PROTOCOL_SERVER_HANDLER_ARCHIVE_PUSH_LIST
@@ -27,6 +27,8 @@ static const ProtocolServerHandler commandLocalHandlerList[] =
     PROTOCOL_SERVER_HANDLER_RESTORE_LIST
     PROTOCOL_SERVER_HANDLER_VERIFY_LIST
 };
+
+static const List *const commandLocalHandlerList = LSTDEF(commandLocalHandler);
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
@@ -36,7 +38,7 @@ cmdLocal(ProtocolServer *const server)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolServerProcess(server, cfgCommandJobRetry(), commandLocalHandlerList, LENGTH_OF(commandLocalHandlerList));
+        protocolServerProcess(server, cfgCommandJobRetry(), commandLocalHandlerList);
     }
     MEM_CONTEXT_TEMP_END();
 

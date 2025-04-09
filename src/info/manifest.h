@@ -116,12 +116,9 @@ typedef struct ManifestBlockIncrChecksumSizeMap
 
 typedef struct ManifestBlockIncrMap
 {
-    const ManifestBlockIncrSizeMap *sizeMap;                        // Block size map
-    unsigned int sizeMapSize;                                       // Block size map size
-    const ManifestBlockIncrAgeMap *ageMap;                          // File age map
-    unsigned int ageMapSize;                                        // File age map size
-    const ManifestBlockIncrChecksumSizeMap *checksumSizeMap;        // Checksum size map
-    unsigned int checksumSizeMapSize;                               // Checksum size map size
+    const List *sizeMap;                                            // Block size map
+    const List *ageMap;                                             // File age map
+    const List *checksumSizeMap;                                    // Checksum size map
 } ManifestBlockIncrMap;
 
 /***********************************************************************************************************************************
