@@ -93,6 +93,20 @@
             </release-item>
 
             <release-item>
+                <github-issue id="2529"/>
+                <github-pull-request id="2535"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="chris.bandy"/>
+                    <release-item-contributor id="david.steele"/>
+                    <!-- Actually tester, but we don't have a tag for that yet -->
+                    <release-item-reviewer id="chris.bandy"/>
+                </release-item-contributor-list>
+
+                <p>Allow connections to <postgres/> on abstract domain sockets.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2410"/>
                 <github-pull-request id="2526"/>
 
