@@ -1626,6 +1626,7 @@ option:
       db-port: {}
       db?-port: {}
 
+  # Despite the name this option needs to be string type rather than path to allow abstract sockets beginning with @
   pg-socket-path:
     section: stanza
     group: pg
