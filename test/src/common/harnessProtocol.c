@@ -27,13 +27,11 @@ static struct
 {
     // Local process shim
     bool localShim;
-    const ProtocolServerHandler *localHandlerList;
-    unsigned int localHandlerListSize;
+    const List *localHandlerList;
 
     // Remote process shim
     bool remoteShim;
-    const ProtocolServerHandler *remoteHandlerList;
-    unsigned int remoteHandlerListSize;
+    const List *remoteHandlerList;
 } hrnProtocolStatic;
 
 /***********************************************************************************************************************************
@@ -112,8 +110,7 @@ protocolLocalExec(
             ProtocolServer *server = protocolServerNew(
                 name, PROTOCOL_SERVICE_LOCAL_STR, ioFdReadNewOpen(name, pipeWrite[0], 5000),
                 ioFdWriteNewOpen(name, pipeRead[1], 5000));
-            protocolServerProcess(
-                server, cfgCommandJobRetry(), hrnProtocolStatic.localHandlerList, hrnProtocolStatic.localHandlerListSize);
+            protocolServerProcess(server, cfgCommandJobRetry(), hrnProtocolStatic.localHandlerList);
 
             // Exit when done
             exit(0);
@@ -141,16 +138,14 @@ protocolLocalExec(
 
 /**********************************************************************************************************************************/
 void
-hrnProtocolLocalShimInstall(const ProtocolServerHandler *const handlerList, const unsigned int handlerListSize)
+hrnProtocolLocalShimInstall(const List *const handlerList)
 {
     FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM_P(VOID, handlerList);
-        FUNCTION_HARNESS_PARAM(UINT, handlerListSize);
+        FUNCTION_HARNESS_PARAM(LIST, handlerList);
     FUNCTION_HARNESS_END();
 
     hrnProtocolStatic.localShim = true;
     hrnProtocolStatic.localHandlerList = handlerList;
-    hrnProtocolStatic.localHandlerListSize = handlerListSize;
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
@@ -210,7 +205,7 @@ protocolRemoteExec(
             ProtocolServer *server = protocolServerNew(
                 name, PROTOCOL_SERVICE_REMOTE_STR, ioFdReadNewOpen(name, pipeWrite[0], 10000),
                 ioFdWriteNewOpen(name, pipeRead[1], 10000));
-            protocolServerProcess(server, NULL, hrnProtocolStatic.remoteHandlerList, hrnProtocolStatic.remoteHandlerListSize);
+            protocolServerProcess(server, NULL, hrnProtocolStatic.remoteHandlerList);
 
             // Put an end message here to sync with the client to ensure that coverage data is written before exiting
             protocolServerResponseP(server);
@@ -241,16 +236,14 @@ protocolRemoteExec(
 
 /**********************************************************************************************************************************/
 void
-hrnProtocolRemoteShimInstall(const ProtocolServerHandler *const handlerList, const unsigned int handlerListSize)
+hrnProtocolRemoteShimInstall(const List *const handlerList)
 {
     FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM_P(VOID, handlerList);
-        FUNCTION_HARNESS_PARAM(UINT, handlerListSize);
+        FUNCTION_HARNESS_PARAM(LIST, handlerList);
     FUNCTION_HARNESS_END();
 
     hrnProtocolStatic.remoteShim = true;
     hrnProtocolStatic.remoteHandlerList = handlerList;
-    hrnProtocolStatic.remoteHandlerListSize = handlerListSize;
 
     FUNCTION_HARNESS_RETURN_VOID();
 }

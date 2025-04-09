@@ -152,6 +152,7 @@ testRun(void)
         strReplace(testC, STRDEF("{[C_TEST_USER_ID]}"), STRDEF(TEST_USER_ID_Z));
         strReplace(testC, STRDEF("{[C_TEST_USER_ID_Z]}"), STRDEF("\"" TEST_USER_ID_Z "\""));
         strReplace(testC, STRDEF("{[C_TEST_USER_LEN]}"), strNewFmt("%zu", sizeof(TEST_USER) - 1));
+        strReplace(testC, STRDEF("{[C_TEST_ARCHITECTURE]}"), STRDEF(TEST_ARCHITECTURE));
 
         // Test definition
         // -------------------------------------------------------------------------------------------------------------------------

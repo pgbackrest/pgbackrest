@@ -27,17 +27,19 @@ Remote Command
 /***********************************************************************************************************************************
 Command handlers
 ***********************************************************************************************************************************/
-static const ProtocolServerHandler commandRemoteHandlerList[] =
+static const ProtocolServerHandler commandRemoteHandler[] =
 {
     PROTOCOL_SERVER_HANDLER_DB_LIST
     PROTOCOL_SERVER_HANDLER_OPTION_LIST
     PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST
 };
 
+static const List *const commandRemoteHandlerList = LSTDEF(commandRemoteHandler);
+
 /***********************************************************************************************************************************
 Filter handlers
 ***********************************************************************************************************************************/
-static const StorageRemoteFilterHandler storageRemoteFilterHandlerList[] =
+static const StorageRemoteFilterHandler storageRemoteFilterHandler[] =
 {
     {.type = BLOCK_CHECKSUM_FILTER_TYPE, .handlerParam = blockChecksumNewPack},
     {.type = BLOCK_INCR_FILTER_TYPE, .handlerParam = blockIncrNewPack},
@@ -48,6 +50,8 @@ static const StorageRemoteFilterHandler storageRemoteFilterHandlerList[] =
     {.type = SIZE_FILTER_TYPE, .handlerNoParam = ioSizeNew},
 };
 
+static const List *const storageRemoteFilterHandlerList = LSTDEF(storageRemoteFilterHandler);
+
 /**********************************************************************************************************************************/
 FN_EXTERN void
 cmdRemote(ProtocolServer *const server)
@@ -55,7 +59,7 @@ cmdRemote(ProtocolServer *const server)
     FUNCTION_LOG_VOID(logLevelDebug);
 
     // Set filter handlers
-    storageRemoteFilterHandlerSet(storageRemoteFilterHandlerList, LENGTH_OF(storageRemoteFilterHandlerList));
+    storageRemoteFilterHandlerSet(storageRemoteFilterHandlerList);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -95,7 +99,7 @@ cmdRemote(ProtocolServer *const server)
 
         // If not successful we'll just exit
         if (success)
-            protocolServerProcess(server, NULL, commandRemoteHandlerList, LENGTH_OF(commandRemoteHandlerList));
+            protocolServerProcess(server, NULL, commandRemoteHandlerList);
     }
     MEM_CONTEXT_TEMP_END();
 

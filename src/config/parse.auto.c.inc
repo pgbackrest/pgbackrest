@@ -1415,52 +1415,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                    // opt/archive-timeout
     ),                                                                                                        // opt/archive-timeout
     // -----------------------------------------------------------------------------------------------------------------------------
-    PARSE_RULE_OPTION                                                                                        // opt/backup-full-incr
-    (                                                                                                        // opt/backup-full-incr
-        PARSE_RULE_OPTION_NAME("backup-full-incr"),                                                          // opt/backup-full-incr
-        PARSE_RULE_OPTION_TYPE(Boolean),                                                                     // opt/backup-full-incr
-        PARSE_RULE_OPTION_NEGATE(true),                                                                      // opt/backup-full-incr
-        PARSE_RULE_OPTION_RESET(true),                                                                       // opt/backup-full-incr
-        PARSE_RULE_OPTION_REQUIRED(true),                                                                    // opt/backup-full-incr
-        PARSE_RULE_OPTION_SECTION(Global),                                                                   // opt/backup-full-incr
-                                                                                                             // opt/backup-full-incr
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                       // opt/backup-full-incr
-        (                                                                                                    // opt/backup-full-incr
-            PARSE_RULE_OPTION_COMMAND(Backup)                                                                // opt/backup-full-incr
-        ),                                                                                                   // opt/backup-full-incr
-                                                                                                             // opt/backup-full-incr
-        PARSE_RULE_OPTIONAL                                                                                  // opt/backup-full-incr
-        (                                                                                                    // opt/backup-full-incr
-            PARSE_RULE_OPTIONAL_GROUP                                                                        // opt/backup-full-incr
-            (                                                                                                // opt/backup-full-incr
-                PARSE_RULE_FILTER_CMD                                                                        // opt/backup-full-incr
-                (                                                                                            // opt/backup-full-incr
-                    PARSE_RULE_VAL_CMD(Backup),                                                              // opt/backup-full-incr
-                ),                                                                                           // opt/backup-full-incr
-                                                                                                             // opt/backup-full-incr
-                PARSE_RULE_OPTIONAL_DEPEND                                                                   // opt/backup-full-incr
-                (                                                                                            // opt/backup-full-incr
-                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(PARSE_RULE_VAL_BOOL_FALSE),                           // opt/backup-full-incr
-                    PARSE_RULE_VAL_OPT(Online),                                                              // opt/backup-full-incr
-                    PARSE_RULE_VAL_BOOL_TRUE,                                                                // opt/backup-full-incr
-                ),                                                                                           // opt/backup-full-incr
-                                                                                                             // opt/backup-full-incr
-                PARSE_RULE_OPTIONAL_DEFAULT                                                                  // opt/backup-full-incr
-                (                                                                                            // opt/backup-full-incr
-                    PARSE_RULE_VAL_BOOL_FALSE,                                                               // opt/backup-full-incr
-                ),                                                                                           // opt/backup-full-incr
-            ),                                                                                               // opt/backup-full-incr
-                                                                                                             // opt/backup-full-incr
-            PARSE_RULE_OPTIONAL_GROUP                                                                        // opt/backup-full-incr
-            (                                                                                                // opt/backup-full-incr
-                PARSE_RULE_OPTIONAL_DEFAULT                                                                  // opt/backup-full-incr
-                (                                                                                            // opt/backup-full-incr
-                    PARSE_RULE_VAL_BOOL_FALSE,                                                               // opt/backup-full-incr
-                ),                                                                                           // opt/backup-full-incr
-            ),                                                                                               // opt/backup-full-incr
-        ),                                                                                                   // opt/backup-full-incr
-    ),                                                                                                       // opt/backup-full-incr
-    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                          // opt/backup-standby
     (                                                                                                          // opt/backup-standby
         PARSE_RULE_OPTION_NAME("backup-standby"),                                                              // opt/backup-standby
@@ -11481,7 +11435,6 @@ static const uint8_t optionResolveOrder[] =
     cfgOptArchiveCheck,                                                                                         // opt-resolve-order
     cfgOptArchiveCopy,                                                                                          // opt-resolve-order
     cfgOptArchiveModeCheck,                                                                                     // opt-resolve-order
-    cfgOptBackupFullIncr,                                                                                       // opt-resolve-order
     cfgOptForce,                                                                                                // opt-resolve-order
     cfgOptPgDatabase,                                                                                           // opt-resolve-order
     cfgOptPgHost,                                                                                               // opt-resolve-order
