@@ -132,6 +132,17 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2592"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Calculate <id>content-md5</id> on <proper>S3</proper> only when required.</p>
+            </release-item>
+
+            <release-item>
                 <commit subject="Add detail logging to expire test."/>
                 <commit subject="Add detail logging for expired archive path.">
                     <github-issue id="2543"/>
