@@ -33,6 +33,8 @@ typedef struct TestRequestParam
     const char *ttl;
     const char *token;
     const char *tag;
+    bool requesterPays;
+    bool contentMd5;
 } TestRequestParam;
 
 #define testRequestP(write, s3, verb, path, ...)                                                                                   \
@@ -67,7 +69,7 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
             "authorization:AWS4-HMAC-SHA256 Credential=%s/\?\?\?\?\?\?\?\?/us-east-1/s3/aws4_request,SignedHeaders=",
             param.accessKey == NULL ? strZ(driver->accessKey) : param.accessKey);
 
-        if (param.content != NULL)
+        if (param.contentMd5)
             strCatZ(request, "content-md5;");
 
         strCatZ(request, "host;");
@@ -76,6 +78,9 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
             strCatZ(request, "range;");
 
         strCatZ(request, "x-amz-content-sha256;x-amz-date");
+
+        if (param.requesterPays)
+            strCatZ(request, ";x-amz-request-payer");
 
         if (securityToken != NULL)
             strCatZ(request, ";x-amz-security-token");
@@ -101,7 +106,7 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
     strCatFmt(request, "content-length:%zu\r\n", param.content != NULL ? strlen(param.content) : 0);
 
     // Add md5
-    if (param.content != NULL)
+    if (param.contentMd5)
     {
         strCatFmt(
             request, "content-md5:%s\r\n", strZ(strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, BUFSTRZ(param.content)))));
@@ -137,6 +142,10 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
         if (securityToken != NULL)
             strCatFmt(request, "x-amz-security-token:%s\r\n", securityToken);
     }
+
+    // Requestor pays
+    if (param.requesterPays)
+        strCatZ(request, "x-amz-request-payer:requester\r\n");
 
     // Add kms key
     if (param.kms != NULL)
@@ -861,7 +870,6 @@ testRun(void)
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"
                     "content-length: 205\n"
-                    "content-md5: 37smUM6Ah2/EjZbp420dPw==\n"
                     "host: bucket.s3.amazonaws.com\n"
                     "x-amz-content-sha256: 0838a79dfbddc2128d28fb4fa8d605e0a8e6d1355094000f39b6eb3feff4641f\n"
                     "x-amz-date: <redacted>\n"
@@ -1309,7 +1317,7 @@ testRun(void)
                         "</ListBucketResult>");
 
                 testRequestP(
-                    service, s3, HTTP_VERB_POST, "/bucket/?delete=",
+                    service, s3, HTTP_VERB_POST, "/bucket/?delete=", .contentMd5 = true,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<Delete><Quiet>true</Quiet>"
@@ -1370,7 +1378,7 @@ testRun(void)
                         "</ListBucketResult>");
 
                 testRequestP(
-                    service, s3, HTTP_VERB_POST, "/bucket/?delete=",
+                    service, s3, HTTP_VERB_POST, "/bucket/?delete=", .contentMd5 = true,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<Delete><Quiet>true</Quiet>"
@@ -1380,7 +1388,7 @@ testRun(void)
                 testResponseP(service);
 
                 testRequestP(
-                    service, s3, HTTP_VERB_POST, "/bucket/?delete=",
+                    service, s3, HTTP_VERB_POST, "/bucket/?delete=", .contentMd5 = true,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<Delete><Quiet>true</Quiet>"
@@ -1409,7 +1417,7 @@ testRun(void)
                         "</ListBucketResult>");
 
                 testRequestP(
-                    service, s3, HTTP_VERB_POST, "/bucket/?delete=",
+                    service, s3, HTTP_VERB_POST, "/bucket/?delete=", .contentMd5 = true,
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<Delete><Quiet>true</Quiet>"
@@ -1447,6 +1455,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
                 hrnCfgArgRawZ(argList, cfgOptRepo, "1");
                 hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-04 02:54:09+00");
+                hrnCfgArgRawBool(argList, cfgOptRepoS3RequesterPays, true);
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
                 s3 = storageRepoGet(0, false);
@@ -1456,7 +1465,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("list with time limit");
 
-                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&prefix=path%2Fto%2F&versions=");
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&prefix=path%2Fto%2F&versions=", .requesterPays = true);
                 testResponseP(
                     service,
                     .content =
@@ -1474,7 +1483,9 @@ testRun(void)
                         "    </Version>"
                         "</ListBucketResult>");
 
-                testRequestP(service, s3, HTTP_VERB_GET, "/?continuation-token=1ueG&delimiter=%2F&prefix=path%2Fto%2F&versions=");
+                testRequestP(
+                    service, s3, HTTP_VERB_GET, "/?continuation-token=1ueG&delimiter=%2F&prefix=path%2Fto%2F&versions=",
+                    .requesterPays = true);
                 testResponseP(
                     service,
                     .content =
@@ -1509,7 +1520,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get file with time limit");
 
-                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&prefix=path%2F3%2F&versions=");
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&prefix=path%2F3%2F&versions=", .requesterPays = true);
                 testResponseP(
                     service,
                     .content =
@@ -1531,7 +1542,7 @@ testRun(void)
                         "   </CommonPrefixes>"
                         "</ListBucketResult>");
 
-                testRequestP(service, s3, HTTP_VERB_GET, "/path/3/test_file?versionId=bbbb");
+                testRequestP(service, s3, HTTP_VERB_GET, "/path/3/test_file?versionId=bbbb", .requesterPays = true);
                 testResponseP(service, .content = "123456");
 
                 TEST_RESULT_STR_Z(
@@ -1540,7 +1551,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get missing file with time limit");
 
-                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&versions=");
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&versions=", .requesterPays = true);
                 testResponseP(
                     service,
                     .content =

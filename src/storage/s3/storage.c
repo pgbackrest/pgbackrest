@@ -39,6 +39,8 @@ STRING_STATIC(S3_HEADER_SSECUSTKEY_AES256_STR,                      "AES256");
 STRING_STATIC(S3_HEADER_SSECUSTKEY_KEY_STR,                         "x-amz-server-side-encryption-customer-key");
 STRING_STATIC(S3_HEADER_SSECUSTKEY_KEY_MD5_STR,                     "x-amz-server-side-encryption-customer-key-md5");
 STRING_STATIC(S3_HEADER_TAGGING,                                    "x-amz-tagging");
+STRING_STATIC(S3_HEADER_REQUEST_PAYER,                              "x-amz-request-payer");
+STRING_STATIC(S3_HEADER_REQUEST_PAYER_STR,                          "requester");
 
 /***********************************************************************************************************************************
 S3 query tokens
@@ -110,6 +112,7 @@ struct StorageS3
     unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
     StorageS3UriStyle uriStyle;                                     // Path or host style URIs
     const String *bucketEndpoint;                                   // Set to {bucket}.{endpoint}
+    bool requesterPays;                                             // Requester pays?
 
     // For retrieving temporary security credentials
     HttpClient *credHttpClient;                                     // HTTP client to service credential requests
@@ -449,6 +452,7 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
+        FUNCTION_LOG_PARAM(BOOL, param.contentMd5);
         FUNCTION_LOG_PARAM(BOOL, param.sseKms);
         FUNCTION_LOG_PARAM(BOOL, param.sseC);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
@@ -470,13 +474,19 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
             requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
             param.content == NULL || bufEmpty(param.content) ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
 
-        // Calculate content-md5 header if there is content
-        if (param.content != NULL)
+        // Calculate content-md5 header when required
+        if (param.contentMd5)
         {
+            ASSERT(param.content != NULL && !bufEmpty(param.content));
+
             httpHeaderAdd(
                 requestHeader, HTTP_HEADER_CONTENT_MD5_STR,
                 strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, param.content)));
         }
+
+        // Set requester pays when requested
+        if (this->requesterPays)
+            httpHeaderPut(requestHeader, S3_HEADER_REQUEST_PAYER, S3_HEADER_REQUEST_PAYER_STR);
 
         // Set KMS headers when requested
         if (param.sseKms && this->kmsKeyId != NULL)
@@ -600,6 +610,7 @@ storageS3Request(StorageS3 *const this, const String *const verb, const String *
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
+        FUNCTION_LOG_PARAM(BOOL, param.contentMd5);
         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
         FUNCTION_LOG_PARAM(BOOL, param.contentIo);
         FUNCTION_LOG_PARAM(BOOL, param.sseKms);
@@ -608,8 +619,8 @@ storageS3Request(StorageS3 *const this, const String *const verb, const String *
     FUNCTION_LOG_END();
 
     HttpRequest *const request = storageS3RequestAsyncP(
-        this, verb, path, .header = param.header, .query = param.query, .content = param.content, .sseKms = param.sseKms,
-        .sseC = param.sseC, .tag = param.tag);
+        this, verb, path, .header = param.header, .query = param.query, .content = param.content, .contentMd5 = param.contentMd5,
+        .sseKms = param.sseKms, .sseC = param.sseC, .tag = param.tag);
     HttpResponse *const result = storageS3ResponseP(
         request, .allowMissing = param.allowMissing, .contentIo = param.contentIo);
 
@@ -1034,7 +1045,8 @@ storageS3PathRemoveInternal(StorageS3 *const this, HttpRequest *const request, X
         HttpQuery *const query = httpQueryAdd(httpQueryNewP(), S3_QUERY_DELETE_STR, EMPTY_STR);
         Buffer *const content = xmlDocumentBuf(xml);
 
-        result = storageS3RequestAsyncP(this, HTTP_VERB_POST_STR, FSLASH_STR, .query = query, .content = content);
+        result = storageS3RequestAsyncP(
+            this, HTTP_VERB_POST_STR, FSLASH_STR, .query = query, .content = content, .contentMd5 = true);
 
         httpQueryFree(query);
         bufFree(content);
@@ -1178,7 +1190,8 @@ storageS3New(
     const StorageS3KeyType keyType, const String *const accessKey, const String *const secretAccessKey,
     const String *const securityToken, const String *const kmsKeyId, const String *sseCustomerKey, const String *const credRole,
     const String *const webIdTokenFile, const size_t partSize, const KeyValue *const tag, const String *host,
-    const unsigned int port, const TimeMSec timeout, const bool verifyPeer, const String *const caFile, const String *const caPath)
+    const unsigned int port, const TimeMSec timeout, const bool verifyPeer, const String *const caFile, const String *const caPath,
+    const bool requesterPays)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -1222,6 +1235,7 @@ storageS3New(
             .region = strDup(region),
             .keyType = keyType,
             .kmsKeyId = strDup(kmsKeyId),
+            .requesterPays = requesterPays,
             .sseCustomerKey = strDup(sseCustomerKey),
             .partSize = partSize,
             .deleteMax = STORAGE_S3_DELETE_MAX,

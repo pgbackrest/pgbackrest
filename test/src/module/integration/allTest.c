@@ -1,13 +1,12 @@
 /***********************************************************************************************************************************
 Real Integration Test
 ***********************************************************************************************************************************/
-#include <utime.h>
-
 #include "common/crypto/common.h"
 #include "config/config.h"
 #include "info/infoBackup.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
+#include "storage/helper.h"
 
 #include "common/harnessErrorRetry.h"
 #include "common/harnessHost.h"
@@ -20,16 +19,16 @@ Test definition
 static HrnHostTestDefine testMatrix[] =
 {
     // {uncrustify_off - struct alignment}
-    {.pg = "9.5", .repo = "repo", .tls = 1, .stg =    "s3", .enc = 0, .cmp =  "bz2", .rt = 1, .bnd = 1, .bi = 1, .fi = 1},
-    {.pg = "9.6", .repo = "repo", .tls = 0, .stg = "azure", .enc = 0, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1, .fi = 0},
-    {.pg =  "10", .repo =  "pg2", .tls = 0, .stg =  "sftp", .enc = 1, .cmp =   "gz", .rt = 1, .bnd = 1, .bi = 0, .fi = 1},
-    {.pg =  "11", .repo = "repo", .tls = 1, .stg =   "gcs", .enc = 0, .cmp =  "zst", .rt = 2, .bnd = 0, .bi = 0, .fi = 1},
-    {.pg =  "12", .repo = "repo", .tls = 0, .stg =    "s3", .enc = 1, .cmp =  "lz4", .rt = 1, .bnd = 1, .bi = 1, .fi = 0},
-    {.pg =  "13", .repo =  "pg2", .tls = 1, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0, .fi = 0},
-    {.pg =  "14", .repo = "repo", .tls = 0, .stg =   "gcs", .enc = 0, .cmp =  "lz4", .rt = 1, .bnd = 1, .bi = 0, .fi = 1},
-    {.pg =  "15", .repo =  "pg2", .tls = 0, .stg = "azure", .enc = 1, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1, .fi = 0},
-    {.pg =  "16", .repo = "repo", .tls = 0, .stg =  "sftp", .enc = 0, .cmp =  "zst", .rt = 1, .bnd = 1, .bi = 1, .fi = 1},
-    {.pg =  "17", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0, .fi = 0},
+    {.pg = "9.5", .repo = "repo", .tls = 1, .stg =    "s3", .enc = 0, .cmp =  "bz2", .rt = 1, .bnd = 1, .bi = 1},
+    {.pg = "9.6", .repo = "repo", .tls = 0, .stg = "azure", .enc = 0, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1},
+    {.pg =  "10", .repo =  "pg2", .tls = 0, .stg =  "sftp", .enc = 1, .cmp =   "gz", .rt = 1, .bnd = 1, .bi = 0},
+    {.pg =  "11", .repo = "repo", .tls = 1, .stg =   "gcs", .enc = 0, .cmp =  "zst", .rt = 2, .bnd = 0, .bi = 0},
+    {.pg =  "12", .repo = "repo", .tls = 0, .stg =    "s3", .enc = 1, .cmp =  "lz4", .rt = 1, .bnd = 1, .bi = 1},
+    {.pg =  "13", .repo =  "pg2", .tls = 1, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
+    {.pg =  "14", .repo = "repo", .tls = 0, .stg =   "gcs", .enc = 0, .cmp =  "lz4", .rt = 1, .bnd = 1, .bi = 0},
+    {.pg =  "15", .repo =  "pg2", .tls = 0, .stg = "azure", .enc = 1, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1},
+    {.pg =  "16", .repo = "repo", .tls = 0, .stg =  "sftp", .enc = 0, .cmp =  "zst", .rt = 1, .bnd = 1, .bi = 1},
+    {.pg =  "17", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
     // {uncrustify_on}
 };
 
@@ -88,23 +87,6 @@ testRun(void)
         // Get ts1 tablespace oid
         const unsigned int ts1Oid = pckReadU32P(hrnHostSqlValue(pg1, "select oid from pg_tablespace where spcname = 'ts1'"));
         TEST_LOG_FMT("ts1 tablespace oid = %u", ts1Oid);
-
-        // When full/incr is enabled, set some modified timestamps in the past so full/incr will find some files
-        if (hrnHostFullIncr())
-        {
-            const StringList *const fileList = storageListP(hrnHostPgStorage(pg1), STRDEF("base/1"));
-            const time_t modified = time(NULL) - SEC_PER_DAY * 2;
-
-            for (unsigned int fileIdx = 0; fileIdx < strLstSize(fileList); fileIdx++)
-            {
-                const char *const pathFull = strZ(
-                    storagePathP(hrnHostPgStorage(pg1), strNewFmt("base/1/%s", strZ(strLstGet(fileList, fileIdx)))));
-
-                THROW_ON_SYS_ERROR_FMT(
-                    utime(pathFull, &((struct utimbuf){.actime = modified, .modtime = modified})) == -1, FileInfoError,
-                    "unable to set time for '%s'", pathFull);
-            }
-        }
 
         // Get the tablespace path to use for this version. We could use our internally stored catalog number but during the beta
         // period this number will be changing and would need to be updated. Make this less fragile by just reading the path.
@@ -177,6 +159,17 @@ testRun(void)
                 TEST_HOST_BR(pg2, CFGCMD_RESTORE, .option = zNewFmt("--delta %s", option), .user = user);
             }
 
+            HRN_HOST_PG_START(pg2);
+
+            // Promote the standby to create a new timeline that can be used to test timeline verification. Once the new timeline
+            // has been created restore again to get the standby back on the same timeline as the primary.
+            HRN_HOST_PG_PROMOTE(pg2);
+            TEST_STORAGE_EXISTS(
+                hrnHostRepo1Storage(repo),
+                zNewFmt("archive/" HRN_STANZA "/%s-1/00000002.history", strZ(pgVersionToStr(hrnHostPgVersion()))), .timeout = 5000);
+
+            HRN_HOST_PG_STOP(pg2);
+            TEST_HOST_BR(pg2, CFGCMD_RESTORE, .option = zNewFmt("%s --delta --target-timeline=current", option));
             HRN_HOST_PG_START(pg2);
 
             // Check standby
@@ -308,13 +301,24 @@ testRun(void)
         TEST_LOG("name target = " TEST_RESTORE_POINT);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("primary restore (default target)");
+        TEST_TITLE("primary restore fails on timeline verification");
         {
             // Stop the cluster
             HRN_HOST_PG_STOP(pg1);
 
-            // Restore
-            TEST_HOST_BR(pg1, CFGCMD_RESTORE, .option = zNewFmt("--force --repo=%u", hrnHostRepoTotal()));
+            // Restore fails because timeline 2 was created before the backup selected for restore. Specify target timeline latest
+            // because PostgreSQL < 12 defaults to current.
+            TEST_HOST_BR(
+                pg1, CFGCMD_RESTORE, .option = "--delta --target-timeline=latest", .resultExpect = errorTypeCode(&DbMismatchError));
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("primary restore (default target)");
+        {
+            // Restore on current timeline to skip the invalid timeline unrelated to the backup
+            TEST_HOST_BR(
+                pg1, CFGCMD_RESTORE,
+                .option = zNewFmt("--force --target-timeline=current --repo=%u", hrnHostRepoTotal()));
             HRN_HOST_PG_START(pg1);
 
             // Check that backup recovered to the expected target
@@ -330,7 +334,8 @@ testRun(void)
             // Stop the cluster and try again
             HRN_HOST_PG_STOP(pg1);
 
-            // Restore
+            // Restore immediate and promote -- this avoids checking the invalid timeline since immediate recovery is always along
+            // the current timeline. The promotion will create a new timeline so subsequent tests will pass timeline verification.
             TEST_HOST_BR(pg1, CFGCMD_RESTORE, .option = "--delta --type=immediate --target-action=promote --db-exclude=exclude_me");
             HRN_HOST_PG_START(pg1);
 

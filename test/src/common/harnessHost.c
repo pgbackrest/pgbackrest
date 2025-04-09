@@ -90,7 +90,6 @@ static struct HrnHostLocal
     bool bundle;                                                    // Bundling enabled?
     bool blockIncr;                                                 // Block incremental enabled?
     bool archiveAsync;                                              // Async archiving enabled?
-    bool fullIncr;                                                  // Full/incr enabled?
     bool nonVersionSpecific;                                        // Run non version-specific tests?
     bool versioning;                                                // Is versioning enabled in the repo storage?
 
@@ -466,6 +465,30 @@ hrnHostPgStop(HrnHost *const this)
 }
 
 /**********************************************************************************************************************************/
+void
+hrnHostPgPromote(HrnHost *const this)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(HRN_HOST, this);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(this != NULL);
+    ASSERT(hrnHostIsPg(this));
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Promote pg
+        const String *const command = strNewFmt(
+            "%s/pg_ctl promote -D '%s' -s -w", strZ(hrnHostPgBinPath(this)), strZ(hrnHostPgDataPath(this)));
+
+        hrnHostExecP(this, command);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 PackRead *
 hrnHostSql(HrnHost *const this, const String *const statement, const PgClientQueryResult resultType)
 {
@@ -638,7 +661,7 @@ hrnHostConfig(HrnHost *const this)
         strCatZ(config, "\n");
         strCatFmt(config, "log-path=%s\n", strZ(hrnHostLogPath(this)));
         strCatZ(config, "log-level-console=warn\n");
-        strCatZ(config, "log-level-file=detail\n");
+        strCatZ(config, "log-level-file=info\n");
         strCatZ(config, "log-subprocess=n\n");
 
         // Compress options
@@ -697,9 +720,6 @@ hrnHostConfig(HrnHost *const this)
                 strCatZ(config, "repo1-block=y\n");
             }
 
-            if (hrnHostLocal.fullIncr)
-                strCatZ(config, "backup-full-incr=y\n");
-
             switch (hrnHostLocal.storage)
             {
                 case STORAGE_AZURE_TYPE:
@@ -740,7 +760,7 @@ hrnHostConfig(HrnHost *const this)
                         this->pub.repo1Storage = storageGcsNew(
                             hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_GCS_BUCKET), storageGcsKeyTypeToken,
                             STRDEF(HRN_HOST_GCS_KEY), 4 * 1024 * 1024, NULL,
-                            strNewFmt("%s:%d", strZ(hrnHostIp(gcs)), HRN_HOST_GCS_PORT), ioTimeoutMs(), false, NULL, NULL);
+                            strNewFmt("%s:%d", strZ(hrnHostIp(gcs)), HRN_HOST_GCS_PORT), ioTimeoutMs(), false, NULL, NULL, NULL);
                     }
                     MEM_CONTEXT_OBJ_END();
 
@@ -764,7 +784,7 @@ hrnHostConfig(HrnHost *const this)
                             hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_S3_BUCKET), STRDEF(HRN_HOST_S3_ENDPOINT),
                             storageS3UriStyleHost, STR(HRN_HOST_S3_REGION), storageS3KeyTypeShared, STRDEF(HRN_HOST_S3_ACCESS_KEY),
                             STRDEF(HRN_HOST_S3_ACCESS_SECRET_KEY), NULL, NULL, NULL, NULL, NULL, 5 * 1024 * 1024, NULL,
-                            hrnHostIp(s3), 443, ioTimeoutMs(), false, NULL, NULL);
+                            hrnHostIp(s3), 443, ioTimeoutMs(), false, NULL, NULL, NULL);
                     }
                     MEM_CONTEXT_OBJ_END();
 
@@ -1009,13 +1029,6 @@ hrnHostCompressType(void)
 }
 
 bool
-hrnHostFullIncr(void)
-{
-    FUNCTION_HARNESS_VOID();
-    FUNCTION_HARNESS_RETURN(BOOL, hrnHostLocal.fullIncr);
-}
-
-bool
 hrnHostNonVersionSpecific(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -1104,7 +1117,7 @@ hrnHostBuildRun(const int line, const StringId id)
         const bool isPg = strBeginsWithZ(name, "pg");
         const bool isRepo = id == hrnHostLocal.repoHost;
         const String *const container = strNewFmt("test-%u-%s", testIdx(), strZ(name));
-        const String *const image = strNewFmt("pgbackrest/test:%s-test", testVm());
+        const String *const image = strNewFmt("pgbackrest/test:%s-test-%s", testVm(), testArchitecture());
         const String *const dataPath = strNewFmt("%s/%s", testPath(), strZ(name));
         String *const option = strNewFmt(
             "-v '%s/cfg:/etc/pgbackrest:ro' -v '%s:/usr/bin/pgbackrest:ro' -v '%s:%s:ro'", strZ(dataPath), testProjectExe(),
@@ -1205,7 +1218,6 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
         hrnHostLocal.tls = testDef->tls;
         hrnHostLocal.bundle = testDef->bnd;
         hrnHostLocal.blockIncr = testDef->bi;
-        hrnHostLocal.fullIncr = testDef->fi;
         hrnHostLocal.nonVersionSpecific = strcmp(testDef->pg, testMatrix[testMatrixSize - 1].pg) == 0;
     }
     MEM_CONTEXT_END();
@@ -1214,9 +1226,9 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
     ASSERT(hrnHostLocal.repoHost == HRN_HOST_PG2 || hrnHostLocal.repoHost == HRN_HOST_REPO);
 
     TEST_RESULT_INFO_LINE_FMT(
-        line, "pg = %s, repo = %s, .tls = %d, stg = %s, enc = %d, cmp = %s, rt = %u, bnd = %d, bi = %d, fi %d, nv = %d",
-        testDef->pg, testDef->repo, testDef->tls, testDef->stg, testDef->enc, testDef->cmp, testDef->rt, testDef->bnd, testDef->bi,
-        testDef->fi, hrnHostLocal.nonVersionSpecific);
+        line, "pg = %s, repo = %s, .tls = %d, stg = %s, enc = %d, cmp = %s, rt = %u, bnd = %d, bi = %d, nv = %d", testDef->pg,
+        testDef->repo, testDef->tls, testDef->stg, testDef->enc, testDef->cmp, testDef->rt, testDef->bnd, testDef->bi,
+        hrnHostLocal.nonVersionSpecific);
 
     // Create pg hosts
     hrnHostBuildRun(line, HRN_HOST_PG1);
@@ -1280,8 +1292,8 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
                     MEM_CONTEXT_PRIOR_BEGIN()
                     {
                         hrnHostNewP(
-                            HRN_HOST_S3, containerName, STRDEF("minio/minio:RELEASE.2024-07-15T19-02-30Z"), .option = option,
-                            .param = param, .noUpdateHosts = true);
+                            HRN_HOST_S3, containerName, STRDEF("minio/minio"), .option = option, .param = param,
+                            .noUpdateHosts = true);
                     }
                     MEM_CONTEXT_PRIOR_END();
 
@@ -1306,7 +1318,8 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
                     MEM_CONTEXT_PRIOR_BEGIN()
                     {
                         hrnHostNewP(
-                            HRN_HOST_SFTP, containerName, strNewFmt("pgbackrest/test:%s-test", testVm()), .noUpdateHosts = true);
+                            HRN_HOST_SFTP, containerName, strNewFmt("pgbackrest/test:%s-test-x86_64", testVm()),
+                            .noUpdateHosts = true);
                     }
                     MEM_CONTEXT_PRIOR_END();
 

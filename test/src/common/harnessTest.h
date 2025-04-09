@@ -73,6 +73,9 @@ unsigned int testIdx(void);
 // PostgreSQL version for integration testing
 const char *testPgVersion(void);
 
+// Test architecture
+const char *testArchitecture(void);
+
 // User running the test
 const char *testUser(void);
 

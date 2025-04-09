@@ -67,6 +67,37 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
+    if (testBegin("lint*()"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("lintStrId()");
+
+        HRN_STORAGE_PUT_Z(
+            storageTest, "repo/test.c",
+            "#define STRID5(str, strId)\n"
+            "#define STRID6(str, strId)\n"
+            "STR" "ID5(\"abcd\", TEST_STRID)\n"
+            "STR" "ID5(\\\"abcd\\\")\n"
+            "STR" "ID5(\\\"abcd)\n"
+            "STR" "ID5(abcd)\n"
+            "STR" "ID5( \"abcd)\n"
+            "STRID5(\"abcd\")\n"
+            "STRID5(\"abcd\", 0x20c410)\n");
+
+        TEST_ERROR(
+            cmdTest(
+                STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("none"), 3, STRDEF("invalid"),
+                STRDEF("common/stack-trace"), 0, 1, logLevelDebug, true, NULL, false, false, false, true),
+            FormatError, "4 linter error(s) in 'test.c' (see warnings above)");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: 'STR" "ID5(\\\"abcd)' must have quotes around string parameter '\\\"abcd'\n"
+            "P00   WARN: 'STR" "ID5(abcd)' must have quotes around string parameter 'abcd'\n"
+            "P00   WARN: 'STR" "ID5( \"abcd)' must have quotes around string parameter '\"abcd'\n"
+            "P00   WARN: 'STRID5(\"abcd\")' should be 'STRID5(\"abcd\", 0x20c410)'");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("TestDef and TestBuild"))
     {
         // meson_options.txt
@@ -121,6 +152,7 @@ testRun(void)
         strReplace(testC, STRDEF("{[C_TEST_USER_ID]}"), STRDEF(TEST_USER_ID_Z));
         strReplace(testC, STRDEF("{[C_TEST_USER_ID_Z]}"), STRDEF("\"" TEST_USER_ID_Z "\""));
         strReplace(testC, STRDEF("{[C_TEST_USER_LEN]}"), strNewFmt("%zu", sizeof(TEST_USER) - 1));
+        strReplace(testC, STRDEF("{[C_TEST_ARCHITECTURE]}"), STRDEF(TEST_ARCHITECTURE));
 
         // Test definition
         // -------------------------------------------------------------------------------------------------------------------------

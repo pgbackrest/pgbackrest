@@ -7,6 +7,7 @@ Test Command
 
 #include "build/common/exec.h"
 #include "command/test/build.h"
+#include "command/test/lint.h"
 #include "command/test/test.h"
 #include "common/debug.h"
 #include "common/log.h"
@@ -75,6 +76,9 @@ cmdTest(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Linter
+        lintAll(pathRepo);
+
         // Find test
         ASSERT(moduleName != NULL);
 
@@ -90,6 +94,9 @@ cmdTest(
         if (module->type == testDefTypeIntegration)
             vm = strNewZ("none");
 
+        // Get test architecture
+        const String *const architecture = strTrim(execOneP(STRDEF("uname -m")));
+
         // Build test
         bool buildRetry = false;
         const String *const pathUnit = strNewFmt("%s/unit-%u/%s", strZ(pathTest), vmId, strZ(vm));
@@ -102,8 +109,8 @@ cmdTest(
             {
                 // Build unit
                 TestBuild *const testBld = testBldNew(
-                    pathRepo, pathTest, vm, vmInt, vmId, pgVersion, module, test, scale, logLevel, logTime, timeZone, coverage,
-                    profile, optimize, backTrace);
+                    pathRepo, pathTest, vm, vmInt, vmId, pgVersion, module, test, scale, logLevel, logTime, timeZone, architecture,
+                    coverage, profile, optimize, backTrace);
                 testBldUnit(testBld);
 
                 // Meson setup

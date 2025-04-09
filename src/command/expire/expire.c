@@ -677,9 +677,16 @@ removeExpiredArchive(const InfoBackup *const infoBackup, const bool timeBasedFul
                                             .recurse = true);
                                     }
 
+                                    LOG_DETAIL_FMT(
+                                        "%s: %s remove archive path %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx),
+                                        strZ(archiveId), strZ(walPath));
+
                                     archiveExpire.total++;
-                                    archiveExpire.start = strDup(walPath);
                                     archiveExpire.stop = strDup(walPath);
+
+                                    // Update start for the first WAL path removed
+                                    if (archiveExpire.start == NULL)
+                                        archiveExpire.start = strDup(walPath);
                                 }
                                 // Else delete individual files instead if the major path is less than or equal to the most recent
                                 // retention backup. This optimization prevents scanning though major paths that could not possibly

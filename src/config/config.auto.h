@@ -54,7 +54,6 @@ Option constants
 #define CFGOPT_ARCHIVE_MODE_CHECK                                   "archive-mode-check"
 #define CFGOPT_ARCHIVE_PUSH_QUEUE_MAX                               "archive-push-queue-max"
 #define CFGOPT_ARCHIVE_TIMEOUT                                      "archive-timeout"
-#define CFGOPT_BACKUP_FULL_INCR                                     "backup-full-incr"
 #define CFGOPT_BACKUP_STANDBY                                       "backup-standby"
 #define CFGOPT_BETA                                                 "beta"
 #define CFGOPT_BUFFER_SIZE                                          "buffer-size"
@@ -140,7 +139,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            185
+#define CFG_OPTION_TOTAL                                            186
 
 /***********************************************************************************************************************************
 Option value constants
@@ -217,6 +216,8 @@ Option value constants
 #define CFGOPTVAL_OUTPUT_JSON_Z                                     "json"
 #define CFGOPTVAL_OUTPUT_NONE                                       STRID5("none", 0x2b9ee0)
 #define CFGOPTVAL_OUTPUT_NONE_Z                                     "none"
+#define CFGOPTVAL_OUTPUT_NUM                                        STRID5("num", 0x36ae0)
+#define CFGOPTVAL_OUTPUT_NUM_Z                                      "num"
 #define CFGOPTVAL_OUTPUT_TEXT                                       STRID5("text", 0xa60b40)
 #define CFGOPTVAL_OUTPUT_TEXT_Z                                     "text"
 
@@ -404,7 +405,6 @@ typedef enum
     cfgOptArchiveModeCheck,
     cfgOptArchivePushQueueMax,
     cfgOptArchiveTimeout,
-    cfgOptBackupFullIncr,
     cfgOptBackupStandby,
     cfgOptBeta,
     cfgOptBufferSize,
@@ -499,6 +499,7 @@ typedef enum
     cfgOptRepoGcsEndpoint,
     cfgOptRepoGcsKey,
     cfgOptRepoGcsKeyType,
+    cfgOptRepoGcsUserProject,
     cfgOptRepoHardlink,
     cfgOptRepoHost,
     cfgOptRepoHostCaFile,
@@ -527,6 +528,7 @@ typedef enum
     cfgOptRepoS3KeyType,
     cfgOptRepoS3KmsKeyId,
     cfgOptRepoS3Region,
+    cfgOptRepoS3RequesterPays,
     cfgOptRepoS3Role,
     cfgOptRepoS3SseCustomerKey,
     cfgOptRepoS3Token,

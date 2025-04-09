@@ -53,7 +53,6 @@ typedef struct HrnHostTestDefine
     unsigned int rt;                                                // Repository total
     bool bnd;                                                       // Bundling enabled?
     bool bi;                                                        // Block incremental enabled?
-    bool fi;                                                        // Full/incr backup?
 } HrnHostTestDefine;
 
 /***********************************************************************************************************************************
@@ -327,7 +326,7 @@ typedef struct HrnHostExecBrParam
 
 String *hrnHostExecBr(HrnHost *this, const char *command, HrnHostExecBrParam param);
 
-// Create/start/stop Pg cluster
+// Create/start/stop/promote pg cluster
 #define HRN_HOST_PG_CREATE(this)                                                                                                   \
     do                                                                                                                             \
     {                                                                                                                              \
@@ -357,6 +356,16 @@ void hrnHostPgStart(HrnHost *this);
     while (0)
 
 void hrnHostPgStop(HrnHost *this);
+
+#define HRN_HOST_PG_PROMOTE(this)                                                                                                  \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        TEST_RESULT_INFO_FMT("%s: promote pg cluster", strZ(hrnHostName(this)));                                                   \
+        hrnHostPgPromote(this);                                                                                                    \
+    }                                                                                                                              \
+    while (0)
+
+void hrnHostPgPromote(HrnHost *this);
 
 // Query
 PackRead *hrnHostSql(HrnHost *this, const String *statement, const PgClientQueryResult resultType);
@@ -432,9 +441,6 @@ const String *hrnHostCipherPass(void);
 
 // Compress Type
 CompressType hrnHostCompressType(void);
-
-// Full/incr enabled
-bool hrnHostFullIncr(void);
 
 // Non version-specific testing enabled
 bool hrnHostNonVersionSpecific(void);
