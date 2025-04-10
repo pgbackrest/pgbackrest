@@ -162,6 +162,7 @@
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
                     <release-item-reviewer id="stefan.fercot"/>
                 </release-item-contributor-list>
 
@@ -260,7 +261,8 @@
     <release-doc-list>
         <release-bug-list>
             <release-item>
-                <github-pull-request id="2538"/>
+                <github-issue id="2591"/>
+                <github-pull-request id="2595"/>
 
                 <release-item-contributor-list>
                     <release-item-ideator id="terry.macandrew"/>
