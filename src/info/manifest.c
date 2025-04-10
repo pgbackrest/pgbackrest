@@ -804,11 +804,13 @@ manifestBuildBlockIncrSize(const ManifestBuildData *const buildData, const Manif
     size_t result = 0;
 
     // Search size map for the appropriate block size
-    for (unsigned int sizeIdx = 0; sizeIdx < buildData->blockIncrMap->sizeMapSize; sizeIdx++)
+    for (unsigned int sizeIdx = 0; sizeIdx < lstSize(buildData->blockIncrMap->sizeMap); sizeIdx++)
     {
-        if (file->size >= buildData->blockIncrMap->sizeMap[sizeIdx].fileSize)
+        const ManifestBlockIncrSizeMap *const sizeMap = lstGet(buildData->blockIncrMap->sizeMap, sizeIdx);
+
+        if (file->size >= sizeMap->fileSize)
         {
-            result = buildData->blockIncrMap->sizeMap[sizeIdx].blockSize;
+            result = sizeMap->blockSize;
             break;
         }
     }
@@ -818,11 +820,13 @@ manifestBuildBlockIncrSize(const ManifestBuildData *const buildData, const Manif
     {
         const time_t fileAge = buildData->manifest->pub.data.backupTimestampStart - file->timestamp;
 
-        for (unsigned int timeIdx = 0; timeIdx < buildData->blockIncrMap->ageMapSize; timeIdx++)
+        for (unsigned int ageIdx = 0; ageIdx < lstSize(buildData->blockIncrMap->ageMap); ageIdx++)
         {
-            if (fileAge >= (time_t)buildData->blockIncrMap->ageMap[timeIdx].fileAge)
+            const ManifestBlockIncrAgeMap *const ageMap = lstGet(buildData->blockIncrMap->ageMap, ageIdx);
+
+            if (fileAge >= (time_t)ageMap->fileAge)
             {
-                result *= buildData->blockIncrMap->ageMap[timeIdx].blockMultiplier;
+                result *= ageMap->blockMultiplier;
                 break;
             }
         }
@@ -846,11 +850,13 @@ manifestBuildBlockIncrChecksumSize(const ManifestBuildData *const buildData, con
     size_t result = BLOCK_INCR_CHECKSUM_SIZE_MIN;
 
     // Search checksum size map for larger value
-    for (unsigned int sizeIdx = 0; sizeIdx < buildData->blockIncrMap->checksumSizeMapSize; sizeIdx++)
+    for (unsigned int sizeIdx = 0; sizeIdx < lstSize(buildData->blockIncrMap->checksumSizeMap); sizeIdx++)
     {
-        if (blockSize >= buildData->blockIncrMap->checksumSizeMap[sizeIdx].blockSize)
+        const ManifestBlockIncrChecksumSizeMap *const sizeMap = lstGet(buildData->blockIncrMap->checksumSizeMap, sizeIdx);
+
+        if (blockSize >= sizeMap->blockSize)
         {
-            result = buildData->blockIncrMap->checksumSizeMap[sizeIdx].checksumSize;
+            result = sizeMap->checksumSize;
             break;
         }
     }
@@ -1567,7 +1573,7 @@ manifestBuildValidate(Manifest *const this, const bool delta, const time_t copyS
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
+static void
 manifestDeltaCheck(Manifest *const this, const Manifest *const manifestPrior)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -1762,51 +1768,6 @@ manifestBuildIncr(
         }
     }
     MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN void
-manifestBuildFullIncr(Manifest *const this, const time_t timeLimit, const uint64_t bundleLimit)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(MANIFEST, this);
-        FUNCTION_LOG_PARAM(TIME, timeLimit);
-        FUNCTION_LOG_PARAM(UINT64, bundleLimit);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(timeLimit > 0);
-    ASSERT(!this->pub.data.bundle || bundleLimit > 0);
-    ASSERT(this->pub.data.backupType == backupTypeFull);
-
-    MEM_CONTEXT_OBJ_BEGIN(this)
-    {
-        // New filtered file list to replace the old one
-        List *const fileList = lstNewP(sizeof(ManifestFilePack *), .comparator = lstComparatorStr);
-
-        MEM_CONTEXT_OBJ_BEGIN(fileList)
-        {
-            // Iterate all files
-            for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(this); fileIdx++)
-            {
-                const ManifestFile file = manifestFile(this, fileIdx);
-
-                // Keep files older than the time limit and not bundled
-                if (file.timestamp <= timeLimit && (!this->pub.data.bundle || file.size > bundleLimit))
-                {
-                    const ManifestFilePack *const filePack = manifestFilePack(this, &file);
-                    lstAdd(fileList, &filePack);
-                }
-            }
-        }
-        MEM_CONTEXT_OBJ_END();
-
-        lstFree(this->pub.fileList);
-        this->pub.fileList = fileList;
-    }
-    MEM_CONTEXT_OBJ_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }

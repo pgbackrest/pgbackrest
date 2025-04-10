@@ -26,7 +26,7 @@ testRun(void)
         char logBuf[STACK_TRACE_PARAM_MAX];
         List *list = lstNewP(sizeof(void *));
 
-        TEST_RESULT_UINT(list->itemSize, sizeof(void *), "item size");
+        TEST_RESULT_UINT(list->pub.itemSize, sizeof(void *), "item size");
         TEST_RESULT_UINT(list->pub.listSize, 0, "list size");
         TEST_RESULT_UINT(list->listSizeMax, 0, "list size max");
         TEST_RESULT_PTR(lstMemContext(list), objMemContext(list), "list mem context");

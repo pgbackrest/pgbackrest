@@ -32,7 +32,7 @@ testRun(void)
         PROTOCOL_SERVER_HANDLER_BACKUP_LIST
         PROTOCOL_SERVER_HANDLER_VERIFY_LIST
     };
-    hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
+    hrnProtocolLocalShimInstall(LSTDEF(testLocalHandlerList));
 
     StringList *argListBase = strLstNew();
     hrnCfgArgRawZ(argListBase, cfgOptStanza, "db");

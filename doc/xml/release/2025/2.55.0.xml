@@ -93,6 +93,20 @@
             </release-item>
 
             <release-item>
+                <github-issue id="2529"/>
+                <github-pull-request id="2535"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="chris.bandy"/>
+                    <release-item-contributor id="david.steele"/>
+                    <!-- Actually tester, but we don't have a tag for that yet -->
+                    <release-item-reviewer id="chris.bandy"/>
+                </release-item-contributor-list>
+
+                <p>Allow connections to <postgres/> on abstract domain sockets.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2410"/>
                 <github-pull-request id="2526"/>
 
@@ -129,6 +143,17 @@
                 </release-item-contributor-list>
 
                 <p>Use <proper>lz4</proper> for protocol compression.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2592"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Calculate <id>content-md5</id> on <proper>S3</proper> only when required.</p>
             </release-item>
 
             <release-item>
@@ -171,7 +196,12 @@
 
         <release-development-list>
             <release-item>
-                <github-pull-request id="2306"/>
+                <commit subject="Full/incremental backup method.">
+                    <github-pull-request id="2306"/>
+                </commit>
+                <commit subject='Revert "full/incremental backup method."'>
+                    <github-pull-request id="2588"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
@@ -179,7 +209,7 @@
                     <release-item-reviewer id="stefan.fercot"/>
                 </release-item-contributor-list>
 
-                <p>Full/incremental backup method.</p>
+                <p>Revert <quote>full/incremental backup method.</quote></p>
             </release-item>
 
             <release-item>
@@ -201,10 +231,36 @@
 
                 <p>Fix missing <code>return</code> in <code>FUNCTION_LOG_RETURN_VOID()</code>.</p>
             </release-item>
+
+            <release-item>
+                <github-pull-request id="2596"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="yegor.zhmak"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Remove extraneous const from <code>cvtIntToZ()</code> prototype.</p>
+            </release-item>
         </release-development-list>
     </release-core-list>
 
     <release-doc-list>
+        <release-bug-list>
+            <release-item>
+                <github-pull-request id="2538"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="terry.macandrew"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix documentation for specifying multiple stanzas with <br-setting>tls-server-auth</br-setting>.</p>
+            </release-item>
+        </release-bug-list>
+
         <release-improvement-list>
             <release-item>
                 <github-pull-request id="2541"/>
@@ -288,6 +344,9 @@
                 </commit>
                 <commit subject="Fix test logging.">
                     <github-pull-request id="2578"/>
+                </commit>
+                <commit subject="Fix test logging in storageHelperDryRunInit().">
+                    <github-pull-request id="2597"/>
                 </commit>
 
                 <release-item-contributor-list>

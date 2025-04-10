@@ -132,7 +132,7 @@ testRun(void)
                             CFGOPT_TLS_SERVER_CA_FILE "=" HRN_SERVER_CA "\n"
                             CFGOPT_TLS_SERVER_CERT_FILE "=" HRN_SERVER_CERT "\n"
                             CFGOPT_TLS_SERVER_KEY_FILE "=" HRN_SERVER_KEY "\n"
-                            CFGOPT_TLS_SERVER_AUTH "=pgbackrest-client=db\n"
+                            CFGOPT_TLS_SERVER_AUTH "=pgbackrest-client=bogus1,db,bogus2\n"
                             "repo1-path=" TEST_PATH "/repo\n");
 
                         StringList *argList = strLstNew();

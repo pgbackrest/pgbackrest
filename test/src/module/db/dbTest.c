@@ -113,8 +113,7 @@ testRun(void)
                     PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST
                 };
 
-                TEST_RESULT_VOID(
-                    protocolServerProcess(server, NULL, commandHandler, LENGTH_OF(commandHandler)), "run process loop");
+                TEST_RESULT_VOID(protocolServerProcess(server, NULL, LSTDEF(commandHandler)), "run process loop");
                 TEST_RESULT_VOID(protocolServerFree(server), "free server");
             }
             HRN_FORK_CHILD_END();
