@@ -157,6 +157,18 @@
             </release-item>
 
             <release-item>
+                <github-issue id="2591"/>
+                <github-pull-request id="2594"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Warn when a value for a multi-key option is overwritten.</p>
+            </release-item>
+
+            <release-item>
                 <commit subject="Add detail logging to expire test."/>
                 <commit subject="Add detail logging for expired archive path.">
                     <github-issue id="2543"/>
