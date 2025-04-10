@@ -918,7 +918,7 @@
                         <text>
                             <p>When a differential backup expires, all incremental backups associated with the differential backup will also expire. When not defined all differential backups will be kept until the full backups they depend on expire.</p>
 
-                            <p>Note that full backups are included in the count of differential backups for the purpose of expiration. This slightly reduces the number of differential backups that need to retained in most cases.</p>
+                            <p>Note that full backups are included in the count of differential backups for the purpose of expiration. This slightly reduces the number of differential backups that need to be retained in most cases.</p>
                         </text>
 
                         <example>3</example>
