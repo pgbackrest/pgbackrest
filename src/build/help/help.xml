@@ -917,6 +917,8 @@
 
                         <text>
                             <p>When a differential backup expires, all incremental backups associated with the differential backup will also expire. When not defined all differential backups will be kept until the full backups they depend on expire.</p>
+
+                            <p>Note that full backups are included in the count of differential backups for the purpose of expiration. This slightly reduces the number of differential backups that need to retained in most cases.</p>
                         </text>
 
                         <example>3</example>
@@ -2227,7 +2229,7 @@
                 <summary>Expire backups that exceed retention.</summary>
 
                 <text>
-                    <p><backrest/> does full backup rotation based on the retention type which can be a count or a time period. When a count is specified, then expiration is not concerned with when the backups were created but with how many must be retained. Differential backups are count-based but will always be expired when the backup they depend on is expired. See sections <link page="user-guide" section="/retention/full">Full Backup Retention</link> and <link page="user-guide" section="/retention/diff">Differential Backup Retention</link> for details and examples. Incremental backups are not expired by retention independently &amp;mdash; they are always expired with their related full or differential backup.</p>
+                    <p><backrest/> does full backup rotation based on the retention type which can be a count or a time period. When a count is specified, then expiration is not concerned with when the backups were created but with how many must be retained. Differential backups are count-based but will always be expired when the backup they depend on is expired. Incremental backups are not expired by retention independently &amp;mdash; they are always expired with their related full or differential backup. See sections <link page="user-guide" section="/retention/full">Full Backup Retention</link> and <link page="user-guide" section="/retention/diff">Differential Backup Retention</link> for details and examples.</p>
 
                     <p>Archived WAL is retained by default for backups that have not expired, however, although not recommended, this schedule can be modified per repository with the retention-archive options. See section <link page="user-guide" section="/retention/archive">Archive Retention</link> for details and examples.</p>
 
