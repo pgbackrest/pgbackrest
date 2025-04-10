@@ -334,6 +334,19 @@
 
                 <p>Update <setting>unix_socket_directory</setting> to <setting>unix_socket_directories</setting>.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2600"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="martin.marques"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="martin.marques"/>
+                    <release-item-reviewer id="don.seiler"/>
+                </release-item-contributor-list>
+
+                <p>Recommend not placing <br-setting>spool-path</br-setting> within <path>pg_xlog</path>/<path>pg_wal</path>.</p>
+            </release-item>
         </release-improvement-list>
 
         <release-development-list>
