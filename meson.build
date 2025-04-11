@@ -58,6 +58,9 @@ warning_enable = [
     # Enable -Wformat plus -Wnonnull, -Wformat-nonliteral, -Wformat-security, and -Wformat-y2k
     '-Wformat=2',
 
+    # Warn about calls to formatted input/output functions such as sprintf and vsprintf that might overflow the destination buffer
+    '-Wformat-overflow=2',
+
     # Warn if the format string requires an unsigned argument and the argument is signed and vice versa
     '-Wformat-signedness',
 
