@@ -97,9 +97,6 @@ warning_disable = [
 
     # Warn if a structure’s initializer has some fields missing. Disable so we can initialize with {0}.
     '-Wno-missing-field-initializers',
-
-    # Warn when a switch case falls through. Disable because this an useful aspect of switches and tests should catch problems.
-    '-Wno-implicit-fallthrough',
 ]
 
 add_project_arguments(cc.get_supported_arguments(warning_enable, warning_disable), language: 'c')
