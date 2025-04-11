@@ -55,10 +55,7 @@ warning_enable = [
     # Warn if floating-point values are used in equality comparisons
     '--Wfloat-equal',
 
-    # Warn if the format string is not a string literal and cannot be checked
-    '-Wformat-nonliteral',
-
-    # Enable -Wformat plus additional format checks
+    # Enable -Wformat plus -Wnonnull, -Wformat-nonliteral, -Wformat-security, and -Wformat-y2k
     '-Wformat=2',
 
     # Warn if the format string requires an unsigned argument and the argument is signed and vice versa
