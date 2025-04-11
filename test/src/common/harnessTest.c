@@ -526,8 +526,8 @@ hrnTestResultDouble(double actual, double expected)
 
     if (actual != expected)
     {
-        char actualZ[256];
-        char expectedZ[256];
+        char actualZ[318];
+        char expectedZ[318];
 
         snprintf(actualZ, sizeof(actualZ), "%f", actual);
         snprintf(expectedZ, sizeof(expectedZ), "%f", expected);

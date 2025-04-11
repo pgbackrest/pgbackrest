@@ -168,7 +168,7 @@ strNewDbl(const double value)
         FUNCTION_TEST_PARAM(DOUBLE, value);
     FUNCTION_TEST_END();
 
-    char working[CVT_BASE10_BUFFER_SIZE];
+    char working[CVT_DOUBLE_BUFFER_SIZE];
 
     cvtDoubleToZ(value, working, sizeof(working));
 
