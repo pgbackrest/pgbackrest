@@ -55,11 +55,11 @@ warning_enable = [
     # Warn if floating-point values are used in equality comparisons
     '--Wfloat-equal',
 
-    # Warn if the format string is not a string literal and cannot be checked
-    '-Wformat-nonliteral',
-
-    # Enable -Wformat plus additional format checks
+    # Enable -Wformat plus -Wnonnull, -Wformat-nonliteral, -Wformat-security, and -Wformat-y2k
     '-Wformat=2',
+
+    # Warn about calls to formatted input/output functions such as sprintf and vsprintf that might overflow the destination buffer
+    '-Wformat-overflow=2',
 
     # Warn if the format string requires an unsigned argument and the argument is signed and vice versa
     '-Wformat-signedness',
@@ -97,9 +97,6 @@ warning_disable = [
 
     # Warn if a structure’s initializer has some fields missing. Disable so we can initialize with {0}.
     '-Wno-missing-field-initializers',
-
-    # Warn when a switch case falls through. Disable because this an useful aspect of switches and tests should catch problems.
-    '-Wno-implicit-fallthrough',
 ]
 
 add_project_arguments(cc.get_supported_arguments(warning_enable, warning_disable), language: 'c')

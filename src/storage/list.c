@@ -138,6 +138,8 @@ storageLstInsert(StorageList *const this, const unsigned int idx, const StorageI
                     listInfo.detail.linkDestination = blbAdd(
                         this->blob, strZ(info->linkDestination), strSize(info->linkDestination) + 1);
                 }
+
+                __attribute__((fallthrough));
             }
 
             case storageInfoLevelBasic:
@@ -147,10 +149,13 @@ storageLstInsert(StorageList *const this, const unsigned int idx, const StorageI
 
                 if (info->versionId != NULL)
                     listInfo.basic.versionId = blbAdd(this->blob, strZ(info->versionId), strSize(info->versionId) + 1);
+
+                __attribute__((fallthrough));
             }
 
             case storageInfoLevelType:
                 listInfo.type.type = info->type;
+                __attribute__((fallthrough));
 
             default:
                 break;
@@ -195,6 +200,8 @@ storageLstGet(const StorageList *const this, const unsigned int idx)
 
             if (listInfo->detail.linkDestination != NULL)
                 result.linkDestination = strCatZ(strTrunc(this->linkDestination), listInfo->detail.linkDestination);
+
+            __attribute__((fallthrough));
         }
 
         case storageInfoLevelBasic:
@@ -204,10 +211,13 @@ storageLstGet(const StorageList *const this, const unsigned int idx)
 
             if (listInfo->basic.versionId != NULL)
                 result.versionId = strCatZ(strTrunc(this->versionId), listInfo->basic.versionId);
+
+            __attribute__((fallthrough));
         }
 
         case storageInfoLevelType:
             result.type = listInfo->type.type;
+            __attribute__((fallthrough));
 
         default:
             break;
