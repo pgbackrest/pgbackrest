@@ -1102,11 +1102,12 @@ hrnHostConfigUpdate(const HrnHostConfigUpdateParam param)
 /**********************************************************************************************************************************/
 // Helper to run a host
 static HrnHost *
-hrnHostBuildRun(const int line, const StringId id)
+hrnHostBuildRun(const int line, const StringId id, const String *const image)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(INT, line);
         FUNCTION_HARNESS_PARAM(STRING_ID, id);
+        FUNCTION_HARNESS_PARAM(STRING, image);
     FUNCTION_HARNESS_END();
 
     HrnHost *result;
@@ -1117,7 +1118,6 @@ hrnHostBuildRun(const int line, const StringId id)
         const bool isPg = strBeginsWithZ(name, "pg");
         const bool isRepo = id == hrnHostLocal.repoHost;
         const String *const container = strNewFmt("test-%u-%s", testIdx(), strZ(name));
-        const String *const image = strNewFmt("pgbackrest/test:%s-test-%s", testVm(), testArchitecture());
         const String *const dataPath = strNewFmt("%s/%s", testPath(), strZ(name));
         String *const option = strNewFmt(
             "-v '%s/cfg:/etc/pgbackrest:ro' -v '%s:/usr/bin/pgbackrest:ro' -v '%s:%s:ro'", strZ(dataPath), testProjectExe(),
@@ -1231,11 +1231,13 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
         hrnHostLocal.nonVersionSpecific);
 
     // Create pg hosts
-    hrnHostBuildRun(line, HRN_HOST_PG1);
-    HrnHost *const pg2 = hrnHostBuildRun(line, HRN_HOST_PG2);
+    const String *const image = strNewFmt("pgbackrest/test:%s-test-%s", testVm(), testArchitecture());
+
+    hrnHostBuildRun(line, HRN_HOST_PG1, image);
+    HrnHost *const pg2 = hrnHostBuildRun(line, HRN_HOST_PG2, image);
 
     // Create repo host if the destination is repo
-    HrnHost *const repo = hrnHostLocal.repoHost == HRN_HOST_REPO ? hrnHostBuildRun(line, HRN_HOST_REPO) : pg2;
+    HrnHost *const repo = hrnHostLocal.repoHost == HRN_HOST_REPO ? hrnHostBuildRun(line, HRN_HOST_REPO, image) : pg2;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -1317,9 +1319,7 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
 
                     MEM_CONTEXT_PRIOR_BEGIN()
                     {
-                        hrnHostNewP(
-                            HRN_HOST_SFTP, containerName, strNewFmt("pgbackrest/test:%s-test-x86_64", testVm()),
-                            .noUpdateHosts = true);
+                        hrnHostNewP(HRN_HOST_SFTP, containerName, hrnHostImage(pg2), .noUpdateHosts = true);
                     }
                     MEM_CONTEXT_PRIOR_END();
 
