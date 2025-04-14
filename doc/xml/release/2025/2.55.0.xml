@@ -93,6 +93,17 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2603"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p><proper>PostgreSQL</proper> 18 experimental support.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2529"/>
                 <github-pull-request id="2535"/>
 
