@@ -497,13 +497,17 @@ sub containerBuild
                     $strScript .=
                         "    echo \"deb http://apt.postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg main" .
                             "\" >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
+                        ($strOS eq VM_U22 ?
+                            "    echo \"deb http://apt.postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg-snapshot main" .
+                            " 18\" >> /etc/apt/sources.list.d/pgdg.list && \\\n" : '') .
                         "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
                         "    apt-get update && \\\n";
                 }
 
                 $strScript .=
-                    "    apt-get install -y --no-install-recommends postgresql-common libpq-dev && \\\n" .
-                    "    sed -i 's/^\\#create\\_main\\_cluster.*\$/create\\_main\\_cluster \\= false/' " .
+                    "    apt-get install -y --no-install-recommends" .
+                    ($strOS eq VM_U22 ? " -t \$(lsb_release -s -c)-pgdg-snapshot" : '') . " postgresql-common libpq-dev && \\\n" .
+                     "    sed -i 's/^\\#create\\_main\\_cluster.*\$/create\\_main\\_cluster \\= false/' " .
                         "/etc/postgresql-common/createcluster.conf";
             }
 
@@ -518,8 +522,10 @@ sub containerBuild
                 }
                 else
                 {
-                    $strScript .= "    apt-get install -y --no-install-recommends";
-                 }
+                    $strScript .=
+                       "    apt-get install -y --no-install-recommends" .
+                        ($strOS eq VM_U22 ? " -t \$(lsb_release -s -c)-pgdg-snapshot" : '');
+                  }
 
                 # Construct list of databases to install
                 foreach my $strDbVersion (@{$oOS->{&VM_DB}})

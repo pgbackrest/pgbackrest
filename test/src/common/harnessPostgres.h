@@ -44,6 +44,8 @@ System id constants by version
 #define HRN_PG_SYSTEMID_16_Z                                        "10000000000000160000"
 #define HRN_PG_SYSTEMID_17                                          (10000000000000000000ULL + (uint64_t)PG_VERSION_17)
 #define HRN_PG_SYSTEMID_17_Z                                        "10000000000000170000"
+#define HRN_PG_SYSTEMID_18                                          (10000000000000000000ULL + (uint64_t)PG_VERSION_18)
+#define HRN_PG_SYSTEMID_18_Z                                        "10000000000000180000"
 
 /***********************************************************************************************************************************
 Put a control file to storage
