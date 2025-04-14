@@ -288,6 +288,17 @@
 
         <release-improvement-list>
             <release-item>
+                <github-pull-request id="2601"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="greg.clough"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Clarify incremental backup expiration.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2541"/>
 
                 <release-item-contributor-list>
