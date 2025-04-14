@@ -13,16 +13,16 @@
 # - DATE=YYYYMMDDX;VM=X;ARCH=X;BASE=pgbackrest/test:${VM?}-base-${ARCH?};docker tag ${BASE?} ${BASE?}-${DATE?} && docker push ${BASE?}-${DATE?}
 # **********************************************************************************************************************************
 20250413A:
+  ppc64le:
+    u22: a07ecf5a76b633c1c0c54ba4a836ed4c19f710b6
+
+  s390x:
+    u22: 535e05dc96aa24dd93b8801ed213c13d9d7a0ee4
+
   x86_64:
     u22: 3a2bd0b5842fd97cf4f67ecc990816efc78cb799
 
 20250228A:
-  ppc64le:
-    u22: 28fa02cb370bbdacadf984afb215d3973ed5ab3e
-
-  s390x:
-    u22: f3e108dd7f808f6b0e82eadcfd72f585a7632530
-
   x86_64:
     d11: 01e6970744c2b2529a14832e92cb861c7da94308
     f41: ce870455184e991e0efd90176da1412f0f3f72a2
