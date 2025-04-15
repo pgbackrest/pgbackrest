@@ -239,7 +239,7 @@ eval
         {
             &log(INFO, "Generate RHEL documentation");
 
-            executeTest("${strDocExe} --deploy --key-var=os-type=rhel --out=pdf", {bShowOutputAsync => true});
+            executeTest("${strDocExe} --deploy --key-var=os-type=rhel --out=html", {bShowOutputAsync => true});
 
             if (!defined($strVm))
             {

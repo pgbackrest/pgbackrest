@@ -2264,8 +2264,17 @@
                 <exe-cmd>rm {[postgres-log-demo]}</exe-cmd>
             </execute>
 
-            <execute if="{[pg-version]} &gt; 12" user="root" output="y" err-expect="1">
+            <execute if="{[pg-version]} &gt; 12 &amp;&amp; {[os-type-is-debian]}" user="root" output="y" err-expect="1">
                 <exe-cmd>{[pg-cluster-start]}</exe-cmd>
+                <exe-highlight>recovery ended before configured recovery target was reached</exe-highlight>
+            </execute>
+
+            <execute if="{[pg-version]} &gt; 12 &amp;&amp; {[os-type-is-rhel]}" user="root" err-expect="1">
+                <exe-cmd>{[pg-cluster-start]}</exe-cmd>
+            </execute>
+
+            <execute if="{[pg-version]} &gt; 12 &amp;&amp; {[os-type-is-rhel]}" user="postgres" output="y">
+                <exe-cmd>cat {[postgres-log-demo]}</exe-cmd>
                 <exe-highlight>recovery ended before configured recovery target was reached</exe-highlight>
             </execute>
 
