@@ -310,6 +310,17 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2605"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add FAQ about exporting self-contained cluster.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2538"/>
 
                 <release-item-contributor-list>
