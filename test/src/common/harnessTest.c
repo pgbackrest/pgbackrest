@@ -686,7 +686,7 @@ hrnTestResultZ(const char *actual, const char *expected, HarnessTestResultOperat
         case harnessTestResultOperationNe:
             result =
                 (actual == NULL && expected != NULL) || (actual != NULL && expected == NULL) ||
-                (actual != NULL && expected != NULL && strcmp(actual, expected) == 0);
+                (actual != NULL && expected != NULL && strcmp(actual, expected) != 0);
             break;
     }
 

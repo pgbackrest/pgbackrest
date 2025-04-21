@@ -408,13 +408,16 @@
                 <commit subject="Fix test logging in storageHelperDryRunInit().">
                     <github-pull-request id="2597"/>
                 </commit>
+                <commit subject="Fix incorrect not-equal comparison in TEST_RESULT_Z_NE().">
+                    <github-pull-request id="2608"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="yegor.zhmak"/>
                     <release-item-reviewer id="david.steele"/>
                 </release-item-contributor-list>
 
-                <p>Fix test logging and comments in unit tests.</p>
+                <p>Fix tests, logging, and comments in unit tests.</p>
             </release-item>
         </release-development-list>
     </release-test-list>
