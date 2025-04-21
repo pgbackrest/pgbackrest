@@ -4,7 +4,7 @@
 
 pgBackRest is a reliable backup and restore solution for PostgreSQL that seamlessly scales up to the largest databases and workloads.
 
-pgBackRest [v2.54.2](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.54.2) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
+pgBackRest [v2.55.0](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.55.0) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
 
 Please give us a star on [GitHub](https://github.com/pgbackrest/pgbackrest) if you like pgBackRest!
 

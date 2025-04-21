@@ -50,8 +50,8 @@ git push origin release-ci
 
 - Prepare Coverity build directory (update version/paths as required):
 ```
-mkdir scratch-coverity
-tar -xvf ~/Downloads/cov-analysis-linux-arm64-2024.6.1.tar.gz --strip-components=1 -C ~/Documents/Code/pgbackrest/test/
+mkdir coverity
+tar -xvf ~/Downloads/cov-analysis-linux-arm64-2024.6.1.tar.gz --strip-components=1 -C ~/coverity
 export COVERITY_TOKEN=?
 export COVERITY_EMAIL=?
 export COVERITY_VERSION=?
@@ -61,7 +61,7 @@ export COVERITY_VERSION=?
 ```
 rm -rf .cache/ccache && rm -rf build && rm -rf pgbackrest.tgz && rm -rf cov-int
 meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug build pgbackrest
-pgbackrest/test/scratch-coverity/bin/cov-build --dir cov-int ninja -C build
+coverity/bin/cov-build --dir cov-int ninja -C build
 tar czvf pgbackrest.tgz cov-int
 ```
 
