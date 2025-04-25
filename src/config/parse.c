@@ -614,7 +614,7 @@ cfgParseOption(const String *const optionCandidate, const CfgParseOptionParam pa
             optionNameSize -= (size_t)(dashPtr - numberPtr);
             memmove(numberPtr, dashPtr, optionNameSize + 1);
 
-            // Check that the index does not exceed the maximum
+            // Check that the index is within bounds
             if (result.keyIdx < 1 || result.keyIdx > CFG_OPTION_KEY_MAX)
             {
                 THROW_FMT(

@@ -831,7 +831,7 @@ testRun(void)
             "option 'pg0-path' key must be between 1 and 256");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error if option great than key max");
+        TEST_TITLE("error if option greater than key max");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
