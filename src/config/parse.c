@@ -615,10 +615,11 @@ cfgParseOption(const String *const optionCandidate, const CfgParseOptionParam pa
             memmove(numberPtr, dashPtr, optionNameSize + 1);
 
             // Check that the index does not exceed the maximum
-            if (result.keyIdx > CFG_OPTION_KEY_MAX)
+            if (result.keyIdx < 1 || result.keyIdx > CFG_OPTION_KEY_MAX)
             {
                 THROW_FMT(
-                    OptionInvalidError, "option '%s' key exceeds maximum of " STRINGIFY(CFG_OPTION_KEY_MAX), strZ(optionCandidate));
+                    OptionInvalidError, "option '%s' key must be between 1 and " STRINGIFY(CFG_OPTION_KEY_MAX),
+                    strZ(optionCandidate));
             }
 
             // Subtract one to represent a key index
