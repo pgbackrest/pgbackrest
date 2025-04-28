@@ -85,7 +85,7 @@
         "commit": "20bfd14b73ad6d75b6fb1169565b18dcfa183c9b",
         "date": "2025-04-09 12:27:27 -0500",
         "subject": "Calculate content-md5 on S3 only when required.",
-        "body": "The content-md5 header was generated for all requests with content but it is only required for batch delete requests. It is not clear why this header is required when x-amz-content-sha256 is also provided or why it\nis required only for this request but the documentation is clear on the matter. However, the content for these requests is relatively small compared to uploading files so omitting content-md5 where possible will\nsave some CPU cycles.\n\nCurrent AWS S3 and recent Minio don't complain if this header is missing but since it is still required by older versions of Minio and it is specified in the documentation for batch delete it is makes sense to\nkeep it."
+        "body": "The content-md5 header was generated for all requests with content but it is only required for batch delete requests. It is not clear why this header is required when x-amz-content-sha256 is also provided or why it is required only for this request but the documentation is clear on the matter. However, the content for these requests is relatively small compared to uploading files so omitting content-md5 where possible will\nsave some CPU cycles.\n\nCurrent AWS S3 and recent Minio don't complain if this header is missing but since it is still required by older versions of Minio and it is specified in the documentation for batch delete it is makes sense to\nkeep it."
     },
     {
         "commit": "c925832e1737f1b5cac347c482a725a87f2237cb",
