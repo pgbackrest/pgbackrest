@@ -476,8 +476,9 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
             param.content == NULL || bufEmpty(param.content) ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
 
         // Calculate x-amz-checksum-sha256 header (will also be used for authentication)
-        const Buffer *const contentSha256 = param.content == NULL || bufEmpty(param.content) ?
-            HASH_TYPE_SHA256_ZERO_BUF : cryptoHashOne(hashTypeSha256, param.content);
+        const Buffer *const contentSha256 =
+            param.content == NULL || bufEmpty(param.content) ?
+                HASH_TYPE_SHA256_ZERO_BUF : cryptoHashOne(hashTypeSha256, param.content);
 
         if (param.content != NULL)
             httpHeaderAdd(requestHeader, S3_HEADER_CHECKSUM_SHA256_STR, strNewEncode(encodingBase64, contentSha256));

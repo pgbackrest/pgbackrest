@@ -134,8 +134,8 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
     if (s3 != NULL)
     {
         // Add sha256
-        const Buffer *const contentSha256 = param.content == NULL ?
-            HASH_TYPE_SHA256_ZERO_BUF : cryptoHashOne(hashTypeSha256, BUFSTRZ(param.content));
+        const Buffer *const contentSha256 =
+            param.content == NULL ? HASH_TYPE_SHA256_ZERO_BUF : cryptoHashOne(hashTypeSha256, BUFSTRZ(param.content));
 
         if (param.content != NULL)
             strCatFmt(request, "x-amz-checksum-sha256:%s\r\n", strZ(strNewEncode(encodingBase64, contentSha256)));
