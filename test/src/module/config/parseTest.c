@@ -821,14 +821,24 @@ testRun(void)
             "option 'reset-force' cannot be reset");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error if option exceeds key max");
+        TEST_TITLE("error if option less than key min");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg0-path=/dude");
+        TEST_ERROR(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
+            "option 'pg0-path' key must be between 1 and 256");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error if option greater than key max");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
         strLstAddZ(argList, "--pg257-path");
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
-            "option 'pg257-path' key exceeds maximum of 256");
+            "option 'pg257-path' key must be between 1 and 256");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error if option begins with a number");
