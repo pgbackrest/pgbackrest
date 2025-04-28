@@ -77,6 +77,9 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
         if (param.range != NULL)
             strCatZ(request, "range;");
 
+        if (param.content != NULL)
+            strCatZ(request, "x-amz-checksum-sha256;");
+
         strCatZ(request, "x-amz-content-sha256;x-amz-date");
 
         if (param.requesterPays)
@@ -130,13 +133,19 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
     // Add content checksum and date if s3 service
     if (s3 != NULL)
     {
+        // Add sha256
+        const Buffer *const contentSha256 = param.content == NULL ?
+            HASH_TYPE_SHA256_ZERO_BUF : cryptoHashOne(hashTypeSha256, BUFSTRZ(param.content));
+
+        if (param.content != NULL)
+            strCatFmt(request, "x-amz-checksum-sha256:%s\r\n", strZ(strNewEncode(encodingBase64, contentSha256)));
+
         // Add content sha256 and date
         strCatFmt(
             request,
             "x-amz-content-sha256:%s\r\n"
             "x-amz-date:????????T??????Z" "\r\n",
-            param.content == NULL ?
-                HASH_TYPE_SHA256_ZERO : strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha256, BUFSTRZ(param.content)))));
+            strZ(strNewEncode(encodingHex, contentSha256)));
 
         // Add security token
         if (securityToken != NULL)
@@ -871,6 +880,7 @@ testRun(void)
                     "authorization: <redacted>\n"
                     "content-length: 205\n"
                     "host: bucket.s3.amazonaws.com\n"
+                    "x-amz-checksum-sha256: CDinnfvdwhKNKPtPqNYF4Kjm0TVQlAAPObbrP+/0ZB8=\n"
                     "x-amz-content-sha256: 0838a79dfbddc2128d28fb4fa8d605e0a8e6d1355094000f39b6eb3feff4641f\n"
                     "x-amz-date: <redacted>\n"
                     "x-amz-security-token: <redacted>\n"

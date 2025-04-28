@@ -28,6 +28,7 @@ Defaults
 /***********************************************************************************************************************************
 S3 HTTP headers
 ***********************************************************************************************************************************/
+STRING_STATIC(S3_HEADER_CHECKSUM_SHA256_STR,                        "x-amz-checksum-sha256");
 STRING_STATIC(S3_HEADER_CONTENT_SHA256_STR,                         "x-amz-content-sha256");
 STRING_STATIC(S3_HEADER_DATE_STR,                                   "x-amz-date");
 STRING_STATIC(S3_HEADER_TOKEN_STR,                                  "x-amz-security-token");
@@ -474,6 +475,13 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
             requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
             param.content == NULL || bufEmpty(param.content) ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
 
+        // Calculate x-amz-checksum-sha256 header (will also be used for authentication)
+        const Buffer *const contentSha256 = param.content == NULL || bufEmpty(param.content) ?
+            HASH_TYPE_SHA256_ZERO_BUF : cryptoHashOne(hashTypeSha256, param.content);
+
+        if (param.content != NULL)
+            httpHeaderAdd(requestHeader, S3_HEADER_CHECKSUM_SHA256_STR, strNewEncode(encodingBase64, contentSha256));
+
         // Calculate content-md5 header when required
         if (param.contentMd5)
         {
@@ -552,10 +560,7 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
         // Generate authorization header
         storageS3Auth(
             this, verb, path, param.query, strNewTimeP("%Y%m%dT%H%M%SZ", time(NULL), .utc = true), requestHeader,
-            strNewEncode(
-                encodingHex,
-                param.content == NULL || bufEmpty(param.content) ?
-                    HASH_TYPE_SHA256_ZERO_BUF : cryptoHashOne(hashTypeSha256, param.content)));
+            strNewEncode(encodingHex, contentSha256));
 
         // Send request
         MEM_CONTEXT_PRIOR_BEGIN()
