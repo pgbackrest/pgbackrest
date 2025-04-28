@@ -9,6 +9,7 @@
                     <release-item-ideator id="wolfgang.walther"/>
                     <release-item-contributor id="david.steele"/>
                     <release-item-reviewer id="david.christensen"/>
+                    <release-item-reviewer id="wolfgang.walther"/>
                 </release-item-contributor-list>
 
                 <p>Fix lower bounds checking for option keys.</p>
