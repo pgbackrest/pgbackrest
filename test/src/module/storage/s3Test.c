@@ -34,7 +34,6 @@ typedef struct TestRequestParam
     const char *token;
     const char *tag;
     bool requesterPays;
-    bool contentMd5;
 } TestRequestParam;
 
 #define testRequestP(write, s3, verb, path, ...)                                                                                   \
@@ -69,7 +68,7 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
             "authorization:AWS4-HMAC-SHA256 Credential=%s/\?\?\?\?\?\?\?\?/us-east-1/s3/aws4_request,SignedHeaders=",
             param.accessKey == NULL ? strZ(driver->accessKey) : param.accessKey);
 
-        if (param.contentMd5)
+        if (param.content != NULL)
             strCatZ(request, "content-md5;");
 
         strCatZ(request, "host;");
@@ -106,7 +105,7 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
     strCatFmt(request, "content-length:%zu\r\n", param.content != NULL ? strlen(param.content) : 0);
 
     // Add md5
-    if (param.contentMd5)
+    if (param.content != NULL)
     {
         strCatFmt(
             request, "content-md5:%s\r\n", strZ(strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, BUFSTRZ(param.content)))));
@@ -870,6 +869,7 @@ testRun(void)
                     "*** Request Headers ***:\n"
                     "authorization: <redacted>\n"
                     "content-length: 205\n"
+                    "content-md5: 37smUM6Ah2/EjZbp420dPw==\n"
                     "host: bucket.s3.amazonaws.com\n"
                     "x-amz-content-sha256: 0838a79dfbddc2128d28fb4fa8d605e0a8e6d1355094000f39b6eb3feff4641f\n"
                     "x-amz-date: <redacted>\n"
@@ -1317,7 +1317,7 @@ testRun(void)
                         "</ListBucketResult>");
 
                 testRequestP(
-                    service, s3, HTTP_VERB_POST, "/bucket/?delete=", .contentMd5 = true,
+                    service, s3, HTTP_VERB_POST, "/bucket/?delete=",
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<Delete><Quiet>true</Quiet>"
@@ -1378,7 +1378,7 @@ testRun(void)
                         "</ListBucketResult>");
 
                 testRequestP(
-                    service, s3, HTTP_VERB_POST, "/bucket/?delete=", .contentMd5 = true,
+                    service, s3, HTTP_VERB_POST, "/bucket/?delete=",
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<Delete><Quiet>true</Quiet>"
@@ -1388,7 +1388,7 @@ testRun(void)
                 testResponseP(service);
 
                 testRequestP(
-                    service, s3, HTTP_VERB_POST, "/bucket/?delete=", .contentMd5 = true,
+                    service, s3, HTTP_VERB_POST, "/bucket/?delete=",
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<Delete><Quiet>true</Quiet>"
@@ -1417,7 +1417,7 @@ testRun(void)
                         "</ListBucketResult>");
 
                 testRequestP(
-                    service, s3, HTTP_VERB_POST, "/bucket/?delete=", .contentMd5 = true,
+                    service, s3, HTTP_VERB_POST, "/bucket/?delete=",
                     .content =
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                         "<Delete><Quiet>true</Quiet>"
