@@ -388,6 +388,11 @@
     <contributor-id type="github">fmbiete</contributor-id>
 </contributor>
 
+<contributor id="frank.brendel">
+    <contributor-name-display>Frank Brendel</contributor-name-display>
+    <contributor-id type="github">fbrendel</contributor-id>
+</contributor>
+
 <contributor id="floris.van.nee">
     <contributor-name-display>Floris van Nee</contributor-name-display>
     <contributor-id type="github">fvannee</contributor-id>
