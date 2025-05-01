@@ -1,5 +1,10 @@
 [
     {
+        "commit": "6c90196e74ef0da38568f08fd7cb234d10130e79",
+        "date": "2025-04-21 18:25:00 -0400",
+        "subject": "v2.55.0: Verification Improvements and PostgreSQL 18 Support"
+    },
+    {
         "commit": "4bb7cb1ac65a135e3f311ef288f2ad946493266b",
         "date": "2025-04-21 09:02:56 -0400",
         "subject": "Fix incorrect not-equal comparison in TEST_RESULT_Z_NE().",
