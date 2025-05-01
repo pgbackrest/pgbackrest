@@ -178,6 +178,8 @@ Deploy the documentation on `pgbackrest.org`.
 
 ## Notify packagers of new release
 
+Notify the Debian packagers by email and RHEL packagers at https://github.com/pgdg-packaging/pgdg-rpms/issues.
+
 ## Announce release on Twitter
 
 ## Publish a postgresql.org news item when there are major new features
