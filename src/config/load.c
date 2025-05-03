@@ -388,7 +388,7 @@ cfgLoadUpdateOption(void)
         }
     }
 
-    // Error if repo-sftp--host-key-check-type is explicitly set to anything other than fingerprint and repo-sftp-host-fingerprint
+    // Error if repo-sftp-host-key-check-type is explicitly set to anything other than fingerprint and repo-sftp-host-fingerprint
     // is also specified. For backward compatibility we need to allow repo-sftp-host-fingerprint when
     // repo-sftp-host-key-check-type defaults to yes, but emit a warning to let the user know to change the configuration. Also
     // set repo-sftp-host-key-check-type=fingerprint so other code does not need to know about this exception.
