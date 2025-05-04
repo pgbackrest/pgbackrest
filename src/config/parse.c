@@ -2643,16 +2643,8 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                     // Else try to set a default
                     else
                     {
-                        bool found = false;
-
-                        MEM_CONTEXT_BEGIN(config->memContext)
-                        {
-                            found = cfgParseOptionalRule(&optionalRules, parseRuleOptionalTypeDefault, config->command, optionId);
-                        }
-                        MEM_CONTEXT_END();
-
                         // If the option has a default
-                        if (found)
+                        if (cfgParseOptionalRule(&optionalRules, parseRuleOptionalTypeDefault, config->command, optionId))
                         {
                             configOptionValue->set = true;
                             configOptionValue->value = optionalRules.defaultValue;
