@@ -303,8 +303,8 @@ typedef struct BldCfgOptionRaw
     const Variant *required;
     const Variant *negate;
     bool reset;
+    DefaultType defaultType;
     const String *defaultValue;
-    bool defaultLiteral;
     const String *group;
     bool secure;
     const BldCfgOptionDependRaw *depend;
@@ -834,7 +834,7 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                     else if (strEqZ(optDef.value, "default-type"))
                     {
                         if (strEqZ(optDefVal.value, "literal"))
-                            optRaw.defaultLiteral = true;
+                            optRaw.defaultType = defaultTypeLiteral;
                         else
                         {
                             THROW_FMT(
@@ -968,8 +968,8 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                     .required = varBool(optRaw->required),
                     .negate = varBool(optRaw->negate),
                     .reset = optRaw->reset,
+                    .defaultType = optRaw->defaultType,
                     .defaultValue = strDup(optRaw->defaultValue),
-                    .defaultLiteral = optRaw->defaultLiteral,
                     .group = strDup(optRaw->group),
                     .secure = optRaw->secure,
                     .allowList = bldCfgParseAllowListDup(optRaw->allowList),

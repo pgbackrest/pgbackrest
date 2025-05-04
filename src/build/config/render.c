@@ -499,7 +499,7 @@ bldCfgRenderAllowList(const List *const allowList, const String *const optType)
 // Helper to render default
 static String *
 bldCfgRenderDefault(
-    const String *const defaultValue, const bool defaultLiteral, const String *const optType)
+    const String *const defaultValue, const DefaultType defaultType, const String *const optType)
 {
     ASSERT(defaultValue != NULL);
     ASSERT(optType != NULL);
@@ -520,8 +520,8 @@ bldCfgRenderDefault(
             "                    %s,\n",
             strZ(
                 bldCfgRenderScalar(
-                    strNewFmt("%s%s%s", defaultLiteral ? "" : "\"", strZ(defaultValue), defaultLiteral ? "" : "\""),
-                    OPT_TYPE_STRING_STR)));
+                    strNewFmt("%s%s%s", defaultType == defaultTypeLiteral ? "" : "\"", strZ(defaultValue),
+                    defaultType == defaultTypeLiteral ? "" : "\""), OPT_TYPE_STRING_STR)));
     }
 
     strCatZ(result, "                )");
@@ -533,7 +533,7 @@ bldCfgRenderDefault(
 #define BLD_CFG_RENDER_VALUE_MAP_MAX                                UINT8_MAX
 
 static void
-bldCfgRenderValueAdd(const String *optType, const bool literal, const String *const value, KeyValue *const ruleValMap)
+bldCfgRenderValueAdd(const String *optType, const DefaultType defaultType, const String *const value, KeyValue *const ruleValMap)
 {
     ASSERT(!strEq(optType, OPT_TYPE_BOOLEAN_STR) && !strEq(optType, OPT_TYPE_HASH_STR) && !strEq(optType, OPT_TYPE_LIST_STR));
 
@@ -542,7 +542,8 @@ bldCfgRenderValueAdd(const String *optType, const bool literal, const String *co
         optType = OPT_TYPE_STRING_STR;
 
     // Generate string value
-    const String *const valueStr = strNewFmt("%s%s%s", literal ? "" : "\"", strZ(value), literal ? "" : "\"");
+    const String *const valueStr = strNewFmt(
+        "%s%s%s", defaultType == defaultTypeLiteral ? "" : "\"", strZ(value), defaultType == defaultTypeLiteral ? "" : "\"");
 
     // Add values other than strings
     if (!strEq(optType, OPT_TYPE_STRING_STR))
@@ -978,10 +979,10 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
 
         if (opt->defaultValue != NULL)
         {
-            kvAdd(optionalDefaultRule, ruleDefault, VARSTR(bldCfgRenderDefault(opt->defaultValue, opt->defaultLiteral, opt->type)));
+            kvAdd(optionalDefaultRule, ruleDefault, VARSTR(bldCfgRenderDefault(opt->defaultValue, opt->defaultType, opt->type)));
 
             if (!strEq(opt->type, OPT_TYPE_BOOLEAN_STR))
-                bldCfgRenderValueAdd(opt->type, opt->defaultLiteral, opt->defaultValue, ruleValMap);
+                bldCfgRenderValueAdd(opt->type, opt->defaultType, opt->defaultValue, ruleValMap);
         }
 
         // Build command optional rules
@@ -1013,10 +1014,10 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
             {
                 kvAdd(
                     optionalCmdRuleType, ruleDefault,
-                    VARSTR(bldCfgRenderDefault(optCmd->defaultValue, opt->defaultLiteral, opt->type)));
+                    VARSTR(bldCfgRenderDefault(optCmd->defaultValue, opt->defaultType, opt->type)));
 
                 if (!strEq(opt->type, OPT_TYPE_BOOLEAN_STR))
-                    bldCfgRenderValueAdd(opt->type, opt->defaultLiteral, optCmd->defaultValue, ruleValMap);
+                    bldCfgRenderValueAdd(opt->type, opt->defaultType, optCmd->defaultValue, ruleValMap);
             }
 
             // Requires
