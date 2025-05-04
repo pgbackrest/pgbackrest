@@ -831,9 +831,15 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                         else
                             optRaw.defaultValue = optDefVal.value;
                     }
-                    else if (strEqZ(optDef.value, "default-literal"))
+                    else if (strEqZ(optDef.value, "default-type"))
                     {
-                        optRaw.defaultLiteral = yamlBoolParse(optDefVal);
+                        if (strEqZ(optDefVal.value, "literal"))
+                            optRaw.defaultLiteral = true;
+                        else
+                        {
+                            THROW_FMT(
+                                FormatError, "option '%s' has invalid default type '%s'", strZ(optRaw.name), strZ(optDefVal.value));
+                        }
                     }
                     else if (strEqZ(optDef.value, "group"))
                     {
