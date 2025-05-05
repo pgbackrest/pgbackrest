@@ -1,5 +1,27 @@
 [
     {
+        "commit": "8bbb98243566bfa052f6aacfd1bd3a6acd770e40",
+        "date": "2025-05-01 13:22:15 -0400",
+        "subject": "Revert \"calculate content-md5 on S3 only when required\".",
+        "body": "20bfd14 removed content-md5 where allowed by the specification but failed to notice that either content-md5 or x-amz-content-* is required for PUT when object lock is enabled.\n\nOn top of that it appears Scality S3 (at least?) won't accept alternate content checksums when object lock is enabled. Technically this is a violation of the specification but nonetheless the change breaks working installations.\n\nFor now it seems safer to revert this change and pursue a better solution for a future feature release."
+    },
+    {
+        "commit": "5e01098617a3803067b153be2d41e023cd4d95e4",
+        "date": "2025-05-01 13:06:18 -0400",
+        "subject": "Fix lower bounds checking for option keys.",
+        "body": "Specifying an indexed option with a key of 0, e.g. pg0-path, would lead to a segfault.\n\nAdd lower bounds checking to fix the issue."
+    },
+    {
+        "commit": "293bc2a75d5cbe364f443bb87a998d76e4618ac2",
+        "date": "2025-05-01 12:53:05 -0400",
+        "subject": "Add details about notifying packagers to release instructions."
+    },
+    {
+        "commit": "6c0e21292629efaf53e513c5badc0824a10a1e79",
+        "date": "2025-05-01 12:38:37 -0400",
+        "subject": "Begin v2.55.1 development."
+    },
+    {
         "commit": "6c90196e74ef0da38568f08fd7cb234d10130e79",
         "date": "2025-04-21 18:25:00 -0400",
         "subject": "v2.55.0: Verification Improvements and PostgreSQL 18 Support"

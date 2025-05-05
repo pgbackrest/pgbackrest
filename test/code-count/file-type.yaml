@@ -663,6 +663,10 @@ doc/xml/release/2025/2.55.0.xml:
   class: doc/source
   type: xml
 
+doc/xml/release/2025/2.55.1.xml:
+  class: doc/source
+  type: xml
+
 doc/xml/release/contributor.xml:
   class: doc/source
   type: xml
