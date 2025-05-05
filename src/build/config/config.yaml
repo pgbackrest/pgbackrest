@@ -237,8 +237,6 @@ optionGroup:
 #
 # default-type:
 #   If 'literal' then default a string output it as-is without quoting. This allows C defines to be used as defaults.
-#   if 'special' then default is a specially calculated value:
-#     bin - the value of argv[0] on execution
 #
 # negate:
 #   All config file boolean options automatically may be negated. This setting is used to maintain backward compatibility with older
