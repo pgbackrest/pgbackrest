@@ -260,7 +260,7 @@
 <table-row>
     <table-cell>config</table-cell>
     <table-cell>93/93 (100.0%)</table-cell>
-    <table-cell>1002/1002 (100.0%)</table-cell>
+    <table-cell>1004/1004 (100.0%)</table-cell>
     <table-cell>1625/1625 (100.0%)</table-cell>
 </table-row>
 
@@ -345,7 +345,7 @@
     <table-cell>storage/s3</table-cell>
     <table-cell>29/29 (100.0%)</table-cell>
     <table-cell>186/186 (100.0%)</table-cell>
-    <table-cell>580/580 (100.0%)</table-cell>
+    <table-cell>579/579 (100.0%)</table-cell>
 </table-row>
 
 <table-row>
@@ -358,6 +358,6 @@
 <table-row>
     <table-cell>TOTAL</table-cell>
     <table-cell>1684/1684 (100.0%)</table-cell>
-    <table-cell>10771/10772 (99.99%)</table-cell>
-    <table-cell>25231/25231 (100.0%)</table-cell>
+    <table-cell>10773/10774 (99.99%)</table-cell>
+    <table-cell>25230/25230 (100.0%)</table-cell>
 </table-row>
