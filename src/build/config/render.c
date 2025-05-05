@@ -537,6 +537,10 @@ bldCfgRenderValueAdd(const String *optType, const DefaultType defaultType, const
 {
     ASSERT(!strEq(optType, OPT_TYPE_BOOLEAN_STR) && !strEq(optType, OPT_TYPE_HASH_STR) && !strEq(optType, OPT_TYPE_LIST_STR));
 
+    // Special defaults are calculated at runtime and do not need to be added to a static values list
+    if (defaultType != defaultTypeSpecial)
+        return;
+
     // Remap path to string
     if (strEq(optType, OPT_TYPE_PATH_STR))
         optType = OPT_TYPE_STRING_STR;

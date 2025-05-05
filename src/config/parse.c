@@ -36,6 +36,15 @@ typedef enum
 } ConfigSection;
 
 /***********************************************************************************************************************************
+Default type enum
+***********************************************************************************************************************************/
+typedef enum
+{
+    cfgDefaultTypeNormal,                                           // Normal, i.e. a stored static string
+    cfgDefaultTypeSpecial,                                          // Special, e.g. calculated at runtime
+} ConfigDefaultType;
+
+/***********************************************************************************************************************************
 Standard config file name and old default path and name
 ***********************************************************************************************************************************/
 #define PGBACKREST_CONFIG_ORIG_PATH_FILE                            "/etc/" PROJECT_CONFIG_FILE
@@ -118,6 +127,7 @@ typedef struct ParseRuleOption
 {
     const char *name;                                               // Name
     unsigned int type : 4;                                          // e.g. string, int, boolean
+    unsigned int defaultType : 1;                                   // e.g. normal, special
     bool boolLike : 1;                                              // Option accepts y/n and can be treated as bool?
     bool beta : 1;                                                  // Is the option a beta feature?
     bool negate : 1;                                                // Can the option be negated on the command line?
@@ -162,6 +172,9 @@ typedef enum
 
 #define PARSE_RULE_OPTION_TYPE(typeParam)                                                                                          \
     .type = cfgOptType##typeParam
+
+#define PARSE_RULE_OPTION_DEFAULT_TYPE(defaultTypeParam)                                                                           \
+    .defaultType = cfgDefaultType##defaultTypeParam
 
 #define PARSE_RULE_OPTION_BOOL_LIKE(boolLikeParam)                                                                                 \
     .boolLike = boolLikeParam

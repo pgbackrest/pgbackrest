@@ -835,6 +835,8 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                     {
                         if (strEqZ(optDefVal.value, "literal"))
                             optRaw.defaultType = defaultTypeLiteral;
+                        else if (strEqZ(optDefVal.value, "special"))
+                            optRaw.defaultType = defaultTypeSpecial;
                         else
                         {
                             THROW_FMT(
