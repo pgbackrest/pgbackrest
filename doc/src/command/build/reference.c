@@ -49,7 +49,13 @@ referenceOptionRender(
         const String *const defaultValue =
             optCmdCfg != NULL && optCmdCfg->defaultValue != NULL ? optCmdCfg->defaultValue : optCfg->defaultValue;
 
-        if (defaultValue != NULL)
+        if (optCfg->defaultType == defaultTypeDynamic)
+        {
+            ASSERT(strEqZ(optCfg->defaultValue, "bin"));
+
+            strLstAddZ(blockList, "default: [path of executed pgbackrest binary]");
+        }
+        else if (defaultValue != NULL)
         {
             if (strEq(optCfg->type, OPT_TYPE_BOOLEAN_STR))
                 strLstAddFmt(blockList, "default: %s", strEqZ(defaultValue, "true") ? "y" : "n");

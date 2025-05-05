@@ -800,7 +800,6 @@
                             <p>Required only if the path to the <backrest/> command is different on the local and repository hosts. If not defined, the repository host command will be set the same as the local command.</p>
                         </text>
 
-                        <default>same as local</default>
                         <example>/usr/lib/backrest/bin/pgbackrest</example>
                     </config-key>
 
@@ -1798,7 +1797,6 @@
                             <p>Required only if the path to the <backrest/> command is different on the local and <postgres/> hosts. If not defined, the <postgres/> host command will be set the same as the local command.</p>
                         </text>
 
-                        <default>same as local</default>
                         <example>/usr/lib/backrest/bin/pgbackrest</example>
                     </config-key>
 

@@ -108,7 +108,7 @@ typedef struct CfgParseOptionResult
 FN_EXTERN CfgParseOptionResult cfgParseOption(const String *const optionName, const CfgParseOptionParam param);
 
 // Default value for the option
-FN_EXTERN const String *cfgParseOptionDefault(ConfigCommand commandId, ConfigOption optionId);
+FN_EXTERN const String *cfgParseOptionDefault(ConfigCommand commandId, ConfigOption optionId, const String *defaultDynamicBin);
 
 // Option name from id
 FN_EXTERN const char *cfgParseOptionName(ConfigOption optionId);

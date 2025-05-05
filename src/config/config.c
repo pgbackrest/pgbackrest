@@ -422,49 +422,9 @@ cfgOptionDefault(const ConfigOption optionId)
     ConfigOptionData *const option = &configLocal->option[optionId];
 
     if (option->defaultValue == NULL)
-        option->defaultValue = cfgParseOptionDefault(cfgCommand(), optionId);
+        option->defaultValue = cfgParseOptionDefault(cfgCommand(), optionId, cfgExe());
 
     FUNCTION_TEST_RETURN_CONST(STRING, option->defaultValue);
-}
-
-FN_EXTERN void
-cfgOptionDefaultSet(const ConfigOption optionId, const Variant *defaultValue)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-        FUNCTION_TEST_PARAM(VARIANT, defaultValue);
-    FUNCTION_TEST_END();
-
-    ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(cfgInited());
-    ASSERT(configLocal->option[optionId].valid);
-    ASSERT(cfgParseOptionDataType(optionId) == cfgOptDataTypeString);
-
-    MEM_CONTEXT_BEGIN(configLocal->memContext)
-    {
-        // Duplicate into this context
-        defaultValue = varDup(defaultValue);
-
-        // Set the default value
-        ConfigOptionData *const option = &configLocal->option[optionId];
-        option->defaultValue = varStr(defaultValue);
-
-        // Copy the value to option indexes that are marked as default so the default can be retrieved quickly
-        for (unsigned int optionIdx = 0; optionIdx < cfgOptionIdxTotal(optionId); optionIdx++)
-        {
-            ConfigOptionValue *const optionValue = &option->index[optionIdx];
-
-            if (optionValue->source == cfgSourceDefault)
-            {
-                optionValue->set = true;
-                optionValue->value.string = varStr(defaultValue);
-                optionValue->display = NULL;
-            }
-        }
-    }
-    MEM_CONTEXT_END();
-
-    FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
