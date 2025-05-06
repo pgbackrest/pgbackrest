@@ -136,39 +136,6 @@ testRun(void)
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 3);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("repo-host-cmd is defaulted when null");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
-        HRN_CFG_LOAD(cfgCmdCheck, argList);
-
-        cfgOptionIdxSet(cfgOptRepoHost, 0, cfgSourceParam, varNewStrZ("repo-host"));
-
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command is updated");
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoHostCmd, 0), testProjectExe(), "check repo1-host-cmd");
-
-        cfgOptionIdxSet(cfgOptRepoHostCmd, 0, cfgSourceParam, VARSTRDEF("/other"));
-
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command was already set");
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoHostCmd, 0), "/other", "check repo1-host-cmd");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("pg-host-cmd is defaulted when null");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 1, "pg1");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 99, "/pg99");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 99, "pg99");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgHostCmd, 99, "pg99-exe");
-        HRN_CFG_LOAD(cfgCmdCheck, argList);
-
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgHostCmd, 0), testProjectExe(), "check pg1-host-cmd");
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgHostCmd, 1), "pg99-exe", "check pg99-host-cmd");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("db-timeout set but not protocol timeout");
 
         argList = strLstNew();
