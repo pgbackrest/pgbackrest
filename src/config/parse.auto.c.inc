@@ -3954,7 +3954,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_NAME("pg-host-config-include-path"),                                    // opt/pg-host-config-include-path
         PARSE_RULE_OPTION_TYPE(Path),                                                             // opt/pg-host-config-include-path
         PARSE_RULE_OPTION_RESET(true),                                                            // opt/pg-host-config-include-path
-        PARSE_RULE_OPTION_REQUIRED(false),                                                        // opt/pg-host-config-include-path
+        PARSE_RULE_OPTION_REQUIRED(true),                                                         // opt/pg-host-config-include-path
         PARSE_RULE_OPTION_SECTION(Stanza),                                                        // opt/pg-host-config-include-path
         PARSE_RULE_OPTION_GROUP_ID(Pg),                                                           // opt/pg-host-config-include-path
                                                                                                   // opt/pg-host-config-include-path
@@ -3995,7 +3995,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_NAME("pg-host-config-path"),                                                    // opt/pg-host-config-path
         PARSE_RULE_OPTION_TYPE(Path),                                                                     // opt/pg-host-config-path
         PARSE_RULE_OPTION_RESET(true),                                                                    // opt/pg-host-config-path
-        PARSE_RULE_OPTION_REQUIRED(false),                                                                // opt/pg-host-config-path
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                 // opt/pg-host-config-path
         PARSE_RULE_OPTION_SECTION(Stanza),                                                                // opt/pg-host-config-path
         PARSE_RULE_OPTION_GROUP_ID(Pg),                                                                   // opt/pg-host-config-path
                                                                                                           // opt/pg-host-config-path
