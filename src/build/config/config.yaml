@@ -1550,12 +1550,14 @@ option:
     type: path
     default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH
     default-literal: true
+    required: true
 
   pg-host-config-path:
     inherit: pg-host-cmd
     type: path
     default: CFGOPTDEF_CONFIG_PATH
     default-literal: true
+    required: true
 
   pg-host-port:
     inherit: pg-host-cmd
