@@ -520,8 +520,9 @@ bldCfgRenderDefault(
             "                    %s,\n",
             strZ(
                 bldCfgRenderScalar(
-                    strNewFmt("%s%s%s", defaultType == defaultTypeLiteral ? "" : "\"", strZ(defaultValue),
-                    defaultType == defaultTypeLiteral ? "" : "\""), OPT_TYPE_STRING_STR)));
+                    strNewFmt(
+                        "%s%s%s", defaultType == defaultTypeLiteral ? "" : "\"", strZ(defaultValue),
+                        defaultType == defaultTypeLiteral ? "" : "\""), OPT_TYPE_STRING_STR)));
     }
 
     strCatZ(result, "                )");
