@@ -2672,17 +2672,23 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                     {
                         configOptionValue->source = parseOptionValue->source;
                     }
-                    // Else try to set a default
-                    else
+
+                    if ((!configOptionValue->set && !parseOptionValue->negate) || config->help)
                     {
                         // If the option has a default
                         if (cfgParseOptionalRule(&optionalRules, parseRuleOptionalTypeDefault, config->command, optionId))
                         {
-                            configOptionValue->set = true;
-                            configOptionValue->value = optionalRules.defaultValue;
+                            if (!configOptionValue->set)
+                            {
+                                configOptionValue->set = true;
+                                configOptionValue->value = optionalRules.defaultValue;
+                                configOptionValue->display = optionalRules.defaultRaw;
+                            }
+
+                            configOptionValue->defaultValue = optionalRules.defaultRaw;
                         }
                         // Else error if option is required and help was not requested
-                        else
+                        else if (!configOptionValue->set)
                         {
                             const bool required =
                                 cfgParseOptionalRule(&optionalRules, parseRuleOptionalTypeRequired, config->command, optionId) ?
@@ -2707,6 +2713,8 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 {
                     configOptionValue->set = true;
                     configOptionValue->value.boolean = dependResult.defaultValue;
+                    configOptionValue->defaultValue = optionalRules.defaultRaw;
+                    configOptionValue->display = optionalRules.defaultRaw;
                 }
 
                 pckReadFree(optionalRules.pack);
