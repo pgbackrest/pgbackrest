@@ -1622,7 +1622,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
             {
                 .memContext = MEM_CONTEXT_NEW(),
                 .command = cfgCmdHelp,
-                .exe = strNewZ(argList[0]),
+                .bin = strNewZ(argList[0]),
             };
         }
         OBJ_NEW_END();

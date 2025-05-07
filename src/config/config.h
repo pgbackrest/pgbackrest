@@ -252,8 +252,8 @@ FN_EXTERN bool cfgCommandHelp(void);
 
 FN_EXTERN void cfgCommandSet(ConfigCommand commandId, ConfigCommandRole commandRoleId);
 
-// pgBackRest exe
-FN_EXTERN const String *cfgExe(void);
+// Path to current pgbackrest binary
+FN_EXTERN const String *cfgBin(void);
 
 // Set option default. Option defaults are generally not set in advance because the vast majority of them are never used. It is more
 // efficient to generate them when they are requested. Some defaults are (e.g. the exe path) are set at runtime.

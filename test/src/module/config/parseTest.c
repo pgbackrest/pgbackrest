@@ -1767,7 +1767,7 @@ testRun(void)
         TEST_RESULT_STR_Z(cfgCommandRoleName(), "backup", "command/role name is backup");
         TEST_RESULT_STR_Z(cfgParseCommandRoleStr(cfgCmdRoleMain), NULL, "main role name is NULL");
 
-        TEST_RESULT_STR_Z(cfgExe(), TEST_BACKREST_EXE, "exe is set");
+        TEST_RESULT_STR_Z(cfgBin(), TEST_BACKREST_EXE, "bin is set");
 
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptConfig), false, "config is not set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptConfig), cfgSourceParam, "config is source param");
@@ -2051,7 +2051,7 @@ testRun(void)
         TEST_RESULT_VOID(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load local config");
 
-        TEST_RESULT_STR_Z(cfgExe(), "pgbackrest", "--cmd not provided; cfgExe() returns " TEST_BACKREST_EXE);
+        TEST_RESULT_STR_Z(cfgBin(), "pgbackrest", "--cmd not provided; cfgBin() returns " TEST_BACKREST_EXE);
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");

@@ -155,11 +155,11 @@ cfgCommandParam(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN const String *
-cfgExe(void)
+cfgBin(void)
 {
     FUNCTION_TEST_VOID();
     ASSERT(cfgInited());
-    FUNCTION_TEST_RETURN(STRING, configLocal->exe);
+    FUNCTION_TEST_RETURN(STRING, configLocal->bin);
 }
 
 /**********************************************************************************************************************************/
