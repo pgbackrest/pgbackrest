@@ -157,7 +157,7 @@ testRun(void)
                         pid_t pid = getpid();
 
                         // Add parameters to arg list required for a reload
-                        strLstInsert(argList, 0, cfgExe());
+                        strLstInsert(argList, 0, cfgBin());
                         strLstAddZ(argList, CFGCMD_SERVER);
 
                         TEST_RESULT_VOID(cmdServer(strLstSize(argList), strLstPtr(argList)), "server");
