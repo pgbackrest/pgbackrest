@@ -1654,7 +1654,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
             {
                 .memContext = MEM_CONTEXT_NEW(),
                 .command = cfgCmdHelp,
-                .exe = strNewZ(argList[0]),
+                .bin = strNewZ(argList[0]),
             };
         }
         OBJ_NEW_END();
@@ -2345,7 +2345,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 *configOptionValue = (ConfigOptionValue){.negate = parseOptionValue->negate, .reset = parseOptionValue->reset};
 
                 // Is the option valid?
-                CfgParseOptionalRuleState optionalRules = {.defaultDynamicBin = config->exe};
+                CfgParseOptionalRuleState optionalRules = {.defaultDynamicBin = config->bin};
                 CfgParseOptionalFilterDependResult dependResult = {.valid = true};
 
                 if (cfgParseOptionalRule(&optionalRules, parseRuleOptionalTypeValid, config->command, optionId))

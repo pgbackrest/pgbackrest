@@ -748,7 +748,7 @@ cmdArchiveGet(void)
 
                     // Generate command options
                     StringList *const commandExec = cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleAsync, optionReplace, true, false);
-                    strLstInsert(commandExec, 0, cfgExe());
+                    strLstInsert(commandExec, 0, cfgBin());
 
                     // Clean the current queue using the list of WAL that we ideally want in the queue. queueNeed() will return the
                     // list of WAL needed to fill the queue and this will be passed to the async process.

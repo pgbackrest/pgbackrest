@@ -252,8 +252,8 @@ FN_EXTERN bool cfgCommandHelp(void);
 
 FN_EXTERN void cfgCommandSet(ConfigCommand commandId, ConfigCommandRole commandRoleId);
 
-// pgBackRest exe
-FN_EXTERN const String *cfgExe(void);
+// Path to current pgbackrest binary
+FN_EXTERN const String *cfgBin(void);
 
 // Was the option negated?
 FN_EXTERN bool cfgOptionIdxNegate(ConfigOption optionId, unsigned int optionIdx);

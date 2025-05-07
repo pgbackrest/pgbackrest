@@ -69,7 +69,7 @@ typedef struct Config
     ConfigCommand command;                                          // Current command
     ConfigCommandRole commandRole;                                  // Current command role
 
-    String *exe;                                                    // Location of the executable
+    String *bin;                                                    // Path to current pgbackrest binary
     bool help;                                                      // Was help requested for the command?
     bool lockRequired;                                              // Is an immediate lock required?
     bool lockRemoteRequired;                                        // Is a lock required on the remote?

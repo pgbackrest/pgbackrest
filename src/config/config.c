@@ -155,11 +155,11 @@ cfgCommandParam(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN const String *
-cfgExe(void)
+cfgBin(void)
 {
     FUNCTION_TEST_VOID();
     ASSERT(cfgInited());
-    FUNCTION_TEST_RETURN(STRING, configLocal->exe);
+    FUNCTION_TEST_RETURN(STRING, configLocal->bin);
 }
 
 /**********************************************************************************************************************************/
@@ -422,7 +422,7 @@ cfgOptionDefault(const ConfigOption optionId)
     ConfigOptionData *const option = &configLocal->option[optionId];
 
     if (option->defaultValue == NULL)
-        option->defaultValue = cfgParseOptionDefault(cfgCommand(), optionId, cfgExe());
+        option->defaultValue = cfgParseOptionDefault(cfgCommand(), optionId, cfgBin());
 
     FUNCTION_TEST_RETURN_CONST(STRING, option->defaultValue);
 }
