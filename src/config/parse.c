@@ -2688,13 +2688,13 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                             configOptionValue->defaultValue = optionalRules.defaultRaw;
                         }
                         // Else error if option is required and help was not requested
-                        else if (!configOptionValue->set)
+                        else if (!config->help)
                         {
                             const bool required =
                                 cfgParseOptionalRule(&optionalRules, parseRuleOptionalTypeRequired, config->command, optionId) ?
                                     optionalRules.required : ruleOption->required;
 
-                            if (required && !config->help)
+                            if (required)
                             {
                                 THROW_FMT(
                                     OptionRequiredError, "%s command requires option: %s%s",
