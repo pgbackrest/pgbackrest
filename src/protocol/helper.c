@@ -531,7 +531,7 @@ protocolRemoteParam(const ProtocolStorageType protocolStorageType, const unsigne
                 {
                     remove =
                         !cfgParseOptionRequired(cfgCommand(), optionId) ||
-                        cfgParseOptionDefault(cfgCommand(), optionId) != NULL;
+                        cfgParseOptionDefault(cfgCommand(), optionId, cfgBin()) != NULL;
                 }
                 // Move pg options to host index 0 (key 1) so they will be in the default index on the remote host
                 else

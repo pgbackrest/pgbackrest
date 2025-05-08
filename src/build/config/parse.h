@@ -13,6 +13,7 @@ typedef enum
 {
     defaultTypeQuote = 0,
     defaultTypeLiteral,
+    defaultTypeDynamic,
 } DefaultType;
 
 /***********************************************************************************************************************************

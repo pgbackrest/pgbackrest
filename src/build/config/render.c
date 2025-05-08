@@ -511,7 +511,11 @@ bldCfgRenderDefault(
         "                PARSE_RULE_OPTIONAL_DEFAULT\n"
         "                (\n");
 
-    if (!strEq(optType, OPT_TYPE_STRING_STR) && !strEq(optType, OPT_TYPE_PATH_STR))
+    if (defaultType == defaultTypeDynamic)
+    {
+        strCatFmt(result, "                    PARSE_RULE_DEFAULT_DYNAMIC(%s),\n", strZ(bldEnum("", defaultValue)));
+    }
+    else if (!strEq(optType, OPT_TYPE_STRING_STR) && !strEq(optType, OPT_TYPE_PATH_STR))
         strCatFmt(result, "                    %s,\n", strZ(bldCfgRenderScalar(defaultValue, optType)));
     else
     {
@@ -537,6 +541,10 @@ static void
 bldCfgRenderValueAdd(const String *optType, const DefaultType defaultType, const String *const value, KeyValue *const ruleValMap)
 {
     ASSERT(!strEq(optType, OPT_TYPE_BOOLEAN_STR) && !strEq(optType, OPT_TYPE_HASH_STR) && !strEq(optType, OPT_TYPE_LIST_STR));
+
+    // Dynamic defaults are generated at runtime and do not need to be added to a static values list
+    if (defaultType == defaultTypeDynamic)
+        return;
 
     // Remap path to string
     if (strEq(optType, OPT_TYPE_PATH_STR))
@@ -824,6 +832,8 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
 
     // Option rules
     // -----------------------------------------------------------------------------------------------------------------------------
+    StringList *const dynamicDefaultList = strLstNew();
+
     strCatZ(
         config,
         "\n"
@@ -855,6 +865,10 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
         const BldCfgOption *const opt = lstGet(bldCfg.optList, optIdx);
         String *const configOpt = strNew();
 
+        // Build list of dynamic defaults
+        if (opt->defaultType == defaultTypeDynamic)
+            strLstAddIfMissing(dynamicDefaultList, opt->defaultValue);
+
         if (optIdx != 0)
             strCatZ(config, COMMENT_SEPARATOR "\n");
 
@@ -865,6 +879,9 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
             "        PARSE_RULE_OPTION_NAME(\"%s\"),\n"
             "        PARSE_RULE_OPTION_TYPE(%s),\n",
             strZ(opt->name), strZ(bldEnum("", opt->type)));
+
+        if (opt->defaultType == defaultTypeDynamic)
+            strCatZ(configOpt, "        PARSE_RULE_OPTION_DEFAULT_TYPE(Dynamic),\n");
 
         if (opt->boolLike)
             strCatZ(configOpt, "        PARSE_RULE_OPTION_BOOL_LIKE(true),\n");
@@ -1260,6 +1277,40 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
     strCat(
         configVal,
         bldCfgRenderValueRender(OPT_TYPE_TIME_STR, ruleValMap, label, "unsigned int", "Time", "Time", "TIME", "val/time"));
+
+    // Dynamic default values
+    // -----------------------------------------------------------------------------------------------------------------------------
+    strCatZ(
+        configVal,
+        "\n"
+        COMMENT_BLOCK_BEGIN "\n"
+        "Dynamic default values\n"
+        COMMENT_BLOCK_END "\n");
+
+    strCatFmt(
+        configVal, "%s\n",
+        strZ(
+            bldDefineRender(
+                STRDEF("PARSE_RULE_DEFAULT_DYNAMIC(value)"),
+                strNewFmt(
+                    "PARSE_RULE_U32_%zu(parseRuleDefaultDynamic##value)",
+                    bldCfgRenderVar128Size(strLstSize(dynamicDefaultList) - 1)))));
+
+    strCatZ(
+        configVal,
+        "\ntypedef enum\n"
+        "{\n");
+
+    for (unsigned int dynamicDefaultIdx = 0; dynamicDefaultIdx < strLstSize(dynamicDefaultList); dynamicDefaultIdx++)
+    {
+        strCatFmt(
+            configVal, "    %s,\n",
+            zNewFmt("parseRuleDefaultDynamic%s", strZ(bldEnum("", strLstGet(dynamicDefaultList, dynamicDefaultIdx)))));
+    }
+
+    strCatZ(
+        configVal,
+        "} ParseRuleDefaultDynamic;\n");
 
     // Write to storage
     // -----------------------------------------------------------------------------------------------------------------------------

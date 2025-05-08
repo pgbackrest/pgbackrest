@@ -1965,10 +1965,12 @@ testRun(void)
         TEST_RESULT_STR_Z(cfgOptionDisplay(cfgOptPgPort), "5432", "pg-port display is 5432");
         TEST_RESULT_STR_Z(cfgOptionDefault(cfgOptDbTimeout), "30m", "db-timeout default is 30m");
 
-        TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptPgSocketPath, VARSTRDEF("/default")), "set pg-socket-path default");
+        TEST_RESULT_VOID(
+            cfgOptionIdxSet(cfgOptPgSocketPath, 1, cfgSourceDefault, VARSTRDEF("/default")), "set pg-socket-path default");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 0), "@socket", "pg1-socket-path unchanged");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 1), "/default", "pg2-socket-path is new default");
         TEST_RESULT_STR_Z(cfgOptionIdxDisplay(cfgOptPgSocketPath, 1), "/default", "pg2-socket-path display");
+        TEST_RESULT_UINT(cfgOptionIdxTotal(cfgOptPgSocketPath), 3, "pg-socket-path index total");
 
         TEST_ERROR(cfgOptionDisplay(cfgOptTarget), AssertError, "option 'target' is not valid for the current command");
         TEST_ERROR(cfgOptionLst(cfgOptDbInclude), AssertError, "option 'db-include' is not valid for the current command");

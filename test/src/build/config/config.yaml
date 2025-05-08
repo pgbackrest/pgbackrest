@@ -192,6 +192,7 @@ option:
   # Options that are not used but must be present for modules to compile. All must have a default or not be required.
   #---------------------------------------------------------------------------------------------------------------------------------
   beta: {type: boolean, default: false, command: {noop: {}}}
+  cmd: {type: string, default-type: dynamic, default: bin, command: {noop: {}}}
   compress-level-network: {type: string, required: false, command: {noop: {}}}
   config: {
     type: string, internal: true, default-type: literal, default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE, negate: true}

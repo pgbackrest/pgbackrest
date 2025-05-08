@@ -237,6 +237,8 @@ optionGroup:
 #
 # default-type:
 #   If 'literal' then default a string output it as-is without quoting. This allows C defines to be used as defaults.
+#   if 'dynamic' then default is a specially calculated value:
+#     bin - the value of argv[0] on execution
 #
 # negate:
 #   All config file boolean options automatically may be negated. This setting is used to maintain backward compatibility with older
@@ -727,7 +729,8 @@ option:
   cmd:
     section: global
     type: string
-    required: false
+    default-type: dynamic
+    default: bin
     command:
       archive-get: {}
       archive-push: {}
@@ -753,6 +756,7 @@ option:
   cmd-ssh:
     inherit: cmd
     required: true
+    default-type: quote
     default: ssh
 
   # Option is deprecated and should not be referenced outside of cfgLoadUpdateOption()
@@ -1518,7 +1522,8 @@ option:
     section: stanza
     group: pg
     type: string
-    required: false
+    default-type: dynamic
+    default: bin
     command:
       backup: {}
       check: {}
@@ -1540,7 +1545,6 @@ option:
     inherit: pg-host-cmd
     default-type: literal
     default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE
-    required: true
     deprecate:
       db-config: {}
       db?-config: {}
@@ -1562,6 +1566,8 @@ option:
   pg-host-port:
     inherit: pg-host-cmd
     type: integer
+    default-type: quote
+    default: ~
     required: false
     allow-range: [0, 65535]
     deprecate:
@@ -1570,6 +1576,7 @@ option:
 
   pg-host-user:
     inherit: pg-host-cmd
+    default-type: quote
     default: postgres
     required: false
     deprecate:
@@ -2158,7 +2165,8 @@ option:
     section: global
     group: repo
     type: string
-    required: false
+    default-type: dynamic
+    default: bin
     command:
       annotate: {}
       archive-get: {}
