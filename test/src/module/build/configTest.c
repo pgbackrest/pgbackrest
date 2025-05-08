@@ -101,6 +101,16 @@ testRun(void)
             TEST_OPTION_GROUP_VALID
             "option:\n"
             "  config:\n"
+            "    default-type: bogus\n");
+
+        TEST_ERROR(bldCfgParse(storageTest), FormatError, "option 'config' has invalid default type 'bogus'");
+
+        HRN_STORAGE_PUT_Z(
+            storageTest, "src/build/config/config.yaml",
+            TEST_COMMAND_VALID
+            TEST_OPTION_GROUP_VALID
+            "option:\n"
+            "  config:\n"
             "    command:\n"
             "      backup:\n"
             "        bogus: test\n");
@@ -334,7 +344,7 @@ testRun(void)
             "  config:\n"
             "    type: string\n"
             "    default: CFGOPTDEF_CONFIG_PATH \"/\" PROJECT_CONFIG_FILE\n"
-            "    default-literal: true\n"
+            "    default-type: literal\n"
             "    negate: true\n"
             "    command:\n"
             "      backup: {}\n"
