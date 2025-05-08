@@ -941,7 +941,7 @@ cfgOptionIdxSet(
             optionValue->defaultValue = NULL;
     }
 
-    // Clear the display value, which will be generated when needed !!!WE NEED THIS FOR BASIC LOGGING SO JUST GENERATE ALL THE TIME?
+    // Clear the display value, which will be generated when needed
     optionValue->display = NULL;
 
     FUNCTION_TEST_RETURN_VOID();
