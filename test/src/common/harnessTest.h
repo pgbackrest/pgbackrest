@@ -40,10 +40,10 @@ Functions
 bool testBegin(const char *name);
 
 // Read a file (max 256k) into a buffer
-void hrnFileRead(const char *fileName, unsigned char *buffer, size_t bufferSize);
+void hrnFileRead(const char *fileName, uint8_t *buffer, size_t bufferSize);
 
 // Write a buffer to a file
-void hrnFileWrite(const char *fileName, const unsigned char *buffer, size_t bufferSize);
+void hrnFileWrite(const char *fileName, const uint8_t *buffer, size_t bufferSize);
 
 // Diff two strings using command-line diff tool
 const char *hrnDiff(const char *actual, const char *expected);
@@ -422,6 +422,6 @@ Is this a 64-bit system? If not then it is 32-bit since 16-bit systems are not s
 /***********************************************************************************************************************************
 Is this a big-endian system?
 ***********************************************************************************************************************************/
-#define TEST_BIG_ENDIAN() (!*(unsigned char *)&(uint16_t){1})
+#define TEST_BIG_ENDIAN() (!*(uint8_t *)&(uint16_t){1})
 
 #endif

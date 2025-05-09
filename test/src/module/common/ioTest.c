@@ -176,8 +176,8 @@ ioTestFilterMultiplyProcess(THIS_VOID, const Buffer *const input, Buffer *const 
             }
             MEM_CONTEXT_OBJ_END();
 
-            const unsigned char *inputPtr = bufPtrConst(input);
-            unsigned char *bufferPtr = bufPtr(this->multiplyBuffer);
+            const uint8_t *inputPtr = bufPtrConst(input);
+            uint8_t *bufferPtr = bufPtr(this->multiplyBuffer);
 
             for (unsigned int charIdx = 0; charIdx < bufUsed(input); charIdx++)
             {

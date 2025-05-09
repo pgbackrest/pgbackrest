@@ -61,7 +61,7 @@ blbAdd(Blob *const this, const void *const data, const size_t size)
             // If data will fit in the current block
             if (BLOB_BLOCK_SIZE - this->pos >= size)
             {
-                result = (unsigned char *)this->block + this->pos;
+                result = (uint8_t *)this->block + this->pos;
 
                 memcpy(result, data, size);
                 this->pos += size;

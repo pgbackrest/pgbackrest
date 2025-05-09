@@ -142,7 +142,7 @@ typedef struct ParseRuleOption
     unsigned int packSize : 7;                                      // Size of optional data in pack format
     uint32_t commandRoleValid[CFG_COMMAND_ROLE_TOTAL];              // Valid for the command role?
 
-    const unsigned char *pack;                                      // Optional data in pack format
+    const uint8_t *pack;                                            // Optional data in pack format
 } ParseRuleOption;
 
 // Define additional types of data that can be associated with an option. Because these types are rare they are not given dedicated
@@ -236,15 +236,15 @@ typedef enum
 
 #define PARSE_RULE_PACK(...)                                        __VA_ARGS__ 0x00
 #define PARSE_RULE_PACK_SIZE(...)                                                                                                  \
-    0xf0, 0x02, sizeof((const unsigned char []){PARSE_RULE_PACK(__VA_ARGS__)}),                                                    \
+    0xf0, 0x02, sizeof((const uint8_t []){PARSE_RULE_PACK(__VA_ARGS__)}),                                                          \
     PARSE_RULE_PACK(__VA_ARGS__)
 
 #define PARSE_RULE_VAL_BOOL_TRUE                                    PARSE_RULE_BOOL_TRUE
 #define PARSE_RULE_VAL_BOOL_FALSE                                   PARSE_RULE_BOOL_FALSE
 
 #define PARSE_RULE_OPTIONAL(...)                                                                                                   \
-    .packSize = sizeof((const unsigned char []){PARSE_RULE_PACK(__VA_ARGS__)}),                                                    \
-    .pack = (const unsigned char []){PARSE_RULE_PACK(__VA_ARGS__)}
+    .packSize = sizeof((const uint8_t []){PARSE_RULE_PACK(__VA_ARGS__)}),                                                          \
+    .pack = (const uint8_t []){PARSE_RULE_PACK(__VA_ARGS__)}
 #define PARSE_RULE_OPTIONAL_GROUP(...)                              PARSE_RULE_PACK_SIZE(__VA_ARGS__)
 
 #define PARSE_RULE_FILTER_CMD(...)                                                                                                 \
@@ -899,7 +899,7 @@ typedef struct CfgParseOptionalRuleState
     bool done;
 
     // Valid
-    const unsigned char *valid;
+    const uint8_t *valid;
     size_t validSize;
 
     // Allow range
@@ -909,7 +909,7 @@ typedef struct CfgParseOptionalRuleState
     unsigned int allowRangeMaxIdx;
 
     // Allow list
-    const unsigned char *allowList;
+    const uint8_t *allowList;
     size_t allowListSize;
 
     // Default

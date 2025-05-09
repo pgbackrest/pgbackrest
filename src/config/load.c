@@ -547,7 +547,7 @@ cfgLoad(const unsigned int argListSize, const char *argList[])
         {
             // Generate some random bytes
             uint32_t execRandom;
-            cryptoRandomBytes((unsigned char *)&execRandom, sizeof(execRandom));
+            cryptoRandomBytes((uint8_t *)&execRandom, sizeof(execRandom));
 
             // Format a string with the pid and the random bytes to serve as the exec id
             cfgOptionSet(cfgOptExecId, cfgSourceParam, VARSTR(strNewFmt("%d-%08x", getpid(), execRandom)));

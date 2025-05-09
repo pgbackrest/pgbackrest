@@ -49,7 +49,7 @@ struct HttpResponseMulti
 {
     const Buffer *content;                                          // Response content
     Buffer *boundary;                                               // Multipart boundary
-    const unsigned char *boundaryLast;                              // Last boundary location
+    const uint8_t *boundaryLast;                                    // Last boundary location
 };
 
 /***********************************************************************************************************************************
@@ -517,7 +517,7 @@ httpResponseMultiNext(HttpResponseMulti *const this)
 
     // Find next boundary
     this->boundaryLast += bufSize(this->boundary);
-    const unsigned char *const boundaryNext = bufFindP(this->content, this->boundary, .begin = this->boundaryLast);
+    const uint8_t *const boundaryNext = bufFindP(this->content, this->boundary, .begin = this->boundaryLast);
 
     if (boundaryNext != NULL)
     {

@@ -100,7 +100,7 @@ bz2CompressProcess(THIS_VOID, const Buffer *const uncompressed, Buffer *const co
             // bzip2 does not accept const input buffers
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-qual"
-            this->stream.next_in = (char *)UNCONSTIFY(unsigned char *, bufPtrConst(uncompressed));
+            this->stream.next_in = (char *)UNCONSTIFY(uint8_t *, bufPtrConst(uncompressed));
 #pragma GCC diagnostic pop
         }
     }

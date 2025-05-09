@@ -54,10 +54,10 @@ CHECKSUM_UNION(pgPageSize32);
 
 /**********************************************************************************************************************************/
 FN_EXTERN uint16_t
-pgPageChecksum(unsigned char *const page, const uint32_t blockNo, const PgPageSize pageSize)
+pgPageChecksum(uint8_t *const page, const uint32_t blockNo, const PgPageSize pageSize)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(UCHARDATA, page);
+        FUNCTION_TEST_PARAM_P(BYTEDATA, page);
         FUNCTION_TEST_PARAM(UINT, blockNo);
         FUNCTION_TEST_PARAM(ENUM, pageSize);
     FUNCTION_TEST_END();
