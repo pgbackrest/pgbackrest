@@ -187,12 +187,12 @@ testSuite(CompressType type, const char *decompressCmd, size_t rawDelta)
     TEST_TITLE("compress a large non-zero input buffer into small output buffer");
 
     decompressed = bufNew(1024 * 1024 - 1);
-    unsigned char *chr = bufPtr(decompressed);
+    uint8_t *chr = bufPtr(decompressed);
 
     // Step through the buffer, setting the individual bytes in a simple pattern (visible ASCII characters, DEC 32 - 126), to make
     // sure that we fill the compression library's small output buffer
     for (size_t chrIdx = 0; chrIdx < bufSize(decompressed); chrIdx++)
-        chr[chrIdx] = (unsigned char)(chrIdx % 94 + 32);
+        chr[chrIdx] = (uint8_t)(chrIdx % 94 + 32);
 
     bufUsedSet(decompressed, bufSize(decompressed));
 

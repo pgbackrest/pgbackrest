@@ -199,7 +199,7 @@ ioWriteVarIntU64(IoWrite *const this, const uint64_t value)
 
     ASSERT(this != NULL);
 
-    unsigned char buffer[CVT_VARINT128_BUFFER_SIZE];
+    uint8_t buffer[CVT_VARINT128_BUFFER_SIZE];
     size_t bufferPos = 0;
 
     cvtUInt64ToVarInt128(value, buffer, &bufferPos, sizeof(buffer));

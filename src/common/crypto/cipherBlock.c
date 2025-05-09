@@ -37,7 +37,7 @@ typedef struct CipherBlock
     bool processDone;                                               // Has any data been processed?
     const Buffer *pass;                                             // Passphrase used to generate encryption key
     size_t headerSize;                                              // Size of header read during decrypt
-    unsigned char header[CIPHER_BLOCK_HEADER_SIZE];                 // Buffer to hold partial header during decrypt
+    uint8_t header[CIPHER_BLOCK_HEADER_SIZE];                       // Buffer to hold partial header during decrypt
     const EVP_CIPHER *cipher;                                       // Cipher object
     const EVP_MD *digest;                                           // Message digest object
     EVP_CIPHER_CTX *cipherContext;                                  // Encrypt/decrypt context
@@ -107,13 +107,13 @@ cipherBlockProcessSize(const CipherBlock *const this, const size_t sourceSize)
 Encrypt/decrypt data
 ***********************************************************************************************************************************/
 static size_t
-cipherBlockProcessBlock(CipherBlock *const this, const unsigned char *source, size_t sourceSize, unsigned char *destination)
+cipherBlockProcessBlock(CipherBlock *const this, const uint8_t *source, size_t sourceSize, uint8_t *destination)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(CIPHER_BLOCK, this);
-        FUNCTION_LOG_PARAM_P(UCHARDATA, source);
+        FUNCTION_LOG_PARAM_P(BYTEDATA, source);
         FUNCTION_LOG_PARAM(SIZE, sourceSize);
-        FUNCTION_LOG_PARAM_P(UCHARDATA, destination);
+        FUNCTION_LOG_PARAM_P(BYTEDATA, destination);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -126,7 +126,7 @@ cipherBlockProcessBlock(CipherBlock *const this, const unsigned char *source, si
     // If the salt has not been generated/read yet
     if (!this->saltDone)
     {
-        const unsigned char *salt = NULL;
+        const uint8_t *salt = NULL;
 
         // On encrypt the salt is generated
         if (this->mode == cipherModeEncrypt)
@@ -181,8 +181,8 @@ cipherBlockProcessBlock(CipherBlock *const this, const unsigned char *source, si
         if (salt)
         {
             // Generate key and initialization vector
-            unsigned char key[EVP_MAX_KEY_LENGTH];
-            unsigned char initVector[EVP_MAX_IV_LENGTH];
+            uint8_t key[EVP_MAX_KEY_LENGTH];
+            uint8_t initVector[EVP_MAX_IV_LENGTH];
 
             EVP_BytesToKey(this->cipher, this->digest, salt, bufPtrConst(this->pass), (int)bufSize(this->pass), 1, key, initVector);
 

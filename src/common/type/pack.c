@@ -384,7 +384,7 @@ pckReadNew(const Pack *const pack)
 }
 
 FN_EXTERN PackRead *
-pckReadNewC(const unsigned char *const buffer, const size_t size)
+pckReadNewC(const uint8_t *const buffer, const size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, buffer);
@@ -739,7 +739,7 @@ pckReadConsume(PackRead *const this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN const unsigned char *
+FN_EXTERN const uint8_t *
 pckReadBufPtr(PackRead *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -750,7 +750,7 @@ pckReadBufPtr(PackRead *const this)
     ASSERT(packTypeMapData[this->tagNextTypeMap].size);
     ASSERT(this->buffer == NULL);
 
-    FUNCTION_TEST_RETURN_CONST_P(UCHARDATA, this->bufferPtr + this->bufferPos);
+    FUNCTION_TEST_RETURN_CONST_P(BYTEDATA, this->bufferPtr + this->bufferPos);
 }
 
 /**********************************************************************************************************************************/
@@ -1371,7 +1371,7 @@ pckWriteU64Internal(PackWrite *const this, const uint64_t value)
 
     ASSERT(this != NULL);
 
-    unsigned char buffer[CVT_VARINT128_BUFFER_SIZE];
+    uint8_t buffer[CVT_VARINT128_BUFFER_SIZE];
     size_t size = 0;
 
     cvtUInt64ToVarInt128(value, buffer, &size, sizeof(buffer));

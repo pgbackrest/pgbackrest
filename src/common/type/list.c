@@ -18,7 +18,7 @@ struct List
     ListPub pub;                                                    // Publicly accessible variables
     unsigned int listSizeMax;
     SortOrder sortOrder;
-    unsigned char *listAlloc;                                       // Pointer to memory allocated for the list
+    uint8_t *listAlloc;                                             // Pointer to memory allocated for the list
     ListComparator *comparator;
 };
 
@@ -268,9 +268,9 @@ lstIdx(const List *const this, const void *const item)
     ASSERT(item != NULL);
 
     // Item pointers should always be aligned with the beginning of an item in the list
-    ASSERT((size_t)((const unsigned char *const)item - this->pub.list) % this->pub.itemSize == 0);
+    ASSERT((size_t)((const uint8_t *const)item - this->pub.list) % this->pub.itemSize == 0);
 
-    const size_t result = (size_t)((const unsigned char *const)item - this->pub.list) / this->pub.itemSize;
+    const size_t result = (size_t)((const uint8_t *const)item - this->pub.list) / this->pub.itemSize;
 
     // Item pointers should always be in range
     ASSERT(result < lstSize(this));

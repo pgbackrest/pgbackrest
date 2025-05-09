@@ -43,7 +43,7 @@ static const uint32_t crc32c_lookup[256] =
 };
 
 FN_EXTERN uint32_t
-crc32cOne(const unsigned char *data, size_t size)
+crc32cOne(const uint8_t *data, size_t size)
 {
     uint32_t result = 0xffffffff;
 

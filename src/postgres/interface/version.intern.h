@@ -22,7 +22,7 @@ alpha/beta/rc period without needing to be updated, unless of course the actual 
 
 #define PG_INTERFACE_CONTROL_IS(version)                                                                                           \
     static bool                                                                                                                    \
-    pgInterfaceControlIs##version(const unsigned char *controlFile)                                                                \
+    pgInterfaceControlIs##version(const uint8_t *controlFile)                                                                      \
     {                                                                                                                              \
         ASSERT(controlFile != NULL);                                                                                               \
                                                                                                                                    \
@@ -36,7 +36,7 @@ alpha/beta/rc period without needing to be updated, unless of course the actual 
 
 #define PG_INTERFACE_CONTROL_IS(version)                                                                                           \
     static bool                                                                                                                    \
-    pgInterfaceControlIs##version(const unsigned char *controlFile)                                                                \
+    pgInterfaceControlIs##version(const uint8_t *controlFile)                                                                      \
     {                                                                                                                              \
         ASSERT(controlFile != NULL);                                                                                               \
                                                                                                                                    \
@@ -58,7 +58,7 @@ Read the version specific pg_control into a general data structure
 
 #define PG_INTERFACE_CONTROL(version)                                                                                              \
     static PgControl                                                                                                               \
-    pgInterfaceControl##version(const unsigned char *controlFile)                                                                  \
+    pgInterfaceControl##version(const uint8_t *controlFile)                                                                        \
     {                                                                                                                              \
         ASSERT(controlFile != NULL);                                                                                               \
                                                                                                                                    \
@@ -101,7 +101,7 @@ Invalidate control checkpoint. PostgreSQL skips the first segment so any LSN in 
 
 #define PG_INTERFACE_CONTROL_CHECKPOINT_INVALIDATE(version)                                                                        \
     static void                                                                                                                    \
-    pgInterfaceControlCheckpointInvalidate##version(unsigned char *const controlFile)                                              \
+    pgInterfaceControlCheckpointInvalidate##version(uint8_t *const controlFile)                                                    \
     {                                                                                                                              \
         ((ControlFileData *)controlFile)->checkPoint = PG_CONTROL_CHECKPOINT_INVALID;                                              \
     }
@@ -133,7 +133,7 @@ Determine if the supplied WAL is for this version of PostgreSQL
 
 #define PG_INTERFACE_WAL_IS(version)                                                                                               \
     static bool                                                                                                                    \
-    pgInterfaceWalIs##version(const unsigned char *walFile)                                                                        \
+    pgInterfaceWalIs##version(const uint8_t *walFile)                                                                              \
     {                                                                                                                              \
         ASSERT(walFile != NULL);                                                                                                   \
                                                                                                                                    \
@@ -151,7 +151,7 @@ Read the version specific WAL header into a general data structure
 
 #define PG_INTERFACE_WAL(version)                                                                                                  \
     static PgWal                                                                                                                   \
-    pgInterfaceWal##version(const unsigned char *walFile)                                                                          \
+    pgInterfaceWal##version(const uint8_t *walFile)                                                                                \
     {                                                                                                                              \
         ASSERT(walFile != NULL);                                                                                                   \
                                                                                                                                    \

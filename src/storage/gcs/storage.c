@@ -227,8 +227,7 @@ storageGcsAuthJwt(StorageGcs *const this, const time_t timeBegin)
             sign = EVP_MD_CTX_create();
             cryptoError(EVP_DigestSignInit(sign, NULL, EVP_sha256(), NULL, privateKey) <= 0, "unable to init");
             cryptoError(
-                EVP_DigestSignUpdate(sign, (const unsigned char *)strZ(result), (unsigned int)strSize(result)) <= 0,
-                "unable to update");
+                EVP_DigestSignUpdate(sign, (const uint8_t *)strZ(result), (unsigned int)strSize(result)) <= 0, "unable to update");
 
             size_t signatureLen = 0;
             cryptoError(EVP_DigestSignFinal(sign, NULL, &signatureLen) <= 0, "unable to get size");

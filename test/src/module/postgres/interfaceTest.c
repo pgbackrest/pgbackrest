@@ -363,7 +363,7 @@ testRun(void)
     {
         TEST_TITLE("1KiB page checksum");
         {
-            unsigned char page[pgPageSize1];
+            uint8_t page[pgPageSize1];
             memset(page, 0xFF, sizeof(page));
 
             TEST_RESULT_UINT(
@@ -375,7 +375,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("2KiB page checksum");
         {
-            unsigned char page[pgPageSize2];
+            uint8_t page[pgPageSize2];
             memset(page, 0xFF, sizeof(page));
 
             TEST_RESULT_UINT(
@@ -387,7 +387,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("4KiB page checksum");
         {
-            unsigned char page[pgPageSize4];
+            uint8_t page[pgPageSize4];
             memset(page, 0xFF, sizeof(page));
 
             TEST_RESULT_UINT(
@@ -399,7 +399,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("8KiB page checksum");
         {
-            unsigned char page[pgPageSize8];
+            uint8_t page[pgPageSize8];
             memset(page, 0xFF, sizeof(page));
 
             TEST_RESULT_UINT(
@@ -411,7 +411,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("16KiB page checksum");
         {
-            unsigned char page[pgPageSize16];
+            uint8_t page[pgPageSize16];
             memset(page, 0xFF, sizeof(page));
 
             TEST_RESULT_UINT(
@@ -423,7 +423,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("32KiB page checksum");
         {
-            unsigned char page[pgPageSize32];
+            uint8_t page[pgPageSize32];
             memset(page, 0xFF, sizeof(page));
 
             TEST_RESULT_UINT(
@@ -435,7 +435,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid page size error");
         {
-            unsigned char page[64 * 1024];
+            uint8_t page[64 * 1024];
             memset(page, 0xFF, sizeof(page));
 
             TEST_ERROR(

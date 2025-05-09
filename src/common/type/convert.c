@@ -638,7 +638,7 @@ cvtUInt64ToVarInt128(uint64_t value, uint8_t *const buffer, size_t *const buffer
     while (value >= 0x80)
     {
         // Encode the lower order 7 bits, adding the continuation bit to indicate there is more data
-        buffer[*bufferPos] = (unsigned char)value | 0x80;
+        buffer[*bufferPos] = (uint8_t)value | 0x80;
 
         // Shift the value to remove bits that have been encoded
         value >>= 7;
@@ -652,7 +652,7 @@ cvtUInt64ToVarInt128(uint64_t value, uint8_t *const buffer, size_t *const buffer
     }
 
     // Encode the last 7 bits of value
-    buffer[*bufferPos] = (unsigned char)value;
+    buffer[*bufferPos] = (uint8_t)value;
     (*bufferPos)++;
 
     FUNCTION_TEST_RETURN_VOID();
