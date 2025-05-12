@@ -63,8 +63,8 @@ use constant VM_ARCH_AARCH64                                        => 'aarch64'
     push @EXPORT, qw(VM_ARCH_AARCH64);
 use constant VM_ARCH_I386                                           => 'i386';
     push @EXPORT, qw(VM_ARCH_I386);
-use constant VM_ARCH_AMD64                                          => 'amd64';
-    push @EXPORT, qw(VM_ARCH_AMD64);
+use constant VM_ARCH_X86_64                                         => 'x86_64';
+    push @EXPORT, qw(VM_ARCH_X86_64);
 
 ####################################################################################################################################
 # Valid VM list
@@ -96,7 +96,7 @@ my $oyVm =
     &VM_NONE =>
     {
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_ARCH => VM_ARCH_AMD64,
+        &VM_ARCH => VM_ARCH_X86_64,
         &VMDEF_COVERAGE_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
@@ -140,7 +140,7 @@ my $oyVm =
     {
         &VM_OS_BASE => VM_OS_BASE_RHEL,
         &VM_IMAGE => 'rockylinux/rockylinux:8',
-        &VM_ARCH => VM_ARCH_AMD64,
+        &VM_ARCH => VM_ARCH_X86_64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
 
         &VMDEF_DEBUG_INTEGRATION => false,
@@ -168,7 +168,7 @@ my $oyVm =
     {
         &VM_OS_BASE => VM_OS_BASE_RHEL,
         &VM_IMAGE => 'fedora:41',
-        &VM_ARCH => VM_ARCH_AMD64,
+        &VM_ARCH => VM_ARCH_X86_64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
         &VMDEF_COVERAGE_C => true,
 
@@ -195,7 +195,7 @@ my $oyVm =
     {
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
         &VM_IMAGE => 'ubuntu:20.04',
-        &VM_ARCH => VM_ARCH_AMD64,
+        &VM_ARCH => VM_ARCH_X86_64,
         &VMDEF_COVERAGE_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
@@ -227,7 +227,7 @@ my $oyVm =
     {
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
         &VM_IMAGE => 'ubuntu:22.04',
-        &VM_ARCH => VM_ARCH_AMD64,
+        &VM_ARCH => VM_ARCH_X86_64,
         &VMDEF_COVERAGE_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
@@ -419,7 +419,7 @@ sub hostArch
         # Mac M1 reports arm64 but we generally need aarch64 (which Linux reports)
         if ($strHostArch eq 'arm64')
         {
-            $strHostArch = 'aarch64';
+            $strHostArch = VM_ARCH_AARCH64;
         }
     }
 

@@ -384,8 +384,9 @@ sub containerBuild
         # Base image
         ###########################################################################################################################
         my $strImageParent =
-            (defined($strArch) ? "${strArch}/" : (vmArch($strOS) eq VM_ARCH_AMD64 ? '' : vmArch($strOS) . '/')) .
+            (defined($strArch) ? "${strArch}/" : (vmArch($strOS) eq VM_ARCH_X86_64 ? '' : vmArch($strOS) . '/')) .
             "$$oVm{$strOS}{&VM_IMAGE}";
+        $strArch = defined($strArch) ? $strArch : VM_ARCH_X86_64;
         my $strImage = "${strOS}-base" . (defined($strArch) ? "-${strArch}" : '-' . hostArch());
         my $strCopy = undef;
 
@@ -422,7 +423,7 @@ sub containerBuild
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
                 "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config \\\n" .
                 "        libbz2-dev bzip2 libyaml-dev libjson-pp-perl liblz4-dev liblz4-tool gnupg lsb-release ccache meson \\\n" .
-                "        libssh2-1-dev";
+                "        libssh2-1-dev libcurl4-openssl-dev";
 
             if ($strOS eq VM_U20 || $strOS eq VM_U22)
             {
@@ -496,18 +497,15 @@ sub containerBuild
                 {
                     $strScript .=
                         "    echo \"deb http://apt.postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg main" .
-                            "\" >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
-                        ($strOS eq VM_U22 ?
-                            "    echo \"deb http://apt.postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg-snapshot main" .
-                            " 18\" >> /etc/apt/sources.list.d/pgdg.list && \\\n" : '') .
+                             ($strOS eq VM_U22 && ($strArch eq VM_ARCH_AARCH64 || $strArch eq VM_ARCH_X86_64) ? ' 18' : '') .
+                             "\" >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
                         "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
                         "    apt-get update && \\\n";
                 }
 
                 $strScript .=
-                    "    apt-get install -y --no-install-recommends" .
-                    ($strOS eq VM_U22 ? " -t \$(lsb_release -s -c)-pgdg-snapshot" : '') . " postgresql-common libpq-dev && \\\n" .
-                     "    sed -i 's/^\\#create\\_main\\_cluster.*\$/create\\_main\\_cluster \\= false/' " .
+                    "    apt-get install -y --no-install-recommends postgresql-common libpq-dev && \\\n" .
+                    "    sed -i 's/^\\#create\\_main\\_cluster.*\$/create\\_main\\_cluster \\= false/' " .
                         "/etc/postgresql-common/createcluster.conf";
             }
 
@@ -522,10 +520,8 @@ sub containerBuild
                 }
                 else
                 {
-                    $strScript .=
-                       "    apt-get install -y --no-install-recommends" .
-                        ($strOS eq VM_U22 ? " -t \$(lsb_release -s -c)-pgdg-snapshot" : '');
-                  }
+                    $strScript .= "    apt-get install -y --no-install-recommends";
+                 }
 
                 # Construct list of databases to install
                 foreach my $strDbVersion (@{$oOS->{&VM_DB}})
@@ -545,6 +541,10 @@ sub containerBuild
                     }
                     else
                     {
+                        # Disable PostgreSQL 18 on architectures that do not support it yet
+                        next if ($strDbVersion eq '18' &&
+                            !($strOS eq VM_U22 && ($strArch eq VM_ARCH_AARCH64 || $strArch eq VM_ARCH_X86_64)));
+
                         $strScript .= " postgresql-${strDbVersion}";
                     }
                 }
