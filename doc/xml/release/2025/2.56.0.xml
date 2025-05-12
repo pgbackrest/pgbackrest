@@ -1,2 +1,17 @@
 <release date="XXXX-XX-XX" version="2.56.0dev" title="UNDER DEVELOPMENT">
+    <release-core-list>
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2625"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                    <release-item-reviewer id="chris.bandy"/>
+                </release-item-contributor-list>
+
+                <p>Fix defaults in command-line help.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-core-list>
 </release>

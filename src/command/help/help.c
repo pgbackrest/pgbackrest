@@ -262,6 +262,45 @@ helpRenderValue(const ConfigOption optionId)
 }
 
 /***********************************************************************************************************************************
+Helper function for helpRender() to output defaults
+***********************************************************************************************************************************/
+static String *
+helpRenderDefault(const ConfigOption optionId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+    FUNCTION_TEST_END();
+
+    String *result = strDup(cfgOptionIdxDefaultValue(optionId, 0));
+
+    if (cfgOptionGroup(optionId))
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            for (unsigned int optionIdx = 1; optionIdx < cfgOptionGroupIdxTotal(cfgOptionGroupId(optionId)); optionIdx++)
+            {
+                const String *const defaultValue = cfgOptionIdxDefaultValue(optionId, optionIdx);
+
+                if (!strEq(result, defaultValue))
+                {
+                    MEM_CONTEXT_PRIOR_BEGIN()
+                    {
+                        strFree(result);
+                        result = strNewZ("<multi>");
+                    }
+                    MEM_CONTEXT_PRIOR_END();
+
+                    break;
+                }
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
+/***********************************************************************************************************************************
 Determine if the first character of a summary should be lower-case
 ***********************************************************************************************************************************/
 static String *
@@ -551,7 +590,7 @@ helpRender(const Buffer *const helpData)
                         String *const summary = helpRenderSummary(optionData[optionId].summary);
 
                         // Output current and default values if they exist
-                        const String *const defaultValue = cfgOptionDefault(optionId);
+                        const String *const defaultValue = helpRenderDefault(optionId);
                         const String *const value = helpRenderValue(optionId);
 
                         if (value != NULL || defaultValue != NULL)
@@ -619,7 +658,7 @@ helpRender(const Buffer *const helpData)
                             CONSOLE_WIDTH)));
 
                 // Output current and default values if they exist
-                const String *const defaultValue = cfgOptionDefault(option.id);
+                const String *const defaultValue = helpRenderDefault(option.id);
                 const String *const value = helpRenderValue(option.id);
 
                 if (value != NULL || defaultValue != NULL)
@@ -651,7 +690,26 @@ helpRender(const Buffer *const helpData)
                     }
 
                     if (defaultValue != NULL)
-                        strCatFmt(result, "default: %s\n", strZ(defaultValue));
+                    {
+                        strCatZ(result, "default:");
+
+                        if (!strEqZ(defaultValue, "<multi>"))
+                            strCatFmt(result, " %s\n", strZ(defaultValue));
+                        else
+                        {
+                            const unsigned int groupId = cfgOptionGroupId(option.id);
+
+                            strCatChr(result, '\n');
+
+                            for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(groupId); optionIdx++)
+                            {
+                                const String *const defaultValue = cfgOptionIdxDefaultValue(option.id, optionIdx);
+
+                                if (defaultValue != NULL)
+                                    strCatFmt(result, "  %s: %s\n", cfgOptionGroupName(groupId, optionIdx), strZ(defaultValue));
+                            }
+                        }
+                    }
                 }
 
                 // Output alternate name (call it deprecated so the user will know not to use it)

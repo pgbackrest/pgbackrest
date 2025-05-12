@@ -1945,7 +1945,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionInt64(cfgOptBufferSize), 65536, "buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceConfig, "backup-standby is source config");
         TEST_RESULT_UINT(cfgOptionUInt64(cfgOptDbTimeout), 1800000, "db-timeout is set");
-        TEST_RESULT_STR_Z(cfgOptionDisplay(cfgOptDbTimeout), "1800", "db-timeout display");
+        TEST_RESULT_STR_Z(cfgOptionDisplay(cfgOptDbTimeout), "30m", "db-timeout display");
         TEST_RESULT_UINT(cfgOptionUInt64(cfgOptProtocolTimeout), 3600000, "protocol-timeout is set");
         TEST_RESULT_UINT(cfgOptionIdxUInt(cfgOptPgPort, 1), 5432, "pg2-port is set");
         TEST_RESULT_UINT(cfgOptionIdxUInt64(cfgOptPgPort, 1), 5432, "pg2-port is set");
@@ -1957,13 +1957,18 @@ testRun(void)
         TEST_RESULT_BOOL(cfgParseOptionRequired(cfgCmdBackup, cfgOptPgHost), false, "pg-host is not required for backup");
         TEST_RESULT_BOOL(cfgParseOptionRequired(cfgCmdInfo, cfgOptStanza), false, "stanza is not required for info");
 
-        TEST_RESULT_STR_Z(cfgOptionDefault(cfgOptBackupStandby), "n", "backup-standby default is false");
-        TEST_RESULT_STR_Z(cfgOptionDefault(cfgOptBackupStandby), "n", "backup-standby default is false (again)");
-        TEST_RESULT_PTR(cfgOptionDefault(cfgOptPgHost), NULL, "pg-host default is NULL");
-        TEST_RESULT_STR_Z(cfgOptionDefault(cfgOptLogLevelConsole), "warn", "log-level-console default is warn");
-        TEST_RESULT_STR_Z(cfgOptionDefault(cfgOptPgPort), "5432", "pg-port default is 5432");
-        TEST_RESULT_STR_Z(cfgOptionDisplay(cfgOptPgPort), "5432", "pg-port display is 5432");
-        TEST_RESULT_STR_Z(cfgOptionDefault(cfgOptDbTimeout), "30m", "db-timeout default is 30m");
+        TEST_RESULT_STR_Z(cfgOptionIdxDefaultValue(cfgOptBackupStandby, 0), "n", "backup-standby default is false");
+        TEST_RESULT_STR_Z(cfgOptionIdxDefaultValue(cfgOptBackupStandby, 0), "n", "backup-standby default is false (again)");
+        TEST_RESULT_PTR(cfgOptionIdxDefaultValue(cfgOptPgHost, 0), NULL, "pg-host default is NULL");
+        TEST_RESULT_STR_Z(cfgOptionIdxDefaultValue(cfgOptLogLevelConsole, 0), "warn", "log-level-console default is warn");
+        TEST_RESULT_STR_Z(cfgOptionIdxDefaultValue(cfgOptPgPort, 0), "5432", "pg-port default is 5432");
+        TEST_RESULT_STR_Z(cfgOptionIdxDisplay(cfgOptPgPort, 0), "5432", "pg-port display is 5432");
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, VARINT64(30000)), "set db-timeout default");
+        TEST_RESULT_STR_Z(cfgOptionIdxDefaultValue(cfgOptDbTimeout, 0), "30", "db-timeout default is 30m");
+
+        TEST_RESULT_STR_Z(cfgParseOptionDefault(cfgCmdBackup, cfgOptPgHost, STRDEF("pgbackrest")), NULL, "default not found");
+        TEST_RESULT_STR_Z(
+            cfgParseOptionDefault(cfgCmdBackup, cfgOptRepoPath, STRDEF("pgbackrest")), "/var/lib/pgbackrest", "default found");
 
         TEST_RESULT_VOID(
             cfgOptionIdxSet(cfgOptPgSocketPath, 1, cfgSourceDefault, VARSTRDEF("/default")), "set pg-socket-path default");

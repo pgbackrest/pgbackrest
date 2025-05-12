@@ -410,21 +410,20 @@ cfgOptionIdxTotal(const ConfigOption optionId)
 
 /**********************************************************************************************************************************/
 FN_EXTERN const String *
-cfgOptionDefault(const ConfigOption optionId)
+cfgOptionIdxDefaultValue(const ConfigOption optionId, const unsigned int optionIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, optionId);
+        FUNCTION_TEST_PARAM(UINT, optionIdx);
     FUNCTION_TEST_END();
 
     ASSERT(cfgInited());
     ASSERT(optionId < CFG_OPTION_TOTAL);
+    ASSERT_DECLARE(const bool group = configLocal->option[optionId].group);
+    ASSERT_DECLARE(const unsigned int indexTotal = configLocal->optionGroup[configLocal->option[optionId].groupId].indexTotal);
+    ASSERT((!group && optionIdx == 0) || (group && optionIdx < indexTotal));
 
-    ConfigOptionData *const option = &configLocal->option[optionId];
-
-    if (option->defaultValue == NULL)
-        option->defaultValue = cfgParseOptionDefault(cfgCommand(), optionId, cfgBin());
-
-    FUNCTION_TEST_RETURN_CONST(STRING, option->defaultValue);
+    FUNCTION_TEST_RETURN_CONST(STRING, configLocal->option[optionId].index[optionIdx].defaultValue);
 }
 
 /**********************************************************************************************************************************/
@@ -925,6 +924,21 @@ cfgOptionIdxSet(
         // Pointer values need to be set to null since they can be accessed when the option is not set, e.g. cfgOptionStrNull().
         // Setting string to NULL suffices to set the other pointers in the union to NULL.
         optionValueType->string = NULL;
+    }
+
+    // Set the default when specified
+    if (source == cfgSourceDefault)
+    {
+        if (value != NULL)
+        {
+            MEM_CONTEXT_BEGIN(configLocal->memContext)
+            {
+                optionValue->defaultValue = cfgOptionDisplayVar(value, cfgParseOptionType(optionId));
+            }
+            MEM_CONTEXT_END();
+        }
+        else
+            optionValue->defaultValue = NULL;
     }
 
     // Clear the display value, which will be generated when needed
