@@ -66,6 +66,7 @@ lstClear(List *const this)
         }
         MEM_CONTEXT_END();
 
+        this->pub.list = NULL;
         this->pub.listSize = 0;
         this->listSizeMax = 0;
     }
