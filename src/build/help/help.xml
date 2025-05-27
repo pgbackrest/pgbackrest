@@ -1614,7 +1614,7 @@
                                 <list-item><id>preserve</id> - preserve current <setting>archive_mode</setting> setting.</list-item>
                             </list>
 
-                            <p><b>NOTE</b>: This option is not available on <postgres/> &amp;lt; 12.</p>
+                            <p><b>NOTE</b>: This option is not available on <postgres/> &lt; 12.</p>
                         </text>
 
                         <example>off</example>
