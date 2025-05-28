@@ -38,6 +38,7 @@ testRun(void)
         TEST_RESULT_Z(logBuf, "{size: 1}", "check log");
 
         TEST_RESULT_VOID(lstClear(list), "clear list");
+        TEST_RESULT_VOID(lstClear(list), "clear list again to ensure everything was cleared correctly");
         TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(list, lstToLog, logBuf, sizeof(logBuf)), "bufToLog");
         TEST_RESULT_Z(logBuf, "{size: 0}", "check log");
 
