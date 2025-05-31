@@ -188,7 +188,7 @@ testRun(void)
         TEST_RESULT_Z(logBuf, "{host: {\"" TEST_ADDR_LOOP_HOST "\"}, port: 443, list: [::1, 127.0.0.1]}", "check log");
 
         // Munge address so it is invalid
-        ((AddressInfoItem *)lstGet(addrInfo->pub.list, 0))->info->ai_addr = NULL;
+        ((AddressInfoItem *)lstGet(addrInfo->pub.list, 0))->info->ai_addr->sa_family = UINT16_MAX;
         TEST_RESULT_STR_Z(addrInfoToStr(addrInfoGet(addrInfo, 0)->info), "invalid", "check invalid");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -272,12 +272,6 @@ testRun(void)
 
         TEST_RESULT_VOID(addrInfoFree(addrInfo), "free");
 #endif
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("addrInfoToStr (invalid)");
-
-        struct addrinfo addrInfoInvalid = {0};
-
-        TEST_RESULT_STR_Z(addrInfoToStr(&addrInfoInvalid), "invalid", "check invalid");
     }
 
     // *****************************************************************************************************************************
