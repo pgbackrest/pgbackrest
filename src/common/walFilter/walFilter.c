@@ -14,6 +14,7 @@
 #include "postgresCommon.h"
 #include "storage/helper.h"
 #include "versions/recordProcessGPDB6.h"
+#include "versions/recordProcessGPDB7.h"
 
 #define WAL_FILTER_TYPE STRID5("wal-fltr", 0x95186db0370)
 
@@ -31,35 +32,12 @@ typedef enum
     ReadRecordSuccess
 } ReadRecordStatus;
 
-typedef struct WalInterface
-{
-    unsigned int pgVersion;
-    StringId fork;
-
-    uint16_t header_magic;
-    void (*validXLogRecordHeader)(const XLogRecord *record, PgPageSize heapPageSize);
-    void (*validXLogRecord)(const XLogRecord *record, PgPageSize heapPageSize);
-    pg_crc32 (*xLogRecordChecksum)(const XLogRecord *record, PgPageSize heapPageSize);
-} WalInterface;
-
-static WalInterface interfaces[] = {
-    {
-        PG_VERSION_94,
-        CFGOPTVAL_FORK_GPDB,
-        GPDB6_XLOG_PAGE_MAGIC,
-        validXLogRecordHeaderGPDB6,
-        validXLogRecordGPDB6,
-        xLogRecordChecksumGPDB6
-    }
-};
-
 typedef struct WalFilter
 {
     ReadStep currentStep;
 
-    PgPageSize heapPageSize;
     PgPageSize walPageSize;
-    uint32_t segSize;
+    uint32 segSize;
 
     bool isBegin;
 
@@ -69,19 +47,19 @@ typedef struct WalFilter
 
     XLogPageHeaderData *currentPageHeader;
 
-    XLogRecord *record;
-    uint32_t recBufSize;
+    XLogRecordBase *record;
+    uint32 recBufSize;
     // How many bytes we read from this record
     size_t gotLen;
 
     List *pageHeaders;
 
-    WalInterface *walInterface;
+    WalInterface walInterface;
 
     const ArchiveGetFile *archiveInfo;
 
     // Records count for debug
-    uint32_t recordNum;
+    uint32 recordNum;
 
     bool done;
     bool inputSame;
@@ -139,7 +117,7 @@ getNextPage(WalFilterState *const this, const Buffer *const input)
     this->inputOffset += this->walPageSize;
 
     // Make sure that WAL belongs to supported Postgres version, since magic value is different in different versions.
-    if (this->currentPageHeader->xlp_magic != this->walInterface->header_magic)
+    if (this->currentPageHeader->xlp_magic != this->walInterface.header_magic)
     {
         THROW_FMT(FormatError, "%s - wrong page magic", strZ(pgLsnToStr(this->recPtr)));
     }
@@ -149,10 +127,10 @@ getNextPage(WalFilterState *const this, const Buffer *const input)
     return true;
 }
 
-static inline uint32_t
+static inline uint32
 getRecordSize(const unsigned char *const buffer)
 {
-    return ((XLogRecord *) (buffer))->xl_tot_len;
+    return ((XLogRecordBase *) (buffer))->xl_tot_len;
 }
 
 // Returns ReadRecordSuccess on success record read and returns ReadRecordNeedBuffer if a new input buffer is needed to continue
@@ -195,7 +173,7 @@ stepBeginOfRecord:
     }
 
     // Record header can be split between pages but first field xl_tot_len is always on single page
-    uint32_t record_size = getRecordSize(((unsigned char *) this->currentPageHeader) + this->pageOffset);
+    uint32 record_size = getRecordSize(((unsigned char *) this->currentPageHeader) + this->pageOffset);
 
     if (this->recBufSize < record_size)
     {
@@ -210,10 +188,10 @@ stepBeginOfRecord:
     memcpy(
         this->record,
         ((unsigned char *) this->currentPageHeader) + this->pageOffset,
-        Min(SizeOfXLogRecord, this->walPageSize - this->pageOffset));
+        Min(this->walInterface.headerSize, this->walPageSize - this->pageOffset));
 
     // If header is split read rest of the header from next page
-    if (SizeOfXLogRecord > this->walPageSize - this->pageOffset)
+    if (this->walInterface.headerSize > this->walPageSize - this->pageOffset)
     {
         this->gotLen = this->walPageSize - this->pageOffset;
         this->currentStep = stepReadHeader;
@@ -238,21 +216,21 @@ stepReadHeader:
         memcpy(
             ((char *) this->record) + this->gotLen,
             ((unsigned char *) this->currentPageHeader) + this->pageOffset,
-            SizeOfXLogRecord - this->gotLen);
-        this->pageOffset += SizeOfXLogRecord - this->gotLen;
+            this->walInterface.headerSize - this->gotLen);
+        this->pageOffset += this->walInterface.headerSize - this->gotLen;
     }
     else
     {
-        this->pageOffset += SizeOfXLogRecord;
+        this->pageOffset += this->walInterface.headerSize;
     }
-    this->gotLen = SizeOfXLogRecord;
+    this->gotLen = this->walInterface.headerSize;
 
-    this->walInterface->validXLogRecordHeader(this->record, this->heapPageSize);
+    this->walInterface.validXLogRecordHeader(this->record);
     // Read rest of the record on this page
-    size_t toRead = Min(this->record->xl_tot_len - SizeOfXLogRecord, this->walPageSize - this->pageOffset);
+    size_t toRead = Min(this->record->xl_tot_len - this->walInterface.headerSize, this->walPageSize - this->pageOffset);
     memcpy(
-        (void *) XLogRecGetData(this->record),
-        ((unsigned char *) this->currentPageHeader) + this->pageOffset,
+        ((uint8 *) this->record) + this->walInterface.headerSize,
+        ((uint8 *) this->currentPageHeader) + this->pageOffset,
         toRead);
     this->gotLen += toRead;
 
@@ -260,7 +238,7 @@ stepReadHeader:
     this->pageOffset += MAXALIGN(toRead);
 
     // Rest of the record data is on the next page
-    while (this->gotLen != this->record->xl_tot_len)
+    while (this->gotLen < this->record->xl_tot_len)
     {
         this->currentStep = stepReadBody;
 stepReadBody:
@@ -293,48 +271,20 @@ stepReadBody:
         this->pageOffset += MAXALIGN(to_write);
         this->gotLen += to_write;
     }
-    this->walInterface->validXLogRecord(this->record, this->heapPageSize);
+    ASSERT(this->gotLen == this->record->xl_tot_len);
 
-    if (this->record->xl_rmid == RM_XLOG_ID && this->record->xl_info == XLOG_SWITCH)
-    {
-        this->isSwitchWal = true;
-    }
+    this->walInterface.validXLogRecord(this->record);
+
+    this->isSwitchWal = this->walInterface.xLogRecordIsWalSwitch(this->record);
+
     this->recordNum++;
     return ReadRecordSuccess;
 }
 
 static void
-filterRecord(WalFilterState *const this)
-{
-    const RelFileNode *const node = getRelFileNodeGPDB6(this->record);
-    if (!node)
-    {
-        return;
-    }
-
-    bool isPassTheFilter;
-
-    // isRelationNeeded can allocate memory on the first call. Therefore, we switch the context.
-    MEM_CONTEXT_OBJ_BEGIN(this)
-    isPassTheFilter = isRelationNeeded(node->dbNode, node->spcNode, node->relNode);
-    MEM_CONTEXT_OBJ_END();
-
-    if (isPassTheFilter)
-    {
-        return;
-    }
-
-    this->record->xl_rmid = RM_XLOG_ID;
-    this->record->xl_info = (uint8_t) XLOG_NOOP; // Clear backup blocks bits
-    // If the initial record has backup blocks, then treat them as rmgr-specific data
-    this->record->xl_len = this->record->xl_tot_len - (uint32) SizeOfXLogRecord;
-    this->record->xl_crc = this->walInterface->xLogRecordChecksum(this->record, this->heapPageSize);
-}
-
-static void
 writeRecord(WalFilterState *const this, Buffer *const output, const unsigned char *recordData)
 {
-    uint32_t header_i = 0;
+    uint32 header_i = 0;
     if (this->recPtr % this->walPageSize == 0)
     {
         ASSERT(!lstEmpty(this->pageHeaders));
@@ -387,7 +337,7 @@ getNearWal (WalFilterState *const this, bool isNext)
 {
     const String *walSegment = NULL;
     const TimeLineID timeLine = this->currentPageHeader->xlp_tli;
-    uint64_t segno = this->currentPageHeader->xlp_pageaddr / this->segSize;
+    uint64 segno = this->currentPageHeader->xlp_pageaddr / this->segSize;
     const String *const path = strNewFmt("%08X%08X", timeLine, (uint32) (segno / XLogSegmentsPerXLogId(this->segSize)));
 
     const StringList *const segmentList = storageListP(
@@ -401,12 +351,12 @@ getNearWal (WalFilterState *const this, bool isNext)
         THROW(FormatError, "no WAL files were found in the repository");
     }
 
-    uint64_t segnoDiff = UINT64_MAX;
-    for (uint32_t i = 0; i < strLstSize(segmentList); i++)
+    uint64 segnoDiff = UINT64_MAX;
+    for (unsigned int i = 0; i < strLstSize(segmentList); i++)
     {
         const String *const file = strSubN(strLstGet(segmentList, i), 0, 24);
         TimeLineID tli;
-        uint64_t fileSegNo = 0;
+        uint64 fileSegNo = 0;
         XLogFromFileName(strZ(file), &tli, &fileSegNo, this->segSize);
 
         if (isNext)
@@ -503,7 +453,7 @@ readBeginOfRecord(WalFilterState *const this)
         lstClearFast(this->pageHeaders);
     }
     // If xl_info and xl_rmid is in prev file then nothing to do
-    result = this->gotLen < offsetof(XLogRecord, xl_rmid) + SIZE_OF_STRUCT_MEMBER(XLogRecord, xl_rmid);
+    result = this->gotLen < this->walInterface.rmidSize;
 
     ioReadClose(storageReadIo(storageRead));
 end:
@@ -567,10 +517,10 @@ walFilterProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
         if (this->currentStep != noStep)
         {
             // if xl_info and xl_rmid of the header is in current file then read end of record from next file if it exits
-            if (this->gotLen >= offsetof(XLogRecord, xl_rmid) + SIZE_OF_STRUCT_MEMBER(XLogRecord, xl_rmid))
+            if (this->gotLen >= this->walInterface.rmidSize)
             {
                 getEndOfRecord(this);
-                filterRecord(this);
+                this->walInterface.xLogRecordFilter(this->record);
             }
             writeRecord(this, output, (const unsigned char *) this->record);
         }
@@ -603,9 +553,9 @@ walFilterProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                     // read this record.
                     THROW_FMT(FormatError, "%s - record is too big", strZ(pgLsnToStr(this->recPtr)));
                 }
-                filterRecord(this);
+                this->walInterface.xLogRecordFilter(this->record);
 
-                ASSERT(offset <= 8);
+                ASSERT(offset % MAXIMUM_ALIGNOF == 0 && offset <= MAXIMUM_ALIGNOF * 2);
                 this->gotLen -= offset;
 
                 ASSERT(this->recPtr == this->currentPageHeader->xlp_pageaddr);
@@ -659,7 +609,7 @@ walFilterProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
         // In the case of overwrite contrecord, we do not need to try to filter it, since the record may not have a body at all.
         if (this->gotLen == this->record->xl_tot_len)
         {
-            filterRecord(this);
+            this->walInterface.xLogRecordFilter(this->record);
         }
 
         writeRecord(this, output, (const unsigned char *) this->record);
@@ -703,30 +653,35 @@ walFilterNew(const PgControl pgControl, const ArchiveGetFile *const archiveInfo)
 
     OBJ_NEW_BEGIN(WalFilterState, .childQty = MEM_CONTEXT_QTY_MAX, .allocQty = MEM_CONTEXT_QTY_MAX)
     {
+        if (cfgOptionStrId(cfgOptFork) != CFGOPTVAL_FORK_GPDB)
+        {
+            THROW(VersionNotSupportedError, "WAL filtering is only supported for GPDB 6 and 7");
+        }
+
         *this = (WalFilterState){
             .isBegin = true,
             .record = memNew(pgControl.pageSize),
             .recBufSize = pgControl.pageSize,
             .pageHeaders = lstNewP(SizeOfXLogLongPHD),
             .archiveInfo = archiveInfo,
-            .heapPageSize = pgControl.pageSize,
             .walPageSize = pgControl.walPageSize,
             .segSize = pgControl.walSegmentSize,
         };
 
-        StringId fork = cfgOptionStrId(cfgOptFork);
-        for (unsigned int i = 0; i < LENGTH_OF(interfaces); i++)
+        if (pgControl.version == PG_VERSION_94)
         {
-            if (interfaces[i].pgVersion == pgControl.version && interfaces[i].fork == fork)
-            {
-                this->walInterface = &interfaces[i];
-                break;
-            }
+            this->walInterface = getWalInterfaceGPDB6(pgControl.pageSize);
         }
-        if (this->walInterface == NULL)
+        else if (pgControl.version == PG_VERSION_12)
         {
-            THROW(VersionNotSupportedError, "WAL filtering is unsupported for this Postgres version");
+            this->walInterface = getWalInterfaceGPDB7(pgControl.pageSize);
         }
+        else
+        {
+            THROW(VersionNotSupportedError, "WAL filtering is not supported for this version of GPDB");
+        }
+
+        relationFilterInit();
     }
     OBJ_NEW_END();
 

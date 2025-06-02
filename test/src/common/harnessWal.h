@@ -7,7 +7,8 @@
 #define DEFAULT_GDPB_XLOG_PAGE_SIZE pgPageSize32
 #define DEFAULT_GDPB_PAGE_SIZE pgPageSize32
 #define GPDB6_XLOG_PAGE_HEADER_MAGIC 0xD07E
-#define GPDB6_XLOG_SEG_SIZE (64 * 1024 * 1024)
+#define GPDB7_XLOG_PAGE_HEADER_MAGIC 0xD101
+#define GPDB_XLOG_SEG_SIZE (64 * 1024 * 1024)
 
 typedef enum InsertRecordFlags
 {
@@ -23,33 +24,57 @@ typedef enum InsertRecordFlags
 typedef struct InsertXRecordParam
 {
     VAR_PARAM_HEADER;
-    uint16_t magic;
-    uint32_t beginOffset;
-    uint64_t segno;
-    uint32_t segSize;
+    uint16 magic;
+    uint32 beginOffset;
+    uint64 segno;
+    uint32 segSize;
     PgPageSize walPageSize;
-    uint32_t incompletePosition;
+    uint32 incompletePosition;
 } InsertXRecordParam;
 
 typedef struct CreateXRecordParam
 {
     VAR_PARAM_HEADER;
     PgPageSize heapPageSize;
-    uint32_t xl_len;
+    uint32 xl_crc;
+    // GPDB 6
+    uint32 xl_len;
+    uint32 body_size;
+    void *body;
+    // GPDB 7
+    List *backupBlocks;
+    void *main_data;
+    uint32 main_data_size;
+    bool has_origin;
 } CreateXRecordParam;
 
-#define hrnGpdbCreateXRecordP(rmid, info, bodySize, body, ...) \
-    hrnGpdbCreateXRecord(rmid, info, bodySize, body, (CreateXRecordParam){VAR_PARAM_INIT, __VA_ARGS__})
+typedef struct
+{
+    uint8 block_id;
+    uint8 fork_flags;
+    uint16 data_length;
 
-XLogRecord *hrnGpdbCreateXRecord(uint8_t rmid, uint8_t info, uint32_t bodySize, void *body, CreateXRecordParam param);
+    uint16 bimg_len;
+    uint16 hole_offset;
+    uint8 bimg_info;
+    uint16 hole_length;
+
+    RelFileNode relFileNode;
+    BlockNumber blockNumber;
+    void *data;
+} BackupBlockInfoGPDB7;
+
+#define hrnGpdbCreateXRecordP(pgVersion, rmid, info, ...) \
+    hrnGpdbCreateXRecord(pgVersion, rmid, info, (CreateXRecordParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+XLogRecordBase *hrnGpdbCreateXRecord(unsigned int pgVersion, uint8 rmid, uint8 info, CreateXRecordParam param);
 
 #define hrnGpdbWalInsertXRecordP(wal, record, flags, ...) \
     hrnGpdbWalInsertXRecord(wal, record, (InsertXRecordParam){VAR_PARAM_INIT, __VA_ARGS__}, flags)
 
 void hrnGpdbWalInsertXRecord(
     Buffer *const walBuffer,
-    XLogRecord *record,
+    XLogRecordBase *record,
     InsertXRecordParam param,
     InsertRecordFlags flags);
-void hrnGpdbWalInsertXRecordSimple(Buffer *const walBuffer, XLogRecord *record);
 #endif // TEST_COMMON_HARNESS_WAL_H

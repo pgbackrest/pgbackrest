@@ -1983,6 +1983,11 @@ restoreProcessQueue(const Manifest *const manifest, List **const queueList)
 
         // Now put all files into the processing queues
         const bool isFilterSet = cfgOptionTest(cfgOptFilter);
+        if (isFilterSet)
+        {
+            relationFilterInit();
+        }
+
         for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
         {
             const ManifestFilePack *const filePack = manifestFilePackGet(manifest, fileIdx);
@@ -2419,9 +2424,11 @@ cmdRestore(void)
             backupData.backupCipherPass);
 
         if (cfgOptionTest(cfgOptFilter) &&
-            (cfgOptionStrId(cfgOptFork) != CFGOPTVAL_FORK_GPDB || manifestData(jobData.manifest)->pgVersion != PG_VERSION_94))
+            (cfgOptionStrId(cfgOptFork) != CFGOPTVAL_FORK_GPDB ||
+             !(manifestData(jobData.manifest)->pgVersion == PG_VERSION_94 ||
+               manifestData(jobData.manifest)->pgVersion == PG_VERSION_12)))
         {
-            THROW(OptionInvalidError, "option '" CFGOPT_FILTER "' is supported on GPDB 6 only");
+            THROW(OptionInvalidError, "option '" CFGOPT_FILTER "' is supported on GPDB 6 and 7 only");
         }
 
         // Remotes (if any) are no longer needed since the rest of the repository reads will be done by the local processes

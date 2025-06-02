@@ -476,7 +476,7 @@ unit:
           - storage/remote/storage
           - storage/remote/write
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: walFilter
+      - name: walFilterGPDB6
         total: 7
         harness: wal
         harness: info
@@ -497,6 +497,30 @@ unit:
           - protocol/parallelJob
           - protocol/parallel
           - common/partialRestore
+          - common/walFilter/versions/recordProcessGPDB7
+
+      - name: walFilterGPDB7
+        total: 6
+        harness: wal
+        harness: info
+        harness: postgres
+
+        coverage:
+          - common/walFilter/walFilter
+          - common/walFilter/versions/recordProcessGPDB7
+          - postgres/interface/crc32
+        depend:
+          - command/archive/common
+          - command/archive/get/file
+          - command/archive/get/get
+          - command/archive/get/protocol
+          - info/infoArchive
+          - info/infoPg
+          - info/info
+          - protocol/parallelJob
+          - protocol/parallel
+          - common/partialRestore
+          - common/walFilter/versions/recordProcessGPDB6
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: partialRestore

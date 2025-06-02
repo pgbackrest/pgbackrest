@@ -222,6 +222,7 @@ src_pgbackrest = [
     'common/type/xml.c',
     'common/walFilter/walFilter.c',
 	'common/walFilter/versions/recordProcessGPDB6.c',
+	'common/walFilter/versions/recordProcessGPDB7.c',
 	'config/config.c',
     'config/exec.c',
     'config/load.c',

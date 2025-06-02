@@ -18,6 +18,8 @@ typedef struct Table
     Oid relNode;
 } Table;
 
+static List *filterList = NULL;
+
 static int
 tableComparator(const Table *const a, const Table *const b)
 {
@@ -117,34 +119,36 @@ isRelationNeeded(const Oid dbNode, const Oid spcNode, const Oid relNode)
     if (!cfgOptionTest(cfgOptFilter))
         return true;
 
+    ASSERT(filterList);
+
     // Restore all system objects.
     if (pgDbIsSystemId(relNode))
         return true;
-
-    static List *filterList = NULL;
-    if (filterList == NULL)
-    {
-        const String *const filter_path = cfgOptionStrNull(cfgOptFilter);
-        if (!strBeginsWith(filter_path, FSLASH_STR))
-        {
-            THROW(AssertError, "The path to the filter info file is not absolute");
-        }
-
-        const Storage *const local_storage = storageLocal();
-        StorageRead *const storageRead = storageNewReadP(local_storage, filter_path);
-        Buffer *const jsonFile = storageGetP(storageRead);
-        JsonRead *const jsonRead = jsonReadNew(strNewBuf(jsonFile));
-
-        filterList = buildFilterList(jsonRead);
-
-        jsonReadFree(jsonRead);
-        bufFree(jsonFile);
-        storageReadFree(storageRead);
-    }
 
     const DataBase *const db = lstFind(filterList, &dbNode);
     if (db == NULL)
         return false;
 
     return lstExists(db->tables, &(Table){.spcNode = spcNode, .relNode = relNode});
+}
+
+FN_EXTERN void
+relationFilterInit(void)
+{
+    const String *const filter_path = cfgOptionStrNull(cfgOptFilter);
+    if (!strBeginsWith(filter_path, FSLASH_STR))
+    {
+        THROW(AssertError, "The path to the filter info file is not absolute");
+    }
+
+    const Storage *const local_storage = storageLocal();
+    StorageRead *const storageRead = storageNewReadP(local_storage, filter_path);
+    Buffer *const jsonFile = storageGetP(storageRead);
+    JsonRead *const jsonRead = jsonReadNew(strNewBuf(jsonFile));
+
+    filterList = buildFilterList(jsonRead);
+
+    jsonReadFree(jsonRead);
+    bufFree(jsonFile);
+    storageReadFree(storageRead);
 }

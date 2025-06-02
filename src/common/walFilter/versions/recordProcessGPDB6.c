@@ -2,68 +2,42 @@
 
 #include <stdbool.h>
 #include "common/log.h"
+#include "common/partialRestore.h"
 #include "postgres/interface/crc32.h"
 #include "recordProcessGPDB6.h"
-#include "xlogInfoGPDB6.h"
+
+static PgPageSize heapPageSizeGPDB6 = 0;
 
 #define XLOG_HEAP_OPMASK        0x70
 
-typedef uint32 CommandId;
-
-typedef enum ForkNumber
+enum
 {
-    InvalidForkNumber = -1,
-    MAIN_FORKNUM = 0,
-    FSM_FORKNUM,
-    VISIBILITYMAP_FORKNUM,
-    INIT_FORKNUM
-} ForkNumber;
-
-typedef struct BkpBlock
-{
-    RelFileNode node;           /* relation containing block */
-    ForkNumber fork;            /* fork within the relation */
-    BlockNumber block;          /* block number */
-    uint16 hole_offset;         /* number of bytes before "hole" */
-    uint16 hole_length;         /* number of bytes in "hole" */
-
-    /* ACTUAL BLOCK DATA FOLLOWS AT END OF STRUCT */
-} BkpBlock;
-
-typedef struct xl_smgr_truncate
-{
-    BlockNumber blkno;
-    RelFileNode rnode;
-} xl_smgr_truncate;
-
-typedef struct xl_heap_new_cid
-{
-    /*
-     * store toplevel xid so we don't have to merge cids from different
-     * transactions
-     */
-    TransactionId top_xid;
-    CommandId cmin;
-    CommandId cmax;
-
-    /*
-     * don't really need the combocid since we have the actual values right in
-     * this struct, but the padding makes it free and its useful for
-     * debugging.
-     */
-    CommandId combocid;
-
-    /*
-     * Store the relfilenode/ctid pair to facilitate lookups.
-     */
-    // RelFileNode is the first field in xl_heaptid.
-    RelFileNode target;
-} xl_heap_new_cid;
+//    RM_XLOG_ID, defined in header with common definitions
+    RM6_XACT_ID =            1,
+    RM6_SMGR_ID =            2,
+    RM6_CLOG_ID =            3,
+    RM6_DBASE_ID =           4,
+    RM6_TBLSPC_ID =          5,
+    RM6_MULTIXACT_ID =       6,
+    RM6_RELMAP_ID =          7,
+    RM6_STANDBY_ID =         8,
+    RM6_HEAP2_ID =           9,
+    RM6_HEAP_ID =           10,
+    RM6_BTREE_ID =          11,
+    RM6_HASH_ID =           12,
+    RM6_GIN_ID =            13,
+    RM6_GIST_ID =           14,
+    RM6_SEQ_ID =            15,
+    RM6_SPGIST_ID =         16,
+    RM6_BITMAP_ID =         17,
+    RM6_DISTRIBUTEDLOG_ID = 18,
+    RM6_APPEND_ONLY_ID =    19,
+};
 
 // Get RelFileNode from XLOG record.
 // Only XLOG_FPI contains RelFileNode, so the other record types are ignored.
 static const RelFileNode *
-getXlog(const XLogRecord *record)
+getXlog(const XLogRecordGPDB6 *record)
 {
     const uint8 info = (uint8) (record->xl_info & ~XLR_INFO_MASK);
     switch (info)
@@ -92,7 +66,7 @@ getXlog(const XLogRecord *record)
 // Get RelFileNode from Storage record.
 // in XLOG_SMGR_TRUNCATE, the RelFileNode is not at the beginning of the structure.
 static const RelFileNode *
-getStorage(const XLogRecord *record)
+getStorage(const XLogRecordGPDB6 *record)
 {
     const uint8 info = (uint8) (record->xl_info & ~XLR_INFO_MASK);
     switch (info)
@@ -115,7 +89,7 @@ getStorage(const XLogRecord *record)
 // this function does not throw errors because XLOG_HEAP_OPMASK contains only 3 non-zero bits, which gives 8 possible values, all of
 // which are used.
 static const RelFileNode *
-getHeap2(const XLogRecord *record)
+getHeap2(const XLogRecordGPDB6 *record)
 {
     uint8 info = (uint8) (record->xl_info & ~XLR_INFO_MASK);
     info &= XLOG_HEAP_OPMASK;
@@ -141,7 +115,7 @@ getHeap2(const XLogRecord *record)
 // Get RelFileNode from Heap record.
 // This function throws an exception only for XLOG_HEAP_MOVE since this type is no longer used.
 static const RelFileNode *
-getHeap(const XLogRecord *record)
+getHeap(const XLogRecordGPDB6 *record)
 {
     uint8 info = (uint8) (record->xl_info & ~XLR_INFO_MASK);
     info &= XLOG_HEAP_OPMASK;
@@ -164,7 +138,7 @@ getHeap(const XLogRecord *record)
 
 // Get RelFileNode from Btree record.
 static const RelFileNode *
-getBtree(const XLogRecord *record)
+getBtree(const XLogRecordGPDB6 *record)
 {
     const uint8 info = (uint8) (record->xl_info & ~XLR_INFO_MASK);
     switch (info)
@@ -191,7 +165,7 @@ getBtree(const XLogRecord *record)
 
 // Get RelFileNode from Gin record.
 static const RelFileNode *
-getGin(const XLogRecord *record)
+getGin(const XLogRecordGPDB6 *record)
 {
     const uint8 info = (uint8) (record->xl_info & ~XLR_INFO_MASK);
     switch (info)
@@ -214,7 +188,7 @@ getGin(const XLogRecord *record)
 
 // Get RelFileNode from Gist record.
 static const RelFileNode *
-getGist(const XLogRecord *record)
+getGist(const XLogRecordGPDB6 *record)
 {
     const uint8 info = (uint8) (record->xl_info & ~XLR_INFO_MASK);
     switch (info)
@@ -229,7 +203,7 @@ getGist(const XLogRecord *record)
 
 // Get RelFileNode from Seq record.
 static const RelFileNode *
-getSeq(const XLogRecord *record)
+getSeq(const XLogRecordGPDB6 *record)
 {
     const uint8 info = (uint8) (record->xl_info & ~XLR_INFO_MASK);
     if (info == XLOG_SEQ_LOG)
@@ -241,7 +215,7 @@ getSeq(const XLogRecord *record)
 
 // Get RelFileNode from Spgist record.
 static const RelFileNode *
-getSpgist(const XLogRecord *record)
+getSpgist(const XLogRecordGPDB6 *record)
 {
     const uint8 info = (uint8) (record->xl_info & ~XLR_INFO_MASK);
 
@@ -263,7 +237,7 @@ getSpgist(const XLogRecord *record)
 
 // Get RelFileNode from Bitmap record.
 static const RelFileNode *
-getBitmap(const XLogRecord *record)
+getBitmap(const XLogRecordGPDB6 *record)
 {
     const uint8 info = (uint8) (record->xl_info & ~XLR_INFO_MASK);
     switch (info)
@@ -281,7 +255,7 @@ getBitmap(const XLogRecord *record)
 
 // Get RelFileNode from Appendonly record.
 static const RelFileNode *
-getAppendonly(const XLogRecord *record)
+getAppendonly(const XLogRecordGPDB6 *record)
 {
     const uint8 info = (uint8) (record->xl_info & ~XLR_INFO_MASK);
     switch (info)
@@ -293,65 +267,69 @@ getAppendonly(const XLogRecord *record)
     THROW_FMT(FormatError, "Appendonly UNKNOWN: %d", info);
 }
 
-FN_EXTERN const RelFileNode *
-getRelFileNodeGPDB6(const XLogRecord *record)
+static const RelFileNode *
+getRelFileNode(const XLogRecordGPDB6 *const record)
 {
     switch (record->xl_rmid)
     {
         case RM_XLOG_ID:
             return getXlog(record);
 
-        case RM_SMGR_ID:
+        case RM6_SMGR_ID:
             return getStorage(record);
 
-        case RM_HEAP2_ID:
+        case RM6_HEAP2_ID:
             return getHeap2(record);
 
-        case RM_HEAP_ID:
+        case RM6_HEAP_ID:
             return getHeap(record);
 
-        case RM_BTREE_ID:
+        case RM6_BTREE_ID:
             return getBtree(record);
 
-        case RM_GIN_ID:
+        case RM6_GIN_ID:
             return getGin(record);
 
-        case RM_GIST_ID:
+        case RM6_GIST_ID:
             return getGist(record);
 
-        case RM_SEQ_ID:
+        case RM6_SEQ_ID:
             return getSeq(record);
 
-        case RM_SPGIST_ID:
+        case RM6_SPGIST_ID:
             return getSpgist(record);
 
-        case RM_BITMAP_ID:
+        case RM6_BITMAP_ID:
             return getBitmap(record);
 
-        case RM_APPEND_ONLY_ID:
+        case RM6_APPEND_ONLY_ID:
             return getAppendonly(record);
 
         // Records of these types do not contain a RelFileNode.
-        case RM_XACT_ID:
-        case RM_CLOG_ID:
-        case RM_DBASE_ID:
-        case RM_TBLSPC_ID:
-        case RM_MULTIXACT_ID:
-        case RM_RELMAP_ID:
-        case RM_STANDBY_ID:
-        case RM_DISTRIBUTEDLOG_ID:
+        case RM6_XACT_ID:
+        case RM6_CLOG_ID:
+        case RM6_DBASE_ID:
+        case RM6_TBLSPC_ID:
+        case RM6_MULTIXACT_ID:
+        case RM6_RELMAP_ID:
+        case RM6_STANDBY_ID:
+        case RM6_DISTRIBUTEDLOG_ID:
             // skip
             return NULL;
 
-        case RM_HASH_ID:
+        case RM6_HASH_ID:
             THROW(FormatError, "Not supported in GPDB 6. Shouldn't be here");
     }
     THROW(FormatError, "Unknown resource manager");
 }
 
-FN_EXTERN void
-validXLogRecordHeaderGPDB6(const XLogRecord *const record, const PgPageSize heapPageSize)
+static void
+validXLogRecordHeaderGPDB6(const XLogRecordBase *const recordBase)
 {
+    ASSERT(heapPageSizeGPDB6 != 0);
+
+    const XLogRecordGPDB6 *const record = (const XLogRecordGPDB6 *const) recordBase;
+
     /*
      * xl_len == 0 is bad data for everything except XLOG SWITCH, where it is
      * required.
@@ -367,31 +345,34 @@ validXLogRecordHeaderGPDB6(const XLogRecord *const record, const PgPageSize heap
     {
         THROW_FMT(FormatError, "record with zero length");
     }
-    if (record->xl_tot_len < SizeOfXLogRecord + record->xl_len ||
-        record->xl_tot_len > SizeOfXLogRecord + record->xl_len +
-        XLR_MAX_BKP_BLOCKS * (sizeof(BkpBlock) + heapPageSize))
+    if (record->xl_tot_len < SizeOfXLogRecordGPDB6 + record->xl_len ||
+        record->xl_tot_len > SizeOfXLogRecordGPDB6 + record->xl_len +
+        XLR_MAX_BKP_BLOCKS * (sizeof(BkpBlock) + heapPageSizeGPDB6))
     {
         THROW_FMT(FormatError, "invalid record length");
     }
-    if (record->xl_rmid > RM_APPEND_ONLY_ID)
+    if (record->xl_rmid > RM6_APPEND_ONLY_ID)
     {
         THROW_FMT(FormatError, "invalid resource manager ID %u", record->xl_rmid);
     }
 }
 
-FN_EXTERN void
-validXLogRecordGPDB6(const XLogRecord *const record, const PgPageSize heapPageSize)
+static void
+validXLogRecordGPDB6(const XLogRecordBase *const recordBase)
 {
+    ASSERT(heapPageSizeGPDB6 != 0);
+
+    const XLogRecordGPDB6 *const record = (const XLogRecordGPDB6 *const) recordBase;
     const uint32 len = record->xl_len;
     uint32 remaining = record->xl_tot_len;
 
-    remaining -= (uint32) (SizeOfXLogRecord + len);
+    remaining -= (uint32) (SizeOfXLogRecordGPDB6 + len);
     pg_crc32 crc = crc32cInit();
     crc = crc32cComp(crc, XLogRecGetData(record), len);
 
     /* Add in the backup blocks, if any */
     const unsigned char *blk = XLogRecGetData(record) + len;
-    for (int i = 0; i < XLR_MAX_BKP_BLOCKS; i++)
+    for (unsigned int i = 0; i < XLR_MAX_BKP_BLOCKS; i++)
     {
         if (!(record->xl_info & XLR_BKP_BLOCK(i)))
             continue;
@@ -402,12 +383,12 @@ validXLogRecordGPDB6(const XLogRecord *const record, const PgPageSize heapPageSi
         }
 
         const BkpBlock *bkpb = (const BkpBlock *) blk;
-        if (bkpb->hole_offset + bkpb->hole_length > heapPageSize)
+        if (bkpb->hole_offset + bkpb->hole_length > heapPageSizeGPDB6)
         {
             THROW_FMT(FormatError, "incorrect hole size in record");
         }
 
-        const uint32 blen = (uint32) sizeof(BkpBlock) + heapPageSize - bkpb->hole_length;
+        const uint32 blen = (uint32) sizeof(BkpBlock) + heapPageSizeGPDB6 - bkpb->hole_length;
         if (remaining < blen)
         {
             THROW_FMT(FormatError, "invalid backup block size in record");
@@ -424,7 +405,7 @@ validXLogRecordGPDB6(const XLogRecord *const record, const PgPageSize heapPageSi
     }
 
     /* Finally include the record header */
-    crc = crc32cComp(crc, (const unsigned char *) record, offsetof(XLogRecord, xl_crc));
+    crc = crc32cComp(crc, (const unsigned char *) record, offsetof(XLogRecordGPDB6, xl_crc));
     crc = crc32cFinish(crc);
 
     if (crc != record->xl_crc)
@@ -433,8 +414,15 @@ validXLogRecordGPDB6(const XLogRecord *const record, const PgPageSize heapPageSi
     }
 }
 
-pg_crc32
-xLogRecordChecksumGPDB6(const XLogRecord *record, const PgPageSize heapPageSize)
+static bool
+xLogRecordIsWalSwitchGPDB6(const XLogRecordBase *recordBase)
+{
+    const XLogRecordGPDB6 *const record = (const XLogRecordGPDB6 *const) recordBase;
+    return record->xl_rmid == RM_XLOG_ID && record->xl_info == XLOG_SWITCH;
+}
+
+FN_EXTERN pg_crc32
+xLogRecordChecksumGPDB6(const XLogRecordGPDB6 *const record, const PgPageSize heapPageSize)
 {
     const uint32 len = record->xl_len;
 
@@ -457,7 +445,46 @@ xLogRecordChecksumGPDB6(const XLogRecord *record, const PgPageSize heapPageSize)
     }
 
     /* Finally include the record header */
-    crc = crc32cComp(crc, (const unsigned char *) record, offsetof(XLogRecord, xl_crc));
+    crc = crc32cComp(crc, (const unsigned char *) record, offsetof(XLogRecordGPDB6, xl_crc));
 
     return crc32cFinish(crc);
+}
+
+static void
+filterRecordGPDB6(XLogRecordBase *const recordBase)
+{
+    ASSERT(heapPageSizeGPDB6 != 0);
+
+    XLogRecordGPDB6 *const record = (XLogRecordGPDB6 *const) recordBase;
+
+    const RelFileNode *const node = getRelFileNode(record);
+
+    if (node == NULL || isRelationNeeded(node->dbNode, node->spcNode, node->relNode))
+    {
+        return;
+    }
+
+    record->xl_rmid = RM_XLOG_ID;
+    record->xl_info = (uint8_t) XLOG_NOOP; // Clear backup blocks bits
+    // If the initial record has backup blocks, then treat them as rmgr-specific data
+    record->xl_len = record->xl_tot_len - (uint32) SizeOfXLogRecordGPDB6;
+    record->xl_crc = xLogRecordChecksumGPDB6(record, heapPageSizeGPDB6);
+}
+
+FN_EXTERN WalInterface
+getWalInterfaceGPDB6(PgPageSize heapPageSize)
+{
+    ASSERT(pgPageSizeValid(heapPageSize));
+
+    heapPageSizeGPDB6 = heapPageSize;
+
+    return (WalInterface){
+               0xD07E,
+               SizeOfXLogRecordGPDB6,
+               offsetof(XLogRecordGPDB6, xl_rmid) + SIZE_OF_STRUCT_MEMBER(XLogRecordGPDB6, xl_rmid),
+               validXLogRecordHeaderGPDB6,
+               validXLogRecordGPDB6,
+               xLogRecordIsWalSwitchGPDB6,
+               filterRecordGPDB6
+    };
 }

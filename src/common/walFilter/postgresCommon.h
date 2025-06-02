@@ -29,8 +29,6 @@ typedef uint32 BlockNumber;
 #define XLR_INFO_MASK           0x0F
 
 #define RM_XLOG_ID 0
-#define XLOG_SWITCH 0x40
-#define XLOG_NOOP   0x20
 // macros
 
 /* ----------------
@@ -54,17 +52,7 @@ typedef uint32 BlockNumber;
 #define SizeOfXLogLongPHD   MAXALIGN(sizeof(XLogLongPageHeaderData))
 #define XLogPageHeaderSize(hdr)     \
     (((hdr)->xlp_info & XLP_LONG_HEADER) ? SizeOfXLogLongPHD : SizeOfXLogShortPHD)
-#define SizeOfXLogRecord    MAXALIGN(sizeof(XLogRecord))
-#define XLogRecGetData(record)  ((const unsigned char*) (record) + SizeOfXLogRecord)
 #define Min(x, y)       ((x) < (y) ? (x) : (y))
-
-/*
- * If we backed up any disk blocks with the XLOG record, we use flag bits in
- * xl_info to signal it.  We support backup of up to 4 disk blocks per XLOG
- * record.
- */
-#define XLR_MAX_BKP_BLOCKS      4
-#define XLR_BKP_BLOCK(iblk)     (0x08 >> (iblk)) /* iblk in 0..3 */
 
 /*
  * The XLOG is split into WAL segments (physical files) of the size indicated
@@ -107,43 +95,158 @@ typedef struct XLogLongPageHeaderData
     uint32 xlp_xlog_blcksz;         /* just as a cross-check */
 } XLogLongPageHeaderData;
 
-/*
- * The overall layout of an XLOG record is:
- *      Fixed-size header (XLogRecord struct)
- *      rmgr-specific data
- *      BkpBlock
- *      backup block data
- *      BkpBlock
- *      backup block data
- *      ...
- *
- * where there can be zero to four backup blocks (as signaled by xl_info flag
- * bits).  XLogRecord structs always start on MAXALIGN boundaries in the WAL
- * files, and we round up SizeOfXLogRecord so that the rmgr data is also
- * guaranteed to begin on a MAXALIGN boundary.  However, no padding is added
- * to align BkpBlock structs or backup block data.
- *
- * NOTE: xl_len counts only the rmgr data, not the XLogRecord header,
- * and also not any backup blocks.  xl_tot_len counts everything.  Neither
- * length field is rounded up to an alignment boundary.
- */
-typedef struct XLogRecord
+// This part of XLogRecord is the same in all supported versions of PostgreSQL.
+typedef struct XLogRecordBase
 {
     uint32 xl_tot_len;          /* total len of entire record */
     TransactionId xl_xid;       /* xact id */
-    uint32 xl_len;              /* total len of rmgr data */
-    uint8 xl_info;            /* flag bits, see below */
-    RmgrId xl_rmid;             /* resource manager for this record */
-    /* 2 bytes of padding here, initialize to zero */
-    XLogRecPtr xl_prev;         /* ptr to previous record in log */
-    pg_crc32 xl_crc;            /* CRC for this record */
+} XLogRecordBase;
 
-    /* If MAXALIGN==8, there are 4 wasted bytes here */
+typedef uint32 CommandId;
 
-    /* ACTUAL LOG DATA FOLLOWS AT END OF STRUCT */
-} XLogRecord;
-_Static_assert(
-    MAXALIGN(offsetof(XLogRecord, xl_info)) == MAXALIGN(offsetof(XLogRecord, xl_rmid)),
-    "The xl_info and xl_rmid fields are in different 8 byte chunks.");
+typedef struct xl_smgr_truncate
+{
+    BlockNumber blkno;
+    RelFileNode rnode;
+} xl_smgr_truncate;
+
+typedef struct xl_heap_new_cid
+{
+    /*
+     * store toplevel xid so we don't have to merge cids from different
+     * transactions
+     */
+    TransactionId top_xid;
+    CommandId cmin;
+    CommandId cmax;
+
+    /*
+     * don't really need the combocid since we have the actual values right in
+     * this struct, but the padding makes it free and its useful for
+     * debugging.
+     */
+    CommandId combocid;
+
+    /*
+     * Store the relfilenode/ctid pair to facilitate lookups.
+     */
+    // RelFileNode is the first field in xl_heaptid.
+    RelFileNode target;
+} xl_heap_new_cid;
+
+enum
+{
+    // xlog
+    XLOG_CHECKPOINT_SHUTDOWN =  0x00,
+    XLOG_CHECKPOINT_ONLINE =    0x10,
+    XLOG_NOOP =                 0x20,
+    XLOG_NEXTOID =              0x30,
+    XLOG_SWITCH =               0x40,
+    XLOG_BACKUP_END =           0x50,
+    XLOG_PARAMETER_CHANGE =     0x60,
+    XLOG_RESTORE_POINT =        0x70,
+    XLOG_FPW_CHANGE =           0x80,
+    XLOG_END_OF_RECOVERY =      0x90,
+    XLOG_FPI =                  0xA0,
+    XLOG_NEXTRELFILENODE =      0xB0,
+    XLOG_OVERWRITE_CONTRECORD = 0xC0,
+
+// storage
+    XLOG_SMGR_CREATE =    0x10,
+    XLOG_SMGR_TRUNCATE =  0x20,
+
+// heap
+    XLOG_HEAP2_REWRITE =      0x00,
+    XLOG_HEAP2_CLEAN =        0x10,
+    XLOG_HEAP2_FREEZE_PAGE =  0x20,
+    XLOG_HEAP2_CLEANUP_INFO = 0x30,
+    XLOG_HEAP2_VISIBLE =      0x40,
+    XLOG_HEAP2_MULTI_INSERT = 0x50,
+    XLOG_HEAP2_LOCK_UPDATED = 0x60,
+    XLOG_HEAP2_NEW_CID =      0x70,
+
+    XLOG_HEAP_INSERT =        0x00,
+    XLOG_HEAP_DELETE =        0x10,
+    XLOG_HEAP_UPDATE =        0x20,
+    XLOG_HEAP_MOVE =          0x30,
+    XLOG_HEAP_HOT_UPDATE =    0x40,
+    XLOG_HEAP_NEWPAGE =       0x50,
+    XLOG_HEAP_LOCK =          0x60,
+    XLOG_HEAP_INPLACE =       0x70,
+    XLOG_HEAP_INIT_PAGE =     0x80,
+
+// btree
+    XLOG_BTREE_INSERT_LEAF =        0x00,
+    XLOG_BTREE_INSERT_UPPER =       0x10,
+    XLOG_BTREE_INSERT_META =        0x20,
+    XLOG_BTREE_SPLIT_L =            0x30,
+    XLOG_BTREE_SPLIT_R =            0x40,
+    XLOG_BTREE_SPLIT_L_ROOT =       0x50,
+    XLOG_BTREE_SPLIT_R_ROOT =       0x60,
+    XLOG_BTREE_DELETE =             0x70,
+    XLOG_BTREE_UNLINK_PAGE =        0x80,
+    XLOG_BTREE_UNLINK_PAGE_META =   0x90,
+    XLOG_BTREE_NEWROOT =            0xA0,
+    XLOG_BTREE_MARK_PAGE_HALFDEAD = 0xB0,
+    XLOG_BTREE_VACUUM =             0xC0,
+    XLOG_BTREE_REUSE_PAGE =         0xD0,
+
+// gin
+    XLOG_GIN_CREATE_INDEX =          0x00,
+    XLOG_GIN_CREATE_PTREE =          0x10,
+    XLOG_GIN_INSERT =                0x20,
+    XLOG_GIN_SPLIT =                 0x30,
+    XLOG_GIN_VACUUM_PAGE =           0x40,
+    XLOG_GIN_VACUUM_DATA_LEAF_PAGE = 0x90,
+    XLOG_GIN_DELETE_PAGE =           0x50,
+    XLOG_GIN_UPDATE_META_PAGE =      0x60,
+    XLOG_GIN_INSERT_LISTPAGE =       0x70,
+    XLOG_GIN_DELETE_LISTPAGE =       0x80,
+
+// gist
+    XLOG_GIST_PAGE_UPDATE =  0x00,
+    XLOG_GIST_PAGE_SPLIT =   0x30,
+    XLOG_GIST_CREATE_INDEX = 0x50,
+    XLOG_GIST_PAGE_REUSE = 0x20, // GPDB 7
+
+// sequence
+    XLOG_SEQ_LOG = 0x00,
+
+// spgist
+    XLOG_SPGIST_CREATE_INDEX =    0x00,
+    XLOG_SPGIST_ADD_LEAF =        0x10,
+    XLOG_SPGIST_MOVE_LEAFS =      0x20,
+    XLOG_SPGIST_ADD_NODE =        0x30,
+    XLOG_SPGIST_SPLIT_TUPLE =     0x40,
+    XLOG_SPGIST_PICKSPLIT =       0x50,
+    XLOG_SPGIST_VACUUM_LEAF =     0x60,
+    XLOG_SPGIST_VACUUM_ROOT =     0x70,
+    XLOG_SPGIST_VACUUM_REDIRECT = 0x80,
+
+// bitmap
+    XLOG_BITMAP_INSERT_LOVITEM =          0x20,
+    XLOG_BITMAP_INSERT_META =             0x30,
+    XLOG_BITMAP_INSERT_BITMAP_LASTWORDS = 0x40,
+
+    XLOG_BITMAP_INSERT_WORDS = 0x50,
+
+    XLOG_BITMAP_UPDATEWORD =  0x70,
+    XLOG_BITMAP_UPDATEWORDS = 0x80,
+
+// appendonly
+    XLOG_APPENDONLY_INSERT =   0x00,
+    XLOG_APPENDONLY_TRUNCATE = 0x10,
+};
+
+typedef struct WalInterface
+{
+    uint16 header_magic;
+    uint32 headerSize;
+    uint32 rmidSize;
+    void (*validXLogRecordHeader)(const XLogRecordBase *record);
+    void (*validXLogRecord)(const XLogRecordBase *record);
+    bool (*xLogRecordIsWalSwitch)(const XLogRecordBase *record);
+    void (*xLogRecordFilter)(XLogRecordBase *record);
+} WalInterface;
 
 #endif // COMMON_WALFILTER_POSTGRESCOMMON_H

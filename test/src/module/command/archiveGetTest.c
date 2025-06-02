@@ -1188,11 +1188,13 @@ testRun(void)
 
     if (testBegin("wal Filter"))
     {
+        const Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
+
         StringList *const baseArgList = strLstNew();
         hrnCfgArgRawZ(baseArgList, cfgOptStanza, "test1");
         hrnCfgArgRawZ(baseArgList, cfgOptPgPath, TEST_PATH "/pg");
         hrnCfgArgRawZ(baseArgList, cfgOptRepoPath, TEST_PATH "/repo");
-        hrnCfgArgRawZ(baseArgList, cfgOptFilter, "recovery_filter.json");
+        hrnCfgArgRawZ(baseArgList, cfgOptFilter, TEST_PATH "/recovery_filter.json");
         hrnCfgArgRawZ(baseArgList, cfgOptFork, CFGOPTVAL_FORK_GPDB_Z);
 
         StringList *argList = strLstDup(baseArgList);
@@ -1202,6 +1204,7 @@ testRun(void)
 
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
+        HRN_STORAGE_PUT_Z(storageTest, TEST_PATH "/recovery_filter.json", "[]");
         HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_wal");
 
         HRN_INFO_PUT(

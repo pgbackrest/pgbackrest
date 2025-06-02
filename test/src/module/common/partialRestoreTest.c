@@ -124,7 +124,8 @@ testRun(void)
         StringList *const argListInv = strLstDup(argListCommon);
         hrnCfgArgRawZ(argListInv, cfgOptFilter, "recovery_filter.json");
         HRN_CFG_LOAD(cfgCmdRestore, argListInv);
-        TEST_ERROR(isRelationNeeded(16384, 1663, 16390), AssertError, "The path to the filter info file is not absolute");
+
+        TEST_ERROR(relationFilterInit(), AssertError, "The path to the filter info file is not absolute");
 
         TEST_TITLE("The --filter option is correct");
         const Storage *const storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
@@ -133,6 +134,7 @@ testRun(void)
         StringList *const argList = strLstDup(argListCommon);
         hrnCfgArgRawZ(argList, cfgOptFilter, TEST_PATH "/recovery_filter.json");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
+        TEST_RESULT_VOID(relationFilterInit(), "init filter");
         TEST_RESULT_BOOL(isRelationNeeded(5, 1663, 1259), true, "always true for system DB and system table");
         TEST_RESULT_BOOL(isRelationNeeded(20002, 1600, 1259), true, "system table from DB which exists in JSON");
         TEST_RESULT_BOOL(isRelationNeeded(20005, 1600, 16384), false, "user DB doesn't exist in JSON");
