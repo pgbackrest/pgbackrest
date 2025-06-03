@@ -36,13 +36,13 @@ cvtCharToZ(const char value, char *const buffer, const size_t bufferSize)
     return (size_t)snprintf(buffer, bufferSize, "%c", value);
 }
 
-// Convert percentage to an integer
+// Convert percentage to an integer. This is useful for exporting a percentage in a way that does not incur rounding.
 FN_EXTERN unsigned int cvtPctToUInt(uint64_t dividend, uint64_t divisor);
 
-// Convert percentage to zero-terminated string
+// Convert percentage to zero-terminated string. This is more reproducible than formatting the results of floating point division.
 FN_EXTERN size_t cvtPctToZ(uint64_t dividend, uint64_t divisor, char *buffer, size_t bufferSize);
 
-// Convert division to zero-terminated string
+// Convert division to zero-terminated string. This is more reproducible than formatting the results of floating point division.
 FN_EXTERN size_t cvtDivToZ(uint64_t dividend, uint64_t divisor, unsigned int precision, bool trim, char *buffer, size_t bufferSize);
 
 // Convert int to zero-terminated string and vice versa
