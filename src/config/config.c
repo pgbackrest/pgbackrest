@@ -448,7 +448,7 @@ cfgOptionDisplayVar(const Variant *const value, const ConfigOptionType optionTyp
     }
     else if (optionType == cfgOptTypeTime)
     {
-        FUNCTION_TEST_RETURN_CONST(STRING, strNewDbl((double)varInt64(value) / MSEC_PER_SEC));
+        FUNCTION_TEST_RETURN_CONST(STRING, strNewDivP(varUInt64Force(value), MSEC_PER_SEC, .precision = 3, .trim = true));
     }
     else if (optionType == cfgOptTypeStringId)
     {
