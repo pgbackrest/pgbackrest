@@ -280,7 +280,11 @@
                         <summary>Output type.</summary>
 
                         <text>
-                            <p>Output may be text (default) or num to display the installed <backrest/> version as an integer.</p>
+                            <p>The following output formats are supported:</p>
+                            <list>
+                                <list-item><id>text</id> - Display the installed <backrest/> version as text.</list-item>
+                                <list-item><id>num</id> - Display the installed <backrest/> version as an integer value.</list-item>
+                            </list>
                         </text>
 
                         <example>num</example>
