@@ -583,9 +583,12 @@ testRun(void)
             {
                 // Wait for parent to bind port before attempting to bind
                 HRN_FORK_PARENT_NOTIFY_GET(0);
-                TEST_ERROR(
+                TEST_ERROR_MULTI(
                     sckServerNew(STRDEF("127.0.0.1"), testPort, 100), FileOpenError,
-                    "unable to bind socket: [98] Address already in use");
+                    // Not musl libc
+                    "unable to bind socket: [98] Address already in use",
+                    // Musl libc
+                    "unable to bind socket: [98] Address in use");
                 TEST_RESULT_VOID(sckServerNew(STRDEF("127.0.0.1"), testPort, 5000), "bind succeeds with enough retries");
             }
             HRN_FORK_PARENT_END();
@@ -629,8 +632,12 @@ testRun(void)
         TEST_ASSIGN(
             client, tlsClientNewP(sckClientNew(STRDEF("99.99.99.99.99"), 7777, 0, 0), STRDEF("X"), 100, 0, true), "new client");
         TEST_RESULT_STR_Z(ioClientName(client), "99.99.99.99.99:7777", " check name");
-        TEST_ERROR(
-            ioClientOpen(client), HostConnectError, "unable to get address for '99.99.99.99.99': [-2] Name or service not known");
+        TEST_ERROR_MULTI(
+            ioClientOpen(client), HostConnectError,
+            // Not musl libc
+            "unable to get address for '99.99.99.99.99': [-2] Name or service not known",
+            // Musl libc
+            "unable to get address for '99.99.99.99.99': [-2] Name does not resolve");
 
         // Set TLS client timeout higher than socket timeout to ensure that TLS retries are covered
         TEST_ASSIGN(

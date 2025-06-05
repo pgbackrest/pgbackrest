@@ -388,7 +388,11 @@ testRun(void)
         {
             printf("%s\n", errorMessage());
             assert(errorCode() == AssertError.code);
-            assert(strcmp(errorMessage(), "message 1: [5] Input/output error") == 0);
+            assert(
+                // glibc
+                strcmp(errorMessage(), "message 1: [5] Input/output error") == 0 ||
+                // musl libc
+                strcmp(errorMessage(), "message 1: [5] I/O error") == 0);
         }
         TRY_END();
 

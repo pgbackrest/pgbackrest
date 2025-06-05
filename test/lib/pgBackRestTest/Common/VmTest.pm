@@ -51,6 +51,8 @@ use constant VMDEF_WITH_ZST                                         => 'with-zst
 ####################################################################################################################################
 # Valid OS base List
 ####################################################################################################################################
+use constant VM_OS_BASE_ALPINE                                      => 'alpine';
+    push @EXPORT, qw(VM_OS_BASE_ALPINE);
 use constant VM_OS_BASE_DEBIAN                                      => 'debian';
     push @EXPORT, qw(VM_OS_BASE_DEBIAN);
 use constant VM_OS_BASE_RHEL                                        => 'rhel';
@@ -75,6 +77,8 @@ use constant VM_ALL                                                 => 'all';
 use constant VM_NONE                                                => 'none';
     push @EXPORT, qw(VM_NONE);
 
+use constant VM_A321                                                 => 'a321';
+    push @EXPORT, qw(VM_A321);
 use constant VM_D11                                                 => 'd11';
     push @EXPORT, qw(VM_D11);
 use constant VM_RH8                                                 => 'rh8';
@@ -110,6 +114,28 @@ my $oyVm =
         &VM_DB_TEST =>
         [
             PG_VERSION_10,
+        ],
+    },
+
+    # Alpine 3.21
+    &VM_A321 =>
+    {
+        &VM_OS_BASE => VM_OS_BASE_ALPINE,
+        &VM_IMAGE => 'alpine:3.21',
+        &VM_ARCH => VM_ARCH_X86_64,
+        &VMDEF_PG_REPO => false,
+        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
+
+        &VMDEF_WITH_ZST => true,
+
+        &VM_DB =>
+        [
+            PG_VERSION_17,
+        ],
+
+        &VM_DB_TEST =>
+        [
+            PG_VERSION_17,
         ],
     },
 

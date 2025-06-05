@@ -141,16 +141,31 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("exec exits with error");
 
-        TEST_ERROR(
+        TEST_ERROR_MULTI(
             execOneP(STRDEF("cat missing.txt")), UnknownError,
-            "cat missing.txt terminated unexpectedly [1]: cat: missing.txt: No such file or directory");
+            // glibc
+            "cat missing.txt terminated unexpectedly [1]: cat: missing.txt: No such file or directory",
+            // musl libc
+            "cat missing.txt terminated unexpectedly [1]: cat: can't open 'missing.txt': No such file or directory");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("exec ignores error");
 
-        TEST_RESULT_STR_Z(
-            execOneP(STRDEF("cat missing.txt"), .resultExpect = 1), "cat: missing.txt: No such file or directory\n",
-            "ignore error");
+        TRY_BEGIN()
+        {
+            TEST_RESULT_STR_Z(
+                execOneP(STRDEF("cat missing.txt"), .resultExpect = 1), "cat: missing.txt: No such file or directory\n",
+                "ignore error");
+        }
+        CATCH_ANY()
+        {
+            hrnTestResultEnd();
+
+            TEST_RESULT_STR_Z(
+                execOneP(STRDEF("cat missing.txt"), .resultExpect = 1),
+                "cat: can't open 'missing.txt': No such file or directory\n", "ignore error");
+        }
+        TRY_END();
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

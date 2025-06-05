@@ -499,12 +499,12 @@ eval
 
     # Setup build if it does not exist
     my $strGenerateCommand =
-        "ninja -C ${strBuildPath} src/build-code" .
+        "ninja -C ${strBuildPath} src/build-code 2>&1" .
         ($bDryRun ? '' : " && \\\n${strBuildPath}/src/build-code config ${strBackRestBase}/src") .
         ($bDryRun ? '' : " && \\\n${strBuildPath}/src/build-code error ${strBackRestBase}/src") .
         ($bDryRun ? '' : " && \\\n${strBuildPath}/src/build-code postgres-version ${strBackRestBase}/src") .
         " && \\\n${strBuildPath}/src/build-code postgres ${strBackRestBase}/src ${strRepoCachePath}" .
-        " && \\\nninja -C ${strBuildPath} test/src/test-pgbackrest";
+        " && \\\nninja -C ${strBuildPath} test/src/test-pgbackrest 2>&1";
 
     if (!-e $strBuildNinja)
     {
@@ -660,7 +660,7 @@ eval
                     # Setup build if it does not exist
                     my $strBuildCommand =
                         "ninja -C ${strBuildPath}" . ($bBinRequired ? ' src/pgbackrest' : '') .
-                        ($bUnitRequired ? ' test/src/test-pgbackrest' : '');
+                        ($bUnitRequired ? ' test/src/test-pgbackrest' : '') .  ' 2>&1';
 
                     if (!-e $strBuildNinja)
                     {

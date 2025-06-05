@@ -557,6 +557,9 @@ cvtTimeToZ(const char *const format, const time_t value, char *const buffer, con
     FUNCTION_TEST_END();
 
     ASSERT(buffer != NULL);
+    // Musl libc does not behave like other C libraries when formatting %s as output from gmtime_r() so forbid it entirely, see
+    // https://www.openwall.com/lists/musl/2025/06/02/3 for details.
+    ASSERT(!param.utc || strstr(format, "%s") == NULL);
 
     struct tm timePart;
 

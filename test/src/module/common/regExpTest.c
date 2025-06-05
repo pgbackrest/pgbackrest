@@ -20,14 +20,18 @@ testRun(void)
             // Newer glibc
             "Unmatched [, [^, [:, [., or [=",
             // MacOS
-            "brackets ([ ]) not balanced");
+            "brackets ([ ]) not balanced",
+            // Musl libc
+            "Missing ']'");
 
         TEST_ERROR_MULTI(
             regExpErrorCheck(REG_BADBR), FormatError,
             // glibc
             "Invalid content of \\{\\}",
             // MacOS
-            "invalid repetition count(s)");
+            "invalid repetition count(s)",
+            // Musl libc
+            "Invalid contents of {}");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("new regexp");
