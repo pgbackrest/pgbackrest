@@ -137,6 +137,63 @@ Test that an expected error is actually thrown and error when it isn't
 }
 
 /***********************************************************************************************************************************
+Test that an expected error is actually thrown and error when it isn't
+***********************************************************************************************************************************/
+#define TEST_ERROR_MULTI(statement, errorTypeExpected, ...)                                                                        \
+{                                                                                                                                  \
+    const char *const errorMessageExpected[] = {__VA_ARGS__};                                                                      \
+    bool TEST_ERROR_catch = false;                                                                                                 \
+                                                                                                                                   \
+    /* Set the line number for the current function in the stack trace */                                                          \
+    FUNCTION_HARNESS_STACK_TRACE_LINE_SET(__LINE__);                                                                               \
+                                                                                                                                   \
+    hrnTestLogPrefix(__LINE__);                                                                                                    \
+    printf("expect %s: [%s]\n", errorTypeName(&errorTypeExpected), #__VA_ARGS__);                                                  \
+    fflush(stdout);                                                                                                                \
+                                                                                                                                   \
+    TEST_ERROR_MEM_CONTEXT_BEGIN()                                                                                                 \
+    {                                                                                                                              \
+        TRY_BEGIN()                                                                                                                \
+        {                                                                                                                          \
+            statement;                                                                                                             \
+        }                                                                                                                          \
+        CATCH_FATAL()                                                                                                              \
+        {                                                                                                                          \
+            TEST_ERROR_catch = true;                                                                                               \
+            bool match = false;                                                                                                    \
+                                                                                                                                   \
+            if (errorType() == &errorTypeExpected)                                                                                 \
+            {                                                                                                                      \
+                for (unsigned int errorIdx = 0; errorIdx < LENGTH_OF(errorMessageExpected); errorIdx++)                            \
+                {                                                                                                                  \
+                    if (strcmp(errorMessage(), errorMessageExpected[errorIdx]) == 0)                                               \
+                    {                                                                                                              \
+                        match = true;                                                                                              \
+                        break;                                                                                                     \
+                    }                                                                                                              \
+                }                                                                                                                  \
+            }                                                                                                                      \
+                                                                                                                                   \
+            if (!match)                                                                                                            \
+            {                                                                                                                      \
+                THROW_FMT(                                                                                                         \
+                    TestError, "EXPECTED %s: [%s]\n\n BUT GOT %s: %s\n\nTHROWN AT:\n%s", errorTypeName(&errorTypeExpected),        \
+                    #__VA_ARGS__, errorName(), errorMessage(), errorStackTrace());                                                 \
+            }                                                                                                                      \
+        }                                                                                                                          \
+        TRY_END();                                                                                                                 \
+    }                                                                                                                              \
+    TEST_ERROR_MEM_CONTEXT_END();                                                                                                  \
+                                                                                                                                   \
+    if (!TEST_ERROR_catch)                                                                                                         \
+        THROW_FMT(                                                                                                                 \
+            TestError, "statement '%s' returned but error %s, [%s] was expected", #statement, errorTypeName(&errorTypeExpected),   \
+            #__VA_ARGS__);                                                                                                         \
+                                                                                                                                   \
+    FUNCTION_HARNESS_STACK_TRACE_LINE_SET(0);                                                                                      \
+}
+
+/***********************************************************************************************************************************
 Test error with a formatted expected message
 ***********************************************************************************************************************************/
 #define TEST_ERROR_FMT(statement, errorTypeExpected, ...)                                                                          \

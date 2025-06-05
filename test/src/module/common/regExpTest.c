@@ -13,39 +13,21 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("regExpNew(), regExpMatch(), and regExpFree()"))
     {
-        // Error message varies based on the libc version/OS
-        TRY_BEGIN()
-        {
-            // Older libc
-            TEST_ERROR(regExpNew(STRDEF("[[[")), FormatError, "Unmatched [ or [^");
-        }
-        CATCH(TestError)
-        {
-            TRY_BEGIN()
-            {
-                // Newer libc
-                TEST_ERROR(regExpNew(STRDEF("[[[")), FormatError, "Unmatched [, [^, [:, [., or [=");
-            }
-            CATCH(TestError)
-            {
-                // MacOS
-                TEST_ERROR(regExpNew(STRDEF("[[[")), FormatError, "brackets ([ ]) not balanced");
-            }
-            TRY_END();
-        }
-        TRY_END();
-
-        TRY_BEGIN()
-        {
-            // libc
-            TEST_ERROR(regExpErrorCheck(REG_BADBR), FormatError, "Invalid content of \\{\\}");
-        }
-        CATCH(TestError)
-        {
+        TEST_ERROR_MULTI(
+            regExpNew(STRDEF("[[[")), FormatError,
+            // Older glibc
+            "Unmatched [ or [^",
+            // Newer glibc
+            "Unmatched [, [^, [:, [., or [=",
             // MacOS
-            TEST_ERROR(regExpErrorCheck(REG_BADBR), FormatError, "invalid repetition count(s)");
-        }
-        TRY_END();
+            "brackets ([ ]) not balanced");
+
+        TEST_ERROR_MULTI(
+            regExpErrorCheck(REG_BADBR), FormatError,
+            // glibc
+            "Invalid content of \\{\\}",
+            // MacOS
+            "invalid repetition count(s)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("new regexp");
