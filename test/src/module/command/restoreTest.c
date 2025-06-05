@@ -2503,7 +2503,7 @@ testRun(void)
 
         // Replace percent complete and restore size since they can cause a lot of churn when files are added/removed
         hrnLogReplaceAdd(", [0-9]{1,3}\\.[0-9]{2}%\\)", "[0-9]+\\.[0-9]+%", "PCT", false);
-        hrnLogReplaceAdd(" restore size = [0-9]+[A-Z]+", "[^ ]+$", "SIZE", false);
+        hrnLogReplaceAdd(" restore size = [0-9]+(\\.[0-9]+){0,1}[A-Z]+", "[^ ]+$", "SIZE", false);
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");

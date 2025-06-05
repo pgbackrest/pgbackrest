@@ -816,14 +816,11 @@ testCvgSummaryValue(const unsigned int hit, const unsigned int total)
     // Else render value
     else
     {
-        strCatFmt(result, "%u/%u (", hit, total);
-
-        if (hit == total)
-            strCatZ(result, "100.0");
-        else
-            strCatFmt(result, "%.2f", (float)hit * 100 / (float)total);
-
-        strCatZ(result, "%)");
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            strCatFmt(result, "%u/%u (%s)", hit, total, strZ(strNewPct(hit, total)));
+        }
+        MEM_CONTEXT_TEMP_END();
     }
 
     FUNCTION_LOG_RETURN(STRING, result);

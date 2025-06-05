@@ -793,7 +793,9 @@ cmdArchiveGet(void)
                         ArchiveTimeoutError,
                         "unable to get WAL file '%s' from the archive asynchronously after %s second(s)\n"
                         "HINT: check '%s' for errors.",
-                        strZ(walSegment), strZ(strNewDbl((double)cfgOptionInt64(cfgOptArchiveTimeout) / MSEC_PER_SEC)),
+                        strZ(walSegment),
+                        strZ(
+                            strNewDivP((uint64_t)cfgOptionInt64(cfgOptArchiveTimeout), MSEC_PER_SEC, .precision = 3, .trim = true)),
                         strZ(cfgLoadLogFileName(cfgCmdRoleAsync)));
                 }
                 // Else report that the WAL segment could not be found
