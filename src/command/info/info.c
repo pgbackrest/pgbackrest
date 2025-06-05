@@ -718,13 +718,15 @@ Set the stanza data for each stanza found in the repo
 ***********************************************************************************************************************************/
 static VariantList *
 stanzaInfoList(
-    List *const stanzaRepoList, const String *const backupLabel, const unsigned int repoIdxMin, const unsigned int repoIdxMax)
+    List *const stanzaRepoList, const String *const backupLabel, const unsigned int repoIdxMin,
+    const unsigned int repoIdxMax, const bool progressOnly)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LIST, stanzaRepoList);
         FUNCTION_TEST_PARAM(STRING, backupLabel);
         FUNCTION_TEST_PARAM(UINT, repoIdxMin);
         FUNCTION_TEST_PARAM(UINT, repoIdxMax);
+        FUNCTION_TEST_PARAM(BOOL, progressOnly);
     FUNCTION_TEST_END();
 
     FUNCTION_AUDIT_HELPER();
@@ -758,6 +760,17 @@ stanzaInfoList(
         for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
             InfoRepoData *const repoData = &stanzaData->repoList[repoIdx];
+
+            // If progressOnly mode is enabled, skip collecting additional data and set the status code
+            if (progressOnly)
+            {
+                if (repoIdx == repoIdxMin)
+                    stanzaStatusCode = repoData->stanzaStatus;
+                else
+                    stanzaStatusCode =
+                        stanzaStatusCode != repoData->stanzaStatus ? INFO_STANZA_STATUS_CODE_MIXED : repoData->stanzaStatus;
+                continue;
+            }
 
             Variant *const repoInfo = varNewKv(kvNew());
             kvPut(varKv(repoInfo), REPO_KEY_KEY_VAR, VARUINT(repoData->key));
@@ -845,18 +858,22 @@ stanzaInfoList(
             kvPut(varKv(stanzaInfo), STANZA_KEY_REPO_VAR, varNewVarLst(repoSection));
         }
 
-        // Get a sorted list of the data for all existing backups for this stanza over all repos
-        backupList(backupSection, stanzaData, backupLabel, repoIdxMin, repoIdxMax);
-        kvPut(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR, varNewVarLst(backupSection));
+        // If progressOnly mode is disabled сollect backup and cipher data.
+        if (!progressOnly)
+        {
+            // Get a sorted list of the data for all existing backups for this stanza over all repos
+            backupList(backupSection, stanzaData, backupLabel, repoIdxMin, repoIdxMax);
+            kvPut(varKv(stanzaInfo), STANZA_KEY_BACKUP_VAR, varNewVarLst(backupSection));
 
-        // Set the overall stanza status
+            // Set the overall cipher type
+            if (stanzaCipherType != INFO_STANZA_STATUS_CODE_MIXED)
+                kvPut(varKv(stanzaInfo), KEY_CIPHER_VAR, VARSTR(strIdToStr(stanzaCipherType)));
+            else
+                kvPut(varKv(stanzaInfo), KEY_CIPHER_VAR, VARSTRDEF(INFO_STANZA_MIXED));
+        }
+
+        // Set the overall stanza status and gather progress information
         stanzaStatus(stanzaStatusCode, stanzaData, stanzaInfo);
-
-        // Set the overall cipher type
-        if (stanzaCipherType != INFO_STANZA_STATUS_CODE_MIXED)
-            kvPut(varKv(stanzaInfo), KEY_CIPHER_VAR, VARSTR(strIdToStr(stanzaCipherType)));
-        else
-            kvPut(varKv(stanzaInfo), KEY_CIPHER_VAR, VARSTRDEF(INFO_STANZA_MIXED));
 
         varLstAdd(result, stanzaInfo);
     }
@@ -1287,7 +1304,7 @@ Get the backup and archive info files on the specified repo for the stanza
 static void
 infoUpdateStanza(
     const Storage *const storage, InfoStanzaRepo *const stanzaRepo, const unsigned int repoIdx, const bool stanzaExists,
-    const String *const backupLabel)
+    const String *const backupLabel, const bool progressOnly)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE, storage);
@@ -1295,6 +1312,7 @@ infoUpdateStanza(
         FUNCTION_TEST_PARAM(UINT, repoIdx);
         FUNCTION_TEST_PARAM(BOOL, stanzaExists);
         FUNCTION_TEST_PARAM(STRING, backupLabel);
+        FUNCTION_TEST_PARAM(BOOL, progressOnly);
     FUNCTION_TEST_END();
 
     FUNCTION_AUDIT_HELPER();
@@ -1309,47 +1327,55 @@ infoUpdateStanza(
     {
         TRY_BEGIN()
         {
-            // Catch certain errors
-            TRY_BEGIN()
+            // If progressOnly mode is disabled read info and manifest files.
+            if (!progressOnly)
             {
-                // Attempt to load the backup info file
-                stanzaRepo->repoList[repoIdx].backupInfo = infoBackupLoadFile(
-                    storage, strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanzaRepo->name), INFO_BACKUP_FILE),
-                    stanzaRepo->repoList[repoIdx].cipher, stanzaRepo->repoList[repoIdx].cipherPass);
-            }
-            CATCH(FileMissingError)
-            {
-                // If there is no backup.info then set the status to indicate missing
-                stanzaStatus = INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA;
-            }
-            CATCH(CryptoError)
-            {
-                // If a reason for the error is due to a an encryption error, add a hint
-                THROW_FMT(
-                    CryptoError,
-                    "%s\n"
-                    "HINT: use option --stanza if encryption settings are different for the stanza than the global settings.",
-                    errorMessage());
-            }
-            TRY_END();
-
-            // If backup.info was found, then get the archive.info file, which must exist if the backup.info exists, else the failed
-            // load will throw an error which will be trapped and recorded
-            if (stanzaRepo->repoList[repoIdx].backupInfo != NULL)
-            {
-                stanzaRepo->repoList[repoIdx].archiveInfo = infoArchiveLoadFile(
-                    storage, strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanzaRepo->name), INFO_ARCHIVE_FILE),
-                    stanzaRepo->repoList[repoIdx].cipher, stanzaRepo->repoList[repoIdx].cipherPass);
-
-                // If a specific backup exists on this repo then attempt to load the manifest
-                if (backupLabel != NULL)
+                // Catch certain errors
+                TRY_BEGIN()
                 {
-                    stanzaRepo->repoList[repoIdx].manifest = manifestLoadFile(
-                        storage, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)),
-                        stanzaRepo->repoList[repoIdx].cipher,
-                        infoPgCipherPass(infoBackupPg(stanzaRepo->repoList[repoIdx].backupInfo)));
+                    // Attempt to load the backup info file
+                    stanzaRepo->repoList[repoIdx].backupInfo = infoBackupLoadFile(
+                        storage, strNewFmt(STORAGE_PATH_BACKUP "/%s/%s", strZ(stanzaRepo->name), INFO_BACKUP_FILE),
+                        stanzaRepo->repoList[repoIdx].cipher, stanzaRepo->repoList[repoIdx].cipherPass);
                 }
+                CATCH(FileMissingError)
+                {
+                    // If there is no backup.info then set the status to indicate missing
+                    stanzaStatus = INFO_STANZA_STATUS_CODE_MISSING_STANZA_DATA;
+                }
+                CATCH(CryptoError)
+                {
+                    // If a reason for the error is due to a an encryption error, add a hint
+                    THROW_FMT(
+                        CryptoError,
+                        "%s\n"
+                        "HINT: use option --stanza if encryption settings are different for the stanza than the global settings.",
+                        errorMessage());
+                }
+                TRY_END();
 
+                // If backup.info was found, then get the archive.info, which must exist if the backup.info exists, else the
+                // load will throw an error which will be trapped and recorded
+                if (stanzaRepo->repoList[repoIdx].backupInfo != NULL)
+                {
+                    stanzaRepo->repoList[repoIdx].archiveInfo = infoArchiveLoadFile(
+                        storage, strNewFmt(STORAGE_PATH_ARCHIVE "/%s/%s", strZ(stanzaRepo->name), INFO_ARCHIVE_FILE),
+                        stanzaRepo->repoList[repoIdx].cipher, stanzaRepo->repoList[repoIdx].cipherPass);
+
+                    // If a specific backup exists on this repo then attempt to load the manifest
+                    if (backupLabel != NULL)
+                    {
+                        stanzaRepo->repoList[repoIdx].manifest = manifestLoadFile(
+                            storage, strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)),
+                            stanzaRepo->repoList[repoIdx].cipher,
+                            infoPgCipherPass(infoBackupPg(stanzaRepo->repoList[repoIdx].backupInfo)));
+                    }
+                }
+            }
+
+            // Read lock files if progressOnly mode is enabled or backup information is available
+            if (progressOnly || stanzaRepo->repoList[repoIdx].backupInfo != NULL)
+            {
                 // If there is a valid backup lock for this stanza then backup/expire must be running
                 const LockReadResult lockResult = cmdLockRead(lockTypeBackup, stanzaRepo->name, repoIdx);
 
@@ -1404,6 +1430,9 @@ infoRender(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Is only progress output requested?
+        const bool progressOnly = cfgOptionBool(cfgOptProgressOnly);
+
         // Get stanza if specified
         const String *const stanza = cfgOptionStrNull(cfgOptStanza);
 
@@ -1492,7 +1521,7 @@ infoRender(void)
                     // If the stanza was already added to the array, then update this repo for the stanza, else the stanza has not
                     // yet been added to the list, so add it
                     if (stanzaRepo != NULL)
-                        infoUpdateStanza(storageRepo, stanzaRepo, repoIdx, stanzaExists, backupExistsOnRepo);
+                        infoUpdateStanza(storageRepo, stanzaRepo, repoIdx, stanzaExists, backupExistsOnRepo, progressOnly);
                     else
                     {
                         InfoStanzaRepo stanzaRepo =
@@ -1516,7 +1545,7 @@ infoRender(void)
                         }
 
                         // Update the info for this repo
-                        infoUpdateStanza(storageRepo, &stanzaRepo, repoIdx, stanzaExists, backupExistsOnRepo);
+                        infoUpdateStanza(storageRepo, &stanzaRepo, repoIdx, stanzaExists, backupExistsOnRepo, progressOnly);
                         lstAdd(stanzaRepoList, &stanzaRepo);
                     }
                 }
@@ -1589,7 +1618,7 @@ infoRender(void)
 
         // If the backup storage exists, then search for and process any stanzas
         if (!lstEmpty(stanzaRepoList))
-            infoList = stanzaInfoList(stanzaRepoList, backupLabel, repoIdxMin, repoIdxMax);
+            infoList = stanzaInfoList(stanzaRepoList, backupLabel, repoIdxMin, repoIdxMax, progressOnly);
 
         // Format text output
         if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT)
@@ -1625,9 +1654,11 @@ infoRender(void)
 
                     if (statusCode != INFO_STANZA_STATUS_CODE_OK)
                     {
-                        // Update the overall stanza status and change displayed status if backup lock is found
-                        if (statusCode == INFO_STANZA_STATUS_CODE_MIXED || statusCode == INFO_STANZA_STATUS_CODE_PG_MISMATCH ||
-                            statusCode == INFO_STANZA_STATUS_CODE_OTHER)
+                        // Update the overall stanza status and change displayed status if backup lock is found.
+                        // If progressOnly mode is enabled, omit detailed error messages since they are not recorded.
+                        if (!progressOnly && (statusCode == INFO_STANZA_STATUS_CODE_MIXED ||
+                                              statusCode == INFO_STANZA_STATUS_CODE_PG_MISMATCH ||
+                                              statusCode == INFO_STANZA_STATUS_CODE_OTHER))
                         {
                             // Stanza status
                             strCatFmt(
@@ -1699,8 +1730,8 @@ infoRender(void)
                             strCatFmt(resultStr, "%s\n", INFO_STANZA_STATUS_OK);
                     }
 
-                    // Add cipher type if the stanza is found on at least one repo
-                    if (statusCode != INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH)
+                    // If progressOnly mode is disabled and the stanza is found on at least one repo add cipher type
+                    if (!progressOnly && statusCode != INFO_STANZA_STATUS_CODE_MISSING_STANZA_PATH)
                     {
                         strCatFmt(resultStr, "    cipher: %s\n", strZ(varStr(kvGet(stanzaInfo, KEY_CIPHER_VAR))));
 
@@ -1720,8 +1751,8 @@ infoRender(void)
                         }
                     }
 
-                    // Get the current database for this stanza
-                    if (!varLstEmpty(kvGetList(stanzaInfo, STANZA_KEY_DB_VAR)))
+                    // If progressOnly mode is disabled get the current database for this stanza
+                    if (!progressOnly && !varLstEmpty(kvGetList(stanzaInfo, STANZA_KEY_DB_VAR)))
                     {
                         const InfoStanzaRepo *const stanzaRepo = lstFind(stanzaRepoList, &stanzaName);
 
