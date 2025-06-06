@@ -2274,8 +2274,8 @@
                             <p>The following output types are supported:</p>
 
                             <list>
-                                <list-item><id>text</id></list-item>
-                                <list-item><id>json</id></list-item>
+                                <list-item><id>text</id> - Human-readable information from the manifest.</list-item>
+                                <list-item><id>json</id> - Exhaustive machine-readable information from the manifest in JSON format.</list-item>
                             </list>
                         </text>
 
