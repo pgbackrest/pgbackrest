@@ -2731,8 +2731,6 @@
                                     <list-item><id>none</id> - No verify output.</list-item>
                                     <list-item><id>text</id> - Provides verify output to stdout.</list-item>
                                 </list>
-
-                            <p>Requesting text generates output to stdout.</p>
                         </text>
 
                         <example>text</example>
