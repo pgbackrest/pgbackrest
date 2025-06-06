@@ -2612,7 +2612,13 @@
                         <summary>Filter on backup type.</summary>
 
                         <text>
-                            <p>Filter the output using one of the following backup types: <id>full</id>, <id>incr</id>, <id>diff</id>.</p>
+                            <p>Filter the output using one of the following backup types:</p>
+
+                            <list>
+                                <list-item><id>full</id> - Dispaly only full backups.</list-item>
+                                <list-item><id>incr</id> - Dispaly only incremental backups.</list-item>
+                                <list-item><id>diff</id> - Dispaly only differential backups.</list-item>
+                            </list>
                         </text>
 
                         <example>full</example>
