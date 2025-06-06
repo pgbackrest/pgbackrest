@@ -2719,7 +2719,14 @@
                     <option id="output" name="Output">
                         <summary>Output type.</summary>
 
-                        <text> <p>Output may be none (default) or text. Requesting text generates output to stdout.</p>
+                        <text>
+                            <p>The following output types are supported:</p>
+                                <list>
+                                    <list-item><id>none</id> - No verify output.</list-item>
+                                    <list-item><id>text</id> - Provides verify output to stdout.</list-item>
+                                </list>
+
+                            <p>Requesting text generates output to stdout.</p>
                         </text>
 
                         <example>text</example>
