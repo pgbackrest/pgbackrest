@@ -2274,8 +2274,8 @@
                             <p>The following output types are supported:</p>
 
                             <list>
-                                <list-item><id>text</id> - Human-readable information from the manifest.</list-item>
-                                <list-item><id>json</id> - Exhaustive machine-readable information from the manifest in JSON format.</list-item>
+                                <list-item><id>text</id> - Human-readable summary of manifest information.</list-item>
+                                <list-item><id>json</id> - Exhaustive machine-readable manifest information in JSON format.</list-item>
                             </list>
                         </text>
 
@@ -2615,9 +2615,9 @@
                             <p>Filter the output using one of the following backup types:</p>
 
                             <list>
-                                <list-item><id>full</id> - Dispaly only full backups.</list-item>
-                                <list-item><id>incr</id> - Dispaly only incremental backups.</list-item>
-                                <list-item><id>diff</id> - Dispaly only differential backups.</list-item>
+                                <list-item><id>full</id> - Output only full backups.</list-item>
+                                <list-item><id>diff</id> - Output only differential backups.</list-item>
+                                <list-item><id>incr</id> - Output only incremental backups.</list-item>
                             </list>
                         </text>
 
@@ -2729,7 +2729,7 @@
                             <p>The following output types are supported:</p>
                                 <list>
                                     <list-item><id>none</id> - No verify output.</list-item>
-                                    <list-item><id>text</id> - Provides verify output to stdout.</list-item>
+                                    <list-item><id>text</id> - Output verify information to stdout.</list-item>
                                 </list>
                         </text>
 
@@ -2763,7 +2763,7 @@
                             <p>The following output types are supported:</p>
                             <list>
                                 <list-item><id>text</id> - Display the installed <backrest/> version as text.</list-item>
-                                <list-item><id>num</id> - Display the installed <backrest/> version as an integer value.</list-item>
+                                <list-item><id>num</id> - Display the installed <backrest/> version as an integer.</list-item>
                             </list>
                         </text>
 

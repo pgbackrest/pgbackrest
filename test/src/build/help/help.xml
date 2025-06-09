@@ -283,7 +283,7 @@
                             <p>The following output formats are supported:</p>
                             <list>
                                 <list-item><id>text</id> - Display the installed <backrest/> version as text.</list-item>
-                                <list-item><id>num</id> - Display the installed <backrest/> version as an integer value.</list-item>
+                                <list-item><id>num</id> - Display the installed <backrest/> version as an integer.</list-item>
                             </list>
                         </text>
 
