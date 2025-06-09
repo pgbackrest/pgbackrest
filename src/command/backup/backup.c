@@ -1456,11 +1456,10 @@ backupJobResult(
                 if (copySize != file.sizeOriginal)
                     strCatFmt(logProgress, "%s->", strZ(strSizeFormat(file.sizeOriginal)));
 
-                // Store percentComplete as an integer
-                percentComplete = sizeTotal == 0 ? 10000 : (unsigned int)(((double)*sizeProgress / (double)sizeTotal) * 10000);
+                // Store percentComplete as an integer (used to update progress in the lock file)
+                percentComplete = cvtPctToUInt(*sizeProgress, sizeTotal);
 
-                strCatFmt(
-                    logProgress, "%s, %u.%02u%%", strZ(strSizeFormat(copySize)), percentComplete / 100, percentComplete % 100);
+                strCatFmt(logProgress, "%s, %s", strZ(strSizeFormat(copySize)), strZ(strNewPct(*sizeProgress, sizeTotal)));
 
                 // Format log checksum
                 const String *const logChecksum =

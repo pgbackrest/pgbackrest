@@ -204,6 +204,15 @@ if lib_zstd.found()
     configuration.set('HAVE_LIBZST', true, description: 'Is libzstd present?')
 endif
 
+# Suppress -Wsign-conversion for C libraries (e.g. musl) that do no accept int without warning for FD_*() macros
+if not cc.compiles(
+        '''#include <sys/select.h>
+        int main(int arg, char **argv) {int fd = 1; fd_set s; FD_ZERO(&s); FD_SET(fd, &s); FD_ISSET(fd, &s);}''',
+        args: ['-Wsign-conversion', '-Werror'])
+    message('Disabling -Wsign-conversion because int is not accepted without warning by FD_*() macros')
+    add_project_arguments(cc.get_supported_arguments('-Wno-sign-conversion'), language: 'c')
+endif
+
 # Check if the C compiler supports _Static_assert()
 if cc.compiles('''int main(int arg, char **argv) {({ _Static_assert(1, "foo");});} ''')
   configuration.set('HAVE_STATIC_ASSERT', true, description: 'Does the compiler provide _Static_assert()?')

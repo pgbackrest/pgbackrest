@@ -607,13 +607,13 @@ testRun(void)
                     "            timestamp start/stop: 2018-11-16 15:47:56+00 / 2018-11-16 15:48:09+00\n"
                     "            wal start/stop: n/a\n"
                     "            database size: 25.7MB, database backup size: 25.7MB\n"
-                    "            repo1: backup set size: 3MB, backup size: 3KB\n"
+                    "            repo1: backup set size: 3MB, backup size: 3.1KB\n"
                     "\n"
                     "        full backup: 20201116-154900F\n"
                     "            timestamp start/stop: 2020-11-16 15:47:56+00 / 2020-11-16 15:48:00+00\n"
                     "            wal start/stop: 000000030000000000000001 / 000000030000000000000001\n"
                     "            database size: 25.7MB, database backup size: 25.7MB\n"
-                    "            repo1: backup set size: 3MB, backup size: 3KB\n",
+                    "            repo1: backup set size: 3MB, backup size: 3.1KB\n",
                     "text - single stanza, valid backup, no priors, no archives in latest DB, backup/expire lock detected");
 
                 // Notify child to release lock
@@ -1530,7 +1530,7 @@ testRun(void)
                 TEST_RESULT_STR_Z(
                     infoRender(),
                     "stanza: stanza1\n"
-                    "    status: ok (backup/expire running - 65.27% complete)\n"
+                    "    status: ok (backup/expire running - 65.28% complete)\n"
                     "    cipher: mixed\n"
                     "        repo1: none\n"
                     "        repo2: aes-256-cbc\n"

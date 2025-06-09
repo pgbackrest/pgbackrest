@@ -19,7 +19,8 @@ Required buffer sizes
 ***********************************************************************************************************************************/
 #define CVT_BOOL_BUFFER_SIZE                                        6
 #define CVT_BASE10_BUFFER_SIZE                                      64
-#define CVT_DOUBLE_BUFFER_SIZE                                      318
+#define CVT_DIV_BUFFER_SIZE                                         68
+#define CVT_PCT_BUFFER_SIZE                                         8
 #define CVT_VARINT128_BUFFER_SIZE                                   10
 
 /***********************************************************************************************************************************
@@ -35,8 +36,14 @@ cvtCharToZ(const char value, char *const buffer, const size_t bufferSize)
     return (size_t)snprintf(buffer, bufferSize, "%c", value);
 }
 
-// Convert double to zero-terminated string
-FN_EXTERN size_t cvtDoubleToZ(double value, char *buffer, size_t bufferSize);
+// Convert percentage to an integer. This is useful for exporting a percentage in a way that does not incur rounding.
+FN_EXTERN unsigned int cvtPctToUInt(uint64_t dividend, uint64_t divisor);
+
+// Convert percentage to zero-terminated string. This is more reproducible than formatting the results of floating point division.
+FN_EXTERN size_t cvtPctToZ(uint64_t dividend, uint64_t divisor, char *buffer, size_t bufferSize);
+
+// Convert division to zero-terminated string. This is more reproducible than formatting the results of floating point division.
+FN_EXTERN size_t cvtDivToZ(uint64_t dividend, uint64_t divisor, unsigned int precision, bool trim, char *buffer, size_t bufferSize);
 
 // Convert int to zero-terminated string and vice versa
 FN_EXTERN size_t cvtIntToZ(const int value, char *buffer, size_t bufferSize);

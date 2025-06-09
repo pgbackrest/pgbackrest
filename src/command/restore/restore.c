@@ -2138,7 +2138,7 @@ restoreJobResult(
 
                 // Add size and percent complete
                 sizeRestored += file.size;
-                strCatFmt(log, "%s, %.2lf%%)", strZ(strSizeFormat(file.size)), (double)sizeRestored * 100.00 / (double)sizeTotal);
+                strCatFmt(log, "%s, %s)", strZ(strSizeFormat(file.size)), strZ(strNewPct(sizeRestored, sizeTotal)));
 
                 // If not zero-length add the checksum
                 if (file.size != 0 && !zeroed)
