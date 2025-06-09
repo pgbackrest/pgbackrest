@@ -31,6 +31,17 @@
     <release-doc-list>
         <release-improvement-list>
             <release-item>
+                <github-pull-request id="2638"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="anton.kurochkin"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Describe discrete option values in a list where appropriate.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2633"/>
 
                 <release-item-contributor-list>
