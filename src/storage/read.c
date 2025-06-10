@@ -181,7 +181,7 @@ storageReadFd(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(INT, this->pub.interface->ioInterface.fd(this->driver));
+    FUNCTION_TEST_RETURN(INT, this->pub.interface->ioInterface.fd == NULL ? -1 : this->pub.interface->ioInterface.fd(this->driver));
 }
 
 /**********************************************************************************************************************************/
@@ -206,6 +206,10 @@ storageReadNew(void *driver, StorageReadInterface *const interface)
 
     ASSERT(driver != NULL);
     ASSERT(interface != NULL);
+    ASSERT(interface->ioInterface.eof != NULL);
+    ASSERT(interface->ioInterface.close != NULL);
+    ASSERT(interface->ioInterface.open != NULL);
+    ASSERT(interface->ioInterface.read != NULL);
 
     OBJ_NEW_BEGIN(StorageRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {

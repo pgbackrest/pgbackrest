@@ -4640,7 +4640,7 @@ testRun(void)
 
         // Mimic creation of TEST_PATH "/readtest.txt"
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
-        TEST_RESULT_INT(ioReadFd(file->driver), -1, "check read fd");
+        TEST_RESULT_INT(ioReadFd(storageReadIo(file)), -1, "check read fd");
         TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "close file");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
