@@ -21,113 +21,150 @@ Test protocol server command handlers
 ***********************************************************************************************************************************/
 #define TEST_PROTOCOL_COMMAND_ASSERT                                STRID5("assert", 0x2922ce610)
 
-__attribute__((__noreturn__)) static void
-testCommandAssertProtocol(PackRead *const param, ProtocolServer *const server)
+__attribute__((__noreturn__)) static ProtocolServerResult *
+testCommandAssertProtocol(PackRead *const param)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, param);
-        FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_HARNESS_END();
 
     ASSERT(param == NULL);
-    ASSERT(server != NULL);
 
     hrnErrorThrowP();
 
-    // No FUNCTION_HARNESS_RETURN_VOID() because the function does not return
+    // No FUNCTION_HARNESS_RETURN() because the function does not return
 }
 
 #define TEST_PROTOCOL_COMMAND_ERROR                                 STRID5("error", 0x127ca450)
 
 static unsigned int testCommandErrorProtocolTotal = 0;
 
-__attribute__((__noreturn__)) static void
-testCommandErrorProtocol(PackRead *const param, ProtocolServer *const server)
+__attribute__((__noreturn__)) static ProtocolServerResult *
+testCommandErrorProtocol(PackRead *const param)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, param);
-        FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_HARNESS_END();
 
     ASSERT(param == NULL);
-    ASSERT(server != NULL);
 
     testCommandErrorProtocolTotal++;
     hrnErrorThrowP(.errorType = &FormatError, .message = testCommandErrorProtocolTotal <= 2 ? NULL : "ERR_MESSAGE_RETRY");
 
-    // No FUNCTION_HARNESS_RETURN_VOID() because the function does not return
+    // No FUNCTION_HARNESS_RETURN() because the function does not return
 }
 
 #define TEST_PROTOCOL_COMMAND_SIMPLE                                STRID5("c-simple", 0x2b20d4cf630)
 
-static void
-testCommandRequestSimpleProtocol(PackRead *const param, ProtocolServer *const server)
+static ProtocolServerResult *
+testCommandRequestSimpleProtocol(PackRead *const param)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, param);
-        FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_HARNESS_END();
 
-    ASSERT(param == NULL);
-    ASSERT(server != NULL);
+    ProtocolServerResult *const result = param != NULL ? protocolServerResultNewP() : NULL;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        protocolServerDataPut(server, pckWriteStrP(protocolPackNew(), STRDEF("output")));
-        protocolServerDataEndPut(server);
+        if (param != NULL)
+            pckWriteStrP(protocolServerResultData(result), strNewFmt("output%u", pckReadU32P(param)));
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_HARNESS_RETURN_VOID();
+    FUNCTION_HARNESS_RETURN(PROTOCOL_SERVER_RESULT, result);
 }
 
 #define TEST_PROTOCOL_COMMAND_COMPLEX                               STRID5("c-complex", 0x182b20d78f630)
+#define TEST_PROTOCOL_COMMAND_COMPLEX_CLOSE                         STRID5("c-complex-c", 0xf782b20d78f630)
 
-static void
-testCommandRequestComplexProtocol(PackRead *const param, ProtocolServer *const server)
+static bool testCommandRequestComplexOpenReturn = false;
+
+static ProtocolServerResult *
+testCommandRequestComplexOpenProtocol(PackRead *const param)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, param);
-        FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_HARNESS_END();
 
     ASSERT(param != NULL);
-    ASSERT(server != NULL);
+
+    ProtocolServerResult *const result = protocolServerResultNewP();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         TEST_RESULT_UINT(pckReadU32P(param), 87, "param check");
         TEST_RESULT_STR_Z(pckReadStrP(param), "data", "param check");
 
-        TEST_RESULT_VOID(protocolServerDataPut(server, NULL), "sync");
+        pckWriteBoolP(protocolServerResultData(result), testCommandRequestComplexOpenReturn);
 
-        TEST_RESULT_BOOL(pckReadBoolP(protocolServerDataGet(server)), true, "data get");
-        TEST_RESULT_UINT(pckReadModeP(protocolServerDataGet(server)), 0644, "data get");
-        TEST_RESULT_PTR(protocolServerDataGet(server), NULL, "data end get");
-
-        TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), true)), "data put");
-        TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteI32P(protocolPackNew(), -1)), "data put");
-        TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
+        if (testCommandRequestComplexOpenReturn)
+            protocolServerResultSessionDataSet(result, strNewZ("DATA"));
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_HARNESS_RETURN_VOID();
+    testCommandRequestComplexOpenReturn = true;
+
+    FUNCTION_HARNESS_RETURN(PROTOCOL_SERVER_RESULT, result);
+}
+
+static bool testCommandRequestComplexReturn = false;
+
+static ProtocolServerResult *
+testCommandRequestComplexProtocol(PackRead *const param, void *const data)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(PACK_READ, param);
+        FUNCTION_HARNESS_PARAM(STRING, data);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(param == NULL);
+    ASSERT(data != NULL);
+    ASSERT(strEqZ(data, "DATA"));
+
+    ProtocolServerResult *const result = protocolServerResultNewP();
+    pckWriteBoolP(protocolServerResultData(result), testCommandRequestComplexReturn);
+
+    if (!testCommandRequestComplexReturn)
+        protocolServerResultCloseSet(result);
+
+    testCommandRequestComplexReturn = true;
+
+    FUNCTION_HARNESS_RETURN_STRUCT(result);
+}
+
+static ProtocolServerResult *
+testCommandRequestComplexCloseProtocol(PackRead *const param, void *const data)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(PACK_READ, param);
+        FUNCTION_HARNESS_PARAM(STRING, data);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(param == NULL);
+    ASSERT(data != NULL);
+    ASSERT(strEqZ(data, "DATA"));
+
+    ProtocolServerResult *const result = protocolServerResultNewP();
+    pckWriteBoolP(protocolServerResultData(result), true);
+
+    FUNCTION_HARNESS_RETURN(PROTOCOL_SERVER_RESULT, result);
 }
 
 #define TEST_PROTOCOL_COMMAND_RETRY                                 STRID5("retry", 0x19950b20)
 
 static unsigned int testCommandRetryTotal = 1;
 
-static void
-testCommandRetryProtocol(PackRead *const param, ProtocolServer *const server)
+static ProtocolServerResult *
+testCommandRetryProtocol(PackRead *const param)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(PACK_READ, param);
-        FUNCTION_HARNESS_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_HARNESS_END();
 
     ASSERT(param == NULL);
-    ASSERT(server != NULL);
+
+    ProtocolServerResult *const result = protocolServerResultNewP();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -137,20 +174,22 @@ testCommandRetryProtocol(PackRead *const param, ProtocolServer *const server)
             THROW(FormatError, "error-until-0");
         }
 
-        protocolServerDataPut(server, pckWriteBoolP(protocolPackNew(), true));
-        protocolServerDataEndPut(server);
+        pckWriteBoolP(protocolServerResultData(result), true);
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_HARNESS_RETURN_VOID();
+    FUNCTION_HARNESS_RETURN(PROTOCOL_SERVER_RESULT, result);
 }
 
 #define TEST_PROTOCOL_SERVER_HANDLER_LIST                                                                                          \
-    {.command = TEST_PROTOCOL_COMMAND_ASSERT, .handler = testCommandAssertProtocol},                                               \
-    {.command = TEST_PROTOCOL_COMMAND_ERROR, .handler = testCommandErrorProtocol},                                                 \
-    {.command = TEST_PROTOCOL_COMMAND_SIMPLE, .handler = testCommandRequestSimpleProtocol},                                        \
-    {.command = TEST_PROTOCOL_COMMAND_COMPLEX, .handler = testCommandRequestComplexProtocol},                                      \
-    {.command = TEST_PROTOCOL_COMMAND_RETRY, .handler = testCommandRetryProtocol},
+    {.command = TEST_PROTOCOL_COMMAND_ASSERT, .process = testCommandAssertProtocol},                                               \
+    {.command = TEST_PROTOCOL_COMMAND_ERROR, .process = testCommandErrorProtocol},                                                 \
+    {.command = TEST_PROTOCOL_COMMAND_SIMPLE, .process = testCommandRequestSimpleProtocol},                                        \
+    {.command = TEST_PROTOCOL_COMMAND_COMPLEX, .open = testCommandRequestComplexOpenProtocol,                                      \
+        .processSession = testCommandRequestComplexProtocol},                                                                      \
+    {.command = TEST_PROTOCOL_COMMAND_COMPLEX_CLOSE, .open = testCommandRequestComplexOpenProtocol,                                \
+        .processSession = testCommandRequestComplexProtocol, .close = testCommandRequestComplexCloseProtocol},                     \
+    {.command = TEST_PROTOCOL_COMMAND_RETRY, .process = testCommandRetryProtocol},
 
 /***********************************************************************************************************************************
 Test ParallelJobCallback
@@ -213,11 +252,6 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .noStd = true);
 
         TEST_RESULT_BOOL(repoIsLocal(0), true, "repo is local");
-        TEST_RESULT_VOID(repoIsLocalVerify(), "local verified");
-        TEST_RESULT_VOID(repoIsLocalVerifyIdx(0), "local by index verified");
-        TEST_ERROR(
-            repoIsLocalVerifyIdx(cfgOptionGroupIdxTotal(cfgOptGrpRepo) - 1), HostInvalidError,
-            "archive-get command must be run on the repository host");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("single-repo - command invalid on remote");
@@ -229,7 +263,6 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .noStd = true);
 
         TEST_RESULT_BOOL(repoIsLocal(0), false, "repo is remote");
-        TEST_ERROR(repoIsLocalVerify(), HostInvalidError, "archive-get command must be run on the repository host");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pg1 is local");
@@ -290,6 +323,7 @@ testRun(void)
                 .name = strNewZ("test"),
                 .state = protocolClientStateIdle,
                 .write = write,
+                .sessionList = lstNewP(sizeof(ProtocolClientSession)),
             };
 
             memContextCallbackSet(memContextCurrent(), protocolClientFreeResource, protocolHelperClient.client);
@@ -299,16 +333,18 @@ testRun(void)
         OBJ_NEW_BASE_BEGIN(Exec, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
         {
             protocolHelperClient.exec = OBJ_NEW_ALLOC();
-            *protocolHelperClient.exec = (Exec){.name = strNewZ("test"), .command = strNewZ("test"), .processId = INT_MAX};
+            *protocolHelperClient.exec = (Exec){.pub = {.command = strNewZ("test")}, .name = strNewZ("test"), .processId = INT_MAX};
             memContextCallbackSet(memContextCurrent(), execFreeResource, protocolHelperClient.exec);
         }
         OBJ_NEW_END();
 
         TEST_RESULT_VOID(protocolHelperClientFree(&protocolHelperClient), "free");
 
+        hrnLogReplaceAdd(" \\[10\\] No child process(es){0,1}", "process(es){0,1}", "processes", false);
+
         TEST_RESULT_LOG(
             "P00   WARN: unable to write to invalid: [9] Bad file descriptor\n"
-            "P00   WARN: unable to wait on child process: [10] No child processes");
+            "P00   WARN: unable to wait on child process: [10] No child [processes]");
     }
 
     // *****************************************************************************************************************************
@@ -430,8 +466,8 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             protocolRemoteParamSsh(protocolStorageTypePg, 0),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npostgres@pg1-host\n"
-            TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
-            " --pg1-path=/path/to/1 --process=0 --remote-type=pg --stanza=test1 backup:remote\n",
+            TEST_PROJECT_EXE " --exec-id=1-test --lock=test1-backup-1.lock --log-level-console=off --log-level-file=off"
+            " --log-level-stderr=error --pg1-path=/path/to/1 --process=0 --remote-type=pg --stanza=test1 backup:remote\n",
             "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -452,8 +488,8 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             protocolRemoteParamSsh(protocolStorageTypePg, 1),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npostgres@pg2-host\n"
-            TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
-            " --pg1-path=/path/to/2 --process=4 --remote-type=pg --stanza=test1 backup:remote\n",
+            TEST_PROJECT_EXE " --exec-id=1-test --lock=test1-backup-1.lock --log-level-console=off --log-level-file=off"
+            " --log-level-stderr=error --pg1-path=/path/to/2 --process=4 --remote-type=pg --stanza=test1 backup:remote\n",
             "check config");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -474,9 +510,9 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             protocolRemoteParamSsh(protocolStorageTypePg, 1),
             "-o\nLogLevel=error\n-o\nCompression=no\n-o\nPasswordAuthentication=no\npostgres@pg3-host\n"
-            TEST_PROJECT_EXE " --exec-id=1-test --log-level-console=off --log-level-file=off --log-level-stderr=error"
-            " --pg1-path=/path/to/3 --pg1-port=3333 --pg1-socket-path=/socket3 --process=4 --remote-type=pg --stanza=test1"
-            " backup:remote\n",
+            TEST_PROJECT_EXE " --exec-id=1-test --lock=test1-backup-1.lock --log-level-console=off --log-level-file=off"
+            " --log-level-stderr=error --pg1-path=/path/to/3 --pg1-port=3333 --pg1-socket-path=/socket3 --process=4"
+            " --remote-type=pg --stanza=test1 backup:remote\n",
             "check config");
     }
 
@@ -526,21 +562,21 @@ testRun(void)
                 const ProtocolServerHandler commandHandler[] = {TEST_PROTOCOL_SERVER_HANDLER_LIST};
 
                 TEST_ERROR(
-                    protocolServerProcess(server, NULL, commandHandler, LENGTH_OF(commandHandler)), ProtocolError,
-                    "invalid command 'BOGUS' (0x38eacd271)");
+                    protocolServerProcess(server, NULL, LSTDEF(commandHandler)), ProtocolError,
+                    "invalid request 'BOGUS' (0x38eacd271)");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("server restart and assert");
 
                 // This does not run in a TEST* macro because tests are run by the command handlers
                 TEST_ERROR(
-                    protocolServerProcess(server, NULL, commandHandler, LENGTH_OF(commandHandler)), AssertError, "ERR_MESSAGE");
+                    protocolServerProcess(server, NULL, LSTDEF(commandHandler)), AssertError, "ERR_MESSAGE");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("server restart");
 
                 // This does not run in a TEST* macro because tests are run by the command handlers
-                protocolServerProcess(server, NULL, commandHandler, LENGTH_OF(commandHandler));
+                protocolServerProcess(server, NULL, LSTDEF(commandHandler));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("server with retries");
@@ -554,7 +590,7 @@ testRun(void)
                     "new server");
 
                 // This does not run in a TEST* macro because tests are run by the command handlers
-                protocolServerProcess(server, retryList, commandHandler, LENGTH_OF(commandHandler));
+                protocolServerProcess(server, retryList, LSTDEF(commandHandler));
             }
             HRN_FORK_CHILD_END();
 
@@ -615,24 +651,24 @@ testRun(void)
                 TEST_TITLE("invalid command");
 
                 TEST_ERROR(
-                    protocolClientExecute(client, protocolCommandNew(strIdFromZ("BOGUS")), false), ProtocolError,
-                    "raised from test client: invalid command 'BOGUS' (0x38eacd271)");
+                    protocolClientRequestP(client, strIdFromZ("BOGUS")), ProtocolError,
+                    "raised from test client: invalid request 'BOGUS' (0x38eacd271)");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("command throws assert");
 
                 TRY_BEGIN()
                 {
-                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ASSERT), false);
+                    protocolClientRequestP(client, TEST_PROTOCOL_COMMAND_ASSERT);
                     THROW(TestError, "error was expected");
                 }
                 CATCH_FATAL()
                 {
+                    TEST_RESULT_Z(errorMessage(), "raised from test client: ERR_MESSAGE", "check message");
                     TEST_RESULT_PTR(errorType(), &AssertError, "check type");
                     TEST_RESULT_Z(errorFileName(), TEST_PGB_PATH "/src/protocol/client.c", "check file");
                     TEST_RESULT_Z(errorFunctionName(), "protocolClientError", "check function");
                     TEST_RESULT_BOOL(errorFileLine() > 0, true, "check file line > 0");
-                    TEST_RESULT_Z(errorMessage(), "raised from test client: ERR_MESSAGE", "check message");
                     TEST_RESULT_Z(errorStackTrace(), "ERR_STACK_TRACE", "check stack trace");
                 }
                 TRY_END();
@@ -645,36 +681,141 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("simple command");
 
+                PackWrite *commandParam = protocolPackNew();
+                pckWriteU32P(commandParam, 99);
+
                 TEST_RESULT_STR_Z(
-                    pckReadStrP(protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_SIMPLE), true)), "output",
+                    pckReadStrP(protocolClientRequestP(client, TEST_PROTOCOL_COMMAND_SIMPLE, .param = commandParam)), "output99",
                     "execute");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("complex command");
+                TEST_TITLE("simple command with out of order results");
 
-                // Put the command to the server
-                ProtocolCommand *command = NULL;
-                TEST_ASSIGN(command, protocolCommandNew(TEST_PROTOCOL_COMMAND_COMPLEX), "command");
-                TEST_RESULT_VOID(pckWriteU32P(protocolCommandParam(command), 87), "param");
-                TEST_RESULT_VOID(pckWriteStrP(protocolCommandParam(command), STRDEF("data")), "param");
-                TEST_RESULT_VOID(protocolClientCommandPut(client, command, true), "command put");
+                ProtocolClientSession *session1 = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_SIMPLE, .async = true);
+                PackWrite *param1 = protocolPackNew();
+                pckWriteU32P(param1, 1);
+                protocolClientSessionRequestAsyncP(session1, .param = param1);
+
+                ProtocolClientSession *session2 = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_SIMPLE, .async = true);
+                protocolClientSessionRequestAsyncP(session2);
+
+                ProtocolClientSession *session3 = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_SIMPLE);
+                PackWrite *param3 = protocolPackNew();
+                pckWriteU32P(param3, 3);
+
+                TEST_RESULT_STR_Z(pckReadStrP(protocolClientSessionRequestP(session3, .param = param3)), "output3", "output 3");
+
+                ProtocolClientSession *session4 = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_SIMPLE, .async = true);
+                PackWrite *param4 = protocolPackNew();
+                pckWriteU32P(param4, 4);
+                protocolClientSessionRequestAsyncP(session4, .param = param4);
+
+                ProtocolClientSession *session5 = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_SIMPLE, .async = true);
+                PackWrite *param5 = protocolPackNew();
+                pckWriteU32P(param5, 5);
+                protocolClientSessionRequestAsyncP(session5, .param = param5);
+
+                TEST_RESULT_VOID(protocolClientSessionCancel(session2), "cancel 2");
+                TEST_RESULT_STR_Z(pckReadStrP(protocolClientSessionResponse(session1)), "output1", "output 1");
+                TEST_RESULT_VOID(protocolClientSessionCancel(session4), "cancel 4");
+                TEST_RESULT_STR_Z(pckReadStrP(protocolClientSessionResponse(session5)), "output5", "output 5");
+
+                TEST_RESULT_VOID(protocolClientSessionFree(session1), "free 1");
+                TEST_RESULT_VOID(protocolClientSessionFree(session5), "free 5");
+
+                TEST_RESULT_UINT(lstSize(client->sessionList), 0, "session list is empty");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("invalid session");
+
+                TEST_ERROR(protocolClientSessionFindIdx(client, 999), ProtocolError, "unable to find protocol client session 999");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("open returns false");
+
+                PackWrite *commandOpenParam = protocolPackNew();
+                pckWriteU32P(commandOpenParam, 87);
+                pckWriteStrP(commandOpenParam, STRDEF("data"));
+
+                TEST_RESULT_BOOL(
+                    pckReadBoolP(
+                        protocolClientSessionOpenP(
+                            protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_COMPLEX), .param = commandOpenParam)),
+                    false, "open request");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("process returns false (no close needed)");
+
+                ProtocolClientSession *session = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_COMPLEX);
+                TEST_RESULT_BOOL(
+                    pckReadBoolP(protocolClientSessionOpenP(session, .param = commandOpenParam)), true, "open succeed");
+
+                uint64_t sessionIdOld = session->sessionId;
+                session->sessionId = 9999;
 
                 TEST_ERROR(
-                    protocolClientStateExpect(client, protocolClientStateIdle), ProtocolError,
-                    "client state is 'cmd-data-get' but expected 'idle'");
+                    protocolClientSessionRequestP(session), ProtocolError,
+                    "raised from test client: unable to find session id 9999 for request c-complex:prc");
 
-                // Read null data to indicate that the server has started the command and is read to receive data
-                TEST_RESULT_PTR(protocolClientDataGet(client), NULL, "command started and ready for data");
+                session->sessionId = sessionIdOld;
 
-                // Write data to the server
-                TEST_RESULT_VOID(protocolClientDataPut(client, pckWriteBoolP(protocolPackNew(), true)), "data put");
-                TEST_RESULT_VOID(protocolClientDataPut(client, pckWriteModeP(protocolPackNew(), 0644)), "data put");
-                TEST_RESULT_VOID(protocolClientDataPut(client, NULL), "data end put");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientSessionRequestP(session)), false, "no more to process");
 
-                // Get data from the server
-                TEST_RESULT_BOOL(pckReadBoolP(protocolClientDataGet(client)), true, "data get");
-                TEST_RESULT_INT(pckReadI32P(protocolClientDataGet(client)), -1, "data get");
-                TEST_RESULT_VOID(protocolClientDataEndGet(client), "data end get");
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error if state not idle");
+
+                client->state = protocolClientStateResponse;
+                session->pub.open = true;
+
+                TEST_ERROR(
+                    protocolClientSessionRequestP(session), ProtocolError,
+                    "client state is 'response' but expected 'idle'");
+
+                client->state = protocolClientStateIdle;
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("process returns true");
+
+                session = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_COMPLEX);
+
+                TEST_RESULT_BOOL(
+                    pckReadBoolP(protocolClientSessionOpenP(session, .param = commandOpenParam)), true, "open succeed");
+
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientSessionRequestP(session)), true, "more to process");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientSessionRequestP(session)), true, "more to process");
+
+                TEST_RESULT_PTR(protocolClientSessionClose(session), NULL, "close request");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("close handler");
+
+                session = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_COMPLEX_CLOSE, .async = true);
+
+                TEST_RESULT_BOOL(
+                    pckReadBoolP(protocolClientSessionOpenP(session, .param = commandOpenParam)), true, "open succeed");
+
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientSessionRequestP(session)), true, "more to process");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientSessionClose(session)), true, "close request");
+
+                session->pub.open = true;
+                TEST_RESULT_VOID(protocolClientRequestInternal(session, protocolCommandTypeClose, NULL), "close after close");
+                TEST_ERROR_FMT(
+                    protocolClientResponseInternal(session), ProtocolError,
+                    "raised from test client: unable to find session id %" PRIu64 " for request c-complex-c:cls",
+                    session->sessionId);
+
+                TEST_RESULT_VOID(protocolClientRequestInternal(session, protocolCommandTypeCancel, NULL), "cancel after close");
+                TEST_RESULT_VOID(protocolClientResponseInternal(session), "cancel request succeeds");
+                session->pub.open = false;
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("cancel handler");
+
+                session = protocolClientSessionNewP(client, TEST_PROTOCOL_COMMAND_COMPLEX);
+
+                TEST_RESULT_BOOL(
+                    pckReadBoolP(protocolClientSessionOpenP(session, .param = commandOpenParam)), true, "open succeed");
+                TEST_RESULT_VOID(protocolClientSessionFree(session), "free request");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("free client");
@@ -692,15 +833,13 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("command with retry");
 
-                TEST_RESULT_BOOL(
-                    pckReadBoolP(protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_RETRY), true)), true,
-                    "execute");
+                TEST_RESULT_BOOL(pckReadBoolP(protocolClientRequestP(client, TEST_PROTOCOL_COMMAND_RETRY)), true, "execute");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("command throws assert with retry messages");
 
                 TEST_ERROR(
-                    protocolClientExecute(client, protocolCommandNew(TEST_PROTOCOL_COMMAND_ERROR), false), FormatError,
+                    protocolClientRequestP(client, TEST_PROTOCOL_COMMAND_ERROR), FormatError,
                     "raised from test client: ERR_MESSAGE\n"
                     "[RETRY DETAIL OMITTED]");
 
@@ -725,6 +864,8 @@ testRun(void)
 
         HRN_FORK_BEGIN()
         {
+            const unsigned int testPort = hrnServerPortNext();
+
             HRN_FORK_CHILD_BEGIN()
             {
                 // -----------------------------------------------------------------------------------------------------------------
@@ -732,7 +873,7 @@ testRun(void)
 
                 // Connect to server without any verification
                 IoClient *tlsClient = tlsClientNewP(
-                    sckClientNew(hrnServerHost(), hrnServerPort(0), 5000, 5000), hrnServerHost(), 5000, 5000, false);
+                    sckClientNew(hrnServerHost(), testPort, 5000, 5000), hrnServerHost(), 5000, 5000, false);
                 IoSession *tlsSession = ioClientOpen(tlsClient);
 
                 // Send ping
@@ -752,7 +893,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptRepoHostType, "tls");
                 hrnCfgArgRawZ(argList, cfgOptRepoHostCertFile, HRN_SERVER_CLIENT_CERT);
                 hrnCfgArgRawZ(argList, cfgOptRepoHostKeyFile, HRN_SERVER_CLIENT_KEY);
-                hrnCfgArgRawFmt(argList, cfgOptRepoHostPort, "%u", hrnServerPort(0));
+                hrnCfgArgRawFmt(argList, cfgOptRepoHostPort, "%u", testPort);
                 hrnCfgArgRawZ(argList, cfgOptStanza, "db");
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
@@ -783,7 +924,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptRepoHostType, "tls");
                 hrnCfgArgRawZ(argList, cfgOptRepoHostCertFile, HRN_SERVER_CLIENT_CERT);
                 hrnCfgArgRawZ(argList, cfgOptRepoHostKeyFile, HRN_SERVER_CLIENT_KEY);
-                hrnCfgArgRawFmt(argList, cfgOptRepoHostPort, "%u", hrnServerPort(0));
+                hrnCfgArgRawFmt(argList, cfgOptRepoHostPort, "%u", testPort);
                 HRN_CFG_LOAD(cfgCmdInfo, argList);
 
                 TEST_ERROR_FMT(
@@ -800,7 +941,7 @@ testRun(void)
                 hrnCfgArgRawZ(argList, cfgOptPgHostType, "tls");
                 hrnCfgArgRawZ(argList, cfgOptPgHostCertFile, HRN_SERVER_CLIENT_CERT);
                 hrnCfgArgRawZ(argList, cfgOptPgHostKeyFile, HRN_SERVER_CLIENT_KEY);
-                hrnCfgArgRawFmt(argList, cfgOptPgHostPort, "%u", hrnServerPort(0));
+                hrnCfgArgRawFmt(argList, cfgOptPgHostPort, "%u", testPort);
                 hrnCfgArgRawZ(argList, cfgOptStanza, "db");
                 hrnCfgArgRawZ(argList, cfgOptProcess, "1");
                 HRN_CFG_LOAD(cfgCmdBackup, argList, .role = cfgCmdRoleLocal);
@@ -815,8 +956,8 @@ testRun(void)
             HRN_FORK_PARENT_BEGIN()
             {
                 IoServer *const tlsServer = tlsServerNew(
-                    STRDEF("localhost"), STRDEF(HRN_SERVER_CA), STRDEF(HRN_SERVER_KEY), STRDEF(HRN_SERVER_CERT), 5000);
-                IoServer *const socketServer = sckServerNew(STRDEF("localhost"), hrnServerPort(0), 5000);
+                    STRDEF("127.0.0.1"), STRDEF(HRN_SERVER_CA), STRDEF(HRN_SERVER_KEY), STRDEF(HRN_SERVER_CERT), 5000);
+                IoServer *const socketServer = sckServerNew(STRDEF("127.0.0.1"), testPort, 5000);
                 ProtocolServer *server = NULL;
 
                 // Server ping
@@ -841,7 +982,7 @@ testRun(void)
 
                 TEST_ASSIGN(server, protocolServer(tlsServer, socketSession), "server start");
                 TEST_RESULT_PTR_NE(server, NULL, "server is not null");
-                TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_EXIT, "server exit");
+                TEST_RESULT_UINT(protocolServerRequest(server).id, PROTOCOL_COMMAND_EXIT, "server exit");
 
                 // Repo server access denied (archive-get) invalid stanza
                 // -----------------------------------------------------------------------------------------------------------------
@@ -883,7 +1024,7 @@ testRun(void)
 
                 TEST_ASSIGN(server, protocolServer(tlsServer, socketSession), "server start");
                 TEST_RESULT_PTR_NE(server, NULL, "server is not null");
-                TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_EXIT, "server exit");
+                TEST_RESULT_UINT(protocolServerRequest(server).id, PROTOCOL_COMMAND_EXIT, "server exit");
             }
             HRN_FORK_PARENT_END();
         }
@@ -904,7 +1045,7 @@ testRun(void)
         {
             TEST_ASSIGN(
                 job,
-                protocolParallelJobNew(VARSTRDEF("test"), protocolCommandNew(strIdFromZ("c"))), "new job");
+                protocolParallelJobNew(VARSTRDEF("test"), strIdFromZ("c"), NULL), "new job");
             TEST_RESULT_PTR(protocolParallelJobMove(job, memContextPrior()), job, "move job");
             TEST_RESULT_PTR(protocolParallelJobMove(NULL, memContextPrior()), NULL, "move null job");
         }
@@ -936,16 +1077,15 @@ testRun(void)
                     "local server 1");
 
                 // Command with output
-                TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ("c-one"), "c-one command get");
+                TEST_RESULT_UINT(protocolServerRequest(server).id, strIdFromZ("c-one"), "c-one command get");
 
                 // Wait for notify from parent
                 HRN_FORK_CHILD_NOTIFY_GET();
 
-                TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteU32P(protocolPackNew(), 1)), "data end put");
-                TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
+                TEST_RESULT_VOID(protocolServerResponseP(server, .data = pckWriteU32P(protocolPackNew(), 1)), "data end put");
 
                 // Wait for exit
-                TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_EXIT, "noop command get");
+                TEST_RESULT_UINT(protocolServerRequest(server).id, PROTOCOL_COMMAND_EXIT, "noop command get");
             }
             HRN_FORK_CHILD_END();
 
@@ -959,20 +1099,19 @@ testRun(void)
                     "local server 2");
 
                 // Command with output
-                TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ("c2"), "c2 command get");
+                TEST_RESULT_UINT(protocolServerRequest(server).id, strIdFromZ("c2"), "c2 command get");
 
                 // Wait for notify from parent
                 HRN_FORK_CHILD_NOTIFY_GET();
 
-                TEST_RESULT_VOID(protocolServerDataPut(server, pckWriteU32P(protocolPackNew(), 2)), "data end put");
-                TEST_RESULT_VOID(protocolServerDataEndPut(server), "data end put");
+                TEST_RESULT_VOID(protocolServerResponseP(server, .data = pckWriteU32P(protocolPackNew(), 2)), "data end put");
 
                 // Command with error
-                TEST_RESULT_UINT(protocolServerCommandGet(server).id, strIdFromZ("c-three"), "c-three command get");
+                TEST_RESULT_UINT(protocolServerRequest(server).id, strIdFromZ("c-three"), "c-three command get");
                 TEST_RESULT_VOID(protocolServerError(server, 39, STRDEF("very serious error"), STRDEF("stack")), "error put");
 
                 // Wait for exit
-                TEST_RESULT_UINT(protocolServerCommandGet(server).id, PROTOCOL_COMMAND_EXIT, "wait for exit");
+                TEST_RESULT_UINT(protocolServerRequest(server).id, PROTOCOL_COMMAND_EXIT, "wait for exit");
             }
             HRN_FORK_CHILD_END();
 
@@ -1016,23 +1155,26 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("add jobs");
 
-                ProtocolCommand *command = protocolCommandNew(strIdFromZ("c-one"));
-                pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
-                pckWriteStrP(protocolCommandParam(command), STRDEF("param2"));
+                StringId command = strIdFromZ("c-one");
+                PackWrite *param = protocolPackNew();
+                pckWriteStrP(param, STRDEF("param1"));
+                pckWriteStrP(param, STRDEF("param2"));
 
-                ProtocolParallelJob *job = protocolParallelJobNew(varNewStr(STRDEF("job1")), command);
+                ProtocolParallelJob *job = protocolParallelJobNew(varNewStr(STRDEF("job1")), command, param);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
-                command = protocolCommandNew(strIdFromZ("c2"));
-                pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
+                command = strIdFromZ("c2");
+                param = protocolPackNew();
+                pckWriteStrP(param, STRDEF("param1"));
 
-                job = protocolParallelJobNew(varNewStr(STRDEF("job2")), command);
+                job = protocolParallelJobNew(varNewStr(STRDEF("job2")), command, param);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
-                command = protocolCommandNew(strIdFromZ("c-three"));
-                pckWriteStrP(protocolCommandParam(command), STRDEF("param1"));
+                command = strIdFromZ("c-three");
+                param = protocolPackNew();
+                pckWriteStrP(param, STRDEF("param1"));
 
-                job = protocolParallelJobNew(varNewStr(STRDEF("job3")), command);
+                job = protocolParallelJobNew(varNewStr(STRDEF("job3")), command, param);
                 TEST_RESULT_VOID(lstAdd(data.jobList, &job), "add job");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -1126,12 +1268,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("call remote free before any remotes exist");
 
-        TEST_RESULT_VOID(protocolRemoteFree(1), "free remote (non exist)");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("free local that does not exist");
-
-        TEST_RESULT_VOID(protocolLocalFree(2), "free");
+        TEST_RESULT_VOID(protocolHelperFree(NULL), "free remote (non-existing)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("call keep alive free before any remotes exist");
@@ -1153,10 +1290,26 @@ testRun(void)
 
         TEST_RESULT_VOID(protocolFree(), "free protocol objects before anything has been created");
 
-        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0), "get remote protocol");
-        TEST_RESULT_PTR(protocolRemoteGet(protocolStorageTypeRepo, 0), client, "get remote cached protocol");
-        TEST_RESULT_PTR(protocolHelper.clientRemote[0].client, client, "check position in cache");
+        TEST_RESULT_PTR(protocolRemoteGet(protocolStorageTypeRepo, 0, false), NULL, "get remote cached protocol (no create)");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0, true), "get remote protocol");
+        TEST_RESULT_PTR(protocolRemoteGet(protocolStorageTypeRepo, 0, true), client, "get remote cached protocol");
+
+        TEST_RESULT_PTR(protocolHelperClientGet(protocolClientLocal, protocolStorageTypePg, 0, 0), NULL, "cache miss");
+        TEST_RESULT_PTR(protocolHelperClientGet(protocolClientRemote, protocolStorageTypePg, 0, 0), NULL, "cache miss");
+        TEST_RESULT_PTR(protocolHelperClientGet(protocolClientRemote, protocolStorageTypeRepo, 0, 1), NULL, "cache miss");
+
+        // Add a fake local protocol to ensure noops are only sent to remotes
+        ProtocolHelperClient protocolHelperClientAdd =
+        {
+            .type = protocolClientLocal,
+            .storageType = protocolStorageTypePg,
+        };
+
+        lstInsert(protocolHelper.clientList, 0, &protocolHelperClientAdd);
+
         TEST_RESULT_VOID(protocolKeepAlive(), "keep alive");
+        lstRemoveIdx(protocolHelper.clientList, 0);
+
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects again");
 
@@ -1183,11 +1336,22 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleLocal);
 
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoCipherPass), "acbd", "check cipher pass before");
-        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0), "get remote protocol");
-        TEST_RESULT_PTR(protocolHelper.clientRemote[0].client, client, "check position in cache");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0, true), "get remote protocol");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoCipherPass), "acbd", "check cipher pass after");
 
-        TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
+        // Remove the client from the client list so it is not found
+        ProtocolHelperClient clientHelper = *(ProtocolHelperClient *)lstGet(protocolHelper.clientList, 0);
+        lstRemoveIdx(protocolHelper.clientList, 0);
+
+        TEST_RESULT_VOID(protocolHelperFree(client), "free missing remote protocol object");
+
+        // Add client back so it can be removed -- also add a fake client that will be skipped
+        lstAdd(protocolHelper.clientList, &(ProtocolHelperClient){0});
+        lstAdd(protocolHelper.clientList, &clientHelper);
+
+        TEST_RESULT_VOID(protocolHelperFree(client), "free remote protocol object");
+
+        lstRemoveIdx(protocolHelper.clientList, 0);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("start protocol with remote encryption settings");
@@ -1216,11 +1380,11 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         TEST_RESULT_PTR(cfgOptionIdxStrNull(cfgOptRepoCipherPass, 0), NULL, "check repo1 cipher pass before");
-        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0), "get repo1 remote protocol");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0, true), "get repo1 remote protocol");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoCipherPass, 0), "dcba", "check repo1 cipher pass after");
 
         TEST_RESULT_PTR(cfgOptionIdxStrNull(cfgOptRepoCipherPass, 1), NULL, "check repo2 cipher pass before");
-        TEST_RESULT_VOID(protocolRemoteGet(protocolStorageTypeRepo, 1), "get repo2 remote protocol");
+        TEST_RESULT_VOID(protocolRemoteGet(protocolStorageTypeRepo, 1, true), "get repo2 remote protocol");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoCipherPass, 1), "xxxx", "check repo2 cipher pass after");
 
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
@@ -1237,7 +1401,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypePg, 0), "get remote protocol");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypePg, 0, true), "get remote protocol");
 
         TEST_RESULT_VOID(protocolFree(), "free local and remote protocol objects");
 
@@ -1252,7 +1416,6 @@ testRun(void)
 
         TEST_ASSIGN(client, protocolLocalGet(protocolStorageTypeRepo, 0, 1), "get local protocol");
         TEST_RESULT_PTR(protocolLocalGet(protocolStorageTypeRepo, 0, 1), client, "get local cached protocol");
-        TEST_RESULT_PTR(protocolHelper.clientLocal[0].client, client, "check location in cache");
 
         TEST_RESULT_VOID(protocolFree(), "free local and remote protocol objects");
     }

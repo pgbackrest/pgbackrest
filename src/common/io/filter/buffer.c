@@ -43,7 +43,7 @@ ioBufferToLog(const IoBuffer *const this, StringStatic *const debugLog)
 Move data from the input buffer to the output buffer
 ***********************************************************************************************************************************/
 static void
-ioBufferProcess(THIS_VOID, const Buffer *input, Buffer *output)
+ioBufferProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
 {
     THIS(IoBuffer);
 

@@ -1,11 +1,4 @@
 ####################################################################################################################################
-# Error on release builds since we do not want anyone using meson for production yet
-####################################################################################################################################
-if not get_option('force-release') and get_option('buildtype') != 'debug' and get_option('buildtype') != 'debugoptimized'
-    error('meson is currently not supported for release builds')
-endif
-
-####################################################################################################################################
 # Write configuration
 ####################################################################################################################################
 configure_file(output: 'build.auto.h', configuration: configuration)
@@ -26,25 +19,32 @@ subdir('command/help')
 # test target
 ####################################################################################################################################
 src_test = [
+    '../../src/build/common/exec.c',
+    '../../src/build/common/json.c',
+    '../../src/build/common/regExp.c',
     '../../src/build/common/render.c',
     '../../src/build/common/string.c',
     '../../src/build/common/yaml.c',
     '../../src/command/command.c',
     '../../src/command/exit.c',
     '../../src/command/help/help.c',
-	'../../src/common/compress/bz2/common.c',
-	'../../src/common/compress/bz2/decompress.c',
+    '../../src/command/lock.c',
+    '../../src/common/compress/common.c',
+    '../../src/common/compress/bz2/common.c',
+    '../../src/common/compress/bz2/decompress.c',
+    '../../src/common/fork.c',
     '../../src/common/ini.c',
     '../../src/common/io/fd.c',
     '../../src/common/io/fdRead.c',
     '../../src/common/io/fdWrite.c',
     '../../src/common/lock.c',
     '../../src/common/stat.c',
-    '../../src/common/type/json.c',
     '../../src/config/config.c',
     '../../src/config/parse.c',
     'command/test/build.c',
+    'command/test/coverage.c',
     'command/test/define.c',
+    'command/test/lint.c',
     'command/test/test.c',
     'config/load.c',
     'main.c',

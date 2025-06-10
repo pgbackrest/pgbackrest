@@ -1,0 +1,31 @@
+<release date="2019-02-09" version="2.10" title="Bug Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="mibiio"/>
+                </release-item-contributor-list>
+
+                <p>Add unimplemented <proper>S3</proper> driver method required for <cmd>archive-get</cmd>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="james.chanco.jr"/>
+                </release-item-contributor-list>
+
+                <p>Fix check for improperly configured <br-option>pg-path</br-option>.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-development-list>
+            <release-item>
+                <p>JSON improvements. Optimize parser implementation. Make the renderer more null tolerant.</p>
+            </release-item>
+
+            <release-item>
+                <p>Automatically adjust <br-option>db-timeout</br-option> when <br-option>protocol-timeout</br-option> is smaller.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+</release>

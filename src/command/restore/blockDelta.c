@@ -24,7 +24,7 @@ typedef struct BlockDeltaBlock
 {
     uint64_t no;                                                    // Block number in the super block
     uint64_t offset;                                                // Offset into original file
-    unsigned char checksum[XX_HASH_SIZE_MAX];                       // Checksum of the block
+    uint8_t checksum[XX_HASH_SIZE_MAX];                             // Checksum of the block
 } BlockDeltaBlock;
 
 struct BlockDelta
@@ -116,7 +116,7 @@ blockDeltaNew(
                     // If the reference has not been added
                     if (referenceData == NULL)
                     {
-                        BlockDeltaReference *referenceData = lstAdd(
+                        const BlockDeltaReference *const referenceData = lstAdd(
                             referenceList,
                             &(BlockDeltaReference){.reference = reference, .blockList = lstNewP(sizeof(unsigned int))});
                         lstAdd(referenceData->blockList, &blockMapIdx);
@@ -135,7 +135,7 @@ blockDeltaNew(
             {
                 const BlockDeltaReference *const referenceData = (const BlockDeltaReference *)lstGet(referenceList, referenceIdx);
                 BlockDeltaRead *blockDeltaRead = NULL;
-                BlockDeltaSuperBlock *blockDeltaSuperBlock = NULL;
+                const BlockDeltaSuperBlock *blockDeltaSuperBlock = NULL;
                 const BlockMapItem *blockMapItemPrior = NULL;
 
                 for (unsigned int blockIdx = 0; blockIdx < lstSize(referenceData->blockList); blockIdx++)
@@ -150,7 +150,7 @@ blockDeltaNew(
                     {
                         MEM_CONTEXT_OBJ_BEGIN(this->pub.readList)
                         {
-                            BlockDeltaRead blockDeltaReadNew =
+                            const BlockDeltaRead blockDeltaReadNew =
                             {
                                 .reference = blockMapItem->reference,
                                 .bundleId = blockMapItem->bundleId,
@@ -168,7 +168,7 @@ blockDeltaNew(
                     {
                         MEM_CONTEXT_OBJ_BEGIN(blockDeltaRead->superBlockList)
                         {
-                            BlockDeltaSuperBlock blockDeltaSuperBlockNew =
+                            const BlockDeltaSuperBlock blockDeltaSuperBlockNew =
                             {
                                 .superBlockSize = blockMapItem->superBlockSize,
                                 .size = blockMapItem->size,
@@ -292,6 +292,11 @@ blockDeltaNext(BlockDelta *const this, const BlockDeltaRead *const readDelta, Io
         // Break if there is a result
         if (result != NULL)
             break;
+
+        // Check that no bytes remain to be written. It is possible that some bytes remain in the super block, however, since we may
+        // have gotten all the bytes we needed but just missed reading something important, e.g. an end of file marker. If we do not
+        // read the remaining bytes then the next read will start too early.
+        ioReadFlushP(this->limitRead, .errorOnBytes = true);
 
         this->superBlockData = NULL;
         this->superBlockIdx++;

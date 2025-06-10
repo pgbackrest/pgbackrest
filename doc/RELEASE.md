@@ -1,5 +1,9 @@
 # Release Build Instructions
 
+## Update CI container builds
+
+If there have been PostgreSQL minor releases since the last pgBackRest release then update the CI containers to include the latest releases. This should be committed before the release.
+
 ## Create a branch to test the release
 
 ```
@@ -14,7 +18,7 @@ Edit the latest release in `doc/xml/release.xml`, e.g.:
 ```
 to:
 ```
-        <release date="2019-05-20" version="2.14" title="Bug Fix and Improvements">
+        <release date="2019-05-20" version="2.14.0" title="Bug Fix and Improvements">
 ```
 
 Edit version in `src/version.h`, e.g.:
@@ -23,7 +27,7 @@ Edit version in `src/version.h`, e.g.:
 ```
 to:
 ```
-#define PROJECT_VERSION                                             "2.14"
+#define PROJECT_VERSION                                             "2.14.0"
 ```
 
 ## Update code counts
@@ -41,6 +45,34 @@ pgbackrest/doc/release.pl --build
 git commit -m "Release test"
 git push origin release-ci
 ```
+
+## Run Coverity
+
+- Prepare Coverity build directory (update version/paths as required):
+```
+mkdir coverity
+tar -xvf ~/Downloads/cov-analysis-linux-arm64-2024.6.1.tar.gz --strip-components=1 -C ~/coverity
+export COVERITY_TOKEN=?
+export COVERITY_EMAIL=?
+export COVERITY_VERSION=?
+```
+
+- Clean directories and run Coverity:
+```
+rm -rf .cache/ccache && rm -rf build && rm -rf pgbackrest.tgz && rm -rf cov-int
+meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug build pgbackrest
+coverity/bin/cov-build --dir cov-int ninja -C build
+tar czvf pgbackrest.tgz cov-int
+```
+
+- Upload results:
+```
+curl --form token=${COVERITY_TOKEN?} --form email="${COVERITY_EMAIL?}" --form file=@pgbackrest.tgz \
+    --form version="${COVERITY_VERSION?}" --form description="dev build" \
+    "https://scan.coverity.com/builds?project=pgbackrest%2Fpgbackrest"
+```
+
+Check issues at https://scan.coverity.com/projects/pgbackrest-pgbackrest then fix and repeat Coverity runs as needed.
 
 ## Perform stress testing on release
 
@@ -91,7 +123,7 @@ pgbackrest/doc/release.pl --deploy
 
 Create release notes based on the pattern in prior git commits (this should be automated at some point), e.g.
 ```
-v2.14: Bug Fix and Improvements
+v2.14.0: Bug Fix and Improvements
 
 Bug Fixes:
 
@@ -117,7 +149,7 @@ Push release commit to main once CI testing is complete.
 
 Create release notes based on pattern in prior releases (this should be automated at some point), e.g.
 ```
-v2.14: Bug Fix and Improvements
+v2.14.0: Bug Fix and Improvements
 
 **Bug Fixes**:
 
@@ -138,7 +170,7 @@ The first line will be the release title and the rest will be the body. The tag 
 ## Push web documentation to main and deploy
 ```
 cd pgbackrest/doc/site
-git commit -m "v2.14 documentation."
+git commit -m "v2.14.0 documentation."
 git push origin main
 ```
 
@@ -146,11 +178,17 @@ Deploy the documentation on `pgbackrest.org`.
 
 ## Notify packagers of new release
 
+Notify the Debian packagers by email and RHEL packagers at https://github.com/pgdg-packaging/pgdg-rpms/issues.
+
 ## Announce release on Twitter
 
 ## Publish a postgresql.org news item when there are major new features
 
 Start from NEWS.md and update with the new date, version, and interesting features added since the last release. News items are automatically sent to the `pgsql-announce` mailing list once they have been approved.
+
+## Update PostgreSQL ecosystem wiki
+
+Update version, date, and minimum supported version (when changed): https://wiki.postgresql.org/wiki/Ecosystem:Backup#pgBackRest
 
 ## Prepare for the next release
 
@@ -161,7 +199,7 @@ Add new release in `doc/xml/release.xml`, e.g.:
 
 Edit version in `src/version.h`, e.g.:
 ```
-#define PROJECT_VERSION                                             "2.14"
+#define PROJECT_VERSION                                             "2.14.0"
 ```
 to:
 ```
@@ -173,28 +211,13 @@ Run deploy to generate git history (ctrl-c as soon as the file is generated):
 pgbackrest/doc/release.pl --build
 ```
 
+Run code count to add new release file:
+```
+pgbackrest/test/test.pl --code-count
+```
+
 Commit and push to integration:
 ```
-git commit -m "Begin v2.15 development."
+git commit -m "Begin v2.15.0 development."
 git push origin integration
-```
-
-## Update automake/config scripts
-
-These scripts are required by `src/config` and should be updated after each release, when needed. Note that these files are updated very infrequently.
-
-Check the latest version of `automake` and see if it is > `1.16.5`:
-```
-https://git.savannah.gnu.org/gitweb/?p=automake.git
-```
-
-If so, update the version above and copy `lib/install-sh` from the `automake` repo to the `pgbackrest` repo at `[repo]/src/build/install-sh`:
-```
-wget -O pgbackrest/src/build/install-sh '[URL]'
-```
-
-Get the latest versions of `config.sub` and `config.guess`. These files are not versioned so the newest version is pulled at the beginning of the release cycle to allow time to test stability.
-```
-wget -O pgbackrest/src/build/config.guess 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess;hb=HEAD'
-wget -O pgbackrest/src/build/config.sub 'https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub;hb=HEAD'
 ```

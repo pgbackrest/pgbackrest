@@ -8,6 +8,7 @@ Main
 #include "command/command.h"
 #include "command/exit.h"
 #include "command/help/help.h"
+#include "command/test/coverage.h"
 #include "command/test/test.h"
 #include "common/debug.h"
 #include "common/log.h"
@@ -55,46 +56,48 @@ main(int argListSize, const char *argList[])
         // -------------------------------------------------------------------------------------------------------------------------
         cfgLoad((unsigned int)argListSize, argList);
 
-        // Display help
+        // Handle command
         // -------------------------------------------------------------------------------------------------------------------------
-        if (cfgCommandHelp())
+        switch (cfgCommandHelp() ? cfgCmdHelp : cfgCommand())
         {
-            cmdHelp(BUF(helpData, sizeof(helpData)));
-        }
-        else
-        {
-            switch (cfgCommand())
+            // Test
+            // -----------------------------------------------------------------------------------------------------------------
+            case cfgCmdTest:
             {
-                // Test
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdTest:
+                // Run a single test
+                if (cfgOptionTest(cfgOptVmId))
                 {
                     cmdTest(
                         cfgOptionStr(cfgOptRepoPath), cfgOptionStr(cfgOptTestPath), cfgOptionStr(cfgOptVm),
-                        cfgOptionUInt(cfgOptVmId), strLstGet(cfgCommandParam(), 0),
+                        cfgOptionUInt(cfgOptVmId), cfgOptionStr(cfgOptPgVersion), strLstGet(cfgCommandParam(), 0),
                         cfgOptionTest(cfgOptTest) ? cfgOptionUInt(cfgOptTest) : 0, cfgOptionUInt64(cfgOptScale),
                         logLevelEnum(cfgOptionStrId(cfgOptLogLevelTest)), cfgOptionBool(cfgOptLogTimestamp),
                         cfgOptionStrNull(cfgOptTz), cfgOptionBool(cfgOptCoverage), cfgOptionBool(cfgOptProfile),
                         cfgOptionBool(cfgOptOptimize), cfgOptionBool(cfgOptBackTrace));
-
-                    break;
+                }
+                // Top-level test
+                else
+                {
+                    result = testCvgGenerate(
+                        cfgOptionStr(cfgOptRepoPath), cfgOptionStr(cfgOptTestPath), cfgOptionStr(cfgOptVm),
+                        cfgOptionBool(cfgOptCoverageSummary), cfgCommandParam()) > 0;
                 }
 
-                // Display version
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdVersion:
-                    printf(PROJECT_NAME " Test " PROJECT_VERSION "\n");
-                    fflush(stdout);
-                    break;
-
-                // Error on commands that should have already been handled
-                // -----------------------------------------------------------------------------------------------------------------
-                case cfgCmdHelp:
-                case cfgCmdNone:
-                case cfgCmdNoop:
-                    THROW_FMT(AssertError, "'%s' command should have been handled", cfgCommandName());
-                    break;
+                break;
             }
+
+            // Help/version
+            // -----------------------------------------------------------------------------------------------------------------
+            case cfgCmdHelp:
+            case cfgCmdVersion:
+                cmdHelp(BUF(helpData, sizeof(helpData)));
+                break;
+
+            // Error on commands that should have been handled
+            // -----------------------------------------------------------------------------------------------------------------
+            case cfgCmdNoop:
+                THROW_FMT(AssertError, "'%s' command should have been handled", cfgCommandName());
+                break;
         }
     }
     CATCH_FATAL()

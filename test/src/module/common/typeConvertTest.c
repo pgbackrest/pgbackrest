@@ -34,25 +34,74 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("cvtDoubleToZ() and cvtZToDouble()"))
+    if (testBegin("cvtDivToZ()"))
     {
-        char buffer[STACK_TRACE_PARAM_MAX];
+        char buffer[CVT_DIV_BUFFER_SIZE];
 
-        TEST_ERROR(cvtDoubleToZ(999.1234, buffer, 4), AssertError, "buffer overflow");
+        TEST_ERROR(cvtDivToZ(100, 2, 0, false, buffer, 2), AssertError, "buffer overflow");
+        TEST_ERROR(cvtDivToZ(999999, 100, 1, false, buffer, 7), AssertError, "buffer overflow");
+        TEST_ERROR(cvtDivToZ(UINT64_MAX / 100, 100, 2, false, buffer, 19), AssertError, "buffer overflow");
 
-        TEST_RESULT_UINT(cvtDoubleToZ(999.1234, buffer, STACK_TRACE_PARAM_MAX), 8, "convert double to string");
-        TEST_RESULT_Z(buffer, "999.1234", "    check buffer");
+        TEST_RESULT_UINT(cvtDivToZ(100, 2, 0, false, buffer, sizeof(buffer)), 2, "no precision");
+        TEST_RESULT_Z(buffer, "50", "    check buffer");
 
-        TEST_RESULT_UINT(cvtDoubleToZ(999999999.123456, buffer, STACK_TRACE_PARAM_MAX), 16, "convert double to string");
-        TEST_RESULT_Z(buffer, "999999999.123456", "    check buffer");
+        TEST_RESULT_UINT(cvtDivToZ(100, 2, 3, false, buffer, sizeof(buffer)), 6, "all zero precision");
+        TEST_RESULT_Z(buffer, "50.000", "    check buffer");
 
-        TEST_RESULT_UINT(cvtDoubleToZ(999.0, buffer, STACK_TRACE_PARAM_MAX), 3, "convert double to string");
-        TEST_RESULT_Z(buffer, "999", "    check buffer");
+        TEST_RESULT_UINT(cvtDivToZ(100, 2, 3, true, buffer, sizeof(buffer)), 2, "all zero precision trimmed");
+        TEST_RESULT_Z(buffer, "50", "    check buffer");
 
-        TEST_ERROR(cvtZToDouble("AAA"), FormatError, "unable to convert string 'AAA' to double");
-        TEST_RESULT_DOUBLE(cvtZToDouble("0"), 0, "convert string to double");
-        TEST_RESULT_DOUBLE(cvtZToDouble("123.123"), 123.123, "convert string to double");
-        TEST_RESULT_DOUBLE(cvtZToDouble("-999999999.123456"), -999999999.123456, "convert string to double");
+        TEST_RESULT_UINT(cvtDivToZ(110, 100, 2, true, buffer, sizeof(buffer)), 3, "precision trimmed");
+        TEST_RESULT_Z(buffer, "1.1", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(5, 4, 1, true, buffer, sizeof(buffer)), 3, "precision rounded");
+        TEST_RESULT_Z(buffer, "1.3", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(5, 4, 3, true, buffer, sizeof(buffer)), 4, "precision exact");
+        TEST_RESULT_Z(buffer, "1.25", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(100, 3, 3, false, buffer, sizeof(buffer)), 6, "precision rounded");
+        TEST_RESULT_Z(buffer, "33.333", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(UINT64_MAX, 3, 0, false, buffer, sizeof(buffer)), 19, "no rounding for max allowed");
+        TEST_RESULT_Z(buffer, "6148914691236517205", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(1999, 10, 0, false, buffer, sizeof(buffer)), 3, "round up");
+        TEST_RESULT_Z(buffer, "200", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(999999, 100, 1, false, buffer, sizeof(buffer)), 7, "round up");
+        TEST_RESULT_Z(buffer, "10000.0", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(9199, 10, 0, false, buffer, sizeof(buffer)), 3, "partial round up");
+        TEST_RESULT_Z(buffer, "920", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(5555, 100, 1, false, buffer, sizeof(buffer)), 4, "partial round up");
+        TEST_RESULT_Z(buffer, "55.6", "    check buffer");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("cvtPctToZ()"))
+    {
+        char buffer[CVT_PCT_BUFFER_SIZE];
+
+        TEST_ERROR(cvtPctToZ(2, 100, buffer, 2), AssertError, "buffer overflow");
+        TEST_ERROR(cvtPctToZ(100, 100, buffer, 2), AssertError, "buffer overflow");
+        TEST_ERROR(cvtPctToZ(2, 100, buffer, 5), AssertError, "buffer overflow");
+
+        TEST_RESULT_UINT(cvtPctToZ(467, 467, buffer, sizeof(buffer)), 7, "100%");
+        TEST_RESULT_Z(buffer, "100.00%", "    check buffer");
+
+        TEST_RESULT_UINT(cvtPctToZ(111, 10000, buffer, sizeof(buffer)), 5, "100%");
+        TEST_RESULT_Z(buffer, "1.11%", "    check buffer");
+
+        TEST_RESULT_UINT(cvtPctToZ(2, 3, buffer, sizeof(buffer)), 6, "66.67%");
+        TEST_RESULT_Z(buffer, "66.67%", "    check buffer");
+
+        TEST_RESULT_UINT(cvtPctToZ(1, 10000, buffer, sizeof(buffer)), 5, "0.01%");
+        TEST_RESULT_Z(buffer, "0.01%", "    check buffer");
+
+        TEST_RESULT_UINT(cvtPctToZ(0, 1, buffer, sizeof(buffer)), 5, "0.00%");
+        TEST_RESULT_Z(buffer, "0.00%", "    check buffer");
     }
 
     // *****************************************************************************************************************************
@@ -125,14 +174,66 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("cvtTimeToZ()"))
+    if (testBegin("cvtTimeToZP() and cvtZToTime()"))
     {
         char buffer[STACK_TRACE_PARAM_MAX];
 
-        TEST_ERROR(cvtTimeToZ(9999, buffer, 4), AssertError, "buffer overflow");
+        hrnTzSet("America/New_York");
 
-        TEST_RESULT_UINT(cvtTimeToZ(1573222014, buffer, STACK_TRACE_PARAM_MAX), 10, "convert time to string");
+        TEST_ERROR(cvtTimeToZP("%s", 9999, buffer, 4), AssertError, "buffer overflow");
+        TEST_ERROR(
+            cvtTimeToZP("%s", 9999, buffer, sizeof(buffer), .utc = true), AssertError,
+            "assertion '!param.utc || strstr(format, \"%s\") == NULL' failed");
+
+        TEST_RESULT_UINT(cvtTimeToZP("%s", 1573222014, buffer, STACK_TRACE_PARAM_MAX), 10, "local epoch");
         TEST_RESULT_Z(buffer, "1573222014", "    check buffer");
+
+        TEST_RESULT_UINT(cvtTimeToZP("%Y%m%d-%H%M%S", 1715930051, buffer, STACK_TRACE_PARAM_MAX), 15, "local string");
+        TEST_RESULT_Z(buffer, "20240517-031411", "    check buffer");
+
+        TEST_RESULT_UINT(cvtTimeToZP("%Y%m%d-%H%M%S", 1715930051, buffer, STACK_TRACE_PARAM_MAX, .utc = true), 15, "utc string");
+        TEST_RESULT_Z(buffer, "20240517-071411", "    check buffer");
+
+        hrnTzSet("UTC");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("invalid");
+
+        TEST_ERROR(cvtZToTime("2020-01-01 00:00:0"), FormatError, "invalid date/time 2020-01-01 00:00:0");
+        TEST_ERROR(cvtZToTime("2020+01-01 00:00:00"), FormatError, "invalid date/time 2020+01-01 00:00:00");
+        TEST_ERROR(cvtZToTime("2020-01+01 00:00:00"), FormatError, "invalid date/time 2020-01+01 00:00:00");
+        TEST_ERROR(cvtZToTime("2020-01-01+00:00:00"), FormatError, "invalid date/time 2020-01-01+00:00:00");
+        TEST_ERROR(cvtZToTime("2020-01-01 00+00:00"), FormatError, "invalid date/time 2020-01-01 00+00:00");
+        TEST_ERROR(cvtZToTime("2020-01-01 00:00+00"), FormatError, "invalid date/time 2020-01-01 00:00+00");
+        TEST_ERROR(cvtZToTime("2020-13-08 16:18:15"), FormatError, "invalid date 2020-13-08");
+        TEST_ERROR(cvtZToTime("2020-01-08 16:68:15"), FormatError, "invalid time 16:68:15");
+        TEST_ERROR(cvtZToTime("202A-01-01 00:00:00"), FormatError, "invalid date/time 202A-01-01 00:00:00");
+        TEST_ERROR(cvtZToTime("2020-01-01 00:00:00!0"), FormatError, "invalid date/time 2020-01-01 00:00:00!0");
+        TEST_ERROR(cvtZToTime("2020-01-01 00:00:00,"), FormatError, "invalid date/time 2020-01-01 00:00:00,");
+        TEST_ERROR(cvtZToTime("2020-01-01 00:00:00,0A"), FormatError, "invalid date/time 2020-01-01 00:00:00,0A");
+        TEST_ERROR(cvtZToTime("2020-01-01 00:00:00+0"), FormatError, "invalid date/time 2020-01-01 00:00:00+0");
+        TEST_ERROR(cvtZToTime("2020-01-01 00:00:00+000"), FormatError, "invalid date/time 2020-01-01 00:00:00+000");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("system time UTC");
+
+        TEST_RESULT_INT(cvtZToTime("2020-01-08 09:18:15-0700"), 1578500295, "epoch with timezone");
+        TEST_RESULT_INT(cvtZToTime("2020-01-08 16:18:15.0000"), 1578500295, "same epoch no timezone");
+        TEST_RESULT_INT(cvtZToTime("2020-01-08 16:18:15.0000+00"), 1578500295, "same epoch timezone 0");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("system time America/New_York");
+
+        hrnTzSet("America/New_York");
+
+        TEST_RESULT_INT(cvtZToTime("2019-11-14 13:02:49-0500"), 1573754569, "offset same as local");
+        TEST_RESULT_INT(cvtZToTime("2019-11-14 13:02:49.0"), 1573754569, "GMT-0500 (EST) with ms");
+        TEST_RESULT_INT(cvtZToTime("2019-11-14 13:02:49,123456"), 1573754569, "GMT-0500 (EST) with ms");
+        TEST_RESULT_INT(cvtZToTime("2019-11-14 13:02:49"), 1573754569, "GMT-0500 (EST)");
+        TEST_RESULT_INT(cvtZToTime("2019-09-14 20:02:49"), 1568505769, "GMT-0400 (EDT)");
+        TEST_RESULT_INT(cvtZToTime("2018-04-27 04:29:00+04:30"), 1524787140, "GMT+0430");
+
+        hrnTzSet("UTC");
     }
 
     // *****************************************************************************************************************************

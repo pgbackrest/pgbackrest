@@ -8,6 +8,8 @@ Remote Command
 #include "command/backup/blockIncr.h"
 #include "command/backup/pageChecksum.h"
 #include "command/control/common.h"
+#include "command/lock.h"
+#include "command/remote/remote.h"
 #include "command/restore/blockChecksum.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/crypto/hash.h"
@@ -25,17 +27,19 @@ Remote Command
 /***********************************************************************************************************************************
 Command handlers
 ***********************************************************************************************************************************/
-static const ProtocolServerHandler commandRemoteHandlerList[] =
+static const ProtocolServerHandler commandRemoteHandler[] =
 {
     PROTOCOL_SERVER_HANDLER_DB_LIST
     PROTOCOL_SERVER_HANDLER_OPTION_LIST
     PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST
 };
 
+static const List *const commandRemoteHandlerList = LSTDEF(commandRemoteHandler);
+
 /***********************************************************************************************************************************
 Filter handlers
 ***********************************************************************************************************************************/
-static const StorageRemoteFilterHandler storageRemoteFilterHandlerList[] =
+static const StorageRemoteFilterHandler storageRemoteFilterHandler[] =
 {
     {.type = BLOCK_CHECKSUM_FILTER_TYPE, .handlerParam = blockChecksumNewPack},
     {.type = BLOCK_INCR_FILTER_TYPE, .handlerParam = blockIncrNewPack},
@@ -46,6 +50,8 @@ static const StorageRemoteFilterHandler storageRemoteFilterHandlerList[] =
     {.type = SIZE_FILTER_TYPE, .handlerNoParam = ioSizeNew},
 };
 
+static const List *const storageRemoteFilterHandlerList = LSTDEF(storageRemoteFilterHandler);
+
 /**********************************************************************************************************************************/
 FN_EXTERN void
 cmdRemote(ProtocolServer *const server)
@@ -53,7 +59,7 @@ cmdRemote(ProtocolServer *const server)
     FUNCTION_LOG_VOID(logLevelDebug);
 
     // Set filter handlers
-    storageRemoteFilterHandlerSet(storageRemoteFilterHandlerList, LENGTH_OF(storageRemoteFilterHandlerList));
+    storageRemoteFilterHandlerSet(storageRemoteFilterHandlerList);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -65,7 +71,7 @@ cmdRemote(ProtocolServer *const server)
         TRY_BEGIN()
         {
             // Get the command. No need to check parameters since we know this is the first noop.
-            CHECK(FormatError, protocolServerCommandGet(server).id == PROTOCOL_COMMAND_NOOP, "noop expected");
+            CHECK(FormatError, protocolServerRequest(server).id == PROTOCOL_COMMAND_NOOP, "noop expected");
 
             // Only try the lock if this is process 0, i.e. the remote started from the main process
             if (cfgOptionUInt(cfgOptProcess) == 0)
@@ -77,12 +83,12 @@ cmdRemote(ProtocolServer *const server)
                     lockStopTest();
 
                     // Acquire the lock
-                    lockAcquireP();
+                    cmdLockAcquireP();
                 }
             }
 
             // Notify the client of success
-            protocolServerDataEndPut(server);
+            protocolServerResponseP(server);
             success = true;
         }
         CATCH_ANY()
@@ -93,7 +99,7 @@ cmdRemote(ProtocolServer *const server)
 
         // If not successful we'll just exit
         if (success)
-            protocolServerProcess(server, NULL, commandRemoteHandlerList, LENGTH_OF(commandRemoteHandlerList));
+            protocolServerProcess(server, NULL, commandRemoteHandlerList);
     }
     MEM_CONTEXT_TEMP_END();
 

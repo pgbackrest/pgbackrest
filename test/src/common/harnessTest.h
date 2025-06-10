@@ -40,13 +40,16 @@ Functions
 bool testBegin(const char *name);
 
 // Read a file (max 256k) into a buffer
-void hrnFileRead(const char *fileName, unsigned char *buffer, size_t bufferSize);
+void hrnFileRead(const char *fileName, uint8_t *buffer, size_t bufferSize);
 
 // Write a buffer to a file
-void hrnFileWrite(const char *fileName, const unsigned char *buffer, size_t bufferSize);
+void hrnFileWrite(const char *fileName, const uint8_t *buffer, size_t bufferSize);
 
 // Diff two strings using command-line diff tool
 const char *hrnDiff(const char *actual, const char *expected);
+
+// Set timezone
+void hrnTzSet(const char *tz);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -66,6 +69,18 @@ bool testContainer(void);
 // Get the 0-based index of the test. Useful for modifying resources like port numbers to avoid conflicts when running tests in
 // parallel.
 unsigned int testIdx(void);
+
+// PostgreSQL version for integration testing
+const char *testPgVersion(void);
+
+// Test architecture
+const char *testArchitecture(void);
+
+// User running the test
+const char *testUser(void);
+
+// VM for integration testing
+const char *testVm(void);
 
 /***********************************************************************************************************************************
 Test that an expected error is actually thrown and error when it isn't
@@ -122,6 +137,63 @@ Test that an expected error is actually thrown and error when it isn't
 }
 
 /***********************************************************************************************************************************
+Test that an expected error is actually thrown and error when it isn't
+***********************************************************************************************************************************/
+#define TEST_ERROR_MULTI(statement, errorTypeExpected, ...)                                                                        \
+{                                                                                                                                  \
+    const char *const errorMessageExpected[] = {__VA_ARGS__};                                                                      \
+    bool TEST_ERROR_catch = false;                                                                                                 \
+                                                                                                                                   \
+    /* Set the line number for the current function in the stack trace */                                                          \
+    FUNCTION_HARNESS_STACK_TRACE_LINE_SET(__LINE__);                                                                               \
+                                                                                                                                   \
+    hrnTestLogPrefix(__LINE__);                                                                                                    \
+    printf("expect %s: [%s]\n", errorTypeName(&errorTypeExpected), #__VA_ARGS__);                                                  \
+    fflush(stdout);                                                                                                                \
+                                                                                                                                   \
+    TEST_ERROR_MEM_CONTEXT_BEGIN()                                                                                                 \
+    {                                                                                                                              \
+        TRY_BEGIN()                                                                                                                \
+        {                                                                                                                          \
+            statement;                                                                                                             \
+        }                                                                                                                          \
+        CATCH_FATAL()                                                                                                              \
+        {                                                                                                                          \
+            TEST_ERROR_catch = true;                                                                                               \
+            bool match = false;                                                                                                    \
+                                                                                                                                   \
+            if (errorType() == &errorTypeExpected)                                                                                 \
+            {                                                                                                                      \
+                for (unsigned int errorIdx = 0; errorIdx < LENGTH_OF(errorMessageExpected); errorIdx++)                            \
+                {                                                                                                                  \
+                    if (strcmp(errorMessage(), errorMessageExpected[errorIdx]) == 0)                                               \
+                    {                                                                                                              \
+                        match = true;                                                                                              \
+                        break;                                                                                                     \
+                    }                                                                                                              \
+                }                                                                                                                  \
+            }                                                                                                                      \
+                                                                                                                                   \
+            if (!match)                                                                                                            \
+            {                                                                                                                      \
+                THROW_FMT(                                                                                                         \
+                    TestError, "EXPECTED %s: [%s]\n\n BUT GOT %s: %s\n\nTHROWN AT:\n%s", errorTypeName(&errorTypeExpected),        \
+                    #__VA_ARGS__, errorName(), errorMessage(), errorStackTrace());                                                 \
+            }                                                                                                                      \
+        }                                                                                                                          \
+        TRY_END();                                                                                                                 \
+    }                                                                                                                              \
+    TEST_ERROR_MEM_CONTEXT_END();                                                                                                  \
+                                                                                                                                   \
+    if (!TEST_ERROR_catch)                                                                                                         \
+        THROW_FMT(                                                                                                                 \
+            TestError, "statement '%s' returned but error %s, [%s] was expected", #statement, errorTypeName(&errorTypeExpected),   \
+            #__VA_ARGS__);                                                                                                         \
+                                                                                                                                   \
+    FUNCTION_HARNESS_STACK_TRACE_LINE_SET(0);                                                                                      \
+}
+
+/***********************************************************************************************************************************
 Test error with a formatted expected message
 ***********************************************************************************************************************************/
 #define TEST_ERROR_FMT(statement, errorTypeExpected, ...)                                                                          \
@@ -141,6 +213,14 @@ Output information about the test
     hrnTestLogPrefix(__LINE__);                                                                                                    \
     puts(comment);                                                                                                                 \
     fflush(stdout);
+
+#define TEST_RESULT_INFO_LINE_FMT(line, comment, ...)                                                                              \
+    hrnTestLogPrefix(line);                                                                                                        \
+    printf(comment "\n", __VA_ARGS__);                                                                                             \
+    fflush(stdout)
+
+#define TEST_RESULT_INFO_FMT(comment, ...)                                                                                         \
+    TEST_RESULT_INFO_LINE_FMT(__LINE__, comment, __VA_ARGS__)
 
 /***********************************************************************************************************************************
 Test that a void statement returns and does not throw an error
@@ -323,6 +403,20 @@ Test log result
         TRY_END();                                                                                                                 \
     } while (0)
 
+#define TEST_RESULT_LOG_EMPTY_OR_CONTAINS(expected)                                                                                \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        TRY_BEGIN()                                                                                                                \
+        {                                                                                                                          \
+            harnessLogResultEmptyOrContains(expected);                                                                             \
+        }                                                                                                                          \
+        CATCH_ANY()                                                                                                                \
+        {                                                                                                                          \
+            THROW_FMT(AssertError, "LOG RESULT CONTAINS FAILED WITH:\n%s", errorMessage());                                        \
+        }                                                                                                                          \
+        TRY_END();                                                                                                                 \
+    } while (0)
+
 #define TEST_RESULT_LOG_FMT(...)                                                                                                   \
     do                                                                                                                             \
     {                                                                                                                              \
@@ -385,6 +479,6 @@ Is this a 64-bit system? If not then it is 32-bit since 16-bit systems are not s
 /***********************************************************************************************************************************
 Is this a big-endian system?
 ***********************************************************************************************************************************/
-#define TEST_BIG_ENDIAN() (!*(unsigned char *)&(uint16_t){1})
+#define TEST_BIG_ENDIAN() (!*(uint8_t *)&(uint16_t){1})
 
 #endif

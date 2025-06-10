@@ -12,6 +12,7 @@ behavior.
 Object type
 ***********************************************************************************************************************************/
 typedef struct HttpRequest HttpRequest;
+typedef struct HttpRequestMulti HttpRequestMulti;
 
 #include "common/io/http/header.h"
 #include "common/io/http/query.h"
@@ -39,18 +40,25 @@ STRING_DECLARE(HTTP_VERB_PUT_STR);
 
 #define HTTP_HEADER_AUTHORIZATION                                   "authorization"
 STRING_DECLARE(HTTP_HEADER_AUTHORIZATION_STR);
+#define HTTP_HEADER_CONTENT_ID                                      "content-id"
+STRING_DECLARE(HTTP_HEADER_CONTENT_ID_STR);
 #define HTTP_HEADER_CONTENT_LENGTH                                  "content-length"
 STRING_DECLARE(HTTP_HEADER_CONTENT_LENGTH_STR);
 #define HTTP_HEADER_CONTENT_MD5                                     "content-md5"
 STRING_DECLARE(HTTP_HEADER_CONTENT_MD5_STR);
 #define HTTP_HEADER_CONTENT_RANGE                                   "content-range"
 STRING_DECLARE(HTTP_HEADER_CONTENT_RANGE_STR);
+#define HTTP_HEADER_CONTENT_TRANSFER_ENCODING                       "content-transfer-encoding"
+#define HTTP_HEADER_CONTENT_TRANSFER_ENCODING_BINARY                "binary"
 #define HTTP_HEADER_CONTENT_TYPE                                    "content-type"
 STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_STR);
 #define HTTP_HEADER_CONTENT_TYPE_APP_FORM_URL                       "application/x-www-form-urlencoded"
 STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_APP_FORM_URL_STR);
+#define HTTP_HEADER_CONTENT_TYPE_HTTP                               "application/http"
+STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_HTTP_STR);
 #define HTTP_HEADER_CONTENT_TYPE_JSON                               "application/json"
 STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_JSON_STR);
+#define HTTP_HEADER_CONTENT_TYPE_MULTIPART                          "multipart/mixed; boundary="
 #define HTTP_HEADER_CONTENT_TYPE_XML                                "application/xml"
 STRING_DECLARE(HTTP_HEADER_CONTENT_TYPE_XML_STR);
 #define HTTP_HEADER_CONTENT_RANGE_BYTES                             "bytes"
@@ -66,8 +74,15 @@ STRING_DECLARE(HTTP_HEADER_LAST_MODIFIED_STR);
 STRING_DECLARE(HTTP_HEADER_RANGE_STR);
 #define HTTP_HEADER_RANGE_BYTES                                     "bytes"
 
+#define HTTP_MULTIPART_BOUNDARY_INIT                                "QKX4EYg4"
+#define HTTP_MULTIPART_BOUNDARY_NEXT                                4
+#define HTTP_MULTIPART_BOUNDARY_EXTRA                               "LARJ52gF4F239iNVrrC5w5aYskcGrWCXIFlMp5IxswggIhcX2A0gF9nrgN8q"
+#define HTTP_MULTIPART_BOUNDARY_PRE                                 "\r\n--"
+#define HTTP_MULTIPART_BOUNDARY_POST                                "\r\n"
+#define HTTP_MULTIPART_BOUNDARY_POST_LAST                           "--\r\n"
+
 /***********************************************************************************************************************************
-Constructors
+Request Constructors
 ***********************************************************************************************************************************/
 typedef struct HttpRequestNewParam
 {
@@ -83,7 +98,7 @@ typedef struct HttpRequestNewParam
 FN_EXTERN HttpRequest *httpRequestNew(HttpClient *client, const String *verb, const String *path, HttpRequestNewParam param);
 
 /***********************************************************************************************************************************
-Getters/Setters
+Request Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct HttpRequestPub
 {
@@ -122,7 +137,7 @@ httpRequestVerb(const HttpRequest *const this)
 }
 
 /***********************************************************************************************************************************
-Functions
+Request Functions
 ***********************************************************************************************************************************/
 // Wait for a response from the request
 FN_EXTERN HttpResponse *httpRequestResponse(HttpRequest *this, bool contentCache);
@@ -138,7 +153,7 @@ httpRequestMove(HttpRequest *const this, MemContext *const parentNew)
 }
 
 /***********************************************************************************************************************************
-Destructor
+Request Destructor
 ***********************************************************************************************************************************/
 FN_INLINE_ALWAYS void
 httpRequestFree(HttpRequest *const this)
@@ -147,13 +162,39 @@ httpRequestFree(HttpRequest *const this)
 }
 
 /***********************************************************************************************************************************
+Request Multi Constructors
+***********************************************************************************************************************************/
+FN_EXTERN HttpRequestMulti *httpRequestMultiNew(void);
+
+/***********************************************************************************************************************************
+Request Multi Functions
+***********************************************************************************************************************************/
+// Add a request to multipart content
+#define httpRequestMultiAddP(this, contentId, verb, path, ...)                                                                                \
+    httpRequestMultiAdd(this, contentId, verb, path, (HttpRequestNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN void httpRequestMultiAdd(
+    HttpRequestMulti *this, const String *contentId, const String *verb, const String *path, HttpRequestNewParam param);
+
+// Concatenate multipart content
+FN_EXTERN Buffer *httpRequestMultiContent(HttpRequestMulti *this);
+
+// Add multipart header
+FN_EXTERN HttpHeader *httpRequestMultiHeaderAdd(HttpRequestMulti *this, HttpHeader *header);
+
+/***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
 FN_EXTERN void httpRequestToLog(const HttpRequest *this, StringStatic *debugLog);
 
-#define FUNCTION_LOG_HTTP_REQUEST_TYPE                                                                                            \
+#define FUNCTION_LOG_HTTP_REQUEST_TYPE                                                                                             \
     HttpRequest *
-#define FUNCTION_LOG_HTTP_REQUEST_FORMAT(value, buffer, bufferSize)                                                               \
+#define FUNCTION_LOG_HTTP_REQUEST_FORMAT(value, buffer, bufferSize)                                                                \
     FUNCTION_LOG_OBJECT_FORMAT(value, httpRequestToLog, buffer, bufferSize)
+
+#define FUNCTION_LOG_HTTP_REQUEST_MULTI_TYPE                                                                                       \
+    HttpRequestMulti *
+#define FUNCTION_LOG_HTTP_REQUEST_MULTI_FORMAT(value, buffer, bufferSize)                                                          \
+    objNameToLog(value, "HttpRequestMulti", buffer, bufferSize)
 
 #endif

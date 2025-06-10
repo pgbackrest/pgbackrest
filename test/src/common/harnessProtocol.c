@@ -27,13 +27,11 @@ static struct
 {
     // Local process shim
     bool localShim;
-    const ProtocolServerHandler *localHandlerList;
-    unsigned int localHandlerListSize;
+    const List *localHandlerList;
 
     // Remote process shim
     bool remoteShim;
-    const ProtocolServerHandler *remoteHandlerList;
-    unsigned int remoteHandlerListSize;
+    const List *remoteHandlerList;
 } hrnProtocolStatic;
 
 /***********************************************************************************************************************************
@@ -46,45 +44,21 @@ hrnProtocolClientCleanup(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
-    if (protocolHelper.memContext != NULL)
+    if (protocolHelper.clientList != NULL)
     {
         // Cleanup remotes
-        for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientRemoteSize; clientIdx++)
+        while (lstSize(protocolHelper.clientList) > 0)
         {
-            // Cleanup remote client
-            if (protocolHelper.clientRemote[clientIdx].client != NULL)
-            {
-                memContextCallbackClear(objMemContext(protocolHelper.clientRemote[clientIdx].client));
-                protocolClientFree(protocolHelper.clientRemote[clientIdx].client);
-                protocolHelper.clientRemote[clientIdx].client = NULL;
-            }
+            ProtocolHelperClient *const clientHelper = lstGet(protocolHelper.clientList, 0);
 
-            // Cleanup remote exec
-            if (protocolHelper.clientRemote[clientIdx].exec != NULL)
-            {
-                memContextCallbackClear(objMemContext(protocolHelper.clientRemote[clientIdx].exec));
-                execFree(protocolHelper.clientRemote[clientIdx].exec);
-                protocolHelper.clientRemote[clientIdx].exec = NULL;
-            }
-        }
+            memContextCallbackClear(objMemContext(clientHelper->client));
+            protocolClientFree(clientHelper->client);
+            lstRemoveIdx(protocolHelper.clientList, 0);
 
-        // Cleanup locals
-        for (unsigned int clientIdx = 0; clientIdx < protocolHelper.clientLocalSize; clientIdx++)
-        {
-            // Cleanup local client
-            if (protocolHelper.clientLocal[clientIdx].client != NULL)
+            if (clientHelper->exec != NULL)
             {
-                memContextCallbackClear(objMemContext(protocolHelper.clientLocal[clientIdx].client));
-                protocolClientFree(protocolHelper.clientLocal[clientIdx].client);
-                protocolHelper.clientLocal[clientIdx].client = NULL;
-            }
-
-            // Cleanup local exec
-            if (protocolHelper.clientLocal[clientIdx].exec != NULL)
-            {
-                memContextCallbackClear(objMemContext(protocolHelper.clientLocal[clientIdx].exec));
-                execFree(protocolHelper.clientLocal[clientIdx].exec);
-                protocolHelper.clientLocal[clientIdx].exec = NULL;
+                memContextCallbackClear(objMemContext(clientHelper->exec));
+                execFree(clientHelper->exec);
             }
         }
     }
@@ -97,7 +71,8 @@ Shim protocolLocalExec() to provide coverage as detailed in the hrnProtocolLocal
 ***********************************************************************************************************************************/
 static void
 protocolLocalExec(
-    ProtocolHelperClient *helper, ProtocolStorageType protocolStorageType, unsigned int hostIdx, unsigned int processId)
+    ProtocolHelperClient *const helper, ProtocolStorageType const protocolStorageType, const unsigned int hostIdx,
+    const unsigned int processId)
 {
     // Call the shim when installed
     if (hrnProtocolStatic.localShim)
@@ -125,7 +100,7 @@ protocolLocalExec(
 
             // Load configuration
             StringList *const paramList = protocolLocalParam(protocolStorageType, hostIdx, processId);
-            hrnCfgLoadP(cfgCmdNone, paramList, .noStd = true);
+            hrnCfgLoadP(CFG_COMMAND_TOTAL, paramList, .noStd = true);
 
             // Change log process id to aid in debugging
             hrnLogProcessIdSet(processId);
@@ -135,8 +110,7 @@ protocolLocalExec(
             ProtocolServer *server = protocolServerNew(
                 name, PROTOCOL_SERVICE_LOCAL_STR, ioFdReadNewOpen(name, pipeWrite[0], 5000),
                 ioFdWriteNewOpen(name, pipeRead[1], 5000));
-            protocolServerProcess(
-                server, cfgCommandJobRetry(), hrnProtocolStatic.localHandlerList, hrnProtocolStatic.localHandlerListSize);
+            protocolServerProcess(server, cfgCommandJobRetry(), hrnProtocolStatic.localHandlerList);
 
             // Exit when done
             exit(0);
@@ -164,16 +138,14 @@ protocolLocalExec(
 
 /**********************************************************************************************************************************/
 void
-hrnProtocolLocalShimInstall(const ProtocolServerHandler *const handlerList, const unsigned int handlerListSize)
+hrnProtocolLocalShimInstall(const List *const handlerList)
 {
     FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM_P(VOID, handlerList);
-        FUNCTION_HARNESS_PARAM(UINT, handlerListSize);
+        FUNCTION_HARNESS_PARAM(LIST, handlerList);
     FUNCTION_HARNESS_END();
 
     hrnProtocolStatic.localShim = true;
     hrnProtocolStatic.localHandlerList = handlerList;
-    hrnProtocolStatic.localHandlerListSize = handlerListSize;
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
@@ -194,7 +166,8 @@ Shim protocolRemoteExec() to provide coverage as detailed in the hrnProtocolRemo
 ***********************************************************************************************************************************/
 static void
 protocolRemoteExec(
-    ProtocolHelperClient *helper, ProtocolStorageType protocolStorageType, unsigned int hostIdx, unsigned int processId)
+    ProtocolHelperClient *const helper, const ProtocolStorageType protocolStorageType, const unsigned int hostIdx,
+    const unsigned int processId)
 {
     // Call the shim when installed
     if (hrnProtocolStatic.remoteShim)
@@ -222,7 +195,7 @@ protocolRemoteExec(
 
             // Load configuration
             StringList *const paramList = protocolRemoteParam(protocolStorageType, hostIdx);
-            hrnCfgLoadP(cfgCmdNone, paramList, .noStd = true);
+            hrnCfgLoadP(CFG_COMMAND_TOTAL, paramList, .noStd = true);
 
             // Change log process id to aid in debugging
             hrnLogProcessIdSet(processId);
@@ -232,10 +205,10 @@ protocolRemoteExec(
             ProtocolServer *server = protocolServerNew(
                 name, PROTOCOL_SERVICE_REMOTE_STR, ioFdReadNewOpen(name, pipeWrite[0], 10000),
                 ioFdWriteNewOpen(name, pipeRead[1], 10000));
-            protocolServerProcess(server, NULL, hrnProtocolStatic.remoteHandlerList, hrnProtocolStatic.remoteHandlerListSize);
+            protocolServerProcess(server, NULL, hrnProtocolStatic.remoteHandlerList);
 
             // Put an end message here to sync with the client to ensure that coverage data is written before exiting
-            protocolServerDataEndPut(server);
+            protocolServerResponseP(server);
 
             // Exit when done
             exit(0);
@@ -263,16 +236,14 @@ protocolRemoteExec(
 
 /**********************************************************************************************************************************/
 void
-hrnProtocolRemoteShimInstall(const ProtocolServerHandler *const handlerList, const unsigned int handlerListSize)
+hrnProtocolRemoteShimInstall(const List *const handlerList)
 {
     FUNCTION_HARNESS_BEGIN();
-        FUNCTION_HARNESS_PARAM_P(VOID, handlerList);
-        FUNCTION_HARNESS_PARAM(UINT, handlerListSize);
+        FUNCTION_HARNESS_PARAM(LIST, handlerList);
     FUNCTION_HARNESS_END();
 
     hrnProtocolStatic.remoteShim = true;
     hrnProtocolStatic.remoteHandlerList = handlerList;
-    hrnProtocolStatic.remoteHandlerListSize = handlerListSize;
 
     FUNCTION_HARNESS_RETURN_VOID();
 }

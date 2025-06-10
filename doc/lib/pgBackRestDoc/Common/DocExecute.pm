@@ -16,11 +16,11 @@ use File::Basename qw(dirname);
 use Storable qw(dclone);
 
 use pgBackRestTest::Common::ExecuteTest;
-use pgBackRestTest::Common::HostTest;
-use pgBackRestTest::Common::HostGroupTest;
 
 use pgBackRestDoc::Common::DocManifest;
 use pgBackRestDoc::Common::Exception;
+use pgBackRestDoc::Common::Host;
+use pgBackRestDoc::Common::HostGroup;
 use pgBackRestDoc::Common::Ini;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
@@ -557,7 +557,7 @@ sub backrestConfig
                 }
             }
 
-            my $strLocalFile = '/home/' . DOC_USER . '/data/pgbackrest.conf';
+            my $strLocalFile = abs_path(dirname($0)) . '/output/pgbackrest.conf';
 
             # Save the ini file
             $self->{oManifest}->storage()->put($strLocalFile, iniRender($self->{config}{$strHostName}{$$hCacheKey{file}}, true));
@@ -655,7 +655,7 @@ sub postgresConfig
                 confess &log(ERROR, "cannot configure postgres on host ${strHostName} because the host does not exist");
             }
 
-            my $strLocalFile = '/home/' . DOC_USER . '/data/postgresql.conf';
+            my $strLocalFile = abs_path(dirname($0)) . '/output/postgresql.conf';
             $oHost->copyFrom($$hCacheKey{file}, $strLocalFile);
 
             if (!defined(${$self->{'pg-config'}}{$strHostName}{$$hCacheKey{file}}{base}) && $self->{bExe})
@@ -933,7 +933,7 @@ sub cachePush
 }
 
 ####################################################################################################################################
-# sectionChildProcesss
+# sectionChildProcess
 ####################################################################################################################################
 sub sectionChildProcess
 {
@@ -1050,7 +1050,7 @@ sub sectionChildProcess
                     $strOption =~ s/\{\[host\-repo\-path\]\}/${strHostRepoPath}/g;
                 }
 
-                my $oHost = new pgBackRestTest::Common::HostTest(
+                my $oHost = new pgBackRestDoc::Common::Host(
                     $$hCacheKey{name}, "doc-$$hCacheKey{name}", $strImage, $strHostUser,
                     defined($strMount) ? [$strMount] : undef, $strOption, $$hCacheKey{param}, $$hCacheKey{'update-hosts'});
 

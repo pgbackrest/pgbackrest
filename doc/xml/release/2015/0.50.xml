@@ -1,0 +1,53 @@
+<release date="2015-03-25" version="0.50" title="Restore and Much More">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <p>Fixed broken checksums and now they work with normal and resumed backups. Finally realized that checksums and checksum deltas should be functionally separated and this simplified a number of things. Issue #28 has been created for checksum deltas.</p>
+            </release-item>
+
+            <release-item>
+                <p>Fixed an issue where a backup could be resumed from an aborted backup that didn't have the same type and prior backup.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <p>Added restore functionality.</p>
+            </release-item>
+
+            <release-item>
+                <p>All options can now be set on the command-line making <file>pg_backrest.conf</file> optional.</p>
+            </release-item>
+
+            <release-item>
+                <p>De/compression is now performed without threads and checksum/size is calculated in stream. That means file checksums are no longer optional.</p>
+            </release-item>
+
+            <release-item>
+                <p>Added option <setting>{[dash]}-no-start-stop</setting> to allow backups when Postgres is shut down. If <file>postmaster.pid</file> is present then <setting>{[dash]}-force</setting> is required to make the backup run (though if Postgres is running an inconsistent backup will likely be created). This option was added primarily for the purpose of unit testing, but there may be applications in the real world as well.</p>
+            </release-item>
+
+            <release-item>
+                <p>Checksum for <file>backup.manifest</file> to detect a corrupted/modified manifest.</p>
+            </release-item>
+
+            <release-item>
+                <p>Link <path>latest</path> always points to the last backup. This has been added for convenience and to make restores simpler.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Removed dependency on <code>Moose</code>. It wasn't being used extensively and makes for longer startup times.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-test-list>
+        <release-feature-list>
+            <release-item>
+                <p>More comprehensive unit tests in all areas.</p>
+            </release-item>
+        </release-feature-list>
+    </release-test-list>
+</release>

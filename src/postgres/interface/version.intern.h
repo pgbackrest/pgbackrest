@@ -16,33 +16,33 @@ alpha/beta/rc period without needing to be updated, unless of course the actual 
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_93
+#elif PG_VERSION >= PG_VERSION_95
 
 #ifdef CATALOG_VERSION_NO_MAX
 
 #define PG_INTERFACE_CONTROL_IS(version)                                                                                           \
     static bool                                                                                                                    \
-    pgInterfaceControlIs##version(const unsigned char *controlFile)                                                                \
+    pgInterfaceControlIs##version(const uint8_t *controlFile)                                                                      \
     {                                                                                                                              \
         ASSERT(controlFile != NULL);                                                                                               \
                                                                                                                                    \
         return                                                                                                                     \
-            ((ControlFileData *)controlFile)->pg_control_version == PG_CONTROL_VERSION &&                                          \
-            ((ControlFileData *)controlFile)->catalog_version_no >= CATALOG_VERSION_NO &&                                          \
-            ((ControlFileData *)controlFile)->catalog_version_no < (CATALOG_VERSION_NO / 100000 + 1) * 100000;                     \
+            ((const ControlFileData *)controlFile)->pg_control_version == PG_CONTROL_VERSION &&                                    \
+            ((const ControlFileData *)controlFile)->catalog_version_no >= CATALOG_VERSION_NO &&                                    \
+            ((const ControlFileData *)controlFile)->catalog_version_no < (CATALOG_VERSION_NO / 100000 + 1) * 100000;               \
     }
 
 #else
 
 #define PG_INTERFACE_CONTROL_IS(version)                                                                                           \
     static bool                                                                                                                    \
-    pgInterfaceControlIs##version(const unsigned char *controlFile)                                                                \
+    pgInterfaceControlIs##version(const uint8_t *controlFile)                                                                      \
     {                                                                                                                              \
         ASSERT(controlFile != NULL);                                                                                               \
                                                                                                                                    \
         return                                                                                                                     \
-            ((ControlFileData *)controlFile)->pg_control_version == PG_CONTROL_VERSION &&                                          \
-            ((ControlFileData *)controlFile)->catalog_version_no == CATALOG_VERSION_NO;                                            \
+            ((const ControlFileData *)controlFile)->pg_control_version == PG_CONTROL_VERSION &&                                    \
+            ((const ControlFileData *)controlFile)->catalog_version_no == CATALOG_VERSION_NO;                                      \
     }
 
 #endif
@@ -54,24 +54,56 @@ Read the version specific pg_control into a general data structure
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_93
+#elif PG_VERSION >= PG_VERSION_95
 
 #define PG_INTERFACE_CONTROL(version)                                                                                              \
     static PgControl                                                                                                               \
-    pgInterfaceControl##version(const unsigned char *controlFile)                                                                  \
+    pgInterfaceControl##version(const uint8_t *controlFile)                                                                        \
     {                                                                                                                              \
         ASSERT(controlFile != NULL);                                                                                               \
                                                                                                                                    \
         return (PgControl)                                                                                                         \
         {                                                                                                                          \
-            .systemId = ((ControlFileData *)controlFile)->system_identifier,                                                       \
-            .catalogVersion = ((ControlFileData *)controlFile)->catalog_version_no,                                                \
-            .checkpoint = ((ControlFileData *)controlFile)->checkPoint,                                                            \
-            .timeline = ((ControlFileData *)controlFile)->checkPointCopy.ThisTimeLineID,                                           \
-            .pageSize = ((ControlFileData *)controlFile)->blcksz,                                                                  \
-            .walSegmentSize = ((ControlFileData *)controlFile)->xlog_seg_size,                                                     \
-            .pageChecksum = ((ControlFileData *)controlFile)->data_checksum_version != 0,                                          \
+            .systemId = ((const ControlFileData *)controlFile)->system_identifier,                                                 \
+            .catalogVersion = ((const ControlFileData *)controlFile)->catalog_version_no,                                          \
+            .checkpoint = ((const ControlFileData *)controlFile)->checkPoint,                                                      \
+            .timeline = ((const ControlFileData *)controlFile)->checkPointCopy.ThisTimeLineID,                                     \
+            .pageSize = ((const ControlFileData *)controlFile)->blcksz,                                                            \
+            .walSegmentSize = ((const ControlFileData *)controlFile)->xlog_seg_size,                                               \
+            .pageChecksumVersion = ((const ControlFileData *)controlFile)->data_checksum_version,                                  \
         };                                                                                                                         \
+    }
+
+#endif
+
+/***********************************************************************************************************************************
+Get control crc offset
+***********************************************************************************************************************************/
+#if PG_VERSION > PG_VERSION_MAX
+
+#elif PG_VERSION >= PG_VERSION_95
+
+#define PG_INTERFACE_CONTROL_CRC_OFFSET(version)                                                                                   \
+    static size_t                                                                                                                  \
+    pgInterfaceControlCrcOffset##version(void)                                                                                     \
+    {                                                                                                                              \
+        return offsetof(ControlFileData, crc);                                                                                     \
+    }
+
+#endif
+
+/***********************************************************************************************************************************
+Invalidate control checkpoint. PostgreSQL skips the first segment so any LSN in that segment is invalid.
+***********************************************************************************************************************************/
+#if PG_VERSION > PG_VERSION_MAX
+
+#elif PG_VERSION >= PG_VERSION_93
+
+#define PG_INTERFACE_CONTROL_CHECKPOINT_INVALIDATE(version)                                                                        \
+    static void                                                                                                                    \
+    pgInterfaceControlCheckpointInvalidate##version(uint8_t *const controlFile)                                                    \
+    {                                                                                                                              \
+        ((ControlFileData *)controlFile)->checkPoint = PG_CONTROL_CHECKPOINT_INVALID;                                              \
     }
 
 #endif
@@ -81,7 +113,7 @@ Get the control version
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_93
+#elif PG_VERSION >= PG_VERSION_95
 
 #define PG_INTERFACE_CONTROL_VERSION(version)                                                                                      \
     static uint32_t                                                                                                                \
@@ -97,15 +129,15 @@ Determine if the supplied WAL is for this version of PostgreSQL
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_93
+#elif PG_VERSION >= PG_VERSION_95
 
 #define PG_INTERFACE_WAL_IS(version)                                                                                               \
     static bool                                                                                                                    \
-    pgInterfaceWalIs##version(const unsigned char *walFile)                                                                        \
+    pgInterfaceWalIs##version(const uint8_t *walFile)                                                                              \
     {                                                                                                                              \
         ASSERT(walFile != NULL);                                                                                                   \
                                                                                                                                    \
-        return ((XLogPageHeaderData *)walFile)->xlp_magic == XLOG_PAGE_MAGIC;                                                      \
+        return ((const XLogPageHeaderData *)walFile)->xlp_magic == XLOG_PAGE_MAGIC;                                                \
     }
 
 #endif
@@ -115,18 +147,18 @@ Read the version specific WAL header into a general data structure
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_93
+#elif PG_VERSION >= PG_VERSION_95
 
 #define PG_INTERFACE_WAL(version)                                                                                                  \
     static PgWal                                                                                                                   \
-    pgInterfaceWal##version(const unsigned char *walFile)                                                                          \
+    pgInterfaceWal##version(const uint8_t *walFile)                                                                                \
     {                                                                                                                              \
         ASSERT(walFile != NULL);                                                                                                   \
                                                                                                                                    \
         return (PgWal)                                                                                                             \
         {                                                                                                                          \
-            .systemId = ((XLogLongPageHeaderData *)walFile)->xlp_sysid,                                                            \
-            .size = ((XLogLongPageHeaderData *)walFile)->xlp_seg_size,                                                             \
+            .systemId = ((const XLogLongPageHeaderData *)walFile)->xlp_sysid,                                                      \
+            .size = ((const XLogLongPageHeaderData *)walFile)->xlp_seg_size,                                                       \
         };                                                                                                                         \
     }
 

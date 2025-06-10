@@ -8,12 +8,12 @@ Configuration Load
 #include <unistd.h>
 
 #include "command/command.h"
+#include "command/lock.h"
 #include "common/compress/helper.intern.h"
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/io/io.h"
 #include "common/io/socket/common.h"
-#include "common/lock.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.intern.h"
@@ -24,6 +24,15 @@ Configuration Load
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
 #include "storage/sftp/storage.h"
+
+/***********************************************************************************************************************************
+Local variables
+***********************************************************************************************************************************/
+static struct ConfigLoadLocal
+{
+    unsigned int argListSize;                                       // Argument list size
+    const char **argList;                                           // Argument list
+} configLoadLocal;
 
 /***********************************************************************************************************************************
 Load log settings
@@ -87,10 +96,9 @@ cfgLoadUpdateOption(void)
     {
         for (unsigned int optionIdx = 0; optionIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); optionIdx++)
         {
-            // If the repo is local and either posix, cifs or sftp
+            // If the repo is local and either posix or cifs
             if (!cfgOptionIdxTest(cfgOptRepoHost, optionIdx) &&
                 (cfgOptionIdxStrId(cfgOptRepoType, optionIdx) == STORAGE_POSIX_TYPE ||
-                 cfgOptionIdxStrId(cfgOptRepoType, optionIdx) == STORAGE_SFTP_TYPE ||
                  cfgOptionIdxStrId(cfgOptRepoType, optionIdx) == STORAGE_CIFS_TYPE))
             {
                 // Ensure a local repo does not have the same path as another local repo of the same type
@@ -111,18 +119,6 @@ cfgLoadUpdateOption(void)
         }
     }
 
-    // Set default for cmd
-    if (cfgOptionValid(cfgOptCmd))
-        cfgOptionDefaultSet(cfgOptCmd, VARSTR(cfgExe()));
-
-    // Set default for repo-host-cmd
-    if (cfgOptionValid(cfgOptRepoHostCmd))
-        cfgOptionDefaultSet(cfgOptRepoHostCmd, VARSTR(cfgExe()));
-
-    // Set default for pg-host-cmd
-    if (cfgOptionValid(cfgOptPgHostCmd))
-        cfgOptionDefaultSet(cfgOptPgHostCmd, VARSTR(cfgExe()));
-
     // Protocol timeout should be greater than db timeout
     if (cfgOptionTest(cfgOptDbTimeout) && cfgOptionTest(cfgOptProtocolTimeout) &&
         cfgOptionInt64(cfgOptProtocolTimeout) <= cfgOptionInt64(cfgOptDbTimeout))
@@ -135,7 +131,7 @@ cfgLoadUpdateOption(void)
         }
         else if (cfgOptionSource(cfgOptDbTimeout) == cfgSourceDefault)
         {
-            int64_t dbTimeout = cfgOptionInt64(cfgOptProtocolTimeout) - (int64_t)(30 * MSEC_PER_SEC);
+            const int64_t dbTimeout = cfgOptionInt64(cfgOptProtocolTimeout) - (int64_t)(30 * MSEC_PER_SEC);
 
             // Normally the protocol time will be greater than 45 seconds so db timeout can be at least 15 seconds
             if (dbTimeout >= (int64_t)(15 * MSEC_PER_SEC))
@@ -207,16 +203,16 @@ cfgLoadUpdateOption(void)
         {
             const BackupType archiveRetentionType = (BackupType)cfgOptionIdxStrId(cfgOptRepoRetentionArchiveType, optionIdx);
 
-            const String *msgArchiveOff = strNewFmt(
-                "WAL segments will not be expired: option '%s=%s' but", cfgOptionIdxName(cfgOptRepoRetentionArchiveType, optionIdx),
-                strZ(strIdToStr(archiveRetentionType)));
-
             // If the archive retention is not explicitly set then determine what it should be defaulted to
             if (!cfgOptionIdxTest(cfgOptRepoRetentionArchive, optionIdx))
             {
                 // If repo-retention-archive-type is default (full), then if repo-retention-full is set, set the
                 // repo-retention-archive to this value when retention-full-type is 'count', else ignore archiving. If
                 // retention-full-type is 'time' then the expire command will default the archive retention accordingly.
+                const String *const msgArchiveOff = strNewFmt(
+                    "WAL segments will not be expired: option '%s=%s' but",
+                    cfgOptionIdxName(cfgOptRepoRetentionArchiveType, optionIdx), strZ(strIdToStr(archiveRetentionType)));
+
                 switch (archiveRetentionType)
                 {
                     case backupTypeFull:
@@ -380,6 +376,63 @@ cfgLoadUpdateOption(void)
         }
     }
 
+    // Error if repo-sftp-host-key-check-type is explicitly set to anything other than fingerprint and repo-sftp-host-fingerprint
+    // is also specified. For backward compatibility we need to allow repo-sftp-host-fingerprint when
+    // repo-sftp-host-key-check-type defaults to yes, but emit a warning to let the user know to change the configuration. Also
+    // set repo-sftp-host-key-check-type=fingerprint so other code does not need to know about this exception.
+    for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
+    {
+        if (cfgOptionIdxTest(cfgOptRepoSftpHostKeyCheckType, repoIdx))
+        {
+            if (cfgOptionIdxTest(cfgOptRepoSftpHostFingerprint, repoIdx))
+            {
+                if (cfgOptionIdxSource(cfgOptRepoSftpHostKeyCheckType, repoIdx) == cfgSourceDefault)
+                {
+                    LOG_WARN_FMT(
+                        "option '%s' without option '%s' = '" CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT_Z "' is"
+                        " deprecated\n"
+                        "HINT: set option '%s=" CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT_Z "'",
+                        cfgOptionIdxName(cfgOptRepoSftpHostFingerprint, repoIdx),
+                        cfgOptionIdxName(cfgOptRepoSftpHostKeyCheckType, repoIdx),
+                        cfgOptionIdxName(cfgOptRepoSftpHostKeyCheckType, repoIdx));
+
+                    cfgOptionIdxSet(
+                        cfgOptRepoSftpHostKeyCheckType, repoIdx, cfgSourceDefault,
+                        VARSTRZ(CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT_Z));
+                }
+                else
+                {
+                    if (cfgOptionIdxStrId(cfgOptRepoSftpHostKeyCheckType, repoIdx) !=
+                        CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT)
+                    {
+                        THROW_FMT(
+                            OptionInvalidError,
+                            "option '%s' not valid without option '%s' = '" CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT_Z
+                            "'",
+                            cfgOptionIdxName(cfgOptRepoSftpHostFingerprint, repoIdx),
+                            cfgOptionIdxName(cfgOptRepoSftpHostKeyCheckType, repoIdx));
+                    }
+                }
+            }
+            else
+            {
+                if (cfgOptionIdxStrId(cfgOptRepoSftpHostKeyCheckType, repoIdx) ==
+                    CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT)
+                {
+                    THROW_FMT(
+                        OptionRequiredError, "%s command requires option: %s", cfgCommandName(),
+                        cfgOptionIdxName(cfgOptRepoSftpHostFingerprint, repoIdx));
+                }
+            }
+        }
+    }
+
+    // A repo must be specified when targeting time. Not all repo types support versioning so rather than try to skip repos in that
+    // case it seems to be easier to just target a specific repo. Also, depending on the type of corruption, different repos might
+    // require different target times.
+    if (cfgOptionTest(cfgOptRepoTargetTime) && cfgOptionSource(cfgOptRepo) == cfgSourceDefault)
+        THROW_FMT(OptionInvalidError, "option '" CFGOPT_REPO_TARGET_TIME "' not valid without option '" CFGOPT_REPO "'");
+
     FUNCTION_LOG_RETURN_VOID();
 }
 
@@ -437,17 +490,24 @@ cfgLoadLogFile(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-cfgLoad(unsigned int argListSize, const char *argList[])
+cfgLoad(const unsigned int argListSize, const char *argList[])
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, argListSize);
         FUNCTION_LOG_PARAM(CHARPY, argList);
     FUNCTION_LOG_END();
 
+    ASSERT(argListSize > 0);
+    ASSERT(argList != NULL);
+
+    // Store arguments
+    configLoadLocal.argListSize = argListSize;
+    configLoadLocal.argList = argList;
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Parse config from command line and config file
-        cfgParseP(storageLocal(), argListSize, argList);
+        cfgParseP(storageLocal(), configLoadLocal.argListSize, configLoadLocal.argList);
 
         // Initialize dry-run mode for storage when valid for the current command
         storageHelperDryRunInit(cfgOptionValid(cfgOptDryRun) && cfgOptionBool(cfgOptDryRun));
@@ -459,59 +519,91 @@ cfgLoad(unsigned int argListSize, const char *argList[])
         if (cfgOptionValid(cfgOptNeutralUmask) && cfgOptionBool(cfgOptNeutralUmask))
             umask(0000);
 
-        // If a command is set
-        if (cfgCommand() != cfgCmdNone)
+        // Initialize TCP settings
+        if (cfgOptionValid(cfgOptSckKeepAlive))
         {
-            // Initialize TCP settings
-            if (cfgOptionValid(cfgOptSckKeepAlive))
-            {
-                sckInit(
-                    cfgOptionBool(cfgOptSckBlock),
-                    cfgOptionBool(cfgOptSckKeepAlive),
-                    cfgOptionTest(cfgOptTcpKeepAliveCount) ? cfgOptionInt(cfgOptTcpKeepAliveCount) : 0,
-                    cfgOptionTest(cfgOptTcpKeepAliveIdle) ? cfgOptionInt(cfgOptTcpKeepAliveIdle) : 0,
-                    cfgOptionTest(cfgOptTcpKeepAliveInterval) ? cfgOptionInt(cfgOptTcpKeepAliveInterval) : 0);
-            }
-
-            // Set IO buffer size
-            if (cfgOptionValid(cfgOptBufferSize))
-                ioBufferSizeSet(cfgOptionUInt(cfgOptBufferSize));
-
-            // Set IO timeout
-            if (cfgOptionValid(cfgOptIoTimeout))
-                ioTimeoutMsSet(cfgOptionUInt64(cfgOptIoTimeout));
-
-            // Open the log file if this command logs to a file
-            cfgLoadLogFile();
-
-            // Create the exec-id used to identify all locals and remotes spawned by this process. This allows lock contention to be
-            // easily resolved and makes it easier to associate processes from various logs.
-            if (cfgOptionValid(cfgOptExecId) && !cfgOptionTest(cfgOptExecId))
-            {
-                // Generate some random bytes
-                uint32_t execRandom;
-                cryptoRandomBytes((unsigned char *)&execRandom, sizeof(execRandom));
-
-                // Format a string with the pid and the random bytes to serve as the exec id
-                cfgOptionSet(cfgOptExecId, cfgSourceParam, VARSTR(strNewFmt("%d-%08x", getpid(), execRandom)));
-            }
-
-            // Begin the command
-            cmdBegin();
-
-            // Init lock module if this command can lock
-            if (cfgLockType() != lockTypeNone && !cfgCommandHelp())
-            {
-                lockInit(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptExecId), cfgOptionStr(cfgOptStanza), cfgLockType());
-
-                // Acquire a lock if this command requires a lock
-                if (cfgLockRequired())
-                    lockAcquireP();
-            }
-
-            // Update options that have complex rules
-            cfgLoadUpdateOption();
+            sckInit(
+                cfgOptionBool(cfgOptSckBlock),
+                cfgOptionBool(cfgOptSckKeepAlive),
+                cfgOptionTest(cfgOptTcpKeepAliveCount) ? cfgOptionInt(cfgOptTcpKeepAliveCount) : 0,
+                cfgOptionTest(cfgOptTcpKeepAliveIdle) ? cfgOptionInt(cfgOptTcpKeepAliveIdle) : 0,
+                cfgOptionTest(cfgOptTcpKeepAliveInterval) ? cfgOptionInt(cfgOptTcpKeepAliveInterval) : 0);
         }
+
+        // Set IO buffer size (use the default for help to lower memory usage)
+        if (cfgOptionValid(cfgOptBufferSize) && !cfgCommandHelp())
+            ioBufferSizeSet(cfgOptionUInt(cfgOptBufferSize));
+
+        // Set IO timeout
+        if (cfgOptionValid(cfgOptIoTimeout))
+            ioTimeoutMsSet(cfgOptionUInt64(cfgOptIoTimeout));
+
+        // Open the log file if this command logs to a file
+        cfgLoadLogFile();
+
+        // Create the exec-id used to identify all locals and remotes spawned by this process. This allows lock contention to be
+        // easily resolved and makes it easier to associate processes from various logs.
+        if (cfgOptionValid(cfgOptExecId) && !cfgOptionTest(cfgOptExecId))
+        {
+            // Generate some random bytes
+            uint32_t execRandom;
+            cryptoRandomBytes((uint8_t *)&execRandom, sizeof(execRandom));
+
+            // Format a string with the pid and the random bytes to serve as the exec id
+            cfgOptionSet(cfgOptExecId, cfgSourceParam, VARSTR(strNewFmt("%d-%08x", getpid(), execRandom)));
+        }
+
+        // Begin the command
+        cmdBegin();
+
+        // Initialize the lock module
+        if (cfgOptionTest(cfgOptLockPath))
+            lockInit(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptExecId));
+
+        // Acquire a lock if this command requires a lock
+        if (cfgLockType() != lockTypeNone && !cfgCommandHelp() && cfgLockRequired())
+            cmdLockAcquireP();
+
+        // Update options that have complex rules
+        cfgLoadUpdateOption();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+cfgLoadStanza(const String *const stanza)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, stanza);
+    FUNCTION_LOG_END();
+
+    ASSERT(stanza != NULL);
+    ASSERT(configLoadLocal.argListSize > 0);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Store the exec id so it can be preserved after reload
+        const Variant *const execId = varNewStr(cfgOptionStr(cfgOptExecId));
+
+        // Make a copy of the arguments and add the stanza (this assumes the stanza was not originally specified)
+        StringList *const argListNew = strLstNew();
+
+        for (unsigned int argListIdx = 0; argListIdx < configLoadLocal.argListSize; argListIdx++)
+            strLstAddZ(argListNew, configLoadLocal.argList[argListIdx]);
+
+        strLstAddFmt(argListNew, "--" CFGOPT_STANZA "=%s", strZ(stanza));
+
+        // Parse config from command line and config file
+        cfgParseP(storageLocal(), strLstSize(argListNew), strLstPtr(argListNew), .noConfigLoad = true, .noResetLogLevel = true);
+
+        // Update options that have complex rules
+        cfgLoadUpdateOption();
+
+        // Set execId to prior value
+        cfgOptionSet(cfgOptExecId, cfgSourceParam, execId);
     }
     MEM_CONTEXT_TEMP_END();
 

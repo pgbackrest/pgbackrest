@@ -118,25 +118,6 @@ testRun(void)
             "local repo1 and repo2 paths are both '/var/lib/pgbackrest' but must be different");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("local default repo paths for sftp repo type must be different");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptRepo, "2");
-        hrnCfgArgKeyRawStrId(argList, cfgOptRepoType, 1, STORAGE_SFTP_TYPE);
-        hrnCfgArgKeyRawStrId(argList, cfgOptRepoType, 2, STORAGE_SFTP_TYPE);
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostUser, 1, "user1");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostUser, 2, "user2");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHost, 1, "host1");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHost, 2, "host2");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostKeyHashType, 1, "sha1");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpHostKeyHashType, 2, "md5");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpPrivateKeyFile, 1, "/keyfile1");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoSftpPrivateKeyFile, 2, "/keyfile2");
-        TEST_ERROR(
-            hrnCfgLoadP(cfgCmdInfo, argList), OptionInvalidValueError,
-            "local repo1 and repo2 paths are both '/var/lib/pgbackrest' but must be different");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("local repo paths same but types different");
 
         argList = strLstNew();
@@ -153,39 +134,6 @@ testRun(void)
 
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 3);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 3);
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("repo-host-cmd is defaulted when null");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
-        HRN_CFG_LOAD(cfgCmdCheck, argList);
-
-        cfgOptionIdxSet(cfgOptRepoHost, 0, cfgSourceParam, varNewStrZ("repo-host"));
-
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command is updated");
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoHostCmd, 0), testProjectExe(), "check repo1-host-cmd");
-
-        cfgOptionIdxSet(cfgOptRepoHostCmd, 0, cfgSourceParam, VARSTRDEF("/other"));
-
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command was already set");
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoHostCmd, 0), "/other", "check repo1-host-cmd");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("pg-host-cmd is defaulted when null");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 1, "pg1");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 99, "/pg99");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 99, "pg99");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgHostCmd, 99, "pg99-exe");
-        HRN_CFG_LOAD(cfgCmdCheck, argList);
-
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgHostCmd, 0), testProjectExe(), "check pg1-host-cmd");
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgHostCmd, 1), "pg99-exe", "check pg99-host-cmd");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("db-timeout set but not protocol timeout");
@@ -233,11 +181,11 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
         hrnCfgArgRawZ(argList, cfgOptDbTimeout, "100000");
-        hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "50.5");
+        hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "50500ms");
         TEST_ERROR(
             hrnCfgLoadP(cfgCmdCheck, argList), OptionInvalidValueError,
-            "'50.5' is not valid for 'protocol-timeout' option\n"
-            "HINT 'protocol-timeout' option (50.5) should be greater than 'db-timeout' option (100000).");
+            "'50500ms' is not valid for 'protocol-timeout' option\n"
+            "HINT 'protocol-timeout' option (50500ms) should be greater than 'db-timeout' option (100000).");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("very small protocol-timeout triggers db-timeout special handling");
@@ -511,6 +459,24 @@ testRun(void)
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 1);
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("repo is set when repo-target-time is set");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-08 12:12:12+00");
+        TEST_ERROR(
+            hrnCfgLoadP(cfgCmdInfo, argList), OptionInvalidError, "option 'repo-target-time' not valid without option 'repo'");
+
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        TEST_ERROR(
+            hrnCfgLoadP(cfgCmdArchiveGet, argList), OptionInvalidError,
+            "option 'repo-target-time' not valid without option 'repo'");
+
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compress-type=none when compress=n");
 
         argList = strLstNew();
@@ -640,6 +606,104 @@ testRun(void)
 
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoAzureAccount, 1);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoAzureKey, 1);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+#ifdef HAVE_LIBSSH2
+        TEST_TITLE("error on missing SFTP fingerprint");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "sftp");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "/privatekey");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyCheckType, "fingerprint");
+
+        TEST_ERROR(
+            hrnCfgLoadP(cfgCmdArchivePush, argList), OptionRequiredError,
+            "archive-push command requires option: repo1-sftp-host-fingerprint");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("success on SFTP fingerprint not needed");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "sftp");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "/privatekey");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyCheckType, "accept-new");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on incorrect SFTP fingerprint check type");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "sftp");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "/privatekey");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostFingerprint, "xxx");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyCheckType, "strict");
+
+        TEST_ERROR(
+            hrnCfgLoadP(cfgCmdArchivePush, argList), OptionInvalidError,
+            "option 'repo1-sftp-host-fingerprint' not valid without option 'repo1-sftp-host-key-check-type' = 'fingerprint'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("warn on default SFTP fingerprint check type");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "sftp");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "/privatekey");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostFingerprint, "xxx");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        TEST_RESULT_LOG(
+            "P00   WARN: option 'repo1-sftp-host-fingerprint' without option 'repo1-sftp-host-key-check-type' = 'fingerprint' is"
+            " deprecated\n"
+            "            HINT: set option 'repo1-sftp-host-key-check-type=fingerprint'");
+
+        TEST_RESULT_UINT(
+            cfgOptionIdxStrId(cfgOptRepoSftpHostKeyCheckType, 0), CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT,
+            "check type updated");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("success on correct SFTP fingerprint check type");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "sftp");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHost, "localhost");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyHashType, "sha1");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostUser, TEST_USER);
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpPrivateKeyFile, "/privatekey");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostFingerprint, "xxx");
+        hrnCfgArgRawZ(argList, cfgOptRepoSftpHostKeyCheckType, "fingerprint");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        TEST_RESULT_UINT(
+            cfgOptionIdxStrId(cfgOptRepoSftpHostKeyCheckType, 0), CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT,
+            "check type");
+#endif // HAVE_LIBSSH2
     }
 
     // *****************************************************************************************************************************
@@ -655,7 +719,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, CFGOPTVAL_ARCHIVE_MODE_OFF_Z);
         strLstAddZ(argList, CFGCMD_BACKUP);
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for backup");
-        lockRelease(true);
+        cmdLockReleaseP();
 
         // Only the error case is tested here, success is tested in cfgLoad()
         TEST_RESULT_VOID(cfgLoadLogFile(), "attempt to open bogus log file");
@@ -677,7 +741,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
         TEST_RESULT_VOID(storageRepoWrite(), "check writable storage");
-        lockRelease(true);
+        cmdLockReleaseP();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("dry-run valid, dry-run");
@@ -687,7 +751,7 @@ testRun(void)
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
         TEST_ERROR(
             storageRepoWrite(), AssertError, "unable to get writable storage in dry-run mode or before dry-run is initialized");
-        lockRelease(true);
+        cmdLockReleaseP();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command does not have umask and disables keep-alives");
@@ -706,6 +770,12 @@ testRun(void)
         TEST_RESULT_BOOL(socketLocal.keepAlive, false, "check socketLocal.keepAlive");
         TEST_RESULT_UINT(ioTimeoutMs(), 60000, "check io timeout");
 
+        String *execId = strDup(cfgOptionStr(cfgOptExecId));
+
+        TEST_RESULT_VOID(cfgLoadStanza(STRDEF("test1")), "load config with stanza");
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptStanza), "test1", "check stanza");
+        TEST_RESULT_STR(cfgOptionStr(cfgOptExecId), execId, "check execId");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("umask is reset, neutral-umask=y");
 
@@ -717,7 +787,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptLogLevelConsole, "off");
         hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, "off");
         hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "off");
-        hrnCfgArgRawZ(argList, cfgOptIoTimeout, "95.5");
+        hrnCfgArgRawZ(argList, cfgOptIoTimeout, "95500ms");
         strLstAddZ(argList, CFGCMD_ARCHIVE_GET);
 
         umask(0111);
@@ -777,8 +847,23 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "off");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
 
+        ioBufferSizeSet(333);
+
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command for backup");
-        TEST_RESULT_UINT(ioBufferSize(), 1048576, "buffer size set to option default");
+        TEST_RESULT_UINT(ioBufferSize(), 333, "buffer size not updated by help command");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("help command for help");
+
+        argList = strLstNew();
+        strLstAddZ(argList, PROJECT_BIN);
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "help");
+
+        ioBufferSizeSet(333);
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
+        TEST_RESULT_UINT(ioBufferSize(), 333, "buffer size not updated by help command");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command takes lock and opens log file and uses custom tcp settings");
@@ -811,7 +896,7 @@ testRun(void)
         TEST_RESULT_INT(socketLocal.tcpKeepAliveIdle, 2222, "check socketLocal.tcpKeepAliveIdle");
         TEST_RESULT_INT(socketLocal.tcpKeepAliveInterval, 888, "check socketLocal.tcpKeepAliveInterval");
 
-        lockRelease(true);
+        cmdLockReleaseP();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("local command opens log file with special filename");
@@ -894,7 +979,7 @@ testRun(void)
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "open log file");
         TEST_RESULT_INT(lstat(TEST_PATH "/test-archive-get-async.log", &statLog), 0, "check log file exists");
 
-        lockRelease(true);
+        cmdLockReleaseP();
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

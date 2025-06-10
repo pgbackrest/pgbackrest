@@ -11,7 +11,7 @@ Posix Storage Read
 #include "common/log.h"
 #include "common/type/object.h"
 #include "storage/posix/read.h"
-#include "storage/read.intern.h"
+#include "storage/read.h"
 
 /***********************************************************************************************************************************
 Object types
@@ -106,7 +106,7 @@ storageReadPosixOpen(THIS_VOID)
 Read from a file
 ***********************************************************************************************************************************/
 static size_t
-storageReadPosix(THIS_VOID, Buffer *buffer, bool block)
+storageReadPosix(THIS_VOID, Buffer *const buffer, const bool block)
 {
     THIS(StorageReadPosix);
 

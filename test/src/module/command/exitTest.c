@@ -29,6 +29,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("exitInit() and exitOnSignal()"))
     {
+        TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no command");
         HRN_CFG_LOAD(cfgCmdHelp, strLstNew());
 
         HRN_FORK_BEGIN()
@@ -46,11 +47,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("exitSafe()"))
     {
-        HRN_CFG_LOAD(cfgCmdHelp, strLstNew());
-        cfgCommandSet(cfgCmdNone, cfgCmdRoleMain);
-
-        TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no command");
-
         // -------------------------------------------------------------------------------------------------------------------------
         StringList *argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");

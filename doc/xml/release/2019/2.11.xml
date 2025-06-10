@@ -1,0 +1,229 @@
+<release date="2019-03-11" version="2.11" title="C Implementation of Archive Get">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="benoit.lobréau"/>
+                </release-item-contributor-list>
+
+                <p>Fix possible truncated WAL segments when an error occurs mid-write.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix info command missing WAL min/max when stanza specified.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="leo.khomenko"/>
+                </release-item-contributor-list>
+
+                <p>Fix non-compliant JSON for options passed from C to Perl.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <p>The <cmd>archive-get</cmd> command is implemented entirely in C.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="marc.cousin"/>
+                </release-item-contributor-list>
+
+                <p>Enable socket keep-alive on older <proper>Perl</proper> versions.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jason.odonnell"/>
+                </release-item-contributor-list>
+
+                <p>Error when parameters are passed to a command that does not accept parameters.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="hans.jurgen.schonig"/>
+                </release-item-contributor-list>
+
+                <p>Add hints when unable to find a WAL segment in the archive.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="james.badger"/>
+                </release-item-contributor-list>
+
+                <p>Improve error when hostname cannot be found in a certificate.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="benoit.lobréau"/>
+                </release-item-contributor-list>
+
+                <p>Add additional options to <file>backup.manifest</file> for debugging purposes.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Migrate <cmd>local</cmd> and <cmd>remote</cmd> commands to C.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add separate <cmd>archive-get-async</cmd> command.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>ProtocolParallel*</code> objects for parallelizing commands.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>ProtocolCommand</code> object.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>exists()</code> to remote storage.</p>
+            </release-item>
+
+            <release-item>
+                <p>Resolve storage path expressions before passing to remote.</p>
+            </release-item>
+
+            <release-item>
+                <p>Expose handle (file descriptor) from <code>IoRead</code> when applicable.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>storageHelperFree()</code> to storage helper.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>kvKeyExists()</code> to <code>KeyValue</code> object.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add <code>lstRemove()</code> to <code>List</code> object.</p>
+            </release-item>
+
+            <release-item>
+                <p>Allow <code>cfgExecParam()</code> to exclude options.</p>
+            </release-item>
+
+            <release-item>
+                <p><code>MemContext</code> improvements. Improve performance of context and memory allocations. Use <code>contextTop</code>/<code>contextCurrent</code> instead of <code>memContextTop()</code>/<code>memContextCurrent()</code>. Don't make a copy of the context name.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Make <id>DESTDIR</id> fully-configurable in the <file>Makefile</file>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="ucando"/>
+                    <release-item-ideator id="jungle-boogie"/>
+                    <release-item-ideator id="luca.ferrari"/>
+                </release-item-contributor-list>
+
+                <p>Add note for <id>CSTD</id> settings on BSD variants.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="luca.ferrari"/>
+                </release-item-contributor-list>
+
+                <p>Add <id>clean</id> and <id>uninstall</id> targets to <file>Makefile</file>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Change <code>execRead()</code> to return a <code>size_t</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Prevent option warning from being output when running help command.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve null-handling of <code>strToLog()</code> and <code>varToLog()</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Increase per-call stack trace size to <id>4096</id>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Move <code>compress</code> module to <code>common/compress</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Move <code>crypto</code> module to <code>common/crypto</code>.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <p>Update default documentation version to <postgres/> 10.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <p>Add instructions for building the coverage report.</p>
+            </release-item>
+
+            <release-item>
+                <p>Documentation builds on <postgres/> 9.4-10.</p>
+            </release-item>
+        </release-development-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-development-list>
+            <release-item>
+                <p>Create test matrix for <id>mock/archive</id>, <id>mock/archive-stop</id>, <id>mock/all</id>, <id>mock/expire</id>, and <id>mock/stanza</id> to increase coverage and reduce tests.</p>
+            </release-item>
+
+            <release-item>
+                <p>Improve fork harness to allow multiple children and setup pipes automatically.</p>
+            </release-item>
+
+            <release-item>
+                <p>Reduce expect log level in <id>mock/archive</id> and <id>mock/stanza</id> tests.</p>
+            </release-item>
+
+            <release-item>
+                <p>Rename test modules for consistency.</p>
+            </release-item>
+
+            <release-item>
+                <p>Only run test-level stack trace by default for unit-tested modules.</p>
+            </release-item>
+
+            <release-item>
+                <p>Add missing ToLog() coverage to <code>String</code>, <code>List</code>, and <code>PgControl</code>.</p>
+            </release-item>
+
+            <release-item>
+                <p>Create aliases for test VMs ordered by age.</p>
+            </release-item>
+        </release-development-list>
+    </release-test-list>
+</release>

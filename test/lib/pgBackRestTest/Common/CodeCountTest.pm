@@ -66,7 +66,6 @@ sub codeCountScan
                  $strFile =~ '^test/result/' ||
                  $strFile =~ '^test/scratch' ||
                  $strFile =~ '^test/src/valgrind\.suppress\.' ||
-                 $strFile eq 'test/src/lcov.conf' ||
                  $strFile eq 'test/uncrustify.cfg');
 
         # Classify the source file
@@ -80,8 +79,8 @@ sub codeCountScan
         {
             $strClass = 'doc/core';
         }
-        elsif ($strFile =~ '^build/' || $strFile eq 'src/Makefile.in' || $strFile eq 'src/configure' ||
-               $strFile =~ '^src/build/' || $strFile =~ 'meson\.build$' || $strFile =~ 'meson_options\.txt$')
+        elsif ($strFile =~ '^build/' || $strFile =~ '^src/build/' || $strFile =~ 'meson\.build$' ||
+               $strFile =~ 'meson_options\.txt$')
         {
             $strClass = 'build';
         }
@@ -134,11 +133,6 @@ sub codeCountScan
         {
             $strType = 'yaml';
             $strForceLang = 'YAML';
-        }
-        elsif ($strFile =~ 'Makefile\.in$' || $strFile =~ '^src\/configure' || $strFile =~ '^src\/build\/')
-        {
-            $strType = 'make';
-            $strForceLang = 'make';
         }
         elsif ($strFile =~ 'meson\.build$' || $strFile =~ 'meson_options\.txt$')
         {

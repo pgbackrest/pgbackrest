@@ -17,6 +17,7 @@ Render Help
 #include "build/common/render.h"
 #include "build/config/parse.h"
 #include "build/help/parse.h"
+#include "build/help/render.h"
 
 /***********************************************************************************************************************************
 Render xml as text
@@ -46,7 +47,7 @@ bldHlpRenderXmlNode(const xmlNodePtr xml)
 
     for (xmlNodePtr currentNode = xml->children; currentNode != NULL; currentNode = currentNode->next)
     {
-        const String *const name = STR((char *)currentNode->name);
+        const String *const name = STR((const char *)currentNode->name);
 
         if (currentNode->type == XML_ELEMENT_NODE)
         {
@@ -117,7 +118,7 @@ bldHlpRenderXmlNode(const xmlNodePtr xml)
     return result;
 }
 
-static String *
+String *
 bldHlpRenderXml(const XmlNode *const xml)
 {
     return strTrim(bldHlpRenderXmlNode(*(const xmlNodePtr *)xml));
@@ -298,7 +299,7 @@ bldHlpRenderHelpAutoC(const Storage *const storageRepo, const BldCfg bldCfg, con
     String *const help = strCatFmt(
         strNew(),
         "%s"
-        "static const unsigned char helpData[%zu] =\n"
+        "static const uint8_t helpData[%zu] =\n"
         "{\n",
         strZ(bldHeader("help", "Help Data")), bufUsed(buffer));
 

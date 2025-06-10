@@ -21,78 +21,29 @@ Storage Test Harness
 #include "common/harnessTest.h"
 
 /***********************************************************************************************************************************
-Dummy functions and interface for constructing test storage drivers
+Include shimmed C modules
 ***********************************************************************************************************************************/
-static StorageInfo
-storageTestDummyInfo(THIS_VOID, const String *file, StorageInfoLevel level, StorageInterfaceInfoParam param)
+{[SHIM_MODULE]}
+
+/***********************************************************************************************************************************
+Dummy interface for constructing test storage drivers
+***********************************************************************************************************************************/
+const StorageInterface hrnStorageInterfaceDummy =
 {
-    (void)thisVoid;
-    (void)file;
-    (void)level;
-    (void)param;
+    .feature =
+        1 << storageFeaturePath | 1 << storageFeatureHardLink | 1 << storageFeatureSymLink | 1 << storageFeaturePathSync |
+        1 << storageFeatureInfoDetail,
 
-    return (StorageInfo){.exists = false};
-}
-
-static StorageList *
-storageTestDummyList(THIS_VOID, const String *path, StorageInfoLevel level, StorageInterfaceListParam param)
-{
-    (void)thisVoid;
-    (void)path;
-    (void)level;
-    (void)param;
-
-    return false;
-}
-
-static StorageRead *
-storageTestDummyNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInterfaceNewReadParam param)
-{
-    (void)thisVoid;
-    (void)file;
-    (void)ignoreMissing;
-    (void)param;
-
-    return NULL;
-}
-
-static StorageWrite *
-storageTestDummyNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam param)
-{
-    (void)thisVoid;
-    (void)file;
-    (void)param;
-
-    return NULL;
-}
-
-static bool
-storageTestDummyPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
-{
-    (void)thisVoid;
-    (void)path;
-    (void)recurse;
-    (void)param;
-
-    return false;
-}
-
-static void
-storageTestDummyRemove(THIS_VOID, const String *file, StorageInterfaceRemoveParam param)
-{
-    (void)thisVoid;
-    (void)file;
-    (void)param;
-}
-
-const StorageInterface storageInterfaceTestDummy =
-{
-    .info = storageTestDummyInfo,
-    .list = storageTestDummyList,
-    .newRead = storageTestDummyNewRead,
-    .newWrite = storageTestDummyNewWrite,
-    .pathRemove = storageTestDummyPathRemove,
-    .remove = storageTestDummyRemove,
+    .info = storagePosixInfo,
+    .linkCreate = storagePosixLinkCreate,
+    .list = storagePosixList,
+    .move = storagePosixMove,
+    .newRead = storagePosixNewRead,
+    .newWrite = storagePosixNewWrite,
+    .pathCreate = storagePosixPathCreate,
+    .pathRemove = storagePosixPathRemove,
+    .pathSync = storagePosixPathSync,
+    .remove = storagePosixRemove,
 };
 
 /**********************************************************************************************************************************/
@@ -109,10 +60,10 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
     // Add compression extension if one exists
     compressExtCat(fileFull, param.compressType);
 
-    // Declare an information filter for displaying paramaters to the output
+    // Declare an information filter for displaying parameters to the output
     String *const filter = strNew();
 
-    StorageRead *read = storageNewReadP(storage, fileFull);
+    StorageRead *read = storageNewReadP(storage, fileFull, .ignoreMissing = param.nullOnMissing);
     IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(read));
 
     // Add decrypt filter
@@ -137,7 +88,10 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
     printf("test content of %s'%s'", strEmpty(filter) ? "" : strZ(filter), strZ(fileFull));
     hrnTestResultComment(param.comment);
 
-    hrnTestResultZ(strZ(strNewBuf(storageGetP(read))), expected, harnessTestResultOperationEq);
+    const Buffer *const readBuf = storageGetP(read);
+    const char *const readZ = readBuf != NULL ? strZ(strNewBuf(readBuf)) : NULL;
+
+    hrnTestResultZ(readZ, expected, harnessTestResultOperationEq);
 
     if (param.remove)
         storageRemoveP(storage, fileFull, .errorOnMissing = true);
@@ -157,7 +111,7 @@ testStorageExists(const Storage *const storage, const char *const file, const Te
     printf("file exists '%s'", strZ(fileFull));
     hrnTestResultComment(param.comment);
 
-    hrnTestResultBool(storageExistsP(storage, fileFull), true);
+    hrnTestResultBool(storageExistsP(storage, fileFull, .timeout = param.timeout), true);
 
     if (param.remove)
         storageRemoveP(storage, fileFull, .errorOnMissing = true);
@@ -275,7 +229,12 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
             strCatZ(item, " {");
 
             if (info.type == storageTypeFile)
+            {
                 strCatFmt(item, "s=%" PRIu64 ", t=%" PRId64, info.size, (int64_t)info.timeModified);
+
+                if (info.versionId != NULL)
+                    strCatFmt(item, ", v=%s", strZ(info.versionId));
+            }
             else if (info.type == storageTypeLink)
             {
                 const StorageInfo infoLink = storageInfoP(
@@ -414,7 +373,7 @@ hrnStoragePut(
     StorageWrite *destination = storageNewWriteP(storage, fileStr, .modeFile = param.modeFile, .timeModified = param.timeModified);
     IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(destination));
 
-    // Declare an information filter for displaying paramaters to the output
+    // Declare an information filter for displaying parameters to the output
     String *const filter = strNew();
 
     // Add mode to output information filter

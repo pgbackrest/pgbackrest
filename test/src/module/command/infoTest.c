@@ -1,5 +1,7 @@
 /***********************************************************************************************************************************
 Test Info Command
+
+NOTE: references to 9.4 are intentionally included in this test to ensure that info will work with no longer supported versions.
 ***********************************************************************************************************************************/
 #include "common/crypto/cipherBlock.h"
 #include "common/io/bufferRead.h"
@@ -22,7 +24,7 @@ testRun(void)
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // The tests expect the timezone to be UTC
-    setenv("TZ", "UTC", true);
+    hrnTzSet("UTC");
 
     // *****************************************************************************************************************************
     if (testBegin("infoRender()"))
@@ -72,7 +74,7 @@ testRun(void)
                         "\"code\":1,"
                         "\"lock\":{\"backup\":{\"held\":false}},"
                         "\"message\":\"missing stanza path\""
-                        "}"
+                    "}"
                 "}"
             "]",
             // {uncrustify_on}
@@ -125,7 +127,7 @@ testRun(void)
                         "\"code\":3,"
                         "\"lock\":{\"backup\":{\"held\":false}},"
                         "\"message\":\"missing stanza data\""
-                        "}"
+                    "}"
                 "}"
             "]",
             // {uncrustify_on}
@@ -138,17 +140,17 @@ testRun(void)
         HRN_INFO_PUT(
             storageTest, TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/stanza1/" INFO_BACKUP_FILE,
             "[db]\n"
-            "db-catalog-version=201409291\n"
-            "db-control-version=942\n"
+            "db-catalog-version=201608131\n"
+            "db-control-version=960\n"
             "db-id=2\n"
             "db-system-id=6569239123849665679\n"
-            "db-version=\"9.4\"\n"
+            "db-version=\"9.6\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201306121,\"db-control-version\":937,\"db-system-id\":6569239123849665666"
-            ",\"db-version\":\"9.3\"}\n"
-            "2={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
-            ",\"db-version\":\"9.4\"}\n");
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":960,\"db-system-id\":6569239123849665666"
+            ",\"db-version\":\"9.5\"}\n"
+            "2={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"9.6\"}\n");
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -185,7 +187,7 @@ testRun(void)
                         "\"code\":99,"
                         "\"lock\":{\"backup\":{\"held\":false}},"
                         "\"message\":\"other\""
-                        "}"
+                    "}"
                 "}"
             "]",
             // {uncrustify_on}
@@ -218,16 +220,16 @@ testRun(void)
             "[db]\n"
             "db-id=3\n"
             "db-system-id=6569239123849665679\n"
-            "db-version=\"9.4\"\n"
+            "db-version=\"9.6\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n"
-            "2={\"db-id\":6569239123849665666,\"db-version\":\"9.3\"}\n"
-            "3={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n");
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.6\"}\n"
+            "2={\"db-id\":6569239123849665666,\"db-version\":\"9.5\"}\n"
+            "3={\"db-id\":6569239123849665679,\"db-version\":\"9.6\"}\n");
 
-        // Create a WAL directory in 9.3-2 but since there are no WAL files or backups it will not show
+        // Create a WAL directory in 9.5-2 but since there are no WAL files or backups it will not show
         HRN_STORAGE_PATH_CREATE(
-            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/9.3-2/0000000100000000",
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/9.5-2/0000000100000000",
             .comment = "create empty db2 archive WAL1 directory");
 
         // archive section will cross reference backup db-id 2 to archive db-id 3 but db section will only use the db-ids from
@@ -236,8 +238,9 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"), STRDEF("stanza1"), lockTypeBackup);
-                TEST_RESULT_INT_NE(lockAcquireP(), -1, "create backup/expire lock");
+                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"));
+                TEST_RESULT_BOOL(
+                    lockAcquireP(cmdLockFileName(STRDEF("stanza1"), lockTypeBackup, 1)), true, "create backup/expire lock");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -245,7 +248,7 @@ testRun(void)
                 // Wait for parent to allow release lock
                 HRN_FORK_CHILD_NOTIFY_GET();
 
-                lockRelease(true);
+                lockReleaseP();
             }
             HRN_FORK_CHILD_END();
 
@@ -266,7 +269,7 @@ testRun(void)
                                         "\"id\":2,"
                                         "\"repo-key\":1"
                                     "},"
-                                    "\"id\":\"9.4-3\","
+                                    "\"id\":\"9.6-3\","
                                     "\"max\":null,"
                                     "\"min\":null"
                                 "}"
@@ -278,13 +281,13 @@ testRun(void)
                                     "\"id\":1,"
                                     "\"repo-key\":1,"
                                     "\"system-id\":6569239123849665666,"
-                                    "\"version\":\"9.3\""
+                                    "\"version\":\"9.5\""
                                 "},"
                                 "{"
                                     "\"id\":2,"
                                     "\"repo-key\":1,"
                                     "\"system-id\":6569239123849665679,"
-                                    "\"version\":\"9.4\""
+                                    "\"version\":\"9.6\""
                                 "}"
                             "],"
                             "\"name\":\"stanza1\","
@@ -316,7 +319,7 @@ testRun(void)
                     "    cipher: none\n"
                     "\n"
                     "    db (current)\n"
-                    "        wal archive min/max (9.4): none present\n",
+                    "        wal archive min/max (9.6): none present\n",
                     "text - single stanza, no valid backups, backup/expire lock detected");
 
                 // Notify child to release lock
@@ -351,7 +354,7 @@ testRun(void)
         // Add WAL segment
         HRN_STORAGE_PUT_EMPTY(
             storageRepoIdxWrite(0),
-            STORAGE_REPO_ARCHIVE "/9.4-3/0000000300000000/000000030000000000000001-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            STORAGE_REPO_ARCHIVE "/9.6-3/0000000300000000/000000030000000000000001-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
             .comment = "write WAL db3 timeline 3 repo1");
 
         TEST_RESULT_STR_Z(
@@ -361,7 +364,7 @@ testRun(void)
             "    cipher: none\n"
             "\n"
             "    db (current)\n"
-            "        wal archive min/max (9.4): 000000030000000000000001/000000030000000000000001\n",
+            "        wal archive min/max (9.6): 000000030000000000000001/000000030000000000000001\n",
             "text - multi-repo, single stanza, one wal segment");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -370,34 +373,34 @@ testRun(void)
         // Db1 and Db3 (from above) have same system-id and db-version so consider them the same for WAL reporting
         HRN_STORAGE_PUT_EMPTY(
             storageRepoIdxWrite(0),
-            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
+            STORAGE_REPO_ARCHIVE "/9.6-1/0000000100000000/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
             .comment = "write WAL db1 timeline 1 repo1");
         HRN_STORAGE_PUT_EMPTY(
             storageRepoIdxWrite(0),
-            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            STORAGE_REPO_ARCHIVE "/9.6-1/0000000100000000/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
             .comment = "write WAL db1 timeline 1 repo1");
         HRN_STORAGE_PUT_EMPTY(
             storageRepoIdxWrite(0),
-            STORAGE_REPO_ARCHIVE "/9.4-1/0000000200000000/000000020000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            STORAGE_REPO_ARCHIVE "/9.6-1/0000000200000000/000000020000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
             .comment = "write WAL db1 timeline 2 repo1");
         HRN_STORAGE_PATH_CREATE(
-            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000300000000",
+            storageRepoWrite(), STORAGE_REPO_ARCHIVE "/9.6-1/0000000300000000",
             .comment = "create empty db1 timeline 3 directory");
 
-        // Create a WAL file in 9.3-2 so that a prior will show
+        // Create a WAL file in 9.5-2 so that a prior will show
         HRN_STORAGE_PUT_EMPTY(
             storageRepoIdxWrite(0),
-            STORAGE_REPO_ARCHIVE "/9.3-2/0000000100000000/000000010000000000000001-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
+            STORAGE_REPO_ARCHIVE "/9.5-2/0000000100000000/000000010000000000000001-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
             .comment = "write WAL db2 timeline 1 repo1");
 
         HRN_INFO_PUT(
             storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE,
             "[db]\n"
-            "db-catalog-version=201409291\n"
-            "db-control-version=942\n"
+            "db-catalog-version=201608131\n"
+            "db-control-version=960\n"
             "db-id=3\n"
             "db-system-id=6569239123849665679\n"
-            "db-version=\"9.4\"\n"
+            "db-version=\"9.6\"\n"
             "\n"
             "[backup:current]\n"
             "20181116-154756F={\"backrest-format\":5,\"backrest-version\":\"2.04\","
@@ -416,21 +419,22 @@ testRun(void)
             "\"option-online\":true}\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
-            ",\"db-version\":\"9.4\"}\n"
-            "2={\"db-catalog-version\":201306121,\"db-control-version\":937,\"db-system-id\":6569239123849665666"
-            ",\"db-version\":\"9.3\"}\n"
-            "3={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
-            ",\"db-version\":\"9.4\"}\n");
+            "1={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"9.6\"}\n"
+            "2={\"db-catalog-version\":201510051,\"db-control-version\":960,\"db-system-id\":6569239123849665666"
+            ",\"db-version\":\"9.5\"}\n"
+            "3={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"9.6\"}\n");
 
         // Execute while a backup lock is held
         HRN_FORK_BEGIN()
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("777-afafafaf"), STRDEF("stanza1"), lockTypeBackup);
-                TEST_RESULT_INT_NE(lockAcquireP(), -1, "create backup/expire lock");
-                TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup), "write lock data");
+                String *lockFileName = cmdLockFileName(STRDEF("stanza1"), lockTypeBackup, 1);
+                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("777-afafafaf"));
+                TEST_RESULT_BOOL(lockAcquireP(lockFileName), true, "create backup/expire lock");
+                TEST_RESULT_VOID(lockWriteP(lockFileName), "write lock data");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -438,7 +442,7 @@ testRun(void)
                 // Wait for parent to allow release lock
                 HRN_FORK_CHILD_NOTIFY_GET();
 
-                lockRelease(true);
+                lockReleaseP();
             }
             HRN_FORK_CHILD_END();
 
@@ -459,7 +463,7 @@ testRun(void)
                                         "\"id\":1,"
                                         "\"repo-key\":1"
                                     "},"
-                                    "\"id\":\"9.4-1\","
+                                    "\"id\":\"9.6-1\","
                                     "\"max\":\"000000020000000000000003\","
                                     "\"min\":\"000000010000000000000002\""
                                 "},"
@@ -468,7 +472,7 @@ testRun(void)
                                         "\"id\":2,"
                                         "\"repo-key\":1"
                                     "},"
-                                    "\"id\":\"9.3-2\","
+                                    "\"id\":\"9.5-2\","
                                     "\"max\":\"000000010000000000000001\","
                                     "\"min\":\"000000010000000000000001\""
                                 "},"
@@ -477,7 +481,7 @@ testRun(void)
                                         "\"id\":3,"
                                         "\"repo-key\":1"
                                     "},"
-                                    "\"id\":\"9.4-3\","
+                                    "\"id\":\"9.6-3\","
                                     "\"max\":\"000000030000000000000001\","
                                     "\"min\":\"000000030000000000000001\""
                                 "}"
@@ -550,19 +554,19 @@ testRun(void)
                                     "\"id\":1,"
                                     "\"repo-key\":1,"
                                     "\"system-id\":6569239123849665679,"
-                                    "\"version\":\"9.4\""
+                                    "\"version\":\"9.6\""
                                 "},"
                                 "{"
                                     "\"id\":2,"
                                     "\"repo-key\":1,"
                                     "\"system-id\":6569239123849665666,"
-                                    "\"version\":\"9.3\""
+                                    "\"version\":\"9.5\""
                                 "},"
                                 "{"
                                     "\"id\":3,"
                                     "\"repo-key\":1,"
                                     "\"system-id\":6569239123849665679,"
-                                    "\"version\":\"9.4\""
+                                    "\"version\":\"9.6\""
                                 "}"
                             "],"
                             "\"name\":\"stanza1\","
@@ -594,22 +598,22 @@ testRun(void)
                     "    cipher: none\n"
                     "\n"
                     "    db (prior)\n"
-                    "        wal archive min/max (9.3): 000000010000000000000001/000000010000000000000001\n"
+                    "        wal archive min/max (9.5): 000000010000000000000001/000000010000000000000001\n"
                     "\n"
                     "    db (current)\n"
-                    "        wal archive min/max (9.4): 000000010000000000000002/000000030000000000000001\n"
+                    "        wal archive min/max (9.6): 000000010000000000000002/000000030000000000000001\n"
                     "\n"
                     "        full backup: 20181116-154756F\n"
-                    "            timestamp start/stop: 2018-11-16 15:47:56 / 2018-11-16 15:48:09\n"
+                    "            timestamp start/stop: 2018-11-16 15:47:56+00 / 2018-11-16 15:48:09+00\n"
                     "            wal start/stop: n/a\n"
                     "            database size: 25.7MB, database backup size: 25.7MB\n"
-                    "            repo1: backup set size: 3MB, backup size: 3KB\n"
+                    "            repo1: backup set size: 3MB, backup size: 3.1KB\n"
                     "\n"
                     "        full backup: 20201116-154900F\n"
-                    "            timestamp start/stop: 2020-11-16 15:47:56 / 2020-11-16 15:48:00\n"
+                    "            timestamp start/stop: 2020-11-16 15:47:56+00 / 2020-11-16 15:48:00+00\n"
                     "            wal start/stop: 000000030000000000000001 / 000000030000000000000001\n"
                     "            database size: 25.7MB, database backup size: 25.7MB\n"
-                    "            repo1: backup set size: 3MB, backup size: 3KB\n",
+                    "            repo1: backup set size: 3MB, backup size: 3.1KB\n",
                     "text - single stanza, valid backup, no priors, no archives in latest DB, backup/expire lock detected");
 
                 // Notify child to release lock
@@ -620,13 +624,27 @@ testRun(void)
         HRN_FORK_END();
 
         // Cleanup
-        HRN_STORAGE_PATH_REMOVE(storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza1/9.3-2", .recurse = true);
-        HRN_STORAGE_PATH_REMOVE(storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza1/9.4-3", .recurse = true);
+        HRN_STORAGE_PATH_REMOVE(storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza1/9.6-1", .recurse = true);
+        HRN_STORAGE_PATH_REMOVE(storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza1/9.5-2", .recurse = true);
+        HRN_STORAGE_PATH_REMOVE(storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza1/9.6-3", .recurse = true);
 
         // backup.info/archive.info files exist, backups exist, archives exist, multi-repo (mixed) with one stanza existing on both
         // repos and the db history is different between the repos
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("mixed multi-repo, percent complete non-null");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE
+            "/stanza1/9.4-1/0000000100000000/000000010000000000000002-ac61b8f1ec7b1e6c3eaee9345214595eb7daa9a1.gz",
+            .comment = "write WAL db1 timeline 1 repo1");
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE
+            "/stanza1/9.4-1/0000000100000000/000000010000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            .comment = "write WAL db1 timeline 1 repo1");
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE
+            "/stanza1/9.4-1/0000000200000000/000000020000000000000003-37dff2b7552a9d66e4bae1a762488a6885e7082c.gz",
+            .comment = "write WAL db1 timeline 2 repo1");
 
         HRN_INFO_PUT(
             storageTest, TEST_PATH "/repo/" STORAGE_PATH_ARCHIVE "/stanza1/" INFO_ARCHIVE_FILE,
@@ -1023,9 +1041,14 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"), STRDEF("stanza2"), lockTypeBackup);
-                TEST_RESULT_INT_NE(lockAcquireP(), -1, "create backup/expire lock");
-                TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(4545)), "write lock data");
+                String *lockFileName = cmdLockFileName(STRDEF("stanza2"), lockTypeBackup, 1);
+                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"));
+                TEST_RESULT_BOOL(lockAcquireP(lockFileName), true, "create backup/expire lock");
+                TEST_RESULT_VOID(
+                    lockWriteP(
+                        lockFileName, .percentComplete = VARUINT(4545), .sizeComplete = VARUINT64(1435765),
+                        .size = VARUINT64(3159000)),
+                    "write lock data");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -1033,7 +1056,7 @@ testRun(void)
                 // Wait for parent to allow release lock
                 HRN_FORK_CHILD_NOTIFY_GET();
 
-                lockRelease(true);
+                lockReleaseP();
             }
             HRN_FORK_CHILD_END();
 
@@ -1365,7 +1388,7 @@ testRun(void)
                             "],"
                             "\"status\":{"
                                 "\"code\":4,"
-                                "\"lock\":{\"backup\":{\"held\":true}},"
+                                "\"lock\":{\"backup\":{\"held\":true,\"size\":3159000,\"size-cplt\":1435765}},"
                                 "\"message\":\"different across repos\""
                             "}"
                         "},"
@@ -1462,9 +1485,31 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"), STRDEF("stanza2"), lockTypeBackup);
-                TEST_RESULT_INT_NE(lockAcquireP(), -1, "create backup/expire lock");
-                TEST_RESULT_VOID(lockWriteDataP(lockTypeBackup, .percentComplete = VARUINT(5555)), "write lock data");
+                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-ffffffff"));
+
+                String *lockFileStanza1Repo1 = cmdLockFileName(STRDEF("stanza1"), lockTypeBackup, 1);
+                TEST_RESULT_BOOL(lockAcquireP(lockFileStanza1Repo1), true, "create backup/expire lock");
+                TEST_RESULT_VOID(
+                    lockWriteP(
+                        lockFileStanza1Repo1, .size = VARUINT64(3159000), .sizeComplete = VARUINT64(1754830),
+                        .percentComplete = VARUINT(5555)),
+                    "write lock data");
+
+                String *lockFileStanza1Repo2 = cmdLockFileName(STRDEF("stanza1"), lockTypeBackup, 2);
+                TEST_RESULT_BOOL(lockAcquireP(lockFileStanza1Repo2), true, "create backup/expire lock");
+                TEST_RESULT_VOID(
+                    lockWriteP(
+                        lockFileStanza1Repo2, .size = VARUINT64(3159000), .sizeComplete = VARUINT64(2369250),
+                        .percentComplete = VARUINT(7500)),
+                    "write lock data");
+
+                String *lockFileStanza2Repo1 = cmdLockFileName(STRDEF("stanza2"), lockTypeBackup, 1);
+                TEST_RESULT_BOOL(lockAcquireP(lockFileStanza2Repo1), true, "create backup/expire lock");
+                TEST_RESULT_VOID(
+                    lockWriteP(
+                        lockFileStanza2Repo1, .size = VARUINT64(3159000), .sizeComplete = VARUINT64(1754830),
+                        .percentComplete = VARUINT(5555)),
+                    "write lock data");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -1472,7 +1517,7 @@ testRun(void)
                 // Wait for parent to allow release lock
                 HRN_FORK_CHILD_NOTIFY_GET();
 
-                lockRelease(true);
+                lockReleaseP();
             }
             HRN_FORK_CHILD_END();
 
@@ -1485,7 +1530,7 @@ testRun(void)
                 TEST_RESULT_STR_Z(
                     infoRender(),
                     "stanza: stanza1\n"
-                    "    status: ok\n"
+                    "    status: ok (backup/expire running - 65.28% complete)\n"
                     "    cipher: mixed\n"
                     "        repo1: none\n"
                     "        repo2: aes-256-cbc\n"
@@ -1494,47 +1539,47 @@ testRun(void)
                     "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
                     "\n"
                     "        full backup: 20181119-152138F\n"
-                    "            timestamp start/stop: 2018-11-19 15:21:38 / 2018-11-19 15:21:39\n"
+                    "            timestamp start/stop: 2018-11-19 15:21:38+00 / 2018-11-19 15:21:39+00\n"
                     "            wal start/stop: 000000010000000000000002 / 000000010000000000000002\n"
                     "            database size: 19.2MB, database backup size: 19.2MB\n"
                     "            repo1: backup set size: 2.3MB, backup size: 2.3MB\n"
                     "\n"
                     "        diff backup: 20181119-152138F_20181119-152152D\n"
-                    "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
+                    "            timestamp start/stop: 2018-11-19 15:21:52+00 / 2018-11-19 15:21:55+00\n"
                     "            wal start/stop: 000000010000000000000003 / 000000020000000000000003\n"
                     "            database size: 19.2MB, database backup size: 8.2KB\n"
                     "            repo1: backup set size: 2.3MB, backup size: 346B\n"
-                    "            backup reference list: 20181119-152138F\n"
+                    "            backup reference total: 1 full\n"
                     "\n"
                     "        incr backup: 20181119-152138F_20181119-152155I\n"
-                    "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
+                    "            timestamp start/stop: 2018-11-19 15:21:55+00 / 2018-11-19 15:21:57+00\n"
                     "            wal start/stop: n/a\n"
                     "            database size: 19.2MB, database backup size: 8.2KB\n"
                     "            repo1: backup set size: 2.3MB, backup size: 346B\n"
-                    "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
+                    "            backup reference total: 1 full, 1 diff\n"
                     "\n"
                     "    db (current)\n"
                     "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
                     "\n"
                     "        full backup: 20201116-155000F\n"
-                    "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+                    "            timestamp start/stop: 2020-11-16 15:50:00+00 / 2020-11-16 15:50:02+00\n"
                     "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
                     "            database size: 25.7MB, database backup size: 25.7MB\n"
                     "            repo1: backup set size: 3MB, backup size: 3KB\n"
                     "\n"
                     "        full backup: 20201116-200000F\n"
-                    "            timestamp start/stop: 2020-11-16 20:00:00 / 2020-11-16 20:00:05\n"
+                    "            timestamp start/stop: 2020-11-16 20:00:00+00 / 2020-11-16 20:00:05+00\n"
                     "            wal start/stop: 000000010000000000000004 / 000000010000000000000004\n"
                     "            database size: 25.7MB, database backup size: 25.7MB\n"
                     "            repo2: backup set size: 3MB, backup size: 3KB\n"
                     "            error(s) detected during backup\n"
                     "\n"
                     "        incr backup: 20201116-155000F_20201119-152100I\n"
-                    "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
+                    "            timestamp start/stop: 2020-11-19 15:21:00+00 / 2020-11-19 15:21:03+00\n"
                     "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
                     "            database size: 19.2MB, database backup size: 8.2KB\n"
                     "            repo1: backup size: 346B\n"
-                    "            backup reference list: 20201116-155000F\n"
+                    "            backup reference total: 1 full\n"
                     "\n"
                     "stanza: stanza2\n"
                     "    status: mixed (backup/expire running - 55.55% complete)\n"
@@ -1559,7 +1604,7 @@ testRun(void)
                     "        wal archive min/max (9.4): 000000010000000000000001/000000010000000000000002\n"
                     "\n"
                     "        full backup: 20201110-100000F\n"
-                    "            timestamp start/stop: 2020-11-10 10:00:00 / 2020-11-10 10:00:02\n"
+                    "            timestamp start/stop: 2020-11-10 10:00:00+00 / 2020-11-10 10:00:02+00\n"
                     "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
                     "            database size: 25.7MB, database backup size: 25.7MB\n"
                     "            repo2: backup set size: 3MB, backup size: 3KB\n",
@@ -1639,6 +1684,9 @@ testRun(void)
         hrnCfgArgRawZ(argList2, cfgOptRepo, "1");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
+        // Switch to America/New_York to test + timezone offset without minutes
+        hrnTzSet("America/New_York");
+
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza1\n"
@@ -1649,7 +1697,7 @@ testRun(void)
             "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
             "\n"
             "        incr backup: 20181119-152138F_20181119-152155I\n"
-            "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
+            "            timestamp start/stop: 2018-11-19 10:21:55-05 / 2018-11-19 10:21:57-05\n"
             "            wal start/stop: n/a\n"
             "            lsn start/stop: 285/89000028 / 285/89001F88\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
@@ -1664,6 +1712,9 @@ testRun(void)
             "                ts12 (12) => /tblspc/ts12\n"
             "            error list: base/16384/17000\n",
             "text - backup set requested");
+
+        // Reset timezone
+        hrnTzSet("UTC");
 
         hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
@@ -1796,7 +1847,7 @@ testRun(void)
             "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
             "\n"
             "        full backup: 20181119-152138F\n"
-            "            timestamp start/stop: 2018-11-19 15:21:38 / 2018-11-19 15:21:39\n"
+            "            timestamp start/stop: 2018-11-19 15:21:38+00 / 2018-11-19 15:21:39+00\n"
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000002\n"
             "            database size: 19.2MB, database backup size: 19.2MB\n"
             "            repo1: backup set size: 2.3MB, backup size: 2.3MB\n"
@@ -1805,13 +1856,13 @@ testRun(void)
             "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
             "\n"
             "        full backup: 20201116-155000F\n"
-            "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+            "            timestamp start/stop: 2020-11-16 15:50:00+00 / 2020-11-16 15:50:02+00\n"
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo1: backup set size: 3MB, backup size: 3KB\n"
             "\n"
             "        full backup: 20201116-200000F\n"
-            "            timestamp start/stop: 2020-11-16 20:00:00 / 2020-11-16 20:00:05\n"
+            "            timestamp start/stop: 2020-11-16 20:00:00+00 / 2020-11-16 20:00:05+00\n"
             "            wal start/stop: 000000010000000000000004 / 000000010000000000000004\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo2: backup set size: 3MB, backup size: 3KB\n"
@@ -1826,6 +1877,9 @@ testRun(void)
         hrnCfgArgRawZ(argList2, cfgOptSet, "20201116-200000F");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
 
+        // Switch to Asia/Kolkata to test - timezone offset with 30 minutes
+        hrnTzSet("Asia/Kolkata");
+
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza1\n"
@@ -1838,7 +1892,7 @@ testRun(void)
             "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
             "\n"
             "        full backup: 20201116-200000F\n"
-            "            timestamp start/stop: 2020-11-16 20:00:00 / 2020-11-16 20:00:05\n"
+            "            timestamp start/stop: 2020-11-17 01:30:00+05:30 / 2020-11-17 01:30:05+05:30\n"
             "            wal start/stop: 000000010000000000000004 / 000000010000000000000004\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo2: backup set size: 3MB, backup size: 3KB\n"
@@ -1851,6 +1905,9 @@ testRun(void)
             "                ts12 (12) => /tblspc/ts12\n"
             "            error list: base/16384/17000\n",
             "text - multi-repo, backup set requested, found on repo2, report stanza and db over all repos");
+
+        // Reset timezone
+        hrnTzSet("UTC");
 
         hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
@@ -2031,6 +2088,9 @@ testRun(void)
             TEST_MANIFEST_PATH_DEFAULT,
             .comment = "write manifest with checksum errors and no links");
 
+        // Switch to Pacific/Chatham to test + timezone offset with 45 minutes
+        hrnTzSet("Pacific/Chatham");
+
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza1\n"
@@ -2041,7 +2101,7 @@ testRun(void)
             "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
             "\n"
             "        incr backup: 20181119-152138F_20181119-152155I\n"
-            "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
+            "            timestamp start/stop: 2018-11-20 05:06:55+13:45 / 2018-11-20 05:06:57+13:45\n"
             "            wal start/stop: n/a\n"
             "            lsn start/stop: 285/89000028 / 285/89001F88\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
@@ -2050,6 +2110,9 @@ testRun(void)
             "            database list: mail (16456), postgres (12173)\n"
             "            error list: base/16384/17000, base/32768/33000\n",
             "text - backup set requested, no links");
+
+        // Reset timezone
+        hrnTzSet("UTC");
 
         hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
@@ -2203,6 +2266,9 @@ testRun(void)
             TEST_MANIFEST_PATH_DEFAULT,
             .comment = " rewrite same manifest without checksum errors");
 
+        // Switch to America/St_Johns to test - timezone offset with 30 minutes
+        hrnTzSet("America/St_Johns");
+
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza1\n"
@@ -2213,7 +2279,7 @@ testRun(void)
             "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
             "\n"
             "        incr backup: 20181119-152138F_20181119-152155I\n"
-            "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
+            "            timestamp start/stop: 2018-11-19 11:51:55-03:30 / 2018-11-19 11:51:57-03:30\n"
             "            wal start/stop: n/a\n"
             "            lsn start/stop: 285/89000028 / 285/89001F88\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
@@ -2221,6 +2287,9 @@ testRun(void)
             "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
             "            database list: none\n",
             "text - backup set requested, no db and no checksum error");
+
+        // Reset timezone
+        hrnTzSet("UTC");
 
         hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
@@ -2356,7 +2425,7 @@ testRun(void)
             "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
             "\n"
             "        incr backup: 20201116-155000F_20201119-152100I\n"
-            "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
+            "            timestamp start/stop: 2020-11-19 15:21:00+00 / 2020-11-19 15:21:03+00\n"
             "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
             "            repo1: backup size: 346B\n"
@@ -2488,40 +2557,40 @@ testRun(void)
             "        wal archive min/max (9.4): 000000010000000000000002/000000020000000000000003\n"
             "\n"
             "        full backup: 20181119-152138F\n"
-            "            timestamp start/stop: 2018-11-19 15:21:38 / 2018-11-19 15:21:39\n"
+            "            timestamp start/stop: 2018-11-19 15:21:38+00 / 2018-11-19 15:21:39+00\n"
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000002\n"
             "            database size: 19.2MB, database backup size: 19.2MB\n"
             "            repo1: backup set size: 2.3MB, backup size: 2.3MB\n"
             "\n"
             "        diff backup: 20181119-152138F_20181119-152152D\n"
-            "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
+            "            timestamp start/stop: 2018-11-19 15:21:52+00 / 2018-11-19 15:21:55+00\n"
             "            wal start/stop: 000000010000000000000003 / 000000020000000000000003\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
             "            repo1: backup set size: 2.3MB, backup size: 346B\n"
-            "            backup reference list: 20181119-152138F\n"
+            "            backup reference total: 1 full\n"
             "\n"
             "        incr backup: 20181119-152138F_20181119-152155I\n"
-            "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
+            "            timestamp start/stop: 2018-11-19 15:21:55+00 / 2018-11-19 15:21:57+00\n"
             "            wal start/stop: n/a\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
             "            repo1: backup set size: 2.3MB, backup size: 346B\n"
-            "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
+            "            backup reference total: 1 full, 1 diff\n"
             "\n"
             "    db (current)\n"
             "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
             "\n"
             "        full backup: 20201116-155000F\n"
-            "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+            "            timestamp start/stop: 2020-11-16 15:50:00+00 / 2020-11-16 15:50:02+00\n"
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo1: backup set size: 3MB, backup size: 3KB\n"
             "\n"
             "        incr backup: 20201116-155000F_20201119-152100I\n"
-            "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
+            "            timestamp start/stop: 2020-11-19 15:21:00+00 / 2020-11-19 15:21:03+00\n"
             "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
             "            repo1: backup size: 346B\n"
-            "            backup reference list: 20201116-155000F\n",
+            "            backup reference total: 1 full\n",
             "text - multi-repo, valid backups only on repo1");
 
         // Remove archives for prior backup so archiveMin prior DB == NULL but backupList > 0 (edge case)
@@ -2530,6 +2599,53 @@ testRun(void)
 
         HRN_STORAGE_PATH_REMOVE(
             storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE "/9.4-1", .recurse = true, .comment = "remove archives on db prior");
+
+        HRN_INFO_PUT(
+            storageTest, TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/stanza1/" INFO_BACKUP_FILE,
+            "[backup:current]\n"
+            "20201116-155000F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.30\","
+            "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000003\","
+            "\"backup-info-repo-size\":3159000,\"backup-info-repo-size-delta\":3100,\"backup-info-size\":26897000,"
+            "\"backup-info-size-delta\":26897020,\"backup-timestamp-start\":1605541800,\"backup-timestamp-stop\":1605541802,"
+            "\"backup-type\":\"full\",\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":true,"
+            "\"option-backup-standby\":false,\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":false,"
+            "\"option-online\":true}\n"
+            "20201116-155000F_20201119-152100I={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.30\","
+            "\"backup-annotation\":{\"extra key\":\"this is an annotation\",\"source\":\"this is another annotation\"},"
+            "\"backup-archive-start\":\"000000010000000000000005\",\"backup-archive-stop\":\"000000010000000000000005\","
+            "\"backup-error\":false,\"backup-info-repo-size\":2369186,"
+            "\"backup-info-repo-size-delta\":346,\"backup-info-repo-size-map\":100,\"backup-info-repo-size-map-delta\":12"
+            ",\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,\"backup-lsn-start\":\"285/89000028\","
+            "\"backup-prior\":\"20201116-155000F\",\"backup-reference\":[\"20201116-155000F\"],"
+            "\"backup-timestamp-start\":1605799260,\"backup-timestamp-stop\":1605799263,\"backup-type\":\"incr\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20201116-155000F_20201120-152100I={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.30\","
+            "\"backup-annotation\":{\"extra key\":\"this is an annotation\",\"source\":\"this is another annotation\"},"
+            "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000006\","
+            "\"backup-error\":false,\"backup-info-repo-size\":2369186,"
+            "\"backup-info-repo-size-delta\":346,\"backup-info-repo-size-map\":100,\"backup-info-repo-size-map-delta\":12"
+            ",\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,\"backup-lsn-start\":\"285/89000028\","
+            "\"backup-prior\":\"20201116-155000F_20201119-152100I\","
+            "\"backup-reference\":[\"20201116-155000F\",\"20201116-155000F_20201119-152100I\"],"
+            "\"backup-timestamp-start\":1605799260,\"backup-timestamp-stop\":1605799263,\"backup-type\":\"incr\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "\n"
+            "[db]\n"
+            "db-catalog-version=201510051\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"9.5\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089"
+            ",\"db-version\":\"9.5\"}\n",
+            .comment = "put backup info to file - stanza1, repo1");
 
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -2541,44 +2657,28 @@ testRun(void)
             "        repo1: none\n"
             "        repo2: aes-256-cbc\n"
             "\n"
-            "    db (prior)\n"
-            "        wal archive min/max (9.4): none present\n"
-            "\n"
-            "        full backup: 20181119-152138F\n"
-            "            timestamp start/stop: 2018-11-19 15:21:38 / 2018-11-19 15:21:39\n"
-            "            wal start/stop: 000000010000000000000002 / 000000010000000000000002\n"
-            "            database size: 19.2MB, database backup size: 19.2MB\n"
-            "            repo1: backup set size: 2.3MB, backup size: 2.3MB\n"
-            "\n"
-            "        diff backup: 20181119-152138F_20181119-152152D\n"
-            "            timestamp start/stop: 2018-11-19 15:21:52 / 2018-11-19 15:21:55\n"
-            "            wal start/stop: 000000010000000000000003 / 000000020000000000000003\n"
-            "            database size: 19.2MB, database backup size: 8.2KB\n"
-            "            repo1: backup set size: 2.3MB, backup size: 346B\n"
-            "            backup reference list: 20181119-152138F\n"
-            "\n"
-            "        incr backup: 20181119-152138F_20181119-152155I\n"
-            "            timestamp start/stop: 2018-11-19 15:21:55 / 2018-11-19 15:21:57\n"
-            "            wal start/stop: n/a\n"
-            "            database size: 19.2MB, database backup size: 8.2KB\n"
-            "            repo1: backup set size: 2.3MB, backup size: 346B\n"
-            "            backup reference list: 20181119-152138F, 20181119-152138F_20181119-152152D\n"
-            "\n"
             "    db (current)\n"
             "        wal archive min/max (9.5): 000000010000000000000002/000000010000000000000005\n"
             "\n"
             "        full backup: 20201116-155000F\n"
-            "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+            "            timestamp start/stop: 2020-11-16 15:50:00+00 / 2020-11-16 15:50:02+00\n"
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo1: backup set size: 3MB, backup size: 3KB\n"
             "\n"
             "        incr backup: 20201116-155000F_20201119-152100I\n"
-            "            timestamp start/stop: 2020-11-19 15:21:00 / 2020-11-19 15:21:03\n"
+            "            timestamp start/stop: 2020-11-19 15:21:00+00 / 2020-11-19 15:21:03+00\n"
             "            wal start/stop: 000000010000000000000005 / 000000010000000000000005\n"
             "            database size: 19.2MB, database backup size: 8.2KB\n"
             "            repo1: backup size: 346B\n"
-            "            backup reference list: 20201116-155000F\n",
+            "            backup reference total: 1 full\n"
+            "\n"
+            "        incr backup: 20201116-155000F_20201120-152100I\n"
+            "            timestamp start/stop: 2020-11-19 15:21:00+00 / 2020-11-19 15:21:03+00\n"
+            "            wal start/stop: 000000010000000000000006 / 000000010000000000000006\n"
+            "            database size: 19.2MB, database backup size: 8.2KB\n"
+            "            repo1: backup size: 346B\n"
+            "            backup reference total: 1 full, 1 incr\n",
             "text - multi-repo, prior backup: no archives but backups (code coverage)");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -2691,7 +2791,7 @@ testRun(void)
             "20210112-192538F={\"backrest-format\":5,\"backrest-version\":\"2.25\","
             "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000006\","
             "\"backup-info-repo-size\":3159000,\"backup-info-repo-size-delta\":3100,\"backup-info-size\":26897000,"
-            "\"backup-info-size-delta\":26897020,\"backup-timestamp-start\":1610479538,\"backup-timestamp-stop\":1610479540,"
+            "\"backup-info-size-delta\":26897020,\"backup-timestamp-start\":1687010984,\"backup-timestamp-stop\":1687011000,"
             "\"backup-type\":\"full\",\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":true,"
             "\"option-backup-standby\":true,\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":true,"
             "\"option-online\":true}\n"
@@ -2714,6 +2814,9 @@ testRun(void)
             storageRepoIdxWrite(0), STORAGE_REPO_ARCHIVE
             "/9.5-2/0000000100000000/000000010000000000000006-47dff2b7552a9d66e4bae1a762488a6885e7082c.gz");
 
+        // Switch to America/New_York to test + timezone offset without minutes
+        hrnTzSet("America/New_York");
+
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza3\n"
@@ -2728,13 +2831,13 @@ testRun(void)
             "        wal archive min/max (9.4): 000000010000000000000001/000000010000000000000003\n"
             "\n"
             "        full backup: 20201110-100000F\n"
-            "            timestamp start/stop: 2020-11-10 10:00:00 / 2020-11-10 10:00:02\n"
+            "            timestamp start/stop: 2020-11-10 05:00:00-05 / 2020-11-10 05:00:02-05\n"
             "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo2: backup set size: 3MB, backup size: 3KB\n"
             "\n"
             "        full backup: 20201212-192538F\n"
-            "            timestamp start/stop: 2020-12-12 19:25:38 / 2020-12-12 19:25:40\n"
+            "            timestamp start/stop: 2020-12-12 14:25:38-05 / 2020-12-12 14:25:40-05\n"
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo1: backup set size: 3MB, backup size: 3KB\n"
@@ -2743,11 +2846,14 @@ testRun(void)
             "        wal archive min/max (9.5): 000000010000000000000006/000000010000000000000006\n"
             "\n"
             "        full backup: 20210112-192538F\n"
-            "            timestamp start/stop: 2021-01-12 19:25:38 / 2021-01-12 19:25:40\n"
+            "            timestamp start/stop: 2023-06-17 10:09:44-04 / 2023-06-17 10:10:00-04\n"
             "            wal start/stop: 000000010000000000000006 / 000000010000000000000006\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo1: backup set size: 3MB, backup size: 3KB\n",
             "text - multi-repo, database mismatch, repo2 stanza-upgrade needed");
+
+        // Reset timezone
+        hrnTzSet("UTC");
 
         hrnCfgArgRawZ(argList2, cfgOptOutput, "json");
         HRN_CFG_LOAD(cfgCmdInfo, argList2);
@@ -2872,8 +2978,8 @@ testRun(void)
                             "\"prior\":null,"
                             "\"reference\":null,"
                             "\"timestamp\":{"
-                                "\"start\":1610479538,"
-                                "\"stop\":1610479540"
+                                "\"start\":1687010984,"
+                                "\"stop\":1687011000"
                             "},"
                             "\"type\":\"full\""
                         "}"
@@ -2997,7 +3103,7 @@ testRun(void)
             "        wal archive min/max (9.4): 000000010000000000000001/000000010000000000000002\n"
             "\n"
             "        full backup: 20201110-100000F\n"
-            "            timestamp start/stop: 2020-11-10 10:00:00 / 2020-11-10 10:00:02\n"
+            "            timestamp start/stop: 2020-11-10 10:00:00+00 / 2020-11-10 10:00:02+00\n"
             "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo2: backup set size: 3MB, backup size: 3KB\n",
@@ -3172,7 +3278,7 @@ testRun(void)
             "        wal archive min/max (9.5): 000000010000000000000001/000000010000000000000002\n"
             "\n"
             "        full backup: 20201116-155010F\n"
-            "            timestamp start/stop: 2020-11-16 15:50:10 / 2020-11-16 15:50:12\n"
+            "            timestamp start/stop: 2020-11-16 15:50:10+00 / 2020-11-16 15:50:12+00\n"
             "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo2: backup set size: 3MB, backup size: 3KB\n"
@@ -3181,7 +3287,7 @@ testRun(void)
             "        wal archive min/max (9.4): 000000010000000000000002/000000010000000000000003\n"
             "\n"
             "        full backup: 20201116-155000F\n"
-            "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+            "            timestamp start/stop: 2020-11-16 15:50:00+00 / 2020-11-16 15:50:02+00\n"
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo1: backup set size: 3MB, backup size: 3KB\n",
@@ -3237,7 +3343,7 @@ testRun(void)
             "        wal archive min/max (9.4): none present\n"
             "\n"
             "        full backup: 20201116-155010F\n"
-            "            timestamp start/stop: 2020-11-16 15:50:10 / 2020-11-16 15:50:12\n"
+            "            timestamp start/stop: 2020-11-16 15:50:10+00 / 2020-11-16 15:50:12+00\n"
             "            wal start/stop: 000000010000000000000001 / 000000010000000000000002\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo2: backup set size: 3MB, backup size: 3KB\n"
@@ -3246,7 +3352,7 @@ testRun(void)
             "        wal archive min/max (9.4): 000000010000000000000002/000000010000000000000003\n"
             "\n"
             "        full backup: 20201116-155000F\n"
-            "            timestamp start/stop: 2020-11-16 15:50:00 / 2020-11-16 15:50:02\n"
+            "            timestamp start/stop: 2020-11-16 15:50:00+00 / 2020-11-16 15:50:02+00\n"
             "            wal start/stop: 000000010000000000000002 / 000000010000000000000003\n"
             "            database size: 25.7MB, database backup size: 25.7MB\n"
             "            repo1: backup set size: 3MB, backup size: 3KB\n",
@@ -3333,7 +3439,7 @@ testRun(void)
                         "\"code\":99,"
                         "\"lock\":{\"backup\":{\"held\":false}},"
                         "\"message\":\"other\""
-                        "}"
+                    "}"
                 "}"
             "]",
             // {uncrustify_on}

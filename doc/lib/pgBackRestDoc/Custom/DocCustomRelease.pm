@@ -15,7 +15,6 @@ use File::Basename qw(dirname);
 use pgBackRestDoc::Common::DocRender;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
-use pgBackRestDoc::Custom::DocConfigData;
 use pgBackRestDoc::ProjectInfo;
 
 ####################################################################################################################################
@@ -378,7 +377,8 @@ sub docGet
         my @stryReleaseCommitRemaining;
         my $bReleaseCheckCommit = false;
 
-        if ($strVersion ge '2.01')
+        # Check versions except for bug fix releases that are not the most recent release (since bug fixes on are separate branches)
+        if ($strVersion ge '2.01' && !($strVersion =~ /^[0-9]+\.[0-9]+\.[0-9]+$/ && $iReleaseIdx != 0))
         {
             # Should commits in the release be checked?
             $bReleaseCheckCommit = !$bReleaseDev ? true : false;
@@ -387,8 +387,16 @@ sub docGet
             my $rhReleaseCommitBegin = $self->commitFindSubject(\@hyGitLog, "Begin v${strVersion} development\\.");
             my $strReleaseCommitBegin = defined($rhReleaseCommitBegin) ? $rhReleaseCommitBegin->{commit} : undef;
 
-            # Get the end commit of the last release
-            my $strReleaseLastVersion = $oyRelease[$iReleaseIdx + 1]->paramGet('version');
+            # Get the end commit of the last release (skipping bug fixes which are on separate branches)
+            my $iReleaseLastVersionIdx = $iReleaseIdx + 1;
+            my $strReleaseLastVersion = $oyRelease[$iReleaseLastVersionIdx]->paramGet('version');
+
+            while ($strReleaseLastVersion =~ /^[0-9]+\.[0-9]+\.[0-9]+$/)
+            {
+                $iReleaseLastVersionIdx++;
+                $strReleaseLastVersion = $oyRelease[$iReleaseLastVersionIdx]->paramGet('version');
+            }
+
             my $rhReleaseLastCommitEnd = $self->commitFindSubject(\@hyGitLog, "v${strReleaseLastVersion}\\: .+");
 
             if (!defined($rhReleaseLastCommitEnd))
@@ -514,7 +522,6 @@ sub docGet
         $oReleaseSection->nodeAdd('subsubtitle')->textSet($strDateOut);
 
         # Add release sections
-        my $bAdditionalNotes = false;
         my $bReleaseNote = false;
 
         my $hSectionType =
@@ -544,12 +551,6 @@ sub docGet
 
                     if ($oRelease->nodeGet($strSectionType)->nodeTest($strItemType))
                     {
-                        if ($strSectionType ne XML_RELEASE_CORE_LIST && !$bAdditionalNotes)
-                        {
-                            $oReleaseSection->nodeAdd('subtitle')->textSet('Additional Notes');
-                            $bAdditionalNotes = true;
-                        }
-
                         # Add release note if present
                         if (!$bReleaseNote && defined($oRelease->nodeGet($strSectionType)->textGet(false)))
                         {

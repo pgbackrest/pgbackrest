@@ -297,13 +297,14 @@ typedef struct BldCfgOptionRaw
     const String *name;                                             // See BldCfgOption for comments
     const String *type;
     const String *section;
+    bool boolLike;
     bool internal;
     bool beta;
     const Variant *required;
     const Variant *negate;
     bool reset;
+    DefaultType defaultType;
     const String *defaultValue;
-    bool defaultLiteral;
     const String *group;
     bool secure;
     const BldCfgOptionDependRaw *depend;
@@ -830,9 +831,19 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                         else
                             optRaw.defaultValue = optDefVal.value;
                     }
-                    else if (strEqZ(optDef.value, "default-literal"))
+                    else if (strEqZ(optDef.value, "default-type"))
                     {
-                        optRaw.defaultLiteral = yamlBoolParse(optDefVal);
+                        if (strEqZ(optDefVal.value, "quote"))
+                            optRaw.defaultType = defaultTypeQuote;
+                        else if (strEqZ(optDefVal.value, "literal"))
+                            optRaw.defaultType = defaultTypeLiteral;
+                        else if (strEqZ(optDefVal.value, "dynamic"))
+                            optRaw.defaultType = defaultTypeDynamic;
+                        else
+                        {
+                            THROW_FMT(
+                                FormatError, "option '%s' has invalid default type '%s'", strZ(optRaw.name), strZ(optDefVal.value));
+                        }
                     }
                     else if (strEqZ(optDef.value, "group"))
                     {
@@ -857,6 +868,10 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                     else if (strEqZ(optDef.value, "internal"))
                     {
                         optRaw.internal = yamlBoolParse(optDefVal);
+                    }
+                    else if (strEqZ(optDef.value, "bool-like"))
+                    {
+                        optRaw.boolLike = yamlBoolParse(optDefVal);
                     }
                     else if (strEqZ(optDef.value, "beta"))
                     {
@@ -905,7 +920,8 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                 if (optRaw.negate == NULL)
                 {
                     optRaw.negate = varNewBool(
-                        strEq(optRaw.type, OPT_TYPE_BOOLEAN_STR) && !strEq(optRaw.section, SECTION_COMMAND_LINE_STR));
+                        (strEq(optRaw.type, OPT_TYPE_BOOLEAN_STR) || optRaw.boolLike) &&
+                        !strEq(optRaw.section, SECTION_COMMAND_LINE_STR));
                 }
 
                 // Build default command list if not defined
@@ -950,13 +966,14 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                     .name = strDup(optRaw->name),
                     .type = strDup(optRaw->type),
                     .section = strDup(optRaw->section),
+                    .boolLike = optRaw->boolLike,
                     .internal = optRaw->internal,
                     .beta = optRaw->beta,
                     .required = varBool(optRaw->required),
                     .negate = varBool(optRaw->negate),
                     .reset = optRaw->reset,
+                    .defaultType = optRaw->defaultType,
                     .defaultValue = strDup(optRaw->defaultValue),
-                    .defaultLiteral = optRaw->defaultLiteral,
                     .group = strDup(optRaw->group),
                     .secure = optRaw->secure,
                     .allowList = bldCfgParseAllowListDup(optRaw->allowList),

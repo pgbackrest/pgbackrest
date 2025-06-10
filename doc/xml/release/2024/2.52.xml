@@ -1,0 +1,112 @@
+<release date="2024-05-27" version="2.52" title="PostgreSQL 17beta1 Support">
+    <release-core-list>
+        <text>
+            <p><b>NOTE TO PACKAGERS</b>: The build system for <backrest/> is now <proper>meson</proper>. The <proper>autoconf</proper>/<proper>make</proper> build will not receive any new features and will be removed after a few releases.</p>
+        </text>
+
+        <release-feature-list>
+            <release-item>
+                <github-pull-request id="2326"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="reid.thompson"/>
+                </release-item-contributor-list>
+
+                <p>Add <proper>GCS</proper> batch delete support.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2279"/>
+                <github-pull-request id="2282"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="tim.jones"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="tim.jones"/>
+                </release-item-contributor-list>
+
+                <p><proper>S3</proper> <id>SSE-C</id> encryption support.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2328"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p><proper>PostgreSQL</proper> 17beta1 support.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2321"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="michael.schout"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Allow explicit disabling of optional dependencies in meson builds.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Update meson minimum version to 0.47."/>
+                <commit subject="Dynamically find python in meson build.">
+                    <github-pull-request id="2338"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="michael.schout"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Dynamically find <proper>python</proper> in <proper>meson</proper> build.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2312"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="bradford.boyle"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Tag <id>pgbackrest</id> build target in meson as installable.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-pull-request id="2337"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update Fedora test image to Fedora 38.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <github-issue id="2325"/>
+                <github-issue id="2334"/>
+                <github-pull-request id="2352"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Update <cmd>start</cmd>/<cmd>stop</cmd> documentation to reflect actual functionality.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
+</release>

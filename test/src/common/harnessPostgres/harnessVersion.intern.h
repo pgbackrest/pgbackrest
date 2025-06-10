@@ -6,6 +6,7 @@ Macros to create harness functions per PostgreSQL version.
 #ifndef TEST_COMMON_HARNESS_POSTGRES_VERSIONINTERN_H
 #define TEST_COMMON_HARNESS_POSTGRES_VERSIONINTERN_H
 
+#include "postgres/interface/crc32.h"
 #include "postgres/interface/version.vendor.h"
 
 #include "common/harnessPostgres.h"
@@ -15,7 +16,7 @@ Get the catalog version
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_93
+#elif PG_VERSION >= PG_VERSION_95
 
 #define HRN_PG_INTERFACE_CATALOG_VERSION(version)                                                                                  \
     uint32_t                                                                                                                       \
@@ -31,11 +32,12 @@ Create a pg_control file
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_93
+#elif PG_VERSION >= PG_VERSION_95
 
 #define HRN_PG_INTERFACE_CONTROL_TEST(version)                                                                                     \
     void                                                                                                                           \
-    hrnPgInterfaceControl##version(const unsigned int controlVersion, const PgControl pgControl, unsigned char *const buffer)      \
+    hrnPgInterfaceControl##version(                                                                                                \
+        const unsigned int controlVersion, const unsigned int crc, const PgControl pgControl, uint8_t *const buffer)               \
     {                                                                                                                              \
         ASSERT(buffer != NULL);                                                                                                    \
                                                                                                                                    \
@@ -51,8 +53,10 @@ Create a pg_control file
             },                                                                                                                     \
             .blcksz = pgControl.pageSize,                                                                                          \
             .xlog_seg_size = pgControl.walSegmentSize,                                                                             \
-            .data_checksum_version = pgControl.pageChecksum,                                                                       \
+            .data_checksum_version = pgControl.pageChecksumVersion,                                                                \
         };                                                                                                                         \
+                                                                                                                                   \
+        ((ControlFileData *)buffer)->crc = crc == 0 ? crc32cOne(buffer, offsetof(ControlFileData, crc)) : crc;                     \
     }
 
 #endif
@@ -62,11 +66,11 @@ Create a WAL file
 ***********************************************************************************************************************************/
 #if PG_VERSION > PG_VERSION_MAX
 
-#elif PG_VERSION >= PG_VERSION_93
+#elif PG_VERSION >= PG_VERSION_95
 
 #define HRN_PG_INTERFACE_WAL_TEST(version)                                                                                         \
     void                                                                                                                           \
-    hrnPgInterfaceWal##version(const unsigned int magic, const PgWal pgWal, unsigned char *const buffer)                           \
+    hrnPgInterfaceWal##version(const unsigned int magic, const PgWal pgWal, uint8_t *const buffer)                                 \
     {                                                                                                                              \
         ((XLogLongPageHeaderData *)buffer)->std.xlp_magic = magic == 0 ? XLOG_PAGE_MAGIC : (uint16)magic;                          \
         ((XLogLongPageHeaderData *)buffer)->std.xlp_info = XLP_LONG_HEADER;                                                        \

@@ -187,12 +187,12 @@ testSuite(CompressType type, const char *decompressCmd, size_t rawDelta)
     TEST_TITLE("compress a large non-zero input buffer into small output buffer");
 
     decompressed = bufNew(1024 * 1024 - 1);
-    unsigned char *chr = bufPtr(decompressed);
+    uint8_t *chr = bufPtr(decompressed);
 
     // Step through the buffer, setting the individual bytes in a simple pattern (visible ASCII characters, DEC 32 - 126), to make
     // sure that we fill the compression library's small output buffer
     for (size_t chrIdx = 0; chrIdx < bufSize(decompressed); chrIdx++)
-        chr[chrIdx] = (unsigned char)(chrIdx % 94 + 32);
+        chr[chrIdx] = (uint8_t)(chrIdx % 94 + 32);
 
     bufUsedSet(decompressed, bufSize(decompressed));
 
@@ -313,7 +313,6 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("lz4"))
     {
-#ifdef HAVE_LIBLZ4
         // Run standard test suite
         testSuite(compressTypeLz4, "lz4 -dc", 4);
 
@@ -351,9 +350,6 @@ testRun(void)
 
         TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, lz4DecompressToLog, buffer, sizeof(buffer)), "lz4DecompressToLog");
         TEST_RESULT_Z(buffer, "{inputSame: true, inputOffset: 999, frameDone false, done: true}", "check log");
-#else
-        TEST_ERROR(compressTypePresent(compressTypeLz4), OptionInvalidValueError, "pgBackRest not built with lz4 support");
-#endif // HAVE_LIBLZ4
     }
 
     // *****************************************************************************************************************************

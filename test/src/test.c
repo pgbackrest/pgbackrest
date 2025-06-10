@@ -49,6 +49,7 @@ The test code is included directly so it can freely interact with the included C
 #define TEST_PROJECT_EXE                                            "{[C_TEST_PROJECT_EXE]}"
 
 #ifdef HRN_FEATURE_STRING
+STRING_DECLARE(TEST_PROJECT_EXE_STR);
 STRING_EXTERN(TEST_PROJECT_EXE_STR, TEST_PROJECT_EXE);
 #endif
 
@@ -56,6 +57,7 @@ STRING_EXTERN(TEST_PROJECT_EXE_STR, TEST_PROJECT_EXE);
 #define TEST_PATH                                                   "{[C_TEST_PATH]}"
 
 #ifdef HRN_FEATURE_STRING
+STRING_DECLARE(TEST_PATH_STR);
 STRING_EXTERN(TEST_PATH_STR, TEST_PATH);
 #endif
 
@@ -63,6 +65,7 @@ STRING_EXTERN(TEST_PATH_STR, TEST_PATH);
 #define HRN_PATH_REPO                                               "{[C_HRN_PATH_REPO]}"
 
 #ifdef HRN_FEATURE_STRING
+STRING_DECLARE(HRN_PATH_REPO_STR);
 STRING_EXTERN(HRN_PATH_REPO_STR, HRN_PATH_REPO);
 #endif
 
@@ -70,6 +73,7 @@ STRING_EXTERN(HRN_PATH_REPO_STR, HRN_PATH_REPO);
 #define HRN_PATH                                                    "{[C_HRN_PATH]}"
 
 #ifdef HRN_FEATURE_STRING
+STRING_DECLARE(HRN_PATH_STR);
 STRING_EXTERN(HRN_PATH_STR, HRN_PATH);
 #endif
 
@@ -79,7 +83,14 @@ STRING_EXTERN(HRN_PATH_STR, HRN_PATH);
 #define TEST_USER_ID_Z                                              "{[C_TEST_USER_ID]}"
 #define TEST_USER_LEN                                               "{[C_TEST_USER_LEN]}"
 
+// VM for integration testing
+#define TEST_VM                                                     "{[C_TEST_VM]}"
+
+// PostgreSQL version for integration testing
+#define TEST_PG_VERSION                                             "{[C_TEST_PG_VERSION]}"
+
 #ifdef HRN_FEATURE_STRING
+STRING_DECLARE(TEST_USER_STR);
 STRING_EXTERN(TEST_USER_STR, TEST_USER);
 #endif
 
@@ -89,6 +100,7 @@ STRING_EXTERN(TEST_USER_STR, TEST_USER);
 #define TEST_GROUP_ID_Z                                             "{[C_TEST_GROUP_ID]}"
 
 #ifdef HRN_FEATURE_STRING
+STRING_DECLARE(TEST_GROUP_STR);
 STRING_EXTERN(TEST_GROUP_STR, TEST_GROUP);
 #endif
 
@@ -98,16 +110,17 @@ STRING_EXTERN(TEST_GROUP_STR, TEST_GROUP);
 // Is this test running in a container?
 #define TEST_IN_CONTAINER                                           {[C_TEST_CONTAINER]}
 
+// Architecture of host
+#define TEST_ARCHITECTURE                                           "{[C_TEST_ARCHITECTURE]}"
+
 // Path to source -- used to construct __FILENAME__ tests
 #define TEST_PGB_PATH                                               "{[C_TEST_PGB_PATH]}"
 
 #include "common/harnessDebug.h"
 #include "common/harnessTest.intern.h"
 
-#ifdef HRN_FEATURE_LOG
-#include "common/harnessLog.h"
-void harnessLogLevelDefaultSet(LogLevel logLevel);
-#endif
+// Is log expect testing enabled?
+#define TEST_LOG_EXPECT                                             {[C_TEST_LOG_EXPECT]}
 
 #ifdef HRN_FEATURE_MEMCONTEXT
 #include "common/memContext.h"
@@ -115,7 +128,6 @@ void harnessLogLevelDefaultSet(LogLevel logLevel);
 
 #ifdef HRN_FEATURE_LOG
 #include "common/harnessLog.h"
-void harnessLogLevelDefaultSet(LogLevel logLevel);
 #endif
 
 {[C_TEST_INCLUDE]}
@@ -196,9 +208,14 @@ main(int argListSize, const char *argList[])
         argList[0],                 // Test exe
         TEST_PROJECT_EXE,           // Project exe
         TEST_IN_CONTAINER,          // Is this test running in a container?
+        TEST_LOG_EXPECT,            // Is log expect testing enabled?
         {[C_TEST_IDX]},             // The 0-based index of this test
         {[C_TEST_TIMING]},          // Is timing enabled (may be disabled for reproducible documentation)
+        TEST_ARCHITECTURE,          // Test architecture
         TEST_PATH,                  // Path where tests write data
+        TEST_USER,                  // User running the test
+        TEST_VM,                    // VM for integration testing
+        TEST_PG_VERSION,            // PostgreSQL version for integration testing
         HRN_PATH,                   // Path where the harness stores temp files (expect, diff, etc.)
         HRN_PATH_REPO);             // Path with a copy of the repository
 

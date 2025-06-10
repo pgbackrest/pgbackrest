@@ -6,6 +6,7 @@ Repository List Command
 #include <unistd.h>
 
 #include "command/repo/common.h"
+#include "command/repo/ls.h"
 #include "common/debug.h"
 #include "common/io/fdWrite.h"
 #include "common/log.h"
@@ -62,6 +63,9 @@ storageListRenderInfo(const StorageInfo *const info, IoWrite *const write, const
         {
             ioWriteStr(write, strNewFmt(",\"size\":%" PRIu64, info->size));
             ioWriteStr(write, strNewFmt(",\"time\":%" PRId64, (int64_t)info->timeModified));
+
+            if (info->versionId != NULL)
+                ioWriteStr(write, strNewFmt(",\"version\":%s", strZ(jsonFromVar(VARSTR(info->versionId)))));
         }
 
         if (info->type == storageTypeLink)
@@ -80,7 +84,7 @@ storageListRenderInfo(const StorageInfo *const info, IoWrite *const write, const
 }
 
 static void
-storageListRender(IoWrite *write)
+storageListRender(IoWrite *const write)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(IO_WRITE, write);
@@ -115,9 +119,9 @@ storageListRender(IoWrite *write)
         THROW(ParamInvalidError, "only one path may be specified");
 
     // Get options
-    bool json = cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON ? true : false;
-    const String *expression = cfgOptionStrNull(cfgOptFilter);
-    RegExp *regExp = expression == NULL ? NULL : regExpNew(expression);
+    const bool json = cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON ? true : false;
+    const String *const expression = cfgOptionStrNull(cfgOptFilter);
+    RegExp *const regExp = expression == NULL ? NULL : regExpNew(expression);
 
     ioWriteOpen(write);
 

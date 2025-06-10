@@ -8,6 +8,7 @@ BZ2 Compress
 
 #include "common/compress/bz2/common.h"
 #include "common/compress/bz2/compress.h"
+#include "common/compress/common.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.h"
 #include "common/log.h"
@@ -66,7 +67,7 @@ bz2CompressFreeResource(THIS_VOID)
 Compress data
 ***********************************************************************************************************************************/
 static void
-bz2CompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
+bz2CompressProcess(THIS_VOID, const Buffer *const uncompressed, Buffer *const compressed)
 {
     THIS(Bz2Compress);
 
@@ -97,7 +98,10 @@ bz2CompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
             this->stream.avail_in = (unsigned int)bufUsed(uncompressed);
 
             // bzip2 does not accept const input buffers
-            this->stream.next_in = (char *)UNCONSTIFY(unsigned char *, bufPtrConst(uncompressed));
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
+            this->stream.next_in = (char *)UNCONSTIFY(uint8_t *, bufPtrConst(uncompressed));
+#pragma GCC diagnostic pop
         }
     }
 
@@ -106,7 +110,7 @@ bz2CompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
     this->stream.next_out = (char *)bufPtr(compressed) + bufUsed(compressed);
 
     // Perform compression, check for error
-    int result = bz2Error(BZ2_bzCompress(&this->stream, this->flushing ? BZ_FINISH : BZ_RUN));
+    const int result = bz2Error(BZ2_bzCompress(&this->stream, this->flushing ? BZ_FINISH : BZ_RUN));
 
     // Set buffer used space
     bufUsedSet(compressed, bufSize(compressed) - (size_t)this->stream.avail_out);
@@ -181,23 +185,9 @@ bz2CompressNew(const int level, const bool raw)
     }
     OBJ_NEW_END();
 
-    // Create param list
-    Pack *paramList;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        PackWrite *const packWrite = pckWriteNewP();
-
-        pckWriteI32P(packWrite, level);
-        pckWriteEndP(packWrite);
-
-        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
-    }
-    MEM_CONTEXT_TEMP_END();
-
     FUNCTION_LOG_RETURN(
         IO_FILTER,
         ioFilterNewP(
-            BZ2_COMPRESS_FILTER_TYPE, this, paramList, .done = bz2CompressDone, .inOut = bz2CompressProcess,
+            BZ2_COMPRESS_FILTER_TYPE, this, compressParamList(level, raw), .done = bz2CompressDone, .inOut = bz2CompressProcess,
             .inputSame = bz2CompressInputSame));
 }

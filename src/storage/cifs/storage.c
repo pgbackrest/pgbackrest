@@ -12,7 +12,8 @@ CIFS Storage
 /**********************************************************************************************************************************/
 FN_EXTERN Storage *
 storageCifsNew(
-    const String *path, mode_t modeFile, mode_t modePath, bool write, StoragePathExpressionCallback pathExpressionFunction)
+    const String *const path, const mode_t modeFile, const mode_t modePath, const bool write,
+    StoragePathExpressionCallback pathExpressionFunction)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);

@@ -14,7 +14,7 @@ Database Helper
 /**********************************************************************************************************************************/
 // Helper to get a connection to the specified pg cluster
 static Db *
-dbGetIdx(unsigned int pgIdx)
+dbGetIdx(const unsigned int pgIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(UINT, pgIdx);
@@ -22,7 +22,7 @@ dbGetIdx(unsigned int pgIdx)
 
     ASSERT(pgIdx < cfgOptionGroupIdxTotal(cfgOptGrpPg));
 
-    Db *result = NULL;
+    Db *result;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -38,7 +38,7 @@ dbGetIdx(unsigned int pgIdx)
                 NULL, storagePgIdx(pgIdx), applicationName);
         }
         else
-            result = dbNew(NULL, protocolRemoteGet(protocolStorageTypePg, pgIdx), storagePgIdx(pgIdx), applicationName);
+            result = dbNew(NULL, protocolRemoteGet(protocolStorageTypePg, pgIdx, true), storagePgIdx(pgIdx), applicationName);
 
         dbMove(result, memContextPrior());
     }
@@ -48,17 +48,17 @@ dbGetIdx(unsigned int pgIdx)
 }
 
 FN_EXTERN DbGetResult
-dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
+dbGet(const bool primaryOnly, const bool primaryRequired, const StringId standbyRequired)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BOOL, primaryOnly);
         FUNCTION_LOG_PARAM(BOOL, primaryRequired);
-        FUNCTION_LOG_PARAM(BOOL, standbyRequired);
+        FUNCTION_LOG_PARAM(STRING_ID, standbyRequired);
     FUNCTION_LOG_END();
 
     FUNCTION_AUDIT_STRUCT();
 
-    ASSERT(!(primaryOnly && standbyRequired));
+    ASSERT(!(primaryOnly && standbyRequired == CFGOPTVAL_BACKUP_STANDBY_Y));
 
     DbGetResult result = {0};
 
@@ -136,7 +136,7 @@ dbGet(bool primaryOnly, bool primaryRequired, bool standbyRequired)
         }
 
         // Error if no standby was found
-        if (result.standby == NULL && standbyRequired)
+        if (result.standby == NULL && standbyRequired == CFGOPTVAL_BACKUP_STANDBY_Y)
             THROW(DbConnectError, "unable to find standby cluster - cannot proceed");
 
         dbMove(result.primary, memContextPrior());

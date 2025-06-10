@@ -1,12 +1,14 @@
 /***********************************************************************************************************************************
 Test Command Control
 ***********************************************************************************************************************************/
-#include "common/harnessConfig.h"
-#include "common/harnessFork.h"
-#include "common/harnessStorage.h"
+#include "command/lock.h"
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 #include "storage/posix/storage.h"
+
+#include "common/harnessConfig.h"
+#include "common/harnessFork.h"
+#include "common/harnessStorage.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -253,8 +255,11 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                lockInit(STRDEF(HRN_PATH "/lock"), cfgOptionStr(cfgOptExecId), cfgOptionStr(cfgOptStanza), lockTypeArchive);
-                TEST_RESULT_BOOL(lockAcquireP(.timeout = 30000), true, "child process acquires lock");
+                lockInit(STRDEF(HRN_PATH "/lock"), cfgOptionStr(cfgOptExecId));
+                TEST_RESULT_BOOL(
+                    lockAcquireP(cmdLockFileName(cfgOptionStr(cfgOptStanza), lockTypeArchive, 1)), true, "create archive lock");
+                TEST_RESULT_BOOL(
+                    lockAcquireP(cmdLockFileName(cfgOptionStr(cfgOptStanza), lockTypeArchive, 2)), true, "create archive lock");
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -339,6 +344,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(hrnStorage, "lock/db-archive" LOCK_FILE_EXT, .comment = "create empty archive lock file for stanza");
         HRN_STORAGE_PUT_Z(hrnStorage, "lock/db1-backup" LOCK_FILE_EXT, " ", .comment = "create non-empty lock file other stanza");
 
+        lockInit(STRDEF(HRN_PATH "/lock"), STRDEF("1"));
         TEST_RESULT_VOID(cmdStop(), "no stanza, create stop file, ignore non lock file");
         TEST_STORAGE_EXISTS(hrnStorage, "lock/all" STOP_FILE_EXT, .comment = "stanza stop file created");
         TEST_STORAGE_LIST(

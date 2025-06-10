@@ -4,6 +4,7 @@ Start Command
 #include "build.auto.h"
 
 #include "command/control/common.h"
+#include "command/control/start.h"
 #include "common/debug.h"
 #include "config/config.h"
 #include "storage/helper.h"
@@ -18,7 +19,7 @@ cmdStart(void)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Remove the stop file so processes can run
-        String *stopFile = lockStopFileName(cfgOptionStrNull(cfgOptStanza));
+        const String *const stopFile = lockStopFileName(cfgOptionStrNull(cfgOptStanza));
 
         // If the stop file exists, then remove it
         if (storageExistsP(storageLocal(), stopFile))

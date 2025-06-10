@@ -209,7 +209,7 @@ eval
                     '        "subject": ' . trim((JSON::PP->new()->allow_nonref()->pretty())->encode($rhGitLog->{subject}));
 
                 # Skip the body if it is empty or a release (since we already have the release note content)
-                if ($rhGitLog->{subject} !~ /^v[0-9]{1,2}\.[0-9]{1,2}\: /g && defined($rhGitLog->{body}))
+                if ($rhGitLog->{subject} !~ /^v[0-9]{1,2}\.[0-9]{1,2}(\.[0-9]+){0,1}\: /g && defined($rhGitLog->{body}))
                 {
                     $strGitLog .=
                         ",\n" .
@@ -239,7 +239,7 @@ eval
         {
             &log(INFO, "Generate RHEL documentation");
 
-            executeTest("${strDocExe} --deploy --key-var=os-type=rhel --out=pdf", {bShowOutputAsync => true});
+            executeTest("${strDocExe} --deploy --key-var=os-type=rhel --out=html", {bShowOutputAsync => true});
 
             if (!defined($strVm))
             {

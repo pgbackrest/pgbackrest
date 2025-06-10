@@ -13,6 +13,6 @@ Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN StorageRead *storageReadRemoteNew(
     StorageRemote *storage, ProtocolClient *client, const String *name, bool ignoreMissing, bool compressible,
-    unsigned int compressLevel, uint64_t offset, const Variant *limit);
+    unsigned int compressLevel, uint64_t offset, const Variant *limit, bool version, const String *versionId);
 
 #endif

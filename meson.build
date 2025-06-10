@@ -4,9 +4,9 @@
 project(
     'pgbackrest',
     ['c'],
-    version: '2.47dev',
+    version: '2.56.0dev',
     license: 'MIT',
-    meson_version: '>=0.45',
+    meson_version: '>=0.47',
     default_options: [
         # Core options
         'buildtype=release',
@@ -30,9 +30,9 @@ cc = meson.get_compiler('c')
 # OS-specific settings
 ####################################################################################################################################
 if host_machine.system() == 'linux'
-    add_global_arguments('-D_POSIX_C_SOURCE=200809L', language : 'c')
+    add_global_arguments('-D_POSIX_C_SOURCE=200809L', language: 'c')
 elif host_machine.system() == 'darwin'
-    add_global_arguments('-D_DARWIN_C_SOURCE', language : 'c')
+    add_global_arguments('-D_DARWIN_C_SOURCE', language: 'c')
 endif
 
 ####################################################################################################################################
@@ -40,6 +40,9 @@ endif
 ####################################################################################################################################
 # Enable as many additional warnings as possible to catch potential errors
 warning_enable = [
+    # Warn whenever a pointer is cast so as to remove a type qualifier from the target type
+    '-Wcast-qual',
+
     # Warn for implicit conversions that may alter a value
     '-Wconversion',
 
@@ -49,17 +52,32 @@ warning_enable = [
     # Warn when an if-else has identical branches
     '-Wduplicated-branches',
 
-    # Warn if the format string is not a string literal and cannot be checked
-    '-Wformat-nonliteral',
+    # Warn if floating-point values are used in equality comparisons
+    '--Wfloat-equal',
 
-    # Enable -Wformat plus additional format checks
+    # Enable -Wformat plus -Wnonnull, -Wformat-nonliteral, -Wformat-security, and -Wformat-y2k
     '-Wformat=2',
+
+    # Warn about calls to formatted input/output functions such as sprintf and vsprintf that might overflow the destination buffer
+    '-Wformat-overflow=2',
 
     # Warn if the format string requires an unsigned argument and the argument is signed and vice versa
     '-Wformat-signedness',
 
+    # Warn about uninitialized variables which are initialized with themselves
+    '-Winit-self',
+
+    # Warn if a global function is defined without a previous prototype declaration
+    '-Wmissing-prototypes',
+
+    # Warn if a global variable is defined without a previous declaration
+    '-Wmissing-variable-declarations',
+
     # Warn about anything that depends on the “size of” a function type or of void
     '-Wpointer-arith',
+
+    # Warn if anything is declared more than once in the same scope, even when the extra declaration is valid and changes nothing
+    '-Wredundant-decls',
 
     # Warn if a function is declared or defined without specifying the argument types
     '-Wstrict-prototypes',
@@ -79,9 +97,6 @@ warning_disable = [
 
     # Warn if a structure’s initializer has some fields missing. Disable so we can initialize with {0}.
     '-Wno-missing-field-initializers',
-
-    # Warn when a switch case falls through. Disable because this an useful aspect of switches and tests should catch problems.
-    '-Wno-implicit-fallthrough',
 ]
 
 add_project_arguments(cc.get_supported_arguments(warning_enable, warning_disable), language: 'c')
@@ -114,15 +129,17 @@ endif
 # reproducible builds and minimizes the file path in debug messages, just like an in-tree make build. For test source, prefix with
 # test/ in case there are any module name collisions.
 ####################################################################################################################################
+python = import('python').find_installation()
+
 file_prefix = run_command(
     [
-        'python3',
+        python,
         '-c',
         'import sys, os; print(os.path.relpath(sys.argv[1], sys.argv[2]))',
         meson.current_source_dir(),
         meson.current_build_dir(),
     ],
-    # check: true, # This should be set when the minimum supported meson version is >= 0.47
+    check: true,
 ).stdout().strip()
 
 add_project_arguments(cc.get_supported_arguments('-fmacro-prefix-map=@0@/src/=' . format(file_prefix)), language: 'c')
@@ -132,6 +149,16 @@ add_project_arguments(cc.get_supported_arguments('-fmacro-prefix-map=@0@/test/sr
 # Build configuration
 ####################################################################################################################################
 configuration = configuration_data()
+
+# Ensure the C compiler supports __builtin_clzl()
+if not cc.links('''int main(int arg, char **argv) {__builtin_clzl(1);}''')
+    error('compiler must support __builtin_clzl()')
+endif
+
+# Ensure the C compiler supports __builtin_bswap64()
+if not cc.links('''int main(int arg, char **argv) {__builtin_bswap64(1);}''')
+    error('compiler must support __builtin_bswap64()')
+endif
 
 # Find optional backtrace library
 lib_backtrace = cc.find_library('backtrace', required: false)
@@ -143,15 +170,11 @@ endif
 # Find required bz2 library
 lib_bz2 = cc.find_library('bz2')
 
-# Find optional lz4 library
-lib_lz4 = dependency('liblz4', required: false)
-
-if lib_lz4.found()
-    configuration.set('HAVE_LIBLZ4', true, description: 'Is liblz4 present?')
-endif
+# Find required lz4 library
+lib_lz4 = dependency('liblz4')
 
 # Find required openssl library
-lib_openssl = dependency('openssl')
+lib_openssl = dependency('openssl', version : '>=1.1.1')
 
 # Find required pq library
 lib_pq = dependency('libpq')
@@ -165,18 +188,29 @@ lib_yaml = dependency('yaml-0.1')
 # Find required gz library
 lib_z = dependency('zlib')
 
+configuration.set('ZLIB_CONST', true, description: 'Require zlib const input buffer')
+
 # Find optional libssh2 library
-lib_ssh2 = dependency('libssh2', required: false)
+lib_ssh2 = dependency('libssh2', required: get_option('libssh2'))
 
 if lib_ssh2.found()
     configuration.set('HAVE_LIBSSH2', true, description: 'Is libssh2 present?')
 endif
 
 # Find optional zstd library
-lib_zstd = dependency('libzstd', version: '>=1.0', required: false)
+lib_zstd = dependency('libzstd', version: '>=1.0', required: get_option('libzstd'))
 
 if lib_zstd.found()
     configuration.set('HAVE_LIBZST', true, description: 'Is libzstd present?')
+endif
+
+# Suppress -Wsign-conversion for C libraries (e.g. musl) that do no accept int without warning for FD_*() macros
+if not cc.compiles(
+        '''#include <sys/select.h>
+        int main(int arg, char **argv) {int fd = 1; fd_set s; FD_ZERO(&s); FD_SET(fd, &s); FD_ISSET(fd, &s);}''',
+        args: ['-Wsign-conversion', '-Werror'])
+    message('Disabling -Wsign-conversion because int is not accepted without warning by FD_*() macros')
+    add_project_arguments(cc.get_supported_arguments('-Wno-sign-conversion'), language: 'c')
 endif
 
 # Check if the C compiler supports _Static_assert()
@@ -207,8 +241,15 @@ configuration.set(
     description: 'Indicate that a function is formatted like printf (and provide format and args position)'
 )
 
+# Set FN_STRFTIME macro
+configuration.set(
+    'FN_STRFTIME(fmt)', '__attribute__((format(strftime, fmt, 0)))',
+    description: 'Indicate that a function is formatted like strftime (and provide format position)'
+)
+
 ####################################################################################################################################
 # Include subdirs
 ####################################################################################################################################
 subdir('src')
+subdir('doc/src')
 subdir('test/src')

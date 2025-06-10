@@ -72,9 +72,12 @@ typedef struct TestRequestParam
     bool noBucket;
     bool upload;
     bool noAuth;
+    bool multiPart;
+    const char *path;
     const char *object;
     const char *query;
     const char *contentRange;
+    const char *contentType;
     const char *content;
     const char *range;
 } TestRequestParam;
@@ -85,8 +88,10 @@ typedef struct TestRequestParam
 static void
 testRequest(IoWrite *write, const char *verb, TestRequestParam param)
 {
-    String *request = strCatFmt(
-        strNew(), "%s %s/storage/v1/b%s", verb, param.upload ? "/upload" : "", param.noBucket ? "" : "/bucket/o");
+    String *const request =
+        param.path != NULL ?
+            strCatFmt(strNew(), "%s %s", verb, param.path) :
+            strCatFmt(strNew(), "%s %s/storage/v1/b%s", verb, param.upload ? "/upload" : "", param.noBucket ? "" : "/bucket/o");
 
     // Add object
     if (param.object != NULL)
@@ -109,6 +114,17 @@ testRequest(IoWrite *write, const char *verb, TestRequestParam param)
     // Add content-range
     if (param.contentRange != NULL)
         strCatFmt(request, "content-range:bytes %s\r\n", param.contentRange);
+
+    // Add content-type
+    if (param.contentType != NULL)
+        strCatFmt(request, "content-type:%s\r\n", param.contentType);
+
+    // Add multipart content-type
+    if (param.multiPart)
+    {
+        ASSERT(param.contentType == NULL);
+        strCatZ(request, "content-type:multipart/mixed; boundary=" HTTP_MULTIPART_BOUNDARY_INIT "\r\n");
+    }
 
     // Add host
     strCatFmt(request, "host:%s\r\n", strZ(hrnServerHost()));
@@ -134,6 +150,7 @@ typedef struct TestResponseParam
 {
     VAR_PARAM_HEADER;
     unsigned int code;
+    bool multiPart;
     const char *header;
     const char *content;
     const Variant *contentSize;
@@ -170,6 +187,10 @@ testResponse(IoWrite *write, TestResponseParam param)
     if (param.header != NULL)
         strCatFmt(response, "%s\r\n", param.header);
 
+    // Add multipart content-type
+    if (param.multiPart)
+        strCatZ(response, "content-type:multipart/mixed; boundary=" HTTP_MULTIPART_BOUNDARY_INIT "\r\n");
+
     // Content
     if (param.content != NULL)
     {
@@ -199,12 +220,6 @@ testRun(void)
     storageHelperInit(storageHelperList);
 
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
-
-    // Get test host and ports
-    const String *const testHost = hrnServerHost();
-    const unsigned int testPort = hrnServerPort(0);
-    const unsigned int testPortAuth = hrnServerPort(1);
-    const unsigned int testPortMeta = hrnServerPort(2);
 
     // *****************************************************************************************************************************
     if (testBegin("storageRepoGet()"))
@@ -245,8 +260,8 @@ testRun(void)
             storage,
             (StorageGcs *)storageDriver(
                 storageGcsNew(
-                    STRDEF("/repo"), false, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
-                    TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
+                    STRDEF("/repo"), false, 0, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
+                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL, NULL)),
             "read-only gcs storage - service key");
         TEST_RESULT_STR_Z(httpUrlHost(storage->authUrl), "test.com", "check host");
         TEST_RESULT_STR_Z(httpUrlPath(storage->authUrl), "/token", "check path");
@@ -270,8 +285,8 @@ testRun(void)
             storage,
             (StorageGcs *)storageDriver(
                 storageGcsNew(
-                    STRDEF("/repo"), true, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
-                    TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
+                    STRDEF("/repo"), true, 0, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
+                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL, NULL)),
             "read/write gcs storage - service key");
 
         TEST_RESULT_STR_Z(
@@ -288,27 +303,30 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("StorageGcs, StorageReadGcs, and StorageWriteGcs"))
     {
-        HRN_STORAGE_PUT(storageTest, TEST_KEY_FILE, BUFSTR(strNewFmt(TEST_KEY, strZ(testHost), testPortAuth)));
-
         HRN_FORK_BEGIN()
         {
+            const String *const testHost = hrnServerHost();
+            const unsigned int testPort = hrnServerPortNext();
+            const unsigned int testPortAuth = hrnServerPortNext();
+            const unsigned int testPortMeta = hrnServerPortNext();
+
+            HRN_STORAGE_PUT(storageTest, TEST_KEY_FILE, BUFSTR(strNewFmt(TEST_KEY, strZ(testHost), testPortAuth)));
+
             HRN_FORK_CHILD_BEGIN(.prefix = "gcs server", .timeout = 10000)
             {
-                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, .port = testPort), "gcs server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort), "gcs server");
             }
             HRN_FORK_CHILD_END();
 
             HRN_FORK_CHILD_BEGIN(.prefix = "auth server", .timeout = 10000)
             {
-                TEST_RESULT_VOID(
-                    hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, .port = testPortAuth), "auth server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPortAuth), "auth server");
             }
             HRN_FORK_CHILD_END();
 
             HRN_FORK_CHILD_BEGIN(.prefix = "meta server", .timeout = 30000)
             {
-                TEST_RESULT_VOID(
-                    hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, .port = testPortMeta), "meta server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, testPortMeta), "meta server");
             }
             HRN_FORK_CHILD_END();
 
@@ -480,6 +498,8 @@ testRun(void)
 
                 StringList *argListAuto = strLstDup(argList);
                 hrnCfgArgRawStrId(argListAuto, cfgOptRepoGcsKeyType, storageGcsKeyTypeAuto);
+                hrnCfgArgRawZ(argListAuto, cfgOptRepoStorageTag, "Key1=Value1");
+                hrnCfgArgRawZ(argListAuto, cfgOptRepoStorageTag, " Key 2= Value 2");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argListAuto);
 
                 TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
@@ -491,6 +511,10 @@ testRun(void)
 
                 // Tests need the chunk size to be 16
                 ((StorageGcs *)storageDriver(storage))->chunkSize = 16;
+
+                // Store tags and set to NULL
+                const Buffer *tag = ((StorageGcs *)storageDriver(storage))->tag;
+                ((StorageGcs *)storageDriver(storage))->tag = NULL;
 
                 hrnServerScriptAccept(service);
 
@@ -590,7 +614,7 @@ testRun(void)
                 TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
                 TEST_RESULT_BOOL(storageWriteTruncate(write), true, "file will be truncated");
 
-                TEST_RESULT_VOID(storageWriteGcsClose(write->driver), "close file again");
+                TEST_RESULT_VOID(storageWriteGcsClose(ioWriteDriver(storageWriteIo(write))), "close file again");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write zero-length file");
@@ -628,9 +652,31 @@ testRun(void)
                 TEST_ERROR(storagePutP(write, NULL), FormatError, "expected size 55 for '/file.txt' but actual is 0");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("write file in chunks with nothing left over on close");
+                TEST_TITLE("write zero-length file (with tags)");
 
-                testRequestP(service, HTTP_VERB_POST, .upload = true, .query = "name=file.txt&uploadType=resumable");
+                testRequestP(
+                    service, HTTP_VERB_POST, .upload = true, .query = "name=file.txt&uploadType=resumable",
+                    .contentType = "application/json", .content = "{\"metadata\":{\" Key 2\":\" Value 2\",\"Key1\":\"Value1\"}}");
+                testResponseP(service, .header = "x-guploader-uploadid:ulid3");
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
+                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid3", .contentRange = "*/0");
+                testResponseP(service, .content = "{\"md5Hash\":\"1B2M2Y8AsgTpgAmY7PhCfg==\",\"size\":\"0\"}");
+
+                ((StorageGcs *)storageDriver(storage))->tag = tag;
+
+                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
+                TEST_RESULT_VOID(storagePutP(write, NULL), "write");
+
+                ((StorageGcs *)storageDriver(storage))->tag = NULL;
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write file in chunks with nothing left over on close (with tags)");
+
+                testRequestP(
+                    service, HTTP_VERB_POST, .upload = true, .query = "name=file.txt&uploadType=resumable",
+                    .contentType = "application/json", .content = "{\"metadata\":{\" Key 2\":\" Value 2\",\"Key1\":\"Value1\"}}");
                 testResponseP(service, .header = "x-guploader-uploadid:ulid1");
 
                 testRequestP(
@@ -641,12 +687,21 @@ testRun(void)
 
                 testRequestP(
                     service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
-                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid1", .contentRange = "16-31/32",
+                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid1", .contentRange = "16-31/*",
                     .content = "7890123456789012");
+                testResponseP(service, .code = 308);
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
+                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid1", .contentRange = "*/32");
                 testResponseP(service, .content = "{\"md5Hash\":\"dnF5x6K/8ZZRzpfSlMMM+w==\",\"size\":\"32\"}");
+
+                ((StorageGcs *)storageDriver(storage))->tag = tag;
 
                 TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write");
+
+                ((StorageGcs *)storageDriver(storage))->tag = NULL;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in chunks with something left over on close");
@@ -947,20 +1002,70 @@ testRun(void)
                         "    },"
                         "    {"
                         "      \"name\": \"path1/xxx.zzz\""
+                        "    },"
+                        "    {"
+                        "      \"name\": \"path2/file2\""
                         "    }"
                         "  ]"
                         "}");
 
-                testRequestP(service, HTTP_VERB_DELETE, .object = "path/to/test1.txt");
-                testResponseP(service);
+                testRequestP(
+                    service, HTTP_VERB_POST, .path = "/batch/storage/v1", .multiPart = true,
+                    .content =
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-transfer-encoding:binary\r\n"
+                        "content-id:0\r\n"
+                        "\r\n"
+                        "DELETE /storage/v1/b/bucket/o/path%2Fto%2Ftest1.txt HTTP/1.1\r\n"
+                        "content-length:0\r\n"
+                        "\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-transfer-encoding:binary\r\n"
+                        "content-id:1\r\n"
+                        "\r\n"
+                        "DELETE /storage/v1/b/bucket/o/path1%2Fxxx.zzz HTTP/1.1\r\n"
+                        "content-length:0\r\n"
+                        "\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-transfer-encoding:binary\r\n"
+                        "content-id:2\r\n"
+                        "\r\n"
+                        "DELETE /storage/v1/b/bucket/o/path2%2Ffile2 HTTP/1.1\r\n"
+                        "content-length:0\r\n"
+                        "\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
+                testResponseP(
+                    service, .multiPart = true,
+                    .content =
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:response-0\r\n"
+                        "\r\n"
+                        "HTTP/1.1 404 Missing\r\n\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:response-1\r\n"
+                        "\r\n"
+                        "HTTP/1.1 200 OK\r\n\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:response-2\r\n"
+                        "\r\n"
+                        "HTTP/1.1 300 Error\r\n\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
 
-                testRequestP(service, HTTP_VERB_DELETE, .object = "path1/xxx.zzz");
+                testRequestP(service, HTTP_VERB_DELETE, .object = "path2/file2");
                 testResponseP(service);
 
                 TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files from path");
+
+                ((StorageGcs *)storageDriver(storage))->deleteMax = 1;
 
                 testRequestP(service, HTTP_VERB_GET, .query = "fields=nextPageToken%2Cprefixes%2Citems%28name%29&prefix=path%2F");
                 testResponseP(
@@ -980,13 +1085,72 @@ testRun(void)
                         "  ]"
                         "}");
 
-                testRequestP(service, HTTP_VERB_DELETE, .object = "path/test1.txt");
-                testResponseP(service);
+                testRequestP(
+                    service, HTTP_VERB_POST, .path = "/batch/storage/v1", .multiPart = true,
+                    .content =
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-transfer-encoding:binary\r\n"
+                        "content-id:0\r\n"
+                        "\r\n"
+                        "DELETE /storage/v1/b/bucket/o/path%2Ftest1.txt HTTP/1.1\r\n"
+                        "content-length:0\r\n"
+                        "\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
+                testResponseP(
+                    service, .multiPart = true,
+                    .content =
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:response-0\r\n"
+                        "\r\n"
+                        "HTTP/1.1 404 OK\r\n\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
+
+                testRequestP(
+                    service, HTTP_VERB_POST, .path = "/batch/storage/v1", .multiPart = true,
+                    .content =
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-transfer-encoding:binary\r\n"
+                        "content-id:0\r\n"
+                        "\r\n"
+                        "DELETE /storage/v1/b/bucket/o/path%2Fpath1%2Fxxx.zzz HTTP/1.1\r\n"
+                        "content-length:0\r\n"
+                        "\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
+                testResponseP(
+                    service, .multiPart = true,
+                    .content =
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:response-0\r\n"
+                        "\r\n"
+                        "HTTP/1.1 305 Error\r\n"
+                        "content-length:5\r\n"
+                        "content-type:text\r\n\r\n"
+                        "ERROR"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
 
                 testRequestP(service, HTTP_VERB_DELETE, .object = "path/path1/xxx.zzz");
-                testResponseP(service);
+                testResponseP(service, .code = 300, .content = "ERROR2");
 
-                TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), "remove");
+                TEST_ERROR_FMT(
+                    storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), ProtocolError,
+                    "HTTP request failed with 300:\n"
+                    "*** Path/Query ***:\n"
+                    "DELETE /storage/v1/b/bucket/o/path%%2Fpath1%%2Fxxx.zzz\n"
+                    "*** Request Headers ***:\n"
+                    "authorization: <redacted>\n"
+                    "content-length: 0\n"
+                    "host: %s\n"
+                    "*** Response Headers ***:\n"
+                    "content-length: 6\n"
+                    "*** Response Content ***:\n"
+                    "ERROR2",
+                    strZ(hrnServerHost()));
+
+                ((StorageGcs *)storageDriver(storage))->deleteMax = STORAGE_GCS_DELETE_MAX;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("remove files in empty subpath (nothing to do)");
@@ -995,6 +1159,169 @@ testRun(void)
                 testResponseP(service, .content = "{}");
 
                 TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), "remove");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to user project");
+
+                hrnServerScriptClose(service);
+
+                StringList *argListUserProject = strLstDup(argList);
+                hrnCfgArgRawZ(argListUserProject, cfgOptRepoGcsUserProject, "usrprj");
+                hrnCfgArgRawZ(argListUserProject, cfgOptRepoRetentionFull, "1");
+                HRN_CFG_LOAD(cfgCmdExpire, argListUserProject);
+
+                TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("remove file");
+
+                testRequestP(service, HTTP_VERB_DELETE, .object = "path/to/test.txt", .query = "userProject=usrprj");
+                testResponseP(service);
+
+                TEST_RESULT_VOID(storageRemoveP(storage, STRDEF("/path/to/test.txt")), "remove");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("info for missing file");
+
+                testRequestP(service, HTTP_VERB_GET, .object = "BOGUS", .query = "fields=size%2Cupdated&userProject=usrprj");
+                testResponseP(service, .code = 404);
+
+                TEST_RESULT_BOOL(
+                    storageInfoP(storage, STRDEF("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to target time");
+
+                hrnServerScriptClose(service);
+
+                hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
+                hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+                hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-04 02:54:09+00");
+                HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+                TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("list with time limit (basic)");
+
+                testRequestP(
+                    service, HTTP_VERB_GET,
+                    .query =
+                        "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%2Csize%2Cupdated%2Cgeneration%29"
+                        "&prefix=path%2Fto%2F&versions=true");
+                testResponseP(
+                    service,
+                    .content =
+                        "{"
+                        "  \"nextPageToken\": \"ueGx\","
+                        "  \"prefixes\": ["
+                        "     \"path/to/path1/\""
+                        "  ],"
+                        "  \"items\": ["
+                        "    {"
+                        "      \"name\": \"path/to/test1.txt\","
+                        "      \"updated\": \"2024-08-04T02:54:01.999Z\","
+                        "      \"size\": \"999\","
+                        "      \"generation\": \"1724645450428444\""
+                        "    }"
+                        "  ]"
+                        "}");
+
+                testRequestP(
+                    service, HTTP_VERB_GET,
+                    .query =
+                        "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%2Csize%2Cupdated%2Cgeneration%29"
+                        "&pageToken=ueGx&prefix=path%2Fto%2F&versions=true");
+                testResponseP(
+                    service,
+                    .content =
+                        "{"
+                        "  \"prefixes\": ["
+                        "     \"path/to/path2/\""
+                        "  ],"
+                        "  \"items\": ["
+                        "    {"
+                        "      \"name\": \"path/to/test1.txt\","
+                        "      \"updated\": \"2024-08-04T02:54:09.123Z\","
+                        "      \"size\": \"787\","
+                        "      \"generation\": \"1724645450428555\""
+                        "    },"
+                        "    {"
+                        "      \"name\": \"path/to/test1.txt\","
+                        "      \"updated\": \"2024-08-04T02:54:10.123Z\""
+                        "    }"
+                        "  ]"
+                        "}");
+
+                TEST_STORAGE_LIST(
+                    storage, "/path/to",
+                    "path1/\n"
+                    "path2/\n"
+                    "test1.txt {s=787, t=1722740050, v=1724645450428555}\n",
+                    .level = storageInfoLevelBasic, .noRecurse = true);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("list with time limit (exists)");
+
+                testRequestP(
+                    service, HTTP_VERB_GET,
+                    .query =
+                        "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%2Cupdated%2Cgeneration%29"
+                        "&prefix=path%2Fto%2F&versions=true");
+                testResponseP(
+                    service,
+                    .content =
+                        "{"
+                        "  \"items\": ["
+                        "    {"
+                        "      \"name\": \"path/to/test1.txt\","
+                        "      \"updated\": \"2024-08-04T02:54:09.999Z\","
+                        "      \"generation\": \"1724645450428444\""
+                        "    }"
+                        "  ]"
+                        "}");
+
+                TEST_STORAGE_LIST(
+                    storage, "/path/to",
+                    "test1.txt\n",
+                    .noRecurse = true);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file with time limit");
+
+                testRequestP(
+                    service, HTTP_VERB_GET,
+                    .query =
+                        "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%2Csize%2Cupdated%2Cgeneration%29"
+                        "&versions=true");
+                testResponseP(
+                    service,
+                    .content =
+                        "{"
+                        "  \"items\": ["
+                        "    {"
+                        "      \"name\": \"file.txt\","
+                        "      \"updated\": \"2024-08-04T02:54:09.999Z\","
+                        "      \"size\": \"6\","
+                        "      \"generation\": \"1724645450428444\""
+                        "    }"
+                        "  ]"
+                        "}");
+
+                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media?generation=1724645450428444");
+                testResponseP(service, .content = "123456");
+
+                TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt")))), "123456", "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get missing file with time limit");
+
+                TEST_RESULT_PTR(
+                    storageGetP(storageNewReadP(storage, STRDEF("missing_file"), .ignoreMissing = true)), NULL, "missing file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 hrnServerScriptEnd(service);

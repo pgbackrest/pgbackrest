@@ -1,0 +1,9 @@
+<release date="2014-04-01" version="0.16" title="RequestTTY=yes for SSH Sessions">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <p>Added <setting>RequestTTY=yes</setting> to ssh sessions. Hoping this will prevent random lockups.</p>
+            </release-item>
+        </release-bug-list>
+    </release-core-list>
+</release>

@@ -1,0 +1,188 @@
+<release date="2020-05-26" version="2.27" title="Expiration Improvements and Compression Drivers">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="christophe.cavallie"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fix issue checking if file links are contained in path links.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="jerome.peng"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Allow <br-option>pg-path1</br-option> to be optional for synchronous <cmd>archive-push</cmd>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>The <cmd>expire</cmd> command now checks if a stop file is present.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="ctenuun"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Handle missing reason phrase in HTTP response.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="eric.radman"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Increase buffer size for <proper>lz4</proper> compression flush.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="pavel.suderevsky"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Ignore <br-option>pg-host*</br-option> and <br-option>repo-host*</br-option> options for the <cmd>remote</cmd> command.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="andrew.lecuyer"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Fix possibly missing <br-option>pg1-*</br-option> options for the <cmd>remote</cmd> command.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <commit subject="Add time-based retention for full backups."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                    <release-item-contributor id="pierre.ducroquet"/>
+                </release-item-contributor-list>
+
+                <p>Time-based retention for full backups.</p>
+
+                <p>The <br-option>--repo-retention-full-type</br-option> option allows retention of full backups based on a time period, specified in days.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add --set option to the expire command."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Ad hoc backup expiration.</p>
+
+                <p>Allow the user to remove a specified backup regardless of retention settings.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add Zstandard compression support."/>
+
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p><proper>Zstandard</proper> compression support.</p>
+
+                <p>Note that setting <br-option>compress-type=zst</br-option> will make new backups and archive incompatible (unrestorable) with prior versions of <backrest/>.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Add bzip2 compression support."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stephen.frost"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p><proper>bzip2</proper> compression support.</p>
+
+                <p>Note that setting <br-option>compress-type=bz2</br-option> will make new backups and archive incompatible (unrestorable) with prior versions of <backrest/>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add <cmd>backup</cmd>/<cmd>expire</cmd> running status to the <cmd>info</cmd> command.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Expire WAL archive only when <br-option>repo-retention-archive</br-option> threshold is met.</p>
+
+                <p>WAL prior to the first full backup was previously expired after the first full backup. Now it is preserved according to retention settings.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="brian.almeida"/>
+                    <release-item-ideator id="john.kelly"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="cynthia.shang"/>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Add local <proper>MD5</proper> implementation so <proper>S3</proper> works when <proper>FIPS</proper> is enabled.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p><postgres/> 13 beta1 support.</p>
+
+                <p>Changes to the control/catalog/WAL versions in subsequent betas may break compatibility but <backrest/> will be updated with each release to keep pace.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="stephen.frost"/>
+                </release-item-contributor-list>
+
+                <p>Reduce <br-option>buffer-size</br-option> default to <id>1MiB</id>.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Throw user-friendly error if <cmd>expire</cmd> is not run on repository host.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-reviewer id="cynthia.shang"/>
+                </release-item-contributor-list>
+
+                <p>Enforce non-null for most string options.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+</release>

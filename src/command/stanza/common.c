@@ -4,6 +4,7 @@ Stanza Commands Handler
 #include "build.auto.h"
 
 #include "command/check/common.h"
+#include "command/stanza/common.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "config/config.h"
@@ -15,7 +16,7 @@ Stanza Commands Handler
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-cipherPassGen(CipherType cipherType)
+cipherPassGen(const CipherType cipherType)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, cipherType);
@@ -25,7 +26,7 @@ cipherPassGen(CipherType cipherType)
 
     if (cipherType != cipherTypeNone)
     {
-        unsigned char buffer[48]; // 48 is the amount of entropy needed to get a 64 base key
+        uint8_t buffer[48];                                         // 48 is the amount of entropy needed to get a 64 base key
         cryptoRandomBytes(buffer, sizeof(buffer));
 
         result = strNewEncode(encodingBase64, BUF(buffer, sizeof(buffer)));
@@ -47,7 +48,7 @@ pgValidate(void)
         if (cfgOptionBool(cfgOptOnline))
         {
             // Check the primary connections (and standby, if any) and return the primary database object.
-            DbGetResult dbObject = dbGet(false, true, false);
+            const DbGetResult dbObject = dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_N);
 
             // Get the pgControl information from the pg*-path deemed to be the primary
             result = dbPgControl(dbObject.primary);

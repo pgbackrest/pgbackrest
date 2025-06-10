@@ -13,16 +13,16 @@ Archive Push Protocol Handler
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
-archivePushFileProtocol(PackRead *const param, ProtocolServer *const server)
+FN_EXTERN ProtocolServerResult *
+archivePushFileProtocol(PackRead *const param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
-        FUNCTION_LOG_PARAM(PROTOCOL_SERVER, server);
     FUNCTION_LOG_END();
 
     ASSERT(param != NULL);
-    ASSERT(server != NULL);
+
+    ProtocolServerResult *const result = protocolServerResultNewP();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -38,7 +38,7 @@ archivePushFileProtocol(PackRead *const param, ProtocolServer *const server)
         const StringList *const priorErrorList = pckReadStrLstP(param);
 
         // Read repo data
-        List *repoList = lstNewP(sizeof(ArchivePushFileRepoData));
+        List *const repoList = lstNewP(sizeof(ArchivePushFileRepoData));
 
         pckReadArrayBeginP(param);
 
@@ -63,10 +63,9 @@ archivePushFileProtocol(PackRead *const param, ProtocolServer *const server)
             priorErrorList);
 
         // Return result
-        protocolServerDataPut(server, pckWriteStrLstP(protocolPackNew(), fileResult.warnList));
-        protocolServerDataEndPut(server);
+        pckWriteStrLstP(protocolServerResultData(result), fileResult.warnList);
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_LOG_RETURN_VOID();
+    FUNCTION_LOG_RETURN(PROTOCOL_SERVER_RESULT, result);
 }

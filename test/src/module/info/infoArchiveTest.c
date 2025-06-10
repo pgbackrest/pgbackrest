@@ -28,10 +28,10 @@ testRun(void)
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6569239123849665679\n"
-            "db-version=\"9.4\"\n"
+            "db-version=\"9.5\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.4\"}\n");
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.5\"}\n");
 
         InfoArchive *info = NULL;
 
@@ -43,7 +43,7 @@ testRun(void)
         }
         MEM_CONTEXT_TEMP_END();
 
-        TEST_RESULT_STR_Z(infoArchiveId(info), "9.4-1", "archiveId set");
+        TEST_RESULT_STR_Z(infoArchiveId(info), "9.5-1", "archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->pub.infoPg, "infoPg set");
         TEST_RESULT_STR(infoArchiveCipherPass(info), NULL, "no cipher sub");
 
@@ -61,8 +61,8 @@ testRun(void)
 
         // Create the same content by creating a new object
         TEST_ASSIGN(
-            info, infoArchiveNew(PG_VERSION_94, 6569239123849665679, NULL), "infoArchiveNew() - no sub cipher");
-        TEST_RESULT_STR_Z(infoArchiveId(info), "9.4-1", "archiveId set");
+            info, infoArchiveNew(PG_VERSION_95, 6569239123849665679, NULL), "infoArchiveNew() - no sub cipher");
+        TEST_RESULT_STR_Z(infoArchiveId(info), "9.5-1", "archiveId set");
         TEST_RESULT_PTR(infoArchivePg(info), info->pub.infoPg, "infoPg set");
         TEST_RESULT_STR(infoArchiveCipherPass(info), NULL, "no cipher sub");
         TEST_RESULT_INT(infoPgDataTotal(infoArchivePg(info)), 1, "history set");
@@ -97,10 +97,10 @@ testRun(void)
         TEST_TITLE("increment history");
 
         InfoPgData infoPgData = {0};
-        TEST_RESULT_VOID(infoArchivePgSet(info, PG_VERSION_94, 6569239123849665679), "add another infoPg");
+        TEST_RESULT_VOID(infoArchivePgSet(info, PG_VERSION_95, 6569239123849665679), "add another infoPg");
         TEST_RESULT_INT(infoPgDataTotal(infoArchivePg(info)), 2, "history incremented");
         TEST_ASSIGN(infoPgData, infoPgDataCurrent(infoArchivePg(info)), "get current infoPgData");
-        TEST_RESULT_INT(infoPgData.version, PG_VERSION_94, "version set");
+        TEST_RESULT_INT(infoPgData.version, PG_VERSION_95, "version set");
         TEST_RESULT_UINT(infoPgData.systemId, 6569239123849665679, "systemId set");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -115,24 +115,24 @@ testRun(void)
             "[db]\n"
             "db-id=2\n"
             "db-system-id=6626363367545678089\n"
-            "db-version=\"9.5\"\n"
+            "db-version=\"17\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
-            "2={\"db-id\":6626363367545678089,\"db-version\":\"9.5\"}\n");
+            "1={\"db-id\":6625592122879095702,\"db-version\":\"9.6\"}\n"
+            "2={\"db-id\":6626363367545678089,\"db-version\":\"17\"}\n");
 
         TEST_ASSIGN(info, infoArchiveNewLoad(ioBufferReadNew(contentLoad)), "new archive info");
-        TEST_RESULT_STR_Z(infoArchiveIdHistoryMatch(info, 2, 90500, 6626363367545678089), "9.5-2", "full match found");
+        TEST_RESULT_STR_Z(infoArchiveIdHistoryMatch(info, 2, 170000, 6626363367545678089), "17-2", "full match found");
 
-        TEST_RESULT_STR_Z(infoArchiveIdHistoryMatch(info, 2, 90400, 6625592122879095702), "9.4-1", "partial match found");
-
-        TEST_ERROR(
-            infoArchiveIdHistoryMatch(info, 2, 90400, 6625592122879095799), ArchiveMismatchError,
-            "unable to retrieve the archive id for database version '9.4' and system-id '6625592122879095799'");
+        TEST_RESULT_STR_Z(infoArchiveIdHistoryMatch(info, 2, 90600, 6625592122879095702), "9.6-1", "partial match found");
 
         TEST_ERROR(
-            infoArchiveIdHistoryMatch(info, 2, 90400, 6626363367545678089), ArchiveMismatchError,
-            "unable to retrieve the archive id for database version '9.4' and system-id '6626363367545678089'");
+            infoArchiveIdHistoryMatch(info, 2, 90500, 6625592122879095799), ArchiveMismatchError,
+            "unable to retrieve the archive id for database version '9.5' and system-id '6625592122879095799'");
+
+        TEST_ERROR(
+            infoArchiveIdHistoryMatch(info, 2, 90500, 6626363367545678089), ArchiveMismatchError,
+            "unable to retrieve the archive id for database version '9.5' and system-id '6626363367545678089'");
     }
 
     // *****************************************************************************************************************************

@@ -13,4 +13,7 @@ Functions
 // Render help
 void bldHlpRender(const Storage *const storageRepo, const BldCfg bldCfg, const BldHlp bldHlp);
 
+// Render xml as text
+String *bldHlpRenderXml(const XmlNode *xml);
+
 #endif

@@ -19,11 +19,17 @@ GCS Storage
 #include "common/io/tls/client.h"
 #include "common/log.h"
 #include "common/regExp.h"
+#include "common/stat.h"
 #include "common/type/json.h"
 #include "common/type/object.h"
 #include "storage/gcs/read.h"
 #include "storage/gcs/write.h"
 #include "storage/posix/storage.h"
+
+/***********************************************************************************************************************************
+Defaults
+***********************************************************************************************************************************/
+#define STORAGE_GCS_DELETE_MAX                                      100
 
 /***********************************************************************************************************************************
 HTTP headers
@@ -42,6 +48,8 @@ STRING_EXTERN(GCS_QUERY_NAME_STR,                                   GCS_QUERY_NA
 STRING_STATIC(GCS_QUERY_PAGE_TOKEN_STR,                             "pageToken");
 STRING_STATIC(GCS_QUERY_PREFIX_STR,                                 "prefix");
 STRING_EXTERN(GCS_QUERY_UPLOAD_ID_STR,                              GCS_QUERY_UPLOAD_ID);
+STRING_STATIC(GCS_QUERY_VERSIONS_STR,                               "versions");
+STRING_STATIC(GCS_QUERY_USER_PROJECT_STR,                           "userProject");
 
 /***********************************************************************************************************************************
 JSON tokens
@@ -53,6 +61,7 @@ VARIANT_STRDEF_STATIC(GCS_JSON_ERROR_DESCRIPTION_VAR,               "error_descr
 VARIANT_STRDEF_STATIC(GCS_JSON_EXPIRES_IN_VAR,                      "expires_in");
 #define GCS_JSON_ITEMS                                              "items"
 VARIANT_STRDEF_STATIC(GCS_JSON_ITEMS_VAR,                           GCS_JSON_ITEMS);
+VARIANT_STRDEF_EXTERN(GCS_JSON_GENERATION_VAR,                      GCS_JSON_GENERATION);
 VARIANT_STRDEF_EXTERN(GCS_JSON_MD5_HASH_VAR,                        GCS_JSON_MD5_HASH);
 VARIANT_STRDEF_EXTERN(GCS_JSON_NAME_VAR,                            GCS_JSON_NAME);
 #define GCS_JSON_NEXT_PAGE_TOKEN                                    "nextPageToken"
@@ -66,12 +75,13 @@ VARIANT_STRDEF_STATIC(GCS_JSON_TOKEN_URI_VAR,                       "token_uri")
 #define GCS_JSON_UPDATED                                            "updated"
 VARIANT_STRDEF_STATIC(GCS_JSON_UPDATED_VAR,                         GCS_JSON_UPDATED);
 
-// Fields required when listing files
-#define GCS_FIELD_LIST                                                                                                             \
-    GCS_JSON_NEXT_PAGE_TOKEN "," GCS_JSON_PREFIXES "," GCS_JSON_ITEMS "(" GCS_JSON_NAME
-
-STRING_STATIC(GCS_FIELD_LIST_MIN_STR,                               GCS_FIELD_LIST ")");
-STRING_STATIC(GCS_FIELD_LIST_MAX_STR,                               GCS_FIELD_LIST "," GCS_JSON_SIZE "," GCS_JSON_UPDATED ")");
+/***********************************************************************************************************************************
+Statistics constants
+***********************************************************************************************************************************/
+STRING_STATIC(GCS_STAT_REMOVE_STR,                                  "gcs.rm");
+STRING_STATIC(GCS_STAT_REMOVE_BATCH_STR,                            "gcs.rm.batch");
+STRING_STATIC(GCS_STAT_REMOVE_BATCH_PART_STR,                       "gcs.rm.batch.part");
+STRING_STATIC(GCS_STAT_REMOVE_BATCH_RETRY_STR,                      "gcs.rm.batch.retry");
 
 /***********************************************************************************************************************************
 Object type
@@ -87,10 +97,12 @@ struct StorageGcs
     const String *bucket;                                           // Bucket to store data in
     const String *endpoint;                                         // Endpoint
     size_t chunkSize;                                               // Block size for resumable upload
+    unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
+    const Buffer *tag;                                              // Tags to be applied to objects
+    const String *userProject;                                      // Project ID
 
     StorageGcsKeyType keyType;                                      // Auth key type
-    const String *credential;                                       // Credential (client email)
-    const String *privateKey;                                       // Private key in PEM format
+    const String *key;                                              // Key (value depends on key type)
     String *token;                                                  // Token
     time_t tokenTimeExpire;                                         // Token expiration time (if service auth)
     HttpUrl *authUrl;                                               // URL for authentication server
@@ -125,7 +137,7 @@ storageGcsAuthToken(HttpRequest *const request, const time_t timeBegin)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Get the response
-        KeyValue *const kvResponse = varKv(jsonToVar(strNewBuf(httpResponseContent(httpRequestResponse(request, true)))));
+        const KeyValue *const kvResponse = varKv(jsonToVar(strNewBuf(httpResponseContent(httpRequestResponse(request, true)))));
 
         // Check for an error
         const String *const error = varStr(kvGet(kvResponse, GCS_JSON_ERROR_VAR));
@@ -165,7 +177,7 @@ Based on the documentation at https://developers.google.com/identity/protocols/o
 ***********************************************************************************************************************************/
 // Helper to construct a JSON Web Token
 static String *
-storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
+storageGcsAuthJwt(StorageGcs *const this, const time_t timeBegin)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_GCS, this);
@@ -173,10 +185,18 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
     FUNCTION_TEST_END();
 
     // Static header with dot delimiter
-    String *result = strCatZ(strNew(), "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.");
+    String *const result = strCatZ(strNew(), "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.");
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Load client email and private key
+        const KeyValue *const kvKey = varKv(
+            jsonToVar(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), this->key)))));
+        const String *const clientEmail = varStr(kvGet(kvKey, GCS_JSON_CLIENT_EMAIL_VAR));
+        const String *const privateKeyRaw = varStr(kvGet(kvKey, GCS_JSON_PRIVATE_KEY_VAR));
+
+        CHECK(FormatError, clientEmail != NULL && privateKeyRaw != NULL, "credentials missing");
+
         // Add claim
         strCatEncode(
             result, encodingBase64Url,
@@ -184,13 +204,13 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
                 strNewFmt(
                     "{\"iss\":\"%s\",\"scope\":\"https://www.googleapis.com/auth/devstorage.read%s\",\"aud\":\"%s\""
                     ",\"exp\":%" PRIu64 ",\"iat\":%" PRIu64 "}",
-                    strZ(this->credential), this->write ? "_write" : "_only", strZ(httpUrl(this->authUrl)),
+                    strZ(clientEmail), this->write ? "_write" : "_only", strZ(httpUrl(this->authUrl)),
                     (uint64_t)timeBegin + 3600, (uint64_t)timeBegin)));
 
         // Sign with RSA key
-        volatile BIO *bio = NULL;
-        volatile EVP_PKEY *privateKey = NULL;
-        volatile EVP_MD_CTX *sign = NULL;
+        BIO *volatile bio = NULL;
+        EVP_PKEY *volatile privateKey = NULL;
+        EVP_MD_CTX *volatile sign = NULL;
 
         cryptoInit();
 
@@ -198,26 +218,24 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
         {
             // Load key
             bio = BIO_new(BIO_s_mem());
-            BIO_write((BIO *)bio, strZ(this->privateKey), (int)strSize(this->privateKey));
+            BIO_write(bio, strZ(privateKeyRaw), (int)strSize(privateKeyRaw));
 
-            privateKey = PEM_read_bio_PrivateKey((BIO *)bio, NULL, NULL, NULL);
+            privateKey = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
             cryptoError(privateKey == NULL, "unable to read PEM");
 
             // Create signature
             sign = EVP_MD_CTX_create();
+            cryptoError(EVP_DigestSignInit(sign, NULL, EVP_sha256(), NULL, privateKey) <= 0, "unable to init");
             cryptoError(
-                EVP_DigestSignInit((EVP_MD_CTX *)sign, NULL, EVP_sha256(), NULL, (EVP_PKEY *)privateKey) <= 0, "unable to init");
-            cryptoError(
-                EVP_DigestSignUpdate((EVP_MD_CTX *)sign, (unsigned char *)strZ(result), (unsigned int)strSize(result)) <= 0,
-                "unable to update");
+                EVP_DigestSignUpdate(sign, (const uint8_t *)strZ(result), (unsigned int)strSize(result)) <= 0, "unable to update");
 
             size_t signatureLen = 0;
-            cryptoError(EVP_DigestSignFinal((EVP_MD_CTX *)sign, NULL, &signatureLen) <= 0, "unable to get size");
+            cryptoError(EVP_DigestSignFinal(sign, NULL, &signatureLen) <= 0, "unable to get size");
 
-            Buffer *signature = bufNew(signatureLen);
+            Buffer *const signature = bufNew(signatureLen);
             bufUsedSet(signature, bufSize(signature));
 
-            cryptoError(EVP_DigestSignFinal((EVP_MD_CTX *)sign, bufPtr(signature), &signatureLen) <= 0, "unable to finalize");
+            cryptoError(EVP_DigestSignFinal(sign, bufPtr(signature), &signatureLen) <= 0, "unable to finalize");
 
             // Add dot delimiter and signature
             strCatChr(result, '.');
@@ -225,13 +243,9 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
         }
         FINALLY()
         {
-            BIO_free((BIO *)bio);
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
-            EVP_MD_CTX_cleanup((EVP_MD_CTX *)sign);
-#else
-            EVP_MD_CTX_free((EVP_MD_CTX *)sign);
-#endif
-            EVP_PKEY_free((EVP_PKEY *)privateKey);
+            BIO_free(bio);
+            EVP_MD_CTX_free(sign);
+            EVP_PKEY_free(privateKey);
         }
         TRY_END();
     }
@@ -241,7 +255,7 @@ storageGcsAuthJwt(StorageGcs *this, time_t timeBegin)
 }
 
 static StorageGcsAuthTokenResult
-storageGcsAuthService(StorageGcs *this, time_t timeBegin)
+storageGcsAuthService(StorageGcs *const this, const time_t timeBegin)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_GCS, this);
@@ -257,16 +271,16 @@ storageGcsAuthService(StorageGcs *this, time_t timeBegin)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        String *content = strNewFmt(
+        const String *const content = strNewFmt(
             "grant_type=urn%%3Aietf%%3Aparams%%3Aoauth%%3Agrant-type%%3Ajwt-bearer&assertion=%s",
             strZ(storageGcsAuthJwt(this, timeBegin)));
 
-        HttpHeader *header = httpHeaderNew(NULL);
+        HttpHeader *const header = httpHeaderNew(NULL);
         httpHeaderAdd(header, HTTP_HEADER_HOST_STR, httpUrlHost(this->authUrl));
         httpHeaderAdd(header, HTTP_HEADER_CONTENT_TYPE_STR, HTTP_HEADER_CONTENT_TYPE_APP_FORM_URL_STR);
         httpHeaderAdd(header, HTTP_HEADER_CONTENT_LENGTH_STR, strNewFmt("%zu", strSize(content)));
 
-        HttpRequest *request = httpRequestNewP(
+        HttpRequest *const request = httpRequestNewP(
             this->authClient, HTTP_VERB_POST_STR, httpUrlPath(this->authUrl), NULL, .header = header, .content = BUFSTR(content));
 
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -286,7 +300,7 @@ Get authentication token automatically for instances running in GCE.
 Based on the documentation at https://cloud.google.com/compute/docs/access/create-enable-service-accounts-for-instances#applications
 ***********************************************************************************************************************************/
 static StorageGcsAuthTokenResult
-storageGcsAuthAuto(StorageGcs *this, time_t timeBegin)
+storageGcsAuthAuto(StorageGcs *const this, const time_t timeBegin)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_GCS, this);
@@ -302,12 +316,12 @@ storageGcsAuthAuto(StorageGcs *this, time_t timeBegin)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        HttpHeader *header = httpHeaderNew(NULL);
+        HttpHeader *const header = httpHeaderNew(NULL);
         httpHeaderAdd(header, HTTP_HEADER_HOST_STR, httpUrlHost(this->authUrl));
         httpHeaderAdd(header, GCS_HEADER_METADATA_FLAVOR_STR, GCS_HEADER_GOOGLE_STR);
         httpHeaderAdd(header, HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
 
-        HttpRequest *request = httpRequestNewP(
+        HttpRequest *const request = httpRequestNewP(
             this->authClient, HTTP_VERB_GET_STR, httpUrlPath(this->authUrl), NULL, .header = header);
 
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -325,7 +339,7 @@ storageGcsAuthAuto(StorageGcs *this, time_t timeBegin)
 Generate authorization header and add it to the supplied header list
 ***********************************************************************************************************************************/
 static void
-storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
+storageGcsAuth(StorageGcs *const this, HttpHeader *const httpHeader)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_GCS, this);
@@ -343,12 +357,12 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
         {
             ASSERT(this->keyType == storageGcsKeyTypeAuto || this->keyType == storageGcsKeyTypeService);
 
-            time_t timeBegin = time(NULL);
+            const time_t timeBegin = time(NULL);
 
             // If the current token has expired then request a new one
             if (timeBegin >= this->tokenTimeExpire)
             {
-                StorageGcsAuthTokenResult tokenResult =
+                const StorageGcsAuthTokenResult tokenResult =
                     this->keyType == storageGcsKeyTypeAuto ?
                         storageGcsAuthAuto(this, timeBegin) : storageGcsAuthService(this, timeBegin);
 
@@ -376,8 +390,38 @@ storageGcsAuth(StorageGcs *this, HttpHeader *httpHeader)
 /***********************************************************************************************************************************
 Process Gcs request
 ***********************************************************************************************************************************/
+// Helper to generate request path
+static String *
+storageGcsRequestPath(StorageGcs *const this, const String *const object, const bool bucket, const bool upload)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_GCS, this);
+        FUNCTION_TEST_PARAM(STRING, object);
+        FUNCTION_TEST_PARAM(BOOL, bucket);
+        FUNCTION_TEST_PARAM(BOOL, upload);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    String *const result = strNew();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        strCatFmt(result, "%s/storage/v1/b", upload ? "/upload" : "");
+
+        if (bucket)
+            strCatFmt(result, "/%s/o", strZ(this->bucket));
+
+        if (object != NULL)
+            strCatFmt(result, "/%s", strZ(httpUriEncode(strSub(object, 1), false)));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN(STRING, result);
+}
+
 FN_EXTERN HttpRequest *
-storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAsyncParam param)
+storageGcsRequestAsync(StorageGcs *const this, const String *const verb, StorageGcsRequestAsyncParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_GCS, this);
@@ -385,10 +429,13 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         FUNCTION_LOG_PARAM(BOOL, param.noBucket);
         FUNCTION_LOG_PARAM(BOOL, param.upload);
         FUNCTION_LOG_PARAM(BOOL, param.noAuth);
+        FUNCTION_LOG_PARAM(BOOL, param.tag);
+        FUNCTION_LOG_PARAM(STRING, param.path);
         FUNCTION_LOG_PARAM(STRING, param.object);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
+        FUNCTION_LOG_PARAM(LIST, param.contentList);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -400,28 +447,64 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Generate path
-        String *path = strCatFmt(strNew(), "%s/storage/v1/b", param.upload ? "/upload" : "");
+        const String *const path =
+            param.path != NULL ? param.path : storageGcsRequestPath(this, param.object, !param.noBucket, param.upload);
 
-        if (!param.noBucket)
-            strCatFmt(path, "/%s/o", strZ(this->bucket));
-
-        if (param.object != NULL)
-            strCatFmt(path, "/%s", strZ(httpUriEncode(strSub(param.object, 1), false)));
-
-        // Create header list and add content length
-        HttpHeader *requestHeader =
+        // Create header list
+        HttpHeader *const requestHeader =
             param.header == NULL ? httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
+
+        // Add tags
+        if (param.tag)
+        {
+            ASSERT(param.content == NULL);
+            ASSERT(this->tag != NULL);
+
+            httpHeaderPut(requestHeader, HTTP_HEADER_CONTENT_TYPE_STR, HTTP_HEADER_CONTENT_TYPE_JSON_STR);
+            param.content = this->tag;
+        }
 
         // Set host
         httpHeaderPut(requestHeader, HTTP_HEADER_HOST_STR, this->endpoint);
 
+        // Set content or construct multipart content
+        const Buffer *content = param.content;
+
+        if (param.contentList != NULL)
+        {
+            ASSERT(param.content == NULL);
+
+            HttpRequestMulti *const requestMulti = httpRequestMultiNew();
+
+            for (unsigned int contentIdx = 0; contentIdx < lstSize(param.contentList); contentIdx++)
+            {
+                const StorageGcsRequestPart *const requestPart = lstGet(param.contentList, contentIdx);
+                HttpHeader *const partHeader = httpHeaderNew(this->headerRedactList);
+
+                httpHeaderAdd(partHeader, HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
+                httpRequestMultiAddP(
+                    requestMulti, strNewFmt("%u", contentIdx), requestPart->verb,
+                    storageGcsRequestPath(this, requestPart->object, true, false), .header = partHeader);
+            }
+
+            httpRequestMultiHeaderAdd(requestMulti, requestHeader);
+            content = httpRequestMultiContent(requestMulti);
+        }
+
         // Set content length
         httpHeaderPut(
             requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
-            param.content == NULL || bufEmpty(param.content) ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
+            content == NULL || bufEmpty(content) ? ZERO_STR : strNewFmt("%zu", bufUsed(content)));
 
         // Make a copy of the query so it can be modified
-        HttpQuery *query = httpQueryDupP(param.query, .redactList = this->queryRedactList);
+        HttpQuery *const query =
+            this->userProject != NULL && param.query == NULL ?
+                httpQueryNewP(.redactList = this->queryRedactList) :
+                httpQueryDupP(param.query, .redactList = this->queryRedactList);
+
+        // Add user project
+        if (this->userProject != NULL)
+            httpQueryAdd(query, GCS_QUERY_USER_PROJECT_STR, this->userProject);
 
         // Generate authorization header
         if (!param.noAuth)
@@ -431,7 +514,7 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = httpRequestNewP(
-                this->httpClient, verb, path, .query = query, .header = requestHeader, .content = param.content);
+                this->httpClient, verb, path, .query = query, .header = requestHeader, .content = content);
         }
         MEM_CONTEXT_END();
     }
@@ -441,7 +524,7 @@ storageGcsRequestAsync(StorageGcs *this, const String *verb, StorageGcsRequestAs
 }
 
 FN_EXTERN HttpResponse *
-storageGcsResponse(HttpRequest *request, StorageGcsResponseParam param)
+storageGcsResponse(HttpRequest *const request, const StorageGcsResponseParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(HTTP_REQUEST, request);
@@ -482,6 +565,8 @@ storageGcsRequest(StorageGcs *const this, const String *const verb, const Storag
         FUNCTION_LOG_PARAM(BOOL, param.noBucket);
         FUNCTION_LOG_PARAM(BOOL, param.upload);
         FUNCTION_LOG_PARAM(BOOL, param.noAuth);
+        FUNCTION_LOG_PARAM(BOOL, param.tag);
+        FUNCTION_LOG_PARAM(STRING, param.path);
         FUNCTION_LOG_PARAM(STRING, param.object);
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
@@ -492,8 +577,9 @@ storageGcsRequest(StorageGcs *const this, const String *const verb, const Storag
     FUNCTION_LOG_END();
 
     HttpRequest *const request = storageGcsRequestAsyncP(
-        this, verb, .noBucket = param.noBucket, .upload = param.upload, .noAuth = param.noAuth, .object = param.object,
-        .header = param.header, .query = param.query, .content = param.content);
+        this, verb, .noBucket = param.noBucket, .upload = param.upload, .noAuth = param.noAuth, .tag = param.tag,
+        .path = param.path, .object = param.object, .header = param.header, .query = param.query, .content = param.content,
+        .contentList = param.contentList);
     HttpResponse *const result = storageGcsResponseP(
         request, .allowMissing = param.allowMissing, .allowIncomplete = param.allowIncomplete, .contentIo = param.contentIo);
 
@@ -504,6 +590,8 @@ storageGcsRequest(StorageGcs *const this, const String *const verb, const Storag
 
 /***********************************************************************************************************************************
 General function for listing files to be used by other list routines
+
+Based on the documentation at https://cloud.google.com/storage/docs/json_api/v1/objects/list
 ***********************************************************************************************************************************/
 // Helper to convert YYYY-MM-DDTHH:MM:SS.MSECZ format to time_t. This format is very nearly ISO-8601 except for the inclusion of
 // milliseconds, which are discarded here.
@@ -522,7 +610,7 @@ storageGcsCvtTime(const String *const time)
 }
 
 static void
-storageGcsInfoFile(StorageInfo *info, const KeyValue *file)
+storageGcsInfoFile(StorageInfo *const info, const KeyValue *const file)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_INFO, info);
@@ -537,8 +625,8 @@ storageGcsInfoFile(StorageInfo *info, const KeyValue *file)
 
 static void
 storageGcsListInternal(
-    StorageGcs *this, const String *path, StorageInfoLevel level, const String *expression, bool recurse,
-    StorageListCallback callback, void *callbackData)
+    StorageGcs *const this, const String *const path, const StorageInfoLevel level, const String *const expression,
+    const bool recurse, const time_t targetTime, StorageListCallback callback, void *const callbackData)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_GCS, this);
@@ -546,6 +634,7 @@ storageGcsListInternal(
         FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(STRING, expression);
         FUNCTION_LOG_PARAM(BOOL, recurse);
+        FUNCTION_LOG_PARAM(TIME, targetTime);
         FUNCTION_LOG_PARAM(FUNCTIONP, callback);
         FUNCTION_LOG_PARAM_P(VOID, callbackData);
     FUNCTION_LOG_END();
@@ -558,15 +647,10 @@ storageGcsListInternal(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Build the base prefix by stripping off the initial /
-        const String *basePrefix;
-
-        if (strSize(path) == 1)
-            basePrefix = EMPTY_STR;
-        else
-            basePrefix = strNewFmt("%s/", strZ(strSub(path, 1)));
+        const String *const basePrefix = strSize(path) == 1 ? EMPTY_STR : strNewFmt("%s/", strZ(strSub(path, 1)));
 
         // Get the expression prefix when possible to limit initial results
-        const String *expressionPrefix = regExpPrefix(expression);
+        const String *const expressionPrefix = regExpPrefix(expression);
 
         // If there is an expression prefix then use it to build the query prefix, otherwise query prefix is base prefix
         const String *queryPrefix;
@@ -582,7 +666,7 @@ storageGcsListInternal(
         }
 
         // Create query
-        HttpQuery *query = httpQueryNewP();
+        HttpQuery *const query = httpQueryNewP();
 
         // Add the delimiter to not recurse
         if (!recurse)
@@ -592,8 +676,35 @@ storageGcsListInternal(
         if (!strEmpty(queryPrefix))
             httpQueryAdd(query, GCS_QUERY_PREFIX_STR, queryPrefix);
 
-        // Add fields to limit the amount of data returned
-        httpQueryAdd(query, GCS_QUERY_FIELDS_STR, level >= storageInfoLevelBasic ? GCS_FIELD_LIST_MAX_STR : GCS_FIELD_LIST_MIN_STR);
+        // Specify fields to limit the amount of data returned
+        String *const fields = strCatZ(
+            strNew(), GCS_JSON_NEXT_PAGE_TOKEN "," GCS_JSON_PREFIXES "," GCS_JSON_ITEMS "(" GCS_JSON_NAME);
+
+        if (level >= storageInfoLevelBasic || targetTime != 0)
+        {
+            if (level >= storageInfoLevelBasic)
+                strCatZ(fields, "," GCS_JSON_SIZE);
+
+            strCatZ(fields, "," GCS_JSON_UPDATED);
+
+            if (targetTime != 0)
+                strCatZ(fields, "," GCS_JSON_GENERATION);
+        }
+
+        strCatChr(fields, ')');
+        httpQueryAdd(query, GCS_QUERY_FIELDS_STR, fields);
+
+        // Add versions
+        if (targetTime != 0)
+            httpQueryAdd(query, GCS_QUERY_VERSIONS_STR, TRUE_STR);
+
+        // Store last info so it can be updated across requests for versioning
+        String *const nameLast = strNew();
+        String *const versionIdLast = strNew();
+        StorageInfo infoLast = {.level = level, .name = nameLast};
+
+        if (targetTime != 0)
+            infoLast.versionId = versionIdLast;
 
         // Loop as long as a continuation marker returned
         HttpRequest *request = NULL;
@@ -618,10 +729,10 @@ storageGcsListInternal(
                 else
                     response = storageGcsRequestP(this, HTTP_VERB_GET_STR, .query = query);
 
-                KeyValue *content = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
+                const KeyValue *const content = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
 
                 // If next page token exists then send an async request to get more data
-                const String *nextPageToken = varStr(kvGet(content, GCS_JSON_NEXT_PAGE_TOKEN_VAR));
+                const String *const nextPageToken = varStr(kvGet(content, GCS_JSON_NEXT_PAGE_TOKEN_VAR));
 
                 if (nextPageToken != NULL)
                 {
@@ -636,7 +747,7 @@ storageGcsListInternal(
                 }
 
                 // Get prefix list
-                const VariantList *prefixList = varVarLst(kvGet(content, GCS_JSON_PREFIXES_VAR));
+                const VariantList *const prefixList = varVarLst(kvGet(content, GCS_JSON_PREFIXES_VAR));
 
                 if (prefixList != NULL)
                 {
@@ -663,44 +774,63 @@ storageGcsListInternal(
                 }
 
                 // Get file list
-                const VariantList *fileList = varVarLst(kvGet(content, GCS_JSON_ITEMS_VAR));
+                const VariantList *const fileList = varVarLst(kvGet(content, GCS_JSON_ITEMS_VAR));
 
                 if (fileList != NULL)
                 {
                     for (unsigned int fileIdx = 0; fileIdx < varLstSize(fileList); fileIdx++)
                     {
-                        const KeyValue *file = varKv(varLstGet(fileList, fileIdx));
+                        const KeyValue *const file = varKv(varLstGet(fileList, fileIdx));
                         CHECK(FormatError, file != NULL, "file missing");
 
-                        // Get file name
-                        StorageInfo info =
-                        {
-                            .level = level,
-                            .name = varStr(kvGet(file, GCS_JSON_NAME_VAR)),
-                            .exists = true,
-                        };
+                        // Get file name and strip off the base prefix when present
+                        const String *name = varStr(kvGet(file, GCS_JSON_NAME_VAR));
+                        CHECK(FormatError, name != NULL, "file name missing");
 
-                        CHECK(FormatError, info.name != NULL, "file name missing");
-
-                        // Strip off the base prefix when present
                         if (!strEmpty(basePrefix))
-                            info.name = strSub(info.name, strSize(basePrefix));
+                            name = strSub(name, strSize(basePrefix));
+
+                        // Return info for last file if new file
+                        if (infoLast.exists && !strEq(name, nameLast))
+                        {
+                            callback(callbackData, &infoLast);
+                            infoLast.exists = false;
+                        }
+
+                        // If targeting by time exclude versions that are newer than targetTime. Note that the API does not provide
+                        // delete markers so the filtering will also show files that have been deleted rather than replaced with a
+                        // new version.
+                        if (targetTime != 0)
+                        {
+                            infoLast.timeModified = storageGcsCvtTime(varStr(kvGet(file, GCS_JSON_UPDATED_VAR)));
+
+                            // Skip this version if it is newer than the time limit
+                            if (infoLast.timeModified > targetTime)
+                                continue;
+                        }
+
+                        // Update last name and set exists
+                        strCat(strTrunc(nameLast), name);
+                        infoLast.exists = true;
 
                         // Add basic level info if requested
                         if (level >= storageInfoLevelBasic)
                         {
-                            info.type = storageTypeFile;
-                            storageGcsInfoFile(&info, file);
-                        }
+                            storageGcsInfoFile(&infoLast, file);
 
-                        // Callback with info
-                        callback(callbackData, &info);
+                            if (targetTime != 0)
+                                strCat(strTrunc(versionIdLast), varStr(kvGet(file, GCS_JSON_GENERATION_VAR)));
+                        }
                     }
                 }
             }
             MEM_CONTEXT_TEMP_END();
         }
         while (request != NULL);
+
+        // Callback with last info if it exists
+        if (infoLast.exists)
+            callback(callbackData, &infoLast);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -778,6 +908,7 @@ storageGcsList(THIS_VOID, const String *const path, const StorageInfoLevel level
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(ENUM, level);
         FUNCTION_LOG_PARAM(STRING, param.expression);
+        FUNCTION_LOG_PARAM(TIME, param.targetTime);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -785,14 +916,14 @@ storageGcsList(THIS_VOID, const String *const path, const StorageInfoLevel level
 
     StorageList *const result = storageLstNew(level);
 
-    storageGcsListInternal(this, path, level, param.expression, false, storageGcsListCallback, result);
+    storageGcsListInternal(this, path, level, param.expression, false, param.targetTime, storageGcsListCallback, result);
 
     FUNCTION_LOG_RETURN(STORAGE_LIST, result);
 }
 
 /**********************************************************************************************************************************/
 static StorageRead *
-storageGcsNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInterfaceNewReadParam param)
+storageGcsNewRead(THIS_VOID, const String *const file, const bool ignoreMissing, const StorageInterfaceNewReadParam param)
 {
     THIS(StorageGcs);
 
@@ -802,17 +933,20 @@ storageGcsNewRead(THIS_VOID, const String *file, bool ignoreMissing, StorageInte
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(UINT64, param.offset);
         FUNCTION_LOG_PARAM(VARIANT, param.limit);
+        FUNCTION_LOG_PARAM(BOOL, param.version);
+        FUNCTION_LOG_PARAM(STRING, param.versionId);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadGcsNew(this, file, ignoreMissing, param.offset, param.limit));
+    FUNCTION_LOG_RETURN(
+        STORAGE_READ, storageReadGcsNew(this, file, ignoreMissing, param.offset, param.limit, param.version, param.versionId));
 }
 
 /**********************************************************************************************************************************/
 static StorageWrite *
-storageGcsNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam param)
+storageGcsNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNewWriteParam param)
 {
     THIS(StorageGcs);
 
@@ -830,17 +964,103 @@ storageGcsNewWrite(THIS_VOID, const String *file, StorageInterfaceNewWriteParam 
     ASSERT(param.group == NULL);
     ASSERT(param.timeModified == 0);
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteGcsNew(this, file, this->chunkSize));
+    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteGcsNew(this, file, this->chunkSize, this->tag != NULL));
 }
 
 /**********************************************************************************************************************************/
+#define GCS_HEADER_CONTENTID_RESPONSE                               "response-"
+
 typedef struct StorageGcsPathRemoveData
 {
     StorageGcs *this;                                               // Storage Object
     MemContext *memContext;                                         // Mem context to create requests in
     HttpRequest *request;                                           // Async remove request
+    List *requestContentList;                                       // Content list for async request
+    List *contentList;                                              // Content list currently being built
     const String *path;                                             // Root path of remove
 } StorageGcsPathRemoveData;
+
+static void
+storageGcsPathRemoveInternal(StorageGcsPathRemoveData *const data)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, data);
+    FUNCTION_TEST_END();
+
+    ASSERT(data != NULL);
+    ASSERT(data->this != NULL);
+
+    // Get response for async request
+    if (data->request != NULL)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            HttpResponse *const response = storageGcsResponseP(data->request);
+            HttpResponseMulti *const responseMulti = httpResponseMultiNew(
+                httpResponseContent(response), httpHeaderGet(httpResponseHeader(response), HTTP_HEADER_CONTENT_TYPE_STR));
+
+            // Loop through all response parts
+            HttpResponse *responsePart = httpResponseMultiNext(responseMulti);
+            CHECK(FormatError, responsePart != NULL, "at least one response part is required");
+
+            do
+            {
+                // If not OK and not missing then retry
+                if (!httpResponseCodeOk(responsePart) && httpResponseCode(responsePart) != HTTP_RESPONSE_CODE_NOT_FOUND)
+                {
+                    // Extract and check content-id header
+                    const String *const contentId = httpHeaderGet(httpResponseHeader(responsePart), HTTP_HEADER_CONTENT_ID_STR);
+                    CHECK(FormatError, contentId != NULL, HTTP_HEADER_CONTENT_ID " header is not present");
+                    CHECK_FMT(
+                        FormatError,
+                        strBeginsWithZ(contentId, GCS_HEADER_CONTENTID_RESPONSE),
+                        HTTP_HEADER_CONTENT_ID " header '%s' must begin with '" GCS_HEADER_CONTENTID_RESPONSE "'", strZ(contentId));
+
+                    // Use content-id to get content
+                    const unsigned int contentIdx = cvtZToUInt(strZ(strSub(contentId, sizeof(GCS_HEADER_CONTENTID_RESPONSE) - 1)));
+                    const StorageGcsRequestPart *const content = lstGet(data->requestContentList, contentIdx);
+
+                    // Retry remove
+                    statInc(GCS_STAT_REMOVE_BATCH_RETRY_STR);
+                    storageGcsRequestP(data->this, content->verb, .object = content->object, .allowMissing = true);
+                }
+                else
+                    statInc(GCS_STAT_REMOVE_BATCH_PART_STR);
+
+                httpResponseFree(responsePart);
+                responsePart = httpResponseMultiNext(responseMulti);
+            }
+            while (responsePart != NULL);
+        }
+        MEM_CONTEXT_TEMP_END();
+
+        // Free request
+        httpRequestFree(data->request);
+        data->request = NULL;
+
+        // Free content list
+        lstFree(data->requestContentList);
+    }
+
+    // Send new async request if there is more to remove
+    if (data->contentList != NULL)
+    {
+        statInc(GCS_STAT_REMOVE_BATCH_STR);
+
+        MEM_CONTEXT_BEGIN(data->memContext)
+        {
+            data->request = storageGcsRequestAsyncP(
+                data->this, HTTP_VERB_POST_STR, .path = STRDEF("/batch/storage/v1"), .contentList = data->contentList);
+        }
+        MEM_CONTEXT_END();
+
+        // Store the content list for use in error handling
+        data->requestContentList = data->contentList;
+        data->contentList = NULL;
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
 
 static void
 storageGcsPathRemoveCallback(void *const callbackData, const StorageInfo *const info)
@@ -853,32 +1073,41 @@ storageGcsPathRemoveCallback(void *const callbackData, const StorageInfo *const 
     ASSERT(callbackData != NULL);
     ASSERT(info != NULL);
 
-    StorageGcsPathRemoveData *const data = callbackData;
-
-    // Get response from prior async request
-    if (data->request != NULL)
-    {
-        httpResponseFree(storageGcsResponseP(data->request, .allowMissing = true));
-        httpRequestFree(data->request);
-        data->request = NULL;
-    }
-
     // Only delete files since paths don't really exist
     if (info->type == storageTypeFile)
     {
-        MEM_CONTEXT_BEGIN(data->memContext)
+        StorageGcsPathRemoveData *const data = callbackData;
+
+        if (data->contentList == NULL)
         {
-            data->request = storageGcsRequestAsyncP(
-                data->this, HTTP_VERB_DELETE_STR, .object = strNewFmt("%s/%s", strZ(data->path), strZ(info->name)));
+            MEM_CONTEXT_BEGIN(data->memContext)
+            {
+                data->contentList = lstNewP(sizeof(StorageGcsRequestPart));
+            }
+            MEM_CONTEXT_END();
         }
-        MEM_CONTEXT_END();
+
+        MEM_CONTEXT_OBJ_BEGIN(data->contentList)
+        {
+            const StorageGcsRequestPart content =
+            {
+                .verb = HTTP_VERB_DELETE_STR,
+                .object = strNewFmt("%s/%s", strZ(data->path), strZ(info->name)),
+            };
+
+            lstAdd(data->contentList, &content);
+        }
+        MEM_CONTEXT_OBJ_END();
+
+        if (lstSize(data->contentList) == data->this->deleteMax)
+            storageGcsPathRemoveInternal(data);
     }
 
     FUNCTION_TEST_RETURN_VOID();
 }
 
 static bool
-storageGcsPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfacePathRemoveParam param)
+storageGcsPathRemove(THIS_VOID, const String *const path, const bool recurse, const StorageInterfacePathRemoveParam param)
 {
     THIS(StorageGcs);
 
@@ -901,11 +1130,18 @@ storageGcsPathRemove(THIS_VOID, const String *path, bool recurse, StorageInterfa
             .path = strEq(path, FSLASH_STR) ? EMPTY_STR : path,
         };
 
-        storageGcsListInternal(this, path, storageInfoLevelType, NULL, true, storageGcsPathRemoveCallback, &data);
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            storageGcsListInternal(this, path, storageInfoLevelType, NULL, true, 0, storageGcsPathRemoveCallback, &data);
 
-        // Check response on last async request
-        if (data.request != NULL)
-            storageGcsResponseP(data.request, .allowMissing = true);
+            // Call if there is more to be removed
+            if (data.contentList != NULL)
+                storageGcsPathRemoveInternal(&data);
+
+            // Check response on last async request
+            storageGcsPathRemoveInternal(&data);
+        }
+        MEM_CONTEXT_TEMP_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -928,6 +1164,7 @@ storageGcsRemove(THIS_VOID, const String *const file, const StorageInterfaceRemo
     ASSERT(file != NULL);
     ASSERT(!param.errorOnMissing);
 
+    statInc(GCS_STAT_REMOVE_STR);
     httpResponseFree(storageGcsRequestP(this, HTTP_VERB_DELETE_STR, .object = file, .allowMissing = true));
 
     FUNCTION_LOG_RETURN_VOID();
@@ -936,6 +1173,8 @@ storageGcsRemove(THIS_VOID, const String *const file, const StorageInterfaceRemo
 /**********************************************************************************************************************************/
 static const StorageInterface storageInterfaceGcs =
 {
+    .feature = 1 << storageFeatureVersioning,
+
     .info = storageGcsInfo,
     .list = storageGcsList,
     .newRead = storageGcsNewRead,
@@ -946,23 +1185,27 @@ static const StorageInterface storageInterfaceGcs =
 
 FN_EXTERN Storage *
 storageGcsNew(
-    const String *const path, const bool write, StoragePathExpressionCallback pathExpressionFunction, const String *const bucket,
-    const StorageGcsKeyType keyType, const String *const key, const size_t chunkSize, const String *const endpoint,
-    const TimeMSec timeout, const bool verifyPeer, const String *const caFile, const String *const caPath)
+    const String *const path, const bool write, const time_t targetTime, StoragePathExpressionCallback pathExpressionFunction,
+    const String *const bucket, const StorageGcsKeyType keyType, const String *const key, const size_t chunkSize,
+    const KeyValue *const tag, const String *const endpoint, const TimeMSec timeout, const bool verifyPeer,
+    const String *const caFile, const String *const caPath, const String *const userProject)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
         FUNCTION_LOG_PARAM(BOOL, write);
+        FUNCTION_LOG_PARAM(TIME, targetTime);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(STRING, bucket);
         FUNCTION_LOG_PARAM(STRING_ID, keyType);
         FUNCTION_TEST_PARAM(STRING, key);
         FUNCTION_LOG_PARAM(SIZE, chunkSize);
+        FUNCTION_LOG_PARAM(KEY_VALUE, tag);
         FUNCTION_LOG_PARAM(STRING, endpoint);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
         FUNCTION_LOG_PARAM(STRING, caFile);
         FUNCTION_LOG_PARAM(STRING, caPath);
+        FUNCTION_LOG_PARAM(STRING, userProject);
     FUNCTION_LOG_END();
 
     ASSERT(path != NULL);
@@ -979,7 +1222,35 @@ storageGcsNew(
             .bucket = strDup(bucket),
             .keyType = keyType,
             .chunkSize = chunkSize,
+            .deleteMax = STORAGE_GCS_DELETE_MAX,
+            .userProject = strDup(userProject),
         };
+
+        // Create tag JSON buffer
+        if (write && tag != NULL)
+        {
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+                JsonWrite *const tagJson = jsonWriteObjectBegin(
+                    jsonWriteKeyStrId(jsonWriteObjectBegin(jsonWriteNewP()), STRID5("metadata", 0xd0240d0ad0)));
+                const StringList *const keyList = strLstSort(strLstNewVarLst(kvKeyList(tag)), sortOrderAsc);
+
+                for (unsigned int keyIdx = 0; keyIdx < strLstSize(keyList); keyIdx++)
+                {
+                    const String *const key = strLstGet(keyList, keyIdx);
+                    jsonWriteStr(jsonWriteKey(tagJson, key), varStr(kvGet(tag, VARSTR(key))));
+                }
+
+                const String *const tagStr = jsonWriteResult(jsonWriteObjectEnd(jsonWriteObjectEnd(tagJson)));
+
+                MEM_CONTEXT_PRIOR_BEGIN()
+                {
+                    this->tag = bufDup(BUFSTR(tagStr));
+                }
+                MEM_CONTEXT_PRIOR_END();
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
 
         // Handle auth key types
         switch (keyType)
@@ -999,15 +1270,13 @@ storageGcsNew(
             // Read data from file for service keys
             case storageGcsKeyTypeService:
             {
-                KeyValue *kvKey = varKv(jsonToVar(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key)))));
-                this->credential = varStr(kvGet(kvKey, GCS_JSON_CLIENT_EMAIL_VAR));
-                this->privateKey = varStr(kvGet(kvKey, GCS_JSON_PRIVATE_KEY_VAR));
+                const KeyValue *const kvKey = varKv(
+                    jsonToVar(strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), key)))));
                 const String *const uri = varStr(kvGet(kvKey, GCS_JSON_TOKEN_URI_VAR));
+                CHECK(FormatError, uri != NULL, "uri missing");
 
-                CHECK(FormatError, this->credential != NULL && this->privateKey != NULL && uri != NULL, "credentials missing");
-
+                this->key = strDup(key);
                 this->authUrl = httpUrlNewParseP(uri, .type = httpProtocolTypeHttps);
-
                 this->authClient = httpClientNew(
                     tlsClientNewP(
                         sckClientNew(httpUrlHost(this->authUrl), httpUrlPort(this->authUrl), timeout, timeout),
@@ -1024,7 +1293,7 @@ storageGcsNew(
         }
 
         // Parse the endpoint to extract the host and port
-        HttpUrl *url = httpUrlNewParseP(endpoint, .type = httpProtocolTypeHttps);
+        const HttpUrl *const url = httpUrlNewParseP(endpoint, .type = httpProtocolTypeHttps);
         this->endpoint = httpUrlHost(url);
 
         // Create the http client used to service requests
@@ -1045,5 +1314,6 @@ storageGcsNew(
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE, storageNew(STORAGE_GCS_TYPE, path, 0, 0, write, pathExpressionFunction, this, this->interface));
+    FUNCTION_LOG_RETURN(
+        STORAGE, storageNew(STORAGE_GCS_TYPE, path, 0, 0, write, targetTime, pathExpressionFunction, this, this->interface));
 }

@@ -12,7 +12,7 @@ Test enum and function to ensure 64-bit enums work properly
 typedef enum
 {
     testStringIdEnumAes256Cbc = STRID5("aes-256-cbc", 0xc43dfbbcdcca10),
-    testStringIdEnumRemote = STRID6("remote", 0x1543cd1521),
+    testStringIdEnumRemote = STRID6("remote9", 0x251543cd1521),
     testStringIdEnumTest = STRID5("test", 0xa4cb40),
 } TestStringIdEnum;
 
@@ -65,9 +65,26 @@ testRun(void)
         TEST_RESULT_STR_Z(strNewBuf(buffer), "12345678", "new string from buffer");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("new from double");
+        TEST_TITLE("new from division");
 
-        TEST_RESULT_STR_Z(strNewDbl(999.1), "999.1", "new");
+        TEST_RESULT_STR_Z(strNewDivP(9991, 10, .precision = 2), "999.10", "new div");
+        TEST_RESULT_STR_Z(strNewDivP(9991, 10, .precision = 2, .trim = true), "999.1", "new div");
+        TEST_RESULT_STR_Z(strNewDivP(9991, 10, .precision = 0), "999", "new div");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("new from percentage");
+
+        TEST_RESULT_STR_Z(strNewPct(2, 3), "66.67%", "new pct");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("new from time");
+
+        hrnTzSet("America/New_York");
+
+        TEST_RESULT_STR_Z(strNewTimeP("%Y%m%d-%H%M%S", 1715930051), "20240517-031411", "local");
+        TEST_RESULT_STR_Z(strNewTimeP("%Y%m%d-%H%M%S", 1715930051, .utc = true), "20240517-071411", "utc");
+
+        hrnTzSet("UTC");
 
         // -------------------------------------------------------------------------------------------------------------------------
         string = strNewFmt("formatted %s %04d", "string", 1);
@@ -141,6 +158,8 @@ testRun(void)
         String *string = strCatZ(strNew(), "XXX");
         String *string2 = strNewZ("ZZZZ");
 
+        hrnTzSet("America/New_York");
+
         TEST_RESULT_STR_Z(strCatN(string, STRDEF("XX"), 1), "XXXX", "cat N chars");
         TEST_RESULT_UINT(string->pub.extra, 60, "check extra");
         TEST_RESULT_STR_Z(strCatZ(string, ""), "XXXX", "cat empty string");
@@ -165,9 +184,19 @@ testRun(void)
             strCatEncode(string, encodingBase64, BUFSTRDEF("zzzzz")),
             "XXXXYYYY?00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$enp6eno=", "cat encode");
         TEST_RESULT_UINT(string->pub.extra, 27, "check extra");
+        TEST_RESULT_STR_Z(
+            strCatTimeP(string, "%Y%m%d-%H%M%S", 1715930051),
+            "XXXXYYYY?00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$enp6eno=20240517-031411", "cat time");
+        TEST_RESULT_STR_Z(
+            strCatTimeP(string, "%Y%m%d-%H%M%S", 1715930051, .utc = true),
+            "XXXXYYYY?00777!$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$enp6eno=20240517-03141120240517-071411",
+            "cat time");
+        TEST_RESULT_UINT(string->pub.extra, 54, "check extra");
         TEST_RESULT_VOID(strFree(string), "free string");
 
         TEST_RESULT_STR_Z(string2, "ZZZZ", "check unaltered string");
+
+        hrnTzSet("UTC");
     }
 
     // *****************************************************************************************************************************
@@ -325,6 +354,7 @@ testRun(void)
         TEST_RESULT_STR_Z(strSizeFormat(20162900), "19.2MB", "19.2 MB");
         TEST_RESULT_STR_Z(strSizeFormat(1073741824), "1GB", "1 GB");
         TEST_RESULT_STR_Z(strSizeFormat(1073741824 + 107374183), "1.1GB", "1.1 GB");
+        TEST_RESULT_STR_Z(strSizeFormat(UINT64_MAX / 10), "1717986918.3GB", "uint64 max / 10");
         TEST_RESULT_STR_Z(strSizeFormat(UINT64_MAX), "17179869183GB", "uint64 max");
     }
 
@@ -690,7 +720,7 @@ testRun(void)
         TEST_RESULT_STR_Z(strIdToStr(testStringIdEnumFunc(testStringIdEnumAes256Cbc)), "aes-256-cbc", "pass to enum param");
 
         TestStringIdEnum testEnum = testStringIdEnumRemote;
-        TEST_RESULT_STR_Z(strIdToStr(testEnum), "remote", "assign to enum");
+        TEST_RESULT_STR_Z(strIdToStr(testEnum), "remote9", "assign to enum");
 
         TEST_RESULT_STR_Z(strIdToStr(testStringIdEnumTest), "test", "pass to StringId param");
 
@@ -700,6 +730,10 @@ testRun(void)
         TEST_RESULT_UINT(strIdToLog(TEST_STR5ID2, buffer, sizeof(buffer)), 2, "string id with limited buffer");
         TEST_RESULT_UINT(strlen(buffer), 2, "    check length");
         TEST_RESULT_Z(buffer, "ab", "    check buffer");
+
+        TEST_RESULT_UINT(strIdToLog(0, buffer, sizeof(buffer)), 4, "null string id");
+        TEST_RESULT_UINT(strlen(buffer), 4, "    check length");
+        TEST_RESULT_Z(buffer, "null", "    check buffer");
     }
 
     // *****************************************************************************************************************************

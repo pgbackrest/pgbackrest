@@ -33,12 +33,23 @@ STRING_DECLARE(GCS_QUERY_UPLOAD_ID_STR);
 /***********************************************************************************************************************************
 JSON tokens
 ***********************************************************************************************************************************/
+#define GCS_JSON_GENERATION                                         "generation"
+VARIANT_DECLARE(GCS_JSON_GENERATION_VAR);
 #define GCS_JSON_MD5_HASH                                           "md5Hash"
 VARIANT_DECLARE(GCS_JSON_MD5_HASH_VAR);
 #define GCS_JSON_NAME                                               "name"
 VARIANT_DECLARE(GCS_JSON_NAME_VAR);
 #define GCS_JSON_SIZE                                               "size"
 VARIANT_DECLARE(GCS_JSON_SIZE_VAR);
+
+/***********************************************************************************************************************************
+Multi-Part request data
+***********************************************************************************************************************************/
+typedef struct StorageGcsRequestPart
+{
+    const String *object;                                           // Object to include in URI
+    const String *verb;                                             // Verb (GET, PUT, etc)
+} StorageGcsRequestPart;
 
 /***********************************************************************************************************************************
 Perform a GCS Request
@@ -50,10 +61,13 @@ typedef struct StorageGcsRequestAsyncParam
     bool noBucket;                                                  // Exclude bucket from the URI?
     bool upload;                                                    // Is an object upload?
     bool noAuth;                                                    // Exclude authentication header?
+    bool tag;                                                       // Add tags when available?
+    const String *path;                                             // URI path (this overrides object)
     const String *object;                                           // Object to include in URI
     const HttpHeader *header;                                       // Request headers
     const HttpQuery *query;                                         // Query parameters
     const Buffer *content;                                          // Request content
+    const List *contentList;                                        // Request content part list
 } StorageGcsRequestAsyncParam;
 
 #define storageGcsRequestAsyncP(this, verb, ...)                                                                                   \
@@ -81,10 +95,13 @@ typedef struct StorageGcsRequestParam
     bool noBucket;                                                  // Exclude bucket from the URI?
     bool upload;                                                    // Is an object upload?
     bool noAuth;                                                    // Exclude authentication header?
+    bool tag;                                                       // Add tags when available?
+    const String *path;                                             // URI path (this overrides object)
     const String *object;                                           // Object to include in URI
     const HttpHeader *header;                                       // Request headers
     const HttpQuery *query;                                         // Query parameters
     const Buffer *content;                                          // Request content
+    const List *contentList;                                        // Request content part list
     bool allowMissing;                                              // Allow missing files (caller can check response code)
     bool allowIncomplete;                                           // Allow incomplete resume (used for resumable upload)
     bool contentIo;                                                 // Is IoRead interface required to read content?

@@ -8,7 +8,12 @@ Azure Storage Read
 #include "common/log.h"
 #include "common/type/object.h"
 #include "storage/azure/read.h"
-#include "storage/read.intern.h"
+#include "storage/read.h"
+
+/***********************************************************************************************************************************
+Azure query tokens
+***********************************************************************************************************************************/
+STRING_STATIC(AZURE_QUERY_VERSION_ID_STR,                           "versionid");
 
 /***********************************************************************************************************************************
 Object type
@@ -46,23 +51,30 @@ storageReadAzureOpen(THIS_VOID)
 
     bool result = false;
 
-    // Request the file
-    MEM_CONTEXT_OBJ_BEGIN(this)
+    // Read if not versioned or if versionId is not null
+    if (!this->interface.version || this->interface.versionId != NULL)
     {
-        this->httpResponse = storageAzureRequestP(
-            this->storage, HTTP_VERB_GET_STR, .path = this->interface.name,
-            .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
-            .allowMissing = true, .contentIo = true);
-    }
-    MEM_CONTEXT_OBJ_END();
+        // Request the file
+        MEM_CONTEXT_OBJ_BEGIN(this)
+        {
+            this->httpResponse = storageAzureRequestP(
+                this->storage, HTTP_VERB_GET_STR, .path = this->interface.name,
+                .query =
+                    this->interface.version ?
+                        httpQueryPut(httpQueryNewP(), AZURE_QUERY_VERSION_ID_STR, this->interface.versionId) : NULL,
+                .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
+                .allowMissing = true, .contentIo = true);
+        }
+        MEM_CONTEXT_OBJ_END();
 
-    if (httpResponseCodeOk(this->httpResponse))
-    {
-        result = true;
+        if (httpResponseCodeOk(this->httpResponse))
+        {
+            result = true;
+        }
+        // Else error unless ignore missing
+        else if (!this->interface.ignoreMissing)
+            THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
     }
-    // Else error unless ignore missing
-    else if (!this->interface.ignoreMissing)
-        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
@@ -71,7 +83,7 @@ storageReadAzureOpen(THIS_VOID)
 Read from a file
 ***********************************************************************************************************************************/
 static size_t
-storageReadAzure(THIS_VOID, Buffer *buffer, bool block)
+storageReadAzure(THIS_VOID, Buffer *const buffer, const bool block)
 {
     THIS(StorageReadAzure);
 
@@ -131,7 +143,7 @@ storageReadAzureClose(THIS_VOID)
 FN_EXTERN StorageRead *
 storageReadAzureNew(
     StorageAzure *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset,
-    const Variant *const limit)
+    const Variant *const limit, const bool version, const String *const versionId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, storage);
@@ -139,6 +151,8 @@ storageReadAzureNew(
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
+        FUNCTION_LOG_PARAM(BOOL, version);
+        FUNCTION_LOG_PARAM(STRING, versionId);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -158,6 +172,8 @@ storageReadAzureNew(
                 .offset = offset,
                 .limit = varDup(limit),
                 .retry = true,
+                .version = version,
+                .versionId = strDup(versionId),
 
                 .ioInterface = (IoReadInterface)
                 {

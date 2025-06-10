@@ -25,14 +25,24 @@ struct Storage
     mode_t modeFile;
     mode_t modePath;
     bool write;
+    time_t targetTime;                                              // Target repo reads by time
+    List *cacheList;                                                // Storage cache
     StoragePathExpressionCallback *pathExpressionFunction;
 };
+
+// Storage list cache
+typedef struct StorageListCache
+{
+    String *path;                                                   // Path
+    StorageList *list;                                              // List
+} StorageListCache;
 
 /**********************************************************************************************************************************/
 FN_EXTERN Storage *
 storageNew(
     const StringId type, const String *const path, const mode_t modeFile, const mode_t modePath, const bool write,
-    StoragePathExpressionCallback pathExpressionFunction, void *const driver, const StorageInterface interface)
+    const time_t targetTime, StoragePathExpressionCallback pathExpressionFunction, void *const driver,
+    const StorageInterface interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING_ID, type);
@@ -40,6 +50,7 @@ storageNew(
         FUNCTION_LOG_PARAM(MODE, modeFile);
         FUNCTION_LOG_PARAM(MODE, modePath);
         FUNCTION_LOG_PARAM(BOOL, write);
+        FUNCTION_LOG_PARAM(TIME, targetTime);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM_P(VOID, driver);
         FUNCTION_LOG_PARAM(STORAGE_INTERFACE, interface);
@@ -71,8 +82,19 @@ storageNew(
             .modeFile = modeFile,
             .modePath = modePath,
             .write = write,
+            .targetTime = targetTime,
             .pathExpressionFunction = pathExpressionFunction,
         };
+
+        // Create storage cache list
+        if (this->targetTime != 0)
+            this->cacheList = lstNewP(sizeof(StorageListCache), .comparator = lstComparatorStr);
+
+        // If time limit is requested then versioning must be supported
+        CHECK(AssertError, targetTime == 0 || storageFeature(this, storageFeatureVersioning), "versioning required for time limit");
+
+        // If time limit is requested then storage must be read-only
+        CHECK(AssertError, targetTime == 0 || !write, "time limit requires read-only storage");
 
         // If path sync feature is enabled then path feature must be enabled
         CHECK(
@@ -103,7 +125,7 @@ storageNew(
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-storageCopy(StorageRead *source, StorageWrite *destination)
+storageCopy(StorageRead *const source, StorageWrite *const destination)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_READ, source);
@@ -141,7 +163,7 @@ storageCopy(StorageRead *source, StorageWrite *destination)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-storageExists(const Storage *this, const String *pathExp, StorageExistsParam param)
+storageExists(const Storage *const this, const String *const pathExp, const StorageExistsParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);
@@ -155,14 +177,14 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        Wait *wait = waitNew(param.timeout);
+        Wait *const wait = waitNew(param.timeout);
 
         // Loop until file exists or timeout
         do
         {
             // storageInfoLevelBasic is required here because storageInfoLevelExists will not return the type and this function
             // specifically wants to test existence of a *file*, not just the existence of anything with the specified name.
-            StorageInfo info = storageInfoP(
+            const StorageInfo info = storageInfoP(
                 this, pathExp, .level = storageInfoLevelBasic, .ignoreMissing = true, .followLink = true);
 
             // Only exists if it is a file
@@ -177,7 +199,7 @@ storageExists(const Storage *this, const String *pathExp, StorageExistsParam par
 
 /**********************************************************************************************************************************/
 FN_EXTERN Buffer *
-storageGet(StorageRead *file, StorageGetParam param)
+storageGet(StorageRead *const file, const StorageGetParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_READ, file);
@@ -207,7 +229,7 @@ storageGet(StorageRead *file, StorageGetParam param)
             else
             {
                 result = bufNew(0);
-                Buffer *read = bufNew(ioBufferSize());
+                Buffer *const read = bufNew(ioBufferSize());
 
                 do
                 {
@@ -234,7 +256,7 @@ storageGet(StorageRead *file, StorageGetParam param)
 
 /**********************************************************************************************************************************/
 FN_EXTERN StorageInfo
-storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
+storageInfo(const Storage *const this, const String *const fileExp, StorageInfoParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);
@@ -255,9 +277,9 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Build the path
-        String *file = storagePathP(this, fileExp, .noEnforce = param.noPathEnforce);
+        const String *const file = storagePathP(this, fileExp, .noEnforce = param.noPathEnforce);
 
-        // Call driver function
+        // Set level when default
         if (param.level == storageInfoLevelDefault)
             param.level = storageFeature(this, storageFeatureInfoDetail) ? storageInfoLevelDetail : storageInfoLevelBasic;
 
@@ -269,11 +291,47 @@ storageInfo(const Storage *this, const String *fileExp, StorageInfoParam param)
         }
         // Else call the driver
         else
-            result = storageInterfaceInfoP(storageDriver(this), file, param.level, .followLink = param.followLink);
+        {
+            // If targeting by time
+            if (this->targetTime != 0)
+            {
+                // Find the version to read using the cache
+                const String *const path = strPath(file);
+                StorageListCache *cache = lstFind(this->cacheList, &path);
+
+                if (cache == NULL)
+                {
+                    MEM_CONTEXT_OBJ_BEGIN(this->cacheList)
+                    {
+                        StorageList *const list = storageInterfaceListP(
+                            storageDriver(this), path, storageInfoLevelBasic, .targetTime = this->targetTime);
+
+                        if (list != NULL)
+                            storageLstSort(list, sortOrderAsc);
+
+                        cache = memNew(sizeof(StorageListCache));
+                        *cache = (StorageListCache){.path = strDup(path), .list = list};
+
+                        lstAdd(this->cacheList, cache);
+                    }
+                    MEM_CONTEXT_OBJ_END();
+
+                    lstSort(this->cacheList, sortOrderAsc);
+                }
+
+                if (cache->list != NULL)
+                {
+                    result = storageLstFind(cache->list, strBase(file));
+                    ASSERT(!result.exists || result.type != storageTypeFile || result.versionId != NULL);
+                }
+            }
+            else
+                result = storageInterfaceInfoP(storageDriver(this), file, param.level, .followLink = param.followLink);
+        }
 
         // Error if the file missing and not ignoring
         if (!result.exists && !param.ignoreMissing)
-            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_INFO_MISSING, strZ(file));
+            THROW_FMT(FileOpenError, STORAGE_ERROR_INFO_MISSING, strZ(file));
 
         // Dup the strings into the prior context
         MEM_CONTEXT_PRIOR_BEGIN()
@@ -320,7 +378,7 @@ storageNewItr(const Storage *const this, const String *const pathExp, StorageNew
         result = storageItrMove(
             storageItrNew(
                 storageDriver(this), storagePathP(this, pathExp), param.level, param.errorOnMissing, param.nullOnMissing,
-                param.recurse, param.sortOrder, param.expression),
+                param.recurse, param.sortOrder, this->targetTime, param.expression),
             memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
@@ -360,7 +418,7 @@ storageLinkCreate(
 
 /**********************************************************************************************************************************/
 FN_EXTERN StringList *
-storageList(const Storage *this, const String *pathExp, StorageListParam param)
+storageList(const Storage *const this, const String *const pathExp, const StorageListParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);
@@ -378,8 +436,8 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         StorageIterator *const storageItr = storageNewItrP(
-            this, pathExp, .errorOnMissing = param.errorOnMissing, .nullOnMissing = param.nullOnMissing,
-            .expression = param.expression);
+            this, pathExp, .level = storageInfoLevelExists, .errorOnMissing = param.errorOnMissing,
+            .nullOnMissing = param.nullOnMissing, .expression = param.expression);
 
         if (storageItr != NULL)
         {
@@ -398,7 +456,7 @@ storageList(const Storage *this, const String *pathExp, StorageListParam param)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-storageMove(const Storage *this, StorageRead *source, StorageWrite *destination)
+storageMove(const Storage *const this, StorageRead *const source, StorageWrite *const destination)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_READ, source);
@@ -438,7 +496,7 @@ storageMove(const Storage *this, StorageRead *source, StorageWrite *destination)
 
 /**********************************************************************************************************************************/
 FN_EXTERN StorageRead *
-storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam param)
+storageNewRead(const Storage *const this, const String *const fileExp, const StorageNewReadParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);
@@ -456,10 +514,22 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        const String *const path = storagePathP(this, fileExp);
+        const String *versionId = NULL;
+
+        // If targeting by time
+        if (this->targetTime != 0)
+        {
+            versionId = storageInfoP(this, fileExp, .ignoreMissing = true).versionId;
+
+            if (versionId == NULL && !param.ignoreMissing)
+                THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(path));
+        }
+
         result = storageReadMove(
             storageInterfaceNewReadP(
-                storageDriver(this), storagePathP(this, fileExp), param.ignoreMissing, .compressible = param.compressible,
-                .offset = param.offset, .limit = param.limit),
+                storageDriver(this), path, param.ignoreMissing, .compressible = param.compressible, .offset = param.offset,
+                .limit = param.limit, .version = this->targetTime != 0, .versionId = versionId),
             memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
@@ -469,7 +539,7 @@ storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam p
 
 /**********************************************************************************************************************************/
 FN_EXTERN StorageWrite *
-storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam param)
+storageNewWrite(const Storage *const this, const String *const fileExp, const StorageNewWriteParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);
@@ -492,7 +562,7 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
     // noTruncate does not work with atomic writes because a new file is always created for atomic writes
     ASSERT(!param.noTruncate || param.noAtomic);
 
-    StorageWrite *result = NULL;
+    StorageWrite *result;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -512,7 +582,7 @@ storageNewWrite(const Storage *this, const String *fileExp, StorageNewWriteParam
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
+storagePath(const Storage *const this, const String *pathExp, const StoragePathParam param)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE, this);
@@ -522,7 +592,7 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
 
     ASSERT(this != NULL);
 
-    String *result = NULL;
+    String *result;
 
     // If there is no path expression then return the base storage path
     if (pathExp == NULL)
@@ -560,14 +630,14 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
                     THROW_FMT(AssertError, "expression '%s' not valid without callback function", strZ(pathExp));
 
                 // Get position of the expression end
-                char *end = strchr(strZ(pathExp), '>');
+                const char *const end = strchr(strZ(pathExp), '>');
 
                 // Error if end is not found
                 if (end == NULL)
                     THROW_FMT(AssertError, "end > not found in path expression '%s'", strZ(pathExp));
 
                 // Create a string from the expression
-                String *expression = strNewZN(strZ(pathExp), (size_t)(end - strZ(pathExp) + 1));
+                String *const expression = strNewZN(strZ(pathExp), (size_t)(end - strZ(pathExp) + 1));
 
                 // Create a string from the path if there is anything left after the expression
                 String *path = NULL;
@@ -614,7 +684,7 @@ storagePath(const Storage *this, const String *pathExp, StoragePathParam param)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param)
+storagePathCreate(const Storage *const this, const String *const pathExp, const StoragePathCreateParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);
@@ -630,12 +700,10 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Build the path
-        String *path = storagePathP(this, pathExp);
-
         // Call driver function
         storageInterfacePathCreateP(
-            storageDriver(this), path, param.errorOnExists, param.noParentCreate, param.mode != 0 ? param.mode : this->modePath);
+            storageDriver(this), storagePathP(this, pathExp), param.errorOnExists, param.noParentCreate,
+            param.mode != 0 ? param.mode : this->modePath);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -644,7 +712,7 @@ storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateP
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-storagePathExists(const Storage *this, const String *pathExp)
+storagePathExists(const Storage *const this, const String *const pathExp)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);
@@ -656,14 +724,14 @@ storagePathExists(const Storage *this, const String *pathExp)
 
     // storageInfoLevelBasic is required here because storageInfoLevelExists will not return the type and this function specifically
     // wants to test existence of a *path*, not just the existence of anything with the specified name.
-    StorageInfo info = storageInfoP(this, pathExp, .level = storageInfoLevelBasic, .ignoreMissing = true, .followLink = true);
+    const StorageInfo info = storageInfoP(this, pathExp, .level = storageInfoLevelBasic, .ignoreMissing = true, .followLink = true);
 
     FUNCTION_LOG_RETURN(BOOL, info.exists && info.type == storageTypePath);
 }
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveParam param)
+storagePathRemove(const Storage *const this, const String *const pathExp, const StoragePathRemoveParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);
@@ -680,13 +748,11 @@ storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveP
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Build the path
-        String *path = storagePathP(this, pathExp);
+        const String *const path = storagePathP(this, pathExp);
 
         // Call driver function
         if (!storageInterfacePathRemoveP(storageDriver(this), path, param.recurse) && param.errorOnMissing)
-        {
             THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_MISSING, strZ(path));
-        }
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -695,7 +761,7 @@ storagePathRemove(const Storage *this, const String *pathExp, StoragePathRemoveP
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-storagePathSync(const Storage *this, const String *pathExp)
+storagePathSync(const Storage *const this, const String *const pathExp)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);
@@ -720,7 +786,7 @@ storagePathSync(const Storage *this, const String *pathExp)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-storagePut(StorageWrite *file, const Buffer *buffer)
+storagePut(StorageWrite *const file, const Buffer *const buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_WRITE, file);
@@ -738,7 +804,7 @@ storagePut(StorageWrite *file, const Buffer *buffer)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam param)
+storageRemove(const Storage *const this, const String *const fileExp, const StorageRemoveParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);
@@ -751,11 +817,8 @@ storageRemove(const Storage *this, const String *fileExp, StorageRemoveParam par
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Build the path
-        String *file = storagePathP(this, fileExp);
-
         // Call driver function
-        storageInterfaceRemoveP(storageDriver(this), file, .errorOnMissing = param.errorOnMissing);
+        storageInterfaceRemoveP(storageDriver(this), storagePathP(this, fileExp), .errorOnMissing = param.errorOnMissing);
     }
     MEM_CONTEXT_TEMP_END();
 

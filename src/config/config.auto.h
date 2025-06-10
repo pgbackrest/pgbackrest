@@ -18,7 +18,6 @@ Command constants
 #define CFGCMD_HELP                                                 "help"
 #define CFGCMD_INFO                                                 "info"
 #define CFGCMD_MANIFEST                                             "manifest"
-#define CFGCMD_REPO_CREATE                                          "repo-create"
 #define CFGCMD_REPO_GET                                             "repo-get"
 #define CFGCMD_REPO_LS                                              "repo-ls"
 #define CFGCMD_REPO_PUT                                             "repo-put"
@@ -34,7 +33,7 @@ Command constants
 #define CFGCMD_VERIFY                                               "verify"
 #define CFGCMD_VERSION                                              "version"
 
-#define CFG_COMMAND_TOTAL                                           24
+#define CFG_COMMAND_TOTAL                                           23
 
 /***********************************************************************************************************************************
 Option group constants
@@ -79,12 +78,14 @@ Option constants
 #define CFGOPT_EXPIRE_AUTO                                          "expire-auto"
 #define CFGOPT_FILTER                                               "filter"
 #define CFGOPT_FORCE                                                "force"
+#define CFGOPT_HELP                                                 "help"
 #define CFGOPT_IGNORE_MISSING                                       "ignore-missing"
 #define CFGOPT_IO_TIMEOUT                                           "io-timeout"
 #define CFGOPT_JOB_RETRY                                            "job-retry"
 #define CFGOPT_JOB_RETRY_INTERVAL                                   "job-retry-interval"
 #define CFGOPT_LINK_ALL                                             "link-all"
 #define CFGOPT_LINK_MAP                                             "link-map"
+#define CFGOPT_LOCK                                                 "lock"
 #define CFGOPT_LOCK_PATH                                            "lock-path"
 #define CFGOPT_LOG_LEVEL_CONSOLE                                    "log-level-console"
 #define CFGOPT_LOG_LEVEL_FILE                                       "log-level-file"
@@ -108,6 +109,8 @@ Option constants
 #define CFGOPT_REFERENCE                                            "reference"
 #define CFGOPT_REMOTE_TYPE                                          "remote-type"
 #define CFGOPT_REPO                                                 "repo"
+#define CFGOPT_REPO_TARGET_TIME                                     "repo-target-time"
+#define CFGOPT_REPORT                                               "report"
 #define CFGOPT_RESUME                                               "resume"
 #define CFGOPT_SCK_BLOCK                                            "sck-block"
 #define CFGOPT_SCK_KEEP_ALIVE                                       "sck-keep-alive"
@@ -134,8 +137,9 @@ Option constants
 #define CFGOPT_TLS_SERVER_PORT                                      "tls-server-port"
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
+#define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            175
+#define CFG_OPTION_TOTAL                                            186
 
 /***********************************************************************************************************************************
 Option value constants
@@ -144,6 +148,13 @@ Option value constants
 #define CFGOPTVAL_ARCHIVE_MODE_OFF_Z                                "off"
 #define CFGOPTVAL_ARCHIVE_MODE_PRESERVE                             STRID5("preserve", 0x2da45996500)
 #define CFGOPTVAL_ARCHIVE_MODE_PRESERVE_Z                           "preserve"
+
+#define CFGOPTVAL_BACKUP_STANDBY_N                                  STRID5("n", 0xe0)
+#define CFGOPTVAL_BACKUP_STANDBY_N_Z                                "n"
+#define CFGOPTVAL_BACKUP_STANDBY_PREFER                             STRID5("prefer", 0x245316500)
+#define CFGOPTVAL_BACKUP_STANDBY_PREFER_Z                           "prefer"
+#define CFGOPTVAL_BACKUP_STANDBY_Y                                  STRID5("y", 0x190)
+#define CFGOPTVAL_BACKUP_STANDBY_Y_Z                                "y"
 
 #define CFGOPTVAL_COMPRESS_TYPE_BZ2                                 STRID5("bz2", 0x73420)
 #define CFGOPTVAL_COMPRESS_TYPE_BZ2_Z                               "bz2"
@@ -205,6 +216,8 @@ Option value constants
 #define CFGOPTVAL_OUTPUT_JSON_Z                                     "json"
 #define CFGOPTVAL_OUTPUT_NONE                                       STRID5("none", 0x2b9ee0)
 #define CFGOPTVAL_OUTPUT_NONE_Z                                     "none"
+#define CFGOPTVAL_OUTPUT_NUM                                        STRID5("num", 0x36ae0)
+#define CFGOPTVAL_OUTPUT_NUM_Z                                      "num"
 #define CFGOPTVAL_OUTPUT_TEXT                                       STRID5("text", 0xa60b40)
 #define CFGOPTVAL_OUTPUT_TEXT_Z                                     "text"
 
@@ -268,6 +281,15 @@ Option value constants
 #define CFGOPTVAL_REPO_S3_URI_STYLE_HOST_Z                          "host"
 #define CFGOPTVAL_REPO_S3_URI_STYLE_PATH                            STRID5("path", 0x450300)
 #define CFGOPTVAL_REPO_S3_URI_STYLE_PATH_Z                          "path"
+
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_ACCEPT_NEW          STRID5("accept-new", 0x2e576e9028c610)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_ACCEPT_NEW_Z        "accept-new"
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT         STRID5("fingerprint", 0x51c9942453b9260)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_FINGERPRINT_Z       "fingerprint"
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_NONE                STRID5("none", 0x2b9ee0)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_NONE_Z              "none"
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_STRICT              STRID5("strict", 0x2834ca930)
+#define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_STRICT_Z            "strict"
 
 #define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_MD5                  STRID5("md5", 0x748d0)
 #define CFGOPTVAL_REPO_SFTP_HOST_KEY_HASH_TYPE_MD5_Z                "md5"
@@ -342,7 +364,6 @@ typedef enum
     cfgCmdHelp,
     cfgCmdInfo,
     cfgCmdManifest,
-    cfgCmdRepoCreate,
     cfgCmdRepoGet,
     cfgCmdRepoLs,
     cfgCmdRepoPut,
@@ -357,7 +378,6 @@ typedef enum
     cfgCmdStop,
     cfgCmdVerify,
     cfgCmdVersion,
-    cfgCmdNone,
 } ConfigCommand;
 
 /***********************************************************************************************************************************
@@ -409,12 +429,14 @@ typedef enum
     cfgOptExpireAuto,
     cfgOptFilter,
     cfgOptForce,
+    cfgOptHelp,
     cfgOptIgnoreMissing,
     cfgOptIoTimeout,
     cfgOptJobRetry,
     cfgOptJobRetryInterval,
     cfgOptLinkAll,
     cfgOptLinkMap,
+    cfgOptLock,
     cfgOptLockPath,
     cfgOptLogLevelConsole,
     cfgOptLogLevelFile,
@@ -477,6 +499,7 @@ typedef enum
     cfgOptRepoGcsEndpoint,
     cfgOptRepoGcsKey,
     cfgOptRepoGcsKeyType,
+    cfgOptRepoGcsUserProject,
     cfgOptRepoHardlink,
     cfgOptRepoHost,
     cfgOptRepoHostCaFile,
@@ -505,14 +528,18 @@ typedef enum
     cfgOptRepoS3KeyType,
     cfgOptRepoS3KmsKeyId,
     cfgOptRepoS3Region,
+    cfgOptRepoS3RequesterPays,
     cfgOptRepoS3Role,
+    cfgOptRepoS3SseCustomerKey,
     cfgOptRepoS3Token,
     cfgOptRepoS3UriStyle,
     cfgOptRepoSftpHost,
     cfgOptRepoSftpHostFingerprint,
+    cfgOptRepoSftpHostKeyCheckType,
     cfgOptRepoSftpHostKeyHashType,
     cfgOptRepoSftpHostPort,
     cfgOptRepoSftpHostUser,
+    cfgOptRepoSftpKnownHost,
     cfgOptRepoSftpPrivateKeyFile,
     cfgOptRepoSftpPrivateKeyPassphrase,
     cfgOptRepoSftpPublicKeyFile,
@@ -520,9 +547,12 @@ typedef enum
     cfgOptRepoStorageCaPath,
     cfgOptRepoStorageHost,
     cfgOptRepoStoragePort,
+    cfgOptRepoStorageTag,
     cfgOptRepoStorageUploadChunkSize,
     cfgOptRepoStorageVerifyTls,
+    cfgOptRepoTargetTime,
     cfgOptRepoType,
+    cfgOptReport,
     cfgOptResume,
     cfgOptSckBlock,
     cfgOptSckKeepAlive,
@@ -549,6 +579,7 @@ typedef enum
     cfgOptTlsServerPort,
     cfgOptType,
     cfgOptVerbose,
+    cfgOptVersion,
 } ConfigOption;
 
 #endif

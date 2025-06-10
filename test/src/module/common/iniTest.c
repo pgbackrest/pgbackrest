@@ -146,6 +146,7 @@ testRun(void)
         TEST_RESULT_STRLST_Z(iniGetList(ini, STRDEF("global"), STRDEF("repeat")), "1\n2\n", "key list");
         TEST_RESULT_PTR(iniGetList(ini, STRDEF("globalx"), STRDEF("repeat2")), NULL, "null key list");
 
+        TEST_RESULT_STRLST_Z(iniSectionList(ini), "global\ndb\n", "sections");
         TEST_RESULT_STRLST_Z(iniSectionKeyList(ini, STRDEF("global")), "compress\nrepeat\n", "section keys");
         TEST_RESULT_STRLST_Z(iniSectionKeyList(ini, STRDEF("bogus")), NULL, "empty section keys");
 

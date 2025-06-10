@@ -29,8 +29,11 @@ typedef struct TestRequestParam
     const char *securityToken;
     const char *range;
     const char *kms;
+    const char *sseC;
     const char *ttl;
     const char *token;
+    const char *tag;
+    bool requesterPays;
 } TestRequestParam;
 
 #define testRequestP(write, s3, verb, path, ...)                                                                                   \
@@ -75,11 +78,25 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
 
         strCatZ(request, "x-amz-content-sha256;x-amz-date");
 
+        if (param.requesterPays)
+            strCatZ(request, ";x-amz-request-payer");
+
         if (securityToken != NULL)
             strCatZ(request, ";x-amz-security-token");
 
         if (param.kms != NULL)
             strCatZ(request, ";x-amz-server-side-encryption;x-amz-server-side-encryption-aws-kms-key-id");
+
+        if (param.sseC != NULL)
+        {
+            strCatZ(
+                request,
+                ";x-amz-server-side-encryption-customer-algorithm;x-amz-server-side-encryption-customer-key"
+                ";x-amz-server-side-encryption-customer-key-md5");
+        }
+
+        if (param.tag != NULL)
+            strCatZ(request, ";x-amz-tagging");
 
         strCatZ(request, ",Signature=????????????????????????????????????????????????????????????????\r\n");
     }
@@ -125,12 +142,30 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
             strCatFmt(request, "x-amz-security-token:%s\r\n", securityToken);
     }
 
+    // Requestor pays
+    if (param.requesterPays)
+        strCatZ(request, "x-amz-request-payer:requester\r\n");
+
     // Add kms key
     if (param.kms != NULL)
     {
         strCatZ(request, "x-amz-server-side-encryption:aws:kms\r\n");
         strCatFmt(request, "x-amz-server-side-encryption-aws-kms-key-id:%s\r\n", param.kms);
     }
+
+    // Add sseC key
+    if (param.sseC != NULL)
+    {
+        strCatZ(request, "x-amz-server-side-encryption-customer-algorithm:AES256\r\n");
+        strCatFmt(request, "x-amz-server-side-encryption-customer-key:%s\r\n", param.sseC);
+        strCatFmt(
+            request, "x-amz-server-side-encryption-customer-key-md5:%s\r\n",
+            strZ(strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, bufNewDecode(encodingBase64, STR(param.sseC))))));
+    }
+
+    // Add tags
+    if (param.tag != NULL)
+        strCatFmt(request, "x-amz-tagging:%s\r\n", param.tag);
 
     // Add metadata token
     if (param.token != NULL)
@@ -216,13 +251,7 @@ testS3DateTime(time_t time)
         FUNCTION_HARNESS_PARAM(TIME, time);
     FUNCTION_HARNESS_END();
 
-    char buffer[21];
-
-    THROW_ON_SYS_ERROR(
-        strftime(buffer, sizeof(buffer), "%Y-%m-%dT%H:%M:%SZ", gmtime(&time)) != sizeof(buffer) - 1, AssertError,
-        "unable to format date");
-
-    FUNCTION_HARNESS_RETURN(STRING, strNewZ(buffer));
+    FUNCTION_HARNESS_RETURN(STRING, strNewTimeP("%Y-%m-%dT%H:%M:%SZ", time, .utc = true));
 }
 
 /***********************************************************************************************************************************
@@ -243,8 +272,6 @@ testRun(void)
     const String *region = STRDEF("us-east-1");
     const String *endPoint = STRDEF("s3.amazonaws.com");
     const String *host = hrnServerHost();
-    const unsigned int port = hrnServerPort(0);
-    const unsigned int authPort = hrnServerPort(1);
     const String *accessKey = STRDEF("AKIAIOSFODNN7EXAMPLE");
     const String *secretAccessKey = STRDEF("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY");
     const String *securityToken = STRDEF(
@@ -274,15 +301,12 @@ testRun(void)
     hrnCfgEnvRaw(cfgOptRepoS3KeySecret, secretAccessKey);
 
     // *****************************************************************************************************************************
-    if (testBegin("storageS3DateTime() and storageS3Auth()"))
+    if (testBegin("storageS3Auth()"))
     {
-        char logBuf[STACK_TRACE_PARAM_MAX];
-
-        TEST_RESULT_STR_Z(storageS3DateTime(1491267845), "20170404T010405Z", "static date");
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("config without token");
 
+        char logBuf[STACK_TRACE_PARAM_MAX];
         StringList *argList = strLstDup(commonArgList);
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
@@ -397,16 +421,18 @@ testRun(void)
     {
         HRN_FORK_BEGIN()
         {
+            const unsigned int testPort = hrnServerPortNext();
+            const unsigned int testPortAuth = hrnServerPortNext();
+
             HRN_FORK_CHILD_BEGIN(.prefix = "s3 server", .timeout = 5000)
             {
-                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, .port = port), "s3 server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort), "s3 server");
             }
             HRN_FORK_CHILD_END();
 
             HRN_FORK_CHILD_BEGIN(.prefix = "auth server", .timeout = 15000)
             {
-                TEST_RESULT_VOID(
-                    hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, .port = authPort), "auth server run");
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, testPortAuth), "auth server");
             }
             HRN_FORK_CHILD_END();
 
@@ -422,7 +448,7 @@ testRun(void)
                 TEST_TITLE("config with keys, token, and host with custom port");
 
                 StringList *argList = strLstDup(commonArgList);
-                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
                 hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
@@ -561,11 +587,15 @@ testRun(void)
                 hrnServerScriptClose(service);
 
                 argList = strLstDup(commonArgList);
-                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
                 hrnCfgArgRaw(argList, cfgOptRepoS3Role, credRole);
                 hrnCfgArgRawStrId(argList, cfgOptRepoS3KeyType, storageS3KeyTypeAuto);
                 hrnCfgArgRawZ(argList, cfgOptRepoS3KmsKeyId, "kmskey1");
+                hrnCfgEnvRawZ(cfgOptRepoS3SseCustomerKey, "rA1P");
+                hrnCfgArgRawZ(argList, cfgOptRepoStorageTag, "Key1=Value1");
+                hrnCfgArgRawZ(argList, cfgOptRepoStorageTag, " Key 2= Value 2");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+                hrnCfgEnvRemoveRaw(cfgOptRepoS3SseCustomerKey);
 
                 s3 = storageRepoGet(0, true);
                 driver = (StorageS3 *)storageDriver(s3);
@@ -579,7 +609,7 @@ testRun(void)
 
                 // Testing requires the auth http client to be redirected
                 driver->credHost = hrnServerHost();
-                driver->credHttpClient = httpClientNew(sckClientNew(host, authPort, 5000, 5000), 5000);
+                driver->credHttpClient = httpClientNew(sckClientNew(host, testPortAuth, 5000, 5000), 5000);
 
                 // Now that we have checked the role when set explicitly, null it out to make sure it is retrieved automatically
                 driver->credRole = NULL;
@@ -731,7 +761,7 @@ testRun(void)
 
                 hrnServerScriptClose(auth);
 
-                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .accessKey = "x", .securityToken = "z");
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .accessKey = "x", .securityToken = "z", .sseC = "rA1P");
                 testResponseP(service, .code = 303, .content = "CONTENT");
 
                 StorageRead *read = NULL;
@@ -751,6 +781,9 @@ testRun(void)
                     "x-amz-content-sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\n"
                     "x-amz-date: <redacted>\n"
                     "x-amz-security-token: <redacted>\n"
+                    "x-amz-server-side-encryption-customer-algorithm: AES256\n"
+                    "x-amz-server-side-encryption-customer-key: <redacted>\n"
+                    "x-amz-server-side-encryption-customer-key-md5: <redacted>\n"
                     "*** Response Headers ***:\n"
                     "content-length: 7\n"
                     "*** Response Content ***:\n"
@@ -784,7 +817,7 @@ testRun(void)
 
                 testRequestP(
                     service, s3, HTTP_VERB_PUT, "/file.txt", .content = "ABCD", .accessKey = "xx", .securityToken = "zz",
-                    .kms = "kmskey1");
+                    .kms = "kmskey1", .sseC = "rA1P", .tag = "%20Key%202=%20Value%202&Key1=Value1");
                 testResponseP(service);
 
                 // Make a copy of the signing key to verify that it gets changed when the keys are updated
@@ -803,7 +836,7 @@ testRun(void)
                 TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
                 TEST_RESULT_BOOL(storageWriteTruncate(write), true, "file will be truncated");
 
-                TEST_RESULT_VOID(storageWriteS3Close(write->driver), "close file again");
+                TEST_RESULT_VOID(storageWriteS3Close(ioWriteDriver(storageWriteIo(write))), "close file again");
 
                 // Check that temp credentials were changed
                 TEST_RESULT_STR_Z(driver->accessKey, "xx", "check access key");
@@ -816,7 +849,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write zero-length file");
 
-                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt", .content = "", .kms = "kmskey1");
+                testRequestP(
+                    service, s3, HTTP_VERB_PUT, "/file.txt", .content = "", .kms = "kmskey1", .sseC = "rA1P",
+                    .tag = "%20Key%202=%20Value%202&Key1=Value1");
                 testResponseP(service);
 
                 TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("file.txt")), "new write");
@@ -825,7 +860,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in chunks with nothing left over on close");
 
-                testRequestP(service, s3, HTTP_VERB_POST, "/file.txt?uploads=", .kms = "kmskey1");
+                testRequestP(
+                    service, s3, HTTP_VERB_POST, "/file.txt?uploads=", .kms = "kmskey1", .sseC = "rA1P",
+                    .tag = "%20Key%202=%20Value%202&Key1=Value1");
                 testResponseP(
                     service,
                     .content =
@@ -836,10 +873,14 @@ testRun(void)
                         "<UploadId>WxRt</UploadId>"
                         "</InitiateMultipartUploadResult>");
 
-                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=WxRt", .content = "1234567890123456");
+                testRequestP(
+                    service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=WxRt", .content = "1234567890123456",
+                    .sseC = "rA1P");
                 testResponseP(service, .header = "etag:WxRt1");
 
-                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=WxRt", .content = "7890123456789012");
+                testRequestP(
+                    service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=WxRt", .content = "7890123456789012",
+                    .sseC = "rA1P");
                 testResponseP(service, .header = "eTag:WxRt2");
 
                 testRequestP(
@@ -862,7 +903,10 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error in success response of multipart upload");
 
-                testRequestP(service, s3, HTTP_VERB_POST, "/file.txt?uploads=", .kms = "kmskey1");
+                // Stop writing tags
+                driver->tag = NULL;
+
+                testRequestP(service, s3, HTTP_VERB_POST, "/file.txt?uploads=", .kms = "kmskey1", .sseC = "rA1P");
                 testResponseP(
                     service,
                     .content =
@@ -873,10 +917,14 @@ testRun(void)
                         "<UploadId>WxRt</UploadId>"
                         "</InitiateMultipartUploadResult>");
 
-                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=WxRt", .content = "1234567890123456");
+                testRequestP(
+                    service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=WxRt", .content = "1234567890123456",
+                    .sseC = "rA1P");
                 testResponseP(service, .header = "etag:WxRt1");
 
-                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=WxRt", .content = "7890123456789012");
+                testRequestP(
+                    service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=WxRt", .content = "7890123456789012",
+                    .sseC = "rA1P");
                 testResponseP(service, .header = "eTag:WxRt2");
 
                 testRequestP(
@@ -916,7 +964,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write file in chunks with something left over on close");
 
-                testRequestP(service, s3, HTTP_VERB_POST, "/file.txt?uploads=", .kms = "kmskey1");
+                testRequestP(service, s3, HTTP_VERB_POST, "/file.txt?uploads=", .kms = "kmskey1", .sseC = "rA1P");
                 testResponseP(
                     service,
                     .content =
@@ -927,10 +975,14 @@ testRun(void)
                         "<UploadId>RR55</UploadId>"
                         "</InitiateMultipartUploadResult>");
 
-                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=RR55", .content = "1234567890123456");
+                testRequestP(
+                    service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=RR55", .content = "1234567890123456",
+                    .sseC = "rA1P");
                 testResponseP(service, .header = "etag:RR551");
 
-                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=RR55", .content = "7890");
+                testRequestP(
+                    service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=RR55", .content = "7890",
+                    .sseC = "rA1P");
                 testResponseP(service, .header = "eTag:RR552");
 
                 testRequestP(
@@ -953,7 +1005,7 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("file missing");
 
-                testRequestP(service, s3, HTTP_VERB_HEAD, "/BOGUS");
+                testRequestP(service, s3, HTTP_VERB_HEAD, "/BOGUS", .sseC = "rA1P");
                 testResponseP(service, .code = 404);
 
                 TEST_RESULT_BOOL(storageExistsP(s3, STRDEF("BOGUS")), false, "check");
@@ -970,6 +1022,7 @@ testRun(void)
 
                 #define TEST_SERVICE_ROLE                           "arn:aws:iam::123456789012:role/TestRole"
                 #define TEST_SERVICE_TOKEN                          "TOKEN"
+                #define TEST_SERVICE_TOKEN_FILE                     TEST_PATH "/web-id-token"
                 #define TEST_SERVICE_URI                                                                                           \
                     "/?Action=AssumeRoleWithWebIdentity&RoleArn=arn%3Aaws%3Aiam%3A%3A123456789012%3Arole%2FTestRole"               \
                         "&RoleSessionName=pgBackRest&Version=2011-06-15&WebIdentityToken=" TEST_SERVICE_TOKEN
@@ -987,10 +1040,10 @@ testRun(void)
                     "</AssumeRoleWithWebIdentityResponse>"
                 // {uncrustify_on}
 
-                HRN_STORAGE_PUT_Z(storagePosixNewP(TEST_PATH_STR, .write = true), "web-id-token", TEST_SERVICE_TOKEN);
+                HRN_STORAGE_PUT_Z(storagePosixNewP(TEST_PATH_STR, .write = true), TEST_SERVICE_TOKEN_FILE, TEST_SERVICE_TOKEN);
 
                 argList = strLstDup(commonArgList);
-                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), port);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
                 hrnCfgArgRawStrId(argList, cfgOptRepoS3KeyType, storageS3KeyTypeWebId);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
@@ -1004,20 +1057,20 @@ testRun(void)
                     storageRepoGet(0, true), OptionInvalidError,
                     "option 'repo1-s3-key-type' is 'web-id' but 'AWS_ROLE_ARN' and 'AWS_WEB_IDENTITY_TOKEN_FILE' are not set");
 
-                setenv("AWS_WEB_IDENTITY_TOKEN_FILE", TEST_PATH "/web-id-token", true);
+                setenv("AWS_WEB_IDENTITY_TOKEN_FILE", TEST_SERVICE_TOKEN_FILE, true);
 
                 s3 = storageRepoGet(0, true);
                 driver = (StorageS3 *)storageDriver(s3);
 
                 TEST_RESULT_STR_Z(driver->credRole, TEST_SERVICE_ROLE, "check role");
-                TEST_RESULT_STR_Z(driver->webIdToken, TEST_SERVICE_TOKEN, "check token");
+                TEST_RESULT_STR_Z(driver->webIdTokenFile, TEST_SERVICE_TOKEN_FILE, "check token file");
 
                 // Set partSize to a small value for testing
                 driver->partSize = 16;
 
                 // Testing requires the auth http client to be redirected
                 driver->credHost = hrnServerHost();
-                driver->credHttpClient = httpClientNew(sckClientNew(host, authPort, 5000, 5000), 5000);
+                driver->credHttpClient = httpClientNew(sckClientNew(host, testPortAuth, 5000, 5000), 5000);
 
                 hrnServerScriptAccept(service);
 
@@ -1307,7 +1360,7 @@ testRun(void)
                 argList = strLstDup(commonArgList);
                 hrnCfgArgRawStrId(argList, cfgOptRepoS3UriStyle, storageS3UriStylePath);
                 hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "https://%s", strZ(host));
-                hrnCfgArgRawFmt(argList, cfgOptRepoStoragePort, "%u", port);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStoragePort, "%u", testPort);
                 hrnCfgEnvRemoveRaw(cfgOptRepoS3Token);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
@@ -1472,6 +1525,135 @@ testRun(void)
                 testResponseP(service, .code = 204);
 
                 TEST_RESULT_VOID(storageRemoveP(s3, STRDEF("/path/to/test.txt")), "remove");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to time limited");
+
+                hrnServerScriptClose(service);
+
+                argList = strLstDup(commonArgList);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
+                hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
+                hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+                hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-04 02:54:09+00");
+                hrnCfgArgRawBool(argList, cfgOptRepoS3RequesterPays, true);
+                HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+                s3 = storageRepoGet(0, false);
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("list with time limit");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&prefix=path%2Fto%2F&versions=", .requesterPays = true);
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>true</IsTruncated>"
+                        "    <NextContinuationToken>1ueG</NextContinuationToken>"
+                        "    <DeleteMarker>"
+                        "        <Key>path/to/test_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
+                        "    </DeleteMarker>"
+                        "    <Version>"
+                        "        <Key>path/to/test_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
+                        "    </Version>"
+                        "</ListBucketResult>");
+
+                testRequestP(
+                    service, s3, HTTP_VERB_GET, "/?continuation-token=1ueG&delimiter=%2F&prefix=path%2Fto%2F&versions=",
+                    .requesterPays = true);
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
+                        "    <Version>"
+                        "        <Key>path/to/test_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:09.000Z</LastModified>"
+                        "        <Size>737</Size>"
+                        "        <VersionId>bbbb</VersionId>"
+                        "    </Version>"
+                        "    <Version>"
+                        "        <Key>path/to/test_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:09.000Z</LastModified>"
+                        "    </Version>"
+                        "    <Version>"
+                        "        <Key>path/to/test_file2</Key>"
+                        "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
+                        "    </Version>"
+                        "   <CommonPrefixes>"
+                        "       <Prefix>path/to/test_path/</Prefix>"
+                        "   </CommonPrefixes>"
+                        "</ListBucketResult>");
+
+                TEST_STORAGE_LIST(
+                    s3, "/path/to",
+                    "test_file {s=737, t=1722740049, v=bbbb}\n"
+                    "test_path/\n",
+                    .level = storageInfoLevelBasic, .noRecurse = true);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file with time limit");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&prefix=path%2F3%2F&versions=", .requesterPays = true);
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
+                        "    <Version>"
+                        "        <Key>path/3/test_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
+                        "    </Version>"
+                        "    <Version>"
+                        "        <Key>path/3/test_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:09.000Z</LastModified>"
+                        "        <Size>6</Size>"
+                        "        <VersionId>bbbb</VersionId>"
+                        "    </Version>"
+                        "   <CommonPrefixes>"
+                        "       <Prefix>path/3/test_path/</Prefix>"
+                        "   </CommonPrefixes>"
+                        "</ListBucketResult>");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/path/3/test_file?versionId=bbbb", .requesterPays = true);
+                testResponseP(service, .content = "123456");
+
+                TEST_RESULT_STR_Z(
+                    strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("/path/3/test_file")))), "123456", "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get missing file with time limit");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&versions=", .requesterPays = true);
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "    <IsTruncated>false</IsTruncated>"
+                        "    <Version>"
+                        "        <Key>missing_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:10.000Z</LastModified>"
+                        "    </Version>"
+                        "    <DeleteMarker>"
+                        "        <Key>missing_file</Key>"
+                        "        <LastModified>2024-08-04T02:54:09.000Z</LastModified>"
+                        "    </DeleteMarker>"
+                        "    <CommonPrefixes>"
+                        "       <Prefix>test_path/</Prefix>"
+                        "    </CommonPrefixes>"
+                        "</ListBucketResult>");
+
+                TEST_RESULT_PTR(
+                    storageGetP(storageNewReadP(s3, STRDEF("missing_file"), .ignoreMissing = true)), NULL, "missing file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 hrnServerScriptEnd(service);

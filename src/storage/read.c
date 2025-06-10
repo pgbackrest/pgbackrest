@@ -211,6 +211,7 @@ storageReadNew(void *driver, StorageReadInterface *const interface)
     {
         *this = (StorageRead)
         {
+            .driver = objMove(driver, memContextCurrent()),
             .pub =
             {
                 .interface = interface,
@@ -219,7 +220,6 @@ storageReadNew(void *driver, StorageReadInterface *const interface)
                 .limit = varDup(interface->limit),
                 .ignoreMissing = interface->ignoreMissing,
             },
-            .driver = objMoveToInterface(driver, this, memContextPrior()),
         };
     }
     OBJ_NEW_END();

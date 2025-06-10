@@ -1,0 +1,126 @@
+####################################################################################################################################
+# Configuration Definition
+####################################################################################################################################
+
+####################################################################################################################################
+# Commands
+####################################################################################################################################
+command:
+  help:
+    log-level-default: DEBUG
+    parameter-allowed: true
+
+  build:
+    parameter-allowed: true
+
+  noop:
+    internal: true
+
+  version:
+    log-level-default: DEBUG
+
+####################################################################################################################################
+# Option groups that are not used but must be present for modules to compile
+####################################################################################################################################
+optionGroup:
+  pg: {}
+  repo: {}
+
+####################################################################################################################################
+# Options
+####################################################################################################################################
+option:
+  # General options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  buffer-size:
+    type: size
+    internal: true
+    default: 64KiB
+    allow-list:
+      - 16KiB
+      - 32KiB
+      - 64KiB
+      - 128KiB
+      - 256KiB
+      - 512KiB
+      - 1MiB
+
+  help:
+    type: boolean
+    default: false
+    command:
+      help: {}
+    command-role:
+      main: {}
+
+  neutral-umask:
+    type: boolean
+    internal: true
+    default: true
+
+  output:
+    type: string-id
+    default: text
+    command:
+      version: {}
+    allow-list:
+      - num
+      - text
+    command-role:
+      main: {}
+
+  repo-path:
+    type: string
+    default: pgbackrest
+    command:
+      build: {}
+
+  version:
+    type: boolean
+    default: false
+    command:
+      help: {}
+    command-role:
+      main: {}
+
+  # Logging options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  log-level:
+    type: string-id
+    default: info
+    allow-list:
+      - off
+      - error
+      - warn
+      - info
+      - detail
+      - debug
+      - trace
+
+  log-timestamp:
+    type: boolean
+    default: true
+    negate: true
+    command: log-level
+
+  # Options that are not used but must be present for modules to compile. All must have a default or not be required.
+  #---------------------------------------------------------------------------------------------------------------------------------
+  beta: {type: boolean, default: false, command: {noop: {}}}
+  cmd: {type: string, default-type: dynamic, default: bin, command: {noop: {}}}
+  compress-level-network: {type: string, required: false, command: {noop: {}}}
+  config: {
+    type: string, internal: true, default-type: literal, default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE, negate: true}
+  config-path: {type: string, required: false, command: {noop: {}}}
+  config-include-path: {
+    type: string, default-type: literal, default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH, command: {noop: {}}}
+  job-retry: {type: time, default: 0, deprecate: {job-retry-old: {}}, command: {noop: {}}}
+  job-retry-interval: {type: integer, default: 0, command: {noop: {}}}
+  lock: {type: list, required: false, command: {noop: {}}}
+  log-level-file: {type: string, required: false, command: {noop: {}}}
+  log-level-stderr: {type: string, required: false, command: {noop: {}}}
+  pg: {type: string, required: false, command: {noop: {}}}
+  pg-path: {type: string, required: false, command: {noop: {}}}
+  repo-type: {type: string, required: false, command: {noop: {}}}
+  repo: {type: string, required: false, command: {noop: {}}}
+  spool-path: {type: string, required: false, command: {noop: {}}}
+  stanza: {type: string, required: false, command: {noop: {}}}

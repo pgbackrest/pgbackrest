@@ -23,11 +23,11 @@ testRun(void)
     FUNCTION_HARNESS_VOID();
 
     // The tests expect the timezone to be UTC
-    setenv("TZ", "UTC", true);
+    hrnTzSet("UTC");
 
     // Install local command handler shim
     static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_BACKUP_LIST};
-    hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
+    hrnProtocolLocalShimInstall(LSTDEF(testLocalHandlerList));
 
     // Test storage
     const Storage *const storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
@@ -73,7 +73,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
             // Create pg_control and run stanza-create
-            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_95, .pageChecksum = false);
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_95);
             TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create");
         }
 
@@ -164,7 +164,7 @@ testRun(void)
             TEST_TITLE("single file block map from full");
 
             StringList *argList = strLstDup(argListCommon);
-            hrnCfgArgRawZ(argList, cfgOptFilter, PG_PATH_BASE "/1/2");
+            hrnCfgArgRawZ(argList, cfgOptFilter, MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/1/2");
             hrnCfgArgRawZ(argList, cfgOptSet, "20191002-070640F");
             HRN_CFG_LOAD(cfgCmdManifest, argList);
 
@@ -179,7 +179,7 @@ testRun(void)
                 "\n"
                 "file list:\n"
                 "  - pg_data/base/1/2\n"
-                "      size: 64KB, repo 64KB\n"
+                "      size: 64KB, repo 64.1KB\n"
                 "      checksum: 1adc95bebe9eea8c112d40cd04ab7a8d75c4f961\n"
                 "      bundle: 1\n"
                 "      block: size 8KB, map size 58B, checksum size 6B\n"
@@ -274,7 +274,7 @@ testRun(void)
                 "\n"
                 "file list:\n"
                 "  - pg_data/base/1/2\n"
-                "      size: 96KB, repo 64KB\n"
+                "      size: 96KB, repo 64.1KB\n"
                 "      checksum: d4976e362696a43fb09e7d4e780d7d9352a2ec2e\n"
                 "      bundle: 1\n"
                 "      block: size 8KB, map size 99B, checksum size 6B\n"
@@ -379,7 +379,7 @@ testRun(void)
                 "\n"
                 "file list:\n"
                 "  - pg_data/base/1/2\n"
-                "      size: 96KB, repo 64KB\n"
+                "      size: 96KB, repo 64.1KB\n"
                 "      checksum: d4976e362696a43fb09e7d4e780d7d9352a2ec2e\n"
                 "      bundle: 1\n"
                 "      block: size 8KB, map size 99B, checksum size 6B\n"
@@ -459,7 +459,7 @@ testRun(void)
             TEST_TITLE("single file block map from diff");
 
             argList = strLstDup(argListCommon);
-            hrnCfgArgRawZ(argList, cfgOptFilter, PG_PATH_BASE "/1/2");
+            hrnCfgArgRawZ(argList, cfgOptFilter, MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/1/2");
             HRN_CFG_LOAD(cfgCmdManifest, argList);
 
             TEST_RESULT_STR_Z(
@@ -473,7 +473,7 @@ testRun(void)
                 "\n"
                 "file list:\n"
                 "  - pg_data/base/1/2\n"
-                "      size: 96KB, repo 64KB\n"
+                "      size: 96KB, repo 64.1KB\n"
                 "      checksum: d4976e362696a43fb09e7d4e780d7d9352a2ec2e\n"
                 "      bundle: 1\n"
                 "      block: size 8KB, map size 99B, checksum size 6B\n"
@@ -487,7 +487,7 @@ testRun(void)
             TEST_TITLE("single file block map delta from diff");
 
             argList = strLstDup(argListCommon);
-            hrnCfgArgRawZ(argList, cfgOptFilter, PG_PATH_BASE "/1/2");
+            hrnCfgArgRawZ(argList, cfgOptFilter, MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/1/2");
             hrnCfgArgRawZ(argList, cfgOptRepo, "2");
             hrnCfgArgRawZ(argList, cfgOptPg, "1");
             HRN_CFG_LOAD(cfgCmdManifest, argList);

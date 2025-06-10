@@ -26,20 +26,11 @@ storageReadMove(StorageRead *const this, MemContext *const parentNew)
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-typedef struct StorageReadPub
-{
-    StorageReadInterface *interface;                                // File data (name, driver type, etc.)
-    IoRead *io;                                                     // Read interface
-    uint64_t offset;                                                // Where to start reading in the file
-    const Variant *limit;                                           // Limit how many bytes are read (NULL for no limit)
-    bool ignoreMissing;                                             // Ignore missing file?
-} StorageReadPub;
-
 // Should a missing file be ignored?
 FN_INLINE_ALWAYS bool
 storageReadIgnoreMissing(const StorageRead *const this)
 {
-    return THIS_PUB(StorageRead)->interface->ignoreMissing;
+    return storageReadInterface(this)->ignoreMissing;
 }
 
 // Read interface
@@ -60,7 +51,7 @@ storageReadLimit(const StorageRead *const this)
 FN_INLINE_ALWAYS const String *
 storageReadName(const StorageRead *const this)
 {
-    return THIS_PUB(StorageRead)->interface->name;
+    return storageReadInterface(this)->name;
 }
 
 // Is there a read limit? NULL for no limit.
@@ -74,7 +65,7 @@ storageReadOffset(const StorageRead *const this)
 FN_INLINE_ALWAYS StringId
 storageReadType(const StorageRead *const this)
 {
-    return THIS_PUB(StorageRead)->interface->type;
+    return storageReadInterface(this)->type;
 }
 
 /***********************************************************************************************************************************

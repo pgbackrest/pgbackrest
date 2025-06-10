@@ -76,7 +76,7 @@ testIoRateProcess(THIS_VOID, const Buffer *input)
     THIS(TestIoRate);
 
     // Determine the elapsed time since the filter began processing data. The begin time is not set in the constructor because an
-    // unknown amount of time can elapse between the filter being created and acually used.
+    // unknown amount of time can elapse between the filter being created and actually used.
     uint64_t timeElapsed = 0;
 
     if (this->timeBegin == 0)
@@ -147,7 +147,7 @@ testRun(void)
 
                     *driver = (StorageTestPerfList)
                     {
-                        .interface = storageInterfaceTestDummy,
+                        .interface = hrnStorageInterfaceDummy,
                         .fileTotal = fileTotal,
                     };
                 }
@@ -155,7 +155,7 @@ testRun(void)
 
                 driver->interface.list = storageTestPerfList;
 
-                Storage *storageTest = storageNew(strIdFromZ("test"), STRDEF("/"), 0, 0, false, NULL, driver, driver->interface);
+                Storage *storageTest = storageNew(strIdFromZ("test"), STRDEF("/"), 0, 0, false, 0, NULL, driver, driver->interface);
                 storageHelper.storageRepoWrite = memNew(sizeof(Storage *));
                 storageHelper.storageRepoWrite[0] = storageTest;
 
@@ -166,7 +166,7 @@ testRun(void)
                     STRDEF("storage test server"), STRDEF("test"), HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE());
 
                 static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST};
-                protocolServerProcess(server, NULL, commandHandler, LENGTH_OF(commandHandler));
+                protocolServerProcess(server, NULL, LSTDEF(commandHandler));
             }
             HRN_FORK_CHILD_END();
 
@@ -178,7 +178,7 @@ testRun(void)
 
                 // Create remote storage
                 Storage *storageRemote = storageRemoteNew(
-                    STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, NULL, client, 1);
+                    STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, false, 0, NULL, client, 1);
 
                 TimeMSec timeBegin = timeMSec();
 
@@ -272,10 +272,7 @@ testRun(void)
         uint64_t sha1Total = 1;
         uint64_t sha256Total = 1;
         uint64_t gzip6Total = 1;
-
-#ifdef HAVE_LIBLZ4
         uint64_t lz41Total = 1;
-#endif // HAVE_LIBLZ4
 
         for (unsigned int idx = 0; idx < iteration; idx++)
         {
@@ -334,7 +331,6 @@ testRun(void)
             MEM_CONTEXT_TEMP_END();
 
             // -------------------------------------------------------------------------------------------------------------------------
-#ifdef HAVE_LIBLZ4
             TEST_LOG_FMT("lz4 -1 iteration %u", idx + 1);
 
             MEM_CONTEXT_TEMP_BEGIN()
@@ -344,7 +340,6 @@ testRun(void)
                 BENCHMARK_END(lz41Total);
             }
             MEM_CONTEXT_TEMP_END();
-#endif // HAVE_LIBLZ4
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -360,10 +355,7 @@ testRun(void)
         TEST_RESULT("sha1", sha1Total);
         TEST_RESULT("sha256", sha256Total);
         TEST_RESULT("gzip -6", gzip6Total);
-
-#ifdef HAVE_LIBLZ4
         TEST_RESULT("lz4 -1", lz41Total);
-#endif // HAVE_LIBLZ4
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

@@ -6,6 +6,7 @@ Common Command Routines
 #include <inttypes.h>
 #include <string.h>
 
+#include "command/command.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "common/memContext.h"
@@ -48,7 +49,7 @@ cmdOption(void)
             MEM_CONTEXT_TEMP_BEGIN()
             {
                 // Add command parameters if they exist
-                const StringList *commandParamList = cfgCommandParam();
+                const StringList *const commandParamList = cfgCommandParam();
 
                 if (!strLstEmpty(commandParamList))
                 {
@@ -80,7 +81,8 @@ cmdOption(void)
                         continue;
 
                     // Loop through option indexes
-                    unsigned int optionIdxTotal = cfgOptionGroup(optionId) ? cfgOptionGroupIdxTotal(cfgOptionGroupId(optionId)) : 1;
+                    const unsigned int optionIdxTotal =
+                        cfgOptionGroup(optionId) ? cfgOptionGroupIdxTotal(cfgOptionGroupId(optionId)) : 1;
 
                     for (unsigned int optionIdx = 0; optionIdx < optionIdxTotal; optionIdx++)
                     {
@@ -109,8 +111,8 @@ cmdOption(void)
                                 {
                                     valueList = strLstNew();
 
-                                    const KeyValue *optionKv = cfgOptionIdxKv(optionId, optionIdx);
-                                    const VariantList *keyList = kvKeyList(optionKv);
+                                    const KeyValue *const optionKv = cfgOptionIdxKv(optionId, optionIdx);
+                                    const VariantList *const keyList = kvKeyList(optionKv);
 
                                     for (unsigned int keyIdx = 0; keyIdx < varLstSize(keyList); keyIdx++)
                                     {
@@ -162,7 +164,7 @@ cmdBegin(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
 
-    ASSERT(cfgCommand() != cfgCmdNone);
+    ASSERT(cfgInited());
 
     // This is fairly expensive log message to generate so skip it if it won't be output
     if (logAny(cfgLogLevelDefault()))
@@ -170,7 +172,7 @@ cmdBegin(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             // Basic info on command start
-            String *info = strCatFmt(strNew(), "%s command begin", strZ(cfgCommandRoleName()));
+            String *const info = strCatFmt(strNew(), "%s command begin", strZ(cfgCommandRoleName()));
 
             // Free the old option string if it exists. This is needed when more than one command is run in a row so an option
             // string gets created for the new command.
@@ -190,14 +192,14 @@ cmdBegin(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-cmdEnd(int code, const String *errorMessage)
+cmdEnd(const int code, const String *const errorMessage)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INT, code);
         FUNCTION_LOG_PARAM(STRING, errorMessage);
     FUNCTION_LOG_END();
 
-    ASSERT(cfgCommand() != cfgCmdNone);
+    ASSERT(cfgInited());
 
     // Skip this log message if it won't be output. It's not too expensive but since we skipped cmdBegin(), may as well.
     if (logAny(cfgLogLevelDefault()))
@@ -211,7 +213,7 @@ cmdEnd(int code, const String *errorMessage)
                 LOG_DETAIL_FMT("statistics: %s", strZ(statJson));
 
             // Basic info on command end
-            String *info = strCatFmt(strNew(), "%s command end: ", strZ(cfgCommandRoleName()));
+            String *const info = strCatFmt(strNew(), "%s command end: ", strZ(cfgCommandRoleName()));
 
             if (errorMessage == NULL)
             {

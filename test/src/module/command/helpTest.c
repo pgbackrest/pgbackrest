@@ -39,7 +39,8 @@ testRun(void)
 
     // Create help data
     const BldCfg bldCfg = bldCfgParse(storagePosixNewP(HRN_PATH_REPO_STR));
-    const Buffer *const helpData = bldHlpRenderHelpAutoCCmp(bldCfg, bldHlpParse(storagePosixNewP(HRN_PATH_REPO_STR), bldCfg));
+    const Buffer *const helpData = bldHlpRenderHelpAutoCCmp(
+        bldCfg, bldHlpParse(storagePosixNewP(HRN_PATH_REPO_STR), bldCfg, false));
 
     // Program name a version are used multiple times
     const char *helpVersion = PROJECT_NAME " " PROJECT_VERSION;
@@ -52,26 +53,26 @@ testRun(void)
         "    pgbackrest [options] [command]\n"
         "\n"
         "Commands:\n"
-        "    annotate        Add or modify backup annotation.\n"
-        "    archive-get     Get a WAL segment from the archive.\n"
-        "    archive-push    Push a WAL segment to the archive.\n"
-        "    backup          Backup a database cluster.\n"
-        "    check           Check the configuration.\n"
-        "    expire          Expire backups that exceed retention.\n"
-        "    help            Get help.\n"
-        "    info            Retrieve information about backups.\n"
-        "    repo-get        Get a file from a repository.\n"
-        "    repo-ls         List files in a repository.\n"
-        "    restore         Restore a database cluster.\n"
-        "    server          pgBackRest server.\n"
-        "    server-ping     Ping pgBackRest server.\n"
-        "    stanza-create   Create the required stanza data.\n"
-        "    stanza-delete   Delete a stanza.\n"
-        "    stanza-upgrade  Upgrade a stanza.\n"
-        "    start           Allow pgBackRest processes to run.\n"
-        "    stop            Stop pgBackRest processes from running.\n"
-        "    verify          Verify contents of the repository.\n"
-        "    version         Get version.\n"
+        "    annotate        add or modify backup annotation\n"
+        "    archive-get     get a WAL segment from the archive\n"
+        "    archive-push    push a WAL segment to the archive\n"
+        "    backup          backup a database cluster\n"
+        "    check           check the configuration\n"
+        "    expire          expire backups that exceed retention\n"
+        "    help            get help\n"
+        "    info            retrieve information about backups\n"
+        "    repo-get        get a file from a repository\n"
+        "    repo-ls         list files in a repository\n"
+        "    restore         restore a database cluster\n"
+        "    server          pgBackRest server\n"
+        "    server-ping     ping pgBackRest server\n"
+        "    stanza-create   create the required stanza data\n"
+        "    stanza-delete   delete a stanza\n"
+        "    stanza-upgrade  upgrade a stanza\n"
+        "    start           allow pgBackRest processes to run\n"
+        "    stop            stop pgBackRest processes from running\n"
+        "    verify          verify contents of a repository\n"
+        "    version         get version\n"
         "\n"
         "Use 'pgbackrest help [command]' for more information.\n",
         helpVersion);
@@ -95,7 +96,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("helpRenderText()"))
+    if (testBegin("helpRenderText() and helpRenderSummary()"))
     {
         TEST_RESULT_STR_Z(
             helpRenderText(STRDEF("this is a short sentence"), false, false, 0, false, 80), "this is a short sentence", "one line");
@@ -128,12 +129,45 @@ testRun(void)
             "  NOT USE IN\n"
             "  PRODUCTION.",
             "two paragraphs, indent first, internal");
+
+        TEST_RESULT_STR_Z(helpRenderSummary(STRDEF("Summary.")), "summary", "render summary");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("helpRender()"))
     {
         StringList *argList = NULL;
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("version");
+
+        const char *versionOnly = zNewFmt("%s\n", helpVersion);
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "version");
+        TEST_RESULT_VOID(testCfgLoad(argList), "version from version command");
+        TEST_RESULT_STR_Z(helpRender(helpData), versionOnly, "check text");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "version");
+        hrnCfgArgRawZ(argList, cfgOptOutput, "text");
+        TEST_RESULT_VOID(testCfgLoad(argList), "version text output from version command");
+        TEST_RESULT_STR_Z(helpRender(helpData), versionOnly, "check text");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "version");
+        hrnCfgArgRawZ(argList, cfgOptOutput, "num");
+        TEST_RESULT_VOID(testCfgLoad(argList), "version num output from version command");
+        TEST_RESULT_STR_Z(helpRender(helpData), zNewFmt("%d", PROJECT_VERSION_NUM), "check text");
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        strLstAddZ(argList, "--version");
+        TEST_RESULT_VOID(testCfgLoad(argList), "version from version option");
+        TEST_RESULT_STR_Z(helpRender(helpData), versionOnly, "check text");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("general invocation");
@@ -149,30 +183,18 @@ testRun(void)
         TEST_RESULT_VOID(testCfgLoad(argList), "help from help command");
         TEST_RESULT_STR_Z(helpRender(helpData), generalHelp, "check text");
 
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("version command");
-
-        const char *commandHelp = zNewFmt(
-            "%s%s",
-            helpVersion,
-            " - 'version' command help\n"
-            "\n"
-            "Get version.\n"
-            "\n"
-            "Displays installed pgBackRest version.\n");
-
         argList = strLstNew();
         strLstAddZ(argList, "/path/to/pgbackrest");
-        strLstAddZ(argList, "help");
-        strLstAddZ(argList, "version");
-        TEST_RESULT_VOID(testCfgLoad(argList), "help for version command");
-        TEST_RESULT_STR_Z(helpRender(helpData), commandHelp, "check text");
+        strLstAddZ(argList, "--version");
+        strLstAddZ(argList, "--help");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help from help option");
+        TEST_RESULT_STR_Z(helpRender(helpData), generalHelp, "check text");
 
         // This test is broken up into multiple strings because C99 does not require compilers to support const strings > 4095 bytes
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("restore command");
 
-        commandHelp = zNewFmt(
+        const char *commandHelp = zNewFmt(
             "%s%s%s",
             helpVersion,
             " - 'restore' command help\n"
@@ -211,7 +233,8 @@ testRun(void)
             "  --link-all                          restore all symlinks [default=n]\n"
             "  --link-map                          modify the destination of a symlink\n"
             "                                      [current=/link1=/dest1, /link2=/dest2]\n"
-            "  --recovery-option                   set an option in recovery.conf\n"
+            "  --recovery-option                   set an option in postgresql.auto.conf or\n"
+            "                                      recovery.conf\n"
             "  --set                               backup set to restore [default=latest]\n"
             "  --tablespace-map                    restore a tablespace into the specified\n"
             "                                      directory\n"
@@ -219,9 +242,9 @@ testRun(void)
             "                                      specified directory\n"
             "  --target                            recovery target\n"
             "  --target-action                     action to take when recovery target is\n"
-            "                                      reached [default=pause]\n"
+            "                                      reached\n"
             "  --target-exclusive                  stop just before the recovery target is\n"
-            "                                      reached [default=n]\n"
+            "                                      reached\n"
             "  --target-timeline                   recover along a timeline\n"
             "  --type                              recovery type [default=default]\n"
             "\n"
@@ -232,7 +255,7 @@ testRun(void)
             "  --cmd                               pgBackRest command\n"
             "                                      [default=/path/to/pgbackrest]\n"
             "  --cmd-ssh                           SSH client command [default=ssh]\n"
-            "  --compress-level-network            network compression level [default=3]\n"
+            "  --compress-level-network            network compression level [default=1]\n"
             "  --config                            pgBackRest configuration file\n"
             "                                      [default=/etc/pgbackrest/pgbackrest.conf]\n"
             "  --config-include-path               path to additional pgBackRest\n"
@@ -242,13 +265,13 @@ testRun(void)
             "                                      files [default=/etc/pgbackrest]\n"
             "  --delta                             restore or backup using checksums\n"
             "                                      [default=n]\n"
-            "  --io-timeout                        I/O timeout [default=60]\n"
+            "  --io-timeout                        I/O timeout [default=1m]\n"
             "  --lock-path                         path where lock files are stored\n"
             "                                      [default=/tmp/pgbackrest]\n"
             "  --neutral-umask                     use a neutral umask [default=y]\n"
             "  --process-max                       max processes to use for\n"
             "                                      compress/transfer [default=1]\n"
-            "  --protocol-timeout                  protocol timeout [default=1830]\n"
+            "  --protocol-timeout                  protocol timeout [default=31m]\n"
             "  --sck-keep-alive                    keep-alive enable [default=y]\n"
             "  --stanza                            defines the stanza\n"
             "  --tcp-keep-alive-count              keep-alive count\n"
@@ -259,33 +282,36 @@ testRun(void)
             "\n"
             "  --log-level-console                 level for console logging [default=warn]\n"
             "  --log-level-file                    level for file logging [default=info]\n"
-            "  --log-level-stderr                  level for stderr logging [default=warn]\n"
+            "  --log-level-stderr                  level for stderr logging [default=off]\n"
             "  --log-path                          path where log files are stored\n"
             "                                      [default=/var/log/pgbackrest]\n"
             "  --log-subprocess                    enable logging in subprocesses [default=n]\n"
             "  --log-timestamp                     enable timestamp in logging [default=y]\n"
             "\n",
+            "Maintainer Options:\n"
+            "\n"
+            "  --pg-version-force                  force PostgreSQL version\n"
+            "\n"
             "Repository Options:\n"
             "\n"
             "  --repo                              set repository\n"
             "  --repo-azure-account                azure repository account\n"
             "  --repo-azure-container              azure repository container\n"
             "  --repo-azure-endpoint               azure repository endpoint\n"
-            "                                      [default=blob.core.windows.net]\n"
             "  --repo-azure-key                    azure repository key\n"
-            "  --repo-azure-key-type               azure repository key type [default=shared]\n"
-            "  --repo-azure-uri-style              azure URI Style [default=host]\n"
+            "  --repo-azure-key-type               azure repository key type\n"
+            "  --repo-azure-uri-style              azure URI Style\n"
             "  --repo-cipher-pass                  repository cipher passphrase\n"
             "                                      [current=<redacted>]\n"
             "  --repo-cipher-type                  cipher used to encrypt the repository\n"
-            "                                      [current=aes-256-cbc, default=none]\n"
+            "                                      [current=<multi>, default=none]\n"
             "  --repo-gcs-bucket                   GCS repository bucket\n"
             "  --repo-gcs-endpoint                 GCS repository endpoint\n"
-            "                                      [default=storage.googleapis.com]\n"
             "  --repo-gcs-key                      GCS repository key\n"
-            "  --repo-gcs-key-type                 GCS repository key type [default=service]\n"
+            "  --repo-gcs-key-type                 GCS repository key type\n"
+            "  --repo-gcs-user-project             GCS project ID\n"
             "  --repo-host                         repository host when operating remotely\n"
-            "                                      [current=backup.example.net]\n"
+            "                                      [current=<multi>]\n"
             "  --repo-host-ca-file                 repository host certificate authority file\n"
             "  --repo-host-ca-path                 repository host certificate authority path\n"
             "  --repo-host-cert-file               repository host certificate file\n"
@@ -311,33 +337,39 @@ testRun(void)
             "  --repo-s3-endpoint                  S3 repository endpoint\n"
             "  --repo-s3-key                       S3 repository access key\n"
             "  --repo-s3-key-secret                S3 repository secret access key\n"
-            "  --repo-s3-key-type                  S3 repository key type [default=shared]\n"
+            "  --repo-s3-key-type                  S3 repository key type\n"
             "  --repo-s3-kms-key-id                S3 repository KMS key\n"
             "  --repo-s3-region                    S3 repository region\n"
+            "  --repo-s3-requester-pays            S3 repository requester pays\n"
             "  --repo-s3-role                      S3 repository role\n"
+            "  --repo-s3-sse-customer-key          S3 repository SSE customer key\n"
             "  --repo-s3-token                     S3 repository security token\n"
-            "  --repo-s3-uri-style                 S3 URI Style [default=host]\n"
+            "  --repo-s3-uri-style                 S3 URI Style\n"
             "  --repo-sftp-host                    SFTP repository host\n"
             "  --repo-sftp-host-fingerprint        SFTP repository host fingerprint\n"
+            "  --repo-sftp-host-key-check-type     SFTP host key check type\n"
             "  --repo-sftp-host-key-hash-type      SFTP repository host key hash type\n"
-            "  --repo-sftp-host-port               SFTP repository host port [default=22]\n"
+            "  --repo-sftp-host-port               SFTP repository host port\n"
             "  --repo-sftp-host-user               SFTP repository host user\n"
+            "  --repo-sftp-known-host              SFTP known hosts file\n"
             "  --repo-sftp-private-key-file        SFTP private key file\n"
             "  --repo-sftp-private-key-passphrase  SFTP private key passphrase\n"
             "  --repo-sftp-public-key-file         SFTP public key file\n"
             "  --repo-storage-ca-file              repository storage CA file\n"
             "  --repo-storage-ca-path              repository storage CA path\n"
             "  --repo-storage-host                 repository storage host\n"
-            "  --repo-storage-port                 repository storage port [default=443]\n"
+            "  --repo-storage-port                 repository storage port\n"
+            "  --repo-storage-tag                  repository storage tag(s)\n"
             "  --repo-storage-upload-chunk-size    repository storage upload chunk size\n"
+            "                                      [default=4194304]\n"
             "  --repo-storage-verify-tls           repository storage certificate verify\n"
-            "                                      [default=y]\n"
+            "  --repo-target-time                  target time for repository\n"
             "  --repo-type                         type of storage used for the repository\n"
             "                                      [default=posix]\n"
             "\n"
             "Stanza Options:\n"
             "\n"
-            "  --pg-path                           postgreSQL data directory\n"
+            "  --pg-path                           PostgreSQL data directory\n"
             "\n"
             "Use 'pgbackrest help restore [option]' for more information.\n");
 
@@ -348,7 +380,8 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptBufferSize, "32768");
         hrnCfgArgRawZ(argList, cfgOptRepoCipherType, "aes-256-cbc");
         hrnCfgEnvRawZ(cfgOptRepoCipherPass, TEST_CIPHER_PASS);
-        hrnCfgArgRawZ(argList, cfgOptRepoHost, "backup.example.net");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 1, "backup.example.net");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 2, "dr.test.org");
         hrnCfgArgRawZ(argList, cfgOptLinkMap, "/link1=/dest1");
         hrnCfgArgRawZ(argList, cfgOptLinkMap, "/link2=/dest2");
         hrnCfgArgRawZ(argList, cfgOptDbInclude, "db1");
@@ -549,6 +582,116 @@ testRun(void)
         strLstAddZ(argList, "repo-retention-archive");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for backup command, repo-retention-archive option");
         TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check admonition text");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multiple current values (with one missing)");
+
+        optionHelp = zNewFmt(
+            "%s - 'restore' command - 'repo-host' option help\n"
+            "\n"
+            "Repository host when operating remotely.\n"
+            "\n"
+            "When backing up and archiving to a locally mounted filesystem this setting is\n"
+            "not required.\n"
+            "\n"
+            "current:\n"
+            "  repo1: backup.example.net\n"
+            "  repo3: dr.test.org\n"
+            "\n"
+            "deprecated name: backup-host\n",
+            helpVersion);
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 1, "backup.example.net");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 3, "dr.test.org");
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "restore");
+        strLstAddZ(argList, "repo-host");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for restore command, repo-host option");
+        TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check text");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multiple current values (with one unset)");
+
+        optionHelp = zNewFmt(
+            "%s - 'restore' command - 'repo-host' option help\n"
+            "\n"
+            "Repository host when operating remotely.\n"
+            "\n"
+            "When backing up and archiving to a locally mounted filesystem this setting is\n"
+            "not required.\n"
+            "\n"
+            "current:\n"
+            "  repo3: dr.test.org\n"
+            "\n"
+            "deprecated name: backup-host\n",
+            helpVersion);
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "s3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoHost, 3, "dr.test.org");
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "restore");
+        strLstAddZ(argList, "repo-host");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for restore command, repo-host option");
+        TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check text");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multiple default values");
+
+        #define HELP_OPTION_CHUNK                                                                                                  \
+            "%s - 'restore' command - 'repo-storage-upload-chunk-size' option help\n"                                              \
+            "\n"                                                                                                                   \
+            "Repository storage upload chunk size.\n"                                                                              \
+            "\n"                                                                                                                   \
+            "Object stores such as S3 allow files to be uploaded in chunks when the file is\n"                                     \
+            "too large to be stored in memory. Even if the file can be stored in memory, it\n"                                     \
+            "is more memory efficient to limit the amount of memory used for uploads.\n"                                           \
+            "\n"                                                                                                                   \
+            "A larger chunk size will generally lead to better performance because it will\n"                                      \
+            "minimize upload requests and allow more files to be uploaded in a single\n"                                           \
+            "request rather than in chunks. The disadvantage is that memory usage will be\n"                                       \
+            "higher and because the chunk buffer must be allocated per process, larger\n"                                          \
+            "process-max values will lead to more memory being consumed overall.\n"                                                \
+            "\n"                                                                                                                   \
+            "Default chunk sizes by repo type:\n"                                                                                  \
+            "\n"                                                                                                                   \
+            "* azure - 4MiB\n"                                                                                                     \
+            "* gcs - 4MiB\n"                                                                                                       \
+            "* s3 - 5MiB\n"                                                                                                        \
+            "\n"                                                                                                                   \
+            "Note that valid chunk sizes vary by storage type and by platform. For example,\n"                                     \
+            "AWS S3 has a minimum chunk size of 5MiB but S3 clones may accept lower values.\n"                                     \
+            "Terminology for chunk size varies by storage type, so when searching min/max\n"                                       \
+            "values use \"part size\" for AWS S3, \"chunk size\" for GCS, and \"block size\" for\n"                                \
+            "Azure. No attempt is made to validate configured chunk sizes so selecting an\n"                                       \
+            "invalid value will lead to errors from the storage service or undefined\n"                                            \
+            "behavior.\n"
+
+        optionHelp = zNewFmt(
+            HELP_OPTION_CHUNK
+            "\n"
+            "default:\n"
+            "  repo1: 5242880\n"
+            "  repo2: 4194304\n",
+            helpVersion);
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "s3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 2, "azure");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 3, "gcs");
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "restore");
+        strLstAddZ(argList, "repo-storage-upload-chunk-size");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for restore command, repo-storage-upload-chunk-size option");
+
+        // There is currently no way for some defaults to be NULL and others not but it could happen in the future
+        cfgOptionIdxSet(cfgOptRepoStorageUploadChunkSize, 2, cfgSourceDefault, NULL);
+
+        TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check text");
     }
 
     // *****************************************************************************************************************************

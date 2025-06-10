@@ -16,8 +16,6 @@ Object type
 struct IoWrite
 {
     IoWritePub pub;                                                 // Publicly accessible variables
-    void *driver;                                                   // Driver object
-    IoWriteInterface interface;                                     // Driver interface
     Buffer *output;                                                 // Output buffer
 
 #ifdef DEBUG
@@ -45,10 +43,10 @@ ioWriteNew(void *const driver, const IoWriteInterface interface)
         {
             .pub =
             {
+                .driver = objMoveToInterface(driver, this, memContextPrior()),
+                .interface = interface,
                 .filterGroup = ioFilterGroupNew(),
             },
-            .driver = objMoveToInterface(driver, this, memContextPrior()),
-            .interface = interface,
             .output = bufNew(ioBufferSize()),
         };
     }
@@ -59,7 +57,7 @@ ioWriteNew(void *const driver, const IoWriteInterface interface)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-ioWriteOpen(IoWrite *this)
+ioWriteOpen(IoWrite *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
@@ -68,8 +66,8 @@ ioWriteOpen(IoWrite *this)
     ASSERT(this != NULL);
     ASSERT(!this->opened && !this->closed);
 
-    if (this->interface.open != NULL)
-        this->interface.open(this->driver);
+    if (ioWriteInterface(this)->open != NULL)
+        ioWriteInterface(this)->open(ioWriteDriver(this));
 
     // Track whether filters were added to prevent flush() from being called later since flush() won't work with most filters
 #ifdef DEBUG
@@ -88,7 +86,7 @@ ioWriteOpen(IoWrite *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-ioWrite(IoWrite *this, const Buffer *buffer)
+ioWrite(IoWrite *const this, const Buffer *const buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
@@ -108,7 +106,7 @@ ioWrite(IoWrite *this, const Buffer *buffer)
             // Write data if the buffer is full
             if (bufRemains(this->output) == 0)
             {
-                this->interface.write(this->driver, this->output);
+                ioWriteInterface(this)->write(ioWriteDriver(this), this->output);
                 bufUsedZero(this->output);
             }
         }
@@ -120,7 +118,7 @@ ioWrite(IoWrite *this, const Buffer *buffer)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-ioWriteLine(IoWrite *this, const Buffer *buffer)
+ioWriteLine(IoWrite *const this, const Buffer *const buffer)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
@@ -138,7 +136,7 @@ ioWriteLine(IoWrite *this, const Buffer *buffer)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-ioWriteReady(IoWrite *this, IoWriteReadyParam param)
+ioWriteReady(IoWrite *const this, const IoWriteReadyParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
@@ -149,15 +147,15 @@ ioWriteReady(IoWrite *this, IoWriteReadyParam param)
 
     bool result = true;
 
-    if (this->interface.ready != NULL)
-        result = this->interface.ready(this->driver, param.error);
+    if (ioWriteInterface(this)->ready != NULL)
+        result = ioWriteInterface(this)->ready(ioWriteDriver(this), param.error);
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-ioWriteStr(IoWrite *this, const String *string)
+ioWriteStr(IoWrite *const this, const String *const string)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
@@ -174,7 +172,7 @@ ioWriteStr(IoWrite *this, const String *string)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-ioWriteStrLine(IoWrite *this, const String *string)
+ioWriteStrLine(IoWrite *const this, const String *const string)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
@@ -201,7 +199,7 @@ ioWriteVarIntU64(IoWrite *const this, const uint64_t value)
 
     ASSERT(this != NULL);
 
-    unsigned char buffer[CVT_VARINT128_BUFFER_SIZE];
+    uint8_t buffer[CVT_VARINT128_BUFFER_SIZE];
     size_t bufferPos = 0;
 
     cvtUInt64ToVarInt128(value, buffer, &bufferPos, sizeof(buffer));
@@ -212,7 +210,7 @@ ioWriteVarIntU64(IoWrite *const this, const uint64_t value)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-ioWriteFlush(IoWrite *this)
+ioWriteFlush(IoWrite *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
@@ -224,7 +222,7 @@ ioWriteFlush(IoWrite *this)
 
     if (!bufEmpty(this->output))
     {
-        this->interface.write(this->driver, this->output);
+        ioWriteInterface(this)->write(ioWriteDriver(this), this->output);
         bufUsedZero(this->output);
     }
 
@@ -233,7 +231,7 @@ ioWriteFlush(IoWrite *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-ioWriteClose(IoWrite *this)
+ioWriteClose(IoWrite *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
@@ -250,7 +248,7 @@ ioWriteClose(IoWrite *this)
         // Write data if the buffer is full or if this is the last buffer to be written
         if (bufRemains(this->output) == 0 || (ioFilterGroupDone(this->pub.filterGroup) && !bufEmpty(this->output)))
         {
-            this->interface.write(this->driver, this->output);
+            ioWriteInterface(this)->write(ioWriteDriver(this), this->output);
             bufUsedZero(this->output);
         }
     }
@@ -260,8 +258,8 @@ ioWriteClose(IoWrite *this)
     ioFilterGroupClose(this->pub.filterGroup);
 
     // Close the driver if there is a close function
-    if (this->interface.close != NULL)
-        this->interface.close(this->driver);
+    if (ioWriteInterface(this)->close != NULL)
+        ioWriteInterface(this)->close(ioWriteDriver(this));
 
 #ifdef DEBUG
     this->closed = true;
@@ -272,7 +270,7 @@ ioWriteClose(IoWrite *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN int
-ioWriteFd(const IoWrite *this)
+ioWriteFd(const IoWrite *const this)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(IO_WRITE, this);
@@ -280,5 +278,5 @@ ioWriteFd(const IoWrite *this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(INT, this->interface.fd == NULL ? -1 : this->interface.fd(this->driver));
+    FUNCTION_LOG_RETURN(INT, ioWriteInterface(this)->fd == NULL ? -1 : ioWriteInterface(this)->fd(ioWriteDriver(this)));
 }

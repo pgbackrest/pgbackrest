@@ -1,0 +1,30 @@
+<release date="2025-01-20" version="2.54.2" title="Bug Fix">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-pull-request id="2511"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Fix issue after disabling bundling with block incremental enabled.</p>
+            </release-item>
+        </release-bug-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-ideator id="paul.bierly"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="paul.bierly"/>
+                </release-item-contributor-list>
+
+                <p>Clarify behavior of multiple configuration files.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
+</release>

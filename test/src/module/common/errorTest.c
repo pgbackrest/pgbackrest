@@ -388,7 +388,11 @@ testRun(void)
         {
             printf("%s\n", errorMessage());
             assert(errorCode() == AssertError.code);
-            assert(strcmp(errorMessage(), "message 1: [5] Input/output error") == 0);
+            assert(
+                // glibc
+                strcmp(errorMessage(), "message 1: [5] Input/output error") == 0 ||
+                // musl libc
+                strcmp(errorMessage(), "message 1: [5] I/O error") == 0);
         }
         TRY_END();
 
@@ -416,7 +420,7 @@ testRun(void)
             HRN_FORK_CHILD_BEGIN(.expectedExitStatus = UnhandledError.code)
             {
                 // Redirect stderr to stdout (we do not care about the output here since coverage will tell us we hit the code)
-                stderr = stdout;
+                dup2(fileno(stdout), fileno(stderr));
 
                 THROW(TestChildError, "does not get caught!");
             }

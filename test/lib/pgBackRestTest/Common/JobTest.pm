@@ -25,12 +25,10 @@ use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestTest::Common::BuildTest;
 use pgBackRestTest::Common::ContainerTest;
-use pgBackRestTest::Common::CoverageTest;
 use pgBackRestTest::Common::DbVersion;
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
 use pgBackRestTest::Common::ListTest;
-use pgBackRestTest::Common::RunTest;
 use pgBackRestTest::Common::VmTest;
 
 ####################################################################################################################################
@@ -53,6 +51,8 @@ sub new
         $self->{oTest},
         $self->{bDryRun},
         $self->{bVmOut},
+        $self->{strPlatform},
+        $self->{strImage},
         $self->{iVmIdx},
         $self->{iVmMax},
         $self->{strMakeCmd},
@@ -86,6 +86,8 @@ sub new
             {name => 'oTest'},
             {name => 'bDryRun'},
             {name => 'bVmOut'},
+            {name => 'strPlatform'},
+            {name => 'strImage'},
             {name => 'iVmIdx'},
             {name => 'iVmMax'},
             {name => 'strMakeCmd'},
@@ -115,7 +117,9 @@ sub new
     $self->{iTry} = 0;
 
     # Setup the path where unit test will be built
-    $self->{strUnitPath} = "$self->{strTestPath}/unit-$self->{iVmIdx}/$self->{oTest}->{&TEST_VM}";
+    $self->{strUnitPath} =
+        "$self->{strTestPath}/unit-$self->{iVmIdx}/" .
+        ($self->{oTest}->{&TEST_TYPE} eq TESTDEF_INTEGRATION ? 'none' : $self->{oTest}->{&TEST_VM});
     $self->{strDataPath} = "$self->{strTestPath}/data-$self->{iVmIdx}";
     $self->{strRepoPath} = "$self->{strTestPath}/repo";
 
@@ -164,7 +168,7 @@ sub run
             ($self->{iTry} > 1 ? ' (retry ' . ($self->{iTry} - 1) . ')' : '');
 
         my $strImage = 'test-' . $self->{iVmIdx};
-        my $strDbVersion = (defined($self->{oTest}->{&TEST_DB}) ? $self->{oTest}->{&TEST_DB} : PG_VERSION_94);
+        my $strDbVersion = (defined($self->{oTest}->{&TEST_DB}) ? $self->{oTest}->{&TEST_DB} : PG_VERSION_95);
         $strDbVersion =~ s/\.//;
 
         &log($self->{bDryRun} && !$self->{bVmOut} || $self->{bShowOutputAsync} ? INFO : DETAIL, "${strTest}" .
@@ -187,7 +191,7 @@ sub run
             }
 
             # Create data directory
-            if ($self->{oTest}->{&TEST_C} && !$self->{oStorageTest}->pathExists($self->{strDataPath}))
+            if ($self->{oTest}->{&TEST_TYPE} eq TESTDEF_UNIT && !$self->{oStorageTest}->pathExists($self->{strDataPath}))
             {
                 $self->{oStorageTest}->pathCreate($self->{strDataPath}, {strMode => '0770'});
             }
@@ -204,20 +208,18 @@ sub run
             {
                 if ($self->{oTest}->{&TEST_VM} ne VM_NONE)
                 {
-                    my $strBinPath = $self->{strTestPath} . '/bin/' . $self->{oTest}->{&TEST_VM} . '/' . PROJECT_EXE;
                     my $strBuildPath = $self->{strTestPath} . '/build/' . $self->{oTest}->{&TEST_VM};
 
                     executeTest(
-                        'docker run -itd -h ' . $self->{oTest}->{&TEST_VM} . "-test --name=${strImage}" .
-                        " -v ${strHostTestPath}:${strVmTestPath}" .
+                        'docker run' . $self->{strPlatform} . ' -itd -h ' .
+                        $self->{oTest}->{&TEST_VM} . "-test --name=${strImage} -v ${strHostTestPath}:${strVmTestPath}" .
                         ($self->{oTest}->{&TEST_C} ? " -v $self->{strUnitPath}:$self->{strUnitPath}" : '') .
                         ($self->{oTest}->{&TEST_C} ? " -v $self->{strDataPath}:$self->{strDataPath}" : '') .
                         " -v $self->{strBackRestBase}:$self->{strBackRestBase}" .
                         " -v $self->{strRepoPath}:$self->{strRepoPath}" .
-                        ($self->{oTest}->{&TEST_BIN_REQ} ? " -v ${strBinPath}:${strBinPath}:ro" : '') .
                         ($self->{oTest}->{&TEST_C} ? " -v ${strBuildPath}:${strBuildPath}:ro" : '') .
                         ($self->{oTest}->{&TEST_C} ? " -v ${strCCachePath}:/home/${\TEST_USER}/.ccache" : '') .
-                        ' ' . containerRepo() . ':' . $self->{oTest}->{&TEST_VM} . '-test',
+                        ' ' . $self->{strImage},
                         {bSuppressStdErr => true});
                 }
             }
@@ -241,63 +243,38 @@ sub run
 
         foreach my $iRunIdx (@{$self->{oTest}->{&TEST_RUN}})
         {
-            $strCommandRunParam .= ' --run=' . $iRunIdx;
+            $strCommandRunParam .= ' --test=' . $iRunIdx;
         }
 
         if (!$self->{bDryRun} || $self->{bVmOut})
         {
-            my $strCommand = undef;                                 # Command to run test
+            my $bValgrind = $self->{bValgrindUnit} && $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE;
+            my $strValgrindSuppress =
+                $self->{strRepoPath} . '/test/src/valgrind.suppress.' .
+                ($self->{oTest}->{&TEST_TYPE} eq TESTDEF_INTEGRATION ? VM_NONE : $self->{oTest}->{&TEST_VM});
+            my $strVm = $self->{oTest}->{&TEST_TYPE} eq TESTDEF_INTEGRATION ? VM_NONE : $self->{oTest}->{&TEST_VM};
 
-            # If testing with C harness
-            if ($self->{oTest}->{&TEST_C})
-            {
-                # Create command
-                # ------------------------------------------------------------------------------------------------------------------
-                # Build filename for valgrind suppressions
-                my $strValgrindSuppress = $self->{strRepoPath} . '/test/src/valgrind.suppress.' . $self->{oTest}->{&TEST_VM};
-
-                $strCommand =
-                    ($self->{oTest}->{&TEST_VM} ne VM_NONE ? "docker exec -i -u ${\TEST_USER} ${strImage} bash -l -c '" : '') .
-                    " \\\n" .
-                    $self->{strTestPath} . '/build/' . $self->{oTest}->{&TEST_VM} . '/test/src/test-pgbackrest' .
-                        ' --repo-path=' . $self->{strTestPath} . '/repo' . ' --test-path=' . $self->{strTestPath} .
-                        " --log-level=$self->{strLogLevel}" . ' --vm=' . $self->{oTest}->{&TEST_VM} .
-                        ' --vm-id=' . $self->{iVmIdx} . ($self->{bProfile} ? ' --profile' : '') .
-                        ($self->{bLogTimestamp} ? '' : ' --no-log-timestamp') .
-                        ($self->{strTimeZone} ? " --tz='$self->{strTimeZone}'" : '') .
-                        ($self->{bBackTraceUnit} ? '' : ' --no-back-trace') . ($bCoverage ? '' : ' --no-coverage') . ' test ' .
-                        $self->{oTest}->{&TEST_MODULE} . '/' . $self->{oTest}->{&TEST_NAME} . " && \\\n" .
-                    # Allow stderr to be copied to stderr and stdout
-                    "exec 3>&1 && \\\n" .
-                    # Test with valgrind when requested
-                    ($self->{bValgrindUnit} && $self->{oTest}->{&TEST_TYPE} ne TESTDEF_PERFORMANCE ?
-                        'valgrind -q --gen-suppressions=all' .
-                        ($self->{oStorageTest}->exists($strValgrindSuppress) ? " --suppressions=${strValgrindSuppress}" : '') .
-                        " --exit-on-first-error=yes --leak-check=full --leak-resolution=high --error-exitcode=25" . ' ' : '') .
-                        "$self->{strUnitPath}/build/test-unit 2>&1 1>&3 | tee /dev/stderr" .
-                    ($self->{oTest}->{&TEST_VM} ne VM_NONE ? "'" : '');
-            }
-            else
-            {
-                $strCommand =
-                    ($self->{oTest}->{&TEST_CONTAINER} ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
-                    abs_path($0) .
-                    " --test-path=${strVmTestPath}" .
-                    " --vm=$self->{oTest}->{&TEST_VM}" .
-                    " --vm-id=$self->{iVmIdx}" .
-                    " --module=" . $self->{oTest}->{&TEST_MODULE} .
-                    ' --test=' . $self->{oTest}->{&TEST_NAME} .
-                    $strCommandRunParam .
-                    (defined($self->{oTest}->{&TEST_DB}) ? ' --pg-version=' . $self->{oTest}->{&TEST_DB} : '') .
-                    ($self->{strLogLevel} ne lc(INFO) ? " --log-level=$self->{strLogLevel}" : '') .
-                    ($self->{strLogLevelTestFile} ne lc(TRACE) ? " --log-level-test-file=$self->{strLogLevelTestFile}" : '') .
+            my $strCommand =
+                ($strVm ne VM_NONE ? "docker exec -i -u ${\TEST_USER} ${strImage} bash -l -c '\\\n" : '') .
+                $self->{strTestPath} . "/build/${strVm}/test/src/test-pgbackrest" .
+                    ' --repo-path=' . $self->{strTestPath} . '/repo' . ' --test-path=' . $self->{strTestPath} .
+                    " --log-level=$self->{strLogLevel}" . ' --vm=' . $self->{oTest}->{&TEST_VM} .
+                    ' --vm-id=' . $self->{iVmIdx} . ($self->{bProfile} ? ' --profile' : '') . $strCommandRunParam .
                     ($self->{bLogTimestamp} ? '' : ' --no-log-timestamp') .
-                    ' --psql-bin=' . $self->{oTest}->{&TEST_PGSQL_BIN} .
                     ($self->{strTimeZone} ? " --tz='$self->{strTimeZone}'" : '') .
-                    ($self->{bDryRun} ? ' --dry-run' : '') .
-                    ($self->{bDryRun} ? ' --vm-out' : '') .
-                    ($self->{bNoCleanup} ? " --no-cleanup" : '');
-            }
+                    ($self->{iScale} ? " --scale=$self->{iScale}" : '') .
+                    (defined($self->{oTest}->{&TEST_DB}) ? ' --pg-version=' . $self->{oTest}->{&TEST_DB} : '') .
+                    ($self->{bBackTraceUnit} ? '' : ' --no-back-trace') . ($bCoverage ? '' : ' --no-coverage') . ' test ' .
+                    $self->{oTest}->{&TEST_MODULE} . '/' . $self->{oTest}->{&TEST_NAME} . " && \\\n" .
+                # Allow stderr to be copied to stderr and stdout
+                "exec 3>&1 && \\\n" .
+                # Test with valgrind when requested
+                ($bValgrind ?
+                    'valgrind -q --gen-suppressions=all' .
+                    ($self->{oStorageTest}->exists($strValgrindSuppress) ? " --suppressions=${strValgrindSuppress}" : '') .
+                    " --exit-on-first-error=yes --leak-check=full --leak-resolution=high --error-exitcode=25" . ' ' : '') .
+                    "$self->{strUnitPath}/build/test-unit 2>&1 1>&3 | tee /dev/stderr" .
+                ($strVm ne VM_NONE ? "'" : '');
 
             my $oExec = new pgBackRestTest::Common::ExecuteTest(
                 $strCommand, {bSuppressError => true, bShowOutputAsync => $self->{bShowOutputAsync}});
@@ -369,13 +346,13 @@ sub end
         # If C code generate coverage info
         if ($iExitStatus == 0 && $self->{oTest}->{&TEST_C} && vmCoverageC($self->{oTest}->{&TEST_VM}) && $self->{bCoverageUnit})
         {
-            coverageExtract(
-                $self->{oStorageTest}, $self->{oTest}->{&TEST_MODULE}, $self->{oTest}->{&TEST_NAME},
-                $self->{oTest}->{&TEST_VM} ne VM_NONE, $self->{bCoverageSummary},
-                $self->{oTest}->{&TEST_VM} eq VM_NONE ? undef : $strImage, $self->{strTestPath}, "$self->{strTestPath}/temp",
-                -e "$self->{strUnitPath}/build/test-unit.p" ?
-                    "$self->{strUnitPath}/build/test-unit.p" : "$self->{strUnitPath}/build/test-unit\@exe",
-                $self->{strBackRestBase} . '/test/result');
+            executeTest(
+                ($self->{oTest}->{&TEST_VM} ne VM_NONE ? 'docker exec -i -u ' . TEST_USER . " ${strImage} " : '') .
+                    "gcov --json-format --stdout --branch-probabilities " .
+                    (-e "$self->{strUnitPath}/build/test-unit.p" ?
+                        "$self->{strUnitPath}/build/test-unit.p" : "$self->{strUnitPath}/build/test-unit\@exe") .
+                        '/test.c.gcda > ' . $self->{strBackRestBase} . '/test/result/coverage/raw/' .
+                        $self->{oTest}->{&TEST_MODULE} . '-' . $self->{oTest}->{&TEST_NAME} . '.json');
         }
 
         # Record elapsed time

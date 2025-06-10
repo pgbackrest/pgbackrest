@@ -122,7 +122,7 @@ testRun(void)
             "    </operation>\n"
             "</doc>\n");
 
-        TEST_ERROR(bldHlpParse(storageTest, bldCfgErr), FormatError, "command 'backup' must have help");
+        TEST_ERROR(bldHlpParse(storageTest, bldCfgErr, false), FormatError, "command 'backup' must have help");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on missing config option");
@@ -153,7 +153,7 @@ testRun(void)
             "    </operation>\n"
             "</doc>\n");
 
-        TEST_ERROR(bldHlpParse(storageTest, bldCfgErr), FormatError, "option 'buffer' must have help for command 'backup'");
+        TEST_ERROR(bldHlpParse(storageTest, bldCfgErr, false), FormatError, "option 'buffer' must have help for command 'backup'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on missing command-line option");
@@ -195,7 +195,7 @@ testRun(void)
             "    </operation>\n"
             "</doc>\n");
 
-        TEST_ERROR(bldHlpParse(storageTest, bldCfgErr), FormatError, "option 'stanza' must have help for command 'backup'");
+        TEST_ERROR(bldHlpParse(storageTest, bldCfgErr, false), FormatError, "option 'stanza' must have help for command 'backup'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("parse and render");
@@ -238,6 +238,7 @@ testRun(void)
             "\n"
             "  force:\n"
             "    type: boolean\n"
+            "    internal: true\n"
             "    command:\n"
             "      check: {}\n"
             "      restore: {}\n"
@@ -266,6 +267,9 @@ testRun(void)
             "                       <text>\n"
             "                           <p>Buffer.</p>\n"
             "                       </text>\n"
+            "\n"
+            "                       <example>128KiB</example>\n"
+            "                       <example>256KiB</example>\n"
             "                   </config-key>\n"
             "\n"
             "                   <config-key id=\"stanza\" name=\"Stanza\">\n"
@@ -274,6 +278,8 @@ testRun(void)
             "                       <text>\n"
             "                           <p>Stanza.</p>\n"
             "                       </text>\n"
+            "\n"
+            "                       <example>test_stanza</example>\n"
             "                   </config-key>\n"
             "               </config-key-list>\n"
             "           </config-section>\n"
@@ -342,7 +348,8 @@ testRun(void)
             "</doc>\n");
 
         TEST_RESULT_STR_Z(
-            hrnPackReadToStr(pckReadNew(pckWriteResult(bldHlpRenderHelpAutoCPack(bldCfg, bldHlpParse(storageTest, bldCfg))))),
+            hrnPackReadToStr(
+                pckReadNew(pckWriteResult(bldHlpRenderHelpAutoCPack(bldCfg, bldHlpParse(storageTest, bldCfg, false))))),
             // {uncrustify_off - indentation}
             "1:array:"
             "["
@@ -376,6 +383,7 @@ testRun(void)
                     "}"
                 "]"
                 // force option
+                ", 13:bool:true"
                 ", 18:array:"
                 "["
                     // check command override
@@ -407,7 +415,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check help file");
 
-        TEST_RESULT_VOID(bldHlpRender(storageTest, bldCfg, bldHlpParse(storageTest, bldCfg)), "write file");
+        TEST_RESULT_VOID(bldHlpRender(storageTest, bldCfg, bldHlpParse(storageTest, bldCfg, false)), "write file");
         TEST_STORAGE_EXISTS(storageTest, "src/command/help/help.auto.c.inc");
     }
 

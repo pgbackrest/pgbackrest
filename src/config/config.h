@@ -7,7 +7,6 @@ sets the command and options and determines which options are valid for a comman
 #ifndef CONFIG_CONFIG_H
 #define CONFIG_CONFIG_H
 
-#include "common/lock.h"
 #include "common/log.h"
 #include "common/type/stringId.h"
 #include "common/type/stringList.h"
@@ -41,6 +40,17 @@ typedef enum
 #define CONFIG_COMMAND_ROLE_REMOTE                       "remote"
 
 #define CFG_COMMAND_ROLE_TOTAL                           4
+
+/***********************************************************************************************************************************
+Lock types
+***********************************************************************************************************************************/
+typedef enum
+{
+    lockTypeArchive,
+    lockTypeBackup,
+    lockTypeAll,
+    lockTypeNone,
+} LockType;
 
 /***********************************************************************************************************************************
 Command Functions
@@ -242,12 +252,8 @@ FN_EXTERN bool cfgCommandHelp(void);
 
 FN_EXTERN void cfgCommandSet(ConfigCommand commandId, ConfigCommandRole commandRoleId);
 
-// pgBackRest exe
-FN_EXTERN const String *cfgExe(void);
-
-// Set option default. Option defaults are generally not set in advance because the vast majority of them are never used. It is more
-// efficient to generate them when they are requested. Some defaults are (e.g. the exe path) are set at runtime.
-FN_EXTERN void cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue);
+// Path to current pgbackrest binary
+FN_EXTERN const String *cfgBin(void);
 
 // Was the option negated?
 FN_EXTERN bool cfgOptionIdxNegate(ConfigOption optionId, unsigned int optionIdx);

@@ -25,8 +25,8 @@ typedef enum
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN Storage *storageGcsNew(
-    const String *path, bool write, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
-    StorageGcsKeyType keyType, const String *key, size_t blockSize, const String *endpoint, TimeMSec timeout, bool verifyPeer,
-    const String *caFile, const String *caPath);
+    const String *path, bool write, time_t targetTime, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
+    StorageGcsKeyType keyType, const String *key, size_t blockSize, const KeyValue *tag, const String *endpoint, TimeMSec timeout,
+    bool verifyPeer, const String *caFile, const String *caPath, const String *userProject);
 
 #endif

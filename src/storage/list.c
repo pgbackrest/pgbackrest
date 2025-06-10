@@ -20,6 +20,7 @@ struct StorageList
     Blob *blob;                                                     // Blob of info data
     String *name;                                                   // Current info name
     String *linkDestination;                                        // Current link destination
+    String *versionId;                                              // Current version id
 };
 
 /***********************************************************************************************************************************
@@ -34,7 +35,8 @@ typedef struct StorageListInfo
         const char *name;                                           // Name of path/file/link
     } exists;
 
-    // Mode is only provided at detail level but is included here to save space on 64-bit architectures
+    // Set when info type >= storageInfoLevelType (undefined at lower levels). Mode is only provided at higher detail levels but
+    // included here to save space on 64-bit architectures
     struct
     {
         // Set when info type >= storageInfoLevelType (undefined at lower levels)
@@ -49,6 +51,7 @@ typedef struct StorageListInfo
     {
         uint64_t size;                                              // Size (path/link is 0)
         time_t timeModified;                                        // Time file was last modified
+        const char *versionId;                                      // Version id when versioning enabled
     } basic;
 
     // Set when info type >= storageInfoLevelDetail (undefined at lower levels)
@@ -95,6 +98,7 @@ storageLstNew(const StorageInfoLevel level)
             .blob = blbNew(),
             .name = strNew(),
             .linkDestination = strNew(),
+            .versionId = strNew(),
         };
     }
     OBJ_NEW_END();
@@ -134,14 +138,24 @@ storageLstInsert(StorageList *const this, const unsigned int idx, const StorageI
                     listInfo.detail.linkDestination = blbAdd(
                         this->blob, strZ(info->linkDestination), strSize(info->linkDestination) + 1);
                 }
+
+                __attribute__((fallthrough));
             }
 
             case storageInfoLevelBasic:
+            {
                 listInfo.basic.size = info->size;
                 listInfo.basic.timeModified = info->timeModified;
 
+                if (info->versionId != NULL)
+                    listInfo.basic.versionId = blbAdd(this->blob, strZ(info->versionId), strSize(info->versionId) + 1);
+
+                __attribute__((fallthrough));
+            }
+
             case storageInfoLevelType:
                 listInfo.type.type = info->type;
+                __attribute__((fallthrough));
 
             default:
                 break;
@@ -156,7 +170,7 @@ storageLstInsert(StorageList *const this, const unsigned int idx, const StorageI
 
 /**********************************************************************************************************************************/
 FN_EXTERN StorageInfo
-storageLstGet(StorageList *const this, const unsigned int idx)
+storageLstGet(const StorageList *const this, const unsigned int idx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_LIST, this);
@@ -186,20 +200,51 @@ storageLstGet(StorageList *const this, const unsigned int idx)
 
             if (listInfo->detail.linkDestination != NULL)
                 result.linkDestination = strCatZ(strTrunc(this->linkDestination), listInfo->detail.linkDestination);
+
+            __attribute__((fallthrough));
         }
 
         case storageInfoLevelBasic:
+        {
             result.size = listInfo->basic.size;
             result.timeModified = listInfo->basic.timeModified;
 
+            if (listInfo->basic.versionId != NULL)
+                result.versionId = strCatZ(strTrunc(this->versionId), listInfo->basic.versionId);
+
+            __attribute__((fallthrough));
+        }
+
         case storageInfoLevelType:
             result.type = listInfo->type.type;
+            __attribute__((fallthrough));
 
         default:
             break;
     }
 
     FUNCTION_TEST_RETURN(STORAGE_INFO, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN StorageInfo
+storageLstFind(const StorageList *const this, const String *const name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_LIST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    const char *const namePtr = strZ(name);
+    const unsigned int listIdx = lstFindIdx(this->pub.list, &namePtr);
+
+    if (listIdx == LIST_NOT_FOUND)
+        FUNCTION_TEST_RETURN(STORAGE_INFO, (StorageInfo){.exists = false});
+
+    FUNCTION_TEST_RETURN(STORAGE_INFO, storageLstGet(this, listIdx));
 }
 
 /**********************************************************************************************************************************/

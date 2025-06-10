@@ -49,8 +49,15 @@ FN_EXTERN int lstComparatorStr(const void *item1, const void *item2);
 // General purpose list comparator for unsigned int or structs with an unsigned int as the first member
 FN_EXTERN int lstComparatorUInt(const void *item1, const void *item2);
 
+// General purpose list comparator for int or structs with an int as the first member
+FN_EXTERN int lstComparatorInt(const void *item1, const void *item2);
+
 // General purpose list comparator for zero-terminated strings or structs with a zero-terminated string as the first member
 FN_EXTERN int lstComparatorZ(const void *item1, const void *item2);
+
+// Macro to compare two values in a branchless and transitive fashion
+#define LST_COMPARATOR_CMP(item1, item2)                                                                                           \
+    (((item1) > (item2)) - ((item1) < (item2)))
 
 /***********************************************************************************************************************************
 Constructors
@@ -73,6 +80,8 @@ Getters/Setters
 typedef struct ListPub
 {
     unsigned int listSize;                                          // List size
+    size_t itemSize;                                                // Size of item stored in the list
+    uint8_t *list;                                                  // Pointer to the current start of the list
 } ListPub;
 
 // Set a new comparator
@@ -111,7 +120,7 @@ FN_EXTERN void *lstGetLast(const List *this);
 
 // Find an item in the list
 FN_EXTERN void *lstFind(const List *this, const void *item);
-FN_EXTERN void *lstFindDefault(const List *this, const void *item, void *itemDefault);
+FN_EXTERN const void *lstFindDefault(const List *this, const void *item, const void *itemDefault);
 FN_EXTERN unsigned int lstFindIdx(const List *this, const void *item);
 
 // Does an item exist in the list?
@@ -157,6 +166,29 @@ lstFree(List *const this)
 {
     objFree(this);
 }
+
+/***********************************************************************************************************************************
+Macros for constant lists
+
+Frequently used constant lists can be declared with these macros at compile time rather than dynamically at run time.
+
+Note that lists created in this way are declared as const so can't be modified or freed by the lst*() methods. Casting to List *
+will result in a segfault due to modifying read-only memory.
+
+By convention all List constant identifiers are appended with _LST.
+***********************************************************************************************************************************/
+// This struct must be kept in sync with ListPub (except for const qualifiers)
+typedef struct ListPubConst
+{
+    unsigned int listSize;                                          // List size
+    size_t itemSize;                                                // Size of item stored in the list
+    const uint8_t *list;                                            // Pointer to the current start of the list
+} ListPubConst;
+
+// Create a List constant inline from a constant array
+#define LSTDEF(listParam)                                                                                                          \
+    (const List *)&(ListPubConst){                                                                                                 \
+        .list = (const uint8_t *)listParam, .itemSize = sizeof((listParam)[0]), .listSize = LENGTH_OF(listParam)}
 
 /***********************************************************************************************************************************
 Macros for function logging

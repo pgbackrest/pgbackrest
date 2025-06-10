@@ -7,6 +7,7 @@ ZST Decompress
 
 #include <zstd.h>
 
+#include "common/compress/common.h"
 #include "common/compress/zst/common.h"
 #include "common/compress/zst/decompress.h"
 #include "common/debug.h"
@@ -67,7 +68,7 @@ zstDecompressFreeResource(THIS_VOID)
 Decompress data
 ***********************************************************************************************************************************/
 static void
-zstDecompressProcess(THIS_VOID, const Buffer *compressed, Buffer *decompressed)
+zstDecompressProcess(THIS_VOID, const Buffer *const compressed, Buffer *const decompressed)
 {
     THIS(ZstDecompress);
 
@@ -180,7 +181,7 @@ zstDecompressNew(const bool raw)
     FUNCTION_LOG_RETURN(
         IO_FILTER,
         ioFilterNewP(
-            ZST_DECOMPRESS_FILTER_TYPE, this, NULL, .done = zstDecompressDone, .inOut = zstDecompressProcess,
+            ZST_DECOMPRESS_FILTER_TYPE, this, decompressParamList(raw), .done = zstDecompressDone, .inOut = zstDecompressProcess,
             .inputSame = zstDecompressInputSame));
 }
 

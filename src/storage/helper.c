@@ -98,9 +98,11 @@ storageHelperInit(const StorageHelper *const helperList)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-storageHelperDryRunInit(bool dryRun)
+storageHelperDryRunInit(const bool dryRun)
 {
-    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BOOL, dryRun);
+    FUNCTION_TEST_END();
 
     storageHelper.dryRunInit = true;
     storageHelper.dryRun = dryRun;
@@ -114,7 +116,9 @@ Initialize the stanza and error if it changes
 static void
 storageHelperStanzaInit(const bool stanzaRequired)
 {
-    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BOOL, stanzaRequired);
+    FUNCTION_TEST_END();
 
     // If the stanza is NULL and the storage has not already been initialized then initialize the stanza
     if (!storageHelper.stanzaInit)
@@ -176,34 +180,32 @@ storageLocalWrite(void)
 Get pg storage for the specified host id
 ***********************************************************************************************************************************/
 static Storage *
-storagePgGet(unsigned int pgIdx, bool write)
+storagePgGet(const unsigned int pgIdx, const bool write)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgIdx);
         FUNCTION_TEST_PARAM(BOOL, write);
     FUNCTION_TEST_END();
 
-    Storage *result = NULL;
+    Storage *result;
 
     // Use remote storage
     if (!pgIsLocal(pgIdx))
     {
         result = storageRemoteNew(
-            STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, NULL,
-            protocolRemoteGet(protocolStorageTypePg, pgIdx), cfgOptionUInt(cfgOptCompressLevelNetwork));
+            STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, 0, NULL,
+            protocolRemoteGet(protocolStorageTypePg, pgIdx, true), cfgOptionUInt(cfgOptCompressLevelNetwork));
     }
     // Use Posix storage
     else
-    {
         result = storagePosixNewP(cfgOptionIdxStr(cfgOptPgPath, pgIdx), .write = write);
-    }
 
     FUNCTION_TEST_RETURN(STORAGE, result);
 }
 
 /**********************************************************************************************************************************/
 FN_EXTERN const Storage *
-storagePgIdx(unsigned int pgIdx)
+storagePgIdx(const unsigned int pgIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgIdx);
@@ -234,7 +236,7 @@ storagePg(void)
 }
 
 FN_EXTERN const Storage *
-storagePgIdxWrite(unsigned int pgIdx)
+storagePgIdxWrite(const unsigned int pgIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, pgIdx);
@@ -349,7 +351,7 @@ storageRepoPathExpression(const String *const expression, const String *const pa
 Get the repo storage
 ***********************************************************************************************************************************/
 static Storage *
-storageRepoGet(unsigned int repoIdx, bool write)
+storageRepoGet(const unsigned int repoIdx, const bool write)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, repoIdx);
@@ -362,8 +364,8 @@ storageRepoGet(unsigned int repoIdx, bool write)
     if (!repoIsLocal(repoIdx))
     {
         result = storageRemoteNew(
-            STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression,
-            protocolRemoteGet(protocolStorageTypeRepo, repoIdx), cfgOptionUInt(cfgOptCompressLevelNetwork));
+            STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoTargetTime(), storageRepoPathExpression,
+            protocolRemoteGet(protocolStorageTypeRepo, repoIdx, true), cfgOptionUInt(cfgOptCompressLevelNetwork));
     }
     // Use local storage
     else
@@ -398,7 +400,7 @@ storageRepoGet(unsigned int repoIdx, bool write)
 
 /**********************************************************************************************************************************/
 FN_EXTERN const Storage *
-storageRepoIdx(unsigned int repoIdx)
+storageRepoIdx(const unsigned int repoIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, repoIdx);
@@ -437,7 +439,7 @@ storageRepo(void)
 }
 
 FN_EXTERN const Storage *
-storageRepoIdxWrite(unsigned int repoIdx)
+storageRepoIdxWrite(const unsigned int repoIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(UINT, repoIdx);
@@ -479,11 +481,20 @@ storageRepoWrite(void)
     FUNCTION_TEST_RETURN_CONST(STORAGE, storageRepoIdxWrite(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
 }
 
+/**********************************************************************************************************************************/
+FN_EXTERN time_t
+storageRepoTargetTime(void)
+{
+    FUNCTION_TEST_VOID();
+
+    FUNCTION_TEST_RETURN(TIME, cfgOptionTest(cfgOptRepoTargetTime) ? cvtZToTime(strZ(cfgOptionStr(cfgOptRepoTargetTime))) : 0);
+}
+
 /***********************************************************************************************************************************
 Spool storage path expression
 ***********************************************************************************************************************************/
 static String *
-storageSpoolPathExpression(const String *expression, const String *path)
+storageSpoolPathExpression(const String *const expression, const String *const path)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, expression);
@@ -567,4 +578,18 @@ storageSpoolWrite(void)
     }
 
     FUNCTION_TEST_RETURN_CONST(STORAGE, storageHelper.storageSpoolWrite);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+storageHelperFree(void)
+{
+    FUNCTION_TEST_VOID();
+
+    if (storageHelper.memContext != NULL)
+        memContextFree(storageHelper.memContext);
+
+    storageHelper = (struct StorageHelperLocal){.memContext = NULL, .helperList = storageHelper.helperList};
+
+    FUNCTION_TEST_RETURN_VOID();
 }

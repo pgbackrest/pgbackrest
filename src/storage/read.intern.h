@@ -19,11 +19,30 @@ typedef struct StorageReadInterface
     uint64_t offset;                                                // Where to start reading in the file
     Variant *limit;                                                 // Limit how many bytes are read (NULL for no limit)
     bool retry;                                                     // Are read retries allowed?
+    bool version;                                                   // Read version
+    const String *versionId;                                        // File version to read
     IoReadInterface ioInterface;
 } StorageReadInterface;
 
-#include "storage/read.h"
-
 FN_EXTERN StorageRead *storageReadNew(void *driver, StorageReadInterface *interface);
+
+/***********************************************************************************************************************************
+Getters/Setters
+***********************************************************************************************************************************/
+typedef struct StorageReadPub
+{
+    StorageReadInterface *interface;                                // File data (name, driver type, etc.)
+    IoRead *io;                                                     // Read interface
+    uint64_t offset;                                                // Where to start reading in the file
+    const Variant *limit;                                           // Limit how many bytes are read (NULL for no limit)
+    bool ignoreMissing;                                             // Ignore missing file?
+} StorageReadPub;
+
+// Read interface
+FN_INLINE_ALWAYS const StorageReadInterface *
+storageReadInterface(const StorageRead *const this)
+{
+    return THIS_PUB(StorageRead)->interface;
+}
 
 #endif

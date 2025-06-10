@@ -90,36 +90,47 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
             {
                 case 12:
                     result |= (uint64_t)map[(uint8_t)buffer[11]] << 59;
+                    __attribute__((fallthrough));
 
                 case 11:
                     result |= (uint64_t)map[(uint8_t)buffer[10]] << 54;
+                    __attribute__((fallthrough));
 
                 case 10:
                     result |= (uint64_t)map[(uint8_t)buffer[9]] << 49;
+                    __attribute__((fallthrough));
 
                 case 9:
                     result |= (uint64_t)map[(uint8_t)buffer[8]] << 44;
+                    __attribute__((fallthrough));
 
                 case 8:
                     result |= (uint64_t)map[(uint8_t)buffer[7]] << 39;
+                    __attribute__((fallthrough));
 
                 case 7:
                     result |= (uint64_t)map[(uint8_t)buffer[6]] << 34;
+                    __attribute__((fallthrough));
 
                 case 6:
                     result |= (uint64_t)map[(uint8_t)buffer[5]] << 29;
+                    __attribute__((fallthrough));
 
                 case 5:
                     result |= (uint64_t)map[(uint8_t)buffer[4]] << 24;
+                    __attribute__((fallthrough));
 
                 case 4:
                     result |= (uint64_t)map[(uint8_t)buffer[3]] << 19;
+                    __attribute__((fallthrough));
 
                 case 3:
                     result |= (uint64_t)map[(uint8_t)buffer[2]] << 14;
+                    __attribute__((fallthrough));
 
                 case 2:
                     result |= (uint64_t)map[(uint8_t)buffer[1]] << 9;
+                    __attribute__((fallthrough));
 
                 case 1:
                     result |= (uint64_t)map[(uint8_t)buffer[0]] << 4;
@@ -181,30 +192,39 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
             {
                 case 10:
                     result |= (uint64_t)map[(uint8_t)buffer[9]] << 58;
+                    __attribute__((fallthrough));
 
                 case 9:
                     result |= (uint64_t)map[(uint8_t)buffer[8]] << 52;
+                    __attribute__((fallthrough));
 
                 case 8:
                     result |= (uint64_t)map[(uint8_t)buffer[7]] << 46;
+                    __attribute__((fallthrough));
 
                 case 7:
                     result |= (uint64_t)map[(uint8_t)buffer[6]] << 40;
+                    __attribute__((fallthrough));
 
                 case 6:
                     result |= (uint64_t)map[(uint8_t)buffer[5]] << 34;
+                    __attribute__((fallthrough));
 
                 case 5:
                     result |= (uint64_t)map[(uint8_t)buffer[4]] << 28;
+                    __attribute__((fallthrough));
 
                 case 4:
                     result |= (uint64_t)map[(uint8_t)buffer[3]] << 22;
+                    __attribute__((fallthrough));
 
                 case 3:
                     result |= (uint64_t)map[(uint8_t)buffer[2]] << 16;
+                    __attribute__((fallthrough));
 
                 case 2:
                     result |= (uint64_t)map[(uint8_t)buffer[1]] << 10;
+                    __attribute__((fallthrough));
 
                 case 1:
                     result |= (uint64_t)map[(uint8_t)buffer[0]] << 4;
@@ -382,6 +402,10 @@ strIdToLog(const StringId strId, char *const buffer, const size_t bufferSize)
 {
     ASSERT(bufferSize > STRID_MAX);
     (void)bufferSize;
+
+    // Treat 0 as if it were null since this can never be a valid StringId
+    if (strId == 0)
+        return (size_t)snprintf(buffer, bufferSize, NULL_Z);
 
     return strIdToZ(strId, buffer);
 }

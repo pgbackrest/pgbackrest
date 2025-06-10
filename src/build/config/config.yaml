@@ -72,6 +72,9 @@ command:
     log-file: false
 
   expire:
+    command-role:
+      remote: {}
+    lock-remote-required: true
     lock-required: true
     lock-type: backup
 
@@ -92,12 +95,6 @@ command:
     internal: true
     log-file: false
     log-level-default: DEBUG
-
-  repo-create:
-    command-role:
-      remote: {}
-    internal: true
-    log-file: false
 
   repo-get:
     command-role:
@@ -143,18 +140,21 @@ command:
   stanza-create:
     command-role:
       remote: {}
+    lock-remote-required: true
     lock-required: true
     lock-type: all
 
   stanza-delete:
     command-role:
       remote: {}
+    lock-remote-required: true
     lock-required: true
     lock-type: all
 
   stanza-upgrade:
     command-role:
       remote: {}
+    lock-remote-required: true
     lock-required: true
     lock-type: all
 
@@ -215,6 +215,10 @@ optionGroup:
 #      defined for the option command override, then they override command roles defined for the option (rule 2) above)
 #      and all roles defined for the command (rule 1) above).
 #
+# bool-like:
+#   Used to convert a boolean to a string or string-id type. It can be used as a boolean (e.g. --option or option=y) and the
+#   boolean values will be mapped to y/n. Otherwise it is used just as a string or string-id type.
+#
 # required:
 #   In global section:
 #     true - if the option does not have a default, then setting required in the global section means all commands listed in
@@ -231,8 +235,10 @@ optionGroup:
 #   Sets a default for the option for all commands if listed in the global section, or for specific commands if listed in the
 #   command section. All boolean types require a default.
 #
-# default-literal:
-#   If the default is a string output it as-is without quoting. This allows C defines to be used as defaults.
+# default-type:
+#   If 'literal' then default a string output it as-is without quoting. This allows C defines to be used as defaults.
+#   if 'dynamic' then default is a specially calculated value:
+#     bin - the value of argv[0] on execution
 #
 # negate:
 #   All config file boolean options automatically may be negated. This setting is used to maintain backward compatibility with older
@@ -264,19 +270,19 @@ option:
   #---------------------------------------------------------------------------------------------------------------------------------
   config:
     type: string
+    default-type: literal
     default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE
-    default-literal: true
     negate: true
 
   config-include-path:
     type: path
+    default-type: literal
     default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH
-    default-literal: true
 
   config-path:
     type: path
+    default-type: literal
     default: CFGOPTDEF_CONFIG_PATH
-    default-literal: true
 
   dry-run:
     type: boolean
@@ -303,6 +309,14 @@ option:
     command-role:
       main: {}
 
+  help:
+    type: boolean
+    default: false
+    command:
+      help: {}
+    command-role:
+      main: {}
+
   online:
     type: boolean
     default: true
@@ -325,6 +339,11 @@ option:
         default: none
         allow-list:
           - none
+          - text
+      version:
+        default: text
+        allow-list:
+          - num
           - text
     allow-list:
       - text
@@ -356,8 +375,16 @@ option:
       restore:
         default: latest
         required: true
-      verify:
-        internal: true
+      verify: {}
+    command-role:
+      main: {}
+
+  report:
+    type: boolean
+    internal: true
+    default: false
+    command:
+      check: {}
     command-role:
       main: {}
 
@@ -368,13 +395,12 @@ option:
       archive-get: {}
       archive-push: {}
       backup: {}
-      check: {}
+      check:
+        required: false
       expire: {}
       info:
         required: false
       manifest: {}
-      repo-create:
-        required: false
       repo-get:
         required: false
       repo-ls:
@@ -496,6 +522,14 @@ option:
     command-role:
       main: {}
 
+  version:
+    type: boolean
+    default: false
+    command:
+      help: {}
+    command-role:
+      main: {}
+
   # Command-line only local/remote options
   #---------------------------------------------------------------------------------------------------------------------------------
   exec-id:
@@ -514,9 +548,9 @@ option:
       archive-push: {}
       backup: {}
       check: {}
+      expire: {}
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -528,6 +562,21 @@ option:
       verify: {}
     command-role:
       local: {}
+      remote: {}
+
+  lock:
+    type: list
+    internal: true
+    required: false
+    command:
+      annotate: {}
+      archive-push: {}
+      backup: {}
+      expire: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+    command-role:
       remote: {}
 
   remote-type:
@@ -543,9 +592,9 @@ option:
       archive-push: {}
       backup: {}
       check: {}
+      expire: {}
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -623,8 +672,8 @@ option:
   archive-timeout:
     section: global
     type: time
-    default: 60
-    allow-range: [0.1, 86400]
+    default: 1m
+    allow-range: [100ms, 1d]
     command:
       archive-get: {}
       archive-push: {}
@@ -665,7 +714,6 @@ option:
       expire: {}
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -681,15 +729,16 @@ option:
   cmd:
     section: global
     type: string
-    required: false
+    default-type: dynamic
+    default: bin
     command:
       archive-get: {}
       archive-push: {}
       backup: {}
       check: {}
+      expire: {}
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -707,6 +756,7 @@ option:
   cmd-ssh:
     inherit: cmd
     required: true
+    default-type: quote
     default: ssh
 
   # Option is deprecated and should not be referenced outside of cfgLoadUpdateOption()
@@ -732,14 +782,15 @@ option:
   compress-level-network:
     section: global
     type: integer
-    default: 3
-    allow-range: [0, 9]
+    default: 1
+    allow-range: [-5, 12]
     command:
       annotate: {}
       archive-get: {}
       archive-push: {}
       backup: {}
       check: {}
+      expire: {}
       info: {}
       manifest: {}
       repo-get: {}
@@ -763,7 +814,7 @@ option:
       - none
       - bz2
       - gz
-      - lz4: HAVE_LIBLZ4
+      - lz4
       - zst: HAVE_LIBZST
     command: compress
     command-role:
@@ -773,14 +824,14 @@ option:
   db-timeout:
     section: global
     type: time
-    default: 1800
-    allow-range: [0.1, 604800]
+    default: 30m
+    allow-range: [100ms, 7d]
     command:
       archive-get: {}
       archive-push: {}
       backup: {}
       check: {}
-      repo-create: {}
+      expire: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -802,8 +853,8 @@ option:
   io-timeout:
     section: global
     type: time
-    default: 60
-    allow-range: [0.1, 3600]
+    default: 1m
+    allow-range: [100ms, 1h]
     command: buffer-size
 
   job-retry:
@@ -828,8 +879,14 @@ option:
   job-retry-interval:
     inherit: job-retry
     type: time
-    default: 15
-    allow-range: [0, 900]
+    default: 15s
+    allow-range: [0s, 15m]
+    command:
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      restore: {}
+      verify: {}
 
   lock-path:
     section: global
@@ -860,7 +917,6 @@ option:
       backup: {}
       check: {}
       expire: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -891,17 +947,17 @@ option:
   protocol-timeout:
     section: global
     type: time
-    default: 1830
-    allow-range: [0.1, 604800]
+    default: 31m
+    allow-range: [100ms, 7d]
     command:
       annotate: {}
       archive-get: {}
       archive-push: {}
       backup: {}
       check: {}
+      expire: {}
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -1040,7 +1096,7 @@ option:
   log-level-stderr:
     section: global
     type: string-id
-    default: warn
+    default: off
     allow-list: log-level-console
 
   log-path:
@@ -1058,9 +1114,9 @@ option:
       archive-push: {}
       backup: {}
       check: {}
+      expire: {}
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -1091,7 +1147,7 @@ option:
     section: global
     type: size
     default: 128MiB
-    allow-range: [0, 4PiB]
+    allow-range: [0B, 4PiB]
     command:
       archive-get: {}
     command-role:
@@ -1121,7 +1177,7 @@ option:
     section: global
     type: size
     required: false
-    allow-range: [0, 4PiB]
+    allow-range: [0B, 4PiB]
     command:
       archive-push: {}
     command-role:
@@ -1193,8 +1249,13 @@ option:
 
   backup-standby:
     section: global
-    type: boolean
-    default: false
+    type: string-id
+    bool-like: true
+    default: n
+    allow-list:
+      - n
+      - prefer
+      - y
     command:
       backup: {}
       check: {}
@@ -1241,7 +1302,7 @@ option:
     section: global
     type: size
     default: 1GiB
-    allow-range: [1, 1TiB]
+    allow-range: [1B, 1TiB]
     command:
       backup: {}
     command-role:
@@ -1461,7 +1522,8 @@ option:
     section: stanza
     group: pg
     type: string
-    required: false
+    default-type: dynamic
+    default: bin
     command:
       backup: {}
       check: {}
@@ -1481,9 +1543,8 @@ option:
 
   pg-host-config:
     inherit: pg-host-cmd
+    default-type: literal
     default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE
-    default-literal: true
-    required: true
     deprecate:
       db-config: {}
       db?-config: {}
@@ -1491,18 +1552,22 @@ option:
   pg-host-config-include-path:
     inherit: pg-host-cmd
     type: path
+    default-type: literal
     default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH
-    default-literal: true
+    required: true
 
   pg-host-config-path:
     inherit: pg-host-cmd
     type: path
+    default-type: literal
     default: CFGOPTDEF_CONFIG_PATH
-    default-literal: true
+    required: true
 
   pg-host-port:
     inherit: pg-host-cmd
     type: integer
+    default-type: quote
+    default: ~
     required: false
     allow-range: [0, 65535]
     deprecate:
@@ -1511,6 +1576,7 @@ option:
 
   pg-host-user:
     inherit: pg-host-cmd
+    default-type: quote
     default: postgres
     required: false
     deprecate:
@@ -1544,7 +1610,9 @@ option:
       archive-push:
         required: false
       backup: {}
-      check: {}
+      check:
+        depend:
+          option: stanza
       manifest:
         required: false
       restore: {}
@@ -1567,10 +1635,11 @@ option:
       db-port: {}
       db?-port: {}
 
+  # Despite the name this option needs to be string type rather than path to allow abstract sockets beginning with @
   pg-socket-path:
     section: stanza
     group: pg
-    type: path
+    type: string
     required: false
     command: pg-database
     depend: pg-database
@@ -1595,7 +1664,6 @@ option:
   pg-version-force:
     section: stanza
     type: string
-    internal: true
     required: false
     command:
       archive-get: {}
@@ -1633,21 +1701,19 @@ option:
         command-role:
           main: {}
           local: {}
+          remote: {}
       check:
         command-role:
           remote: {}
       expire:
         command-role:
           main: {}
+          remote: {}
       info:
         command-role:
           main: {}
           remote: {}
       manifest:
-        command-role:
-          main: {}
-          remote: {}
-      repo-create:
         command-role:
           main: {}
           remote: {}
@@ -1709,7 +1775,6 @@ option:
         internal: true
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -1757,6 +1822,7 @@ option:
         command-role:
           main: {}
           local: {}
+          remote: {}
       check:
         command-role:
           main: {}
@@ -1764,15 +1830,12 @@ option:
       expire:
         command-role:
           main: {}
+          remote: {}
       info:
         command-role:
           main: {}
           remote: {}
       manifest:
-        command-role:
-          main: {}
-          remote: {}
-      repo-create:
         command-role:
           main: {}
           remote: {}
@@ -2017,6 +2080,13 @@ option:
       list:
         - gcs
 
+  repo-gcs-user-project:
+    section: global
+    type: string
+    group: repo
+    required: false
+    command: repo-type
+
   repo-hardlink:
     section: global
     group: repo
@@ -2095,15 +2165,17 @@ option:
     section: global
     group: repo
     type: string
-    required: false
+    default-type: dynamic
+    default: bin
     command:
       annotate: {}
       archive-get: {}
       archive-push: {}
+      backup: {}
       check: {}
+      expire: {}
       info: {}
       manifest: {}
-      repo-create: {}
       repo-get: {}
       repo-ls: {}
       repo-put: {}
@@ -2131,8 +2203,8 @@ option:
       async: {}
       main: {}
       local: {}
+    default-type: literal
     default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE
-    default-literal: true
     depend:
       option: repo-host
     deprecate:
@@ -2141,14 +2213,14 @@ option:
   repo-host-config-include-path:
     inherit: repo-host-config
     type: path
+    default-type: literal
     default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH
-    default-literal: true
 
   repo-host-config-path:
     inherit: repo-host-config
     type: path
+    default-type: literal
     default: CFGOPTDEF_CONFIG_PATH
-    default-literal: true
 
   repo-host-port:
     section: global
@@ -2322,6 +2394,11 @@ option:
     inherit: repo-s3-bucket
     required: false
 
+  repo-s3-sse-customer-key:
+    inherit: repo-s3-bucket
+    required: false
+    secure: true
+
   repo-s3-region:
     inherit: repo-s3-bucket
     deprecate:
@@ -2339,6 +2416,17 @@ option:
     inherit: repo-s3-key
     required: false
     command: repo-type
+
+  repo-s3-requester-pays:
+    section: global
+    group: repo
+    type: boolean
+    default: false
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - s3
 
   repo-s3-uri-style:
     section: global
@@ -2366,6 +2454,23 @@ option:
     group: repo
     type: string
     required: false
+    command: repo-type
+    depend:
+      option: repo-sftp-host-key-check-type
+      list:
+        - fingerprint
+        - strict
+
+  repo-sftp-host-key-check-type:
+    section: global
+    group: repo
+    type: string-id
+    default: strict
+    allow-list:
+      - accept-new
+      - fingerprint
+      - none
+      - strict
     command: repo-type
     depend: repo-sftp-host
 
@@ -2395,6 +2500,18 @@ option:
     type: string
     command: repo-type
     depend: repo-sftp-host
+
+  repo-sftp-known-host:
+    section: global
+    group: repo
+    type: list
+    required: false
+    command: repo-type
+    depend:
+      option: repo-sftp-host-key-check-type
+      list:
+        - accept-new
+        - strict
 
   repo-sftp-private-key-file:
     section: global
@@ -2486,6 +2603,19 @@ option:
       repo?-azure-port: {}
       repo?-s3-port: {}
 
+  repo-storage-tag:
+    section: global
+    group: repo
+    type: hash
+    required: false
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - azure
+        - gcs
+        - s3
+
   repo-storage-upload-chunk-size:
     section: global
     group: repo
@@ -2499,3 +2629,20 @@ option:
         - azure
         - gcs
         - s3
+
+  repo-target-time:
+    section: global
+    type: string
+    required: false
+    command:
+      archive-get: {}
+      info: {}
+      manifest: {}
+      repo-get: {}
+      repo-ls: {}
+      restore: {}
+      verify: {}
+    command-role:
+      async: {}
+      main: {}
+      local: {}

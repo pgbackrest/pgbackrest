@@ -8,10 +8,10 @@ Exit Routines
 
 #include "command/command.h"
 #include "command/exit.h"
+#include "command/lock.h"
 #include "common/debug.h"
-#include "common/lock.h"
 #include "common/log.h"
-#include "config/config.h"
+#include "config/config.intern.h"
 #include "protocol/helper.h"
 #include "version.h"
 
@@ -19,7 +19,7 @@ Exit Routines
 Return signal names
 ***********************************************************************************************************************************/
 static const char *
-exitSignalName(SignalType signalType)
+exitSignalName(const SignalType signalType)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(ENUM, signalType);
@@ -52,7 +52,7 @@ exitSignalName(SignalType signalType)
 Catch signals
 ***********************************************************************************************************************************/
 static void
-exitOnSignal(int signalType)
+exitOnSignal(const int signalType)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(INT, signalType);
@@ -105,7 +105,7 @@ exitErrorDetail(void)
 }
 
 FN_EXTERN int
-exitSafe(int result, bool error, SignalType signalType)
+exitSafe(int result, const bool error, const SignalType signalType)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INT, result);
@@ -137,12 +137,11 @@ exitSafe(int result, bool error, SignalType signalType)
         result = errorCode();
     }
 
-    // Log command end if a command is set
-    if (cfgCommand() != cfgCmdNone)
+    // On error generate an error message for command end when config is initialized
+    if (cfgInited())
     {
         String *errorMessage = NULL;
 
-        // On error generate an error message
         if (result != 0)
         {
             // On process terminate
@@ -169,7 +168,7 @@ exitSafe(int result, bool error, SignalType signalType)
     // Release any locks but ignore errors
     TRY_BEGIN()
     {
-        lockRelease(false);
+        cmdLockReleaseP(.returnOnNoLock = true);
     }
     TRY_END();
 

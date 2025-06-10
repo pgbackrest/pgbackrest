@@ -90,6 +90,9 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             archivePushDrop(STRDEF("pg_wal"), archivePushProcessList(STRDEF(TEST_PATH "/db/pg_wal"))), true, "wal is dropped");
+
+        // No WAL to be processed
+        TEST_RESULT_BOOL(archivePushDrop(STRDEF("pg_wal"), strLstNew()), false, "no WAL to be processed");
     }
 
     // *****************************************************************************************************************************
@@ -113,13 +116,13 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n");
+            "1={\"db-id\":5555555555555555555,\"db-version\":\"9.5\"}\n");
 
         TEST_ERROR(
             archivePushCheck(true), RepoInvalidError,
             "unable to find a valid repository:\n"
             "repo1: [ArchiveMismatchError] PostgreSQL version 9.6, system-id " HRN_PG_SYSTEMID_96_Z " do not match repo1 stanza"
-            " version 9.4, system-id 5555555555555555555\n"
+            " version 9.5, system-id 5555555555555555555\n"
             "HINT: are you archiving to the correct stanza?");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -190,7 +193,7 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n");
+            "1={\"db-id\":5555555555555555555,\"db-version\":\"9.5\"}\n");
 
         TEST_ASSIGN(result, archivePushCheck(false), "get archive check result");
 
@@ -199,7 +202,7 @@ testRun(void)
         TEST_RESULT_STRLST_Z(
             result.errorList,
             "repo4: [ArchiveMismatchError] repo2 stanza version 9.6, system-id " HRN_PG_SYSTEMID_96_Z " do not match repo4 stanza"
-            " version 9.4, system-id 5555555555555555555\n"
+            " version 9.5, system-id 5555555555555555555\n"
             "HINT: are you archiving to the correct stanza?\n",
             "check error list");
 
@@ -219,7 +222,7 @@ testRun(void)
             "db-id=2\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":5555555555555555555,\"db-version\":\"9.4\"}\n"
+            "1={\"db-id\":5555555555555555555,\"db-version\":\"9.5\"}\n"
             "2={\"db-id\":" HRN_PG_SYSTEMID_96_Z ",\"db-version\":\"9.6\"}\n");
 
         TEST_ASSIGN(result, archivePushCheck(false), "get archive check result");
@@ -469,7 +472,7 @@ testRun(void)
             "unexpected WAL magic 999\n"
             "HINT: is this version of PostgreSQL supported?");
 
-        HRN_PG_CONTROL_OVERRIDE_PUT(storagePgWrite(), PG_VERSION_11, 1501, .catalogVersion = 202211111);
+        HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(storagePgWrite(), PG_VERSION_11, 1501, .catalogVersion = 202211111);
 
         TEST_ERROR(
             cmdArchivePush(), VersionNotSupportedError,
@@ -648,7 +651,7 @@ testRun(void)
 
         // Install local command handler shim
         static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_ARCHIVE_PUSH_LIST};
-        hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
+        hrnProtocolLocalShimInstall(LSTDEF(testLocalHandlerList));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command must be run on the pg host");
@@ -708,7 +711,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         hrnCfgArgRawBool(argList, cfgOptLogSubprocess, true);
 
-        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_94);
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_95);
 
         HRN_INFO_PUT(
             storageTest, "repo/archive/test/archive.info",
@@ -716,7 +719,7 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":" HRN_PG_SYSTEMID_94_Z ",\"db-version\":\"9.4\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_95_Z ",\"db-version\":\"9.5\"}\n");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("async, ignore error file on first pass");
@@ -749,8 +752,8 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
-                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("555-fefefefe"), cfgOptionStr(cfgOptStanza), cfgLockType());
-                lockAcquireP(.timeout = 30000, .returnOnNoLock = true);
+                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("555-fefefefe"));
+                cmdLockAcquireP(.returnOnNoLock = true);
 
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -758,7 +761,7 @@ testRun(void)
                 // Wait for parent to allow release lock
                 HRN_FORK_CHILD_NOTIFY_GET();
 
-                lockRelease(true);
+                cmdLockReleaseP();
             }
             HRN_FORK_CHILD_END();
 
@@ -792,7 +795,7 @@ testRun(void)
         Buffer *walBuffer1 = bufNew((size_t)16 * 1024 * 1024);
         bufUsedSet(walBuffer1, bufSize(walBuffer1));
         memset(bufPtr(walBuffer1), 0xFF, bufSize(walBuffer1));
-        HRN_PG_WAL_TO_BUFFER(walBuffer1, PG_VERSION_94);
+        HRN_PG_WAL_TO_BUFFER(walBuffer1, PG_VERSION_95);
         const char *walBuffer1Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBuffer1)));
 
         HRN_STORAGE_PUT(storagePgWrite(),"pg_xlog/000000010000000100000001", walBuffer1);
@@ -801,7 +804,7 @@ testRun(void)
         TEST_RESULT_LOG("P00   INFO: pushed WAL file '000000010000000100000001' to the archive asynchronously");
 
         TEST_STORAGE_EXISTS(
-            storageTest, zNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1),
+            storageTest, zNewFmt("repo/archive/test/9.5-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1),
             .comment = "check repo for WAL file");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -853,13 +856,13 @@ testRun(void)
             "db-id=1\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":" HRN_PG_SYSTEMID_94_Z ",\"db-version\":\"9.4\"}\n");
+            "1={\"db-id\":" HRN_PG_SYSTEMID_95_Z ",\"db-version\":\"9.5\"}\n");
 
         // Recreate ready file for WAL 1
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/archive_status/000000010000000100000001.ready");
 
         TEST_STORAGE_EXISTS(
-            storageTest, zNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1),
+            storageTest, zNewFmt("repo/archive/test/9.5-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1),
             .comment = "check repo1 for WAL 1 file");
 
         // Create a ready file for WAL 2 but don't create the segment yet -- this will test the file error
@@ -877,11 +880,11 @@ testRun(void)
             TEST_PATH "/pg/pg_xlog/000000010000000100000002");
 
         TEST_STORAGE_EXISTS(
-            storageTest, zNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1),
+            storageTest, zNewFmt("repo/archive/test/9.5-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1),
             .comment = "check repo1 for WAL 1 file");
 
         TEST_STORAGE_EXISTS(
-            storageTest, zNewFmt("repo3/archive/test/9.4-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1),
+            storageTest, zNewFmt("repo3/archive/test/9.5-1/0000000100000001/000000010000000100000001-%s", walBuffer1Sha1),
             .comment = "check repo3 for WAL 1 file");
 
         TEST_STORAGE_LIST(
@@ -897,7 +900,7 @@ testRun(void)
         Buffer *walBuffer2 = bufNew((size_t)16 * 1024 * 1024);
         bufUsedSet(walBuffer2, bufSize(walBuffer2));
         memset(bufPtr(walBuffer2), 0x0C, bufSize(walBuffer2));
-        HRN_PG_WAL_TO_BUFFER(walBuffer2, PG_VERSION_94);
+        HRN_PG_WAL_TO_BUFFER(walBuffer2, PG_VERSION_95);
         const char *walBuffer2Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBuffer2)));
 
         HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000002", walBuffer2);
@@ -912,10 +915,10 @@ testRun(void)
             "P01 DETAIL: pushed WAL file '000000010000000100000002' to the archive");
 
         TEST_STORAGE_EXISTS(
-            storageTest, zNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1),
+            storageTest, zNewFmt("repo/archive/test/9.5-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1),
             .comment = "check repo1 for WAL 2 file");
         TEST_STORAGE_EXISTS(
-            storageTest, zNewFmt("repo3/archive/test/9.4-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1),
+            storageTest, zNewFmt("repo3/archive/test/9.5-1/0000000100000001/000000010000000100000002-%s", walBuffer2Sha1),
             .comment = "check repo3 for WAL 2 file");
 
         TEST_STORAGE_LIST(
@@ -946,7 +949,7 @@ testRun(void)
         Buffer *walBuffer3 = bufNew((size_t)16 * 1024 * 1024);
         bufUsedSet(walBuffer3, bufSize(walBuffer3));
         memset(bufPtr(walBuffer3), 0x44, bufSize(walBuffer3));
-        HRN_PG_WAL_TO_BUFFER(walBuffer3, PG_VERSION_94);
+        HRN_PG_WAL_TO_BUFFER(walBuffer3, PG_VERSION_95);
         const char *walBuffer3Sha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBuffer3)));
 
         HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000003", walBuffer3);
@@ -960,10 +963,10 @@ testRun(void)
             "P01 DETAIL: pushed WAL file '000000010000000100000003' to the archive");
 
         TEST_STORAGE_EXISTS(
-            storageTest, zNewFmt("repo/archive/test/9.4-1/0000000100000001/000000010000000100000003-%s", walBuffer3Sha1),
+            storageTest, zNewFmt("repo/archive/test/9.5-1/0000000100000001/000000010000000100000003-%s", walBuffer3Sha1),
             .comment = "check repo1 for WAL 3 file");
         TEST_STORAGE_EXISTS(
-            storageTest, zNewFmt("repo3/archive/test/9.4-1/0000000100000001/000000010000000100000003-%s", walBuffer3Sha1),
+            storageTest, zNewFmt("repo3/archive/test/9.5-1/0000000100000001/000000010000000100000003-%s", walBuffer3Sha1),
             .comment = "check repo3 for WAL 3 file");
 
         // Remove the ready file to prevent WAL 3 from being considered for the next test

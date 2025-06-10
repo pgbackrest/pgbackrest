@@ -8,6 +8,7 @@ Based on the documentation at https://github.com/madler/zlib/blob/master/zlib.h
 #include <stdio.h>
 #include <zlib.h>
 
+#include "common/compress/common.h"
 #include "common/compress/gz/common.h"
 #include "common/compress/gz/compress.h"
 #include "common/debug.h"
@@ -73,7 +74,7 @@ gzCompressFreeResource(THIS_VOID)
 Compress data
 ***********************************************************************************************************************************/
 static void
-gzCompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
+gzCompressProcess(THIS_VOID, const Buffer *const uncompressed, Buffer *const compressed)
 {
     THIS(GzCompress);
 
@@ -104,7 +105,7 @@ gzCompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
             this->stream.avail_in = (unsigned int)bufUsed(uncompressed);
 
             // Not all versions of zlib (and none by default) will accept const input buffers
-            this->stream.next_in = UNCONSTIFY(unsigned char *, bufPtrConst(uncompressed));
+            this->stream.next_in = bufPtrConst(uncompressed);
         }
     }
 
@@ -113,7 +114,7 @@ gzCompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
     this->stream.next_out = bufPtr(compressed) + bufUsed(compressed);
 
     // Perform compression
-    int result = gzError(deflate(&this->stream, this->flushing ? Z_FINISH : Z_NO_FLUSH));
+    const int result = gzError(deflate(&this->stream, this->flushing ? Z_FINISH : Z_NO_FLUSH));
 
     // Set buffer used space
     bufUsedSet(compressed, bufSize(compressed) - (size_t)this->stream.avail_out);
@@ -188,24 +189,9 @@ gzCompressNew(const int level, const bool raw)
     }
     OBJ_NEW_END();
 
-    // Create param list
-    Pack *paramList;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        PackWrite *const packWrite = pckWriteNewP();
-
-        pckWriteI32P(packWrite, level);
-        pckWriteBoolP(packWrite, raw);
-        pckWriteEndP(packWrite);
-
-        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
-    }
-    MEM_CONTEXT_TEMP_END();
-
     FUNCTION_LOG_RETURN(
         IO_FILTER,
         ioFilterNewP(
-            GZ_COMPRESS_FILTER_TYPE, this, paramList, .done = gzCompressDone, .inOut = gzCompressProcess,
+            GZ_COMPRESS_FILTER_TYPE, this, compressParamList(level, raw), .done = gzCompressDone, .inOut = gzCompressProcess,
             .inputSame = gzCompressInputSame));
 }

@@ -14,7 +14,7 @@ Posix Storage File write
 #include "common/type/object.h"
 #include "common/user.h"
 #include "storage/posix/write.h"
-#include "storage/write.intern.h"
+#include "storage/write.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -158,7 +158,7 @@ storageWritePosixOpen(THIS_VOID)
 Write to the file
 ***********************************************************************************************************************************/
 static void
-storageWritePosix(THIS_VOID, const Buffer *buffer)
+storageWritePosix(THIS_VOID, const Buffer *const buffer)
 {
     THIS(StorageWritePosix);
 

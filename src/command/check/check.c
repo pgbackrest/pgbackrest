@@ -3,13 +3,19 @@ Check Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include "command/archive/common.h"
+#include <unistd.h>
+
+#include "command/archive/find.h"
 #include "command/check/check.h"
 #include "command/check/common.h"
+#include "command/check/report.h"
 #include "common/debug.h"
+#include "common/io/fdWrite.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.h"
+#include "config/load.h"
+#include "config/parse.h"
 #include "db/helper.h"
 #include "info/infoArchive.h"
 #include "postgres/interface.h"
@@ -81,7 +87,7 @@ checkStandby(const DbGetResult dbGroup, const unsigned int pgPathDefinedTotal)
             LOG_INFO_FMT(CFGCMD_CHECK " %s (standby)", cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
             // Get the repo storage in case it is remote and encryption settings need to be pulled down (performed here for testing)
-            const Storage *storageRepo = storageRepoIdx(repoIdx);
+            const Storage *const storageRepo = storageRepoIdx(repoIdx);
 
             // Check that the backup and archive info files exist and are valid for the current database of the stanza
             checkStanzaInfoPg(
@@ -95,7 +101,7 @@ checkStandby(const DbGetResult dbGroup, const unsigned int pgPathDefinedTotal)
         dbFree(dbGroup.standby);
     }
     // If backup from standby is true then warn when a standby not found
-    else if (cfgOptionBool(cfgOptBackupStandby))
+    else if (cfgOptionStrId(cfgOptBackupStandby) != CFGOPTVAL_BACKUP_STANDBY_N)
     {
         LOG_WARN("option '" CFGOPT_BACKUP_STANDBY "' is enabled but standby is not properly configured");
     }
@@ -119,7 +125,7 @@ checkPrimary(const DbGetResult dbGroup)
         checkDbConfig(dbPgControl(dbGroup.primary).version, dbGroup.primaryIdx, dbGroup.primary, false);
 
         // Check configuration of each repo
-        const String **repoArchiveId = memNew(sizeof(String *) * cfgOptionGroupIdxTotal(cfgOptGrpRepo));
+        const String **const repoArchiveId = memNew(sizeof(String *) * cfgOptionGroupIdxTotal(cfgOptGrpRepo));
 
         for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
         {
@@ -149,7 +155,7 @@ checkPrimary(const DbGetResult dbGroup)
         {
             LOG_INFO_FMT(CFGCMD_CHECK " %s archive for WAL (primary)", cfgOptionGroupName(cfgOptGrpRepo, repoIdx));
 
-            const String *const walSegmentFile = walSegmentFind(
+            const String *const walSegmentFile = walSegmentFindOne(
                 storageRepoIdx(repoIdx), repoArchiveId[repoIdx], walSegment, cfgOptionUInt64(cfgOptArchiveTimeout));
 
             LOG_INFO_FMT(
@@ -176,15 +182,59 @@ cmdCheck(void)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Get the primary/standby connections (standby is only required if backup from standby is enabled)
-        DbGetResult dbGroup = dbGet(false, false, false);
+        if (cfgOptionBool(cfgOptReport))
+            ioFdWriteOneStr(STDOUT_FILENO, checkReport());
+        else
+        {
+            // Build stanza list based on whether a stanza was specified or not
+            StringList *stanzaList;
+            bool stanzaSpecified = cfgOptionTest(cfgOptStanza);
 
-        if (dbGroup.standby == NULL && dbGroup.primary == NULL)
-            THROW(ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");
+            if (stanzaSpecified)
+            {
+                stanzaList = strLstNew();
+                strLstAdd(stanzaList, cfgOptionStr(cfgOptStanza));
+            }
+            else
+            {
+                stanzaList = cfgParseStanzaList();
 
-        const unsigned int pgPathDefinedTotal = checkManifest();
-        checkStandby(dbGroup, pgPathDefinedTotal);
-        checkPrimary(dbGroup);
+                if (strLstSize(stanzaList) == 0)
+                {
+                    LOG_WARN(
+                        "no stanzas found to check\n"
+                        "HINT: are there non-empty stanza sections in the configuration?");
+                }
+            }
+
+            // Iterate stanzas
+            for (unsigned int stanzaIdx = 0; stanzaIdx < strLstSize(stanzaList); stanzaIdx++)
+            {
+                // Switch stanza if required
+                if (!stanzaSpecified)
+                {
+                    const String *const stanza = strLstGet(stanzaList, stanzaIdx);
+                    LOG_INFO_FMT("check stanza '%s'", strZ(stanza));
+
+                    // Free storage and protocol cache
+                    storageHelperFree();
+                    protocolFree();
+
+                    // Reload config with new stanza
+                    cfgLoadStanza(stanza);
+                }
+
+                // Get the primary/standby connections (standby is only required if backup from standby is enabled)
+                DbGetResult dbGroup = dbGet(false, false, CFGOPTVAL_BACKUP_STANDBY_N);
+
+                if (dbGroup.standby == NULL && dbGroup.primary == NULL)
+                    THROW(ConfigError, "no database found\nHINT: check indexed pg-path/pg-host configurations");
+
+                const unsigned int pgPathDefinedTotal = checkManifest();
+                checkStandby(dbGroup, pgPathDefinedTotal);
+                checkPrimary(dbGroup);
+            }
+        }
     }
     MEM_CONTEXT_TEMP_END();
 

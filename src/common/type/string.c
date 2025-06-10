@@ -8,6 +8,7 @@ String Handler
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "common/debug.h"
 #include "common/macro.h"
@@ -103,7 +104,7 @@ strNewFixed(const size_t size)
     CHECK_SIZE(size);
 
     // If the string is larger than the extra allowed with a mem context then allocate the buffer separately
-    size_t allocExtra = sizeof(String) + size + 1;
+    const size_t allocExtra = sizeof(String) + size + 1;
 
     if (allocExtra > MEM_CONTEXT_ALLOC_EXTRA_MAX)
     {
@@ -150,7 +151,7 @@ strNewZ(const char *const string)
     ASSERT(string != NULL);
 
     // Create object
-    String *this = strNewFixed(strlen(string));
+    String *const this = strNewFixed(strlen(string));
 
     // Assign string
     memcpy(this->pub.buffer, string, strSize(this));
@@ -161,22 +162,62 @@ strNewZ(const char *const string)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strNewDbl(double value)
+strNewDiv(const uint64_t dividend, const uint64_t divisor, StrNewDivParam param)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(DOUBLE, value);
+        FUNCTION_TEST_PARAM(UINT64, dividend);
+        FUNCTION_TEST_PARAM(UINT64, divisor);
+        FUNCTION_TEST_PARAM(UINT, param.precision);
+        FUNCTION_TEST_PARAM(BOOL, param.trim);
     FUNCTION_TEST_END();
 
-    char working[CVT_BASE10_BUFFER_SIZE];
+    char working[CVT_DIV_BUFFER_SIZE];
 
-    cvtDoubleToZ(value, working, sizeof(working));
+    size_t resultSize = cvtDivToZ(dividend, divisor, param.precision, param.trim, working, sizeof(working));
 
-    FUNCTION_TEST_RETURN(STRING, strNewZ(working));
+    FUNCTION_TEST_RETURN(STRING, strNewZN(working, resultSize));
 }
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strNewBuf(const Buffer *buffer)
+strNewPct(const uint64_t dividend, const uint64_t divisor)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT64, dividend);
+        FUNCTION_TEST_PARAM(UINT64, divisor);
+    FUNCTION_TEST_END();
+
+    char working[CVT_PCT_BUFFER_SIZE];
+
+    size_t resultSize = cvtPctToZ(dividend, divisor, working, sizeof(working));
+
+    FUNCTION_TEST_RETURN(STRING, strNewZN(working, resultSize));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN String *
+strNewTime(const char *const format, const time_t timestamp, const StrNewTimeParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, format);
+        FUNCTION_TEST_PARAM(TIME, timestamp);
+        FUNCTION_TEST_PARAM(BOOL, param.utc);
+    FUNCTION_TEST_END();
+
+    char buffer[64];
+
+    // We can ignore this warning here since the format parameter of strNewTimeP() is checked
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+    cvtTimeToZP(format, timestamp, buffer, sizeof(buffer), .utc = param.utc);
+#pragma GCC diagnostic pop
+
+    FUNCTION_TEST_RETURN(STRING, strNewZ(buffer));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN String *
+strNewBuf(const Buffer *const buffer)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, buffer);
@@ -185,7 +226,7 @@ strNewBuf(const Buffer *buffer)
     ASSERT(buffer != NULL);
 
     // Create object
-    String *this = strNewFixed(bufUsed(buffer));
+    String *const this = strNewFixed(bufUsed(buffer));
 
     // Assign string
     if (strSize(this) != 0)
@@ -208,7 +249,7 @@ strNewEncode(const EncodingType type, const Buffer *const buffer)
     ASSERT(buffer != NULL);
 
     // Create object
-    String *this = strNewFixed(encodeToStrSize(type, bufUsed(buffer)));
+    String *const this = strNewFixed(encodeToStrSize(type, bufUsed(buffer)));
 
     // Encode buffer
     if (bufUsed(buffer) > 0)
@@ -224,7 +265,7 @@ strNewEncode(const EncodingType type, const Buffer *const buffer)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strNewFmt(const char *format, ...)
+strNewFmt(const char *const format, ...)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRINGZ, format);
@@ -235,7 +276,7 @@ strNewFmt(const char *format, ...)
     // Determine how long the allocated string needs to be and create object
     va_list argumentList;
     va_start(argumentList, format);
-    String *this = strNewFixed((size_t)vsnprintf(NULL, 0, format, argumentList));
+    String *const this = strNewFixed((size_t)vsnprintf(NULL, 0, format, argumentList));
     va_end(argumentList);
 
     // Format string
@@ -248,7 +289,7 @@ strNewFmt(const char *format, ...)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strNewZN(const char *string, size_t size)
+strNewZN(const char *const string, const size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(CHARDATA, string);
@@ -258,7 +299,7 @@ strNewZN(const char *string, size_t size)
     ASSERT(string != NULL);
 
     // Create object
-    String *this = strNewFixed(size);
+    String *const this = strNewFixed(size);
 
     // Assign string
     memcpy(this->pub.buffer, string, strSize(this));
@@ -269,7 +310,7 @@ strNewZN(const char *string, size_t size)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strBase(const String *this)
+strBase(const String *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -281,7 +322,7 @@ strBase(const String *this)
 }
 
 FN_EXTERN const char *
-strBaseZ(const String *this)
+strBaseZ(const String *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -299,7 +340,7 @@ strBaseZ(const String *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-strBeginsWith(const String *this, const String *beginsWith)
+strBeginsWith(const String *const this, const String *const beginsWith)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -313,7 +354,7 @@ strBeginsWith(const String *this, const String *beginsWith)
 }
 
 FN_EXTERN bool
-strBeginsWithZ(const String *this, const char *beginsWith)
+strBeginsWithZ(const String *const this, const char *const beginsWith)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -324,7 +365,7 @@ strBeginsWithZ(const String *this, const char *beginsWith)
     ASSERT(beginsWith != NULL);
 
     bool result = false;
-    unsigned int beginsWithSize = (unsigned int)strlen(beginsWith);
+    const unsigned int beginsWithSize = (unsigned int)strlen(beginsWith);
 
     if (strSize(this) >= beginsWithSize)
         result = strncmp(strZ(this), beginsWith, beginsWithSize) == 0;
@@ -336,7 +377,7 @@ strBeginsWithZ(const String *this, const char *beginsWith)
 Resize the string to allow the requested number of characters to be appended
 ***********************************************************************************************************************************/
 static void
-strResize(String *this, size_t requested)
+strResize(String *const this, const size_t requested)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -373,7 +414,7 @@ strResize(String *this, size_t requested)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strCat(String *this, const String *cat)
+strCat(String *const this, const String *const cat)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -387,7 +428,7 @@ strCat(String *this, const String *cat)
 }
 
 FN_EXTERN String *
-strCatZ(String *this, const char *cat)
+strCatZ(String *const this, const char *const cat)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -398,7 +439,7 @@ strCatZ(String *this, const char *cat)
     ASSERT(cat != NULL);
 
     // Determine length of string to append
-    size_t sizeGrow = strlen(cat);
+    const size_t sizeGrow = strlen(cat);
 
     if (sizeGrow != 0)
     {
@@ -415,7 +456,7 @@ strCatZ(String *this, const char *cat)
 }
 
 FN_EXTERN String *
-strCatZN(String *this, const char *cat, size_t size)
+strCatZN(String *const this, const char *const cat, const size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -456,12 +497,12 @@ strCatBuf(String *const this, const Buffer *const buffer)
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
 
-    FUNCTION_TEST_RETURN(STRING, strCatZN(this, (char *)bufPtrConst(buffer), bufUsed(buffer)));
+    FUNCTION_TEST_RETURN(STRING, strCatZN(this, (const char *)bufPtrConst(buffer), bufUsed(buffer)));
 }
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strCatChr(String *this, char cat)
+strCatChr(String *const this, const char cat)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -495,7 +536,7 @@ strCatEncode(String *const this, const EncodingType type, const Buffer *const bu
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
 
-    size_t encodeSize = encodeToStrSize(type, bufUsed(buffer));
+    const size_t encodeSize = encodeToStrSize(type, bufUsed(buffer));
 
     if (encodeSize != 0)
     {
@@ -515,7 +556,29 @@ strCatEncode(String *const this, const EncodingType type, const Buffer *const bu
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strCatFmt(String *this, const char *format, ...)
+strCatTime(String *const this, const char *const format, const time_t timestamp, const StrCatTimeParam param)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+        FUNCTION_TEST_PARAM(STRINGZ, format);
+        FUNCTION_TEST_PARAM(TIME, timestamp);
+        FUNCTION_TEST_PARAM(BOOL, param.utc);
+    FUNCTION_TEST_END();
+
+    char buffer[64];
+
+    // We can ignore this warning here since the format parameter of strCatTimeP() is checked
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
+    cvtTimeToZP(format, timestamp, buffer, sizeof(buffer), .utc = param.utc);
+#pragma GCC diagnostic pop
+
+    FUNCTION_TEST_RETURN(STRING, strCatZ(this, buffer));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN String *
+strCatFmt(String *const this, const char *const format, ...)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -528,7 +591,7 @@ strCatFmt(String *this, const char *format, ...)
     // Determine how long the allocated string needs to be
     va_list argumentList;
     va_start(argumentList, format);
-    size_t sizeGrow = (size_t)vsnprintf(NULL, 0, format, argumentList);
+    const size_t sizeGrow = (size_t)vsnprintf(NULL, 0, format, argumentList);
     va_end(argumentList);
 
     if (sizeGrow != 0)
@@ -550,7 +613,7 @@ strCatFmt(String *this, const char *format, ...)
 
 /**********************************************************************************************************************************/
 FN_EXTERN int
-strCmp(const String *this, const String *compare)
+strCmp(const String *const this, const String *const compare)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -571,7 +634,7 @@ strCmp(const String *this, const String *compare)
 }
 
 FN_EXTERN int
-strCmpZ(const String *this, const char *compare)
+strCmpZ(const String *const this, const char *const compare)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -583,7 +646,7 @@ strCmpZ(const String *this, const char *compare)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strDup(const String *this)
+strDup(const String *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -599,7 +662,7 @@ strDup(const String *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-strEmpty(const String *this)
+strEmpty(const String *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -610,7 +673,7 @@ strEmpty(const String *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN bool
-strEndsWith(const String *this, const String *endsWith)
+strEndsWith(const String *const this, const String *const endsWith)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -624,7 +687,7 @@ strEndsWith(const String *this, const String *endsWith)
 }
 
 FN_EXTERN bool
-strEndsWithZ(const String *this, const char *endsWith)
+strEndsWithZ(const String *const this, const char *const endsWith)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -635,7 +698,7 @@ strEndsWithZ(const String *this, const char *endsWith)
     ASSERT(endsWith != NULL);
 
     bool result = false;
-    unsigned int endsWithSize = (unsigned int)strlen(endsWith);
+    const unsigned int endsWithSize = (unsigned int)strlen(endsWith);
 
     if (strSize(this) >= endsWithSize)
         result = strcmp(strZ(this) + (strSize(this) - endsWithSize), endsWith) == 0;
@@ -648,7 +711,7 @@ There are two separate implementations because string objects can get the size v
 would need a call to strlen().
 ***********************************************************************************************************************************/
 FN_EXTERN bool
-strEq(const String *this, const String *compare)
+strEq(const String *const this, const String *const compare)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -669,7 +732,7 @@ strEq(const String *this, const String *compare)
 }
 
 FN_EXTERN bool
-strEqZ(const String *this, const char *compare)
+strEqZ(const String *const this, const char *const compare)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -684,7 +747,7 @@ strEqZ(const String *this, const char *compare)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strFirstUpper(String *this)
+strFirstUpper(String *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -700,7 +763,7 @@ strFirstUpper(String *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strFirstLower(String *this)
+strFirstLower(String *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -716,7 +779,7 @@ strFirstLower(String *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strLower(String *this)
+strLower(String *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -732,7 +795,7 @@ strLower(String *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strPath(const String *this)
+strPath(const String *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -754,7 +817,7 @@ strPath(const String *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strPathAbsolute(const String *this, const String *base)
+strPathAbsolute(const String *const this, const String *const base)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -782,12 +845,12 @@ strPathAbsolute(const String *this, const String *base)
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            StringList *baseList = strLstNewSplit(base, FSLASH_STR);
-            StringList *pathList = strLstNewSplit(this, FSLASH_STR);
+            StringList *const baseList = strLstNewSplit(base, FSLASH_STR);
+            StringList *const pathList = strLstNewSplit(this, FSLASH_STR);
 
             while (!strLstEmpty(pathList))
             {
-                const String *pathPart = strLstGet(pathList, 0);
+                const String *const pathPart = strLstGet(pathList, 0);
 
                 // If the last part is empty
                 if (strSize(pathPart) == 0)
@@ -804,7 +867,7 @@ strPathAbsolute(const String *this, const String *base)
 
                 if (strEq(pathPart, DOTDOT_STR))
                 {
-                    const String *basePart = strLstGet(baseList, strLstSize(baseList) - 1);
+                    const String *const basePart = strLstGet(baseList, strLstSize(baseList) - 1);
 
                     if (strSize(basePart) == 0)
                         THROW_FMT(AssertError, "relative path '%s' goes back too far in base path '%s'", strZ(this), strZ(base));
@@ -838,7 +901,7 @@ strPathAbsolute(const String *this, const String *base)
 
 /**********************************************************************************************************************************/
 FN_EXTERN const char *
-strZNull(const String *this)
+strZNull(const String *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -849,7 +912,7 @@ strZNull(const String *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strReplaceChr(String *this, char find, char replace)
+strReplaceChr(String *const this, const char find, const char replace)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -870,7 +933,7 @@ strReplaceChr(String *this, char find, char replace)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strSub(const String *this, size_t start)
+strSub(const String *const this, const size_t start)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -885,7 +948,7 @@ strSub(const String *this, size_t start)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strSubN(const String *this, size_t start, size_t size)
+strSubN(const String *const this, const size_t start, const size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -902,7 +965,7 @@ strSubN(const String *this, size_t start, size_t size)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strTrim(String *this)
+strTrim(String *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -926,7 +989,7 @@ strTrim(String *this)
             end--;
 
         // Is there anything to trim?
-        size_t newSize = (size_t)(end - begin + 1);
+        const size_t newSize = (size_t)(end - begin + 1);
 
         if (begin != this->pub.buffer || newSize < strSize(this))
         {
@@ -945,7 +1008,7 @@ strTrim(String *this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN int
-strChr(const String *this, char chr)
+strChr(const String *const this, const char chr)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -958,7 +1021,7 @@ strChr(const String *this, char chr)
 
     if (strSize(this) > 0)
     {
-        const char *ptr = strchr(this->pub.buffer, chr);
+        const char *const ptr = strchr(this->pub.buffer, chr);
 
         if (ptr != NULL)
             result = (int)(ptr - this->pub.buffer);
@@ -969,7 +1032,7 @@ strChr(const String *this, char chr)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strTruncIdx(String *this, int idx)
+strTruncIdx(String *const this, const int idx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, this);
@@ -1004,30 +1067,35 @@ strSizeFormat(const uint64_t size)
         FUNCTION_TEST_PARAM(UINT64, size);
     FUNCTION_TEST_END();
 
-    String *result = NULL;
+    String *result;
 
     if (size < 1024)
         result = strNewFmt("%" PRIu64 "B", size);
-    else if (size < (1024 * 1024))
-    {
-        if ((uint64_t)((double)size / 102.4) % 10 != 0)
-            result = strNewFmt("%.1lfKB", (double)size / 1024);
-        else
-            result = strNewFmt("%" PRIu64 "KB", size / 1024);
-    }
-    else if (size < (1024 * 1024 * 1024))
-    {
-        if ((uint64_t)((double)size / (1024 * 102.4)) % 10 != 0)
-            result = strNewFmt("%.1lfMB", (double)size / (1024 * 1024));
-        else
-            result = strNewFmt("%" PRIu64 "MB", size / (1024 * 1024));
-    }
     else
     {
-        if ((uint64_t)((double)size / (1024 * 1024 * 102.4)) % 10 != 0)
-            result = strNewFmt("%.1lfGB", (double)size / (1024 * 1024 * 1024));
-        else
-            result = strNewFmt("%" PRIu64 "GB", size / (1024 * 1024 * 1024));
+        char working[CVT_DIV_BUFFER_SIZE];
+        uint64_t divisor = 1024 * 1024 * 1024;
+        unsigned int precision = 1;
+        const char *suffix = "GB";
+
+        if (size < (1024 * 1024))
+        {
+            divisor = 1024;
+            suffix = "KB";
+        }
+        else if (size < (1024 * 1024 * 1024))
+        {
+            divisor = 1024 * 1024;
+            suffix = "MB";
+        }
+
+        // Skip precision when it would cause overflow
+        if (size > UINT64_MAX / 10)
+            precision = 0;
+
+        // Format size
+        cvtDivToZ(size, divisor, precision, true, working, sizeof(working));
+        result = strNewFmt("%s%s", working, suffix);
     }
 
     FUNCTION_TEST_RETURN(STRING, result);

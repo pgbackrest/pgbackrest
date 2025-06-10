@@ -3,6 +3,8 @@ Configuration Common
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <ctype.h>
+
 #include "common/debug.h"
 #include "common/regExp.h"
 #include "common/time.h"
@@ -62,14 +64,14 @@ cfgParseSize(const String *const value)
     ASSERT(value != NULL);
 
     // Lowercase the value
-    String *valueLower = strLower(strDup(value));
+    String *const valueLower = strLower(strDup(value));
 
     // Match the value against possible values
     if (regExpMatchOne(STRDEF("^[0-9]+(kib|kb|k|mib|mb|m|gib|gb|g|tib|tb|t|pib|pb|p|b)*$"), valueLower))
     {
         // Get the character array and size
-        const char *strArray = strZ(valueLower);
-        size_t size = strSize(valueLower);
+        const char *const strArray = strZ(valueLower);
+        const size_t size = strSize(valueLower);
         int chrPos = -1;
 
         // If there is a 'b' on the end, then see if the previous character is a number
@@ -124,5 +126,59 @@ cfgParseTime(const String *const value)
 
     ASSERT(value != NULL);
 
-    FUNCTION_TEST_RETURN(INT64, (int64_t)(cvtZToDouble(strZ(value)) * MSEC_PER_SEC));
+    // Get value ptr and size
+    const char *const valuePtr = strZ(value);
+    const size_t size = strSize(value);
+    size_t qualifierSize = 0;
+    int64_t multiplier = 1000;
+
+    // Check if this is ms (the only two character qualifier)
+    if (size > 1 && tolower(valuePtr[size - 2]) == 'm' && tolower(valuePtr[size - 1]) == 's')
+    {
+        qualifierSize = 2;
+        multiplier = 1;
+    }
+    // Else check for  single character qualifier
+    else if (size > 0)
+    {
+        switch (tolower(valuePtr[size - 1]))
+        {
+            case 's':
+                qualifierSize = 1;
+                multiplier = 1000;
+                break;
+
+            case 'm':
+                qualifierSize = 1;
+                multiplier = 60 * 1000;
+                break;
+
+            case 'h':
+                qualifierSize = 1;
+                multiplier = 60 * 60 * 1000;
+                break;
+
+            case 'd':
+                qualifierSize = 1;
+                multiplier = 24 * 60 * 60 * 1000;
+                break;
+
+            case 'w':
+                qualifierSize = 1;
+                multiplier = 7 * 24 * 60 * 60 * 1000;
+                break;
+        }
+    }
+
+    // Only proceed if there are numbers to parse
+    if (size - qualifierSize > 0)
+    {
+        // Convert string to time
+        const int64_t valueInt = cvtZSubNToInt64Base(valuePtr, 0, size - qualifierSize, 10);
+
+        if (valueInt <= INT64_MAX / multiplier)
+            FUNCTION_TEST_RETURN(INT64, valueInt * multiplier);
+    }
+
+    THROW_FMT(FormatError, "value '%s' is not valid", strZ(value));
 }

@@ -143,7 +143,7 @@ static const uint8_t memContextSizePossible[memQtyMany + 1][memQtyMany + 1][memQ
 Get pointers to optional parts of the manifest
 ***********************************************************************************************************************************/
 // Get pointer to child part
-#define MEM_CONTEXT_CHILD_OFFSET(memContext)                        ((unsigned char *)(memContext + 1) + memContext->allocExtra)
+#define MEM_CONTEXT_CHILD_OFFSET(memContext)                        ((uint8_t *)(memContext + 1) + memContext->allocExtra)
 
 static MemContextChildOne *
 memContextChildOne(MemContext *const memContext)
@@ -159,7 +159,7 @@ memContextChildMany(MemContext *const memContext)
 
 // Get pointer to allocation part
 #define MEM_CONTEXT_ALLOC_OFFSET(memContext)                                                                                       \
-    ((unsigned char *)(memContext + 1) + memContextSizePossible[memContext->childQty][0][0] + memContext->allocExtra)
+    ((uint8_t *)(memContext + 1) + memContextSizePossible[memContext->childQty][0][0] + memContext->allocExtra)
 
 static MemContextAllocOne *
 memContextAllocOne(MemContext *const memContext)
@@ -179,7 +179,7 @@ memContextCallbackOne(MemContext *const memContext)
 {
     return
         (MemContextCallbackOne *)
-        ((unsigned char *)(memContext + 1) +
+        ((uint8_t *)(memContext + 1) +
          memContextSizePossible[memContext->childQty][memContext->allocQty][0] + memContext->allocExtra);
 }
 
@@ -394,14 +394,14 @@ memContextAuditAllocExtraName(void *const allocExtra, const char *const name)
 Wrapper around malloc() with error handling
 ***********************************************************************************************************************************/
 static void *
-memAllocInternal(size_t size)
+memAllocInternal(const size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 
     // Allocate memory
-    void *buffer = malloc(size);
+    void *const buffer = malloc(size);
 
     // Error when malloc fails
     if (buffer == NULL)
@@ -415,14 +415,14 @@ memAllocInternal(size_t size)
 Allocate an array of pointers and set all entries to NULL
 ***********************************************************************************************************************************/
 static void *
-memAllocPtrArrayInternal(size_t size)
+memAllocPtrArrayInternal(const size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 
     // Allocate memory
-    void **buffer = memAllocInternal(size * sizeof(void *));
+    void **const buffer = memAllocInternal(size * sizeof(void *));
 
     // Set all pointers to NULL
     for (size_t ptrIdx = 0; ptrIdx < size; ptrIdx++)
@@ -436,7 +436,7 @@ memAllocPtrArrayInternal(size_t size)
 Wrapper around realloc() with error handling
 ***********************************************************************************************************************************/
 static void *
-memReAllocInternal(void *bufferOld, size_t sizeNew)
+memReAllocInternal(void *const bufferOld, const size_t sizeNew)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, bufferOld);
@@ -446,7 +446,7 @@ memReAllocInternal(void *bufferOld, size_t sizeNew)
     ASSERT(bufferOld != NULL);
 
     // Allocate memory
-    void *bufferNew = realloc(bufferOld, sizeNew);
+    void *const bufferNew = realloc(bufferOld, sizeNew);
 
     // Error when realloc fails
     if (bufferNew == NULL)
@@ -460,7 +460,7 @@ memReAllocInternal(void *bufferOld, size_t sizeNew)
 Wrapper around realloc() with error handling
 ***********************************************************************************************************************************/
 static void *
-memReAllocPtrArrayInternal(void *bufferOld, size_t sizeOld, size_t sizeNew)
+memReAllocPtrArrayInternal(void *const bufferOld, const size_t sizeOld, const size_t sizeNew)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, bufferOld);
@@ -469,7 +469,7 @@ memReAllocPtrArrayInternal(void *bufferOld, size_t sizeOld, size_t sizeNew)
     FUNCTION_TEST_END();
 
     // Allocate memory
-    void **bufferNew = memReAllocInternal(bufferOld, sizeNew * sizeof(void *));
+    void **const bufferNew = memReAllocInternal(bufferOld, sizeNew * sizeof(void *));
 
     // Set all new pointers to NULL
     for (size_t ptrIdx = sizeOld; ptrIdx < sizeNew; ptrIdx++)
@@ -483,7 +483,7 @@ memReAllocPtrArrayInternal(void *bufferOld, size_t sizeOld, size_t sizeNew)
 Wrapper around free()
 ***********************************************************************************************************************************/
 static void
-memFreeInternal(void *buffer)
+memFreeInternal(void *const buffer)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, buffer);
@@ -676,7 +676,7 @@ memContextFromAllocExtra(void *const allocExtra)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-memContextCallbackSet(MemContext *this, void (*callbackFunction)(void *), void *callbackArgument)
+memContextCallbackSet(MemContext *const this, void (*const callbackFunction)(void *), void *const callbackArgument)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
@@ -705,7 +705,7 @@ memContextCallbackSet(MemContext *this, void (*callbackFunction)(void *), void *
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-memContextCallbackClear(MemContext *this)
+memContextCallbackClear(MemContext *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
@@ -778,7 +778,7 @@ memContextAllocNew(const size_t size)
             if (contextAlloc->freeIdx == contextAlloc->listSize)
             {
                 // Calculate new list size
-                unsigned int listSizeNew = contextAlloc->listSize * 2;
+                const unsigned int listSizeNew = contextAlloc->listSize * 2;
 
                 // Reallocate memory before modifying anything else in case there is an error
                 contextAlloc->list = memReAllocPtrArrayInternal(contextAlloc->list, contextAlloc->listSize, listSizeNew);
@@ -805,7 +805,7 @@ memContextAllocNew(const size_t size)
 Resize memory that has already been allocated
 ***********************************************************************************************************************************/
 static MemContextAlloc *
-memContextAllocResize(MemContextAlloc *alloc, size_t size)
+memContextAllocResize(MemContextAlloc *alloc, const size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, alloc);
@@ -839,27 +839,25 @@ memContextAllocResize(MemContextAlloc *alloc, size_t size)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void *
-memNew(size_t size)
+memNew(const size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 
-    void *result = MEM_CONTEXT_ALLOC_BUFFER(memContextAllocNew(size));
-
-    FUNCTION_TEST_RETURN_P(VOID, result);
+    FUNCTION_TEST_RETURN_P(VOID, MEM_CONTEXT_ALLOC_BUFFER(memContextAllocNew(size)));
 }
 
 /**********************************************************************************************************************************/
 FN_EXTERN void *
-memNewPtrArray(size_t size)
+memNewPtrArray(const size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 
     // Allocate pointer array
-    void **buffer = (void **)MEM_CONTEXT_ALLOC_BUFFER(memContextAllocNew(size * sizeof(void *)));
+    void **const buffer = (void **const)MEM_CONTEXT_ALLOC_BUFFER(memContextAllocNew(size * sizeof(void *)));
 
     // Set pointers to NULL
     for (size_t ptrIdx = 0; ptrIdx < size; ptrIdx++)
@@ -870,7 +868,7 @@ memNewPtrArray(size_t size)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void *
-memResize(const void *buffer, size_t size)
+memResize(void *const buffer, const size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, buffer);
@@ -923,7 +921,7 @@ memFree(void *const buffer)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-memContextMove(MemContext *this, MemContext *parentNew)
+memContextMove(MemContext *const this, MemContext *const parentNew)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
@@ -984,7 +982,7 @@ memContextMove(MemContext *this, MemContext *parentNew)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-memContextSwitch(MemContext *this)
+memContextSwitch(MemContext *const this)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(MEM_CONTEXT, this);
@@ -1129,7 +1127,7 @@ memContextSize(const MemContext *const this)
 
     // Size of struct and extra
     size_t total = 0;
-    const unsigned char *offset = (unsigned char *)(this + 1) + this->allocExtra;
+    const uint8_t *offset = (const uint8_t *)(this + 1) + this->allocExtra;
 
     // Size of child contexts
     if (this->childQty == memQtyOne)
@@ -1197,7 +1195,7 @@ memContextSize(const MemContext *const this)
     if (this->callbackQty != memQtyNone)
         offset += sizeof(MemContextCallbackOne);
 
-    FUNCTION_TEST_RETURN(SIZE, (size_t)(offset - (unsigned char *)this) + total);
+    FUNCTION_TEST_RETURN(SIZE, (size_t)(offset - (const uint8_t *)this) + total);
 }
 
 #endif // DEBUG

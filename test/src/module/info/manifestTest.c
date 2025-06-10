@@ -67,23 +67,14 @@ testRun(void)
             "backup-timestamp-stop=0\n"                                                                                            \
             "backup-type=\"full\"\n"
 
-        #define TEST_MANIFEST_DB_93                                                                                                \
-            "\n"                                                                                                                   \
-            "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=201306121\n"                                                                                       \
-            "db-control-version=937\n"                                                                                             \
-            "db-id=0\n"                                                                                                            \
-            "db-system-id=0\n"                                                                                                     \
-            "db-version=\"9.3\"\n"
-
         #define TEST_MANIFEST_DB_94                                                                                                \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=201409291\n"                                                                                       \
+            "db-catalog-version=201510051\n"                                                                                       \
             "db-control-version=942\n"                                                                                             \
             "db-id=0\n"                                                                                                            \
             "db-system-id=0\n"                                                                                                     \
-            "db-version=\"9.4\"\n"
+            "db-version=\"9.5\"\n"
 
         #define TEST_MANIFEST_DB_12                                                                                                \
             "\n"                                                                                                                   \
@@ -171,10 +162,10 @@ testRun(void)
         Storage *storagePgWrite = storagePosixNewP(STRDEF(TEST_PATH "/pg"), .write = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("manifest with all features - 9.3");
+        TEST_TITLE("manifest with all features - 9.5");
 
         // Version
-        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "9.3\n", .modeFile = 0600, .timeModified = 1565282100);
+        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "9.5\n", .modeFile = 0600, .timeModified = 1565282100);
 
         // base/1 directory
         HRN_STORAGE_PATH_CREATE(storagePgWrite, PG_PATH_BASE, .mode = 0700);
@@ -276,13 +267,13 @@ testRun(void)
             storagePgWrite, "pg_xlog/archive_status/" BOGUS_STR, "TESTDATA", .modeFile = 0600, .timeModified = 1565282120);
 
         // Tablespace 1
-        HRN_STORAGE_PATH_CREATE(storageTest, "ts/1/PG_9.3_201306121/1", .mode = 0700);
+        HRN_STORAGE_PATH_CREATE(storageTest, "ts/1/PG_9.5_201510051/1", .mode = 0700);
         HRN_STORAGE_PATH_CREATE(storagePgWrite, MANIFEST_TARGET_PGTBLSPC, .mode = 0700);
         THROW_ON_SYS_ERROR(symlink("../../ts/1", TEST_PATH "/pg/pg_tblspc/1") == -1, FileOpenError, "unable to create symlink");
         HRN_STORAGE_PUT_Z(
-            storagePgWrite,"pg_tblspc/1/PG_9.3_201306121/1/16384", "TESTDATA", .modeFile = 0600, .timeModified = 1565282115);
+            storagePgWrite,"pg_tblspc/1/PG_9.5_201510051/1/16384", "TESTDATA", .modeFile = 0600, .timeModified = 1565282115);
         HRN_STORAGE_PUT_Z(
-            storagePgWrite,"pg_tblspc/1/PG_9.3_201306121/1/t123_123_fsm", "IGNORE_TEMP_RELATION", .modeFile = 0600,
+            storagePgWrite,"pg_tblspc/1/PG_9.5_201510051/1/t123_123_fsm", "IGNORE_TEMP_RELATION", .modeFile = 0600,
             .timeModified = 1565282115);
 
         // Add tablespaceList with error (no name)
@@ -297,7 +288,7 @@ testRun(void)
         // Test tablespace error
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, false, false, false, false, NULL, exclusionList,
+                storagePg, PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), 0, false, false, false, false, NULL, exclusionList,
                 pckWriteResult(tablespaceList)),
             AssertError,
             "tablespace with oid 1 not found in tablespace map\n"
@@ -322,7 +313,7 @@ testRun(void)
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, false, false, false, false, NULL, NULL,
+                storagePg, PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), 0, false, false, false, false, NULL, NULL,
                 pckWriteResult(tablespaceList)),
             "build manifest");
         TEST_RESULT_VOID(manifestBackupLabelSet(manifest, STRDEF("20190818-084502F")), "backup label set");
@@ -335,7 +326,7 @@ testRun(void)
             strNewBuf(
                 harnessInfoChecksumZ(
                     TEST_MANIFEST_HEADER_LABEL
-                    TEST_MANIFEST_DB_93
+                    TEST_MANIFEST_DB_94
                     TEST_MANIFEST_OPTION_ALL
                     "\n"
                     "[backup:target]\n"
@@ -352,13 +343,11 @@ testRun(void)
                     "pg_data/base/1/555_init.1={\"size\":0,\"timestamp\":1565282114}\n"
                     "pg_data/base/1/555_vm.1_vm={\"size\":0,\"timestamp\":1565282114}\n"
                     "pg_data/global/pg_internal.init.allow={\"size\":0,\"timestamp\":1565282114}\n"
-                    "pg_data/pg_dynshmem/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
                     "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
-                    "pg_data/pg_replslot/BOGUS={\"size\":0,\"timestamp\":1565282103}\n"
                     "pg_data/pg_xlog/BOGUS={\"size\":0,\"timestamp\":1565282108}\n"
                     "pg_data/pg_xlog/archive_status/BOGUS={\"size\":8,\"timestamp\":1565282120}\n"
                     "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
-                    "pg_tblspc/1/PG_9.3_201306121/1/16384={\"size\":8,\"timestamp\":1565282115}\n"
+                    "pg_tblspc/1/PG_9.5_201510051/1/16384={\"size\":8,\"timestamp\":1565282115}\n"
                     TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE
                     "\n"
                     "[target:link]\n"
@@ -385,8 +374,8 @@ testRun(void)
                     "pg_data/pg_xlog/archive_status={\"mode\":\"0777\"}\n"
                     "pg_tblspc={}\n"
                     "pg_tblspc/1={}\n"
-                    "pg_tblspc/1/PG_9.3_201306121={}\n"
-                    "pg_tblspc/1/PG_9.3_201306121/1={}\n"
+                    "pg_tblspc/1/PG_9.5_201510051={}\n"
+                    "pg_tblspc/1/PG_9.5_201510051/1={}\n"
                     TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
@@ -401,10 +390,10 @@ testRun(void)
 
         // Remove symlinks and directories
         THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/pg_tblspc/1") == -1, FileRemoveError, "unable to remove symlink");
-        HRN_STORAGE_PATH_REMOVE(storageTest,"ts/1/PG_9.3_201306121", .recurse = true);
+        HRN_STORAGE_PATH_REMOVE(storageTest,"ts/1/PG_9.5_201510051", .recurse = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("manifest with all features - 9.3, online");
+        TEST_TITLE("manifest with all features - 9.5, online");
 
         // Create a path other than archive_status under pg_xlog for code coverage
         HRN_STORAGE_PATH_CREATE(storagePgWrite, "pg_xlog/somepath", .mode = 0700);
@@ -414,14 +403,14 @@ testRun(void)
         HRN_STORAGE_PUT_Z(
             storagePgWrite, "pg_wal/000000010000000000000001", "WALDATA", .modeFile = 0600, .timeModified = 1565282120);
 
-        // Files to conditionally ignore before 9.4
+        // Files to conditionally ignore before 9.5
         HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_POSTGRESQLAUTOCONFTMP, .modeFile = 0600, .timeModified = 1565282101);
 
         // Test manifest - temp tables, unlogged tables, pg_serial and pg_xlog files ignored
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_93, hrnPgCatalogVersion(PG_VERSION_93), 0, true, false, false, false, NULL, NULL, NULL),
+                storagePg, PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), 0, true, false, false, false, NULL, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -431,7 +420,7 @@ testRun(void)
             strNewBuf(
                 harnessInfoChecksumZ(
                     TEST_MANIFEST_HEADER
-                    TEST_MANIFEST_DB_93
+                    TEST_MANIFEST_DB_94
                     TEST_MANIFEST_OPTION_ARCHIVE
                     TEST_MANIFEST_OPTION_CHECKSUM_PAGE_FALSE
                     TEST_MANIFEST_OPTION_ONLINE_TRUE
@@ -448,11 +437,8 @@ testRun(void)
                     "pg_data/base/1/555_init.1={\"size\":0,\"timestamp\":1565282114}\n"
                     "pg_data/base/1/555_vm.1_vm={\"size\":0,\"timestamp\":1565282114}\n"
                     "pg_data/global/pg_internal.init.allow={\"size\":0,\"timestamp\":1565282114}\n"
-                    "pg_data/pg_dynshmem/BOGUS={\"size\":0,\"timestamp\":1565282101}\n"
                     "pg_data/pg_hba.conf={\"size\":9,\"timestamp\":1565282117}\n"
-                    "pg_data/pg_replslot/BOGUS={\"size\":0,\"timestamp\":1565282103}\n"
                     "pg_data/pg_wal/000000010000000000000001={\"size\":7,\"timestamp\":1565282120}\n"
-                    "pg_data/postgresql.auto.conf.tmp={\"size\":0,\"timestamp\":1565282101}\n"
                     "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
                     TEST_MANIFEST_FILE_DEFAULT_PRIMARY_TRUE
                     "\n"
@@ -504,10 +490,10 @@ testRun(void)
         HRN_STORAGE_REMOVE(storageTest, TEST_PATH "/wal/wal");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("manifest with all features - 9.4, checksum-page");
+        TEST_TITLE("manifest with all features - 9.5, checksum-page");
 
         // Version
-        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "9.4\n", .modeFile = 0600, .timeModified = 1565282100);
+        HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "9.5\n", .modeFile = 0600, .timeModified = 1565282100);
 
         // Put a pgcontrol (always primary:true)
         HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, .modeFile = 0600, .timeModified = 1565282101);
@@ -528,12 +514,12 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storagePgWrite, PG_FILE_BACKUPLABEL, .modeFile = 0600, .timeModified = 1565282101);
 
         // Tablespace 1
-        HRN_STORAGE_PATH_CREATE(storageTest, "ts/1/PG_9.4_201409291/1", .mode = 0700);
+        HRN_STORAGE_PATH_CREATE(storageTest, "ts/1/PG_9.5_201510051/1", .mode = 0700);
         THROW_ON_SYS_ERROR(symlink("../../ts/1", TEST_PATH "/pg/pg_tblspc/1") == -1, FileOpenError, "unable to create symlink");
         HRN_STORAGE_PUT_Z(
-            storagePgWrite, "pg_tblspc/1/PG_9.4_201409291/1/16384", "TESTDATA", .modeFile = 0600, .timeModified = 1565282115);
+            storagePgWrite, "pg_tblspc/1/PG_9.5_201510051/1/16384", "TESTDATA", .modeFile = 0600, .timeModified = 1565282115);
         HRN_STORAGE_PUT_Z(
-            storagePgWrite, "pg_tblspc/1/PG_9.4_201409291/1/t123_123_fsm", "IGNORE_TEMP_RELATION", .modeFile = 0600,
+            storagePgWrite, "pg_tblspc/1/PG_9.5_201510051/1/t123_123_fsm", "IGNORE_TEMP_RELATION", .modeFile = 0600,
             .timeModified = 1565282115);
 
         // Add checksum-page files to exclude from checksum-page validation in database relation directories
@@ -541,19 +527,19 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(
             storagePgWrite, PG_PATH_BASE "/1/" PG_FILE_PGFILENODEMAP, .modeFile = 0600, .timeModified = 1565282120);
         HRN_STORAGE_PUT_EMPTY(
-            storagePgWrite, "pg_tblspc/1/PG_9.4_201409291/1/" PG_FILE_PGVERSION, .modeFile = 0600, .timeModified = 1565282120);
+            storagePgWrite, "pg_tblspc/1/PG_9.5_201510051/1/" PG_FILE_PGVERSION, .modeFile = 0600, .timeModified = 1565282120);
 
         // Tablespace 2
-        HRN_STORAGE_PATH_CREATE(storageTest, "ts/2/PG_9.4_201409291/1", .mode = 0700);
+        HRN_STORAGE_PATH_CREATE(storageTest, "ts/2/PG_9.5_201510051/1", .mode = 0700);
         THROW_ON_SYS_ERROR(symlink("../../ts/2", TEST_PATH "/pg/pg_tblspc/2") == -1, FileOpenError, "unable to create symlink");
         HRN_STORAGE_PUT_Z(
-            storagePgWrite, "pg_tblspc/2/PG_9.4_201409291/1/16385", "TESTDATA", .modeFile = 0600, .timeModified = 1565282115);
+            storagePgWrite, "pg_tblspc/2/PG_9.5_201510051/1/16385", "TESTDATA", .modeFile = 0600, .timeModified = 1565282115);
 
         // Test manifest - pg_dynshmem, pg_replslot and postgresql.auto.conf.tmp files ignored
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, true, false, false, NULL, NULL, NULL),
+                storagePg, PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), 0, false, true, false, false, NULL, NULL, NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -594,9 +580,9 @@ testRun(void)
                     "pg_data/postgresql.conf={\"size\":14,\"timestamp\":1565282116}\n"
                     "pg_data/recovery.signal={\"size\":0,\"timestamp\":1565282101}\n"
                     "pg_data/standby.signal={\"size\":0,\"timestamp\":1565282101}\n"
-                    "pg_tblspc/1/PG_9.4_201409291/1/16384={\"checksum-page\":true,\"size\":8,\"timestamp\":1565282115}\n"
-                    "pg_tblspc/1/PG_9.4_201409291/1/PG_VERSION={\"size\":0,\"timestamp\":1565282120}\n"
-                    "pg_tblspc/2/PG_9.4_201409291/1/16385={\"checksum-page\":true,\"size\":8,\"timestamp\":1565282115}\n"
+                    "pg_tblspc/1/PG_9.5_201510051/1/16384={\"checksum-page\":true,\"size\":8,\"timestamp\":1565282115}\n"
+                    "pg_tblspc/1/PG_9.5_201510051/1/PG_VERSION={\"size\":0,\"timestamp\":1565282120}\n"
+                    "pg_tblspc/2/PG_9.5_201510051/1/16385={\"checksum-page\":true,\"size\":8,\"timestamp\":1565282115}\n"
                     TEST_MANIFEST_FILE_DEFAULT_PRIMARY_FALSE
                     "\n"
                     "[target:link]\n"
@@ -627,11 +613,11 @@ testRun(void)
                     "pg_data/pg_xlog={}\n"
                     "pg_tblspc={}\n"
                     "pg_tblspc/1={}\n"
-                    "pg_tblspc/1/PG_9.4_201409291={}\n"
-                    "pg_tblspc/1/PG_9.4_201409291/1={}\n"
+                    "pg_tblspc/1/PG_9.5_201510051={}\n"
+                    "pg_tblspc/1/PG_9.5_201510051/1={}\n"
                     "pg_tblspc/2={}\n"
-                    "pg_tblspc/2/PG_9.4_201409291={}\n"
-                    "pg_tblspc/2/PG_9.4_201409291/1={}\n"
+                    "pg_tblspc/2/PG_9.5_201510051={}\n"
+                    "pg_tblspc/2/PG_9.5_201510051/1={}\n"
                     TEST_MANIFEST_PATH_DEFAULT)),
             "check manifest");
 
@@ -645,13 +631,11 @@ testRun(void)
         // Version
         HRN_STORAGE_PUT_Z(storagePgWrite, PG_FILE_PGVERSION, "12\n", .modeFile = 0600, .timeModified = 1565282100);
 
-        // Tablespace link errors when correct verion not found
+        // Tablespace link errors when correct version not found
         TEST_ERROR(
             manifestNewBuild(
                 storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), 0, false, false, false, false, NULL, NULL, NULL),
-            FileOpenError,
-            "unable to get info for missing path/file '" TEST_PATH "/pg/pg_tblspc/1/PG_12_201909212': [2] No such file or"
-            " directory");
+            FileOpenError, "unable to get info for missing path/file '" TEST_PATH "/pg/pg_tblspc/1/PG_12_201909212'");
 
         // Remove the link inside pg/pg_tblspc
         THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/pg_tblspc/1") == -1, FileRemoveError, "unable to remove symlink");
@@ -781,14 +765,11 @@ testRun(void)
             {.blockSize = 32 * 1024, .checksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN + 1},
         };
 
-        static const ManifestBlockIncrMap manifestBuildBlockIncrMap =
+        const ManifestBlockIncrMap manifestBuildBlockIncrMap =
         {
-            .sizeMap = manifestBlockIncrSizeMap,
-            .sizeMapSize = LENGTH_OF(manifestBlockIncrSizeMap),
-            .ageMap = manifestBlockIncrAgeMap,
-            .ageMapSize = LENGTH_OF(manifestBlockIncrAgeMap),
-            .checksumSizeMap = manifestBlockIncrChecksumSizeMap,
-            .checksumSizeMapSize = LENGTH_OF(manifestBlockIncrChecksumSizeMap),
+            .sizeMap = LSTDEF(manifestBlockIncrSizeMap),
+            .ageMap = LSTDEF(manifestBlockIncrAgeMap),
+            .checksumSizeMap = LSTDEF(manifestBlockIncrChecksumSizeMap),
         };
 
         // pg_wal not ignored
@@ -871,7 +852,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL, NULL),
+                storagePg, PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), 0, false, false, false, false, NULL, NULL, NULL),
             LinkDestinationError, "link 'link' destination '" TEST_PATH "/pg/base' is in PGDATA");
 
         THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/link") == -1, FileRemoveError, "unable to remove symlink");
@@ -883,7 +864,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL, NULL),
+                storagePg, PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), 0, false, false, false, false, NULL, NULL, NULL),
             LinkExpectedError, "'pg_data/pg_tblspc/somedir' is not a symlink - pg_tblspc should contain only symlinks");
 
         HRN_STORAGE_PATH_REMOVE(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somedir");
@@ -895,7 +876,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL, NULL),
+                storagePg, PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), 0, false, false, false, false, NULL, NULL, NULL),
             LinkExpectedError, "'pg_data/pg_tblspc/somefile' is not a symlink - pg_tblspc should contain only symlinks");
 
         TEST_STORAGE_EXISTS(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somefile", .remove = true);
@@ -907,9 +888,8 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, true, false, false, NULL, NULL, NULL),
-            FileOpenError,
-            "unable to get info for missing path/file '" TEST_PATH "/pg/link-to-link': [2] No such file or directory");
+                storagePg, PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), 0, false, true, false, false, NULL, NULL, NULL),
+            FileOpenError, "unable to get info for missing path/file '" TEST_PATH "/pg/link-to-link'");
 
         THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/link-to-link") == -1, FileRemoveError, "unable to remove symlink");
 
@@ -924,7 +904,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL, NULL),
+                storagePg, PG_VERSION_95, hrnPgCatalogVersion(PG_VERSION_95), 0, false, false, false, false, NULL, NULL, NULL),
             LinkDestinationError, "link '" TEST_PATH "/pg/linktolink' cannot reference another link '" TEST_PATH "/linktest'");
 
         #undef TEST_MANIFEST_HEADER
@@ -991,6 +971,7 @@ testRun(void)
     {
         #define TEST_MANIFEST_HEADER_PRE                                                                                           \
             "[backup]\n"                                                                                                           \
+            "backup-bundle-raw=true\n"                                                                                             \
             "backup-label=null\n"                                                                                                  \
             "backup-prior=\"20190101-010101F\"\n"
 
@@ -1106,7 +1087,8 @@ testRun(void)
                     "[target:file]\n"
                     "pg_data/BOGUS={\"size\":6,\"timestamp\":1482182860}\n"
                     "pg_data/FILE3={\"reference\":\"20190101-010101F\",\"size\":0,\"timestamp\":1482182860}\n"
-                    "pg_data/FILE4={\"size\":55,\"timestamp\":1482182861}\n"
+                    "pg_data/FILE4={\"checksum\":\"ccccccccccaaaaaaaaaabbbbbbbbbbdddddddddd\",\"reference\":\"20190101-010101F\""
+                    ",\"size\":55,\"timestamp\":1482182861}\n"
                     "pg_data/PG_VERSION={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\""
                     ",\"reference\":\"20190101-010101F\",\"size\":4,\"timestamp\":1482182860}\n"
                     TEST_MANIFEST_FILE_DEFAULT
@@ -1185,9 +1167,10 @@ testRun(void)
         manifest->pub.data.backupOptionDelta = BOOL_FALSE_VAR;
         lstClear(manifest->pub.fileList);
 
+        // File goes to zero-length
         HRN_MANIFEST_FILE_ADD(
-            manifest, .name = MANIFEST_TARGET_PGDATA "/FILE1", .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182859,
-            .group = "test", .user = "test");
+            manifest, .name = MANIFEST_TARGET_PGDATA "/FILE1", .copy = true, .size = 0, .timestamp = 1482182859, .group = "test",
+            .user = "test");
 
         // Clear prior manifest and add a single file with later timestamp and checksum error
         lstClear(manifestPrior->pub.fileList);
@@ -1222,9 +1205,7 @@ testRun(void)
                     "pg_data={\"path\":\"/pg\",\"type\":\"path\"}\n"
                     "\n"
                     "[target:file]\n"
-                    "pg_data/FILE1={\"checksum\":\"aaaaaaaaaabbbbbbbbbbccccccccccdddddddddd\",\"checksum-page\":false"
-                    ",\"checksum-page-error\":[77],\"reference\":\"20190101-010101F_20190202-010101D\",\"size\":4"
-                    ",\"timestamp\":1482182859}\n"
+                    "pg_data/FILE1={\"size\":0,\"timestamp\":1482182859}\n"
                     TEST_MANIFEST_FILE_DEFAULT
                     "\n"
                     "[target:path]\n"
@@ -1245,8 +1226,9 @@ testRun(void)
             .group = "test", .user = "test");
 
         HRN_MANIFEST_FILE_ADD(
-            manifestPrior, .name = MANIFEST_TARGET_PGDATA "/FILE2", .copy = true, .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
-            .reference = "20190101-010101F_20190202-010101D", .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
+            manifestPrior, .name = MANIFEST_TARGET_PGDATA "/FILE2", .copy = true, .size = 6, .sizeOriginal = 4, .sizeRepo = 4,
+            .timestamp = 1482182860, .reference = "20190101-010101F_20190202-010101D",
+            .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
 
         TEST_RESULT_VOID(
             manifestBuildIncr(manifest, manifestPrior, backupTypeIncr, STRDEF("000000040000000400000004")),
@@ -1273,7 +1255,8 @@ testRun(void)
                     "\n"
                     "[target:file]\n"
                     "pg_data/FILE1={\"size\":6,\"timestamp\":1482182861}\n"
-                    "pg_data/FILE2={\"size\":6,\"timestamp\":1482182860}\n"
+                    "pg_data/FILE2={\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\""
+                    ",\"reference\":\"20190101-010101F_20190202-010101D\",\"repo-size\":4,\"size\":6,\"timestamp\":1482182860}\n"
                     TEST_MANIFEST_FILE_DEFAULT
                     "\n"
                     "[target:path]\n"
@@ -1348,6 +1331,8 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("block incr delta");
 
+        manifest->pub.data.backupOptionDelta = BOOL_FALSE_VAR;
+
         lstClear(manifest->pub.fileList);
         lstClear(manifestPrior->pub.fileList);
 
@@ -1365,15 +1350,16 @@ testRun(void)
             .timestamp = 1482182861, .group = "test", .user = "test");
         HRN_MANIFEST_FILE_ADD(
             manifestPrior, .name = MANIFEST_TARGET_PGDATA "/block-incr-sub", .size = 4, .sizeRepo = 4, .blockIncrSize = 8192,
-            .blockIncrMapSize = 66, .timestamp = 1482182860, .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
+            .blockIncrMapSize = 66, .blockIncrChecksumSize = 1, .timestamp = 1482182860,
+            .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
 
-        // Prior file has different block incr size
+        // Prior file has different block incr size which is preserved and new file is large enough to be block incremental
         HRN_MANIFEST_FILE_ADD(
-            manifest, .name = MANIFEST_TARGET_PGDATA "/block-incr-keep-size", .copy = true, .size = 6, .sizeRepo = 6,
+            manifest, .name = MANIFEST_TARGET_PGDATA "/block-incr-keep-size", .copy = true, .size = 16384, .sizeRepo = 6,
             .blockIncrSize = 16384, .blockIncrChecksumSize = 6, .timestamp = 1482182861, .group = "test", .user = "test");
         HRN_MANIFEST_FILE_ADD(
-            manifestPrior, .name = MANIFEST_TARGET_PGDATA "/block-incr-keep-size", .size = 4, .sizeRepo = 4, .blockIncrSize = 8192,
-            .blockIncrChecksumSize = 6, .blockIncrMapSize = 31, .timestamp = 1482182860,
+            manifestPrior, .name = MANIFEST_TARGET_PGDATA "/block-incr-keep-size", .size = 8193, .sizeRepo = 4,
+            .blockIncrSize = 8192, .blockIncrChecksumSize = 6, .blockIncrMapSize = 31, .timestamp = 1482182860,
             .checksumSha1 = "ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa");
 
         TEST_RESULT_VOID(
@@ -1388,7 +1374,7 @@ testRun(void)
                     TEST_MANIFEST_HEADER_PRE
                     "backup-reference=\"20190101-010101F,20190101-010101F_20190202-010101D\"\n"
                     TEST_MANIFEST_HEADER_MID
-                    "option-delta=true\n"
+                    "option-delta=false\n"
                     "option-hardlink=false\n"
                     "option-online=true\n"
                     "\n"
@@ -1398,7 +1384,7 @@ testRun(void)
                     "[target:file]\n"
                     "pg_data/block-incr-add={\"bi\":1,\"size\":6,\"timestamp\":1482182861}\n"
                     "pg_data/block-incr-keep-size={\"bi\":1,\"bim\":31,\"checksum\":\"ddddddddddbbbbbbbbbbccccccccccaaaaaaaaaa\""
-                    ",\"reference\":\"20190101-010101F\",\"repo-size\":4,\"size\":6,\"timestamp\":1482182861}\n"
+                    ",\"reference\":\"20190101-010101F\",\"repo-size\":4,\"size\":8193,\"szo\":16384,\"timestamp\":1482182861}\n"
                     "pg_data/block-incr-sub={\"size\":6,\"timestamp\":1482182861}\n"
                     TEST_MANIFEST_FILE_DEFAULT
                     "\n"
@@ -1432,11 +1418,11 @@ testRun(void)
             "backup-type=\"full\"\n"
             "\n"
             "[backup:db]\n"
-            "db-catalog-version=201409291\n"
+            "db-catalog-version=201510051\n"
             "db-control-version=942\n"
             "db-id=1\n"
             "db-system-id=1000000000000000094\n"
-            "db-version=\"9.4\"\n"
+            "db-version=\"9.5\"\n"
             "\n"
             "[backup:option]\n"
             "option-archive-check=true\n"
@@ -1520,11 +1506,11 @@ testRun(void)
             "backup-type=\"full\"\n"                                                                                               \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=201409291\n"                                                                                       \
+            "db-catalog-version=201510051\n"                                                                                       \
             "db-control-version=942\n"                                                                                             \
             "db-id=1\n"                                                                                                            \
             "db-system-id=1000000000000000094\n"                                                                                   \
-            "db-version=\"9.4\"\n"                                                                                                 \
+            "db-version=\"9.5\"\n"                                                                                                 \
             "\n"                                                                                                                   \
             "[backup:option]\n"                                                                                                    \
             "option-archive-check=true\n"                                                                                          \
@@ -1576,7 +1562,7 @@ testRun(void)
                 ",\"rck\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"reference\":\"20190818-084502F_20190819-084506D\""        \
                 ",\"size\":4,\"timestamp\":1565282114}\n"                                                                          \
             "pg_data/base/16384/17000={\"bi\":4,\"bni\":1,\"checksum\":\"e0101dd8ffb910c9c202ca35b5f828bcb9697bed\""               \
-                ",\"checksum-page\":false,\"checksum-page-error\":[1],\"repo-size\":4096,\"size\":8192"                            \
+                ",\"checksum-page\":false,\"checksum-page-error\":[1],\"repo-size\":4096,\"size\":8192,\"szo\":16384"             \
                 ",\"timestamp\":1565282114}\n"                                                                                     \
             "pg_data/base/16384/PG_VERSION={\"bni\":1,\"bno\":1,\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\""         \
                 ",\"group\":\"group2\",\"size\":4,\"timestamp\":1565282115,\"user\":false}\n"                                      \
@@ -1644,11 +1630,11 @@ testRun(void)
                         "backup-type=\"full\"\n"
                         "\n"
                         "[backup:db]\n"
-                        "db-catalog-version=201409291\n"
+                        "db-catalog-version=201510051\n"
                         "db-control-version=942\n"
                         "db-id=2\n"
                         "db-system-id=2000000000000000094\n"
-                        "db-version=\"9.4\"\n"
+                        "db-version=\"9.5\"\n"
                         "\n"
                         "[backup:option]\n"
                         "option-archive-check=false\n"
@@ -1992,11 +1978,11 @@ testRun(void)
             "ignore-key=\"ignore-value\"\n"                                                                                        \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=201409291\n"                                                                                       \
+            "db-catalog-version=201510051\n"                                                                                       \
             "db-control-version=942\n"                                                                                             \
             "db-id=1\n"                                                                                                            \
             "db-system-id=1000000000000000094\n"                                                                                   \
-            "db-version=\"9.4\"\n"                                                                                                 \
+            "db-version=\"9.5\"\n"                                                                                                 \
             "ignore-key=\"ignore-value\"\n"                                                                                        \
             "\n"                                                                                                                   \
             "[backup:option]\n"                                                                                                    \

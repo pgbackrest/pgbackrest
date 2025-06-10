@@ -176,8 +176,8 @@ ioTestFilterMultiplyProcess(THIS_VOID, const Buffer *const input, Buffer *const 
             }
             MEM_CONTEXT_OBJ_END();
 
-            const unsigned char *inputPtr = bufPtrConst(input);
-            unsigned char *bufferPtr = bufPtr(this->multiplyBuffer);
+            const uint8_t *inputPtr = bufPtrConst(input);
+            uint8_t *bufferPtr = bufPtr(this->multiplyBuffer);
 
             for (unsigned int charIdx = 0; charIdx < bufUsed(input); charIdx++)
             {
@@ -296,6 +296,31 @@ testRun(void)
         TEST_RESULT_BOOL(ioReadOpen(bufferRead), true, "    open");
         TEST_RESULT_BOOL(ioReadEof(bufferRead), false, "    not eof");
         TEST_RESULT_UINT(ioRead(bufferRead, buffer), 0, "    read 0 bytes");
+        TEST_RESULT_UINT(ioReadFlushP(bufferRead), 0, "    flush 0 bytes");
+        TEST_RESULT_BOOL(ioReadEof(bufferRead), true, "    now eof");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read flush bytes");
+
+        ioBufferSizeSet(1);
+        bufferOriginal = bufNewC("123", 3);
+
+        TEST_ASSIGN(bufferRead, ioBufferReadNew(bufferOriginal), "create empty buffer read object");
+        TEST_RESULT_BOOL(ioReadOpen(bufferRead), true, "    open");
+        TEST_RESULT_BOOL(ioReadEof(bufferRead), false, "    not eof");
+        TEST_RESULT_UINT(ioReadFlushP(bufferRead), 3, "    flush 3 bytes");
+        TEST_RESULT_BOOL(ioReadEof(bufferRead), true, "    now eof");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read flush bytes and error");
+
+        ioBufferSizeSet(1);
+        bufferOriginal = bufNewC("123", 3);
+
+        TEST_ASSIGN(bufferRead, ioBufferReadNew(bufferOriginal), "create empty buffer read object");
+        TEST_RESULT_BOOL(ioReadOpen(bufferRead), true, "    open");
+        TEST_RESULT_BOOL(ioReadEof(bufferRead), false, "    not eof");
+        TEST_ERROR(ioReadFlushP(bufferRead, .errorOnBytes = true), FileReadError, "expected EOF but flushed 3 byte(s)");
         TEST_RESULT_BOOL(ioReadEof(bufferRead), true, "    now eof");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -629,7 +654,7 @@ testRun(void)
 
                 TEST_ASSIGN(write, ioFdWriteNewOpen(STRDEF("write test"), HRN_FORK_CHILD_WRITE_FD(), 1000), "move write");
                 TEST_RESULT_BOOL(ioWriteReadyP(write), true, "write is ready");
-                TEST_RESULT_INT(ioWriteFd(write), ((IoFdWrite *)write->driver)->fd, "check write fd");
+                TEST_RESULT_INT(ioWriteFd(write), ((IoFdWrite *)ioWriteDriver(write))->fd, "check write fd");
 
                 // Write a line to be read
                 TEST_RESULT_VOID(ioWriteStrLine(write, STRDEF("test string 1")), "write test string");

@@ -5,12 +5,11 @@ Developed against version r131 using the documentation in https://github.com/lz4
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#ifdef HAVE_LIBLZ4
-
 #include <lz4frame.h>
 #include <stdio.h>
 #include <string.h>
 
+#include "common/compress/common.h"
 #include "common/compress/lz4/common.h"
 #include "common/compress/lz4/compress.h"
 #include "common/debug.h"
@@ -83,7 +82,7 @@ Compress data
 // otherwise allocate an internal buffer to hold the compressed data. Once we start using the internal buffer we'll need to continue
 // using it until it is completely flushed.
 static Buffer *
-lz4CompressBuffer(Lz4Compress *this, size_t required, Buffer *output)
+lz4CompressBuffer(Lz4Compress *const this, const size_t required, Buffer *const output)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LZ4_COMPRESS, this);
@@ -108,7 +107,7 @@ lz4CompressBuffer(Lz4Compress *this, size_t required, Buffer *output)
 
 // Helper to flush output data to compressed buffer
 static void
-lz4CompressFlush(Lz4Compress *this, Buffer *output, Buffer *compressed)
+lz4CompressFlush(Lz4Compress *const this, Buffer *const output, Buffer *const compressed)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(LZ4_COMPRESS, this);
@@ -140,7 +139,7 @@ lz4CompressFlush(Lz4Compress *this, Buffer *output, Buffer *compressed)
 }
 
 static void
-lz4CompressProcess(THIS_VOID, const Buffer *uncompressed, Buffer *compressed)
+lz4CompressProcess(THIS_VOID, const Buffer *const uncompressed, Buffer *const compressed)
 {
     THIS(Lz4Compress);
 
@@ -273,26 +272,9 @@ lz4CompressNew(const int level, const bool raw)
     }
     OBJ_NEW_END();
 
-    // Create param list
-    Pack *paramList;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        PackWrite *const packWrite = pckWriteNewP();
-
-        pckWriteI32P(packWrite, level);
-        pckWriteBoolP(packWrite, raw);
-        pckWriteEndP(packWrite);
-
-        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
-    }
-    MEM_CONTEXT_TEMP_END();
-
     FUNCTION_LOG_RETURN(
         IO_FILTER,
         ioFilterNewP(
-            LZ4_COMPRESS_FILTER_TYPE, this, paramList, .done = lz4CompressDone, .inOut = lz4CompressProcess,
+            LZ4_COMPRESS_FILTER_TYPE, this, compressParamList(level, raw), .done = lz4CompressDone, .inOut = lz4CompressProcess,
             .inputSame = lz4CompressInputSame));
 }
-
-#endif // HAVE_LIBLZ4

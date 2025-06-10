@@ -11,6 +11,7 @@ GCS Storage Read
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN StorageRead *storageReadGcsNew(
-    StorageGcs *storage, const String *name, bool ignoreMissing, uint64_t offset, const Variant *limit);
+    StorageGcs *storage, const String *name, bool ignoreMissing, uint64_t offset, const Variant *limit, bool version,
+    const String *versionId);
 
 #endif

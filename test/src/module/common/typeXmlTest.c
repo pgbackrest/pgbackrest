@@ -47,6 +47,7 @@ testRun(void)
 
         XmlNode *rootNode = NULL;
         TEST_ASSIGN(rootNode, xmlDocumentRoot(xmlDocument), "get root node");
+        TEST_RESULT_STR_Z(xmlNodeName(rootNode), "ListBucketResult", "root node name");
 
         XmlNode *nodeMaxKeys = NULL;
         TEST_ASSIGN(nodeMaxKeys, xmlNodeChild(rootNode, STRDEF("MaxKeys"), true), "get max keys");
@@ -72,6 +73,18 @@ testRun(void)
             "    check Contents index 1 Key");
         TEST_RESULT_VOID(xmlNodeLstFree(list), "    free list");
 
+        StringList *nameList = strLstNew();
+        strLstAddZ(nameList, "IsTruncated");
+        strLstAddZ(nameList, "Contents");
+
+        TEST_ASSIGN(list, xmlNodeChildListMulti(rootNode, nameList), "create node multi list");
+        TEST_RESULT_STR_Z(
+            xmlNodeContent(xmlNodeLstGet(list, 0)), "false", "check IsTruncated index 0 Contents");
+        TEST_RESULT_STR_Z(
+            xmlNodeContent(xmlNodeChild(xmlNodeLstGet(list, 1), STRDEF("Key"), true)), "test1.txt", "check Contents index 1 Key");
+        TEST_RESULT_STR_Z(
+            xmlNodeContent(xmlNodeChild(xmlNodeLstGet(list, 2), STRDEF("Key"), true)), "test2.txt", "check Contents index 2 Key");
+
         TEST_ERROR(
             xmlNodeChildN(rootNode, STRDEF("Contents"), 2, true), FormatError,
             "unable to find child 'Contents':2 in node 'ListBucketResult'");
@@ -84,7 +97,7 @@ testRun(void)
 
         // Create an empty document, add data to it, and output xml
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_ASSIGN(xmlDocument, xmlDocumentNew(STRDEF("CompleteMultipartUpload")), "new xml with root node");
+        TEST_ASSIGN(xmlDocument, xmlDocumentNewP(STRDEF("CompleteMultipartUpload")), "new xml with root node");
 
         XmlNode *partNode = NULL;
         TEST_ASSIGN(partNode, xmlNodeAdd(xmlDocumentRoot(xmlDocument), STRDEF("Part")), "create part node 1");
@@ -102,6 +115,38 @@ testRun(void)
             "<Part><PartNumber>1</PartNumber><ETag>E1</ETag></Part>"
             "<Part><PartNumber>2</PartNumber><ETag>E2</ETag></Part>"
             "</CompleteMultipartUpload>\n",
+            "get xml");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("copy xml between documents");
+
+        XmlDocument *xmlDocument2 = NULL;
+
+        TEST_ASSIGN(
+            xmlDocument, xmlDocumentNewP(STRDEF("doc1"), .dtdName = STRDEF("doc"), .dtdFile = STRDEF("doc.dtd")),
+            "new xml with dtd");
+        TEST_ASSIGN(
+            xmlDocument2,
+            xmlDocumentNewBuf(
+                BUFSTRDEF(
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                    "<doc2>\n"
+                    "    <!-- comment -->\n"
+                    "    text55\n"
+                    "    <name id=\"id55\">name55</name>\n"
+                    "</doc2>")),
+            "valid xml");
+
+        TEST_RESULT_VOID(xmlNodeChildAdd(xmlDocumentRoot(xmlDocument), xmlDocumentRoot(xmlDocument2)), "copy xml");
+        TEST_RESULT_STR_Z(
+            strNewBuf(xmlDocumentBuf(xmlDocument)),
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            "<!DOCTYPE doc SYSTEM \"doc.dtd\">\n"
+            "<doc1>\n"
+            "    \n"
+            "    text55\n"
+            "    <name id=\"id55\">name55</name>\n"
+            "</doc1>\n",
             "get xml");
     }
 

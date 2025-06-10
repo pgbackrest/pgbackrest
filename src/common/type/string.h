@@ -66,8 +66,33 @@ FN_EXTERN String *strNewZN(const char *string, size_t size);
 // will be copied but only the data before the NULL character will be used as a string.
 FN_EXTERN String *strNewBuf(const Buffer *buffer);
 
-// Create a new fixed length string by converting the double value
-FN_EXTERN String *strNewDbl(double value);
+// Create a new fixed length string by performing division
+typedef struct StrNewDivParam
+{
+    VAR_PARAM_HEADER;
+    unsigned int precision;                                         // Digits of precision after the decimal
+    bool trim;                                                      // Trim trailing zeros and decimal point?
+} StrNewDivParam;
+
+#define strNewDivP(dividend, divisor, ...)                                                                                         \
+    strNewDiv(dividend, divisor, (StrNewDivParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN String *strNewDiv(uint64_t dividend, uint64_t divisor, StrNewDivParam param);
+
+// Create a new fixed length string containing a percentage
+FN_EXTERN String *strNewPct(uint64_t dividend, uint64_t divisor);
+
+// Create a new fixed length string by converting a timestamp
+typedef struct StrNewTimeParam
+{
+    VAR_PARAM_HEADER;
+    bool utc;                                                       // Use UTC instead of local time?
+} StrNewTimeParam;
+
+#define strNewTimeP(format, timestamp, ...)                                                                                        \
+    strNewTime(format, timestamp, (StrNewTimeParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN FN_STRFTIME(1) String *strNewTime(const char *format, time_t timestamp, StrNewTimeParam param);
 
 // Create a new fixed length string encoded with the specified type (e.g. encodingBase64) from a buffer
 FN_EXTERN String *strNewEncode(EncodingType type, const Buffer *buffer);
@@ -128,6 +153,18 @@ FN_EXTERN String *strCatChr(String *this, char cat);
 
 // Append a string encoded with the specified type (e.g. encodingBase64) from a buffer
 FN_EXTERN String *strCatEncode(String *this, EncodingType type, const Buffer *buffer);
+
+// Append a timestamp
+typedef struct StrCatTimeParam
+{
+    VAR_PARAM_HEADER;
+    bool utc;                                                       // Use UTC instead of local time?
+} StrCatTimeParam;
+
+#define strCatTimeP(this, format, timestamp, ...)                                                                                  \
+    strCatTime(this, format, timestamp, (StrCatTimeParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN FN_STRFTIME(2) String *strCatTime(String *this, const char *format, time_t timestamp, StrCatTimeParam param);
 
 // Append a formatted string
 FN_EXTERN FN_PRINTF(2, 3) String *strCatFmt(String *this, const char *format, ...);
@@ -220,8 +257,16 @@ will result in a segfault due to modifying read-only memory.
 
 By convention all string constant identifiers are appended with _STR.
 ***********************************************************************************************************************************/
+// This struct must be kept in sync with StringPub (except for const qualifiers)
+typedef struct StringPubConst
+{
+    uint64_t size : 32;                                             // Actual size of the string
+    uint64_t extra : 32;                                            // Extra space allocated for expansion
+    const char *buffer;                                             // String buffer
+} StringPubConst;
+
 #define STR_SIZE(bufferParam, sizeParam)                                                                                           \
-    ((const String *const)&(const StringPub){.buffer = (char *)(bufferParam), .size = (unsigned int)(sizeParam)})
+    ((const String *const)&(const StringPubConst){.buffer = (const char *const)(bufferParam), .size = (unsigned int)(sizeParam)})
 
 // Create a String constant inline from any zero-terminated string
 #define STR(buffer)                                                                                                                \

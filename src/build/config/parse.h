@@ -4,7 +4,17 @@ Parse Configuration Yaml
 #ifndef BUILD_CONFIG_PARSE_H
 #define BUILD_CONFIG_PARSE_H
 
-#include "common/type/stringList.h"
+#include "storage/storage.h"
+
+/***********************************************************************************************************************************
+Default types
+***********************************************************************************************************************************/
+typedef enum
+{
+    defaultTypeQuote = 0,
+    defaultTypeLiteral,
+    defaultTypeDynamic,
+} DefaultType;
 
 /***********************************************************************************************************************************
 Command role constants
@@ -125,13 +135,14 @@ struct BldCfgOption
     const String *name;                                             // Name
     const String *type;                                             // Option type, e.g. integer
     const String *section;                                          // Option section, i.e. stanza or global
+    bool boolLike;                                                  // Option accepts y/n and can be treated as bool?
     bool internal;                                                  // Is the option internal?
     bool beta;                                                      // Is the option beta?
     bool required;                                                  // Is the option required?
     bool negate;                                                    // Can the option be negated?
     bool reset;                                                     // Can the option be reset?
+    DefaultType defaultType;                                        // Type of default
     const String *defaultValue;                                     // Default value, if any
-    bool defaultLiteral;                                            // Should default be interpreted literally, i.e. not a string
     const String *group;                                            // Option group, if any
     bool secure;                                                    // Does the option contain a secret?
     const BldCfgOptionDepend *depend;                               // Dependency, if any

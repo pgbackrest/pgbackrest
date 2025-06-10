@@ -7,6 +7,7 @@
         <operation-general>
             <option-list>
                 <option id="beta"><summary></summary><text><p></p></text></option>
+                <option id="cmd"><summary></summary><text><p></p></text></option>
                 <option id="config"><summary></summary><text><p></p></text></option>
                 <option id="config-path"><summary></summary><text><p></p></text></option>
                 <option id="config-include-path"><summary></summary><text><p></p></text></option>
@@ -15,6 +16,7 @@
                 <option id="compress-level-network"><summary></summary><text><p></p></text></option>
                 <option id="job-retry"><summary></summary><text><p></p></text></option>
                 <option id="job-retry-interval"><summary></summary><text><p></p></text></option>
+                <option id="lock"><summary></summary><text><p></p></text></option>
                 <option id="log-level-file"><summary></summary><text><p></p></text></option>
                 <option id="log-level-stderr"><summary></summary><text><p></p></text></option>
                 <option id="repo"><summary></summary><text><p></p></text></option>
@@ -49,6 +51,16 @@
 
                     <text>
                         <p>Coverage helps determine that tests adequately test the code.</p>
+                    </text>
+
+                    <example>n</example>
+                </option>
+
+                <option id="coverage-summary">
+                    <summary>Generate code coverage summary.</summary>
+
+                    <text>
+                        <p>Generate coverage summary used in metrics documentation.</p>
                     </text>
 
                     <example>n</example>
@@ -120,6 +132,16 @@
                     <example>n</example>
                 </option>
 
+                <option id="pg-version">
+                    <summary><postgres/> version for integration test.</summary>
+
+                    <text>
+                        <p>Version of <postgres/> to use for the integration test.</p>
+                    </text>
+
+                    <example>16</example>
+                </option>
+
                 <option id="profile">
                     <summary>Generate profile report.</summary>
 
@@ -187,7 +209,7 @@
                         <p>Name of VM to run the test on.</p>
                     </text>
 
-                    <example>rh7</example>
+                    <example>rh8</example>
                 </option>
 
                 <option id="vm-id">
@@ -207,8 +229,30 @@
                 <summary>Get help.</summary>
 
                 <text>
-                    <p>Three levels of help are provided. If no command is specified then general help will be displayed. If a command is specified (e.g. <cmd>pgbackrest help backup</cmd>) then a full description of the command will be displayed along with a list of valid options. If an option is specified in addition to a command (e.g. <cmd>pgbackrest help backup type</cmd>) then a full description of the option as it applies to the command will be displayed.</p>
+                    <p>Three levels of help are provided. If no command is specified then general help will be displayed. If a command is specified (e.g. <cmd>test-pgbackrest help test</cmd>) then a full description of the command will be displayed along with a list of valid options. If an option is specified in addition to a command (e.g. <cmd>pgbackrest help test vm</cmd>) then a full description of the option as it applies to the command will be displayed.</p>
                 </text>
+
+                <option-list>
+                    <option id="help" name="Display Help">
+                        <summary>Display help.</summary>
+
+                        <text>
+                            <p>Displays help even if the <cmd>help</cmd> command is not specified and overrides the <br-option>--version</br-option> option.</p>
+                        </text>
+
+                        <example>y</example>
+                    </option>
+
+                    <option id="version" name="Display Version">
+                        <summary>Display version.</summary>
+
+                        <text>
+                            <p>Displays version even if the <cmd>version</cmd> or <cmd>help</cmd> command is not specified.</p>
+                        </text>
+
+                        <example>y</example>
+                    </option>
+                </option-list>
             </command>
 
             <!-- Noop command holds options that must be defined but we don't need -->
@@ -230,6 +274,22 @@
                 <text>
                     <p>Displays installed <backrest/> version.</p>
                 </text>
+
+                <option-list>
+                    <option id="output" name="Output">
+                        <summary>Output type.</summary>
+
+                        <text>
+                            <p>The following output formats are supported:</p>
+                            <list>
+                                <list-item><id>text</id> - Display the installed <backrest/> version as text.</list-item>
+                                <list-item><id>num</id> - Display the installed <backrest/> version as an integer.</list-item>
+                            </list>
+                        </text>
+
+                        <example>num</example>
+                    </option>
+                </option-list>
             </command>
         </command-list>
     </operation>
