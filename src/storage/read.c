@@ -70,7 +70,7 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
         unsigned int try = this->pub.interface->retry ? 3 : 1;
 
         // While tries remaining
-        while (try >= 1)
+        while (try > 0)
         {
             TRY_BEGIN()
             {
@@ -195,7 +195,7 @@ static const IoReadInterface storageIoReadInterface =
 };
 
 FN_EXTERN StorageRead *
-storageReadNew(void *driver, StorageReadInterface *const interface)
+storageReadNew(void *const driver, StorageReadInterface *const interface)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
