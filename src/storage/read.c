@@ -181,7 +181,7 @@ storageReadFd(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(INT, this->pub.interface->ioInterface.fd == NULL ? -1 : this->pub.interface->ioInterface.fd(this->driver));
+    FUNCTION_TEST_RETURN(INT, this->pub.interface->ioInterface.fd(this->driver));
 }
 
 /**********************************************************************************************************************************/
@@ -211,6 +211,12 @@ storageReadNew(void *driver, StorageReadInterface *const interface)
     ASSERT(interface->ioInterface.open != NULL);
     ASSERT(interface->ioInterface.read != NULL);
 
+    // Remove fd method if it does not exist in the driver
+    IoReadInterface storageIoReadInterfaceCopy = storageIoReadInterface;
+
+    if (interface->ioInterface.fd == NULL)
+        storageIoReadInterfaceCopy.fd = NULL;
+
     OBJ_NEW_BEGIN(StorageRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         *this = (StorageRead)
@@ -219,7 +225,7 @@ storageReadNew(void *driver, StorageReadInterface *const interface)
             .pub =
             {
                 .interface = interface,
-                .io = ioReadNew(this, storageIoReadInterface),
+                .io = ioReadNew(this, storageIoReadInterfaceCopy),
                 .offset = interface->offset,
                 .limit = varDup(interface->limit),
                 .ignoreMissing = interface->ignoreMissing,
