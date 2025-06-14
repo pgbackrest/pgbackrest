@@ -60,7 +60,7 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
 
     ASSERT(this != NULL);
 
-    size_t bufUsedBegin = bufUsed(buffer);
+    const size_t bufUsedBegin = bufUsed(buffer);
     size_t result = 0;
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -89,13 +89,11 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
                 // bytes that have already been read
                 if (try > 1)
                 {
-                    // Account for bytes that have been read
-                    result += bufUsed(buffer) - bufUsedBegin;
-                    this->bytesRead += bufUsed(buffer) - bufUsedBegin;
-                    bufUsedBegin = bufUsed(buffer);
-
                     // Close the file
                     this->pub.interface->ioInterface.close(this->driver);
+
+                    // Ignore partial reads and restart from the last successful read
+                    bufUsedSet(buffer, bufUsedBegin);
 
                     // The file must not be missing on retry. If we got here then the file must have existed originally and it if is
                     // missing now we want a hard error.
