@@ -4685,7 +4685,7 @@ testRun(void)
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
-        TEST_RESULT_VOID(storageReadSftpClose((StorageReadSftp *)ioReadDriver(storageReadIo(file))), "close file");
+        TEST_RESULT_VOID(storageReadSftpClose((StorageReadSftp *)file->driver), "close file");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -4713,7 +4713,7 @@ testRun(void)
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
-        close(ioSessionFd(((StorageReadSftp *)ioReadDriver(storageReadIo(file)))->storage->ioSession));
+        close(ioSessionFd(((StorageReadSftp *)file->driver)->storage->ioSession));
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -4741,8 +4741,8 @@ testRun(void)
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
-        ((StorageReadSftp *)ioReadDriver(storageReadIo(file)))->sftpHandle = NULL;
-        TEST_RESULT_VOID(storageReadSftpClose(ioReadDriver(storageReadIo(file))), "close file null sftpHandle");
+        ((StorageReadSftp *)file->driver)->sftpHandle = NULL;
+        TEST_RESULT_VOID(storageReadSftpClose(file->driver), "close file null sftpHandle");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -4775,7 +4775,7 @@ testRun(void)
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
         TEST_ERROR(
-            storageReadSftpClose(ioReadDriver(storageReadIo(file))), FileCloseError,
+            storageReadSftpClose(file->driver), FileCloseError,
             "timeout closing file '" TEST_PATH "/readtest.txt': libssh2 error [-37]");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -4809,7 +4809,7 @@ testRun(void)
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
         TEST_ERROR(
-            storageReadSftpClose(ioReadDriver(storageReadIo(file))), FileCloseError,
+            storageReadSftpClose(file->driver), FileCloseError,
             "unable to close file '" TEST_PATH "/readtest.txt' after read: libssh2 errno [-31]: sftp errno [4]");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -4842,7 +4842,7 @@ testRun(void)
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
         TEST_ERROR(
-            storageReadSftpClose(ioReadDriver(storageReadIo(file))), FileCloseError,
+            storageReadSftpClose(file->driver), FileCloseError,
             "unable to close file '" TEST_PATH "/readtest.txt' after read: libssh2 errno [-29]");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -4874,7 +4874,7 @@ testRun(void)
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
         TEST_ERROR(
-            storageReadSftp(ioReadDriver(storageReadIo(file)), outBuffer, false), FileReadError,
+            storageReadSftp(file->driver, outBuffer, false), FileReadError,
             "unable to read '" TEST_PATH "/readtest.txt': sftp errno [4]");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -4906,7 +4906,7 @@ testRun(void)
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file (defaults)");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
         TEST_ERROR(
-            storageReadSftp(ioReadDriver(storageReadIo(file)), outBuffer, false), FileReadError,
+            storageReadSftp(file->driver, outBuffer, false), FileReadError,
             "unable to read '" TEST_PATH "/readtest.txt': libssh2 error [-29]");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -6761,14 +6761,14 @@ testRun(void)
         TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "no data to load");
         TEST_RESULT_UINT(bufUsed(outBuffer), 0, "buffer is empty");
 
-        TEST_RESULT_VOID(storageReadSftp(ioReadDriver(storageReadIo(file)), outBuffer, true), "no data to load from driver either");
+        TEST_RESULT_VOID(storageReadSftp(file->driver, outBuffer, true), "no data to load from driver either");
         TEST_RESULT_UINT(bufUsed(outBuffer), 0, "buffer is empty");
 
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "check file contents (all loaded)");
 
         TEST_RESULT_BOOL(ioReadEof(storageReadIo(file)), true, "eof");
         TEST_RESULT_BOOL(ioReadEof(storageReadIo(file)), true, "still eof");
-        TEST_RESULT_BOOL(storageReadSftpEof(ioReadDriver(storageReadIo(file))), true, "storageReadSftpEof eof true");
+        TEST_RESULT_BOOL(storageReadSftpEof(file->driver), true, "storageReadSftpEof eof true");
 
         TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "close file");
 

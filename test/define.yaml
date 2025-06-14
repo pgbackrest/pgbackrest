@@ -619,6 +619,7 @@ unit:
           - storage/s3/read
           - storage/s3/storage
           - storage/s3/write
+          - storage/read
           - storage/helper
 
         include:
