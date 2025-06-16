@@ -17,21 +17,25 @@ typedef struct StorageReadInterface
     unsigned int compressLevel;                                     // Level to use for compression
     bool ignoreMissing;
     uint64_t offset;                                                // Where to start reading in the file
-    const Variant *limit;                                           // Limit how many bytes are read (NULL for no limit)
+    Variant *limit;                                                 // Limit how many bytes are read (NULL for no limit)
+    bool retry;                                                     // Are read retries allowed?
     bool version;                                                   // Read version
     const String *versionId;                                        // File version to read
     IoReadInterface ioInterface;
 } StorageReadInterface;
 
-FN_EXTERN StorageRead *storageReadNew(void *driver, const StorageReadInterface *interface);
+FN_EXTERN StorageRead *storageReadNew(void *driver, StorageReadInterface *interface);
 
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct StorageReadPub
 {
-    const StorageReadInterface *interface;                          // File data (name, driver type, etc.)
+    StorageReadInterface *interface;                                // File data (name, driver type, etc.)
     IoRead *io;                                                     // Read interface
+    uint64_t offset;                                                // Where to start reading in the file
+    const Variant *limit;                                           // Limit how many bytes are read (NULL for no limit)
+    bool ignoreMissing;                                             // Ignore missing file?
 } StorageReadPub;
 
 // Read interface

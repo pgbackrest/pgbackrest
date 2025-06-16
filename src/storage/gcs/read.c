@@ -121,6 +121,27 @@ storageReadGcsEof(THIS_VOID)
     FUNCTION_TEST_RETURN(BOOL, ioReadEof(httpResponseIoRead(this->httpResponse)));
 }
 
+/***********************************************************************************************************************************
+Close the file
+***********************************************************************************************************************************/
+static void
+storageReadGcsClose(THIS_VOID)
+{
+    THIS(StorageReadGcs);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_GCS, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->httpResponse != NULL);
+
+    httpResponseFree(this->httpResponse);
+    this->httpResponse = NULL;
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 FN_EXTERN StorageRead *
 storageReadGcsNew(
@@ -153,6 +174,7 @@ storageReadGcsNew(
                 .ignoreMissing = ignoreMissing,
                 .offset = offset,
                 .limit = varDup(limit),
+                .retry = true,
                 .version = version,
                 .versionId = strDup(versionId),
 
@@ -161,6 +183,7 @@ storageReadGcsNew(
                     .eof = storageReadGcsEof,
                     .open = storageReadGcsOpen,
                     .read = storageReadGcs,
+                    .close = storageReadGcsClose,
                 },
             },
         };
