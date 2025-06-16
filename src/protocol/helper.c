@@ -526,15 +526,8 @@ protocolRemoteParam(const ProtocolStorageType protocolStorageType, const unsigne
             {
                 ASSERT(cfgOptionGroupId(optionId) == cfgOptGrpPg);
 
-                // Remove unrequired/defaulted pg options when the remote type is repo since they won't be used
-                if (protocolStorageType == protocolStorageTypeRepo)
-                {
-                    remove =
-                        !cfgParseOptionRequired(cfgCommand(), optionId) ||
-                        cfgParseOptionDefault(cfgCommand(), optionId, cfgBin()) != NULL;
-                }
                 // Move pg options to host index 0 (key 1) so they will be in the default index on the remote host
-                else
+                if (protocolStorageType != protocolStorageTypeRepo)
                 {
                     if (hostIdx != 0)
                     {

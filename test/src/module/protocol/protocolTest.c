@@ -414,7 +414,6 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawBool(argList, cfgOptLogSubprocess, true);
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/unused");            // Will be passed to remote (required)
-        hrnCfgArgRawZ(argList, cfgOptPgPort, "777");                // Not passed to remote (required but has default)
         hrnCfgArgRawZ(argList, cfgOptRepoHost, "repo-host");
         hrnCfgArgRawZ(argList, cfgOptRepoHostPort, "444");
         hrnCfgArgRawZ(argList, cfgOptRepoHostConfig, "/path/pgbackrest.conf");

@@ -1233,34 +1233,6 @@ cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config,
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN const String *
-cfgParseOptionDefault(const ConfigCommand commandId, const ConfigOption optionId, const String *const defaultDynamicBin)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-        FUNCTION_TEST_PARAM(STRING, defaultDynamicBin);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandId < CFG_COMMAND_TOTAL);
-    ASSERT(optionId < CFG_OPTION_TOTAL);
-    ASSERT(defaultDynamicBin != NULL);
-
-    const String *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        CfgParseOptionalRuleState optionalRules = {.defaultDynamicBin = defaultDynamicBin};
-
-        if (cfgParseOptionalRule(&optionalRules, parseRuleOptionalTypeDefault, commandId, optionId))
-            result = optionalRules.defaultRaw;
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_TEST_RETURN_CONST(STRING, result);
-}
-
-/**********************************************************************************************************************************/
 FN_EXTERN const char *
 cfgParseOptionName(const ConfigOption optionId)
 {
@@ -1299,39 +1271,6 @@ cfgParseOptionKeyIdxName(const ConfigOption optionId, const unsigned int keyIdx)
 
     // Else return the stored name
     FUNCTION_TEST_RETURN_CONST(STRINGZ, ruleOption->name);
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN bool
-cfgParseOptionRequired(const ConfigCommand commandId, const ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandId < CFG_COMMAND_TOTAL);
-    ASSERT(optionId < CFG_OPTION_TOTAL);
-
-    bool found = false;
-    bool result = false;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        CfgParseOptionalRuleState optionalRules = {0};
-
-        if (cfgParseOptionalRule(&optionalRules, parseRuleOptionalTypeRequired, commandId, optionId))
-        {
-            found = true;
-            result = optionalRules.required;
-        }
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    if (found)
-        FUNCTION_TEST_RETURN(BOOL, result);
-
-    FUNCTION_TEST_RETURN(BOOL, parseRuleOption[optionId].required);
 }
 
 /**********************************************************************************************************************************/
