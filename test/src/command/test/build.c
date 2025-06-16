@@ -31,8 +31,8 @@ TestBuild *
 testBldNew(
     const String *const pathRepo, const String *const pathTest, const String *const vm, const String *const vmInt,
     const unsigned int vmId, const String *const pgVersion, const TestDefModule *const module, const unsigned int test,
-    const uint64_t scale, const LogLevel logLevel, const bool logTime, const String *const timeZone, const bool coverage,
-    const bool profile, const bool optimize, const bool backTrace)
+    const uint64_t scale, const LogLevel logLevel, const bool logTime, const String *const timeZone,
+    const String *const architecture, const bool coverage, const bool profile, const bool optimize, const bool backTrace)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, pathRepo);
@@ -47,6 +47,7 @@ testBldNew(
         FUNCTION_LOG_PARAM(ENUM, logLevel);
         FUNCTION_LOG_PARAM(BOOL, logTime);
         FUNCTION_LOG_PARAM(STRING, timeZone);
+        FUNCTION_LOG_PARAM(STRING, architecture);
         FUNCTION_LOG_PARAM(BOOL, coverage);
         FUNCTION_LOG_PARAM(BOOL, profile);
         FUNCTION_LOG_PARAM(BOOL, optimize);
@@ -78,6 +79,7 @@ testBldNew(
                 .logLevel = logLevel,
                 .logTime = logTime,
                 .timeZone = strDup(timeZone),
+                .architecture = strDup(architecture),
                 .coverage = coverage,
                 .profile = profile,
                 .optimize = optimize,
@@ -668,6 +670,9 @@ testBldUnit(TestBuild *const this)
 
         // Log time/timestamp
         strReplace(testC, STRDEF("{[C_TEST_TIMING]}"), STR(cvtBoolToConstZ(testBldLogTime(this))));
+
+        // Test architecture
+        strReplace(testC, STRDEF("{[C_TEST_ARCHITECTURE]}"), testBldArchitecture(this));
 
         // Test timezone
         strReplace(

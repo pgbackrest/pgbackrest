@@ -131,6 +131,19 @@ process-max=1
     </section>
 
     <!-- ======================================================================================================================= -->
+    <section id="self-contained-backup">
+        <title>How can I export a backup for use in a network-isolated environment?</title>
+
+        <p><backrest/> uses the repository not only to store backups and WAL archives but also to maintain essential metadata required for features such as compression, encryption, and file bundling. Because of this, simply copying a backup along with a subset of WAL files usually will not work unless very specific and restrictive conditions are met.</p>
+
+        <p>However, there is a workaround if your goal is to create a self-contained export of a database that you can transfer (e.g., via USB). You can make a backup with the <link url="https://pgbackrest.org/command.html#command-backup/category-command/option-archive-copy">--archive-copy</link> option enabled to ensure that the necessary WAL segments are stored along with the backup. Then, restore it using <link url="https://pgbackrest.org/command.html#command-restore/category-command/option-type">--type=none</link> --pg1-path=/your/target/path. This produces a restored PostgreSQL data directory with all required WAL files already placed in <code>pg_wal</code>, similar to what <file>pg_basebackup</file> would create.</p>
+
+        <p>You can then copy this directory to another system, and <postgres/> should be able to recover from it without needing access to the <backrest/> repository.</p>
+
+        <p>Please note that recovering this backup will not result in a timeline switch, which means that this cluster should not push WAL to the original repository that it was exported from. If the new cluster is in a network-isolated environment this should not be a problem.</p>
+    </section>
+
+    <!-- ======================================================================================================================= -->
     <!-- <section id="different-server">
         <title>How to restore a backup to a different server (for example, a production backup to a development server)?</title>
 

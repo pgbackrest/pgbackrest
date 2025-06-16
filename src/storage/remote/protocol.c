@@ -23,26 +23,23 @@ static struct
     MemContext *memContext;                                         // Mem context
     void *driver;                                                   // Storage driver used for requests
 
-    const StorageRemoteFilterHandler *filterHandler;                // Filter handler list
-    unsigned int filterHandlerSize;                                 // Filter handler list size
+    const List *filterHandler;                                      // Filter handler list
 } storageRemoteProtocolLocal;
 
 /***********************************************************************************************************************************
 Set filter handlers
 ***********************************************************************************************************************************/
 FN_EXTERN void
-storageRemoteFilterHandlerSet(const StorageRemoteFilterHandler *const filterHandler, const unsigned int filterHandlerSize)
+storageRemoteFilterHandlerSet(const List *const filterHandler)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, filterHandler);
-        FUNCTION_TEST_PARAM(UINT, filterHandlerSize);
+        FUNCTION_TEST_PARAM(VOID, filterHandler);
     FUNCTION_TEST_END();
 
     ASSERT(filterHandler != NULL);
-    ASSERT(filterHandlerSize > 0);
+    ASSERT(!lstEmpty(filterHandler));
 
     storageRemoteProtocolLocal.filterHandler = filterHandler;
-    storageRemoteProtocolLocal.filterHandlerSize = filterHandlerSize;
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -85,26 +82,28 @@ storageRemoteFilterGroup(IoFilterGroup *const filterGroup, const Pack *const fil
                 // Search for a filter handler
                 unsigned int filterIdx = 0;
 
-                for (; filterIdx < storageRemoteProtocolLocal.filterHandlerSize; filterIdx++)
+                for (; filterIdx < lstSize(storageRemoteProtocolLocal.filterHandler); filterIdx++)
                 {
+                    const StorageRemoteFilterHandler *const filterHandler = lstGet(
+                        storageRemoteProtocolLocal.filterHandler, filterIdx);
+
                     // If a match create the filter
-                    if (storageRemoteProtocolLocal.filterHandler[filterIdx].type == filterKey)
+                    if (filterHandler->type == filterKey)
                     {
                         // Create a filter with parameters
-                        if (storageRemoteProtocolLocal.filterHandler[filterIdx].handlerParam != NULL)
+                        if (filterHandler->handlerParam != NULL)
                         {
                             ASSERT(filterParam != NULL);
 
-                            ioFilterGroupAdd(
-                                filterGroup, storageRemoteProtocolLocal.filterHandler[filterIdx].handlerParam(filterParam));
+                            ioFilterGroupAdd(filterGroup, filterHandler->handlerParam(filterParam));
                         }
                         // Else create a filter without parameters
                         else
                         {
-                            ASSERT(storageRemoteProtocolLocal.filterHandler[filterIdx].handlerNoParam != NULL);
+                            ASSERT(filterHandler->handlerNoParam != NULL);
                             ASSERT(filterParam == NULL);
 
-                            ioFilterGroupAdd(filterGroup, storageRemoteProtocolLocal.filterHandler[filterIdx].handlerNoParam());
+                            ioFilterGroupAdd(filterGroup, filterHandler->handlerNoParam());
                         }
 
                         // Break on filter match
@@ -113,7 +112,7 @@ storageRemoteFilterGroup(IoFilterGroup *const filterGroup, const Pack *const fil
                 }
 
                 // Error when the filter was not found
-                if (filterIdx == storageRemoteProtocolLocal.filterHandlerSize)
+                if (filterIdx == lstSize(storageRemoteProtocolLocal.filterHandler))
                     THROW_FMT(AssertError, "unable to add filter '%s'", strZ(strIdToStr(filterKey)));
             }
         }

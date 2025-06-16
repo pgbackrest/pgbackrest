@@ -133,11 +133,11 @@ bufCat(Buffer *const this, const Buffer *const cat)
 
 /**********************************************************************************************************************************/
 FN_EXTERN Buffer *
-bufCatC(Buffer *const this, const unsigned char *const cat, const size_t catOffset, const size_t catSize)
+bufCatC(Buffer *const this, const uint8_t *const cat, const size_t catOffset, const size_t catSize)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(BUFFER, this);
-        FUNCTION_TEST_PARAM_P(UCHARDATA, cat);
+        FUNCTION_TEST_PARAM_P(BYTEDATA, cat);
         FUNCTION_TEST_PARAM(SIZE, catOffset);
         FUNCTION_TEST_PARAM(SIZE, catSize);
     FUNCTION_TEST_END();
@@ -203,7 +203,7 @@ bufEq(const Buffer *const this, const Buffer *const compare)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN const unsigned char *
+FN_EXTERN const uint8_t *
 bufFind(const Buffer *const this, const Buffer *const find, const BufFindParam param)
 {
     FUNCTION_TEST_BEGIN();
@@ -220,7 +220,7 @@ bufFind(const Buffer *const this, const Buffer *const find, const BufFindParam p
 
     if (bufUsed(this) >= bufUsed(find))
     {
-        const unsigned char *haystack = param.begin != NULL ? param.begin : bufPtrConst(this);
+        const uint8_t *haystack = param.begin != NULL ? param.begin : bufPtrConst(this);
         unsigned int findIdx = (unsigned int)(haystack - bufPtrConst(this));
 
         for (; findIdx <= bufUsed(this) - bufUsed(find); findIdx++)
@@ -235,7 +235,7 @@ bufFind(const Buffer *const this, const Buffer *const find, const BufFindParam p
         }
     }
 
-    FUNCTION_TEST_RETURN_CONST_P(UCHARDATA, result);
+    FUNCTION_TEST_RETURN_CONST_P(BYTEDATA, result);
 }
 
 /**********************************************************************************************************************************/

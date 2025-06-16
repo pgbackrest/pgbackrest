@@ -52,7 +52,7 @@ testRun(void)
 
         // Test if the buffer was overrun
         // -------------------------------------------------------------------------------------------------------------------------
-        unsigned char buffer[256] = {0};
+        uint8_t buffer[256] = {0};
 
         cryptoRandomBytes(buffer, sizeof(buffer) - 1);
         TEST_RESULT_BOOL(

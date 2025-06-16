@@ -110,8 +110,8 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_PG_CONTROL_PUT(
-            storageTest, PG_VERSION_11, .systemId = 0xFACEFACE, .checkpoint = 0xEEFFEEFFAABBAABB, .checkpointTime = 555,
-            .timeline = 47, .walSegmentSize = 1024 * 1024);
+            storageTest, PG_VERSION_11, .systemId = 0xFACEFACE, .checkpoint = 0xEEFFEEFFAABBAABB, .timeline = 47,
+            .walSegmentSize = 1024 * 1024);
 
         PgControl info = {0};
         TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info v11");
@@ -119,7 +119,6 @@ testRun(void)
         TEST_RESULT_UINT(info.version, PG_VERSION_11, "   check version");
         TEST_RESULT_UINT(info.catalogVersion, 201809051, "   check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xEEFFEEFFAABBAABB, "check checkpoint");
-        TEST_RESULT_INT(info.checkpointTime, 555, "check checkpoint time");
         TEST_RESULT_UINT(info.timeline, 47, "check timeline");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -141,7 +140,7 @@ testRun(void)
             pgControlFromFile(storageTest, NULL), FormatError,
             "wal segment size is 47 but must be a power of two between 1048576 and 1073741824 inclusive");
 
-        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_17, .walSegmentSize = (unsigned int)2 * 1024 * 1024 * 1024);
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_18, .walSegmentSize = (unsigned int)2 * 1024 * 1024 * 1024);
 
         TEST_ERROR(
             pgControlFromFile(storageTest, NULL), FormatError,
@@ -226,13 +225,13 @@ testRun(void)
         TEST_RESULT_UINT(info.pageSize, pgPageSize16, "check page size");
 
         HRN_PG_CONTROL_PUT(
-            storageTest, PG_VERSION_17, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_17),
+            storageTest, PG_VERSION_18, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_18),
             .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .pageSize = pgPageSize32);
 
         TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "check system id");
-        TEST_RESULT_UINT(info.version, PG_VERSION_17, "check version");
-        TEST_RESULT_UINT(info.catalogVersion, 202406281, "check catalog version");
+        TEST_RESULT_UINT(info.version, PG_VERSION_18, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 202504091, "check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
         TEST_RESULT_UINT(info.pageSize, pgPageSize32, "check page size");
@@ -364,7 +363,7 @@ testRun(void)
     {
         TEST_TITLE("1KiB page checksum");
         {
-            unsigned char page[pgPageSize1];
+            uint8_t page[pgPageSize1];
             memset(page, 0xFF, sizeof(page));
 
             TEST_RESULT_UINT(
@@ -376,7 +375,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("2KiB page checksum");
         {
-            unsigned char page[pgPageSize2];
+            uint8_t page[pgPageSize2];
             memset(page, 0xFF, sizeof(page));
 
             TEST_RESULT_UINT(
@@ -388,7 +387,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("4KiB page checksum");
         {
-            unsigned char page[pgPageSize4];
+            uint8_t page[pgPageSize4];
             memset(page, 0xFF, sizeof(page));
 
             TEST_RESULT_UINT(
@@ -400,7 +399,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("8KiB page checksum");
         {
-            unsigned char page[pgPageSize8];
+            uint8_t page[pgPageSize8];
             memset(page, 0xFF, sizeof(page));
 
             TEST_RESULT_UINT(
@@ -412,7 +411,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("16KiB page checksum");
         {
-            unsigned char page[pgPageSize16];
+            uint8_t page[pgPageSize16];
             memset(page, 0xFF, sizeof(page));
 
             TEST_RESULT_UINT(
@@ -424,7 +423,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("32KiB page checksum");
         {
-            unsigned char page[pgPageSize32];
+            uint8_t page[pgPageSize32];
             memset(page, 0xFF, sizeof(page));
 
             TEST_RESULT_UINT(
@@ -436,7 +435,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid page size error");
         {
-            unsigned char page[64 * 1024];
+            uint8_t page[64 * 1024];
             memset(page, 0xFF, sizeof(page));
 
             TEST_ERROR(

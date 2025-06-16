@@ -49,6 +49,9 @@ jobs:
           # All unit tests on the newest gcc available
           - param: test --vm=f41 --param=c-only --param=no-valgrind --param=no-coverage --param=no-performance
 
+          # All unit tests on musl libc
+          - param: test --vm=a321 --param=c-only --param=no-coverage --param=no-performance
+
           # RHEL documentation
           - param: doc --vm=rh8
 

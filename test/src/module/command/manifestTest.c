@@ -27,7 +27,7 @@ testRun(void)
 
     // Install local command handler shim
     static const ProtocolServerHandler testLocalHandlerList[] = {PROTOCOL_SERVER_HANDLER_BACKUP_LIST};
-    hrnProtocolLocalShimInstall(testLocalHandlerList, LENGTH_OF(testLocalHandlerList));
+    hrnProtocolLocalShimInstall(LSTDEF(testLocalHandlerList));
 
     // Test storage
     const Storage *const storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
@@ -98,7 +98,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Backup to repo1
-            hrnBackupPqScriptP(PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true, .fullIncrNoOp = true);
+            hrnBackupPqScriptP(PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup repo1");
 
             // Backup to repo2
@@ -106,8 +106,8 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             hrnBackupPqScriptP(
-                PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true, .fullIncrNoOp = true,
-                .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS);
+                PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true, .cipherType = cipherTypeAes256Cbc,
+                .cipherPass = TEST_CIPHER_PASS);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup repo2");
         }
 
@@ -179,7 +179,7 @@ testRun(void)
                 "\n"
                 "file list:\n"
                 "  - pg_data/base/1/2\n"
-                "      size: 64KB, repo 64KB\n"
+                "      size: 64KB, repo 64.1KB\n"
                 "      checksum: 1adc95bebe9eea8c112d40cd04ab7a8d75c4f961\n"
                 "      bundle: 1\n"
                 "      block: size 8KB, map size 58B, checksum size 6B\n"
@@ -274,7 +274,7 @@ testRun(void)
                 "\n"
                 "file list:\n"
                 "  - pg_data/base/1/2\n"
-                "      size: 96KB, repo 64KB\n"
+                "      size: 96KB, repo 64.1KB\n"
                 "      checksum: d4976e362696a43fb09e7d4e780d7d9352a2ec2e\n"
                 "      bundle: 1\n"
                 "      block: size 8KB, map size 99B, checksum size 6B\n"
@@ -379,7 +379,7 @@ testRun(void)
                 "\n"
                 "file list:\n"
                 "  - pg_data/base/1/2\n"
-                "      size: 96KB, repo 64KB\n"
+                "      size: 96KB, repo 64.1KB\n"
                 "      checksum: d4976e362696a43fb09e7d4e780d7d9352a2ec2e\n"
                 "      bundle: 1\n"
                 "      block: size 8KB, map size 99B, checksum size 6B\n"
@@ -473,7 +473,7 @@ testRun(void)
                 "\n"
                 "file list:\n"
                 "  - pg_data/base/1/2\n"
-                "      size: 96KB, repo 64KB\n"
+                "      size: 96KB, repo 64.1KB\n"
                 "      checksum: d4976e362696a43fb09e7d4e780d7d9352a2ec2e\n"
                 "      bundle: 1\n"
                 "      block: size 8KB, map size 99B, checksum size 6B\n"

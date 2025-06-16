@@ -119,18 +119,6 @@ cfgLoadUpdateOption(void)
         }
     }
 
-    // Set default for cmd
-    if (cfgOptionValid(cfgOptCmd))
-        cfgOptionDefaultSet(cfgOptCmd, VARSTR(cfgExe()));
-
-    // Set default for repo-host-cmd
-    if (cfgOptionValid(cfgOptRepoHostCmd))
-        cfgOptionDefaultSet(cfgOptRepoHostCmd, VARSTR(cfgExe()));
-
-    // Set default for pg-host-cmd
-    if (cfgOptionValid(cfgOptPgHostCmd))
-        cfgOptionDefaultSet(cfgOptPgHostCmd, VARSTR(cfgExe()));
-
     // Protocol timeout should be greater than db timeout
     if (cfgOptionTest(cfgOptDbTimeout) && cfgOptionTest(cfgOptProtocolTimeout) &&
         cfgOptionInt64(cfgOptProtocolTimeout) <= cfgOptionInt64(cfgOptDbTimeout))
@@ -388,7 +376,7 @@ cfgLoadUpdateOption(void)
         }
     }
 
-    // Error if repo-sftp--host-key-check-type is explicitly set to anything other than fingerprint and repo-sftp-host-fingerprint
+    // Error if repo-sftp-host-key-check-type is explicitly set to anything other than fingerprint and repo-sftp-host-fingerprint
     // is also specified. For backward compatibility we need to allow repo-sftp-host-fingerprint when
     // repo-sftp-host-key-check-type defaults to yes, but emit a warning to let the user know to change the configuration. Also
     // set repo-sftp-host-key-check-type=fingerprint so other code does not need to know about this exception.
@@ -559,7 +547,7 @@ cfgLoad(const unsigned int argListSize, const char *argList[])
         {
             // Generate some random bytes
             uint32_t execRandom;
-            cryptoRandomBytes((unsigned char *)&execRandom, sizeof(execRandom));
+            cryptoRandomBytes((uint8_t *)&execRandom, sizeof(execRandom));
 
             // Format a string with the pid and the random bytes to serve as the exec id
             cfgOptionSet(cfgOptExecId, cfgSourceParam, VARSTR(strNewFmt("%d-%08x", getpid(), execRandom)));

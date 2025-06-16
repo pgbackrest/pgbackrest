@@ -303,8 +303,8 @@ typedef struct BldCfgOptionRaw
     const Variant *required;
     const Variant *negate;
     bool reset;
+    DefaultType defaultType;
     const String *defaultValue;
-    bool defaultLiteral;
     const String *group;
     bool secure;
     const BldCfgOptionDependRaw *depend;
@@ -831,9 +831,19 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                         else
                             optRaw.defaultValue = optDefVal.value;
                     }
-                    else if (strEqZ(optDef.value, "default-literal"))
+                    else if (strEqZ(optDef.value, "default-type"))
                     {
-                        optRaw.defaultLiteral = yamlBoolParse(optDefVal);
+                        if (strEqZ(optDefVal.value, "quote"))
+                            optRaw.defaultType = defaultTypeQuote;
+                        else if (strEqZ(optDefVal.value, "literal"))
+                            optRaw.defaultType = defaultTypeLiteral;
+                        else if (strEqZ(optDefVal.value, "dynamic"))
+                            optRaw.defaultType = defaultTypeDynamic;
+                        else
+                        {
+                            THROW_FMT(
+                                FormatError, "option '%s' has invalid default type '%s'", strZ(optRaw.name), strZ(optDefVal.value));
+                        }
                     }
                     else if (strEqZ(optDef.value, "group"))
                     {
@@ -962,8 +972,8 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                     .required = varBool(optRaw->required),
                     .negate = varBool(optRaw->negate),
                     .reset = optRaw->reset,
+                    .defaultType = optRaw->defaultType,
                     .defaultValue = strDup(optRaw->defaultValue),
-                    .defaultLiteral = optRaw->defaultLiteral,
                     .group = strDup(optRaw->group),
                     .secure = optRaw->secure,
                     .allowList = bldCfgParseAllowListDup(optRaw->allowList),

@@ -235,8 +235,10 @@ optionGroup:
 #   Sets a default for the option for all commands if listed in the global section, or for specific commands if listed in the
 #   command section. All boolean types require a default.
 #
-# default-literal:
-#   If the default is a string output it as-is without quoting. This allows C defines to be used as defaults.
+# default-type:
+#   If 'literal' then default a string output it as-is without quoting. This allows C defines to be used as defaults.
+#   if 'dynamic' then default is a specially calculated value:
+#     bin - the value of argv[0] on execution
 #
 # negate:
 #   All config file boolean options automatically may be negated. This setting is used to maintain backward compatibility with older
@@ -268,19 +270,19 @@ option:
   #---------------------------------------------------------------------------------------------------------------------------------
   config:
     type: string
+    default-type: literal
     default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE
-    default-literal: true
     negate: true
 
   config-include-path:
     type: path
+    default-type: literal
     default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH
-    default-literal: true
 
   config-path:
     type: path
+    default-type: literal
     default: CFGOPTDEF_CONFIG_PATH
-    default-literal: true
 
   dry-run:
     type: boolean
@@ -728,7 +730,8 @@ option:
   cmd:
     section: global
     type: string
-    required: false
+    default-type: dynamic
+    default: bin
     command:
       archive-get: {}
       archive-push: {}
@@ -754,6 +757,7 @@ option:
   cmd-ssh:
     inherit: cmd
     required: true
+    default-type: quote
     default: ssh
 
   # Option is deprecated and should not be referenced outside of cfgLoadUpdateOption()
@@ -1244,21 +1248,6 @@ option:
       list:
         - true
 
-  backup-full-incr:
-    section: global
-    type: boolean
-    default: false
-    internal: true
-    command:
-      backup:
-        depend:
-          option: online
-          default: false
-          list:
-            - true
-    command-role:
-      main: {}
-
   backup-standby:
     section: global
     type: string-id
@@ -1534,7 +1523,8 @@ option:
     section: stanza
     group: pg
     type: string
-    required: false
+    default-type: dynamic
+    default: bin
     command:
       backup: {}
       check: {}
@@ -1554,9 +1544,8 @@ option:
 
   pg-host-config:
     inherit: pg-host-cmd
+    default-type: literal
     default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE
-    default-literal: true
-    required: true
     deprecate:
       db-config: {}
       db?-config: {}
@@ -1564,18 +1553,22 @@ option:
   pg-host-config-include-path:
     inherit: pg-host-cmd
     type: path
+    default-type: literal
     default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH
-    default-literal: true
+    required: true
 
   pg-host-config-path:
     inherit: pg-host-cmd
     type: path
+    default-type: literal
     default: CFGOPTDEF_CONFIG_PATH
-    default-literal: true
+    required: true
 
   pg-host-port:
     inherit: pg-host-cmd
     type: integer
+    default-type: quote
+    default: ~
     required: false
     allow-range: [0, 65535]
     deprecate:
@@ -1584,6 +1577,7 @@ option:
 
   pg-host-user:
     inherit: pg-host-cmd
+    default-type: quote
     default: postgres
     required: false
     deprecate:
@@ -1642,10 +1636,11 @@ option:
       db-port: {}
       db?-port: {}
 
+  # Despite the name this option needs to be string type rather than path to allow abstract sockets beginning with @
   pg-socket-path:
     section: stanza
     group: pg
-    type: path
+    type: string
     required: false
     command: pg-database
     depend: pg-database
@@ -2171,7 +2166,8 @@ option:
     section: global
     group: repo
     type: string
-    required: false
+    default-type: dynamic
+    default: bin
     command:
       annotate: {}
       archive-get: {}
@@ -2208,8 +2204,8 @@ option:
       async: {}
       main: {}
       local: {}
+    default-type: literal
     default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE
-    default-literal: true
     depend:
       option: repo-host
     deprecate:
@@ -2218,14 +2214,14 @@ option:
   repo-host-config-include-path:
     inherit: repo-host-config
     type: path
+    default-type: literal
     default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH
-    default-literal: true
 
   repo-host-config-path:
     inherit: repo-host-config
     type: path
+    default-type: literal
     default: CFGOPTDEF_CONFIG_PATH
-    default-literal: true
 
   repo-host-port:
     section: global

@@ -7,6 +7,16 @@ Parse Configuration Yaml
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
+Default types
+***********************************************************************************************************************************/
+typedef enum
+{
+    defaultTypeQuote = 0,
+    defaultTypeLiteral,
+    defaultTypeDynamic,
+} DefaultType;
+
+/***********************************************************************************************************************************
 Command role constants
 ***********************************************************************************************************************************/
 #define CMD_ROLE_ASYNC                                              "async"
@@ -131,8 +141,8 @@ struct BldCfgOption
     bool required;                                                  // Is the option required?
     bool negate;                                                    // Can the option be negated?
     bool reset;                                                     // Can the option be reset?
+    DefaultType defaultType;                                        // Type of default
     const String *defaultValue;                                     // Default value, if any
-    bool defaultLiteral;                                            // Should default be interpreted literally, i.e. not a string
     const String *group;                                            // Option group, if any
     bool secure;                                                    // Does the option contain a secret?
     const BldCfgOptionDepend *depend;                               // Dependency, if any

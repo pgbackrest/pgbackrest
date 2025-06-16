@@ -16,11 +16,9 @@ Object type
 struct List
 {
     ListPub pub;                                                    // Publicly accessible variables
-    size_t itemSize;
     unsigned int listSizeMax;
     SortOrder sortOrder;
-    unsigned char *listAlloc;                                       // Pointer to memory allocated for the list
-    unsigned char *list;                                            // Pointer to the current start of the list
+    uint8_t *listAlloc;                                             // Pointer to memory allocated for the list
     ListComparator *comparator;
 };
 
@@ -37,7 +35,10 @@ lstNew(const size_t itemSize, const ListParam param)
     {
         *this = (List)
         {
-            .itemSize = itemSize,
+            .pub =
+            {
+                .itemSize = itemSize,
+            },
             .sortOrder = param.sortOrder,
             .comparator = param.comparator,
         };
@@ -57,14 +58,15 @@ lstClear(List *const this)
 
     ASSERT(this != NULL);
 
-    if (this->list != NULL)
+    if (this->pub.list != NULL)
     {
         MEM_CONTEXT_BEGIN(lstMemContext(this))
         {
-            memFree(this->list);
+            memFree(this->pub.list);
         }
         MEM_CONTEXT_END();
 
+        this->pub.list = NULL;
         this->pub.listSize = 0;
         this->listSizeMax = 0;
     }
@@ -165,7 +167,7 @@ lstGet(const List *const this, const unsigned int listIdx)
         THROW_FMT(AssertError, "cannot get index %u from list with %u value(s)", listIdx, lstSize(this));
 
     // Return pointer to list item
-    FUNCTION_TEST_RETURN_P(VOID, this->list + (listIdx * this->itemSize));
+    FUNCTION_TEST_RETURN_P(VOID, this->pub.list + (listIdx * this->pub.itemSize));
 }
 
 FN_EXTERN void *
@@ -198,16 +200,16 @@ lstFind(const List *const this, const void *const item)
     ASSERT(this->comparator != NULL);
     ASSERT(item != NULL);
 
-    if (this->list != NULL)
+    if (this->pub.list != NULL)
     {
         if (this->sortOrder == sortOrderAsc)
-            FUNCTION_TEST_RETURN_P(VOID, bsearch(item, this->list, lstSize(this), this->itemSize, this->comparator));
+            FUNCTION_TEST_RETURN_P(VOID, bsearch(item, this->pub.list, lstSize(this), this->pub.itemSize, this->comparator));
         else if (this->sortOrder == sortOrderDesc)
         {
             // Assign the list for the descending comparator to use
             comparatorDescList = this;
 
-            FUNCTION_TEST_RETURN_P(VOID, bsearch(item, this->list, lstSize(this), this->itemSize, lstComparatorDesc));
+            FUNCTION_TEST_RETURN_P(VOID, bsearch(item, this->pub.list, lstSize(this), this->pub.itemSize, lstComparatorDesc));
         }
 
         // Fall back on an iterative search
@@ -267,9 +269,9 @@ lstIdx(const List *const this, const void *const item)
     ASSERT(item != NULL);
 
     // Item pointers should always be aligned with the beginning of an item in the list
-    ASSERT((size_t)((const unsigned char *const)item - this->list) % this->itemSize == 0);
+    ASSERT((size_t)((const uint8_t *const)item - this->pub.list) % this->pub.itemSize == 0);
 
-    const size_t result = (size_t)((const unsigned char *const)item - this->list) / this->itemSize;
+    const size_t result = (size_t)((const uint8_t *const)item - this->pub.list) / this->pub.itemSize;
 
     // Item pointers should always be in range
     ASSERT(result < lstSize(this));
@@ -299,38 +301,38 @@ lstInsert(List *const this, const unsigned int listIdx, const void *const item)
             if (this->listSizeMax == 0)
             {
                 this->listSizeMax = LIST_INITIAL_SIZE;
-                this->list = memNew(this->listSizeMax * this->itemSize);
+                this->pub.list = memNew(this->listSizeMax * this->pub.itemSize);
             }
             // Else the list needs to be extended
             else
             {
                 this->listSizeMax *= 2;
-                this->list = memResize(this->list, this->listSizeMax * this->itemSize);
+                this->pub.list = memResize(this->pub.list, this->listSizeMax * this->pub.itemSize);
             }
 
-            this->listAlloc = this->list;
+            this->listAlloc = this->pub.list;
         }
         MEM_CONTEXT_END();
     }
     // Else if there is space before the beginning of the list then move the list down
     else if (
-        (this->list != this->listAlloc) &&
-        (lstSize(this) + ((uintptr_t)(this->list - this->listAlloc) / this->itemSize) == this->listSizeMax))
+        (this->pub.list != this->listAlloc) &&
+        (lstSize(this) + ((uintptr_t)(this->pub.list - this->listAlloc) / this->pub.itemSize) == this->listSizeMax))
     {
-        memmove(this->listAlloc, this->list, lstSize(this) * this->itemSize);
-        this->list = this->listAlloc;
+        memmove(this->listAlloc, this->pub.list, lstSize(this) * this->pub.itemSize);
+        this->pub.list = this->listAlloc;
     }
 
     // Calculate the position where this item will be copied
-    void *const itemPtr = this->list + (listIdx * this->itemSize);
+    void *const itemPtr = this->pub.list + (listIdx * this->pub.itemSize);
 
     // If not inserting at the end then move items down to make space
     if (listIdx != lstSize(this))
-        memmove(this->list + ((listIdx + 1) * this->itemSize), itemPtr, (lstSize(this) - listIdx) * this->itemSize);
+        memmove(this->pub.list + ((listIdx + 1) * this->pub.itemSize), itemPtr, (lstSize(this) - listIdx) * this->pub.itemSize);
 
     // Copy item into the list
     this->sortOrder = sortOrderNone;
-    memcpy(itemPtr, item, this->itemSize);
+    memcpy(itemPtr, item, this->pub.itemSize);
     this->pub.listSize++;
 
     FUNCTION_TEST_RETURN_P(VOID, itemPtr);
@@ -354,14 +356,14 @@ lstRemoveIdx(List *const this, const unsigned int listIdx)
     // If this is the first item then move the list pointer up to avoid moving all the items
     if (listIdx == 0)
     {
-        this->list += this->itemSize;
+        this->pub.list += this->pub.itemSize;
     }
     // Else remove the item by moving the items after it down
     else
     {
         memmove(
-            this->list + (listIdx * this->itemSize), this->list + ((listIdx + 1) * this->itemSize),
-            (lstSize(this) - listIdx) * this->itemSize);
+            this->pub.list + (listIdx * this->pub.itemSize), this->pub.list + ((listIdx + 1) * this->pub.itemSize),
+            (lstSize(this) - listIdx) * this->pub.itemSize);
     }
 
     FUNCTION_TEST_RETURN(LIST, this);
@@ -416,12 +418,12 @@ lstSort(List *const this, const SortOrder sortOrder)
     ASSERT(this != NULL);
     ASSERT(this->comparator != NULL);
 
-    if (this->list != NULL)
+    if (this->pub.list != NULL)
     {
         switch (sortOrder)
         {
             case sortOrderAsc:
-                qsort(this->list, lstSize(this), this->itemSize, this->comparator);
+                qsort(this->pub.list, lstSize(this), this->pub.itemSize, this->comparator);
                 break;
 
             case sortOrderDesc:
@@ -429,7 +431,7 @@ lstSort(List *const this, const SortOrder sortOrder)
                 // Assign the list that will be sorted for the comparator function to use
                 comparatorDescList = this;
 
-                qsort(this->list, lstSize(this), this->itemSize, lstComparatorDesc);
+                qsort(this->pub.list, lstSize(this), this->pub.itemSize, lstComparatorDesc);
                 break;
             }
 

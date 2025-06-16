@@ -24,7 +24,7 @@ typedef struct PageChecksum
     bool headerCheck;                                               // Perform additional header checks?
     const String *fileName;                                         // Used to load the file to retry pages
 
-    unsigned char *pageBuffer;                                      // Buffer to hold a page while verifying the checksum
+    uint8_t *pageBuffer;                                            // Buffer to hold a page while verifying the checksum
 
     bool valid;                                                     // Is the relation structure valid?
     bool align;                                                     // Is the relation alignment valid?

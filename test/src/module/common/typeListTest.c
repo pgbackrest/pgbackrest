@@ -26,7 +26,7 @@ testRun(void)
         char logBuf[STACK_TRACE_PARAM_MAX];
         List *list = lstNewP(sizeof(void *));
 
-        TEST_RESULT_UINT(list->itemSize, sizeof(void *), "item size");
+        TEST_RESULT_UINT(list->pub.itemSize, sizeof(void *), "item size");
         TEST_RESULT_UINT(list->pub.listSize, 0, "list size");
         TEST_RESULT_UINT(list->listSizeMax, 0, "list size max");
         TEST_RESULT_PTR(lstMemContext(list), objMemContext(list), "list mem context");
@@ -38,6 +38,7 @@ testRun(void)
         TEST_RESULT_Z(logBuf, "{size: 1}", "check log");
 
         TEST_RESULT_VOID(lstClear(list), "clear list");
+        TEST_RESULT_VOID(lstClear(list), "clear list again to ensure everything was cleared correctly");
         TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(list, lstToLog, logBuf, sizeof(logBuf)), "bufToLog");
         TEST_RESULT_Z(logBuf, "{size: 0}", "check log");
 

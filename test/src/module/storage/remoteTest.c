@@ -32,7 +32,7 @@ testRun(void)
         PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST
     };
 
-    hrnProtocolRemoteShimInstall(testRemoteHandlerList, LENGTH_OF(testRemoteHandlerList));
+    hrnProtocolRemoteShimInstall(LSTDEF(testRemoteHandlerList));
 
     // Set filter handlers
     static const StorageRemoteFilterHandler storageRemoteFilterHandlerList[] =
@@ -43,7 +43,7 @@ testRun(void)
         {.type = SIZE_FILTER_TYPE, .handlerNoParam = ioSizeNew},
     };
 
-    storageRemoteFilterHandlerSet(storageRemoteFilterHandlerList, LENGTH_OF(storageRemoteFilterHandlerList));
+    storageRemoteFilterHandlerSet(LSTDEF(storageRemoteFilterHandlerList));
 
     // Test storage
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);

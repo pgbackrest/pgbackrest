@@ -299,7 +299,7 @@ bldHlpRenderHelpAutoC(const Storage *const storageRepo, const BldCfg bldCfg, con
     String *const help = strCatFmt(
         strNew(),
         "%s"
-        "static const unsigned char helpData[%zu] =\n"
+        "static const uint8_t helpData[%zu] =\n"
         "{\n",
         strZ(bldHeader("help", "Help Data")), bufUsed(buffer));
 

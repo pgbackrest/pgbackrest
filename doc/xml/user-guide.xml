@@ -150,7 +150,7 @@
         <variable key="gcs-key">/etc/pgbackrest/gcs-key.json</variable>
 
         <!-- S3 Settings -->
-        <variable key="s3-image">minio/minio:RELEASE.2024-07-15T19-02-30Z</variable>    <!-- Minio docker image -->
+        <variable key="s3-image">minio/minio</variable>             <!-- Minio docker image -->
         <variable key="s3-all">n</variable>                         <!-- Build all the documentation with S3? -->
         <variable key="s3-local">y</variable>
         <variable key="s3-bucket">demo-bucket</variable>
@@ -1417,7 +1417,7 @@
 
                 <list-item><br-option>repo-bundle</br-option> - combines small files during backup to save space and improve the speed of both the <cmd>backup</cmd> and <cmd>restore</cmd> commands, especially on object stores such as S3. The <br-option>repo-bundle</br-option> option was introduced in <link url="release.html#2.39">v2.39</link>. See <link section="/backup/bundle">File Bundling</link> for more details.</list-item>
 
-                <list-item><br-option>repo-block</br-option> - stores only the portions of of files that have changed rather than the entire file during <id>diff</id>/<id>incr</id> <cmd>backup</cmd>. This saves space and increases the speed of the <cmd>backup</cmd>. The <br-option>repo-block</br-option> option was introduced in <link url="release.html#2.46">v2.46</link> but at least <link url="release.html#2.52.1">v2.52.1</link> is recommended. See <link section="/backup/block">Block Incremental</link> for more details.</list-item>
+                <list-item><br-option>repo-block</br-option> - stores only the portions of files that have changed rather than the entire file during <id>diff</id>/<id>incr</id> <cmd>backup</cmd>. This saves space and increases the speed of the <cmd>backup</cmd>. The <br-option>repo-block</br-option> option was introduced in <link url="release.html#2.46">v2.46</link> but at least <link url="release.html#2.52.1">v2.52.1</link> is recommended. See <link section="/backup/block">Block Incremental</link> for more details.</list-item>
             </list>
 
             <p>There are other performance options that are not enabled by default because they require additional configuration or because the default is safe (but not optimal). These options are available in all v2 versions of <backrest/>.</p>
@@ -1852,7 +1852,7 @@
                 <backrest-config-option section="global" key="repo1-retention-diff">1</backrest-config-option>
             </backrest-config>
 
-            <p>Backup <br-setting>repo1-retention-diff=1</br-setting> so two differentials will need to be performed before one is expired. An incremental backup is added to demonstrate incremental expiration. Incremental backups cannot be expired independently &amp;mdash; they are always expired with their related full or differential backup.</p>
+            <p>Backup <br-setting>repo1-retention-diff=1</br-setting> so two differentials will need to be performed before one is expired. An incremental backup is added to demonstrate incremental expiration, which in this case depends on the differential expiration.</p>
 
             <execute-list host="{[host-pg1]}">
                 <title>Perform differential and incremental backups</title>
@@ -2264,8 +2264,17 @@
                 <exe-cmd>rm {[postgres-log-demo]}</exe-cmd>
             </execute>
 
-            <execute if="{[pg-version]} &gt; 12" user="root" output="y" err-expect="1">
+            <execute if="{[pg-version]} &gt; 12 &amp;&amp; {[os-type-is-debian]}" user="root" output="y" err-expect="1">
                 <exe-cmd>{[pg-cluster-start]}</exe-cmd>
+                <exe-highlight>recovery ended before configured recovery target was reached</exe-highlight>
+            </execute>
+
+            <execute if="{[pg-version]} &gt; 12 &amp;&amp; {[os-type-is-rhel]}" user="root" err-expect="1">
+                <exe-cmd>{[pg-cluster-start]}</exe-cmd>
+            </execute>
+
+            <execute if="{[pg-version]} &gt; 12 &amp;&amp; {[os-type-is-rhel]}" user="postgres" output="y">
+                <exe-cmd>cat {[postgres-log-demo]}</exe-cmd>
                 <exe-highlight>recovery ended before configured recovery target was reached</exe-highlight>
             </execute>
 

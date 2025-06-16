@@ -218,7 +218,7 @@ protocolLocalExec(
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            helper->exec = execNew(cfgExe(), param, name, cfgOptionUInt64(cfgOptProtocolTimeout));
+            helper->exec = execNew(cfgBin(), param, name, cfgOptionUInt64(cfgOptProtocolTimeout));
         }
         MEM_CONTEXT_PRIOR_END();
 
@@ -351,7 +351,7 @@ protocolServerAuthorize(const String *authListStr, const String *const stanza)
         // Else check the stanza list for a match with the specified stanza. Each entry will need to be trimmed before comparing.
         else if (stanza != NULL)
         {
-            StringList *authList = strLstNewSplitZ(authListStr, ",");
+            const StringList *const authList = strLstNewSplitZ(authListStr, ",");
 
             for (unsigned int authListIdx = 0; authListIdx < strLstSize(authList); authListIdx++)
             {
@@ -409,7 +409,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
 
                 // Load parameter list from the client
                 StringList *const paramList = pckReadStrLstP(pckReadNew(command.param));
-                strLstInsert(paramList, 0, cfgExe());
+                strLstInsert(paramList, 0, cfgBin());
                 cfgLoad(strLstSize(paramList), strLstPtr(paramList));
 
                 // Error if the client is not authorized for the requested stanza
@@ -531,7 +531,7 @@ protocolRemoteParam(const ProtocolStorageType protocolStorageType, const unsigne
                 {
                     remove =
                         !cfgParseOptionRequired(cfgCommand(), optionId) ||
-                        cfgParseOptionDefault(cfgCommand(), optionId) != NULL;
+                        cfgParseOptionDefault(cfgCommand(), optionId, cfgBin()) != NULL;
                 }
                 // Move pg options to host index 0 (key 1) so they will be in the default index on the remote host
                 else

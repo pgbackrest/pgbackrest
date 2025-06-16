@@ -13,6 +13,6 @@ CRC-32 and CRC-32C calculations required to validate the integrity of pg_control
 Functions
 ***********************************************************************************************************************************/
 // Generate CRC-32C checksum
-FN_EXTERN uint32_t crc32cOne(const unsigned char *data, size_t size);
+FN_EXTERN uint32_t crc32cOne(const uint8_t *data, size_t size);
 
 #endif

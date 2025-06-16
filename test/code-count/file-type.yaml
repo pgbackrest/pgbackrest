@@ -663,6 +663,14 @@ doc/xml/release/2025/2.55.0.xml:
   class: doc/source
   type: xml
 
+doc/xml/release/2025/2.55.1.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2025/2.56.0.xml:
+  class: doc/source
+  type: xml
+
 doc/xml/release/contributor.xml:
   class: doc/source
   type: xml
@@ -1155,11 +1163,15 @@ src/command/restore/restore.c:
   class: core
   type: c
 
+src/command/restore/restore.h:
+  class: core
+  type: c/h
+
 src/command/restore/timeline.c:
   class: core
   type: c
 
-src/command/restore/restore.h:
+src/command/restore/timeline.h:
   class: core
   type: c/h
 
@@ -1260,6 +1272,14 @@ src/common/compress/bz2/decompress.c:
   type: c
 
 src/common/compress/bz2/decompress.h:
+  class: core
+  type: c/h
+
+src/common/compress/common.c:
+  class: core
+  type: c
+
+src/common/compress/common.h:
   class: core
   type: c/h
 
@@ -2607,6 +2627,14 @@ test/src/command/test/define.h:
   class: test/harness
   type: c/h
 
+test/src/command/test/lint.c:
+  class: test/harness
+  type: c
+
+test/src/command/test/lint.h:
+  class: test/harness
+  type: c/h
+
 test/src/command/test/test.c:
   class: test/harness
   type: c
@@ -2772,6 +2800,10 @@ test/src/common/harnessPostgres/harness160.c:
   type: c
 
 test/src/common/harnessPostgres/harness170.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessPostgres/harness180.c:
   class: test/harness
   type: c
 

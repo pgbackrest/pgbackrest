@@ -71,10 +71,10 @@ cryptoInit(void)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-cryptoRandomBytes(unsigned char *const buffer, const size_t size)
+cryptoRandomBytes(uint8_t *const buffer, const size_t size)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM_P(UCHARDATA, buffer);
+        FUNCTION_LOG_PARAM_P(BYTEDATA, buffer);
         FUNCTION_LOG_PARAM(SIZE, size);
     FUNCTION_LOG_END();
 

@@ -37,7 +37,7 @@ Create a pg_control file
 #define HRN_PG_INTERFACE_CONTROL_TEST(version)                                                                                     \
     void                                                                                                                           \
     hrnPgInterfaceControl##version(                                                                                                \
-        const unsigned int controlVersion, const unsigned int crc, const PgControl pgControl, unsigned char *const buffer)         \
+        const unsigned int controlVersion, const unsigned int crc, const PgControl pgControl, uint8_t *const buffer)               \
     {                                                                                                                              \
         ASSERT(buffer != NULL);                                                                                                    \
                                                                                                                                    \
@@ -49,7 +49,6 @@ Create a pg_control file
             .checkPoint = pgControl.checkpoint,                                                                                    \
             .checkPointCopy =                                                                                                      \
             {                                                                                                                      \
-                .time = (pg_time_t)pgControl.checkpointTime,                                                                       \
                 .ThisTimeLineID = pgControl.timeline,                                                                              \
             },                                                                                                                     \
             .blcksz = pgControl.pageSize,                                                                                          \
@@ -71,7 +70,7 @@ Create a WAL file
 
 #define HRN_PG_INTERFACE_WAL_TEST(version)                                                                                         \
     void                                                                                                                           \
-    hrnPgInterfaceWal##version(const unsigned int magic, const PgWal pgWal, unsigned char *const buffer)                           \
+    hrnPgInterfaceWal##version(const unsigned int magic, const PgWal pgWal, uint8_t *const buffer)                                 \
     {                                                                                                                              \
         ((XLogLongPageHeaderData *)buffer)->std.xlp_magic = magic == 0 ? XLOG_PAGE_MAGIC : (uint16)magic;                          \
         ((XLogLongPageHeaderData *)buffer)->std.xlp_info = XLP_LONG_HEADER;                                                        \

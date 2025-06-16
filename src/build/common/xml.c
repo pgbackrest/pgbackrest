@@ -24,7 +24,7 @@ xmlDocumentNewParam(const String *const rootNode, const XmlDocumentNewParam para
     {
         ASSERT(param.dtdFile != NULL);
         xmlCreateIntSubset(
-            result->xml, (const unsigned char *)strZ(param.dtdName), NULL, (const unsigned char *)strZ(param.dtdFile));
+            result->xml, (const uint8_t *)strZ(param.dtdName), NULL, (const uint8_t *)strZ(param.dtdFile));
     }
 
     FUNCTION_TEST_RETURN(XML_DOCUMENT, result);
@@ -43,7 +43,7 @@ xmlNodeAttribute(const XmlNode *this, const String *name)
     ASSERT(name != NULL);
 
     String *result = NULL;
-    xmlChar *const value = xmlGetProp(this->node, (const unsigned char *)strZ(name));
+    xmlChar *const value = xmlGetProp(this->node, (const uint8_t *)strZ(name));
 
     if (value != NULL)
     {
@@ -68,7 +68,7 @@ xmlNodeAttributeSet(XmlNode *const this, const String *const name, const String 
     ASSERT(name != NULL);
     ASSERT(value != NULL);
 
-    xmlSetProp(this->node, (const unsigned char *)strZ(name), (const unsigned char *)strZ(value));
+    xmlSetProp(this->node, (const uint8_t *)strZ(name), (const uint8_t *)strZ(value));
 
     FUNCTION_TEST_RETURN_VOID();
 }

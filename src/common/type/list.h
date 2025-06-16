@@ -80,6 +80,8 @@ Getters/Setters
 typedef struct ListPub
 {
     unsigned int listSize;                                          // List size
+    size_t itemSize;                                                // Size of item stored in the list
+    uint8_t *list;                                                  // Pointer to the current start of the list
 } ListPub;
 
 // Set a new comparator
@@ -164,6 +166,29 @@ lstFree(List *const this)
 {
     objFree(this);
 }
+
+/***********************************************************************************************************************************
+Macros for constant lists
+
+Frequently used constant lists can be declared with these macros at compile time rather than dynamically at run time.
+
+Note that lists created in this way are declared as const so can't be modified or freed by the lst*() methods. Casting to List *
+will result in a segfault due to modifying read-only memory.
+
+By convention all List constant identifiers are appended with _LST.
+***********************************************************************************************************************************/
+// This struct must be kept in sync with ListPub (except for const qualifiers)
+typedef struct ListPubConst
+{
+    unsigned int listSize;                                          // List size
+    size_t itemSize;                                                // Size of item stored in the list
+    const uint8_t *list;                                            // Pointer to the current start of the list
+} ListPubConst;
+
+// Create a List constant inline from a constant array
+#define LSTDEF(listParam)                                                                                                          \
+    (const List *)&(ListPubConst){                                                                                                 \
+        .list = (const uint8_t *)listParam, .itemSize = sizeof((listParam)[0]), .listSize = LENGTH_OF(listParam)}
 
 /***********************************************************************************************************************************
 Macros for function logging

@@ -132,7 +132,7 @@ testRun(void)
                             CFGOPT_TLS_SERVER_CA_FILE "=" HRN_SERVER_CA "\n"
                             CFGOPT_TLS_SERVER_CERT_FILE "=" HRN_SERVER_CERT "\n"
                             CFGOPT_TLS_SERVER_KEY_FILE "=" HRN_SERVER_KEY "\n"
-                            CFGOPT_TLS_SERVER_AUTH "=pgbackrest-client=db\n"
+                            CFGOPT_TLS_SERVER_AUTH "=pgbackrest-client=bogus1,db,bogus2\n"
                             "repo1-path=" TEST_PATH "/repo\n");
 
                         StringList *argList = strLstNew();
@@ -157,7 +157,7 @@ testRun(void)
                         pid_t pid = getpid();
 
                         // Add parameters to arg list required for a reload
-                        strLstInsert(argList, 0, cfgExe());
+                        strLstInsert(argList, 0, cfgBin());
                         strLstAddZ(argList, CFGCMD_SERVER);
 
                         TEST_RESULT_VOID(cmdServer(strLstSize(argList), strLstPtr(argList)), "server");

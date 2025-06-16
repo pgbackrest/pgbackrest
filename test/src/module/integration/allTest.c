@@ -1,8 +1,6 @@
 /***********************************************************************************************************************************
 Real Integration Test
 ***********************************************************************************************************************************/
-#include <utime.h>
-
 #include "common/crypto/common.h"
 #include "config/config.h"
 #include "info/infoBackup.h"
@@ -21,16 +19,17 @@ Test definition
 static HrnHostTestDefine testMatrix[] =
 {
     // {uncrustify_off - struct alignment}
-    {.pg = "9.5", .repo = "repo", .tls = 1, .stg =    "s3", .enc = 0, .cmp =  "bz2", .rt = 1, .bnd = 1, .bi = 1, .fi = 1},
-    {.pg = "9.6", .repo = "repo", .tls = 0, .stg = "azure", .enc = 0, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1, .fi = 0},
-    {.pg =  "10", .repo =  "pg2", .tls = 0, .stg =  "sftp", .enc = 1, .cmp =   "gz", .rt = 1, .bnd = 1, .bi = 0, .fi = 1},
-    {.pg =  "11", .repo = "repo", .tls = 1, .stg =   "gcs", .enc = 0, .cmp =  "zst", .rt = 2, .bnd = 0, .bi = 0, .fi = 1},
-    {.pg =  "12", .repo = "repo", .tls = 0, .stg =    "s3", .enc = 1, .cmp =  "lz4", .rt = 1, .bnd = 1, .bi = 1, .fi = 0},
-    {.pg =  "13", .repo =  "pg2", .tls = 1, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0, .fi = 0},
-    {.pg =  "14", .repo = "repo", .tls = 0, .stg =   "gcs", .enc = 0, .cmp =  "lz4", .rt = 1, .bnd = 1, .bi = 0, .fi = 1},
-    {.pg =  "15", .repo =  "pg2", .tls = 0, .stg = "azure", .enc = 1, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1, .fi = 0},
-    {.pg =  "16", .repo = "repo", .tls = 0, .stg =  "sftp", .enc = 0, .cmp =  "zst", .rt = 1, .bnd = 1, .bi = 1, .fi = 1},
-    {.pg =  "17", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0, .fi = 0},
+    {.pg = "9.5", .repo = "repo", .tls = 1, .stg =    "s3", .enc = 0, .cmp =  "bz2", .rt = 1, .bnd = 1, .bi = 1},
+    {.pg = "9.6", .repo = "repo", .tls = 0, .stg = "azure", .enc = 0, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1},
+    {.pg =  "10", .repo =  "pg2", .tls = 0, .stg =  "sftp", .enc = 1, .cmp =   "gz", .rt = 1, .bnd = 1, .bi = 0},
+    {.pg =  "11", .repo = "repo", .tls = 1, .stg =   "gcs", .enc = 0, .cmp =  "zst", .rt = 2, .bnd = 0, .bi = 0},
+    {.pg =  "12", .repo = "repo", .tls = 0, .stg =    "s3", .enc = 1, .cmp =  "lz4", .rt = 1, .bnd = 1, .bi = 1},
+    {.pg =  "13", .repo =  "pg2", .tls = 1, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
+    {.pg =  "14", .repo = "repo", .tls = 0, .stg =   "gcs", .enc = 0, .cmp =  "lz4", .rt = 1, .bnd = 1, .bi = 0},
+    {.pg =  "15", .repo =  "pg2", .tls = 0, .stg = "azure", .enc = 1, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1},
+    {.pg =  "16", .repo = "repo", .tls = 0, .stg =  "sftp", .enc = 0, .cmp =  "zst", .rt = 1, .bnd = 1, .bi = 1},
+    {.pg =  "17", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
+    {.pg =  "18", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
     // {uncrustify_on}
 };
 
@@ -89,23 +88,6 @@ testRun(void)
         // Get ts1 tablespace oid
         const unsigned int ts1Oid = pckReadU32P(hrnHostSqlValue(pg1, "select oid from pg_tablespace where spcname = 'ts1'"));
         TEST_LOG_FMT("ts1 tablespace oid = %u", ts1Oid);
-
-        // When full/incr is enabled, set some modified timestamps in the past so full/incr will find some files
-        if (hrnHostFullIncr())
-        {
-            const StringList *const fileList = storageListP(hrnHostPgStorage(pg1), STRDEF("base/1"));
-            const time_t modified = time(NULL) - SEC_PER_DAY * 2;
-
-            for (unsigned int fileIdx = 0; fileIdx < strLstSize(fileList); fileIdx++)
-            {
-                const char *const pathFull = strZ(
-                    storagePathP(hrnHostPgStorage(pg1), strNewFmt("base/1/%s", strZ(strLstGet(fileList, fileIdx)))));
-
-                THROW_ON_SYS_ERROR_FMT(
-                    utime(pathFull, &((struct utimbuf){.actime = modified, .modtime = modified})) == -1, FileInfoError,
-                    "unable to set time for '%s'", pathFull);
-            }
-        }
 
         // Get the tablespace path to use for this version. We could use our internally stored catalog number but during the beta
         // period this number will be changing and would need to be updated. Make this less fragile by just reading the path.

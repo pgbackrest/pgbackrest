@@ -152,6 +152,7 @@ testRun(void)
         strReplace(testC, STRDEF("{[C_TEST_USER_ID]}"), STRDEF(TEST_USER_ID_Z));
         strReplace(testC, STRDEF("{[C_TEST_USER_ID_Z]}"), STRDEF("\"" TEST_USER_ID_Z "\""));
         strReplace(testC, STRDEF("{[C_TEST_USER_LEN]}"), strNewFmt("%zu", sizeof(TEST_USER) - 1));
+        strReplace(testC, STRDEF("{[C_TEST_ARCHITECTURE]}"), STRDEF(TEST_ARCHITECTURE));
 
         // Test definition
         // -------------------------------------------------------------------------------------------------------------------------
@@ -599,7 +600,13 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3, STRDEF("invalid"),
-                STRDEF("test/shim"), 0, 1, logLevelDebug, true, NULL, true, true, true, true),
+                STRDEF("test/shim"), 0, 1, logLevelDebug, true, NULL, true,
+#ifdef DEBUG_COVERAGE
+                true,
+#else
+                false,
+#endif
+                true, true),
             "new build");
 
         // Older versions of ninja may error on a rebuild so a retry may occur
@@ -654,12 +661,14 @@ testRun(void)
                         "    sources: src_unit,\n"
                         "    c_args: [\n"
                         "        '-O2',\n"
+#ifdef DEBUG_COVERAGE
                         "        '-pg',\n"
                         "        '-no-pie',\n"
                         "    ],\n"
                         "    link_args: [\n"
                         "        '-pg',\n"
                         "        '-no-pie',\n"
+#endif
                         "    ],\n"
                         "    include_directories:\n"
                         "        include_directories(\n"
@@ -711,9 +720,17 @@ testRun(void)
                 strReplace(testCDup, STRDEF("{[C_TEST_VM]}"), STRDEF("uXX"));
                 strReplace(testCDup, STRDEF("{[C_TEST_PG_VERSION]}"), STRDEF("invalid"));
                 strReplace(testCDup, STRDEF("{[C_TEST_LOG_EXPECT]}"), STRDEF("true"));
+#ifdef DEBUG_COVERAGE
                 strReplace(testCDup, STRDEF("{[C_TEST_DEBUG_TEST_TRACE]}"), STRDEF("// Debug test trace not enabled"));
+#else
+                strReplace(testCDup, STRDEF("{[C_TEST_DEBUG_TEST_TRACE]}"), STRDEF("#define DEBUG_TEST_TRACE"));
+#endif
                 strReplace(testCDup, STRDEF("{[C_TEST_PATH_BUILD]}"), STRDEF(TEST_PATH "/test/unit-3/uXX/build"));
+#ifdef DEBUG_COVERAGE
                 strReplace(testCDup, STRDEF("{[C_TEST_PROFILE]}"), STRDEF("true"));
+#else
+                strReplace(testCDup, STRDEF("{[C_TEST_PROFILE]}"), STRDEF("false"));
+#endif
                 strReplace(testCDup, STRDEF("{[C_TEST_PROJECT_EXE]}"), STRDEF(TEST_PATH "/test/build/uXX/src/pgbackrest"));
                 strReplace(testCDup, STRDEF("{[C_TEST_TZ]}"), STRDEF("// No timezone specified"));
 
@@ -746,7 +763,13 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3, STRDEF("invalid"),
-                STRDEF("test/shim"), 0, 1, logLevelDebug, true, NULL, true, true, true, true),
+                STRDEF("test/shim"), 0, 1, logLevelDebug, true, NULL, true,
+#ifdef DEBUG_COVERAGE
+                true,
+#else
+                false,
+#endif
+                true, true),
             "new build");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -769,7 +792,13 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3, STRDEF("invalid"),
-                STRDEF("real/all"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false, true, false, true),
+                STRDEF("real/all"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false,
+#ifdef DEBUG_COVERAGE
+                true,
+#else
+                false,
+#endif
+                false, true),
             "new build");
 
         storageUnit = storagePosixNewP(STRDEF(TEST_PATH "/test/unit-3/none"));
@@ -815,6 +844,7 @@ testRun(void)
                         "executable(\n"
                         "    'test-unit',\n"
                         "    sources: src_unit,\n"
+#ifdef DEBUG_COVERAGE
                         "    c_args: [\n"
                         "        '-pg',\n"
                         "        '-no-pie',\n"
@@ -823,6 +853,7 @@ testRun(void)
                         "        '-pg',\n"
                         "        '-no-pie',\n"
                         "    ],\n"
+#endif
                         "    include_directories:\n"
                         "        include_directories(\n"
                         "            '.',\n"
@@ -876,9 +907,17 @@ testRun(void)
                 strReplace(testCDup, STRDEF("{[C_TEST_VM]}"), STRDEF("uXX"));
                 strReplace(testCDup, STRDEF("{[C_TEST_PG_VERSION]}"), STRDEF("invalid"));
                 strReplace(testCDup, STRDEF("{[C_TEST_LOG_EXPECT]}"), STRDEF("false"));
+#ifdef DEBUG_COVERAGE
                 strReplace(testCDup, STRDEF("{[C_TEST_DEBUG_TEST_TRACE]}"), STRDEF("// Debug test trace not enabled"));
+#else
+                strReplace(testCDup, STRDEF("{[C_TEST_DEBUG_TEST_TRACE]}"), STRDEF("#define DEBUG_TEST_TRACE"));
+#endif
                 strReplace(testCDup, STRDEF("{[C_TEST_PATH_BUILD]}"), STRDEF(TEST_PATH "/test/unit-3/none/build"));
+#ifdef DEBUG_COVERAGE
                 strReplace(testCDup, STRDEF("{[C_TEST_PROFILE]}"), STRDEF("true"));
+#else
+                strReplace(testCDup, STRDEF("{[C_TEST_PROFILE]}"), STRDEF("false"));
+#endif
                 strReplace(testCDup, STRDEF("{[C_TEST_PROJECT_EXE]}"), STRDEF(TEST_PATH "/test/build/uXX/src/pgbackrest"));
                 strReplace(testCDup, STRDEF("{[C_TEST_TZ]}"), STRDEF("hrnTzSet(\"America/New_York\");"));
 
@@ -922,7 +961,13 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3, STRDEF("invalid"),
-                STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false, true, false, false),
+                STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false,
+#ifdef DEBUG_COVERAGE
+                true,
+#else
+                false,
+#endif
+                false, false),
             "new build");
 
         TEST_RESULT_LOG(
@@ -978,12 +1023,14 @@ testRun(void)
                         "    sources: src_unit,\n"
                         "    c_args: [\n"
                         "        '-O2',\n"
+#ifdef DEBUG_COVERAGE
                         "        '-pg',\n"
                         "        '-no-pie',\n"
                         "    ],\n"
                         "    link_args: [\n"
                         "        '-pg',\n"
                         "        '-no-pie',\n"
+#endif
                         "    ],\n"
                         "    include_directories:\n"
                         "        include_directories(\n"
@@ -1036,7 +1083,11 @@ testRun(void)
                 strReplace(testCDup, STRDEF("{[C_TEST_LOG_EXPECT]}"), STRDEF("false"));
                 strReplace(testCDup, STRDEF("{[C_TEST_DEBUG_TEST_TRACE]}"), STRDEF("// Debug test trace not enabled"));
                 strReplace(testCDup, STRDEF("{[C_TEST_PATH_BUILD]}"), STRDEF(TEST_PATH "/test/unit-3/uXX/build"));
+#ifdef DEBUG_COVERAGE
                 strReplace(testCDup, STRDEF("{[C_TEST_PROFILE]}"), STRDEF("true"));
+#else
+                strReplace(testCDup, STRDEF("{[C_TEST_PROFILE]}"), STRDEF("false"));
+#endif
                 strReplace(testCDup, STRDEF("{[C_TEST_PROJECT_EXE]}"), STRDEF(TEST_PATH "/test/build/uXX/src/pgbackrest"));
                 strReplace(testCDup, STRDEF("{[C_TEST_TZ]}"), STRDEF("hrnTzSet(\"America/New_York\");"));
 

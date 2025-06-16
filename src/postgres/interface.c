@@ -63,25 +63,25 @@ typedef struct PgInterface
     unsigned int version;
 
     // Does pg_control match this version of PostgreSQL?
-    bool (*controlIs)(const unsigned char *);
+    bool (*controlIs)(const uint8_t *);
 
     // Convert pg_control to a common data structure
-    PgControl (*control)(const unsigned char *);
+    PgControl (*control)(const uint8_t *);
 
     // Get control crc offset
     size_t (*controlCrcOffset)(void);
 
     // Invalidate control checkpoint
-    void (*controlCheckpointInvalidate)(unsigned char *);
+    void (*controlCheckpointInvalidate)(uint8_t *);
 
     // Get the control version for this version of PostgreSQL
     uint32_t (*controlVersion)(void);
 
     // Does the WAL header match this version of PostgreSQL?
-    bool (*walIs)(const unsigned char *);
+    bool (*walIs)(const uint8_t *);
 
     // Convert WAL header to a common data structure
-    PgWal (*wal)(const unsigned char *);
+    PgWal (*wal)(const uint8_t *);
 } PgInterface;
 
 // Include auto-generated interfaces

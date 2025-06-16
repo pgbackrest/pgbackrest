@@ -57,7 +57,7 @@ testRun(void)
         // Memory reallocation
         memset(buffer, 0xC7, sizeof(size_t));
 
-        unsigned char *buffer2 = memReAllocInternal(buffer, sizeof(size_t) * 2);
+        uint8_t *buffer2 = memReAllocInternal(buffer, sizeof(size_t) * 2);
 
         int expectedTotal = 0;
 
@@ -220,7 +220,7 @@ testRun(void)
                 "allocation list size");
         }
 
-        unsigned char *buffer = memNew(sizeof(size_t));
+        uint8_t *buffer = memNew(sizeof(size_t));
 
         // Grow memory
         memset(buffer, 0xFE, sizeof(size_t));

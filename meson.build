@@ -4,7 +4,7 @@
 project(
     'pgbackrest',
     ['c'],
-    version: '2.55.0dev',
+    version: '2.56.0dev',
     license: 'MIT',
     meson_version: '>=0.47',
     default_options: [
@@ -55,11 +55,11 @@ warning_enable = [
     # Warn if floating-point values are used in equality comparisons
     '--Wfloat-equal',
 
-    # Warn if the format string is not a string literal and cannot be checked
-    '-Wformat-nonliteral',
-
-    # Enable -Wformat plus additional format checks
+    # Enable -Wformat plus -Wnonnull, -Wformat-nonliteral, -Wformat-security, and -Wformat-y2k
     '-Wformat=2',
+
+    # Warn about calls to formatted input/output functions such as sprintf and vsprintf that might overflow the destination buffer
+    '-Wformat-overflow=2',
 
     # Warn if the format string requires an unsigned argument and the argument is signed and vice versa
     '-Wformat-signedness',
@@ -97,9 +97,6 @@ warning_disable = [
 
     # Warn if a structure’s initializer has some fields missing. Disable so we can initialize with {0}.
     '-Wno-missing-field-initializers',
-
-    # Warn when a switch case falls through. Disable because this an useful aspect of switches and tests should catch problems.
-    '-Wno-implicit-fallthrough',
 ]
 
 add_project_arguments(cc.get_supported_arguments(warning_enable, warning_disable), language: 'c')
@@ -205,6 +202,15 @@ lib_zstd = dependency('libzstd', version: '>=1.0', required: get_option('libzstd
 
 if lib_zstd.found()
     configuration.set('HAVE_LIBZST', true, description: 'Is libzstd present?')
+endif
+
+# Suppress -Wsign-conversion for C libraries (e.g. musl) that do no accept int without warning for FD_*() macros
+if not cc.compiles(
+        '''#include <sys/select.h>
+        int main(int arg, char **argv) {int fd = 1; fd_set s; FD_ZERO(&s); FD_SET(fd, &s); FD_ISSET(fd, &s);}''',
+        args: ['-Wsign-conversion', '-Werror'])
+    message('Disabling -Wsign-conversion because int is not accepted without warning by FD_*() macros')
+    add_project_arguments(cc.get_supported_arguments('-Wno-sign-conversion'), language: 'c')
 endif
 
 # Check if the C compiler supports _Static_assert()

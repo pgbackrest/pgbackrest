@@ -65,9 +65,16 @@ testRun(void)
         TEST_RESULT_STR_Z(strNewBuf(buffer), "12345678", "new string from buffer");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("new from double");
+        TEST_TITLE("new from division");
 
-        TEST_RESULT_STR_Z(strNewDbl(999.1), "999.1", "new");
+        TEST_RESULT_STR_Z(strNewDivP(9991, 10, .precision = 2), "999.10", "new div");
+        TEST_RESULT_STR_Z(strNewDivP(9991, 10, .precision = 2, .trim = true), "999.1", "new div");
+        TEST_RESULT_STR_Z(strNewDivP(9991, 10, .precision = 0), "999", "new div");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("new from percentage");
+
+        TEST_RESULT_STR_Z(strNewPct(2, 3), "66.67%", "new pct");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("new from time");
@@ -347,6 +354,7 @@ testRun(void)
         TEST_RESULT_STR_Z(strSizeFormat(20162900), "19.2MB", "19.2 MB");
         TEST_RESULT_STR_Z(strSizeFormat(1073741824), "1GB", "1 GB");
         TEST_RESULT_STR_Z(strSizeFormat(1073741824 + 107374183), "1.1GB", "1.1 GB");
+        TEST_RESULT_STR_Z(strSizeFormat(UINT64_MAX / 10), "1717986918.3GB", "uint64 max / 10");
         TEST_RESULT_STR_Z(strSizeFormat(UINT64_MAX), "17179869183GB", "uint64 max");
     }
 

@@ -166,7 +166,7 @@ testRun(void)
                     STRDEF("storage test server"), STRDEF("test"), HRN_FORK_CHILD_READ(), HRN_FORK_CHILD_WRITE());
 
                 static const ProtocolServerHandler commandHandler[] = {PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST};
-                protocolServerProcess(server, NULL, commandHandler, LENGTH_OF(commandHandler));
+                protocolServerProcess(server, NULL, LSTDEF(commandHandler));
             }
             HRN_FORK_CHILD_END();
 

@@ -12,48 +12,52 @@ Harness for PostgreSQL Interface
 Interface definition
 ***********************************************************************************************************************************/
 uint32_t hrnPgInterfaceCatalogVersion094(void);
-void hrnPgInterfaceControl094(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
-void hrnPgInterfaceWal094(unsigned int magic, PgWal pgWal, unsigned char *buffer);
+void hrnPgInterfaceControl094(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
+void hrnPgInterfaceWal094(unsigned int magic, PgWal pgWal, uint8_t *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion095(void);
-void hrnPgInterfaceControl095(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
-void hrnPgInterfaceWal095(unsigned int magic, PgWal pgWal, unsigned char *buffer);
+void hrnPgInterfaceControl095(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
+void hrnPgInterfaceWal095(unsigned int magic, PgWal pgWal, uint8_t *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion096(void);
-void hrnPgInterfaceControl096(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
-void hrnPgInterfaceWal096(unsigned int magic, PgWal pgWal, unsigned char *buffer);
+void hrnPgInterfaceControl096(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
+void hrnPgInterfaceWal096(unsigned int magic, PgWal pgWal, uint8_t *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion100(void);
-void hrnPgInterfaceControl100(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
-void hrnPgInterfaceWal100(unsigned int magic, PgWal pgWal, unsigned char *buffer);
+void hrnPgInterfaceControl100(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
+void hrnPgInterfaceWal100(unsigned int magic, PgWal pgWal, uint8_t *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion110(void);
-void hrnPgInterfaceControl110(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
-void hrnPgInterfaceWal110(unsigned int magic, PgWal pgWal, unsigned char *buffer);
+void hrnPgInterfaceControl110(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
+void hrnPgInterfaceWal110(unsigned int magic, PgWal pgWal, uint8_t *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion120(void);
-void hrnPgInterfaceControl120(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
-void hrnPgInterfaceWal120(unsigned int magic, PgWal pgWal, unsigned char *buffer);
+void hrnPgInterfaceControl120(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
+void hrnPgInterfaceWal120(unsigned int magic, PgWal pgWal, uint8_t *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion130(void);
-void hrnPgInterfaceControl130(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
-void hrnPgInterfaceWal130(unsigned int magic, PgWal pgWal, unsigned char *buffer);
+void hrnPgInterfaceControl130(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
+void hrnPgInterfaceWal130(unsigned int magic, PgWal pgWal, uint8_t *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion140(void);
-void hrnPgInterfaceControl140(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
-void hrnPgInterfaceWal140(unsigned int magic, PgWal pgWal, unsigned char *buffer);
+void hrnPgInterfaceControl140(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
+void hrnPgInterfaceWal140(unsigned int magic, PgWal pgWal, uint8_t *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion150(void);
-void hrnPgInterfaceControl150(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
-void hrnPgInterfaceWal150(unsigned int magic, PgWal pgWal, unsigned char *buffer);
+void hrnPgInterfaceControl150(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
+void hrnPgInterfaceWal150(unsigned int magic, PgWal pgWal, uint8_t *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion160(void);
-void hrnPgInterfaceControl160(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
-void hrnPgInterfaceWal160(unsigned int magic, PgWal pgWal, unsigned char *buffer);
+void hrnPgInterfaceControl160(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
+void hrnPgInterfaceWal160(unsigned int magic, PgWal pgWal, uint8_t *buffer);
 
 uint32_t hrnPgInterfaceCatalogVersion170(void);
-void hrnPgInterfaceControl170(unsigned int controlVersion, unsigned int crc, PgControl pgControl, unsigned char *buffer);
-void hrnPgInterfaceWal170(unsigned int magic, PgWal pgWal, unsigned char *buffer);
+void hrnPgInterfaceControl170(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
+void hrnPgInterfaceWal170(unsigned int magic, PgWal pgWal, uint8_t *buffer);
+
+uint32_t hrnPgInterfaceCatalogVersion180(void);
+void hrnPgInterfaceControl180(unsigned int controlVersion, unsigned int crc, PgControl pgControl, uint8_t *buffer);
+void hrnPgInterfaceWal180(unsigned int magic, PgWal pgWal, uint8_t *buffer);
 
 typedef struct HrnPgInterface
 {
@@ -64,14 +68,21 @@ typedef struct HrnPgInterface
     unsigned int (*catalogVersion)(void);
 
     // Create pg_control
-    void (*control)(unsigned int, unsigned int, PgControl, unsigned char *);
+    void (*control)(unsigned int, unsigned int, PgControl, uint8_t *);
 
     // Create WAL header
-    void (*wal)(unsigned int, PgWal, unsigned char *);
+    void (*wal)(unsigned int, PgWal, uint8_t *);
 } HrnPgInterface;
 
 static const HrnPgInterface hrnPgInterface[] =
 {
+    {
+        .version = PG_VERSION_18,
+
+        .catalogVersion = hrnPgInterfaceCatalogVersion180,
+        .control = hrnPgInterfaceControl180,
+        .wal = hrnPgInterfaceWal180,
+    },
     {
         .version = PG_VERSION_17,
 

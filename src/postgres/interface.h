@@ -101,7 +101,6 @@ typedef struct PgControl
     unsigned int catalogVersion;
 
     uint64_t checkpoint;                                            // Last checkpoint LSN
-    time_t checkpointTime;                                          // Last checkpoint time
     uint32_t timeline;                                              // Current timeline
 
     PgPageSize pageSize;
@@ -171,7 +170,7 @@ FN_EXTERN StringList *pgLsnRangeToWalSegmentList(
 FN_EXTERN const String *pgLsnName(unsigned int pgVersion);
 
 // Calculate the checksum for a page. Page cannot be const because the page header is temporarily modified during processing.
-FN_EXTERN uint16_t pgPageChecksum(unsigned char *page, uint32_t blockNo, PgPageSize pageSize);
+FN_EXTERN uint16_t pgPageChecksum(uint8_t *page, uint32_t blockNo, PgPageSize pageSize);
 
 // Returns true if page size is valid, false otherwise
 FN_EXTERN bool pgPageSizeValid(PgPageSize pageSize);

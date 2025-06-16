@@ -26,7 +26,7 @@ cipherPassGen(const CipherType cipherType)
 
     if (cipherType != cipherTypeNone)
     {
-        unsigned char buffer[48]; // 48 is the amount of entropy needed to get a 64 base key
+        uint8_t buffer[48];                                         // 48 is the amount of entropy needed to get a 64 base key
         cryptoRandomBytes(buffer, sizeof(buffer));
 
         result = strNewEncode(encodingBase64, BUF(buffer, sizeof(buffer)));

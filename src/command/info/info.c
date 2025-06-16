@@ -251,7 +251,7 @@ stanzaStatus(const int code, const InfoStanzaRepo *const stanzaData, const Varia
         {
             kvPut(
                 backupLockKv, STATUS_KEY_LOCK_BACKUP_PERCENT_COMPLETE_VAR,
-                VARUINT((unsigned int)(((double)stanzaData->sizeComplete / (double)stanzaData->size) * 10000)));
+                VARUINT(cvtPctToUInt(stanzaData->sizeComplete, stanzaData->size)));
         }
     }
 

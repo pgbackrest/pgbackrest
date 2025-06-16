@@ -37,6 +37,7 @@ static bool testContainerData = false;
 static bool testLogExpectData = false;
 static unsigned int testIdxData = 0;
 static bool testTiming = true;
+static const char *testArchitectureData = NULL;
 static const char *testPathData = NULL;
 static const char *testUserData = NULL;
 static const char *testVmData = NULL;
@@ -64,8 +65,9 @@ Initialize harness
 void
 hrnInit(
     const char *const testExe, const char *const testProjectExe, const bool testContainer, const bool testLogExpect,
-    const unsigned int testIdx, const bool timing, const char *const testPath, const char *const testUser, const char *const testVm,
-    const char *const testPgVersion,const char *const testDataPath, const char *const testRepoPath)
+    const unsigned int testIdx, const bool timing, const char *const architecture, const char *const testPath,
+    const char *const testUser, const char *const testVm, const char *const testPgVersion,const char *const testDataPath,
+    const char *const testRepoPath)
 {
     FUNCTION_HARNESS_VOID();
 
@@ -77,6 +79,7 @@ hrnInit(
     (void)testLogExpectData;
     testIdxData = testIdx;
     testTiming = timing;
+    testArchitectureData = architecture;
     testPathData = testPath;
     testUserData = testUser;
     testVmData = testVm;
@@ -226,7 +229,7 @@ hrnComplete(void)
 
 /**********************************************************************************************************************************/
 void
-hrnFileRead(const char *fileName, unsigned char *buffer, size_t bufferSize)
+hrnFileRead(const char *fileName, uint8_t *buffer, size_t bufferSize)
 {
     int result = open(fileName, O_RDONLY, 0660);
 
@@ -253,7 +256,7 @@ hrnFileRead(const char *fileName, unsigned char *buffer, size_t bufferSize)
 
 /**********************************************************************************************************************************/
 void
-hrnFileWrite(const char *fileName, const unsigned char *buffer, size_t bufferSize)
+hrnFileWrite(const char *fileName, const uint8_t *buffer, size_t bufferSize)
 {
     int result = open(fileName, O_WRONLY | O_CREAT | O_TRUNC, 0660);
 
@@ -290,12 +293,12 @@ hrnDiff(const char *expected, const char *actual)
     // Write expected file
     char expectedFile[1024];
     snprintf(expectedFile, sizeof(expectedFile), "%s/diff.expected", hrnPath());
-    hrnFileWrite(expectedFile, (const unsigned char *)expected, strlen(expected));
+    hrnFileWrite(expectedFile, (const uint8_t *)expected, strlen(expected));
 
     // Write actual file
     char actualFile[1024];
     snprintf(actualFile, sizeof(actualFile), "%s/diff.actual", hrnPath());
-    hrnFileWrite(actualFile, (const unsigned char *)actual, strlen(actual));
+    hrnFileWrite(actualFile, (const uint8_t *)actual, strlen(actual));
 
     // Perform diff
     char command[2560];
@@ -311,7 +314,7 @@ hrnDiff(const char *expected, const char *actual)
     // Read result
     char resultFile[1024];
     snprintf(resultFile, sizeof(resultFile), "%s/diff.result", hrnPath());
-    hrnFileRead(resultFile, (unsigned char *)harnessDiffBuffer, sizeof(harnessDiffBuffer));
+    hrnFileRead(resultFile, (uint8_t *)harnessDiffBuffer, sizeof(harnessDiffBuffer));
 
     // Remove last linefeed from diff output
     harnessDiffBuffer[strlen(harnessDiffBuffer) - 1] = 0;
@@ -523,8 +526,8 @@ hrnTestResultDouble(double actual, double expected)
 
     if (actual != expected)
     {
-        char actualZ[256];
-        char expectedZ[256];
+        char actualZ[318];
+        char expectedZ[318];
 
         snprintf(actualZ, sizeof(actualZ), "%f", actual);
         snprintf(expectedZ, sizeof(expectedZ), "%f", expected);
@@ -683,7 +686,7 @@ hrnTestResultZ(const char *actual, const char *expected, HarnessTestResultOperat
         case harnessTestResultOperationNe:
             result =
                 (actual == NULL && expected != NULL) || (actual != NULL && expected == NULL) ||
-                (actual != NULL && expected != NULL && strcmp(actual, expected) == 0);
+                (actual != NULL && expected != NULL && strcmp(actual, expected) != 0);
             break;
     }
 
@@ -749,6 +752,14 @@ testUser(void)
 {
     FUNCTION_HARNESS_VOID();
     FUNCTION_HARNESS_RETURN(STRINGZ, testUserData);
+}
+
+/**********************************************************************************************************************************/
+const char *
+testArchitecture(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RETURN(STRINGZ, testArchitectureData);
 }
 
 /**********************************************************************************************************************************/

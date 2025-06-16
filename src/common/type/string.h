@@ -66,8 +66,21 @@ FN_EXTERN String *strNewZN(const char *string, size_t size);
 // will be copied but only the data before the NULL character will be used as a string.
 FN_EXTERN String *strNewBuf(const Buffer *buffer);
 
-// Create a new fixed length string by converting the double value
-FN_EXTERN String *strNewDbl(double value);
+// Create a new fixed length string by performing division
+typedef struct StrNewDivParam
+{
+    VAR_PARAM_HEADER;
+    unsigned int precision;                                         // Digits of precision after the decimal
+    bool trim;                                                      // Trim trailing zeros and decimal point?
+} StrNewDivParam;
+
+#define strNewDivP(dividend, divisor, ...)                                                                                         \
+    strNewDiv(dividend, divisor, (StrNewDivParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN String *strNewDiv(uint64_t dividend, uint64_t divisor, StrNewDivParam param);
+
+// Create a new fixed length string containing a percentage
+FN_EXTERN String *strNewPct(uint64_t dividend, uint64_t divisor);
 
 // Create a new fixed length string by converting a timestamp
 typedef struct StrNewTimeParam

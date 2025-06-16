@@ -143,7 +143,7 @@ static const uint8_t memContextSizePossible[memQtyMany + 1][memQtyMany + 1][memQ
 Get pointers to optional parts of the manifest
 ***********************************************************************************************************************************/
 // Get pointer to child part
-#define MEM_CONTEXT_CHILD_OFFSET(memContext)                        ((unsigned char *)(memContext + 1) + memContext->allocExtra)
+#define MEM_CONTEXT_CHILD_OFFSET(memContext)                        ((uint8_t *)(memContext + 1) + memContext->allocExtra)
 
 static MemContextChildOne *
 memContextChildOne(MemContext *const memContext)
@@ -159,7 +159,7 @@ memContextChildMany(MemContext *const memContext)
 
 // Get pointer to allocation part
 #define MEM_CONTEXT_ALLOC_OFFSET(memContext)                                                                                       \
-    ((unsigned char *)(memContext + 1) + memContextSizePossible[memContext->childQty][0][0] + memContext->allocExtra)
+    ((uint8_t *)(memContext + 1) + memContextSizePossible[memContext->childQty][0][0] + memContext->allocExtra)
 
 static MemContextAllocOne *
 memContextAllocOne(MemContext *const memContext)
@@ -179,7 +179,7 @@ memContextCallbackOne(MemContext *const memContext)
 {
     return
         (MemContextCallbackOne *)
-        ((unsigned char *)(memContext + 1) +
+        ((uint8_t *)(memContext + 1) +
          memContextSizePossible[memContext->childQty][memContext->allocQty][0] + memContext->allocExtra);
 }
 
@@ -1127,7 +1127,7 @@ memContextSize(const MemContext *const this)
 
     // Size of struct and extra
     size_t total = 0;
-    const unsigned char *offset = (const unsigned char *)(this + 1) + this->allocExtra;
+    const uint8_t *offset = (const uint8_t *)(this + 1) + this->allocExtra;
 
     // Size of child contexts
     if (this->childQty == memQtyOne)
@@ -1195,7 +1195,7 @@ memContextSize(const MemContext *const this)
     if (this->callbackQty != memQtyNone)
         offset += sizeof(MemContextCallbackOne);
 
-    FUNCTION_TEST_RETURN(SIZE, (size_t)(offset - (const unsigned char *)this) + total);
+    FUNCTION_TEST_RETURN(SIZE, (size_t)(offset - (const uint8_t *)this) + total);
 }
 
 #endif // DEBUG

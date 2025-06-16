@@ -162,17 +162,36 @@ strNewZ(const char *const string)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-strNewDbl(const double value)
+strNewDiv(const uint64_t dividend, const uint64_t divisor, StrNewDivParam param)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(DOUBLE, value);
+        FUNCTION_TEST_PARAM(UINT64, dividend);
+        FUNCTION_TEST_PARAM(UINT64, divisor);
+        FUNCTION_TEST_PARAM(UINT, param.precision);
+        FUNCTION_TEST_PARAM(BOOL, param.trim);
     FUNCTION_TEST_END();
 
-    char working[CVT_BASE10_BUFFER_SIZE];
+    char working[CVT_DIV_BUFFER_SIZE];
 
-    cvtDoubleToZ(value, working, sizeof(working));
+    size_t resultSize = cvtDivToZ(dividend, divisor, param.precision, param.trim, working, sizeof(working));
 
-    FUNCTION_TEST_RETURN(STRING, strNewZ(working));
+    FUNCTION_TEST_RETURN(STRING, strNewZN(working, resultSize));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN String *
+strNewPct(const uint64_t dividend, const uint64_t divisor)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT64, dividend);
+        FUNCTION_TEST_PARAM(UINT64, divisor);
+    FUNCTION_TEST_END();
+
+    char working[CVT_PCT_BUFFER_SIZE];
+
+    size_t resultSize = cvtPctToZ(dividend, divisor, working, sizeof(working));
+
+    FUNCTION_TEST_RETURN(STRING, strNewZN(working, resultSize));
 }
 
 /**********************************************************************************************************************************/
@@ -1052,26 +1071,31 @@ strSizeFormat(const uint64_t size)
 
     if (size < 1024)
         result = strNewFmt("%" PRIu64 "B", size);
-    else if (size < (1024 * 1024))
-    {
-        if ((uint64_t)((double)size / 102.4) % 10 != 0)
-            result = strNewFmt("%.1lfKB", (double)size / 1024);
-        else
-            result = strNewFmt("%" PRIu64 "KB", size / 1024);
-    }
-    else if (size < (1024 * 1024 * 1024))
-    {
-        if ((uint64_t)((double)size / (1024 * 102.4)) % 10 != 0)
-            result = strNewFmt("%.1lfMB", (double)size / (1024 * 1024));
-        else
-            result = strNewFmt("%" PRIu64 "MB", size / (1024 * 1024));
-    }
     else
     {
-        if ((uint64_t)((double)size / (1024 * 1024 * 102.4)) % 10 != 0)
-            result = strNewFmt("%.1lfGB", (double)size / (1024 * 1024 * 1024));
-        else
-            result = strNewFmt("%" PRIu64 "GB", size / (1024 * 1024 * 1024));
+        char working[CVT_DIV_BUFFER_SIZE];
+        uint64_t divisor = 1024 * 1024 * 1024;
+        unsigned int precision = 1;
+        const char *suffix = "GB";
+
+        if (size < (1024 * 1024))
+        {
+            divisor = 1024;
+            suffix = "KB";
+        }
+        else if (size < (1024 * 1024 * 1024))
+        {
+            divisor = 1024 * 1024;
+            suffix = "MB";
+        }
+
+        // Skip precision when it would cause overflow
+        if (size > UINT64_MAX / 10)
+            precision = 0;
+
+        // Format size
+        cvtDivToZ(size, divisor, precision, true, working, sizeof(working));
+        result = strNewFmt("%s%s", working, suffix);
     }
 
     FUNCTION_TEST_RETURN(STRING, result);

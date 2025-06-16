@@ -652,6 +652,16 @@ typedef enum
 } ParseRuleValueTime;
 
 /***********************************************************************************************************************************
+Dynamic default values
+***********************************************************************************************************************************/
+#define PARSE_RULE_DEFAULT_DYNAMIC(value)                           PARSE_RULE_U32_1(parseRuleDefaultDynamic##value)
+
+typedef enum
+{
+    parseRuleDefaultDynamicBin,
+} ParseRuleDefaultDynamic;
+
+/***********************************************************************************************************************************
 Command parse data
 ***********************************************************************************************************************************/
 #define PARSE_RULE_VAL_CMD(value)                                   PARSE_RULE_U32_1(cfgCmd##value)
@@ -1415,52 +1425,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                    // opt/archive-timeout
     ),                                                                                                        // opt/archive-timeout
     // -----------------------------------------------------------------------------------------------------------------------------
-    PARSE_RULE_OPTION                                                                                        // opt/backup-full-incr
-    (                                                                                                        // opt/backup-full-incr
-        PARSE_RULE_OPTION_NAME("backup-full-incr"),                                                          // opt/backup-full-incr
-        PARSE_RULE_OPTION_TYPE(Boolean),                                                                     // opt/backup-full-incr
-        PARSE_RULE_OPTION_NEGATE(true),                                                                      // opt/backup-full-incr
-        PARSE_RULE_OPTION_RESET(true),                                                                       // opt/backup-full-incr
-        PARSE_RULE_OPTION_REQUIRED(true),                                                                    // opt/backup-full-incr
-        PARSE_RULE_OPTION_SECTION(Global),                                                                   // opt/backup-full-incr
-                                                                                                             // opt/backup-full-incr
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                       // opt/backup-full-incr
-        (                                                                                                    // opt/backup-full-incr
-            PARSE_RULE_OPTION_COMMAND(Backup)                                                                // opt/backup-full-incr
-        ),                                                                                                   // opt/backup-full-incr
-                                                                                                             // opt/backup-full-incr
-        PARSE_RULE_OPTIONAL                                                                                  // opt/backup-full-incr
-        (                                                                                                    // opt/backup-full-incr
-            PARSE_RULE_OPTIONAL_GROUP                                                                        // opt/backup-full-incr
-            (                                                                                                // opt/backup-full-incr
-                PARSE_RULE_FILTER_CMD                                                                        // opt/backup-full-incr
-                (                                                                                            // opt/backup-full-incr
-                    PARSE_RULE_VAL_CMD(Backup),                                                              // opt/backup-full-incr
-                ),                                                                                           // opt/backup-full-incr
-                                                                                                             // opt/backup-full-incr
-                PARSE_RULE_OPTIONAL_DEPEND                                                                   // opt/backup-full-incr
-                (                                                                                            // opt/backup-full-incr
-                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(PARSE_RULE_VAL_BOOL_FALSE),                           // opt/backup-full-incr
-                    PARSE_RULE_VAL_OPT(Online),                                                              // opt/backup-full-incr
-                    PARSE_RULE_VAL_BOOL_TRUE,                                                                // opt/backup-full-incr
-                ),                                                                                           // opt/backup-full-incr
-                                                                                                             // opt/backup-full-incr
-                PARSE_RULE_OPTIONAL_DEFAULT                                                                  // opt/backup-full-incr
-                (                                                                                            // opt/backup-full-incr
-                    PARSE_RULE_VAL_BOOL_FALSE,                                                               // opt/backup-full-incr
-                ),                                                                                           // opt/backup-full-incr
-            ),                                                                                               // opt/backup-full-incr
-                                                                                                             // opt/backup-full-incr
-            PARSE_RULE_OPTIONAL_GROUP                                                                        // opt/backup-full-incr
-            (                                                                                                // opt/backup-full-incr
-                PARSE_RULE_OPTIONAL_DEFAULT                                                                  // opt/backup-full-incr
-                (                                                                                            // opt/backup-full-incr
-                    PARSE_RULE_VAL_BOOL_FALSE,                                                               // opt/backup-full-incr
-                ),                                                                                           // opt/backup-full-incr
-            ),                                                                                               // opt/backup-full-incr
-        ),                                                                                                   // opt/backup-full-incr
-    ),                                                                                                       // opt/backup-full-incr
-    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                          // opt/backup-standby
     (                                                                                                          // opt/backup-standby
         PARSE_RULE_OPTION_NAME("backup-standby"),                                                              // opt/backup-standby
@@ -1706,8 +1670,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                                     // opt/cmd
         PARSE_RULE_OPTION_NAME("cmd"),                                                                                    // opt/cmd
         PARSE_RULE_OPTION_TYPE(String),                                                                                   // opt/cmd
+        PARSE_RULE_OPTION_DEFAULT_TYPE(Dynamic),                                                                          // opt/cmd
         PARSE_RULE_OPTION_RESET(true),                                                                                    // opt/cmd
-        PARSE_RULE_OPTION_REQUIRED(false),                                                                                // opt/cmd
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                                 // opt/cmd
         PARSE_RULE_OPTION_SECTION(Global),                                                                                // opt/cmd
                                                                                                                           // opt/cmd
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                    // opt/cmd
@@ -1743,6 +1708,17 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                             // opt/cmd
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                            // opt/cmd
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                             // opt/cmd
+        ),                                                                                                                // opt/cmd
+                                                                                                                          // opt/cmd
+        PARSE_RULE_OPTIONAL                                                                                               // opt/cmd
+        (                                                                                                                 // opt/cmd
+            PARSE_RULE_OPTIONAL_GROUP                                                                                     // opt/cmd
+            (                                                                                                             // opt/cmd
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                               // opt/cmd
+                (                                                                                                         // opt/cmd
+                    PARSE_RULE_DEFAULT_DYNAMIC(Bin),                                                                      // opt/cmd
+                ),                                                                                                        // opt/cmd
+            ),                                                                                                            // opt/cmd
         ),                                                                                                                // opt/cmd
     ),                                                                                                                    // opt/cmd
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -3922,8 +3898,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                             // opt/pg-host-cmd
         PARSE_RULE_OPTION_NAME("pg-host-cmd"),                                                                    // opt/pg-host-cmd
         PARSE_RULE_OPTION_TYPE(String),                                                                           // opt/pg-host-cmd
+        PARSE_RULE_OPTION_DEFAULT_TYPE(Dynamic),                                                                  // opt/pg-host-cmd
         PARSE_RULE_OPTION_RESET(true),                                                                            // opt/pg-host-cmd
-        PARSE_RULE_OPTION_REQUIRED(false),                                                                        // opt/pg-host-cmd
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                         // opt/pg-host-cmd
         PARSE_RULE_OPTION_SECTION(Stanza),                                                                        // opt/pg-host-cmd
         PARSE_RULE_OPTION_GROUP_ID(Pg),                                                                           // opt/pg-host-cmd
                                                                                                                   // opt/pg-host-cmd
@@ -3949,6 +3926,11 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEPEND                                                                        // opt/pg-host-cmd
                 (                                                                                                 // opt/pg-host-cmd
                     PARSE_RULE_VAL_OPT(PgHost),                                                                   // opt/pg-host-cmd
+                ),                                                                                                // opt/pg-host-cmd
+                                                                                                                  // opt/pg-host-cmd
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                       // opt/pg-host-cmd
+                (                                                                                                 // opt/pg-host-cmd
+                    PARSE_RULE_DEFAULT_DYNAMIC(Bin),                                                              // opt/pg-host-cmd
                 ),                                                                                                // opt/pg-host-cmd
             ),                                                                                                    // opt/pg-host-cmd
         ),                                                                                                        // opt/pg-host-cmd
@@ -4000,7 +3982,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_NAME("pg-host-config-include-path"),                                    // opt/pg-host-config-include-path
         PARSE_RULE_OPTION_TYPE(Path),                                                             // opt/pg-host-config-include-path
         PARSE_RULE_OPTION_RESET(true),                                                            // opt/pg-host-config-include-path
-        PARSE_RULE_OPTION_REQUIRED(false),                                                        // opt/pg-host-config-include-path
+        PARSE_RULE_OPTION_REQUIRED(true),                                                         // opt/pg-host-config-include-path
         PARSE_RULE_OPTION_SECTION(Stanza),                                                        // opt/pg-host-config-include-path
         PARSE_RULE_OPTION_GROUP_ID(Pg),                                                           // opt/pg-host-config-include-path
                                                                                                   // opt/pg-host-config-include-path
@@ -4041,7 +4023,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_NAME("pg-host-config-path"),                                                    // opt/pg-host-config-path
         PARSE_RULE_OPTION_TYPE(Path),                                                                     // opt/pg-host-config-path
         PARSE_RULE_OPTION_RESET(true),                                                                    // opt/pg-host-config-path
-        PARSE_RULE_OPTION_REQUIRED(false),                                                                // opt/pg-host-config-path
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                 // opt/pg-host-config-path
         PARSE_RULE_OPTION_SECTION(Stanza),                                                                // opt/pg-host-config-path
         PARSE_RULE_OPTION_GROUP_ID(Pg),                                                                   // opt/pg-host-config-path
                                                                                                           // opt/pg-host-config-path
@@ -4453,7 +4435,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     PARSE_RULE_OPTION                                                                                          // opt/pg-socket-path
     (                                                                                                          // opt/pg-socket-path
         PARSE_RULE_OPTION_NAME("pg-socket-path"),                                                              // opt/pg-socket-path
-        PARSE_RULE_OPTION_TYPE(Path),                                                                          // opt/pg-socket-path
+        PARSE_RULE_OPTION_TYPE(String),                                                                        // opt/pg-socket-path
         PARSE_RULE_OPTION_RESET(true),                                                                         // opt/pg-socket-path
         PARSE_RULE_OPTION_REQUIRED(false),                                                                     // opt/pg-socket-path
         PARSE_RULE_OPTION_SECTION(Stanza),                                                                     // opt/pg-socket-path
@@ -6619,8 +6601,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                           // opt/repo-host-cmd
         PARSE_RULE_OPTION_NAME("repo-host-cmd"),                                                                // opt/repo-host-cmd
         PARSE_RULE_OPTION_TYPE(String),                                                                         // opt/repo-host-cmd
+        PARSE_RULE_OPTION_DEFAULT_TYPE(Dynamic),                                                                // opt/repo-host-cmd
         PARSE_RULE_OPTION_RESET(true),                                                                          // opt/repo-host-cmd
-        PARSE_RULE_OPTION_REQUIRED(false),                                                                      // opt/repo-host-cmd
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                       // opt/repo-host-cmd
         PARSE_RULE_OPTION_SECTION(Global),                                                                      // opt/repo-host-cmd
         PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                       // opt/repo-host-cmd
                                                                                                                 // opt/repo-host-cmd
@@ -6667,6 +6650,11 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEPEND                                                                      // opt/repo-host-cmd
                 (                                                                                               // opt/repo-host-cmd
                     PARSE_RULE_VAL_OPT(RepoHost),                                                               // opt/repo-host-cmd
+                ),                                                                                              // opt/repo-host-cmd
+                                                                                                                // opt/repo-host-cmd
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                     // opt/repo-host-cmd
+                (                                                                                               // opt/repo-host-cmd
+                    PARSE_RULE_DEFAULT_DYNAMIC(Bin),                                                            // opt/repo-host-cmd
                 ),                                                                                              // opt/repo-host-cmd
             ),                                                                                                  // opt/repo-host-cmd
         ),                                                                                                      // opt/repo-host-cmd
@@ -11481,7 +11469,6 @@ static const uint8_t optionResolveOrder[] =
     cfgOptArchiveCheck,                                                                                         // opt-resolve-order
     cfgOptArchiveCopy,                                                                                          // opt-resolve-order
     cfgOptArchiveModeCheck,                                                                                     // opt-resolve-order
-    cfgOptBackupFullIncr,                                                                                       // opt-resolve-order
     cfgOptForce,                                                                                                // opt-resolve-order
     cfgOptPgDatabase,                                                                                           // opt-resolve-order
     cfgOptPgHost,                                                                                               // opt-resolve-order

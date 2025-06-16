@@ -1,4 +1,4 @@
-<release date="XXXX-XX-XX" version="2.55.0dev" title="UNDER DEVELOPMENT">
+<release date="2025-04-21" version="2.55.0" title="Verification Improvements and PostgreSQL 18 Support">
     <release-core-list>
         <release-bug-list>
             <release-item>
@@ -93,6 +93,31 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2603"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p><proper>PostgreSQL</proper> 18 experimental support.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2529"/>
+                <github-pull-request id="2535"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="chris.bandy"/>
+                    <release-item-contributor id="david.steele"/>
+                    <!-- Actually tester, but we don't have a tag for that yet -->
+                    <release-item-reviewer id="chris.bandy"/>
+                </release-item-contributor-list>
+
+                <p>Allow connections to <postgres/> on abstract domain sockets.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2410"/>
                 <github-pull-request id="2526"/>
 
@@ -129,6 +154,30 @@
                 </release-item-contributor-list>
 
                 <p>Use <proper>lz4</proper> for protocol compression.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2592"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Calculate <id>content-md5</id> on <proper>S3</proper> only when required.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2591"/>
+                <github-pull-request id="2594"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Warn when a value for a multi-key option is overwritten.</p>
             </release-item>
 
             <release-item>
@@ -171,7 +220,12 @@
 
         <release-development-list>
             <release-item>
-                <github-pull-request id="2306"/>
+                <commit subject="Full/incremental backup method.">
+                    <github-pull-request id="2306"/>
+                </commit>
+                <commit subject='Revert "full/incremental backup method."'>
+                    <github-pull-request id="2588"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
@@ -179,7 +233,7 @@
                     <release-item-reviewer id="stefan.fercot"/>
                 </release-item-contributor-list>
 
-                <p>Full/incremental backup method.</p>
+                <p>Revert <quote>full/incremental backup method.</quote></p>
             </release-item>
 
             <release-item>
@@ -201,11 +255,47 @@
 
                 <p>Fix missing <code>return</code> in <code>FUNCTION_LOG_RETURN_VOID()</code>.</p>
             </release-item>
+
+            <release-item>
+                <github-pull-request id="2596"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="yegor.zhmak"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Remove extraneous const from <code>cvtIntToZ()</code> prototype.</p>
+            </release-item>
         </release-development-list>
     </release-core-list>
 
     <release-doc-list>
         <release-improvement-list>
+            <release-item>
+                <github-issue id="2591"/>
+                <github-pull-request id="2595"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="terry.macandrew"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix documentation for specifying multiple stanzas with <setting>tls-server-auth</setting>.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2601"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Clarify incremental backup expiration.</p>
+            </release-item>
+
             <release-item>
                 <github-pull-request id="2541"/>
 
@@ -218,6 +308,17 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2605"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add FAQ about exporting self-contained cluster.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2538"/>
 
                 <release-item-contributor-list>
@@ -227,7 +328,7 @@
                     <release-item-reviewer id="christophe.courtois"/>
                 </release-item-contributor-list>
 
-                <p>Caveat <br-setting>--tablespace-map-all</br-setting> regarding tablespace creation.</p>
+                <p>Caveat <setting>--tablespace-map-all</setting> regarding tablespace creation.</p>
             </release-item>
 
             <release-item>
@@ -240,7 +341,7 @@
                     <release-item-reviewer id="antoine.beaupre"/>
                 </release-item-contributor-list>
 
-                <p>Clarify behavior of <br-setting>--repo-retention-full-type</br-setting>.</p>
+                <p>Clarify behavior of <setting>--repo-retention-full-type</setting>.</p>
             </release-item>
 
             <release-item>
@@ -251,9 +352,46 @@
                     <release-item-reviewer id="stefan.fercot"/>
                 </release-item-contributor-list>
 
-                <p>Change <br-setting>--process-max</br-setting> recommendation for object stores to <br-setting>--repo-bundle</br-setting>.</p>
+                <p>Change <setting>--process-max</setting> recommendation for object stores to <setting>--repo-bundle</setting>.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2589"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="hyunkyu.han"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Update <setting>unix_socket_directory</setting> to <setting>unix_socket_directories</setting>.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2600"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="martin.marques"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="martin.marques"/>
+                    <release-item-reviewer id="don.seiler"/>
+                </release-item-contributor-list>
+
+                <p>Recommend not placing <setting>spool-path</setting> within <path>pg_xlog</path>/<path>pg_wal</path>.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-pull-request id="2585"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="albert.chae"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix instances of <quote>of of</quote>.</p>
+            </release-item>
+        </release-development-list>
     </release-doc-list>
 
     <release-test-list>
@@ -265,13 +403,19 @@
                 <commit subject="Fix test logging.">
                     <github-pull-request id="2578"/>
                 </commit>
+                <commit subject="Fix test logging in storageHelperDryRunInit().">
+                    <github-pull-request id="2597"/>
+                </commit>
+                <commit subject="Fix incorrect not-equal comparison in TEST_RESULT_Z_NE().">
+                    <github-pull-request id="2608"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="yegor.zhmak"/>
                     <release-item-reviewer id="david.steele"/>
                 </release-item-contributor-list>
 
-                <p>Fix test logging and comments in unit tests.</p>
+                <p>Fix tests, logging, and comments in unit tests.</p>
             </release-item>
         </release-development-list>
     </release-test-list>
