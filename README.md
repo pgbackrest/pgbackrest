@@ -106,18 +106,12 @@ Contributions to pgBackRest are always welcome! Please see our [Contributing Gui
 
 ## Support
 
-pgBackRest is completely free and open source under the [MIT](https://github.com/pgbackrest/pgbackrest/blob/main/LICENSE) license. You may use it for personal or commercial purposes without any restrictions whatsoever. Bug reports are taken very seriously and will be addressed as quickly as possible.
+pgBackRest is completely free and open source under the [MIT](https://github.com/pgbackrest/pgbackrest/blob/main/LICENSE) license. You may use it for personal or commercial purposes without any restrictions whatsoever. Bug reports are taken very seriously and will be addressed as quickly as possible. Please report bugs [here]({[github-url-base}]/issues).
 
-Creating a robust disaster recovery policy with proper replication and backup strategies can be a very complex and daunting task. You may find that you need help during the architecture phase and ongoing support to ensure that your enterprise continues running smoothly.
-
-[Crunchy Data](http://www.crunchydata.com) provides packaged versions of pgBackRest for major operating systems and expert full life-cycle commercial support for pgBackRest and all things PostgreSQL. [Crunchy Data](http://www.crunchydata.com) is committed to providing open source solutions with no vendor lock-in, ensuring that cross-compatibility with the community version of pgBackRest is always strictly maintained.
-
-Please visit [Crunchy Data](http://www.crunchydata.com) for more information.
+Creating a robust disaster recovery policy with proper replication and backup strategies can be a very complex and daunting task. You may find that you need help during the architecture phase and ongoing support to ensure that your enterprise continues running smoothly. There are a variety of PostgreSQL support companies that can provide this service.
 
 ## Recognition
 
-Primary recognition goes to Stephen Frost for all his valuable advice and criticism during the development of pgBackRest.
+[Crunchy Data](http://www.crunchydata.com) and [Resonate](http://www.resonate.com) have both generously supported the development of pgBackRest.
 
-[Crunchy Data](http://www.crunchydata.com) has contributed significant time and resources to pgBackRest and continues to actively support development. [Resonate](http://www.resonate.com) also contributed to the development of pgBackRest and allowed early (but well tested) versions to be installed as their primary PostgreSQL backup solution.
-
-[Armchair](https://thenounproject.com/search/?q=lounge+chair&i=129971) graphic by [Sandor Szabo](https://thenounproject.com/sandorsz).
+[Armchair](https://thenounproject.com/icon/armchair-129971) graphic by [Alexander Skowalsky](https://thenounproject.com/sandorsz).
