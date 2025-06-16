@@ -1315,10 +1315,6 @@ src/common/compress/helper.h:
   class: core
   type: c/h
 
-src/common/compress/helper.intern.h:
-  class: core
-  type: c/h
-
 src/common/compress/lz4/common.c:
   class: core
   type: c

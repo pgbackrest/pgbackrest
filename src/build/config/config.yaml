@@ -774,7 +774,25 @@ option:
     section: global
     type: integer
     required: false
+    default:
+      - bz2: 9
+      - gz: 6
+      - lz4: 1
+      - zst: 3
+    allow-range:
+      - bz2: [1, 9]
+      - gz: [-1, 9]
+      - lz4: [-5, 12]
+      - zst: [-7, 22]
     command: compress
+    depend:
+      option: compress-type
+      default: 0
+      list:
+        - bz2
+        - gz
+        - lz4
+        - zst
     command-role:
       async: {}
       main: {}
@@ -1570,6 +1588,13 @@ option:
     default: ~
     required: false
     allow-range: [0, 65535]
+    default:
+      - tls: 8432
+    depend:
+      option: pg-host-type
+      list:
+        - ssh
+        - tls
     deprecate:
       db-ssh-port: {}
       db?-ssh-port: {}
@@ -2228,13 +2253,18 @@ option:
     type: integer
     required: false
     allow-range: [0, 65535]
+    default:
+      - tls: 8432
+    depend:
+      option: repo-host-type
+      list:
+        - ssh
+        - tls
     command: repo-host-cmd
     command-role:
       async: {}
       main: {}
       local: {}
-    depend:
-      option: repo-host
     deprecate:
       backup-ssh-port: {}
 
@@ -2621,6 +2651,10 @@ option:
     group: repo
     type: size
     required: false
+    default:
+      - azure: 4MiB
+      - gcs: 4MiB
+      - s3: 5MiB
     allow-range: [64KiB, 1TiB]
     command: repo-type
     depend:

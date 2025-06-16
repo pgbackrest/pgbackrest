@@ -11,7 +11,9 @@ Rule Strings
 
 static const StringPubConst parseRuleValueStr[] =
 {
+    PARSE_RULE_STRPUB("-1"),                                                                                              // val/str
     PARSE_RULE_STRPUB("-5"),                                                                                              // val/str
+    PARSE_RULE_STRPUB("-7"),                                                                                              // val/str
     PARSE_RULE_STRPUB("/tmp/pgbackrest"),                                                                                 // val/str
     PARSE_RULE_STRPUB("/var/lib/pgbackrest"),                                                                             // val/str
     PARSE_RULE_STRPUB("/var/log/pgbackrest"),                                                                             // val/str
@@ -43,6 +45,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("256"),                                                                                             // val/str
     PARSE_RULE_STRPUB("256KiB"),                                                                                          // val/str
     PARSE_RULE_STRPUB("2MiB"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("3"),                                                                                               // val/str
     PARSE_RULE_STRPUB("30m"),                                                                                             // val/str
     PARSE_RULE_STRPUB("31m"),                                                                                             // val/str
     PARSE_RULE_STRPUB("32"),                                                                                              // val/str
@@ -54,12 +57,15 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("4PiB"),                                                                                            // val/str
     PARSE_RULE_STRPUB("512KiB"),                                                                                          // val/str
     PARSE_RULE_STRPUB("5432"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("5MiB"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("6"),                                                                                               // val/str
     PARSE_RULE_STRPUB("64KiB"),                                                                                           // val/str
     PARSE_RULE_STRPUB("65535"),                                                                                           // val/str
     PARSE_RULE_STRPUB("7d"),                                                                                              // val/str
     PARSE_RULE_STRPUB("8432"),                                                                                            // val/str
     PARSE_RULE_STRPUB("8KiB"),                                                                                            // val/str
     PARSE_RULE_STRPUB("8MiB"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("9"),                                                                                               // val/str
     PARSE_RULE_STRPUB("900"),                                                                                             // val/str
     PARSE_RULE_STRPUB("999"),                                                                                             // val/str
     PARSE_RULE_STRPUB("9999999"),                                                                                         // val/str
@@ -136,7 +142,9 @@ static const StringPubConst parseRuleValueStr[] =
 
 typedef enum
 {
+    parseRuleValStrQT_DS_1_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_DS_5_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_DS_7_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_FS_tmp_FS_pgbackrest_QT,                                                                       // val/str/enum
     parseRuleValStrQT_FS_var_FS_lib_FS_pgbackrest_QT,                                                                // val/str/enum
     parseRuleValStrQT_FS_var_FS_log_FS_pgbackrest_QT,                                                                // val/str/enum
@@ -168,6 +176,7 @@ typedef enum
     parseRuleValStrQT_256_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_256KiB_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_2MiB_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_3_QT,                                                                                          // val/str/enum
     parseRuleValStrQT_30m_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_31m_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_32_QT,                                                                                         // val/str/enum
@@ -179,12 +188,15 @@ typedef enum
     parseRuleValStrQT_4PiB_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_512KiB_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_5432_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_5MiB_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_6_QT,                                                                                          // val/str/enum
     parseRuleValStrQT_64KiB_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_65535_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_7d_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_8432_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_8KiB_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_8MiB_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_9_QT,                                                                                          // val/str/enum
     parseRuleValStrQT_900_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_999_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_9999999_QT,                                                                                    // val/str/enum
@@ -463,10 +475,15 @@ Rule Ints
 
 static const int parseRuleValueInt[] =
 {
+    -7,                                                                                                                   // val/int
     -5,                                                                                                                   // val/int
+    -1,                                                                                                                   // val/int
     0,                                                                                                                    // val/int
     1,                                                                                                                    // val/int
     2,                                                                                                                    // val/int
+    3,                                                                                                                    // val/int
+    6,                                                                                                                    // val/int
+    9,                                                                                                                    // val/int
     12,                                                                                                                   // val/int
     22,                                                                                                                   // val/int
     32,                                                                                                                   // val/int
@@ -485,10 +502,15 @@ static const int parseRuleValueInt[] =
 
 static const uint8_t parseRuleValueIntStrMap[] =
 {
+    parseRuleValStrQT_DS_7_QT,                                                                                     // val/int/strmap
     parseRuleValStrQT_DS_5_QT,                                                                                     // val/int/strmap
+    parseRuleValStrQT_DS_1_QT,                                                                                     // val/int/strmap
     parseRuleValStrQT_0_QT,                                                                                        // val/int/strmap
     parseRuleValStrQT_1_QT,                                                                                        // val/int/strmap
     parseRuleValStrQT_2_QT,                                                                                        // val/int/strmap
+    parseRuleValStrQT_3_QT,                                                                                        // val/int/strmap
+    parseRuleValStrQT_6_QT,                                                                                        // val/int/strmap
+    parseRuleValStrQT_9_QT,                                                                                        // val/int/strmap
     parseRuleValStrQT_12_QT,                                                                                       // val/int/strmap
     parseRuleValStrQT_22_QT,                                                                                       // val/int/strmap
     parseRuleValStrQT_32_QT,                                                                                       // val/int/strmap
@@ -507,10 +529,15 @@ static const uint8_t parseRuleValueIntStrMap[] =
 
 typedef enum
 {
+    parseRuleValIntDS_7,                                                                                             // val/int/enum
     parseRuleValIntDS_5,                                                                                             // val/int/enum
+    parseRuleValIntDS_1,                                                                                             // val/int/enum
     parseRuleValInt0,                                                                                                // val/int/enum
     parseRuleValInt1,                                                                                                // val/int/enum
     parseRuleValInt2,                                                                                                // val/int/enum
+    parseRuleValInt3,                                                                                                // val/int/enum
+    parseRuleValInt6,                                                                                                // val/int/enum
+    parseRuleValInt9,                                                                                                // val/int/enum
     parseRuleValInt12,                                                                                               // val/int/enum
     parseRuleValInt22,                                                                                               // val/int/enum
     parseRuleValInt32,                                                                                               // val/int/enum
@@ -546,6 +573,7 @@ static const int64_t parseRuleValueSize[] =
     1048576,                                                                                                             // val/size
     2097152,                                                                                                             // val/size
     4194304,                                                                                                             // val/size
+    5242880,                                                                                                             // val/size
     8388608,                                                                                                             // val/size
     16777216,                                                                                                            // val/size
     20971520,                                                                                                            // val/size
@@ -570,6 +598,7 @@ static const uint8_t parseRuleValueSizeStrMap[] =
     parseRuleValStrQT_1MiB_QT,                                                                                    // val/size/strmap
     parseRuleValStrQT_2MiB_QT,                                                                                    // val/size/strmap
     parseRuleValStrQT_4MiB_QT,                                                                                    // val/size/strmap
+    parseRuleValStrQT_5MiB_QT,                                                                                    // val/size/strmap
     parseRuleValStrQT_8MiB_QT,                                                                                    // val/size/strmap
     parseRuleValStrQT_16MiB_QT,                                                                                   // val/size/strmap
     parseRuleValStrQT_20MiB_QT,                                                                                   // val/size/strmap
@@ -594,6 +623,7 @@ typedef enum
     parseRuleValSize1MiB,                                                                                           // val/size/enum
     parseRuleValSize2MiB,                                                                                           // val/size/enum
     parseRuleValSize4MiB,                                                                                           // val/size/enum
+    parseRuleValSize5MiB,                                                                                           // val/size/enum
     parseRuleValSize8MiB,                                                                                           // val/size/enum
     parseRuleValSize16MiB,                                                                                          // val/size/enum
     parseRuleValSize20MiB,                                                                                          // val/size/enum
@@ -1821,6 +1851,56 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                        // opt/compress-level
         (                                                                                                      // opt/compress-level
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                             // opt/compress-level
+        ),                                                                                                     // opt/compress-level
+                                                                                                               // opt/compress-level
+        PARSE_RULE_OPTIONAL                                                                                    // opt/compress-level
+        (                                                                                                      // opt/compress-level
+            PARSE_RULE_OPTIONAL_GROUP                                                                          // opt/compress-level
+            (                                                                                                  // opt/compress-level
+                PARSE_RULE_OPTIONAL_DEPEND                                                                     // opt/compress-level
+                (                                                                                              // opt/compress-level
+                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(PARSE_RULE_VAL_INT(0)),                                 // opt/compress-level
+                    PARSE_RULE_VAL_OPT(CompressType),                                                          // opt/compress-level
+                    PARSE_RULE_VAL_STRID(Bz2),                                                                 // opt/compress-level
+                    PARSE_RULE_VAL_STRID(Gz),                                                                  // opt/compress-level
+                    PARSE_RULE_VAL_STRID(Lz4),                                                                 // opt/compress-level
+                    PARSE_RULE_VAL_STRID(Zst),                                                                 // opt/compress-level
+                ),                                                                                             // opt/compress-level
+                                                                                                               // opt/compress-level
+                PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                                // opt/compress-level
+                (                                                                                              // opt/compress-level
+                    PARSE_RULE_OPTIONAL_ALLOW_RANGE_MAP                                                        // opt/compress-level
+                    (                                                                                          // opt/compress-level
+                        PARSE_RULE_VAL_STRID(Bz2),                                                             // opt/compress-level
+                        PARSE_RULE_VAL_INT(1),                                                                 // opt/compress-level
+                        PARSE_RULE_VAL_INT(9),                                                                 // opt/compress-level
+                        PARSE_RULE_VAL_STRID(Gz),                                                              // opt/compress-level
+                        PARSE_RULE_VAL_INT(DS_1),                                                              // opt/compress-level
+                        PARSE_RULE_VAL_INT(9),                                                                 // opt/compress-level
+                        PARSE_RULE_VAL_STRID(Lz4),                                                             // opt/compress-level
+                        PARSE_RULE_VAL_INT(DS_5),                                                              // opt/compress-level
+                        PARSE_RULE_VAL_INT(12),                                                                // opt/compress-level
+                        PARSE_RULE_VAL_STRID(Zst),                                                             // opt/compress-level
+                        PARSE_RULE_VAL_INT(DS_7),                                                              // opt/compress-level
+                        PARSE_RULE_VAL_INT(22),                                                                // opt/compress-level
+                    ),                                                                                         // opt/compress-level
+                ),                                                                                             // opt/compress-level
+                                                                                                               // opt/compress-level
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                    // opt/compress-level
+                (                                                                                              // opt/compress-level
+                    PARSE_RULE_OPTIONAL_DEFAULT_MAP                                                            // opt/compress-level
+                    (                                                                                          // opt/compress-level
+                        PARSE_RULE_VAL_STRID(Bz2),                                                             // opt/compress-level
+                        PARSE_RULE_VAL_INT(9),                                                                 // opt/compress-level
+                        PARSE_RULE_VAL_STRID(Gz),                                                              // opt/compress-level
+                        PARSE_RULE_VAL_INT(6),                                                                 // opt/compress-level
+                        PARSE_RULE_VAL_STRID(Lz4),                                                             // opt/compress-level
+                        PARSE_RULE_VAL_INT(1),                                                                 // opt/compress-level
+                        PARSE_RULE_VAL_STRID(Zst),                                                             // opt/compress-level
+                        PARSE_RULE_VAL_INT(3),                                                                 // opt/compress-level
+                    ),                                                                                         // opt/compress-level
+                ),                                                                                             // opt/compress-level
+            ),                                                                                                 // opt/compress-level
         ),                                                                                                     // opt/compress-level
     ),                                                                                                         // opt/compress-level
     // -----------------------------------------------------------------------------------------------------------------------------
@@ -4138,13 +4218,24 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                                    // opt/pg-host-port
                 PARSE_RULE_OPTIONAL_DEPEND                                                                       // opt/pg-host-port
                 (                                                                                                // opt/pg-host-port
-                    PARSE_RULE_VAL_OPT(PgHost),                                                                  // opt/pg-host-port
+                    PARSE_RULE_VAL_OPT(PgHostType),                                                              // opt/pg-host-port
+                    PARSE_RULE_VAL_STRID(Ssh),                                                                   // opt/pg-host-port
+                    PARSE_RULE_VAL_STRID(Tls),                                                                   // opt/pg-host-port
                 ),                                                                                               // opt/pg-host-port
                                                                                                                  // opt/pg-host-port
                 PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                                  // opt/pg-host-port
                 (                                                                                                // opt/pg-host-port
                     PARSE_RULE_VAL_INT(0),                                                                       // opt/pg-host-port
                     PARSE_RULE_VAL_INT(65535),                                                                   // opt/pg-host-port
+                ),                                                                                               // opt/pg-host-port
+                                                                                                                 // opt/pg-host-port
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                      // opt/pg-host-port
+                (                                                                                                // opt/pg-host-port
+                    PARSE_RULE_OPTIONAL_DEFAULT_MAP                                                              // opt/pg-host-port
+                    (                                                                                            // opt/pg-host-port
+                        PARSE_RULE_VAL_STRID(Tls),                                                               // opt/pg-host-port
+                        PARSE_RULE_VAL_INT(8432),                                                                // opt/pg-host-port
+                    ),                                                                                           // opt/pg-host-port
                 ),                                                                                               // opt/pg-host-port
             ),                                                                                                   // opt/pg-host-port
         ),                                                                                                       // opt/pg-host-port
@@ -6955,13 +7046,24 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                                  // opt/repo-host-port
                 PARSE_RULE_OPTIONAL_DEPEND                                                                     // opt/repo-host-port
                 (                                                                                              // opt/repo-host-port
-                    PARSE_RULE_VAL_OPT(RepoHost),                                                              // opt/repo-host-port
+                    PARSE_RULE_VAL_OPT(RepoHostType),                                                          // opt/repo-host-port
+                    PARSE_RULE_VAL_STRID(Ssh),                                                                 // opt/repo-host-port
+                    PARSE_RULE_VAL_STRID(Tls),                                                                 // opt/repo-host-port
                 ),                                                                                             // opt/repo-host-port
                                                                                                                // opt/repo-host-port
                 PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                                // opt/repo-host-port
                 (                                                                                              // opt/repo-host-port
                     PARSE_RULE_VAL_INT(0),                                                                     // opt/repo-host-port
                     PARSE_RULE_VAL_INT(65535),                                                                 // opt/repo-host-port
+                ),                                                                                             // opt/repo-host-port
+                                                                                                               // opt/repo-host-port
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                    // opt/repo-host-port
+                (                                                                                              // opt/repo-host-port
+                    PARSE_RULE_OPTIONAL_DEFAULT_MAP                                                            // opt/repo-host-port
+                    (                                                                                          // opt/repo-host-port
+                        PARSE_RULE_VAL_STRID(Tls),                                                             // opt/repo-host-port
+                        PARSE_RULE_VAL_INT(8432),                                                              // opt/repo-host-port
+                    ),                                                                                         // opt/repo-host-port
                 ),                                                                                             // opt/repo-host-port
             ),                                                                                                 // opt/repo-host-port
         ),                                                                                                     // opt/repo-host-port
@@ -9723,6 +9825,19 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                     PARSE_RULE_VAL_SIZE(64KiB),                                                // opt/repo-storage-upload-chunk-size
                     PARSE_RULE_VAL_SIZE(1TiB),                                                 // opt/repo-storage-upload-chunk-size
                 ),                                                                             // opt/repo-storage-upload-chunk-size
+                                                                                               // opt/repo-storage-upload-chunk-size
+                PARSE_RULE_OPTIONAL_DEFAULT                                                    // opt/repo-storage-upload-chunk-size
+                (                                                                              // opt/repo-storage-upload-chunk-size
+                    PARSE_RULE_OPTIONAL_DEFAULT_MAP                                            // opt/repo-storage-upload-chunk-size
+                    (                                                                          // opt/repo-storage-upload-chunk-size
+                        PARSE_RULE_VAL_STRID(Azure),                                           // opt/repo-storage-upload-chunk-size
+                        PARSE_RULE_VAL_SIZE(4MiB),                                             // opt/repo-storage-upload-chunk-size
+                        PARSE_RULE_VAL_STRID(Gcs),                                             // opt/repo-storage-upload-chunk-size
+                        PARSE_RULE_VAL_SIZE(4MiB),                                             // opt/repo-storage-upload-chunk-size
+                        PARSE_RULE_VAL_STRID(S3),                                              // opt/repo-storage-upload-chunk-size
+                        PARSE_RULE_VAL_SIZE(5MiB),                                             // opt/repo-storage-upload-chunk-size
+                    ),                                                                         // opt/repo-storage-upload-chunk-size
+                ),                                                                             // opt/repo-storage-upload-chunk-size
             ),                                                                                 // opt/repo-storage-upload-chunk-size
         ),                                                                                     // opt/repo-storage-upload-chunk-size
     ),                                                                                         // opt/repo-storage-upload-chunk-size
@@ -11377,7 +11492,6 @@ static const uint8_t optionResolveOrder[] =
     cfgOptCmd,                                                                                                  // opt-resolve-order
     cfgOptCmdSsh,                                                                                               // opt-resolve-order
     cfgOptCompress,                                                                                             // opt-resolve-order
-    cfgOptCompressLevel,                                                                                        // opt-resolve-order
     cfgOptCompressLevelNetwork,                                                                                 // opt-resolve-order
     cfgOptCompressType,                                                                                         // opt-resolve-order
     cfgOptConfig,                                                                                               // opt-resolve-order
@@ -11469,6 +11583,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptArchiveCheck,                                                                                         // opt-resolve-order
     cfgOptArchiveCopy,                                                                                          // opt-resolve-order
     cfgOptArchiveModeCheck,                                                                                     // opt-resolve-order
+    cfgOptCompressLevel,                                                                                        // opt-resolve-order
     cfgOptForce,                                                                                                // opt-resolve-order
     cfgOptPgDatabase,                                                                                           // opt-resolve-order
     cfgOptPgHost,                                                                                               // opt-resolve-order
@@ -11476,7 +11591,6 @@ static const uint8_t optionResolveOrder[] =
     cfgOptPgHostConfig,                                                                                         // opt-resolve-order
     cfgOptPgHostConfigIncludePath,                                                                              // opt-resolve-order
     cfgOptPgHostConfigPath,                                                                                     // opt-resolve-order
-    cfgOptPgHostPort,                                                                                           // opt-resolve-order
     cfgOptPgHostType,                                                                                           // opt-resolve-order
     cfgOptPgHostUser,                                                                                           // opt-resolve-order
     cfgOptRecoveryOption,                                                                                       // opt-resolve-order
@@ -11499,7 +11613,6 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoHostConfig,                                                                                       // opt-resolve-order
     cfgOptRepoHostConfigIncludePath,                                                                            // opt-resolve-order
     cfgOptRepoHostConfigPath,                                                                                   // opt-resolve-order
-    cfgOptRepoHostPort,                                                                                         // opt-resolve-order
     cfgOptRepoHostType,                                                                                         // opt-resolve-order
     cfgOptRepoHostUser,                                                                                         // opt-resolve-order
     cfgOptRepoS3Bucket,                                                                                         // opt-resolve-order
@@ -11536,6 +11649,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptPgHostCaPath,                                                                                         // opt-resolve-order
     cfgOptPgHostCertFile,                                                                                       // opt-resolve-order
     cfgOptPgHostKeyFile,                                                                                        // opt-resolve-order
+    cfgOptPgHostPort,                                                                                           // opt-resolve-order
     cfgOptRepoGcsBucket,                                                                                        // opt-resolve-order
     cfgOptRepoGcsEndpoint,                                                                                      // opt-resolve-order
     cfgOptRepoGcsKey,                                                                                           // opt-resolve-order
@@ -11543,6 +11657,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoHostCaPath,                                                                                       // opt-resolve-order
     cfgOptRepoHostCertFile,                                                                                     // opt-resolve-order
     cfgOptRepoHostKeyFile,                                                                                      // opt-resolve-order
+    cfgOptRepoHostPort,                                                                                         // opt-resolve-order
     cfgOptRepoS3Key,                                                                                            // opt-resolve-order
     cfgOptRepoS3KeySecret,                                                                                      // opt-resolve-order
     cfgOptRepoSftpHostFingerprint,                                                                              // opt-resolve-order

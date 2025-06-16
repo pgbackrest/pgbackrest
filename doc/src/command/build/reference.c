@@ -44,30 +44,57 @@ referenceOptionRender(
 
         xmlNodeChildAdd(xmlOption, optHlp->description);
 
-        // Add default value
+        // Add default value or default map
         StringList *const blockList = strLstNew();
-        const String *const defaultValue =
+        const BldCfgOptionDefault *const defaultValue =
             optCmdCfg != NULL && optCmdCfg->defaultValue != NULL ? optCmdCfg->defaultValue : optCfg->defaultValue;
 
         if (optCfg->defaultType == defaultTypeDynamic)
         {
-            ASSERT(strEqZ(optCfg->defaultValue, "bin"));
+            ASSERT(strEqZ(defaultValue->value, "bin"));
 
             strLstAddZ(blockList, "default: [path of executed pgbackrest binary]");
         }
         else if (defaultValue != NULL)
         {
-            if (strEq(optCfg->type, OPT_TYPE_BOOLEAN_STR))
-                strLstAddFmt(blockList, "default: %s", strEqZ(defaultValue, "true") ? "y" : "n");
+            if (defaultValue->value != NULL)
+            {
+                if (strEq(optCfg->type, OPT_TYPE_BOOLEAN_STR))
+                    strLstAddFmt(blockList, "default: %s", strEqZ(defaultValue->value, "true") ? "y" : "n");
+                else
+                    strLstAddFmt(blockList, "default: %s", strZ(defaultValue->value));
+            }
             else
-                strLstAddFmt(blockList, "default: %s", strZ(defaultValue));
+            {
+                strLstAddFmt(blockList, "default (depending on %s):", strZ(optCfg->depend->option->name));
+
+                for (unsigned int mapIdx = 0; mapIdx < lstSize(defaultValue->mapList); mapIdx++)
+                {
+                    const BldCfgOptionDefaultMap *const map = lstGet(defaultValue->mapList, mapIdx);
+                    strLstAddFmt(blockList, "    %s - %s", strZ(map->map), strZ(map->value));
+                }
+
+                strLstAddZ(blockList, "");
+            }
         }
 
         // Add allow range
-        if (optCfg->allowRangeMin != NULL)
+        if (optCfg->allowRange != NULL)
         {
-            ASSERT(optCfg->allowRangeMax != NULL);
-            strLstAddFmt(blockList, "allowed: %s-%s", strZ(optCfg->allowRangeMin), strZ(optCfg->allowRangeMax));
+            if (optCfg->allowRange->mapList != NULL)
+            {
+                strLstAddFmt(blockList, "allow range (depending on %s):", strZ(optCfg->depend->option->name));
+
+                for (unsigned int mapIdx = 0; mapIdx < lstSize(optCfg->allowRange->mapList); mapIdx++)
+                {
+                    const BldCfgOptionAllowRangeMap *const map = lstGet(optCfg->allowRange->mapList, mapIdx);
+                    strLstAddFmt(blockList, "    %s - [%s, %s]", strZ(map->map), strZ(map->min), strZ(map->max));
+                }
+
+                strLstAddZ(blockList, "");
+            }
+            else
+                strLstAddFmt(blockList, "allowed: [%s, %s]", strZ(optCfg->allowRange->min), strZ(optCfg->allowRange->max));
         }
 
         // Add examples
@@ -110,7 +137,7 @@ referenceOptionRender(
         }
 
         if (!strLstEmpty(blockList))
-            xmlNodeContentSet(xmlNodeAdd(xmlOption, STRDEF("code-block")), strLstJoin(blockList, "\n"));
+            xmlNodeContentSet(xmlNodeAdd(xmlOption, STRDEF("code-block")), strTrim(strLstJoin(blockList, "\n")));
 
         // Add deprecated names
         if (optCfg->deprecateList != NULL)
