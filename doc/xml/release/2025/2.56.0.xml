@@ -2,6 +2,17 @@
     <release-core-list>
         <release-improvement-list>
             <release-item>
+                <github-pull-request id="2642"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Retry failed reads on object stores.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2625"/>
 
                 <release-item-contributor-list>
