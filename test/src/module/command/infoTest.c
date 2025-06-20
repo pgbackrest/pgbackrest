@@ -37,10 +37,10 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdInfo, argList);
 
         StringList *argListProgressOnly = strLstDup(argList);
-        hrnCfgArgRawZ(argListProgressOnly, cfgOptProgressOnly, "y");
+        hrnCfgArgRawZ(argListProgressOnly, cfgOptDetailLevel, "progress");
 
         StringList *argListTextProgressOnly = strLstDup(argListText);
-        hrnCfgArgRawZ(argListTextProgressOnly, cfgOptProgressOnly, "y");
+        hrnCfgArgRawZ(argListTextProgressOnly, cfgOptDetailLevel, "progress");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no stanzas have been created");
@@ -145,8 +145,7 @@ testRun(void)
             "    cipher: none\n",
             "text - missing stanza data");
 
-        // In progress-only mode, the info command skips additional checks,
-        // verifying only the availability of the stanza. The status will be `ok`.
+        // If only progress is requested, the info command skips additional checks.
         HRN_CFG_LOAD(cfgCmdInfo, argListTextProgressOnlyStanzaOpt);
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -185,8 +184,7 @@ testRun(void)
             // {uncrustify_on}
             "json - missing stanza data");
 
-        // In progress-only mode, the info command skips additional checks,
-        // verifying only the availability of the stanza. The status will be `ok`.
+        // If only progress is requested, the info command skips additional checks.
         HRN_CFG_LOAD(cfgCmdInfo, argListProgressOnlyStanzaOpt);
         TEST_RESULT_STR_Z(
             infoRender(),
@@ -418,7 +416,7 @@ testRun(void)
             "text - multi-repo, requested stanza missing on selected repo");
 
         StringList *argList2ProgressOnly = strLstDup(argList2);
-        hrnCfgArgRawZ(argList2ProgressOnly, cfgOptProgressOnly, "y");
+        hrnCfgArgRawZ(argList2ProgressOnly, cfgOptDetailLevel, "progress");
         HRN_CFG_LOAD(cfgCmdInfo, argList2ProgressOnly);
 
         TEST_RESULT_STR_Z(
@@ -452,10 +450,9 @@ testRun(void)
             "text - multi-repo, single stanza, one wal segment");
 
         argList2ProgressOnly = strLstDup(argList2);
-        hrnCfgArgRawZ(argList2ProgressOnly, cfgOptProgressOnly, "y");
+        hrnCfgArgRawZ(argList2ProgressOnly, cfgOptDetailLevel, "progress");
         HRN_CFG_LOAD(cfgCmdInfo, argList2ProgressOnly);
-        // In progress-only mode, the info command skips additional checks,
-        // verifying only the availability of the stanza. The status will be `ok`.
+        // If only progress is requested, the info command skips additional checks.
         TEST_RESULT_STR_Z(
             infoRender(),
             "stanza: stanza1\n"
@@ -1159,10 +1156,10 @@ testRun(void)
         hrnCfgArgRawZ(argListMultiRepoJson, cfgOptOutput, "json");
 
         StringList *argListMultiRepoProgressOnly = strLstDup(argListMultiRepo);
-        hrnCfgArgRawZ(argListMultiRepoProgressOnly, cfgOptProgressOnly, "y");
+        hrnCfgArgRawZ(argListMultiRepoProgressOnly, cfgOptDetailLevel, "progress");
 
         StringList *argListMultiRepoJsonProgressOnly = strLstDup(argListMultiRepoJson);
-        hrnCfgArgRawZ(argListMultiRepoJsonProgressOnly, cfgOptProgressOnly, "y");
+        hrnCfgArgRawZ(argListMultiRepoJsonProgressOnly, cfgOptDetailLevel, "progress");
 
         HRN_FORK_BEGIN()
         {
@@ -1780,7 +1777,7 @@ testRun(void)
                 TEST_RESULT_STR_Z(
                     infoRender(),
                     "stanza: stanza1\n"
-                    "    status: ok (backup/expire running - 65.27% complete)\n"
+                    "    status: ok (backup/expire running - 65.28% complete)\n"
                     "\n"
                     "stanza: stanza2\n"
                     "    status: ok (backup/expire running - 55.55% complete)\n"
@@ -3574,6 +3571,15 @@ testRun(void)
         TEST_ERROR(hrnCfgLoadP(cfgCmdInfo, argList), OptionInvalidError, "option 'set' not valid without option 'stanza'");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("set option invalid if only progress info is requested");
+
+        hrnCfgArgRawZ(argList, cfgOptStanza, "bogus");
+        hrnCfgArgRawZ(argList, cfgOptDetailLevel, "progress");
+        HRN_CFG_LOAD(cfgCmdInfo, argList);
+
+        TEST_ERROR(infoRender(), OptionInvalidError, "option 'set' cannot be used with option 'detail-level' = 'progress'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("repo-level error");
 
         HRN_STORAGE_PATH_CREATE(storageTest, TEST_PATH "/repo2", .mode = 0200, .comment = "repo directory with bad permissions");
@@ -3591,7 +3597,7 @@ testRun(void)
             "text - invalid stanza");
 
         StringList *argListProgressOnly = strLstDup(argList);
-        hrnCfgArgRawZ(argListProgressOnly, cfgOptProgressOnly, "y");
+        hrnCfgArgRawZ(argListProgressOnly, cfgOptDetailLevel, "progress");
         HRN_CFG_LOAD(cfgCmdInfo, argListProgressOnly);
 
         TEST_RESULT_STR_Z(
@@ -3669,7 +3675,7 @@ testRun(void)
             "text - stanza requested");
 
         argListProgressOnly = strLstDup(argList);
-        hrnCfgArgRawZ(argListProgressOnly, cfgOptProgressOnly, "y");
+        hrnCfgArgRawZ(argListProgressOnly, cfgOptDetailLevel, "progress");
         HRN_CFG_LOAD(cfgCmdInfo, argListProgressOnly);
 
         TEST_RESULT_STR_Z(

@@ -284,6 +284,17 @@ option:
     default-type: literal
     default: CFGOPTDEF_CONFIG_PATH
 
+  detail-level:
+    type: string-id
+    default: full
+    command:
+      info: {}
+    allow-list:
+      - progress
+      - full
+    command-role:
+      main: {}
+
   dry-run:
     type: boolean
     default: false
@@ -348,14 +359,6 @@ option:
     allow-list:
       - text
       - json
-    command-role:
-      main: {}
-
-  progress-only:
-    type: boolean
-    default: false
-    command:
-      info: {}
     command-role:
       main: {}
 

@@ -2550,6 +2550,8 @@
 
                     <p>For machine-readable output use <br-option>--output=json</br-option>. The JSON output contains far more information than the text output and is kept stable unless a bug is found.</p>
 
+                    <p>To speed up execution, limit the output to only progress information by specifying <br-option>--detail-level=progress</br-option>. Note that it skips all checks except for the availability of the stanza.</p>
+
                     <p>Each stanza has a separate section and it is possible to limit output to a single stanza with the <br-option>--stanza</br-option> option. The stanza '<id>status</id>' gives a brief indication of the stanza's health. If this is '<id>ok</id>' then <backrest/> is functioning normally. If there are multiple repositories, then a status of '<id>mixed</id>' indicates that the stanza is not in a healthy state on one or more of the repositories; in this case the state of the stanza will be detailed per repository. For cases in which an error on a repository occurred that is not one of the known error codes, then an error code of '<id>other</id>' will be used and the full error details will be provided. The '<id>wal archive min/max</id>' shows the minimum and maximum WAL currently stored in the archive and, in the case of multiple repositories, will be reported across all repositories unless the <br-option>{[dash]}-repo</br-option> option is set. Note that there may be gaps due to archive retention policies or other reasons.</p>
 
                     <p>The '<id>backup/expire running</id>' message will appear beside the '<id>status</id>' information if one of those commands is currently running on the host.</p>
@@ -2570,6 +2572,21 @@
                 </text>
 
                 <option-list>
+                    <option id="detail-level" name="Detail level">
+                        <summary>Output detail level.</summary>
+
+                        <text>
+                            <p>The following levels are supported:</p>
+
+                            <list>
+                                <list-item><id>progress</id> - Show only the current backup/expire progress. This level cannot be used with the <br-option>--set</br-option> option.</list-item>
+                                <list-item><id>full</id> - Show the complete report.</list-item>
+                            </list>
+                        </text>
+
+                        <example>progress</example>
+                    </option>
+
                     <option id="output" name="Output">
                         <summary>Output format.</summary>
 
@@ -2583,17 +2600,6 @@
                         </text>
 
                         <example>json</example>
-                    </option>
-
-                    <option id="progress-only" name="Progress Only">
-                        <summary>Get only progress information.</summary>
-
-                        <text>
-                            <p>Specifying this option as true displays only the progress details of the backup/expire process. As it skips repository access, it speeds up retrieving such information.</p>
-                            <p>Note that the info command with this option does not perform any additional checks, except for the availability of the stanza. To obtain comprehensive information, use the full version of the info command.</p>
-                        </text>
-
-                        <example>y</example>
                     </option>
 
                     <option id="set" name="Set">
