@@ -829,7 +829,7 @@ removeExpiredBackup(const InfoBackup *const infoBackup, const String *const adho
         unsigned int backupIdx = 0;
 
         // Only remove the resumable backup if there is a possibility it is a dependent of the adhoc label being expired
-        if (adhocBackupLabel != NULL)
+        if (adhocBackupLabel != NULL && !strLstEmpty(backupList))
         {
             const String *const manifestFileName = strNewFmt(
                 STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(strLstGet(backupList, backupIdx)));
