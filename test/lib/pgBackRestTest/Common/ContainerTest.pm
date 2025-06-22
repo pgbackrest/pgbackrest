@@ -509,11 +509,11 @@ sub containerBuild
                             "pgdg-redhat-repo-latest.noarch.rpm && \\\n" .
                         "    dnf -qy module disable postgresql && \\\n";
                 }
-                elsif ($strOS eq VM_F41)
+                elsif ($strOS eq VM_F42)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-41-" . hostArch() . "/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-42-" . hostArch() . "/" .
                             "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
                 }
 
