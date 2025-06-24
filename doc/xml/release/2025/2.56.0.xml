@@ -1,5 +1,20 @@
 <release date="XXXX-XX-XX" version="2.56.0dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="2645"/>
+                <github-pull-request id="2646"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="anup.gupta"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix issue with adhoc expiration when no backups in a repository.</p>
+            </release-item>
+        </release-bug-list>
+
         <release-improvement-list>
             <release-item>
                 <github-pull-request id="2642"/>
