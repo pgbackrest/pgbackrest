@@ -762,15 +762,17 @@ stanzaInfoList(
         {
             InfoRepoData *const repoData = &stanzaData->repoList[repoIdx];
 
-            // When full output is not requested (progress mode),
-            // skip collecting detailed information and only update the status code.
+            // When full output is not requested (progress mode), skip collecting detailed information and only update status code
             if (!outputFull)
             {
                 if (repoIdx == repoIdxMin)
                     stanzaStatusCode = repoData->stanzaStatus;
                 else
+                {
                     stanzaStatusCode =
                         stanzaStatusCode != repoData->stanzaStatus ? INFO_STANZA_STATUS_CODE_MIXED : repoData->stanzaStatus;
+                }
+
                 continue;
             }
 
@@ -1357,8 +1359,8 @@ infoUpdateStanza(
                 }
                 TRY_END();
 
-                // If backup.info was found, then get the archive.info file, which must exist if the backup.info exists,
-                // else the failed load will throw an error which will be trapped and recorded
+                // If backup.info was found, then get the archive.info file, which must exist if backup.info exists, else the failed
+                // load will throw an error which will be trapped and recorded
                 if (stanzaRepo->repoList[repoIdx].backupInfo != NULL)
                 {
                     stanzaRepo->repoList[repoIdx].archiveInfo = infoArchiveLoadFile(
@@ -1376,9 +1378,8 @@ infoUpdateStanza(
                 }
             }
 
-            // Read the lock file if backup.info is present.
-            // Exception: if only progress is requested, backup.info is skipped for performance,
-            // so the lock file is read unconditionally — though it may be outdated in this case.
+            // Read the lock file if backup.info is present. Exception: when only progress is requested, backup.info is skipped for
+            // performance, so the lock file is read unconditionally -- though it may be outdated in this case.
             if (stanzaRepo->repoList[repoIdx].backupInfo != NULL || !outputFull)
             {
                 // If there is a valid backup lock for this stanza then backup/expire must be running
@@ -1443,11 +1444,14 @@ infoRender(void)
 
         // Get the backup label if specified
         const String *const backupLabel = cfgOptionStrNull(cfgOptSet);
-        // If only progress info is requested, details about a specific backup will not be loaded
+        bool backupFound = false;
+
+        // If only progress info is requested then details about a specific backup may not be requested
         if (backupLabel != NULL && cfgOptionStrId(cfgOptDetailLevel) == CFGOPTVAL_DETAIL_LEVEL_PROGRESS)
+        {
             THROW_FMT(OptionInvalidError, "option '%s' cannot be used with option '%s' = '%s'",
                       cfgOptionName(cfgOptSet), cfgOptionName(cfgOptDetailLevel), CFGOPTVAL_DETAIL_LEVEL_PROGRESS_Z);
-        bool backupFound = false;
+        }
 
         // Initialize the repo index
         unsigned int repoIdxMin = 0;
@@ -1634,6 +1638,7 @@ infoRender(void)
             {
                 // Is full output requested?
                 const bool outputFull = cfgOptionStrId(cfgOptDetailLevel) == CFGOPTVAL_DETAIL_LEVEL_FULL;
+
                 for (unsigned int stanzaIdx = 0; stanzaIdx < varLstSize(infoList); stanzaIdx++)
                 {
                     const KeyValue *const stanzaInfo = varKv(varLstGet(infoList, stanzaIdx));
@@ -1662,10 +1667,10 @@ infoRender(void)
 
                     if (statusCode != INFO_STANZA_STATUS_CODE_OK)
                     {
-                        // Update the overall stanza status and change displayed status if backup lock is found.
-                        if (outputFull && (statusCode == INFO_STANZA_STATUS_CODE_MIXED ||
-                                           statusCode == INFO_STANZA_STATUS_CODE_PG_MISMATCH ||
-                                           statusCode == INFO_STANZA_STATUS_CODE_OTHER))
+                        // Update the overall stanza status and change displayed status if backup lock is found
+                        if (outputFull &&
+                            (statusCode == INFO_STANZA_STATUS_CODE_MIXED || statusCode == INFO_STANZA_STATUS_CODE_PG_MISMATCH ||
+                             statusCode == INFO_STANZA_STATUS_CODE_OTHER))
                         {
                             // Stanza status
                             strCatFmt(
