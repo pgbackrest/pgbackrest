@@ -1302,11 +1302,11 @@ infoUpdateStanza(
     ASSERT(storage != NULL);
     ASSERT(stanzaRepo != NULL);
 
-    volatile int stanzaStatus = INFO_STANZA_STATUS_CODE_OK;
-
     // If the stanza exists, attempt to get the info files
     if (stanzaExists)
     {
+        volatile int stanzaStatus = INFO_STANZA_STATUS_CODE_OK;
+
         TRY_BEGIN()
         {
             // Catch certain errors
