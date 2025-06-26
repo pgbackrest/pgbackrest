@@ -18,7 +18,7 @@ Assert that encoding type is valid. This needs to be kept up to date with the la
 /***********************************************************************************************************************************
 Base64 encoding/decoding
 ***********************************************************************************************************************************/
-static const char encodeBase64Lookup[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+VR_NON_STRING static const char encodeBase64Lookup[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static void
 encodeToStrBase64(const uint8_t *const source, const size_t sourceSize, char *const destination)
@@ -221,7 +221,7 @@ decodeToBinSizeBase64(const char *const source)
 /***********************************************************************************************************************************
 Base64Url encoding
 ***********************************************************************************************************************************/
-static const char encodeBase64LookupUrl[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+VR_NON_STRING static const char encodeBase64LookupUrl[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
 static void
 encodeToStrBase64Url(const uint8_t *const source, const size_t sourceSize, char *const destination)
@@ -291,7 +291,7 @@ encodeToStrSizeBase64Url(const size_t sourceSize)
 /***********************************************************************************************************************************
 Hex encoding/decoding
 ***********************************************************************************************************************************/
-static const char encodeHexLookup[512] =
+VR_NON_STRING static const char encodeHexLookup[512] =
     "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f"
     "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"
     "404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f"
