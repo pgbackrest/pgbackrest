@@ -22,6 +22,7 @@
                 <release-item-contributor-list>
                     <release-item-contributor id="denis.garsh"/>
                     <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
                 </release-item-contributor-list>
 
                 <p>Add progress-only detail level for <cmd>info</cmd> command output.</p>
