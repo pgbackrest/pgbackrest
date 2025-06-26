@@ -111,6 +111,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("postgres"),                                                                                        // val/str
     PARSE_RULE_STRPUB("prefer"),                                                                                          // val/str
     PARSE_RULE_STRPUB("preserve"),                                                                                        // val/str
+    PARSE_RULE_STRPUB("progress"),                                                                                        // val/str
     PARSE_RULE_STRPUB("promote"),                                                                                         // val/str
     PARSE_RULE_STRPUB("repo"),                                                                                            // val/str
     PARSE_RULE_STRPUB("s3"),                                                                                              // val/str
@@ -242,6 +243,7 @@ typedef enum
     parseRuleValStrQT_postgres_QT,                                                                                   // val/str/enum
     parseRuleValStrQT_prefer_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_preserve_QT,                                                                                   // val/str/enum
+    parseRuleValStrQT_progress_QT,                                                                                   // val/str/enum
     parseRuleValStrQT_promote_QT,                                                                                    // val/str/enum
     parseRuleValStrQT_repo_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_s3_QT,                                                                                         // val/str/enum
@@ -315,6 +317,7 @@ static const StringId parseRuleValueStrId[] =
     STRID5("posix", 0x184cdf00),                                                                                        // val/strid
     STRID5("prefer", 0x245316500),                                                                                      // val/strid
     STRID5("preserve", 0x2da45996500),                                                                                  // val/strid
+    STRID5("progress", 0x9ccb23be500),                                                                                  // val/strid
     STRID5("promote", 0x168f6be500),                                                                                    // val/strid
     STRID5("repo", 0x7c0b20),                                                                                           // val/strid
     STRID6("s3", 0x7d31),                                                                                               // val/strid
@@ -379,6 +382,7 @@ static const uint8_t parseRuleValueStrIdStrMap[] =
     parseRuleValStrQT_posix_QT,                                                                                  // val/strid/strmap
     parseRuleValStrQT_prefer_QT,                                                                                 // val/strid/strmap
     parseRuleValStrQT_preserve_QT,                                                                               // val/strid/strmap
+    parseRuleValStrQT_progress_QT,                                                                               // val/strid/strmap
     parseRuleValStrQT_promote_QT,                                                                                // val/strid/strmap
     parseRuleValStrQT_repo_QT,                                                                                   // val/strid/strmap
     parseRuleValStrQT_s3_QT,                                                                                     // val/strid/strmap
@@ -443,6 +447,7 @@ typedef enum
     parseRuleValStrIdPosix,                                                                                        // val/strid/enum
     parseRuleValStrIdPrefer,                                                                                       // val/strid/enum
     parseRuleValStrIdPreserve,                                                                                     // val/strid/enum
+    parseRuleValStrIdProgress,                                                                                     // val/strid/enum
     parseRuleValStrIdPromote,                                                                                      // val/strid/enum
     parseRuleValStrIdRepo,                                                                                         // val/strid/enum
     parseRuleValStrIdS3,                                                                                           // val/strid/enum
@@ -2376,6 +2381,36 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),                                                                                                          // opt/delta
         ),                                                                                                              // opt/delta
     ),                                                                                                                  // opt/delta
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                            // opt/detail-level
+    (                                                                                                            // opt/detail-level
+        PARSE_RULE_OPTION_NAME("detail-level"),                                                                  // opt/detail-level
+        PARSE_RULE_OPTION_TYPE(StringId),                                                                        // opt/detail-level
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                        // opt/detail-level
+        PARSE_RULE_OPTION_SECTION(CommandLine),                                                                  // opt/detail-level
+                                                                                                                 // opt/detail-level
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                           // opt/detail-level
+        (                                                                                                        // opt/detail-level
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                      // opt/detail-level
+        ),                                                                                                       // opt/detail-level
+                                                                                                                 // opt/detail-level
+        PARSE_RULE_OPTIONAL                                                                                      // opt/detail-level
+        (                                                                                                        // opt/detail-level
+            PARSE_RULE_OPTIONAL_GROUP                                                                            // opt/detail-level
+            (                                                                                                    // opt/detail-level
+                PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                   // opt/detail-level
+                (                                                                                                // opt/detail-level
+                    PARSE_RULE_VAL_STRID(Progress),                                                              // opt/detail-level
+                    PARSE_RULE_VAL_STRID(Full),                                                                  // opt/detail-level
+                ),                                                                                               // opt/detail-level
+                                                                                                                 // opt/detail-level
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                      // opt/detail-level
+                (                                                                                                // opt/detail-level
+                    PARSE_RULE_VAL_STRID(Full),                                                                  // opt/detail-level
+                ),                                                                                               // opt/detail-level
+            ),                                                                                                   // opt/detail-level
+        ),                                                                                                       // opt/detail-level
+    ),                                                                                                           // opt/detail-level
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                                 // opt/dry-run
     (                                                                                                                 // opt/dry-run
@@ -11501,6 +11536,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptDbInclude,                                                                                            // opt-resolve-order
     cfgOptDbTimeout,                                                                                            // opt-resolve-order
     cfgOptDelta,                                                                                                // opt-resolve-order
+    cfgOptDetailLevel,                                                                                          // opt-resolve-order
     cfgOptDryRun,                                                                                               // opt-resolve-order
     cfgOptExclude,                                                                                              // opt-resolve-order
     cfgOptExecId,                                                                                               // opt-resolve-order
