@@ -1325,14 +1325,14 @@ infoUpdateStanza(
 
     volatile int stanzaStatus = INFO_STANZA_STATUS_CODE_OK;
 
-    const bool outputFull = cfgOptionStrId(cfgOptDetailLevel) == CFGOPTVAL_DETAIL_LEVEL_FULL;
-
     // If the stanza exists, attempt to get the info files
     if (stanzaExists)
     {
         TRY_BEGIN()
         {
             // If full output is requested read info and manifest files
+            const bool outputFull = cfgOptionStrId(cfgOptDetailLevel) == CFGOPTVAL_DETAIL_LEVEL_FULL;
+
             if (outputFull)
             {
                 // Catch certain errors
