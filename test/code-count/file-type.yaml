@@ -2823,6 +2823,14 @@ test/src/common/harnessProtocol.h:
   class: test/harness
   type: c/h
 
+test/src/common/harnessRestore.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessRestore.h:
+  class: test/harness
+  type: c/h
+
 test/src/common/harnessServer.c:
   class: test/harness
   type: c

@@ -895,7 +895,8 @@ static const ParseRuleCommand parseRuleCommand[CFG_COMMAND_TOTAL] =
     PARSE_RULE_COMMAND                                                                                                // cmd/restore
     (                                                                                                                 // cmd/restore
         PARSE_RULE_COMMAND_NAME("restore"),                                                                           // cmd/restore
-        PARSE_RULE_COMMAND_LOCK_TYPE(None),                                                                           // cmd/restore
+        PARSE_RULE_COMMAND_LOCK_REQUIRED(true),                                                                       // cmd/restore
+        PARSE_RULE_COMMAND_LOCK_TYPE(Restore),                                                                        // cmd/restore
         PARSE_RULE_COMMAND_LOG_FILE(true),                                                                            // cmd/restore
         PARSE_RULE_COMMAND_LOG_LEVEL_DEFAULT(Info),                                                                   // cmd/restore
                                                                                                                       // cmd/restore

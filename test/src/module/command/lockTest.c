@@ -76,7 +76,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdLockAcquireP(), "acquire stanza-create lock");
         TEST_STORAGE_LIST(
-            storageTest, NULL, "test-archive-1.lock\ntest-archive-2.lock\ntest-backup-1.lock\ntest-backup-2.lock\n",
+            storageTest, NULL, "test-archive-1.lock\ntest-archive-2.lock\ntest-backup-1.lock\ntest-backup-2.lock\ntest-restore-1.lock\ntest-restore-2.lock\n",
             .comment = "check lock files");
 
         // -------------------------------------------------------------------------------------------------------------------------
