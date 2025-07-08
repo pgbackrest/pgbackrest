@@ -77,9 +77,9 @@ VARIANT_STRDEF_STATIC(STANZA_KEY_DB_VAR,                            "db");
 VARIANT_STRDEF_STATIC(STATUS_KEY_CODE_VAR,                          "code");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_VAR,                          "lock");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_BACKUP_VAR,                   "backup");
-VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_RESTORE_VAR,                  "restore");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_HELD_VAR,                     "held");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_PERCENT_COMPLETE_VAR,         "pct-cplt");
+VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_RESTORE_VAR,                  "restore");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_SIZE_COMPLETE_VAR,            "size-cplt");
 VARIANT_STRDEF_STATIC(STATUS_KEY_LOCK_SIZE_VAR,                     "size");
 VARIANT_STRDEF_STATIC(STATUS_KEY_MESSAGE_VAR,                       "message");
@@ -211,11 +211,7 @@ stanzaStatusLockAdd(KeyValue *targetKv, const Variant *const lockKey, const Info
         kvPut(lockKv, STATUS_KEY_LOCK_SIZE_VAR, VARUINT64(lock->size));
 
         if (cfgOptionStrId(cfgOptOutput) != CFGOPTVAL_OUTPUT_JSON)
-        {
-            kvPut(
-                lockKv, STATUS_KEY_LOCK_PERCENT_COMPLETE_VAR,
-                VARUINT(cvtPctToUInt(lock->sizeComplete, lock->size)));
-        }
+            kvPut(lockKv, STATUS_KEY_LOCK_PERCENT_COMPLETE_VAR, VARUINT(cvtPctToUInt(lock->sizeComplete, lock->size)));
     }
 }
 
@@ -1331,7 +1327,8 @@ formatTextDb(
 Get the lock info of the specified lock type for the stanza
 ***********************************************************************************************************************************/
 static void
-infoUpdateStanzaLock(InfoStanzaLock *const stanzaLock, const String *const stanzaName, const unsigned int repoIdx, const LockType lockType)
+infoUpdateStanzaLock(
+    InfoStanzaLock *const stanzaLock, const String *const stanzaName, const unsigned int repoIdx, const LockType lockType)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INFO_STANZA_LOCK, stanzaLock);
@@ -1711,16 +1708,15 @@ infoRender(void)
                     const Variant *const backupPercentComplete = kvGet(backupLockKv, STATUS_KEY_LOCK_PERCENT_COMPLETE_VAR);
                     const String *const backupPercentCompleteStr =
                         backupPercentComplete != NULL ?
-                            strNewFmt(" - %u.%02u%% complete", varUInt(backupPercentComplete) / 100, varUInt(backupPercentComplete) % 100) :
-                            EMPTY_STR;
+                            strNewFmt(" - %s complete", strZ(strNewPct(varUInt(backupPercentComplete), 10000))) : EMPTY_STR;
+
                     // Get the restore lock info
                     const KeyValue *const restoreLockKv = varKv(kvGet(lockKv, STATUS_KEY_LOCK_RESTORE_VAR));
                     const bool restoreLockHeld = varBool(kvGet(restoreLockKv, STATUS_KEY_LOCK_HELD_VAR));
                     const Variant *const restorePercentComplete = kvGet(restoreLockKv, STATUS_KEY_LOCK_PERCENT_COMPLETE_VAR);
                     const String *const restorePercentCompleteStr =
                         restorePercentComplete != NULL ?
-                            strNewFmt(" - %u.%02u%% complete", varUInt(restorePercentComplete) / 100, varUInt(restorePercentComplete) % 100) :
-                            EMPTY_STR;
+                            strNewFmt(" - %s complete", strZ(strNewPct(varUInt(restorePercentComplete), 10000))) : EMPTY_STR;
 
                     if (statusCode != INFO_STANZA_STATUS_CODE_OK)
                     {

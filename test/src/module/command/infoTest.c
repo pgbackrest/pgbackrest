@@ -535,7 +535,7 @@ testRun(void)
             "3={\"db-catalog-version\":201608131,\"db-control-version\":960,\"db-system-id\":6569239123849665679"
             ",\"db-version\":\"9.6\"}\n");
 
-        // Execute while a backup and restore lock is held
+        // Execute while backup and restore locks are held
         HRN_FORK_BEGIN()
         {
             HRN_FORK_CHILD_BEGIN()
@@ -724,7 +724,8 @@ testRun(void)
                         "}"
                     "]",
                     // {uncrustify_on}
-                    "json (progress only) - single stanza, valid backup, no priors, no archives in latest DB, backup/expire and restore lock detected");
+                    "json (progress only) - single stanza, valid backup, no priors, no archives in latest DB, backup/expire and"
+                    " restore lock detected");
 
                 HRN_CFG_LOAD(cfgCmdInfo, argListText);
                 TEST_RESULT_STR_Z(
@@ -757,7 +758,8 @@ testRun(void)
                     infoRender(),
                     "stanza: stanza1\n"
                     "    status: ok (backup/expire running) (restore running)\n",
-                    "text (progress only) - single stanza, valid backup, no priors, no archives in latest DB, backup/expire and restore lock detected");
+                    "text (progress only) - single stanza, valid backup, no priors, no archives in latest DB, backup/expire and"
+                    " restore lock detected");
 
                 // Notify child to release lock
                 HRN_FORK_PARENT_NOTIFY_PUT(0);
@@ -1726,7 +1728,8 @@ testRun(void)
                         "}"
                     "]",
                     // {uncrustify_on}
-                    "json - multiple stanzas, some with valid backups, archives in latest DB, backup and restore lock held on one stanza");
+                    "json - multiple stanzas, some with valid backups, archives in latest DB, backup and restore lock held on one"
+                    " stanza");
 
                 HRN_CFG_LOAD(cfgCmdInfo, argListMultiRepoJsonProgressOnly);
                 TEST_RESULT_STR_Z(
@@ -1779,7 +1782,8 @@ testRun(void)
                         "}"
                     "]",
                     // {uncrustify_on}
-                    "json (progress only) - multiple stanzas, some with valid backups, archives in latest DB, backup and restore lock held on one stanza");
+                    "json (progress only) - multiple stanzas, some with valid backups, archives in latest DB, backup and restore"
+                    " lock held on one stanza");
 
                 // Notify child to release lock
                 HRN_FORK_PARENT_NOTIFY_PUT(0);
