@@ -17,6 +17,19 @@
 
         <release-feature-list>
             <release-item>
+                <github-issue id="2546"/>
+                <github-pull-request id="2652"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="denis.garsh"/>
+                    <release-item-contributor id="maxim.michkov"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add restore progress to <cmd>info</cmd> command output.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2550"/>
 
                 <release-item-contributor-list>
