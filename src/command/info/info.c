@@ -1783,7 +1783,8 @@ infoRender(void)
                                 backupLockHeld == true ?
                                     zNewFmt(", " INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP "%s", strZ(backupPercentCompleteStr)) : "",
                                 restoreLockHeld == true ?
-                                    zNewFmt(", " INFO_STANZA_STATUS_MESSAGE_LOCK_RESTORE "%s)", strZ(restorePercentCompleteStr)) : ")");
+                                    zNewFmt(", " INFO_STANZA_STATUS_MESSAGE_LOCK_RESTORE "%s)", strZ(restorePercentCompleteStr)) :
+                                    ")");
                         }
                     }
                     else
@@ -1796,7 +1797,8 @@ infoRender(void)
                                 backupLockHeld == true ?
                                     zNewFmt(" (" INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP "%s)", strZ(backupPercentCompleteStr)) : "",
                                 restoreLockHeld == true ?
-                                    zNewFmt(" (" INFO_STANZA_STATUS_MESSAGE_LOCK_RESTORE "%s)", strZ(restorePercentCompleteStr)) : "");
+                                    zNewFmt(" (" INFO_STANZA_STATUS_MESSAGE_LOCK_RESTORE "%s)", strZ(restorePercentCompleteStr)) :
+                                    "");
                         }
                         else
                             strCatFmt(resultStr, "%s\n", INFO_STANZA_STATUS_OK);
