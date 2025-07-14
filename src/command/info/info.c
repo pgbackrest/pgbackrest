@@ -1718,90 +1718,96 @@ infoRender(void)
                         restorePercentComplete != NULL ?
                             strNewFmt(" - %s complete", strZ(strNewPct(varUInt(restorePercentComplete), 10000))) : EMPTY_STR;
 
-                    if (statusCode != INFO_STANZA_STATUS_CODE_OK)
-                    {
-                        // Update the overall stanza status and change displayed status if backup lock is found
-                        if (outputFull &&
-                            (statusCode == INFO_STANZA_STATUS_CODE_MIXED || statusCode == INFO_STANZA_STATUS_CODE_PG_MISMATCH ||
-                             statusCode == INFO_STANZA_STATUS_CODE_OTHER))
-                        {
-                            // Stanza status
-                            strCatFmt(
-                                resultStr, "%s%s%s\n",
-                                statusCode == INFO_STANZA_STATUS_CODE_MIXED ?
-                                    INFO_STANZA_MIXED :
-                                    zNewFmt(
-                                        INFO_STANZA_STATUS_ERROR " (%s)",
-                                        strZ(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR)))),
-                                backupLockHeld == true ?
-                                    zNewFmt(" (" INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP "%s)", strZ(backupPercentCompleteStr)) : "",
+                    // Stanza status
+                    const bool errorStatus = statusCode != INFO_STANZA_STATUS_CODE_OK &&
+                                             (outputFull == false || statusCode != INFO_STANZA_STATUS_CODE_MIXED);
+                    const bool progressStatus = backupLockHeld == true || restoreLockHeld == true;
+
+                    const String *const statusLabelStr =
+                        statusCode == INFO_STANZA_STATUS_CODE_OK ? strNewZ(INFO_STANZA_STATUS_OK) :
+                            (errorStatus == true) ? strNewZ(INFO_STANZA_STATUS_ERROR) :
+                                strNewZ(INFO_STANZA_MIXED);
+                    const String *const statusErrorStr = errorStatus ?
+                                                             varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR)) : EMPTY_STR;
+                    const String *const progressStr =
+                        backupLockHeld == true && restoreLockHeld == true ?
+                            strNewFmt(
+                                INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP "%s, " INFO_STANZA_STATUS_MESSAGE_LOCK_RESTORE "%s",
+                                strZ(backupPercentCompleteStr),
+                                strZ(restorePercentCompleteStr)) :
+                            backupLockHeld == true ?
+                                strNewFmt(INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP "%s", strZ(backupPercentCompleteStr)) :
                                 restoreLockHeld == true ?
-                                    zNewFmt(" (" INFO_STANZA_STATUS_MESSAGE_LOCK_RESTORE "%s)", strZ(restorePercentCompleteStr)) : "");
+                                    strNewFmt(INFO_STANZA_STATUS_MESSAGE_LOCK_RESTORE "%s", strZ(restorePercentCompleteStr)) :
+                                    EMPTY_STR;
 
-                            // Output the status per repo
-                            const VariantList *const repoSection = kvGetList(stanzaInfo, STANZA_KEY_REPO_VAR);
-                            const bool multiRepo = varLstSize(repoSection) > 1;
-                            const char *const formatSpacer = multiRepo ? "               " : "            ";
-
-                            for (unsigned int repoIdx = 0; repoIdx < varLstSize(repoSection); repoIdx++)
-                            {
-                                const KeyValue *const repoInfo = varKv(varLstGet(repoSection, repoIdx));
-                                const KeyValue *const repoStatus = varKv(kvGet(repoInfo, STANZA_KEY_STATUS_VAR));
-
-                                // If more than one repo configured, then add the repo status per repo
-                                if (multiRepo)
-                                    strCatFmt(resultStr, "        repo%u: ", varUInt(kvGet(repoInfo, REPO_KEY_KEY_VAR)));
-
-                                if (varInt(kvGet(repoStatus, STATUS_KEY_CODE_VAR)) == INFO_STANZA_STATUS_CODE_OK)
-                                    strCatZ(resultStr, INFO_STANZA_STATUS_OK "\n");
-                                else
-                                {
-                                    if (varInt(kvGet(repoStatus, STATUS_KEY_CODE_VAR)) == INFO_STANZA_STATUS_CODE_OTHER)
-                                    {
-                                        const StringList *const repoError = strLstNewSplit(
-                                            varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR)), STRDEF("\n"));
-
-                                        strCatFmt(
-                                            resultStr, "%s%s%s\n",
-                                            multiRepo ? INFO_STANZA_STATUS_ERROR " (" INFO_STANZA_STATUS_MESSAGE_OTHER ")\n" : "",
-                                            formatSpacer, strZ(strLstJoin(repoError, zNewFmt("\n%s", formatSpacer))));
-                                    }
-                                    else
-                                    {
-                                        strCatFmt(
-                                            resultStr, INFO_STANZA_STATUS_ERROR " (%s)\n",
-                                            strZ(varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR))));
-                                    }
-                                }
-                            }
+                    if (progressStatus)
+                    {
+                        if (errorStatus)
+                        {
+                            // status: error (message, progress)
+                            strCatFmt(resultStr, "%s (%s, %s)\n", strZ(statusLabelStr), strZ(statusErrorStr), strZ(progressStr));
                         }
                         else
                         {
-                            strCatFmt(
-                                resultStr, "%s (%s%s%s\n", INFO_STANZA_STATUS_ERROR,
-                                strZ(varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR))),
-                                backupLockHeld == true ?
-                                    zNewFmt(", " INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP "%s", strZ(backupPercentCompleteStr)) : "",
-                                restoreLockHeld == true ?
-                                    zNewFmt(", " INFO_STANZA_STATUS_MESSAGE_LOCK_RESTORE "%s)", strZ(restorePercentCompleteStr)) :
-                                    ")");
+                            // status: ok/mixed (progress)
+                            strCatFmt(resultStr, "%s (%s)\n", strZ(statusLabelStr), strZ(progressStr));
                         }
                     }
                     else
                     {
-                        // Change displayed status if backup/restore lock is found
-                        if (backupLockHeld || restoreLockHeld)
+                        if (errorStatus)
                         {
-                            strCatFmt(
-                                resultStr, "%s%s%s\n", INFO_STANZA_STATUS_OK,
-                                backupLockHeld == true ?
-                                    zNewFmt(" (" INFO_STANZA_STATUS_MESSAGE_LOCK_BACKUP "%s)", strZ(backupPercentCompleteStr)) : "",
-                                restoreLockHeld == true ?
-                                    zNewFmt(" (" INFO_STANZA_STATUS_MESSAGE_LOCK_RESTORE "%s)", strZ(restorePercentCompleteStr)) :
-                                    "");
+                            // status: error (message)
+                            strCatFmt(resultStr, "%s (%s)\n", strZ(statusLabelStr), strZ(statusErrorStr));
                         }
                         else
-                            strCatFmt(resultStr, "%s\n", INFO_STANZA_STATUS_OK);
+                        {
+                            // status: ok/mixed
+                            strCatFmt(resultStr, "%s\n", strZ(statusLabelStr));
+                        }
+                    }
+
+                    // Output the status per repo
+                    if (outputFull &&
+                        (statusCode == INFO_STANZA_STATUS_CODE_MIXED || statusCode == INFO_STANZA_STATUS_CODE_PG_MISMATCH ||
+                         statusCode == INFO_STANZA_STATUS_CODE_OTHER))
+                    {
+                        const VariantList *const repoSection = kvGetList(stanzaInfo, STANZA_KEY_REPO_VAR);
+                        const bool multiRepo = varLstSize(repoSection) > 1;
+                        const char *const formatSpacer = multiRepo ? "               " : "            ";
+
+                        for (unsigned int repoIdx = 0; repoIdx < varLstSize(repoSection); repoIdx++)
+                        {
+                            const KeyValue *const repoInfo = varKv(varLstGet(repoSection, repoIdx));
+                            const KeyValue *const repoStatus = varKv(kvGet(repoInfo, STANZA_KEY_STATUS_VAR));
+
+                            // If more than one repo configured, then add the repo status per repo
+                            if (multiRepo)
+                                strCatFmt(resultStr, "        repo%u: ", varUInt(kvGet(repoInfo, REPO_KEY_KEY_VAR)));
+
+                            if (varInt(kvGet(repoStatus, STATUS_KEY_CODE_VAR)) == INFO_STANZA_STATUS_CODE_OK)
+                                strCatZ(resultStr, INFO_STANZA_STATUS_OK "\n");
+                            else
+                            {
+                                if (varInt(kvGet(repoStatus, STATUS_KEY_CODE_VAR)) == INFO_STANZA_STATUS_CODE_OTHER)
+                                {
+                                    const StringList *const repoError = strLstNewSplit(
+                                        varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR)), STRDEF("\n"));
+
+                                    strCatFmt(
+                                        resultStr, "%s%s%s\n",
+                                        multiRepo ? INFO_STANZA_STATUS_ERROR " (" INFO_STANZA_STATUS_MESSAGE_OTHER ")\n" : "",
+                                        formatSpacer, strZ(strLstJoin(repoError, zNewFmt("\n%s", formatSpacer))));
+                                }
+                                else
+                                {
+                                    strCatFmt(
+                                        resultStr, INFO_STANZA_STATUS_ERROR " (%s)\n",
+                                        strZ(varStr(kvGet(repoStatus, STATUS_KEY_MESSAGE_VAR))));
+                                }
+                            }
+                        }
                     }
 
                     // Add cipher type if the stanza is found on at least one repo

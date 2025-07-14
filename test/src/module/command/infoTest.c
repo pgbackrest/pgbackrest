@@ -731,7 +731,7 @@ testRun(void)
                 TEST_RESULT_STR_Z(
                     infoRender(),
                     "stanza: stanza1\n"
-                    "    status: ok (backup/expire running) (restore running)\n"
+                    "    status: ok (backup/expire running, restore running)\n"
                     "    cipher: none\n"
                     "\n"
                     "    db (prior)\n"
@@ -757,7 +757,7 @@ testRun(void)
                 TEST_RESULT_STR_Z(
                     infoRender(),
                     "stanza: stanza1\n"
-                    "    status: ok (backup/expire running) (restore running)\n",
+                    "    status: ok (backup/expire running, restore running)\n",
                     "text (progress only) - single stanza, valid backup, no priors, no archives in latest DB, backup/expire and"
                     " restore lock detected");
 
@@ -1881,7 +1881,7 @@ testRun(void)
                 TEST_RESULT_STR_Z(
                     infoRender(),
                     "stanza: stanza1\n"
-                    "    status: ok (backup/expire running - 65.28% complete) (restore running - 65.28% complete)\n"
+                    "    status: ok (backup/expire running - 65.28% complete, restore running - 65.28% complete)\n"
                     "    cipher: mixed\n"
                     "        repo1: none\n"
                     "        repo2: aes-256-cbc\n"
@@ -1976,7 +1976,7 @@ testRun(void)
                 TEST_RESULT_STR_Z(
                     infoRender(),
                     "stanza: stanza1\n"
-                    "    status: ok (backup/expire running - 65.28% complete) (restore running - 65.28% complete)\n"
+                    "    status: ok (backup/expire running - 65.28% complete, restore running - 65.28% complete)\n"
                     "\n"
                     "stanza: stanza2\n"
                     "    status: ok (backup/expire running - 55.55% complete)\n"
