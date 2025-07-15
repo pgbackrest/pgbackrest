@@ -35,7 +35,7 @@
 
         <p><backrest/> <link url="{[github-url-base]}/releases/tag/release/{[version-stable]}">v{[version-stable]}</link> is the current stable release. Release notes are on the <link page="{[backrest-page-release]}">Releases</link> page.</p>
 
-        <p>Please give us a star on <link url="{[github-url-base]}">GitHub</link> if you like <backrest/>!</p>
+        <p>Please give us a star on <link url="{[github-url-base]}">GitHub</link> if you like <backrest/>! Consider a <link url="{[github-url-root]}/sponsors/dwsteele">sponsorship</link> if you use <backrest/> in your enterprise.</p>
     </section>
 
     <!-- ======================================================================================================================= -->
