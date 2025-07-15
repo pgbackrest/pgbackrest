@@ -1718,17 +1718,17 @@ infoRender(void)
                         restorePercentComplete != NULL ?
                             strNewFmt(" - %s complete", strZ(strNewPct(varUInt(restorePercentComplete), 10000))) : EMPTY_STR;
 
-                    // Stanza status
-                    const bool errorStatus = statusCode != INFO_STANZA_STATUS_CODE_OK &&
-                                             (outputFull == false || statusCode != INFO_STANZA_STATUS_CODE_MIXED);
+                    // Build stanza status
+                    const bool errorStatus =
+                        statusCode != INFO_STANZA_STATUS_CODE_OK &&
+                        (outputFull == false || statusCode != INFO_STANZA_STATUS_CODE_MIXED);
                     const bool progressStatus = backupLockHeld == true || restoreLockHeld == true;
-
                     const String *const statusLabelStr =
-                        statusCode == INFO_STANZA_STATUS_CODE_OK ? strNewZ(INFO_STANZA_STATUS_OK) :
-                            (errorStatus == true) ? strNewZ(INFO_STANZA_STATUS_ERROR) :
-                                strNewZ(INFO_STANZA_MIXED);
-                    const String *const statusErrorStr = errorStatus ?
-                                                             varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR)) : EMPTY_STR;
+                        statusCode == INFO_STANZA_STATUS_CODE_OK ?
+                            strNewZ(INFO_STANZA_STATUS_OK) :
+                            errorStatus == true ? strNewZ(INFO_STANZA_STATUS_ERROR) : strNewZ(INFO_STANZA_MIXED);
+                    const String *const statusErrorStr =
+                        errorStatus ? varStr(kvGet(stanzaStatus, STATUS_KEY_MESSAGE_VAR)) : EMPTY_STR;
                     const String *const progressStr =
                         backupLockHeld == true && restoreLockHeld == true ?
                             strNewFmt(
@@ -1743,29 +1743,25 @@ infoRender(void)
 
                     if (progressStatus)
                     {
+                        // Status: error (message, progress)
                         if (errorStatus)
                         {
-                            // status: error (message, progress)
                             strCatFmt(resultStr, "%s (%s, %s)\n", strZ(statusLabelStr), strZ(statusErrorStr), strZ(progressStr));
                         }
+                        // Status: ok/mixed (progress)
                         else
-                        {
-                            // status: ok/mixed (progress)
                             strCatFmt(resultStr, "%s (%s)\n", strZ(statusLabelStr), strZ(progressStr));
-                        }
                     }
                     else
                     {
+                        // Status: error (message)
                         if (errorStatus)
                         {
-                            // status: error (message)
                             strCatFmt(resultStr, "%s (%s)\n", strZ(statusLabelStr), strZ(statusErrorStr));
                         }
+                        // Status: ok/mixed
                         else
-                        {
-                            // status: ok/mixed
                             strCatFmt(resultStr, "%s\n", strZ(statusLabelStr));
-                        }
                     }
 
                     // Output the status per repo
