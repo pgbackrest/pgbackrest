@@ -1,5 +1,10 @@
 [
     {
+        "commit": "eca9290a2a6583fd0dd9156ee6ef6cf26899336e",
+        "date": "2025-07-21 10:12:22 -0400",
+        "subject": "v2.56.0: Progress Info Improvements"
+    },
+    {
         "commit": "a2a246bba9f71b4b80b3df77688d260862534949",
         "date": "2025-07-18 11:42:12 -0400",
         "subject": "New CI container build for PostgreSQL 18 beta2."
