@@ -1390,6 +1390,36 @@ testRun(void)
         result = testFilter(filter, wal, bufSize(wal), bufSize(wal));
         TEST_RESULT_BOOL(bufEq(wal, result), true, "WAL not the same");
         MEM_CONTEXT_TEMP_END();
+
+        TEST_TITLE("complete wal without wal switch");
+        MEM_CONTEXT_TEMP_BEGIN();
+        filter = walFilterNew(pgControl, NULL);
+        {
+            wal = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE * 2);
+            XRecordInfo walRecords[] = {
+                {RM_XLOG_ID, XLOG_NOOP, DEFAULT_GDPB_XLOG_PAGE_SIZE - SizeOfXLogLongPHD - SizeOfXLogRecordGPDB6},
+                {RM_XLOG_ID, XLOG_NOOP, DEFAULT_GDPB_XLOG_PAGE_SIZE - SizeOfXLogShortPHD - SizeOfXLogRecordGPDB6},
+            };
+            buildWalP(wal, walRecords, LENGTH_OF(walRecords), NO_SWITCH_WAL);
+        }
+        result = testFilter(filter, wal, bufSize(wal), bufSize(wal));
+        TEST_RESULT_BOOL(bufEq(wal, result), true, "WAL not the same");
+        MEM_CONTEXT_TEMP_END();
+
+        TEST_TITLE("wal switch at the end of page");
+        MEM_CONTEXT_TEMP_BEGIN();
+        filter = walFilterNew(pgControl, NULL);
+        {
+            wal = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE * 2);
+            XRecordInfo walRecords[] = {
+                {RM_XLOG_ID, XLOG_NOOP, DEFAULT_GDPB_XLOG_PAGE_SIZE - SizeOfXLogLongPHD - SizeOfXLogRecordGPDB6 - SizeOfXLogRecordGPDB6},
+                {RM_XLOG_ID, XLOG_SWITCH, 0},
+            };
+            buildWalP(wal, walRecords, LENGTH_OF(walRecords), NO_SWITCH_WAL);
+        }
+        result = testFilter(filter, wal, bufSize(wal), bufSize(wal));
+        TEST_RESULT_BOOL(bufEq(wal, result), true, "WAL not the same");
+        MEM_CONTEXT_TEMP_END();
     }
 
     if (testBegin("read invalid wal"))
