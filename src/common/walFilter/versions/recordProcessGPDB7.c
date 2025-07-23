@@ -469,7 +469,6 @@ getWalInterfaceGPDB7(PgPageSize heapPageSize)
     return (WalInterface){
                0xD101,
                sizeof(XLogRecordGPDB7),
-               offsetof(XLogRecordGPDB7, xl_rmid) + SIZE_OF_STRUCT_MEMBER(XLogRecordGPDB7, xl_rmid),
                validXLogRecordHeaderGPDB7,
                validXLogRecordGPDB7,
                xLogRecordIsWalSwitchGPDB7,

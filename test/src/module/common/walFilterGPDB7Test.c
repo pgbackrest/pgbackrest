@@ -289,7 +289,7 @@ testRun(void)
             Buffer *wal1 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
 
             record = createXRecord(RM7_XACT_ID, XLOG_XACT_COMMIT, .main_data_size = 100);
-            insertXRecord(wal1, record, NO_FLAGS, .beginOffset = 108);
+            insertXRecord(wal1, record, NO_FLAGS, .beginOffset = 110);
             fillLastPage(wal1, DEFAULT_GDPB_XLOG_PAGE_SIZE);
 
             HRN_STORAGE_PUT(
@@ -1204,6 +1204,137 @@ testRun(void)
 
         result = testFilter(filter, wal2, bufSize(wal2), bufSize(wal2));
         TEST_RESULT_BOOL(bufEq(wal2_expected, result), true, "WAL not the same");
+
+        HRN_STORAGE_REMOVE(
+            storageRepoWrite(),
+            STORAGE_REPO_ARCHIVE "/12-1/0000000100000000/000000010000000000000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+        MEM_CONTEXT_TEMP_END();
+
+        TEST_TITLE("Filter record that splits between 2 files");
+        MEM_CONTEXT_TEMP_BEGIN();
+
+        ArchiveGetFile archiveInfo = {
+            .repoIdx = 0,
+            .archiveId = STRDEF("12-1"),
+            .cipherType = cipherTypeNone,
+            .cipherPassArchive = STRDEF("")
+        };
+
+        PgControl testPgControl = pgControl;
+        testPgControl.walSegmentSize = DEFAULT_GDPB_XLOG_PAGE_SIZE;
+
+        BackupBlockInfoGPDB7 block = {
+            .block_id = 1,
+            .blockNumber = 1,
+            .relFileNode = {
+                20000,
+                20000,
+                20000
+            }
+        };
+        List *backupBlocks = lstNewP(sizeof(BackupBlockInfoGPDB7));
+        lstAdd(backupBlocks, &block);
+
+        Buffer *wal1 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        Buffer *wal2 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        Buffer *wal1_expected = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        Buffer *wal2_expected = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+
+        {
+            // LPH - long page header (40 bytes)
+            // SPH - short page header (24 bytes)
+            // RH  - record header (32 bytes)
+            // RM  - remaining data from prev page (var len)
+            // B   - record body (var len)
+            // P   - padding
+            // layout of the second file:
+            // 40  24 32673 7 24 |
+            // LPH RH   B   P RH |
+            record = createXRecord(RM7_XACT_ID, XLOG_XACT_COMMIT, .main_data_size = 32673 - 1 - 4);
+            insertXRecord(wal1, record, NO_FLAGS, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            record = createXRecord(RM7_XACT_ID, XLOG_XACT_COMMIT, .backupBlocks = backupBlocks);
+            insertXRecord(wal1, record, INCOMPLETE_RECORD, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            fillLastPage(wal1, DEFAULT_GDPB_XLOG_PAGE_SIZE);
+
+            HRN_STORAGE_PUT(
+                storageRepoWrite(),
+                STORAGE_REPO_ARCHIVE "/12-1/0000000100000000/000000010000000000000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+                wal1);
+        }
+
+        {
+            // LPH - long page header (40 bytes)
+            // SPH - short page header (24 bytes)
+            // RH  - record header (32 bytes)
+            // RM  - remaining data from prev page (var len)
+            // B   - record body (var len)
+            // P   - padding
+            // layout of the second file:
+            // 40  20 24
+            // LPH RM RH
+            record = createXRecord(RM7_XACT_ID, XLOG_XACT_COMMIT, .backupBlocks = backupBlocks);
+            insertXRecord(wal2, record, NO_FLAGS, .segno = 2, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE, .beginOffset = 20);
+            insertWalSwitchXRecord(wal2);
+            fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
+
+            HRN_STORAGE_PUT(
+                storageRepoWrite(),
+                STORAGE_REPO_ARCHIVE "/12-1/0000000100000000/000000010000000000000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+                wal2);
+        }
+
+        {
+            // LPH - long page header (40 bytes)
+            // SPH - short page header (24 bytes)
+            // RH  - record header (32 bytes)
+            // RM  - remaining data from prev page (var len)
+            // B   - record body (var len)
+            // P   - padding
+            // layout of the second file:
+            // 40  24 32673 7 24 |
+            // LPH RH   B   P RH |
+            record = createXRecord(RM7_XACT_ID, XLOG_XACT_COMMIT, .main_data_size = 32673 - 1 - 4);
+            insertXRecord(wal1_expected, record, NO_FLAGS, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .backupBlocks = backupBlocks);
+            overrideXLogRecordBody((XLogRecordGPDB7 *) record);
+            ((XLogRecordGPDB7 *) record)->xl_crc = xLogRecordChecksumGPDB7((XLogRecordGPDB7 *) record);
+            insertXRecord(wal1_expected, record, INCOMPLETE_RECORD, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            fillLastPage(wal1_expected, DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        }
+
+        {
+            // LPH - long page header (40 bytes)
+            // SPH - short page header (24 bytes)
+            // RH  - record header (32 bytes)
+            // RM  - remaining data from prev page (var len)
+            // B   - record body (var len)
+            // P   - padding
+            // layout of the second file:
+            // 40  20 24
+            // LPH RM RH
+            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .backupBlocks = backupBlocks);
+            overrideXLogRecordBody((XLogRecordGPDB7 *) record);
+            ((XLogRecordGPDB7 *) record)->xl_crc = xLogRecordChecksumGPDB7((XLogRecordGPDB7 *) record);
+            insertXRecord(wal2_expected, record, NO_FLAGS, .segno = 2, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE, .beginOffset = 20);
+            insertWalSwitchXRecord(wal2_expected);
+            fillLastPage(wal2_expected, DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        }
+
+        {
+            archiveInfo.file = STRDEF(
+                STORAGE_REPO_ARCHIVE "/12-1/0000000100000000/000000010000000000000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"),
+            filter = walFilterNew(testPgControl, &archiveInfo);
+            result = testFilter(filter, wal1, bufSize(wal1), bufSize(wal1));
+            TEST_RESULT_BOOL(bufEq(wal1_expected, result), true, "WAL not the same");
+        }
+
+        {
+            archiveInfo.file = STRDEF(
+                STORAGE_REPO_ARCHIVE "/12-1/0000000100000000/000000010000000000000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"),
+            filter = walFilterNew(testPgControl, &archiveInfo);
+            result = testFilter(filter, wal2, bufSize(wal2), bufSize(wal2));
+            TEST_RESULT_BOOL(bufEq(wal2_expected, result), true, "WAL not the same");
+        }
 
         HRN_STORAGE_REMOVE(
             storageRepoWrite(),

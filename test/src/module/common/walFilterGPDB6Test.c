@@ -266,6 +266,14 @@ testRun(void)
         MEM_CONTEXT_TEMP_BEGIN();
         filter = walFilterNew(pgControl, &archiveInfo);
         {
+            // LPH - long page header (40 bytes)
+            // SPH - short page header (24 bytes)
+            // RH  - record header (32 bytes)
+            // RM  - remaining data from prev page (var len)
+            // B   - record body (var len)
+            // layout of the first file:
+            // 40  32728 |24  32744|24  64 32 32648 |
+            // LPH  RM   |SPH  RM  |SPH RM RH   B   |
             Buffer *wal1 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE * 3);
             record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE * 3);
             insertXRecord(wal1, record, NO_FLAGS, .beginOffset = DEFAULT_GDPB_XLOG_PAGE_SIZE * 2);
@@ -279,21 +287,22 @@ testRun(void)
                 STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                 wal1);
         }
+        // LPH - long page header (40 bytes)
+        // SPH - short page header (24 bytes)
+        // RH  - record header (32 bytes)
+        // RM  - remaining data from prev page (var len)
+        // B   - record body (var len)
+        // layout of the second file:
+        // 40  32728 |24  160 32 32552 |24  32744 |24  208 32
+        // LPH  RM   |SPH  RM RH   B   |SPH  RM   |SPH RM  RH
         wal2 = bufNew(1024 * 1024);
         record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE * 2);
-
-        // The size of the space occupied by the first record on the last page of the previous file.
-        size_t remLen =
-            (DEFAULT_GDPB_XLOG_PAGE_SIZE * 2 - DEFAULT_GDPB_XLOG_PAGE_SIZE - SizeOfXLogLongPHD) -
-            (DEFAULT_GDPB_XLOG_PAGE_SIZE - SizeOfXLogShortPHD);
         hrnGpdbWalInsertXRecordP(
             wal2,
             record,
             NO_FLAGS,
             .segno = 2,
-            .beginOffset =
-                (uint32_t) (DEFAULT_GDPB_XLOG_PAGE_SIZE * 2 -
-                            (DEFAULT_GDPB_XLOG_PAGE_SIZE - SizeOfXLogShortPHD - SizeOfXLogRecordGPDB6 - remLen)));
+            .beginOffset = 32728 + 160);
         insertWalSwitchXRecord(wal2);
 
         fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
@@ -309,6 +318,14 @@ testRun(void)
         MEM_CONTEXT_TEMP_BEGIN();
         filter = walFilterNew(pgControl, &archiveInfo);
         {
+            // LPH - long page header (40 bytes)
+            // SPH - short page header (24 bytes)
+            // RH  - record header (32 bytes)
+            // RM  - remaining data from prev page (var len)
+            // B   - record body (var len)
+            // layout of the first file:
+            // 40  32728 |24  32744 |24  32 32712 |
+            // LPH  RM   |SPH  RM   |SPH RH   B   |
             Buffer *wal1 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE * 3);
             record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE * 3);
             hrnGpdbWalInsertXRecordP(
@@ -323,10 +340,18 @@ testRun(void)
                 STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                 wal1);
         }
+        // LPH - long page header (40 bytes)
+        // SPH - short page header (24 bytes)
+        // RH  - record header (32 bytes)
+        // RM  - remaining data from prev page (var len)
+        // B   - record body (var len)
+        // layout of the second file:
+        // 40  32728 |24  96 32
+        // LPH  RM   |SPH RM RH
         wal2 = bufNew(1024 * 1024);
         record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE * 2);
         insertXRecord(
-            wal2, record, NO_FLAGS, .segno = 2, .beginOffset = DEFAULT_GDPB_XLOG_PAGE_SIZE - SizeOfXLogShortPHD - SizeOfXLogRecordGPDB6);
+            wal2, record, NO_FLAGS, .segno = 2, .beginOffset = 32728 + 96);
         insertWalSwitchXRecord(wal2);
 
         fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
@@ -544,7 +569,7 @@ testRun(void)
 
             // 120 - The size occupied by the previous entry on page 4.
             record = createXRecord(
-                RM_XLOG_ID, XLOG_NOOP, DEFAULT_GDPB_XLOG_PAGE_SIZE - SizeOfXLogShortPHD - 120 - SizeOfXLogRecordGPDB6 - 8);
+                RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE - SizeOfXLogShortPHD - 120 - SizeOfXLogRecordGPDB6 - 8);
             insertXRecord(wal1, record, NO_FLAGS);
 
             record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 100);
@@ -575,22 +600,24 @@ testRun(void)
         filter = walFilterNew(pgControl, &archiveInfo);
         {
             Buffer *wal1 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
-
-            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE / 2);
-            insertXRecord(wal1, record, NO_FLAGS);
-
-            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE * 3);
-            insertXRecord(wal1, record, INCOMPLETE_RECORD);
-
+            memset(bufPtr(wal1), 0, bufUsed(wal1));
             HRN_STORAGE_PUT(
                 storageRepoWrite(),
-                STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+                STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000021-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                 wal1);
         }
 
         wal2 = bufNew(1024 * 1024);
+        // LPH - long page header (40 bytes)
+        // SPH - short page header (24 bytes)
+        // RH  - record header (32 bytes)
+        // RM  - remaining data from prev page (var len)
+        // B   - record body (var len)
+        // layout of the second file:
+        // 40  32728 |24  32744 |24  16552 32 16160 |24  32744 |24  16600 32
+        // LPH  RM   |SPH  RM   |SPH  RM   RH   B   |SPH  RM   |SPH  RM   RH
         record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE * 3);
-        insertXRecord(wal2, record, 0, .segno = 2, .beginOffset = (DEFAULT_GDPB_XLOG_PAGE_SIZE * 3 + SizeOfXLogRecordGPDB6) - DEFAULT_GDPB_XLOG_PAGE_SIZE / 2 - SizeOfXLogLongPHD - SizeOfXLogRecordGPDB6);
+        insertXRecord(wal2, record, 0, .segno = 2, .beginOffset = 32728 + 32744 + 16552);
         record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE * 2);
         insertXRecord(wal2, record, NO_FLAGS);
         insertWalSwitchXRecord(wal2);
@@ -610,6 +637,14 @@ testRun(void)
         {
             Buffer *wal1 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
 
+            // LPH - long page header (40 bytes)
+            // SPH - short page header (24 bytes)
+            // RH  - record header (32 bytes)
+            // RM  - remaining data from prev page (var len)
+            // B   - record body (var len)
+            // layout of the second file:
+            // 40  32 16384 32 16280 |
+            // LPH RH   B   RH   B   |
             record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE / 2);
             insertXRecord(wal1, record, NO_FLAGS);
 
@@ -623,10 +658,18 @@ testRun(void)
         }
 
         wal2 = bufNew(1024 * 1024);
+        // LPH - long page header (40 bytes)
+        // SPH - short page header (24 bytes)
+        // RH  - record header (32 bytes)
+        // RM  - remaining data from prev page (var len)
+        // B   - record body (var len)
+        // layout of the second file:
+        // 40  32728 |24  32 32712 |24  32744 |24  80 32
+        // LPH  RM   |SPH RH   B   |SPH  RM   |SPH RM RH
         record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE * 3);
         insertXRecord(
             wal2, record, INCOMPLETE_RECORD, .segno = 2,
-            .beginOffset = (DEFAULT_GDPB_XLOG_PAGE_SIZE * 3 + SizeOfXLogRecordGPDB6) - DEFAULT_GDPB_XLOG_PAGE_SIZE / 2 - SizeOfXLogLongPHD - SizeOfXLogRecordGPDB6);
+            .beginOffset = (DEFAULT_GDPB_XLOG_PAGE_SIZE * 3 + SizeOfXLogRecordGPDB6) - (SizeOfXLogRecordGPDB6 + 16280));
         record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE * 2);
         insertXRecord(wal2, record, OVERWRITE, .segno = 2);
         insertWalSwitchXRecord(wal2);
@@ -645,31 +688,29 @@ testRun(void)
         filter = walFilterNew(pgControl, &archiveInfo);
         {
             Buffer *wal1 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
-
-            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE / 2);
-            insertXRecord(wal1, record, NO_FLAGS);
-
-            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE * 3);
-            insertXRecord(wal1, record, INCOMPLETE_RECORD);
-
+            memset(bufPtr(wal1), 0, bufUsed(wal1));
             HRN_STORAGE_PUT(
                 storageRepoWrite(),
-                STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+                STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000011-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                 wal1);
         }
 
         wal2 = bufNew(1024 * 1024);
+        // LPH - long page header (40 bytes)
+        // SPH - short page header (24 bytes)
+        // RH  - record header (32 bytes)
+        // RM  - remaining data from prev page (var len)
+        // B   - record body (var len)
+        // layout of the second file:
+        // 40  32728 |24  32744 |24  16552 32 16160 |24  32744 |24  16600 32
+        // LPH  RM   |SPH  RM   |SPH  RM   RH   B   |SPH  RM   |SPH  RM   RH
         record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE * 3);
         insertXRecord(
             wal2,
             record,
             0,
             .segno = 2,
-            .beginOffset =
-                (DEFAULT_GDPB_XLOG_PAGE_SIZE * 3 + SizeOfXLogRecordGPDB6) -
-                DEFAULT_GDPB_XLOG_PAGE_SIZE / 2 -
-                SizeOfXLogLongPHD -
-                SizeOfXLogRecordGPDB6);
+            .beginOffset = 32728 + 32744 + 16552);
         record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE * 2);
         insertXRecord(wal2, record, NO_FLAGS);
         insertWalSwitchXRecord(wal2);
@@ -1044,12 +1085,22 @@ testRun(void)
 
         TEST_TITLE("usefully part of header in the next file");
         MEM_CONTEXT_TEMP_BEGIN();
-        filter = walFilterNew(pgControl, &archiveInfo);
+        PgControl testPgControl = pgControl;
+        testPgControl.walSegmentSize = DEFAULT_GDPB_XLOG_PAGE_SIZE;
+        filter = walFilterNew(testPgControl, &archiveInfo);
         {
             Buffer *wal1 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
 
+            // LPH - long page header (40 bytes)
+            // SPH - short page header (24 bytes)
+            // RH  - record header (32 bytes)
+            // RM  - remaining data from prev page (var len)
+            // B   - record body (var len)
+            // layout of the second file:
+            // 40  124
+            // LPH  RM
             record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 100);
-            insertXRecord(wal1, record, 0, .beginOffset = 124);
+            insertXRecord(wal1, record, 0, .beginOffset = 124, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
             fillLastPage(wal1, DEFAULT_GDPB_XLOG_PAGE_SIZE);
 
             HRN_STORAGE_PUT(
@@ -1059,11 +1110,19 @@ testRun(void)
         }
 
         wal2 = bufNew(1024 * 1024);
+        // LPH - long page header (40 bytes)
+        // SPH - short page header (24 bytes)
+        // RH  - record header (32 bytes)
+        // RM  - remaining data from prev page (var len)
+        // B   - record body (var len)
+        // layout of the second file:
+        // 40  32 32688 8  |
+        // LPH RH   B   RH |
         record = createXRecord(
             RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE - SizeOfXLogLongPHD - SizeOfXLogRecordGPDB6 - 8);
-        insertXRecord(wal2, record, NO_FLAGS);
+        insertXRecord(wal2, record, NO_FLAGS, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
         record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 100);
-        insertXRecord(wal2, record, INCOMPLETE_RECORD, .segno = 1);
+        insertXRecord(wal2, record, INCOMPLETE_RECORD, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
 
         fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
         result = testFilter(filter, wal2, bufSize(wal2), bufSize(wal2));
@@ -1906,7 +1965,9 @@ testRun(void)
         HRN_STORAGE_PUT_Z(storageTest, "recovery_filter.json", "[]");
 
         MEM_CONTEXT_TEMP_BEGIN();
-        filter = walFilterNew(pgControl, &archiveInfo);
+        PgControl testPgControl = pgControl;
+        testPgControl.walSegmentSize = DEFAULT_GDPB_XLOG_PAGE_SIZE;
+        filter = walFilterNew(testPgControl, &archiveInfo);
         RelFileNode node1 = {
             .dbNode = 30000,
             .spcNode = 1000,
@@ -1919,13 +1980,20 @@ testRun(void)
         };
         {
             Buffer *wal1 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
-
+            // LPH - long page header (40 bytes)
+            // SPH - short page header (24 bytes)
+            // RH  - record header (32 bytes)
+            // RM  - remaining data from prev page (var len)
+            // B   - record body (var len)
+            // layout of the second file:
+            // 40  32 32688 8  |
+            // LPH RH   B   RH |
             record = createXRecord(
                 RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE - SizeOfXLogLongPHD - SizeOfXLogRecordGPDB6 - 8);
-            insertXRecord(wal1, record, NO_FLAGS);
+            insertXRecord(wal1, record, NO_FLAGS, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
 
             record = createXRecord(RM6_HEAP_ID, XLOG_HEAP_INSERT, .body_size = sizeof(node1), .body = &node1);
-            insertXRecord(wal1, record, INCOMPLETE_RECORD);
+            insertXRecord(wal1, record, INCOMPLETE_RECORD, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
             fillLastPage(wal1, DEFAULT_GDPB_XLOG_PAGE_SIZE);
 
             HRN_STORAGE_PUT(
@@ -1934,8 +2002,20 @@ testRun(void)
                 wal1);
 
             Buffer *wal4 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            // LPH - long page header (40 bytes)
+            // SPH - short page header (24 bytes)
+            // RH  - record header (32 bytes)
+            // RM  - remaining data from prev page (var len)
+            // B   - record body (var len)
+            // layout of the second file:
+            // 40  36
+            // LPH RM
+            // sizeof(node2) = 12
+            // SizeOfXLogRecordGPDB6 = 32
+            // 32 + 12 = 44
+            // 44 - 8 = 36
             record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = sizeof(node2), .body = &node2);
-            insertXRecord(wal4, record, 0, .beginOffset = (SizeOfXLogRecordGPDB6 + sizeof(node2)) - 16);
+            insertXRecord(wal4, record, 0, .beginOffset = 36, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
             HRN_STORAGE_PUT(
                 storageRepoWrite(),
                 STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000003-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
@@ -1943,9 +2023,18 @@ testRun(void)
         }
         Buffer *wal2;
         {
-            wal2 = bufNew(1024 * 1024);
+            wal2 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            // LPH - long page header (40 bytes)
+            // SPH - short page header (24 bytes)
+            // RH  - record header (32 bytes)
+            // RM  - remaining data from prev page (var len)
+            // B   - record body (var len)
+            // P   - padding
+            // layout of the second file:
+            // 40  36 4 32 32644 4 8  |
+            // LPH RM P RH   B   P RH |
             record = createXRecord(RM6_HEAP_ID, XLOG_HEAP_INSERT, .body_size = sizeof(node1), .body = &node1);
-            insertXRecord(wal2, record, 0, .segno = 2, .beginOffset = (sizeof(node1) + SizeOfXLogRecordGPDB6) - 8);
+            insertXRecord(wal2, record, 0, .segno = 2, .beginOffset = (sizeof(node1) + SizeOfXLogRecordGPDB6) - 8, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
             record = createXRecord(
                 RM_XLOG_ID,
                 XLOG_NOOP,
@@ -1955,17 +2044,26 @@ testRun(void)
                     SizeOfXLogRecordGPDB6 -
                     ((sizeof(node1) + SizeOfXLogRecordGPDB6) - 8)
                     - 16);
-            insertXRecord(wal2, record, NO_FLAGS);
+            insertXRecord(wal2, record, NO_FLAGS, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
             record = createXRecord(RM6_HEAP_ID, XLOG_HEAP_INSERT, .body_size = sizeof(node2), .body = &node2);
-            insertXRecord(wal2, record, INCOMPLETE_RECORD, .segno = 2);
+            insertXRecord(wal2, record, INCOMPLETE_RECORD, .segno = 2, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
 
             fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
         }
         Buffer *wal3;
         {
-            wal3 = bufNew(1024 * 1024);
+            wal3 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            // LPH - long page header (40 bytes)
+            // SPH - short page header (24 bytes)
+            // RH  - record header (32 bytes)
+            // RM  - remaining data from prev page (var len)
+            // B   - record body (var len)
+            // P   - padding
+            // layout of the second file:
+            // 40  36 4 32 32644 4 8  |
+            // LPH RM P RH   B   P RH |
             record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = sizeof(node1), .body = &node1);
-            insertXRecord(wal3, record, 0, .segno = 2, .beginOffset = (sizeof(node1) + SizeOfXLogRecordGPDB6) - 8);
+            insertXRecord(wal3, record, 0, .segno = 2, .beginOffset = (sizeof(node1) + SizeOfXLogRecordGPDB6) - 8, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
             record = createXRecord(
                 RM_XLOG_ID,
                 XLOG_NOOP,
@@ -1975,9 +2073,9 @@ testRun(void)
                     SizeOfXLogRecordGPDB6 -
                     ((sizeof(node1) + SizeOfXLogRecordGPDB6) - 8) -
                     16);
-            insertXRecord(wal3, record, NO_FLAGS);
+            insertXRecord(wal3, record, NO_FLAGS, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
             record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = sizeof(node2), .body = &node2);
-            insertXRecord(wal3, record, INCOMPLETE_RECORD, .segno = 2);
+            insertXRecord(wal3, record, INCOMPLETE_RECORD, .segno = 2, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
 
             fillLastPage(wal3, DEFAULT_GDPB_XLOG_PAGE_SIZE);
         }
@@ -1996,6 +2094,121 @@ testRun(void)
         HRN_STORAGE_REMOVE(
             storageRepoWrite(),
             STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+        MEM_CONTEXT_TEMP_END();
+
+        TEST_TITLE("Filter record that splits between 2 files");
+        MEM_CONTEXT_TEMP_BEGIN();
+        PgControl testPgControl = pgControl;
+        testPgControl.walSegmentSize = DEFAULT_GDPB_XLOG_PAGE_SIZE;
+        RelFileNode node1 = {
+            .dbNode = 30000,
+            .spcNode = 1000,
+            .relNode = 17000
+        };
+
+        Buffer *wal1 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        Buffer *wal2 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        Buffer *wal1_expected = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        Buffer *wal2_expected = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+
+        {
+            // LPH - long page header (40 bytes)
+            // SPH - short page header (24 bytes)
+            // RH  - record header (32 bytes)
+            // RM  - remaining data from prev page (var len)
+            // B   - record body (var len)
+            // P   - padding
+            // layout of the first file:
+            // 40  32 32680 16 |
+            // LPH RH   B   RH |
+            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 32680);
+            insertXRecord(wal1, record, NO_FLAGS, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            record = createXRecord(RM6_HEAP_ID, XLOG_HEAP_INSERT, .body_size = sizeof(node1), .body = &node1);
+            insertXRecord(wal1, record, INCOMPLETE_RECORD, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
+
+            fillLastPage(wal1, DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            HRN_STORAGE_PUT(
+                storageRepoWrite(),
+                STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+                wal1);
+        }
+
+        {
+            // LPH - long page header (40 bytes)
+            // SPH - short page header (24 bytes)
+            // RH  - record header (32 bytes)
+            // RM  - remaining data from prev page (var len)
+            // B   - record body (var len)
+            // P   - padding
+            // layout of the first file:
+            // 40  28 32
+            // LPH RM RH
+            record = createXRecord(RM6_HEAP_ID, XLOG_HEAP_INSERT, .body_size = sizeof(node1), .body = &node1);
+            insertXRecord(wal2, record, NO_FLAGS, .segno = 2, .beginOffset = 28, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            insertWalSwitchXRecord(wal2);
+            fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            HRN_STORAGE_PUT(
+                storageRepoWrite(),
+                STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+                wal2);
+        }
+
+        {
+            // LPH - long page header (40 bytes)
+            // SPH - short page header (24 bytes)
+            // RH  - record header (32 bytes)
+            // RM  - remaining data from prev page (var len)
+            // B   - record body (var len)
+            // P   - padding
+            // layout of the first file:
+            // 40  32 32680 16 |
+            // LPH RH   B   RH |
+            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 32680);
+            insertXRecord(wal1_expected, record, NO_FLAGS, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = sizeof(node1), .body = &node1);
+            insertXRecord(wal1_expected, record, INCOMPLETE_RECORD, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            fillLastPage(wal1_expected, DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        }
+
+        {
+            // LPH - long page header (40 bytes)
+            // SPH - short page header (24 bytes)
+            // RH  - record header (32 bytes)
+            // RM  - remaining data from prev page (var len)
+            // B   - record body (var len)
+            // P   - padding
+            // layout of the first file:
+            // 40  28 32
+            // LPH RM RH
+            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = sizeof(node1), .body = &node1);
+            insertXRecord(wal2_expected, record, NO_FLAGS, .segno = 2, .beginOffset = 28, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            insertWalSwitchXRecord(wal2_expected);
+            fillLastPage(wal2_expected, DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        }
+
+        // We run filtering in the child process to clear the filter list after the test is completed.
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN()
+            {
+                archiveInfo.file = STRDEF(
+                    STORAGE_REPO_ARCHIVE
+                    "/9.4-1/0000000100000000/000000010000000000000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+                filter = walFilterNew(testPgControl, &archiveInfo);
+                result = testFilter(filter, wal1, bufSize(wal1), bufSize(wal1));
+                TEST_RESULT_BOOL(bufEq(wal1_expected, result), true, "WAL not the same");
+
+                archiveInfo.file = STRDEF(
+                    STORAGE_REPO_ARCHIVE
+                    "/9.4-1/0000000100000000/000000010000000000000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+                filter = walFilterNew(testPgControl, &archiveInfo);
+                result = testFilter(filter, wal2, bufSize(wal2), bufSize(wal2));
+                TEST_RESULT_BOOL(bufEq(wal2_expected, result), true, "WAL not the same");
+            }
+            HRN_FORK_CHILD_END();
+        }
+        HRN_FORK_END();
+
         MEM_CONTEXT_TEMP_END();
 
         TEST_TITLE("Filter record with backup blocks");

@@ -452,10 +452,10 @@ readBeginOfRecord(WalFilterState *const this)
         }
         lstClearFast(this->pageHeaders);
     }
-    // If xl_info and xl_rmid is in prev file then nothing to do
-    result = this->gotLen < this->walInterface.rmidSize;
+    ASSERT(this->currentStep != noStep);
 
     ioReadClose(storageReadIo(storageRead));
+    result = true;
 end:
     MEM_CONTEXT_TEMP_END();
     return result;
@@ -516,12 +516,8 @@ walFilterProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
         // We have an incomplete record at the end, and we have already read something
         if (this->currentStep != noStep && this->currentStep != stepBeginOfRecord)
         {
-            // if xl_info and xl_rmid of the header is in current file then read end of record from next file if it exits
-            if (this->gotLen >= this->walInterface.rmidSize)
-            {
-                getEndOfRecord(this);
-                this->walInterface.xLogRecordFilter(this->record);
-            }
+            getEndOfRecord(this);
+            this->walInterface.xLogRecordFilter(this->record);
             writeRecord(this, output, (const unsigned char *) this->record);
         }
         this->done = true;
@@ -555,10 +551,9 @@ walFilterProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
                 }
                 this->walInterface.xLogRecordFilter(this->record);
 
-                ASSERT(offset % MAXIMUM_ALIGNOF == 0 && offset <= MAXIMUM_ALIGNOF * 2);
+                ASSERT(offset < this->gotLen);
                 this->gotLen -= offset;
 
-                ASSERT(this->recPtr == this->currentPageHeader->xlp_pageaddr);
                 writeRecord(this, output, ((const unsigned char *) this->record) + offset);
                 this->inputSame = true;
                 lstClearFast(this->pageHeaders);

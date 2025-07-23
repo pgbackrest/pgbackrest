@@ -242,7 +242,6 @@ typedef struct WalInterface
 {
     uint16 header_magic;
     uint32 headerSize;
-    uint32 rmidSize;
     void (*validXLogRecordHeader)(const XLogRecordBase *record);
     void (*validXLogRecord)(const XLogRecordBase *record);
     bool (*xLogRecordIsWalSwitch)(const XLogRecordBase *record);

@@ -481,7 +481,6 @@ getWalInterfaceGPDB6(PgPageSize heapPageSize)
     return (WalInterface){
                0xD07E,
                SizeOfXLogRecordGPDB6,
-               offsetof(XLogRecordGPDB6, xl_rmid) + SIZE_OF_STRUCT_MEMBER(XLogRecordGPDB6, xl_rmid),
                validXLogRecordHeaderGPDB6,
                validXLogRecordGPDB6,
                xLogRecordIsWalSwitchGPDB6,
