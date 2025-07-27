@@ -332,56 +332,50 @@ writeRecord(WalFilterState *const this, Buffer *const output, const unsigned cha
     this->gotLen = 0;
 }
 
+// Based on XLogFilePath from Postgres
+static inline const String *
+xLogFileName (const TimeLineID timeLine, uint64 segno, uint32 segSize)
+{
+    return strNewFmt("%08X%08X%08X", timeLine,
+                     (uint32) ((segno) / XLogSegmentsPerXLogId(segSize)),
+                     (uint32) ((segno) % XLogSegmentsPerXLogId(segSize)));
+}
+
 static const StorageRead *
 getNearWal (WalFilterState *const this, bool isNext)
 {
-    const String *walSegment = NULL;
     const TimeLineID timeLine = this->currentPageHeader->xlp_tli;
     uint64 segno = this->currentPageHeader->xlp_pageaddr / this->segSize;
-    const String *const path = strNewFmt("%08X%08X", timeLine, (uint32) (segno / XLogSegmentsPerXLogId(this->segSize)));
+
+    ASSERT(isNext == true || segno != 0);
+    if (isNext)
+        segno++;
+    else
+        segno--;
+
+    const String *walName = xLogFileName(timeLine, segno, this->segSize);
+
+    String *walDir = strNewFmt("%08X%08X", timeLine, (uint32) (segno / XLogSegmentsPerXLogId(this->segSize)));
+
+    const String *expression;
+    // The next file may be partial if the timeline has been switched.
+    if (isNext)
+        expression = strNewFmt("^%s(\\.partial)?-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(walName));
+    else
+        expression = strNewFmt("^%s-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$", strZ(walName));
 
     const StringList *const segmentList = storageListP(
         storageRepoIdx(this->archiveInfo->repoIdx),
-        strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(this->archiveInfo->archiveId), strZ(path)),
-        .expression = strNewFmt("^[0-f]{24}-[0-f]{40}" COMPRESS_TYPE_REGEXP "{0,1}$"));
+        strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(this->archiveInfo->archiveId), strZ(walDir)),
+        .expression = expression);
 
     if (strLstEmpty(segmentList))
     {
-        // an exotic case where we couldn't even find the current file.
-        THROW(FormatError, "no WAL files were found in the repository");
-    }
-
-    uint64 segnoDiff = UINT64_MAX;
-    for (unsigned int i = 0; i < strLstSize(segmentList); i++)
-    {
-        const String *const file = strSubN(strLstGet(segmentList, i), 0, 24);
-        TimeLineID tli;
-        uint64 fileSegNo = 0;
-        XLogFromFileName(strZ(file), &tli, &fileSegNo, this->segSize);
-
-        if (isNext)
-        {
-            if (fileSegNo - segno < segnoDiff && fileSegNo > segno)
-            {
-                segnoDiff = fileSegNo - segno;
-                walSegment = strLstGet(segmentList, i);
-            }
-        }
-        else
-        {
-            if (segno - fileSegNo < segnoDiff && fileSegNo < segno)
-            {
-                segnoDiff = segno - fileSegNo;
-                walSegment = strLstGet(segmentList, i);
-            }
-        }
-    }
-
-    // current file is oldest/newest
-    if (segnoDiff == UINT64_MAX)
-    {
         return NULL;
     }
+
+    ASSERT(strLstSize(segmentList) == 1);
+    const String *walSegment = strLstGet(segmentList, 0);
 
     const bool compressible =
         this->archiveInfo->cipherType == cipherTypeNone && compressTypeFromName(this->archiveInfo->file) == compressTypeNone;

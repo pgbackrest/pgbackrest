@@ -304,9 +304,9 @@ testRun(void)
             RM_XLOG_ID,
             XLOG_NOOP,
             .main_data_size = DEFAULT_GDPB_XLOG_PAGE_SIZE - SizeOfXLogLongPHD - sizeof(XLogRecordGPDB7) - 1 - 4 - 16);
-        insertXRecord(wal2, record, NO_FLAGS);
+        insertXRecord(wal2, record, NO_FLAGS, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
         record = createXRecord(RM7_XACT_ID, XLOG_XACT_COMMIT, .main_data_size = 100);
-        insertXRecord(wal2, record, INCOMPLETE_RECORD, .segno = 1);
+        insertXRecord(wal2, record, INCOMPLETE_RECORD, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
 
         fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
         result = testFilter(filter, wal2, bufSize(wal2), bufSize(wal2));
@@ -1170,7 +1170,7 @@ testRun(void)
             Buffer *wal1 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
 
             record = createXRecord(RM7_XACT_ID, XLOG_XACT_COMMIT, .backupBlocks = backupBlocks);
-            insertXRecord(wal1, record, NO_FLAGS, .beginOffset = record->xl_tot_len - 24);
+            insertXRecord(wal1, record, NO_FLAGS, .beginOffset = record->xl_tot_len - 24, .segno = 2, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
             fillLastPage(wal1, DEFAULT_GDPB_XLOG_PAGE_SIZE);
 
             HRN_STORAGE_PUT(
@@ -1185,9 +1185,9 @@ testRun(void)
             RM_XLOG_ID,
             XLOG_NOOP,
             .main_data_size = DEFAULT_GDPB_XLOG_PAGE_SIZE - SizeOfXLogLongPHD - sizeof(XLogRecordGPDB7) - 1 - 4 - 24);
-        insertXRecord(wal2, record, NO_FLAGS);
+        insertXRecord(wal2, record, NO_FLAGS, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
         record = createXRecord(RM7_XACT_ID, XLOG_XACT_COMMIT, .backupBlocks = backupBlocks);
-        insertXRecord(wal2, record, INCOMPLETE_RECORD, .segno = 1);
+        insertXRecord(wal2, record, INCOMPLETE_RECORD, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
         fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
 
         Buffer *wal2_expected = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
@@ -1195,11 +1195,11 @@ testRun(void)
             RM_XLOG_ID,
             XLOG_NOOP,
             .main_data_size = DEFAULT_GDPB_XLOG_PAGE_SIZE - SizeOfXLogLongPHD - sizeof(XLogRecordGPDB7) - 1 - 4 - 24);
-        insertXRecord(wal2_expected, record, NO_FLAGS);
+        insertXRecord(wal2_expected, record, NO_FLAGS, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
         record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .backupBlocks = backupBlocks);
         overrideXLogRecordBody((XLogRecordGPDB7 *) record);
         ((XLogRecordGPDB7 *) record)->xl_crc = xLogRecordChecksumGPDB7((XLogRecordGPDB7 *) record);
-        insertXRecord(wal2_expected, record, INCOMPLETE_RECORD, .segno = 1);
+        insertXRecord(wal2_expected, record, INCOMPLETE_RECORD, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
         fillLastPage(wal2_expected, DEFAULT_GDPB_XLOG_PAGE_SIZE);
 
         result = testFilter(filter, wal2, bufSize(wal2), bufSize(wal2));

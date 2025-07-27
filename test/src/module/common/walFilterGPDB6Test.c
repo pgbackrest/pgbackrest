@@ -223,6 +223,88 @@ testRun(void)
             STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
         MEM_CONTEXT_TEMP_END();
 
+        TEST_TITLE("prev file is partial");
+        MEM_CONTEXT_TEMP_BEGIN();
+        filter = walFilterNew(pgControl, &archiveInfo);
+        {
+            Buffer *zeros = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            memset(bufPtr(zeros), 0, bufUsed(zeros));
+
+            HRN_STORAGE_PUT(
+                storageRepoWrite(),
+                STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000001.partial-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+                zeros);
+        }
+
+        wal2 = bufNew(1024 * 1024);
+        record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 100);
+        hrnGpdbWalInsertXRecordP(wal2, record, NO_FLAGS, .segno = 2, .beginOffset = 132 - 8);
+        insertWalSwitchXRecord(wal2);
+
+        fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        result = testFilter(filter, wal2, bufSize(wal2), bufSize(wal2));
+        TEST_RESULT_BOOL(bufEq(wal2, result), true, "WAL not the same");
+
+        HRN_STORAGE_REMOVE(
+            storageRepoWrite(),
+            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000001.partial-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+        archiveInfo.file = STRDEF(
+            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+        MEM_CONTEXT_TEMP_END();
+
+        TEST_TITLE("prev file is in the another directory");
+        MEM_CONTEXT_TEMP_BEGIN();
+        archiveInfo.file = STRDEF(
+            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000001/000000010000000100000000-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+        filter = walFilterNew(pgControl, &archiveInfo);
+        {
+            Buffer *wal1 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            // LPH - long page header (40 bytes)
+            // SPH - short page header (24 bytes)
+            // RH  - record header (32 bytes)
+            // RM  - remaining data from prev page (var len)
+            // B   - record body (var len)
+            // layout of the first file:
+            // 40  24 32688 8  |
+            // LPH 32   B   RH |
+            record = createXRecord(
+                RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE - SizeOfXLogLongPHD - SizeOfXLogRecordGPDB6 - 8);
+            insertXRecord(wal1, record, NO_FLAGS, .segno = 63);
+
+            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 100);
+            insertXRecord(wal1, record, INCOMPLETE_RECORD, .segno = 63);
+            fillLastPage(wal1, DEFAULT_GDPB_XLOG_PAGE_SIZE);
+
+            HRN_STORAGE_PUT(
+                storageRepoWrite(),
+                STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/00000001000000000000003F-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+                wal1);
+        }
+
+        wal2 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        // LPH - long page header (40 bytes)
+        // SPH - short page header (24 bytes)
+        // RH  - record header (32 bytes)
+        // RM  - remaining data from prev page (var len)
+        // B   - record body (var len)
+        // layout of the first file:
+        // 40  124 32
+        // LPH RM  RH
+        record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 100);
+        hrnGpdbWalInsertXRecordP(wal2, record, NO_FLAGS, .segno = 64, .beginOffset = 132 - 8);
+        insertWalSwitchXRecord(wal2);
+
+        fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        result = testFilter(filter, wal2, bufSize(wal2), bufSize(wal2));
+        TEST_RESULT_BOOL(bufEq(wal2, result), true, "WAL not the same");
+
+        HRN_STORAGE_REMOVE(
+            storageRepoWrite(),
+            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/00000001000000000000003F-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+        archiveInfo.file = STRDEF(
+            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+        MEM_CONTEXT_TEMP_END();
+
         TEST_TITLE("incomplete record in the beginning of prev file");
         MEM_CONTEXT_TEMP_BEGIN();
         filter = walFilterNew(pgControl, &archiveInfo);
@@ -420,6 +502,39 @@ testRun(void)
             STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000033-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
         MEM_CONTEXT_TEMP_END();
 
+        TEST_TITLE("no prev file for this backup");
+        MEM_CONTEXT_TEMP_BEGIN();
+        filter = walFilterNew(pgControl, &archiveInfo);
+        {
+            Buffer *zeros = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            memset(bufPtr(zeros), 0, bufUsed(zeros));
+
+            HRN_STORAGE_PUT(
+                storageRepoWrite(),
+                STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+                zeros);
+            HRN_STORAGE_PUT(
+                storageRepoWrite(),
+                STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+                zeros);
+        }
+
+        wal2 = bufNew(1024 * 1024);
+        record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 100);
+        hrnGpdbWalInsertXRecordP(wal2, record, NO_FLAGS, .segno = 10, .beginOffset = 132 - 8);
+        insertWalSwitchXRecord(wal2);
+        fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        result = testFilter(filter, wal2, bufSize(wal2), bufSize(wal2));
+        TEST_RESULT_BOOL(bufEq(wal2, result), true, "WAL not the same");
+
+        HRN_STORAGE_REMOVE(
+            storageRepoWrite(),
+            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+        HRN_STORAGE_REMOVE(
+            storageRepoWrite(),
+            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+        MEM_CONTEXT_TEMP_END();
+
         TEST_TITLE("no WAL files in repository");
         MEM_CONTEXT_TEMP_BEGIN();
         filter = walFilterNew(pgControl, &archiveInfo);
@@ -430,10 +545,8 @@ testRun(void)
         insertWalSwitchXRecord(wal2);
 
         fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
-        TEST_ERROR(
-            testFilter(filter, wal2, bufSize(wal2), bufSize(wal2)),
-            FormatError,
-            "no WAL files were found in the repository");
+        result = testFilter(filter, wal2, bufSize(wal2), bufSize(wal2));
+        TEST_RESULT_BOOL(bufEq(wal2, result), true, "WAL not the same");
 
         MEM_CONTEXT_TEMP_END();
 
@@ -852,6 +965,43 @@ testRun(void)
             RM_XLOG_ID,
             XLOG_NOOP,
             .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE - SizeOfXLogLongPHD - SizeOfXLogRecordGPDB6 - SizeOfXLogRecordGPDB6);
+        insertXRecord(wal2, record, NO_FLAGS, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 100);
+        insertXRecord(wal2, record, INCOMPLETE_RECORD, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
+
+        fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        result = testFilter(filter, wal2, bufSize(wal2), bufSize(wal2));
+        TEST_RESULT_BOOL(bufEq(wal2, result), true, "WAL not the same");
+
+        HRN_STORAGE_REMOVE(
+            storageRepoWrite(),
+            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+        MEM_CONTEXT_TEMP_END();
+
+        TEST_TITLE("the next file is partial");
+        MEM_CONTEXT_TEMP_BEGIN();
+        PgControl testPgControl = pgControl;
+        testPgControl.walSegmentSize = DEFAULT_GDPB_XLOG_PAGE_SIZE;
+        filter = walFilterNew(testPgControl, &archiveInfo);
+        {
+            Buffer *wal1 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+
+            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 100);
+            insertXRecord(wal1, record, 0, .beginOffset = 100);
+            fillLastPage(wal1, DEFAULT_GDPB_XLOG_PAGE_SIZE);
+
+            HRN_STORAGE_PUT(
+                storageRepoWrite(),
+                STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000001.partial-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+                wal1);
+        }
+
+        wal2 = bufNew(1024 * 1024);
+        // Subtract SizeOfXLogRecord twice to leave exactly space at the end of the page for the header of the next record.
+        record = createXRecord(
+            RM_XLOG_ID,
+            XLOG_NOOP,
+            .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE - SizeOfXLogLongPHD - SizeOfXLogRecordGPDB6 - SizeOfXLogRecordGPDB6);
         insertXRecord(wal2, record, NO_FLAGS);
         record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 100);
         insertXRecord(wal2, record, INCOMPLETE_RECORD, .segno = 1);
@@ -862,7 +1012,47 @@ testRun(void)
 
         HRN_STORAGE_REMOVE(
             storageRepoWrite(),
-            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000001.partial-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+        MEM_CONTEXT_TEMP_END();
+
+        TEST_TITLE("next file in the another directory");
+        archiveInfo.file = STRDEF("/9.4-1/0000000100000000/00000001000000000000003F-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+        MEM_CONTEXT_TEMP_BEGIN();
+        filter = walFilterNew(pgControl, &archiveInfo);
+        {
+            Buffer *wal1 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+
+            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 100);
+            insertXRecord(wal1, record, 0, .beginOffset = 100, .segno = 63);
+            fillLastPage(wal1, DEFAULT_GDPB_XLOG_PAGE_SIZE);
+
+            HRN_STORAGE_PUT(
+                storageRepoWrite(),
+                STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000001/000000010000000100000000-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+                wal1);
+        }
+
+        wal2 = bufNew(GPDB_XLOG_SEG_SIZE);
+
+        // GPDB_XLOG_SEG_SIZE = 64*1024*1024 = 67108864
+        // GPDB_XLOG_SEG_SIZE / DEFAULT_GDPB_XLOG_PAGE_SIZE = 2048
+        // 2047 * SizeOfXLogShortPHD = 49128
+        // 49128 + SizeOfXLogLongPHD + SizeOfXLogRecordGPDB6 = 49200
+        // 67108864 - 49200 = 67059664
+        // 67059664 - SizeOfXLogRecordGPDB6 = 67059632
+        record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 67059632);
+
+        insertXRecord(wal2, record, NO_FLAGS, .segno = 63);
+        record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 100);
+        insertXRecord(wal2, record, INCOMPLETE_RECORD, .segno = 63);
+
+        fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        result = testFilter(filter, wal2, bufSize(wal2), bufSize(wal2));
+        TEST_RESULT_BOOL(bufEq(wal2, result), true, "WAL not the same");
+
+        HRN_STORAGE_REMOVE(
+            storageRepoWrite(),
+            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000001/000000010000000100000000-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
         MEM_CONTEXT_TEMP_END();
 
         TEST_TITLE("no files in repository");
@@ -878,7 +1068,7 @@ testRun(void)
 
         fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
         TEST_ERROR(
-            testFilter(filter, wal2, bufSize(wal2), bufSize(wal2)), FormatError, "no WAL files were found in the repository");
+            testFilter(filter, wal2, bufSize(wal2), bufSize(wal2)), FormatError, "The file with the end of the 0/7ff0 record is missing");
 
         MEM_CONTEXT_TEMP_END();
 
@@ -1071,12 +1261,12 @@ testRun(void)
             RM_XLOG_ID,
             XLOG_NOOP,
             .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE - SizeOfXLogLongPHD - SizeOfXLogRecordGPDB6 - SizeOfXLogRecordGPDB6);
-        insertXRecord(wal2, record, NO_FLAGS);
+        insertXRecord(wal2, record, NO_FLAGS, .segno = 1);
         record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = (DEFAULT_GDPB_XLOG_PAGE_SIZE * 2) - SizeOfXLogRecordGPDB6);
         insertXRecord(wal2, record, INCOMPLETE_RECORD, .segno = 1);
 
         fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
-        TEST_ERROR(testFilter(filter, wal2, bufSize(wal2), bufSize(wal2)), FormatError, "0/7fe0 - Unexpected WAL end");
+        TEST_ERROR(testFilter(filter, wal2, bufSize(wal2), bufSize(wal2)), FormatError, "0/4007fe0 - Unexpected WAL end");
 
         HRN_STORAGE_REMOVE(
             storageRepoWrite(),
@@ -1120,7 +1310,7 @@ testRun(void)
         // LPH RH   B   RH |
         record = createXRecord(
             RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE - SizeOfXLogLongPHD - SizeOfXLogRecordGPDB6 - 8);
-        insertXRecord(wal2, record, NO_FLAGS, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        insertXRecord(wal2, record, NO_FLAGS, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE, .segno = 1);
         record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 100);
         insertXRecord(wal2, record, INCOMPLETE_RECORD, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
 
