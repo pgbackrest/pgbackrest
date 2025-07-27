@@ -584,7 +584,7 @@ testRun(void)
             STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
         MEM_CONTEXT_TEMP_END();
 
-        TEST_TITLE("record is too big");
+        TEST_TITLE("record is larger than buffer with prev file");
         MEM_CONTEXT_TEMP_BEGIN();
         filter = walFilterNew(pgControl, &archiveInfo);
         {
@@ -610,10 +610,8 @@ testRun(void)
         insertWalSwitchXRecord(wal2);
 
         fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
-        TEST_ERROR(
-            testFilter(filter, wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE, DEFAULT_GDPB_XLOG_PAGE_SIZE),
-            FormatError,
-            "0/8000000 - record is too big");
+        result = testFilter(filter, wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE, DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        TEST_RESULT_BOOL(bufEq(wal2, result), true, "WAL not the same");
 
         HRN_STORAGE_REMOVE(
             storageRepoWrite(),
@@ -796,7 +794,7 @@ testRun(void)
             STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
         MEM_CONTEXT_TEMP_END();
 
-        TEST_TITLE("long record at the end of the previous file - record is too big");
+        TEST_TITLE("long record at the end of the previous file with small buffer");
         MEM_CONTEXT_TEMP_BEGIN();
         filter = walFilterNew(pgControl, &archiveInfo);
         {
@@ -829,7 +827,8 @@ testRun(void)
         insertWalSwitchXRecord(wal2);
 
         fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
-        TEST_ERROR(testFilter(filter, wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE, 1024 * 1024), FormatError, "0/8008000 - record is too big");
+        result = testFilter(filter, wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE, 1024 * 1024);
+        TEST_RESULT_BOOL(bufEq(wal2, result), true, "WAL not the same");
 
         HRN_STORAGE_REMOVE(
             storageRepoWrite(),
