@@ -99,6 +99,32 @@ typedef struct BldCfgOptionGroup
 
 typedef struct BldCfgOption BldCfgOption;                           // Forward declaration
 
+typedef struct BldCfgOptionAllowRangeMap
+{
+    const String *map;                                              // Map value
+    const String *min;                                              // Min value
+    const String *max;                                              // Max value
+} BldCfgOptionAllowRangeMap;
+
+typedef struct BldCfgOptionAllowRange
+{
+    const String *min;                                              // Min value
+    const String *max;                                              // Max value
+    const List *mapList;                                            // List of default mappings
+} BldCfgOptionAllowRange;
+
+typedef struct BldCfgOptionDefaultMap
+{
+    const String *map;                                              // Map value
+    const String *value;                                            // Default value
+} BldCfgOptionDefaultMap;
+
+typedef struct BldCfgOptionDefault
+{
+    const String *value;                                            // Default value
+    const List *mapList;                                            // List of default mappings
+} BldCfgOptionDefault;
+
 typedef struct BldCfgOptionDepend
 {
     const BldCfgOption *option;                                     // Option dependency is on
@@ -118,7 +144,7 @@ typedef struct BldCfgOptionCommand
     const String *name;                                             // Name
     bool internal;                                                  // Is the option internal?
     bool required;                                                  // Is the option required?
-    const String *defaultValue;                                     // Default value, if any
+    const BldCfgOptionDefault *defaultValue;                        // Default value, if any
     const BldCfgOptionDepend *depend;                               // Dependency, if any
     const List *allowList;                                          // Allowed value list
     const StringList *roleList;                                     // Roles valid for the command
@@ -142,13 +168,12 @@ struct BldCfgOption
     bool negate;                                                    // Can the option be negated?
     bool reset;                                                     // Can the option be reset?
     DefaultType defaultType;                                        // Type of default
-    const String *defaultValue;                                     // Default value, if any
+    const BldCfgOptionDefault *defaultValue;                        // Default value, if any
     const String *group;                                            // Option group, if any
     bool secure;                                                    // Does the option contain a secret?
     const BldCfgOptionDepend *depend;                               // Dependency, if any
     const List *allowList;                                          // Allowed value list
-    const String *allowRangeMin;                                    // Allow range min, if any
-    const String *allowRangeMax;                                    // Allow range max, if any
+    const BldCfgOptionAllowRange *allowRange;                       // Allow range, if any
     const List *cmdList;                                            // Command override list
     const List *deprecateList;                                      // List of option deprecations
 };

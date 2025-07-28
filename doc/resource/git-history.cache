@@ -1,5 +1,222 @@
 [
     {
+        "commit": "eca9290a2a6583fd0dd9156ee6ef6cf26899336e",
+        "date": "2025-07-21 10:12:22 -0400",
+        "subject": "v2.56.0: Progress Info Improvements"
+    },
+    {
+        "commit": "a2a246bba9f71b4b80b3df77688d260862534949",
+        "date": "2025-07-18 11:42:12 -0400",
+        "subject": "New CI container build for PostgreSQL 18 beta2."
+    },
+    {
+        "commit": "8cdd9ce1c4ab6cca508932a41a3013374d7547ef",
+        "date": "2025-07-16 12:49:34 -0400",
+        "subject": "Add restore progress to info command output.",
+        "body": "The prior implementation of the restore command did not provide any progress information. Implement it similarly to the backup command and also update the info command to display restore progress alongside backup progress.\n\nRestore is a read operation and should not block other commands. The only exception is that multiple restores with the same lock and repository path are not allowed, as each restore must write progress to a separate file. Therefore, no lock is needed for restores with a remote role and the restore command should not be terminated when the stop command is executed."
+    },
+    {
+        "commit": "d55836e7e80a0524c46db2a763dee5194354cd33",
+        "date": "2025-07-15 09:45:36 -0400",
+        "subject": "Update contributing guide to Ubuntu 22.04.",
+        "body": "20.04 is EOL and Docker is now noisy during installation so update."
+    },
+    {
+        "commit": "ff944585caeea912c2897302e56ff4c8e6b0df2e",
+        "date": "2025-07-07 16:57:08 -0400",
+        "subject": "Add funding information."
+    },
+    {
+        "commit": "2706168f609af544b0453d384c7fb620626fc205",
+        "date": "2025-06-26 17:40:05 -0400",
+        "subject": "Add progress-only detail level for info command output.",
+        "body": "The info command fetches a lot of information from the repository about backups and archives, so this operation can be slow. Because progress data is stored in local lock files, accessing the repository is unnecessary when only progress information is required.\n\nThis patch introduces the `--detail-level=[progress|full]` option, with `full` as the default. The `progress` level limits the info command output to progress details without querying the repository. The only remaining operations are scanning the folder structure to list available stanzas and reading lock files.\n\nNote: When `progress` is selected, the info command performs no checks beyond verifying stanza availability."
+    },
+    {
+        "commit": "277b4db46f20a52d9c363fe3478adb6acc31c039",
+        "date": "2025-06-26 08:04:33 -0400",
+        "subject": "Move variable to scope where it is used."
+    },
+    {
+        "commit": "638815b4cde1ba1322516e256742c51676af66f0",
+        "date": "2025-06-24 12:35:18 -0400",
+        "subject": "Fix issue with adhoc expiration when no backups in a repository.",
+        "body": "If there are no backups in one or more repositories then the following error occurs during adhoc expiration:\n\nASSERT: [025]: cannot get index 0 from list with 0 value(s)\n\nFix this by skipping the adhoc logic when there are no backups in a repository."
+    },
+    {
+        "commit": "378005786670fad5c6f8b027f6447565e10489d6",
+        "date": "2025-06-22 17:46:54 -0400",
+        "subject": "Update Fedora test image to Fedora 42."
+    },
+    {
+        "commit": "d0072945fa33d4af6b64ffd7921df376885c1717",
+        "date": "2025-06-22 15:38:32 -0400",
+        "subject": "Add VR_NON_STRING macro for nonstring attribute.",
+        "body": "The nonstring variable attribute specifies that an object or member declaration with type array of char, signed char, or unsigned char, or pointer to such a type is intended to store character arrays that do not necessarily contain a terminating NUL.\n\nNewer versions of gcc will warn if this attribute is missing."
+    },
+    {
+        "commit": "44e3ee33d2360127ac715ebb16866cf995863949",
+        "date": "2025-06-16 17:21:33 -0400",
+        "subject": "Improve defaults and allow lists with option value dependencies.",
+        "body": "Some defaults and allow lists were determined in cfgLoadUpdateOption() because they depended on the values of other options, .e.g. compress-level.\n\nInstead build this functionality into the config parser. Not only does this standardize the defaults and allow lists but it makes it possible to automate the documentation, which is also done in this commit."
+    },
+    {
+        "commit": "435f8a3ad7104fe28bcb79bf9bb00d1f0b7ee32f",
+        "date": "2025-06-16 17:05:35 -0400",
+        "subject": "Remove cfgParseOptionDefault() and cfgParseOptionRequired().",
+        "body": "It is currently not possible to determine the default of all options knowing just the command. Some defaults are set in cfgLoadUpdateOption() and in an upcoming commit defaults may be based on the value of other options.\n\nIt would be possible to update parser to provide this information but that will complicate the parser and since the logic is only used to simplify options passed to remotes it does not seem worth the effort.\n\nFor the same reason cfgParseOptionRequired() can also be removed."
+    },
+    {
+        "commit": "5e14692588b9fd8a566c9a1795c866ba2e83eebd",
+        "date": "2025-06-16 16:25:50 -0400",
+        "subject": "Retry failed reads on object stores.",
+        "body": "There is currently a retry if the initial get request fails (depending on the error code) but if the read fails later on while fetching blocks of data it is fatal. In most cases there is a higher level retry (e.g. restore) but restarting the restore job might be expensive depending on how many files are being restored.\n\nAdd a retry that will catch read errors and retry from where the last data was successfully read.\n\nA bit of history -- this patch was first started three years ago but the memory context model at that time would not allow the interface (StorageRead) to own the driver (e.g. StorageReadS3). Subsequent improvements in memory contexts have allowed this ownership model and in fact it is now the default so no ownership changes are required in this patch except in StorageReadRemote which was not updated in f6e3073."
+    },
+    {
+        "commit": "1e23e38730af88152f16e12aa95dd0e6761b317a",
+        "date": "2025-06-16 16:04:35 -0400",
+        "subject": "Update support and recognition documentation."
+    },
+    {
+        "commit": "2e76e9fc699d22286f6bf05fddc271d8fa22523e",
+        "date": "2025-06-09 10:34:17 -0400",
+        "subject": "Describe discrete option values in a list where appropriate.",
+        "body": "In the documentation and help output the possible values for most options are described as a list but there were several commands for which formatting was done in a different style.\n\nFormatting has been applied to commands and their options to display option values as a list:\n\n* `info` command, `--type` option\n* `verify` command, `--output` option\n* `version` command, `--output` option\n* `manifest` command, `--output` option"
+    },
+    {
+        "commit": "8aa2d88bac07225df8786ceb98c4eeac4fb58e5e",
+        "date": "2025-06-05 17:33:18 -0400",
+        "subject": "Update unit tests to work with Alpine Linux and musl libc.",
+        "body": "A few bugs have been reported over the years on Alpine with musl libc and generally it has been possible to figure them out without testing on that platform but a few newer ones cannot be reproduced elsewhere.\n\nAlso, testing with additional libc implementations helps portability so it makes sense to add support.\n\nFor the most part musl libc works as expected with a few caveats:\n\n1) The FD_*() macros won't accept an int file descriptor without warning when -Wsign-conversion is enabled. I opened https://www.openwall.com/lists/musl/2025/05/23/4 to discuss this and I was referred to https://www.openwall.com/lists/musl/2024/07/16/1 which explains why this happens. It was not a very satisfying answer but clearly it is not going to be addressed so a meson probe was added to detect the issue and disable the warning.\n\n2) Floating point numbers are rounded differently than in GNU/Mac libc when formatted with printf() and friends. This is fine for the core code but causes issues in the unit tests that expect log entries to match exactly. This was solved in ad7ba46b by adding our own rough and ready formatting routines.\n\n3) Some error messages are different from GNU/Mac libc. This was solved with a new error macro that accepts multiple messages in b5fbb16c.\n\n4) For some reason ninja on Alpine outputs \"nothing to do\" messages to stderr whereas they go to stdout on other distributions. Redirecting stderr to stdout is our standard fix for this issue so do that. A non-zero result code will let us know that something has gone wrong.\n\n5) It appears that profiling is not supported on Alpine, which is pretty surprising. For now fix this by only unit testing the profiling code when coverage is enabled. This is not a great solution since we would rather test profiling on any system that supports it but for now this will do."
+    },
+    {
+        "commit": "b5fbb16cce1dc47d153e3f96171e6544407f714f",
+        "date": "2025-06-05 15:35:28 -0400",
+        "subject": "Add TEST_ERROR_MULTI() macro.",
+        "body": "This macro allows the error to be tested against multiple strings and it passes if any of them match.\n\nThis is useful for supporting multiple libc versions/implementations that have different error messages and is needed for an upcoming commit to add unit test support for musl libc."
+    },
+    {
+        "commit": "ad7ba46bc6d9aa3074a33eca7eefc53ebb721cde",
+        "date": "2025-06-05 13:27:45 -0400",
+        "subject": "Improve the predictability of floating point numbers formatted as strings.",
+        "body": "Some C libraries (e.g.musl) render floating point numbers differently when using printf(). This does not cause any problems for the core code but the unit tests require more predictability to function smoothly without a lot of exceptions.\n\nTo accomplish this, wrap the various floating point operations in functions that mostly continue doing math using double but format the output string using integers. This leads to more predictable output at the cost of some complexity.\n\nRounding could also be accomplished using nearbyint() but this would require linking the math library, which does not seem worth it for a fairly simple operation."
+    },
+    {
+        "commit": "a30442f1688968b9fc133667b6860d18474f2ac6",
+        "date": "2025-05-31 10:08:13 -0400",
+        "subject": "Update invalid address check in common/io-tls unit test.",
+        "body": "The prior check would result in a segfault from musl libc, which is understandable but not OK for a test.\n\nInstead set all the flags to get the expected invalid result.\n\nThe second invalid test was not required for coverage so remove it. This was likely added before the earlier test was required for additional coverage."
+    },
+    {
+        "commit": "cb673225e90604a8865ce30c188d15661f945e5e",
+        "date": "2025-05-28 15:33:38 -0400",
+        "subject": "Fix \"less than\" in help output for archive-mode option."
+    },
+    {
+        "commit": "f494dd21ade34bc09692515e13d7ca60b53373b0",
+        "date": "2025-05-27 17:14:18 -0400",
+        "subject": "Fix architecture labeling for multi-architecture container builds.",
+        "body": "When the architecture was not specified it was being set to x86_64 rather than the host architecture."
+    },
+    {
+        "commit": "f4e1adf0591ab06c1ced79cf94a77331de16db52",
+        "date": "2025-05-27 16:33:32 -0400",
+        "subject": "Fix issue with calling lstClear() twice.",
+        "body": "The list pointer was not nulled out so calling lstClear() caused a double free.\n\nThis is not a production issue but was noticed in some upcoming test code."
+    },
+    {
+        "commit": "b5a26d99a04120ce0946cfe20829e44a7351cc9a",
+        "date": "2025-05-26 12:49:47 -0400",
+        "subject": "Use dup2() to redirect stderr in the common/error unit test.",
+        "body": "The assignment was obviously not kosher but seemed fine for a test in short-lived fork. However, musl libc defines stderr as read-only so this trick won't work.\n\nInstead use dup2(), which is pretty clearly the correct way to do this."
+    },
+    {
+        "commit": "8737cad566974c37529595715ecdc06571420752",
+        "date": "2025-05-12 13:33:42 -0400",
+        "subject": "Fix defaults in command-line help.",
+        "body": "This is another attempt to fix broken defaults in the command-line help. PR #2395 tried to do this by removing current and default values (at least from the list) but this removed much of the value of command-line help being context sensitive. Improvements were made to current values in b3ca2e34 but defaults were left as-is, i.e. broken in some cases.\n\nThis new approach handles defaults much the same way as current values. If there are multiple defaults for an option then it is displayed in the option list as <multi> and enumerated in the specific option help. For example, if repo1-type=s3 and repo2-type=azure then the defaults for repo1-storage-upload-chunk-size and repo2-storage-upload-chunk-size will differ.\n\nHowever, getting the above right means we can no longer display defaults for options that are not valid in the current context. For instance, if repo1-type=posix then none of the repo1-s3-* options are valid and therefore their defaults are not displayed in help. In this case they don't have defaults and if you tried to set one of these options you would get an error."
+    },
+    {
+        "commit": "7b1b1f5322fe2b96c2325bb283178fb4ca1b602a",
+        "date": "2025-05-09 17:45:05 -0400",
+        "subject": "New CI container build for PostgreSQL 18 beta1.",
+        "body": "Since the addition of libcurl4-openssl-dev requires a rebuild of the Debian containers go ahead and rebuild all containers to include new PostgreSQL minor release versions."
+    },
+    {
+        "commit": "34b916f3231d32cd350cc7532ff3b30cf09065b9",
+        "date": "2025-05-09 12:56:57 -0400",
+        "subject": "Use 'x86_64' instead of 'amd64' for container testing.",
+        "body": "This aligns with what is reported by 'uname -m' and required by Docker naming conventions.\n\nAlso convert a 'aarch64' string to the VM_ARCH_AARCH64 constant."
+    },
+    {
+        "commit": "7786b5d8472221a94dda3dc3ac7871aab2c0e5be",
+        "date": "2025-05-09 09:25:38 -0400",
+        "subject": "Rename unsigned char to uint8_t.",
+        "body": "These data types are equivalent so no code changes required -- just renaming.\n\nThe advantage is that uint8_t makes it clear that this is byte data. It also has the advantage of being shorter."
+    },
+    {
+        "commit": "1e98684148c0095d2c8e4cabc033e2aa3b0c2554",
+        "date": "2025-05-08 09:16:30 -0400",
+        "subject": "Add default type for current pgbackrest binary.",
+        "body": "These defaults were being set in cfgLoadUpdate() but they can be better documented if they are part of the option rules. This is part of a general trend to move away from custom-coded defaults."
+    },
+    {
+        "commit": "6869543b7ac312fa230ae52cf22a4727c74fb684",
+        "date": "2025-05-08 09:12:38 -0400",
+        "subject": "Make default-literal option configuration with default-type.",
+        "body": "This allows default types to be added without adding more boolean flags."
+    },
+    {
+        "commit": "32b69e9accb02c0c83959a6d97798707f7b6dc3b",
+        "date": "2025-05-07 09:35:54 -0400",
+        "subject": "Rename cfgExe() to cfgBin().",
+        "body": "This aligns better with naming in an upcoming commit."
+    },
+    {
+        "commit": "d45da0363e3dcf0df277255edf097a1bfb7194a7",
+        "date": "2025-05-06 14:12:38 -0400",
+        "subject": "Flag pg-host-config-include-path and pg-host-config-path as required.",
+        "body": "These options had defaults so this doesn't really change anything but it does prevent some difficult to explain churn in a future commit."
+    },
+    {
+        "commit": "e38e3e009035a4feab45279aca7f14112a0572b4",
+        "date": "2025-05-05 13:40:14 -0400",
+        "subject": "Merge v2.55.1 release."
+    },
+    {
+        "commit": "975516ae6d55676fb24562272d771fb3da295b23",
+        "date": "2025-05-04 13:56:13 -0400",
+        "subject": "Remove context wrapper when processing defaults during config parsing.",
+        "body": "Once upon a time storing the default required creating a new string that needed to be assigned to the config mem context but that was a very long time ago and now only constants are used, so no need for a context switch."
+    },
+    {
+        "commit": "beeb93225f16c0f63c6ba0c8e5dd4eb2583863fc",
+        "date": "2025-05-03 17:29:38 -0400",
+        "subject": "Fix typo in comment."
+    },
+    {
+        "commit": "96dfdce0859811a4e01d94cb7f401f872094bde8",
+        "date": "2025-04-29 15:12:11 -0400",
+        "subject": "Revert \"calculate content-md5 on S3 only when required\".",
+        "body": "20bfd14 removed content-md5 where allowed by the specification but failed to notice that either content-md5 or x-amz-content-* is required for PUT when object lock is enabled.\n\nOn top of that it appears Scality S3 (at least?) won't accept alternate content checksums when object lock is enabled. Technically this is a violation of the specification but nonetheless the change breaks working installations.\n\nFor now it seems safer to revert this change and pursue a better solution for a future feature release."
+    },
+    {
+        "commit": "9958b178344898476979bb27ef1c37f082d2ee5d",
+        "date": "2025-04-28 14:33:56 -0400",
+        "subject": "Fix lower bounds checking for option keys.",
+        "body": "Specifying an indexed option with a key of 0, e.g. pg0-path, would lead to a segfault.\n\nAdd lower bounds checking to fix the issue."
+    },
+    {
+        "commit": "1d89e3d75b9c19ee09b1d5906f4296914be2b896",
+        "date": "2025-04-23 13:17:19 -0400",
+        "subject": "Add details about notifying packagers to release instructions."
+    },
+    {
+        "commit": "01c8c0f8649f5cdc9c0cf83cfa78ee5c2bd72a18",
+        "date": "2025-04-21 18:51:50 -0400",
+        "subject": "Begin v2.56.0 development."
+    },
+    {
         "commit": "6c90196e74ef0da38568f08fd7cb234d10130e79",
         "date": "2025-04-21 18:25:00 -0400",
         "subject": "v2.55.0: Verification Improvements and PostgreSQL 18 Support"

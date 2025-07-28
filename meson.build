@@ -4,7 +4,7 @@
 project(
     'pgbackrest',
     ['c'],
-    version: '2.56.0dev',
+    version: '2.57.0dev',
     license: 'MIT',
     meson_version: '>=0.47',
     default_options: [
@@ -246,6 +246,18 @@ configuration.set(
     'FN_STRFTIME(fmt)', '__attribute__((format(strftime, fmt, 0)))',
     description: 'Indicate that a function is formatted like strftime (and provide format position)'
 )
+
+# Set VR_NON_STRING macro
+if cc.compiles(
+        '''int main(int arg, char **argv) {__attribute__((nonstring)) static char test[3] = "ABC";}''',
+        args: ['-Wextra', '-Werror'])
+    configuration.set(
+        'VR_NON_STRING', '__attribute__((nonstring))',
+        description: 'Indicate that the char array is intentionally not NULL terminated')
+else
+    configuration.set(
+        'VR_NON_STRING', '', description: 'Indicate that the char array is intentionally not NULL terminated')
+endif
 
 ####################################################################################################################################
 # Include subdirs

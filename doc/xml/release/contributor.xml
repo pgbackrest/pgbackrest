@@ -115,6 +115,11 @@
     <contributor-id type="github">woblerr</contributor-id>
 </contributor>
 
+<contributor id="anup.gupta">
+    <contributor-name-display>Anup Gupta</contributor-name-display>
+    <contributor-id type="github">anupg19</contributor-id>
+</contributor>
+
 <contributor id="argdenis">
     <contributor-name-display>argdenis</contributor-name-display>
     <contributor-id type="github">argdenis</contributor-id>
@@ -317,6 +322,11 @@
 <contributor id="david.youatt">
     <contributor-name-display>David Youatt</contributor-name-display>
     <contributor-id type="github">youattd</contributor-id>
+</contributor>
+
+<contributor id="denis.garsh">
+    <contributor-name-display>Denis Garsh</contributor-name-display>
+    <contributor-id type="github">hilltracer</contributor-id>
 </contributor>
 
 <contributor id="devrim.gunduz">

@@ -234,13 +234,6 @@ testRun(void)
         TEST_ERROR(gzError(999), AssertError, "zlib threw error: [999] unknown error");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("compressLevelDefault(), compressLevelMin(), and compressLevelMax()");
-
-        TEST_RESULT_INT(compressLevelDefault(compressTypeGz), 6, "level default");
-        TEST_RESULT_INT(compressLevelMin(compressTypeGz), -1, "level default");
-        TEST_RESULT_INT(compressLevelMax(compressTypeGz), 9, "level default");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("gzDecompressToLog() and gzCompressToLog()");
 
         char buffer[STACK_TRACE_PARAM_MAX];
@@ -283,13 +276,6 @@ testRun(void)
         TEST_ERROR(bz2Error(-999), AssertError, "bz2 error: [-999] unknown error");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("compressLevelDefault(), compressLevelMin(), and compressLevelMax()");
-
-        TEST_RESULT_INT(compressLevelDefault(compressTypeBz2), 9, "level default");
-        TEST_RESULT_INT(compressLevelMin(compressTypeBz2), 1, "level default");
-        TEST_RESULT_INT(compressLevelMax(compressTypeBz2), 9, "level default");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("bz2DecompressToLog() and bz2CompressToLog()");
 
         char buffer[STACK_TRACE_PARAM_MAX];
@@ -321,13 +307,6 @@ testRun(void)
 
         TEST_RESULT_UINT(lz4Error(0), 0, "check success");
         TEST_ERROR(lz4Error((size_t)-2), FormatError, "lz4 error: [-2] ERROR_maxBlockSize_invalid");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("compressLevelDefault(), compressLevelMin(), and compressLevelMax()");
-
-        TEST_RESULT_INT(compressLevelDefault(compressTypeLz4), 1, "level default");
-        TEST_RESULT_INT(compressLevelMin(compressTypeLz4), -5, "level default");
-        TEST_RESULT_INT(compressLevelMax(compressTypeLz4), 12, "level default");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("lz4DecompressToLog() and lz4CompressToLog()");
@@ -364,13 +343,6 @@ testRun(void)
 
         TEST_RESULT_UINT(zstError(0), 0, "check success");
         TEST_ERROR(zstError((size_t)-12), FormatError, "zst error: [-12] Version not supported");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("compressLevelDefault(), compressLevelMin(), and compressLevelMax()");
-
-        TEST_RESULT_INT(compressLevelDefault(compressTypeZst), 3, "level default");
-        TEST_RESULT_INT(compressLevelMin(compressTypeZst), -7, "level default");
-        TEST_RESULT_INT(compressLevelMax(compressTypeZst), 22, "level default");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("zstDecompressToLog() and zstCompressToLog()");

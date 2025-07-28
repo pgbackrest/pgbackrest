@@ -26,7 +26,7 @@ Coding standards are defined in [CODING.md](https://github.com/pgbackrest/pgback
 
 ## Building a Development Environment
 
-This example is based on Ubuntu 20.04, but it should work on many versions of Debian and Ubuntu.
+This example is based on Ubuntu 22.04, but it should work on many versions of Debian and Ubuntu.
 
 pgbackrest-dev => Install development tools
 ```
@@ -260,7 +260,7 @@ pgbackrest/test/test.pl --vm-out --module=common --test=wait
                 
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
                 
-        P00   INFO: test command begin 2.55.1: [common/wait] --log-level=info --no-log-timestamp --repo-path=/home/vagrant/test/repo --scale=1 --test-path=/home/vagrant/test --vm=none --vm-id=0
+        P00   INFO: test command begin 2.56.0: [common/wait] --log-level=info --no-log-timestamp --repo-path=/home/vagrant/test/repo --scale=1 --test-path=/home/vagrant/test --vm=none --vm-id=0
         P00   INFO: test command end: completed successfully
         run 1 - waitNew(), waitMore, and waitFree()
                       L0018     expect AssertError: assertion 'waitTime <= 999999000' failed
@@ -339,34 +339,34 @@ pgbackrest/test/test.pl --module=postgres
 
 #### With Docker
 
-Build a container to run tests. The vm must be pre-configured but a variety are available. A vagrant file is provided in the test directory as an example of running in a virtual environment. The vm names are all three character abbreviations, e.g. `u20` for Ubuntu 20.04.
+Build a container to run tests. The vm must be pre-configured but a variety are available. A vagrant file is provided in the test directory as an example of running in a virtual environment. The vm names are all three character abbreviations, e.g. `u22` for Ubuntu 22.04.
 
 pgbackrest-dev => Build a VM
 ```
-pgbackrest/test/test.pl --vm-build --vm=u20
+pgbackrest/test/test.pl --vm-build --vm=u22
 
 --- output ---
 
     P00   INFO: test begin on x86_64 - log level info
-    P00   INFO: Using cached pgbackrest/test:u20-base-x86_64-20250228A image (862159b4d2169a4752b106639ca0f47c1ebb1f86) ...
-    P00   INFO: Building pgbackrest/test:u20-test-x86_64 image ...
+    P00   INFO: Using cached pgbackrest/test:u22-base-x86_64-20250718A image (8feb0a70d1614b6873887e0bb3d99ef7016663eb) ...
+    P00   INFO: Building pgbackrest/test:u22-test-x86_64 image ...
     P00   INFO: Build Complete
 ```
 > **NOTE:** to build all the vms, just omit the `--vm` option above.
 
 pgbackrest-dev => Run a Specific Test Run
 ```
-pgbackrest/test/test.pl --vm=u20 --module=postgres --test=interface --run=2
+pgbackrest/test/test.pl --vm=u22 --module=postgres --test=interface --run=2
 
 --- output ---
 
     P00   INFO: test begin on x86_64 - log level info
     P00   INFO: cleanup old data and containers
     P00   INFO: autogenerate code
-    P00   INFO: clean build for u20 (/home/vagrant/test/build/u20)
+    P00   INFO: clean build for u22 (/home/vagrant/test/build/u22)
     P00   INFO: 1 test selected
                 
-    P00   INFO: P1-T1/1 - vm=u20, module=postgres, test=interface, run=2
+    P00   INFO: P1-T1/1 - vm=u22, module=postgres, test=interface, run=2
     P00   INFO: TESTS COMPLETED SUCCESSFULLY
 ```
 
@@ -521,7 +521,7 @@ TEST_ERROR(cmdCheck(), ConfigError, "primary database not found\nHINT: check ind
 
 Unit tests are run for all files that are listed in `define.yaml` and a coverage report generated for each file listed under the tag `coverage:`. Note that some files are listed in multiple `coverage:` sections for a module; in this case, each test for the file being modified should be specified for the module in which the file exists (e.g. `--module=storage --test=posix --test=gcs`, etc.) or, alternatively, simply run the module without the `--test` option. It is recommended that a `--vm` be specified since running the same test for multiple vms is unnecessary for coverage. The following example would run the test set from the **define.yaml** section detailed above.
 ```
-pgbackrest/test/test.pl --vm-out --module=command --test=check --vm=u20
+pgbackrest/test/test.pl --vm-out --module=command --test=check --vm=u22
 ```
 > **NOTE:** Not all systems perform at the same speed, so if a test is timing out, try rerunning with another vm.
 

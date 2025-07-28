@@ -1414,6 +1414,18 @@ testRun(void)
             "'65536' is out of range for 'process-max' option\n"
             "HINT: allowed range is 1 to 999 inclusive");
 
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptCompressType, "gz");
+        hrnCfgArgRawZ(argList, cfgOptCompressLevel, "-2");
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+        TEST_ERROR(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidValueError,
+            "'-2' is out of range for 'compress-level' option when 'compress-type' option = 'gz'\n"
+            "HINT: allowed range is -1 to 9 inclusive");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("character value when integer expected");
 
@@ -1840,7 +1852,7 @@ testRun(void)
             BUFSTR(
                 strNewFmt(
                     "[global]\n"
-                    "compress-level=3\n"
+                    "compress-type=gz\n"
                     "spool-path=/path/to/spool\n"
                     "lock-path=/\n"
                     "pg1-path=/not/path/to/db\n"
@@ -1872,6 +1884,7 @@ testRun(void)
                     "%s=ignore\n"
                     "%s=/path/to/db2\n"
                     "pg3-host=ignore\n"
+                    "repo1-host=ssh-host\n"
                     "recovery-option=c=d\n",
                     cfgParseOptionKeyIdxName(cfgOptPgHost, 1), cfgParseOptionKeyIdxName(cfgOptPgPath, 1))));
 
@@ -1912,6 +1925,8 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "pg1-path is source config");
         TEST_RESULT_STR_Z(
             cfgOptionIdxStr(cfgOptPgPath, cfgOptionKeyToIdx(cfgOptPgPath, 256)), "/path/to/db256", "pg256-path is set");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoHost, 0), "ssh-host", "repo1-host is set");
+        TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptRepoHostPort, 0), false, "repo1-host-port is not set for ssh");
         TEST_RESULT_UINT(varUInt64(cfgOptionVar(cfgOptType)), STRID5("incr", 0x90dc90), "check type");
         TEST_RESULT_STR_Z(
             cfgOptionDisplayVar(VARUINT64(STRID5("incr", 0x90dc90)), cfgOptTypeStringId), "incr", "check type display");
@@ -1935,8 +1950,8 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoHardlink), cfgSourceConfig, "repo-hardlink is source config");
         TEST_RESULT_UINT(cfgOptionUInt(cfgOptRepoRetentionFull), 55, "repo-retention-full is set");
         TEST_RESULT_INT(varInt64(cfgOptionVar(cfgOptRepoRetentionFull)), 55, "repo-retention-full as variant");
-        TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 3, "compress-level is set");
-        TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceConfig, "compress-level is source config");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 6, "compress-level is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceDefault, "compress-level is source config");
         TEST_RESULT_UINT(cfgOptionStrId(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_N, "backup-standby not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBackupStandby), cfgSourceDefault, "backup-standby is source default");
         TEST_RESULT_BOOL(cfgOptionIdxReset(cfgOptBackupStandby, 0), true, "backup-standby was reset");
@@ -1954,9 +1969,6 @@ testRun(void)
         TEST_ERROR(cfgOptionIdxStr(cfgOptPgHost, 1), AssertError, "option 'pg2-host' is null but non-null was requested");
         TEST_RESULT_UINT(cfgOptionUInt64(cfgOptIoTimeout), 60000, "io-timeout is set");
 
-        TEST_RESULT_BOOL(cfgParseOptionRequired(cfgCmdBackup, cfgOptPgHost), false, "pg-host is not required for backup");
-        TEST_RESULT_BOOL(cfgParseOptionRequired(cfgCmdInfo, cfgOptStanza), false, "stanza is not required for info");
-
         TEST_RESULT_STR_Z(cfgOptionIdxDefaultValue(cfgOptBackupStandby, 0), "n", "backup-standby default is false");
         TEST_RESULT_STR_Z(cfgOptionIdxDefaultValue(cfgOptBackupStandby, 0), "n", "backup-standby default is false (again)");
         TEST_RESULT_PTR(cfgOptionIdxDefaultValue(cfgOptPgHost, 0), NULL, "pg-host default is NULL");
@@ -1965,10 +1977,6 @@ testRun(void)
         TEST_RESULT_STR_Z(cfgOptionIdxDisplay(cfgOptPgPort, 0), "5432", "pg-port display is 5432");
         TEST_RESULT_VOID(cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, VARINT64(30000)), "set db-timeout default");
         TEST_RESULT_STR_Z(cfgOptionIdxDefaultValue(cfgOptDbTimeout, 0), "30", "db-timeout default is 30m");
-
-        TEST_RESULT_STR_Z(cfgParseOptionDefault(cfgCmdBackup, cfgOptPgHost, STRDEF("pgbackrest")), NULL, "default not found");
-        TEST_RESULT_STR_Z(
-            cfgParseOptionDefault(cfgCmdBackup, cfgOptRepoPath, STRDEF("pgbackrest")), "/var/lib/pgbackrest", "default found");
 
         TEST_RESULT_VOID(
             cfgOptionIdxSet(cfgOptPgSocketPath, 1, cfgSourceDefault, VARSTRDEF("/default")), "set pg-socket-path default");
@@ -2127,7 +2135,8 @@ testRun(void)
         TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, VARSTRDEF("a"))), "b", "check recovery option");
         TEST_ASSIGN(recoveryKv, varKv(cfgOptionIdxVar(cfgOptRecoveryOption, 0)), "get recovery options");
         TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, VARSTRDEF("c"))), "de=fg hi", "check recovery option");
-        TEST_RESULT_BOOL(cfgLockRequired(), false, "restore command does not require lock");
+        TEST_RESULT_BOOL(cfgLockRequired(), true, "restore command requires lock");
+        TEST_RESULT_UINT(cfgLockType(), lockTypeRestore, "restore command requires restore lock type");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("recovery options, config file");
@@ -2218,6 +2227,19 @@ testRun(void)
 
         TEST_RESULT_VOID(cfgOptionIdxSet(cfgOptType, 0, cfgSourceParam, VARSTRDEF("standby")), "set type");
         TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptType, 0), STRID5("standby", 0x6444706930), "check type");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("integer default when dependency invalid");
+        {
+            argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+            hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+            hrnCfgEnvKeyRawZ(cfgOptRepoRetentionFull, 1, "1");
+            hrnCfgEnvRawZ(cfgOptCompressType, "none");
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            TEST_RESULT_UINT(cfgOptionUInt(cfgOptCompressLevel), 0, "compress-level is 0");
+        }
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza options should not be loaded for commands that don't take a stanza");

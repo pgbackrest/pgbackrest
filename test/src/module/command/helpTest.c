@@ -361,7 +361,6 @@ testRun(void)
             "  --repo-storage-port                 repository storage port\n"
             "  --repo-storage-tag                  repository storage tag(s)\n"
             "  --repo-storage-upload-chunk-size    repository storage upload chunk size\n"
-            "                                      [default=4194304]\n"
             "  --repo-storage-verify-tls           repository storage certificate verify\n"
             "  --repo-target-time                  target time for repository\n"
             "  --repo-type                         type of storage used for the repository\n"
@@ -656,12 +655,6 @@ testRun(void)
             "higher and because the chunk buffer must be allocated per process, larger\n"                                          \
             "process-max values will lead to more memory being consumed overall.\n"                                                \
             "\n"                                                                                                                   \
-            "Default chunk sizes by repo type:\n"                                                                                  \
-            "\n"                                                                                                                   \
-            "* azure - 4MiB\n"                                                                                                     \
-            "* gcs - 4MiB\n"                                                                                                       \
-            "* s3 - 5MiB\n"                                                                                                        \
-            "\n"                                                                                                                   \
             "Note that valid chunk sizes vary by storage type and by platform. For example,\n"                                     \
             "AWS S3 has a minimum chunk size of 5MiB but S3 clones may accept lower values.\n"                                     \
             "Terminology for chunk size varies by storage type, so when searching min/max\n"                                       \
@@ -674,8 +667,8 @@ testRun(void)
             HELP_OPTION_CHUNK
             "\n"
             "default:\n"
-            "  repo1: 5242880\n"
-            "  repo2: 4194304\n",
+            "  repo1: 5MiB\n"
+            "  repo2: 4MiB\n",
             helpVersion);
 
         argList = strLstNew();

@@ -230,15 +230,6 @@
 
                         <text>
                             <p>Sets the level to be used for file compression when <setting>compress-type</setting> does not equal <id>none</id> or <setting>compress=y</setting> (deprecated).</p>
-
-                            <p>The following are the defaults levels based on <setting>compress-type</setting> when <setting>compress-level</setting> is not specified:</p>
-
-                            <list>
-                                <list-item><id>bz2</id> - 9</list-item>
-                                <list-item><id>gz</id> - 6</list-item>
-                                <list-item><id>lz4</id> - 1</list-item>
-                                <list-item><id>zst</id> - 3</list-item>
-                            </list>
                         </text>
 
                         <allow>0-9</allow>
@@ -848,6 +839,8 @@
 
                         <text>
                             <p>Use this option to specify a non-default port for the repository host protocol.</p>
+
+                            <admonition type="note">When <setting>repo-host-type=ssh</setting> there is no default for <setting>repo-host-port</setting>. In this case the port will be whatever is configured for the command specified by <setting>cmd-ssh</setting>.</admonition>
                         </text>
 
                         <example>25</example>
@@ -1262,14 +1255,6 @@
                             <p>Object stores such as S3 allow files to be uploaded in chunks when the file is too large to be stored in memory. Even if the file can be stored in memory, it is more memory efficient to limit the amount of memory used for uploads.</p>
 
                             <p>A larger chunk size will generally lead to better performance because it will minimize upload requests and allow more files to be uploaded in a single request rather than in chunks. The disadvantage is that memory usage will be higher and because the chunk buffer must be allocated per process, larger <br-option>process-max</br-option> values will lead to more memory being consumed overall.</p>
-
-                            <p>Default chunk sizes by repo type:</p>
-
-                            <list>
-                                <list-item><id>azure</id> - 4MiB</list-item>
-                                <list-item><id>gcs</id> - 4MiB</list-item>
-                                <list-item><id>s3</id> - 5MiB</list-item>
-                            </list>
 
                             <p>Note that valid chunk sizes vary by storage type and by platform. For example, <proper>AWS S3</proper> has a minimum chunk size of 5MiB but <proper>S3</proper> clones may accept lower values. Terminology for chunk size varies by storage type, so when searching min/max values use <quote>part size</quote> for <proper>AWS S3</proper>, <quote>chunk size</quote> for <proper>GCS</proper>, and <quote>block size</quote> for <proper>Azure</proper>. No attempt is made to validate configured chunk sizes so selecting an invalid value will lead to errors from the storage service or undefined behavior.</p>
                         </text>
@@ -1974,6 +1959,8 @@
 
                         <text>
                             <p>Use this option to specify a non-default port for the <postgres/> host protocol.</p>
+
+                            <admonition type="note">When <setting>pg-host-type=ssh</setting> there is no default for <setting>pg-host-port</setting>. In this case the port will be whatever is configured for the command specified by <setting>cmd-ssh</setting>.</admonition>
                         </text>
 
                         <example>25</example>
@@ -2563,9 +2550,11 @@
 
                     <p>For machine-readable output use <br-option>--output=json</br-option>. The JSON output contains far more information than the text output and is kept stable unless a bug is found.</p>
 
+                    <p>To speed up execution, limit the output to only progress information by specifying <br-option>--detail-level=progress</br-option>. Note that this skips all checks except for availability of the stanza.</p>
+
                     <p>Each stanza has a separate section and it is possible to limit output to a single stanza with the <br-option>--stanza</br-option> option. The stanza '<id>status</id>' gives a brief indication of the stanza's health. If this is '<id>ok</id>' then <backrest/> is functioning normally. If there are multiple repositories, then a status of '<id>mixed</id>' indicates that the stanza is not in a healthy state on one or more of the repositories; in this case the state of the stanza will be detailed per repository. For cases in which an error on a repository occurred that is not one of the known error codes, then an error code of '<id>other</id>' will be used and the full error details will be provided. The '<id>wal archive min/max</id>' shows the minimum and maximum WAL currently stored in the archive and, in the case of multiple repositories, will be reported across all repositories unless the <br-option>{[dash]}-repo</br-option> option is set. Note that there may be gaps due to archive retention policies or other reasons.</p>
 
-                    <p>The '<id>backup/expire running</id>' message will appear beside the '<id>status</id>' information if one of those commands is currently running on the host.</p>
+                    <p>The '<id>backup/expire running</id>' and/or '<id>restore running</id>' messages will appear beside the '<id>status</id>' information if any of those commands are currently running on the host.</p>
 
                     <p>The backups are displayed oldest to newest. The oldest backup will <i>always</i> be a full backup (indicated by an <id>F</id> at the end of the label) but the newest backup can be full, differential (ends with <id>D</id>), or incremental (ends with <id>I</id>).</p>
 
@@ -2583,6 +2572,21 @@
                 </text>
 
                 <option-list>
+                    <option id="detail-level" name="Detail level">
+                        <summary>Output detail level.</summary>
+
+                        <text>
+                            <p>The following levels are supported:</p>
+
+                            <list>
+                                <list-item><id>progress</id> - Output only the current backup/expire progress. This level cannot be used with the <br-option>--set</br-option> option.</list-item>
+                                <list-item><id>full</id> - Output full info.</list-item>
+                            </list>
+                        </text>
+
+                        <example>progress</example>
+                    </option>
+
                     <option id="output" name="Output">
                         <summary>Output format.</summary>
 
