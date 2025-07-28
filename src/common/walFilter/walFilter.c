@@ -526,7 +526,10 @@ walFilterProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
         if (this->currentStep != noStep && this->currentStep != stepBeginOfRecord)
         {
             getEndOfRecord(this);
-            this->walInterface.xLogRecordFilter(this->record);
+            if (this->record->xl_tot_len == this->gotLen)
+            {
+                this->walInterface.xLogRecordFilter(this->record);
+            }
             writeRecord(this, output, (const unsigned char *) this->record);
         }
         this->done = true;

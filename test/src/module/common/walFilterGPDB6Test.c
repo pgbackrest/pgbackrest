@@ -2400,6 +2400,154 @@ testRun(void)
 
         MEM_CONTEXT_TEMP_END();
 
+        TEST_TITLE("overwrite contrecord at the beginning of the next file");
+        MEM_CONTEXT_TEMP_BEGIN();
+        PgControl testPgControl = pgControl;
+        testPgControl.walSegmentSize = DEFAULT_GDPB_XLOG_PAGE_SIZE;
+        RelFileNode node1 = {
+            .dbNode = 30000,
+            .spcNode = 1000,
+            .relNode = 17000
+        };
+
+        Buffer *wal1 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        Buffer *wal2 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+
+        {
+            // LPH - long page header (40 bytes)
+            // SPH - short page header (24 bytes)
+            // RH  - record header (32 bytes)
+            // RM  - remaining data from prev page (var len)
+            // B   - record body (var len)
+            // P   - padding
+            // layout of the first file:
+            // 40  32 32680 16 |
+            // LPH RH   B   RH |
+            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 32680);
+            insertXRecord(wal1, record, NO_FLAGS, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            record = createXRecord(RM6_HEAP_ID, XLOG_HEAP_INSERT, .body_size = sizeof(node1), .body = &node1);
+            insertXRecord(wal1, record, INCOMPLETE_RECORD, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        }
+
+        {
+            // LPH - long page header (40 bytes)
+            // SPH - short page header (24 bytes)
+            // RH  - record header (32 bytes)
+            // RM  - remaining data from prev page (var len)
+            // B   - record body (var len)
+            // P   - padding
+            // layout of the first file:
+            // 40  32 100 32
+            // LPH RH  B  RH
+            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 100);
+            insertXRecord(wal2, record, OVERWRITE, .segno = 2, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            insertWalSwitchXRecord(wal2);
+            fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            HRN_STORAGE_PUT(
+                storageRepoWrite(),
+                STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+                wal2);
+        }
+
+        // We run filtering in the child process to clear the filter list after the test is completed.
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN()
+            {
+                archiveInfo.file = STRDEF(
+                    STORAGE_REPO_ARCHIVE
+                    "/9.4-1/0000000100000000/000000010000000000000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+                filter = walFilterNew(testPgControl, &archiveInfo);
+                result = testFilter(filter, wal1, bufSize(wal1), bufSize(wal1));
+                TEST_RESULT_BOOL(bufEq(wal1, result), true, "WAL not the same");
+            }
+            HRN_FORK_CHILD_END();
+        }
+        HRN_FORK_END();
+
+        HRN_STORAGE_REMOVE(
+            storageRepoWrite(),
+            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+        MEM_CONTEXT_TEMP_END();
+
+        TEST_TITLE("overwrite contrecord at the beginning of the next file in the second page");
+        MEM_CONTEXT_TEMP_BEGIN();
+        PgControl testPgControl = pgControl;
+        testPgControl.walSegmentSize = DEFAULT_GDPB_XLOG_PAGE_SIZE * 2;
+        RelFileNode node1 = {
+            .dbNode = 30000,
+            .spcNode = 1000,
+            .relNode = 17000
+        };
+
+        Buffer *bodyBuf = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE * 3);
+        memset(bufPtr(bodyBuf), 0, bufSize(bodyBuf));
+        *((RelFileNode *)bufRemainsPtr(bodyBuf)) = node1;
+        bufUsedSet(bodyBuf, DEFAULT_GDPB_XLOG_PAGE_SIZE * 3);
+
+        Buffer *wal1 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE * 2);
+        Buffer *wal2 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE * 2);
+
+        {
+            // LPH - long page header (40 bytes)
+            // SPH - short page header (24 bytes)
+            // RH  - record header (32 bytes)
+            // RM  - remaining data from prev page (var len)
+            // B   - record body (var len)
+            // P   - padding
+            // layout of the first file:
+            // 40  32 32696 |24  32728 16 |
+            // LPH RH   B   |SPH  RM   RH |
+            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 32696 + 32728);
+            insertXRecord(wal1, record, NO_FLAGS, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE * 2);
+            record = createXRecord(RM6_HEAP_ID, XLOG_HEAP_INSERT, .body_size = (uint32) bufUsed(bodyBuf), .body = bufPtr(bodyBuf));
+            insertXRecord(wal1, record, INCOMPLETE_RECORD, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE * 2);
+        }
+
+        {
+            // LPH - long page header (40 bytes)
+            // SPH - short page header (24 bytes)
+            // RH  - record header (32 bytes)
+            // RM  - remaining data from prev page (var len)
+            // B   - record body (var len)
+            // P   - padding
+            // layout of the first file:
+            // 40  32728 |24  32 100 32
+            // LPH  RM   |SPH RH  B  RH
+            // DEFAULT_GDPB_XLOG_PAGE_SIZE * 3 - 16 = 98288
+            record = createXRecord(RM6_HEAP_ID, XLOG_HEAP_INSERT, .body_size = (uint32) bufUsed(bodyBuf), .body = bufPtr(bodyBuf));
+            insertXRecord(wal2, record, INCOMPLETE_RECORD, .segno = 2, .beginOffset = 98288, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE * 2);
+            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 100);
+            insertXRecord(wal2, record, OVERWRITE, .segno = 2, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE * 2);
+            insertWalSwitchXRecord(wal2);
+            fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            HRN_STORAGE_PUT(
+                storageRepoWrite(),
+                STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+                wal2);
+        }
+
+        // We run filtering in the child process to clear the filter list after the test is completed.
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN()
+            {
+                archiveInfo.file = STRDEF(
+                    STORAGE_REPO_ARCHIVE
+                    "/9.4-1/0000000100000000/000000010000000000000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+                filter = walFilterNew(testPgControl, &archiveInfo);
+                result = testFilter(filter, wal1, bufSize(wal1), bufSize(wal1));
+                TEST_RESULT_BOOL(bufEq(wal1, result), true, "WAL not the same");
+            }
+            HRN_FORK_CHILD_END();
+        }
+        HRN_FORK_END();
+
+        HRN_STORAGE_REMOVE(
+            storageRepoWrite(),
+            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+        MEM_CONTEXT_TEMP_END();
+
         TEST_TITLE("Filter record with backup blocks");
         MEM_CONTEXT_TEMP_BEGIN();
         RelFileNode node1 = {
