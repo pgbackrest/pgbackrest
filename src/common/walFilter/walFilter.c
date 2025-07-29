@@ -411,6 +411,7 @@ readBeginOfRecord(WalFilterState *const this)
 
     if (storageRead == NULL)
     {
+        LOG_WARN_FMT("%s - Missing previous WAL file. Is current file is first in the chain?", strZ(pgLsnToStr(this->recPtr)));
         goto end;
     }
 
@@ -476,7 +477,9 @@ getEndOfRecord(WalFilterState *const this)
 
     if (storageRead == NULL)
     {
-        THROW_FMT(FormatError, "The file with the end of the %s record is missing", strZ(pgLsnToStr(this->recPtr)));
+        LOG_WARN_FMT(
+            "The file with the end of the %s record is missing. Has the timeline switch happened?", strZ(pgLsnToStr(this->recPtr)));
+        goto end;
     }
 
     ioReadOpen(storageReadIo(storageRead));
@@ -496,6 +499,7 @@ getEndOfRecord(WalFilterState *const this)
         bufUsedSet(buffer, size);
     }
     ioReadClose(storageReadIo(storageRead));
+end:
     MEM_CONTEXT_TEMP_END();
 }
 

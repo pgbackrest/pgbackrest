@@ -244,6 +244,7 @@ testRun(void)
         fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
         result = testFilter(filter, wal2, bufSize(wal2), bufSize(wal2));
         TEST_RESULT_BOOL(bufEq(wal2, result), true, "WAL not the same");
+        TEST_RESULT_LOG("P00   WARN: 0/8000000 - Missing previous WAL file. Is current file is first in the chain?");
 
         HRN_STORAGE_REMOVE(
             storageRepoWrite(),
@@ -496,6 +497,7 @@ testRun(void)
         fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
         result = testFilter(filter, wal2, bufSize(wal2), bufSize(wal2));
         TEST_RESULT_BOOL(bufEq(wal2, result), true, "WAL not the same");
+        TEST_RESULT_LOG("P00   WARN: 0/8000000 - Missing previous WAL file. Is current file is first in the chain?");
 
         HRN_STORAGE_REMOVE(
             storageRepoWrite(),
@@ -526,6 +528,7 @@ testRun(void)
         fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
         result = testFilter(filter, wal2, bufSize(wal2), bufSize(wal2));
         TEST_RESULT_BOOL(bufEq(wal2, result), true, "WAL not the same");
+        TEST_RESULT_LOG("P00   WARN: 0/28000000 - Missing previous WAL file. Is current file is first in the chain?");
 
         HRN_STORAGE_REMOVE(
             storageRepoWrite(),
@@ -547,6 +550,7 @@ testRun(void)
         fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
         result = testFilter(filter, wal2, bufSize(wal2), bufSize(wal2));
         TEST_RESULT_BOOL(bufEq(wal2, result), true, "WAL not the same");
+        TEST_RESULT_LOG("P00   WARN: 0/8000000 - Missing previous WAL file. Is current file is first in the chain?");
 
         MEM_CONTEXT_TEMP_END();
 
@@ -736,6 +740,7 @@ testRun(void)
         fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
         result = testFilter(filter, wal2, 1024 * 1024, 1024 * 1024);
         TEST_RESULT_BOOL(bufEq(wal2, result), true, "WAL not the same");
+        TEST_RESULT_LOG("P00   WARN: 0/8000000 - Missing previous WAL file. Is current file is first in the chain?");
 
         HRN_STORAGE_REMOVE(
             storageRepoWrite(),
@@ -829,6 +834,7 @@ testRun(void)
         fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
         result = testFilter(filter, wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE, 1024 * 1024);
         TEST_RESULT_BOOL(bufEq(wal2, result), true, "WAL not the same");
+        TEST_RESULT_LOG("P00   WARN: 0/8000000 - Missing previous WAL file. Is current file is first in the chain?");
 
         HRN_STORAGE_REMOVE(
             storageRepoWrite(),
@@ -1066,8 +1072,9 @@ testRun(void)
         insertXRecord(wal2, record, INCOMPLETE_RECORD, .segno = 1);
 
         fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
-        TEST_ERROR(
-            testFilter(filter, wal2, bufSize(wal2), bufSize(wal2)), FormatError, "The file with the end of the 0/7ff0 record is missing");
+        result = testFilter(filter, wal2, bufSize(wal2), bufSize(wal2));
+        TEST_RESULT_BOOL(bufEq(wal2, result), true, "WAL not the same");
+        TEST_RESULT_LOG("P00   WARN: The file with the end of the 0/7ff0 record is missing. Has the timeline switch happened?");
 
         MEM_CONTEXT_TEMP_END();
 
@@ -1150,9 +1157,9 @@ testRun(void)
         insertXRecord(wal2, record, INCOMPLETE_RECORD, .segno = 2);
 
         fillLastPage(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE);
-        TEST_ERROR(
-            testFilter(filter, wal2, bufSize(wal2), bufSize(wal2)),
-            FormatError, "The file with the end of the 0/8007fe0 record is missing");
+        result = testFilter(filter, wal2, bufSize(wal2), bufSize(wal2));
+        TEST_RESULT_BOOL(bufEq(wal2, result), true, "WAL not the same");
+        TEST_RESULT_LOG("P00   WARN: The file with the end of the 0/8007fe0 record is missing. Has the timeline switch happened?");
 
         HRN_STORAGE_REMOVE(
             storageRepoWrite(),
