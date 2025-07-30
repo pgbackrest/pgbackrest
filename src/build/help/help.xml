@@ -1080,10 +1080,22 @@
                         <text>
                             <p>The S3 storage class to use when storing objects. When not specified, S3 will use its default storage class. Any valid AWS S3 storage class with instant access can be specified, such as <id>STANDARD_IA</id>, <id>ONEZONE_IA</id>, <id>GLACIER_IR</id>, or <id>INTELLIGENT_TIERING</id>.</p>
 
-                            <p>When choosing a storage class, consider the trade-offs between cost and retrieval requirements. Be aware that some storage classes have minimum object sizes for billing (typically 128KB) and minimum storage durations. Consult the AWS S3 documentation for current storage class options and their billing characteristics.</p>
+                            <p>When choosing a storage class, consider the trade-offs between cost and retrieval requirements. Be aware that some storage classes have minimum object sizes for billing (typically 128KB, see <br-option>repo-s3-storage-class-threshold</br-option>) and minimum storage durations. Consult the AWS S3 documentation for current storage class options and their billing characteristics.</p>
                         </text>
 
                         <example>INTELLIGENT_TIERING</example>
+                    </config-key>
+
+                    <config-key id="repo-s3-storage-class-threshold" name="S3 Repository Storage Class Threshold">
+                        <summary>S3 repository storage class size threshold.</summary>
+
+                        <text>
+                            <p>The minimum object size for applying the <br-option>repo-s3-storage-class</br-option> setting. Objects smaller than this size will use the default S3 storage class. The maximum value is 5MiB, which is the minimum threshold for multipart uploads.</p>
+
+                            <p>This is particularly important for storage classes like <id>STANDARD_IA</id>, <id>ONEZONE_IA</id>, and <id>GLACIER_IR</id> which have a minimum billable object size of 128KB. Setting this threshold to 128KB (the default) ensures you don't pay for storage you're not using on small objects.</p>
+                        </text>
+
+                        <example>128KiB</example>
                     </config-key>
 
                     <config-key id="repo-s3-uri-style" name="S3 Repository URI Style">
