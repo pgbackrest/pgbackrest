@@ -33,6 +33,7 @@ typedef struct TestRequestParam
     const char *ttl;
     const char *token;
     const char *tag;
+    const char *storageClass;
     bool requesterPays;
 } TestRequestParam;
 
@@ -94,6 +95,9 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
                 ";x-amz-server-side-encryption-customer-algorithm;x-amz-server-side-encryption-customer-key"
                 ";x-amz-server-side-encryption-customer-key-md5");
         }
+
+        if (param.storageClass != NULL)
+            strCatZ(request, ";x-amz-storage-class");
 
         if (param.tag != NULL)
             strCatZ(request, ";x-amz-tagging");
@@ -162,6 +166,10 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
             request, "x-amz-server-side-encryption-customer-key-md5:%s\r\n",
             strZ(strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, bufNewDecode(encodingBase64, STR(param.sseC))))));
     }
+
+    // Add storage class
+    if (param.storageClass != NULL)
+        strCatFmt(request, "x-amz-storage-class:%s\r\n", param.storageClass);
 
     // Add tags
     if (param.tag != NULL)
@@ -1654,6 +1662,92 @@ testRun(void)
 
                 TEST_RESULT_PTR(
                     storageGetP(storageNewReadP(s3, STRDEF("missing_file"), .ignoreMissing = true)), NULL, "missing file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                hrnServerScriptEnd(service);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("S3 storage class option"))
+    {
+        HRN_FORK_BEGIN()
+        {
+            const unsigned int testPort = hrnServerPortNext();
+
+            HRN_FORK_CHILD_BEGIN(.prefix = "s3 server", .timeout = 5000)
+            {
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort), "s3 server");
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN()
+            {
+                IoWrite *service = hrnServerScriptBegin(
+                    ioFdWriteNewOpen(STRDEF("s3 client write"), HRN_FORK_PARENT_WRITE_FD(0), 2000));
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("storage class configuration and file upload");
+
+                StringList *argList = strLstDup(commonArgList);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
+                hrnCfgArgRawZ(argList, cfgOptRepoS3StorageClass, "STANDARD_IA");
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+                Storage *s3 = storageRepoGet(0, true);
+                StorageS3 *driver = (StorageS3 *)storageDriver(s3);
+
+                // Set partSize to a small value for testing
+                driver->partSize = 16;
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write file with storage class");
+
+                testRequestP(service, s3, HTTP_VERB_PUT, "/test.txt", .content = "test content", .storageClass = "STANDARD_IA");
+                testResponseP(service);
+
+                StorageWrite *write = NULL;
+                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("test.txt")), "new write");
+                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("test content")), "write file with storage class");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("multipart upload with storage class");
+
+                testRequestP(service, s3, HTTP_VERB_POST, "/multipart.txt?uploads=", .storageClass = "STANDARD_IA");
+                testResponseP(service, .content =
+                                  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                                  "<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                                  "<Bucket>bucket</Bucket>"
+                                  "<Key>multipart.txt</Key>"
+                                  "<UploadId>MP123</UploadId>"
+                                  "</InitiateMultipartUploadResult>");
+
+                testRequestP(service, s3, HTTP_VERB_PUT, "/multipart.txt?partNumber=1&uploadId=MP123",
+                             .content = "1234567890123456");
+                testResponseP(service, .header = "etag:MP123-1");
+
+                testRequestP(service, s3, HTTP_VERB_PUT, "/multipart.txt?partNumber=2&uploadId=MP123",
+                             .content = "7890123456789012");
+                testResponseP(service, .header = "etag:MP123-2");
+
+                testRequestP(service, s3, HTTP_VERB_POST, "/multipart.txt?uploadId=MP123",
+                             .content =
+                                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                                 "<CompleteMultipartUpload>"
+                                 "<Part><PartNumber>1</PartNumber><ETag>MP123-1</ETag></Part>"
+                                 "<Part><PartNumber>2</PartNumber><ETag>MP123-2</ETag></Part>"
+                                 "</CompleteMultipartUpload>\n");
+                testResponseP(service, .content =
+                                  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                                  "<CompleteMultipartUploadResult><ETag>XXX</ETag></CompleteMultipartUploadResult>");
+
+                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("multipart.txt")), "new write");
+                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write multipart file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 hrnServerScriptEnd(service);

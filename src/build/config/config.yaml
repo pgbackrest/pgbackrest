@@ -2471,6 +2471,10 @@ option:
       list:
         - s3
 
+  repo-s3-storage-class:
+    inherit: repo-s3-bucket
+    required: false
+
   repo-s3-uri-style:
     section: global
     group: repo
