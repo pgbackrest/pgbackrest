@@ -1081,6 +1081,8 @@
                             <p>The S3 storage class to use when storing objects. When not specified, S3 will use its default storage class. Any valid AWS S3 storage class with instant access can be specified, such as <id>STANDARD_IA</id>, <id>ONEZONE_IA</id>, <id>GLACIER_IR</id>, or <id>INTELLIGENT_TIERING</id>.</p>
 
                             <p>When choosing a storage class, consider the trade-offs between cost and retrieval requirements. Be aware that some storage classes have minimum object sizes for billing (typically 128KB, see <br-option>repo-s3-storage-class-threshold</br-option>) and minimum storage durations. Consult the AWS S3 documentation for current storage class options and their billing characteristics.</p>
+
+                            <p>Note that <file>backup.info</file> and <file>backup.manifest</file> files are always stored using the default S3 storage class regardless of this setting to save retrieval costs, as these critical metadata files are frequently accessed during backup operations.</p>
                         </text>
 
                         <example>INTELLIGENT_TIERING</example>

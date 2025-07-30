@@ -7,6 +7,8 @@ S3 Storage File Write
 #include "common/log.h"
 #include "common/type/object.h"
 #include "common/type/xml.h"
+#include "info/infoBackup.h"
+#include "info/manifest.h"
 #include "storage/s3/write.h"
 #include "storage/write.h"
 
@@ -121,6 +123,11 @@ storageWriteS3PartAsync(StorageWriteS3 *const this)
         // Get the upload id if we have not already
         if (this->uploadId == NULL)
         {
+            // Check if storage class should be applied (not for backup.info or backup.manifest files)
+            bool applyStorageClass =
+                !strEndsWithZ(this->interface.name, "/" INFO_BACKUP_FILE) &&
+                !strEndsWithZ(this->interface.name, "/" BACKUP_MANIFEST_FILE);
+
             // Initiate mult-part upload
             const XmlNode *const xmlRoot = xmlDocumentRoot(
                 xmlDocumentNewBuf(
@@ -128,7 +135,7 @@ storageWriteS3PartAsync(StorageWriteS3 *const this)
                         storageS3RequestP(
                             this->storage, HTTP_VERB_POST_STR, this->interface.name,
                             .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOADS_STR, EMPTY_STR), .sseKms = true,
-                            .sseC = true, .tag = true, .storageClass = true))));
+                            .sseC = true, .tag = true, .storageClass = applyStorageClass))));
 
             // Store the upload id
             MEM_CONTEXT_OBJ_BEGIN(this)
@@ -254,8 +261,11 @@ storageWriteS3Close(THIS_VOID)
             // Else upload all the data in a single put
             else
             {
-                // Only apply storage class if the object size meets the threshold
-                bool applyStorageClass = bufUsed(this->partBuffer) >= storageS3StorageClassThreshold(this->storage);
+                // Only apply storage class if the object size meets the threshold and file is not backup.info or backup.manifest
+                bool applyStorageClass =
+                    bufUsed(this->partBuffer) >= storageS3StorageClassThreshold(this->storage) &&
+                    !strEndsWithZ(this->interface.name, "/" INFO_BACKUP_FILE) &&
+                    !strEndsWithZ(this->interface.name, "/" BACKUP_MANIFEST_FILE);
 
                 storageS3RequestP(
                     this->storage, HTTP_VERB_PUT_STR, this->interface.name, .content = this->partBuffer, .sseKms = true,
