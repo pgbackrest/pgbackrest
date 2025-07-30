@@ -426,11 +426,11 @@ readBeginOfRecord(WalFilterState *const this)
     // There may be an unfinished record from the previous file at the beginning of the file. Just skip it.
     while (true)
     {
-#ifdef DEBUG
-        bool ret =
-#endif
-        getNextPage(this, buffer);
-        ASSERT(ret);
+        if (!getNextPage(this, buffer))
+        {
+            goto end;
+        }
+
         if (!(this->currentPageHeader->xlp_info & XLP_FIRST_IS_CONTRECORD) ||
             this->currentPageHeader->xlp_info & XLP_FIRST_IS_OVERWRITE_CONTRECORD)
         {
@@ -473,32 +473,38 @@ getEndOfRecord(WalFilterState *const this)
 {
     MEM_CONTEXT_TEMP_BEGIN();
 
-    const StorageRead *const storageRead = getNearWal(this, true);
+    ReadRecordStatus result = ReadRecordNeedBuffer;
 
-    if (storageRead == NULL)
+    while (result != ReadRecordSuccess)
     {
-        LOG_WARN_FMT(
-            "The file with the end of the %s record is missing. Has the timeline switch happened?", strZ(pgLsnToStr(this->recPtr)));
-        goto end;
-    }
+        const StorageRead *const storageRead = getNearWal(this, true);
 
-    ioReadOpen(storageReadIo(storageRead));
-
-    Buffer *const buffer = bufNew(this->walPageSize);
-    size_t size = ioRead(storageReadIo(storageRead), buffer);
-    bufUsedSet(buffer, size);
-    while (readRecord(this, buffer) == ReadRecordNeedBuffer)
-    {
-        if (ioReadEof(storageReadIo(storageRead)))
+        if (storageRead == NULL)
         {
-            THROW_FMT(FormatError, "%s - Unexpected WAL end", strZ(pgLsnToStr(this->recPtr)));
+            LOG_WARN_FMT(
+                "The file with the end of the %s record is missing. Has the timeline switch happened?",
+                strZ(pgLsnToStr(this->recPtr)));
+            goto end;
         }
 
-        bufUsedZero(buffer);
-        size = ioRead(storageReadIo(storageRead), buffer);
+        ioReadOpen(storageReadIo(storageRead));
+
+        Buffer *const buffer = bufNew(this->walPageSize);
+        size_t size = ioRead(storageReadIo(storageRead), buffer);
         bufUsedSet(buffer, size);
+        while ((result = readRecord(this, buffer)) == ReadRecordNeedBuffer)
+        {
+            if (ioReadEof(storageReadIo(storageRead)))
+            {
+                break;
+            }
+
+            bufUsedZero(buffer);
+            size = ioRead(storageReadIo(storageRead), buffer);
+            bufUsedSet(buffer, size);
+        }
+        ioReadClose(storageReadIo(storageRead));
     }
-    ioReadClose(storageReadIo(storageRead));
 end:
     MEM_CONTEXT_TEMP_END();
 }
@@ -521,9 +527,6 @@ walFilterProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
     // Avoid creating local variables before the record is fully read,
     // since if the input buffer is exhausted, we can exit the function.
 
-    if (this->isReadOrphanedData)
-        goto readOrphanedData;
-
     if (input == NULL)
     {
         // We have an incomplete record at the end, and we have already read something
@@ -539,6 +542,9 @@ walFilterProcess(THIS_VOID, const Buffer *const input, Buffer *const output)
         this->done = true;
         goto end;
     }
+
+    if (this->isReadOrphanedData)
+        goto readOrphanedData;
 
     if (this->isBegin)
     {
