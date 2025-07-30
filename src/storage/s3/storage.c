@@ -115,6 +115,7 @@ struct StorageS3
     const String *bucketEndpoint;                                   // Set to {bucket}.{endpoint}
     bool requesterPays;                                             // Requester pays?
     const String *storageClass;                                     // S3 storage class
+    size_t storageClassThreshold;                                   // Minimum object size for storage class
 
     // For retrieving temporary security credentials
     HttpClient *credHttpClient;                                     // HTTP client to service credential requests
@@ -439,6 +440,15 @@ storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Get storage class threshold
+***********************************************************************************************************************************/
+FN_EXTERN size_t
+storageS3StorageClassThreshold(const StorageS3 *const this)
+{
+    return this->storageClassThreshold;
 }
 
 /***********************************************************************************************************************************
@@ -1194,7 +1204,7 @@ storageS3New(
     const String *const securityToken, const String *const kmsKeyId, const String *sseCustomerKey, const String *const credRole,
     const String *const webIdTokenFile, const size_t partSize, const KeyValue *const tag, const String *host,
     const unsigned int port, const TimeMSec timeout, const bool verifyPeer, const String *const caFile, const String *const caPath,
-    const bool requesterPays, const String *const storageClass)
+    const bool requesterPays, const String *const storageClass, const size_t storageClassThreshold)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -1223,6 +1233,7 @@ storageS3New(
         FUNCTION_LOG_PARAM(STRING, caPath);
         FUNCTION_LOG_PARAM(BOOL, requesterPays);
         FUNCTION_LOG_PARAM(STRING, storageClass);
+        FUNCTION_LOG_PARAM(SIZE, storageClassThreshold);
     FUNCTION_LOG_END();
 
     ASSERT(path != NULL);
@@ -1243,6 +1254,7 @@ storageS3New(
             .requesterPays = requesterPays,
             .sseCustomerKey = strDup(sseCustomerKey),
             .storageClass = strDup(storageClass),
+            .storageClassThreshold = storageClassThreshold,
             .partSize = partSize,
             .deleteMax = STORAGE_S3_DELETE_MAX,
             .uriStyle = uriStyle,

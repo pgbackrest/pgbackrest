@@ -1695,6 +1695,7 @@ testRun(void)
                 StringList *argList = strLstDup(commonArgList);
                 hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
                 hrnCfgArgRawZ(argList, cfgOptRepoS3StorageClass, "STANDARD_IA");
+                hrnCfgArgRawZ(argList, cfgOptRepoS3StorageClassThreshold, "6B");  // Set low threshold for testing
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
                 Storage *s3 = storageRepoGet(0, true);
@@ -1706,12 +1707,21 @@ testRun(void)
                 hrnServerScriptAccept(service);
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("write file with storage class");
+                TEST_TITLE("write small file below threshold - no storage class");
+
+                testRequestP(service, s3, HTTP_VERB_PUT, "/small.txt", .content = "small");  // 5 bytes < threshold
+                testResponseP(service);
+
+                StorageWrite *write = NULL;
+                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("small.txt")), "new write");
+                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("small")), "write small file without storage class");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write file above threshold with storage class");
 
                 testRequestP(service, s3, HTTP_VERB_PUT, "/test.txt", .content = "test content", .storageClass = "STANDARD_IA");
                 testResponseP(service);
 
-                StorageWrite *write = NULL;
                 TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("test.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("test content")), "write file with storage class");
 

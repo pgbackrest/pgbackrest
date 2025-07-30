@@ -8,7 +8,7 @@
                     <release-item-contributor id="felix.buenemann"/>
                 </release-item-contributor-list>
 
-                <p>Add <br-option>repo-s3-storage-class</br-option> option to configure S3 storage class for object uploads. This allows users to optimize storage costs based on their backup access patterns.</p>
+                <p>Add <br-option>repo-s3-storage-class</br-option> and <br-option>repo-s3-storage-class-threshold</br-option> options to configure S3 storage class for object uploads. This allows users to optimize storage costs based on their backup access patterns while avoiding minimum billing penalties on small objects.</p>
             </release-item>
         </release-feature-list>
 

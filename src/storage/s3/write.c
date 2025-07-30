@@ -254,9 +254,12 @@ storageWriteS3Close(THIS_VOID)
             // Else upload all the data in a single put
             else
             {
+                // Only apply storage class if the object size meets the threshold
+                bool applyStorageClass = bufUsed(this->partBuffer) >= storageS3StorageClassThreshold(this->storage);
+
                 storageS3RequestP(
                     this->storage, HTTP_VERB_PUT_STR, this->interface.name, .content = this->partBuffer, .sseKms = true,
-                    .sseC = true, .tag = true, .storageClass = true);
+                    .sseC = true, .tag = true, .storageClass = applyStorageClass);
             }
 
             bufFree(this->partBuffer);

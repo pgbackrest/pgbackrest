@@ -344,6 +344,7 @@ testRun(void)
             "  --repo-s3-role                      S3 repository role\n"
             "  --repo-s3-sse-customer-key          S3 repository SSE customer key\n"
             "  --repo-s3-storage-class             S3 repository storage class\n"
+            "  --repo-s3-storage-class-threshold   S3 repository storage class size threshold\n"
             "  --repo-s3-token                     S3 repository security token\n"
             "  --repo-s3-uri-style                 S3 URI Style\n"
             "  --repo-sftp-host                    SFTP repository host\n"
