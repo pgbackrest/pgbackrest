@@ -128,7 +128,7 @@ storageWriteS3PartAsync(StorageWriteS3 *const this)
                         storageS3RequestP(
                             this->storage, HTTP_VERB_POST_STR, this->interface.name,
                             .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOADS_STR, EMPTY_STR), .sseKms = true,
-                            .sseC = true, .tag = true))));
+                            .sseC = true, .tag = true, .storageClass = true))));
 
             // Store the upload id
             MEM_CONTEXT_OBJ_BEGIN(this)
@@ -256,7 +256,7 @@ storageWriteS3Close(THIS_VOID)
             {
                 storageS3RequestP(
                     this->storage, HTTP_VERB_PUT_STR, this->interface.name, .content = this->partBuffer, .sseKms = true,
-                    .sseC = true, .tag = true);
+                    .sseC = true, .tag = true, .storageClass = true);
             }
 
             bufFree(this->partBuffer);
