@@ -2471,6 +2471,16 @@ option:
       list:
         - s3
 
+  repo-s3-storage-class:
+    inherit: repo-s3-bucket
+    required: false
+
+  repo-s3-storage-class-threshold:
+    inherit: repo-s3-bucket
+    type: size
+    default: 128KiB
+    allow-range: [0B, 5MiB]
+
   repo-s3-uri-style:
     section: global
     group: repo

@@ -25,6 +25,7 @@ typedef struct StorageS3RequestAsyncParam
     bool sseKms;                                                    // Enable server-side encryption?
     bool sseC;                                                      // Enable server-side encryption with customer-provided keys?
     bool tag;                                                       // Add tags when available?
+    bool storageClass;                                              // Add storage class header when available?
 } StorageS3RequestAsyncParam;
 
 #define storageS3RequestAsyncP(this, verb, path, ...)                                                                              \
@@ -57,12 +58,19 @@ typedef struct StorageS3RequestParam
     bool sseKms;                                                    // Enable server-side encryption?
     bool sseC;                                                      // Enable server-side encryption with customer-provided keys?
     bool tag;                                                       // Add tags when available?
+    bool storageClass;                                              // Add storage class header when available?
 } StorageS3RequestParam;
 
 #define storageS3RequestP(this, verb, path, ...)                                                                                   \
     storageS3Request(this, verb, path, (StorageS3RequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 FN_EXTERN HttpResponse *storageS3Request(StorageS3 *this, const String *verb, const String *path, StorageS3RequestParam param);
+
+/***********************************************************************************************************************************
+Getters
+***********************************************************************************************************************************/
+// Get storage class threshold
+FN_EXTERN size_t storageS3StorageClassThreshold(const StorageS3 *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

@@ -41,6 +41,7 @@ STRING_STATIC(S3_HEADER_SSECUSTKEY_KEY_MD5_STR,                     "x-amz-serve
 STRING_STATIC(S3_HEADER_TAGGING,                                    "x-amz-tagging");
 STRING_STATIC(S3_HEADER_REQUEST_PAYER,                              "x-amz-request-payer");
 STRING_STATIC(S3_HEADER_REQUEST_PAYER_STR,                          "requester");
+STRING_STATIC(S3_HEADER_STORAGE_CLASS,                              "x-amz-storage-class");
 
 /***********************************************************************************************************************************
 S3 query tokens
@@ -113,6 +114,8 @@ struct StorageS3
     StorageS3UriStyle uriStyle;                                     // Path or host style URIs
     const String *bucketEndpoint;                                   // Set to {bucket}.{endpoint}
     bool requesterPays;                                             // Requester pays?
+    const String *storageClass;                                     // S3 storage class
+    size_t storageClassThreshold;                                   // Minimum object size for storage class
 
     // For retrieving temporary security credentials
     HttpClient *credHttpClient;                                     // HTTP client to service credential requests
@@ -440,6 +443,15 @@ storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
 }
 
 /***********************************************************************************************************************************
+Get storage class threshold
+***********************************************************************************************************************************/
+FN_EXTERN size_t
+storageS3StorageClassThreshold(const StorageS3 *const this)
+{
+    return this->storageClassThreshold;
+}
+
+/***********************************************************************************************************************************
 Process S3 request
 ***********************************************************************************************************************************/
 FN_EXTERN HttpRequest *
@@ -455,6 +467,7 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
         FUNCTION_LOG_PARAM(BOOL, param.sseKms);
         FUNCTION_LOG_PARAM(BOOL, param.sseC);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
+        FUNCTION_LOG_PARAM(BOOL, param.storageClass);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -503,6 +516,10 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
         // Set tags when requested and available
         if (param.tag && this->tag != NULL)
             httpHeaderPut(requestHeader, S3_HEADER_TAGGING, this->tag);
+
+        // Set storage class when specified and requested
+        if (param.storageClass && this->storageClass != NULL)
+            httpHeaderPut(requestHeader, S3_HEADER_STORAGE_CLASS, this->storageClass);
 
         // When using path-style URIs the bucket name needs to be prepended
         if (this->uriStyle == storageS3UriStylePath)
@@ -612,11 +629,12 @@ storageS3Request(StorageS3 *const this, const String *const verb, const String *
         FUNCTION_LOG_PARAM(BOOL, param.sseKms);
         FUNCTION_LOG_PARAM(BOOL, param.sseC);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
+        FUNCTION_LOG_PARAM(BOOL, param.storageClass);
     FUNCTION_LOG_END();
 
     HttpRequest *const request = storageS3RequestAsyncP(
         this, verb, path, .header = param.header, .query = param.query, .content = param.content, .sseKms = param.sseKms,
-        .sseC = param.sseC, .tag = param.tag);
+        .sseC = param.sseC, .tag = param.tag, .storageClass = param.storageClass);
     HttpResponse *const result = storageS3ResponseP(
         request, .allowMissing = param.allowMissing, .contentIo = param.contentIo);
 
@@ -1186,7 +1204,7 @@ storageS3New(
     const String *const securityToken, const String *const kmsKeyId, const String *sseCustomerKey, const String *const credRole,
     const String *const webIdTokenFile, const size_t partSize, const KeyValue *const tag, const String *host,
     const unsigned int port, const TimeMSec timeout, const bool verifyPeer, const String *const caFile, const String *const caPath,
-    const bool requesterPays)
+    const bool requesterPays, const String *const storageClass, const size_t storageClassThreshold)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -1213,6 +1231,9 @@ storageS3New(
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
         FUNCTION_LOG_PARAM(STRING, caFile);
         FUNCTION_LOG_PARAM(STRING, caPath);
+        FUNCTION_LOG_PARAM(BOOL, requesterPays);
+        FUNCTION_LOG_PARAM(STRING, storageClass);
+        FUNCTION_LOG_PARAM(SIZE, storageClassThreshold);
     FUNCTION_LOG_END();
 
     ASSERT(path != NULL);
@@ -1232,6 +1253,8 @@ storageS3New(
             .kmsKeyId = strDup(kmsKeyId),
             .requesterPays = requesterPays,
             .sseCustomerKey = strDup(sseCustomerKey),
+            .storageClass = strDup(storageClass),
+            .storageClassThreshold = storageClassThreshold,
             .partSize = partSize,
             .deleteMax = STORAGE_S3_DELETE_MAX,
             .uriStyle = uriStyle,
