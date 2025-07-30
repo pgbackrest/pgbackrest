@@ -164,6 +164,28 @@ getRemainingLenOnPage(XLogRecordBase *record, uint32 targetPage, uint32 segSize,
     return leftLen;
 }
 
+static uint32
+calcBodySize(uint32 pageCount, uint32 leftOnLastPage, XLogRecPtr recPtr, uint32 segSize)
+{
+    uint32 totalSize = pageCount * DEFAULT_GDPB_XLOG_PAGE_SIZE;
+    if (recPtr % DEFAULT_GDPB_XLOG_PAGE_SIZE == 0)
+    {
+        if (recPtr % segSize == 0)
+        {
+            totalSize -= (uint32) SizeOfXLogLongPHD;
+        }
+        else
+        {
+            totalSize -= (uint32) SizeOfXLogShortPHD;
+        }
+    }
+    totalSize -= (uint32) SizeOfXLogRecordGPDB6;
+    totalSize -= (uint32) SizeOfXLogShortPHD * (pageCount - 1);
+    totalSize -= leftOnLastPage;
+
+    return totalSize;
+}
+
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
@@ -1496,6 +1518,52 @@ testRun(void)
                 strZ(xLogFileName(1, i + 1, DEFAULT_GDPB_XLOG_PAGE_SIZE * 2)));
             HRN_STORAGE_REMOVE(storageRepoWrite(), strZ(walName));
         }
+
+        MEM_CONTEXT_TEMP_END();
+
+        TEST_TITLE("incomplete end of record in the next partial file");
+        // If there is an unfinished record at the end of the segment, we need to read the next file. This file may be partial if
+        // the timeline has been switched in it. In this case, we have no guarantee that the end of the record will be complete, and
+        // we can start reading garbage.
+        MEM_CONTEXT_TEMP_BEGIN();
+        PgControl testPgControl = pgControl;
+        testPgControl.walSegmentSize = DEFAULT_GDPB_XLOG_PAGE_SIZE * 3;
+        Buffer *wal1 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE * 3);
+        Buffer *wal2 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE * 3);
+
+        {
+            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = calcBodySize(3, 16, 0, DEFAULT_GDPB_XLOG_PAGE_SIZE * 3));
+            insertXRecord(wal1, record, NO_FLAGS, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE * 3);
+            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE * 3);
+            insertXRecord(wal1, record, INCOMPLETE_RECORD, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE * 3);
+        }
+        {
+            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = DEFAULT_GDPB_XLOG_PAGE_SIZE * 3);
+            insertXRecord(
+                wal2,
+                record,
+                INCOMPLETE_RECORD,
+                .beginOffset = getRemainingLenOnPage(record, 2, DEFAULT_GDPB_XLOG_PAGE_SIZE * 3, bufUsed(wal1)),
+                .segno = 2,
+                .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE * 3);
+            memset(bufRemainsPtr(wal2), 0xFF, bufRemains(wal2));
+            bufUsedSet(wal2, DEFAULT_GDPB_XLOG_PAGE_SIZE * 3);
+            HRN_STORAGE_PUT(
+                storageRepoWrite(),
+                STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+                wal2);
+        }
+
+        {
+            filter = walFilterNew(testPgControl, &archiveInfo);
+            result = testFilter(filter, wal1, bufSize(wal1), bufSize(wal1));
+            TEST_RESULT_BOOL(bufEq(wal1, result), true, "WAL not the same");
+            TEST_RESULT_LOG("P00   WARN: Error when reading the end of a record from the next file: 0/2fff0 - wrong page magic");
+        }
+
+        HRN_STORAGE_REMOVE(
+            storageRepoWrite(),
+            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
 
         MEM_CONTEXT_TEMP_END();
 
