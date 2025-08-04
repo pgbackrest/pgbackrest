@@ -185,6 +185,9 @@ typedef struct StorageNewWriteParam
     time_t timeModified;
     const String *user;
     const String *group;
+
+    // Use default instead of configured storage class.
+    bool defaultStorageClass;
 } StorageNewWriteParam;
 
 #define storageNewWriteP(this, pathExp, ...)                                                                                       \

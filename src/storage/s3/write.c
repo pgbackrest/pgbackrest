@@ -41,6 +41,7 @@ typedef struct StorageWriteS3
     Buffer *partBuffer;
     const String *uploadId;
     StringList *uploadPartList;
+    bool applyStorageClass;
 } StorageWriteS3;
 
 /***********************************************************************************************************************************
@@ -123,11 +124,6 @@ storageWriteS3PartAsync(StorageWriteS3 *const this)
         // Get the upload id if we have not already
         if (this->uploadId == NULL)
         {
-            // Check if storage class should be applied (not for backup.info or backup.manifest files)
-            bool applyStorageClass =
-                !strEndsWithZ(this->interface.name, "/" INFO_BACKUP_FILE) &&
-                !strEndsWithZ(this->interface.name, "/" BACKUP_MANIFEST_FILE);
-
             // Initiate mult-part upload
             const XmlNode *const xmlRoot = xmlDocumentRoot(
                 xmlDocumentNewBuf(
@@ -135,7 +131,7 @@ storageWriteS3PartAsync(StorageWriteS3 *const this)
                         storageS3RequestP(
                             this->storage, HTTP_VERB_POST_STR, this->interface.name,
                             .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOADS_STR, EMPTY_STR), .sseKms = true,
-                            .sseC = true, .tag = true, .storageClass = applyStorageClass))));
+                            .sseC = true, .tag = true, .storageClass = this->applyStorageClass))));
 
             // Store the upload id
             MEM_CONTEXT_OBJ_BEGIN(this)
@@ -261,15 +257,9 @@ storageWriteS3Close(THIS_VOID)
             // Else upload all the data in a single put
             else
             {
-                // Only apply storage class if the object size meets the threshold and file is not backup.info or backup.manifest
-                bool applyStorageClass =
-                    bufUsed(this->partBuffer) >= storageS3StorageClassThreshold(this->storage) &&
-                    !strEndsWithZ(this->interface.name, "/" INFO_BACKUP_FILE) &&
-                    !strEndsWithZ(this->interface.name, "/" BACKUP_MANIFEST_FILE);
-
                 storageS3RequestP(
                     this->storage, HTTP_VERB_PUT_STR, this->interface.name, .content = this->partBuffer, .sseKms = true,
-                    .sseC = true, .tag = true, .storageClass = applyStorageClass);
+                    .sseC = true, .tag = true, .storageClass = this->applyStorageClass);
             }
 
             bufFree(this->partBuffer);
@@ -283,11 +273,13 @@ storageWriteS3Close(THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN StorageWrite *
-storageWriteS3New(StorageS3 *const storage, const String *const name, const size_t partSize)
+storageWriteS3New(StorageS3 *const storage, const String *const name, const size_t partSize, const bool applyStorageClass)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_S3, storage);
         FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM(SIZE, partSize);
+        FUNCTION_LOG_PARAM(BOOL, applyStorageClass);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -299,6 +291,7 @@ storageWriteS3New(StorageS3 *const storage, const String *const name, const size
         {
             .storage = storage,
             .partSize = partSize,
+            .applyStorageClass = applyStorageClass,
 
             .interface = (StorageWriteInterface)
             {

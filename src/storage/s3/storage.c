@@ -443,15 +443,6 @@ storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
 }
 
 /***********************************************************************************************************************************
-Get storage class threshold
-***********************************************************************************************************************************/
-FN_EXTERN size_t
-storageS3StorageClassThreshold(const StorageS3 *const this)
-{
-    return this->storageClassThreshold;
-}
-
-/***********************************************************************************************************************************
 Process S3 request
 ***********************************************************************************************************************************/
 FN_EXTERN HttpRequest *
@@ -517,9 +508,12 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
         if (param.tag && this->tag != NULL)
             httpHeaderPut(requestHeader, S3_HEADER_TAGGING, this->tag);
 
-        // Set storage class when specified and requested
-        if (param.storageClass && this->storageClass != NULL)
+        // Set storage class when requested, specified, and content meets threshold (or no content)
+        if (param.storageClass && this->storageClass != NULL &&
+            (param.content == NULL || bufUsed(param.content) >= this->storageClassThreshold))
+        {
             httpHeaderPut(requestHeader, S3_HEADER_STORAGE_CLASS, this->storageClass);
+        }
 
         // When using path-style URIs the bucket name needs to be prepended
         if (this->uriStyle == storageS3UriStylePath)
@@ -986,7 +980,7 @@ storageS3NewWrite(THIS_VOID, const String *const file, const StorageInterfaceNew
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        (void)param;                                                // No parameters are used
+        FUNCTION_LOG_PARAM(BOOL, param.defaultStorageClass);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -997,7 +991,7 @@ storageS3NewWrite(THIS_VOID, const String *const file, const StorageInterfaceNew
     ASSERT(param.group == NULL);
     ASSERT(param.timeModified == 0);
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteS3New(this, file, this->partSize));
+    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteS3New(this, file, this->partSize, !param.defaultStorageClass));
 }
 
 /**********************************************************************************************************************************/

@@ -1760,91 +1760,47 @@ testRun(void)
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write multipart file");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("backup.info file - no storage class even above threshold");
+                TEST_TITLE("file with defaultStorageClass = true - no storage class even above threshold");
 
-                testRequestP(service, s3, HTTP_VERB_PUT, "/backup/test/backup.info", .content = "backup info");
+                testRequestP(service, s3, HTTP_VERB_PUT, "/test-no-class.txt", .content = "test content");
                 testResponseP(service);
 
-                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("backup/test/backup.info")), "new write");
-                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("backup info")), "write backup.info without storage class");
+                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("test-no-class.txt"), .defaultStorageClass = true), "new write");
+                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("test content")), "write file without storage class");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("backup.manifest file - no storage class even above threshold");
+                TEST_TITLE("multipart file with defaultStorageClass = true - no storage class");
 
-                testRequestP(service, s3, HTTP_VERB_PUT, "/backup/test/20241230-123456F/backup.manifest",
-                             .content = "manifest");
-                testResponseP(service);
-
-                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("backup/test/20241230-123456F/backup.manifest")), "new write");
-                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("manifest")), "write backup.manifest without storage class");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("backup.manifest multipart - no storage class for multipart upload");
-
-                testRequestP(service, s3, HTTP_VERB_POST, "/backup/test/20241230-123456F/backup.manifest?uploads=");
+                testRequestP(service, s3, HTTP_VERB_POST, "/test-no-class-multipart.txt?uploads=");
                 testResponseP(service, .content =
                                   "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                                   "<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
                                   "<Bucket>bucket</Bucket>"
-                                  "<Key>backup/test/20241230-123456F/backup.manifest</Key>"
-                                  "<UploadId>BMMP123</UploadId>"
+                                  "<Key>test-no-class-multipart.txt</Key>"
+                                  "<UploadId>NC123</UploadId>"
                                   "</InitiateMultipartUploadResult>");
 
-                testRequestP(service, s3, HTTP_VERB_PUT, "/backup/test/20241230-123456F/backup.manifest?partNumber=1&uploadId=BMMP123",
+                testRequestP(service, s3, HTTP_VERB_PUT, "/test-no-class-multipart.txt?partNumber=1&uploadId=NC123",
                              .content = "1234567890123456");
-                testResponseP(service, .header = "etag:BMMP123-1");
+                testResponseP(service, .header = "etag:NC123-1");
 
-                testRequestP(service, s3, HTTP_VERB_PUT, "/backup/test/20241230-123456F/backup.manifest?partNumber=2&uploadId=BMMP123",
-                             .content = "7890123456");
-                testResponseP(service, .header = "etag:BMMP123-2");
-
-                testRequestP(service, s3, HTTP_VERB_POST, "/backup/test/20241230-123456F/backup.manifest?uploadId=BMMP123",
-                             .content =
-                                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                                 "<CompleteMultipartUpload>"
-                                 "<Part><PartNumber>1</PartNumber><ETag>BMMP123-1</ETag></Part>"
-                                 "<Part><PartNumber>2</PartNumber><ETag>BMMP123-2</ETag></Part>"
-                                 "</CompleteMultipartUpload>\n");
-                testResponseP(service, .content =
-                                  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                                  "<CompleteMultipartUploadResult><ETag>XXX</ETag></CompleteMultipartUploadResult>");
-
-                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("backup/test/20241230-123456F/backup.manifest")), "new write");
-                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456")), "write multipart backup.manifest");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("backup.info multipart - no storage class for multipart upload");
-
-                testRequestP(service, s3, HTTP_VERB_POST, "/backup/test/backup.info?uploads=");
-                testResponseP(service, .content =
-                                  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                                  "<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                                  "<Bucket>bucket</Bucket>"
-                                  "<Key>backup/test/backup.info</Key>"
-                                  "<UploadId>BIMP123</UploadId>"
-                                  "</InitiateMultipartUploadResult>");
-
-                testRequestP(service, s3, HTTP_VERB_PUT, "/backup/test/backup.info?partNumber=1&uploadId=BIMP123",
-                             .content = "1234567890123456");
-                testResponseP(service, .header = "etag:BIMP123-1");
-
-                testRequestP(service, s3, HTTP_VERB_PUT, "/backup/test/backup.info?partNumber=2&uploadId=BIMP123",
+                testRequestP(service, s3, HTTP_VERB_PUT, "/test-no-class-multipart.txt?partNumber=2&uploadId=NC123",
                              .content = "78901234567890");
-                testResponseP(service, .header = "etag:BIMP123-2");
+                testResponseP(service, .header = "etag:NC123-2");
 
-                testRequestP(service, s3, HTTP_VERB_POST, "/backup/test/backup.info?uploadId=BIMP123",
+                testRequestP(service, s3, HTTP_VERB_POST, "/test-no-class-multipart.txt?uploadId=NC123",
                              .content =
                                  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
                                  "<CompleteMultipartUpload>"
-                                 "<Part><PartNumber>1</PartNumber><ETag>BIMP123-1</ETag></Part>"
-                                 "<Part><PartNumber>2</PartNumber><ETag>BIMP123-2</ETag></Part>"
+                                 "<Part><PartNumber>1</PartNumber><ETag>NC123-1</ETag></Part>"
+                                 "<Part><PartNumber>2</PartNumber><ETag>NC123-2</ETag></Part>"
                                  "</CompleteMultipartUpload>\n");
                 testResponseP(service, .content =
                                   "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                                   "<CompleteMultipartUploadResult><ETag>XXX</ETag></CompleteMultipartUploadResult>");
 
-                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("backup/test/backup.info")), "new write");
-                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("123456789012345678901234567890")), "write multipart backup.info");
+                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("test-no-class-multipart.txt"), .defaultStorageClass = true), "new write");
+                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("123456789012345678901234567890")), "write multipart file without storage class");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 hrnServerScriptEnd(service);
