@@ -438,7 +438,7 @@ sub containerBuild
                 "        libbz2-dev bzip2 libyaml-dev libjson-pp-perl liblz4-dev liblz4-tool gnupg lsb-release ccache meson \\\n" .
                 "        libssh2-1-dev libcurl4-openssl-dev";
 
-            if ($strOS eq VM_U20 || $strOS eq VM_U22)
+            if ($strOS eq VM_U22)
             {
                 $strScript .= " valgrind";
             }
