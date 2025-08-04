@@ -67,12 +67,6 @@ typedef struct StorageS3RequestParam
 FN_EXTERN HttpResponse *storageS3Request(StorageS3 *this, const String *verb, const String *path, StorageS3RequestParam param);
 
 /***********************************************************************************************************************************
-Getters
-***********************************************************************************************************************************/
-// Get storage class threshold
-FN_EXTERN size_t storageS3StorageClassThreshold(const StorageS3 *this);
-
-/***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
 #define FUNCTION_LOG_STORAGE_S3_TYPE                                                                                               \
