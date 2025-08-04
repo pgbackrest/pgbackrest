@@ -83,13 +83,11 @@ use constant VM_RH8                                                 => 'rh8';
     push @EXPORT, qw(VM_RH8);
 use constant VM_F41                                                 => 'f41';
     push @EXPORT, qw(VM_F41);
-use constant VM_U20                                                 => 'u20';
-    push @EXPORT, qw(VM_U20);
 use constant VM_U22                                                 => 'u22';
     push @EXPORT, qw(VM_U22);
 
 # List of default test VMs
-use constant VM_LIST                                                => (VM_U20, VM_D11, VM_RH8, VM_U22);
+use constant VM_LIST                                                => (VM_D11, VM_RH8, VM_U22);
     push @EXPORT, qw(VM_LIST);
 
 my $oyVm =
@@ -162,6 +160,7 @@ my $oyVm =
             PG_VERSION_14,
             PG_VERSION_15,
             PG_VERSION_16,
+            PG_VERSION_17,
         ],
     },
 
@@ -189,40 +188,6 @@ my $oyVm =
         &VM_DB_TEST =>
         [
             PG_VERSION_15,
-        ],
-    },
-
-    # Ubuntu 20.04
-    &VM_U20 =>
-    {
-        &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_IMAGE => 'ubuntu:20.04',
-        &VM_ARCH => VM_ARCH_AMD64,
-        &VMDEF_COVERAGE_C => true,
-        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-
-        &VMDEF_WITH_ZST => true,
-
-        &VM_DB =>
-        [
-            PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_96,
-            PG_VERSION_10,
-            PG_VERSION_11,
-            PG_VERSION_12,
-            PG_VERSION_13,
-            PG_VERSION_14,
-            PG_VERSION_15,
-            PG_VERSION_16,
-            PG_VERSION_17,
-        ],
-
-        &VM_DB_TEST =>
-        [
-            PG_VERSION_94,
-            PG_VERSION_95,
-            PG_VERSION_96,
         ],
     },
 
@@ -254,10 +219,12 @@ my $oyVm =
 
         &VM_DB_TEST =>
         [
+            PG_VERSION_94,
+            PG_VERSION_95,
+            PG_VERSION_96,
             PG_VERSION_10,
             PG_VERSION_11,
             PG_VERSION_12,
-            PG_VERSION_17,
         ],
     },
 };

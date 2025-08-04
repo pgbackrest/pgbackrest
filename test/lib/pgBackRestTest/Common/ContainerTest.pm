@@ -424,7 +424,7 @@ sub containerBuild
                 "        libbz2-dev bzip2 libyaml-dev libjson-pp-perl liblz4-dev liblz4-tool gnupg lsb-release ccache meson \\\n" .
                 "        libssh2-1-dev";
 
-            if ($strOS eq VM_U20 || $strOS eq VM_U22)
+            if ($strOS eq VM_U22)
             {
                 $strScript .= " valgrind";
             }
@@ -495,7 +495,7 @@ sub containerBuild
                 if (vmPgRepo($strVm))
                 {
                     $strScript .=
-                        "    echo \"deb http://apt" . ($strVm eq VM_U20 ? '-archive' : '') . ".postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg main" .
+                        "    echo \"deb http://apt.postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg main" .
                             "\" >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
                         "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
                         "    apt-get update && \\\n";

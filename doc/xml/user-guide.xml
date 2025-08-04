@@ -36,7 +36,7 @@
         <variable key="os-type-is-rhel">'{[os-type]}' eq '{[os-rhel]}'</variable>
 
         <!-- Defines the container image that will be used to build the host -->
-        <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:20.04</variable>
+        <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:22.04</variable>
         <variable key="os-image" if="{[os-type-is-rhel]}">rockylinux/rockylinux:8</variable>
 
         <variable key="user-guide-subtitle" if="{[os-type-is-debian]}">{[os-debian-title]}</variable>
@@ -312,11 +312,13 @@
         # Fix root tty
         RUN sed -i 's/^mesg n/tty -s \&amp;\&amp; mesg n/g' /root/.profile
 
+        # Non-interactive install
+        ENV DEBIAN_FRONTEND=noninteractive
+
         # Install base packages (suppress dpkg interactive output)
-        RUN export DEBIAN_FRONTEND=noninteractive &amp;&amp; \
-            rm /etc/apt/apt.conf.d/70debconf &amp;&amp; \
+        RUN rm /etc/apt/apt.conf.d/70debconf &amp;&amp; \
             apt-get update &amp;&amp; \
-            apt-get install -y --no-install-recommends sudo ssh wget vim gnupg lsb-release iputils-ping ca-certificates \
+            apt-get install -y --no-install-recommends sudo ssh curl vim gnupg lsb-release iputils-ping ca-certificates \
                     tzdata locales libssh2-1-dev 2>&amp;1
 
         {[sudo-disable-core-dump]}
@@ -324,19 +326,17 @@
         # Install CA certificate
         RUN update-ca-certificates
 
+        # Allow RSA keys in ssh
+        RUN echo 'PubkeyAcceptedAlgorithms +ssh-rsa' >> /etc/ssh/sshd_config
+
         # Install PostgreSQL
-        RUN RELEASE_CODENAME=`lsb_release -c | awk '{print $2}'` &amp;&amp; \
-            echo 'deb http://apt.postgresql.org/pub/repos/apt/ '${RELEASE_CODENAME?}'-pgdg main' | \
-                tee -a /etc/apt/sources.list.d/pgdg.list &amp;&amp; \
-            wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add - &amp;&amp; \
-            apt-get update &amp;&amp; \
-            apt-get install -y --no-install-recommends postgresql-common 2>&amp;1 &amp;&amp; \
-            sed -i 's/^\#create\_main\_cluster.*$/create\_main\_cluster \= false/' \
-                /etc/postgresql-common/createcluster.conf &amp;&amp; \
-            apt-get install -y --no-install-recommends postgresql-{[pg-version]} postgresql-{[pg-version-upgrade]} 2>&amp;1
+        RUN apt-get install -y --no-install-recommends postgresql-common 2>&amp;1
+        RUN /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+        RUN sed -i 's/^\#create\_main\_cluster.*$/create\_main\_cluster \= false/' /etc/postgresql-common/createcluster.conf
+        RUN apt-get install -y --no-install-recommends postgresql-{[pg-version]} postgresql-{[pg-version-upgrade]} 2>&amp;1
 
         # Install Azure CLI
-        RUN apt-get install -y azure-cli
+        RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash
 
         # Create an ssh key for root so all hosts can ssh to each other as root
         RUN \ {[ssh-key-install]}
