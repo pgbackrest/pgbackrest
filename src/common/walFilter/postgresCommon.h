@@ -150,10 +150,12 @@ enum
     XLOG_FPI =                  0xA0,
     XLOG_NEXTRELFILENODE =      0xB0,
     XLOG_OVERWRITE_CONTRECORD = 0xC0,
+    XLOG_PENDING_DELETE =       0xD0,
 
 // storage
-    XLOG_SMGR_CREATE =    0x10,
-    XLOG_SMGR_TRUNCATE =  0x20,
+    XLOG_SMGR_CREATE =     0x10,
+    XLOG_SMGR_TRUNCATE =   0x20,
+    XLOG_SMGR_CREATE_PDL = 0x30,
 
 // heap
     XLOG_HEAP2_REWRITE =      0x00,

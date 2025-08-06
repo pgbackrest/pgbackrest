@@ -2197,15 +2197,17 @@ testRun(void)
         testGetRelfilenode(RM_XLOG_ID, XLOG_RESTORE_POINT, false);
         testGetRelfilenode(RM_XLOG_ID, XLOG_FPW_CHANGE, false);
         testGetRelfilenode(RM_XLOG_ID, XLOG_END_OF_RECOVERY, false);
+        testGetRelfilenode(RM_XLOG_ID, XLOG_PENDING_DELETE, false);
 
         testGetRelfilenode(RM_XLOG_ID, XLOG_FPI, true);
 
-        record = createXRecord(RM_XLOG_ID, 0xD0, .body_size = 100);
-        TEST_ERROR(getRelFileNode((XLogRecordGPDB6 *) record), FormatError, "XLOG UNKNOWN: 208");
+        record = createXRecord(RM_XLOG_ID, 0xE0, .body_size = 100);
+        TEST_ERROR(getRelFileNode((XLogRecordGPDB6 *) record), FormatError, "XLOG UNKNOWN: 224");
         memFree(record);
 
         TEST_TITLE("Storage");
         testGetRelfilenode(RM6_SMGR_ID, XLOG_SMGR_CREATE, true);
+        testGetRelfilenode(RM6_SMGR_ID, XLOG_SMGR_CREATE_PDL, true);
 
         record = createXRecord(RM6_SMGR_ID, XLOG_SMGR_TRUNCATE, .body_size = 100);
 
@@ -2222,8 +2224,8 @@ testRun(void)
         }
         memFree(record);
 
-        record = createXRecord(RM6_SMGR_ID, 0x30, .body_size = 100);
-        TEST_ERROR(getRelFileNode((XLogRecordGPDB6 *) record), FormatError, "Storage UNKNOWN: 48");
+        record = createXRecord(RM6_SMGR_ID, 0x40, .body_size = 100);
+        TEST_ERROR(getRelFileNode((XLogRecordGPDB6 *) record), FormatError, "Storage UNKNOWN: 64");
         memFree(record);
 
         TEST_TITLE("Heap2");
@@ -2927,6 +2929,7 @@ testRun(void)
                 {RM6_HEAP_ID, XLOG_HEAP_INSERT, sizeof(RelFileNode), &nodes[8]},
                 {RM6_HEAP_ID, XLOG_HEAP_INSERT, sizeof(RelFileNode), &nodes[9]},
                 {RM6_HEAP_ID, XLOG_HEAP_INSERT, sizeof(RelFileNode), &nodes[10]},
+                {RM_XLOG_ID,  XLOG_PENDING_DELETE, 100,              NULL},
             };
 
             XRecordInfo records_expected[] = {
@@ -2943,6 +2946,7 @@ testRun(void)
                 {RM_XLOG_ID, XLOG_NOOP,        sizeof(RelFileNode), &nodes[8]},
                 {RM6_HEAP_ID, XLOG_HEAP_INSERT, sizeof(RelFileNode), &nodes[9]},
                 {RM6_HEAP_ID, XLOG_HEAP_INSERT, sizeof(RelFileNode), &nodes[10]},
+                {RM_XLOG_ID,  XLOG_PENDING_DELETE, 100,              NULL},
             };
 
             buildWalP(wal, records, LENGTH_OF(records), 0);

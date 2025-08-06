@@ -99,8 +99,9 @@ done
 
 # Create new tables and add data to existing ones.
 psql -c "create table t3 (a int, b int[128]) distributed by(a);"
-psql -c "create table t6 (a int, b int[128]) with (appendoptimized=true) distributed by(a);"
-psql -c "create table t9 (a int, b int[128]) with (appendoptimized=true, orientation=column) distributed by(a);"
+# Add several checkpoints inside the transaction to test the pending delete records.
+psql -c "begin; create table t6 (a int, b int[128]) with (appendoptimized=true) distributed by(a); checkpoint; commit;"
+psql -c "begin; create table t9 (a int, b int[128]) with (appendoptimized=true, orientation=column) distributed by(a); checkpoint; commit;"
 psql -c "insert into t3 select a, (select * from random_array) from generate_series(1, 100000)a;"
 psql -c "insert into t6 select a, (select * from random_array) from generate_series(1, 100000)a;"
 psql -c "insert into t9 select a, (select * from random_array) from generate_series(1, 100000)a;"

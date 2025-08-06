@@ -54,6 +54,7 @@ getXlog(const XLogRecordGPDB6 *record)
         case XLOG_END_OF_RECOVERY:
         case XLOG_OVERWRITE_CONTRECORD:
         case XLOG_SWITCH:
+        case XLOG_PENDING_DELETE:
 //          ignore
             return NULL;
 
@@ -72,6 +73,7 @@ getStorage(const XLogRecordGPDB6 *record)
     switch (info)
     {
         case XLOG_SMGR_CREATE:
+        case XLOG_SMGR_CREATE_PDL:
             return (const RelFileNode *) XLogRecGetData(record);
 
         case XLOG_SMGR_TRUNCATE:
