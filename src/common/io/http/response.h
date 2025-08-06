@@ -89,7 +89,7 @@ httpResponseCodeOk(const HttpResponse *const this)
 }
 
 // Should the request be retried?
-bool httpResponseCodeRetry(const HttpResponse *this);
+FN_EXTERN bool httpResponseCodeRetry(const HttpResponse *this);
 
 // Fetch all response content. Content will be cached so it can be retrieved again without additional cost.
 FN_EXTERN const Buffer *httpResponseContent(HttpResponse *this);
