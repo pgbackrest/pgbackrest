@@ -633,7 +633,7 @@ testRun(void)
                 hrnServerScriptAccept(http);
 
                 hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
-                hrnServerScriptReplyZ(http, "HTTP/1.1 429 To Many Requests\r\ncontent-length:0\r\nConnection:close\r\n\r\n");
+                hrnServerScriptReplyZ(http, "HTTP/1.1 429 Too Many Requests\r\ncontent-length:0\r\nConnection:close\r\n\r\n");
 
                 hrnServerScriptClose(http);
                 hrnServerScriptAccept(http);
