@@ -1134,14 +1134,12 @@ testRun(void)
 
                 hrnServerScriptAccept(tls);
 
-                TEST_ERROR(
+                TEST_ERROR_MULTI(
                     ioClientOpen(client), ServiceError,
-                    "TLS error "
-#if OPENSSL_VERSION_NUMBER >= 0x30000000L
-                    "[1:167772454] unexpected eof while reading");
-#else
-                    "[5:0] no details available");
-#endif
+                    // TLS >= 3
+                    "TLS error [1:167772454] unexpected eof while reading",
+                    // TLS < 3 and Alpine
+                    "TLS error [5:0] no details available");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("connect success");
@@ -1151,8 +1149,6 @@ testRun(void)
                     tlsClientNewP(
                         sckClientNew(hrnServerHost(), testPort, 5000, 5000), hrnServerHost(), 5000, 0, TEST_IN_CONTAINER),
                     "new client");
-
-                // hrnServerScriptAccept(tls);
 
                 TEST_ASSIGN(session, ioClientOpen(client), "open client");
                 TlsSession *tlsSession = (TlsSession *)session->pub.driver;
