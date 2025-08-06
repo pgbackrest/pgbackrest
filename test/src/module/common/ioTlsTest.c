@@ -1113,7 +1113,8 @@ testRun(void)
 
             HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
             {
-                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort), "tls server");
+                TEST_RESULT_VOID(
+                    hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort, .tlsErrorTotal = 2), "tls server");
             }
             HRN_FORK_CHILD_END();
 
@@ -1122,6 +1123,9 @@ testRun(void)
                 IoWrite *tls = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
                 ioBufferSizeSet(12);
 
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("connect failure");
+
                 TEST_ASSIGN(
                     client,
                     tlsClientNewP(
@@ -1129,6 +1133,26 @@ testRun(void)
                     "new client");
 
                 hrnServerScriptAccept(tls);
+
+                TEST_ERROR(
+                    ioClientOpen(client), ServiceError,
+                    "TLS error "
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+                    "[1:167772454] unexpected eof while reading");
+#else
+                    "[5:0] no details available");
+#endif
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("connect success");
+
+                TEST_ASSIGN(
+                    client,
+                    tlsClientNewP(
+                        sckClientNew(hrnServerHost(), testPort, 5000, 5000), hrnServerHost(), 5000, 0, TEST_IN_CONTAINER),
+                    "new client");
+
+                // hrnServerScriptAccept(tls);
 
                 TEST_ASSIGN(session, ioClientOpen(client), "open client");
                 TlsSession *tlsSession = (TlsSession *)session->pub.driver;
@@ -1145,7 +1169,7 @@ testRun(void)
                     buffer,
                     zNewFmt(
                         "{type: tls, driver: {ioClient: {type: socket, driver: {host: %s, port: %u, timeoutConnect: 5000"
-                        ", timeoutSession: 5000}}, timeoutConnect: 0, timeoutSession: 0, verifyPeer: %s}}",
+                        ", timeoutSession: 5000}}, timeoutConnect: 5000, timeoutSession: 0, verifyPeer: %s}}",
                         strZ(hrnServerHost()), testPort, cvtBoolToConstZ(TEST_IN_CONTAINER)),
                     "check log");
 

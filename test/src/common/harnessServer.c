@@ -300,7 +300,19 @@ hrnServerRun(IoRead *const read, const HrnServerProtocol protocol, const unsigne
 
                 // Start TLS if requested
                 if (protocol == hrnServerProtocolTls)
+                {
+                    // Generate as many TLS errors as requested
+                    if (param.tlsErrorTotal > 0)
+                    {
+                        ioSessionClose(serverSession);
+                        ioSessionFree(serverSession);
+                        param.tlsErrorTotal--;
+
+                        serverSession = ioServerAccept(socketServer, NULL);
+                    }
+
                     serverSession = ioServerAccept(tlsServer, serverSession);
+                }
 
                 break;
             }
