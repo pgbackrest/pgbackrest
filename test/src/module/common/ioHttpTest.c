@@ -616,12 +616,24 @@ testRun(void)
                 TEST_RESULT_Z(logBuf, "{connection: 'close'}", "check response headers");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("error with content (with a few slow down errors)");
+                TEST_TITLE("error with content (with a few errors to be retried)");
 
                 hrnServerScriptAccept(http);
 
                 hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 503 Slow Down\r\ncontent-length:3\r\nConnection:close\r\n\r\n123");
+
+                hrnServerScriptClose(http);
+                hrnServerScriptAccept(http);
+
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
+                hrnServerScriptReplyZ(http, "HTTP/1.1 408 Request Timeout\r\ncontent-length:0\r\nConnection:close\r\n\r\n");
+
+                hrnServerScriptClose(http);
+                hrnServerScriptAccept(http);
+
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
+                hrnServerScriptReplyZ(http, "HTTP/1.1 429 Too Many Requests\r\ncontent-length:0\r\nConnection:close\r\n\r\n");
 
                 hrnServerScriptClose(http);
                 hrnServerScriptAccept(http);
