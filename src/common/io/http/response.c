@@ -452,7 +452,8 @@ httpResponseContent(HttpResponse *const this)
 }
 
 /**********************************************************************************************************************************/
-bool httpResponseCodeRetry(const HttpResponse *const this)
+FN_EXTERN bool
+httpResponseCodeRetry(const HttpResponse *const this)
 {
     return
         httpResponseCode(this) / 100 == HTTP_RESPONSE_CODE_CLASS_RETRY ||
