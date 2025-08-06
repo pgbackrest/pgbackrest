@@ -24,6 +24,8 @@ HTTP Response Constants
 #define HTTP_RESPONSE_CODE_PERMANENT_REDIRECT                       308
 #define HTTP_RESPONSE_CODE_FORBIDDEN                                403
 #define HTTP_RESPONSE_CODE_NOT_FOUND                                404
+#define HTTP_RESPONSE_CODE_REQUEST_TIMEOUT                          408
+#define HTTP_RESPONSE_CODE_TOO_MANY_REQUESTS                        429
 
 // 2xx indicates success
 #define HTTP_RESPONSE_CODE_CLASS_OK                                 2
@@ -87,11 +89,7 @@ httpResponseCodeOk(const HttpResponse *const this)
 }
 
 // Should the request be retried?
-FN_INLINE_ALWAYS bool
-httpResponseCodeRetry(const HttpResponse *const this)
-{
-    return httpResponseCode(this) / 100 == HTTP_RESPONSE_CODE_CLASS_RETRY;
-}
+bool httpResponseCodeRetry(const HttpResponse *this);
 
 // Fetch all response content. Content will be cached so it can be retrieved again without additional cost.
 FN_EXTERN const Buffer *httpResponseContent(HttpResponse *this);
