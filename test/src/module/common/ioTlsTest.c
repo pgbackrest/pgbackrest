@@ -1142,7 +1142,7 @@ testRun(void)
                     "TLS error [5:0] no details available");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("connect success");
+                TEST_TITLE("connect success (with retry from prior accept)");
 
                 TEST_ASSIGN(
                     client,
