@@ -333,7 +333,6 @@ testRun(void)
         TEST_ERROR_FMT(
             httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), HostConnectError,
             "unable to connect to 'localhost:34342 (127.0.0.1)': [111] Connection refused\n"
-            "[RETRY DETAIL OMITTED]\n"
             "[RETRY DETAIL OMITTED]");
 
         HRN_FORK_BEGIN()

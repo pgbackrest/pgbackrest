@@ -136,6 +136,21 @@ httpRequestProcess(HttpRequest *const this, const bool waitForResponse, const bo
 
         do
         {
+            // Create a session to process the request. This is done outside exception handling to avoid multiplying retries.
+            HttpSession *session = NULL;
+            bool send = true;
+
+            // If a session is saved then the request was already successfully sent
+            if (this->session != NULL)
+            {
+                session = httpSessionMove(this->session, memContextCurrent());
+                this->session = NULL;
+                send = false;
+            }
+            // Else the request has not been sent yet or this is a retry
+            else
+                session = httpClientOpen(this->client);
+
             // Assume there will be no retry
             retry = false;
 
@@ -143,19 +158,9 @@ httpRequestProcess(HttpRequest *const this, const bool waitForResponse, const bo
             {
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
-                    HttpSession *session = NULL;
-
-                    // If a session is saved then the request was already successfully sent
-                    if (this->session != NULL)
+                    // Send the request
+                    if (send)
                     {
-                        session = httpSessionMove(this->session, memContextCurrent());
-                        this->session = NULL;
-                    }
-                    // Else the request has not been sent yet or this is a retry
-                    else
-                    {
-                        session = httpClientOpen(this->client);
-
                         // Write the request as a buffer so secrets do not show up in logs
                         ioWrite(
                             httpSessionIoWrite(session),
