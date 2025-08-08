@@ -386,7 +386,6 @@ getNearWal (WalFilterState *const this, bool isNext)
         return NULL;
     }
 
-    ASSERT(strLstSize(segmentList) == 1);
     const String *walSegment = strLstGet(segmentList, 0);
 
     const bool compressible =

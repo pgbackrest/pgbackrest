@@ -1078,6 +1078,70 @@ testRun(void)
             STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000001.partial-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
         MEM_CONTEXT_TEMP_END();
 
+        TEST_TITLE("partial and regular segment is the archive in the same time");
+        MEM_CONTEXT_TEMP_BEGIN();
+        PgControl testPgControl = pgControl;
+        testPgControl.walSegmentSize = DEFAULT_GDPB_XLOG_PAGE_SIZE;
+        filter = walFilterNew(testPgControl, &archiveInfo);
+        XLogRecPtr recordLsn;
+        {
+            wal2 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            record = createXRecord(
+                RM_XLOG_ID,
+                XLOG_NOOP,
+                .body_size = calcBodySize(1, SizeOfXLogRecordGPDB6, 0, DEFAULT_GDPB_XLOG_PAGE_SIZE));
+            insertXRecord(wal2, record, NO_FLAGS, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            recordLsn = bufUsed(wal2);
+            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 100);
+            insertXRecord(wal2, record, INCOMPLETE_RECORD, .segno = 1, .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
+        }
+
+        {
+            Buffer *wal1 = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+
+            record = createXRecord(RM_XLOG_ID, XLOG_NOOP, .body_size = 100);
+            insertXRecord(
+                wal1,
+                record,
+                0,
+                .beginOffset = getRemainingLenOnPage(record, 2, DEFAULT_GDPB_XLOG_PAGE_SIZE, recordLsn),
+                .segno = 2,
+                .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            insertWalSwitchXRecord(wal1);
+            fillLastPage(wal1, DEFAULT_GDPB_XLOG_PAGE_SIZE);
+
+            HRN_STORAGE_PUT(
+                storageRepoWrite(),
+                STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+                wal1);
+
+            Buffer *wal1_partial = bufNew(DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            insertXRecord(
+                wal1_partial,
+                record,
+                0,
+                .beginOffset = getRemainingLenOnPage(record, 2, DEFAULT_GDPB_XLOG_PAGE_SIZE, recordLsn),
+                .segno = 2,
+                .segSize = DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            // There is no wal switch and there is garbage after an unfinished record.
+            fillLastPage(wal1_partial, DEFAULT_GDPB_XLOG_PAGE_SIZE);
+            HRN_STORAGE_PUT(
+                storageRepoWrite(),
+                STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000002.partial-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
+                wal1_partial);
+        }
+
+        result = testFilter(filter, wal2, bufSize(wal2), bufSize(wal2));
+        TEST_RESULT_BOOL(bufEq(wal2, result), true, "WAL not the same");
+
+        HRN_STORAGE_REMOVE(
+            storageRepoWrite(),
+            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000002.partial-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+        HRN_STORAGE_REMOVE(
+            storageRepoWrite(),
+            STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000/000000010000000000000002-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+        MEM_CONTEXT_TEMP_END();
+
         TEST_TITLE("next file in the another directory");
         archiveInfo.file = STRDEF("/9.4-1/0000000100000000/00000001000000000000003F-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
         MEM_CONTEXT_TEMP_BEGIN();
