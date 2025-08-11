@@ -458,6 +458,8 @@ testRun(void)
                 StringList *argList = strLstDup(commonArgList);
                 hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
                 hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
+                hrnCfgArgRawZ(argList, cfgOptRepoS3StorageClass, "STANDARD_IA");
+                hrnCfgArgRawZ(argList, cfgOptRepoS3StorageClassThreshold, "6B");  // Set low threshold for testing
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
                 Storage *s3 = storageRepoGet(0, true);
@@ -466,6 +468,9 @@ testRun(void)
                 TEST_RESULT_STR(s3->path, path, "check path");
                 TEST_RESULT_BOOL(storageFeature(s3, storageFeaturePath), false, "check path feature");
                 TEST_RESULT_UINT(driver->partSize, 5 * 1024 * 1024, "check part size");
+
+                // Set partSize to a small value for testing multipart uploads
+                driver->partSize = 16;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("coverage for noop functions");
@@ -588,6 +593,69 @@ testRun(void)
                 testResponseP(service);
 
                 TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("file0.txt")))), "", "get zero-length file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write small file below threshold - no storage class");
+
+                StorageWrite *write = NULL;
+
+                testRequestP(service, s3, HTTP_VERB_PUT, "/small.txt", .content = "small");  // 5 bytes < threshold
+                testResponseP(service);
+
+                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("small.txt")), "new write");
+                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("small")), "write small file without storage class");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write file above threshold with storage class");
+
+                testRequestP(service, s3, HTTP_VERB_PUT, "/test.txt", .content = "test content", .storageClass = "STANDARD_IA");
+                testResponseP(service);
+
+                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("test.txt")), "new write");
+                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("test content")), "write file with storage class");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("multipart upload with storage class");
+
+                testRequestP(service, s3, HTTP_VERB_POST, "/multipart.txt?uploads=", .storageClass = "STANDARD_IA");
+                testResponseP(service, .content =
+                                  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                                  "<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                                  "<Bucket>bucket</Bucket>"
+                                  "<Key>multipart.txt</Key>"
+                                  "<UploadId>MP123</UploadId>"
+                                  "</InitiateMultipartUploadResult>");
+
+                testRequestP(service, s3, HTTP_VERB_PUT, "/multipart.txt?partNumber=1&uploadId=MP123",
+                             .content = "1234567890123456");
+                testResponseP(service, .header = "etag:MP123-1");
+
+                testRequestP(service, s3, HTTP_VERB_PUT, "/multipart.txt?partNumber=2&uploadId=MP123",
+                             .content = "7890123456789012");
+                testResponseP(service, .header = "etag:MP123-2");
+
+                testRequestP(service, s3, HTTP_VERB_POST, "/multipart.txt?uploadId=MP123",
+                             .content =
+                                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                                 "<CompleteMultipartUpload>"
+                                 "<Part><PartNumber>1</PartNumber><ETag>MP123-1</ETag></Part>"
+                                 "<Part><PartNumber>2</PartNumber><ETag>MP123-2</ETag></Part>"
+                                 "</CompleteMultipartUpload>\n");
+                testResponseP(service, .content =
+                                  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                                  "<CompleteMultipartUploadResult><ETag>XXX</ETag></CompleteMultipartUploadResult>");
+
+                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("multipart.txt")), "new write");
+                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write multipart file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("file with defaultStorageClass = true - no storage class even above threshold");
+
+                testRequestP(service, s3, HTTP_VERB_PUT, "/test-no-class.txt", .content = "test content");
+                testResponseP(service);
+
+                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("test-no-class.txt"), .defaultStorageClass = true), "new write");
+                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("test content")), "write file without storage class");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("switch to temp credentials");
@@ -831,7 +899,6 @@ testRun(void)
                 // Make a copy of the signing key to verify that it gets changed when the keys are updated
                 const Buffer *oldSigningKey = bufDup(driver->signingKey);
 
-                StorageWrite *write = NULL;
                 TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("ABCD")), "write");
 
@@ -1662,145 +1729,6 @@ testRun(void)
 
                 TEST_RESULT_PTR(
                     storageGetP(storageNewReadP(s3, STRDEF("missing_file"), .ignoreMissing = true)), NULL, "missing file");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                hrnServerScriptEnd(service);
-            }
-            HRN_FORK_PARENT_END();
-        }
-        HRN_FORK_END();
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("S3 storage class option"))
-    {
-        HRN_FORK_BEGIN()
-        {
-            const unsigned int testPort = hrnServerPortNext();
-
-            HRN_FORK_CHILD_BEGIN(.prefix = "s3 server", .timeout = 5000)
-            {
-                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort), "s3 server");
-            }
-            HRN_FORK_CHILD_END();
-
-            HRN_FORK_PARENT_BEGIN()
-            {
-                IoWrite *service = hrnServerScriptBegin(
-                    ioFdWriteNewOpen(STRDEF("s3 client write"), HRN_FORK_PARENT_WRITE_FD(0), 2000));
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("storage class configuration and file upload");
-
-                StringList *argList = strLstDup(commonArgList);
-                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
-                hrnCfgArgRawZ(argList, cfgOptRepoS3StorageClass, "STANDARD_IA");
-                hrnCfgArgRawZ(argList, cfgOptRepoS3StorageClassThreshold, "6B");  // Set low threshold for testing
-                HRN_CFG_LOAD(cfgCmdArchivePush, argList);
-
-                Storage *s3 = storageRepoGet(0, true);
-                StorageS3 *driver = (StorageS3 *)storageDriver(s3);
-
-                // Set partSize to a small value for testing
-                driver->partSize = 16;
-
-                hrnServerScriptAccept(service);
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("write small file below threshold - no storage class");
-
-                testRequestP(service, s3, HTTP_VERB_PUT, "/small.txt", .content = "small");  // 5 bytes < threshold
-                testResponseP(service);
-
-                StorageWrite *write = NULL;
-                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("small.txt")), "new write");
-                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("small")), "write small file without storage class");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("write file above threshold with storage class");
-
-                testRequestP(service, s3, HTTP_VERB_PUT, "/test.txt", .content = "test content", .storageClass = "STANDARD_IA");
-                testResponseP(service);
-
-                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("test.txt")), "new write");
-                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("test content")), "write file with storage class");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("multipart upload with storage class");
-
-                testRequestP(service, s3, HTTP_VERB_POST, "/multipart.txt?uploads=", .storageClass = "STANDARD_IA");
-                testResponseP(service, .content =
-                                  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                                  "<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                                  "<Bucket>bucket</Bucket>"
-                                  "<Key>multipart.txt</Key>"
-                                  "<UploadId>MP123</UploadId>"
-                                  "</InitiateMultipartUploadResult>");
-
-                testRequestP(service, s3, HTTP_VERB_PUT, "/multipart.txt?partNumber=1&uploadId=MP123",
-                             .content = "1234567890123456");
-                testResponseP(service, .header = "etag:MP123-1");
-
-                testRequestP(service, s3, HTTP_VERB_PUT, "/multipart.txt?partNumber=2&uploadId=MP123",
-                             .content = "7890123456789012");
-                testResponseP(service, .header = "etag:MP123-2");
-
-                testRequestP(service, s3, HTTP_VERB_POST, "/multipart.txt?uploadId=MP123",
-                             .content =
-                                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                                 "<CompleteMultipartUpload>"
-                                 "<Part><PartNumber>1</PartNumber><ETag>MP123-1</ETag></Part>"
-                                 "<Part><PartNumber>2</PartNumber><ETag>MP123-2</ETag></Part>"
-                                 "</CompleteMultipartUpload>\n");
-                testResponseP(service, .content =
-                                  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                                  "<CompleteMultipartUploadResult><ETag>XXX</ETag></CompleteMultipartUploadResult>");
-
-                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("multipart.txt")), "new write");
-                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write multipart file");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("file with defaultStorageClass = true - no storage class even above threshold");
-
-                testRequestP(service, s3, HTTP_VERB_PUT, "/test-no-class.txt", .content = "test content");
-                testResponseP(service);
-
-                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("test-no-class.txt"), .defaultStorageClass = true), "new write");
-                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("test content")), "write file without storage class");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("multipart file with defaultStorageClass = true - no storage class");
-
-                testRequestP(service, s3, HTTP_VERB_POST, "/test-no-class-multipart.txt?uploads=");
-                testResponseP(service, .content =
-                                  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                                  "<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                                  "<Bucket>bucket</Bucket>"
-                                  "<Key>test-no-class-multipart.txt</Key>"
-                                  "<UploadId>NC123</UploadId>"
-                                  "</InitiateMultipartUploadResult>");
-
-                testRequestP(service, s3, HTTP_VERB_PUT, "/test-no-class-multipart.txt?partNumber=1&uploadId=NC123",
-                             .content = "1234567890123456");
-                testResponseP(service, .header = "etag:NC123-1");
-
-                testRequestP(service, s3, HTTP_VERB_PUT, "/test-no-class-multipart.txt?partNumber=2&uploadId=NC123",
-                             .content = "78901234567890");
-                testResponseP(service, .header = "etag:NC123-2");
-
-                testRequestP(service, s3, HTTP_VERB_POST, "/test-no-class-multipart.txt?uploadId=NC123",
-                             .content =
-                                 "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                                 "<CompleteMultipartUpload>"
-                                 "<Part><PartNumber>1</PartNumber><ETag>NC123-1</ETag></Part>"
-                                 "<Part><PartNumber>2</PartNumber><ETag>NC123-2</ETag></Part>"
-                                 "</CompleteMultipartUpload>\n");
-                testResponseP(service, .content =
-                                  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                                  "<CompleteMultipartUploadResult><ETag>XXX</ETag></CompleteMultipartUploadResult>");
-
-                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("test-no-class-multipart.txt"), .defaultStorageClass = true), "new write");
-                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("123456789012345678901234567890")), "write multipart file without storage class");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 hrnServerScriptEnd(service);
