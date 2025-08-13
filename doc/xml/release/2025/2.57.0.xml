@@ -1,2 +1,16 @@
 <release date="XXXX-XX-XX" version="2.57.0dev" title="Under Development">
+    <release-core-list>
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2661"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Add HTTP retries for 408 and 429 errors.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-core-list>
 </release>
