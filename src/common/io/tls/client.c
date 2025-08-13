@@ -327,24 +327,24 @@ tlsClientOpen(THIS_VOID)
             cryptoError(SSL_set_tlsext_host_name(tlsSession, strZ(this->host)) != 1, "unable to set TLS host name");
 #pragma GCC diagnostic pop
 
+            // Open the underlying session first since this is mostly likely to fail. This is done outside exception handling to
+            // avoid multiplying retries.
+            IoSession *ioSession = NULL;
+
+            TRY_BEGIN()
+            {
+                ioSession = ioClientOpen(this->ioClient);
+            }
+            CATCH_ANY()
+            {
+                SSL_free(tlsSession);
+                RETHROW();
+            }
+            TRY_END();
+
             // Open TLS session
             TRY_BEGIN()
             {
-                // Open the underlying session first since this is mostly likely to fail
-                IoSession *ioSession = NULL;
-
-                TRY_BEGIN()
-                {
-                    ioSession = ioClientOpen(this->ioClient);
-                }
-                CATCH_ANY()
-                {
-                    SSL_free(tlsSession);
-                    RETHROW();
-                }
-                TRY_END();
-
-                // Open session
                 result = tlsSessionNew(tlsSession, ioSession, this->timeoutSession);
             }
             CATCH_ANY()
