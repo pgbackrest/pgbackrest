@@ -2469,11 +2469,13 @@ backupComplete(InfoBackup *const infoBackup, Manifest *const manifest)
 
         backupManifestSaveCopy(manifest, infoPgCipherPass(infoBackupPg(infoBackup)), true);
 
+        // Use default storage class for backup.manifest file to avoid extra charges since it is frequently accessed
         storageCopy(
             storageNewReadP(
                 storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, strZ(backupLabel))),
             storageNewWriteP(
-                storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel))));
+                storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)),
+                .defaultStorageClass = true));
 
         // Copy a compressed version of the manifest to history. If the repo is encrypted then the passphrase to open the manifest
         // is required. We can't just do a straight copy since the destination needs to be compressed and that must happen before

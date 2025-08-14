@@ -7,6 +7,8 @@ S3 Storage File Write
 #include "common/log.h"
 #include "common/type/object.h"
 #include "common/type/xml.h"
+#include "info/infoBackup.h"
+#include "info/manifest.h"
 #include "storage/s3/write.h"
 #include "storage/write.h"
 
@@ -39,6 +41,7 @@ typedef struct StorageWriteS3
     Buffer *partBuffer;
     const String *uploadId;
     StringList *uploadPartList;
+    bool applyStorageClass;
 } StorageWriteS3;
 
 /***********************************************************************************************************************************
@@ -128,7 +131,7 @@ storageWriteS3PartAsync(StorageWriteS3 *const this)
                         storageS3RequestP(
                             this->storage, HTTP_VERB_POST_STR, this->interface.name,
                             .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOADS_STR, EMPTY_STR), .sseKms = true,
-                            .sseC = true, .tag = true))));
+                            .sseC = true, .tag = true, .storageClass = this->applyStorageClass))));
 
             // Store the upload id
             MEM_CONTEXT_OBJ_BEGIN(this)
@@ -256,7 +259,7 @@ storageWriteS3Close(THIS_VOID)
             {
                 storageS3RequestP(
                     this->storage, HTTP_VERB_PUT_STR, this->interface.name, .content = this->partBuffer, .sseKms = true,
-                    .sseC = true, .tag = true);
+                    .sseC = true, .tag = true, .storageClass = this->applyStorageClass);
             }
 
             bufFree(this->partBuffer);
@@ -270,11 +273,13 @@ storageWriteS3Close(THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN StorageWrite *
-storageWriteS3New(StorageS3 *const storage, const String *const name, const size_t partSize)
+storageWriteS3New(StorageS3 *const storage, const String *const name, const size_t partSize, const bool applyStorageClass)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_S3, storage);
         FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM(SIZE, partSize);
+        FUNCTION_LOG_PARAM(BOOL, applyStorageClass);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -286,6 +291,7 @@ storageWriteS3New(StorageS3 *const storage, const String *const name, const size
         {
             .storage = storage,
             .partSize = partSize,
+            .applyStorageClass = applyStorageClass,
 
             .interface = (StorageWriteInterface)
             {
