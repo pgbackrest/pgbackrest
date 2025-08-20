@@ -25,11 +25,12 @@ typedef struct InsertXRecordParam
 {
     VAR_PARAM_HEADER;
     uint16 magic;
-    uint32 beginOffset;
+    uint32 remLen;
     uint64 segno;
     uint32 segSize;
     PgPageSize walPageSize;
     uint32 incompletePosition;
+    uint32 timeline;
 } InsertXRecordParam;
 
 typedef struct CreateXRecordParam

@@ -477,7 +477,7 @@ unit:
           - storage/remote/write
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: walFilterGPDB6
-        total: 7
+        total: 8
         harness: wal
         harness: info
         harness: postgres

@@ -83,6 +83,8 @@ hrnGpdbWalInsertXRecord(
         param.walPageSize = DEFAULT_GDPB_XLOG_PAGE_SIZE;
     if (param.segSize == 0)
         param.segSize = GPDB_XLOG_SEG_SIZE;
+    if (param.timeline == 0)
+        param.timeline = 1;
 
     if (bufUsed(walBuffer) == 0)
     {
@@ -91,16 +93,16 @@ hrnGpdbWalInsertXRecord(
         XLogLongPageHeaderData longHeader = {{0}};
         longHeader.std.xlp_magic = param.magic;
         longHeader.std.xlp_info = XLP_LONG_HEADER;
-        longHeader.std.xlp_tli = 1;
+        longHeader.std.xlp_tli = param.timeline;
         longHeader.std.xlp_pageaddr = param.segno * param.segSize;
-        longHeader.std.xlp_rem_len = param.beginOffset;
+        longHeader.std.xlp_rem_len = param.remLen;
         longHeader.xlp_sysid = 10000000000000090400ULL;
         longHeader.xlp_seg_size = param.segSize;
         longHeader.xlp_xlog_blcksz = param.walPageSize;
 
         if (flags & OVERWRITE)
             longHeader.std.xlp_info |= XLP_FIRST_IS_OVERWRITE_CONTRECORD;
-        if (param.beginOffset)
+        if (param.remLen)
             longHeader.std.xlp_info |= XLP_FIRST_IS_CONTRECORD;
 
         *((XLogLongPageHeaderData *) bufRemainsPtr(walBuffer)) = longHeader;
@@ -115,7 +117,7 @@ hrnGpdbWalInsertXRecord(
     {
         XLogPageHeaderData header = {0};
         header.xlp_magic = param.magic;
-        header.xlp_tli = 1;
+        header.xlp_tli = param.timeline;
         header.xlp_pageaddr = param.segno * param.segSize + bufUsed(walBuffer);
         header.xlp_rem_len = 0;
 
@@ -137,15 +139,15 @@ hrnGpdbWalInsertXRecord(
     size_t totalLen;
     unsigned char *recordPtr;
 
-    if (param.beginOffset == 0 || flags & OVERWRITE)
+    if (param.remLen == 0 || flags & OVERWRITE)
     {
         totalLen = record->xl_tot_len;
         recordPtr = (unsigned char *) record;
     }
     else
     {
-        totalLen = param.beginOffset;
-        recordPtr = ((unsigned char *) record) + (record->xl_tot_len - param.beginOffset);
+        totalLen = param.remLen;
+        recordPtr = ((unsigned char *) record) + (record->xl_tot_len - param.remLen);
     }
 
     if (spaceOnPage < totalLen)
@@ -169,6 +171,10 @@ hrnGpdbWalInsertXRecord(
             }
             if (wrote == totalLen)
                 break;
+            if (bufUsed(walBuffer) % param.segSize == 0)
+            {
+                break;
+            }
 
             ASSERT(bufUsed(walBuffer) % param.walPageSize == 0);
             // We should be on the beginning of the page. so write header
