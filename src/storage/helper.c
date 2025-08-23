@@ -385,7 +385,7 @@ storageRepoGet(const unsigned int repoIdx, const bool write)
             }
         }
 
-        // If no helper was found it try Posix
+        // If no helper was found then try Posix
         if (result == NULL)
         {
             CHECK(AssertError, type == STORAGE_POSIX_TYPE, "invalid storage type");
