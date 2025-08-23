@@ -12,25 +12,16 @@
 # - docker login -u pgbackrest
 # - DATE=YYYYMMDDX;VM=X;ARCH=X;BASE=pgbackrest/test:${VM?}-base-${ARCH?};docker tag ${BASE?} ${BASE?}-${DATE?} && docker push ${BASE?}-${DATE?}
 # **********************************************************************************************************************************
-20250718A:
-  x86_64:
-    u22: 8feb0a70d1614b6873887e0bb3d99ef7016663eb
-
-20250622A:
-  x86_64:
-    f42: f1c2eceeed7b66d8096a9b891f28eb30f141d1b2
-
-20250605A:
+20250822A:
   x86_64:
     a321: dab99d91eed1710c68dae28efa5cd0e27e0a7f60
+    d11: be044bf120ca3e7d8bed69d5a83b4de4926be87f
+    f42: f1c2eceeed7b66d8096a9b891f28eb30f141d1b2
+    rh8: 4d141c845abfbdbf402ba447cf2bd2e4357c8a63
+    u22: b7d5253d70ac4c00f615761e2ccc9e24835dd054
 
-20250509A:
   ppc64le:
-    u22: b6461e07d86205488f861ad25e7a46442c2ee990
+    u22: cf3637d799de2b3d847f74777c839271b5c8e268
 
   s390x:
-    u22: cbdcbaca3e7e0642cdd379f80574e3f1a87d3924
-
-  x86_64:
-    d11: be044bf120ca3e7d8bed69d5a83b4de4926be87f
-    rh8: 4d141c845abfbdbf402ba447cf2bd2e4357c8a63
+    u22: 131ba5585c13943dd950d5aa025ac73ac7c30767
