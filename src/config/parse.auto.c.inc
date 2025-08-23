@@ -9965,6 +9965,40 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                            // opt/repo-storage-verify-tls
     ),                                                                                                // opt/repo-storage-verify-tls
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                            // opt/repo-symlink
+    (                                                                                                            // opt/repo-symlink
+        PARSE_RULE_OPTION_NAME("repo-symlink"),                                                                  // opt/repo-symlink
+        PARSE_RULE_OPTION_TYPE(Boolean),                                                                         // opt/repo-symlink
+        PARSE_RULE_OPTION_NEGATE(true),                                                                          // opt/repo-symlink
+        PARSE_RULE_OPTION_RESET(true),                                                                           // opt/repo-symlink
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                        // opt/repo-symlink
+        PARSE_RULE_OPTION_SECTION(Global),                                                                       // opt/repo-symlink
+        PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                        // opt/repo-symlink
+                                                                                                                 // opt/repo-symlink
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                           // opt/repo-symlink
+        (                                                                                                        // opt/repo-symlink
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                    // opt/repo-symlink
+        ),                                                                                                       // opt/repo-symlink
+                                                                                                                 // opt/repo-symlink
+        PARSE_RULE_OPTIONAL                                                                                      // opt/repo-symlink
+        (                                                                                                        // opt/repo-symlink
+            PARSE_RULE_OPTIONAL_GROUP                                                                            // opt/repo-symlink
+            (                                                                                                    // opt/repo-symlink
+                PARSE_RULE_OPTIONAL_DEPEND                                                                       // opt/repo-symlink
+                (                                                                                                // opt/repo-symlink
+                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(PARSE_RULE_VAL_BOOL_FALSE),                               // opt/repo-symlink
+                    PARSE_RULE_VAL_OPT(RepoType),                                                                // opt/repo-symlink
+                    PARSE_RULE_VAL_STRID(Posix),                                                                 // opt/repo-symlink
+                ),                                                                                               // opt/repo-symlink
+                                                                                                                 // opt/repo-symlink
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                      // opt/repo-symlink
+                (                                                                                                // opt/repo-symlink
+                    PARSE_RULE_VAL_BOOL_TRUE,                                                                    // opt/repo-symlink
+                ),                                                                                               // opt/repo-symlink
+            ),                                                                                                   // opt/repo-symlink
+        ),                                                                                                       // opt/repo-symlink
+    ),                                                                                                           // opt/repo-symlink
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                        // opt/repo-target-time
     (                                                                                                        // opt/repo-target-time
         PARSE_RULE_OPTION_NAME("repo-target-time"),                                                          // opt/repo-target-time
@@ -11678,6 +11712,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoStorageTag,                                                                                       // opt-resolve-order
     cfgOptRepoStorageUploadChunkSize,                                                                           // opt-resolve-order
     cfgOptRepoStorageVerifyTls,                                                                                 // opt-resolve-order
+    cfgOptRepoSymlink,                                                                                          // opt-resolve-order
     cfgOptTarget,                                                                                               // opt-resolve-order
     cfgOptTargetAction,                                                                                         // opt-resolve-order
     cfgOptTargetExclusive,                                                                                      // opt-resolve-order

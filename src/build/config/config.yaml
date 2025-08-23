@@ -2125,6 +2125,21 @@ option:
     required: false
     command: repo-type
 
+  repo-symlink:
+    section: global
+    group: repo
+    type: boolean
+    default: true
+    command:
+      backup: {}
+    command-role:
+      main: {}
+    depend:
+      option: repo-type
+      default: false
+      list:
+        - posix
+
   repo-hardlink:
     section: global
     group: repo

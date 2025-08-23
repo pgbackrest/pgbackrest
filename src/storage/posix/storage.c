@@ -594,7 +594,7 @@ static const StorageInterface storageInterfacePosix =
 FN_EXTERN Storage *
 storagePosixNewInternal(
     const StringId type, const String *const path, const mode_t modeFile, const mode_t modePath, const bool write,
-    StoragePathExpressionCallback pathExpressionFunction, const bool pathSync)
+    StoragePathExpressionCallback pathExpressionFunction, const bool pathSync, const bool symLink)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_ID, type);
@@ -604,6 +604,7 @@ storagePosixNewInternal(
         FUNCTION_LOG_PARAM(BOOL, write);
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(BOOL, pathSync);
+        FUNCTION_LOG_PARAM(BOOL, symLink);
     FUNCTION_LOG_END();
 
     ASSERT(type != 0);
@@ -628,9 +629,11 @@ storagePosixNewInternal(
 
         // If this is a posix driver then add link features
         if (type == STORAGE_POSIX_TYPE)
+        {
             this->interface.feature |=
-                1 << storageFeatureHardLink | 1 << storageFeatureSymLink | 1 << storageFeaturePathSync |
+                1 << storageFeatureHardLink | symLink << storageFeatureSymLink | 1 << storageFeaturePathSync |
                 1 << storageFeatureInfoDetail;
+        }
     }
     OBJ_NEW_END();
 
@@ -646,6 +649,7 @@ storagePosixNew(const String *const path, const StoragePosixNewParam param)
         FUNCTION_LOG_PARAM(MODE, param.modeFile);
         FUNCTION_LOG_PARAM(MODE, param.modePath);
         FUNCTION_LOG_PARAM(BOOL, param.write);
+        FUNCTION_LOG_PARAM(BOOL, param.noSymLink);
         FUNCTION_LOG_PARAM(FUNCTIONP, param.pathExpressionFunction);
     FUNCTION_LOG_END();
 
@@ -653,5 +657,6 @@ storagePosixNew(const String *const path, const StoragePosixNewParam param)
         STORAGE,
         storagePosixNewInternal(
             STORAGE_POSIX_TYPE, path, param.modeFile == 0 ? STORAGE_MODE_FILE_DEFAULT : param.modeFile,
-            param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, param.pathExpressionFunction, true));
+            param.modePath == 0 ? STORAGE_MODE_PATH_DEFAULT : param.modePath, param.write, param.pathExpressionFunction, true,
+            !param.noSymLink));
 }

@@ -894,7 +894,7 @@ testRun(void)
         int invalidLinkType = 9;
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("create soft link to BACKUPLABEL");
+        TEST_TITLE("soft link success/fail");
 
         TEST_RESULT_VOID(storagePathCreateP(storageTest, backupLabel), "create path to link to");
         TEST_RESULT_VOID(storageLinkCreateP(storageTest, backupLabel, latestLabel), "create symlink");
@@ -906,6 +906,14 @@ testRun(void)
         TEST_ASSIGN(info, storageInfoP(storageTest, latestLabel, .ignoreMissing = false), "get link info");
         TEST_RESULT_STR(info.linkDestination, backupLabel, "match link destination");
         TEST_RESULT_VOID(storageRemoveP(storageTest, latestLabel), "remove symlink");
+
+        TEST_ERROR(
+            storageLinkCreateP(
+                storagePosixNewP(STRDEF("/"), .write = true, .noSymLink = true), backupLabel, latestLabel,
+                .linkType = storageLinkSym),
+            AssertError,
+            "assertion '(param.linkType == storageLinkSym && storageFeature(this, storageFeatureSymLink)) ||"
+            " (param.linkType == storageLinkHard && storageFeature(this, storageFeatureHardLink))' failed");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("hardlink success/fail");
@@ -1636,6 +1644,27 @@ testRun(void)
 
         TEST_ERROR(storageSpool(), AssertError, "stanza cannot be NULL for this storage object");
         TEST_ERROR(storageSpoolWrite(), AssertError, "stanza cannot be NULL for this storage object");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("enable/disable symlink");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/db");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, TEST_PATH "/repo1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 2, TEST_PATH "/repo2");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 2, "1");
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        TEST_RESULT_BOOL(storageFeature(storageRepoIdxWrite(0), storageFeatureSymLink), true, "repo1 symlink enabled");
+        TEST_RESULT_BOOL(storageFeature(storageRepoIdxWrite(1), storageFeatureSymLink), true, "repo2 symlink enabled");
+
+        hrnCfgArgKeyRawBool(argList, cfgOptRepoSymlink, 2, false);
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        TEST_RESULT_BOOL(storageFeature(storageRepoIdxWrite(0), storageFeatureSymLink), true, "repo1 symlink enabled");
+        TEST_RESULT_BOOL(storageFeature(storageRepoIdxWrite(1), storageFeatureSymLink), false, "repo2 symlink disabled");
     }
 
     // *****************************************************************************************************************************
