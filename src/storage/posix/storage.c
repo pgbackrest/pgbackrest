@@ -631,7 +631,7 @@ storagePosixNewInternal(
         if (type == STORAGE_POSIX_TYPE)
         {
             this->interface.feature |=
-                1 << storageFeatureHardLink | symLink << storageFeatureSymLink | 1 << storageFeaturePathSync |
+                1 << storageFeatureHardLink | (unsigned int)symLink << storageFeatureSymLink | 1 << storageFeaturePathSync |
                 1 << storageFeatureInfoDetail;
         }
     }

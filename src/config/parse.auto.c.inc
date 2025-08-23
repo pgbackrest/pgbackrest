@@ -9978,6 +9978,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                           // opt/repo-symlink
         (                                                                                                        // opt/repo-symlink
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                    // opt/repo-symlink
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                    // opt/repo-symlink
         ),                                                                                                       // opt/repo-symlink
                                                                                                                  // opt/repo-symlink
         PARSE_RULE_OPTIONAL                                                                                      // opt/repo-symlink
