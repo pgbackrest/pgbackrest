@@ -1272,7 +1272,6 @@
                         <example>n</example>
                     </config-key>
 
-
                     <config-key id="repo-symlink" name="Repository Symlink">
                         <summary>Create symlinks within the repository.</summary>
 
