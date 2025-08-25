@@ -1,5 +1,18 @@
 <release date="XXXX-XX-XX" version="2.57.0dev" title="Under Development">
     <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-pull-request id="2675"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="zsolt.parragi"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix possible segfault in page checksum error message.</p>
+            </release-item>
+        </release-bug-list>
+
         <release-improvement-list>
             <release-item>
                 <github-pull-request id="2661"/>
