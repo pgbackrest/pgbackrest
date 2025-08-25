@@ -3544,6 +3544,44 @@ testRun(void)
             "P00 DETAIL: archiveId: 11-2, wal start: 000000050000000800000003, wal stop: 000000050000000800000004");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("--set with all WALs missing");
+
+        HRN_STORAGE_REMOVE(
+            storageRepoIdxWrite(0),
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000500000008/000000050000000800000003-%s", walBufferSha1),
+            .comment = "remove WAL");
+
+        TEST_RESULT_STR_Z(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            "stanza: db\n"
+            "status: error\n"
+            "  archiveId: 11-2, total WAL checked: 1, total valid WAL: 1\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, wal invalid: 0, other: 0\n"
+            "  backup: 20181119-153300F, status: invalid, total files checked: 1, total valid files: 1\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, wal invalid: 1, other: 0", "--set with missing WALs\n");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: path '11-2/0000000500000007' does not contain any valid WAL to be processed\n"
+            "P00 DETAIL: path '11-2/0000000500000009' does not contain any valid WAL to be processed\n"
+            "P00 DETAIL: archiveId: 11-2, wal start: 000000050000000800000004, wal stop: 000000050000000800000004");
+
+        HRN_STORAGE_REMOVE(
+            storageRepoIdxWrite(0),
+            zNewFmt(STORAGE_REPO_ARCHIVE "/11-2/0000000500000008/000000050000000800000004-%s", walBufferSha1),
+            .comment = "remove WAL");
+
+        TEST_RESULT_STR_Z(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            "stanza: db\n"
+            "status: error\n"
+            "  archiveId: 11-2, total WAL checked: 0, total valid WAL: 0\n"
+            "  backup: 20181119-153300F, status: invalid, total files checked: 1, total valid files: 1\n"
+            "    missing: 0, checksum invalid: 0, size invalid: 0, wal invalid: 2, other: 0", "--set with missing WALs\n");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: path '11-2/0000000500000007' does not contain any valid WAL to be processed\n"
+            "P00 DETAIL: path '11-2/0000000500000008' does not contain any valid WAL to be processed\n"
+            "P00 DETAIL: path '11-2/0000000500000009' does not contain any valid WAL to be processed");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("--set with archive and broken backup");
 
         argList = strLstDup(argListBase);

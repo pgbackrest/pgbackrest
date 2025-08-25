@@ -564,7 +564,6 @@ verifyUpdateWalFilesMissing(
     ASSERT(backupList != NULL);
     ASSERT(archiveIdResult != NULL);
     ASSERT(missingStart == NULL || missingStop == NULL || strCmp(missingStart, missingStop) <= 0);
-    ASSERT(missingStart != NULL || missingStop != NULL);
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -586,10 +585,14 @@ verifyUpdateWalFilesMissing(
             ASSERT(strCmp(backup->archiveStart, backup->archiveStop) <= 0);
 
             // We do not process backups from the wrong timeline
-            const String *const anyMissing = missingStart ? missingStart : missingStop;
-            const String *const missingTimeline = strSubN(anyMissing, 0, 8);
-            const String *const backupTimeline = strSubN(backup->archiveStart, 0, 8);
-            bool wrongTimeline = !strEq(missingTimeline, backupTimeline);
+            bool wrongTimeline = false;
+            if (missingStart != NULL || missingStop != NULL)
+            {
+                const String *const anyMissing = missingStart ? missingStart : missingStop;
+                const String *const missingTimeline = strSubN(anyMissing, 0, 8);
+                const String *const backupTimeline = strSubN(backup->archiveStart, 0, 8);
+                wrongTimeline = !strEq(missingTimeline, backupTimeline);
+            }
             // Backups have inclusive ranges, so [A, B] is placed before [C, D) if B < C (so A <= B < C < D)
             // but [A, B] is placed after [C, D) if D <= A (so C < D <= A <= B).
             // We skip any backups that don't overlap the range with missing files.
@@ -598,9 +601,13 @@ verifyUpdateWalFilesMissing(
             if (wrongTimeline || backupIsBeforeRange || backupIsAfterRange)
                 continue;
 
+            size_t walSegmentSize = (size_t)archiveIdResult->pgWalInfo.size;
+            if (walSegmentSize == 0)
+                walSegmentSize = pgWalSegmentSizeDefault(backup->pgVersion);
+
             // Convert inclusive range [start, stop] to exclusive [start, stop+1)
             const String *const backupStopExclusive =
-                walSegmentNext(backup->archiveStop, (size_t)archiveIdResult->pgWalInfo.size, archiveIdResult->pgWalInfo.version);
+                walSegmentNext(backup->archiveStop, walSegmentSize, backup->pgVersion);
             // Overlap of ranges [A, B) and [C, D) is [max(A, C), min(B, D))
             // Since NULLs in missing file range corresponds to negative/positive infinity,
             // we can simply choose the other value if NULL is present.
@@ -610,8 +617,7 @@ verifyUpdateWalFilesMissing(
             const String *const overlapEnd = missingStop && strCmp(backupStopExclusive, missingStop) > 0 ?
                                                  missingStop : backupStopExclusive;
             int overlapSize = walSegmentDist(overlapStart, overlapEnd,
-                                             (size_t)archiveIdResult->pgWalInfo.size,
-                                             archiveIdResult->pgWalInfo.version);
+                                             walSegmentSize, backup->pgVersion);
             ASSERT(overlapSize >= 0);
 
             if (overlapSize > 0)
@@ -2114,10 +2120,9 @@ verifyProcess(const bool verboseText)
                                                   archiveIdResult->pgWalInfo.version);
                     }
 
-                    // If we had at least one WAL range, mark all files after the last range as missing
-                    if (gapStart != NULL)
-                        verifyUpdateWalFilesMissing(jobData.backupResultList, archiveIdResult,
-                                                    gapStart, NULL, &jobData.jobErrorTotal);
+                    // Mark all files after the last range as missing
+                    verifyUpdateWalFilesMissing(jobData.backupResultList, archiveIdResult,
+                                                gapStart, NULL, &jobData.jobErrorTotal);
                 }
 
                 // Report results
