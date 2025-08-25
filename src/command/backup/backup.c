@@ -1568,12 +1568,12 @@ backupJobResult(
                                 }
 
                                 // Make message plural when appropriate
-                                const String *const plural = errorTotalMin > 1 ? strNewZ("s") : EMPTY_STR;
+                                const char *const plural = errorTotalMin > 1 ? "s" : "";
 
                                 // ??? Update formatting after migration
                                 LOG_WARN_FMT(
-                                    "invalid page checksum%s found in file %s at page%s %s", strZ(plural), strZ(fileLog),
-                                    strZ(plural), strZ(error));
+                                    "invalid page checksum%s found in file %s at page%s %s", plural, strZ(fileLog), plural,
+                                    strZ(error));
                             }
                         }
                     }
