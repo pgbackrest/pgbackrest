@@ -1569,7 +1569,7 @@ backupJobResult(
                                 }
 
                                 // Make message plural when appropriate
-                                const String *const plural = errorTotalMin > 1 ? STRDEF("s") : EMPTY_STR;
+                                const String *const plural = errorTotalMin > 1 ? strNewZ("s") : EMPTY_STR;
 
                                 // ??? Update formatting after migration
                                 LOG_WARN_FMT(
