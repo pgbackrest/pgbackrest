@@ -81,7 +81,7 @@ typedef struct ListPub
 {
     unsigned int listSize;                                          // List size
     size_t itemSize;                                                // Size of item stored in the list
-    unsigned char *list;                                            // Pointer to the current start of the list
+    uint8_t *list;                                                  // Pointer to the current start of the list
 } ListPub;
 
 // Set a new comparator
@@ -182,13 +182,13 @@ typedef struct ListPubConst
 {
     unsigned int listSize;                                          // List size
     size_t itemSize;                                                // Size of item stored in the list
-    const unsigned char *list;                                      // Pointer to the current start of the list
+    const uint8_t *list;                                            // Pointer to the current start of the list
 } ListPubConst;
 
 // Create a List constant inline from a constant array
 #define LSTDEF(listParam)                                                                                                          \
     (const List *)&(ListPubConst){                                                                                                 \
-        .list = (const unsigned char *)listParam, .itemSize = sizeof((listParam)[0]), .listSize = LENGTH_OF(listParam)}
+        .list = (const uint8_t *)listParam, .itemSize = sizeof((listParam)[0]), .listSize = LENGTH_OF(listParam)}
 
 /***********************************************************************************************************************************
 Macros for function logging

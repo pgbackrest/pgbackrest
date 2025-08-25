@@ -362,7 +362,7 @@ cmdArchivePush(void)
 
                     // Generate command options
                     StringList *const commandExec = cfgExecParam(cfgCmdArchivePush, cfgCmdRoleAsync, optionReplace, true, false);
-                    strLstInsert(commandExec, 0, cfgExe());
+                    strLstInsert(commandExec, 0, cfgBin());
                     strLstAdd(commandExec, strPath(walFile));
 
                     // Clear errors for the current archive file

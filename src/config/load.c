@@ -9,7 +9,6 @@ Configuration Load
 
 #include "command/command.h"
 #include "command/lock.h"
-#include "common/compress/helper.intern.h"
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/io/io.h"
@@ -118,18 +117,6 @@ cfgLoadUpdateOption(void)
             }
         }
     }
-
-    // Set default for cmd
-    if (cfgOptionValid(cfgOptCmd))
-        cfgOptionDefaultSet(cfgOptCmd, VARSTR(cfgExe()));
-
-    // Set default for repo-host-cmd
-    if (cfgOptionValid(cfgOptRepoHostCmd))
-        cfgOptionDefaultSet(cfgOptRepoHostCmd, VARSTR(cfgExe()));
-
-    // Set default for pg-host-cmd
-    if (cfgOptionValid(cfgOptPgHostCmd))
-        cfgOptionDefaultSet(cfgOptPgHostCmd, VARSTR(cfgExe()));
 
     // Protocol timeout should be greater than db timeout
     if (cfgOptionTest(cfgOptDbTimeout) && cfgOptionTest(cfgOptProtocolTimeout) &&
@@ -301,48 +288,6 @@ cfgLoadUpdateOption(void)
         }
     }
 
-    // Set default upload chunk size if not set
-    if (cfgOptionValid(cfgOptRepoStorageUploadChunkSize))
-    {
-        for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
-        {
-            if (!cfgOptionIdxTest(cfgOptRepoStorageUploadChunkSize, repoIdx))
-            {
-                cfgOptionIdxSet(
-                    cfgOptRepoStorageUploadChunkSize, repoIdx, cfgSourceDefault,
-                    VARINT64((cfgOptionIdxStrId(cfgOptRepoType, repoIdx) == CFGOPTVAL_REPO_TYPE_S3 ? 5 : 4) * 1024 * 1024));
-            }
-        }
-    }
-
-    // Set pg-host-port/repo-host-port default when pg-host-type/repo-host-type is tls. ??? This should be handled in the parser but
-    // it requires a default that depends on another option value and that is not currently possible.
-    #define HOST_PORT_TLS                                           8432
-
-    if (cfgOptionValid(cfgOptRepoHostPort))
-    {
-        for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
-        {
-            if (cfgOptionIdxStrId(cfgOptRepoHostType, repoIdx) == CFGOPTVAL_REPO_HOST_TYPE_TLS &&
-                cfgOptionIdxSource(cfgOptRepoHostPort, repoIdx) == cfgSourceDefault)
-            {
-                cfgOptionIdxSet(cfgOptRepoHostPort, repoIdx, cfgSourceDefault, VARINT64(HOST_PORT_TLS));
-            }
-        }
-    }
-
-    if (cfgOptionValid(cfgOptPgHostPort))
-    {
-        for (unsigned int pgIdx = 0; pgIdx < cfgOptionGroupIdxTotal(cfgOptGrpPg); pgIdx++)
-        {
-            if (cfgOptionIdxStrId(cfgOptPgHostType, pgIdx) == CFGOPTVAL_PG_HOST_TYPE_TLS &&
-                cfgOptionIdxSource(cfgOptPgHostPort, pgIdx) == cfgSourceDefault)
-            {
-                cfgOptionIdxSet(cfgOptPgHostPort, pgIdx, cfgSourceDefault, VARINT64(HOST_PORT_TLS));
-            }
-        }
-    }
-
     // Check/update compress-type if compress is valid. There should be no references to the compress option outside this block.
     if (cfgOptionValid(cfgOptCompress))
     {
@@ -358,34 +303,15 @@ cfgLoadUpdateOption(void)
             // Set compress-type to none. Eventually the compress option will be deprecated and removed so this reduces code churn
             // when that happens.
             if (!cfgOptionBool(cfgOptCompress) && cfgOptionSource(cfgOptCompressType) == cfgSourceDefault)
+            {
                 cfgOptionSet(cfgOptCompressType, cfgSourceParam, VARUINT64(CFGOPTVAL_COMPRESS_TYPE_NONE));
+                cfgOptionSet(cfgOptCompressLevel, cfgSourceDefault, VARINT64(0));
+            }
         }
 
         // Now invalidate compress so it can't be used and won't be passed to child processes
         cfgOptionInvalidate(cfgOptCompress);
         cfgOptionSet(cfgOptCompress, cfgSourceDefault, NULL);
-    }
-
-    // Update compress-level default based on the compression type. Also check that level range is valid per compression type.
-    if (cfgOptionValid(cfgOptCompressLevel))
-    {
-        const CompressType compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType));
-
-        if (cfgOptionSource(cfgOptCompressLevel) == cfgSourceDefault)
-        {
-            cfgOptionSet(cfgOptCompressLevel, cfgSourceDefault, VARINT64(compressLevelDefault(compressType)));
-        }
-        else if (compressType != compressTypeNone)
-        {
-            if (cfgOptionInt(cfgOptCompressLevel) < compressLevelMin(compressType) ||
-                cfgOptionInt(cfgOptCompressLevel) > compressLevelMax(compressType))
-            {
-                THROW_FMT(
-                    OptionInvalidValueError,
-                    "'%d' is out of range for '" CFGOPT_COMPRESS_LEVEL "' option when '" CFGOPT_COMPRESS_TYPE "' option = '%s'",
-                    cfgOptionInt(cfgOptCompressLevel), strZ(strIdToStr(cfgOptionStrId(cfgOptCompressType))));
-            }
-        }
     }
 
     // Error if repo-sftp--host-key-check-type is explicitly set to anything other than fingerprint and repo-sftp-host-fingerprint
@@ -559,7 +485,7 @@ cfgLoad(const unsigned int argListSize, const char *argList[])
         {
             // Generate some random bytes
             uint32_t execRandom;
-            cryptoRandomBytes((unsigned char *)&execRandom, sizeof(execRandom));
+            cryptoRandomBytes((uint8_t *)&execRandom, sizeof(execRandom));
 
             // Format a string with the pid and the random bytes to serve as the exec id
             cfgOptionSet(cfgOptExecId, cfgSourceParam, VARSTR(strNewFmt("%d-%08x", getpid(), execRandom)));

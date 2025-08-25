@@ -49,7 +49,7 @@ struct HttpResponseMulti
 {
     const Buffer *content;                                          // Response content
     Buffer *boundary;                                               // Multipart boundary
-    const unsigned char *boundaryLast;                              // Last boundary location
+    const uint8_t *boundaryLast;                                    // Last boundary location
 };
 
 /***********************************************************************************************************************************
@@ -452,6 +452,16 @@ httpResponseContent(HttpResponse *const this)
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN bool
+httpResponseCodeRetry(const HttpResponse *const this)
+{
+    return
+        httpResponseCode(this) / 100 == HTTP_RESPONSE_CODE_CLASS_RETRY ||
+        httpResponseCode(this) == HTTP_RESPONSE_CODE_REQUEST_TIMEOUT ||
+        httpResponseCode(this) == HTTP_RESPONSE_CODE_TOO_MANY_REQUESTS;
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN HttpResponseMulti *
 httpResponseMultiNew(const Buffer *const content, const String *const contentType)
 {
@@ -517,7 +527,7 @@ httpResponseMultiNext(HttpResponseMulti *const this)
 
     // Find next boundary
     this->boundaryLast += bufSize(this->boundary);
-    const unsigned char *const boundaryNext = bufFindP(this->content, this->boundary, .begin = this->boundaryLast);
+    const uint8_t *const boundaryNext = bufFindP(this->content, this->boundary, .begin = this->boundaryLast);
 
     if (boundaryNext != NULL)
     {

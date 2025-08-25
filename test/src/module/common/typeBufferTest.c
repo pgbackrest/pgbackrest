@@ -53,7 +53,7 @@ testRun(void)
     if (testBegin("bufResize(), bufFull(), bufLimit*(), bufRemains*(), and bufUsed*()"))
     {
         Buffer *buffer = NULL;
-        unsigned char *bufferPtr = NULL;
+        uint8_t *bufferPtr = NULL;
 
         TEST_ASSIGN(buffer, bufNew(0), "new zero buffer");
         TEST_RESULT_UINT(bufSize(buffer), 0, "check size");
@@ -66,7 +66,7 @@ testRun(void)
         TEST_ASSIGN(bufferPtr, bufPtr(buffer), "buffer pointer");
 
         for (unsigned int bufferIdx = 0; bufferIdx < bufSize(buffer); bufferIdx++)
-            bufferPtr[bufferIdx] = (unsigned char)bufferIdx;
+            bufferPtr[bufferIdx] = (uint8_t)bufferIdx;
 
         // Increase buffer size
         TEST_ASSIGN(bufferPtr, bufPtr(bufResize(buffer, 512)), "increase buffer size");

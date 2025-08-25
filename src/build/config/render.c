@@ -397,7 +397,7 @@ bldCfgRenderScalar(const String *const scalar, const String *const optType)
 
 // Helper to render validity
 static String *
-bldCfgRenderValid(const BldCfgOptionDepend *const depend)
+bldCfgRenderValid(const String *const type, const BldCfgOptionDepend *const depend)
 {
     ASSERT(depend != NULL);
 
@@ -412,8 +412,7 @@ bldCfgRenderValid(const BldCfgOptionDepend *const depend)
     {
         strCatFmt(
             result,
-            "                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(%s),\n",
-            strZ(bldCfgRenderScalar(depend->defaultValue, OPT_TYPE_BOOLEAN_STR)));
+            "                    PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(%s),\n", strZ(bldCfgRenderScalar(depend->defaultValue, type)));
     }
 
     strCatFmt(
@@ -444,20 +443,57 @@ bldCfgRenderValid(const BldCfgOptionDepend *const depend)
 
 // Helper to render allow range
 static String *
-bldCfgRenderAllowRange(const String *const allowRangeMin, const String *const allowRangeMax, const String *const optType)
+bldCfgRenderAllowRange(const BldCfgOptionAllowRange *const allowRange, const String *const optType)
 {
-    ASSERT(allowRangeMin != NULL);
-    ASSERT(allowRangeMax != NULL);
+    ASSERT((allowRange->min != NULL && allowRange->min != NULL) || (allowRange->min == NULL && allowRange->min == NULL));
+    ASSERT((allowRange->mapList == NULL && allowRange->min != NULL) || (allowRange->mapList != NULL && allowRange->min == NULL));
     ASSERT(optType != NULL);
 
-    return strNewFmt(
+    String *const result = strCatZ(
+        strNew(),
         "                PARSE_RULE_OPTIONAL_ALLOW_RANGE\n"
-        "                (\n"
-        "                    %s,\n"
-        "                    %s,\n"
-        "                )",
-        strZ(bldCfgRenderScalar(allowRangeMin, optType)),
-        strZ(bldCfgRenderScalar(allowRangeMax, optType)));
+        "                (\n");
+
+    if (allowRange->mapList != NULL)
+    {
+        strCatFmt(
+            result,
+            "                    PARSE_RULE_OPTIONAL_ALLOW_RANGE_MAP\n"
+            "                    (\n");
+
+        for (unsigned int mapIdx = 0; mapIdx < lstSize(allowRange->mapList); mapIdx++)
+        {
+            const BldCfgOptionAllowRangeMap *const allowRangeMap = lstGet(allowRange->mapList, mapIdx);
+
+            strCatFmt(
+                result,
+                "                        %s,\n"
+                "                        %s,\n"
+                "                        %s,\n",
+                strZ(bldCfgRenderScalar(allowRangeMap->map, OPT_TYPE_STRING_ID_STR)),
+                strZ(bldCfgRenderScalar(allowRangeMap->min, optType)),
+                strZ(bldCfgRenderScalar(allowRangeMap->max, optType)));
+        }
+
+        strCatZ(
+            result,
+            "                    ),\n");
+    }
+    else
+    {
+        strCatFmt(
+            result,
+            "                    %s,\n"
+            "                    %s,\n",
+            strZ(bldCfgRenderScalar(allowRange->min, optType)),
+            strZ(bldCfgRenderScalar(allowRange->max, optType)));
+    }
+
+    strCatZ(
+        result,
+        "                )");
+
+    return result;
 }
 
 // Helper to render allow list
@@ -497,9 +533,36 @@ bldCfgRenderAllowList(const List *const allowList, const String *const optType)
 }
 
 // Helper to render default
+static void
+bldCfgRenderDefaultValue(
+    String *const result, const String *const defaultValue, const DefaultType defaultType, const String *const optType,
+    const bool indent)
+{
+    ASSERT(defaultValue != NULL);
+    ASSERT(optType != NULL);
+
+    if (indent)
+        strCatZ(result, "    ");
+
+    if (!strEq(optType, OPT_TYPE_STRING_STR) && !strEq(optType, OPT_TYPE_PATH_STR))
+    {
+        strCatFmt(result, "                    %s,\n", strZ(bldCfgRenderScalar(defaultValue, optType)));
+    }
+    else
+    {
+        strCatFmt(
+            result,
+            "                    %s,\n",
+            strZ(
+                bldCfgRenderScalar(
+                    strNewFmt(
+                        "%s%s%s", defaultType == defaultTypeLiteral ? "" : "\"", strZ(defaultValue),
+                        defaultType == defaultTypeLiteral ? "" : "\""), OPT_TYPE_STRING_STR)));
+    }
+}
+
 static String *
-bldCfgRenderDefault(
-    const String *const defaultValue, const bool defaultLiteral, const String *const optType)
+bldCfgRenderDefault(const BldCfgOptionDefault *const defaultValue, const DefaultType defaultType, const String *const optType)
 {
     ASSERT(defaultValue != NULL);
     ASSERT(optType != NULL);
@@ -511,17 +574,31 @@ bldCfgRenderDefault(
         "                PARSE_RULE_OPTIONAL_DEFAULT\n"
         "                (\n");
 
-    if (!strEq(optType, OPT_TYPE_STRING_STR) && !strEq(optType, OPT_TYPE_PATH_STR))
-        strCatFmt(result, "                    %s,\n", strZ(bldCfgRenderScalar(defaultValue, optType)));
+    if (defaultType == defaultTypeDynamic)
+    {
+        strCatFmt(result, "                    PARSE_RULE_DEFAULT_DYNAMIC(%s),\n", strZ(bldEnum("", defaultValue->value)));
+    }
+    else if (defaultValue->value != NULL)
+        bldCfgRenderDefaultValue(result, defaultValue->value, defaultType, optType, false);
     else
     {
-        strCatFmt(
+        ASSERT(defaultValue->mapList != NULL);
+
+        strCatZ(
             result,
-            "                    %s,\n",
-            strZ(
-                bldCfgRenderScalar(
-                    strNewFmt("%s%s%s", defaultLiteral ? "" : "\"", strZ(defaultValue), defaultLiteral ? "" : "\""),
-                    OPT_TYPE_STRING_STR)));
+            "                    PARSE_RULE_OPTIONAL_DEFAULT_MAP\n"
+            "                    (\n");
+
+        for (unsigned int mapIdx = 0; mapIdx < lstSize(defaultValue->mapList); mapIdx++)
+        {
+            const BldCfgOptionDefaultMap *const map = lstGet(defaultValue->mapList, mapIdx);
+
+            strCatFmt(result, "                        %s,\n", strZ(bldCfgRenderScalar(map->map, OPT_TYPE_STRING_ID_STR)));
+
+            bldCfgRenderDefaultValue(result, map->value, defaultType, optType, true);
+        }
+
+        strCatZ(result, "                    ),\n");
     }
 
     strCatZ(result, "                )");
@@ -533,16 +610,21 @@ bldCfgRenderDefault(
 #define BLD_CFG_RENDER_VALUE_MAP_MAX                                UINT8_MAX
 
 static void
-bldCfgRenderValueAdd(const String *optType, const bool literal, const String *const value, KeyValue *const ruleValMap)
+bldCfgRenderValueAdd(const String *optType, const DefaultType defaultType, const String *const value, KeyValue *const ruleValMap)
 {
     ASSERT(!strEq(optType, OPT_TYPE_BOOLEAN_STR) && !strEq(optType, OPT_TYPE_HASH_STR) && !strEq(optType, OPT_TYPE_LIST_STR));
+
+    // Dynamic defaults are generated at runtime and do not need to be added to a static values list
+    if (defaultType == defaultTypeDynamic)
+        return;
 
     // Remap path to string
     if (strEq(optType, OPT_TYPE_PATH_STR))
         optType = OPT_TYPE_STRING_STR;
 
     // Generate string value
-    const String *const valueStr = strNewFmt("%s%s%s", literal ? "" : "\"", strZ(value), literal ? "" : "\"");
+    const String *const valueStr = strNewFmt(
+        "%s%s%s", defaultType == defaultTypeLiteral ? "" : "\"", strZ(value), defaultType == defaultTypeLiteral ? "" : "\"");
 
     // Add values other than strings
     if (!strEq(optType, OPT_TYPE_STRING_STR))
@@ -822,6 +904,8 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
 
     // Option rules
     // -----------------------------------------------------------------------------------------------------------------------------
+    StringList *const dynamicDefaultList = strLstNew();
+
     strCatZ(
         config,
         "\n"
@@ -853,6 +937,10 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
         const BldCfgOption *const opt = lstGet(bldCfg.optList, optIdx);
         String *const configOpt = strNew();
 
+        // Build list of dynamic defaults
+        if (opt->defaultType == defaultTypeDynamic)
+            strLstAddIfMissing(dynamicDefaultList, opt->defaultValue->value);
+
         if (optIdx != 0)
             strCatZ(config, COMMENT_SEPARATOR "\n");
 
@@ -863,6 +951,9 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
             "        PARSE_RULE_OPTION_NAME(\"%s\"),\n"
             "        PARSE_RULE_OPTION_TYPE(%s),\n",
             strZ(opt->name), strZ(bldEnum("", opt->type)));
+
+        if (opt->defaultType == defaultTypeDynamic)
+            strCatZ(configOpt, "        PARSE_RULE_OPTION_DEFAULT_TYPE(Dynamic),\n");
 
         if (opt->boolLike)
             strCatZ(configOpt, "        PARSE_RULE_OPTION_BOOL_LIKE(true),\n");
@@ -953,16 +1044,27 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
         const Variant *const ruleList[] = {ruleDepend, ruleAllowRange, ruleAllowList, ruleDefault, ruleRequire};
 
         if (opt->depend)
-            kvAdd(optionalDefaultRule, ruleDepend, VARSTR(bldCfgRenderValid(opt->depend)));
+            kvAdd(optionalDefaultRule, ruleDepend, VARSTR(bldCfgRenderValid(opt->type, opt->depend)));
 
-        if (opt->allowRangeMin != NULL)
+        if (opt->allowRange != NULL)
         {
-            kvAdd(
-                optionalDefaultRule, ruleAllowRange,
-                VARSTR(bldCfgRenderAllowRange(opt->allowRangeMin, opt->allowRangeMax, opt->type)));
+            kvAdd(optionalDefaultRule, ruleAllowRange, VARSTR(bldCfgRenderAllowRange(opt->allowRange, opt->type)));
 
-            bldCfgRenderValueAdd(opt->type, false, opt->allowRangeMin, ruleValMap);
-            bldCfgRenderValueAdd(opt->type, false, opt->allowRangeMax, ruleValMap);
+            if (opt->allowRange->mapList != NULL)
+            {
+                for (unsigned int mapIdx = 0; mapIdx < lstSize(opt->allowRange->mapList); mapIdx++)
+                {
+                    const BldCfgOptionAllowRangeMap *const allowRangeMap = lstGet(opt->allowRange->mapList, mapIdx);
+
+                    bldCfgRenderValueAdd(opt->type, false, allowRangeMap->min, ruleValMap);
+                    bldCfgRenderValueAdd(opt->type, false, allowRangeMap->max, ruleValMap);
+                }
+            }
+            else
+            {
+                bldCfgRenderValueAdd(opt->type, false, opt->allowRange->min, ruleValMap);
+                bldCfgRenderValueAdd(opt->type, false, opt->allowRange->max, ruleValMap);
+            }
         }
 
         if (opt->allowList != NULL)
@@ -978,10 +1080,24 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
 
         if (opt->defaultValue != NULL)
         {
-            kvAdd(optionalDefaultRule, ruleDefault, VARSTR(bldCfgRenderDefault(opt->defaultValue, opt->defaultLiteral, opt->type)));
+            kvAdd(
+                optionalDefaultRule, ruleDefault,
+                VARSTR(bldCfgRenderDefault(opt->defaultValue, opt->defaultType, opt->type)));
 
             if (!strEq(opt->type, OPT_TYPE_BOOLEAN_STR))
-                bldCfgRenderValueAdd(opt->type, opt->defaultLiteral, opt->defaultValue, ruleValMap);
+            {
+                if (opt->defaultValue->value != NULL)
+                    bldCfgRenderValueAdd(opt->type, opt->defaultType, opt->defaultValue->value, ruleValMap);
+
+                if (opt->defaultValue->mapList != NULL)
+                {
+                    for (unsigned int mapIdx = 0; mapIdx < lstSize(opt->defaultValue->mapList); mapIdx++)
+                    {
+                        const BldCfgOptionDefaultMap *const map = lstGet(opt->defaultValue->mapList, mapIdx);
+                        bldCfgRenderValueAdd(opt->type, opt->defaultType, map->value, ruleValMap);
+                    }
+                }
+            }
         }
 
         // Build command optional rules
@@ -994,7 +1110,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
 
             // Depends
             if (optCmd->depend != NULL)
-                kvAdd(optionalCmdRuleType, ruleDepend, VARSTR(bldCfgRenderValid(optCmd->depend)));
+                kvAdd(optionalCmdRuleType, ruleDepend, VARSTR(bldCfgRenderValid(opt->type, optCmd->depend)));
 
             // Allow lists
             if (optCmd->allowList != NULL)
@@ -1013,10 +1129,10 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
             {
                 kvAdd(
                     optionalCmdRuleType, ruleDefault,
-                    VARSTR(bldCfgRenderDefault(optCmd->defaultValue, opt->defaultLiteral, opt->type)));
+                    VARSTR(bldCfgRenderDefault(optCmd->defaultValue, opt->defaultType, opt->type)));
 
                 if (!strEq(opt->type, OPT_TYPE_BOOLEAN_STR))
-                    bldCfgRenderValueAdd(opt->type, opt->defaultLiteral, optCmd->defaultValue, ruleValMap);
+                    bldCfgRenderValueAdd(opt->type, opt->defaultType, optCmd->defaultValue->value, ruleValMap);
             }
 
             // Requires
@@ -1258,6 +1374,40 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
     strCat(
         configVal,
         bldCfgRenderValueRender(OPT_TYPE_TIME_STR, ruleValMap, label, "unsigned int", "Time", "Time", "TIME", "val/time"));
+
+    // Dynamic default values
+    // -----------------------------------------------------------------------------------------------------------------------------
+    strCatZ(
+        configVal,
+        "\n"
+        COMMENT_BLOCK_BEGIN "\n"
+        "Dynamic default values\n"
+        COMMENT_BLOCK_END "\n");
+
+    strCatFmt(
+        configVal, "%s\n",
+        strZ(
+            bldDefineRender(
+                STRDEF("PARSE_RULE_DEFAULT_DYNAMIC(value)"),
+                strNewFmt(
+                    "PARSE_RULE_U32_%zu(parseRuleDefaultDynamic##value)",
+                    bldCfgRenderVar128Size(strLstSize(dynamicDefaultList) - 1)))));
+
+    strCatZ(
+        configVal,
+        "\ntypedef enum\n"
+        "{\n");
+
+    for (unsigned int dynamicDefaultIdx = 0; dynamicDefaultIdx < strLstSize(dynamicDefaultList); dynamicDefaultIdx++)
+    {
+        strCatFmt(
+            configVal, "    %s,\n",
+            zNewFmt("parseRuleDefaultDynamic%s", strZ(bldEnum("", strLstGet(dynamicDefaultList, dynamicDefaultIdx)))));
+    }
+
+    strCatZ(
+        configVal,
+        "} ParseRuleDefaultDynamic;\n");
 
     // Write to storage
     // -----------------------------------------------------------------------------------------------------------------------------

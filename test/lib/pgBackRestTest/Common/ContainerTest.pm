@@ -150,7 +150,16 @@ sub groupCreate
     my $strName = shift;
     my $iId = shift;
 
-    return "groupadd -f -g${iId} ${strName}";
+    my $oVm = vmGet();
+
+    if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL || $$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+    {
+        return "groupadd -f -g${iId} ${strName}";
+    }
+    elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_ALPINE)
+    {
+        return "addgroup -g${iId} ${strName}";
+    }
 }
 
 sub userCreate
@@ -166,7 +175,7 @@ sub userCreate
     {
         return "adduser -g${strGroup} -u${iId} -N ${strName}";
     }
-    elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+    elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN || $$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_ALPINE)
     {
         return "adduser --uid=${iId} --ingroup=${strGroup} --disabled-password --gecos \"\" ${strName}";
     }
@@ -277,7 +286,7 @@ sub caSetup
     {
         $strCertFile = '/etc/pki/ca-trust/source/anchors';
     }
-    elsif ($strOsBase eq VM_OS_BASE_DEBIAN)
+    elsif ($strOsBase eq VM_OS_BASE_DEBIAN || $strOsBase eq VM_OS_BASE_ALPINE)
     {
         $strCertFile = '/usr/local/share/ca-certificates';
     }
@@ -301,7 +310,7 @@ sub caSetup
         $strScript .=
             "    update-ca-trust extract";
     }
-    elsif ($strOsBase eq VM_OS_BASE_DEBIAN)
+    elsif ($strOsBase eq VM_OS_BASE_DEBIAN || $strOsBase eq VM_OS_BASE_ALPINE)
     {
         $strScript .=
             "    update-ca-certificates";
@@ -327,9 +336,13 @@ sub entryPointSetup
     {
         $strScript .= 'rm -rf /run/nologin && /usr/sbin/sshd -D';
     }
-    else
+    elsif ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
     {
         $strScript .= 'service ssh restart && bash';
+    }
+    elsif ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_ALPINE)
+    {
+        $strScript .= '/usr/sbin/sshd -D';
     }
 
     return $strScript;
@@ -384,8 +397,9 @@ sub containerBuild
         # Base image
         ###########################################################################################################################
         my $strImageParent =
-            (defined($strArch) ? "${strArch}/" : (vmArch($strOS) eq VM_ARCH_AMD64 ? '' : vmArch($strOS) . '/')) .
+            (defined($strArch) ? "${strArch}/" : (vmArch($strOS) eq VM_ARCH_X86_64 ? '' : vmArch($strOS) . '/')) .
             "$$oVm{$strOS}{&VM_IMAGE}";
+        $strArch = defined($strArch) ? $strArch : hostArch();
         my $strImage = "${strOS}-base" . (defined($strArch) ? "-${strArch}" : '-' . hostArch());
         my $strCopy = undef;
 
@@ -412,7 +426,7 @@ sub containerBuild
                 "        libyaml-devel zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 perl-JSON-PP ccache meson \\\n" .
                 "        libssh2-devel";
         }
-        else
+        elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
             $strScript .=
                 "    export DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive && \\\n" .
@@ -422,12 +436,21 @@ sub containerBuild
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
                 "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config \\\n" .
                 "        libbz2-dev bzip2 libyaml-dev libjson-pp-perl liblz4-dev liblz4-tool gnupg lsb-release ccache meson \\\n" .
-                "        libssh2-1-dev";
+                "        libssh2-1-dev libcurl4-openssl-dev";
 
-            if ($strOS eq VM_U20 || $strOS eq VM_U22)
+            if ($strOS eq VM_U22)
             {
                 $strScript .= " valgrind";
             }
+        }
+        elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_ALPINE)
+        {
+            $strScript .=
+                "    apk update && \\\n" .
+                "    apk add --no-cache sudo openssh git rsync tzdata openssh ca-certificates openrc bash && \\\n" .
+                "    rc-update add sshd && \\\n" .
+                "    apk add --no-cache meson build-base libpq-dev openssl-dev libxml2-dev pkgconfig lz4-dev bzip2-dev\\\n" .
+                "        openssh-keygen zlib-dev yaml-dev libssh2-dev perl perl-yaml-libyaml valgrind lz4";
         }
 
         # Add zst command-line tool and development libs when available
@@ -437,9 +460,13 @@ sub containerBuild
             {
                 $strScript .= ' zstd libzstd-devel';
             }
-            else
+            elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
             {
                 $strScript .= ' zstd libzstd-dev';
+            }
+            elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_ALPINE)
+            {
+                $strScript .= ' zstd zstd-dev';
             }
         }
 
@@ -463,8 +490,11 @@ sub containerBuild
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bDeprecated)
         {
-            $strScript .= sectionHeader() .
-                "# Install PostgreSQL packages\n";
+            if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL || $$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+            {
+                $strScript .= sectionHeader() .
+                    "# Install PostgreSQL packages\n";
+            }
 
             if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
             {
@@ -479,39 +509,35 @@ sub containerBuild
                             "pgdg-redhat-repo-latest.noarch.rpm && \\\n" .
                         "    dnf -qy module disable postgresql && \\\n";
                 }
-                elsif ($strOS eq VM_F41)
+                elsif ($strOS eq VM_F42)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-41-" . hostArch() . "/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-42-" . hostArch() . "/" .
                             "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
                 }
 
                 $strScript .= "    yum -y install postgresql-devel";
             }
-            else
+            elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
             {
                 # Install repo from apt.postgresql.org
                 if (vmPgRepo($strVm))
                 {
                     $strScript .=
-                        "    echo \"deb http://apt.postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg main" .
-                            "\" >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
-                        ($strOS eq VM_U22 ?
-                            "    echo \"deb http://apt.postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg-snapshot main" .
-                            " 18\" >> /etc/apt/sources.list.d/pgdg.list && \\\n" : '') .
-                        "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
-                        "    apt-get update && \\\n";
+                        "    apt-get install -y --no-install-recommends postgresql-common && \\\n" .
+                        "    /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y" .
+                            ($strOS eq VM_U22 && ($strArch eq VM_ARCH_AARCH64 || $strArch eq VM_ARCH_X86_64) ? ' -c 18' : '') .
+                            " && \\\n";
                 }
 
                 $strScript .=
-                    "    apt-get install -y --no-install-recommends" .
-                    ($strOS eq VM_U22 ? " -t \$(lsb_release -s -c)-pgdg-snapshot" : '') . " postgresql-common libpq-dev && \\\n" .
-                     "    sed -i 's/^\\#create\\_main\\_cluster.*\$/create\\_main\\_cluster \\= false/' " .
+                    "    apt-get install -y --no-install-recommends postgresql-common libpq-dev && \\\n" .
+                    "    sed -i 's/^\\#create\\_main\\_cluster.*\$/create\\_main\\_cluster \\= false/' " .
                         "/etc/postgresql-common/createcluster.conf";
             }
 
-            if (defined($oOS->{&VM_DB}) && @{$oOS->{&VM_DB}} > 0)
+            if (defined($oOS->{&VM_DB}) && @{$oOS->{&VM_DB}} > 0 && ($strArch eq VM_ARCH_AARCH64 || $strArch eq VM_ARCH_X86_64))
             {
                 $strScript .= sectionHeader() .
                     "# Install PostgreSQL\n";
@@ -520,12 +546,14 @@ sub containerBuild
                 {
                     $strScript .= "    yum -y install";
                 }
-                else
+                elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
                 {
-                    $strScript .=
-                       "    apt-get install -y --no-install-recommends" .
-                        ($strOS eq VM_U22 ? " -t \$(lsb_release -s -c)-pgdg-snapshot" : '');
-                  }
+                    $strScript .= "    apt-get install -y --no-install-recommends";
+                }
+                elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_ALPINE)
+                {
+                    $strScript .= "    apk add --no-cache";
+                }
 
                 # Construct list of databases to install
                 foreach my $strDbVersion (@{$oOS->{&VM_DB}})
@@ -543,9 +571,17 @@ sub containerBuild
                             $strScript .= " postgresql${strDbVersionNoDot}-devel";
                         }
                     }
-                    else
+                    elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
                     {
+                        # Disable PostgreSQL 18 on architectures that do not support it yet
+                        next if ($strDbVersion eq '18' &&
+                            !($strOS eq VM_U22 && ($strArch eq VM_ARCH_AARCH64 || $strArch eq VM_ARCH_X86_64)));
+
                         $strScript .= " postgresql-${strDbVersion}";
+                    }
+                    elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_ALPINE)
+                    {
+                        $strScript .= " postgresql${strDbVersion}";
                     }
                 }
             }
@@ -625,6 +661,14 @@ sub containerBuild
                 '    ' . userCreate($strOS, TEST_USER, TEST_USER_ID, TEST_GROUP) . " && \\\n" .
                 '    mkdir -m 750 /home/' . TEST_USER . "/test && \\\n" .
                 '    chown ' . TEST_USER . ':' . TEST_GROUP . ' /home/' . TEST_USER . "/test";
+
+            # On Alpine the test account must have a password for SSH logon
+            if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_ALPINE)
+            {
+                $strScript .=
+                    " && \\\n" .
+                    "    passwd -d '" . TEST_USER . "' " . TEST_USER;
+            }
 
             $strScript .= sectionHeader() .
                 "# Configure sudo\n";

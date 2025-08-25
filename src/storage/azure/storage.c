@@ -841,7 +841,7 @@ storageAzureNew(
         strLstAdd(this->queryRedactList, AZURE_QUERY_SIG_STR);
 
         // Generate starting file id
-        cryptoRandomBytes((unsigned char *)&this->fileId, sizeof(this->fileId));
+        cryptoRandomBytes((uint8_t *)&this->fileId, sizeof(this->fileId));
     }
     OBJ_NEW_END();
 

@@ -136,39 +136,6 @@ testRun(void)
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 3);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("repo-host-cmd is defaulted when null");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
-        HRN_CFG_LOAD(cfgCmdCheck, argList);
-
-        cfgOptionIdxSet(cfgOptRepoHost, 0, cfgSourceParam, varNewStrZ("repo-host"));
-
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command is updated");
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoHostCmd, 0), testProjectExe(), "check repo1-host-cmd");
-
-        cfgOptionIdxSet(cfgOptRepoHostCmd, 0, cfgSourceParam, VARSTRDEF("/other"));
-
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command was already set");
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoHostCmd, 0), "/other", "check repo1-host-cmd");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("pg-host-cmd is defaulted when null");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 1, "pg1");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 99, "/pg99");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 99, "pg99");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgHostCmd, 99, "pg99-exe");
-        HRN_CFG_LOAD(cfgCmdCheck, argList);
-
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgHostCmd, 0), testProjectExe(), "check pg1-host-cmd");
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgHostCmd, 1), "pg99-exe", "check pg99-host-cmd");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("db-timeout set but not protocol timeout");
 
         argList = strLstNew();
@@ -535,38 +502,15 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "compress is not valid");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on invalid compress level");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-        hrnCfgArgRawZ(argList, cfgOptCompressType, "gz");
-        hrnCfgArgRawZ(argList, cfgOptCompressLevel, "-2");
-
-        TEST_ERROR(
-            hrnCfgLoadP(cfgCmdArchivePush, argList), OptionInvalidValueError,
-            "'-2' is out of range for 'compress-level' option when 'compress-type' option = 'gz'");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-        hrnCfgArgRawZ(argList, cfgOptCompressType, "gz");
-        hrnCfgArgRawZ(argList, cfgOptCompressLevel, "10");
-
-        TEST_ERROR(
-            hrnCfgLoadP(cfgCmdArchivePush, argList), OptionInvalidValueError,
-            "'10' is out of range for 'compress-level' option when 'compress-type' option = 'gz'");
-
-        // In practice level should not be used here but preserve the prior behavior in case something depends on it
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("do not check range when compress-type = none");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptCompressType, "none");
-        hrnCfgArgRawZ(argList, cfgOptCompressLevel, "3");
 
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
         TEST_RESULT_UINT(cfgOptionStrId(cfgOptCompressType), CFGOPTVAL_COMPRESS_TYPE_NONE, "compress-type=none");
-        TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 3, "compress-level=3");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 0, "compress-level=0");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("warn when compress-type and compress both set");

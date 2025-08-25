@@ -947,8 +947,7 @@ testRun(void)
         HRN_SYSTEM_FMT("touch %s", strZ(fileName));
 
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
-        TEST_RESULT_INT(
-            ioReadFd(storageReadIo(file)), ((StorageReadPosix *)ioReadDriver(storageReadIo(file)))->fd, "check read fd");
+        TEST_RESULT_INT(ioReadFd(storageReadIo(file)), ((StorageReadPosix *)file->driver)->fd, "check read fd");
         TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "close file");
     }
 
@@ -1212,13 +1211,13 @@ testRun(void)
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
 
         // Close the file descriptor so operations will fail
-        close(((StorageReadPosix *)ioReadDriver(storageReadIo(file)))->fd);
+        close(((StorageReadPosix *)file->driver)->fd);
 
         TEST_ERROR_FMT(
             ioRead(storageReadIo(file), outBuffer), FileReadError, "unable to read '%s': [9] Bad file descriptor", strZ(fileName));
 
         // Set file descriptor to -1 so the close on free will not fail
-        ((StorageReadPosix *)ioReadDriver(storageReadIo(file)))->fd = -1;
+        ((StorageReadPosix *)file->driver)->fd = -1;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("incremental load");
@@ -1261,8 +1260,7 @@ testRun(void)
         TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "no data to load");
         TEST_RESULT_UINT(bufUsed(outBuffer), 0, "buffer is empty");
 
-        TEST_RESULT_VOID(
-            storageReadPosix(ioReadDriver(storageReadIo(file)), outBuffer, true), "no data to load from driver either");
+        TEST_RESULT_VOID(storageReadPosix(file->driver, outBuffer, true), "no data to load from driver either");
         TEST_RESULT_UINT(bufUsed(outBuffer), 0, "buffer is empty");
 
         TEST_RESULT_BOOL(bufEq(buffer, expectedBuffer), true, "check file contents (all loaded)");

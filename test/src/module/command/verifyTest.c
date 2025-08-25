@@ -2337,7 +2337,7 @@ testRun(void)
             "P00   INFO: backup start archive = 0000000105D95D3000000000, lsn = 5d95d30/0\n"
             "P00   INFO: check archive for prior segment 0000000105D95D2F000000FF\n"
             "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/postgresql.auto.conf\n"
-            "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (bundle 1/0, 256KB, 96.96%) checksum [SHA1]\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (bundle 1/0, 256KB, 96.97%) checksum [SHA1]\n"
             "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/237, 8KB, 100.00%) checksum [SHA1]\n"
             "P00 DETAIL: reference pg_data/PG_VERSION to 20191002-070640F\n"
             "P00 DETAIL: reference pg_data/base/1/44 to 20191002-070640F\n"

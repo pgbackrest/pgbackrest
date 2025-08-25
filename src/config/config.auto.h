@@ -72,6 +72,7 @@ Option constants
 #define CFGOPT_DB_INCLUDE                                           "db-include"
 #define CFGOPT_DB_TIMEOUT                                           "db-timeout"
 #define CFGOPT_DELTA                                                "delta"
+#define CFGOPT_DETAIL_LEVEL                                         "detail-level"
 #define CFGOPT_DRY_RUN                                              "dry-run"
 #define CFGOPT_EXCLUDE                                              "exclude"
 #define CFGOPT_EXEC_ID                                              "exec-id"
@@ -139,7 +140,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            186
+#define CFG_OPTION_TOTAL                                            187
 
 /***********************************************************************************************************************************
 Option value constants
@@ -166,6 +167,11 @@ Option value constants
 #define CFGOPTVAL_COMPRESS_TYPE_NONE_Z                              "none"
 #define CFGOPTVAL_COMPRESS_TYPE_ZST                                 STRID5("zst", 0x527a0)
 #define CFGOPTVAL_COMPRESS_TYPE_ZST_Z                               "zst"
+
+#define CFGOPTVAL_DETAIL_LEVEL_FULL                                 STRID5("full", 0x632a60)
+#define CFGOPTVAL_DETAIL_LEVEL_FULL_Z                               "full"
+#define CFGOPTVAL_DETAIL_LEVEL_PROGRESS                             STRID5("progress", 0x9ccb23be500)
+#define CFGOPTVAL_DETAIL_LEVEL_PROGRESS_Z                           "progress"
 
 #define CFGOPTVAL_LOG_LEVEL_CONSOLE_DEBUG                           STRID5("debug", 0x7a88a40)
 #define CFGOPTVAL_LOG_LEVEL_CONSOLE_DEBUG_Z                         "debug"
@@ -423,6 +429,7 @@ typedef enum
     cfgOptDbInclude,
     cfgOptDbTimeout,
     cfgOptDelta,
+    cfgOptDetailLevel,
     cfgOptDryRun,
     cfgOptExclude,
     cfgOptExecId,

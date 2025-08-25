@@ -36,7 +36,7 @@ typedef struct BufferPub
     size_t size;                                                    // Reported size of the buffer
     bool sizeLimit;                                                 // Is the size limited to make the buffer appear smaller?
     size_t used;                                                    // Amount of buffer used
-    unsigned char *buffer;                                          // Buffer
+    uint8_t *buffer;                                                // Buffer
 } BufferPub;
 
 // Amount of the buffer actually used. This will be updated automatically when possible but if the buffer is modified by using
@@ -69,14 +69,14 @@ bufFull(const Buffer *const this)
 }
 
 // Buffer pointer
-FN_INLINE_ALWAYS unsigned char *
+FN_INLINE_ALWAYS uint8_t *
 bufPtr(Buffer *const this)
 {
     return THIS_PUB(Buffer)->buffer;
 }
 
 // Const buffer pointer
-FN_INLINE_ALWAYS const unsigned char *
+FN_INLINE_ALWAYS const uint8_t *
 bufPtrConst(const Buffer *const this)
 {
     return THIS_PUB(Buffer)->buffer;
@@ -90,7 +90,7 @@ bufRemains(const Buffer *const this)
 }
 
 // Pointer to remaining buffer space (after used space)
-FN_INLINE_ALWAYS unsigned char *
+FN_INLINE_ALWAYS uint8_t *
 bufRemainsPtr(Buffer *const this)
 {
     return bufPtr(this) + bufUsed(this);
@@ -117,7 +117,7 @@ Functions
 FN_EXTERN Buffer *bufCat(Buffer *this, const Buffer *cat);
 
 // Append a C buffer
-FN_EXTERN Buffer *bufCatC(Buffer *this, const unsigned char *cat, size_t catOffset, size_t catSize);
+FN_EXTERN Buffer *bufCatC(Buffer *this, const uint8_t *cat, size_t catOffset, size_t catSize);
 
 // Append a subset of another buffer
 FN_EXTERN Buffer *bufCatSub(Buffer *this, const Buffer *cat, size_t catOffset, size_t catSize);
@@ -129,13 +129,13 @@ FN_EXTERN bool bufEq(const Buffer *this, const Buffer *compare);
 typedef struct BufFindParam
 {
     VAR_PARAM_HEADER;
-    const unsigned char *begin;                                     // Begin find from this address
+    const uint8_t *begin;                                           // Begin find from this address
 } BufFindParam;
 
 #define bufFindP(this, find, ...)                                                                                                     \
     bufFind(this, find, (BufFindParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-FN_EXTERN const unsigned char *bufFind(const Buffer *this, const Buffer *find, BufFindParam param);
+FN_EXTERN const uint8_t *bufFind(const Buffer *this, const Buffer *find, BufFindParam param);
 
 // Move to a new parent mem context
 FN_INLINE_ALWAYS Buffer *
@@ -181,24 +181,24 @@ typedef struct BufferPubConst
     size_t size;                                                    // Reported size of the buffer
     bool sizeLimit;                                                 // Is the size limited to make the buffer appear smaller?
     size_t used;                                                    // Amount of buffer used
-    const unsigned char *buffer;                                    // Buffer
+    const uint8_t *buffer;                                          // Buffer
 } BufferPubConst;
 
-// Create a buffer constant inline from an unsigned char[]
+// Create a buffer constant inline from an uint8_t[]
 #define BUF(bufferParam, sizeParam)                                                                                                \
-    ((const Buffer *)&(const BufferPubConst){.size = sizeParam, .used = sizeParam, .buffer = (const unsigned char *)bufferParam})
+    ((const Buffer *)&(const BufferPubConst){.size = sizeParam, .used = sizeParam, .buffer = (const uint8_t *)bufferParam})
 
 // Create a buffer constant inline from a non-constant zero-terminated string
 #define BUFSTRZ(stringz)                                                                                                           \
-    BUF((const unsigned char *)stringz, strlen(stringz))
+    BUF((const uint8_t *)stringz, strlen(stringz))
 
 // Create a buffer constant inline from a String
 #define BUFSTR(string)                                                                                                             \
-    BUF((const unsigned char *)strZ(string), strSize(string))
+    BUF((const uint8_t *)strZ(string), strSize(string))
 
 // Create a buffer constant inline from a constant zero-terminated string
 #define BUFSTRDEF(stringdef)                                                                                                       \
-    BUF((const unsigned char *)stringdef, (sizeof(stringdef) - 1))
+    BUF((const uint8_t *)stringdef, (sizeof(stringdef) - 1))
 
 // Used to define buffer constants that will be externed using BUFFER_DECLARE(). Must be used in a .c file.
 #define BUFFER_EXTERN(name, ...)                                                                                                   \

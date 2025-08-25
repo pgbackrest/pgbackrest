@@ -22,7 +22,6 @@ typedef struct StorageS3RequestAsyncParam
     const HttpHeader *header;                                       // Headers
     const HttpQuery *query;                                         // Query parameters
     const Buffer *content;                                          // Request content
-    bool contentMd5;                                                // MD5 content checksum required?
     bool sseKms;                                                    // Enable server-side encryption?
     bool sseC;                                                      // Enable server-side encryption with customer-provided keys?
     bool tag;                                                       // Add tags when available?
@@ -53,7 +52,6 @@ typedef struct StorageS3RequestParam
     const HttpHeader *header;                                       // Headers
     const HttpQuery *query;                                         // Query parameters
     const Buffer *content;                                          // Request content
-    bool contentMd5;                                                // MD5 content checksum required?
     bool allowMissing;                                              // Allow missing files (caller can check response code)
     bool contentIo;                                                 // Is IoRead interface required to read content?
     bool sseKms;                                                    // Enable server-side encryption?

@@ -242,9 +242,9 @@ testRun(void)
             "                                      specified directory\n"
             "  --target                            recovery target\n"
             "  --target-action                     action to take when recovery target is\n"
-            "                                      reached [default=pause]\n"
+            "                                      reached\n"
             "  --target-exclusive                  stop just before the recovery target is\n"
-            "                                      reached [default=n]\n"
+            "                                      reached\n"
             "  --target-timeline                   recover along a timeline\n"
             "  --type                              recovery type [default=default]\n"
             "\n"
@@ -298,19 +298,17 @@ testRun(void)
             "  --repo-azure-account                azure repository account\n"
             "  --repo-azure-container              azure repository container\n"
             "  --repo-azure-endpoint               azure repository endpoint\n"
-            "                                      [default=blob.core.windows.net]\n"
             "  --repo-azure-key                    azure repository key\n"
-            "  --repo-azure-key-type               azure repository key type [default=shared]\n"
-            "  --repo-azure-uri-style              azure URI Style [default=host]\n"
+            "  --repo-azure-key-type               azure repository key type\n"
+            "  --repo-azure-uri-style              azure URI Style\n"
             "  --repo-cipher-pass                  repository cipher passphrase\n"
             "                                      [current=<redacted>]\n"
             "  --repo-cipher-type                  cipher used to encrypt the repository\n"
             "                                      [current=<multi>, default=none]\n"
             "  --repo-gcs-bucket                   GCS repository bucket\n"
             "  --repo-gcs-endpoint                 GCS repository endpoint\n"
-            "                                      [default=storage.googleapis.com]\n"
             "  --repo-gcs-key                      GCS repository key\n"
-            "  --repo-gcs-key-type                 GCS repository key type [default=service]\n"
+            "  --repo-gcs-key-type                 GCS repository key type\n"
             "  --repo-gcs-user-project             GCS project ID\n"
             "  --repo-host                         repository host when operating remotely\n"
             "                                      [current=<multi>]\n"
@@ -339,19 +337,19 @@ testRun(void)
             "  --repo-s3-endpoint                  S3 repository endpoint\n"
             "  --repo-s3-key                       S3 repository access key\n"
             "  --repo-s3-key-secret                S3 repository secret access key\n"
-            "  --repo-s3-key-type                  S3 repository key type [default=shared]\n"
+            "  --repo-s3-key-type                  S3 repository key type\n"
             "  --repo-s3-kms-key-id                S3 repository KMS key\n"
             "  --repo-s3-region                    S3 repository region\n"
-            "  --repo-s3-requester-pays            S3 repository requester pays [default=n]\n"
+            "  --repo-s3-requester-pays            S3 repository requester pays\n"
             "  --repo-s3-role                      S3 repository role\n"
             "  --repo-s3-sse-customer-key          S3 repository SSE customer key\n"
             "  --repo-s3-token                     S3 repository security token\n"
-            "  --repo-s3-uri-style                 S3 URI Style [default=host]\n"
+            "  --repo-s3-uri-style                 S3 URI Style\n"
             "  --repo-sftp-host                    SFTP repository host\n"
             "  --repo-sftp-host-fingerprint        SFTP repository host fingerprint\n"
-            "  --repo-sftp-host-key-check-type     SFTP host key check type [default=strict]\n"
+            "  --repo-sftp-host-key-check-type     SFTP host key check type\n"
             "  --repo-sftp-host-key-hash-type      SFTP repository host key hash type\n"
-            "  --repo-sftp-host-port               SFTP repository host port [default=22]\n"
+            "  --repo-sftp-host-port               SFTP repository host port\n"
             "  --repo-sftp-host-user               SFTP repository host user\n"
             "  --repo-sftp-known-host              SFTP known hosts file\n"
             "  --repo-sftp-private-key-file        SFTP private key file\n"
@@ -360,11 +358,10 @@ testRun(void)
             "  --repo-storage-ca-file              repository storage CA file\n"
             "  --repo-storage-ca-path              repository storage CA path\n"
             "  --repo-storage-host                 repository storage host\n"
-            "  --repo-storage-port                 repository storage port [default=443]\n"
+            "  --repo-storage-port                 repository storage port\n"
             "  --repo-storage-tag                  repository storage tag(s)\n"
             "  --repo-storage-upload-chunk-size    repository storage upload chunk size\n"
             "  --repo-storage-verify-tls           repository storage certificate verify\n"
-            "                                      [default=y]\n"
             "  --repo-target-time                  target time for repository\n"
             "  --repo-type                         type of storage used for the repository\n"
             "                                      [default=posix]\n"
@@ -638,6 +635,55 @@ testRun(void)
         strLstAddZ(argList, "restore");
         strLstAddZ(argList, "repo-host");
         TEST_RESULT_VOID(testCfgLoad(argList), "help for restore command, repo-host option");
+        TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check text");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multiple default values");
+
+        #define HELP_OPTION_CHUNK                                                                                                  \
+            "%s - 'restore' command - 'repo-storage-upload-chunk-size' option help\n"                                              \
+            "\n"                                                                                                                   \
+            "Repository storage upload chunk size.\n"                                                                              \
+            "\n"                                                                                                                   \
+            "Object stores such as S3 allow files to be uploaded in chunks when the file is\n"                                     \
+            "too large to be stored in memory. Even if the file can be stored in memory, it\n"                                     \
+            "is more memory efficient to limit the amount of memory used for uploads.\n"                                           \
+            "\n"                                                                                                                   \
+            "A larger chunk size will generally lead to better performance because it will\n"                                      \
+            "minimize upload requests and allow more files to be uploaded in a single\n"                                           \
+            "request rather than in chunks. The disadvantage is that memory usage will be\n"                                       \
+            "higher and because the chunk buffer must be allocated per process, larger\n"                                          \
+            "process-max values will lead to more memory being consumed overall.\n"                                                \
+            "\n"                                                                                                                   \
+            "Note that valid chunk sizes vary by storage type and by platform. For example,\n"                                     \
+            "AWS S3 has a minimum chunk size of 5MiB but S3 clones may accept lower values.\n"                                     \
+            "Terminology for chunk size varies by storage type, so when searching min/max\n"                                       \
+            "values use \"part size\" for AWS S3, \"chunk size\" for GCS, and \"block size\" for\n"                                \
+            "Azure. No attempt is made to validate configured chunk sizes so selecting an\n"                                       \
+            "invalid value will lead to errors from the storage service or undefined\n"                                            \
+            "behavior.\n"
+
+        optionHelp = zNewFmt(
+            HELP_OPTION_CHUNK
+            "\n"
+            "default:\n"
+            "  repo1: 5MiB\n"
+            "  repo2: 4MiB\n",
+            helpVersion);
+
+        argList = strLstNew();
+        strLstAddZ(argList, "/path/to/pgbackrest");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "s3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 2, "azure");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 3, "gcs");
+        strLstAddZ(argList, "help");
+        strLstAddZ(argList, "restore");
+        strLstAddZ(argList, "repo-storage-upload-chunk-size");
+        TEST_RESULT_VOID(testCfgLoad(argList), "help for restore command, repo-storage-upload-chunk-size option");
+
+        // There is currently no way for some defaults to be NULL and others not but it could happen in the future
+        cfgOptionIdxSet(cfgOptRepoStorageUploadChunkSize, 2, cfgSourceDefault, NULL);
+
         TEST_RESULT_STR_Z(helpRender(helpData), optionHelp, "check text");
     }
 

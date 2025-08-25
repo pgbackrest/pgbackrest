@@ -102,7 +102,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: type-convert
-        total: 12
+        total: 13
 
         coverage:
           - common/type/convert
@@ -619,6 +619,7 @@ unit:
           - storage/s3/read
           - storage/s3/storage
           - storage/s3/write
+          - storage/read
           - storage/helper
 
         include:
@@ -948,7 +949,9 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
-        total: 15
+        total: 16
+
+        harness: restore
 
         coverage:
           - command/restore/blockChecksum

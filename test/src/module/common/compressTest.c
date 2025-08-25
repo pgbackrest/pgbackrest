@@ -187,12 +187,12 @@ testSuite(CompressType type, const char *decompressCmd, size_t rawDelta)
     TEST_TITLE("compress a large non-zero input buffer into small output buffer");
 
     decompressed = bufNew(1024 * 1024 - 1);
-    unsigned char *chr = bufPtr(decompressed);
+    uint8_t *chr = bufPtr(decompressed);
 
     // Step through the buffer, setting the individual bytes in a simple pattern (visible ASCII characters, DEC 32 - 126), to make
     // sure that we fill the compression library's small output buffer
     for (size_t chrIdx = 0; chrIdx < bufSize(decompressed); chrIdx++)
-        chr[chrIdx] = (unsigned char)(chrIdx % 94 + 32);
+        chr[chrIdx] = (uint8_t)(chrIdx % 94 + 32);
 
     bufUsedSet(decompressed, bufSize(decompressed));
 
@@ -232,13 +232,6 @@ testRun(void)
         TEST_ERROR(gzError(Z_BUF_ERROR), AssertError, "zlib threw error: [-5] no space in buffer");
         TEST_ERROR(gzError(Z_VERSION_ERROR), FormatError, "zlib threw error: [-6] incompatible version");
         TEST_ERROR(gzError(999), AssertError, "zlib threw error: [999] unknown error");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("compressLevelDefault(), compressLevelMin(), and compressLevelMax()");
-
-        TEST_RESULT_INT(compressLevelDefault(compressTypeGz), 6, "level default");
-        TEST_RESULT_INT(compressLevelMin(compressTypeGz), -1, "level default");
-        TEST_RESULT_INT(compressLevelMax(compressTypeGz), 9, "level default");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("gzDecompressToLog() and gzCompressToLog()");
@@ -283,13 +276,6 @@ testRun(void)
         TEST_ERROR(bz2Error(-999), AssertError, "bz2 error: [-999] unknown error");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("compressLevelDefault(), compressLevelMin(), and compressLevelMax()");
-
-        TEST_RESULT_INT(compressLevelDefault(compressTypeBz2), 9, "level default");
-        TEST_RESULT_INT(compressLevelMin(compressTypeBz2), 1, "level default");
-        TEST_RESULT_INT(compressLevelMax(compressTypeBz2), 9, "level default");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("bz2DecompressToLog() and bz2CompressToLog()");
 
         char buffer[STACK_TRACE_PARAM_MAX];
@@ -321,13 +307,6 @@ testRun(void)
 
         TEST_RESULT_UINT(lz4Error(0), 0, "check success");
         TEST_ERROR(lz4Error((size_t)-2), FormatError, "lz4 error: [-2] ERROR_maxBlockSize_invalid");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("compressLevelDefault(), compressLevelMin(), and compressLevelMax()");
-
-        TEST_RESULT_INT(compressLevelDefault(compressTypeLz4), 1, "level default");
-        TEST_RESULT_INT(compressLevelMin(compressTypeLz4), -5, "level default");
-        TEST_RESULT_INT(compressLevelMax(compressTypeLz4), 12, "level default");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("lz4DecompressToLog() and lz4CompressToLog()");
@@ -364,13 +343,6 @@ testRun(void)
 
         TEST_RESULT_UINT(zstError(0), 0, "check success");
         TEST_ERROR(zstError((size_t)-12), FormatError, "zst error: [-12] Version not supported");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("compressLevelDefault(), compressLevelMin(), and compressLevelMax()");
-
-        TEST_RESULT_INT(compressLevelDefault(compressTypeZst), 3, "level default");
-        TEST_RESULT_INT(compressLevelMin(compressTypeZst), -7, "level default");
-        TEST_RESULT_INT(compressLevelMax(compressTypeZst), 22, "level default");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("zstDecompressToLog() and zstCompressToLog()");

@@ -107,9 +107,6 @@ typedef struct CfgParseOptionResult
 
 FN_EXTERN CfgParseOptionResult cfgParseOption(const String *const optionName, const CfgParseOptionParam param);
 
-// Default value for the option
-FN_EXTERN const String *cfgParseOptionDefault(ConfigCommand commandId, ConfigOption optionId);
-
 // Option name from id
 FN_EXTERN const char *cfgParseOptionName(ConfigOption optionId);
 
@@ -124,9 +121,6 @@ FN_EXTERN ConfigOptionType cfgParseOptionType(ConfigOption optionId);
 
 // Get the underlying data type for an option
 FN_EXTERN ConfigOptionDataType cfgParseOptionDataType(ConfigOption optionId);
-
-// Is the option required?
-FN_EXTERN bool cfgParseOptionRequired(ConfigCommand commandId, ConfigOption optionId);
 
 // Get list of stanzas in the configuration
 FN_EXTERN StringList *cfgParseStanzaList(void);

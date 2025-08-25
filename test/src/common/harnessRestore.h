@@ -1,18 +1,13 @@
 /***********************************************************************************************************************************
-CRC-32 Calculation
-
-CRC-32 and CRC-32C calculations required to validate the integrity of pg_control.
+Harness for Restore Testing
 ***********************************************************************************************************************************/
-#ifndef POSTGRES_INTERFACE_CRC32_H
-#define POSTGRES_INTERFACE_CRC32_H
-
-#include <inttypes.h>
-#include <stddef.h>
+#ifndef TEST_COMMON_HARNESS_RESTORE_H
+#define TEST_COMMON_HARNESS_RESTORE_H
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Generate CRC-32C checksum
-FN_EXTERN uint32_t crc32cOne(const uint8_t *data, size_t size);
+// Restore the database from the test backup and handle all the required locking. The restore configuration must already be loaded.
+void hrnCmdRestore(void);
 
 #endif

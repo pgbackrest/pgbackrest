@@ -13,7 +13,7 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("base64"))
     {
-        const unsigned char *encode = (const unsigned char *)"string_to_encode\r\n";
+        const uint8_t *encode = (const uint8_t *)"string_to_encode\r\n";
         char destinationEncode[256];
 
         TEST_RESULT_UINT(encodeToStrSize(encodingBase64, 0), 0, "check zero size");
@@ -45,7 +45,7 @@ testRun(void)
             encodeToStrSize(encodingBase64, strlen((const char *)encode) + 1), strlen(destinationEncode), "check size");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        unsigned char destinationDecode[256];
+        uint8_t destinationDecode[256];
 
         memset(destinationDecode, 0xFF, sizeof(destinationDecode));
         const char *decode = "c3RyaW5nX3RvX2VuY29kZQ0KAA==";
@@ -107,7 +107,7 @@ testRun(void)
     {
         TEST_TITLE("encode");
 
-        const unsigned char *encode = (const unsigned char *)"string_to_encode\r\n";
+        const uint8_t *encode = (const uint8_t *)"string_to_encode\r\n";
         char destinationEncode[256];
 
         TEST_RESULT_UINT(encodeToStrSize(encodingBase64Url, 0), 0, "check zero size");
@@ -141,7 +141,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("decode unsupported");
 
-        unsigned char destinationDecode[256];
+        uint8_t destinationDecode[256];
 
         TEST_ERROR(decodeToBinSize(encodingBase64Url, "c3"), AssertError, "unsupported");
         TEST_ERROR(decodeToBin(encodingBase64Url, "c3", destinationDecode), AssertError, "unsupported");
@@ -152,7 +152,7 @@ testRun(void)
     {
         TEST_TITLE("encode");
 
-        const unsigned char *encode = (const unsigned char *)"string_to_encode\r\n";
+        const uint8_t *encode = (const uint8_t *)"string_to_encode\r\n";
         char destinationEncode[513];
 
         encodeToStr(encodingHex, encode, 1, destinationEncode);
@@ -170,7 +170,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("decode");
 
-        unsigned char destinationDecode[256];
+        uint8_t destinationDecode[256];
 
         memset(destinationDecode, 0xFF, sizeof(destinationDecode));
         const char *decode = "737472696e675f746f5f656e636f64650d0a00";
@@ -192,10 +192,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("decode/encode all values");
 
-        unsigned char decodedAll[256];
+        uint8_t decodedAll[256];
 
         for (unsigned int decodeIdx = 0; decodeIdx < sizeof(decodedAll); decodeIdx++)
-            decodedAll[decodeIdx] = (unsigned char)decodeIdx;
+            decodedAll[decodeIdx] = (uint8_t)decodeIdx;
 
         encodeToStr(encodingHex, decodedAll, sizeof(decodedAll), destinationEncode);
         TEST_RESULT_UINT(strlen(destinationEncode), 512, "all values encoded size");

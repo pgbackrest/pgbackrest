@@ -218,7 +218,7 @@ protocolLocalExec(
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
-            helper->exec = execNew(cfgExe(), param, name, cfgOptionUInt64(cfgOptProtocolTimeout));
+            helper->exec = execNew(cfgBin(), param, name, cfgOptionUInt64(cfgOptProtocolTimeout));
         }
         MEM_CONTEXT_PRIOR_END();
 
@@ -409,7 +409,7 @@ protocolServer(IoServer *const tlsServer, IoSession *const socketSession)
 
                 // Load parameter list from the client
                 StringList *const paramList = pckReadStrLstP(pckReadNew(command.param));
-                strLstInsert(paramList, 0, cfgExe());
+                strLstInsert(paramList, 0, cfgBin());
                 cfgLoad(strLstSize(paramList), strLstPtr(paramList));
 
                 // Error if the client is not authorized for the requested stanza
@@ -526,15 +526,8 @@ protocolRemoteParam(const ProtocolStorageType protocolStorageType, const unsigne
             {
                 ASSERT(cfgOptionGroupId(optionId) == cfgOptGrpPg);
 
-                // Remove unrequired/defaulted pg options when the remote type is repo since they won't be used
-                if (protocolStorageType == protocolStorageTypeRepo)
-                {
-                    remove =
-                        !cfgParseOptionRequired(cfgCommand(), optionId) ||
-                        cfgParseOptionDefault(cfgCommand(), optionId) != NULL;
-                }
                 // Move pg options to host index 0 (key 1) so they will be in the default index on the remote host
-                else
+                if (protocolStorageType != protocolStorageTypeRepo)
                 {
                     if (hostIdx != 0)
                     {

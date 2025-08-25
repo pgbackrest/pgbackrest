@@ -181,9 +181,7 @@ httpRequestProcess(HttpRequest *const this, const bool waitForResponse, const bo
                     {
                         result = httpResponseNew(session, httpRequestVerb(this), contentCache);
 
-                        // Retry when response code is 5xx. These errors generally represent a server error for a request that looks
-                        // valid. There are a few errors that might be permanently fatal but they are rare and it seems best not to
-                        // try and pick and choose errors in this class to retry.
+                        // Error on response codes that should be retried to engage the retry logic
                         if (httpResponseCodeRetry(result))
                             THROW_FMT(ServiceError, "[%u] %s", httpResponseCode(result), strZ(httpResponseReason(result)));
 
@@ -413,7 +411,7 @@ httpRequestMultiAdd(
                     THROW(AssertError, "unable to construct unique boundary");
 
                 bufCatC(
-                    this->boundaryRaw, (const unsigned char *)HTTP_MULTIPART_BOUNDARY_EXTRA,
+                    this->boundaryRaw, (const uint8_t *)HTTP_MULTIPART_BOUNDARY_EXTRA,
                     bufUsed(this->boundaryRaw) - HTTP_MULTIPART_BOUNDARY_INIT_SIZE, HTTP_MULTIPART_BOUNDARY_NEXT);
             }
 

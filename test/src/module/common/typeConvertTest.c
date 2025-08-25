@@ -34,20 +34,74 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("cvtDoubleToZ()"))
+    if (testBegin("cvtDivToZ()"))
     {
-        char buffer[STACK_TRACE_PARAM_MAX];
+        char buffer[CVT_DIV_BUFFER_SIZE];
 
-        TEST_ERROR(cvtDoubleToZ(999.1234, buffer, 4), AssertError, "buffer overflow");
+        TEST_ERROR(cvtDivToZ(100, 2, 0, false, buffer, 2), AssertError, "buffer overflow");
+        TEST_ERROR(cvtDivToZ(999999, 100, 1, false, buffer, 7), AssertError, "buffer overflow");
+        TEST_ERROR(cvtDivToZ(UINT64_MAX / 100, 100, 2, false, buffer, 19), AssertError, "buffer overflow");
 
-        TEST_RESULT_UINT(cvtDoubleToZ(999.1234, buffer, STACK_TRACE_PARAM_MAX), 8, "convert double to string");
-        TEST_RESULT_Z(buffer, "999.1234", "    check buffer");
+        TEST_RESULT_UINT(cvtDivToZ(100, 2, 0, false, buffer, sizeof(buffer)), 2, "no precision");
+        TEST_RESULT_Z(buffer, "50", "    check buffer");
 
-        TEST_RESULT_UINT(cvtDoubleToZ(999999999.123456, buffer, STACK_TRACE_PARAM_MAX), 16, "convert double to string");
-        TEST_RESULT_Z(buffer, "999999999.123456", "    check buffer");
+        TEST_RESULT_UINT(cvtDivToZ(100, 2, 3, false, buffer, sizeof(buffer)), 6, "all zero precision");
+        TEST_RESULT_Z(buffer, "50.000", "    check buffer");
 
-        TEST_RESULT_UINT(cvtDoubleToZ(999.0, buffer, STACK_TRACE_PARAM_MAX), 3, "convert double to string");
-        TEST_RESULT_Z(buffer, "999", "    check buffer");
+        TEST_RESULT_UINT(cvtDivToZ(100, 2, 3, true, buffer, sizeof(buffer)), 2, "all zero precision trimmed");
+        TEST_RESULT_Z(buffer, "50", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(110, 100, 2, true, buffer, sizeof(buffer)), 3, "precision trimmed");
+        TEST_RESULT_Z(buffer, "1.1", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(5, 4, 1, true, buffer, sizeof(buffer)), 3, "precision rounded");
+        TEST_RESULT_Z(buffer, "1.3", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(5, 4, 3, true, buffer, sizeof(buffer)), 4, "precision exact");
+        TEST_RESULT_Z(buffer, "1.25", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(100, 3, 3, false, buffer, sizeof(buffer)), 6, "precision rounded");
+        TEST_RESULT_Z(buffer, "33.333", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(UINT64_MAX, 3, 0, false, buffer, sizeof(buffer)), 19, "no rounding for max allowed");
+        TEST_RESULT_Z(buffer, "6148914691236517205", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(1999, 10, 0, false, buffer, sizeof(buffer)), 3, "round up");
+        TEST_RESULT_Z(buffer, "200", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(999999, 100, 1, false, buffer, sizeof(buffer)), 7, "round up");
+        TEST_RESULT_Z(buffer, "10000.0", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(9199, 10, 0, false, buffer, sizeof(buffer)), 3, "partial round up");
+        TEST_RESULT_Z(buffer, "920", "    check buffer");
+
+        TEST_RESULT_UINT(cvtDivToZ(5555, 100, 1, false, buffer, sizeof(buffer)), 4, "partial round up");
+        TEST_RESULT_Z(buffer, "55.6", "    check buffer");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("cvtPctToZ()"))
+    {
+        char buffer[CVT_PCT_BUFFER_SIZE];
+
+        TEST_ERROR(cvtPctToZ(2, 100, buffer, 2), AssertError, "buffer overflow");
+        TEST_ERROR(cvtPctToZ(100, 100, buffer, 2), AssertError, "buffer overflow");
+        TEST_ERROR(cvtPctToZ(2, 100, buffer, 5), AssertError, "buffer overflow");
+
+        TEST_RESULT_UINT(cvtPctToZ(467, 467, buffer, sizeof(buffer)), 7, "100%");
+        TEST_RESULT_Z(buffer, "100.00%", "    check buffer");
+
+        TEST_RESULT_UINT(cvtPctToZ(111, 10000, buffer, sizeof(buffer)), 5, "100%");
+        TEST_RESULT_Z(buffer, "1.11%", "    check buffer");
+
+        TEST_RESULT_UINT(cvtPctToZ(2, 3, buffer, sizeof(buffer)), 6, "66.67%");
+        TEST_RESULT_Z(buffer, "66.67%", "    check buffer");
+
+        TEST_RESULT_UINT(cvtPctToZ(1, 10000, buffer, sizeof(buffer)), 5, "0.01%");
+        TEST_RESULT_Z(buffer, "0.01%", "    check buffer");
+
+        TEST_RESULT_UINT(cvtPctToZ(0, 1, buffer, sizeof(buffer)), 5, "0.00%");
+        TEST_RESULT_Z(buffer, "0.00%", "    check buffer");
     }
 
     // *****************************************************************************************************************************
@@ -127,12 +181,12 @@ testRun(void)
         hrnTzSet("America/New_York");
 
         TEST_ERROR(cvtTimeToZP("%s", 9999, buffer, 4), AssertError, "buffer overflow");
+        TEST_ERROR(
+            cvtTimeToZP("%s", 9999, buffer, sizeof(buffer), .utc = true), AssertError,
+            "assertion '!param.utc || strstr(format, \"%s\") == NULL' failed");
 
         TEST_RESULT_UINT(cvtTimeToZP("%s", 1573222014, buffer, STACK_TRACE_PARAM_MAX), 10, "local epoch");
         TEST_RESULT_Z(buffer, "1573222014", "    check buffer");
-
-        TEST_RESULT_UINT(cvtTimeToZP("%s", 1573222014, buffer, STACK_TRACE_PARAM_MAX, .utc = true), 10, "utc epoch");
-        TEST_RESULT_Z(buffer, "1573240014", "    check buffer");
 
         TEST_RESULT_UINT(cvtTimeToZP("%Y%m%d-%H%M%S", 1715930051, buffer, STACK_TRACE_PARAM_MAX), 15, "local string");
         TEST_RESULT_Z(buffer, "20240517-031411", "    check buffer");

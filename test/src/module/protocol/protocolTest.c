@@ -340,9 +340,11 @@ testRun(void)
 
         TEST_RESULT_VOID(protocolHelperClientFree(&protocolHelperClient), "free");
 
+        hrnLogReplaceAdd(" \\[10\\] No child process(es){0,1}", "process(es){0,1}", "processes", false);
+
         TEST_RESULT_LOG(
             "P00   WARN: unable to write to invalid: [9] Bad file descriptor\n"
-            "P00   WARN: unable to wait on child process: [10] No child processes");
+            "P00   WARN: unable to wait on child process: [10] No child [processes]");
     }
 
     // *****************************************************************************************************************************
@@ -412,7 +414,6 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawBool(argList, cfgOptLogSubprocess, true);
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/unused");            // Will be passed to remote (required)
-        hrnCfgArgRawZ(argList, cfgOptPgPort, "777");                // Not passed to remote (required but has default)
         hrnCfgArgRawZ(argList, cfgOptRepoHost, "repo-host");
         hrnCfgArgRawZ(argList, cfgOptRepoHostPort, "444");
         hrnCfgArgRawZ(argList, cfgOptRepoHostConfig, "/path/pgbackrest.conf");

@@ -229,7 +229,7 @@ hrnComplete(void)
 
 /**********************************************************************************************************************************/
 void
-hrnFileRead(const char *fileName, unsigned char *buffer, size_t bufferSize)
+hrnFileRead(const char *fileName, uint8_t *buffer, size_t bufferSize)
 {
     int result = open(fileName, O_RDONLY, 0660);
 
@@ -256,7 +256,7 @@ hrnFileRead(const char *fileName, unsigned char *buffer, size_t bufferSize)
 
 /**********************************************************************************************************************************/
 void
-hrnFileWrite(const char *fileName, const unsigned char *buffer, size_t bufferSize)
+hrnFileWrite(const char *fileName, const uint8_t *buffer, size_t bufferSize)
 {
     int result = open(fileName, O_WRONLY | O_CREAT | O_TRUNC, 0660);
 
@@ -293,12 +293,12 @@ hrnDiff(const char *expected, const char *actual)
     // Write expected file
     char expectedFile[1024];
     snprintf(expectedFile, sizeof(expectedFile), "%s/diff.expected", hrnPath());
-    hrnFileWrite(expectedFile, (const unsigned char *)expected, strlen(expected));
+    hrnFileWrite(expectedFile, (const uint8_t *)expected, strlen(expected));
 
     // Write actual file
     char actualFile[1024];
     snprintf(actualFile, sizeof(actualFile), "%s/diff.actual", hrnPath());
-    hrnFileWrite(actualFile, (const unsigned char *)actual, strlen(actual));
+    hrnFileWrite(actualFile, (const uint8_t *)actual, strlen(actual));
 
     // Perform diff
     char command[2560];
@@ -314,7 +314,7 @@ hrnDiff(const char *expected, const char *actual)
     // Read result
     char resultFile[1024];
     snprintf(resultFile, sizeof(resultFile), "%s/diff.result", hrnPath());
-    hrnFileRead(resultFile, (unsigned char *)harnessDiffBuffer, sizeof(harnessDiffBuffer));
+    hrnFileRead(resultFile, (uint8_t *)harnessDiffBuffer, sizeof(harnessDiffBuffer));
 
     // Remove last linefeed from diff output
     harnessDiffBuffer[strlen(harnessDiffBuffer) - 1] = 0;

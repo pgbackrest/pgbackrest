@@ -200,11 +200,6 @@ FN_EXTERN size_t typeToLog(const char *typeName, char *buffer, size_t bufferSize
 #define FUNCTION_LOG_CHARPY_FORMAT(value, buffer, bufferSize)                                                                      \
     ptrToLog(value, "char *[]", buffer, bufferSize)
 
-#define FUNCTION_LOG_DOUBLE_TYPE                                                                                                   \
-    double
-#define FUNCTION_LOG_DOUBLE_FORMAT(value, buffer, bufferSize)                                                                      \
-    cvtDoubleToZ(value, buffer, bufferSize)
-
 #define FUNCTION_LOG_INT_TYPE                                                                                                      \
     int
 #define FUNCTION_LOG_INT_FORMAT(value, buffer, bufferSize)                                                                         \
@@ -233,10 +228,10 @@ FN_EXTERN size_t typeToLog(const char *typeName, char *buffer, size_t bufferSize
 #define FUNCTION_LOG_TIMEMSEC_FORMAT(value, buffer, bufferSize)                                                                    \
     cvtUInt64ToZ(value, buffer, bufferSize)
 
-#define FUNCTION_LOG_UCHARDATA_TYPE                                                                                                \
-    unsigned char
-#define FUNCTION_LOG_UCHARDATA_FORMAT(value, buffer, bufferSize)                                                                   \
-    typeToLog("(unsigned char)", buffer, bufferSize)
+#define FUNCTION_LOG_BYTEDATA_TYPE                                                                                                 \
+    uint8_t
+#define FUNCTION_LOG_BYTEDATA_FORMAT(value, buffer, bufferSize)                                                                    \
+    typeToLog("(uint8_t)", buffer, bufferSize)
 
 #define FUNCTION_LOG_SIZE_TYPE                                                                                                     \
     size_t

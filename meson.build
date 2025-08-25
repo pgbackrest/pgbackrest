@@ -4,7 +4,7 @@
 project(
     'pgbackrest',
     ['c'],
-    version: '2.55.0',
+    version: '2.57.0dev',
     license: 'MIT',
     meson_version: '>=0.47',
     default_options: [
@@ -204,6 +204,15 @@ if lib_zstd.found()
     configuration.set('HAVE_LIBZST', true, description: 'Is libzstd present?')
 endif
 
+# Suppress -Wsign-conversion for C libraries (e.g. musl) that do no accept int without warning for FD_*() macros
+if not cc.compiles(
+        '''#include <sys/select.h>
+        int main(int arg, char **argv) {int fd = 1; fd_set s; FD_ZERO(&s); FD_SET(fd, &s); FD_ISSET(fd, &s);}''',
+        args: ['-Wsign-conversion', '-Werror'])
+    message('Disabling -Wsign-conversion because int is not accepted without warning by FD_*() macros')
+    add_project_arguments(cc.get_supported_arguments('-Wno-sign-conversion'), language: 'c')
+endif
+
 # Check if the C compiler supports _Static_assert()
 if cc.compiles('''int main(int arg, char **argv) {({ _Static_assert(1, "foo");});} ''')
   configuration.set('HAVE_STATIC_ASSERT', true, description: 'Does the compiler provide _Static_assert()?')
@@ -237,6 +246,18 @@ configuration.set(
     'FN_STRFTIME(fmt)', '__attribute__((format(strftime, fmt, 0)))',
     description: 'Indicate that a function is formatted like strftime (and provide format position)'
 )
+
+# Set VR_NON_STRING macro
+if cc.compiles(
+        '''int main(int arg, char **argv) {__attribute__((nonstring)) static char test[3] = "ABC";}''',
+        args: ['-Wextra', '-Werror'])
+    configuration.set(
+        'VR_NON_STRING', '__attribute__((nonstring))',
+        description: 'Indicate that the char array is intentionally not NULL terminated')
+else
+    configuration.set(
+        'VR_NON_STRING', '', description: 'Indicate that the char array is intentionally not NULL terminated')
+endif
 
 ####################################################################################################################################
 # Include subdirs
