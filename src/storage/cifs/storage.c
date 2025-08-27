@@ -24,5 +24,5 @@ storageCifsNew(
     FUNCTION_LOG_END();
 
     FUNCTION_LOG_RETURN(
-        STORAGE, storagePosixNewInternal(STORAGE_CIFS_TYPE, path, modeFile, modePath, write, pathExpressionFunction, false));
+        STORAGE, storagePosixNewInternal(STORAGE_CIFS_TYPE, path, modeFile, modePath, write, pathExpressionFunction, false, false));
 }
