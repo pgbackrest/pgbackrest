@@ -1040,6 +1040,7 @@ unit:
           - command/verify/file
           - command/verify/protocol
           - command/verify/verify
+          - postgres/interface
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: local

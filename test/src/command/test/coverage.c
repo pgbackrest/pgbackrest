@@ -19,7 +19,7 @@ Object types
 typedef struct TestCoverageLine
 {
     unsigned int no;                                                // Line number
-    unsigned int hit;                                               // Total times line was hit
+    uint64_t hit;                                                   // Total times line was hit
     List *branchList;                                               // List of branches
 } TestCoverageLine;
 
@@ -28,7 +28,7 @@ typedef struct TestCoverageFunction
     String *name;                                                   // Function name
     unsigned int lineBegin;                                         // Beginning line of function
     unsigned int lineEnd;                                           // Beginning line of function
-    unsigned int hit;                                               // Total times function was hit
+    uint64_t hit;                                                   // Total times function was hit
 } TestCoverageFunction;
 
 typedef struct TestCoverageFile
@@ -172,7 +172,7 @@ testCvgMerge(const TestCoverage *const this, const String *const json, const Str
                                     }
                                     else if (strEqZ(key, "execution_count"))
                                     {
-                                        function.hit = jsonReadUInt(read);
+                                        function.hit = jsonReadUInt64(read);
                                     }
                                     else
                                         jsonReadSkip(read);
@@ -209,7 +209,7 @@ testCvgMerge(const TestCoverage *const this, const String *const json, const Str
 
                                         while (jsonReadUntil(read, jsonTypeArrayEnd))
                                         {
-                                            unsigned int branchHit = 0;
+                                            uint64_t branchHit = 0;
 
                                             jsonReadObjectBegin(read);
 
@@ -227,7 +227,7 @@ testCvgMerge(const TestCoverage *const this, const String *const json, const Str
                                                 const String *const key = jsonReadKey(read);
 
                                                 if (strEqZ(key, "count"))
-                                                    branchHit = jsonReadUInt(read);
+                                                    branchHit = jsonReadUInt64(read);
                                                 else
                                                     jsonReadSkip(read);
                                             }
@@ -239,7 +239,7 @@ testCvgMerge(const TestCoverage *const this, const String *const json, const Str
                                         jsonReadArrayEnd(read);
                                     }
                                     else if (strEqZ(key, "count"))
-                                        line.hit = jsonReadUInt(read);
+                                        line.hit = jsonReadUInt64(read);
                                     else if (strEqZ(key, "line_number"))
                                         line.no = jsonReadUInt(read);
                                     else

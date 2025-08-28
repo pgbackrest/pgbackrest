@@ -488,7 +488,7 @@ sub containerBuild
                 if (vmPgRepo($strVm))
                 {
                     $strScript .=
-                        "    echo \"deb http://apt.postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg main" .
+                        "    echo \"deb http://apt" . ($strVm eq VM_U20 ? '-archive' : '') . ".postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg main" .
                             "\" >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
                         "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
                         "    apt-get update && \\\n";

@@ -383,6 +383,15 @@
 
         # Install PGDG PostgreSQL repository
         RUN rpm -ivh https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-`uname -m`/pgdg-redhat-repo-latest.noarch.rpm
+        RUN printf "%s\n" \
+        "[pgdg12-archive]" \
+        "name=PostgreSQL 12 RPMs for RHEL/Rocky Linux/AlmaLinux 8" \
+        "baseurl=https://yum-archive.postgresql.org/12/redhat/rhel-8-x86_64" \
+        "enabled=1" \
+        "gpgcheck=1" \
+        "gpgkey=https://yum.postgresql.org/keys/PGDG-RPM-GPG-KEY-RHEL" > /etc/yum.repos.d/pgdg-12.repo
+
+
 
         # Disable default PostgreSQL repository
         RUN command -v dnf >/dev/null 2>&amp;1 &amp;&amp; dnf -qy module disable postgresql || true
