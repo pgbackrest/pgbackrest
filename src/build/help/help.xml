@@ -1272,6 +1272,18 @@
                         <example>n</example>
                     </config-key>
 
+                    <config-key id="repo-symlink" name="Repository Symlink">
+                        <summary>Create symlinks within the repository.</summary>
+
+                        <text>
+                            <p>Enable creation of the <file>lastest</file> and tablespace symlinks. These symlinks are most useful when using snapshots to do in-place recovery in the repository, which is an uncommon use case.</p>
+
+                            <p>While this feature is likely not useful for the vast majority of users it remains on by default for legacy purposes. However, it may be useful to disable symlinks for Posix-like storage that does not support them.</p>
+                        </text>
+
+                        <example>n</example>
+                    </config-key>
+
                     <config-key id="repo-target-time" name="Target Time for Repository">
                         <summary>Target time for repository.</summary>
 
