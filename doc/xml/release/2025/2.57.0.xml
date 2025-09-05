@@ -2,6 +2,18 @@
     <release-core-list>
         <release-bug-list>
             <release-item>
+                <github-issue id="2654"/>
+                <github-pull-request id="2662"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Unnest HTTP/TLS/socket timeouts.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2675"/>
 
                 <release-item-contributor-list>
