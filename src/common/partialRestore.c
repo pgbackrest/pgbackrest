@@ -79,12 +79,9 @@ buildFilterList(JsonRead *const json)
                     }
                     jsonReadObjectEnd(json);
 
-                    if (table.relNode == 0)
-                    {
-                        THROW(FormatError, "relfilenode field of table is missing");
-                    }
-
-                    lstAdd(dataBase.tables, &table);
+                    // In GPDB 7 and beyond, non-leaf partitions have a relfilenode equal to 0. Ignore them.
+                    if (table.relNode != 0)
+                        lstAdd(dataBase.tables, &table);
                 }
                 jsonReadArrayEnd(json);
 

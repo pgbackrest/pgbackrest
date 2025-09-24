@@ -53,6 +53,13 @@ testRun(void)
         "      {"
         "        \"tablespace\": 1600,"
         "        \"relfilenode\": 16386"
+        "      },"
+        "      {"
+        "        \"tablespace\": 1600,"
+        "        \"relfilenode\": 0"
+        "      },"
+        "      {"
+        "        \"tablespace\": 1600"
         "      }"
         "    ]"
         "  }"
@@ -104,10 +111,6 @@ testRun(void)
         TEST_TITLE("missing tables");
         json = jsonReadNew(STRDEF("[{\"dbOid\": 10}]"));
         TEST_ERROR(buildFilterList(json), FormatError, "tables field of table is missing");
-
-        TEST_TITLE("missing relfilenode");
-        json = jsonReadNew(STRDEF("[{\"dbOid\": 10, \"tables\": [{}]}]"));
-        TEST_ERROR(buildFilterList(json), FormatError, "relfilenode field of table is missing");
     }
 
     if (testBegin("The --filter option"))

@@ -22,7 +22,6 @@
             pg_inherits inh on inh.inhrelid = pgc.oid
         where pgc.relkind in ('r', 'p')
             and pgc.oid >= 16384
-            and inh.inhrelid is null
             and pgc.relname in ({});
         """.format(to_dump))
 

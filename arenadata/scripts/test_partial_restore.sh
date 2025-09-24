@@ -58,6 +58,8 @@ psql -c "create table t3 (a int, b int[128]) distributed by(a);" &
 # Add several checkpoints inside the transaction to test the pending delete records.
 psql -c "begin; create table t6 (a int, b int[128]) with (appendoptimized=true) distributed by(a); checkpoint; commit;" &
 psql -c "begin; create table t9 (a int, b int[128]) with (appendoptimized=true, orientation=column) distributed by(a); checkpoint; commit;" &
+psql -c "CREATE TABLE tp1 (a int, b int, c int) DISTRIBUTED BY (a) PARTITION BY LIST (a) SUBPARTITION BY LIST (b)
+  SUBPARTITION TEMPLATE ( SUBPARTITION prt1 VALUES (1)) (PARTITION ptr1 VALUES (1));" &
 wait
 psql -c "insert into t3 select a, (select * from random_array) from generate_series(1, 100000)a;" &
 psql -c "insert into t6 select a, (select * from random_array) from generate_series(1, 100000)a;" &
@@ -69,6 +71,7 @@ psql -c "insert into t4 select a, (select * from random_array) from generate_ser
 psql -c "insert into t5 select a, (select * from random_array) from generate_series(1, 100000)a;" &
 psql -c "insert into t7 select a, (select * from random_array) from generate_series(1, 100000)a;" &
 psql -c "insert into t8 select a, (select * from random_array) from generate_series(1, 100000)a;" &
+psql -c "insert into tp1 select 1, 1, a from generate_series(1, 100000)a;" &
 wait
 
 # Step 4
@@ -83,6 +86,7 @@ dump_table t4 pre &
 dump_table t6 pre &
 dump_table t7 pre &
 dump_table t9 pre &
+dump_table tp1 pre &
 wait
 
 psql -c "select * from gp_segment_configuration order by dbid" -o "$TEST_DIR/$TEST_NAME/gp_segment_conf_expected.out"
@@ -123,17 +127,21 @@ $(cat /home/gpadmin/pgbackrest/arenadata/scripts/helpers/partial_restore_helper.
 
 # Step 8
 # Dump metadata
-psql -Atc "select * from table_metadata_dump(\$\$'t1','t3','t4','t6','t7','t9'\$\$)" -o "$TEST_DIR/$TEST_NAME/filter_seg-1.json"
-psql -Atc "select table_metadata_dump(\$\$'t1','t3','t4','t6','t7','t9'\$\$) from gp_dist_random(\$\$gp_id\$\$) where gp_segment_id = 0;" -o "$TEST_DIR/$TEST_NAME/filter_seg0.json"
-psql -Atc "select table_metadata_dump(\$\$'t1','t3','t4','t6','t7','t9'\$\$) from gp_dist_random(\$\$gp_id\$\$) where gp_segment_id = 1;" -o "$TEST_DIR/$TEST_NAME/filter_seg1.json"
-psql -Atc "select table_metadata_dump(\$\$'t1','t3','t4','t6','t7','t9'\$\$) from gp_dist_random(\$\$gp_id\$\$) where gp_segment_id = 2;" -o "$TEST_DIR/$TEST_NAME/filter_seg2.json"
+psql -Atc "select * from table_metadata_dump(\$\$'t1','t3','t4','t6','t7','t9','tp1','tp1_1_prt_ptr1','tp1_1_prt_ptr1_2_prt_prt1'\$\$)" -o "$TEST_DIR/$TEST_NAME/filter_seg-1.json"
+psql -Atc "select table_metadata_dump(\$\$'t1','t3','t4','t6','t7','t9','tp1','tp1_1_prt_ptr1','tp1_1_prt_ptr1_2_prt_prt1'\$\$) from gp_dist_random(\$\$gp_id\$\$) where gp_segment_id = 0;" -o "$TEST_DIR/$TEST_NAME/filter_seg0.json"
+psql -Atc "select table_metadata_dump(\$\$'t1','t3','t4','t6','t7','t9','tp1','tp1_1_prt_ptr1','tp1_1_prt_ptr1_2_prt_prt1'\$\$) from gp_dist_random(\$\$gp_id\$\$) where gp_segment_id = 1;" -o "$TEST_DIR/$TEST_NAME/filter_seg1.json"
+psql -Atc "select table_metadata_dump(\$\$'t1','t3','t4','t6','t7','t9','tp1','tp1_1_prt_ptr1','tp1_1_prt_ptr1_2_prt_prt1'\$\$) from gp_dist_random(\$\$gp_id\$\$) where gp_segment_id = 2;" -o "$TEST_DIR/$TEST_NAME/filter_seg2.json"
+cat "$TEST_DIR/$TEST_NAME/filter_seg-1.json"
+cat "$TEST_DIR/$TEST_NAME/filter_seg0.json"
+cat "$TEST_DIR/$TEST_NAME/filter_seg1.json"
+cat "$TEST_DIR/$TEST_NAME/filter_seg2.json"
 
 # Step 9
 gpstop -a
 rm -rf "${MASTER:?}/"* "${PRIMARY1:?}/"* "${PRIMARY2:?}/"* "${PRIMARY3:?}/"*
 
 # Step 10
-# Restore only tables t1, t3, t4, t6, t7 and t9
+# Restore only tables t1, t3, t4, t6, t7, t9 and tp1
 for i in -1 0 1 2
 do
     pgbackrest --stanza=seg$i --type=name --target=backup1 $RESTORE_OPTIONS --filter="$(realpath "$TEST_DIR/$TEST_NAME/filter_seg$i.json")" restore &
@@ -160,6 +168,7 @@ dump_table t4 after &
 dump_table t6 after &
 dump_table t7 after &
 dump_table t9 after &
+dump_table tp1 after &
 wait
 
 # Step 11
@@ -170,6 +179,7 @@ diff "$TEST_DIR/$TEST_NAME/t4_pre.txt" "$TEST_DIR/$TEST_NAME/t4_after.txt"
 diff "$TEST_DIR/$TEST_NAME/t6_pre.txt" "$TEST_DIR/$TEST_NAME/t6_after.txt"
 diff "$TEST_DIR/$TEST_NAME/t7_pre.txt" "$TEST_DIR/$TEST_NAME/t7_after.txt"
 diff "$TEST_DIR/$TEST_NAME/t9_pre.txt" "$TEST_DIR/$TEST_NAME/t9_after.txt"
+diff "$TEST_DIR/$TEST_NAME/tp1_pre.txt" "$TEST_DIR/$TEST_NAME/tp1_after.txt"
 
 # Step 12
 gprecoverseg -aF
