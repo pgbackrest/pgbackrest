@@ -895,17 +895,17 @@ backupResumeFind(const Manifest *const manifest, const String *const cipherPassB
             {
                 const bool resume = cfgOptionBool(cfgOptResume) && cfgOptionStrId(cfgOptType) == backupTypeFull;
                 bool usable = false;
-                const String *reason = STRDEF("resume only valid for full backup");
+                const char *reason = "resume only valid for full backup";
                 Manifest *manifestResume = NULL;
 
                 if (cfgOptionStrId(cfgOptType) == backupTypeFull)
                 {
-                    reason = STRDEF("partially deleted by prior resume or invalid");
+                    reason = "partially deleted by prior resume or invalid";
 
                     // Resumable backups must have backup.manifest.copy
                     if (storageExistsP(storageRepo(), strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile))))
                     {
-                        reason = strNewZ("resume is disabled");
+                        reason = "resume is disabled";
 
                         // Attempt to read the manifest file in the resumable backup to see if it can be used. If any error at all
                         // occurs then the backup will be considered unusable and a resume will not be attempted.
@@ -918,7 +918,7 @@ backupResumeFind(const Manifest *const manifest, const String *const cipherPassB
                             }
                             CATCH_ANY()
                             {
-                                reason = strNewFmt("unable to read %s" INFO_COPY_EXT, strZ(manifestFile));
+                                reason = zNewFmt("unable to read %s" INFO_COPY_EXT, strZ(manifestFile));
                             }
                             TRY_END();
 
@@ -931,21 +931,21 @@ backupResumeFind(const Manifest *const manifest, const String *const cipherPassB
                                 // the cost.
                                 if (!strEq(manifestResumeData->backrestVersion, manifestData(manifest)->backrestVersion))
                                 {
-                                    reason = strNewFmt(
+                                    reason = zNewFmt(
                                         "new " PROJECT_NAME " version '%s' does not match resumable " PROJECT_NAME " version '%s'",
                                         strZ(manifestData(manifest)->backrestVersion), strZ(manifestResumeData->backrestVersion));
                                 }
                                 // Check backup type because new backup label must be the same type as resume backup label
                                 else if (manifestResumeData->backupType != cfgOptionStrId(cfgOptType))
                                 {
-                                    reason = strNewFmt(
+                                    reason = zNewFmt(
                                         "new backup type '%s' does not match resumable backup type '%s'",
                                         strZ(cfgOptionDisplay(cfgOptType)), strZ(strIdToStr(manifestResumeData->backupType)));
                                 }
                                 // Check prior backup label ??? Do we really care about the prior backup label?
                                 else if (!strEq(manifestResumeData->backupLabelPrior, manifestData(manifest)->backupLabelPrior))
                                 {
-                                    reason = strNewFmt(
+                                    reason = zNewFmt(
                                         "new prior backup label '%s' does not match resumable prior backup label '%s'",
                                         manifestResumeData->backupLabelPrior ?
                                             strZ(manifestResumeData->backupLabelPrior) : "<undef>",
@@ -957,7 +957,7 @@ backupResumeFind(const Manifest *const manifest, const String *const cipherPassB
                                     manifestResumeData->backupOptionCompressType !=
                                     compressTypeEnum(cfgOptionStrId(cfgOptCompressType)))
                                 {
-                                    reason = strNewFmt(
+                                    reason = zNewFmt(
                                         "new compression '%s' does not match resumable compression '%s'",
                                         strZ(cfgOptionDisplay(cfgOptCompressType)),
                                         strZ(compressTypeStr(manifestResumeData->backupOptionCompressType)));
@@ -978,8 +978,7 @@ backupResumeFind(const Manifest *const manifest, const String *const cipherPassB
                 else
                 {
                     LOG_FMT(
-                        resume ? logLevelWarn : logLevelInfo, 0, "backup '%s' cannot be resumed: %s", strZ(backupLabel),
-                        strZ(reason));
+                        resume ? logLevelWarn : logLevelInfo, 0, "backup '%s' cannot be resumed: %s", strZ(backupLabel), reason);
 
                     storagePathRemoveP(
                         storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabel)), .recurse = true);
