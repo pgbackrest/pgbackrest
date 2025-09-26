@@ -526,9 +526,7 @@ sub containerBuild
                 {
                     $strScript .=
                         "    apt-get install -y --no-install-recommends postgresql-common && \\\n" .
-                        "    /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y" .
-                            ($strOS eq VM_U22 && ($strArch eq VM_ARCH_AARCH64 || $strArch eq VM_ARCH_X86_64) ? ' -c 18' : '') .
-                            " && \\\n";
+                        "    /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y && \\\n";
                 }
 
                 $strScript .=
