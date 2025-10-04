@@ -91,6 +91,9 @@ jobs:
     runs-on: ubuntu-24.04
 
     strategy:
+      # Let all the jobs run to completion even if one fails
+      fail-fast: false
+
       matrix:
         include:
           - arch: 'ppc64le'
