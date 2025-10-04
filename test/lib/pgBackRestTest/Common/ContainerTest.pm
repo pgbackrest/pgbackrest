@@ -396,9 +396,7 @@ sub containerBuild
 
         # Base image
         ###########################################################################################################################
-        my $strImageParent =
-            (defined($strArch) ? "${strArch}/" : (vmArch($strOS) eq VM_ARCH_X86_64 ? '' : vmArch($strOS) . '/')) .
-            "$$oVm{$strOS}{&VM_IMAGE}";
+        my $strImageParent = $oVm->{$strOS}{&VM_IMAGE};
         $strArch = defined($strArch) ? $strArch : hostArch();
         my $strImage = "${strOS}-base" . (defined($strArch) ? "-${strArch}" : '-' . hostArch());
         my $strCopy = undef;
