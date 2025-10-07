@@ -100,7 +100,7 @@
                     <release-item-reviewer id="stefan.fercot"/>
                 </release-item-contributor-list>
 
-                <p><proper>PostgreSQL</proper> 18 experimental support.</p>
+                <p><proper>PostgreSQL</proper> 18 support.</p>
             </release-item>
 
             <release-item>
