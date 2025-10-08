@@ -18,6 +18,7 @@ typedef struct StoragePosixNewParam
 {
     VAR_PARAM_HEADER;
     bool write;
+    bool noSymLink;                                                 // Do not create symlinks on this storage
     mode_t modeFile;
     mode_t modePath;
     StoragePathExpressionCallback *pathExpressionFunction;
