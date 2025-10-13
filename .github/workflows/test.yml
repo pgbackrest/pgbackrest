@@ -71,6 +71,19 @@ jobs:
         run: |
           cat ${GITHUB_WORKSPACE?}/pgbackrest/test/result/coverage/coverage.html
 
+  # Unit tests on aarch64 with valgrind
+  aarch64:
+    runs-on: ubuntu-22.04-arm
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          path: pgbackrest
+
+      - name: Run Test
+        run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl test --vm=u22 --param=c-only --param=no-coverage --param=no-back-trace --param=build-max=2
+
   # Basic tests on other architectures using emulation. The emulation is so slow that running all the unit tests would be too
   # expensive, but this at least shows that the build works and some of the more complex tests run. In particular, it is good to
   # test on one big-endian architecture to be sure that checksums are correct.
@@ -78,6 +91,9 @@ jobs:
     runs-on: ubuntu-24.04
 
     strategy:
+      # Let all the jobs run to completion even if one fails
+      fail-fast: false
+
       matrix:
         include:
           - arch: 'ppc64le'

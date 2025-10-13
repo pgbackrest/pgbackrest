@@ -1705,7 +1705,7 @@ testRun(void)
         {
             manifest = manifestNewInternal();
             manifest->pub.data.backupType = backupTypeFull;
-            manifest->pub.data.backrestVersion = STRDEF("BOGUS");
+            manifest->pub.data.backrestVersion = strNewZ("BOGUS");
         }
         OBJ_NEW_END();
 

@@ -396,9 +396,7 @@ sub containerBuild
 
         # Base image
         ###########################################################################################################################
-        my $strImageParent =
-            (defined($strArch) ? "${strArch}/" : (vmArch($strOS) eq VM_ARCH_X86_64 ? '' : vmArch($strOS) . '/')) .
-            "$$oVm{$strOS}{&VM_IMAGE}";
+        my $strImageParent = $oVm->{$strOS}{&VM_IMAGE};
         $strArch = defined($strArch) ? $strArch : hostArch();
         my $strImage = "${strOS}-base" . (defined($strArch) ? "-${strArch}" : '-' . hostArch());
         my $strCopy = undef;
@@ -526,9 +524,7 @@ sub containerBuild
                 {
                     $strScript .=
                         "    apt-get install -y --no-install-recommends postgresql-common && \\\n" .
-                        "    /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y" .
-                            ($strOS eq VM_U22 && ($strArch eq VM_ARCH_AARCH64 || $strArch eq VM_ARCH_X86_64) ? ' -c 18' : '') .
-                            " && \\\n";
+                        "    /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y && \\\n";
                 }
 
                 $strScript .=

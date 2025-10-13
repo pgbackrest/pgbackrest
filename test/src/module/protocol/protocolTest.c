@@ -21,7 +21,7 @@ Test protocol server command handlers
 ***********************************************************************************************************************************/
 #define TEST_PROTOCOL_COMMAND_ASSERT                                STRID5("assert", 0x2922ce610)
 
-__attribute__((__noreturn__)) static ProtocolServerResult *
+FN_NO_RETURN static ProtocolServerResult *
 testCommandAssertProtocol(PackRead *const param)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -39,7 +39,7 @@ testCommandAssertProtocol(PackRead *const param)
 
 static unsigned int testCommandErrorProtocolTotal = 0;
 
-__attribute__((__noreturn__)) static ProtocolServerResult *
+FN_NO_RETURN static ProtocolServerResult *
 testCommandErrorProtocol(PackRead *const param)
 {
     FUNCTION_HARNESS_BEGIN();
