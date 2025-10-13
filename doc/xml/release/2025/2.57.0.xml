@@ -25,6 +25,21 @@
             </release-item>
         </release-bug-list>
 
+        <release-feature-list>
+            <release-item>
+                <github-issue id="2673"/>
+                <github-pull-request id="2674"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="ron.johnson"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Add <setting>repo-symlink</setting> option to suppress creation of repository symlinks.</p>
+            </release-item>
+        </release-feature-list>
+
         <release-improvement-list>
             <release-item>
                 <github-pull-request id="2661"/>
