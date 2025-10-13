@@ -391,7 +391,8 @@ storageRepoGet(const unsigned int repoIdx, const bool write)
             CHECK(AssertError, type == STORAGE_POSIX_TYPE, "invalid storage type");
 
             result = storagePosixNewP(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), .write = write, .pathExpressionFunction = storageRepoPathExpression);
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), .write = write, .pathExpressionFunction = storageRepoPathExpression,
+                .noSymLink = cfgOptionValid(cfgOptRepoSymlink) ? !cfgOptionIdxBool(cfgOptRepoSymlink, repoIdx) : true);
         }
     }
 
