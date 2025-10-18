@@ -1,5 +1,10 @@
 [
     {
+        "commit": "d9773a31c97077761ee8e7d06e073b0b0734e26f",
+        "date": "2025-10-18 11:07:36 +0200",
+        "subject": "v2.57.0: Suppress Repository Symlinks"
+    },
+    {
         "commit": "bfd97907311a25ed239798691cff52cf73acdb83",
         "date": "2025-10-13 11:20:18 +0200",
         "subject": "Add repo-symlink option to suppress creation of repository symlinks.",

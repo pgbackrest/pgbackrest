@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE doc SYSTEM "doc.dtd" [
+    <!ENTITY v2.58.0 SYSTEM "release/2026/2.58.0.xml">
     <!ENTITY v2.57.0 SYSTEM "release/2025/2.57.0.xml">
     <!ENTITY v2.56.0 SYSTEM "release/2025/2.56.0.xml">
     <!ENTITY v2.55.1 SYSTEM "release/2025/2.55.1.xml">
@@ -133,6 +134,7 @@
     </intro>
 
     <release-list>
+        &v2.58.0;
         &v2.57.0;
         &v2.56.0;
         &v2.55.1;
