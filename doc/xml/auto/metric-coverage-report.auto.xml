@@ -231,9 +231,9 @@
 
 <table-row>
     <table-cell>common/io/http</table-cell>
-    <table-cell>57/57 (100.00%)</table-cell>
-    <table-cell>274/274 (100.00%)</table-cell>
-    <table-cell>670/670 (100.00%)</table-cell>
+    <table-cell>58/58 (100.00%)</table-cell>
+    <table-cell>282/282 (100.00%)</table-cell>
+    <table-cell>677/677 (100.00%)</table-cell>
 </table-row>
 
 <table-row>
@@ -302,7 +302,7 @@
 <table-row>
     <table-cell>storage</table-cell>
     <table-cell>61/61 (100.00%)</table-cell>
-    <table-cell>260/260 (100.00%)</table-cell>
+    <table-cell>262/262 (100.00%)</table-cell>
     <table-cell>678/678 (100.00%)</table-cell>
 </table-row>
 
@@ -331,7 +331,7 @@
     <table-cell>storage/posix</table-cell>
     <table-cell>28/28 (100.00%)</table-cell>
     <table-cell>167/168 (99.40%)</table-cell>
-    <table-cell>324/324 (100.00%)</table-cell>
+    <table-cell>325/325 (100.00%)</table-cell>
 </table-row>
 
 <table-row>
@@ -351,13 +351,13 @@
 <table-row>
     <table-cell>storage/sftp</table-cell>
     <table-cell>32/32 (100.00%)</table-cell>
-    <table-cell>404/404 (100.00%)</table-cell>
+    <table-cell>400/400 (100.00%)</table-cell>
     <table-cell>712/712 (100.00%)</table-cell>
 </table-row>
 
 <table-row>
     <table-cell>TOTAL</table-cell>
-    <table-cell>1699/1699 (100.00%)</table-cell>
-    <table-cell>10902/10904 (99.98%)</table-cell>
-    <table-cell>25565/25565 (100.00%)</table-cell>
+    <table-cell>1700/1700 (100.00%)</table-cell>
+    <table-cell>10908/10910 (99.98%)</table-cell>
+    <table-cell>25573/25573 (100.00%)</table-cell>
 </table-row>

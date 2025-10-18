@@ -1,5 +1,108 @@
 [
     {
+        "commit": "bfd97907311a25ed239798691cff52cf73acdb83",
+        "date": "2025-10-13 11:20:18 +0200",
+        "subject": "Add repo-symlink option to suppress creation of repository symlinks.",
+        "body": "Some otherwise Posix-compatible filesystems do not support symlinks. To support this allow symlinks to be disabled."
+    },
+    {
+        "commit": "4767f16214073f251c794113378f2c7b927eca02",
+        "date": "2025-10-07 18:36:36 +0200",
+        "subject": "Update release note for PostgreSQL 18 experimental support.",
+        "body": "Nothing changed in PostgreSQL before 18.0 so the support is no longer experimental."
+    },
+    {
+        "commit": "b8ed84f7543e9b278c4fea58df9b6998a3c91eb3",
+        "date": "2025-10-05 12:42:42 +0200",
+        "subject": "Remove no longer used GLUE() macro."
+    },
+    {
+        "commit": "b4e3d213635b0078447dd6814f3e32474d0c41db",
+        "date": "2025-10-05 12:32:06 +0200",
+        "subject": "Use FN_NO_RETURN macro consistently in tests.",
+        "body": "These cases were either missed in 0dabf88e or added afterwards."
+    },
+    {
+        "commit": "a451ed22f49fe0a5bb730c3d7e08585cf14dafe0",
+        "date": "2025-10-04 13:49:54 +0200",
+        "subject": "Allow multi-architecture tests to continue if one fails."
+    },
+    {
+        "commit": "24802a08b4a306becb6792f26c9cd8601b57ae5b",
+        "date": "2025-10-04 13:34:53 +0200",
+        "subject": "Improve support for multi-architecture builds.",
+        "body": "On recent versions of Docker it is not necessary to specify the architecture of the require image. The --platform option takes care of it.\n\nRebuild test images that were modified by this change."
+    },
+    {
+        "commit": "96b4b474ce11f7c624a734f662d2399d5b30f800",
+        "date": "2025-10-04 11:49:38 +0200",
+        "subject": "Move aarch64 test to Github Actions.",
+        "body": "This test was removed in c64cd8e0 because it was taking too long to be scheduled, which held up testing.\n\nNow that Github Actions supports aarch64 move the test there."
+    },
+    {
+        "commit": "5f55f7c1b1c025d3b20478e5a130dc04291d8a4c",
+        "date": "2025-09-26 11:10:53 +0200",
+        "subject": "Finalize catalog number for PostgreSQL 18 release."
+    },
+    {
+        "commit": "c1c40a4a851efe98be83aca2044c02fd1c7fb2ae",
+        "date": "2025-09-26 09:21:50 +0200",
+        "subject": "Fix possible segfault in backup resume messages.",
+        "body": "Similar to adc5e5b23, STRDEF assignment to reason can be out of scope, which may lead to either garbage in the log message or a crash with SIGSEGV.\n\nFix by using simple char * constants for the reason."
+    },
+    {
+        "commit": "76ee6861fb3523790fb473c4d49d5ea9efeca2be",
+        "date": "2025-09-16 20:38:02 +0200",
+        "subject": "Fix errant STRDEF() in command/backup unit test.",
+        "body": "Use strNewZ() so the value persists past the block where it is assigned."
+    },
+    {
+        "commit": "5cc9d25817f48dcfc9a907c43e1d97d347711da7",
+        "date": "2025-09-16 14:58:49 +0200",
+        "subject": "Remove unused pathSync parameter in SFTP storage driver.",
+        "body": "The SFTP storage driver did not set the pathSync method but had logic to see if pathSync was set. This led to some tortured tests since pathSync had to be injected into the interface after the storage object had been created.\n\nRemove the pathSync parameter from storageWriteSftpNew() and also remove related tests."
+    },
+    {
+        "commit": "9c7f0648648e651d82918e5dbfc3d511abee3298",
+        "date": "2025-09-05 11:42:00 -0400",
+        "subject": "Unnest HTTP/TLS/socket timeouts.",
+        "body": "These timeouts were nested, i.e. an error in the socket connection would also retry in the TLS and HTTP layers. This led to a multiplying effect such that it took nine minutes to fully timeout with the default io-timeout of 60 seconds.\n\nA fix for this was attempted in 5314dbff but it reduced retries by too much and had to be reverted in fa5b2d44.\n\nInstead fix by moving connection attempts to the lower layer (e.g. TLS -> socket) out of the exception block but leave it within the retry loop. So, for example, if the socket connection fails after retries then the error will not be retried by TLS. But if the TLS session fails the socket will be reconnected."
+    },
+    {
+        "commit": "adc5e5b23b9b544745724a7eaa0461b88b691e36",
+        "date": "2025-08-25 11:51:54 -0400",
+        "subject": "Fix possible segfault in page checksum error message.",
+        "body": "The STRDEF definition of plural is out of scope in the error message just below it, which may lead to either garbage in the log message or a crash with SIGSEGV.\n\nThis is particularly visible with pg_tde, which encrypts tables: if pgbackrest is run with checksum enabled, it tries to emit this message for all encrypted files.\n\nFix by using simple char * constants in the error message."
+    },
+    {
+        "commit": "779cb763afa6fc8e7e6b92ef8c2c64ee1c1b2c2e",
+        "date": "2025-08-23 14:23:30 -0400",
+        "subject": "Fix comment typo."
+    },
+    {
+        "commit": "5de5ed842a21f4fb7c7f7e9c94650e18dcae96d5",
+        "date": "2025-08-23 11:40:34 -0400",
+        "subject": "New CI container build for PostgreSQL 18 beta3.",
+        "body": "Rebuild all containers to get the most recent versions of PostgreSQL.\n\nUpdate the Debian repository install to match current recommendations. This has already been done for the documentation in fcd00a45."
+    },
+    {
+        "commit": "87339004e59c03d2a03a6ceb8426202346849c37",
+        "date": "2025-08-13 10:12:29 -0400",
+        "subject": "Add HTTP retries for 408 and 429 errors.",
+        "body": "HTTP client errors 408 and 429 were not being retried but there seems to be some benefit to doing so.\n\n408 has only been seen once and in that case the server was returning 400 (with Request Timeout in the response body) but it seems worth doing since this could happen during times of high congestion. Requests are not sent until request content is ready so there is not much else to be done to handle this error.\n\n429 has been seen occasionally in the past but now seems to be common on Cloudflare R2. Ideally we would have a large initial back off here but it is not clear that is worth it at this time. The existing Fibonacci back off should be enough to allow operations to proceed if possible during the configured timeout."
+    },
+    {
+        "commit": "fcd00a45f50d03b3e61ce28cd0ee622c05c65fbd",
+        "date": "2025-08-04 17:42:16 -0400",
+        "subject": "Update user guide and tests to Ubuntu 22.04.",
+        "body": "20.04 is EOL so update the user guide and tests to 22.04.\n\nThe contributing guide was updated to 22.04 in d55836e7e."
+    },
+    {
+        "commit": "03cabe2644a6233392671c80d88726737b1bb0fe",
+        "date": "2025-07-21 13:08:40 -0400",
+        "subject": "Begin v2.57.0 development."
+    },
+    {
         "commit": "eca9290a2a6583fd0dd9156ee6ef6cf26899336e",
         "date": "2025-07-21 10:12:22 -0400",
         "subject": "v2.56.0: Progress Info Improvements"
