@@ -3666,6 +3666,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 (                                                                                                      // opt/output
                     PARSE_RULE_VAL_STRID(None),                                                                        // opt/output
                     PARSE_RULE_VAL_STRID(Text),                                                                        // opt/output
+                    PARSE_RULE_VAL_STRID(Json),                                                                        // opt/output
                 ),                                                                                                     // opt/output
                                                                                                                        // opt/output
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                            // opt/output

@@ -2746,6 +2746,7 @@
                                 <list>
                                     <list-item><id>none</id> - No verify output.</list-item>
                                     <list-item><id>text</id> - Output verify information to stdout.</list-item>
+                                    <list-item><id>json</id> - Output verify information to stdout in json format.</list-item>
                                 </list>
                         </text>
 
