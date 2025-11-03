@@ -34,11 +34,11 @@ will be invalid unless migration functions are written.
 Project version components. PROJECT_VERSION and PROJECT_VERSION_NUM are automatically generated from the component parts.
 ***********************************************************************************************************************************/
 #define PROJECT_VERSION_MAJOR                                       2
-#define PROJECT_VERSION_MINOR                                       57
+#define PROJECT_VERSION_MINOR                                       58
 #define PROJECT_VERSION_PATCH                                       0
 #define PROJECT_VERSION_SUFFIX                                      "dev"
 
-#define PROJECT_VERSION                                             "2.57.0dev"
-#define PROJECT_VERSION_NUM                                         2057000
+#define PROJECT_VERSION                                             "2.58.0dev"
+#define PROJECT_VERSION_NUM                                         2058000
 
 #endif

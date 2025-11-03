@@ -1705,7 +1705,7 @@ testRun(void)
         {
             manifest = manifestNewInternal();
             manifest->pub.data.backupType = backupTypeFull;
-            manifest->pub.data.backrestVersion = STRDEF("BOGUS");
+            manifest->pub.data.backrestVersion = strNewZ("BOGUS");
         }
         OBJ_NEW_END();
 
@@ -2918,6 +2918,7 @@ testRun(void)
             hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
             hrnCfgArgRaw(argList, cfgOptPgPath, pg1Path);
             hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+            hrnCfgArgRawBool(argList, cfgOptRepoSymlink, false);
             hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
             hrnCfgArgRawBool(argList, cfgOptRepoHardlink, true);
             hrnCfgArgRawZ(argList, cfgOptManifestSaveThreshold, "1");
@@ -2988,9 +2989,6 @@ testRun(void)
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-qual"
-            // Disable storageFeatureSymLink so tablespace (and latest) symlinks will not be created
-            ((Storage *)storageRepoWrite())->pub.interface.feature ^= 1 << storageFeatureSymLink;
-
             // Disable storageFeatureHardLink so hardlinks will not be created
             ((Storage *)storageRepoWrite())->pub.interface.feature ^= 1 << storageFeatureHardLink;
 
@@ -2999,7 +2997,6 @@ testRun(void)
             TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
             // Reset storage features
-            ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeatureSymLink;
             ((Storage *)storageRepoWrite())->pub.interface.feature |= 1 << storageFeatureHardLink;
 #pragma GCC diagnostic pop
 

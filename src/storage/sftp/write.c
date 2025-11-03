@@ -341,8 +341,8 @@ FN_EXTERN StorageWrite *
 storageWriteSftpNew(
     StorageSftp *const storage, const String *const name, LIBSSH2_SESSION *const session, LIBSSH2_SFTP *const sftpSession,
     LIBSSH2_SFTP_HANDLE *const sftpHandle, const mode_t modeFile, const mode_t modePath, const String *const user,
-    const String *const group, const time_t timeModified, const bool createPath, const bool syncFile, const bool syncPath,
-    const bool atomic, const bool truncate)
+    const String *const group, const time_t timeModified, const bool createPath, const bool syncFile, const bool atomic,
+    const bool truncate)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_SFTP, storage);
@@ -357,7 +357,6 @@ storageWriteSftpNew(
         FUNCTION_LOG_PARAM(TIME, timeModified);
         FUNCTION_LOG_PARAM(BOOL, createPath);
         FUNCTION_LOG_PARAM(BOOL, syncFile);
-        FUNCTION_LOG_PARAM(BOOL, syncPath);
         FUNCTION_LOG_PARAM(BOOL, atomic);
         FUNCTION_LOG_PARAM(BOOL, truncate);
     FUNCTION_LOG_END();
@@ -387,7 +386,6 @@ storageWriteSftpNew(
                 .modeFile = modeFile,
                 .modePath = modePath,
                 .syncFile = syncFile,
-                .syncPath = syncPath,
                 .truncate = truncate,
                 .user = strDup(user),
                 .timeModified = timeModified,

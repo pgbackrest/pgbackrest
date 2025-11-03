@@ -1,4 +1,4 @@
-<release date="XXXX-XX-XX" version="2.57.0dev" title="Under Development">
+<release date="XXXX-XX-XX" version="2.58.0dev" title="Under Development">
     <release-core-list>
         <release-feature-list>
             <release-item>
@@ -11,18 +11,5 @@
                 <p>Add <br-option>repo-s3-storage-class</br-option> and <br-option>repo-s3-storage-class-threshold</br-option> options to configure S3 storage class for object uploads. This allows users to optimize storage costs based on their backup access patterns while avoiding minimum billing penalties on small objects.</p>
             </release-item>
         </release-feature-list>
-
-        <release-improvement-list>
-            <release-item>
-                <github-pull-request id="2661"/>
-
-                <release-item-contributor-list>
-                    <release-item-contributor id="david.steele"/>
-                    <release-item-reviewer id="david.christensen"/>
-                </release-item-contributor-list>
-
-                <p>Add HTTP retries for 408 and 429 errors.</p>
-            </release-item>
-        </release-improvement-list>
     </release-core-list>
 </release>

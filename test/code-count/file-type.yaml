@@ -675,6 +675,10 @@ doc/xml/release/2025/2.57.0.xml:
   class: doc/source
   type: xml
 
+doc/xml/release/2026/2.58.0.xml:
+  class: doc/source
+  type: xml
+
 doc/xml/release/contributor.xml:
   class: doc/source
   type: xml

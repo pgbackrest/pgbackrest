@@ -396,9 +396,7 @@ sub containerBuild
 
         # Base image
         ###########################################################################################################################
-        my $strImageParent =
-            (defined($strArch) ? "${strArch}/" : (vmArch($strOS) eq VM_ARCH_X86_64 ? '' : vmArch($strOS) . '/')) .
-            "$$oVm{$strOS}{&VM_IMAGE}";
+        my $strImageParent = $oVm->{$strOS}{&VM_IMAGE};
         $strArch = defined($strArch) ? $strArch : hostArch();
         my $strImage = "${strOS}-base" . (defined($strArch) ? "-${strArch}" : '-' . hostArch());
         my $strCopy = undef;
@@ -525,11 +523,8 @@ sub containerBuild
                 if (vmPgRepo($strVm))
                 {
                     $strScript .=
-                        "    echo \"deb http://apt.postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg main" .
-                             ($strOS eq VM_U22 && ($strArch eq VM_ARCH_AARCH64 || $strArch eq VM_ARCH_X86_64) ? ' 18' : '') .
-                             "\" >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
-                        "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
-                        "    apt-get update && \\\n";
+                        "    apt-get install -y --no-install-recommends postgresql-common && \\\n" .
+                        "    /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y && \\\n";
                 }
 
                 $strScript .=
@@ -538,7 +533,7 @@ sub containerBuild
                         "/etc/postgresql-common/createcluster.conf";
             }
 
-            if (defined($oOS->{&VM_DB}) && @{$oOS->{&VM_DB}} > 0)
+            if (defined($oOS->{&VM_DB}) && @{$oOS->{&VM_DB}} > 0 && ($strArch eq VM_ARCH_AARCH64 || $strArch eq VM_ARCH_X86_64))
             {
                 $strScript .= sectionHeader() .
                     "# Install PostgreSQL\n";
