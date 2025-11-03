@@ -2601,6 +2601,7 @@ option:
     group: repo
     type: string
     required: false
+    command: repo-type
     depend:
       option: repo-type
       list:

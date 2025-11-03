@@ -9549,13 +9549,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(RepoPut)                                                             // opt/repo-storage-class
             PARSE_RULE_OPTION_COMMAND(RepoRm)                                                              // opt/repo-storage-class
             PARSE_RULE_OPTION_COMMAND(Restore)                                                             // opt/repo-storage-class
-            PARSE_RULE_OPTION_COMMAND(Server)                                                              // opt/repo-storage-class
-            PARSE_RULE_OPTION_COMMAND(ServerPing)                                                          // opt/repo-storage-class
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                        // opt/repo-storage-class
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                        // opt/repo-storage-class
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                       // opt/repo-storage-class
-            PARSE_RULE_OPTION_COMMAND(Start)                                                               // opt/repo-storage-class
-            PARSE_RULE_OPTION_COMMAND(Stop)                                                                // opt/repo-storage-class
             PARSE_RULE_OPTION_COMMAND(Verify)                                                              // opt/repo-storage-class
         ),                                                                                                 // opt/repo-storage-class
                                                                                                            // opt/repo-storage-class
