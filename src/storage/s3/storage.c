@@ -115,7 +115,6 @@ struct StorageS3
     const String *bucketEndpoint;                                   // Set to {bucket}.{endpoint}
     bool requesterPays;                                             // Requester pays?
     const String *storageClass;                                     // S3 storage class
-    size_t storageClassThreshold;                                   // Minimum object size for storage class
 
     // For retrieving temporary security credentials
     HttpClient *credHttpClient;                                     // HTTP client to service credential requests
@@ -508,12 +507,9 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
         if (param.tag && this->tag != NULL)
             httpHeaderPut(requestHeader, S3_HEADER_TAGGING, this->tag);
 
-        // Set storage class when requested, specified, and content meets threshold (or no content)
-        if (param.storageClass && this->storageClass != NULL &&
-            (param.content == NULL || bufUsed(param.content) >= this->storageClassThreshold))
-        {
+        // Set storage class when requested and specified
+        if (param.storageClass && this->storageClass != NULL)
             httpHeaderPut(requestHeader, S3_HEADER_STORAGE_CLASS, this->storageClass);
-        }
 
         // When using path-style URIs the bucket name needs to be prepended
         if (this->uriStyle == storageS3UriStylePath)
@@ -980,7 +976,7 @@ storageS3NewWrite(THIS_VOID, const String *const file, const StorageInterfaceNew
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(BOOL, param.defaultStorageClass);
+        (void)param;                                                // No parameters are used
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -991,7 +987,7 @@ storageS3NewWrite(THIS_VOID, const String *const file, const StorageInterfaceNew
     ASSERT(param.group == NULL);
     ASSERT(param.timeModified == 0);
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteS3New(this, file, this->partSize, !param.defaultStorageClass));
+    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteS3New(this, file, this->partSize));
 }
 
 /**********************************************************************************************************************************/
@@ -1198,7 +1194,7 @@ storageS3New(
     const String *const securityToken, const String *const kmsKeyId, const String *sseCustomerKey, const String *const credRole,
     const String *const webIdTokenFile, const size_t partSize, const KeyValue *const tag, const String *host,
     const unsigned int port, const TimeMSec timeout, const bool verifyPeer, const String *const caFile, const String *const caPath,
-    const bool requesterPays, const String *const storageClass, const size_t storageClassThreshold)
+    const bool requesterPays, const String *const storageClass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -1227,7 +1223,6 @@ storageS3New(
         FUNCTION_LOG_PARAM(STRING, caPath);
         FUNCTION_LOG_PARAM(BOOL, requesterPays);
         FUNCTION_LOG_PARAM(STRING, storageClass);
-        FUNCTION_LOG_PARAM(SIZE, storageClassThreshold);
     FUNCTION_LOG_END();
 
     ASSERT(path != NULL);
@@ -1248,7 +1243,6 @@ storageS3New(
             .requesterPays = requesterPays,
             .sseCustomerKey = strDup(sseCustomerKey),
             .storageClass = strDup(storageClass),
-            .storageClassThreshold = storageClassThreshold,
             .partSize = partSize,
             .deleteMax = STORAGE_S3_DELETE_MAX,
             .uriStyle = uriStyle,

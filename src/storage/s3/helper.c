@@ -92,8 +92,7 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
                 cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), host, port, ioTimeoutMs(),
                 cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx), cfgOptionIdxBool(cfgOptRepoS3RequesterPays, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoS3StorageClass, repoIdx),
-                (size_t)cfgOptionIdxUInt64(cfgOptRepoS3StorageClassThreshold, repoIdx));
+                cfgOptionIdxStrNull(cfgOptRepoStorageClass, repoIdx));
         }
         MEM_CONTEXT_PRIOR_END();
     }

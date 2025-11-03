@@ -2487,16 +2487,6 @@ option:
       list:
         - s3
 
-  repo-s3-storage-class:
-    inherit: repo-s3-bucket
-    required: false
-
-  repo-s3-storage-class-threshold:
-    inherit: repo-s3-bucket
-    type: size
-    default: 128KiB
-    allow-range: [0B, 5MiB]
-
   repo-s3-uri-style:
     section: global
     group: repo
@@ -2605,6 +2595,16 @@ option:
     required: false
     command: repo-type
     depend: repo-sftp-host
+
+  repo-storage-class:
+    section: global
+    group: repo
+    type: string
+    required: false
+    depend:
+      option: repo-type
+      list:
+        - s3
 
   repo-storage-verify-tls:
     section: global

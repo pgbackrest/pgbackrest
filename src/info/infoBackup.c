@@ -896,9 +896,8 @@ infoBackupSaveFile(
             cipherBlockFilterGroupAdd(ioWriteFilterGroup(write), cipherType, cipherModeEncrypt, cipherPass);
             infoBackupSave(infoBackup, write);
 
-            // Save the file and make a copy. Use default storage class for main backup.info file
-            // to avoid extra charges since it is frequently accessed.
-            storagePutP(storageNewWriteP(storage, fileName, .defaultStorageClass = true), buffer);
+            // Save the file and make a copy
+            storagePutP(storageNewWriteP(storage, fileName), buffer);
             storagePutP(storageNewWriteP(storage, strNewFmt("%s" INFO_COPY_EXT, strZ(fileName))), buffer);
         }
         MEM_CONTEXT_TEMP_END();

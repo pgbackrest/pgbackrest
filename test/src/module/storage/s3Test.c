@@ -458,8 +458,7 @@ testRun(void)
                 StringList *argList = strLstDup(commonArgList);
                 hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
                 hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
-                hrnCfgArgRawZ(argList, cfgOptRepoS3StorageClass, "STANDARD_IA");
-                hrnCfgArgRawZ(argList, cfgOptRepoS3StorageClassThreshold, "6B");  // Set low threshold for testing
+                hrnCfgArgRawZ(argList, cfgOptRepoStorageClass, "STANDARD_IA");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
                 Storage *s3 = storageRepoGet(0, true);
@@ -595,18 +594,9 @@ testRun(void)
                 TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("file0.txt")))), "", "get zero-length file");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("write small file below threshold - no storage class");
+                TEST_TITLE("write file above threshold with storage class");
 
                 StorageWrite *write = NULL;
-
-                testRequestP(service, s3, HTTP_VERB_PUT, "/small.txt", .content = "small");  // 5 bytes < threshold
-                testResponseP(service);
-
-                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("small.txt")), "new write");
-                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("small")), "write small file without storage class");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("write file above threshold with storage class");
 
                 testRequestP(service, s3, HTTP_VERB_PUT, "/test.txt", .content = "test content", .storageClass = "STANDARD_IA");
                 testResponseP(service);
@@ -647,15 +637,6 @@ testRun(void)
 
                 TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("multipart.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write multipart file");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("file with defaultStorageClass = true - no storage class even above threshold");
-
-                testRequestP(service, s3, HTTP_VERB_PUT, "/test-no-class.txt", .content = "test content");
-                testResponseP(service);
-
-                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("test-no-class.txt"), .defaultStorageClass = true), "new write");
-                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("test content")), "write file without storage class");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("switch to temp credentials");

@@ -2,13 +2,15 @@
     <release-core-list>
         <release-feature-list>
             <release-item>
+                <github-issue id="371"/>
+                <github-issue id="2671"/>
                 <github-pull-request id="2658"/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="felix.buenemann"/>
                 </release-item-contributor-list>
 
-                <p>Add <br-option>repo-s3-storage-class</br-option> and <br-option>repo-s3-storage-class-threshold</br-option> options to configure S3 storage class for object uploads. This allows users to optimize storage costs based on their backup access patterns while avoiding minimum billing penalties on small objects.</p>
+                <p>Add <br-option>repo-storage-class</br-option> option to configure S3 storage class for object uploads.</p>
             </release-item>
         </release-feature-list>
     </release-core-list>
