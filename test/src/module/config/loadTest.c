@@ -104,7 +104,13 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+        hrnCfgArgRawBool(argList, cfgOptStopAuto, true);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        TEST_RESULT_LOG(
+            "P00   WARN: option 'start-fast' is deprecated\n"
+            "            HINT: all supported versions use non-exclusive backup.\n"
+            "            HINT: stop using this option to avoid an error when it is removed.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("local default repo paths for cifs repo type must be different");
