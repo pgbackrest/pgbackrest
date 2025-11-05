@@ -49,7 +49,6 @@ testRun(void)
         "repo2-block=y\n"
         "\n"
         "archive-check=n\n"
-        "stop-auto=y\n"
         "compress-type=none\n"
         "\n"
         "[test]\n"
@@ -73,7 +72,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
 
             // Create pg_control and run stanza-create
-            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_95);
+            HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_14);
             TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create");
         }
 
@@ -84,7 +83,7 @@ testRun(void)
 
             // Version file that will not be updated after the full backup
             HRN_STORAGE_PUT_Z(
-                storagePgWrite(), PG_PATH_BASE "/" PG_FILE_PGVERSION, PG_VERSION_95_Z, .timeModified = backupTimeStart);
+                storagePgWrite(), PG_PATH_BASE "/" PG_FILE_PGVERSION, PG_VERSION_14_Z "\n", .timeModified = backupTimeStart);
 
             // Zeroed file large enough to use block incr
             Buffer *relation = bufNew(8 * 8192);
@@ -98,7 +97,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Backup to repo1
-            hrnBackupPqScriptP(PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true);
+            hrnBackupPqScriptP(PG_VERSION_14, backupTimeStart, .noArchiveCheck = true, .noWal = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup repo1");
 
             // Backup to repo2
@@ -106,7 +105,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             hrnBackupPqScriptP(
-                PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true, .cipherType = cipherTypeAes256Cbc,
+                PG_VERSION_14, backupTimeStart, .noArchiveCheck = true, .noWal = true, .cipherType = cipherTypeAes256Cbc,
                 .cipherPass = TEST_CIPHER_PASS);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup repo2");
         }
@@ -129,7 +128,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             // Backup to repo1
-            hrnBackupPqScriptP(PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true);
+            hrnBackupPqScriptP(PG_VERSION_14, backupTimeStart, .noArchiveCheck = true, .noWal = true);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup repo1");
 
             // Munge the pg_control checksum since it will vary by architecture
@@ -153,7 +152,7 @@ testRun(void)
             HRN_CFG_LOAD(cfgCmdBackup, argList);
 
             hrnBackupPqScriptP(
-                PG_VERSION_95, backupTimeStart, .noArchiveCheck = true, .noWal = true, .cipherType = cipherTypeAes256Cbc,
+                PG_VERSION_14, backupTimeStart, .noArchiveCheck = true, .noWal = true, .cipherType = cipherTypeAes256Cbc,
                 .cipherPass = TEST_CIPHER_PASS);
             TEST_RESULT_VOID(hrnCmdBackup(), "backup repo2");
         }
@@ -273,6 +272,10 @@ testRun(void)
                 "block: true\n"
                 "\n"
                 "file list:\n"
+                "  - pg_data/backup_label\n"
+                "      size: 17B, repo 17B\n"
+                "      checksum: 8e6f41ac87a7514be96260d65bacbffb11be77dc\n"
+                "\n"
                 "  - pg_data/base/1/2\n"
                 "      size: 96KB, repo 64.1KB\n"
                 "      checksum: d4976e362696a43fb09e7d4e780d7d9352a2ec2e\n"
@@ -282,7 +285,7 @@ testRun(void)
                 "  - pg_data/base/PG_VERSION\n"
                 "      reference: 20191002-070640F\n"
                 "      size: 3B, repo 3B\n"
-                "      checksum: 06d06bb31b570b94d7b4325f511f853dbe771c21\n"
+                "      checksum: 030514d80869744a4e2f60d2fd37d6081f5ed01a\n"
                 "      bundle: 1\n"
                 "\n"
                 "  - pg_data/global/pg_control\n"
@@ -311,7 +314,7 @@ testRun(void)
                 "  - pg_data/base/PG_VERSION\n"
                 "      reference: 20191002-070640F\n"
                 "      size: 3B, repo 3B\n"
-                "      checksum: 06d06bb31b570b94d7b4325f511f853dbe771c21\n"
+                "      checksum: 030514d80869744a4e2f60d2fd37d6081f5ed01a\n"
                 "      bundle: 1\n",
                 "repo 1 text");
 
@@ -345,7 +348,7 @@ testRun(void)
                             "\"name\":\"pg_data/base/PG_VERSION\","
                             "\"reference\":\"20191002-070640F\","
                             "\"size\":3,"
-                            "\"checksum\":\"06d06bb31b570b94d7b4325f511f853dbe771c21\","
+                            "\"checksum\":\"030514d80869744a4e2f60d2fd37d6081f5ed01a\","
                             "\"repo\":{"
                                 "\"size\":3"
                             "},"
@@ -378,6 +381,10 @@ testRun(void)
                 "block: true\n"
                 "\n"
                 "file list:\n"
+                "  - pg_data/backup_label\n"
+                "      size: 17B, repo 17B\n"
+                "      checksum: 8e6f41ac87a7514be96260d65bacbffb11be77dc\n"
+                "\n"
                 "  - pg_data/base/1/2\n"
                 "      size: 96KB, repo 64.1KB\n"
                 "      checksum: d4976e362696a43fb09e7d4e780d7d9352a2ec2e\n"
@@ -415,6 +422,13 @@ testRun(void)
                         "\"block\":true"
                     "},"
                     "\"fileList\":["
+                        "{"
+                            "\"name\":\"pg_data/backup_label\","
+                            "\"size\":17,"
+                            "\"checksum\":\"8e6f41ac87a7514be96260d65bacbffb11be77dc\","
+                            "\"repo\":"
+                                "{\"size\":17}"
+                            "},"
                         "{"
                             "\"name\":\"pg_data/base/1/2\","
                             "\"size\":98304,"

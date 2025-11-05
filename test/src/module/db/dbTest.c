@@ -83,19 +83,21 @@ testRun(void)
                     HRN_PQ_SCRIPT_OPEN(1, "dbname='testdb' port=5432"),
                     HRN_PQ_SCRIPT_SET_SEARCH_PATH(1),
                     HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(1),
-                    HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_95, TEST_PATH "/pg", NULL, NULL),
+                    HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_15, TEST_PATH "/pg", NULL, NULL),
                     HRN_PQ_SCRIPT_SET_APPLICATION_NAME(1),
+                    HRN_PQ_SCRIPT_SET_MAX_PARALLEL_WORKERS_PER_GATHER(1),
                     HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false),
                     HRN_PQ_SCRIPT_CLOSE(1),
 
                     HRN_PQ_SCRIPT_OPEN(1, "dbname='testdb' port=5432"),
                     HRN_PQ_SCRIPT_SET_SEARCH_PATH(1),
                     HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(1),
-                    HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_95, TEST_PATH "/pg", NULL, NULL),
+                    HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_15, TEST_PATH "/pg", NULL, NULL),
                     HRN_PQ_SCRIPT_SET_APPLICATION_NAME(1),
+                    HRN_PQ_SCRIPT_SET_MAX_PARALLEL_WORKERS_PER_GATHER(1),
                     HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false),
                     HRN_PQ_SCRIPT_CREATE_RESTORE_POINT(1, "2/3"),
-                    HRN_PQ_SCRIPT_WAL_SWITCH(1, "xlog", "000000030000000200000003"),
+                    HRN_PQ_SCRIPT_WAL_SWITCH(1, "wal", "000000030000000200000003"),
                     HRN_PQ_SCRIPT_CLOSE(1));
 
                 // Create server
@@ -129,7 +131,7 @@ testRun(void)
                 HRN_CFG_LOAD(cfgCmdBackup, argList);
 
                 // Create control file
-                HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_95);
+                HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_15);
 
                 // Create client
                 ProtocolClient *client = NULL;
@@ -203,7 +205,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // Create control file
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_95, .checkpoint = pgLsnFromStr(STRDEF("1/1")));
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_18, .checkpoint = pgLsnFromStr(STRDEF("1/1")));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error when unable to select any pg_settings");
@@ -257,99 +259,6 @@ testRun(void)
             "            HINT: is the pg_read_all_settings role assigned for PostgreSQL >= 10?");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("PostgreSQL 9.5 start/stop backup");
-
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_95, .checkpoint = pgLsnFromStr(STRDEF("2/3")));
-
-        // Connect to primary
-        HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='backupdb' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL));
-
-        DbGetResult db = {0};
-        TEST_ASSIGN(db, dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary");
-
-        // Get start time
-        HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_TIME_QUERY(1, 1000));
-        TEST_RESULT_UINT(dbTimeMSec(db.primary), 1000, "check time");
-
-        // Start backup errors on advisory lock
-        HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_ADVISORY_LOCK(1, false));
-
-        TEST_ERROR(
-            dbBackupStart(db.primary, false, false, false), LockAcquireError,
-            "unable to acquire pgBackRest advisory lock\n"
-            "HINT: is another pgBackRest backup already running on this cluster?");
-
-        // Start backup
-        HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
-            HRN_PQ_SCRIPT_IS_IN_BACKUP(1, false),
-            HRN_PQ_SCRIPT_START_BACKUP_LE_95(1, false, "2/3", "000000010000000200000003"));
-
-        DbBackupStartResult backupStartResult = {0};
-        TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, true, false), "start backup");
-        TEST_RESULT_STR_Z(backupStartResult.lsn, "2/3", "check lsn");
-        TEST_RESULT_STR_Z(backupStartResult.walSegmentName, "000000010000000200000003", "check wal segment name");
-
-        // Get database list
-        HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_DATABASE_LIST_1(1, "test1"));
-        TEST_RESULT_STR_Z(hrnPackToStr(dbList(db.primary)), "1:array:[1:u32:16384, 2:str:test1, 3:u32:13777]", "check db list");
-
-        // Get tablespace list
-        HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_TABLESPACE_LIST_0(1));
-        TEST_RESULT_STR_Z(hrnPackToStr(dbTablespaceList(db.primary)), "", "check tablespace list");
-
-        // Stop backup
-        HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_STOP_BACKUP_LE_95(1, "2/4", "000000010000000200000004"));
-
-        DbBackupStopResult backupStopResult = {.lsn = NULL};
-        TEST_ASSIGN(backupStopResult, dbBackupStop(db.primary), "stop backup");
-        TEST_RESULT_STR_Z(backupStopResult.lsn, "2/4", "check lsn");
-        TEST_RESULT_STR_Z(backupStopResult.walSegmentName, "000000010000000200000004", "check wal segment name");
-        TEST_RESULT_STR_Z(backupStopResult.backupLabel, NULL, "check backup label is not set");
-        TEST_RESULT_STR_Z(backupStopResult.tablespaceMap, NULL, "check tablespace map is not set");
-
-        // Close primary
-        HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_CLOSE(1));
-        TEST_RESULT_VOID(dbFree(db.primary), "free primary");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("PostgreSQL 9.5 start/stop backup where backup is in progress");
-
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_95, .checkpoint = pgLsnFromStr(STRDEF("2/5")));
-
-        // Connect to primary
-        HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='backupdb' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL));
-
-        TEST_ASSIGN(db, dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary");
-
-        // Start backup when backup is in progress
-        HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
-            HRN_PQ_SCRIPT_IS_IN_BACKUP(1, true),
-
-            // Stop old backup
-            HRN_PQ_SCRIPT_STOP_BACKUP_LE_95(1, "1/1", "000000010000000100000001"),
-
-            // Start backup
-            HRN_PQ_SCRIPT_START_BACKUP_LE_95(1, true, "2/5", "000000010000000200000005"));
-
-        TEST_RESULT_STR_Z(dbBackupStart(db.primary, true, true, false).lsn, "2/5", "start backup");
-
-        TEST_RESULT_LOG(
-            "P00   WARN: the cluster is already in backup mode but no pgBackRest backup process is running."
-            " pg_stop_backup() will be called so a new backup can be started.");
-
-        // Stop backup
-        HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_STOP_BACKUP_LE_95(1, "2/6", "000000010000000200000006"));
-        TEST_RESULT_STR_Z(dbBackupStop(db.primary).lsn, "2/6", "stop backup");
-
-        // Close primary
-        HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_CLOSE(1));
-        TEST_RESULT_VOID(dbFree(db.primary), "free primary");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("PostgreSQL 9.6 start/stop backup");
 
         HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_96, .checkpoint = pgLsnFromStr(STRDEF("3/3")));
@@ -358,7 +267,12 @@ testRun(void)
         HRN_PQ_SCRIPT_SET(
             HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='backupdb' port=5432", PG_VERSION_96, TEST_PATH "/pg1", false, NULL, NULL));
 
+        DbGetResult db = {0};
         TEST_ASSIGN(db, dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary");
+
+        // Get start time
+        HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_TIME_QUERY(1, 1000));
+        TEST_RESULT_UINT(dbTimeMSec(db.primary), 1000, "check time");
 
         // Start backup with timeline error
         HRN_PQ_SCRIPT_SET(
@@ -382,14 +296,24 @@ testRun(void)
             HRN_PQ_SCRIPT_CURRENT_WAL_LE_96(1, "000000010000000300000002"),
             HRN_PQ_SCRIPT_START_BACKUP_96(1, false, "3/3", "000000010000000300000003"));
 
+        DbBackupStartResult backupStartResult = {0};
         TEST_ASSIGN(backupStartResult, dbBackupStart(db.primary, false, true, true), "start backup");
         TEST_RESULT_STR_Z(backupStartResult.lsn, "3/3", "check lsn");
         TEST_RESULT_STR_Z(backupStartResult.walSegmentName, "000000010000000300000003", "check wal segment name");
         TEST_RESULT_STR_Z(backupStartResult.walSegmentCheck, "000000010000000300000002", "check wal segment check");
 
+        // Get database list
+        HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_DATABASE_LIST_1(1, "test1"));
+        TEST_RESULT_STR_Z(hrnPackToStr(dbList(db.primary)), "1:array:[1:u32:16384, 2:str:test1, 3:u32:13777]", "check db list");
+
+        // Get tablespace list
+        HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_TABLESPACE_LIST_0(1));
+        TEST_RESULT_STR_Z(hrnPackToStr(dbTablespaceList(db.primary)), "", "check tablespace list");
+
         // Stop backup
         HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_STOP_BACKUP_96(1, "3/4", "000000010000000300000004", false));
 
+        DbBackupStopResult backupStopResult = {.lsn = NULL};
         TEST_ASSIGN(backupStopResult, dbBackupStop(db.primary), "stop backup");
         TEST_RESULT_STR_Z(backupStopResult.lsn, "3/4", "check lsn");
         TEST_RESULT_STR_Z(backupStopResult.walSegmentName, "000000010000000300000004", "check wal segment name");
@@ -401,7 +325,7 @@ testRun(void)
         TEST_RESULT_VOID(dbFree(db.primary), "free primary");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("PostgreSQL 9.5 start backup from standby");
+        TEST_TITLE("PostgreSQL 12 start backup from standby");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -412,25 +336,24 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // Create control file
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_95, .timeline = 5, .checkpoint = pgLsnFromStr(STRDEF("5/4")));
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_95, .timeline = 5, .checkpoint = pgLsnFromStr(STRDEF("5/4")));
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_12, .timeline = 5, .checkpoint = pgLsnFromStr(STRDEF("5/4")));
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_12, .timeline = 5, .checkpoint = pgLsnFromStr(STRDEF("5/4")));
 
         // Connect to primary and standby
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
-            HRN_PQ_SCRIPT_OPEN_GE_93(2, "dbname='postgres' port=5433", PG_VERSION_95, TEST_PATH "/pg2", true, NULL, NULL));
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_12, TEST_PATH "/pg1", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_96(2, "dbname='postgres' port=5433", PG_VERSION_12, TEST_PATH "/pg2", true, NULL, NULL));
 
         TEST_ASSIGN(db, dbGet(false, true, CFGOPTVAL_BACKUP_STANDBY_Y), "get primary and standby");
 
         // Start backup
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true),
-            HRN_PQ_SCRIPT_START_BACKUP_LE_95(1, false, "5/4", "000000050000000500000004"));
+            HRN_PQ_SCRIPT_START_BACKUP_GE_10(1, true, "5/4", "000000050000000500000004"));
 
-        TEST_RESULT_STR_Z(dbBackupStart(db.primary, false, false, false).lsn, "5/4", "start backup");
+        TEST_RESULT_STR_Z(dbBackupStart(db.primary, true, false, false).lsn, "5/4", "start backup");
 
         // Wait for standby to sync
-        HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_REPLAY_WAIT_LE_95(2, "5/4"));
+        HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_REPLAY_WAIT_GE_10(2, "5/4"));
 
         TEST_RESULT_VOID(dbReplayWait(db.standby, STRDEF("5/4"), dbPgControl(db.primary).timeline, 1000), "sync standby");
 
@@ -679,7 +602,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // Create control file
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_95);
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_18);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error connecting to primary");
@@ -705,8 +628,9 @@ testRun(void)
             HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432 user='bob'"),
             HRN_PQ_SCRIPT_SET_SEARCH_PATH(1),
             HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(1),
-            HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_95, TEST_PATH "/pg", NULL, NULL),
+            HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_18, TEST_PATH "/pg", NULL, NULL),
             HRN_PQ_SCRIPT_SET_APPLICATION_NAME(1),
+            HRN_PQ_SCRIPT_SET_MAX_PARALLEL_WORKERS_PER_GATHER(1),
             HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, true),
             HRN_PQ_SCRIPT_CLOSE(1));
 
@@ -722,8 +646,9 @@ testRun(void)
             HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432 user='bob'"),
             HRN_PQ_SCRIPT_SET_SEARCH_PATH(1),
             HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(1),
-            HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_95, TEST_PATH "/pg", NULL, NULL),
+            HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_18, TEST_PATH "/pg", NULL, NULL),
             HRN_PQ_SCRIPT_SET_APPLICATION_NAME(1),
+            HRN_PQ_SCRIPT_SET_MAX_PARALLEL_WORKERS_PER_GATHER(1),
             HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false),
             HRN_PQ_SCRIPT_CLOSE(1));
 
@@ -734,8 +659,8 @@ testRun(void)
         TEST_TITLE("primary cluster found");
 
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_93(
-                1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_96(
+                1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_18, TEST_PATH "/pg1", false, NULL, NULL),
             HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ASSIGN(result, dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary only");
@@ -744,7 +669,7 @@ testRun(void)
         TEST_RESULT_BOOL(result.primary != NULL, true, "check primary");
         TEST_RESULT_INT(result.standbyIdx, 0, "check standby id");
         TEST_RESULT_BOOL(result.standby == NULL, true, "check standby");
-        TEST_RESULT_INT(dbPgVersion(result.primary), PG_VERSION_95, "version set");
+        TEST_RESULT_INT(dbPgVersion(result.primary), PG_VERSION_18, "version set");
         TEST_RESULT_STR_Z(dbPgDataPath(result.primary), TEST_PATH "/pg1", "path set");
 
         TEST_RESULT_VOID(dbFree(result.primary), "free primary");
@@ -761,11 +686,11 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         // Create control file
-        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_95);
+        HRN_PG_CONTROL_PUT(storagePgIdxWrite(1), PG_VERSION_18);
 
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_95, TEST_PATH "/pg1", false, NULL, NULL),
-            HRN_PQ_SCRIPT_OPEN_GE_93(8, "dbname='postgres' port=5433", PG_VERSION_95, TEST_PATH "/pg8", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_18, TEST_PATH "/pg8", false, NULL, NULL),
 
             HRN_PQ_SCRIPT_CLOSE(1),
             HRN_PQ_SCRIPT_CLOSE(8));
@@ -776,8 +701,8 @@ testRun(void)
         TEST_TITLE("two standbys found but no primary");
 
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, TEST_PATH "/pg1", true, NULL, NULL),
-            HRN_PQ_SCRIPT_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_96, TEST_PATH "/pg8", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg1", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_18, TEST_PATH "/pg8", true, NULL, NULL),
 
             HRN_PQ_SCRIPT_CLOSE(8),
             HRN_PQ_SCRIPT_CLOSE(1));

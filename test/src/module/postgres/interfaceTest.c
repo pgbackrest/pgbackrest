@@ -59,7 +59,7 @@ testRun(void)
             pgControlVersion(70300), VersionNotSupportedError,
             "invalid PostgreSQL version 70300\n"
             "HINT: is this version of PostgreSQL supported?");
-        TEST_RESULT_UINT(pgControlVersion(PG_VERSION_95), 942, "9.5 control version");
+        TEST_RESULT_UINT(pgControlVersion(PG_VERSION_96), 960, "9.6 control version");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_11), 1100, "11 control version");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_17), 1700, "17 control version");
     }
@@ -147,7 +147,7 @@ testRun(void)
             "wal segment size is 2147483648 but must be a power of two between 1048576 and 1073741824 inclusive");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_95, .pageSize = 64 * 1024);
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_96, .pageSize = 64 * 1024);
 
         TEST_ERROR(
             pgControlFromFile(storageTest, NULL), FormatError,
@@ -161,19 +161,6 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check all valid page sizes");
-
-        HRN_PG_CONTROL_PUT(
-            storageTest, PG_VERSION_95, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_95),
-            .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .pageSize = pgPageSize8);
-
-        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
-        TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
-        TEST_RESULT_UINT(info.version, PG_VERSION_95, "   check version");
-        TEST_RESULT_UINT(info.catalogVersion, 201510051, "   check catalog version");
-        TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
-        TEST_RESULT_UINT(info.timeline, 88, "check timeline");
-        TEST_RESULT_UINT(info.pageSize, pgPageSize8, "check page size");
-        TEST_RESULT_UINT(info.pageChecksumVersion, 0, "check page checksum");
 
         HRN_PG_CONTROL_PUT(
             storageTest, PG_VERSION_96, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_96),
@@ -211,6 +198,18 @@ testRun(void)
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
         TEST_RESULT_UINT(info.pageSize, pgPageSize4, "check page size");
+
+        HRN_PG_CONTROL_PUT(
+            storageTest, PG_VERSION_15, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_15),
+            .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .pageSize = pgPageSize8);
+
+        TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
+        TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "   check system id");
+        TEST_RESULT_UINT(info.version, PG_VERSION_15, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 202209061, "check catalog version");
+        TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
+        TEST_RESULT_UINT(info.timeline, 88, "check timeline");
+        TEST_RESULT_UINT(info.pageSize, pgPageSize8, "check page size");
 
         HRN_PG_CONTROL_PUT(
             storageTest, PG_VERSION_16, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_16),
@@ -291,15 +290,15 @@ testRun(void)
 
         // Start with an invalid crc but write a valid one at a greater offset to test the forced scan
         control = hrnPgControlToBuffer(
-            0, 0xFADEFADE, (PgControl){.version = PG_VERSION_95, .systemId = 0xAAAA0AAAA, .checkpoint = 777});
-        crcOffset = pgInterfaceVersion(PG_VERSION_95)->controlCrcOffset() + sizeof(uint32_t) * 2;
+            0, 0xFADEFADE, (PgControl){.version = PG_VERSION_18, .systemId = 0xAAAA0AAAA, .checkpoint = 777});
+        crcOffset = pgInterfaceVersion(PG_VERSION_18)->controlCrcOffset() + sizeof(uint32_t) * 2;
         *((uint32_t *)(bufPtr(control) + crcOffset)) = crc32cOne(bufPtrConst(control), crcOffset);
 
-        info = pgControlFromBuffer(control, STRDEF(PG_VERSION_95_Z));
+        info = pgControlFromBuffer(control, STRDEF(PG_VERSION_18_Z));
         TEST_RESULT_UINT(info.checkpoint, 777, "check checkpoint");
 
-        TEST_RESULT_VOID(pgControlCheckpointInvalidate(control, STRDEF(PG_VERSION_95_Z)), "invalidate checkpoint");
-        info = pgControlFromBuffer(control, STRDEF(PG_VERSION_95_Z));
+        TEST_RESULT_VOID(pgControlCheckpointInvalidate(control, STRDEF(PG_VERSION_18_Z)), "invalidate checkpoint");
+        info = pgControlFromBuffer(control, STRDEF(PG_VERSION_18_Z));
         TEST_RESULT_UINT(info.checkpoint, 0xDEAD, "check invalid checkpoint");
     }
 
@@ -345,7 +344,7 @@ testRun(void)
         TEST_RESULT_STR_Z(pgLsnName(PG_VERSION_96), "location", "check location name");
         TEST_RESULT_STR_Z(pgLsnName(PG_VERSION_10), "lsn", "check lsn name");
 
-        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_95, 201510051), "PG_9.5_201510051", "check 9.5 tablespace id");
+        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_96, 888888888), "PG_9.6_888888888", "check 9.5 tablespace id");
         TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_16, 999999999), "PG_16_999999999", "check 16 tablespace id");
 
         TEST_RESULT_STR_Z(pgWalName(PG_VERSION_96), "xlog", "check xlog name");
@@ -482,12 +481,12 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         memset(bufPtr(result), 0, bufSize(result));
-        HRN_PG_WAL_TO_BUFFER(result, PG_VERSION_95, .systemId = 0xEAEAEAEA, .size = HRN_PG_WAL_SEGMENT_SIZE_DEFAULT);
+        HRN_PG_WAL_TO_BUFFER(result, PG_VERSION_96, .systemId = 0xEAEAEAEA, .size = HRN_PG_WAL_SEGMENT_SIZE_DEFAULT);
         storagePutP(storageNewWriteP(storageTest, walFile), result);
 
-        TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest, NULL), "get wal info v9.5");
+        TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest, NULL), "get wal info v9.6");
         TEST_RESULT_UINT(info.systemId, 0xEAEAEAEA, "   check system id");
-        TEST_RESULT_UINT(info.version, PG_VERSION_95, "   check version");
+        TEST_RESULT_UINT(info.version, PG_VERSION_96, "   check version");
         TEST_RESULT_UINT(info.size, HRN_PG_WAL_SEGMENT_SIZE_DEFAULT, "   check size");
 
         // -------------------------------------------------------------------------------------------------------------------------

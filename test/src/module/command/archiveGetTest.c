@@ -36,7 +36,7 @@ testRun(void)
         TEST_TITLE("path missing");
 
         TEST_ERROR(
-            queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_95),
+            queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_18),
             PathMissingError, "unable to list file info for missing path '" TEST_PATH "/spool/archive/test1/in'");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -45,7 +45,7 @@ testRun(void)
         HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN);
 
         TEST_RESULT_STRLST_Z(
-            queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_95),
+            queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_18),
             "000000010000000100000001\n000000010000000100000002\n", "queue size smaller than min");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -54,7 +54,7 @@ testRun(void)
         queueSize = (16 * 1024 * 1024) * 3;
 
         TEST_RESULT_STRLST_Z(
-            queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_95),
+            queueNeed(STRDEF("000000010000000100000001"), false, queueSize, walSegmentSize, PG_VERSION_18),
             "000000010000000100000001\n000000010000000100000002\n000000010000000100000003\n", "empty queue");
 
         // -------------------------------------------------------------------------------------------------------------------------

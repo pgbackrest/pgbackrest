@@ -213,58 +213,6 @@ Macros for defining groups of functions that implement various queries and comma
     {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
     {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
 
-#define HRN_PQ_SCRIPT_ADVISORY_LOCK(sessionParam, lockAcquiredParam)                                                               \
-    {.session = sessionParam,                                                                                                      \
-        .function = HRN_PQ_SENDQUERY, .param = "[\"select pg_catalog.pg_try_advisory_lock(12340078987004321)::bool\"]",            \
-        .resultInt = 1},                                                                                                           \
-    {.session = sessionParam, .function = HRN_PQ_CONSUMEINPUT},                                                                    \
-    {.session = sessionParam, .function = HRN_PQ_ISBUSY},                                                                          \
-    {.session = sessionParam, .function = HRN_PQ_GETRESULT},                                                                       \
-    {.session = sessionParam, .function = HRN_PQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},                                      \
-    {.session = sessionParam, .function = HRN_PQ_NTUPLES, .resultInt = 1},                                                         \
-    {.session = sessionParam, .function = HRN_PQ_NFIELDS, .resultInt = 1},                                                         \
-    {.session = sessionParam, .function = HRN_PQ_FTYPE, .param = "[0]", .resultInt = HRN_PQ_TYPE_BOOL},                            \
-    {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,0]", .resultZ = cvtBoolToConstZ(lockAcquiredParam)},       \
-    {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
-    {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
-
-#define HRN_PQ_SCRIPT_IS_IN_BACKUP(sessionParam, inBackupParam)                                                                    \
-    {.session = sessionParam,                                                                                                      \
-        .function = HRN_PQ_SENDQUERY, .param = "[\"select pg_catalog.pg_is_in_backup()::bool\"]",                                  \
-        .resultInt = 1},                                                                                                           \
-    {.session = sessionParam, .function = HRN_PQ_CONSUMEINPUT},                                                                    \
-    {.session = sessionParam, .function = HRN_PQ_ISBUSY},                                                                          \
-    {.session = sessionParam, .function = HRN_PQ_GETRESULT},                                                                       \
-    {.session = sessionParam, .function = HRN_PQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},                                      \
-    {.session = sessionParam, .function = HRN_PQ_NTUPLES, .resultInt = 1},                                                         \
-    {.session = sessionParam, .function = HRN_PQ_NFIELDS, .resultInt = 1},                                                         \
-    {.session = sessionParam, .function = HRN_PQ_FTYPE, .param = "[0]", .resultInt = HRN_PQ_TYPE_BOOL},                            \
-    {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,0]", .resultZ = cvtBoolToConstZ(inBackupParam)},           \
-    {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
-    {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
-
-#define HRN_PQ_SCRIPT_START_BACKUP_LE_95(sessionParam, startFastParam, lsnParam, walSegmentNameParam)                              \
-    {.session = sessionParam,                                                                                                      \
-        .function = HRN_PQ_SENDQUERY,                                                                                              \
-        .param = zNewFmt(                                                                                                          \
-            "[\"select lsn::text as lsn,\\n"                                                                                       \
-            "       pg_catalog.pg_xlogfile_name(lsn)::text as wal_segment_name\\n"                                                 \
-            "  from pg_catalog.pg_start_backup('pgBackRest backup started at ' || current_timestamp, %s) as lsn\"]",               \
-            cvtBoolToConstZ(startFastParam)),                                                                                      \
-        .resultInt = 1},                                                                                                           \
-    {.session = sessionParam, .function = HRN_PQ_CONSUMEINPUT},                                                                    \
-    {.session = sessionParam, .function = HRN_PQ_ISBUSY},                                                                          \
-    {.session = sessionParam, .function = HRN_PQ_GETRESULT},                                                                       \
-    {.session = sessionParam, .function = HRN_PQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},                                      \
-    {.session = sessionParam, .function = HRN_PQ_NTUPLES, .resultInt = 1},                                                         \
-    {.session = sessionParam, .function = HRN_PQ_NFIELDS, .resultInt = 2},                                                         \
-    {.session = sessionParam, .function = HRN_PQ_FTYPE, .param = "[0]", .resultInt = HRN_PQ_TYPE_TEXT},                            \
-    {.session = sessionParam, .function = HRN_PQ_FTYPE, .param = "[1]", .resultInt = HRN_PQ_TYPE_TEXT},                            \
-    {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,0]", .resultZ = lsnParam},                                 \
-    {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,1]", .resultZ = walSegmentNameParam},                      \
-    {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
-    {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
-
 #define HRN_PQ_SCRIPT_START_BACKUP_96(sessionParam, startFastParam, lsnParam, walSegmentNameParam)                                 \
     {.session = sessionParam,                                                                                                      \
         .function = HRN_PQ_SENDQUERY,                                                                                              \
@@ -317,27 +265,6 @@ Macros for defining groups of functions that implement various queries and comma
             "       pg_catalog.pg_walfile_name(lsn)::text as wal_segment_name\\n"                                                  \
             "  from pg_catalog.pg_backup_start('pgBackRest backup started at ' || current_timestamp, %s) as lsn\"]",               \
             cvtBoolToConstZ(startFastParam)),                                                                                      \
-        .resultInt = 1},                                                                                                           \
-    {.session = sessionParam, .function = HRN_PQ_CONSUMEINPUT},                                                                    \
-    {.session = sessionParam, .function = HRN_PQ_ISBUSY},                                                                          \
-    {.session = sessionParam, .function = HRN_PQ_GETRESULT},                                                                       \
-    {.session = sessionParam, .function = HRN_PQ_RESULTSTATUS, .resultInt = PGRES_TUPLES_OK},                                      \
-    {.session = sessionParam, .function = HRN_PQ_NTUPLES, .resultInt = 1},                                                         \
-    {.session = sessionParam, .function = HRN_PQ_NFIELDS, .resultInt = 2},                                                         \
-    {.session = sessionParam, .function = HRN_PQ_FTYPE, .param = "[0]", .resultInt = HRN_PQ_TYPE_TEXT},                            \
-    {.session = sessionParam, .function = HRN_PQ_FTYPE, .param = "[1]", .resultInt = HRN_PQ_TYPE_TEXT},                            \
-    {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,0]", .resultZ = lsnParam},                                 \
-    {.session = sessionParam, .function = HRN_PQ_GETVALUE, .param = "[0,1]", .resultZ = walSegmentNameParam},                      \
-    {.session = sessionParam, .function = HRN_PQ_CLEAR},                                                                           \
-    {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
-
-#define HRN_PQ_SCRIPT_STOP_BACKUP_LE_95(sessionParam, lsnParam, walSegmentNameParam)                                               \
-    {.session = sessionParam,                                                                                                      \
-        .function = HRN_PQ_SENDQUERY,                                                                                              \
-        .param =                                                                                                                   \
-            "[\"select lsn::text as lsn,\\n"                                                                                       \
-            "       pg_catalog.pg_xlogfile_name(lsn)::text as wal_segment_name\\n"                                                 \
-            "  from pg_catalog.pg_stop_backup() as lsn\"]",                                                                        \
         .resultInt = 1},                                                                                                           \
     {.session = sessionParam, .function = HRN_PQ_CONSUMEINPUT},                                                                    \
     {.session = sessionParam, .function = HRN_PQ_ISBUSY},                                                                          \
@@ -563,10 +490,6 @@ Macros for defining groups of functions that implement various queries and comma
     HRN_PQ_SCRIPT_CHECKPOINT_TARGET_REACHED(                                                                                       \
         sessionParam, "lsn", targetLsnParam, targetReachedParam, checkpointLsnParam, sleepParam)
 
-#define HRN_PQ_SCRIPT_REPLAY_WAIT_LE_95(sessionParam, targetLsnParam)                                                              \
-    HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_LE_96(sessionParam, targetLsnParam, true, "X/X"),                                          \
-    HRN_PQ_SCRIPT_CHECKPOINT(sessionParam)
-
 #define HRN_PQ_SCRIPT_REPLAY_WAIT_96(sessionParam, targetLsnParam)                                                                 \
     HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_LE_96(sessionParam, targetLsnParam, true, "X/X"),                                          \
     HRN_PQ_SCRIPT_CHECKPOINT(sessionParam),                                                                                        \
@@ -583,14 +506,6 @@ Macros for defining groups of functions that implement various queries and comma
 /***********************************************************************************************************************************
 Macros to simplify dbOpen() for specific database versions
 ***********************************************************************************************************************************/
-#define HRN_PQ_SCRIPT_OPEN_GE_93(sessionParam, connectParam, pgVersion, pgPathParam, standbyParam, archiveMode, archiveCommand)    \
-    HRN_PQ_SCRIPT_OPEN(sessionParam, connectParam),                                                                                \
-    HRN_PQ_SCRIPT_SET_SEARCH_PATH(sessionParam),                                                                                   \
-    HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(sessionParam),                                                                               \
-    HRN_PQ_SCRIPT_VALIDATE_QUERY(sessionParam, pgVersion, pgPathParam, archiveMode, archiveCommand),                               \
-    HRN_PQ_SCRIPT_SET_APPLICATION_NAME(sessionParam),                                                                              \
-    HRN_PQ_SCRIPT_IS_STANDBY_QUERY(sessionParam, standbyParam)
-
 #define HRN_PQ_SCRIPT_OPEN_GE_96(sessionParam, connectParam, pgVersion, pgPathParam, standbyParam, archiveMode, archiveCommand)    \
     HRN_PQ_SCRIPT_OPEN(sessionParam, connectParam),                                                                                \
     HRN_PQ_SCRIPT_SET_SEARCH_PATH(sessionParam),                                                                                   \

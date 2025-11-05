@@ -15,8 +15,6 @@ use pgBackRestDoc::Common::Log;
 ####################################################################################################################################
 # PostgreSQL version numbers
 ####################################################################################################################################
-use constant PG_VERSION_95                                          => '9.5';
-    push @EXPORT, qw(PG_VERSION_95);
 use constant PG_VERSION_96                                          => '9.6';
     push @EXPORT, qw(PG_VERSION_96);
 use constant PG_VERSION_10                                          => '10';
@@ -48,8 +46,9 @@ sub versionSupport
     # Assign function parameters, defaults, and log debug info
     my ($strOperation) = logDebugParam(__PACKAGE__ . '->versionSupport');
 
-    my @strySupportVersion = (PG_VERSION_95, PG_VERSION_96, PG_VERSION_10, PG_VERSION_11, PG_VERSION_12, PG_VERSION_13,
-                              PG_VERSION_14, PG_VERSION_15, PG_VERSION_16, PG_VERSION_17, PG_VERSION_18);
+    my @strySupportVersion = (
+        PG_VERSION_96, PG_VERSION_10, PG_VERSION_11, PG_VERSION_12, PG_VERSION_13, PG_VERSION_14, PG_VERSION_15, PG_VERSION_16,
+        PG_VERSION_17, PG_VERSION_18);
 
     # Return from function and log return values if any
     return logDebugReturn

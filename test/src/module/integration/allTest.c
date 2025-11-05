@@ -259,18 +259,10 @@ testRun(void)
             // Create a database that can be excluded from restores
             HRN_HOST_SQL_EXEC(pg1, "create database exclude_me with tablespace ts1");
 
-            // Check that backup fails for <= 9.5 when another backup is already running
-            if (hrnHostPgVersion() <= PG_VERSION_95)
-            {
-                HRN_HOST_SQL_EXEC(pg1, "perform pg_start_backup('test backup that will be restarted', true)");
-                TEST_HOST_BR(repo, CFGCMD_BACKUP, .resultExpect = errorTypeCode(&DbQueryError));
-            }
-
             // Backup from pg1 to show that backups can be done from the primary when a repo host exists, that a primary backup
-            // works after a standby backup, and that disabling bundling and block incremental works. Include stop auto here so
-            // backups for <= 9.5 will stop the prior backup
+            // works after a standby backup, and that disabling bundling and block incremental works.
             HRN_HOST_SQL_EXEC(pg1, "update status set message = '" TEST_STATUS_INCR "'");
-            TEST_HOST_BR(pg1, CFGCMD_BACKUP, .option = "--type=incr --delta --stop-auto");
+            TEST_HOST_BR(pg1, CFGCMD_BACKUP, .option = "--type=incr --delta");
 
             // Check that expire works remotely (increase full retention to make it a noop)
             TEST_HOST_BR(pg1, CFGCMD_EXPIRE, .option = "--repo1-retention-full=99");

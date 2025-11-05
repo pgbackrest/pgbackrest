@@ -1090,8 +1090,7 @@ backupStart(const BackupData *const backupData)
 
             // Start backup
             LOG_INFO_FMT(
-                "execute %sexclusive backup start: backup begins after the %s checkpoint completes",
-                backupData->version >= PG_VERSION_96 ? "non-" : "",
+                "execute backup start: backup begins after the %s checkpoint completes",
                 cfgOptionBool(cfgOptStartFast) ? "requested immediate" : "next regular");
 
             const DbBackupStartResult dbBackupStartResult = dbBackupStart(
@@ -1263,8 +1262,7 @@ backupStop(BackupData *const backupData, Manifest *const manifest)
         {
             // Stop the backup
             LOG_INFO_FMT(
-                "execute %sexclusive backup stop and wait for all WAL segments to archive",
-                backupData->version >= PG_VERSION_96 ? "non-" : "");
+                "execute backup stop and wait for all WAL segments to archive");
 
             const DbBackupStopResult dbBackupStopResult = dbBackupStop(backupData->dbPrimary);
 
