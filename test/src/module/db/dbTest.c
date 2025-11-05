@@ -80,10 +80,10 @@ testRun(void)
 
                 // Set script
                 HRN_PQ_SCRIPT_SET(
-                    HRN_PQ_SCRIPT_OPEN(1, "dbname='testdb' port=5432", PG_VERSION_15, TEST_PATH "/pg", true, NULL, NULL),
+                    HRN_PQ_SCRIPT_OPEN(1, "dbname='testdb' port=5432", PG_VERSION_15, TEST_PATH "/pg", false, NULL, NULL),
                     HRN_PQ_SCRIPT_CLOSE(1),
 
-                    HRN_PQ_SCRIPT_OPEN(1, "dbname='testdb' port=5432", PG_VERSION_15, TEST_PATH "/pg", true, NULL, NULL),
+                    HRN_PQ_SCRIPT_OPEN(1, "dbname='testdb' port=5432", PG_VERSION_15, TEST_PATH "/pg", false, NULL, NULL),
                     HRN_PQ_SCRIPT_CREATE_RESTORE_POINT(1, "2/3"),
                     HRN_PQ_SCRIPT_WAL_SWITCH(1, "wal", "000000030000000200000003"),
                     HRN_PQ_SCRIPT_CLOSE(1));
