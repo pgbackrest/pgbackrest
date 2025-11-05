@@ -80,20 +80,10 @@ testRun(void)
 
                 // Set script
                 HRN_PQ_SCRIPT_SET(
-                    HRN_PQ_SCRIPT_OPEN(1, "dbname='testdb' port=5432"),
-                    HRN_PQ_SCRIPT_SET_SEARCH_PATH(1),
-                    HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(1),
-                    HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_95, TEST_PATH "/pg", NULL, NULL),
-                    HRN_PQ_SCRIPT_SET_APPLICATION_NAME(1),
-                    HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false),
+                    HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='testdb' port=5432", PG_VERSION_95, TEST_PATH "/pg", false, NULL, NULL),
                     HRN_PQ_SCRIPT_CLOSE(1),
 
-                    HRN_PQ_SCRIPT_OPEN(1, "dbname='testdb' port=5432"),
-                    HRN_PQ_SCRIPT_SET_SEARCH_PATH(1),
-                    HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(1),
-                    HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_95, TEST_PATH "/pg", NULL, NULL),
-                    HRN_PQ_SCRIPT_SET_APPLICATION_NAME(1),
-                    HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false),
+                    HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='testdb' port=5432", PG_VERSION_95, TEST_PATH "/pg", false, NULL, NULL),
                     HRN_PQ_SCRIPT_CREATE_RESTORE_POINT(1, "2/3"),
                     HRN_PQ_SCRIPT_WAL_SWITCH(1, "xlog", "000000030000000200000003"),
                     HRN_PQ_SCRIPT_CLOSE(1));
@@ -702,12 +692,7 @@ testRun(void)
         TEST_TITLE("only available cluster is a standby");
 
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432 user='bob'"),
-            HRN_PQ_SCRIPT_SET_SEARCH_PATH(1),
-            HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(1),
-            HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_95, TEST_PATH "/pg", NULL, NULL),
-            HRN_PQ_SCRIPT_SET_APPLICATION_NAME(1),
-            HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, true),
+            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_95, TEST_PATH "/pg", true, NULL, NULL),
             HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(
@@ -719,12 +704,8 @@ testRun(void)
         TEST_TITLE("standby cluster required but not found");
 
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432 user='bob'"),
-            HRN_PQ_SCRIPT_SET_SEARCH_PATH(1),
-            HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(1),
-            HRN_PQ_SCRIPT_VALIDATE_QUERY(1, PG_VERSION_95, TEST_PATH "/pg", NULL, NULL),
-            HRN_PQ_SCRIPT_SET_APPLICATION_NAME(1),
-            HRN_PQ_SCRIPT_IS_STANDBY_QUERY(1, false),
+            HRN_PQ_SCRIPT_OPEN_GE_93(
+                1, "dbname='postgres' port=5432 user='bob'", PG_VERSION_95, TEST_PATH "/pg", false, NULL, NULL),
             HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(
