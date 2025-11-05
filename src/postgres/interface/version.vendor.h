@@ -11,7 +11,7 @@ though the pgBackRest project does not use tabs elsewhere.
 New versions should always be added to the top of each type's #if block, underneath `PG_VERSION > PG_VERSION_MAX` to cause as little
 churn as possible. This also ensures that new versions will not work until PG_VERSION_MAX and this file have been updated.
 
-New data structures do not need to add #elif branches for old versions. See pg_time_t as an example.
+New data structures do not need to add #elif branches for old versions. See FullTransactionId as an example.
 
 Comments should be copied with the types they apply to, even if the comment has not changed. This does get repetitive, but has no
 runtime cost and makes the rules a bit easier to follow.
@@ -20,6 +20,8 @@ If a comment has syntax only changes, then the new version of the comment can be
 
 If a comment has changed in a way that implies a difference in the way the type is used, then a new version of the comment and type
 should be created. See the CheckPoint type difference between 9.5 and 9.6 as an example.
+
+Unversioned types that are only used by versioned types are also included in this file.
 ***********************************************************************************************************************************/
 #include "postgres/interface/static.vendor.h"
 #include "postgres/version.h"
@@ -30,34 +32,20 @@ Types from src/include/c.h
 
 // int64 type. The definition in c.h is more complicated but here we can rely on stdint.h for the correct type.
 // ---------------------------------------------------------------------------------------------------------------------------------
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_95
-
 typedef int64_t int64;
 
-#endif
+// uint64 type
+// ---------------------------------------------------------------------------------------------------------------------------------
+typedef uint64_t uint64;
 
 // MultiXactId type
 // ---------------------------------------------------------------------------------------------------------------------------------
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_95
-
 /* MultiXactId must be equivalent to TransactionId, to fit in t_xmax */
 typedef TransactionId MultiXactId;
 
-#endif
-
 // MultiXactOffset
 // ---------------------------------------------------------------------------------------------------------------------------------
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_95
-
 typedef uint32 MultiXactOffset;
-
-#endif
 
 /***********************************************************************************************************************************
 Types from src/include/pgtime.h
@@ -65,10 +53,6 @@ Types from src/include/pgtime.h
 
 // pg_time_t type
 // ---------------------------------------------------------------------------------------------------------------------------------
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_95
-
 /*
  * The API of this library is generally similar to the corresponding
  * C library functions, except that we use pg_time_t which (we hope) is
@@ -76,24 +60,16 @@ Types from src/include/pgtime.h
  */
 typedef int64 pg_time_t;
 
-#endif
-
 /***********************************************************************************************************************************
 Types from src/include/postgres_ext.h
 ***********************************************************************************************************************************/
 
 // Oid Type
 // ---------------------------------------------------------------------------------------------------------------------------------
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_95
-
 /*
  * Object ID is a fundamental type in Postgres.
  */
 typedef unsigned int Oid;
-
-#endif
 
 /***********************************************************************************************************************************
 Types from src/include/port/pg_crc32.h
@@ -101,13 +77,7 @@ Types from src/include/port/pg_crc32.h
 
 // pg_crc32/c type
 // ---------------------------------------------------------------------------------------------------------------------------------
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_95
-
 typedef uint32 pg_crc32c;
-
-#endif
 
 /***********************************************************************************************************************************
 Types from src/include/access/xlogdefs.h
@@ -115,24 +85,14 @@ Types from src/include/access/xlogdefs.h
 
 // XLogRecPtr type
 // ---------------------------------------------------------------------------------------------------------------------------------
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_95
-
 /*
  * Pointer to a location in the XLOG.  These pointers are 64 bits wide,
  * because we don't want them ever to overflow.
  */
 typedef uint64 XLogRecPtr;
 
-#endif
-
 // TimeLineID type
 // ---------------------------------------------------------------------------------------------------------------------------------
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_95
-
 /*
  * TimeLineID (TLI) - identifies different database histories to prevent
  * confusion after restoring a prior state of a database installation.
@@ -143,8 +103,6 @@ typedef uint64 XLogRecPtr;
  * sequence that was generated in the previous incarnation.
  */
 typedef uint32 TimeLineID;
-
-#endif
 
 /***********************************************************************************************************************************
 Types from src/include/catalog/catversion.h
@@ -583,10 +541,6 @@ typedef struct CheckPoint
 
 // DBState enum
 // ---------------------------------------------------------------------------------------------------------------------------------
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_95
-
 /*
  * System status indicator.  Note this is stored in pg_control; if you change
  * it, you must bump PG_CONTROL_VERSION
@@ -601,8 +555,6 @@ typedef enum DBState
 	DB_IN_ARCHIVE_RECOVERY,
 	DB_IN_PRODUCTION,
 } DBState;
-
-#endif
 
 // ControlFileData type
 // ---------------------------------------------------------------------------------------------------------------------------------
@@ -1831,10 +1783,6 @@ typedef struct XLogPageHeaderData
 
 // XLogLongPageHeaderData type
 // ---------------------------------------------------------------------------------------------------------------------------------
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_95
-
 /*
  * When the XLP_LONG_HEADER flag is set, we store additional fields in the
  * page header.  (This is ordinarily done just in the first page of an
@@ -1848,15 +1796,7 @@ typedef struct XLogLongPageHeaderData
 	uint32		xlp_xlog_blcksz;	/* just as a cross-check */
 } XLogLongPageHeaderData;
 
-#endif
-
 // XLP_LONG_HEADER define
 // ---------------------------------------------------------------------------------------------------------------------------------
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_95
-
 /* This flag indicates a "long" page header */
 #define XLP_LONG_HEADER				0x0002
-
-#endif
