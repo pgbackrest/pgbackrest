@@ -1410,7 +1410,7 @@
         <section id="performance-tuning">
             <title>Performance Tuning</title>
 
-            <p><backrest/> has a number of performance options that are not enabled by default to maintain backward compatibility in the repository. However, when creating a new repository the following options are recommended. They can also be used on an existing repository with the caveat that older versions of <backrest/> will not be able to read the repository. This incompatibility depends on when the feature was introduced, which will be noted in the list below.</p>
+            <p><backrest/> has a number of performance options that are not enabled by default to maintain backward compatibility in the repository. However, when creating a new repository the following options are recommended. They can also be used on an existing repository with the caveat that older versions of <backrest/> will not be able to read the repository. This incompatibility depends on when the feature was introduced, as noted in the list below.</p>
 
             <list>
                 <list-item><br-option>compress-type</br-option> - determines the compression algorithm used by the <cmd>backup</cmd> and <cmd>archive-push</cmd> commands. The default is <id>gz</id> (Gzip) but <id>zst</id> (Zstandard) is recommended because it is much faster and provides compression similar to <id>gz</id>. <id>zst</id> has been supported by the <br-option>compress-type</br-option> option since <link url="release.html#2.27">v2.27</link>. See <link page="configuration" section="/section-general/option-compress-type">Compress Type</link> for more details.</list-item>
