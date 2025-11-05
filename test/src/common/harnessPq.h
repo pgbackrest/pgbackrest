@@ -51,7 +51,7 @@ Data type constants
 /***********************************************************************************************************************************
 Macros for defining groups of functions that implement various queries and commands
 ***********************************************************************************************************************************/
-#define HRN_PQ_SCRIPT_OPEN(sessionParam, connectParam)                                                                             \
+#define HRN_PQ_SCRIPT_CONNECT(sessionParam, connectParam)                                                                          \
     {.session = sessionParam, .function = HRN_PQ_CONNECTDB, .param = "[\"" connectParam "\"]"},                                    \
     {.session = sessionParam, .function = HRN_PQ_STATUS, .resultInt = CONNECTION_OK}
 
@@ -506,8 +506,8 @@ Macros for defining groups of functions that implement various queries and comma
 /***********************************************************************************************************************************
 Macros to simplify dbOpen() for specific database versions
 ***********************************************************************************************************************************/
-#define HRN_PQ_SCRIPT_OPEN_GE_96(sessionParam, connectParam, pgVersion, pgPathParam, standbyParam, archiveMode, archiveCommand)    \
-    HRN_PQ_SCRIPT_OPEN(sessionParam, connectParam),                                                                                \
+#define HRN_PQ_SCRIPT_OPEN(sessionParam, connectParam, pgVersion, pgPathParam, standbyParam, archiveMode, archiveCommand)          \
+    HRN_PQ_SCRIPT_CONNECT(sessionParam, connectParam),                                                                             \
     HRN_PQ_SCRIPT_SET_SEARCH_PATH(sessionParam),                                                                                   \
     HRN_PQ_SCRIPT_SET_CLIENT_ENCODING(sessionParam),                                                                               \
     HRN_PQ_SCRIPT_VALIDATE_QUERY(sessionParam, pgVersion, pgPathParam, archiveMode, archiveCommand),                               \

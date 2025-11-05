@@ -250,7 +250,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
         // Generate pq script
         // -------------------------------------------------------------------------------------------------------------------------
         // Connect to primary
-        HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", pgVersion, pg1Path, false, NULL, NULL));
+        HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", pgVersion, pg1Path, false, NULL, NULL));
 
         // Connect to standby
         if (param.backupStandby)
@@ -269,7 +269,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
             }
             else
             {
-                HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_OPEN_GE_96(2, "dbname='postgres' port=5433", pgVersion, pg2Path, true, NULL, NULL));
+                HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_OPEN(2, "dbname='postgres' port=5433", pgVersion, pg2Path, true, NULL, NULL));
             }
         }
 

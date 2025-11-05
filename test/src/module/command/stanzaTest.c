@@ -566,7 +566,7 @@ testRun(void)
         HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_18);
 
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg", false, NULL, NULL));
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg", false, NULL, NULL));
 
         TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create - db online");
         TEST_RESULT_LOG("P00   INFO: stanza-create for stanza 'db' on repo1");
@@ -584,7 +584,7 @@ testRun(void)
 
         HRN_CFG_LOAD(cfgCmdStanzaUpgrade, argList);
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg", false, NULL, NULL));
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, TEST_PATH "/pg", false, NULL, NULL));
 
         TEST_RESULT_VOID(cmdStanzaUpgrade(), "stanza upgrade - db online");
         TEST_RESULT_LOG(
@@ -598,7 +598,7 @@ testRun(void)
         HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_10);
 
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_11, TEST_PATH "/pg", false, NULL, NULL));
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_11, TEST_PATH "/pg", false, NULL, NULL));
 
         TEST_ERROR(
             pgValidate(), DbMismatchError,
@@ -613,7 +613,7 @@ testRun(void)
         HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_15);
 
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg2", false, NULL, NULL));
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg2", false, NULL, NULL));
 
         TEST_ERROR(
             pgValidate(), DbMismatchError,
@@ -640,8 +640,8 @@ testRun(void)
         HRN_PG_CONTROL_PUT(storagePgIdxWrite(0), PG_VERSION_13);
 
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_13, TEST_PATH "/pg", true, NULL, NULL),
-            HRN_PQ_SCRIPT_OPEN_GE_96(2, "dbname='postgres' port=5434", PG_VERSION_13, TEST_PATH "/pg1", false, NULL, NULL));
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_13, TEST_PATH "/pg", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(2, "dbname='postgres' port=5434", PG_VERSION_13, TEST_PATH "/pg1", false, NULL, NULL));
 
         PgControl pgControl = {0};
         TEST_ASSIGN(pgControl, pgValidate(), "validate primary on pg2");

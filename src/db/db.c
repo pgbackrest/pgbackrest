@@ -357,12 +357,11 @@ dbBackupStartQuery(const unsigned int pgVersion, const bool startFast)
 }
 
 FN_EXTERN DbBackupStartResult
-dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const bool archiveCheck)
+dbBackupStart(Db *const this, const bool startFast, const bool archiveCheck)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
         FUNCTION_LOG_PARAM(BOOL, startFast);
-        FUNCTION_LOG_PARAM(BOOL, stopAuto);
         FUNCTION_LOG_PARAM(BOOL, archiveCheck);
     FUNCTION_LOG_END();
 

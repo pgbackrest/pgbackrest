@@ -1094,8 +1094,7 @@ backupStart(const BackupData *const backupData)
                 cfgOptionBool(cfgOptStartFast) ? "requested immediate" : "next regular");
 
             const DbBackupStartResult dbBackupStartResult = dbBackupStart(
-                backupData->dbPrimary, cfgOptionBool(cfgOptStartFast), cfgOptionBool(cfgOptStopAuto),
-                cfgOptionBool(cfgOptArchiveCheck));
+                backupData->dbPrimary, cfgOptionBool(cfgOptStartFast), cfgOptionBool(cfgOptArchiveCheck));
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
