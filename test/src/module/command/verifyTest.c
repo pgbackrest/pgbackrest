@@ -222,6 +222,7 @@ testRun(void)
 
         Manifest *manifest = NULL;
         unsigned int jobErrorTotal = 0;
+        VariantList *errorList = varLstNew();
         VerifyBackupResult backupResult = {.backupLabel = strNewZ(TEST_BACKUP_LABEL_FULL)};
 
         InfoPg *infoPg = NULL;
@@ -256,9 +257,28 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         backupResult.status = backupValid;
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal, errorList), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg version mismatch");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
+        TEST_RESULT_UINT(varLstSize(errorList), 2, "error list size");
+
+        TEST_RESULT_STR_Z(
+            jsonFromVar(varNewVarLst(errorList)),
+            // {uncrustify_off - indentation}
+            "["
+                "{"
+                    "\"level\":5,"
+                    "\"message\":\"unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest.copy' for read\""
+                "},"
+                "{"
+                    "\"level\":4,"
+                    "\"message\":\"'20181119-152138F' may not be recoverable - PG data (id 1, version 9.6, system-id " HRN_PG_SYSTEMID_95_Z ") is not in the backup.info history, skipping\""
+                "}"
+            "]",
+            // {uncrustify_on}
+            "errorList does not match"
+            );
+
         TEST_RESULT_LOG(
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest.copy'"
             " for read\n"
@@ -291,9 +311,30 @@ testRun(void)
             .comment = "manifest copy - invalid system-id");
 
         backupResult.status = backupValid;
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
+
+        lstClear((List *)errorList);
+        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal, errorList), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg system-id mismatch");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
+
+        TEST_RESULT_STR_Z(
+            jsonFromVar(varNewVarLst(errorList)),
+            // {uncrustify_off - indentation}
+            "["
+                "{"
+                    "\"level\":5,"
+                    "\"message\":\"unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest' for read\""
+                "},"
+                "{\"level\":5,\"message\":\"20181119-152138F/backup.manifest is missing or unusable, using copy\"},"
+                "{"
+                    "\"level\":4,"
+                    "\"message\":\"'20181119-152138F' may not be recoverable - PG data (id 1, version 9.5, system-id 0) is not in the backup.info history, skipping\""
+                "}"
+            "]",
+            // {uncrustify_on}
+            "errorList does not match"
+            );
+
         TEST_RESULT_LOG(
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest' for read\n"
             "P00 DETAIL: 20181119-152138F/backup.manifest is missing or unusable, using copy\n"
@@ -325,9 +366,32 @@ testRun(void)
             .comment = "manifest copy - invalid db-id");
 
         backupResult.status = backupValid;
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
+        lstClear((List *)errorList);
+        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal, errorList), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set - pg db-id mismatch");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
+
+        TEST_RESULT_STR_Z(
+            jsonFromVar(varNewVarLst(errorList)),
+            // {uncrustify_off - indentation}
+            "["
+                "{"
+                    "\"level\":5,"
+                    "\"message\":\"unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest' for read\""
+                "},"
+                "{"
+                    "\"level\":5,"
+                    "\"message\":\"20181119-152138F/backup.manifest is missing or unusable, using copy\""
+                "},"
+                "{"
+                    "\"level\":4,"
+                    "\"message\":\"'20181119-152138F' may not be recoverable - PG data (id 0, version 9.5, system-id " HRN_PG_SYSTEMID_95_Z ") is not in the backup.info history, skipping\""
+                "}"
+            "]",
+            // {uncrustify_on}
+            "errorList does not match"
+            );
+
         TEST_RESULT_LOG(
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest' for read\n"
             "P00 DETAIL: 20181119-152138F/backup.manifest is missing or unusable, using copy\n"
@@ -338,13 +402,31 @@ testRun(void)
         TEST_TITLE("missing main manifest, errored copy");
 
         backupResult.status = backupValid;
-
+        lstClear((List *)errorList);
         HRN_STORAGE_PUT_Z(
             storageRepoWrite(), TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/db/" TEST_BACKUP_LABEL_FULL "/" BACKUP_MANIFEST_FILE
             INFO_COPY_EXT, TEST_INVALID_BACKREST_INFO, .comment = "invalid manifest copy");
 
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, false, infoPg, &jobErrorTotal, errorList), "verify manifest");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
+
+        TEST_RESULT_STR_Z(
+            jsonFromVar(varNewVarLst(errorList)),
+            // {uncrustify_off - indentation}
+            "["
+                "{"
+                    "\"level\":5,"
+                    "\"message\":\"unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest' for read\""
+                "},"
+                "{"
+                    "\"level\":5,"
+                    "\"message\":\"invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' <REPO:BACKUP>/20181119-152138F/backup.manifest.copy\""
+                "}"
+            "]",
+            // {uncrustify_on}
+            "errorList does not match"
+            );
+
         TEST_RESULT_LOG(
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest' for read\n"
             "P00 DETAIL: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
@@ -353,13 +435,32 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("current backup true");
 
+        lstClear((List *)errorList);
         HRN_STORAGE_PUT_Z(
             storageRepoWrite(), TEST_PATH "/repo/" STORAGE_PATH_BACKUP "/db/" TEST_BACKUP_LABEL_FULL "/" BACKUP_MANIFEST_FILE,
             TEST_INVALID_BACKREST_INFO, .comment = "invalid manifest");
 
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal), "verify manifest");
+        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal, errorList), "verify manifest");
         TEST_RESULT_PTR(manifest, NULL, "manifest not set");
         TEST_RESULT_UINT(backupResult.status, backupInvalid, "manifest unusable - backup invalid");
+
+        TEST_RESULT_STR_Z(
+            jsonFromVar(varNewVarLst(errorList)),
+            // {uncrustify_off - indentation}
+            "["
+                "{"
+                    "\"level\":5,"
+                    "\"message\":\"invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' <REPO:BACKUP>/20181119-152138F/backup.manifest\""
+                "},"
+                "{"
+                    "\"level\":5,"
+                    "\"message\":\"invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' <REPO:BACKUP>/20181119-152138F/backup.manifest.copy\""
+                "}"
+            "]",
+            // {uncrustify_on}
+            "errorList does not match"
+            );
+
         TEST_RESULT_LOG(
             "P00 DETAIL: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
             " <REPO:BACKUP>/20181119-152138F/backup.manifest\n"
@@ -383,9 +484,24 @@ testRun(void)
             .comment = "valid manifest");
 
         backupResult.status = backupValid;
-        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal), "verify manifest");
+        lstClear((List *)errorList);
+        TEST_ASSIGN(manifest, verifyManifestFile(&backupResult, NULL, true, infoPg, &jobErrorTotal, errorList), "verify manifest");
         TEST_RESULT_PTR_NE(manifest, NULL, "manifest set");
         TEST_RESULT_UINT(backupResult.status, backupValid, "manifest usable");
+
+        TEST_RESULT_STR_Z(
+            jsonFromVar(varNewVarLst(errorList)),
+            // {uncrustify_off - indentation}
+            "["
+                "{"
+                    "\"level\":5,"
+                    "\"message\":\"backup '20181119-152138F' manifest.copy does not match manifest\""
+                "}"
+            "]",
+            // {uncrustify_on}
+            "errorList does not match"
+            );
+
         TEST_RESULT_LOG("P00 DETAIL: backup '20181119-152138F' manifest.copy does not match manifest");
 
         harnessLogLevelReset();
@@ -412,10 +528,11 @@ testRun(void)
 
         archiveIdResult->pgWalInfo.size = HRN_PG_WAL_SEGMENT_SIZE_DEFAULT;
         archiveIdResult->pgWalInfo.version = PG_VERSION_95;
+        VariantList *errorList = varLstNew();
 
         strLstAddZ(walFileList, "000000020000000200000000-daa497dba64008db824607940609ba1cd7c6c501.gz");
 
-        TEST_RESULT_VOID(verifyCreateArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
+        TEST_RESULT_VOID(verifyCreateArchiveIdRange(archiveIdResult, walFileList, &errTotal, errorList), "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 0, "no errors");
         TEST_RESULT_UINT(lstSize(((VerifyArchiveResult *)lstGet(archiveIdResultList, 0))->walRangeList), 1, "single range");
         TEST_ASSIGN(
@@ -423,19 +540,25 @@ testRun(void)
             "get range");
         TEST_RESULT_STR_Z(walRangeResult->start, "000000020000000200000000", "start range");
         TEST_RESULT_STR_Z(walRangeResult->stop, "000000020000000200000000", "stop range");
+        TEST_RESULT_STR_Z(
+            jsonFromVar(varNewVarLst(errorList)),
+            "[]",
+            "errorList does not match"
+            );
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("Duplicate WAL only - no range, all removed from list");
 
         lstClear(archiveIdResult->walRangeList);
-
+        lstClear((List *)errorList);
         // Add a duplicate
         strLstAddZ(walFileList, "000000020000000200000000");
 
-        TEST_RESULT_VOID(verifyCreateArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
+        TEST_RESULT_VOID(verifyCreateArchiveIdRange(archiveIdResult, walFileList, &errTotal, errorList), "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 1, "duplicate WAL error");
         TEST_RESULT_UINT(strLstSize(walFileList), 0, "all WAL removed from WAL file list");
         TEST_RESULT_UINT(lstSize(archiveIdResult->walRangeList), 0, "no range");
+        TEST_RESULT_UINT(varLstSize(errorList), 1, "one error");
         TEST_RESULT_LOG("P00   INFO: duplicate WAL '000000020000000200000000' for '9.5-1' exists, skipping");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -452,7 +575,8 @@ testRun(void)
         strLstAddZ(walFileList, "000000020000000200000001");
         strLstAddZ(walFileList, "000000020000000200000001");
 
-        TEST_RESULT_VOID(verifyCreateArchiveIdRange(archiveIdResult, walFileList, &errTotal), "create archiveId WAL range");
+        lstClear((List *)errorList);
+        TEST_RESULT_VOID(verifyCreateArchiveIdRange(archiveIdResult, walFileList, &errTotal, errorList), "create archiveId WAL range");
         TEST_RESULT_UINT(errTotal, 2, "triplicate WAL error at beginning, duplicate WAL at end");
         TEST_RESULT_UINT(strLstSize(walFileList), 4, "only duplicate WAL removed from WAL list");
         TEST_RESULT_UINT(lstSize(archiveIdResultList), 1, "single archiveId result");
@@ -590,21 +714,23 @@ testRun(void)
         strLstAddZ(archiveIdList, "11-2");
 
         unsigned int errTotal = 0;
+        VariantList *errorList = varLstNew();
 
         // Add backup to end of list
         strLstAddZ(backupList, "20181119-153000F");
         strLstAddZ(archiveIdList, "12-3");
 
         TEST_RESULT_STR_Z(
-            verifySetBackupCheckArchive(backupList, backupInfo, archiveIdList, pgHistory, &errTotal),
+            verifySetBackupCheckArchive(backupList, backupInfo, archiveIdList, pgHistory, &errTotal, errorList),
             "20181119-153000F", "current backup, missing archive");
         TEST_RESULT_UINT(errTotal, 1, "error logged");
         TEST_RESULT_LOG("P00   INFO: archiveIds '12-3' are not in the archive.info history list");
 
         errTotal = 0;
+        lstClear((List *)errorList);
         strLstAddZ(archiveIdList, "13-4");
         TEST_RESULT_STR_Z(
-            verifySetBackupCheckArchive(backupList, backupInfo, archiveIdList, pgHistory, &errTotal),
+            verifySetBackupCheckArchive(backupList, backupInfo, archiveIdList, pgHistory, &errTotal, errorList),
             "20181119-153000F", "test multiple archiveIds on disk not in archive.info");
         TEST_RESULT_UINT(errTotal, 1, "error logged");
         TEST_RESULT_LOG("P00   INFO: archiveIds '12-3, 13-4' are not in the archive.info history list");
@@ -613,12 +739,30 @@ testRun(void)
         TEST_TITLE("verifyLogInvalidResult() - missing file");
 
         TEST_RESULT_UINT(
-            verifyLogInvalidResult(STORAGE_REPO_ARCHIVE_STR, verifyFileMissing, 0, STRDEF("missingfilename")),
+            verifyLogInvalidResult(STORAGE_REPO_ARCHIVE_STR, verifyFileMissing, 0, STRDEF("missingfilename"), errorList),
             0, "file missing message");
+        TEST_RESULT_STR_Z(
+            jsonFromVar(varNewVarLst(errorList)),
+            // {uncrustify_off - indentation}
+            "["
+                "{"
+                    "\"level\":4,"
+                    "\"message\":\"archiveIds '12-3, 13-4' are not in the archive.info history list\""
+                "},"
+                "{"
+                    "\"level\":3,"
+                    "\"message\":\"file missing 'missingfilename'\","
+                    "\"pid\":0"
+                "}"
+            "]",
+            // {uncrustify_on}
+            "errorList does not match"
+            );
+
         TEST_RESULT_LOG("P00   WARN: file missing 'missingfilename'");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("verifyRender() - missing file, empty invalidList");
+        TEST_TITLE("verifyRender - missing file, empty invalidList");
 
         List *archiveIdResultList = lstNewP(sizeof(VerifyArchiveResult), .comparator = archiveIdComparator);
         List *backupResultList = lstNewP(sizeof(VerifyBackupResult), .comparator = lstComparatorStr);
@@ -639,10 +783,36 @@ testRun(void)
         lstAdd(archiveIdResult.walRangeList, &walRange);
         lstAdd(archiveIdResultList, &archiveIdResult);
 
+        KeyValue *resultKv = kvNew();
+        verifyPrepareResult(archiveIdResultList, backupResultList, resultKv);
+
         TEST_RESULT_STR_Z(
-            verifyRender(archiveIdResultList, backupResultList, cfgOptionBool(cfgOptVerbose)),
+            verifyRenderText(resultKv, cfgOptionBool(cfgOptVerbose)),
             "\n"
             "  archiveId: 9.6-1, total WAL checked: 1, total valid WAL: 0", "archive: no invalid file list");
+        TEST_RESULT_STR_Z(
+            verifyRenderJson(resultKv),
+            // {uncrustify_off - indentation}
+            "{"
+                "\"archives\":["
+                    "{"
+                        "\"archiveId\":\"9.6-1\","
+                        "\"checked\":1,"
+                        "\"checksumInvalid\":0,"
+                        "\"fileErrors\":{\"checksumInvalid\":0,\"missing\":0,\"other\":0,\"sizeInvalid\":0},"
+                        "\"missing\":0,"
+                        "\"other\":0,"
+                        "\"sizeInvalid\":0,"
+                        "\"valid\":0"
+                    "}"
+                "],"
+                "\"backups\":[],"
+                "\"messages\":["
+                    "{\"level\":5,\"message\":\"archiveId: 9.6-1, wal start: 0, wal stop: 2\"}"
+                "]"
+            "}",
+            // {uncrustify_on}
+            "archive: no invalid file list");
 
         VerifyInvalidFile invalidFile =
         {
@@ -661,13 +831,53 @@ testRun(void)
         lstAdd(backupResult.invalidFileList, &invalidFile);
         lstAdd(backupResultList, &backupResult);
 
+        resultKv = kvNew();
+        verifyPrepareResult(archiveIdResultList, backupResultList, resultKv);
+
         TEST_RESULT_STR_Z(
-            verifyRender(archiveIdResultList, backupResultList, cfgOptionBool(cfgOptVerbose)),
+            verifyRenderText(resultKv, cfgOptionBool(cfgOptVerbose)),
             "\n"
             "  archiveId: 9.6-1, total WAL checked: 1, total valid WAL: 0\n"
             "    missing: 1\n"
             "  backup: test-backup-label, status: invalid, total files checked: 1, total valid files: 0\n"
             "    missing: 1", "archive file missing, backup file missing, no text, no verbose");
+
+        lstClear((List *)errorList);
+        TEST_RESULT_STR_Z(
+            verifyRenderJson(resultKv),
+            // {uncrustify_off - indentation}
+            "{"
+                "\"archives\":["
+                    "{"
+                        "\"archiveId\":\"9.6-1\","
+                        "\"checked\":1,"
+                        "\"checksumInvalid\":0,"
+                        "\"fileErrors\":{\"checksumInvalid\":0,\"missing\":1,\"other\":0,\"sizeInvalid\":0},"
+                        "\"missing\":1,"
+                        "\"other\":0,"
+                        "\"sizeInvalid\":0,"
+                        "\"valid\":0"
+                    "}"
+                "],"
+                "\"backups\":["
+                    "{"
+                        "\"checked\":1,"
+                        "\"checksumInvalid\":0,"
+                        "\"fileErrors\":{\"checksumInvalid\":0,\"missing\":1,\"other\":0,\"sizeInvalid\":0},"
+                        "\"label\":\"test-backup-label\","
+                        "\"missing\":1,"
+                        "\"other\":0,"
+                        "\"sizeInvalid\":0,"
+                        "\"status\":\"invalid\","
+                        "\"valid\":0"
+                    "}"
+                "],"
+                "\"messages\":["
+                    "{\"level\":5,\"message\":\"archiveId: 9.6-1, wal start: 0, wal stop: 2\"}"
+                "]"
+            "}",
+            // {uncrustify_on}
+            "archive file missing, backup file missing, no text, no verbose, json output");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("verifyAddInvalidWalFile() - file missing (coverage test)");
@@ -787,7 +997,7 @@ testRun(void)
             " <REPO:ARCHIVE>/archive.info\n"
             "P00   INFO: stanza: db\n"
             "            status: error\n"
-            "            backup info file and archive info file do not match\n"
+            "              backup info file and archive info file do not match\n"
             "            archive: id = 1, version = 9.5, system-id = 10000000000000090500\n"
             "            backup : id = 2, version = 11, system-id = 10000000000000110000\n"
             "            HINT: this may be a symptom of repository corruption!");
@@ -846,6 +1056,323 @@ testRun(void)
             "            status: error\n"
             "              No usable backup.info file");
 
+        harnessLogLevelReset();
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("cmdVerify() - info files JSON output")){
+        // Load Parameters
+        StringList *argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptOutput, "json");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup.info invalid checksum, neither backup copy nor archive infos exist");
+
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_INVALID_BACKREST_INFO, .comment = "invalid backup.info");
+
+        harnessLogLevelSet(logLevelDetail);
+
+        // Redirect stdout to a file
+        int stdoutSave = dup(STDOUT_FILENO);
+        const String *stdoutFile = STRDEF(TEST_PATH "/stdout.info");
+
+        THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
+
+        // Not in a test wrapper to compare stdout
+        cmdVerify();
+
+        // Restore normal stdout
+        dup2(stdoutSave, STDOUT_FILENO);
+
+        #define EXPECTED_OUTPUT_JSON "{"\
+                "\"messages\":[" \
+                    "{"\
+                        "\"level\":5,"\
+                        "\"message\":\"invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' <REPO:BACKUP>/backup.info\""\
+                    "},{"\
+                        "\"level\":5,"\
+                        "\"message\":\"unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info.copy' for read\""\
+                    "},{"\
+                        "\"message\":\"No usable backup.info file\""\
+                    "},{"\
+                        "\"level\":5,"\
+                        "\"message\":\"unable to open missing file '" TEST_PATH "/repo/archive/db/archive.info' for read\""\
+                    "},{"\
+                        "\"level\":5,"\
+                        "\"message\":\"unable to open missing file '" TEST_PATH "/repo/archive/db/archive.info.copy' for read\""\
+                    "},{"\
+                        "\"message\":\"No usable archive.info file\""\
+                    "}"\
+                "],"\
+                "\"stanza\":\"db\","\
+                "\"status\":\"error\""\
+            "}"
+
+        // Check output of verify command stored in file
+        TEST_STORAGE_GET(storageTest, strZ(stdoutFile),
+                         EXPECTED_OUTPUT_JSON "\n",
+                         .remove = true);
+
+        TEST_RESULT_LOG(
+            "P00 DETAIL: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
+            " <REPO:BACKUP>/backup.info\n"
+            "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info.copy' for read\n"
+            "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/archive/db/archive.info' for read\n"
+            "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/archive/db/archive.info.copy' for read\n"
+            "P00   INFO: " EXPECTED_OUTPUT_JSON
+            );
+#undef EXPECTED_OUTPUT_JSON
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup.info invalid checksum, backup.info.copy valid, archive.info not exist, archive copy checksum invalid");
+
+        HRN_STORAGE_PUT_Z(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_INVALID_BACKREST_INFO,
+            .comment = "invalid archive.info.copy");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT,
+            "[backup:current]\n"
+            TEST_BACKUP_DB1_CURRENT_FULL1
+            "\n"
+            "[db]\n"
+            TEST_BACKUP_DB1_95
+            "\n"
+            "[db:history]\n"
+            TEST_BACKUP_DB1_HISTORY,
+            .comment = "valid backup.info.copy");
+
+        // Redirect stdout to a file
+        stdoutSave = dup(STDOUT_FILENO);
+        THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
+
+        // Not in a test wrapper to compare stdout
+        cmdVerify();
+
+        // Restore normal stdout
+        dup2(stdoutSave, STDOUT_FILENO);
+
+        #define EXPECTED_OUTPUT_JSON "{"\
+            "\"messages\":["\
+                "{"\
+                    "\"level\":5,"\
+                    "\"message\":\"invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' <REPO:BACKUP>/backup.info\""\
+                "},{"\
+                    "\"level\":5,"\
+                    "\"message\":\"unable to open missing file '" TEST_PATH "/repo/archive/db/archive.info' for read\""\
+                "},{"\
+                    "\"level\":5,\"message\":\"invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' <REPO:ARCHIVE>/archive.info.copy\""\
+                "},{"\
+                    "\"message\":\"No usable archive.info file\""\
+                "}"\
+            "],"\
+            "\"stanza\":\"db\","\
+            "\"status\":\"error\""\
+        "}"
+
+        // Check output of verify command stored in file
+        TEST_STORAGE_GET(storageTest, strZ(stdoutFile),
+                         EXPECTED_OUTPUT_JSON "\n",
+                         .remove = true);
+
+        /* Consume log */
+        TEST_RESULT_LOG(
+            "P00 DETAIL: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
+            " <REPO:BACKUP>/backup.info\n"
+            "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/archive/db/archive.info' for read\n"
+            "P00 DETAIL: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS'"
+            " <REPO:ARCHIVE>/archive.info.copy\n"
+            "P00   INFO: " EXPECTED_OUTPUT_JSON
+            );
+#undef EXPECTED_OUTPUT_JSON
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup.info and copy valid but checksum mismatch, archive.info checksum invalid, archive.info copy valid");
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_BACKUP_INFO_MULTI_HISTORY_BASE, .comment = "valid backup.info");
+        HRN_STORAGE_PUT_Z(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_INVALID_BACKREST_INFO, .comment = "invalid archive.info");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_BASE, .comment = "valid archive.info.copy");
+
+        // Redirect stdout to a file
+        stdoutSave = dup(STDOUT_FILENO);
+        THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
+
+        // Not in a test wrapper to compare stdout
+        cmdVerify();
+
+        // Restore normal stdout
+        dup2(stdoutSave, STDOUT_FILENO);
+
+        #define EXPECTED_OUTPUT_JSON "{"\
+            "\"messages\":["\
+                "{"\
+                    "\"level\":5,"\
+                    "\"message\":\"backup.info.copy does not match backup.info\""\
+                "},{"\
+                    "\"level\":5,"\
+                    "\"message\":\"invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' <REPO:ARCHIVE>/archive.info\""\
+                "},{"\
+                    "\"message\":\"backup info file and archive info file do not match\\narchive: id = 1, version = 9.5, system-id = 10000000000000090500\\nbackup : id = 2, version = 11, system-id = 10000000000000110000\\nHINT: this may be a symptom of repository corruption!\""\
+                "}"\
+            "],"\
+            "\"stanza\":\"db\","\
+            "\"status\":\"error\""\
+        "}"
+
+        // Check output of verify command stored in file
+        TEST_STORAGE_GET(storageTest, strZ(stdoutFile),
+                         EXPECTED_OUTPUT_JSON "\n",
+                         .remove = true);
+
+        /* Consume log */
+        TEST_RESULT_LOG(
+            "P00 DETAIL: backup.info.copy does not match backup.info\n"
+            "P00 DETAIL: invalid checksum, actual 'e056f784a995841fd4e2802b809299b8db6803a2' but expected 'BOGUS' <REPO:ARCHIVE>/archive.info\n"
+            "P00   INFO: " EXPECTED_OUTPUT_JSON
+            );
+#undef EXPECTED_OUTPUT_JSON
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup.info and copy valid and checksums match, archive.info and copy valid, but checksum mismatch");
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_BACKUP_INFO_MULTI_HISTORY_BASE,
+            .comment = "valid backup.info.copy");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE, .comment = "valid archive.info");
+
+        // Redirect stdout to a file
+        stdoutSave = dup(STDOUT_FILENO);
+        THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
+
+        // Not in a test wrapper to compare stdout
+        cmdVerify();
+
+        // Restore normal stdout
+        dup2(stdoutSave, STDOUT_FILENO);
+
+        #define EXPECTED_OUTPUT_JSON "{"\
+            "\"messages\":["\
+                "{"\
+                    "\"level\":5,"\
+                    "\"message\":\"archive.info.copy does not match archive.info\""\
+                "},"\
+                "{\"message\":\"no archives or backups exist in the repo\"}"\
+            "],"\
+            "\"stanza\":\"db\","\
+            "\"status\":\"ok\""\
+        "}"
+
+        TEST_STORAGE_GET(storageTest, strZ(stdoutFile),
+                         EXPECTED_OUTPUT_JSON "\n",
+                         .remove = true);
+
+        /* Consume log */
+        TEST_RESULT_LOG(
+            "P00 DETAIL: archive.info.copy does not match archive.info\n"
+            "P00   INFO: " EXPECTED_OUTPUT_JSON
+            );
+
+#undef EXPECTED_OUTPUT_JSON
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup.info valid, copy invalid, archive.info valid, copy invalid");
+
+        HRN_STORAGE_REMOVE(storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, .comment = "remove backup.info.copy");
+        HRN_STORAGE_REMOVE(storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, .comment = "remove archive.info.copy");
+
+        // Redirect stdout to a file
+        stdoutSave = dup(STDOUT_FILENO);
+        THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
+
+        // Not in a test wrapper to compare stdout
+        cmdVerify();
+
+        // Restore normal stdout
+        dup2(stdoutSave, STDOUT_FILENO);
+
+        #define EXPECTED_OUTPUT_JSON "{"\
+            "\"messages\":["\
+                "{"\
+                    "\"level\":5,"\
+                    "\"message\":\"unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info.copy' for read\""\
+                "},"\
+                "{"\
+                    "\"level\":5,"\
+                    "\"message\":\"unable to open missing file '" TEST_PATH "/repo/archive/db/archive.info.copy' for read\""\
+                "},"\
+                "{\"message\":\"no archives or backups exist in the repo\"}"\
+            "],"\
+            "\"stanza\":\"db\","\
+            "\"status\":\"ok\""\
+        "}"
+
+        TEST_STORAGE_GET(storageTest, strZ(stdoutFile),
+                         EXPECTED_OUTPUT_JSON "\n",
+                         .remove = true);
+
+        /* Consume log */
+        TEST_RESULT_LOG(
+            "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info.copy' for read\n"
+            "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/archive/db/archive.info.copy' for read\n"
+            "P00   INFO: " EXPECTED_OUTPUT_JSON
+            );
+
+#undef EXPECTED_OUTPUT_JSON
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("backup.info and copy missing, archive.info and copy valid");
+
+        hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        HRN_STORAGE_REMOVE(storageRepoWrite(), INFO_BACKUP_PATH_FILE);
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
+            .comment = "valid and matching archive.info.copy");
+
+        // Redirect stdout to a file
+        stdoutSave = dup(STDOUT_FILENO);
+        THROW_ON_SYS_ERROR(freopen(strZ(stdoutFile), "w", stdout) == NULL, FileWriteError, "unable to reopen stdout");
+
+        // Not in a test wrapper to compare stdout
+        cmdVerify();
+
+        // Restore normal stdout
+        dup2(stdoutSave, STDOUT_FILENO);
+
+        #define EXPECTED_OUTPUT_JSON "{"\
+            "\"messages\":["\
+                "{"\
+                    "\"level\":5,"\
+                    "\"message\":\"unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info' for read\""\
+                "},"\
+                "{"\
+                    "\"level\":5,"\
+                    "\"message\":\"unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info.copy' for read\""\
+                "},"\
+                "{"\
+                    "\"message\":\"No usable backup.info file\""\
+                "}"\
+            "],"\
+            "\"stanza\":\"db\","\
+            "\"status\":\"error\""\
+        "}"
+
+        TEST_STORAGE_GET(storageTest, strZ(stdoutFile),
+                         EXPECTED_OUTPUT_JSON "\n",
+                         .remove = true);
+
+        /* Consume log */
+        TEST_RESULT_LOG(
+            "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info' for read\n"
+            "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info.copy' for read\n"
+            "P00   INFO: " EXPECTED_OUTPUT_JSON
+            );
+#undef EXPECTED_OUTPUT_JSON
         harnessLogLevelReset();
     }
 
@@ -1019,6 +1546,81 @@ testRun(void)
         harnessLogLevelReset();
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("JSON output");
+
+        StringList *argListJSON = strLstDup(argListBase);
+        hrnCfgArgRawZ(argListJSON, cfgOptOutput, "json");
+        HRN_CFG_LOAD(cfgCmdVerify, argListJSON);
+
+        #define EXPECTED_OUTPUT_JSON "{"\
+            "\"archives\":["\
+                "{"\
+                    "\"archiveId\":\"9.5-1\","\
+                    "\"checked\":0,"\
+                    "\"checksumInvalid\":0,"\
+                    "\"missing\":0,"\
+                    "\"other\":0,"\
+                    "\"sizeInvalid\":0,"\
+                    "\"valid\":0"\
+                "},"\
+                "{"\
+                    "\"archiveId\":\"11-2\","\
+                    "\"checked\":4,"\
+                    "\"checksumInvalid\":1,"\
+                    "\"fileErrors\":{\"checksumInvalid\":1,\"missing\":0,\"other\":0,\"sizeInvalid\":1},"\
+                    "\"missing\":0,"\
+                    "\"other\":0,"\
+                    "\"sizeInvalid\":1,"\
+                    "\"valid\":2"\
+                "}"\
+            "],"\
+            "\"backups\":[],"\
+            "\"messages\":["\
+                "{"\
+                    "\"level\":5,"\
+                    "\"message\":\"no backups exist in the repo\""\
+                "},"\
+                "{"\
+                    "\"level\":5,"\
+                    "\"message\":\"archive path '9.5-1' is empty\""\
+                "},"\
+                "{"\
+                    "\"level\":5,"\
+                    "\"message\":\"path '11-2/0000000100000000' does not contain any valid WAL to be processed\""\
+                "},"\
+                "{"\
+                    "\"level\":4,"\
+                    "\"message\":\"invalid checksum '11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\","\
+                    "\"pid\":1"\
+                "},"\
+                "{"\
+                    "\"level\":4,"\
+                    "\"message\":\"invalid size '11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\","\
+                    "\"pid\":1"\
+                "},"\
+                "{"\
+                    "\"level\":5,"\
+                    "\"message\":\"archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000\""\
+                "}"\
+            "],"\
+            "\"stanza\":\"db\","\
+            "\"status\":\"error\""\
+        "}"
+
+        TEST_RESULT_STR_Z(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            EXPECTED_OUTPUT_JSON,
+            "verifyProcess() json, no verbose");
+
+#undef EXPECTED_OUTPUT_JSON
+
+        TEST_RESULT_LOG(
+            "P01   INFO: invalid checksum"
+            " '11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
+            "P01   INFO: invalid size"
+            " '11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no text output, verbose, with verify failures");
 
         hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
@@ -1034,6 +1636,78 @@ testRun(void)
             "    missing: 0, checksum invalid: 1, size invalid: 1, other: 0\n"
             "  backup: none found",
             "verbose, with failures");
+        TEST_RESULT_LOG(
+            "P01   INFO: invalid checksum"
+            " '11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
+            "P01   INFO: invalid size"
+            " '11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("JSON output, verbose, with verify failures");
+
+        hrnCfgArgRawZ(argListJSON, cfgOptVerbose, "y");
+        HRN_CFG_LOAD(cfgCmdVerify, argListJSON);
+
+        // Verify text output, verbose, with verify failures
+        TEST_RESULT_STR_Z(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            // {uncrustify_off - indentation}
+            "{" \
+                "\"archives\":[" \
+                    "{" \
+                        "\"archiveId\":\"9.5-1\"," \
+                        "\"checked\":0," \
+                        "\"checksumInvalid\":0," \
+                        "\"missing\":0," \
+                        "\"other\":0," \
+                        "\"sizeInvalid\":0," \
+                        "\"valid\":0" \
+                    "}," \
+                    "{" \
+                        "\"archiveId\":\"11-2\"," \
+                        "\"checked\":4," \
+                        "\"checksumInvalid\":1," \
+                        "\"fileErrors\":{\"checksumInvalid\":1,\"missing\":0,\"other\":0,\"sizeInvalid\":1},"
+                        "\"missing\":0," \
+                        "\"other\":0," \
+                        "\"sizeInvalid\":1," \
+                        "\"valid\":2" \
+                    "}" \
+                "]," \
+                "\"backups\":[]," \
+                "\"messages\":[" \
+                    "{" \
+                        "\"level\":5," \
+                        "\"message\":\"no backups exist in the repo\"" \
+                    "}," \
+                    "{" \
+                        "\"level\":5," \
+                        "\"message\":\"archive path '9.5-1' is empty\"" \
+                    "}," \
+                    "{" \
+                        "\"level\":5," \
+                        "\"message\":\"path '11-2/0000000100000000' does not contain any valid WAL to be processed\"" \
+                    "}," \
+                    "{" \
+                        "\"level\":4," \
+                        "\"message\":\"invalid checksum '11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\"," \
+                        "\"pid\":1" \
+                    "}," \
+                    "{" \
+                        "\"level\":4," \
+                        "\"message\":\"invalid size '11-2/0000000200000007/000000020000000700000FFF-ee161f898c9012dd0c28b3fd1e7140b9cf411306'\"," \
+                        "\"pid\":1" \
+                    "}," \
+                    "{" \
+                        "\"level\":5," \
+                        "\"message\":\"archiveId: 11-2, wal start: 000000020000000700000FFD, wal stop: 000000020000000800000000\"" \
+                    "}" \
+                "]," \
+                "\"stanza\":\"db\"," \
+                "\"status\":\"error\"" \
+            "}",
+            // {uncrustify_on}
+            "JSON verbose, with failures");
         TEST_RESULT_LOG(
             "P01   INFO: invalid checksum"
             " '11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
@@ -1347,6 +2021,90 @@ testRun(void)
             "P01   INFO: invalid result UNPROCESSEDBACKUP/pg_data/testother: [41] raised from local-1 shim protocol:"
             " unable to open file '" TEST_PATH "/repo/backup/db/UNPROCESSEDBACKUP/pg_data/testother' for read: [13]"
             " Permission denied");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("cmdVerify(), verifyProcess() - errors JSON"))
+    {
+        StringList *argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptOutput, "json");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("valid info files, WAL files present, no backups");
+
+        // Store valid archive/backup info files
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE, .comment = "valid archive.info");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
+            .comment = "valid archive.info.copy");
+
+        #define TEST_NO_CURRENT_BACKUP                                                                                             \
+            "[db]\n"                                                                                                               \
+            TEST_BACKUP_DB2_11                                                                                                     \
+            "\n"                                                                                                                   \
+            "[db:history]\n"                                                                                                       \
+            TEST_BACKUP_DB1_HISTORY                                                                                                \
+            "\n"                                                                                                                   \
+            TEST_BACKUP_DB2_HISTORY
+
+        HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_NO_CURRENT_BACKUP, .comment = "no current backups");
+
+        HRN_STORAGE_PATH_CREATE(
+            storageRepoIdxWrite(0), STORAGE_REPO_BACKUP "/20181119-152800F", .comment = "prior backup path missing manifests");
+
+        harnessLogLevelSet(logLevelDetail);
+
+        TEST_RESULT_STR_Z(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            // {uncrustify_off - indentation}
+            "{" \
+                "\"archives\":[]," \
+                "\"backups\":[" \
+                    "{" \
+                        "\"checked\":0," \
+                        "\"checksumInvalid\":0," \
+                        "\"label\":\"20181119-152800F\"," \
+                        "\"missing\":0," \
+                        "\"other\":0," \
+                        "\"sizeInvalid\":0," \
+                        "\"status\":\"in-progress\"," \
+                        "\"valid\":0" \
+                    "}" \
+                "]," \
+                "\"messages\":[" \
+                    "{" \
+                        "\"level\":5," \
+                        "\"message\":\"unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info.copy' for read\"" \
+                    "}," \
+                    "{" \
+                        "\"level\":5," \
+                        "\"message\":\"no archives exist in the repo\"" \
+                    "}," \
+                    "{" \
+                        "\"level\":5," \
+                        "\"message\":\"unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152800F/backup.manifest' for read\"" \
+                    "}," \
+                    "{" \
+                        "\"level\":4," \
+                        "\"message\":\"backup '20181119-152800F' appears to be in progress, skipping\"" \
+                    "}" \
+                "]," \
+                "\"stanza\":\"db\"," \
+                "\"status\":\"ok\"" \
+            "}",
+            // {uncrustify_on}
+            "verifyProcess() JSON missing no total file verify");
+
+        TEST_RESULT_LOG(
+            "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info.copy' for read\n"
+            "P00 DETAIL: no archives exist in the repo\n"
+            "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152800F/backup.manifest' for read\n"
+            "P00   INFO: backup '20181119-152800F' appears to be in progress, skipping"
+            );
+
+        harnessLogLevelReset();
     }
 
     // *****************************************************************************************************************************
@@ -1756,6 +2514,173 @@ testRun(void)
             "              backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 2,"
             " total valid files: 1\n"
             "                missing: 0, checksum invalid: 1, size invalid: 0, other: 0");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("cmdVerify() verbose JSON"))
+    {
+        // Load Parameters
+        StringList *argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptOutput, "json");
+        hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
+        HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        #define TEST_BACKUP_DB1_CURRENT_FULL3_DIFF1                                                                                \
+            "20181119-152900F_20181119-152909D={"                                                                                  \
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","                                                              \
+            "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000007\","          \
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"                                           \
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"                                                   \
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","                 \
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"             \
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+
+        #define TEST_BACKUP_DB2_CURRENT_FULL1                                                                                      \
+            "20201119-163000F={"                                                                                                   \
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","                                                              \
+            "\"backup-archive-start\":\"000000020000000000000001\",\"backup-archive-stop\":\"000000020000000000000001\","          \
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"                                           \
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"                                                   \
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","                 \
+            "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"             \
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("prior backup verification incomplete - referenced file checked verbose, text output");
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE, .comment = "valid archive.info");
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
+            .comment = "valid archive.info.copy");
+
+        #define TEST_BACKUP_INFO                                                                                                   \
+            "[backup:current]\n"                                                                                                   \
+            TEST_BACKUP_DB1_CURRENT_FULL3                                                                                          \
+            TEST_BACKUP_DB1_CURRENT_FULL3_DIFF1                                                                                    \
+            TEST_BACKUP_DB2_CURRENT_FULL1                                                                                          \
+            "\n"                                                                                                                   \
+            "[db]\n"                                                                                                               \
+            TEST_BACKUP_DB2_11                                                                                                     \
+            "\n"                                                                                                                   \
+            "[db:history]\n"                                                                                                       \
+            TEST_BACKUP_DB1_HISTORY                                                                                                \
+            "\n"                                                                                                                   \
+            TEST_BACKUP_DB2_HISTORY
+
+        HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_BACKUP_INFO);
+        HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_BACKUP_INFO);
+
+        // Create valid full backup
+        #define TEST_MANIFEST_FULL_DB2                                                                                             \
+            TEST_MANIFEST_HEADER                                                                                                   \
+            TEST_MANIFEST_DB_94                                                                                                    \
+            TEST_MANIFEST_OPTION_ALL                                                                                               \
+            TEST_MANIFEST_TARGET                                                                                                   \
+            TEST_MANIFEST_DB                                                                                                       \
+            TEST_MANIFEST_FILE                                                                                                     \
+            "pg_data/biind={\"bi\":1,\"bim\":3,\"checksum\":\"ffffffffffffffffffffffffffffffffffffffff\",\"size\":4"               \
+            ",\"timestamp\":1565282114}\n"                                                                                         \
+            TEST_MANIFEST_FILE_DEFAULT                                                                                             \
+            TEST_MANIFEST_LINK                                                                                                     \
+            TEST_MANIFEST_LINK_DEFAULT                                                                                             \
+            TEST_MANIFEST_PATH                                                                                                     \
+            TEST_MANIFEST_PATH_DEFAULT
+
+        // Write manifests for full backup
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE, TEST_MANIFEST_FULL_DB2,
+            .comment = "valid manifest - full");
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT, TEST_MANIFEST_FULL_DB2,
+            .comment = "valid manifest copy - full");
+        HRN_STORAGE_PUT_Z(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/pg_data/biind.pgbi", "ZVZV", .comment = "pgbi file");
+
+        // Create valid diff backup
+        #define TEST_MANIFEST_DIFF_DB2                                                                                             \
+            TEST_MANIFEST_HEADER                                                                                                   \
+            TEST_MANIFEST_DB_94                                                                                                    \
+            TEST_MANIFEST_OPTION_ALL                                                                                               \
+            TEST_MANIFEST_TARGET                                                                                                   \
+            TEST_MANIFEST_DB                                                                                                       \
+            "\n"                                                                                                                   \
+            "[target:file]\n"                                                                                                      \
+            "pg_data/PG_VERSION={\"checksum\":\"184473f470864e067ee3a22e64b47b0a1c356f29\",\"reference\":\"20181119-152900F\""     \
+                ",\"size\":4,\"timestamp\":1565282114}\n"                                                                          \
+            "pg_data/biind={\"bi\":1,\"bim\":3,\"checksum\":\"ffffffffffffffffffffffffffffffffffffffff\","                         \
+            "\"reference\":\"20181119-152900F\",\"size\":4,\"timestamp\":1565282114}\n"                                            \
+            TEST_MANIFEST_FILE_DEFAULT                                                                                             \
+            TEST_MANIFEST_LINK                                                                                                     \
+            TEST_MANIFEST_LINK_DEFAULT                                                                                             \
+            TEST_MANIFEST_PATH                                                                                                     \
+            TEST_MANIFEST_PATH_DEFAULT
+
+        // Write manifests for diff backup
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F_20181119-152909D/" BACKUP_MANIFEST_FILE,
+            TEST_MANIFEST_DIFF_DB2, .comment = "valid manifest - diff");
+        HRN_INFO_PUT(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F_20181119-152909D/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
+            TEST_MANIFEST_DIFF_DB2, .comment = "valid manifest copy - diff");
+
+        // Put the file referenced by both backups into the full backup
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152900F/pg_data/PG_VERSION", fileContents);
+
+        TEST_RESULT_STR_Z(
+            verifyProcess(cfgOptionBool(cfgOptVerbose)),
+            // {uncrustify_off - indentation}
+            "{" \
+                "\"archives\":[]," \
+                "\"backups\":[" \
+                    "{" \
+                        "\"checked\":2," \
+                        "\"checksumInvalid\":2," \
+                        "\"fileErrors\":{\"checksumInvalid\":2,\"missing\":0,\"other\":0,\"sizeInvalid\":0}," \
+                        "\"label\":\"20181119-152900F\"," \
+                        "\"missing\":0," \
+                        "\"other\":0," \
+                        "\"sizeInvalid\":0," \
+                        "\"status\":\"invalid\"," \
+                        "\"valid\":0" \
+                    "}," \
+                    "{" \
+                        "\"checked\":2," \
+                        "\"checksumInvalid\":1," \
+                        "\"fileErrors\":{\"checksumInvalid\":1,\"missing\":0,\"other\":0,\"sizeInvalid\":0}," \
+                        "\"label\":\"20181119-152900F_20181119-152909D\"," \
+                        "\"missing\":0," \
+                        "\"other\":0," \
+                        "\"sizeInvalid\":0," \
+                        "\"status\":\"invalid\"," \
+                        "\"valid\":1" \
+                    "}" \
+                "]," \
+                "\"messages\":[" \
+                    "{" \
+                        "\"level\":5," \
+                        "\"message\":\"no archives exist in the repo\"" \
+                    "}," \
+                    "{" \
+                        "\"level\":4," \
+                        "\"message\":\"invalid checksum '20181119-152900F/pg_data/PG_VERSION'\"," \
+                        "\"pid\":1" \
+                    "}," \
+                    "{" \
+                        "\"level\":4," \
+                        "\"message\":\"invalid checksum '20181119-152900F/pg_data/biind.pgbi'\"," \
+                        "\"pid\":1" \
+                    "}" \
+                "]," \
+                "\"stanza\":\"db\"," \
+                "\"status\":\"error\"" \
+            "}",
+            // {uncrustify_on}
+            "verifyProcess() verbose JSON");
+
+        TEST_RESULT_LOG(
+            "P01   INFO: invalid checksum '20181119-152900F/pg_data/PG_VERSION'\n"
+            "P01   INFO: invalid checksum '20181119-152900F/pg_data/biind.pgbi'");
     }
 
     // *****************************************************************************************************************************
