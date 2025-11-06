@@ -19,7 +19,6 @@ Test definition
 static HrnHostTestDefine testMatrix[] =
 {
     // {uncrustify_off - struct alignment}
-    {.pg = "9.5", .repo = "repo", .tls = 1, .stg =    "s3", .enc = 0, .cmp =  "bz2", .rt = 1, .bnd = 1, .bi = 1},
     {.pg = "9.6", .repo = "repo", .tls = 0, .stg = "azure", .enc = 0, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1},
     {.pg =  "10", .repo =  "pg2", .tls = 0, .stg =  "sftp", .enc = 1, .cmp =   "gz", .rt = 1, .bnd = 1, .bi = 0},
     {.pg =  "11", .repo = "repo", .tls = 1, .stg =   "gcs", .enc = 0, .cmp =  "zst", .rt = 2, .bnd = 0, .bi = 0},

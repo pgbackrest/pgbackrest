@@ -19,7 +19,7 @@ runtime cost and makes the rules a bit easier to follow.
 If a comment has syntax only changes, then the new version of the comment can be applied to older versions of the type.
 
 If a comment has changed in a way that implies a difference in the way the type is used, then a new version of the comment and type
-should be created. See the CheckPoint type difference between 9.5 and 9.6 as an example.
+should be created.
 
 Unversioned types that are only used by versioned types are also included in this file.
 ***********************************************************************************************************************************/

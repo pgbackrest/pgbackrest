@@ -108,7 +108,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
         TEST_RESULT_LOG(
-            "P00   WARN: option 'start-fast' is deprecated\n"
+            "P00   WARN: option 'stop-auto' is deprecated\n"
             "            HINT: all supported versions use non-exclusive backup.\n"
             "            HINT: stop using this option to avoid an error when it is removed.");
 

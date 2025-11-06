@@ -375,7 +375,7 @@ cfgLoadUpdateOption(void)
     if (cfgOptionValid(cfgOptStopAuto) && cfgOptionSource(cfgOptStopAuto) != cfgSourceDefault)
     {
         LOG_WARN(
-            "option '" CFGOPT_START_FAST "' is deprecated\n"
+            "option '" CFGOPT_STOP_AUTO "' is deprecated\n"
             "HINT: all supported versions use non-exclusive backup.\n"
             "HINT: stop using this option to avoid an error when it is removed.");
     }

@@ -344,7 +344,7 @@ testRun(void)
         TEST_RESULT_STR_Z(pgLsnName(PG_VERSION_96), "location", "check location name");
         TEST_RESULT_STR_Z(pgLsnName(PG_VERSION_10), "lsn", "check lsn name");
 
-        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_96, 888888888), "PG_9.6_888888888", "check 9.5 tablespace id");
+        TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_96, 888888888), "PG_9.6_888888888", "check 9.6 tablespace id");
         TEST_RESULT_STR_Z(pgTablespaceId(PG_VERSION_16, 999999999), "PG_16_999999999", "check 16 tablespace id");
 
         TEST_RESULT_STR_Z(pgWalName(PG_VERSION_96), "xlog", "check xlog name");
