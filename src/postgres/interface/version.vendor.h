@@ -1395,7 +1395,7 @@ typedef struct ControlFileData
 	pg_crc32c	crc;
 } ControlFileData;
 
-#elif PG_VERSION >= PG_VERSION_95
+#elif PG_VERSION >= PG_VERSION_96
 
 /*
  * Contents of pg_control.
@@ -1627,6 +1627,7 @@ typedef struct ControlFileData
 	int			max_worker_processes;
 	int			max_prepared_xacts;
 	int			max_locks_per_xact;
+	bool		track_commit_timestamp;
 
 	/*
 	 * This data is used to check for hardware-architecture compatibility of
@@ -1671,7 +1672,7 @@ typedef struct ControlFileData
 	uint32		data_checksum_version;
 
 	/* CRC of all above ... MUST BE LAST! */
-	pg_crc32	crc;
+	pg_crc32c	crc;
 } ControlFileData;
 
 #endif
