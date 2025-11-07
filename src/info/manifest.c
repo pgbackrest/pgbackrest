@@ -1038,10 +1038,8 @@ manifestBuildInfo(
                      pgVersion < PG_VERSION_12) ||
                     // Skip temp file for safely writing postgresql.auto.conf
                     (strEqZ(info->name, PG_FILE_POSTGRESQLAUTOCONFTMP)) ||
-                    // Skip backup_label in versions where non-exclusive backup is supported
-                    (strEqZ(info->name, PG_FILE_BACKUPLABEL) && pgVersion >= PG_VERSION_96) ||
-                    // Skip old backup labels
-                    strEqZ(info->name, PG_FILE_BACKUPLABELOLD) ||
+                    // Skip obsolete backup_label/backup_label.old
+                    strEqZ(info->name, PG_FILE_BACKUPLABEL) || strEqZ(info->name, PG_FILE_BACKUPLABELOLD) ||
                     // Skip backup_manifest/tmp in versions where it is created
                     ((strEqZ(info->name, PG_FILE_BACKUPMANIFEST) || strEqZ(info->name, PG_FILE_BACKUPMANIFEST_TMP)) &&
                      pgVersion >= PG_VERSION_13) ||

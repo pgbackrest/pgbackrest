@@ -1361,6 +1361,7 @@ option:
     section: global
     type: boolean
     default: false
+    internal: true
     command:
       backup: {}
     command-role:

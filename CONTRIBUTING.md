@@ -505,8 +505,8 @@ A PostgreSQL libpq shim is provided to simulate interactions with PostgreSQL. Be
 ```
 // Set up two standbys but no primary
 HRN_PQ_SCRIPT_SET(
-    HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, "/pgdata", true, NULL, NULL),
-    HRN_PQ_SCRIPT_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_96, "/pgdata", true, NULL, NULL),
+    HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_96, "/pgdata", true, NULL, NULL),
+    HRN_PQ_SCRIPT_OPEN(8, "dbname='postgres' port=5433", PG_VERSION_96, "/pgdata", true, NULL, NULL),
 
     // Close the "inner" session first (8) then the outer (1)
     HRN_PQ_SCRIPT_CLOSE(8),

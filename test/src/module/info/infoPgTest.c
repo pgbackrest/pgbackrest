@@ -50,26 +50,26 @@ testRun(void)
         TEST_ASSIGN(
             infoPg,
             infoPgSet(
-                infoPgNew(infoPgArchive, NULL), infoPgArchive, PG_VERSION_95, 6569239123849665679,
-                hrnPgCatalogVersion(PG_VERSION_95)),
+                infoPgNew(infoPgArchive, NULL), infoPgArchive, PG_VERSION_18, 6569239123849665679,
+                hrnPgCatalogVersion(PG_VERSION_18)),
             "infoPgSet - infoPgArchive");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "  1 history");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
         InfoPgData pgData = infoPgData(infoPg, infoPgDataCurrentId(infoPg));
         TEST_RESULT_INT(pgData.id, 1, "  id set");
         TEST_RESULT_UINT(pgData.systemId, 6569239123849665679, "  system-id set");
-        TEST_RESULT_UINT(pgData.version, PG_VERSION_95, "  version set");
+        TEST_RESULT_UINT(pgData.version, PG_VERSION_18, "  version set");
         TEST_RESULT_UINT(pgData.catalogVersion, 0, "  catalog version not set for archive");
 
         TEST_ASSIGN(
-            infoPg, infoPgSet(infoPg, infoPgArchive, PG_VERSION_95, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_95)),
+            infoPg, infoPgSet(infoPg, infoPgArchive, PG_VERSION_18, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_18)),
             "infoPgSet - infoPgArchive second db");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 2, "  2 history");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
         pgData = infoPgData(infoPg, infoPgDataCurrentId(infoPg));
         TEST_RESULT_INT(pgData.id, 2, "  current id updated");
         TEST_RESULT_UINT(pgData.systemId, 6569239123849665999, "  system-id updated");
-        TEST_RESULT_UINT(pgData.version, PG_VERSION_95, "  version updated");
+        TEST_RESULT_UINT(pgData.version, PG_VERSION_18, "  version updated");
         TEST_RESULT_UINT(pgData.catalogVersion, 0, "  catalog version not set for archive");
         TEST_RESULT_STR(infoCipherPass(infoPgInfo(infoPg)), NULL, "  cipherPass not set");
 
@@ -77,16 +77,16 @@ testRun(void)
         TEST_ASSIGN(
             infoPg,
             infoPgSet(
-                infoPgNew(infoPgBackup, STRDEF("123xyz")), infoPgBackup, PG_VERSION_95, 6569239123849665679,
-                hrnPgCatalogVersion(PG_VERSION_95)),
+                infoPgNew(infoPgBackup, STRDEF("123xyz")), infoPgBackup, PG_VERSION_18, 6569239123849665679,
+                hrnPgCatalogVersion(PG_VERSION_18)),
             "infoPgSet - infoPgBackup");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "  1 history");
         TEST_RESULT_INT(infoPgDataCurrentId(infoPg), 0, "  0 historyCurrent");
         pgData = infoPgData(infoPg, infoPgDataCurrentId(infoPg));
         TEST_RESULT_INT(pgData.id, 1, "  id set");
         TEST_RESULT_UINT(pgData.systemId, 6569239123849665679, "  system-id set");
-        TEST_RESULT_UINT(pgData.version, PG_VERSION_95, "  version set");
-        TEST_RESULT_UINT(pgData.catalogVersion, 201510051, "  catalog version updated");
+        TEST_RESULT_UINT(pgData.version, PG_VERSION_18, "  version set");
+        TEST_RESULT_UINT(pgData.catalogVersion, 202506291, "  catalog version updated");
         TEST_RESULT_STR_Z(infoCipherPass(infoPgInfo(infoPg)), "123xyz", "  cipherPass set");
     }
 
@@ -102,13 +102,13 @@ testRun(void)
             "[db]\n"
             "db-id=1\n"
             "db-system-id=6569239123849665679\n"
-            "db-version=\"9.5\"\n"
+            "db-version=\"18\"\n"
             "\n"
             "[db:backup]\n"
             "key=\"value\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-id\":6569239123849665679,\"db-version\":\"9.5\"}\n"
+            "1={\"db-id\":6569239123849665679,\"db-version\":\"18\"}\n"
             "\n"
             "[later]\n"
             "key=\"value\"\n");
@@ -129,10 +129,10 @@ testRun(void)
 
         InfoPgData pgData = infoPgDataCurrent(infoPg);
         TEST_RESULT_INT(pgData.id, 1, "    id set");
-        TEST_RESULT_UINT(pgData.version, PG_VERSION_95, "    version set");
+        TEST_RESULT_UINT(pgData.version, PG_VERSION_18, "    version set");
         TEST_RESULT_UINT(pgData.systemId, 6569239123849665679, "    system-id set");
         TEST_RESULT_INT(infoPgDataTotal(infoPg), 1, "    check pg data total");
-        TEST_RESULT_STR_Z(infoPgArchiveId(infoPg, 0), "9.5-1", "    check pg archive id");
+        TEST_RESULT_STR_Z(infoPgArchiveId(infoPg, 0), "18-1", "    check pg archive id");
         TEST_RESULT_STR(infoPgCipherPass(infoPg), NULL, "    no cipher passphrase");
 
         Buffer *contentSave = bufNew(0);
@@ -144,19 +144,19 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         #define CONTENT_DB                                                                                                         \
             "[db]\n"                                                                                                               \
-            "db-catalog-version=201510051\n"                                                                                       \
-            "db-control-version=942\n"                                                                                             \
+            "db-catalog-version=202506291\n"                                                                                       \
+            "db-control-version=1800\n"                                                                                            \
             "db-id=2\n"                                                                                                            \
             "db-system-id=6365925855999999999\n"                                                                                   \
-            "db-version=\"9.5\"\n"
+            "db-version=\"18\"\n"
 
         #define CONTENT_DB_HISTORY                                                                                                 \
             "\n"                                                                                                                   \
             "[db:history]\n"                                                                                                       \
             "1={\"db-catalog-version\":20081101,\"db-control-version\":730,\"db-system-id\":6569239123849665679,"                  \
                 "\"db-version\":\"7.3\"}\n"                                                                                        \
-            "2={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6365925855999999999,"                 \
-                "\"db-version\":\"9.5\"}\n"
+            "2={\"db-catalog-version\":202506291,\"db-control-version\":1800,\"db-system-id\":6365925855999999999,"                \
+                "\"db-version\":\"18\"}\n"
 
         contentLoad = harnessInfoChecksumZ(
             CONTENT_DB
@@ -174,7 +174,7 @@ testRun(void)
 
         pgData = infoPgDataCurrent(infoPg);
         TEST_RESULT_INT(pgData.id, 2, "    id set");
-        TEST_RESULT_INT(pgData.version, PG_VERSION_95, "    version set");
+        TEST_RESULT_INT(pgData.version, PG_VERSION_18, "    version set");
         TEST_RESULT_UINT(pgData.systemId, 6365925855999999999, "    system-id set");
 
         pgData = infoPgData(infoPg, 1);

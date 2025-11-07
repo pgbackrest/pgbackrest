@@ -371,6 +371,15 @@ cfgLoadUpdateOption(void)
     if (cfgOptionTest(cfgOptRepoTargetTime) && cfgOptionSource(cfgOptRepo) == cfgSourceDefault)
         THROW_FMT(OptionInvalidError, "option '" CFGOPT_REPO_TARGET_TIME "' not valid without option '" CFGOPT_REPO "'");
 
+    // The stop-auto option is deprecated
+    if (cfgOptionValid(cfgOptStopAuto) && cfgOptionSource(cfgOptStopAuto) != cfgSourceDefault)
+    {
+        LOG_WARN(
+            "option '" CFGOPT_STOP_AUTO "' is deprecated\n"
+            "HINT: all supported versions use non-exclusive backup.\n"
+            "HINT: stop using this option to avoid an error when it is removed.");
+    }
+
     FUNCTION_LOG_RETURN_VOID();
 }
 

@@ -22,8 +22,6 @@ Default wal segment size
 /***********************************************************************************************************************************
 System id constants by version
 ***********************************************************************************************************************************/
-#define HRN_PG_SYSTEMID_95                                          (10000000000000000000ULL + (uint64_t)PG_VERSION_95)
-#define HRN_PG_SYSTEMID_95_Z                                        "10000000000000090500"
 #define HRN_PG_SYSTEMID_96                                          (10000000000000000000ULL + (uint64_t)PG_VERSION_96)
 #define HRN_PG_SYSTEMID_96_Z                                        "10000000000000090600"
 #define HRN_PG_SYSTEMID_10                                          (10000000000000000000ULL + (uint64_t)PG_VERSION_10)

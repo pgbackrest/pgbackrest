@@ -168,7 +168,7 @@ sub run
             ($self->{iTry} > 1 ? ' (retry ' . ($self->{iTry} - 1) . ')' : '');
 
         my $strImage = 'test-' . $self->{iVmIdx};
-        my $strDbVersion = (defined($self->{oTest}->{&TEST_DB}) ? $self->{oTest}->{&TEST_DB} : PG_VERSION_95);
+        my $strDbVersion = (defined($self->{oTest}->{&TEST_DB}) ? $self->{oTest}->{&TEST_DB} : PG_VERSION_96);
         $strDbVersion =~ s/\.//;
 
         &log($self->{bDryRun} && !$self->{bVmOut} || $self->{bShowOutputAsync} ? INFO : DETAIL, "${strTest}" .
