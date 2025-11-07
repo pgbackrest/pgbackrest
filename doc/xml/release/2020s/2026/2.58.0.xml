@@ -1,2 +1,16 @@
 <release date="XXXX-XX-XX" version="2.58.0dev" title="Under Development">
+    <release-core-list>
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2692"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Remove support for <proper>PostgreSQL</proper> <id>9.5</id>.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-core-list>
 </release>
