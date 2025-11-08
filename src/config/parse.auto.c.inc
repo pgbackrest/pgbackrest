@@ -4714,7 +4714,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_NAME("priority"),                                                                          // opt/priority
         PARSE_RULE_OPTION_TYPE(Integer),                                                                             // opt/priority
         PARSE_RULE_OPTION_RESET(true),                                                                               // opt/priority
-        PARSE_RULE_OPTION_REQUIRED(true),                                                                            // opt/priority
+        PARSE_RULE_OPTION_REQUIRED(false),                                                                           // opt/priority
         PARSE_RULE_OPTION_SECTION(Global),                                                                           // opt/priority
                                                                                                                      // opt/priority
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                               // opt/priority
@@ -4780,11 +4780,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 (                                                                                                    // opt/priority
                     PARSE_RULE_VAL_INT(DS_20),                                                                       // opt/priority
                     PARSE_RULE_VAL_INT(19),                                                                          // opt/priority
-                ),                                                                                                   // opt/priority
-                                                                                                                     // opt/priority
-                PARSE_RULE_OPTIONAL_DEFAULT                                                                          // opt/priority
-                (                                                                                                    // opt/priority
-                    PARSE_RULE_VAL_INT(0),                                                                           // opt/priority
                 ),                                                                                                   // opt/priority
             ),                                                                                                       // opt/priority
         ),                                                                                                           // opt/priority

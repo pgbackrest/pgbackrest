@@ -269,7 +269,7 @@ testRun(void)
             "  --lock-path                         path where lock files are stored\n"
             "                                      [default=/tmp/pgbackrest]\n"
             "  --neutral-umask                     use a neutral umask [default=y]\n"
-            "  --priority                          set process priority [default=0]\n"
+            "  --priority                          set process priority\n"
             "  --process-max                       max processes to use for\n"
             "                                      compress/transfer [default=1]\n"
             "  --protocol-timeout                  protocol timeout [default=31m]\n"

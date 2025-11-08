@@ -329,10 +329,10 @@
                         <summary>Set process priority.</summary>
 
                         <text>
-                            <p>!!!</p>
+                            <p>Defines how much priority will be give to the process by the kernel scheduler. Positive values decrease priority and negative values increase priority. In most case processes do not have permission to increase their priority.</p>
                         </text>
 
-                        <example>n</example>
+                        <example>19</example>
                     </config-key>
 
                     <config-key id="spool-path" name="Spool Path">

@@ -963,7 +963,7 @@ option:
   priority:
     section: global
     type: integer
-    default: 0
+    required: false
     allow-range: [-20, 19]
     command:
       annotate: {}

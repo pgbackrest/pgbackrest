@@ -469,7 +469,9 @@ cfgLoad(const unsigned int argListSize, const char *argList[])
 
         if (cfgOptionValid(cfgOptPriority) && cfgOptionSource(cfgOptPriority) != cfgSourceDefault)
         {
-            // !!!
+            // Sign conversion is ignored here due to type conflicts between setpriority() and getpid() on different platforms.
+            // Linux returns _pid_t (int) from getpid() but accepts id_t (unsigned int) in setpriority(). FreeBSD (but not MacOS)
+            // uses int for both. Presumably implicit conversion will work appropriately on each platform so just let that happen.
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wsign-conversion"
             THROW_ON_SYS_ERROR(
