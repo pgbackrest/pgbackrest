@@ -469,9 +469,16 @@ cfgLoad(const unsigned int argListSize, const char *argList[])
 
         if (cfgOptionValid(cfgOptPriority) && cfgOptionSource(cfgOptPriority) != cfgSourceDefault)
         {
+            // !!!
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
             THROW_ON_SYS_ERROR(
-                setpriority(PRIO_PROCESS, (id_t)getpid(), cfgOptionInt(cfgOptPriority)) == -1, KernelError,
+                setpriority(
+                    PRIO_PROCESS,
+                    getpid(),
+                    cfgOptionInt(cfgOptPriority)) == -1, KernelError,
                 "unable to set process priority");
+#pragma GCC diagnostic pop
         }
 
         // Initialize TCP settings
