@@ -91,9 +91,7 @@ main(int argListSize, const char *argList[])
     // Initialize exit handler
     exitInit();
 
-#ifdef _POSIX_PRIORITY_SCHEDULING
     nice(19);
-#endif
 
     // Process commands
     volatile int result = 0;
