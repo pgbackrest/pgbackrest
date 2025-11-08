@@ -91,8 +91,6 @@ main(int argListSize, const char *argList[])
     // Initialize exit handler
     exitInit();
 
-    nice(19);
-
     // Process commands
     volatile int result = 0;
     volatile bool error = false;

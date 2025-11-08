@@ -31,7 +31,6 @@ cc = meson.get_compiler('c')
 ####################################################################################################################################
 if host_machine.system() == 'linux'
     add_global_arguments('-D_POSIX_C_SOURCE=200809L', language: 'c')
-    add_global_arguments('-D_GNU_SOURCE', language: 'c')
 elif host_machine.system() == 'darwin'
     add_global_arguments('-D_DARWIN_C_SOURCE', language: 'c')
 endif

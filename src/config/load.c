@@ -4,6 +4,7 @@ Configuration Load
 #include "build.auto.h"
 
 #include <string.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -465,6 +466,13 @@ cfgLoad(const unsigned int argListSize, const char *argList[])
         // Neutralize the umask to make the repository file/path modes more consistent
         if (cfgOptionValid(cfgOptNeutralUmask) && cfgOptionBool(cfgOptNeutralUmask))
             umask(0000);
+
+        if (cfgOptionValid(cfgOptPriority) && cfgOptionSource(cfgOptPriority) != cfgSourceDefault)
+        {
+            THROW_ON_SYS_ERROR(
+                setpriority(PRIO_PROCESS, (id_t)getpid(), cfgOptionInt(cfgOptPriority)) == -1, KernelError,
+                "unable to set process priority");
+        }
 
         // Initialize TCP settings
         if (cfgOptionValid(cfgOptSckKeepAlive))
