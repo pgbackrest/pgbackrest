@@ -46,6 +46,7 @@ src_doc = [
     '../../src/config/parse.c',
     'command/build/build.c',
     'command/build/man.c',
+    'command/build/pre.c',
     'command/build/reference.c',
     'config/load.c',
     'main.c',

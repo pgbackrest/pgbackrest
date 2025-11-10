@@ -85,6 +85,10 @@ testRun(void)
         TEST_RESULT_STR_Z(
             xmlNodeContent(xmlNodeChild(xmlNodeLstGet(list, 2), STRDEF("Key"), true)), "test2.txt", "check Contents index 2 Key");
 
+        TEST_ASSIGN(list, xmlNodeChildListAll(rootNode), "create node all list");
+        TEST_RESULT_STR_Z(xmlNodeName(xmlNodeLstGet(list, 0)), "Name", "check node 0 name");
+        TEST_RESULT_STR_Z(xmlNodeName(xmlNodeLstGet(list, 1)), "Prefix", "check node 1 name");
+
         TEST_ERROR(
             xmlNodeChildN(rootNode, STRDEF("Contents"), 2, true), FormatError,
             "unable to find child 'Contents':2 in node 'ListBucketResult'");
@@ -147,6 +151,45 @@ testRun(void)
             "    text55\n"
             "    <name id=\"id55\">name55</name>\n"
             "</doc1>\n",
+            "get xml");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("insert xml between documents");
+
+        TEST_ASSIGN(
+            xmlDocument,
+            xmlDocumentNewBuf(
+                BUFSTRDEF(
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                    "<doc>\n"
+                    "    <replace/>\n"
+                    "</doc>")),
+            "destination xml");
+        TEST_ASSIGN(
+            xmlDocument2,
+            xmlDocumentNewBuf(
+                BUFSTRDEF(
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                    "<doc2>\n"
+                    "    <!-- comment -->\n"
+                    "    text55\n"
+                    "    <name id=\"id55\">name55</name>\n"
+                    "</doc2>")),
+            "source xml");
+
+        TEST_RESULT_VOID(
+            xmlNodeChildReplace(xmlNodeChild(xmlDocumentRoot(xmlDocument), STRDEF("replace"), true), xmlDocumentRoot(xmlDocument2)),
+            "insert xml");
+        TEST_RESULT_STR_Z(
+            strNewBuf(xmlDocumentBuf(xmlDocument)),
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            "<doc>\n"
+            "    \n"
+            "    \n"
+            "    text55\n"
+            "    <name id=\"id55\">name55</name>\n"
+            "\n"
+            "</doc>\n",
             "get xml");
     }
 
