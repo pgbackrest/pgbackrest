@@ -1751,10 +1751,6 @@ option:
       stanza-upgrade:
         command-role:
           remote: {}
-      start:
-        command-role: {}
-      stop:
-        command-role: {}
       verify:
         command-role:
           main: {}
@@ -1875,10 +1871,6 @@ option:
         command-role:
           main: {}
           remote: {}
-      start:
-        command-role: {}
-      stop:
-        command-role: {}
       verify:
         command-role:
           main: {}
