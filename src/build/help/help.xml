@@ -329,7 +329,7 @@
                         <summary>Set process priority.</summary>
 
                         <text>
-                            <p>Defines how much priority will be give to the process by the kernel scheduler. Positive values decrease priority and negative values increase priority. In most case processes do not have permission to increase their priority.</p>
+                            <p>Defines how much priority (i.e. niceness) will be given to the process by the kernel scheduler. Positive values decrease priority and negative values increase priority. In most case processes do not have permission to increase their priority.</p>
                         </text>
 
                         <example>19</example>
