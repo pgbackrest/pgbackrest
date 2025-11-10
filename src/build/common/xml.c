@@ -55,6 +55,27 @@ xmlNodeAttribute(const XmlNode *this, const String *name)
 }
 
 /**********************************************************************************************************************************/
+XmlNodeList *
+xmlNodeChildListAll(const XmlNode *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(XML_NODE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    XmlNodeList *const list = xmlNodeLstNew();
+
+    for (xmlNodePtr currentNode = this->node->children; currentNode != NULL; currentNode = currentNode->next)
+    {
+        if (currentNode->type == XML_ELEMENT_NODE)
+            xmlNodeLstAdd(list, currentNode);
+    }
+
+    FUNCTION_TEST_RETURN(XML_NODE_LIST, list);
+}
+
+/**********************************************************************************************************************************/
 void
 xmlNodeAttributeSet(XmlNode *const this, const String *const name, const String *const value)
 {
@@ -69,6 +90,83 @@ xmlNodeAttributeSet(XmlNode *const this, const String *const name, const String 
     ASSERT(value != NULL);
 
     xmlSetProp(this->node, (const uint8_t *)strZ(name), (const uint8_t *)strZ(value));
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+xmlNodeChildInsert(XmlNode *const this, const XmlNode *const child)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(XML_NODE, this);
+        FUNCTION_TEST_PARAM(XML_NODE, child);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(child != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        for (xmlNodePtr currentNodeRaw = child->node->children; currentNodeRaw != NULL; currentNodeRaw = currentNodeRaw->next)
+        {
+            // Skip comments
+            if (currentNodeRaw->type == XML_COMMENT_NODE)
+                continue;
+
+            // Insert all child nodes (only node and text types are inserted)
+            XmlNode *const currentNode = xmlNodeNew(currentNodeRaw);
+
+            if (currentNode->node->type == XML_ELEMENT_NODE)
+            {
+                XmlNode *const node = xmlNodeNew(xmlNewNode(NULL, currentNode->node->name));
+                xmlAddPrevSibling(this->node, node->node);
+
+                // Copy node attributes
+                for (xmlAttrPtr currentAttr = currentNode->node->properties; currentAttr != NULL; currentAttr = currentAttr->next)
+                {
+                    xmlNodeAttributeSet(
+                        node, STR((const char *)currentAttr->name),
+                        xmlNodeAttribute(currentNode, STR((const char *)currentAttr->name)));
+                }
+
+                // Recurse to copy child nodes
+                xmlNodeChildAdd(node, currentNode);
+            }
+            else
+            {
+                CHECK_FMT(
+                    AssertError, currentNode->node->type == XML_TEXT_NODE, "unknown type %u in node '%s'", currentNode->node->type,
+                    currentNode->node->name);
+
+                xmlChar *const content = xmlNodeGetContent(currentNode->node);
+                xmlNodePtr node = xmlNewDocText(NULL, content);
+                xmlFree(content);
+
+                xmlAddPrevSibling(this->node, node);
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+xmlNodeChildReplace(XmlNode *const this, const XmlNode *const child)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(XML_NODE, this);
+        FUNCTION_TEST_PARAM(XML_NODE, child);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(child != NULL);
+
+    xmlNodeChildInsert(this, child);
+    xmlUnlinkNode(this->node);
+    xmlFreeNode(this->node);
 
     FUNCTION_TEST_RETURN_VOID();
 }

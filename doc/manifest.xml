@@ -85,7 +85,7 @@
     <source-list>
         <source key="index"/>
         <source key="user-guide-index"/>
-        <source key="user-guide"/>
+        <source key="user-guide" file="output/xml/user-guide.xml"/>
         <source key="command" file="output/xml/command.xml"/>
         <source key="configuration" file="output/xml/configuration.xml"/>
         <source key="help" type="custom" file="../src/build/help/help.xml"/>
