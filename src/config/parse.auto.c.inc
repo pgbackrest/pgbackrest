@@ -4725,11 +4725,15 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                        // opt/priority
             PARSE_RULE_OPTION_COMMAND(Check)                                                                         // opt/priority
             PARSE_RULE_OPTION_COMMAND(Expire)                                                                        // opt/priority
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                          // opt/priority
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                      // opt/priority
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                       // opt/priority
             PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                        // opt/priority
             PARSE_RULE_OPTION_COMMAND(RepoPut)                                                                       // opt/priority
             PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                        // opt/priority
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                       // opt/priority
+            PARSE_RULE_OPTION_COMMAND(Server)                                                                        // opt/priority
+            PARSE_RULE_OPTION_COMMAND(ServerPing)                                                                    // opt/priority
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                  // opt/priority
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                  // opt/priority
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                 // opt/priority
@@ -4761,6 +4765,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                        // opt/priority
             PARSE_RULE_OPTION_COMMAND(Check)                                                                         // opt/priority
             PARSE_RULE_OPTION_COMMAND(Expire)                                                                        // opt/priority
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                          // opt/priority
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                      // opt/priority
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                       // opt/priority
             PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                        // opt/priority
             PARSE_RULE_OPTION_COMMAND(RepoPut)                                                                       // opt/priority

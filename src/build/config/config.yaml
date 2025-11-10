@@ -929,24 +929,6 @@ option:
     type: integer
     required: false
     allow-range: [-20, 19]
-    command:
-      annotate: {}
-      archive-get: {}
-      archive-push: {}
-      backup: {}
-      check: {}
-      expire: {}
-      repo-get: {}
-      repo-ls: {}
-      repo-put: {}
-      repo-rm: {}
-      restore: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-      start: {}
-      stop: {}
-      verify: {}
 
   process-max:
     section: global
