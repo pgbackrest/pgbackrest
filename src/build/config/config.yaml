@@ -1687,75 +1687,31 @@ option:
     required: false
     allow-range: [1, 256]
     command:
-      annotate:
-        command-role:
-          main: {}
-          remote: {}
-      archive-get:
-        command-role:
-          async: {}
-          main: {}
-          local: {}
-          remote: {}
+      annotate: {}
+      archive-get: {}
       archive-push:
         command-role:
           remote: {}
-      backup:
-        command-role:
-          main: {}
-          local: {}
-          remote: {}
+      backup: {}
       check:
         command-role:
           remote: {}
-      expire:
-        command-role:
-          main: {}
-          remote: {}
-      info:
-        command-role:
-          main: {}
-          remote: {}
-      manifest:
-        command-role:
-          main: {}
-          remote: {}
-      repo-get:
-        command-role:
-          main: {}
-          remote: {}
-      repo-ls:
-        command-role:
-          main: {}
-          remote: {}
-      repo-put:
-        command-role:
-          main: {}
-          remote: {}
-      repo-rm:
-        command-role:
-          main: {}
-          remote: {}
-      restore:
-        command-role:
-          main: {}
-          local: {}
-          remote: {}
+      expire: {}
+      info: {}
+      manifest: {}
+      repo-get: {}
+      repo-ls: {}
+      repo-put: {}
+      repo-rm: {}
+      restore: {}
       stanza-create:
         command-role:
           remote: {}
-      stanza-delete:
-        command-role:
-          main: {}
-          remote: {}
+      stanza-delete: {}
       stanza-upgrade:
         command-role:
           remote: {}
-      verify:
-        command-role:
-          main: {}
-          local: {}
-          remote: {}
+      verify: {}
 
   repo-local:
     section: global
@@ -1801,81 +1757,23 @@ option:
       - s3
       - sftp: HAVE_LIBSSH2
     command:
-      annotate:
-        command-role:
-          main: {}
-          remote: {}
-      archive-get:
-        command-role:
-          async: {}
-          main: {}
-          local: {}
-          remote: {}
-      archive-push:
-        command-role:
-          async: {}
-          main: {}
-          local: {}
-          remote: {}
-      backup:
-        command-role:
-          main: {}
-          local: {}
-          remote: {}
-      check:
-        command-role:
-          main: {}
-          remote: {}
-      expire:
-        command-role:
-          main: {}
-          remote: {}
-      info:
-        command-role:
-          main: {}
-          remote: {}
-      manifest:
-        command-role:
-          main: {}
-          remote: {}
-      repo-get:
-        command-role:
-          main: {}
-          remote: {}
-      repo-ls:
-        command-role:
-          main: {}
-          remote: {}
-      repo-put:
-        command-role:
-          main: {}
-          remote: {}
-      repo-rm:
-        command-role:
-          main: {}
-          remote: {}
-      restore:
-        command-role:
-          main: {}
-          local: {}
-          remote: {}
-      stanza-create:
-        command-role:
-          main: {}
-          remote: {}
-      stanza-delete:
-        command-role:
-          main: {}
-          remote: {}
-      stanza-upgrade:
-        command-role:
-          main: {}
-          remote: {}
-      verify:
-        command-role:
-          main: {}
-          local: {}
-          remote: {}
+      annotate: {}
+      archive-get: {}
+      archive-push: {}
+      backup: {}
+      check: {}
+      expire: {}
+      info: {}
+      manifest: {}
+      repo-get: {}
+      repo-ls: {}
+      repo-put: {}
+      repo-rm: {}
+      restore: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+      verify: {}
     deprecate:
       repo-type: {}
 
