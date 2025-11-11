@@ -1721,18 +1721,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                         // opt/cmd
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                        // opt/cmd
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                             // opt/cmd
-            PARSE_RULE_OPTION_COMMAND(Check)                                                                              // opt/cmd
-            PARSE_RULE_OPTION_COMMAND(Expire)                                                                             // opt/cmd
-            PARSE_RULE_OPTION_COMMAND(Info)                                                                               // opt/cmd
-            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                           // opt/cmd
-            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                            // opt/cmd
-            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                             // opt/cmd
-            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                                            // opt/cmd
-            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                             // opt/cmd
             PARSE_RULE_OPTION_COMMAND(Restore)                                                                            // opt/cmd
-            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                       // opt/cmd
-            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                       // opt/cmd
-            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                                      // opt/cmd
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                             // opt/cmd
         ),                                                                                                                // opt/cmd
                                                                                                                           // opt/cmd
@@ -1773,6 +1762,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                       // opt/cmd-ssh
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                // opt/cmd-ssh
         (                                                                                                             // opt/cmd-ssh
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                                       // opt/cmd-ssh
             PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                     // opt/cmd-ssh
             PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                    // opt/cmd-ssh
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                         // opt/cmd-ssh
@@ -1936,6 +1926,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(RepoGet)                                                         // opt/compress-level-network
             PARSE_RULE_OPTION_COMMAND(RepoLs)                                                          // opt/compress-level-network
             PARSE_RULE_OPTION_COMMAND(RepoPut)                                                         // opt/compress-level-network
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                          // opt/compress-level-network
             PARSE_RULE_OPTION_COMMAND(Restore)                                                         // opt/compress-level-network
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                    // opt/compress-level-network
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                    // opt/compress-level-network

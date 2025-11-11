@@ -856,7 +856,7 @@ bldCfgParseOptionDeprecateReconcile(const List *const optDeprecateRawList)
 
 // Helper to parse the option command list
 static const List *
-bldCfgParseOptionCommandList(Yaml *const yaml, const List *const optList)
+bldCfgParseOptionCommandList(Yaml *const yaml, const List *const cmdList, const List *const optList)
 {
     const List *result = NULL;
 
@@ -876,78 +876,100 @@ bldCfgParseOptionCommandList(Yaml *const yaml, const List *const optList)
                 yamlEventCheck(optCmd, yamlEventTypeScalar);
                 BldCfgOptionCommandRaw optCmdRaw = {.name = optCmd.value};
 
-                yamlEventNextCheck(yaml, yamlEventTypeMapBegin);
-                YamlEvent optCmdDef = yamlEventNext(yaml);
-
-                if (optCmdDef.type == yamlEventTypeScalar)
+                if (strEqZ(optCmd.value, "+role"))
                 {
-                    do
+                    YamlEvent cmdRoleVal = yamlEventNext(yaml);
+                    yamlEventCheck(cmdRoleVal, yamlEventTypeScalar);
+
+                    for (unsigned int cmdIdx = 0; cmdIdx < lstSize(cmdList); cmdIdx++)
                     {
-                        yamlEventCheck(optCmdDef, yamlEventTypeScalar);
+                        const BldCfgCommand *const cmd = lstGet(cmdList, cmdIdx);
 
-                        if (strEqZ(optCmdDef.value, "allow-list"))
+                        for (unsigned int cmdRoleIdx = 0; cmdRoleIdx < strLstSize(cmd->roleList); cmdRoleIdx++)
                         {
-                            optCmdRaw.allowList = bldCfgParseAllowList(yaml, NULL);
-                        }
-                        else if (strEqZ(optCmdDef.value, "command-role"))
-                        {
-                            optCmdRaw.roleList = bldCfgParseCommandRole(yaml);
-                        }
-                        else if (strEqZ(optCmdDef.value, "depend"))
-                        {
-                            MEM_CONTEXT_BEGIN(lstMemContext(optCmdRawList))
-                            {
-                                optCmdRaw.depend = bldCfgParseDepend(yaml, optList);
-                            }
-                            MEM_CONTEXT_END();
-                        }
-                        else if (strEqZ(optCmdDef.value, "default"))
-                        {
-                            MEM_CONTEXT_BEGIN(lstMemContext(optCmdRawList))
-                            {
-                                optCmdRaw.defaultValue = bldCfgParseDefault(yaml);
-                            }
-                            MEM_CONTEXT_END();
-                        }
-                        else
-                        {
-                            YamlEvent optCmdDefVal = yamlEventNextCheck(yaml, yamlEventTypeScalar);
+                            const String *role = strLstGet(cmd->roleList, cmdRoleIdx);
+                            BldCfgOptionCommandRaw optCmdRaw = {.name = cmd->name};
 
-                            if (strEqZ(optCmdDef.value, "internal"))
-                            {
-                                optCmdRaw.internal = varNewBool(yamlBoolParse(optCmdDefVal));
-                            }
-                            else if (strEqZ(optCmdDef.value, "required"))
-                            {
-                                optCmdRaw.required = varNewBool(yamlBoolParse(optCmdDefVal));
-                            }
-                            else
-                                THROW_FMT(FormatError, "unknown option command definition '%s'", strZ(optCmdDef.value));
+                            if (strEq(role, cmdRoleVal.value) && !lstFind(optCmdRawList, &optCmdRaw))
+                                lstAdd(optCmdRawList, &optCmdRaw);
                         }
-
-                        optCmdDef = yamlEventNext(yaml);
                     }
-                    while (optCmdDef.type != yamlEventTypeMapEnd);
                 }
                 else
-                    yamlEventCheck(optCmdDef, yamlEventTypeMapEnd);
-
-                MEM_CONTEXT_BEGIN(lstMemContext(optCmdRawList))
                 {
-                    const BldCfgOptionCommandRaw bldCfgOptionCommandRaw =
-                    {
-                        .name = strDup(optCmdRaw.name),
-                        .internal = varDup(optCmdRaw.internal),
-                        .required = varDup(optCmdRaw.required),
-                        .defaultValue = optCmdRaw.defaultValue,
-                        .depend = optCmdRaw.depend,
-                        .allowList = bldCfgParseAllowListDup(optCmdRaw.allowList),
-                        .roleList = strLstDup(optCmdRaw.roleList),
-                    };
+                    yamlEventNextCheck(yaml, yamlEventTypeMapBegin);
+                    YamlEvent optCmdDef = yamlEventNext(yaml);
 
-                    lstAdd(optCmdRawList, &bldCfgOptionCommandRaw);
+                    if (optCmdDef.type == yamlEventTypeScalar)
+                    {
+                        do
+                        {
+                            yamlEventCheck(optCmdDef, yamlEventTypeScalar);
+
+                            if (strEqZ(optCmdDef.value, "allow-list"))
+                            {
+                                optCmdRaw.allowList = bldCfgParseAllowList(yaml, NULL);
+                            }
+                            else if (strEqZ(optCmdDef.value, "command-role"))
+                            {
+                                optCmdRaw.roleList = bldCfgParseCommandRole(yaml);
+                            }
+                            else if (strEqZ(optCmdDef.value, "depend"))
+                            {
+                                MEM_CONTEXT_BEGIN(lstMemContext(optCmdRawList))
+                                {
+                                    optCmdRaw.depend = bldCfgParseDepend(yaml, optList);
+                                }
+                                MEM_CONTEXT_END();
+                            }
+                            else if (strEqZ(optCmdDef.value, "default"))
+                            {
+                                MEM_CONTEXT_BEGIN(lstMemContext(optCmdRawList))
+                                {
+                                    optCmdRaw.defaultValue = bldCfgParseDefault(yaml);
+                                }
+                                MEM_CONTEXT_END();
+                            }
+                            else
+                            {
+                                YamlEvent optCmdDefVal = yamlEventNextCheck(yaml, yamlEventTypeScalar);
+
+                                if (strEqZ(optCmdDef.value, "internal"))
+                                {
+                                    optCmdRaw.internal = varNewBool(yamlBoolParse(optCmdDefVal));
+                                }
+                                else if (strEqZ(optCmdDef.value, "required"))
+                                {
+                                    optCmdRaw.required = varNewBool(yamlBoolParse(optCmdDefVal));
+                                }
+                                else
+                                    THROW_FMT(FormatError, "unknown option command definition '%s'", strZ(optCmdDef.value));
+                            }
+
+                            optCmdDef = yamlEventNext(yaml);
+                        }
+                        while (optCmdDef.type != yamlEventTypeMapEnd);
+                    }
+                    else
+                        yamlEventCheck(optCmdDef, yamlEventTypeMapEnd);
+
+                    MEM_CONTEXT_BEGIN(lstMemContext(optCmdRawList))
+                    {
+                        const BldCfgOptionCommandRaw bldCfgOptionCommandRaw =
+                        {
+                            .name = strDup(optCmdRaw.name),
+                            .internal = varDup(optCmdRaw.internal),
+                            .required = varDup(optCmdRaw.required),
+                            .defaultValue = optCmdRaw.defaultValue,
+                            .depend = optCmdRaw.depend,
+                            .allowList = bldCfgParseAllowListDup(optCmdRaw.allowList),
+                            .roleList = strLstDup(optCmdRaw.roleList),
+                        };
+
+                        lstAdd(optCmdRawList, &bldCfgOptionCommandRaw);
+                    }
+                    MEM_CONTEXT_END();
                 }
-                MEM_CONTEXT_END();
 
                 optCmd = yamlEventNext(yaml);
             }
@@ -1014,7 +1036,7 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                 }
                 else if (strEqZ(optDef.value, "command"))
                 {
-                    optRaw.cmdList = bldCfgParseOptionCommandList(yaml, optListRaw);
+                    optRaw.cmdList = bldCfgParseOptionCommandList(yaml, cmdList, optListRaw);
                 }
                 else if (strEqZ(optDef.value, "command-role"))
                 {
