@@ -876,7 +876,26 @@ bldCfgParseOptionCommandList(Yaml *const yaml, const List *const cmdList, const 
                 yamlEventCheck(optCmd, yamlEventTypeScalar);
                 BldCfgOptionCommandRaw optCmdRaw = {.name = optCmd.value};
 
-                if (strEqZ(optCmd.value, "+role"))
+                // Add all commands from an option without attributes
+                if (strEqZ(optCmd.value, "+inherit"))
+                {
+                    CHECK(AssertError, optList != NULL, "option list is NULL");
+
+                    YamlEvent optInheritVal = yamlEventNext(yaml);
+                    yamlEventCheck(optInheritVal, yamlEventTypeScalar);
+
+                    const BldCfgOptionRaw *const optInherit = lstFind(optList, &optInheritVal.value);
+                    CHECK(AssertError, optInherit != NULL, "inherited option is NULL");
+
+                    for (unsigned int optCmdRawIdx = 0; optCmdRawIdx < lstSize(optInherit->cmdList); optCmdRawIdx++)
+                    {
+                        const BldCfgOptionCommandRaw *const optCmd = (BldCfgOptionCommandRaw *)lstGet(
+                            optInherit->cmdList, optCmdRawIdx);
+                        lstAdd(optCmdRawList, &(BldCfgOptionCommandRaw){.name = optCmd->name});
+                    }
+                }
+                // Add all commands from a role (or any for all roles)
+                else if (strEqZ(optCmd.value, "+role"))
                 {
                     YamlEvent cmdRoleVal = yamlEventNext(yaml);
                     yamlEventCheck(cmdRoleVal, yamlEventTypeScalar);
@@ -887,14 +906,29 @@ bldCfgParseOptionCommandList(Yaml *const yaml, const List *const cmdList, const 
 
                         for (unsigned int cmdRoleIdx = 0; cmdRoleIdx < strLstSize(cmd->roleList); cmdRoleIdx++)
                         {
-                            const String *role = strLstGet(cmd->roleList, cmdRoleIdx);
+                            const String *const role = strLstGet(cmd->roleList, cmdRoleIdx);
                             BldCfgOptionCommandRaw optCmdRaw = {.name = cmd->name};
 
-                            if (strEq(role, cmdRoleVal.value) && !lstFind(optCmdRawList, &optCmdRaw))
+                            if (strEq(cmd->name, CMD_HELP_STR) || strEq(cmd->name, CMD_VERSION_STR))
+                                continue;
+
+                            if ((strEqZ(cmdRoleVal.value, "any") || strEq(role, cmdRoleVal.value)) &&
+                                !lstFind(optCmdRawList, &optCmdRaw))
+                            {
                                 lstAdd(optCmdRawList, &optCmdRaw);
+                            }
                         }
                     }
                 }
+                // Exclude a command
+                else if (strEqZ(optCmd.value, "-command"))
+                {
+                    YamlEvent cmdVal = yamlEventNext(yaml);
+                    yamlEventCheck(cmdVal, yamlEventTypeScalar);
+
+                    lstRemove(optCmdRawList, &cmdVal.value);
+                }
+                // Process the command list
                 else
                 {
                     yamlEventNextCheck(yaml, yamlEventTypeMapBegin);
@@ -966,6 +1000,7 @@ bldCfgParseOptionCommandList(Yaml *const yaml, const List *const cmdList, const 
                             .roleList = strLstDup(optCmdRaw.roleList),
                         };
 
+                        lstRemove(optCmdRawList, &bldCfgOptionCommandRaw);
                         lstAdd(optCmdRawList, &bldCfgOptionCommandRaw);
                     }
                     MEM_CONTEXT_END();

@@ -199,6 +199,11 @@ optionGroup:
 #
 #   If another option is referenced (e.g. command: repo-type) then the list of commands will be copied from the referenced option.
 #
+#   Shortcuts for including multiple commands:
+#     +inherit: <option> - all commands from the specified option stripped of attributes
+#     +role: <role|any> - all commands that are valid for the role (or any role)
+#     -command: <command> - exclude a command (useful to trim commands from +inherit or +role)
+#
 #   NOTE: If the option (A) has a dependency on another option (B) then the command must also be specified in the other option
 #         (B), else it will still error on the option (A).
 #
@@ -683,25 +688,9 @@ option:
       - 8MiB
       - 16MiB
     command:
-      annotate: {}
-      archive-get: {}
-      archive-push: {}
-      backup: {}
-      check: {}
-      expire: {}
-      info: {}
-      manifest: {}
-      repo-get: {}
-      repo-ls: {}
-      repo-put: {}
-      repo-rm: {}
-      restore: {}
-      server: {}
-      server-ping: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-      verify: {}
+      +role: any
+      -command: start
+      -command: stop
 
   cmd:
     section: global
@@ -832,13 +821,11 @@ option:
     default: 2
     allow-range: [0, 360]
     command:
+      +role: local
       archive-get:
         default: 1
       archive-push:
         default: 1
-      backup: {}
-      restore: {}
-      verify: {}
     command-role:
       async: {}
       main: {}
@@ -875,23 +862,11 @@ option:
     type: boolean
     default: true
     command:
-      annotate: {}
-      archive-get: {}
-      archive-push: {}
-      backup: {}
-      check: {}
-      expire: {}
-      repo-get: {}
-      repo-ls: {}
-      repo-put: {}
-      repo-rm: {}
-      restore: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-      start: {}
-      stop: {}
-      verify: {}
+      +role: any
+      -command: info
+      -command: manifest
+      -command: server
+      -command: server-ping
 
   process-max:
     section: global
@@ -910,24 +885,10 @@ option:
     default: 31m
     allow-range: [100ms, 7d]
     command:
-      annotate: {}
-      archive-get: {}
-      archive-push: {}
-      backup: {}
-      check: {}
-      expire: {}
-      info: {}
-      manifest: {}
-      repo-get: {}
-      repo-ls: {}
-      repo-put: {}
-      repo-rm: {}
-      restore: {}
-      server: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-      verify: {}
+      +role: any
+      -command: start
+      -command: stop
+      -command: server-ping
 
   sck-block:
     section: global
@@ -1449,12 +1410,10 @@ option:
       - ssh
       - tls
     command:
-      backup: {}
-      check: {}
-      manifest: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
+      +inherit: pg-host
+      -command: archive-get
+      -command: archive-push
+      -command: restore
     command-role:
       async: {}
       main: {}
@@ -1684,23 +1643,7 @@ option:
     internal: true
     default: false
     command:
-      annotate: {}
-      archive-get: {}
-      archive-push: {}
-      backup: {}
-      check: {}
-      expire: {}
-      info: {}
-      manifest: {}
-      repo-get: {}
-      repo-ls: {}
-      repo-put: {}
-      repo-rm: {}
-      restore: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-      verify: {}
+      +inherit: repo
     command-role:
       async: {}
       main: {}
