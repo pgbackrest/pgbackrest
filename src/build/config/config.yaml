@@ -199,6 +199,11 @@ optionGroup:
 #
 #   If another option is referenced (e.g. command: repo-type) then the list of commands will be copied from the referenced option.
 #
+#   Shortcuts for including multiple commands:
+#     +inherit: <option> - all commands from the specified option stripped of attributes
+#     +role: <role|any> - all commands that are valid for the role (or any role)
+#     -command: <command> - exclude a command (useful to trim commands from +inherit or +role)
+#
 #   NOTE: If the option (A) has a dependency on another option (B) then the command must also be specified in the other option
 #         (B), else it will still error on the option (A).
 #
@@ -683,25 +688,9 @@ option:
       - 8MiB
       - 16MiB
     command:
-      annotate: {}
-      archive-get: {}
-      archive-push: {}
-      backup: {}
-      check: {}
-      expire: {}
-      info: {}
-      manifest: {}
-      repo-get: {}
-      repo-ls: {}
-      repo-put: {}
-      repo-rm: {}
-      restore: {}
-      server: {}
-      server-ping: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-      verify: {}
+      +role: any
+      -command: start
+      -command: stop
 
   cmd:
     section: global
@@ -709,22 +698,8 @@ option:
     default-type: dynamic
     default: bin
     command:
-      archive-get: {}
-      archive-push: {}
-      backup: {}
-      check: {}
-      expire: {}
-      info: {}
-      manifest: {}
-      repo-get: {}
-      repo-ls: {}
-      repo-put: {}
-      repo-rm: {}
-      restore: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-      verify: {}
+      +role: async
+      +role: local
     command-role:
       async: {}
       main: {}
@@ -735,6 +710,8 @@ option:
     required: true
     default-type: quote
     default: ssh
+    command:
+      +role: remote
 
   # Option is deprecated and should not be referenced outside of cfgLoadUpdateOption()
   compress:
@@ -780,22 +757,7 @@ option:
     default: 1
     allow-range: [-5, 12]
     command:
-      annotate: {}
-      archive-get: {}
-      archive-push: {}
-      backup: {}
-      check: {}
-      expire: {}
-      info: {}
-      manifest: {}
-      repo-get: {}
-      repo-ls: {}
-      repo-put: {}
-      restore: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-      verify: {}
+      +role: remote
     command-role:
       async: {}
       main: {}
@@ -815,25 +777,6 @@ option:
     command-role:
       async: {}
       main: {}
-
-  db-timeout:
-    section: global
-    type: time
-    default: 30m
-    allow-range: [100ms, 7d]
-    command:
-      archive-get: {}
-      archive-push: {}
-      backup: {}
-      check: {}
-      expire: {}
-      repo-get: {}
-      repo-ls: {}
-      repo-put: {}
-      repo-rm: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
 
   delta:
     section: global
@@ -859,13 +802,11 @@ option:
     default: 2
     allow-range: [0, 360]
     command:
+      +role: local
       archive-get:
         default: 1
       archive-push:
         default: 1
-      backup: {}
-      restore: {}
-      verify: {}
     command-role:
       async: {}
       main: {}
@@ -877,11 +818,7 @@ option:
     default: 15s
     allow-range: [0s, 15m]
     command:
-      archive-get: {}
-      archive-push: {}
-      backup: {}
-      restore: {}
-      verify: {}
+      +role: local
 
   lock-path:
     section: global
@@ -906,23 +843,11 @@ option:
     type: boolean
     default: true
     command:
-      annotate: {}
-      archive-get: {}
-      archive-push: {}
-      backup: {}
-      check: {}
-      expire: {}
-      repo-get: {}
-      repo-ls: {}
-      repo-put: {}
-      repo-rm: {}
-      restore: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-      start: {}
-      stop: {}
-      verify: {}
+      +role: any
+      -command: info
+      -command: manifest
+      -command: server
+      -command: server-ping
 
   priority:
     section: global
@@ -936,11 +861,7 @@ option:
     default: 1
     allow-range: [1, 999]
     command:
-      archive-get: {}
-      archive-push: {}
-      backup: {}
-      restore: {}
-      verify: {}
+      +role: local
     command-role:
       async: {}
       main: {}
@@ -951,37 +872,10 @@ option:
     default: 31m
     allow-range: [100ms, 7d]
     command:
-      annotate: {}
-      archive-get: {}
-      archive-push: {}
-      backup: {}
-      check: {}
-      expire: {}
-      info: {}
-      manifest: {}
-      repo-get: {}
-      repo-ls: {}
-      repo-put: {}
-      repo-rm: {}
-      restore: {}
-      server: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-      verify: {}
-
-  sck-block:
-    section: global
-    type: boolean
-    default: false
-    internal: true
-    command: buffer-size
-
-  sck-keep-alive:
-    type: boolean
-    section: global
-    default: true
-    command: buffer-size
+      +role: any
+      -command: start
+      -command: stop
+      -command: server-ping
 
   spool-path:
     section: global
@@ -1004,6 +898,21 @@ option:
       async: {}
       main: {}
       local: {}
+
+  # TCP and socket options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  sck-block:
+    section: global
+    type: boolean
+    default: false
+    internal: true
+    command: buffer-size
+
+  sck-keep-alive:
+    type: boolean
+    section: global
+    default: true
+    command: buffer-size
 
   tcp-keep-alive-count:
     section: global
@@ -1031,47 +940,6 @@ option:
     allow-range: [1, 900]
     command: buffer-size
     depend: tcp-keep-alive-count
-
-  tls-server-ca-file:
-    section: global
-    type: path
-    command:
-      server: {}
-
-  tls-server-cert-file:
-    section: global
-    type: path
-    command:
-      server: {}
-
-  tls-server-key-file:
-    section: global
-    type: path
-    command:
-      server: {}
-
-  tls-server-auth:
-    section: global
-    type: hash
-    command:
-      server: {}
-
-  tls-server-address:
-    section: global
-    type: string
-    default: localhost
-    command:
-      server: {}
-      server-ping: {}
-
-  tls-server-port:
-    section: global
-    type: integer
-    default: 8432
-    allow-range: [1, 65535]
-    command:
-      server: {}
-      server-ping: {}
 
   # Logging options
   #---------------------------------------------------------------------------------------------------------------------------------
@@ -1110,23 +978,9 @@ option:
     type: boolean
     default: false
     command:
-      annotate: {}
-      archive-get: {}
-      archive-push: {}
-      backup: {}
-      check: {}
-      expire: {}
-      info: {}
-      manifest: {}
-      repo-get: {}
-      repo-ls: {}
-      repo-put: {}
-      repo-rm: {}
-      restore: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-      verify: {}
+      +role: async
+      +role: local
+      +role: remote
 
   log-timestamp:
     section: global
@@ -1134,7 +988,7 @@ option:
     default: true
     command: log-level-console
 
-  # Archive options
+  # Archive command options
   #---------------------------------------------------------------------------------------------------------------------------------
   archive-async:
     section: global
@@ -1187,7 +1041,7 @@ option:
     deprecate:
       archive-queue-max: {}
 
-  # Backup options
+  # Backup command options
   #---------------------------------------------------------------------------------------------------------------------------------
   annotation:
     section: global
@@ -1337,7 +1191,7 @@ option:
     command-role:
       main: {}
 
-  # Restore options
+  # Restore command options
   #---------------------------------------------------------------------------------------------------------------------------------
   archive-mode:
     section: global
@@ -1424,7 +1278,50 @@ option:
         - standby
         - xid
 
-  # Stanza options
+  # Server command options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  tls-server-ca-file:
+    section: global
+    type: path
+    command:
+      server: {}
+
+  tls-server-cert-file:
+    section: global
+    type: path
+    command:
+      server: {}
+
+  tls-server-key-file:
+    section: global
+    type: path
+    command:
+      server: {}
+
+  tls-server-auth:
+    section: global
+    type: hash
+    command:
+      server: {}
+
+  tls-server-address:
+    section: global
+    type: string
+    default: localhost
+    command:
+      server: {}
+      server-ping: {}
+
+  tls-server-port:
+    section: global
+    type: integer
+    default: 8432
+    allow-range: [1, 65535]
+    command:
+      server: {}
+      server-ping: {}
+
+  # PostgreSQL common options
   #---------------------------------------------------------------------------------------------------------------------------------
   pg:
     type: integer
@@ -1439,20 +1336,30 @@ option:
         command-role:
           main: {}
 
-  pg-database:
+  pg-path:
     section: stanza
     group: pg
-    type: string
+    type: path
     command:
+      archive-get: {}
+      archive-push:
+        required: false
       backup: {}
-      check: {}
+      check:
+        depend:
+          option: stanza
+      manifest:
+        required: false
+      restore: {}
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
-    default: postgres
-    depend:
-      option: pg-path
+    deprecate:
+      db-path: {}
+      db?-path: {}
 
+  # PostgreSQL host options
+  #---------------------------------------------------------------------------------------------------------------------------------
   pg-local:
     section: stanza
     group: pg
@@ -1460,18 +1367,13 @@ option:
     internal: true
     default: false
     command:
+      +inherit: pg-path
       archive-get:
         internal: true
       archive-push:
         internal: true
-      backup: {}
-      check: {}
-      manifest: {}
       restore:
         internal: true
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
     command-role:
       async: {}
       main: {}
@@ -1495,11 +1397,31 @@ option:
       db-host: {}
       db?-host: {}
 
+  pg-host-type:
+    section: global
+    group: pg
+    type: string-id
+    default: ssh
+    allow-list:
+      - ssh
+      - tls
+    command:
+      +inherit: pg-host
+      -command: archive-get
+      -command: archive-push
+      -command: restore
+    command-role:
+      async: {}
+      main: {}
+      local: {}
+    depend:
+      option: pg-host
+
   pg-host-cert-file:
     section: global
     group: pg
     type: string
-    command: pg-local
+    command: pg-host-type
     command-role:
       async: {}
       main: {}
@@ -1526,13 +1448,26 @@ option:
     type: string
     default-type: dynamic
     default: bin
-    command:
-      backup: {}
-      check: {}
-      manifest: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
+    command: pg-host-type
+    command-role:
+      async: {}
+      main: {}
+      local: {}
+    depend:
+      option: pg-host-type
+      list:
+        - ssh
+    deprecate:
+      db-cmd: {}
+      db?-cmd: {}
+
+  pg-host-config:
+    section: stanza
+    group: pg
+    type: path
+    default-type: literal
+    default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE
+    command: pg-host-type
     command-role:
       async: {}
       main: {}
@@ -1540,26 +1475,18 @@ option:
     depend:
       option: pg-host
     deprecate:
-      db-cmd: {}
-      db?-cmd: {}
-
-  pg-host-config:
-    inherit: pg-host-cmd
-    default-type: literal
-    default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE
-    deprecate:
       db-config: {}
       db?-config: {}
 
   pg-host-config-include-path:
-    inherit: pg-host-cmd
+    inherit: pg-host-config
     type: path
     default-type: literal
     default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH
     required: true
 
   pg-host-config-path:
-    inherit: pg-host-cmd
+    inherit: pg-host-config
     type: path
     default-type: literal
     default: CFGOPTDEF_CONFIG_PATH
@@ -1588,49 +1515,36 @@ option:
     default-type: quote
     default: postgres
     required: false
+    depend:
+      option: pg-host-type
+      list:
+        - ssh
     deprecate:
       db-user: {}
       db?-user: {}
 
-  pg-host-type:
-    section: global
-    group: pg
-    type: string-id
-    default: ssh
-    allow-list:
-      - ssh
-      - tls
-    command: pg-local
-    command-role:
-      async: {}
-      main: {}
-      local: {}
-    depend:
-      option: pg-local
-      list:
-        - false
-
-  pg-path:
+  # PostgreSQL connection options (directly to PostgreSQL not the host)
+  #---------------------------------------------------------------------------------------------------------------------------------
+  pg-database:
     section: stanza
     group: pg
-    type: path
+    type: string
     command:
-      archive-get: {}
-      archive-push:
-        required: false
       backup: {}
-      check:
-        depend:
-          option: stanza
-      manifest:
-        required: false
-      restore: {}
+      check: {}
       stanza-create: {}
       stanza-delete: {}
       stanza-upgrade: {}
-    deprecate:
-      db-path: {}
-      db?-path: {}
+    default: postgres
+    depend:
+      option: pg-path
+
+  db-timeout:
+    section: global
+    type: time
+    default: 30m
+    allow-range: [100ms, 7d]
+    command: pg-database
 
   pg-port:
     section: stanza
@@ -1661,14 +1575,8 @@ option:
     group: pg
     type: string
     required: false
-    command:
-      backup: {}
-      check: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-    depend:
-      option: pg-path
+    command: pg-database
+    depend: pg-database
 
   pg-version-force:
     section: stanza
@@ -1686,102 +1594,23 @@ option:
       stanza-upgrade: {}
       verify: {}
 
-  # Repository options
+  # Repository common options
   #---------------------------------------------------------------------------------------------------------------------------------
   repo:
     type: integer
     required: false
     allow-range: [1, 256]
     command:
-      annotate:
-        command-role:
-          main: {}
-          remote: {}
-      archive-get:
-        command-role:
-          async: {}
-          main: {}
-          local: {}
-          remote: {}
+      annotate: {}
+      archive-get: {}
       archive-push:
         command-role:
           remote: {}
-      backup:
-        command-role:
-          main: {}
-          local: {}
-          remote: {}
+      backup: {}
       check:
         command-role:
           remote: {}
-      expire:
-        command-role:
-          main: {}
-          remote: {}
-      info:
-        command-role:
-          main: {}
-          remote: {}
-      manifest:
-        command-role:
-          main: {}
-          remote: {}
-      repo-get:
-        command-role:
-          main: {}
-          remote: {}
-      repo-ls:
-        command-role:
-          main: {}
-          remote: {}
-      repo-put:
-        command-role:
-          main: {}
-          remote: {}
-      repo-rm:
-        command-role:
-          main: {}
-          remote: {}
-      restore:
-        command-role:
-          main: {}
-          local: {}
-          remote: {}
-      stanza-create:
-        command-role:
-          remote: {}
-      stanza-delete:
-        command-role:
-          main: {}
-          remote: {}
-      stanza-upgrade:
-        command-role:
-          remote: {}
-      start:
-        command-role: {}
-      stop:
-        command-role: {}
-      verify:
-        command-role:
-          main: {}
-          local: {}
-          remote: {}
-
-  repo-local:
-    section: global
-    group: repo
-    type: boolean
-    internal: true
-    default: false
-    command:
-      annotate: {}
-      archive-get: {}
-      archive-push: {}
-      backup:
-        internal: true
-      check: {}
-      expire:
-        internal: true
+      expire: {}
       info: {}
       manifest: {}
       repo-get: {}
@@ -1789,14 +1618,14 @@ option:
       repo-put: {}
       repo-rm: {}
       restore: {}
-      stanza-create: {}
+      stanza-create:
+        command-role:
+          remote: {}
       stanza-delete: {}
-      stanza-upgrade: {}
+      stanza-upgrade:
+        command-role:
+          remote: {}
       verify: {}
-    command-role:
-      async: {}
-      main: {}
-      local: {}
 
   repo-type:
     section: global
@@ -1811,132 +1640,181 @@ option:
       - s3
       - sftp: HAVE_LIBSSH2
     command:
-      annotate:
-        command-role:
-          main: {}
-          remote: {}
-      archive-get:
-        command-role:
-          async: {}
-          main: {}
-          local: {}
-          remote: {}
-      archive-push:
-        command-role:
-          async: {}
-          main: {}
-          local: {}
-          remote: {}
-      backup:
-        command-role:
-          main: {}
-          local: {}
-          remote: {}
-      check:
-        command-role:
-          main: {}
-          remote: {}
-      expire:
-        command-role:
-          main: {}
-          remote: {}
-      info:
-        command-role:
-          main: {}
-          remote: {}
-      manifest:
-        command-role:
-          main: {}
-          remote: {}
-      repo-get:
-        command-role:
-          main: {}
-          remote: {}
-      repo-ls:
-        command-role:
-          main: {}
-          remote: {}
-      repo-put:
-        command-role:
-          main: {}
-          remote: {}
-      repo-rm:
-        command-role:
-          main: {}
-          remote: {}
-      restore:
-        command-role:
-          main: {}
-          local: {}
-          remote: {}
-      stanza-create:
-        command-role:
-          main: {}
-          remote: {}
-      stanza-delete:
-        command-role:
-          main: {}
-          remote: {}
-      stanza-upgrade:
-        command-role:
-          main: {}
-          remote: {}
-      start:
-        command-role: {}
-      stop:
-        command-role: {}
-      verify:
-        command-role:
-          main: {}
-          local: {}
-          remote: {}
+      +inherit: repo
     deprecate:
       repo-type: {}
 
-  repo-azure-account:
+  repo-path:
+    section: global
+    group: repo
+    type: path
+    default: /var/lib/pgbackrest
+    command: repo-type
+    deprecate:
+      repo-path: {}
+
+  repo-cipher-type:
+    section: global
+    type: string-id
+    group: repo
+    default: none
+    allow-list:
+      - none
+      - aes-256-cbc
+    command: repo-type
+    deprecate:
+      repo-cipher-type: {}
+
+  repo-cipher-pass:
     section: global
     type: string
-    group: repo
     secure: true
     command: repo-type
     depend:
-      option: repo-type
+      option: repo-cipher-type
       list:
-        - azure
+        - aes-256-cbc
+    group: repo
+    deprecate:
+      repo-cipher-pass: {}
 
-  repo-azure-container:
+  repo-hardlink:
+    section: global
+    group: repo
+    type: boolean
+    default: false
+    command:
+      backup: {}
+    command-role:
+      main: {}
+    depend:
+      option: repo-bundle
+      default: false
+      list:
+        - false
+    deprecate:
+      hardlink: {}
+
+  repo-symlink:
+    section: global
+    group: repo
+    type: boolean
+    default: true
+    command:
+      backup: {}
+      expire: {}
+    command-role:
+      main: {}
+    depend:
+      option: repo-type
+      default: false
+      list:
+        - posix
+
+  repo-target-time:
     section: global
     type: string
-    group: repo
-    command: repo-type
-    depend: repo-azure-account
+    required: false
+    command:
+      archive-get: {}
+      info: {}
+      manifest: {}
+      repo-get: {}
+      repo-ls: {}
+      restore: {}
+      verify: {}
+    command-role:
+      async: {}
+      main: {}
+      local: {}
 
-  repo-azure-endpoint:
-    inherit: repo-azure-account
-    default: blob.core.windows.net
-
-  repo-azure-key:
-    inherit: repo-azure-account
-
-  repo-azure-key-type:
-    inherit: repo-azure-container
-    type: string-id
-    default: shared
-    allow-list:
-      - shared
-      - sas
-
-  repo-azure-uri-style:
+  # Repository retention options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  repo-retention-full-type:
     section: global
     group: repo
     type: string-id
-    default: host
+    default: count
     allow-list:
-      - host
-      - path
-    command: repo-type
-    depend: repo-azure-account
+      - count
+      - time
+    command:
+      backup: {}
+      expire: {}
+    command-role:
+      main: {}
 
+  repo-retention-full:
+    section: global
+    group: repo
+    type: integer
+    required: false
+    allow-range: [1, 9999999]
+    command: repo-retention-full-type
+    command-role:
+      main: {}
+    deprecate:
+      retention-full: {}
+
+  repo-retention-diff:
+    section: global
+    group: repo
+    type: integer
+    required: false
+    allow-range: [1, 9999999]
+    command:
+      backup: {}
+      expire: {}
+    command-role:
+      main: {}
+    deprecate:
+      retention-diff: {}
+
+  repo-retention-archive-type:
+    section: global
+    type: string-id
+    group: repo
+    default: full
+    allow-list:
+      - full
+      - diff
+      - incr
+    command:
+      backup: {}
+      expire: {}
+    command-role:
+      main: {}
+    deprecate:
+      retention-archive-type: {}
+
+  repo-retention-archive:
+    section: global
+    group: repo
+    type: integer
+    required: false
+    allow-range: [1, 9999999]
+    command:
+      backup: {}
+      expire: {}
+    command-role:
+      main: {}
+    deprecate:
+      retention-archive: {}
+
+  repo-retention-history:
+    section: global
+    group: repo
+    type: integer
+    required: false
+    allow-range: [0, 9999999]
+    command:
+      backup: {}
+      expire: {}
+    command-role:
+      main: {}
+
+  # Repository bundle and block options
+  #---------------------------------------------------------------------------------------------------------------------------------
   repo-bundle:
     section: global
     group: repo
@@ -2021,113 +1899,37 @@ option:
     inherit: repo-block-size-super
     default: 1MiB
 
-  repo-cipher-pass:
-    section: global
-    type: string
-    secure: true
-    command: repo-type
-    depend:
-      option: repo-cipher-type
-      list:
-        - aes-256-cbc
-    group: repo
-    deprecate:
-      repo-cipher-pass: {}
-
-  repo-cipher-type:
-    section: global
-    type: string-id
-    group: repo
-    default: none
-    allow-list:
-      - none
-      - aes-256-cbc
-    command: repo-type
-    deprecate:
-      repo-cipher-type: {}
-
-  repo-gcs-bucket:
-    section: global
-    type: string
-    group: repo
-    command: repo-type
-    depend:
-      option: repo-gcs-key-type
-
-  repo-gcs-endpoint:
-    section: global
-    type: string
-    group: repo
-    default: storage.googleapis.com
-    command: repo-type
-    depend: repo-gcs-bucket
-
-  repo-gcs-key:
-    section: global
-    type: string
-    group: repo
-    secure: true
-    command: repo-type
-    depend:
-      option: repo-gcs-key-type
-      list:
-        - service
-        - token
-
-  repo-gcs-key-type:
-    section: global
-    type: string-id
-    group: repo
-    default: service
-    allow-list:
-      - auto
-      - service
-      - token
-    command: repo-type
-    depend:
-      option: repo-type
-      list:
-        - gcs
-
-  repo-gcs-user-project:
-    section: global
-    type: string
-    group: repo
-    required: false
-    command: repo-type
-
-  repo-symlink:
+  # Repository host options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  repo-local:
     section: global
     group: repo
     type: boolean
-    default: true
-    command:
-      backup: {}
-      expire: {}
-    command-role:
-      main: {}
-    depend:
-      option: repo-type
-      default: false
-      list:
-        - posix
-
-  repo-hardlink:
-    section: global
-    group: repo
-    type: boolean
+    internal: true
     default: false
     command:
-      backup: {}
+      +inherit: repo
     command-role:
+      async: {}
       main: {}
+      local: {}
+
+  repo-host:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command: repo-local
+    command-role:
+      async: {}
+      main: {}
+      local: {}
     depend:
-      option: repo-bundle
-      default: false
+      option: repo-local
       list:
         - false
     deprecate:
-      hardlink: {}
+      backup-host: {}
 
   repo-host-type:
     section: global
@@ -2143,23 +1945,7 @@ option:
       main: {}
       local: {}
     depend:
-      option: repo-local
-      list:
-        - false
-
-  repo-host:
-    section: global
-    group: repo
-    type: string
-    required: false
-    command: repo-local
-    command-role:
-      async: {}
-      main: {}
-      local: {}
-    depend: repo-host-type
-    deprecate:
-      backup-host: {}
+      option: repo-host
 
   repo-host-cert-file:
     section: global
@@ -2192,30 +1978,15 @@ option:
     type: string
     default-type: dynamic
     default: bin
-    command:
-      annotate: {}
-      archive-get: {}
-      archive-push: {}
-      backup: {}
-      check: {}
-      expire: {}
-      info: {}
-      manifest: {}
-      repo-get: {}
-      repo-ls: {}
-      repo-put: {}
-      repo-rm: {}
-      restore: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-      verify: {}
+    command: repo-local
     command-role:
       async: {}
       main: {}
       local: {}
     depend:
-      option: repo-host
+      option: repo-host-type
+      list:
+        - ssh
     deprecate:
       backup-cmd: {}
 
@@ -2280,293 +2051,14 @@ option:
       local: {}
     default: pgbackrest
     depend:
-      option: repo-host
+      option: repo-host-type
+      list:
+        - ssh
     deprecate:
       backup-user: {}
 
-  repo-path:
-    section: global
-    group: repo
-    type: path
-    default: /var/lib/pgbackrest
-    command: repo-type
-    deprecate:
-      repo-path: {}
-
-  repo-retention-archive:
-    section: global
-    group: repo
-    type: integer
-    required: false
-    allow-range: [1, 9999999]
-    command:
-      backup: {}
-      expire: {}
-    command-role:
-      main: {}
-    deprecate:
-      retention-archive: {}
-
-  repo-retention-archive-type:
-    section: global
-    type: string-id
-    group: repo
-    default: full
-    allow-list:
-      - full
-      - diff
-      - incr
-    command:
-      backup: {}
-      expire: {}
-    command-role:
-      main: {}
-    deprecate:
-      retention-archive-type: {}
-
-  repo-retention-diff:
-    section: global
-    group: repo
-    type: integer
-    required: false
-    allow-range: [1, 9999999]
-    command:
-      backup: {}
-      expire: {}
-    command-role:
-      main: {}
-    deprecate:
-      retention-diff: {}
-
-  repo-retention-full-type:
-    section: global
-    group: repo
-    type: string-id
-    default: count
-    allow-list:
-      - count
-      - time
-    command:
-      backup: {}
-      expire: {}
-    command-role:
-      main: {}
-
-  repo-retention-full:
-    section: global
-    group: repo
-    type: integer
-    required: false
-    allow-range: [1, 9999999]
-    command: repo-retention-full-type
-    command-role:
-      main: {}
-    deprecate:
-      retention-full: {}
-
-  repo-retention-history:
-    section: global
-    group: repo
-    type: integer
-    required: false
-    allow-range: [0, 9999999]
-    command:
-      backup: {}
-      expire: {}
-    command-role:
-      main: {}
-
-  repo-s3-bucket:
-    section: global
-    group: repo
-    type: string
-    command: repo-type
-    depend:
-      option: repo-type
-      list:
-        - s3
-    deprecate:
-      repo-s3-bucket: {}
-
-  repo-s3-endpoint:
-    inherit: repo-s3-bucket
-    deprecate:
-      repo-s3-endpoint: {}
-
-  repo-s3-key:
-    section: global
-    group: repo
-    type: string
-    secure: true
-    command: repo-type
-    depend:
-      option: repo-s3-key-type
-      list:
-        - shared
-    deprecate:
-      repo-s3-key: {}
-
-  repo-s3-key-secret:
-    inherit: repo-s3-key
-    deprecate:
-      repo-s3-key-secret: {}
-
-  repo-s3-key-type:
-    inherit: repo-s3-bucket
-    type: string-id
-    default: shared
-    allow-list:
-      - shared
-      - auto
-      - web-id
-
-  repo-s3-kms-key-id:
-    inherit: repo-s3-bucket
-    required: false
-
-  repo-s3-sse-customer-key:
-    inherit: repo-s3-bucket
-    required: false
-    secure: true
-
-  repo-s3-region:
-    inherit: repo-s3-bucket
-    deprecate:
-      repo-s3-region: {}
-
-  repo-s3-role:
-    inherit: repo-s3-bucket
-    required: false
-    depend:
-      option: repo-s3-key-type
-      list:
-        - auto
-
-  repo-s3-token:
-    inherit: repo-s3-key
-    required: false
-    command: repo-type
-
-  repo-s3-requester-pays:
-    section: global
-    group: repo
-    type: boolean
-    default: false
-    command: repo-type
-    depend:
-      option: repo-type
-      list:
-        - s3
-
-  repo-s3-uri-style:
-    section: global
-    group: repo
-    type: string-id
-    default: host
-    allow-list:
-      - host
-      - path
-    command: repo-type
-    depend: repo-s3-bucket
-
-  repo-sftp-host:
-    section: global
-    group: repo
-    type: string
-    command: repo-type
-    depend:
-      option: repo-type
-      list:
-        - sftp
-
-  repo-sftp-host-fingerprint:
-    section: global
-    group: repo
-    type: string
-    required: false
-    command: repo-type
-    depend:
-      option: repo-sftp-host-key-check-type
-      list:
-        - fingerprint
-        - strict
-
-  repo-sftp-host-key-check-type:
-    section: global
-    group: repo
-    type: string-id
-    default: strict
-    allow-list:
-      - accept-new
-      - fingerprint
-      - none
-      - strict
-    command: repo-type
-    depend: repo-sftp-host
-
-  repo-sftp-host-key-hash-type:
-    section: global
-    group: repo
-    type: string-id
-    allow-list:
-      - md5
-      - sha1
-      - sha256
-    command: repo-type
-    depend: repo-sftp-host
-
-  repo-sftp-host-port:
-    section: global
-    group: repo
-    type: integer
-    default: 22
-    allow-range: [1, 65535]
-    command: repo-type
-    depend: repo-sftp-host
-
-  repo-sftp-host-user:
-    section: global
-    group: repo
-    type: string
-    command: repo-type
-    depend: repo-sftp-host
-
-  repo-sftp-known-host:
-    section: global
-    group: repo
-    type: list
-    required: false
-    command: repo-type
-    depend:
-      option: repo-sftp-host-key-check-type
-      list:
-        - accept-new
-        - strict
-
-  repo-sftp-private-key-file:
-    section: global
-    group: repo
-    type: string
-    command: repo-type
-    depend: repo-sftp-host
-
-  repo-sftp-private-key-passphrase:
-    section: global
-    group: repo
-    type: string
-    required: false
-    secure: true
-    command: repo-type
-    depend: repo-sftp-host
-
-  repo-sftp-public-key-file:
-    section: global
-    group: repo
-    type: string
-    required: false
-    command: repo-type
-    depend: repo-sftp-host
-
+  # Repository common storage options
+  #---------------------------------------------------------------------------------------------------------------------------------
   repo-storage-verify-tls:
     section: global
     group: repo
@@ -2664,19 +2156,295 @@ option:
         - gcs
         - s3
 
-  repo-target-time:
+  # Repository Azure storage options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  repo-azure-account:
     section: global
     type: string
+    group: repo
+    secure: true
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - azure
+
+  repo-azure-container:
+    section: global
+    type: string
+    group: repo
+    command: repo-type
+    depend: repo-azure-account
+
+  repo-azure-endpoint:
+    inherit: repo-azure-account
+    default: blob.core.windows.net
+
+  repo-azure-key:
+    inherit: repo-azure-account
+
+  repo-azure-key-type:
+    inherit: repo-azure-container
+    type: string-id
+    default: shared
+    allow-list:
+      - shared
+      - sas
+
+  repo-azure-uri-style:
+    section: global
+    group: repo
+    type: string-id
+    default: host
+    allow-list:
+      - host
+      - path
+    command: repo-type
+    depend: repo-azure-account
+
+  # Repository GCS storage options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  repo-gcs-bucket:
+    section: global
+    type: string
+    group: repo
+    command: repo-type
+    depend:
+      option: repo-gcs-key-type
+
+  repo-gcs-endpoint:
+    section: global
+    type: string
+    group: repo
+    default: storage.googleapis.com
+    command: repo-type
+    depend: repo-gcs-bucket
+
+  repo-gcs-key-type:
+    section: global
+    type: string-id
+    group: repo
+    default: service
+    allow-list:
+      - auto
+      - service
+      - token
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - gcs
+
+  repo-gcs-key:
+    section: global
+    type: string
+    group: repo
+    secure: true
+    command: repo-type
+    depend:
+      option: repo-gcs-key-type
+      list:
+        - service
+        - token
+
+  repo-gcs-user-project:
+    section: global
+    type: string
+    group: repo
     required: false
-    command:
-      archive-get: {}
-      info: {}
-      manifest: {}
-      repo-get: {}
-      repo-ls: {}
-      restore: {}
-      verify: {}
-    command-role:
-      async: {}
-      main: {}
-      local: {}
+    command: repo-type
+
+  # Repository S3 storage options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  repo-s3-bucket:
+    section: global
+    group: repo
+    type: string
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - s3
+    deprecate:
+      repo-s3-bucket: {}
+
+  repo-s3-endpoint:
+    inherit: repo-s3-bucket
+    deprecate:
+      repo-s3-endpoint: {}
+
+  repo-s3-key-type:
+    inherit: repo-s3-bucket
+    type: string-id
+    default: shared
+    allow-list:
+      - shared
+      - auto
+      - web-id
+
+  repo-s3-key:
+    section: global
+    group: repo
+    type: string
+    secure: true
+    command: repo-type
+    depend:
+      option: repo-s3-key-type
+      list:
+        - shared
+    deprecate:
+      repo-s3-key: {}
+
+  repo-s3-key-secret:
+    inherit: repo-s3-key
+    deprecate:
+      repo-s3-key-secret: {}
+
+  repo-s3-kms-key-id:
+    inherit: repo-s3-bucket
+    required: false
+
+  repo-s3-sse-customer-key:
+    inherit: repo-s3-bucket
+    required: false
+    secure: true
+
+  repo-s3-region:
+    inherit: repo-s3-bucket
+    deprecate:
+      repo-s3-region: {}
+
+  repo-s3-role:
+    inherit: repo-s3-bucket
+    required: false
+    depend:
+      option: repo-s3-key-type
+      list:
+        - auto
+
+  repo-s3-token:
+    inherit: repo-s3-key
+    required: false
+    command: repo-type
+
+  repo-s3-requester-pays:
+    section: global
+    group: repo
+    type: boolean
+    default: false
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - s3
+
+  repo-s3-uri-style:
+    section: global
+    group: repo
+    type: string-id
+    default: host
+    allow-list:
+      - host
+      - path
+    command: repo-type
+    depend: repo-s3-bucket
+
+  # Repository SFTP storage options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  repo-sftp-host:
+    section: global
+    group: repo
+    type: string
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - sftp
+
+  repo-sftp-host-fingerprint:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command: repo-type
+    depend:
+      option: repo-sftp-host-key-check-type
+      list:
+        - fingerprint
+        - strict
+
+  repo-sftp-host-key-check-type:
+    section: global
+    group: repo
+    type: string-id
+    default: strict
+    allow-list:
+      - accept-new
+      - fingerprint
+      - none
+      - strict
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-host-key-hash-type:
+    section: global
+    group: repo
+    type: string-id
+    allow-list:
+      - md5
+      - sha1
+      - sha256
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-host-port:
+    section: global
+    group: repo
+    type: integer
+    default: 22
+    allow-range: [1, 65535]
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-host-user:
+    section: global
+    group: repo
+    type: string
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-known-host:
+    section: global
+    group: repo
+    type: list
+    required: false
+    command: repo-type
+    depend:
+      option: repo-sftp-host-key-check-type
+      list:
+        - accept-new
+        - strict
+
+  repo-sftp-private-key-file:
+    section: global
+    group: repo
+    type: string
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-private-key-passphrase:
+    section: global
+    group: repo
+    type: string
+    required: false
+    secure: true
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-public-key-file:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command: repo-type
+    depend: repo-sftp-host
