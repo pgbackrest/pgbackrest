@@ -849,7 +849,7 @@ testRun(void)
         TEST_RESULT_UINT(ioBufferSize(), 333, "buffer size not updated by help command");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("command takes lock and opens log file and uses custom tcp settings");
+        TEST_TITLE("command takes lock, opens log file, uses custom tcp settings, and sets priority");
 
         socketLocal = (struct SocketLocal){.init = false};
         struct stat statLog;
@@ -867,6 +867,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptTcpKeepAliveCount, "11");
         hrnCfgArgRawZ(argList, cfgOptTcpKeepAliveIdle, "2222");
         hrnCfgArgRawZ(argList, cfgOptTcpKeepAliveInterval, "888");
+        hrnCfgArgRawZ(argList, cfgOptPriority, "19");
         strLstAddZ(argList, CFGCMD_BACKUP);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "lock and open log file");
@@ -878,6 +879,7 @@ testRun(void)
         TEST_RESULT_INT(socketLocal.tcpKeepAliveCount, 11, "check socketLocal.tcpKeepAliveCount");
         TEST_RESULT_INT(socketLocal.tcpKeepAliveIdle, 2222, "check socketLocal.tcpKeepAliveIdle");
         TEST_RESULT_INT(socketLocal.tcpKeepAliveInterval, 888, "check socketLocal.tcpKeepAliveInterval");
+        TEST_RESULT_INT(getpriority(PRIO_PROCESS, (id_t)getpid()), 19, "check priority");
 
         cmdLockReleaseP();
 

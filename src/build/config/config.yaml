@@ -849,6 +849,12 @@ option:
       -command: server
       -command: server-ping
 
+  priority:
+    section: global
+    type: integer
+    required: false
+    allow-range: [-20, 19]
+
   process-max:
     section: global
     type: integer
