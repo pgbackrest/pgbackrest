@@ -2291,44 +2291,22 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                    // opt/db-timeout
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                             // opt/db-timeout
         (                                                                                                          // opt/db-timeout
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/db-timeout
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                 // opt/db-timeout
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                      // opt/db-timeout
             PARSE_RULE_OPTION_COMMAND(Check)                                                                       // opt/db-timeout
-            PARSE_RULE_OPTION_COMMAND(Expire)                                                                      // opt/db-timeout
-            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                     // opt/db-timeout
-            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                      // opt/db-timeout
-            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                                     // opt/db-timeout
-            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                      // opt/db-timeout
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                // opt/db-timeout
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                // opt/db-timeout
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                               // opt/db-timeout
         ),                                                                                                         // opt/db-timeout
                                                                                                                    // opt/db-timeout
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                            // opt/db-timeout
-        (                                                                                                          // opt/db-timeout
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/db-timeout
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                 // opt/db-timeout
-        ),                                                                                                         // opt/db-timeout
-                                                                                                                   // opt/db-timeout
         PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                            // opt/db-timeout
         (                                                                                                          // opt/db-timeout
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/db-timeout
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                 // opt/db-timeout
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                      // opt/db-timeout
         ),                                                                                                         // opt/db-timeout
                                                                                                                    // opt/db-timeout
         PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                           // opt/db-timeout
         (                                                                                                          // opt/db-timeout
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/db-timeout
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                 // opt/db-timeout
             PARSE_RULE_OPTION_COMMAND(Backup)                                                                      // opt/db-timeout
             PARSE_RULE_OPTION_COMMAND(Check)                                                                       // opt/db-timeout
-            PARSE_RULE_OPTION_COMMAND(Expire)                                                                      // opt/db-timeout
-            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                     // opt/db-timeout
-            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                      // opt/db-timeout
-            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                                     // opt/db-timeout
-            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                      // opt/db-timeout
             PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                // opt/db-timeout
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                // opt/db-timeout
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                               // opt/db-timeout

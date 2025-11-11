@@ -778,25 +778,6 @@ option:
       async: {}
       main: {}
 
-  db-timeout:
-    section: global
-    type: time
-    default: 30m
-    allow-range: [100ms, 7d]
-    command:
-      archive-get: {}
-      archive-push: {}
-      backup: {}
-      check: {}
-      expire: {}
-      repo-get: {}
-      repo-ls: {}
-      repo-put: {}
-      repo-rm: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-
   delta:
     section: global
     type: boolean
@@ -1345,20 +1326,6 @@ option:
         command-role:
           main: {}
 
-  pg-database:
-    section: stanza
-    group: pg
-    type: string
-    command:
-      backup: {}
-      check: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-    default: postgres
-    depend:
-      option: pg-path
-
   pg-local:
     section: stanza
     group: pg
@@ -1549,6 +1516,29 @@ option:
       db-path: {}
       db?-path: {}
 
+  # PostgreSQL connection options (directly to PostgreSQL not the host)
+  #---------------------------------------------------------------------------------------------------------------------------------
+  pg-database:
+    section: stanza
+    group: pg
+    type: string
+    command:
+      backup: {}
+      check: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+    default: postgres
+    depend:
+      option: pg-path
+
+  db-timeout:
+    section: global
+    type: time
+    default: 30m
+    allow-range: [100ms, 7d]
+    command: pg-database
+
   pg-port:
     section: stanza
     group: pg
@@ -1578,14 +1568,8 @@ option:
     group: pg
     type: string
     required: false
-    command:
-      backup: {}
-      check: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-    depend:
-      option: pg-path
+    command: pg-database
+    depend: pg-database
 
   pg-version-force:
     section: stanza
