@@ -1489,11 +1489,33 @@ option:
       db-host: {}
       db?-host: {}
 
+  pg-host-type:
+    section: global
+    group: pg
+    type: string-id
+    default: ssh
+    allow-list:
+      - ssh
+      - tls
+    command:
+      backup: {}
+      check: {}
+      manifest: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+    command-role:
+      async: {}
+      main: {}
+      local: {}
+    depend:
+      option: pg-host
+
   pg-host-cert-file:
     section: global
     group: pg
     type: string
-    command: pg-local
+    command: pg-host-type
     command-role:
       async: {}
       main: {}
@@ -1520,13 +1542,26 @@ option:
     type: string
     default-type: dynamic
     default: bin
-    command:
-      backup: {}
-      check: {}
-      manifest: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
+    command: pg-host-type
+    command-role:
+      async: {}
+      main: {}
+      local: {}
+    depend:
+      option: pg-host-type
+      list:
+        - ssh
+    deprecate:
+      db-cmd: {}
+      db?-cmd: {}
+
+  pg-host-config:
+    section: stanza
+    group: pg
+    type: path
+    default-type: literal
+    default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE
+    command: pg-host-type
     command-role:
       async: {}
       main: {}
@@ -1534,26 +1569,18 @@ option:
     depend:
       option: pg-host
     deprecate:
-      db-cmd: {}
-      db?-cmd: {}
-
-  pg-host-config:
-    inherit: pg-host-cmd
-    default-type: literal
-    default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE
-    deprecate:
       db-config: {}
       db?-config: {}
 
   pg-host-config-include-path:
-    inherit: pg-host-cmd
+    inherit: pg-host-config
     type: path
     default-type: literal
     default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH
     required: true
 
   pg-host-config-path:
-    inherit: pg-host-cmd
+    inherit: pg-host-config
     type: path
     default-type: literal
     default: CFGOPTDEF_CONFIG_PATH
@@ -1582,27 +1609,13 @@ option:
     default-type: quote
     default: postgres
     required: false
+    depend:
+      option: pg-host-type
+      list:
+        - ssh
     deprecate:
       db-user: {}
       db?-user: {}
-
-  pg-host-type:
-    section: global
-    group: pg
-    type: string-id
-    default: ssh
-    allow-list:
-      - ssh
-      - tls
-    command: pg-local
-    command-role:
-      async: {}
-      main: {}
-      local: {}
-    depend:
-      option: pg-local
-      list:
-        - false
 
   pg-path:
     section: stanza
