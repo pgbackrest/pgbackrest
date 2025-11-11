@@ -871,19 +871,6 @@ option:
       -command: stop
       -command: server-ping
 
-  sck-block:
-    section: global
-    type: boolean
-    default: false
-    internal: true
-    command: buffer-size
-
-  sck-keep-alive:
-    type: boolean
-    section: global
-    default: true
-    command: buffer-size
-
   spool-path:
     section: global
     type: path
@@ -905,6 +892,21 @@ option:
       async: {}
       main: {}
       local: {}
+
+  # TCP and socket options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  sck-block:
+    section: global
+    type: boolean
+    default: false
+    internal: true
+    command: buffer-size
+
+  sck-keep-alive:
+    type: boolean
+    section: global
+    default: true
+    command: buffer-size
 
   tcp-keep-alive-count:
     section: global
@@ -932,47 +934,6 @@ option:
     allow-range: [1, 900]
     command: buffer-size
     depend: tcp-keep-alive-count
-
-  tls-server-ca-file:
-    section: global
-    type: path
-    command:
-      server: {}
-
-  tls-server-cert-file:
-    section: global
-    type: path
-    command:
-      server: {}
-
-  tls-server-key-file:
-    section: global
-    type: path
-    command:
-      server: {}
-
-  tls-server-auth:
-    section: global
-    type: hash
-    command:
-      server: {}
-
-  tls-server-address:
-    section: global
-    type: string
-    default: localhost
-    command:
-      server: {}
-      server-ping: {}
-
-  tls-server-port:
-    section: global
-    type: integer
-    default: 8432
-    allow-range: [1, 65535]
-    command:
-      server: {}
-      server-ping: {}
 
   # Logging options
   #---------------------------------------------------------------------------------------------------------------------------------
@@ -1021,7 +982,7 @@ option:
     default: true
     command: log-level-console
 
-  # Archive options
+  # Archive command options
   #---------------------------------------------------------------------------------------------------------------------------------
   archive-async:
     section: global
@@ -1074,7 +1035,7 @@ option:
     deprecate:
       archive-queue-max: {}
 
-  # Backup options
+  # Backup command options
   #---------------------------------------------------------------------------------------------------------------------------------
   annotation:
     section: global
@@ -1224,7 +1185,7 @@ option:
     command-role:
       main: {}
 
-  # Restore options
+  # Restore command options
   #---------------------------------------------------------------------------------------------------------------------------------
   archive-mode:
     section: global
@@ -1311,7 +1272,50 @@ option:
         - standby
         - xid
 
-  # Stanza options
+  # Server command options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  tls-server-ca-file:
+    section: global
+    type: path
+    command:
+      server: {}
+
+  tls-server-cert-file:
+    section: global
+    type: path
+    command:
+      server: {}
+
+  tls-server-key-file:
+    section: global
+    type: path
+    command:
+      server: {}
+
+  tls-server-auth:
+    section: global
+    type: hash
+    command:
+      server: {}
+
+  tls-server-address:
+    section: global
+    type: string
+    default: localhost
+    command:
+      server: {}
+      server-ping: {}
+
+  tls-server-port:
+    section: global
+    type: integer
+    default: 8432
+    allow-range: [1, 65535]
+    command:
+      server: {}
+      server-ping: {}
+
+  # PostgreSQL common options
   #---------------------------------------------------------------------------------------------------------------------------------
   pg:
     type: integer
@@ -1326,6 +1330,30 @@ option:
         command-role:
           main: {}
 
+  pg-path:
+    section: stanza
+    group: pg
+    type: path
+    command:
+      archive-get: {}
+      archive-push:
+        required: false
+      backup: {}
+      check:
+        depend:
+          option: stanza
+      manifest:
+        required: false
+      restore: {}
+      stanza-create: {}
+      stanza-delete: {}
+      stanza-upgrade: {}
+    deprecate:
+      db-path: {}
+      db?-path: {}
+
+  # PostgreSQL host options
+  #---------------------------------------------------------------------------------------------------------------------------------
   pg-local:
     section: stanza
     group: pg
@@ -1333,18 +1361,13 @@ option:
     internal: true
     default: false
     command:
+      +inherit: pg-path
       archive-get:
         internal: true
       archive-push:
         internal: true
-      backup: {}
-      check: {}
-      manifest: {}
       restore:
         internal: true
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
     command-role:
       async: {}
       main: {}
@@ -1494,28 +1517,6 @@ option:
       db-user: {}
       db?-user: {}
 
-  pg-path:
-    section: stanza
-    group: pg
-    type: path
-    command:
-      archive-get: {}
-      archive-push:
-        required: false
-      backup: {}
-      check:
-        depend:
-          option: stanza
-      manifest:
-        required: false
-      restore: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-    deprecate:
-      db-path: {}
-      db?-path: {}
-
   # PostgreSQL connection options (directly to PostgreSQL not the host)
   #---------------------------------------------------------------------------------------------------------------------------------
   pg-database:
@@ -1587,7 +1588,7 @@ option:
       stanza-upgrade: {}
       verify: {}
 
-  # Repository options
+  # Repository common options
   #---------------------------------------------------------------------------------------------------------------------------------
   repo:
     type: integer
@@ -1620,19 +1621,6 @@ option:
           remote: {}
       verify: {}
 
-  repo-local:
-    section: global
-    group: repo
-    type: boolean
-    internal: true
-    default: false
-    command:
-      +inherit: repo
-    command-role:
-      async: {}
-      main: {}
-      local: {}
-
   repo-type:
     section: global
     group: repo
@@ -1645,54 +1633,182 @@ option:
       - posix
       - s3
       - sftp: HAVE_LIBSSH2
-    command: repo-local
+    command:
+      +inherit: repo
     deprecate:
       repo-type: {}
 
-  repo-azure-account:
+  repo-path:
+    section: global
+    group: repo
+    type: path
+    default: /var/lib/pgbackrest
+    command: repo-type
+    deprecate:
+      repo-path: {}
+
+  repo-cipher-type:
+    section: global
+    type: string-id
+    group: repo
+    default: none
+    allow-list:
+      - none
+      - aes-256-cbc
+    command: repo-type
+    deprecate:
+      repo-cipher-type: {}
+
+  repo-cipher-pass:
     section: global
     type: string
-    group: repo
     secure: true
     command: repo-type
     depend:
-      option: repo-type
+      option: repo-cipher-type
       list:
-        - azure
+        - aes-256-cbc
+    group: repo
+    deprecate:
+      repo-cipher-pass: {}
 
-  repo-azure-container:
+  repo-hardlink:
+    section: global
+    group: repo
+    type: boolean
+    default: false
+    command:
+      backup: {}
+    command-role:
+      main: {}
+    depend:
+      option: repo-bundle
+      default: false
+      list:
+        - false
+    deprecate:
+      hardlink: {}
+
+  repo-symlink:
+    section: global
+    group: repo
+    type: boolean
+    default: true
+    command:
+      backup: {}
+      expire: {}
+    command-role:
+      main: {}
+    depend:
+      option: repo-type
+      default: false
+      list:
+        - posix
+
+  repo-target-time:
     section: global
     type: string
-    group: repo
-    command: repo-type
-    depend: repo-azure-account
+    required: false
+    command:
+      archive-get: {}
+      info: {}
+      manifest: {}
+      repo-get: {}
+      repo-ls: {}
+      restore: {}
+      verify: {}
+    command-role:
+      async: {}
+      main: {}
+      local: {}
 
-  repo-azure-endpoint:
-    inherit: repo-azure-account
-    default: blob.core.windows.net
-
-  repo-azure-key:
-    inherit: repo-azure-account
-
-  repo-azure-key-type:
-    inherit: repo-azure-container
-    type: string-id
-    default: shared
-    allow-list:
-      - shared
-      - sas
-
-  repo-azure-uri-style:
+  # Repository retention options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  repo-retention-full-type:
     section: global
     group: repo
     type: string-id
-    default: host
+    default: count
     allow-list:
-      - host
-      - path
-    command: repo-type
-    depend: repo-azure-account
+      - count
+      - time
+    command:
+      backup: {}
+      expire: {}
+    command-role:
+      main: {}
 
+  repo-retention-full:
+    section: global
+    group: repo
+    type: integer
+    required: false
+    allow-range: [1, 9999999]
+    command: repo-retention-full-type
+    command-role:
+      main: {}
+    deprecate:
+      retention-full: {}
+
+  repo-retention-diff:
+    section: global
+    group: repo
+    type: integer
+    required: false
+    allow-range: [1, 9999999]
+    command:
+      backup: {}
+      expire: {}
+    command-role:
+      main: {}
+    deprecate:
+      retention-diff: {}
+
+  repo-retention-archive-type:
+    section: global
+    type: string-id
+    group: repo
+    default: full
+    allow-list:
+      - full
+      - diff
+      - incr
+    command:
+      backup: {}
+      expire: {}
+    command-role:
+      main: {}
+    deprecate:
+      retention-archive-type: {}
+
+  repo-retention-archive:
+    section: global
+    group: repo
+    type: integer
+    required: false
+    allow-range: [1, 9999999]
+    command:
+      backup: {}
+      expire: {}
+    command-role:
+      main: {}
+    deprecate:
+      retention-archive: {}
+
+  repo-retention-history:
+    section: global
+    group: repo
+    type: integer
+    required: false
+    allow-range: [0, 9999999]
+    command:
+      backup: {}
+      expire: {}
+    command-role:
+      main: {}
+
+  # Repository bundle and block options
+  #---------------------------------------------------------------------------------------------------------------------------------
   repo-bundle:
     section: global
     group: repo
@@ -1777,113 +1893,20 @@ option:
     inherit: repo-block-size-super
     default: 1MiB
 
-  repo-cipher-pass:
-    section: global
-    type: string
-    secure: true
-    command: repo-type
-    depend:
-      option: repo-cipher-type
-      list:
-        - aes-256-cbc
-    group: repo
-    deprecate:
-      repo-cipher-pass: {}
-
-  repo-cipher-type:
-    section: global
-    type: string-id
-    group: repo
-    default: none
-    allow-list:
-      - none
-      - aes-256-cbc
-    command: repo-type
-    deprecate:
-      repo-cipher-type: {}
-
-  repo-gcs-bucket:
-    section: global
-    type: string
-    group: repo
-    command: repo-type
-    depend:
-      option: repo-gcs-key-type
-
-  repo-gcs-endpoint:
-    section: global
-    type: string
-    group: repo
-    default: storage.googleapis.com
-    command: repo-type
-    depend: repo-gcs-bucket
-
-  repo-gcs-key:
-    section: global
-    type: string
-    group: repo
-    secure: true
-    command: repo-type
-    depend:
-      option: repo-gcs-key-type
-      list:
-        - service
-        - token
-
-  repo-gcs-key-type:
-    section: global
-    type: string-id
-    group: repo
-    default: service
-    allow-list:
-      - auto
-      - service
-      - token
-    command: repo-type
-    depend:
-      option: repo-type
-      list:
-        - gcs
-
-  repo-gcs-user-project:
-    section: global
-    type: string
-    group: repo
-    required: false
-    command: repo-type
-
-  repo-symlink:
+  # Repository host options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  repo-local:
     section: global
     group: repo
     type: boolean
-    default: true
-    command:
-      backup: {}
-      expire: {}
-    command-role:
-      main: {}
-    depend:
-      option: repo-type
-      default: false
-      list:
-        - posix
-
-  repo-hardlink:
-    section: global
-    group: repo
-    type: boolean
+    internal: true
     default: false
     command:
-      backup: {}
+      +inherit: repo
     command-role:
+      async: {}
       main: {}
-    depend:
-      option: repo-bundle
-      default: false
-      list:
-        - false
-    deprecate:
-      hardlink: {}
+      local: {}
 
   repo-host:
     section: global
@@ -2028,289 +2051,8 @@ option:
     deprecate:
       backup-user: {}
 
-  repo-path:
-    section: global
-    group: repo
-    type: path
-    default: /var/lib/pgbackrest
-    command: repo-type
-    deprecate:
-      repo-path: {}
-
-  repo-retention-archive:
-    section: global
-    group: repo
-    type: integer
-    required: false
-    allow-range: [1, 9999999]
-    command:
-      backup: {}
-      expire: {}
-    command-role:
-      main: {}
-    deprecate:
-      retention-archive: {}
-
-  repo-retention-archive-type:
-    section: global
-    type: string-id
-    group: repo
-    default: full
-    allow-list:
-      - full
-      - diff
-      - incr
-    command:
-      backup: {}
-      expire: {}
-    command-role:
-      main: {}
-    deprecate:
-      retention-archive-type: {}
-
-  repo-retention-diff:
-    section: global
-    group: repo
-    type: integer
-    required: false
-    allow-range: [1, 9999999]
-    command:
-      backup: {}
-      expire: {}
-    command-role:
-      main: {}
-    deprecate:
-      retention-diff: {}
-
-  repo-retention-full-type:
-    section: global
-    group: repo
-    type: string-id
-    default: count
-    allow-list:
-      - count
-      - time
-    command:
-      backup: {}
-      expire: {}
-    command-role:
-      main: {}
-
-  repo-retention-full:
-    section: global
-    group: repo
-    type: integer
-    required: false
-    allow-range: [1, 9999999]
-    command: repo-retention-full-type
-    command-role:
-      main: {}
-    deprecate:
-      retention-full: {}
-
-  repo-retention-history:
-    section: global
-    group: repo
-    type: integer
-    required: false
-    allow-range: [0, 9999999]
-    command:
-      backup: {}
-      expire: {}
-    command-role:
-      main: {}
-
-  repo-s3-bucket:
-    section: global
-    group: repo
-    type: string
-    command: repo-type
-    depend:
-      option: repo-type
-      list:
-        - s3
-    deprecate:
-      repo-s3-bucket: {}
-
-  repo-s3-endpoint:
-    inherit: repo-s3-bucket
-    deprecate:
-      repo-s3-endpoint: {}
-
-  repo-s3-key:
-    section: global
-    group: repo
-    type: string
-    secure: true
-    command: repo-type
-    depend:
-      option: repo-s3-key-type
-      list:
-        - shared
-    deprecate:
-      repo-s3-key: {}
-
-  repo-s3-key-secret:
-    inherit: repo-s3-key
-    deprecate:
-      repo-s3-key-secret: {}
-
-  repo-s3-key-type:
-    inherit: repo-s3-bucket
-    type: string-id
-    default: shared
-    allow-list:
-      - shared
-      - auto
-      - web-id
-
-  repo-s3-kms-key-id:
-    inherit: repo-s3-bucket
-    required: false
-
-  repo-s3-sse-customer-key:
-    inherit: repo-s3-bucket
-    required: false
-    secure: true
-
-  repo-s3-region:
-    inherit: repo-s3-bucket
-    deprecate:
-      repo-s3-region: {}
-
-  repo-s3-role:
-    inherit: repo-s3-bucket
-    required: false
-    depend:
-      option: repo-s3-key-type
-      list:
-        - auto
-
-  repo-s3-token:
-    inherit: repo-s3-key
-    required: false
-    command: repo-type
-
-  repo-s3-requester-pays:
-    section: global
-    group: repo
-    type: boolean
-    default: false
-    command: repo-type
-    depend:
-      option: repo-type
-      list:
-        - s3
-
-  repo-s3-uri-style:
-    section: global
-    group: repo
-    type: string-id
-    default: host
-    allow-list:
-      - host
-      - path
-    command: repo-type
-    depend: repo-s3-bucket
-
-  repo-sftp-host:
-    section: global
-    group: repo
-    type: string
-    command: repo-type
-    depend:
-      option: repo-type
-      list:
-        - sftp
-
-  repo-sftp-host-fingerprint:
-    section: global
-    group: repo
-    type: string
-    required: false
-    command: repo-type
-    depend:
-      option: repo-sftp-host-key-check-type
-      list:
-        - fingerprint
-        - strict
-
-  repo-sftp-host-key-check-type:
-    section: global
-    group: repo
-    type: string-id
-    default: strict
-    allow-list:
-      - accept-new
-      - fingerprint
-      - none
-      - strict
-    command: repo-type
-    depend: repo-sftp-host
-
-  repo-sftp-host-key-hash-type:
-    section: global
-    group: repo
-    type: string-id
-    allow-list:
-      - md5
-      - sha1
-      - sha256
-    command: repo-type
-    depend: repo-sftp-host
-
-  repo-sftp-host-port:
-    section: global
-    group: repo
-    type: integer
-    default: 22
-    allow-range: [1, 65535]
-    command: repo-type
-    depend: repo-sftp-host
-
-  repo-sftp-host-user:
-    section: global
-    group: repo
-    type: string
-    command: repo-type
-    depend: repo-sftp-host
-
-  repo-sftp-known-host:
-    section: global
-    group: repo
-    type: list
-    required: false
-    command: repo-type
-    depend:
-      option: repo-sftp-host-key-check-type
-      list:
-        - accept-new
-        - strict
-
-  repo-sftp-private-key-file:
-    section: global
-    group: repo
-    type: string
-    command: repo-type
-    depend: repo-sftp-host
-
-  repo-sftp-private-key-passphrase:
-    section: global
-    group: repo
-    type: string
-    required: false
-    secure: true
-    command: repo-type
-    depend: repo-sftp-host
-
-  repo-sftp-public-key-file:
-    section: global
-    group: repo
-    type: string
-    required: false
-    command: repo-type
-    depend: repo-sftp-host
-
+  # Repository common storage options
+  #---------------------------------------------------------------------------------------------------------------------------------
   repo-storage-verify-tls:
     section: global
     group: repo
@@ -2408,19 +2150,295 @@ option:
         - gcs
         - s3
 
-  repo-target-time:
+  # Repository Azure storage options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  repo-azure-account:
     section: global
     type: string
+    group: repo
+    secure: true
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - azure
+
+  repo-azure-container:
+    section: global
+    type: string
+    group: repo
+    command: repo-type
+    depend: repo-azure-account
+
+  repo-azure-endpoint:
+    inherit: repo-azure-account
+    default: blob.core.windows.net
+
+  repo-azure-key:
+    inherit: repo-azure-account
+
+  repo-azure-key-type:
+    inherit: repo-azure-container
+    type: string-id
+    default: shared
+    allow-list:
+      - shared
+      - sas
+
+  repo-azure-uri-style:
+    section: global
+    group: repo
+    type: string-id
+    default: host
+    allow-list:
+      - host
+      - path
+    command: repo-type
+    depend: repo-azure-account
+
+  # Repository GCS storage options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  repo-gcs-bucket:
+    section: global
+    type: string
+    group: repo
+    command: repo-type
+    depend:
+      option: repo-gcs-key-type
+
+  repo-gcs-endpoint:
+    section: global
+    type: string
+    group: repo
+    default: storage.googleapis.com
+    command: repo-type
+    depend: repo-gcs-bucket
+
+  repo-gcs-key-type:
+    section: global
+    type: string-id
+    group: repo
+    default: service
+    allow-list:
+      - auto
+      - service
+      - token
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - gcs
+
+  repo-gcs-key:
+    section: global
+    type: string
+    group: repo
+    secure: true
+    command: repo-type
+    depend:
+      option: repo-gcs-key-type
+      list:
+        - service
+        - token
+
+  repo-gcs-user-project:
+    section: global
+    type: string
+    group: repo
     required: false
-    command:
-      archive-get: {}
-      info: {}
-      manifest: {}
-      repo-get: {}
-      repo-ls: {}
-      restore: {}
-      verify: {}
-    command-role:
-      async: {}
-      main: {}
-      local: {}
+    command: repo-type
+
+  # Repository S3 storage options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  repo-s3-bucket:
+    section: global
+    group: repo
+    type: string
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - s3
+    deprecate:
+      repo-s3-bucket: {}
+
+  repo-s3-endpoint:
+    inherit: repo-s3-bucket
+    deprecate:
+      repo-s3-endpoint: {}
+
+  repo-s3-key-type:
+    inherit: repo-s3-bucket
+    type: string-id
+    default: shared
+    allow-list:
+      - shared
+      - auto
+      - web-id
+
+  repo-s3-key:
+    section: global
+    group: repo
+    type: string
+    secure: true
+    command: repo-type
+    depend:
+      option: repo-s3-key-type
+      list:
+        - shared
+    deprecate:
+      repo-s3-key: {}
+
+  repo-s3-key-secret:
+    inherit: repo-s3-key
+    deprecate:
+      repo-s3-key-secret: {}
+
+  repo-s3-kms-key-id:
+    inherit: repo-s3-bucket
+    required: false
+
+  repo-s3-sse-customer-key:
+    inherit: repo-s3-bucket
+    required: false
+    secure: true
+
+  repo-s3-region:
+    inherit: repo-s3-bucket
+    deprecate:
+      repo-s3-region: {}
+
+  repo-s3-role:
+    inherit: repo-s3-bucket
+    required: false
+    depend:
+      option: repo-s3-key-type
+      list:
+        - auto
+
+  repo-s3-token:
+    inherit: repo-s3-key
+    required: false
+    command: repo-type
+
+  repo-s3-requester-pays:
+    section: global
+    group: repo
+    type: boolean
+    default: false
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - s3
+
+  repo-s3-uri-style:
+    section: global
+    group: repo
+    type: string-id
+    default: host
+    allow-list:
+      - host
+      - path
+    command: repo-type
+    depend: repo-s3-bucket
+
+  # Repository SFTP storage options
+  #---------------------------------------------------------------------------------------------------------------------------------
+  repo-sftp-host:
+    section: global
+    group: repo
+    type: string
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - sftp
+
+  repo-sftp-host-fingerprint:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command: repo-type
+    depend:
+      option: repo-sftp-host-key-check-type
+      list:
+        - fingerprint
+        - strict
+
+  repo-sftp-host-key-check-type:
+    section: global
+    group: repo
+    type: string-id
+    default: strict
+    allow-list:
+      - accept-new
+      - fingerprint
+      - none
+      - strict
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-host-key-hash-type:
+    section: global
+    group: repo
+    type: string-id
+    allow-list:
+      - md5
+      - sha1
+      - sha256
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-host-port:
+    section: global
+    group: repo
+    type: integer
+    default: 22
+    allow-range: [1, 65535]
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-host-user:
+    section: global
+    group: repo
+    type: string
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-known-host:
+    section: global
+    group: repo
+    type: list
+    required: false
+    command: repo-type
+    depend:
+      option: repo-sftp-host-key-check-type
+      list:
+        - accept-new
+        - strict
+
+  repo-sftp-private-key-file:
+    section: global
+    group: repo
+    type: string
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-private-key-passphrase:
+    section: global
+    group: repo
+    type: string
+    required: false
+    secure: true
+    command: repo-type
+    depend: repo-sftp-host
+
+  repo-sftp-public-key-file:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command: repo-type
+    depend: repo-sftp-host
