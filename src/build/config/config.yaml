@@ -1723,11 +1723,9 @@ option:
       annotate: {}
       archive-get: {}
       archive-push: {}
-      backup:
-        internal: true
+      backup: {}
       check: {}
-      expire:
-        internal: true
+      expire: {}
       info: {}
       manifest: {}
       repo-get: {}
@@ -1756,24 +1754,7 @@ option:
       - posix
       - s3
       - sftp: HAVE_LIBSSH2
-    command:
-      annotate: {}
-      archive-get: {}
-      archive-push: {}
-      backup: {}
-      check: {}
-      expire: {}
-      info: {}
-      manifest: {}
-      repo-get: {}
-      repo-ls: {}
-      repo-put: {}
-      repo-rm: {}
-      restore: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-      verify: {}
+    command: repo-local
     deprecate:
       repo-type: {}
 
@@ -2013,6 +1994,23 @@ option:
     deprecate:
       hardlink: {}
 
+  repo-host:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command: repo-local
+    command-role:
+      async: {}
+      main: {}
+      local: {}
+    depend:
+      option: repo-local
+      list:
+        - false
+    deprecate:
+      backup-host: {}
+
   repo-host-type:
     section: global
     group: repo
@@ -2027,23 +2025,7 @@ option:
       main: {}
       local: {}
     depend:
-      option: repo-local
-      list:
-        - false
-
-  repo-host:
-    section: global
-    group: repo
-    type: string
-    required: false
-    command: repo-local
-    command-role:
-      async: {}
-      main: {}
-      local: {}
-    depend: repo-host-type
-    deprecate:
-      backup-host: {}
+      option: repo-host
 
   repo-host-cert-file:
     section: global
@@ -2076,30 +2058,15 @@ option:
     type: string
     default-type: dynamic
     default: bin
-    command:
-      annotate: {}
-      archive-get: {}
-      archive-push: {}
-      backup: {}
-      check: {}
-      expire: {}
-      info: {}
-      manifest: {}
-      repo-get: {}
-      repo-ls: {}
-      repo-put: {}
-      repo-rm: {}
-      restore: {}
-      stanza-create: {}
-      stanza-delete: {}
-      stanza-upgrade: {}
-      verify: {}
+    command: repo-local
     command-role:
       async: {}
       main: {}
       local: {}
     depend:
-      option: repo-host
+      option: repo-host-type
+      list:
+        - ssh
     deprecate:
       backup-cmd: {}
 
@@ -2164,7 +2131,9 @@ option:
       local: {}
     default: pgbackrest
     depend:
-      option: repo-host
+      option: repo-host-type
+      list:
+        - ssh
     deprecate:
       backup-user: {}
 

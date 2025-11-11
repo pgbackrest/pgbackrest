@@ -6566,12 +6566,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(Global),                                                                          // opt/repo-host
         PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                           // opt/repo-host
                                                                                                                     // opt/repo-host
-        PARSE_RULE_OPTION_COMMAND_INTERNAL_LIST                                                                     // opt/repo-host
-        (                                                                                                           // opt/repo-host
-            PARSE_RULE_OPTION_COMMAND_INTERNAL(Backup, true),                                                       // opt/repo-host
-            PARSE_RULE_OPTION_COMMAND_INTERNAL(Expire, true),                                                       // opt/repo-host
-        )                                                                                                           // opt/repo-host
-                                                                                                                    // opt/repo-host
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                              // opt/repo-host
         (                                                                                                           // opt/repo-host
             PARSE_RULE_OPTION_COMMAND(Annotate)                                                                     // opt/repo-host
@@ -6629,12 +6623,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(false),                                                                  // opt/repo-host-ca-file
         PARSE_RULE_OPTION_SECTION(Global),                                                                  // opt/repo-host-ca-file
         PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                   // opt/repo-host-ca-file
-                                                                                                            // opt/repo-host-ca-file
-        PARSE_RULE_OPTION_COMMAND_INTERNAL_LIST                                                             // opt/repo-host-ca-file
-        (                                                                                                   // opt/repo-host-ca-file
-            PARSE_RULE_OPTION_COMMAND_INTERNAL(Backup, true),                                               // opt/repo-host-ca-file
-            PARSE_RULE_OPTION_COMMAND_INTERNAL(Expire, true),                                               // opt/repo-host-ca-file
-        )                                                                                                   // opt/repo-host-ca-file
                                                                                                             // opt/repo-host-ca-file
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                      // opt/repo-host-ca-file
         (                                                                                                   // opt/repo-host-ca-file
@@ -6694,12 +6682,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(Global),                                                                  // opt/repo-host-ca-path
         PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                   // opt/repo-host-ca-path
                                                                                                             // opt/repo-host-ca-path
-        PARSE_RULE_OPTION_COMMAND_INTERNAL_LIST                                                             // opt/repo-host-ca-path
-        (                                                                                                   // opt/repo-host-ca-path
-            PARSE_RULE_OPTION_COMMAND_INTERNAL(Backup, true),                                               // opt/repo-host-ca-path
-            PARSE_RULE_OPTION_COMMAND_INTERNAL(Expire, true),                                               // opt/repo-host-ca-path
-        )                                                                                                   // opt/repo-host-ca-path
-                                                                                                            // opt/repo-host-ca-path
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                      // opt/repo-host-ca-path
         (                                                                                                   // opt/repo-host-ca-path
             PARSE_RULE_OPTION_COMMAND(Annotate)                                                             // opt/repo-host-ca-path
@@ -6757,12 +6739,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                 // opt/repo-host-cert-file
         PARSE_RULE_OPTION_SECTION(Global),                                                                // opt/repo-host-cert-file
         PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                 // opt/repo-host-cert-file
-                                                                                                          // opt/repo-host-cert-file
-        PARSE_RULE_OPTION_COMMAND_INTERNAL_LIST                                                           // opt/repo-host-cert-file
-        (                                                                                                 // opt/repo-host-cert-file
-            PARSE_RULE_OPTION_COMMAND_INTERNAL(Backup, true),                                             // opt/repo-host-cert-file
-            PARSE_RULE_OPTION_COMMAND_INTERNAL(Expire, true),                                             // opt/repo-host-cert-file
-        )                                                                                                 // opt/repo-host-cert-file
                                                                                                           // opt/repo-host-cert-file
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                    // opt/repo-host-cert-file
         (                                                                                                 // opt/repo-host-cert-file
@@ -6865,7 +6841,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                                   // opt/repo-host-cmd
                 PARSE_RULE_OPTIONAL_DEPEND                                                                      // opt/repo-host-cmd
                 (                                                                                               // opt/repo-host-cmd
-                    PARSE_RULE_VAL_OPT(RepoHost),                                                               // opt/repo-host-cmd
+                    PARSE_RULE_VAL_OPT(RepoHostType),                                                           // opt/repo-host-cmd
+                    PARSE_RULE_VAL_STRID(Ssh),                                                                  // opt/repo-host-cmd
                 ),                                                                                              // opt/repo-host-cmd
                                                                                                                 // opt/repo-host-cmd
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                     // opt/repo-host-cmd
@@ -7071,12 +7048,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(Global),                                                                 // opt/repo-host-key-file
         PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                  // opt/repo-host-key-file
                                                                                                            // opt/repo-host-key-file
-        PARSE_RULE_OPTION_COMMAND_INTERNAL_LIST                                                            // opt/repo-host-key-file
-        (                                                                                                  // opt/repo-host-key-file
-            PARSE_RULE_OPTION_COMMAND_INTERNAL(Backup, true),                                              // opt/repo-host-key-file
-            PARSE_RULE_OPTION_COMMAND_INTERNAL(Expire, true),                                              // opt/repo-host-key-file
-        )                                                                                                  // opt/repo-host-key-file
-                                                                                                           // opt/repo-host-key-file
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                     // opt/repo-host-key-file
         (                                                                                                  // opt/repo-host-key-file
             PARSE_RULE_OPTION_COMMAND(Annotate)                                                            // opt/repo-host-key-file
@@ -7209,12 +7180,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_SECTION(Global),                                                                     // opt/repo-host-type
         PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                      // opt/repo-host-type
                                                                                                                // opt/repo-host-type
-        PARSE_RULE_OPTION_COMMAND_INTERNAL_LIST                                                                // opt/repo-host-type
-        (                                                                                                      // opt/repo-host-type
-            PARSE_RULE_OPTION_COMMAND_INTERNAL(Backup, true),                                                  // opt/repo-host-type
-            PARSE_RULE_OPTION_COMMAND_INTERNAL(Expire, true),                                                  // opt/repo-host-type
-        )                                                                                                      // opt/repo-host-type
-                                                                                                               // opt/repo-host-type
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                         // opt/repo-host-type
         (                                                                                                      // opt/repo-host-type
             PARSE_RULE_OPTION_COMMAND(Annotate)                                                                // opt/repo-host-type
@@ -7257,8 +7222,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                                  // opt/repo-host-type
                 PARSE_RULE_OPTIONAL_DEPEND                                                                     // opt/repo-host-type
                 (                                                                                              // opt/repo-host-type
-                    PARSE_RULE_VAL_OPT(RepoLocal),                                                             // opt/repo-host-type
-                    PARSE_RULE_VAL_BOOL_FALSE,                                                                 // opt/repo-host-type
+                    PARSE_RULE_VAL_OPT(RepoHost),                                                              // opt/repo-host-type
                 ),                                                                                             // opt/repo-host-type
                                                                                                                // opt/repo-host-type
                 PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                 // opt/repo-host-type
@@ -7326,7 +7290,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                                  // opt/repo-host-user
                 PARSE_RULE_OPTIONAL_DEPEND                                                                     // opt/repo-host-user
                 (                                                                                              // opt/repo-host-user
-                    PARSE_RULE_VAL_OPT(RepoHost),                                                              // opt/repo-host-user
+                    PARSE_RULE_VAL_OPT(RepoHostType),                                                          // opt/repo-host-user
+                    PARSE_RULE_VAL_STRID(Ssh),                                                                 // opt/repo-host-user
                 ),                                                                                             // opt/repo-host-user
                                                                                                                // opt/repo-host-user
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                    // opt/repo-host-user
@@ -11791,7 +11756,6 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoCipherPass,                                                                                       // opt-resolve-order
     cfgOptRepoGcsKeyType,                                                                                       // opt-resolve-order
     cfgOptRepoHost,                                                                                             // opt-resolve-order
-    cfgOptRepoHostCmd,                                                                                          // opt-resolve-order
     cfgOptRepoHostConfig,                                                                                       // opt-resolve-order
     cfgOptRepoHostConfigIncludePath,                                                                            // opt-resolve-order
     cfgOptRepoHostConfigPath,                                                                                   // opt-resolve-order
@@ -11839,6 +11803,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoHostCaFile,                                                                                       // opt-resolve-order
     cfgOptRepoHostCaPath,                                                                                       // opt-resolve-order
     cfgOptRepoHostCertFile,                                                                                     // opt-resolve-order
+    cfgOptRepoHostCmd,                                                                                          // opt-resolve-order
     cfgOptRepoHostKeyFile,                                                                                      // opt-resolve-order
     cfgOptRepoHostPort,                                                                                         // opt-resolve-order
     cfgOptRepoS3Key,                                                                                            // opt-resolve-order
