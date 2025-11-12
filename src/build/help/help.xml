@@ -1235,7 +1235,7 @@
                             <admonition type="caution">When choosing a storage class, consider the trade-offs between cost and retrieval requirements. Be aware that some storage classes have minimum object sizes for billing and minimum storage duration. Consult the documentation for current storage class options and their billing characteristics -- in the vast majority of situations setting the storage class will increase costs rather than reduce them. Always set <setting>repo-bundle</setting> when using this option to avoid small files that may be billed at a higher rate.</admonition>
                         </text>
 
-                        <example>INTELLIGENT_TIERING</example>
+                        <example>ONEZONE_IA</example>
                     </config-key>
 
                     <config-key id="repo-storage-host" name="Repository Storage Host">
