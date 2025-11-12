@@ -191,7 +191,6 @@ sub sshSetup
     my $strOS = shift;
     my $strUser = shift;
     my $strGroup = shift;
-    my $bControlMtr = shift;
 
     my $strUserPath = $strUser eq 'root' ? "/${strUser}" : "/home/${strUser}";
 
@@ -231,14 +230,6 @@ sub sshSetup
              "hLYkuCyAkdvbRInZcQjYiWf2yP6gJaAsnab5Eu9b user\@pgbackrest-test' > ${strUserPath}/.ssh/authorized_keys && \\\n" .
         "    echo 'Host *' > ${strUserPath}/.ssh/config && \\\n" .
         "    echo '    StrictHostKeyChecking no' >> ${strUserPath}/.ssh/config && \\\n";
-
-    if ($bControlMtr)
-    {
-        $strScript .=
-            "    echo '    ControlMas'.'ter auto' >> ${strUserPath}/.ssh/config && \\\n" .
-            "    echo '    ControlPath /tmp/\%r\@\%h:\%p' >> ${strUserPath}/.ssh/config && \\\n" .
-            "    echo '    ControlPersist 30' >> ${strUserPath}/.ssh/config && \\\n";
-    }
 
     $strScript .=
         "    cp ${strUserPath}/.ssh/authorized_keys ${strUserPath}/.ssh/id_rsa.pub && \\\n" .
@@ -422,7 +413,7 @@ sub containerBuild
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl \\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
                 "        libyaml-devel zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 perl-JSON-PP ccache meson \\\n" .
-                "        libssh2-devel";
+                "        libssh2-devel zstd libzstd-devel";
         }
         elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
@@ -440,6 +431,8 @@ sub containerBuild
             {
                 $strScript .= " valgrind";
             }
+
+            $strScript .= ' zstd libzstd-dev';
         }
         elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_ALPINE)
         {
@@ -448,24 +441,7 @@ sub containerBuild
                 "    apk add --no-cache sudo openssh git rsync tzdata openssh ca-certificates openrc bash && \\\n" .
                 "    rc-update add sshd && \\\n" .
                 "    apk add --no-cache meson build-base libpq-dev openssl-dev libxml2-dev pkgconfig lz4-dev bzip2-dev\\\n" .
-                "        openssh-keygen zlib-dev yaml-dev libssh2-dev perl perl-yaml-libyaml valgrind lz4";
-        }
-
-        # Add zst command-line tool and development libs when available
-        if (vmWithZst($strOS))
-        {
-            if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
-            {
-                $strScript .= ' zstd libzstd-devel';
-            }
-            elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
-            {
-                $strScript .= ' zstd libzstd-dev';
-            }
-            elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_ALPINE)
-            {
-                $strScript .= ' zstd zstd-dev';
-            }
+                "        openssh-keygen zlib-dev yaml-dev libssh2-dev perl perl-yaml-libyaml valgrind lz4 zstd zstd-dev";
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -684,8 +660,7 @@ sub containerBuild
                     "    echo '%" . TEST_GROUP . " ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers";
             }
 
-            $strScript .=
-                sshSetup($strOS, TEST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MTR});
+            $strScript .= sshSetup($strOS, TEST_USER, TEST_GROUP);
 
             $strScript .= sectionHeader() .
                 "# Make " . TEST_USER . " home dir readable\n" .

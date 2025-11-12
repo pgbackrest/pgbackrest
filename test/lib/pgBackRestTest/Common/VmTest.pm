@@ -28,10 +28,6 @@ use constant VM_DB                                                  => 'db';
     push @EXPORT, qw(VM_DB);
 use constant VM_DB_TEST                                             => 'db-test';
     push @EXPORT, qw(VM_DB_TEST);
-use constant VMDEF_DEBUG_INTEGRATION                                => 'debug-integration';
-    push @EXPORT, qw(VMDEF_DEBUG_INTEGRATION);
-use constant VM_CONTROL_MTR                                         => 'control-mtr';
-    push @EXPORT, qw(VM_CONTROL_MTR);
 # Will coverage testing be run for C?
 use constant VMDEF_COVERAGE_C                                       => 'coverage-c';
 use constant VM_DEPRECATED                                          => 'deprecated';
@@ -43,10 +39,6 @@ use constant VM_OS_BASE                                             => 'os-base'
 use constant VMDEF_PG_REPO                                          => 'pg-repo';
 use constant VMDEF_PGSQL_BIN                                        => 'psql-bin';
     push @EXPORT, qw(VMDEF_PGSQL_BIN);
-use constant VMDEF_WITH_LZ4                                         => 'with-lz4';
-    push @EXPORT, qw(VMDEF_WITH_LZ4);
-use constant VMDEF_WITH_ZST                                         => 'with-zst';
-    push @EXPORT, qw(VMDEF_WITH_ZST);
 
 ####################################################################################################################################
 # Valid OS base List
@@ -102,8 +94,6 @@ my $oyVm =
         &VMDEF_COVERAGE_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
-        &VMDEF_WITH_ZST => true,
-
         &VM_DB =>
         [
             PG_VERSION_10,
@@ -123,8 +113,6 @@ my $oyVm =
         &VM_ARCH => VM_ARCH_X86_64,
         &VMDEF_PG_REPO => false,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-
-        &VMDEF_WITH_ZST => true,
 
         &VM_DB =>
         [
@@ -146,8 +134,6 @@ my $oyVm =
         &VMDEF_PG_REPO => false,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
-        &VMDEF_WITH_ZST => true,
-
         &VM_DB =>
         [
             PG_VERSION_13,
@@ -166,9 +152,6 @@ my $oyVm =
         &VM_IMAGE => 'rockylinux/rockylinux:8',
         &VM_ARCH => VM_ARCH_X86_64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
-
-        &VMDEF_DEBUG_INTEGRATION => false,
-        &VMDEF_WITH_ZST => true,
 
         &VM_DB =>
         [
@@ -197,9 +180,6 @@ my $oyVm =
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
         &VMDEF_COVERAGE_C => true,
 
-        &VMDEF_DEBUG_INTEGRATION => false,
-        &VMDEF_WITH_ZST => true,
-
         &VM_DB =>
         [
             PG_VERSION_13,
@@ -223,8 +203,6 @@ my $oyVm =
         &VM_ARCH => VM_ARCH_X86_64,
         &VMDEF_COVERAGE_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
-
-        &VMDEF_WITH_ZST => true,
 
         &VM_DB =>
         [
@@ -349,19 +327,6 @@ sub vmGet
 push @EXPORT, qw(vmGet);
 
 ####################################################################################################################################
-# vmBaseTest
-####################################################################################################################################
-sub vmBaseTest
-{
-    my $strVm = shift;
-    my $strDistroTest = shift;
-
-    return $oyVm->{$strVm}{&VM_OS_BASE} eq $strDistroTest ? true : false;
-}
-
-push @EXPORT, qw(vmBaseTest);
-
-####################################################################################################################################
 # vmCoverageC
 ####################################################################################################################################
 sub vmCoverageC
@@ -419,41 +384,5 @@ sub hostArch
 }
 
 push @EXPORT, qw(hostArch);
-
-####################################################################################################################################
-# Does the VM support liblz4?
-####################################################################################################################################
-sub vmWithLz4
-{
-    my $strVm = shift;
-
-    return (defined($oyVm->{$strVm}{&VMDEF_WITH_LZ4}) ? $oyVm->{$strVm}{&VMDEF_WITH_LZ4} : true);
-}
-
-push @EXPORT, qw(vmWithLz4);
-
-####################################################################################################################################
-# Does the VM support liblzst?
-####################################################################################################################################
-sub vmWithZst
-{
-    my $strVm = shift;
-
-    return (defined($oyVm->{$strVm}{&VMDEF_WITH_ZST}) ? $oyVm->{$strVm}{&VMDEF_WITH_ZST} : false);
-}
-
-push @EXPORT, qw(vmWithZst);
-
-####################################################################################################################################
-# Will integration tests be run in debug mode?
-####################################################################################################################################
-sub vmDebugIntegration
-{
-    my $strVm = shift;
-
-    return (defined($oyVm->{$strVm}{&VMDEF_DEBUG_INTEGRATION}) ? $oyVm->{$strVm}{&VMDEF_DEBUG_INTEGRATION} : true);
-}
-
-push @EXPORT, qw(vmDebugIntegration);
 
 1;
