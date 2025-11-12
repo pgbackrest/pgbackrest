@@ -157,6 +157,13 @@ option:
     command:
       test: {}
 
+  vm-arch:
+    type: string
+    internal: true
+    required: false
+    command:
+      test: {}
+
   vm-id:
     type: integer
     required: false

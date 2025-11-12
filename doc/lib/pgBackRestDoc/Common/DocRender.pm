@@ -197,13 +197,6 @@ sub new
         my $oRenderOut =
             $self->{oManifest}->renderOutGet($self->{strType} eq 'latex' ? 'pdf' : $self->{strType}, $self->{strRenderOutKey});
 
-        # If these are the backrest docs then load the help
-        if ($self->{oManifest}->isBackRest())
-        {
-            $self->{oReference} =
-                new pgBackRestDoc::Common::DocConfig(${$self->{oManifest}->sourceGet('help')}{doc}, $self);
-        }
-
         if (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'release' && $self->{oManifest}->isBackRest())
         {
             require pgBackRestDoc::Custom::DocCustomRelease;

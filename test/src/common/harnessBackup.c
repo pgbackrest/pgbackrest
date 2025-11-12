@@ -250,10 +250,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
         // Generate pq script
         // -------------------------------------------------------------------------------------------------------------------------
         // Connect to primary
-        if (pgVersion <= PG_VERSION_95)
-            HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", pgVersion, pg1Path, false, NULL, NULL));
-        else
-            HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", pgVersion, pg1Path, false, NULL, NULL));
+        HRN_PQ_SCRIPT_SET(HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", pgVersion, pg1Path, false, NULL, NULL));
 
         // Connect to standby
         if (param.backupStandby)
@@ -261,36 +258,23 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
             // Save standby pg_control with updated info
             HRN_STORAGE_PUT(storagePgIdxWrite(1), PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL, hrnPgControlToBuffer(0, 0, pgControl));
 
-            if (pgVersion <= PG_VERSION_95)
-                HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_OPEN_GE_93(2, "dbname='postgres' port=5433", pgVersion, pg2Path, true, NULL, NULL));
+            if (param.backupStandbyError)
+            {
+                HRN_PQ_SCRIPT_ADD(
+                    {.session = 2, .function = HRN_PQ_CONNECTDB, .param = "[\"dbname='postgres' port=5433\"]"},
+                    {.session = 2, .function = HRN_PQ_STATUS, .resultInt = CONNECTION_BAD},
+                    {.session = 2, .function = HRN_PQ_ERRORMESSAGE, .resultZ = "error"});
+
+                param.backupStandby = false;
+            }
             else
             {
-                if (param.backupStandbyError)
-                {
-                    HRN_PQ_SCRIPT_ADD(
-                        {.session = 2, .function = HRN_PQ_CONNECTDB, .param = "[\"dbname='postgres' port=5433\"]"},
-                        {.session = 2, .function = HRN_PQ_STATUS, .resultInt = CONNECTION_BAD},
-                        {.session = 2, .function = HRN_PQ_ERRORMESSAGE, .resultZ = "error"});
-
-                    param.backupStandby = false;
-                }
-                else
-                {
-                    HRN_PQ_SCRIPT_ADD(
-                        HRN_PQ_SCRIPT_OPEN_GE_96(2, "dbname='postgres' port=5433", pgVersion, pg2Path, true, NULL, NULL));
-                }
+                HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_OPEN(2, "dbname='postgres' port=5433", pgVersion, pg2Path, true, NULL, NULL));
             }
         }
 
         // Get start time
         HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_TIME_QUERY(1, (int64_t)backupTimeStart * 1000));
-
-        // Get advisory lock and check if backup is in progress (only for exclusive backup)
-        if (pgVersion <= PG_VERSION_95)
-        {
-            HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_ADVISORY_LOCK(1, true));
-            HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_IN_BACKUP(1, false));
-        }
 
         // Perform archive check
         if (!param.noArchiveCheck)
@@ -304,9 +288,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
         }
 
         // Start backup
-        if (pgVersion <= PG_VERSION_95)
-            HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_START_BACKUP_LE_95(1, param.startFast, lsnStartStr, walSegmentStart));
-        else if (pgVersion <= PG_VERSION_96)
+        if (pgVersion == PG_VERSION_96)
             HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_START_BACKUP_96(1, param.startFast, lsnStartStr, walSegmentStart));
         else
             HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_START_BACKUP_GE_10(1, param.startFast, lsnStartStr, walSegmentStart));
@@ -358,9 +340,7 @@ hrnBackupPqScript(const unsigned int pgVersion, const time_t backupTimeStart, Hr
                         HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_IS_STANDBY_QUERY(2, true));
 
                     // Stop backup
-                    if (pgVersion <= PG_VERSION_95)
-                        HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_LE_95(1, lsnStopStr, walSegmentStop));
-                    else if (pgVersion <= PG_VERSION_96)
+                    if (pgVersion == PG_VERSION_96)
                         HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_96(1, lsnStopStr, walSegmentStop, tablespace));
                     else
                         HRN_PQ_SCRIPT_ADD(HRN_PQ_SCRIPT_STOP_BACKUP_GE_10(1, lsnStopStr, walSegmentStop, tablespace));

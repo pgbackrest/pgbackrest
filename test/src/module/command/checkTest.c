@@ -245,7 +245,7 @@ testRun(void)
         HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_96);
 
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, TEST_PATH "/pg", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_96, TEST_PATH "/pg", true, NULL, NULL),
             HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(cmdCheck(), ConfigError, "primary database not found\nHINT: check indexed pg-path/pg-host configurations");
@@ -267,8 +267,8 @@ testRun(void)
 
         // Two standbys found but no primary
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_93(1, "dbname='postgres' port=5432", PG_VERSION_95, "/pgdata", true, NULL, NULL),
-            HRN_PQ_SCRIPT_OPEN_GE_93(8, "dbname='postgres' port=5433", PG_VERSION_95, "/pgdata", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_18, "/pgdata", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(8, "dbname='postgres' port=5433", PG_VERSION_18, "/pgdata", true, NULL, NULL),
 
             HRN_PQ_SCRIPT_CLOSE(8),
             HRN_PQ_SCRIPT_CLOSE(1));
@@ -287,7 +287,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, "/pgdata", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_96, "/pgdata", true, NULL, NULL),
             HRN_PQ_SCRIPT_CLOSE(1));
 
         // Only confirming we get passed the check for repoIsLocal || more than one pg-path configured
@@ -310,7 +310,7 @@ testRun(void)
 
         // Primary database connection ok
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_96, TEST_PATH "/pg", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_96, TEST_PATH "/pg", false, NULL, NULL),
             HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ERROR(
@@ -344,8 +344,8 @@ testRun(void)
 
         // Standby database path doesn't match pg_control
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH, true, NULL, NULL),
-            HRN_PQ_SCRIPT_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_15, TEST_PATH "/pg8", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH, true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(8, "dbname='postgres' port=5433", PG_VERSION_15, TEST_PATH "/pg8", false, NULL, NULL),
 
             HRN_PQ_SCRIPT_CLOSE(8),
             HRN_PQ_SCRIPT_CLOSE(1));
@@ -387,8 +387,8 @@ testRun(void)
 
         // Single repo config - error when checking archive mode setting on database
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", true, NULL, NULL),
-            HRN_PQ_SCRIPT_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_15, TEST_PATH "/pg8", false, "off", NULL),
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(8, "dbname='postgres' port=5433", PG_VERSION_15, TEST_PATH "/pg8", false, "off", NULL),
 
             HRN_PQ_SCRIPT_CLOSE(1),
             HRN_PQ_SCRIPT_CLOSE(8));
@@ -408,8 +408,8 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdCheck, argListRepo2);
 
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", true, NULL, NULL),
-            HRN_PQ_SCRIPT_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_15, TEST_PATH "/pg8", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(8, "dbname='postgres' port=5433", PG_VERSION_15, TEST_PATH "/pg8", false, NULL, NULL),
 
             HRN_PQ_SCRIPT_CLOSE(8),
             HRN_PQ_SCRIPT_CLOSE(1));
@@ -470,7 +470,7 @@ testRun(void)
 
         // Error when WAL segment not found
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", false, NULL, NULL),
             HRN_PQ_SCRIPT_CREATE_RESTORE_POINT(1, "1/1"),
             HRN_PQ_SCRIPT_WAL_SWITCH(1, "wal", "000000010000000100000001"),
             HRN_PQ_SCRIPT_CLOSE(1));
@@ -518,7 +518,7 @@ testRun(void)
 
         // WAL segment switch is performed once for all repos
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_15, TEST_PATH "/pg", false, NULL, NULL),
             HRN_PQ_SCRIPT_CREATE_RESTORE_POINT(1, "1/1"),
             HRN_PQ_SCRIPT_WAL_SWITCH(1, "wal", "000000010000000100000001"),
             HRN_PQ_SCRIPT_CLOSE(1));
@@ -584,8 +584,8 @@ testRun(void)
         DbGetResult db = {0};
 
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_11, TEST_PATH "/pg", false, NULL, NULL),
-            HRN_PQ_SCRIPT_OPEN_GE_96(8, "dbname='postgres' port=5433", PG_VERSION_11, "/badpath", true, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_11, TEST_PATH "/pg", false, NULL, NULL),
+            HRN_PQ_SCRIPT_OPEN(8, "dbname='postgres' port=5433", PG_VERSION_11, "/badpath", true, NULL, NULL),
 
             HRN_PQ_SCRIPT_CLOSE(1),
             HRN_PQ_SCRIPT_CLOSE(8));
@@ -598,9 +598,9 @@ testRun(void)
         TEST_TITLE("checkDbConfig() version mismatch");
 
         TEST_ERROR(
-            checkDbConfig(PG_VERSION_95, db.primaryIdx, db.primary, false), DbMismatchError,
+            checkDbConfig(PG_VERSION_96, db.primaryIdx, db.primary, false), DbMismatchError,
             "version '" PG_VERSION_11_Z "' and path '" TEST_PATH "/pg' queried from cluster do not match version '"
-            PG_VERSION_95_Z "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/global/pg_control'\n"
+            PG_VERSION_96_Z "' and '" TEST_PATH "/pg' read from '" TEST_PATH "/pg/global/pg_control'\n"
             "HINT: the pg1-path and pg1-port settings likely reference different clusters.");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -648,7 +648,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         HRN_PQ_SCRIPT_SET(
-            HRN_PQ_SCRIPT_OPEN_GE_96(1, "dbname='postgres' port=5432", PG_VERSION_11, TEST_PATH "/pg", false, "always", NULL),
+            HRN_PQ_SCRIPT_OPEN(1, "dbname='postgres' port=5432", PG_VERSION_11, TEST_PATH "/pg", false, "always", NULL),
             HRN_PQ_SCRIPT_CLOSE(1));
 
         TEST_ASSIGN(db, dbGet(true, true, CFGOPTVAL_BACKUP_STANDBY_N), "get primary");
@@ -696,27 +696,27 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("checkStanzaInfo() - corrupted backup file: system id and version");
 
-        backupInfo = infoBackupNew(PG_VERSION_95, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_95), NULL);
+        backupInfo = infoBackupNew(PG_VERSION_18, 6569239123849665999, hrnPgCatalogVersion(PG_VERSION_18), NULL);
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
         TEST_ERROR(
             checkStanzaInfo(&archivePg, &backupPg), FileInvalidError,
             "backup info file and archive info file do not match\n"
             "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
-            "backup : id = 1, version = 9.5, system-id = 6569239123849665999\n"
+            "backup : id = 1, version = 18, system-id = 6569239123849665999\n"
             "HINT: this may be a symptom of repository corruption!");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("checkStanzaInfo() - corrupted backup file: version");
 
-        backupInfo = infoBackupNew(PG_VERSION_95, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_95), NULL);
+        backupInfo = infoBackupNew(PG_VERSION_18, 6569239123849665679, hrnPgCatalogVersion(PG_VERSION_18), NULL);
         backupPg = infoPgData(infoBackupPg(backupInfo), infoPgDataCurrentId(infoBackupPg(backupInfo)));
 
         TEST_ERROR(
             checkStanzaInfo(&archivePg, &backupPg), FileInvalidError,
             "backup info file and archive info file do not match\n"
             "archive: id = 1, version = 9.6, system-id = 6569239123849665679\n"
-            "backup : id = 1, version = 9.5, system-id = 6569239123849665679\n"
+            "backup : id = 1, version = 18, system-id = 6569239123849665679\n"
             "HINT: this may be a symptom of repository corruption!");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -754,7 +754,7 @@ testRun(void)
         // Version mismatch
         TEST_ERROR(
             checkStanzaInfoPg(
-                storageRepoIdx(0), PG_VERSION_95, HRN_PG_SYSTEMID_95, cfgOptionIdxStrId(cfgOptRepoCipherType, 0),
+                storageRepoIdx(0), PG_VERSION_18, HRN_PG_SYSTEMID_18, cfgOptionIdxStrId(cfgOptRepoCipherType, 0),
                 cfgOptionIdxStr(cfgOptRepoCipherPass, 0)),
             FileInvalidError,
             "backup and archive info files exist but do not match the database\n"

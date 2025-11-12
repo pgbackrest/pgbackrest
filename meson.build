@@ -102,10 +102,9 @@ warning_disable = [
 add_project_arguments(cc.get_supported_arguments(warning_enable, warning_disable), language: 'c')
 
 ####################################################################################################################################
-# Enable additional optimizations for release builds. We would prefer to use `get_option('optimization') in ['2', '3']` when our
-# minimum version is high enough to allow it.
+# Enable additional optimizations for appropriate levels
 ####################################################################################################################################
-if get_option('buildtype') == 'release'
+if get_option('optimization') in ['2', '3']
     optimization_enable = [
         # Unroll loops whose number of iterations can be determined at compile time or upon entry to the loop
         '-funroll-loops',
@@ -218,8 +217,8 @@ if cc.compiles('''int main(int arg, char **argv) {({ _Static_assert(1, "foo");})
   configuration.set('HAVE_STATIC_ASSERT', true, description: 'Does the compiler provide _Static_assert()?')
 endif
 
-# Enable debug code. We would prefer to use `get_option('debug')` when our minimum version is high enough to allow it.
-if get_option('buildtype') == 'debug' or get_option('buildtype') == 'debugoptimized'
+# Enable debug code
+if get_option('debug')
     configuration.set('DEBUG', true, description: 'Enable debug code')
 endif
 

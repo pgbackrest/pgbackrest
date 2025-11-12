@@ -24,13 +24,19 @@ use pgBackRestDoc::Common::HostGroup;
 use pgBackRestDoc::Common::Ini;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
-use pgBackRestDoc::Custom::DocConfigData;
 use pgBackRestDoc::ProjectInfo;
 
 ####################################################################################################################################
 # User that's building the docs
 ####################################################################################################################################
 use constant DOC_USER                                              => getpwuid($UID) eq 'root' ? 'ubuntu' : getpwuid($UID) . '';
+
+####################################################################################################################################
+# Option constants
+####################################################################################################################################
+use constant CFGDEF_SECTION_GLOBAL                                  => 'global';
+use constant CFGOPT_LOG_LEVEL_STDERR                                => 'log-level-stderr';
+use constant CFGOPT_LOG_TIMESTAMP                                   => 'log-timestamp';
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -526,8 +532,7 @@ sub backrestConfig
                 else
                 {
                     # If this option is a hash and the value is already set then append to the array
-                    if (defined(cfgDefine()->{$strKey}) &&
-                        cfgDefine()->{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_HASH &&
+                    if ($oOption->paramTest('multi', 'y') &&
                         defined(${$self->{config}}{$strHostName}{$$hCacheKey{file}}{$strSection}{$strKey}))
                     {
                         my @oValue = ();

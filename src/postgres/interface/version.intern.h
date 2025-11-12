@@ -14,10 +14,6 @@ Determine if the supplied pg_control is for this version of PostgreSQL. When CAT
 be accepted as a range that lasts until the end of the encoded year. This allows pgBackRest to work with PostgreSQL during the
 alpha/beta/rc period without needing to be updated, unless of course the actual interface changes.
 ***********************************************************************************************************************************/
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_95
-
 #ifdef CATALOG_VERSION_NO_MAX
 
 #define PG_INTERFACE_CONTROL_IS(version)                                                                                           \
@@ -47,15 +43,9 @@ alpha/beta/rc period without needing to be updated, unless of course the actual 
 
 #endif
 
-#endif
-
 /***********************************************************************************************************************************
 Read the version specific pg_control into a general data structure
 ***********************************************************************************************************************************/
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_95
-
 #define PG_INTERFACE_CONTROL(version)                                                                                              \
     static PgControl                                                                                                               \
     pgInterfaceControl##version(const uint8_t *controlFile)                                                                        \
@@ -74,15 +64,9 @@ Read the version specific pg_control into a general data structure
         };                                                                                                                         \
     }
 
-#endif
-
 /***********************************************************************************************************************************
 Get control crc offset
 ***********************************************************************************************************************************/
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_95
-
 #define PG_INTERFACE_CONTROL_CRC_OFFSET(version)                                                                                   \
     static size_t                                                                                                                  \
     pgInterfaceControlCrcOffset##version(void)                                                                                     \
@@ -90,15 +74,9 @@ Get control crc offset
         return offsetof(ControlFileData, crc);                                                                                     \
     }
 
-#endif
-
 /***********************************************************************************************************************************
 Invalidate control checkpoint. PostgreSQL skips the first segment so any LSN in that segment is invalid.
 ***********************************************************************************************************************************/
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_93
-
 #define PG_INTERFACE_CONTROL_CHECKPOINT_INVALIDATE(version)                                                                        \
     static void                                                                                                                    \
     pgInterfaceControlCheckpointInvalidate##version(uint8_t *const controlFile)                                                    \
@@ -106,15 +84,9 @@ Invalidate control checkpoint. PostgreSQL skips the first segment so any LSN in 
         ((ControlFileData *)controlFile)->checkPoint = PG_CONTROL_CHECKPOINT_INVALID;                                              \
     }
 
-#endif
-
 /***********************************************************************************************************************************
 Get the control version
 ***********************************************************************************************************************************/
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_95
-
 #define PG_INTERFACE_CONTROL_VERSION(version)                                                                                      \
     static uint32_t                                                                                                                \
     pgInterfaceControlVersion##version(void)                                                                                       \
@@ -122,15 +94,9 @@ Get the control version
         return PG_CONTROL_VERSION;                                                                                                 \
     }
 
-#endif
-
 /***********************************************************************************************************************************
 Determine if the supplied WAL is for this version of PostgreSQL
 ***********************************************************************************************************************************/
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_95
-
 #define PG_INTERFACE_WAL_IS(version)                                                                                               \
     static bool                                                                                                                    \
     pgInterfaceWalIs##version(const uint8_t *walFile)                                                                              \
@@ -140,15 +106,9 @@ Determine if the supplied WAL is for this version of PostgreSQL
         return ((const XLogPageHeaderData *)walFile)->xlp_magic == XLOG_PAGE_MAGIC;                                                \
     }
 
-#endif
-
 /***********************************************************************************************************************************
 Read the version specific WAL header into a general data structure
 ***********************************************************************************************************************************/
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_95
-
 #define PG_INTERFACE_WAL(version)                                                                                                  \
     static PgWal                                                                                                                   \
     pgInterfaceWal##version(const uint8_t *walFile)                                                                                \
@@ -161,5 +121,3 @@ Read the version specific WAL header into a general data structure
             .size = ((const XLogLongPageHeaderData *)walFile)->xlp_seg_size,                                                       \
         };                                                                                                                         \
     }
-
-#endif

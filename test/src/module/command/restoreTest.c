@@ -34,15 +34,15 @@ Test data for backup.info
 ***********************************************************************************************************************************/
 #define TEST_RESTORE_BACKUP_INFO_DB                                                                                                \
     "[db]\n"                                                                                                                       \
-    "db-catalog-version=201510051\n"                                                                                               \
-    "db-control-version=942\n"                                                                                                     \
+    "db-catalog-version=202506291\n"                                                                                               \
+    "db-control-version=1100\n"                                                                                                    \
     "db-id=1\n"                                                                                                                    \
     "db-system-id=6569239123849665679\n"                                                                                           \
-    "db-version=\"9.5\"\n"                                                                                                         \
+    "db-version=\"18\"\n"                                                                                                          \
     "\n"                                                                                                                           \
     "[db:history]\n"                                                                                                               \
-    "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6569239123849665679,"                         \
-        "\"db-version\":\"9.5\"}\n"
+    "1={\"db-catalog-version\":202506291,\"db-control-version\":1100,\"db-system-id\":6569239123849665679,"                        \
+        "\"db-version\":\"18\"}\n"
 
 #define TEST_RESTORE_BACKUP_INFO                                                                                                   \
     "[backup:current]\n"                                                                                                           \
@@ -437,8 +437,8 @@ testRun(void)
             "db-version=\"10\"\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6569239123849665679"
-            ",\"db-version\":\"9.5\"}\n"
+            "1={\"db-catalog-version\":202506291,\"db-control-version\":1100,\"db-system-id\":6569239123849665679"
+            ",\"db-version\":\"18\"}\n"
             "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089"
             ",\"db-version\":\"10\"}\n");
 
@@ -701,7 +701,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on mismatched label");
 
-        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_95, STRDEF("/pg"));
+        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_18, STRDEF("/pg"));
 
         TEST_ERROR(
             restoreManifestValidate(manifest, STRDEF("20161219-212741F_20161219-212918I")), FormatError,
@@ -714,7 +714,7 @@ testRun(void)
     {
         const String *pgPath = STRDEF(TEST_PATH "/pg");
         const String *repoPath = STRDEF(TEST_PATH "/repo");
-        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_95, pgPath);
+        Manifest *manifest = testManifestMinimal(STRDEF("20161219-212741F"), PG_VERSION_18, pgPath);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remap data directory");
@@ -1361,8 +1361,8 @@ testRun(void)
         OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
-            manifest->pub.data.pgVersion = PG_VERSION_95;
-            manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_95);
+            manifest->pub.data.pgVersion = PG_VERSION_18;
+            manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_18);
 
             HRN_MANIFEST_TARGET_ADD(manifest, .name = MANIFEST_TARGET_PGDATA, .path = "/pg");
             HRN_MANIFEST_FILE_ADD(manifest, .name = MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION);
@@ -1508,7 +1508,7 @@ testRun(void)
         MEM_CONTEXT_END();
 
         TEST_RESULT_STR_Z(
-            restoreSelectiveExpression(manifest), "(^pg_data/base/32768/)|(^pg_tblspc/16387/PG_9.5_201510051/32768/)",
+            restoreSelectiveExpression(manifest), "(^pg_data/base/32768/)|(^pg_tblspc/16387/PG_18_202506291/32768/)",
             "check expression");
 
         TEST_RESULT_LOG(
@@ -1518,20 +1518,20 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("one database selected with tablespace id");
 
-        manifest->pub.data.pgVersion = PG_VERSION_95;
-        manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_95);
+        manifest->pub.data.pgVersion = PG_VERSION_18;
+        manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_18);
 
         MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
             HRN_MANIFEST_DB_ADD(manifest, .name = "test3", .id = 65536, .lastSystemId = 99999);
-            HRN_MANIFEST_FILE_ADD(manifest, .name = MANIFEST_TARGET_PGTBLSPC "/16387/PG_9.5_201510051/65536/" PG_FILE_PGVERSION);
+            HRN_MANIFEST_FILE_ADD(manifest, .name = MANIFEST_TARGET_PGTBLSPC "/16387/PG_18_202506291/65536/" PG_FILE_PGVERSION);
         }
         MEM_CONTEXT_END();
 
         TEST_RESULT_STR_Z(
             restoreSelectiveExpression(manifest),
-            "(^pg_data/base/32768/)|(^pg_tblspc/16387/PG_9.5_201510051/32768/)|(^pg_data/base/65536/)"
-            "|(^pg_tblspc/16387/PG_9.5_201510051/65536/)",
+            "(^pg_data/base/32768/)|(^pg_tblspc/16387/PG_18_202506291/32768/)|(^pg_data/base/65536/)"
+            "|(^pg_tblspc/16387/PG_18_202506291/65536/)",
             "check expression");
 
         TEST_RESULT_LOG(
@@ -1547,7 +1547,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             restoreSelectiveExpression(manifest),
-            "(^pg_data/base/16384/)|(^pg_tblspc/16387/PG_9.5_201510051/16384/)",
+            "(^pg_data/base/16384/)|(^pg_tblspc/16387/PG_18_202506291/16384/)",
             "check expression");
 
         TEST_RESULT_LOG(
@@ -1563,7 +1563,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             restoreSelectiveExpression(manifest),
-            "(^pg_data/base/16384/)|(^pg_tblspc/16387/PG_9.5_201510051/16384/)",
+            "(^pg_data/base/16384/)|(^pg_tblspc/16387/PG_18_202506291/16384/)",
             "check expression");
 
         TEST_RESULT_LOG(
@@ -1579,7 +1579,7 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             restoreSelectiveExpression(manifest),
-            "(^pg_data/base/16385/)|(^pg_tblspc/16387/PG_9.5_201510051/16385/)",
+            "(^pg_data/base/16385/)|(^pg_tblspc/16387/PG_18_202506291/16385/)",
             "check expression");
 
         TEST_RESULT_LOG(
@@ -1621,10 +1621,10 @@ testRun(void)
 
         TEST_RESULT_STR_Z(
             restoreSelectiveExpression(manifest),
-            "(^pg_data/base/1/)|(^pg_tblspc/16387/PG_9.5_201510051/1/)|"
-            "(^pg_data/base/16385/)|(^pg_tblspc/16387/PG_9.5_201510051/16385/)|"
-            "(^pg_data/base/32768/)|(^pg_tblspc/16387/PG_9.5_201510051/32768/)|"
-            "(^pg_data/base/65536/)|(^pg_tblspc/16387/PG_9.5_201510051/65536/)",
+            "(^pg_data/base/1/)|(^pg_tblspc/16387/PG_18_202506291/1/)|"
+            "(^pg_data/base/16385/)|(^pg_tblspc/16387/PG_18_202506291/16385/)|"
+            "(^pg_data/base/32768/)|(^pg_tblspc/16387/PG_18_202506291/32768/)|"
+            "(^pg_data/base/65536/)|(^pg_tblspc/16387/PG_18_202506291/65536/)",
             "check expression");
 
         TEST_RESULT_LOG(
@@ -1652,7 +1652,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
-            restoreRecoveryConf(PG_VERSION_95, restoreLabel),
+            restoreRecoveryConf(PG_VERSION_18, restoreLabel),
             RECOVERY_SETTING_HEADER
             "a_setting = 'a'\n"
             "b_setting = 'b'\n"
@@ -1668,7 +1668,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
-            restoreRecoveryConf(PG_VERSION_95, restoreLabel),
+            restoreRecoveryConf(PG_VERSION_18, restoreLabel),
             RECOVERY_SETTING_HEADER
             "restore_command = '/usr/local/bin/pg_wrapper.sh --beta --lock-path=" HRN_PATH "/lock --log-path=" HRN_PATH
             " --pg1-path=/pg --repo1-path=/repo --stanza=test1 archive-get %f \"%p\"'\n",
@@ -1682,7 +1682,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
-            restoreRecoveryConf(PG_VERSION_95, restoreLabel),
+            restoreRecoveryConf(PG_VERSION_18, restoreLabel),
             RECOVERY_SETTING_HEADER
             "restore_command = 'my_restore_command'\n",
             "check recovery options");
@@ -1726,7 +1726,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
-            restoreRecoveryConf(PG_VERSION_95, restoreLabel),
+            restoreRecoveryConf(PG_VERSION_11, restoreLabel),
             RECOVERY_SETTING_HEADER
             "restore_command = 'my_restore_command'\n"
             "recovery_target_time = 'TIME'\n"
@@ -1743,7 +1743,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
-            restoreRecoveryConf(PG_VERSION_95, restoreLabel),
+            restoreRecoveryConf(PG_VERSION_18, restoreLabel),
             RECOVERY_SETTING_HEADER
             "restore_command = 'my_restore_command'\n"
             "recovery_target_time = 'TIME'\n"
@@ -1759,7 +1759,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
-            restoreRecoveryConf(PG_VERSION_95, restoreLabel),
+            restoreRecoveryConf(PG_VERSION_18, restoreLabel),
             RECOVERY_SETTING_HEADER
             "restore_command = 'my_restore_command'\n"
             "recovery_target_name = 'NAME'\n",
@@ -1789,7 +1789,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
-            restoreRecoveryConf(PG_VERSION_95, restoreLabel),
+            restoreRecoveryConf(PG_VERSION_11, restoreLabel),
             RECOVERY_SETTING_HEADER
             "restore_command = 'my_restore_command'\n"
             "recovery_target = 'immediate'\n"
@@ -1804,7 +1804,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
-            restoreRecoveryConf(PG_VERSION_95, restoreLabel),
+            restoreRecoveryConf(PG_VERSION_11, restoreLabel),
             RECOVERY_SETTING_HEADER
             "restore_command = 'my_restore_command'\n"
             "standby_mode = 'on'\n",
@@ -1819,7 +1819,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_RESULT_STR_Z(
-            restoreRecoveryConf(PG_VERSION_95, restoreLabel),
+            restoreRecoveryConf(PG_VERSION_11, restoreLabel),
             RECOVERY_SETTING_HEADER
             "restore_command = 'my_restore_command'\n"
             "standby_mode = 'on'\n",
@@ -1840,7 +1840,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         TEST_ERROR(
-            restoreRecoveryConf(PG_VERSION_95, restoreLabel), OptionInvalidError,
+            restoreRecoveryConf(PG_VERSION_11, restoreLabel), OptionInvalidError,
             "option 'archive-mode' is not supported on PostgreSQL < 12\n"
             "HINT: 'archive_mode' should be manually set to 'off' in postgresql.conf.");
 
@@ -2254,8 +2254,8 @@ testRun(void)
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
             manifest->pub.data.backupLabel = strNewZ(TEST_LABEL);
-            manifest->pub.data.pgVersion = PG_VERSION_95;
-            manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_95);
+            manifest->pub.data.pgVersion = PG_VERSION_11;
+            manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_11);
             manifest->pub.data.backupType = backupTypeFull;
             manifest->pub.data.backupTimestampStart = 1482182860;
             manifest->pub.data.backupTimestampCopyStart = 1482182861; // So file timestamps should be less than this
@@ -2272,13 +2272,13 @@ testRun(void)
 
             // PG_VERSION
             HRN_MANIFEST_FILE_ADD(
-                manifest, .name = TEST_PGDATA PG_FILE_PGVERSION, .size = 4, .timestamp = 1482182860,
-                .checksumSha1 = "d3b57b066120b2abc25be3bac96c87cfc8d82a6c");
-            HRN_STORAGE_PUT_Z(storageRepoIdxWrite(0), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_95_Z "\n");
+                manifest, .name = TEST_PGDATA PG_FILE_PGVERSION, .size = 3, .timestamp = 1482182860,
+                .checksumSha1 = "dd71038f3463f511ee7403dbcbc87195302d891c");
+            HRN_STORAGE_PUT_Z(storageRepoIdxWrite(0), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_11_Z "\n");
 
             // Store the file also to the encrypted repo
             HRN_STORAGE_PUT_Z(
-                storageRepoIdxWrite(1), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_95_Z "\n",
+                storageRepoIdxWrite(1), TEST_REPO_PATH PG_FILE_PGVERSION, PG_VERSION_11_Z "\n",
                 .cipherType = cipherTypeAes256Cbc, .cipherPass = TEST_CIPHER_PASS_ARCHIVE);
 
             // pg_tblspc
@@ -2321,7 +2321,7 @@ testRun(void)
             TEST_CIPHER_PASS_MANIFEST "\"\n\n" TEST_RESTORE_BACKUP_INFO_DB, .cipherType = cipherTypeAes256Cbc);
 
         // Write archive.info to the encrypted repo
-        InfoArchive *infoArchive = infoArchiveNew(PG_VERSION_95, 6569239123849665679, STRDEF(TEST_CIPHER_PASS_ARCHIVE));
+        InfoArchive *infoArchive = infoArchiveNew(PG_VERSION_11, 6569239123849665679, STRDEF(TEST_CIPHER_PASS_ARCHIVE));
         infoArchiveSaveFile(
             infoArchive, storageRepoIdxWrite(1), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeAes256Cbc, STRDEF(TEST_CIPHER_PASS));
 
@@ -2339,14 +2339,14 @@ testRun(void)
                 "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
                 "P00 DETAIL: create path '" TEST_PATH "/pg/global'\n"
                 "P00 DETAIL: create path '" TEST_PATH "/pg/pg_tblspc'\n"
-                "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, 100.00%%) checksum"
-                " d3b57b066120b2abc25be3bac96c87cfc8d82a6c\n"
+                "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (3B, 100.00%%) checksum"
+                " dd71038f3463f511ee7403dbcbc87195302d891c\n"
                 "P00   INFO: write " TEST_PATH "/pg/recovery.conf\n"
                 "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
                 "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc'\n"
                 "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
                 "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-                "P00   INFO: restore size = 4B, file total = 1",
+                "P00   INFO: restore size = 3B, file total = 1",
                 TEST_PATH, TEST_PATH, TEST_PATH, TEST_PATH));
 
         // Remove recovery.conf before file comparison since it will have a new timestamp. Make sure it existed, though.
@@ -2355,7 +2355,7 @@ testRun(void)
         TEST_STORAGE_LIST(
             storagePg(), NULL,
             "./\n"
-            "PG_VERSION {s=4, t=1482182860}\n"
+            "PG_VERSION {s=3, t=1482182860}\n"
             "global/\n"
             "pg_tblspc/\n",
             .level = storageInfoLevelBasic, .includeDot = true);
@@ -2367,7 +2367,7 @@ testRun(void)
         HRN_INFO_PUT(storageRepoIdxWrite(0), INFO_BACKUP_PATH_FILE, TEST_RESTORE_BACKUP_INFO "\n" TEST_RESTORE_BACKUP_INFO_DB);
 
         // Store archive.info to repo1 - repo1 will be selected because of the priority order
-        infoArchive = infoArchiveNew(PG_VERSION_95, 6569239123849665679, NULL);
+        infoArchive = infoArchiveNew(PG_VERSION_11, 6569239123849665679, NULL);
         infoArchiveSaveFile(infoArchive, storageRepoIdxWrite(0), INFO_ARCHIVE_PATH_FILE_STR, cipherTypeNone, NULL);
 
         hrnCfgArgRawZ(argList, cfgOptTargetTimeline, "0xff");
@@ -2375,7 +2375,7 @@ testRun(void)
 
         TEST_ERROR(
             cmdRestore(), FileMissingError,
-            "unable to open missing file '" TEST_PATH "/repo/archive/test1/9.5-0/000000FF.history' for read");
+            "unable to open missing file '" TEST_PATH "/repo/archive/test1/11-0/000000FF.history' for read");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("full restore with delta force");
@@ -2416,7 +2416,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "size-mismatch", .modeFile = 0600);
 
         // Overwrite PG_VERSION with bogus content that will not be detected by delta force because the time and size are the same
-        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "BOG\n", .modeFile = 0600, .timeModified = 1482182860);
+        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, "BG\n", .modeFile = 0600, .timeModified = 1482182860);
 
         // Change destination of tablespace link
         THROW_ON_SYS_ERROR(
@@ -2450,7 +2450,7 @@ testRun(void)
                 .tablespaceId = 1, .tablespaceName = "ts1");
             HRN_MANIFEST_PATH_ADD(manifest, .name = MANIFEST_TARGET_PGTBLSPC);
             HRN_MANIFEST_PATH_ADD(manifest, .name = MANIFEST_TARGET_PGTBLSPC "/1");
-            HRN_MANIFEST_PATH_ADD(manifest, .name = MANIFEST_TARGET_PGTBLSPC "/1/PG_9.5_201510051");
+            HRN_MANIFEST_PATH_ADD(manifest, .name = MANIFEST_TARGET_PGTBLSPC "/1/PG_11_201809051");
             HRN_MANIFEST_LINK_ADD(
                 manifest, .name = MANIFEST_TARGET_PGDATA "/" MANIFEST_TARGET_PGTBLSPC "/1", .destination = TEST_PATH "/ts/1");
 
@@ -2459,12 +2459,12 @@ testRun(void)
 
             // pg_tblspc/1/16384/PG_VERSION
             HRN_MANIFEST_FILE_ADD(
-                manifest, .name = MANIFEST_TARGET_PGTBLSPC "/1/16384/" PG_FILE_PGVERSION, .size = 4,
-                .timestamp = 1482182860, .checksumSha1 = "d3b57b066120b2abc25be3bac96c87cfc8d82a6c");
+                manifest, .name = MANIFEST_TARGET_PGTBLSPC "/1/16384/" PG_FILE_PGVERSION, .size = 3,
+                .timestamp = 1482182860, .checksumSha1 = "dd71038f3463f511ee7403dbcbc87195302d891c");
 
             HRN_STORAGE_PUT_Z(
                 storageRepoWrite(), STORAGE_REPO_BACKUP "/" TEST_LABEL "/" MANIFEST_TARGET_PGTBLSPC "/1/16384/" PG_FILE_PGVERSION,
-                PG_VERSION_95_Z "\n");
+                PG_VERSION_11_Z "\n");
 
             // Always sort
             lstSort(manifest->pub.targetList, sortOrderAsc);
@@ -2488,7 +2488,7 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: repo1: restore backup set 20161219-212741F, recovery will start at 2016-12-19 21:27:40\n"
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
-            "P00 DETAIL: check '" TEST_PATH "/ts/1/PG_9.5_201510051' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/ts/1/PG_11_201809051' exists\n"
             "P00 DETAIL: skip 'tablespace_map' -- tablespace links will be created based on mappings\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/pg'\n"
             "P00 DETAIL: update mode for '" TEST_PATH "/pg' to 0700\n"
@@ -2497,30 +2497,30 @@ testRun(void)
             "P00 DETAIL: remove special file '" TEST_PATH "/pg/pipe'\n"
             "P00 DETAIL: create symlink '" TEST_PATH "/pg/pg_tblspc/1' to '" TEST_PATH "/ts/1'\n"
             "P00 DETAIL: create path '" TEST_PATH "/pg/pg_tblspc/1/16384'\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.auto.conf (15B, 44.12%)"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.auto.conf (15B, 46.88%)"
             " checksum 37a0c84d42c3ec3d08c311cec2cef2a7ab55a7c3\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf (10B, 73.53%) checksum"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf (10B, 78.13%) checksum"
             " 1a49a3c2240449fee1422e4afcf44d5b96378511\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches size 4 and modification time 1482182860"
-            " (4B, 85.29%) checksum d3b57b066120b2abc25be3bac96c87cfc8d82a6c\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/size-mismatch (1B, 88.24%) checksum"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches size 3 and modification time 1482182860"
+            " (3B, 87.50%) checksum dd71038f3463f511ee7403dbcbc87195302d891c\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/size-mismatch (1B, 90.63%) checksum"
             " c032adc1ff629c9b66f22749ad667e6beadf144b\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (4B, 100.00%)"
-            " checksum d3b57b066120b2abc25be3bac96c87cfc8d82a6c\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (3B, 100.00%)"
+            " checksum dd71038f3463f511ee7403dbcbc87195302d891c\n"
             "P00   WARN: recovery type is preserve but recovery file does not exist at '" TEST_PATH "/pg/recovery.conf'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/16384'\n"
-            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_9.5_201510051'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_11_201809051'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
-            "P00   INFO: restore size = 34B, file total = 5");
+            "P00   INFO: restore size = 32B, file total = 5");
 
         TEST_STORAGE_LIST(
             storagePg(), NULL,
             "./\n"
-            "PG_VERSION {s=4, t=1482182860}\n"
+            "PG_VERSION {s=3, t=1482182860}\n"
             "global/\n"
             "pg_tblspc/\n"
             "pg_tblspc/1> {d=" TEST_PATH "/ts/1}\n"
@@ -2533,12 +2533,12 @@ testRun(void)
             storagePg(), "pg_tblspc/1",
             ".> {d=" TEST_PATH "/ts/1}\n"
             "16384/\n"
-            "16384/PG_VERSION {s=4, t=1482182860}\n"
-            "PG_9.5_201510051/\n",
+            "16384/PG_VERSION {s=3, t=1482182860}\n"
+            "PG_11_201809051/\n",
             .level = storageInfoLevelBasic, .includeDot = true);
 
         // PG_VERSION was not restored because delta force relies on time and size which were the same in the manifest and on disk
-        TEST_STORAGE_GET(storagePg(), PG_FILE_PGVERSION, "BOG\n", .comment = "check PG_VERSION was not restored");
+        TEST_STORAGE_GET(storagePg(), PG_FILE_PGVERSION, "BG\n", .comment = "check PG_VERSION was not restored");
 
         // Cleanup
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoCipherPass, 2);
@@ -2565,25 +2565,25 @@ testRun(void)
         TEST_RESULT_LOG(
             "P00   INFO: repo1: restore backup set 20161219-212741F, recovery will start at 2016-12-19 21:27:40\n"
             "P00 DETAIL: check '" TEST_PATH "/pg' exists\n"
-            "P00 DETAIL: check '" TEST_PATH "/ts/1/PG_9.5_201510051' exists\n"
+            "P00 DETAIL: check '" TEST_PATH "/ts/1/PG_11_201809051' exists\n"
             "P00 DETAIL: skip 'tablespace_map' -- tablespace links will be created based on mappings\n"
             "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/pg'\n"
-            "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/ts/1/PG_9.5_201510051'\n"
+            "P00   INFO: remove invalid files/links/paths from '" TEST_PATH "/ts/1/PG_11_201809051'\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.auto.conf (15B, [PCT]) checksum"
             " 37a0c84d42c3ec3d08c311cec2cef2a7ab55a7c3\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/postgresql.conf (10B, [PCT]) checksum"
             " 1a49a3c2240449fee1422e4afcf44d5b96378511\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (4B, [PCT]) checksum d3b57b066120b2abc25be3bac96c87cfc8d82a6c\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (3B, [PCT]) checksum dd71038f3463f511ee7403dbcbc87195302d891c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/size-mismatch (1B, [PCT]) checksum"
             " c032adc1ff629c9b66f22749ad667e6beadf144b\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (4B, [PCT])"
-            " checksum d3b57b066120b2abc25be3bac96c87cfc8d82a6c\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/pg_tblspc/1/16384/PG_VERSION (3B, [PCT])"
+            " checksum dd71038f3463f511ee7403dbcbc87195302d891c\n"
             "P00   WARN: recovery type is preserve but recovery file does not exist at '" TEST_PATH "/pg/recovery.conf'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1'\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/16384'\n"
-            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_9.5_201510051'\n"
+            "P00 DETAIL: sync path '" TEST_PATH "/pg/pg_tblspc/1/PG_11_201809051'\n"
             "P00   WARN: backup does not contain 'global/pg_control' -- cluster will not start\n"
             "P00 DETAIL: sync path '" TEST_PATH "/pg/global'\n"
             "P00   INFO: restore size = [SIZE], file total = 5");
@@ -2591,7 +2591,7 @@ testRun(void)
         TEST_STORAGE_LIST(
             storagePg(), NULL,
             "./\n"
-            "PG_VERSION {s=4, t=1482182860}\n"
+            "PG_VERSION {s=3, t=1482182860}\n"
             "global/\n"
             "pg_tblspc/\n"
             "pg_tblspc/1> {d=" TEST_PATH "/ts/1}\n"
@@ -2604,15 +2604,15 @@ testRun(void)
             storagePg(), "pg_tblspc/1",
             ".> {d=" TEST_PATH "/ts/1}\n"
             "16384/\n"
-            "16384/PG_VERSION {s=4, t=1482182860}\n"
-            "PG_9.5_201510051/\n",
+            "16384/PG_VERSION {s=3, t=1482182860}\n"
+            "PG_11_201809051/\n",
             .level = storageInfoLevelBasic, .includeDot = true);
 
         // PG_VERSION was restored by the force option
-        TEST_STORAGE_GET(storagePg(), PG_FILE_PGVERSION, PG_VERSION_95_Z "\n", .comment = "check PG_VERSION was restored");
+        TEST_STORAGE_GET(storagePg(), PG_FILE_PGVERSION, PG_VERSION_11_Z "\n", .comment = "check PG_VERSION was restored");
 
         // Remove tablespace
-        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), MANIFEST_TARGET_PGTBLSPC "/1/PG_9.5_201510051", .recurse = true);
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), MANIFEST_TARGET_PGTBLSPC "/1/PG_11_201809051", .recurse = true);
 
         // Remove files
         HRN_STORAGE_REMOVE(storagePgWrite(), "postgresql.conf");
@@ -2693,8 +2693,8 @@ testRun(void)
 
             // PG_VERSION
             HRN_MANIFEST_FILE_ADD(
-                manifest, .name = TEST_PGDATA PG_FILE_PGVERSION, .size = 4, .sizeRepo = 4, .timestamp = 1482182860,
-                .bundleId = 1, .checksumSha1 = "2fafe15172578a19dbc196723bca6a4a8ad70da8");
+                manifest, .name = TEST_PGDATA PG_FILE_PGVERSION, .size = 3, .sizeRepo = 3, .timestamp = 1482182860,
+                .bundleId = 1, .checksumSha1 = "f5b7e6d36dc0113f61b36c700817d42b96f7b037");
 
             HRN_MANIFEST_FILE_ADD(
                 manifest, .name = TEST_PGDATA "yyy", .size = 3, .sizeRepo = 3, .timestamp = 1482182860, .bundleId = 1,
@@ -2721,9 +2721,9 @@ testRun(void)
 
             // base/1/PG_VERSION. File was written as part of bundle 1 above
             HRN_MANIFEST_FILE_ADD(
-                manifest, .name = TEST_PGDATA "base/1/" PG_FILE_PGVERSION, .size = 4, .sizeRepo = 4,
+                manifest, .name = TEST_PGDATA "base/1/" PG_FILE_PGVERSION, .size = 3, .sizeRepo = 3,
                 .timestamp = 1482182860, .bundleId = 1, .bundleOffset = 4,
-                .checksumSha1 = "2fafe15172578a19dbc196723bca6a4a8ad70da8");
+                .checksumSha1 = "f5b7e6d36dc0113f61b36c700817d42b96f7b037");
 
             // base/1/2
             fileBuffer = bufNew(8192);
@@ -2774,9 +2774,9 @@ testRun(void)
 
             // base/16384/PG_VERSION
             HRN_MANIFEST_FILE_ADD(
-                manifest, .name = TEST_PGDATA "base/16384/" PG_FILE_PGVERSION, .size = 4, .timestamp = 1482182860,
-                .checksumSha1 = "d3b57b066120b2abc25be3bac96c87cfc8d82a6c");
-            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/16384/" PG_FILE_PGVERSION, PG_VERSION_95_Z "\n");
+                manifest, .name = TEST_PGDATA "base/16384/" PG_FILE_PGVERSION, .size = 3, .timestamp = 1482182860,
+                .checksumSha1 = "dd71038f3463f511ee7403dbcbc87195302d891c");
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/16384/" PG_FILE_PGVERSION, PG_VERSION_11_Z "\n");
 
             // base/16384/16385
             fileBuffer = bufNew(16384);
@@ -2794,9 +2794,9 @@ testRun(void)
 
             // base/32768/PG_VERSION
             HRN_MANIFEST_FILE_ADD(
-                manifest, .name = TEST_PGDATA "base/32768/" PG_FILE_PGVERSION, .size = 4, .timestamp = 1482182860,
-                .checksumSha1 = "d3b57b066120b2abc25be3bac96c87cfc8d82a6c");
-            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/32768/" PG_FILE_PGVERSION, PG_VERSION_95_Z "\n");
+                manifest, .name = TEST_PGDATA "base/32768/" PG_FILE_PGVERSION, .size = 3, .timestamp = 1482182860,
+                .checksumSha1 = "dd71038f3463f511ee7403dbcbc87195302d891c");
+            HRN_STORAGE_PUT_Z(storageRepoWrite(), TEST_REPO_PATH "base/32768/" PG_FILE_PGVERSION, PG_VERSION_11_Z "\n");
 
             // base/32768/32769
             fileBuffer = bufNew(32768);
@@ -2992,16 +2992,16 @@ testRun(void)
             " 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/pg_hba.conf (11B, [PCT]) checksum"
             " 401215e092779574988a854d8c7caed7f91dba4b\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/PG_VERSION (4B, [PCT])"
-            " checksum d3b57b066120b2abc25be3bac96c87cfc8d82a6c\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/PG_VERSION (4B, [PCT])"
-            " checksum d3b57b066120b2abc25be3bac96c87cfc8d82a6c\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/PG_VERSION (3B, [PCT])"
+            " checksum dd71038f3463f511ee7403dbcbc87195302d891c\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/PG_VERSION (3B, [PCT])"
+            " checksum dd71038f3463f511ee7403dbcbc87195302d891c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/10 (bundle 20161219-212741F/1/1, 8KB, [PCT])"
             " checksum 28757c756c03c37aca13692cb719c18d1510c190\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (bundle 1/0, 4B, [PCT]) checksum"
-            " 2fafe15172578a19dbc196723bca6a4a8ad70da8\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION (bundle 1/4, 4B, [PCT]) checksum"
-            " 2fafe15172578a19dbc196723bca6a4a8ad70da8\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION (bundle 1/0, 3B, [PCT]) checksum"
+            " f5b7e6d36dc0113f61b36c700817d42b96f7b037\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION (bundle 1/4, 3B, [PCT]) checksum"
+            " f5b7e6d36dc0113f61b36c700817d42b96f7b037\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/yyy - exists and matches backup (bundle 1/8, 3B, [PCT]) checksum"
             " 186154712b2d5f6791d85b9a0987b98fa231779c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/xxxxx (bundle 1/11, 5B, [PCT]) checksum"
@@ -3038,7 +3038,7 @@ testRun(void)
         TEST_STORAGE_LIST(
             storagePg(), NULL,
             "./\n"
-            "PG_VERSION {s=4, t=1482182860}\n"
+            "PG_VERSION {s=3, t=1482182860}\n"
             "base/\n"
             "base/1/\n"
             "base/1/10 {s=8192, t=1482182860}\n"
@@ -3047,15 +3047,15 @@ testRun(void)
             "base/1/21 {s=1, t=1482182860}\n"
             "base/1/30 {s=1, t=1482182860}\n"
             "base/1/31 {s=1, t=1482182860}\n"
-            "base/1/PG_VERSION {s=4, t=1482182860}\n"
+            "base/1/PG_VERSION {s=3, t=1482182860}\n"
             "base/1/bi-no-ref {s=24576, t=1482182860}\n"
             "base/1/bi-unused-ref {s=49152, t=1482182860}\n"
             "base/16384/\n"
             "base/16384/16385 {s=16384, t=1482182860}\n"
-            "base/16384/PG_VERSION {s=4, t=1482182860}\n"
+            "base/16384/PG_VERSION {s=3, t=1482182860}\n"
             "base/32768/\n"
             "base/32768/32769 {s=32768, t=1482182860}\n"
-            "base/32768/PG_VERSION {s=4, t=1482182860}\n"
+            "base/32768/PG_VERSION {s=3, t=1482182860}\n"
             "global/\n"
             "global/888 {s=0, t=1482182860}\n"
             "global/999 {s=0, t=1482182860}\n"
@@ -3076,7 +3076,7 @@ testRun(void)
             storagePg(), "pg_tblspc/1",
             ".> {d=" TEST_PATH "/ts/1}\n"
             "16384/\n"
-            "16384/PG_VERSION {s=4, t=1482182860}\n"
+            "16384/PG_VERSION {s=3, t=1482182860}\n"
             "PG_10_201707211/\n",
             .level = storageInfoLevelBasic, .includeDot = true);
 
@@ -3119,7 +3119,7 @@ testRun(void)
 
         // Enlarge a file so it gets truncated. Keep timestamp the same to prove that it gets updated after the truncate.
         HRN_STORAGE_PUT_Z(
-            storagePgWrite(), "base/16384/" PG_FILE_PGVERSION, PG_VERSION_95_Z "\n\n", .modeFile = 0600,
+            storagePgWrite(), "base/16384/" PG_FILE_PGVERSION, PG_VERSION_11_Z "\n\n", .modeFile = 0600,
             .timeModified = 1482182860);
 
         // Enlarge a zero-length file so it gets truncated
@@ -3186,16 +3186,16 @@ testRun(void)
             " checksum 98b8abb2e681e2a5a7d8ab082c0a79727887558d\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/pg_hba.conf - exists and matches backup (11B, [PCT])"
             " checksum 401215e092779574988a854d8c7caed7f91dba4b\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/PG_VERSION - exists and matches backup (4B, [PCT])"
-            " checksum d3b57b066120b2abc25be3bac96c87cfc8d82a6c\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/PG_VERSION - exists and matches backup (4B, [PCT])"
-            " checksum d3b57b066120b2abc25be3bac96c87cfc8d82a6c\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/32768/PG_VERSION - exists and matches backup (3B, [PCT])"
+            " checksum dd71038f3463f511ee7403dbcbc87195302d891c\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/16384/PG_VERSION - exists and matches backup (3B, [PCT])"
+            " checksum dd71038f3463f511ee7403dbcbc87195302d891c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/10 - exists and matches backup (bundle 20161219-212741F/1/1, 8KB,"
             " [PCT]) checksum 28757c756c03c37aca13692cb719c18d1510c190\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches backup (bundle 1/0, 4B, [PCT])"
-            " checksum 2fafe15172578a19dbc196723bca6a4a8ad70da8\n"
-            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION - exists and matches backup (bundle 1/4, 4B, [PCT])"
-            " checksum 2fafe15172578a19dbc196723bca6a4a8ad70da8\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/PG_VERSION - exists and matches backup (bundle 1/0, 3B, [PCT])"
+            " checksum f5b7e6d36dc0113f61b36c700817d42b96f7b037\n"
+            "P01 DETAIL: restore file " TEST_PATH "/pg/base/1/PG_VERSION - exists and matches backup (bundle 1/4, 3B, [PCT])"
+            " checksum f5b7e6d36dc0113f61b36c700817d42b96f7b037\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/yyy - exists and matches backup (bundle 1/8, 3B, [PCT]) checksum"
             " 186154712b2d5f6791d85b9a0987b98fa231779c\n"
             "P01 DETAIL: restore file " TEST_PATH "/pg/xxxxx - exists and matches backup (bundle 1/11, 5B, [PCT]) checksum"

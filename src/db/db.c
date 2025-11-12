@@ -306,8 +306,7 @@ dbOpen(Db *const this)
 
         // There is no need to have parallelism enabled in a backup session. In particular, 9.6 marks pg_stop_backup() as
         // parallel-safe but an error will be thrown if pg_stop_backup() is run in a worker.
-        if (dbPgVersion(this) >= PG_VERSION_PARALLEL_QUERY)
-            dbExec(this, STRDEF("set max_parallel_workers_per_gather = 0"));
+        dbExec(this, STRDEF("set max_parallel_workers_per_gather = 0"));
 
         // Is the cluster a standby?
         this->pub.standby = dbIsInRecovery(this);
@@ -348,7 +347,7 @@ dbBackupStartQuery(const unsigned int pgVersion, const bool startFast)
         strCatZ(result, ", " FALSE_Z);
 
     // Use non-exclusive backup mode when available
-    if (pgVersion >= PG_VERSION_96 && pgVersion <= PG_VERSION_14)
+    if (pgVersion <= PG_VERSION_14)
         strCatZ(result, ", " FALSE_Z);
 
     // Complete query
@@ -358,12 +357,11 @@ dbBackupStartQuery(const unsigned int pgVersion, const bool startFast)
 }
 
 FN_EXTERN DbBackupStartResult
-dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const bool archiveCheck)
+dbBackupStart(Db *const this, const bool startFast, const bool archiveCheck)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(DB, this);
         FUNCTION_LOG_PARAM(BOOL, startFast);
-        FUNCTION_LOG_PARAM(BOOL, stopAuto);
         FUNCTION_LOG_PARAM(BOOL, archiveCheck);
     FUNCTION_LOG_END();
 
@@ -375,35 +373,6 @@ dbBackupStart(Db *const this, const bool startFast, const bool stopAuto, const b
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Acquire the backup advisory lock to make sure that backups are not running from multiple backup servers against the same
-        // database cluster when PostgreSQL <= 9.5. This lock helps make the stop-auto option safe. On PostgreSQL > 9.5 multiple
-        // backups are allowed on the same cluster.
-        if (dbPgVersion(this) <= PG_VERSION_95 &&
-            !pckReadBoolP(dbQueryColumn(this, STRDEF("select pg_catalog.pg_try_advisory_lock(" PG_BACKUP_ADVISORY_LOCK ")::bool"))))
-        {
-            THROW(
-                LockAcquireError,
-                "unable to acquire " PROJECT_NAME " advisory lock\n"
-                "HINT: is another " PROJECT_NAME " backup already running on this cluster?");
-        }
-
-        // If stop-auto is enabled check for a running backup
-        if (stopAuto)
-        {
-            // Feature is not needed for PostgreSQL >= 9.6 since backups are run in non-exclusive mode
-            if (dbPgVersion(this) < PG_VERSION_96)
-            {
-                if (pckReadBoolP(dbQueryColumn(this, STRDEF("select pg_catalog.pg_is_in_backup()::bool"))))
-                {
-                    LOG_WARN(
-                        "the cluster is already in backup mode but no " PROJECT_NAME " backup process is running."
-                        " pg_stop_backup() will be called so a new backup can be started.");
-
-                    dbBackupStop(this);
-                }
-            }
-        }
-
         // When the start-fast option is disabled and db-timeout is smaller than checkpoint_timeout, the command may timeout
         // before the backup actually starts
         if (!startFast && dbDbTimeout(this) <= dbCheckpointTimeout(this))
@@ -486,28 +455,14 @@ dbBackupStopQuery(const unsigned int pgVersion)
     String *const result = strCatFmt(
         strNew(),
         "select lsn::text as lsn,\n"
-        "       pg_catalog.pg_%sfile_name(lsn)::text as wal_segment_name",
-        strZ(pgWalName(pgVersion)));
-
-    // For PostgreSQL >= 9.6 the backup label and tablespace map are returned
-    if (pgVersion >= PG_VERSION_96)
-    {
-        strCatZ(
-            result,
-            ",\n"
-            "       labelfile::text as backuplabel_file,\n"
-            "       spcmapfile::text as tablespacemap_file");
-    }
-
-    // Build stop backup function
-    strCatFmt(
-        result,
-        "\n"
+        "       pg_catalog.pg_%sfile_name(lsn)::text as wal_segment_name,\n"
+        "       labelfile::text as backuplabel_file,\n"
+        "       spcmapfile::text as tablespacemap_file\n"
         "  from pg_catalog.pg_%s(",
-        pgVersion >= PG_VERSION_15 ? "backup_stop" : "stop_backup");
+        strZ(pgWalName(pgVersion)), pgVersion >= PG_VERSION_15 ? "backup_stop" : "stop_backup");
 
     // Use non-exclusive backup mode when available
-    if (pgVersion >= PG_VERSION_96 && pgVersion <= PG_VERSION_14)
+    if (pgVersion <= PG_VERSION_14)
         strCatZ(result, FALSE_Z);
 
     // Disable archive checking since we do this elsewhere
@@ -521,9 +476,6 @@ dbBackupStopQuery(const unsigned int pgVersion)
 
     // Complete query
     strCatZ(result, ")");
-
-    if (pgVersion < PG_VERSION_96)
-        strCatZ(result, " as lsn");
 
     FUNCTION_TEST_RETURN(STRING, result);
 }
@@ -551,22 +503,18 @@ dbBackupStop(Db *const this)
         {
             result.lsn = pckReadStrP(read);
             result.walSegmentName = pckReadStrP(read);
+            result.backupLabel = pckReadStrP(read);
 
-            if (dbPgVersion(this) >= PG_VERSION_96)
-            {
-                result.backupLabel = pckReadStrP(read);
+            // Return the tablespace map if it is not empty
+            String *const tablespaceMap = pckReadStrP(read);
+            String *const tablespaceMapTrim = strTrim(strDup(tablespaceMap));
 
-                // Return the tablespace map if it is not empty
-                String *const tablespaceMap = pckReadStrP(read);
-                String *const tablespaceMapTrim = strTrim(strDup(tablespaceMap));
+            if (!strEmpty(tablespaceMapTrim))
+                result.tablespaceMap = tablespaceMap;
+            else
+                strFree(tablespaceMap);
 
-                if (!strEmpty(tablespaceMapTrim))
-                    result.tablespaceMap = tablespaceMap;
-                else
-                    strFree(tablespaceMap);
-
-                strFree(tablespaceMapTrim);
-            }
+            strFree(tablespaceMapTrim);
         }
         MEM_CONTEXT_PRIOR_END();
     }
@@ -690,38 +638,35 @@ dbReplayWait(Db *const this, const String *const targetLsn, const uint32_t targe
         // Perform a checkpoint
         dbExec(this, STRDEF("checkpoint"));
 
-        // On PostgreSQL >= 9.6 the checkpoint location can be verified so loop until lsn has been reached or timeout
-        if (dbPgVersion(this) >= PG_VERSION_96)
+        // Loop until the checkpoint has reached the target lsn (or timeout)
+        wait = waitNew(timeout);
+        targetReached = false;
+        const String *checkpointLsn = NULL;
+
+        do
         {
-            Wait *const wait = waitNew(timeout);
-            targetReached = false;
-            const String *checkpointLsn = NULL;
+            // Build the query
+            const String *const query = strNewFmt(
+                "select (checkpoint_%s >= '%s')::bool as targetReached,\n"
+                "       checkpoint_%s::text as checkpointLsn\n"
+                "  from pg_catalog.pg_control_checkpoint()",
+                lsnName, strZ(targetLsn), lsnName);
 
-            do
-            {
-                // Build the query
-                const String *const query = strNewFmt(
-                    "select (checkpoint_%s >= '%s')::bool as targetReached,\n"
-                    "       checkpoint_%s::text as checkpointLsn\n"
-                    "  from pg_catalog.pg_control_checkpoint()",
-                    lsnName, strZ(targetLsn), lsnName);
+            // Execute the query and get checkpointLsn
+            PackRead *const read = dbQueryRow(this, query);
+            targetReached = pckReadBoolP(read);
+            checkpointLsn = pckReadStrP(read);
 
-                // Execute the query and get checkpointLsn
-                PackRead *const read = dbQueryRow(this, query);
-                targetReached = pckReadBoolP(read);
-                checkpointLsn = pckReadStrP(read);
+            protocolKeepAlive();
+        }
+        while (!targetReached && waitMore(wait));
 
-                protocolKeepAlive();
-            }
-            while (!targetReached && waitMore(wait));
-
-            // Error if a timeout occurred before the target lsn was reached
-            if (!targetReached)
-            {
-                THROW_FMT(
-                    ArchiveTimeoutError, "timeout before standby checkpoint lsn reached %s - only reached %s", strZ(targetLsn),
-                    strZ(checkpointLsn));
-            }
+        // Error if a timeout occurred before the target lsn was reached
+        if (!targetReached)
+        {
+            THROW_FMT(
+                ArchiveTimeoutError, "timeout before standby checkpoint lsn reached %s - only reached %s", strZ(targetLsn),
+                strZ(checkpointLsn));
         }
 
         // Reload pg_control in case timeline was updated by the checkpoint

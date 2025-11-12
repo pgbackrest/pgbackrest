@@ -57,6 +57,7 @@ test.pl [options] doc|test
 # Command line parameters
 ####################################################################################################################################
 my $strVm = "none";
+my $strVmArch;
 my @stryParam;
 my $bNoTempFs;
 my $bSudo;
@@ -66,7 +67,8 @@ GetOptions ('help' => \$bHelp,
             'param=s@' => \@stryParam,
             'no-tempfs' => \$bNoTempFs,
             'sudo' => \$bSudo,
-            'vm=s' => \$strVm)
+            'vm=s' => \$strVm,
+            'vm-arch=s' => \$strVmArch)
     or pod2usage(2);
 
 ####################################################################################################################################
@@ -214,17 +216,20 @@ eval
         }
 
         # Build the container
+        my $strVmArchParam = defined($strVmArch) ? " --vm-arch=${strVmArch}" : '';
+
         if ($strVm ne VM_NONE)
         {
             processBegin("${strVm} build");
-            processExec("${strTestExe} --vm-build --vm=${strVm}", {bShowOutputAsync => true, bOutLogOnError => false});
+            processExec(
+                "${strTestExe} --vm-build --vm=${strVm}${strVmArchParam}", {bShowOutputAsync => true, bOutLogOnError => false});
             processEnd();
         }
 
         processBegin(($strVm eq VM_NONE ? "no container" : $strVm) . ' test');
         processExec(
-            "${strTestExe} --gen-check --log-level-test-file=off --no-coverage-report --vm-max=2 --vm=${strVm}" .
-            (@stryParam != 0 ? " --" . join(" --", @stryParam) : ''),
+            "${strTestExe} --gen-check --log-level-test-file=off --no-coverage-report --vm-max=2 --vm=${strVm}${strVmArchParam}" .
+                (@stryParam != 0 ? " --" . join(" --", @stryParam) : ''),
             {bShowOutputAsync => true, bOutLogOnError => false});
         processEnd();
     }

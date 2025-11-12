@@ -1,20 +1,17 @@
 /***********************************************************************************************************************************
-Test Command
-
-Perform a test.
+Build Preprocessor
 ***********************************************************************************************************************************/
-#ifndef TEST_COMMAND_TEST_TEST_H
-#define TEST_COMMAND_TEST_TEST_H
+#ifndef DOC_COMMAND_BUILD_PRE_H
+#define DOC_COMMAND_BUILD_PRE_H
 
-#include "common/logLevel.h"
-#include "common/type/stringList.h"
+#include "build/config/parse.h"
+#include "build/help/parse.h"
+#include "common/type/xml.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void cmdTest(
-    const String *pathRepo, const String *pathTest, const String *const vm, unsigned int vmId, const String *pgVersion,
-    const String *moduleName, unsigned int test, uint64_t scale, LogLevel logLevel, bool logTime, const String *timeZone,
-    const String *architecture, bool coverage, bool profile, bool optimize, bool backTrace);
+// Build command reference
+XmlDocument *buildPre(XmlDocument *xml, const BldCfg *bldCfg, const BldHlp *bldHlp);
 
 #endif

@@ -52,6 +52,7 @@ sub new
         $self->{bDryRun},
         $self->{bVmOut},
         $self->{strPlatform},
+        $self->{strVmArch},
         $self->{strImage},
         $self->{iVmIdx},
         $self->{iVmMax},
@@ -87,6 +88,7 @@ sub new
             {name => 'bDryRun'},
             {name => 'bVmOut'},
             {name => 'strPlatform'},
+            {name => 'strVmArch', required => false},
             {name => 'strImage'},
             {name => 'iVmIdx'},
             {name => 'iVmMax'},
@@ -168,7 +170,7 @@ sub run
             ($self->{iTry} > 1 ? ' (retry ' . ($self->{iTry} - 1) . ')' : '');
 
         my $strImage = 'test-' . $self->{iVmIdx};
-        my $strDbVersion = (defined($self->{oTest}->{&TEST_DB}) ? $self->{oTest}->{&TEST_DB} : PG_VERSION_95);
+        my $strDbVersion = (defined($self->{oTest}->{&TEST_DB}) ? $self->{oTest}->{&TEST_DB} : PG_VERSION_96);
         $strDbVersion =~ s/\.//;
 
         &log($self->{bDryRun} && !$self->{bVmOut} || $self->{bShowOutputAsync} ? INFO : DETAIL, "${strTest}" .
@@ -259,6 +261,7 @@ sub run
                 $self->{strTestPath} . "/build/${strVm}/test/src/test-pgbackrest" .
                     ' --repo-path=' . $self->{strTestPath} . '/repo' . ' --test-path=' . $self->{strTestPath} .
                     " --log-level=$self->{strLogLevel}" . ' --vm=' . $self->{oTest}->{&TEST_VM} .
+                    (defined($self->{strVmArch}) ? ' --vm-arch=' . $self->{strVmArch} : '') .
                     ' --vm-id=' . $self->{iVmIdx} . ($self->{bProfile} ? ' --profile' : '') . $strCommandRunParam .
                     ($self->{bLogTimestamp} ? '' : ' --no-log-timestamp') .
                     ($self->{strTimeZone} ? " --tz='$self->{strTimeZone}'" : '') .

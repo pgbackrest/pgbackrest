@@ -8,10 +8,35 @@
 
                 <release-item-contributor-list>
                     <release-item-contributor id="felix.buenemann"/>
+                    <release-item-reviewer id="david.steele"/>
                 </release-item-contributor-list>
 
                 <p>Add <br-option>repo-storage-class</br-option> option to configure S3 storage class for object uploads.</p>
             </release-item>
+
+            <release-item>
+                <github-pull-request id="2693"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Allow process priority to be set.</p>
+            </release-item>
         </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2692"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Remove support for <proper>PostgreSQL</proper> <id>9.5</id>.</p>
+            </release-item>
+        </release-improvement-list>
     </release-core-list>
 </release>

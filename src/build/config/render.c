@@ -823,6 +823,9 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
             "        PARSE_RULE_COMMAND_NAME(\"%s\"),\n",
             strZ(cmd->name));
 
+        if (cmd->internal)
+            strCatZ(configCmd, "        PARSE_RULE_COMMAND_INTERNAL(true)\n");
+
         if (cmd->lockRequired)
             strCatZ(configCmd, "        PARSE_RULE_COMMAND_LOCK_REQUIRED(true),\n");
 
@@ -952,6 +955,9 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
             "        PARSE_RULE_OPTION_TYPE(%s),\n",
             strZ(opt->name), strZ(bldEnum("", opt->type)));
 
+        if (opt->internal)
+            strCatZ(configOpt, "        PARSE_RULE_OPTION_INTERNAL(true)\n");
+
         if (opt->defaultType == defaultTypeDynamic)
             strCatZ(configOpt, "        PARSE_RULE_OPTION_DEFAULT_TYPE(Dynamic),\n");
 
@@ -1000,6 +1006,33 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
                     break;
                 }
             }
+        }
+
+        // Build command internal list
+        String *const cmdInternal = strNew();
+
+        for (unsigned int optCmdIdx = 0; optCmdIdx < lstSize(opt->cmdList); optCmdIdx++)
+        {
+            BldCfgOptionCommand *const optCmd = lstGet(opt->cmdList, optCmdIdx);
+
+            if (optCmd->internal != opt->internal)
+            {
+                strCatFmt(
+                    cmdInternal, "            PARSE_RULE_OPTION_COMMAND_INTERNAL(%s, %s),\n", strZ(bldEnum("", optCmd->name)),
+                    cvtBoolToConstZ(optCmd->internal));
+            }
+        }
+
+        if (strSize(cmdInternal) > 0)
+        {
+            strCatFmt(
+                configOpt,
+                "\n"
+                "        PARSE_RULE_OPTION_COMMAND_INTERNAL_LIST\n"
+                "        (\n"
+                "%s"
+                "        )\n",
+                strZ(cmdInternal));
         }
 
         // Build command role valid lists

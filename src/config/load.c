@@ -4,6 +4,7 @@ Configuration Load
 #include "build.auto.h"
 
 #include <string.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -371,6 +372,15 @@ cfgLoadUpdateOption(void)
     if (cfgOptionTest(cfgOptRepoTargetTime) && cfgOptionSource(cfgOptRepo) == cfgSourceDefault)
         THROW_FMT(OptionInvalidError, "option '" CFGOPT_REPO_TARGET_TIME "' not valid without option '" CFGOPT_REPO "'");
 
+    // The stop-auto option is deprecated
+    if (cfgOptionValid(cfgOptStopAuto) && cfgOptionSource(cfgOptStopAuto) != cfgSourceDefault)
+    {
+        LOG_WARN(
+            "option '" CFGOPT_STOP_AUTO "' is deprecated\n"
+            "HINT: all supported versions use non-exclusive backup.\n"
+            "HINT: stop using this option to avoid an error when it is removed.");
+    }
+
     FUNCTION_LOG_RETURN_VOID();
 }
 
@@ -456,6 +466,19 @@ cfgLoad(const unsigned int argListSize, const char *argList[])
         // Neutralize the umask to make the repository file/path modes more consistent
         if (cfgOptionValid(cfgOptNeutralUmask) && cfgOptionBool(cfgOptNeutralUmask))
             umask(0000);
+
+        if (cfgOptionValid(cfgOptPriority) && cfgOptionSource(cfgOptPriority) != cfgSourceDefault)
+        {
+            // Sign conversion is ignored here due to type conflicts between setpriority() and getpid() on different platforms.
+            // Linux returns _pid_t (int) from getpid() but accepts id_t (unsigned int) in setpriority(). FreeBSD (but not MacOS)
+            // uses int for both. Presumably implicit conversion will work appropriately on each platform so just let that happen.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+            THROW_ON_SYS_ERROR(
+                setpriority(PRIO_PROCESS, getpid(), cfgOptionInt(cfgOptPriority)) == -1, KernelError,
+                "unable to set process priority");
+#pragma GCC diagnostic pop
+        }
 
         // Initialize TCP settings
         if (cfgOptionValid(cfgOptSckKeepAlive))

@@ -161,7 +161,8 @@ hrnHostNew(const StringId id, const String *const container, const String *const
 
             // Run container
             String *const command = strCatFmt(
-                strNew(), "docker run -itd -h %s --name=%s", strZ(hrnHostName(this)), strZ(hrnHostContainer(this)));
+                strNew(), "docker run -itd -h %s --platform linux/%s --name=%s", strZ(hrnHostName(this)), testArchitecture(),
+                strZ(hrnHostContainer(this)));
 
             if (hrnHostDataPath(this) != NULL)
             {
