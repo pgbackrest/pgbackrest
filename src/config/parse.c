@@ -87,6 +87,8 @@ typedef struct ParseRuleCommand
 #define PARSE_RULE_COMMAND_ROLE(commandRoleParam)                                                                                  \
     | (1 << cfgCmdRole##commandRoleParam)
 
+#define PARSE_RULE_COMMAND_INTERNAL(internalParam)
+
 #define PARSE_RULE_COMMAND_LOCK_REQUIRED(lockRequiredParam)                                                                        \
     .lockRequired = lockRequiredParam
 
@@ -172,6 +174,9 @@ typedef enum
 
 #define PARSE_RULE_OPTION_TYPE(typeParam)                                                                                          \
     .type = cfgOptType##typeParam
+
+#define PARSE_RULE_OPTION_INTERNAL(typeParam)
+#define PARSE_RULE_OPTION_COMMAND_INTERNAL_LIST(...)
 
 #define PARSE_RULE_OPTION_DEFAULT_TYPE(defaultTypeParam)                                                                           \
     .defaultType = cfgDefaultType##defaultTypeParam

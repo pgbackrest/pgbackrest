@@ -94,6 +94,7 @@
     <!ATTLIST backrest-config-option if CDATA "">
     <!ATTLIST backrest-config-option section CDATA #REQUIRED>
     <!ATTLIST backrest-config-option key CDATA #REQUIRED>
+    <!ATTLIST backrest-config-option multi CDATA "n">
     <!ATTLIST backrest-config-option remove CDATA "n">
 
 <!ELEMENT postgres-config (title, postgres-config-option+)>

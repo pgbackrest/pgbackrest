@@ -49,6 +49,19 @@ testRun(void)
             "</doc>\n");
 
         HRN_STORAGE_PUT_Z(
+            storageTest, "doc/xml/user-guide.xml",
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            "<!DOCTYPE doc SYSTEM \"doc.dtd\">\n"
+            "<doc title=\"{[project]} User Guide\" subtitle=\"{[user-guide-subtitle]}\" cmd-line-len=\"85\">\n"
+            "<description>The {[project]} User Guide demonstrates how...</description>\n"
+            "<section id=\"introduction\">\n"
+            "    <title>Introduction</title>\n"
+            "    <cmd-description key=\"check\"/>\n"
+            "    <option-description key=\"config\"/>\n"
+            "</section>\n"
+            "</doc>\n");
+
+        HRN_STORAGE_PUT_Z(
             storageTest, "src/build/config/config.yaml",
             "command:\n"
             "  backup: {}\n"
@@ -430,6 +443,23 @@ testRun(void)
                     "</section>"
                 "</section>"
             // {uncrustify_on}
+            "</doc>\n");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("command.xml");
+
+        TEST_STORAGE_GET(
+            storageTest,
+            "doc/output/xml/user-guide.xml",
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            "<!DOCTYPE doc SYSTEM \"doc.dtd\">\n"
+            "<doc title=\"{[project]} User Guide\" subtitle=\"{[user-guide-subtitle]}\" cmd-line-len=\"85\">\n"
+            "<description>The {[project]} User Guide demonstrates how...</description>\n"
+            "<section id=\"introduction\">\n"
+            "    <title>Introduction</title>\n"
+            "    <p>Check command description.</p>\n"
+            "    <p>config option description.</p>\n"
+            "</section>\n"
             "</doc>\n");
 
         // -------------------------------------------------------------------------------------------------------------------------

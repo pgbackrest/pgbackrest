@@ -1260,7 +1260,7 @@ testRun(void)
         strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
-            "option 'repo1-host-user' not valid without option 'repo1-host'");
+            "option 'repo1-host-user' not valid without option 'repo1-host-type'");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);

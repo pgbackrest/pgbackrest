@@ -29,9 +29,7 @@ use pgBackRestTest::Common::Storage;
 use pgBackRestTest::Common::StoragePosix;
 
 use pgBackRestDoc::Common::Doc;
-use pgBackRestDoc::Common::DocConfig;
 use pgBackRestDoc::Common::DocManifest;
-use pgBackRestDoc::Common::DocRender;
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;

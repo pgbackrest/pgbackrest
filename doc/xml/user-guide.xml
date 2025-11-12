@@ -3404,7 +3404,7 @@
             <backrest-config host="{[host-pg2]}" file="{[backrest-config-demo]}">
                 <title>Set <pg-option>primary_conninfo</pg-option></title>
 
-                <backrest-config-option section="demo" key="recovery-option">primary_conninfo=host={[host-pg1-ip]} port=5432 user=replicator</backrest-config-option>
+                <backrest-config-option section="demo" key="recovery-option" multi="y">primary_conninfo=host={[host-pg1-ip]} port=5432 user=replicator</backrest-config-option>
             </backrest-config>
 
             <p>It is possible to configure a password in the <pg-option>primary_conninfo</pg-option> setting but using a <file>.pgpass</file> file is more flexible and secure.</p>

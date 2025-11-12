@@ -1033,6 +1033,7 @@ unit:
         coverage:
           - doc/command/build/build
           - doc/command/build/man
+          - doc/command/build/pre
           - doc/command/build/reference
 
 # **********************************************************************************************************************************

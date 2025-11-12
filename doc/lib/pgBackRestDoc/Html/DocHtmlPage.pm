@@ -12,7 +12,6 @@ use Data::Dumper;
 use Exporter qw(import);
     our @EXPORT = qw();
 
-use pgBackRestDoc::Common::DocConfig;
 use pgBackRestDoc::Common::DocManifest;
 use pgBackRestDoc::Common::DocRender;
 use pgBackRestDoc::Html::DocHtmlBuilder;
@@ -469,36 +468,6 @@ sub sectionProcess
             $oSectionBodyElement->
                 addNew(HTML_DIV, 'section-body-text',
                        {strContent => $self->processText($oChild->textGet())});
-        }
-        # Add option descriptive text
-        elsif ($oChild->nameGet() eq 'option-description')
-        {
-            my $strOption = $oChild->paramGet("key");
-            my $oDescription = ${$self->{oReference}->{oConfigHash}}{&CONFIG_HELP_OPTION}{$strOption}{&CONFIG_HELP_DESCRIPTION};
-
-            if (!defined($oDescription))
-            {
-                confess &log(ERROR, "unable to find ${strOption} option in sections - try adding option?");
-            }
-
-            $oSectionBodyElement->
-                addNew(HTML_DIV, 'section-body-text',
-                       {strContent => $self->processText($oDescription)});
-        }
-        # Add cmd descriptive text
-        elsif ($oChild->nameGet() eq 'cmd-description')
-        {
-            my $strCommand = $oChild->paramGet("key");
-            my $oDescription = ${$self->{oReference}->{oConfigHash}}{&CONFIG_HELP_COMMAND}{$strCommand}{&CONFIG_HELP_DESCRIPTION};
-
-            if (!defined($oDescription))
-            {
-                confess &log(ERROR, "unable to find ${strCommand} command in sections - try adding command?");
-            }
-
-            $oSectionBodyElement->
-                addNew(HTML_DIV, 'section-body-text',
-                       {strContent => $self->processText($oDescription)});
         }
         # Add/remove backrest config options
         elsif ($oChild->nameGet() eq 'backrest-config')

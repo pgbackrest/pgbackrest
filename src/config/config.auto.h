@@ -101,6 +101,7 @@ Option constants
 #define CFGOPT_PAGE_HEADER_CHECK                                    "page-header-check"
 #define CFGOPT_PG                                                   "pg"
 #define CFGOPT_PG_VERSION_FORCE                                     "pg-version-force"
+#define CFGOPT_PRIORITY                                             "priority"
 #define CFGOPT_PROCESS                                              "process"
 #define CFGOPT_PROCESS_MAX                                          "process-max"
 #define CFGOPT_PROTOCOL_TIMEOUT                                     "protocol-timeout"
@@ -140,7 +141,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            188
+#define CFG_OPTION_TOTAL                                            189
 
 /***********************************************************************************************************************************
 Option value constants
@@ -478,6 +479,7 @@ typedef enum
     cfgOptPgSocketPath,
     cfgOptPgUser,
     cfgOptPgVersionForce,
+    cfgOptPriority,
     cfgOptProcess,
     cfgOptProcessMax,
     cfgOptProtocolTimeout,
