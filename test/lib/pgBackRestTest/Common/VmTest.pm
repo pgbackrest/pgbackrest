@@ -22,8 +22,6 @@ use pgBackRestTest::Common::DbVersion;
 ####################################################################################################################################
 # VM hash keywords
 ####################################################################################################################################
-use constant VM_ARCH                                                => 'arch';
-    push @EXPORT, qw(VM_ARCH);
 use constant VM_DB                                                  => 'db';
     push @EXPORT, qw(VM_DB);
 use constant VM_DB_TEST                                             => 'db-test';
@@ -90,7 +88,6 @@ my $oyVm =
     &VM_NONE =>
     {
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_ARCH => VM_ARCH_X86_64,
         &VMDEF_COVERAGE_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
@@ -110,7 +107,6 @@ my $oyVm =
     {
         &VM_OS_BASE => VM_OS_BASE_ALPINE,
         &VM_IMAGE => 'alpine:3.21',
-        &VM_ARCH => VM_ARCH_X86_64,
         &VMDEF_PG_REPO => false,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
@@ -130,7 +126,6 @@ my $oyVm =
     {
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
         &VM_IMAGE => 'debian:11',
-        &VM_ARCH => VM_ARCH_I386,
         &VMDEF_PG_REPO => false,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
@@ -150,7 +145,6 @@ my $oyVm =
     {
         &VM_OS_BASE => VM_OS_BASE_RHEL,
         &VM_IMAGE => 'rockylinux/rockylinux:8',
-        &VM_ARCH => VM_ARCH_X86_64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
 
         &VM_DB =>
@@ -176,7 +170,6 @@ my $oyVm =
     {
         &VM_OS_BASE => VM_OS_BASE_RHEL,
         &VM_IMAGE => 'fedora:42',
-        &VM_ARCH => VM_ARCH_X86_64,
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
         &VMDEF_COVERAGE_C => true,
 
@@ -200,7 +193,6 @@ my $oyVm =
     {
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
         &VM_IMAGE => 'ubuntu:22.04',
-        &VM_ARCH => VM_ARCH_X86_64,
         &VMDEF_COVERAGE_C => true,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
@@ -337,30 +329,6 @@ sub vmCoverageC
 }
 
 push @EXPORT, qw(vmCoverageC);
-
-####################################################################################################################################
-# Get vm architecture
-####################################################################################################################################
-sub vmArch
-{
-    my $strVm = shift;
-
-    return $oyVm->{$strVm}{&VM_ARCH};
-}
-
-push @EXPORT, qw(vmArch);
-
-####################################################################################################################################
-# Get vm architecture bits
-####################################################################################################################################
-sub vmArchBits
-{
-    my $strVm = shift;
-
-    return (vmArch($strVm) eq VM_ARCH_I386 ? 32 : 64);
-}
-
-push @EXPORT, qw(vmArchBits);
 
 ####################################################################################################################################
 # Get host architecture

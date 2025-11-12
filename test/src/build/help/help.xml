@@ -212,6 +212,16 @@
                     <example>rh8</example>
                 </option>
 
+                <option id="vm-arch">
+                    <summary>VM architecture to run test on.</summary>
+
+                    <text>
+                        <p>Architecture of VM to run the test on.</p>
+                    </text>
+
+                    <example>aarch64</example>
+                </option>
+
                 <option id="vm-id">
                     <summary>VM id to run test on.</summary>
 

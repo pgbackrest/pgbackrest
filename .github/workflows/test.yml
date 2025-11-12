@@ -29,7 +29,7 @@ jobs:
       matrix:
         include:
           # All tests (without coverage or valgrind) for 32-bit
-          - param: test --vm=d11 --param=no-performance --param=no-coverage --param=no-valgrind
+          - param: test --vm=d11 --vm-arch=i386 --param=no-performance --param=no-coverage --param=no-valgrind
 
           # Debian/Ubuntu documentation
           - param: doc --vm=u22

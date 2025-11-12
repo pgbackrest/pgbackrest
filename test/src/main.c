@@ -72,8 +72,8 @@ main(int argListSize, const char *argList[])
                         cfgOptionUInt(cfgOptVmId), cfgOptionStr(cfgOptPgVersion), strLstGet(cfgCommandParam(), 0),
                         cfgOptionTest(cfgOptTest) ? cfgOptionUInt(cfgOptTest) : 0, cfgOptionUInt64(cfgOptScale),
                         logLevelEnum(cfgOptionStrId(cfgOptLogLevelTest)), cfgOptionBool(cfgOptLogTimestamp),
-                        cfgOptionStrNull(cfgOptTz), cfgOptionBool(cfgOptCoverage), cfgOptionBool(cfgOptProfile),
-                        cfgOptionBool(cfgOptOptimize), cfgOptionBool(cfgOptBackTrace));
+                        cfgOptionStrNull(cfgOptTz), cfgOptionStrNull(cfgOptVmArch), cfgOptionBool(cfgOptCoverage),
+                        cfgOptionBool(cfgOptProfile), cfgOptionBool(cfgOptOptimize), cfgOptionBool(cfgOptBackTrace));
                 }
                 // Top-level test
                 else
