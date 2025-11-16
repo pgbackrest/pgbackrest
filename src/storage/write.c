@@ -69,7 +69,10 @@ storageWriteChunkSize(const uint64_t fileSize, const size_t chunkSize, const siz
         FUNCTION_TEST_PARAM(SIZE, chunkMax);
     FUNCTION_TEST_END();
 
-    size_t result = fileSize / chunkMax;
+    ASSERT(chunkSize > 0);
+    ASSERT(chunkMax > 0);
+
+    uint64_t result = fileSize / chunkMax;
 
     if (result > chunkSize)
     {
@@ -77,7 +80,10 @@ storageWriteChunkSize(const uint64_t fileSize, const size_t chunkSize, const siz
         if (result % STORAGE_MIB != 0)
             result += STORAGE_MIB - (result % STORAGE_MIB);
 
-        FUNCTION_TEST_RETURN(SIZE, result);
+        // On 32-bit platforms chunk size might exceed SIZE_MAX but only for very large files
+        CHECK(AssertError, result <= SIZE_MAX, "chunk size exceeds SIZE_MAX");
+
+        FUNCTION_TEST_RETURN(SIZE, (size_t)result);
     }
 
     FUNCTION_TEST_RETURN(SIZE, chunkSize);
