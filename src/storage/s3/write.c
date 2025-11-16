@@ -13,7 +13,8 @@ S3 Storage File Write
 /***********************************************************************************************************************************
 Defaults
 ***********************************************************************************************************************************/
-#define STORAGE_S3_CHUNK_MAX                                        (10000 / 2)
+// Use half of allowed parts to select buffer sizes more aggressively
+#define STORAGE_S3_PART_MAX                                         (10000 / 2)
 
 /***********************************************************************************************************************************
 S3 query tokens
@@ -53,32 +54,6 @@ Macros for function logging
     StorageWriteS3 *
 #define FUNCTION_LOG_STORAGE_WRITE_S3_FORMAT(value, buffer, bufferSize)                                                            \
     objNameToLog(value, "StorageWriteS3", buffer, bufferSize)
-
-/***********************************************************************************************************************************
-!!!
-***********************************************************************************************************************************/
-static size_t
-storageChunkSize(const uint64_t fileSize, const size_t chunkSize, const size_t chunkMax)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT64, fileSize);
-        FUNCTION_TEST_PARAM(SIZE, chunkSize);
-        FUNCTION_TEST_PARAM(SIZE, chunkMax);
-    FUNCTION_TEST_END();
-
-    size_t result = fileSize / chunkMax;
-
-    if (result > chunkSize)
-    {
-        // Round up to the nearest mebibyte
-        if (result % (1024 * 1024) != 0)
-            result += (1024 * 1024) - (result % (1024 * 1024));
-
-        FUNCTION_TEST_RETURN(SIZE, result);
-    }
-
-    FUNCTION_TEST_RETURN(SIZE, chunkSize);
-}
 
 /***********************************************************************************************************************************
 Open the file
@@ -319,7 +294,7 @@ storageWriteS3New(StorageS3 *const storage, const String *const name, const uint
         {
             .storage = storage,
             // Calculate part size based on limits documented at https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
-            .partSize = storageChunkSize(size, partSize, STORAGE_S3_CHUNK_MAX),
+            .partSize = storageWriteChunkSize(size, partSize, STORAGE_S3_PART_MAX),
 
             .interface = (StorageWriteInterface)
             {

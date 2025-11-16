@@ -464,11 +464,11 @@ testRun(void)
 
                 TEST_RESULT_UINT(
                     ((StorageWriteS3 *)ioWriteDriver(
-                        storageWriteIo(storageNewWriteP(s3, STRDEF("file.txt"), .size = 26214400000ULL))))->partSize,
+                         storageWriteIo(storageNewWriteP(s3, STRDEF("file.txt"), .size = 26214400000ULL))))->partSize,
                     5 * 1024 * 1024, "unmodified part size");
                 TEST_RESULT_UINT(
                     ((StorageWriteS3 *)ioWriteDriver(
-                        storageWriteIo(storageNewWriteP(s3, STRDEF("file.txt"), .size = 26214400000ULL + (8 * 1024)))))->partSize,
+                         storageWriteIo(storageNewWriteP(s3, STRDEF("file.txt"), .size = 26214400000ULL + (8 * 1024)))))->partSize,
                     6 * 1024 * 1024, "modified part size");
 
                 // -----------------------------------------------------------------------------------------------------------------

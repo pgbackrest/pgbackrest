@@ -58,6 +58,32 @@ storageWriteNew(void *const driver, const StorageWriteInterface *const interface
 }
 
 /**********************************************************************************************************************************/
+#define STORAGE_MIB                                                 (1024 * 1024)
+
+FN_EXTERN size_t
+storageWriteChunkSize(const uint64_t fileSize, const size_t chunkSize, const size_t chunkMax)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT64, fileSize);
+        FUNCTION_TEST_PARAM(SIZE, chunkSize);
+        FUNCTION_TEST_PARAM(SIZE, chunkMax);
+    FUNCTION_TEST_END();
+
+    size_t result = fileSize / chunkMax;
+
+    if (result > chunkSize)
+    {
+        // Round up to the nearest MiB
+        if (result % STORAGE_MIB != 0)
+            result += STORAGE_MIB - (result % STORAGE_MIB);
+
+        FUNCTION_TEST_RETURN(SIZE, result);
+    }
+
+    FUNCTION_TEST_RETURN(SIZE, chunkSize);
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN void
 storageWriteToLog(const StorageWrite *const this, StringStatic *const debugLog)
 {
