@@ -968,7 +968,7 @@ storageS3NewWrite(THIS_VOID, const String *const file, const StorageInterfaceNew
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(SIZE, param.size);
+        FUNCTION_LOG_PARAM(UINT64, param.size);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
