@@ -140,6 +140,9 @@ typedef struct StorageInterfaceNewWriteParam
 {
     VAR_PARAM_HEADER;
 
+    // Used to determine chunk size on object stores and only required when the file might be large, i.e. > 25GiB
+    uint64_t size;
+
     // File/path mode for storage that supports Posix-style permissions. modePath is only used in conjunction with createPath.
     mode_t modeFile;
     mode_t modePath;

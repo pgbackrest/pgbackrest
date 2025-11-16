@@ -968,7 +968,7 @@ storageS3NewWrite(THIS_VOID, const String *const file, const StorageInterfaceNew
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        (void)param;                                                // No parameters are used
+        FUNCTION_LOG_PARAM(SIZE, param.size);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -979,7 +979,7 @@ storageS3NewWrite(THIS_VOID, const String *const file, const StorageInterfaceNew
     ASSERT(param.group == NULL);
     ASSERT(param.timeModified == 0);
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteS3New(this, file, this->partSize));
+    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteS3New(this, file, param.size, this->partSize));
 }
 
 /**********************************************************************************************************************************/

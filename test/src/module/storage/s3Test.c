@@ -460,6 +460,18 @@ testRun(void)
                 TEST_RESULT_UINT(driver->partSize, 5 * 1024 * 1024, "check part size");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("check part sizes");
+
+                TEST_RESULT_UINT(
+                    ((StorageWriteS3 *)ioWriteDriver(
+                        storageWriteIo(storageNewWriteP(s3, STRDEF("file.txt"), .size = 26214400000ULL))))->partSize,
+                    5 * 1024 * 1024, "unmodified part size");
+                TEST_RESULT_UINT(
+                    ((StorageWriteS3 *)ioWriteDriver(
+                        storageWriteIo(storageNewWriteP(s3, STRDEF("file.txt"), .size = 26214400000ULL + (8 * 1024)))))->partSize,
+                    6 * 1024 * 1024, "modified part size");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("coverage for noop functions");
 
                 TEST_RESULT_VOID(storagePathSyncP(s3, STRDEF("path")), "path sync is a noop");

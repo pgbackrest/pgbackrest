@@ -11,6 +11,11 @@ S3 Storage File Write
 #include "storage/write.h"
 
 /***********************************************************************************************************************************
+Defaults
+***********************************************************************************************************************************/
+#define STORAGE_S3_CHUNK_MAX                                        (10000 / 2)
+
+/***********************************************************************************************************************************
 S3 query tokens
 ***********************************************************************************************************************************/
 STRING_STATIC(S3_QUERY_PART_NUMBER_STR,                             "partNumber");
@@ -48,6 +53,32 @@ Macros for function logging
     StorageWriteS3 *
 #define FUNCTION_LOG_STORAGE_WRITE_S3_FORMAT(value, buffer, bufferSize)                                                            \
     objNameToLog(value, "StorageWriteS3", buffer, bufferSize)
+
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
+static size_t
+storageChunkSize(const uint64_t fileSize, const size_t chunkSize, const size_t chunkMax)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT64, fileSize);
+        FUNCTION_TEST_PARAM(SIZE, chunkSize);
+        FUNCTION_TEST_PARAM(SIZE, chunkMax);
+    FUNCTION_TEST_END();
+
+    size_t result = fileSize / chunkMax;
+
+    if (result > chunkSize)
+    {
+        // Round up to the nearest mebibyte
+        if (result % (1024 * 1024) != 0)
+            result += (1024 * 1024) - (result % (1024 * 1024));
+
+        FUNCTION_TEST_RETURN(SIZE, result);
+    }
+
+    FUNCTION_TEST_RETURN(SIZE, chunkSize);
+}
 
 /***********************************************************************************************************************************
 Open the file
@@ -270,11 +301,13 @@ storageWriteS3Close(THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN StorageWrite *
-storageWriteS3New(StorageS3 *const storage, const String *const name, const size_t partSize)
+storageWriteS3New(StorageS3 *const storage, const String *const name, const uint64_t size, const size_t partSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_S3, storage);
         FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM(UINT64, size);
+        FUNCTION_LOG_PARAM(SIZE, partSize);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -285,7 +318,8 @@ storageWriteS3New(StorageS3 *const storage, const String *const name, const size
         *this = (StorageWriteS3)
         {
             .storage = storage,
-            .partSize = partSize,
+            // Calculate part size based on limits documented at https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
+            .partSize = storageChunkSize(size, partSize, STORAGE_S3_CHUNK_MAX),
 
             .interface = (StorageWriteInterface)
             {

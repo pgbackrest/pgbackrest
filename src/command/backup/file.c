@@ -357,14 +357,14 @@ backupFile(
                             // Posix) because checksums are tested on resume after a failed backup. The path does not need to be
                             // synced for each file because all paths are synced at the end of the backup. It needs to be created in
                             // the prior context because it will live longer than a single loop when more than one file is being
-                            // written.
+                            // written. Size is specified to calculate a suitable chunk size for object stores.
                             if (write == NULL)
                             {
                                 MEM_CONTEXT_PRIOR_BEGIN()
                                 {
                                     write = storageNewWriteP(
                                         storageRepoWrite(), repoFile, .compressible = compressible, .noAtomic = true,
-                                        .noSyncPath = true);
+                                        .noSyncPath = true, .size = file->pgFileSize);
                                     ioWriteOpen(storageWriteIo(write));
                                 }
                                 MEM_CONTEXT_PRIOR_END();
