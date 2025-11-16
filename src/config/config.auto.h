@@ -119,6 +119,7 @@ Option constants
 #define CFGOPT_SET                                                  "set"
 #define CFGOPT_SORT                                                 "sort"
 #define CFGOPT_SPOOL_PATH                                           "spool-path"
+#define CFGOPT_SSL_CIPHERS                                          "ssl-ciphers"
 #define CFGOPT_STANZA                                               "stanza"
 #define CFGOPT_START_FAST                                           "start-fast"
 #define CFGOPT_STOP_AUTO                                            "stop-auto"
@@ -137,11 +138,12 @@ Option constants
 #define CFGOPT_TLS_SERVER_CERT_FILE                                 "tls-server-cert-file"
 #define CFGOPT_TLS_SERVER_KEY_FILE                                  "tls-server-key-file"
 #define CFGOPT_TLS_SERVER_PORT                                      "tls-server-port"
+#define CFGOPT_TLS13_CIPHERS                                        "tls13-ciphers"
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            189
+#define CFG_OPTION_TOTAL                                            191
 
 /***********************************************************************************************************************************
 Option value constants
@@ -569,6 +571,7 @@ typedef enum
     cfgOptSet,
     cfgOptSort,
     cfgOptSpoolPath,
+    cfgOptSslCiphers,
     cfgOptStanza,
     cfgOptStartFast,
     cfgOptStopAuto,
@@ -587,6 +590,7 @@ typedef enum
     cfgOptTlsServerCertFile,
     cfgOptTlsServerKeyFile,
     cfgOptTlsServerPort,
+    cfgOptTls13Ciphers,
     cfgOptType,
     cfgOptVerbose,
     cfgOptVersion,

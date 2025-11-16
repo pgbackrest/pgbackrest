@@ -324,6 +324,8 @@ bldCfgRenderEnumStr(const String *const source)
             case '/':
             case ' ':
             case '.':
+            case ':':
+            case '!':
             case '-':
             {
                 if (sourceIdx != 0 && !priorSpecial)
@@ -345,6 +347,14 @@ bldCfgRenderEnumStr(const String *const source)
 
                     case '.':
                         strCatZ(result, "DT");
+                        break;
+
+                    case ':':
+                        strCatZ(result, "CO");
+                        break;
+
+                    case '!':
+                        strCatZ(result, "NT");
                         break;
 
                     case '-':
