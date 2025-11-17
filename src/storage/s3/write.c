@@ -11,10 +11,10 @@ S3 Storage File Write
 #include "storage/write.h"
 
 /***********************************************************************************************************************************
-Defaults
+Part defaults based on limits documented at https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
 ***********************************************************************************************************************************/
-// Use half of allowed parts to select buffer sizes more aggressively
-#define STORAGE_S3_PART_MAX                                         (10000 / 2)
+#define STORAGE_S3_SPLIT_DEFAULT                                    205
+#define STORAGE_S3_SPLIT_MAX                                        9558
 
 /***********************************************************************************************************************************
 S3 query tokens
@@ -73,7 +73,9 @@ storageWriteS3Open(THIS_VOID)
     // Allocate the part buffer
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
-        this->partBuffer = bufNew(this->partSize);
+        this->partBuffer = bufNew(
+            storageWriteChunkSize(
+                this->partSize, STORAGE_CHUNK_SIZE_MAX, STORAGE_CHUNK_INCR, STORAGE_S3_SPLIT_DEFAULT, STORAGE_S3_SPLIT_MAX, 0));
     }
     MEM_CONTEXT_OBJ_END();
 
@@ -196,7 +198,19 @@ storageWriteS3(THIS_VOID, const Buffer *const buffer)
         if (bufRemains(this->partBuffer) == 0)
         {
             storageWriteS3PartAsync(this);
+
+            size_t size = storageWriteChunkSize(
+                this->partSize, STORAGE_CHUNK_SIZE_MAX, STORAGE_CHUNK_INCR, STORAGE_S3_SPLIT_DEFAULT, STORAGE_S3_SPLIT_MAX,
+                strLstSize(this->uploadPartList) * 300);
+            // LOG_INFO_FMT("!!!OLD %zu USED %zu NEW %zu", bufSize(this->partBuffer), bufUsed(this->partBuffer), size);
+            bufResize(this->partBuffer, size);
             bufUsedZero(this->partBuffer);
+
+            // bufResize(
+            //     this->partBuffer,
+            //     storageWriteChunkSize(
+            //         this->partSize, STORAGE_CHUNK_SIZE_MAX, STORAGE_CHUNK_INCR, STORAGE_S3_SPLIT_DEFAULT, STORAGE_S3_SPLIT_MAX,
+            //         strLstSize(this->uploadPartList)));
         }
     }
     while (bytesTotal != bufUsed(buffer));
@@ -293,8 +307,7 @@ storageWriteS3New(StorageS3 *const storage, const String *const name, const uint
         *this = (StorageWriteS3)
         {
             .storage = storage,
-            // Calculate part size based on limits documented at https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
-            .partSize = storageWriteChunkSize(size, partSize, STORAGE_S3_PART_MAX),
+            .partSize = partSize,
 
             .interface = (StorageWriteInterface)
             {

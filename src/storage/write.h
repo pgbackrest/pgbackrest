@@ -5,6 +5,12 @@ Storage Write Interface
 #define STORAGE_WRITE_H
 
 /***********************************************************************************************************************************
+Chunk defaults for all object stores
+***********************************************************************************************************************************/
+#define STORAGE_CHUNK_SIZE_MAX                                      (1024 * 1024 * 1024)
+#define STORAGE_CHUNK_INCR                                          (8 * 1024 * 1024)
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct StorageWrite StorageWrite;
@@ -112,7 +118,13 @@ storageWriteFree(StorageWrite *const this)
 /***********************************************************************************************************************************
 Helper functions
 ***********************************************************************************************************************************/
-FN_EXTERN size_t storageWriteChunkSize(uint64_t fileSize, size_t chunkSize, size_t chunkMax);
+// !!!
+FN_EXTERN size_t storageWriteChunkSizeY(uint64_t fileSize, size_t chunkSize, size_t chunkMax);
+
+// !!!
+FN_EXTERN size_t storageWriteChunkSize(
+    size_t chunkSizeDefault, size_t chunkSizeMax, size_t chunkIncr, unsigned int defaultSplit, unsigned int maxSplit,
+    unsigned int chunkIdx);
 
 /***********************************************************************************************************************************
 Macros for function logging
