@@ -444,7 +444,7 @@
                     <config-key id="ssl-ciphers" name="Cipher suites accepted for TLSv1.2 (lower levels are never used)">
                         <summary>Sets the list of allowed TLSv1.2 cipher suites.</summary>
                         <text>
-                            <p>The default value reflects the current "state of the art".</p>
+                            <p>The default value reflects the current <quote>state of the art</quote>.</p>
                         </text>
                         <example>ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA256:!SSLv1:!SSLv2:!SSLv3:!TLSv1:!TLSv1.1</example>
                     </config-key>
