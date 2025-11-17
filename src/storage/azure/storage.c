@@ -5,6 +5,8 @@ Azure Storage
 
 #include <string.h>
 
+#include "config/config.h"
+
 #include "common/crypto/common.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
@@ -828,7 +830,7 @@ storageAzureNew(
         this->httpClient = httpClientNew(
             tlsClientNewP(
                 sckClientNew(this->host, port, timeout, timeout), this->host, timeout, timeout, verifyPeer, .caFile = caFile,
-                .caPath = caPath),
+                .caPath = caPath, .sslCiphers = cfgOptionStr(cfgOptSslCiphers), .tls13Ciphers = cfgOptionStrNull(cfgOptTls13Ciphers)),
             timeout);
 
         // Create list of redacted headers

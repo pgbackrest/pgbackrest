@@ -280,7 +280,7 @@ static const IoServerInterface tlsServerInterface =
 FN_EXTERN IoServer *
 tlsServerNew(
     const String *const host, const String *const caFile, const String *const keyFile, const String *const certFile,
-    const TimeMSec timeout)
+    const TimeMSec timeout, const String * sslCiphers, const String * tls13Ciphers)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, host);
@@ -318,6 +318,30 @@ tlsServerNew(
 #endif
             // Disable session tickets
             SSL_OP_NO_TICKET);
+
+        // Set minimum TLS 1.2
+        cryptoError(
+            SSL_CTX_set_min_proto_version(
+                this->context,
+                TLS1_2_VERSION) != 1,
+            "failed to set minumum TLS version to 1.2");
+
+        // Set accepted cipher suites
+        cryptoError(
+            SSL_CTX_set_cipher_list(
+                this->context,
+                strZ(sslCiphers)) != 1,
+        "failed to set TLSv1.2 ciphers");
+
+        // only configure TLSv1.3 ciphers if the config option is not empty
+        if (tls13Ciphers != NULL)
+        {
+            cryptoError(
+                SSL_CTX_set_ciphersuites (
+                    this->context,
+                    strZ(tls13Ciphers)) != 1,
+            "failed to set TLSv1.3 ciphers");
+        }
 
         // Disable session caching
         SSL_CTX_set_session_cache_mode(this->context, SSL_SESS_CACHE_OFF);

@@ -5,6 +5,8 @@ S3 Storage
 
 #include <string.h>
 
+#include "config/config.h"
+
 #include "common/crypto/hash.h"
 #include "common/debug.h"
 #include "common/io/http/client.h"
@@ -1256,7 +1258,8 @@ storageS3New(
 
         this->httpClient = httpClientNew(
             tlsClientNewP(
-                sckClientNew(host, port, timeout, timeout), host, timeout, timeout, verifyPeer, .caFile = caFile, .caPath = caPath),
+                sckClientNew(host, port, timeout, timeout), host, timeout, timeout, verifyPeer, .caFile = caFile, .caPath = caPath,
+                    .sslCiphers = cfgOptionStr(cfgOptSslCiphers), .tls13Ciphers = cfgOptionStrNull(cfgOptTls13Ciphers)),
             timeout);
 
         // Initialize authentication
@@ -1290,7 +1293,8 @@ storageS3New(
                 this->credHttpClient = httpClientNew(
                     tlsClientNewP(
                         sckClientNew(this->credHost, S3_STS_PORT, timeout, timeout), this->credHost, timeout, timeout, true,
-                        .caFile = caFile, .caPath = caPath),
+                        .caFile = caFile, .caPath = caPath,
+                         .sslCiphers = cfgOptionStr(cfgOptSslCiphers), .tls13Ciphers = cfgOptionStrNull(cfgOptTls13Ciphers)),
                     timeout);
 
                 break;

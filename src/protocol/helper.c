@@ -718,7 +718,10 @@ protocolRemoteExec(
                         .caFile = cfgOptionIdxStrNull(isRepo ? cfgOptRepoHostCaFile : cfgOptPgHostCaFile, hostIdx),
                         .caPath = cfgOptionIdxStrNull(isRepo ? cfgOptRepoHostCaPath : cfgOptPgHostCaPath, hostIdx),
                         .certFile = cfgOptionIdxStr(isRepo ? cfgOptRepoHostCertFile : cfgOptPgHostCertFile, hostIdx),
-                        .keyFile = cfgOptionIdxStr(isRepo ? cfgOptRepoHostKeyFile : cfgOptPgHostKeyFile, hostIdx));
+                        .keyFile = cfgOptionIdxStr(isRepo ? cfgOptRepoHostKeyFile : cfgOptPgHostKeyFile, hostIdx),
+                        .sslCiphers = cfgOptionStr(cfgOptSslCiphers),
+                        .tls13Ciphers = cfgOptionStrNull(cfgOptTls13Ciphers)
+                    );
 
                     helper->ioSession = ioClientOpen(helper->ioClient);
                 }

@@ -8,6 +8,7 @@ Test Tls Client
 #include "common/io/fdWrite.h"
 #include "storage/posix/storage.h"
 
+#include "common/harnessConfig.h"
 #include "common/harnessFork.h"
 #include "common/harnessServer.h"
 #include "common/harnessStorage.h"
@@ -980,11 +981,17 @@ testRun(void)
 
             HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
             {
+                //StringList *argList = strLstNew();
+                //hrnCfgArgRawZ(argList, cfgOptSslCiphers, "ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA256:!SSLv1:!SSLv2:!SSLv3:!TLSv1:!TLSv1.1");
+                //hrnCfgArgRawZ(argList, cfgOptTls13Ciphers, NULL);
+
                 // TLS server to accept connections
                 IoServer *socketServer = sckServerNew(STRDEF("127.0.0.1"), testPort, 5000);
                 IoServer *tlsServer = tlsServerNew(
                     STRDEF("127.0.0.1"), STRDEF(HRN_SERVER_CA), STRDEF(TEST_PATH "/server-root-perm-link"),
-                    STRDEF(TEST_PATH "/server-cn-only.crt"), 5000);
+                    STRDEF(TEST_PATH "/server-cn-only.crt"), 5000,
+                    STRDEF("ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA256:!SSLv1:!SSLv2:!SSLv3:!TLSv1:!TLSv1.1"),
+                    NULL);
                 IoSession *socketSession = NULL;
 
                 TEST_RESULT_STR(

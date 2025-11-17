@@ -37,6 +37,8 @@ typedef struct TlsClientNewParam
     const String *caPath;
     const String *certFile;
     const String *keyFile;
+    const String *sslCiphers;
+    const String *tls13Ciphers;
 } TlsClientNewParam;
 
 #define tlsClientNewP(ioClient, host, timeoutConnect, timeoutSession, verifyPeer, ...)                                             \

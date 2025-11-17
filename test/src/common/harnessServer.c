@@ -267,7 +267,9 @@ hrnServerRun(IoRead *const read, const HrnServerProtocol protocol, const unsigne
             param.key = strNewFmt("%s/" HRN_SERVER_CERT_PREFIX "server.key", hrnPathRepo());
         }
 
-        tlsServer = tlsServerNew(STRDEF(HRN_SERVER_HOST), param.ca, param.key, param.certificate, 5000);
+        tlsServer = tlsServerNew(STRDEF(HRN_SERVER_HOST), param.ca, param.key, param.certificate, 5000, 
+            strNewFmt("ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA256:!SSLv1:!SSLv2:!SSLv3:!TLSv1:!TLSv1.1"), 
+            NULL);
     }
 
     IoServer *socketServer = sckServerNew(param.address == NULL ? STRDEF("127.0.0.1") : param.address, port, 5000);

@@ -12,7 +12,6 @@ TLS Common
 #include "common/debug.h"
 #include "common/io/tls/common.h"
 #include "common/user.h"
-#include "config/config.h"
 #include "storage/posix/storage.h"
 
 /**********************************************************************************************************************************/
@@ -182,7 +181,7 @@ tlsContext(void)
     cryptoInit();
 
     // Select the TLS method to use. To maintain compatibility with older versions of OpenSSL we need to use an SSL method, but
-    // SSL versions will be excluded later on.
+    // SSL versions will be excluded in SSL_CTX_set_options().
     const SSL_METHOD *const method = SSLv23_method();
     cryptoError(method == NULL, "unable to load TLS method");
 
@@ -191,43 +190,15 @@ tlsContext(void)
     cryptoError(result == NULL, "unable to create TLS context");
 
     // Set options
-    cryptoError(
-        SSL_CTX_set_options(
-            result,
-            // Disable SSL
-            SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 |
-            // Disable compression
-            SSL_OP_NO_COMPRESSION) != 1,
-        "failed to set TLS context options");
-
-    // Set minimum TLS 1.2
-    cryptoError(
-        SSL_CTX_set_min_proto_version(
-            result,
-            TLS1_2_VERSION) != 1,
-        "failed to set minumum TLS version to 1.2");
-
-    // Set accepted cipher suites
-    cryptoError(
-    SSL_CTX_set_cipher_list(
+    SSL_CTX_set_options(
         result,
-        strZ(cfgOptionStr(cfgOptSslCiphers))) != 1,
-    "failed to set TLSv1.2 ciphers");
-    
-    // only configure TLSv1.3 ciphers if the config option is not empty 
-    if (cfgOptionStrNull(cfgOptTls13Ciphers) != NULL)
-    {
-        cryptoError(
-        SSL_CTX_set_ciphersuites (
-            result,
-            strZ(cfgOptionStr(cfgOptTls13Ciphers))) != 1,
-        "failed to set TLSv1.3 ciphers");
-    }
+        // Disable SSL
+        SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 |
+        // Disable compression
+        SSL_OP_NO_COMPRESSION);
 
     // Disable auto-retry to prevent SSL_read() from hanging
-    cryptoError(
-        SSL_CTX_clear_mode(result, SSL_MODE_AUTO_RETRY) != 1,
-    "failed to disable SSL_MODE_AUTO_RETRY");
+    SSL_CTX_clear_mode(result, SSL_MODE_AUTO_RETRY);
 
     FUNCTION_TEST_RETURN_TYPE_P(SSL_CTX, result);
 }

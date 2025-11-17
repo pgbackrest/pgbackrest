@@ -31,7 +31,8 @@ cmdServerPing(void)
         const TimeMSec timeout = cfgOptionUInt64(cfgOptIoTimeout);
 
         IoClient *const tlsClient = tlsClientNewP(
-            sckClientNew(host, cfgOptionUInt(cfgOptTlsServerPort), timeout, timeout), host, timeout, timeout, false);
+            sckClientNew(host, cfgOptionUInt(cfgOptTlsServerPort), timeout, timeout), host, timeout, timeout, false, 
+                .sslCiphers = cfgOptionStr(cfgOptSslCiphers), .tls13Ciphers = cfgOptionStrNull(cfgOptTls13Ciphers));
         IoSession *const tlsSession = ioClientOpen(tlsClient);
 
         // Send ping
