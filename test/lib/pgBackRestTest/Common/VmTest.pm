@@ -65,6 +65,8 @@ use constant VM_ARCH_I386                                           => 'i386';
     push @EXPORT, qw(VM_ARCH_I386);
 use constant VM_ARCH_AMD64                                          => 'amd64';
     push @EXPORT, qw(VM_ARCH_AMD64);
+use constant VM_ARCH_X86_64                                         => 'x86_64';
+    push @EXPORT, qw(VM_ARCH_X86_64);
 
 ####################################################################################################################################
 # Valid VM list

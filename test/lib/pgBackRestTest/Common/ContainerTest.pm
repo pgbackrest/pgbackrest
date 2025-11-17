@@ -507,7 +507,11 @@ sub containerBuild
                         "/etc/postgresql-common/createcluster.conf";
             }
 
-            if (defined($oOS->{&VM_DB}) && @{$oOS->{&VM_DB}} > 0)
+            my $strArchDefined = defined($strArch) ? $strArch : hostArch();
+            if (defined($oOS->{&VM_DB}) && @{$oOS->{&VM_DB}} > 0 &&
+                ($strArchDefined eq VM_ARCH_AARCH64 ||
+                 $strArchDefined eq VM_ARCH_AMD64 ||
+                 $strArchDefined eq VM_ARCH_X86_64))
             {
                 $strScript .= sectionHeader() .
                     "# Install PostgreSQL\n";
