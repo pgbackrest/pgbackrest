@@ -980,11 +980,11 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storageWriteChunkSize()");
 
-        TEST_RESULT_UINT(storageWriteChunkSize(5, 16, 4, 1, 2, 0), 5, "default chunk size");
-        TEST_RESULT_UINT(storageWriteChunkSize(5, 16, 4, 1, 2, 3), 16, "max chunk size");
-        TEST_RESULT_UINT(storageWriteChunkSize(32, 512, 4, 1, 100, 2), 36, "asc chunk size below default");
-        TEST_RESULT_UINT(storageWriteChunkSize(32, 512, 4, 1, 3, 2), 508, "asc chunk size not rounded");
-        TEST_RESULT_UINT(storageWriteChunkSize(32, 512, 3, 1, 3, 2), 510, "asc chunk size not rounded");
+        TEST_RESULT_UINT(storageWriteChunkSize(5, 1, 2, 0), 5, "default chunk size");
+        TEST_RESULT_UINT(storageWriteChunkSize(5, 1, 2, 3), STORAGE_CHUNK_SIZE_MAX, "max chunk size");
+        TEST_RESULT_UINT(storageWriteChunkSize(35165824, 1, 100, 2), 43554432, "asc chunk size below default");
+        TEST_RESULT_UINT(storageWriteChunkSize(32, 1, 100, 2), 25165824, "asc chunk size rounded");
+        TEST_RESULT_UINT(storageWriteChunkSize(32, 1, 2, 1), 1065353216, "asc chunk size not rounded");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write file - defaults");

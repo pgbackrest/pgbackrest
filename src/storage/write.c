@@ -58,23 +58,23 @@ storageWriteNew(void *const driver, const StorageWriteInterface *const interface
 }
 
 /**********************************************************************************************************************************/
+#define STORAGE_CHUNK_SIZE_MAX                                      (size_t)(1024 * 1024 * 1024)
+#define STORAGE_CHUNK_INCR                                          (size_t)(8 * 1024 * 1024)
+
 FN_EXTERN size_t
 storageWriteChunkSize(
-    const size_t chunkSizeDefault, const size_t chunkSizeMax, const size_t chunkIncr, const unsigned int splitDefault,
-    const unsigned int splitMax, const unsigned int chunkIdx)
+    const size_t chunkSizeDefault, const unsigned int splitDefault, const unsigned int splitMax, const unsigned int chunkIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(SIZE, chunkSizeDefault);
-        FUNCTION_TEST_PARAM(SIZE, chunkSizeMax);
-        FUNCTION_TEST_PARAM(SIZE, chunkIncr);
         FUNCTION_TEST_PARAM(UINT, splitDefault);
         FUNCTION_TEST_PARAM(UINT, splitMax);
         FUNCTION_TEST_PARAM(UINT, chunkIdx);
     FUNCTION_TEST_END();
 
     ASSERT(chunkSizeDefault > 0);
-    ASSERT(chunkSizeMax >= chunkSizeDefault);
-    ASSERT(chunkIncr > 0);
+    ASSERT(STORAGE_CHUNK_SIZE_MAX >= chunkSizeDefault);
+    ASSERT(STORAGE_CHUNK_INCR > 0);
     ASSERT(splitMax > splitDefault);
 
     // If below the default split then return default chunk size
@@ -84,19 +84,19 @@ storageWriteChunkSize(
     }
     // Else if above max split then return max chunk size
     else if (chunkIdx > splitMax)
-        FUNCTION_TEST_RETURN(SIZE, chunkSizeMax);
+        FUNCTION_TEST_RETURN(SIZE, STORAGE_CHUNK_SIZE_MAX);
 
     // Calculate ascending chunk size
-    uint64_t result = (chunkSizeMax - chunkIncr) * (chunkIdx - splitDefault + 1) / (splitMax - splitDefault);
+    uint64_t result = (STORAGE_CHUNK_SIZE_MAX - STORAGE_CHUNK_INCR) * (chunkIdx - splitDefault + 1) / (splitMax - splitDefault);
 
     // If ascending chunk size is less than default then return default
-    if (result <= chunkSizeDefault + chunkIncr)
+    if (result <= chunkSizeDefault + STORAGE_CHUNK_INCR)
     {
-        result = chunkSizeDefault + chunkIncr;
+        result = chunkSizeDefault + STORAGE_CHUNK_INCR;
     }
     // Else if ascending chunk size is less evenly divisible by chunk increment then round up
-    else if (result % chunkIncr != 0)
-        result += chunkIncr - (result % chunkIncr);
+    else if (result % STORAGE_CHUNK_INCR != 0)
+        result += STORAGE_CHUNK_INCR - (result % STORAGE_CHUNK_INCR);
 
     // Chunk size should never exceed SIZE_MAX (might happen on 32-bit platforms)
     CHECK(AssertError, result <= SIZE_MAX, "chunk size exceeds SIZE_MAX");

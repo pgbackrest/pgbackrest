@@ -73,9 +73,7 @@ storageWriteS3Open(THIS_VOID)
     // Allocate the part buffer
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
-        this->partBuffer = bufNew(
-            storageWriteChunkSize(
-                this->partSize, STORAGE_CHUNK_SIZE_MAX, STORAGE_CHUNK_INCR, STORAGE_S3_SPLIT_DEFAULT, STORAGE_S3_SPLIT_MAX, 0));
+        this->partBuffer = bufNew(this->partSize);
     }
     MEM_CONTEXT_OBJ_END();
 
@@ -200,17 +198,15 @@ storageWriteS3(THIS_VOID, const Buffer *const buffer)
             storageWriteS3PartAsync(this);
 
             size_t size = storageWriteChunkSize(
-                this->partSize, STORAGE_CHUNK_SIZE_MAX, STORAGE_CHUNK_INCR, STORAGE_S3_SPLIT_DEFAULT, STORAGE_S3_SPLIT_MAX,
-                strLstSize(this->uploadPartList) * 300);
+                this->partSize, STORAGE_S3_SPLIT_DEFAULT, STORAGE_S3_SPLIT_MAX, strLstSize(this->uploadPartList) * 300);
             // LOG_INFO_FMT("!!!OLD %zu USED %zu NEW %zu", bufSize(this->partBuffer), bufUsed(this->partBuffer), size);
             bufResize(this->partBuffer, size);
             bufUsedZero(this->partBuffer);
 
-            // bufResize(
+            // !!! bufResize(
             //     this->partBuffer,
             //     storageWriteChunkSize(
-            //         this->partSize, STORAGE_CHUNK_SIZE_MAX, STORAGE_CHUNK_INCR, STORAGE_S3_SPLIT_DEFAULT, STORAGE_S3_SPLIT_MAX,
-            //         strLstSize(this->uploadPartList)));
+            //         this->partSize, STORAGE_S3_SPLIT_DEFAULT, STORAGE_S3_SPLIT_MAX, strLstSize(this->uploadPartList)));
         }
     }
     while (bytesTotal != bufUsed(buffer));

@@ -59,8 +59,6 @@ storageWriteChunkSplitMax(
             ascTotal += chunkSize;
         }
 
-        // TEST_LOG_FMT("IDX = %u, DEFAULT = %zu, ASC = %zu, MAX = %zu, TOTAL = %zu", splitIdx, defaultTotal, ascTotal, maxTotal, defaultTotal + ascTotal + maxTotal);
-
         if (defaultTotal + ascTotal + maxTotal > fileSizeMax)
             break;
     }
@@ -516,8 +514,8 @@ testRun(void)
                 TEST_RESULT_UINT(splitDefault, STORAGE_S3_SPLIT_DEFAULT, "check part default split");
 
                 unsigned int splitMax = storageWriteChunkSplitMax(
-                        TEST_STORAGE_S3_PART_SIZE_DEFAULT, STORAGE_CHUNK_SIZE_MAX, TEST_STORAGE_S3_PART_MAX, STORAGE_CHUNK_INCR,
-                        splitDefault, TEST_STORAGE_S3_FILE_MAX);
+                    TEST_STORAGE_S3_PART_SIZE_DEFAULT, STORAGE_CHUNK_SIZE_MAX, TEST_STORAGE_S3_PART_MAX, STORAGE_CHUNK_INCR,
+                    splitDefault, TEST_STORAGE_S3_FILE_MAX);
                 TEST_RESULT_UINT(splitMax, STORAGE_S3_SPLIT_MAX, "check part max split");
 
                 uint64_t sizeCheck = 0;
@@ -525,8 +523,7 @@ testRun(void)
                 for (unsigned int chunkIdx = 0; chunkIdx < TEST_STORAGE_S3_PART_MAX; chunkIdx++)
                 {
                     sizeCheck += storageWriteChunkSize(
-                        TEST_STORAGE_S3_PART_SIZE_DEFAULT, STORAGE_CHUNK_SIZE_MAX, STORAGE_CHUNK_INCR, STORAGE_S3_SPLIT_DEFAULT,
-                        STORAGE_S3_SPLIT_MAX, chunkIdx);
+                        TEST_STORAGE_S3_PART_SIZE_DEFAULT, STORAGE_S3_SPLIT_DEFAULT, STORAGE_S3_SPLIT_MAX, chunkIdx);
                 }
 
                 TEST_RESULT_BOOL(sizeCheck >= TEST_STORAGE_S3_FILE_MAX, true, "check part total min");
