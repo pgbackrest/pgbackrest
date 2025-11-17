@@ -544,7 +544,6 @@ storageNewWrite(const Storage *const this, const String *const fileExp, const St
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE, this);
         FUNCTION_LOG_PARAM(STRING, fileExp);
-        FUNCTION_LOG_PARAM(UINT64, param.size);
         FUNCTION_LOG_PARAM(MODE, param.modeFile);
         FUNCTION_LOG_PARAM(MODE, param.modePath);
         FUNCTION_LOG_PARAM(STRING, param.user);
@@ -573,7 +572,7 @@ storageNewWrite(const Storage *const this, const String *const fileExp, const St
                 .modePath = param.modePath != 0 ? param.modePath : this->modePath, .user = param.user, .group = param.group,
                 .timeModified = param.timeModified, .createPath = !param.noCreatePath, .syncFile = !param.noSyncFile,
                 .syncPath = !param.noSyncPath, .atomic = !param.noAtomic, .truncate = !param.noTruncate,
-                .compressible = param.compressible, .size = param.size),
+                .compressible = param.compressible),
             memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();

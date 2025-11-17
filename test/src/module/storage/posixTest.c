@@ -978,13 +978,6 @@ testRun(void)
 #endif // TEST_CONTAINER_REQUIRED
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storageWriteChunkSizeY()");
-
-        TEST_RESULT_UINT(storageWriteChunkSizeY(32, 16, 2), 16, "keep chunk size");
-        TEST_RESULT_UINT(storageWriteChunkSizeY(34, 16, 2), 1024 * 1024, "increase chunk size (rounding up)");
-        TEST_RESULT_UINT(storageWriteChunkSizeY(4 * 1024 * 1024, 16, 2), 2 * 1024 * 1024, "increase chunk size (no rounding)");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storageWriteChunkSize()");
 
         TEST_RESULT_UINT(storageWriteChunkSize(5, 16, 4, 1, 2, 0), 5, "default chunk size");

@@ -290,12 +290,11 @@ storageWriteS3Close(THIS_VOID)
 
 /**********************************************************************************************************************************/
 FN_EXTERN StorageWrite *
-storageWriteS3New(StorageS3 *const storage, const String *const name, const uint64_t size, const size_t partSize)
+storageWriteS3New(StorageS3 *const storage, const String *const name, const size_t partSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_S3, storage);
         FUNCTION_LOG_PARAM(STRING, name);
-        FUNCTION_LOG_PARAM(UINT64, size);
         FUNCTION_LOG_PARAM(SIZE, partSize);
     FUNCTION_LOG_END();
 

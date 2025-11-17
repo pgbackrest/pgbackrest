@@ -58,38 +58,6 @@ storageWriteNew(void *const driver, const StorageWriteInterface *const interface
 }
 
 /**********************************************************************************************************************************/
-#define STORAGE_MIB                                                 (1024 * 1024)
-
-FN_EXTERN size_t
-storageWriteChunkSizeY(const uint64_t fileSize, const size_t chunkSize, const size_t chunkMax)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(UINT64, fileSize);
-        FUNCTION_TEST_PARAM(SIZE, chunkSize);
-        FUNCTION_TEST_PARAM(SIZE, chunkMax);
-    FUNCTION_TEST_END();
-
-    ASSERT(chunkSize > 0);
-    ASSERT(chunkMax > 0);
-
-    uint64_t result = fileSize / chunkMax;
-
-    if (result > chunkSize)
-    {
-        // Round up to the nearest MiB
-        if (result % STORAGE_MIB != 0)
-            result += STORAGE_MIB - (result % STORAGE_MIB);
-
-        // On 32-bit platforms chunk size might exceed SIZE_MAX but only for very large files
-        CHECK(AssertError, result <= SIZE_MAX, "chunk size exceeds SIZE_MAX");
-
-        FUNCTION_TEST_RETURN(SIZE, (size_t)result);
-    }
-
-    FUNCTION_TEST_RETURN(SIZE, chunkSize);
-}
-
-/**********************************************************************************************************************************/
 FN_EXTERN size_t
 storageWriteChunkSize(
     const size_t chunkSizeDefault, const size_t chunkSizeMax, const size_t chunkIncr, const unsigned int splitDefault,

@@ -183,10 +183,6 @@ typedef struct StorageNewWriteParam
     mode_t modeFile;
     mode_t modePath;
     time_t timeModified;
-
-    // Used to determine chunk size on object stores and only required when the file might be large, i.e. > 25GiB
-    uint64_t size;
-
     const String *user;
     const String *group;
 } StorageNewWriteParam;

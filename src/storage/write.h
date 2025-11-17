@@ -119,9 +119,6 @@ storageWriteFree(StorageWrite *const this)
 Helper functions
 ***********************************************************************************************************************************/
 // !!!
-FN_EXTERN size_t storageWriteChunkSizeY(uint64_t fileSize, size_t chunkSize, size_t chunkMax);
-
-// !!!
 FN_EXTERN size_t storageWriteChunkSize(
     size_t chunkSizeDefault, size_t chunkSizeMax, size_t chunkIncr, unsigned int defaultSplit, unsigned int maxSplit,
     unsigned int chunkIdx);
