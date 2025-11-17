@@ -68,7 +68,7 @@ cmdServerInit(void)
         serverLocal.tlsServer = tlsServerNew(
             cfgOptionStr(cfgOptTlsServerAddress), cfgOptionStr(cfgOptTlsServerCaFile), cfgOptionStr(cfgOptTlsServerKeyFile),
             cfgOptionStr(cfgOptTlsServerCertFile), cfgOptionUInt64(cfgOptProtocolTimeout),
-            cfgOptionStr(cfgOptSslCiphers), cfgOptionStrNull(cfgOptTls13Ciphers));
+            cfgOptionStr(cfgOptTlsCiphers), cfgOptionStrNull(cfgOptTls13Ciphers));
     }
     MEM_CONTEXT_END();
 }

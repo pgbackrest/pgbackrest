@@ -942,7 +942,7 @@ option:
     depend: tcp-keep-alive-count
 
   # TLS options:
-  ssl-ciphers:
+  tls-ciphers:
     section: global
     type: string
     required: false

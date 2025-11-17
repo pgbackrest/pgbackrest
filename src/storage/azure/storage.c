@@ -830,7 +830,7 @@ storageAzureNew(
         this->httpClient = httpClientNew(
             tlsClientNewP(
                 sckClientNew(this->host, port, timeout, timeout), this->host, timeout, timeout, verifyPeer, .caFile = caFile,
-                .caPath = caPath, .sslCiphers = cfgOptionStr(cfgOptSslCiphers), .tls13Ciphers = cfgOptionStrNull(cfgOptTls13Ciphers)),
+                .caPath = caPath, .tlsCiphers = cfgOptionStr(cfgOptTlsCiphers), .tls13Ciphers = cfgOptionStrNull(cfgOptTls13Ciphers)),
             timeout);
 
         // Create list of redacted headers

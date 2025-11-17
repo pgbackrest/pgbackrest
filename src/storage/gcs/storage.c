@@ -1283,7 +1283,7 @@ storageGcsNew(
                     tlsClientNewP(
                         sckClientNew(httpUrlHost(this->authUrl), httpUrlPort(this->authUrl), timeout, timeout),
                         httpUrlHost(this->authUrl), timeout, timeout, verifyPeer, .caFile = caFile, .caPath = caPath,
-                            .sslCiphers = cfgOptionStr(cfgOptSslCiphers), .tls13Ciphers = cfgOptionStrNull(cfgOptTls13Ciphers)),
+                            .tlsCiphers = cfgOptionStr(cfgOptTlsCiphers), .tls13Ciphers = cfgOptionStrNull(cfgOptTls13Ciphers)),
                     timeout);
 
                 break;
@@ -1303,7 +1303,7 @@ storageGcsNew(
         this->httpClient = httpClientNew(
             tlsClientNewP(
                 sckClientNew(this->endpoint, httpUrlPort(url), timeout, timeout), this->endpoint, timeout, timeout, verifyPeer,
-                .caFile = caFile, .caPath = caPath, cfgOptionStr(cfgOptSslCiphers), cfgOptionStrNull(cfgOptTls13Ciphers)),
+                .caFile = caFile, .caPath = caPath, cfgOptionStr(cfgOptTlsCiphers), cfgOptionStrNull(cfgOptTls13Ciphers)),
             timeout);
 
         // Create list of redacted headers

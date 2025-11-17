@@ -982,7 +982,7 @@ testRun(void)
             HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
             {
                 //StringList *argList = strLstNew();
-                //hrnCfgArgRawZ(argList, cfgOptSslCiphers, "ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA256:!SSLv1:!SSLv2:!SSLv3:!TLSv1:!TLSv1.1");
+                //hrnCfgArgRawZ(argList, cfgOptTlsCiphers, "ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA256:!SSLv1:!SSLv2:!SSLv3:!TLSv1:!TLSv1.1");
                 //hrnCfgArgRawZ(argList, cfgOptTls13Ciphers, NULL);
 
                 // TLS server to accept connections

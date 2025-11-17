@@ -32,7 +32,7 @@ cmdServerPing(void)
 
         IoClient *const tlsClient = tlsClientNewP(
             sckClientNew(host, cfgOptionUInt(cfgOptTlsServerPort), timeout, timeout), host, timeout, timeout, false, 
-                .sslCiphers = cfgOptionStr(cfgOptSslCiphers), .tls13Ciphers = cfgOptionStrNull(cfgOptTls13Ciphers));
+                .tlsCiphers = cfgOptionStr(cfgOptTlsCiphers), .tls13Ciphers = cfgOptionStrNull(cfgOptTls13Ciphers));
         IoSession *const tlsSession = ioClientOpen(tlsClient);
 
         // Send ping

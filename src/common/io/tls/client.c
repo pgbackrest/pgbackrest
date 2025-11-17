@@ -423,7 +423,7 @@ tlsClientNew(
         FUNCTION_LOG_PARAM(STRING, param.caPath);
         FUNCTION_LOG_PARAM(STRING, param.certFile);
         FUNCTION_LOG_PARAM(STRING, param.keyFile);
-        FUNCTION_LOG_PARAM(STRING, param.sslCiphers);
+        FUNCTION_LOG_PARAM(STRING, param.tlsCiphers);
         FUNCTION_LOG_PARAM(STRING, param.tls13Ciphers);
     FUNCTION_LOG_END();
     ASSERT(ioClient != NULL);
@@ -457,7 +457,7 @@ tlsClientNew(
         cryptoError(
             SSL_CTX_set_cipher_list(
                 this->context,
-                strZ(param.sslCiphers)) != 1,
+                strZ(param.tlsCiphers)) != 1,
         "client: failed to set TLSv1.2 ciphers");
 
         // only configure TLSv1.3 ciphers if the config option is not empty

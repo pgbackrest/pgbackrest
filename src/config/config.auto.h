@@ -119,7 +119,6 @@ Option constants
 #define CFGOPT_SET                                                  "set"
 #define CFGOPT_SORT                                                 "sort"
 #define CFGOPT_SPOOL_PATH                                           "spool-path"
-#define CFGOPT_SSL_CIPHERS                                          "ssl-ciphers"
 #define CFGOPT_STANZA                                               "stanza"
 #define CFGOPT_START_FAST                                           "start-fast"
 #define CFGOPT_STOP_AUTO                                            "stop-auto"
@@ -132,6 +131,7 @@ Option constants
 #define CFGOPT_TCP_KEEP_ALIVE_COUNT                                 "tcp-keep-alive-count"
 #define CFGOPT_TCP_KEEP_ALIVE_IDLE                                  "tcp-keep-alive-idle"
 #define CFGOPT_TCP_KEEP_ALIVE_INTERVAL                              "tcp-keep-alive-interval"
+#define CFGOPT_TLS_CIPHERS                                          "tls-ciphers"
 #define CFGOPT_TLS_SERVER_ADDRESS                                   "tls-server-address"
 #define CFGOPT_TLS_SERVER_AUTH                                      "tls-server-auth"
 #define CFGOPT_TLS_SERVER_CA_FILE                                   "tls-server-ca-file"
@@ -571,7 +571,6 @@ typedef enum
     cfgOptSet,
     cfgOptSort,
     cfgOptSpoolPath,
-    cfgOptSslCiphers,
     cfgOptStanza,
     cfgOptStartFast,
     cfgOptStopAuto,
@@ -584,6 +583,7 @@ typedef enum
     cfgOptTcpKeepAliveCount,
     cfgOptTcpKeepAliveIdle,
     cfgOptTcpKeepAliveInterval,
+    cfgOptTlsCiphers,
     cfgOptTlsServerAddress,
     cfgOptTlsServerAuth,
     cfgOptTlsServerCaFile,

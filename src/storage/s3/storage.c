@@ -1259,7 +1259,7 @@ storageS3New(
         this->httpClient = httpClientNew(
             tlsClientNewP(
                 sckClientNew(host, port, timeout, timeout), host, timeout, timeout, verifyPeer, .caFile = caFile, .caPath = caPath,
-                    .sslCiphers = cfgOptionStr(cfgOptSslCiphers), .tls13Ciphers = cfgOptionStrNull(cfgOptTls13Ciphers)),
+                    .tlsCiphers = cfgOptionStr(cfgOptTlsCiphers), .tls13Ciphers = cfgOptionStrNull(cfgOptTls13Ciphers)),
             timeout);
 
         // Initialize authentication
@@ -1294,7 +1294,7 @@ storageS3New(
                     tlsClientNewP(
                         sckClientNew(this->credHost, S3_STS_PORT, timeout, timeout), this->credHost, timeout, timeout, true,
                         .caFile = caFile, .caPath = caPath,
-                         .sslCiphers = cfgOptionStr(cfgOptSslCiphers), .tls13Ciphers = cfgOptionStrNull(cfgOptTls13Ciphers)),
+                         .tlsCiphers = cfgOptionStr(cfgOptTlsCiphers), .tls13Ciphers = cfgOptionStrNull(cfgOptTls13Ciphers)),
                     timeout);
 
                 break;

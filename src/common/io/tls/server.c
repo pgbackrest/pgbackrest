@@ -280,7 +280,7 @@ static const IoServerInterface tlsServerInterface =
 FN_EXTERN IoServer *
 tlsServerNew(
     const String *const host, const String *const caFile, const String *const keyFile, const String *const certFile,
-    const TimeMSec timeout, const String * sslCiphers, const String * tls13Ciphers)
+    const TimeMSec timeout, const String * tlsCiphers, const String * tls13Ciphers)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, host);
@@ -330,7 +330,7 @@ tlsServerNew(
         cryptoError(
             SSL_CTX_set_cipher_list(
                 this->context,
-                strZ(sslCiphers)) != 1,
+                strZ(tlsCiphers)) != 1,
         "failed to set TLSv1.2 ciphers");
 
         // only configure TLSv1.3 ciphers if the config option is not empty

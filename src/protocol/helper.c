@@ -719,7 +719,7 @@ protocolRemoteExec(
                         .caPath = cfgOptionIdxStrNull(isRepo ? cfgOptRepoHostCaPath : cfgOptPgHostCaPath, hostIdx),
                         .certFile = cfgOptionIdxStr(isRepo ? cfgOptRepoHostCertFile : cfgOptPgHostCertFile, hostIdx),
                         .keyFile = cfgOptionIdxStr(isRepo ? cfgOptRepoHostKeyFile : cfgOptPgHostKeyFile, hostIdx),
-                        .sslCiphers = cfgOptionStr(cfgOptSslCiphers),
+                        .tlsCiphers = cfgOptionStr(cfgOptTlsCiphers),
                         .tls13Ciphers = cfgOptionStrNull(cfgOptTls13Ciphers)
                     );
 

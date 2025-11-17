@@ -430,32 +430,25 @@
 
                         <example>30</example>
                     </config-key>
-                </config-key-list>
-            </config-section>
 
-            <config-section id="ssl" name="TLS settings">
-                <text>
-                    <p>pgBackRest encrypts all transport connections. This includes the TLS server and client as well as accessing obkect storage.</p>
-                    <p>The absolute minimum version used is TLSv1.2.</p>
-                    <p>The accepted cipher suites can be adjusted if need arises.</p>
-                </text>
-
-                <config-key-list>
-                    <config-key id="ssl-ciphers" name="Cipher suites accepted for TLSv1.2 (lower levels are never used)">
+                    <config-key id="tls-ciphers" name="TLSv1.2 cipher suites">
                         <summary>Sets the list of allowed TLSv1.2 cipher suites.</summary>
                         <text>
-                            <p>The default value reflects the current <quote>state of the art</quote>.</p>
+                            <p>pgBackRest encrypts all transport connections. This includes the TLS server and client as well client access of object storage.</p>
+                            <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2.</admonition>
+                            <p>The accepted cipher suites can be adjusted if need arises. The default value reflects the current <quote>state of the art</quote>.</p>
                         </text>
                         <example>ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA256:!SSLv1:!SSLv2:!SSLv3:!TLSv1:!TLSv1.1</example>
                     </config-key>
 
-                    <config-key id="tls13-ciphers" name="Cipher suites accepted for TLSv1.3">
+                    <config-key id="tls13-ciphers" name="TLSv1.3 cipher suites">
                         <summary>Sets the list of allowed TLSv1.3 cipher suites.</summary>
                         <text>
-                            <p>If unset (the default), all suites defined by the standard are allowed.</p>
+                            <p>If unset (the default), the default of the underlying OpenSSL library applies.</p>
                         </text>
-                        <example>TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_CCM_SHA256</example>
+                        <example>TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256</example>
                     </config-key>
+
                 </config-key-list>
             </config-section>
 

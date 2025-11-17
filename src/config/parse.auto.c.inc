@@ -10528,87 +10528,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                         // opt/spool-path
     ),                                                                                                             // opt/spool-path
     // -----------------------------------------------------------------------------------------------------------------------------
-    PARSE_RULE_OPTION                                                                                             // opt/ssl-ciphers
-    (                                                                                                             // opt/ssl-ciphers
-        PARSE_RULE_OPTION_NAME("ssl-ciphers"),                                                                    // opt/ssl-ciphers
-        PARSE_RULE_OPTION_TYPE(String),                                                                           // opt/ssl-ciphers
-        PARSE_RULE_OPTION_RESET(true),                                                                            // opt/ssl-ciphers
-        PARSE_RULE_OPTION_REQUIRED(false),                                                                        // opt/ssl-ciphers
-        PARSE_RULE_OPTION_SECTION(Global),                                                                        // opt/ssl-ciphers
-                                                                                                                  // opt/ssl-ciphers
-        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                            // opt/ssl-ciphers
-        (                                                                                                         // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Annotate)                                                                   // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                 // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Backup)                                                                     // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Check)                                                                      // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Expire)                                                                     // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Info)                                                                       // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                   // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                    // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                     // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                                    // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                     // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Restore)                                                                    // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Server)                                                                     // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(ServerPing)                                                                 // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                               // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                               // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                              // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Start)                                                                      // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Stop)                                                                       // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Verify)                                                                     // opt/ssl-ciphers
-        ),                                                                                                        // opt/ssl-ciphers
-                                                                                                                  // opt/ssl-ciphers
-        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                           // opt/ssl-ciphers
-        (                                                                                                         // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                 // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                // opt/ssl-ciphers
-        ),                                                                                                        // opt/ssl-ciphers
-                                                                                                                  // opt/ssl-ciphers
-        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                           // opt/ssl-ciphers
-        (                                                                                                         // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                 // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Backup)                                                                     // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Restore)                                                                    // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Verify)                                                                     // opt/ssl-ciphers
-        ),                                                                                                        // opt/ssl-ciphers
-                                                                                                                  // opt/ssl-ciphers
-        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                          // opt/ssl-ciphers
-        (                                                                                                         // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Annotate)                                                                   // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                 // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Backup)                                                                     // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Check)                                                                      // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Expire)                                                                     // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Info)                                                                       // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                   // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                    // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                     // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                                    // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                     // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Restore)                                                                    // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                               // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                               // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                              // opt/ssl-ciphers
-            PARSE_RULE_OPTION_COMMAND(Verify)                                                                     // opt/ssl-ciphers
-        ),                                                                                                        // opt/ssl-ciphers
-                                                                                                                  // opt/ssl-ciphers
-        PARSE_RULE_OPTIONAL                                                                                       // opt/ssl-ciphers
-        (                                                                                                         // opt/ssl-ciphers
-            PARSE_RULE_OPTIONAL_GROUP                                                                             // opt/ssl-ciphers
-            (                                                                                                     // opt/ssl-ciphers
-                PARSE_RULE_OPTIONAL_DEFAULT                                                                       // opt/ssl-ciphers
-                (                                                                                                 // opt/ssl-ciphers
-                    PARSE_RULE_VAL_STR(QT_ECDHE_DS_RSA_DS_AES256_DS_GCM_DS_SHA384_CO_DHE_DS_RSA_DS_AES256_DS_GCM_DS_SHA384_CO_ECDHE_DS_RSA_DS_AES128_DS_GCM_DS_SHA256_CO_DHE_DS_RSA_DS_AES128_DS_GCM_DS_SHA256_CO_NT_SSLv1_CO_NT_SSLv2_CO_NT_SSLv3_CO_NT_TLSv1_CO_NT_TLSv1_DT_1_QT),
-                ),                                                                                                // opt/ssl-ciphers
-            ),                                                                                                    // opt/ssl-ciphers
-        ),                                                                                                        // opt/ssl-ciphers
-    ),                                                                                                            // opt/ssl-ciphers
-    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                                  // opt/stanza
     (                                                                                                                  // opt/stanza
         PARSE_RULE_OPTION_NAME("stanza"),                                                                              // opt/stanza
@@ -11166,6 +11085,87 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),                                                                                        // opt/tcp-keep-alive-interval
         ),                                                                                            // opt/tcp-keep-alive-interval
     ),                                                                                                // opt/tcp-keep-alive-interval
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                             // opt/tls-ciphers
+    (                                                                                                             // opt/tls-ciphers
+        PARSE_RULE_OPTION_NAME("tls-ciphers"),                                                                    // opt/tls-ciphers
+        PARSE_RULE_OPTION_TYPE(String),                                                                           // opt/tls-ciphers
+        PARSE_RULE_OPTION_RESET(true),                                                                            // opt/tls-ciphers
+        PARSE_RULE_OPTION_REQUIRED(false),                                                                        // opt/tls-ciphers
+        PARSE_RULE_OPTION_SECTION(Global),                                                                        // opt/tls-ciphers
+                                                                                                                  // opt/tls-ciphers
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                            // opt/tls-ciphers
+        (                                                                                                         // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                                   // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                 // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                     // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Check)                                                                      // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                     // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                       // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                   // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                    // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                     // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                                    // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                     // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                    // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Server)                                                                     // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(ServerPing)                                                                 // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                               // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                               // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                              // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Start)                                                                      // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Stop)                                                                       // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                     // opt/tls-ciphers
+        ),                                                                                                        // opt/tls-ciphers
+                                                                                                                  // opt/tls-ciphers
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                           // opt/tls-ciphers
+        (                                                                                                         // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                 // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                // opt/tls-ciphers
+        ),                                                                                                        // opt/tls-ciphers
+                                                                                                                  // opt/tls-ciphers
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                           // opt/tls-ciphers
+        (                                                                                                         // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                 // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                     // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                    // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                     // opt/tls-ciphers
+        ),                                                                                                        // opt/tls-ciphers
+                                                                                                                  // opt/tls-ciphers
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                          // opt/tls-ciphers
+        (                                                                                                         // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                                   // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                 // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                     // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Check)                                                                      // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                     // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                       // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                   // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                    // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                     // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                                    // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                     // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                    // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                               // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                               // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                              // opt/tls-ciphers
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                     // opt/tls-ciphers
+        ),                                                                                                        // opt/tls-ciphers
+                                                                                                                  // opt/tls-ciphers
+        PARSE_RULE_OPTIONAL                                                                                       // opt/tls-ciphers
+        (                                                                                                         // opt/tls-ciphers
+            PARSE_RULE_OPTIONAL_GROUP                                                                             // opt/tls-ciphers
+            (                                                                                                     // opt/tls-ciphers
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                       // opt/tls-ciphers
+                (                                                                                                 // opt/tls-ciphers
+                    PARSE_RULE_VAL_STR(QT_ECDHE_DS_RSA_DS_AES256_DS_GCM_DS_SHA384_CO_DHE_DS_RSA_DS_AES256_DS_GCM_DS_SHA384_CO_ECDHE_DS_RSA_DS_AES128_DS_GCM_DS_SHA256_CO_DHE_DS_RSA_DS_AES128_DS_GCM_DS_SHA256_CO_NT_SSLv1_CO_NT_SSLv2_CO_NT_SSLv3_CO_NT_TLSv1_CO_NT_TLSv1_DT_1_QT),
+                ),                                                                                                // opt/tls-ciphers
+            ),                                                                                                    // opt/tls-ciphers
+        ),                                                                                                        // opt/tls-ciphers
+    ),                                                                                                            // opt/tls-ciphers
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                      // opt/tls-server-address
     (                                                                                                      // opt/tls-server-address
@@ -11832,7 +11832,6 @@ static const uint8_t optionResolveOrder[] =
     cfgOptSet,                                                                                                  // opt-resolve-order
     cfgOptSort,                                                                                                 // opt-resolve-order
     cfgOptSpoolPath,                                                                                            // opt-resolve-order
-    cfgOptSslCiphers,                                                                                           // opt-resolve-order
     cfgOptStartFast,                                                                                            // opt-resolve-order
     cfgOptStopAuto,                                                                                             // opt-resolve-order
     cfgOptTablespaceMap,                                                                                        // opt-resolve-order
@@ -11840,6 +11839,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptTcpKeepAliveCount,                                                                                    // opt-resolve-order
     cfgOptTcpKeepAliveIdle,                                                                                     // opt-resolve-order
     cfgOptTcpKeepAliveInterval,                                                                                 // opt-resolve-order
+    cfgOptTlsCiphers,                                                                                           // opt-resolve-order
     cfgOptTlsServerAddress,                                                                                     // opt-resolve-order
     cfgOptTlsServerAuth,                                                                                        // opt-resolve-order
     cfgOptTlsServerCaFile,                                                                                      // opt-resolve-order
