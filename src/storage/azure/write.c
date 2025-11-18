@@ -196,16 +196,11 @@ storageWriteAzure(THIS_VOID, const Buffer *const buffer)
         {
             storageWriteAzureBlockAsync(this);
 
-            size_t size = bufSize(this->blockBuffer);
-
             bufUsedZero(this->blockBuffer);
             bufResize(
                 this->blockBuffer,
-                storageWriteChunkSize(this->blockSize, STORAGE_AZURE_SPLIT_DEFAULT, STORAGE_AZURE_SPLIT_MAX,
-                strLstSize(this->blockIdList)));
-
-            if (size != bufSize(this->blockBuffer))
-                LOG_INFO_FMT("!!!%s IDX %u NEW %zu", strZ(this->interface.name), strLstSize(this->blockIdList), bufSize(this->blockBuffer));
+                storageWriteChunkSize(
+                    this->blockSize, STORAGE_AZURE_SPLIT_DEFAULT, STORAGE_AZURE_SPLIT_MAX, strLstSize(this->blockIdList)));
         }
     }
     while (bytesTotal != bufUsed(buffer));

@@ -67,7 +67,7 @@ sub new
                 {bSuppressStdErr => true});
 
     # Get IP Address
-    $self->{strIP} = trim(executeTest("docker inspect --format '\{\{ .NetworkSettings.Networks.bridge.IPAddress \}\}' $self->{strContainer}"));
+    $self->{strIP} = trim(executeTest("docker inspect --format '\{\{ .NetworkSettings.IPAddress \}\}' $self->{strContainer}"));
     $self->{bActive} = true;
 
     # Return from function and log return values if any
