@@ -13,7 +13,7 @@ Azure Storage File Write
 #include "storage/write.h"
 
 /***********************************************************************************************************************************
-Block defaults based on limits at https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob?tabs=microsoft-entra-id
+Block defaults based on limits at https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob
 ***********************************************************************************************************************************/
 #define STORAGE_AZURE_SPLIT_DEFAULT                                 257
 #define STORAGE_AZURE_SPLIT_MAX                                     9505
