@@ -13,6 +13,12 @@ Azure Storage File Write
 #include "storage/write.h"
 
 /***********************************************************************************************************************************
+Block defaults based on limits at https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob?tabs=microsoft-entra-id
+***********************************************************************************************************************************/
+#define STORAGE_AZURE_SPLIT_DEFAULT                                 257
+#define STORAGE_AZURE_SPLIT_MAX                                     9506
+
+/***********************************************************************************************************************************
 Azure HTTP headers
 ***********************************************************************************************************************************/
 STRING_STATIC(AZURE_HEADER_BLOB_TYPE_STR,                           "x-ms-blob-type");

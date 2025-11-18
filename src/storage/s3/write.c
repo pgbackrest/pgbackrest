@@ -11,7 +11,7 @@ S3 Storage File Write
 #include "storage/write.h"
 
 /***********************************************************************************************************************************
-Part defaults based on limits documented at https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
+Part defaults based on limits at https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
 ***********************************************************************************************************************************/
 #define STORAGE_S3_SPLIT_DEFAULT                                    205
 #define STORAGE_S3_SPLIT_MAX                                        9558
@@ -199,7 +199,7 @@ storageWriteS3(THIS_VOID, const Buffer *const buffer)
 
             size_t size = storageWriteChunkSize(
                 this->partSize, STORAGE_S3_SPLIT_DEFAULT, STORAGE_S3_SPLIT_MAX, strLstSize(this->uploadPartList) * 300);
-            // LOG_INFO_FMT("!!!OLD %zu USED %zu NEW %zu", bufSize(this->partBuffer), bufUsed(this->partBuffer), size);
+            LOG_INFO_FMT("!!!OLD %zu USED %zu NEW %zu", bufSize(this->partBuffer), bufUsed(this->partBuffer), size);
             bufResize(this->partBuffer, size);
             bufUsedZero(this->partBuffer);
 
