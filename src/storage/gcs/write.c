@@ -264,15 +264,10 @@ storageWriteGcs(THIS_VOID, const Buffer *const buffer)
         {
             storageWriteGcsBlockAsync(this, false);
 
-            size_t size = bufSize(this->chunkBuffer);
-
             bufUsedZero(this->chunkBuffer);
             bufResize(
                 this->chunkBuffer,
                 storageWriteChunkSize(this->chunkSize, STORAGE_GCS_SPLIT_DEFAULT, STORAGE_GCS_SPLIT_MAX, ++this->chunkTotal));
-
-            if (size != bufSize(this->chunkBuffer))
-                LOG_INFO_FMT("!!!%s IDX %u NEW %zu", strZ(this->interface.name), this->chunkTotal, bufSize(this->chunkBuffer));
         }
     }
     while (bytesTotal != bufUsed(buffer));
