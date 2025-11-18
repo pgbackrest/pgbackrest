@@ -36,8 +36,8 @@ testStorageWriteChunkSplitMax(
 
     for (; splitIdx >= splitDefault; splitIdx--)
     {
-        uint64_t defaultTotal = splitDefault * chunkSizeDefault;
-        uint64_t maxTotal = (chunkMax - splitIdx) * chunkSizeMax;
+        uint64_t defaultTotal = (uint64_t)splitDefault * chunkSizeDefault;
+        uint64_t maxTotal = (uint64_t)(chunkMax - splitIdx) * chunkSizeMax;
 
         // Calculate ascending chunks
         uint64_t ascTotal = 0;
@@ -45,7 +45,7 @@ testStorageWriteChunkSplitMax(
         for (unsigned int chunkIdx = splitDefault; chunkIdx < splitIdx; chunkIdx++)
         {
             // Calculate ascending chunk size
-            uint64_t chunkSize = (chunkSizeMax - chunkIncr) * (chunkIdx - splitDefault + 1) / (splitIdx - splitDefault);
+            uint64_t chunkSize = (uint64_t)(chunkSizeMax - chunkIncr) * (chunkIdx - splitDefault + 1) / (splitIdx - splitDefault);
 
             // If ascending chunk size is less than default then return default
             if (chunkSize <= chunkSizeDefault)

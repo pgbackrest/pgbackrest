@@ -87,7 +87,8 @@ storageWriteChunkSize(
         FUNCTION_TEST_RETURN(SIZE, STORAGE_CHUNK_SIZE_MAX);
 
     // Calculate ascending chunk size
-    uint64_t result = (STORAGE_CHUNK_SIZE_MAX - STORAGE_CHUNK_INCR) * (chunkIdx - splitDefault + 1) / (splitMax - splitDefault);
+    uint64_t result =
+        (uint64_t)(STORAGE_CHUNK_SIZE_MAX - STORAGE_CHUNK_INCR) * (chunkIdx - splitDefault + 1) / (splitMax - splitDefault);
 
     // If ascending chunk size is less than default then return default
     if (result <= chunkSizeDefault)
