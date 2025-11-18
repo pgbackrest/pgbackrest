@@ -14,7 +14,7 @@ S3 Storage File Write
 Part defaults based on limits at https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
 ***********************************************************************************************************************************/
 #define STORAGE_S3_SPLIT_DEFAULT                                    205
-#define STORAGE_S3_SPLIT_MAX                                        9558
+#define STORAGE_S3_SPLIT_MAX                                        9557
 
 /***********************************************************************************************************************************
 S3 query tokens
