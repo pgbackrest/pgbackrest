@@ -52,7 +52,7 @@ testStorageWriteChunkSplitMax(
             {
                 chunkSize = chunkSizeDefault;
             }
-            // Else if ascending chunk size is less evenly divisible by chunk increment then round up
+            // Else if ascending chunk size is not evenly divisible by chunk increment then round up
             else if (chunkSize % chunkIncr != 0)
                 chunkSize += chunkIncr - (chunkSize % chunkIncr);
 
