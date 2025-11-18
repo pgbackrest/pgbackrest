@@ -706,11 +706,12 @@ testRun(void)
                 driver->tag = NULL;
 
                 testRequestP(
-                    service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCDx0000000&comp=block", .content = "1234567890123456");
+                    service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCDx0000000&comp=block",
+                    .content = "12345678901234567");
                 testResponseP(service);
 
                 testRequestP(
-                    service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCDx0000001&comp=block", .content = "7890");
+                    service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCDx0000001&comp=block", .content = "890");
                 testResponseP(service);
 
                 testRequestP(
@@ -723,8 +724,26 @@ testRun(void)
                         "</BlockList>\n");
                 testResponseP(service);
 
+                // Check that block size is updated during write
+                ioBufferSizeSet(9);
                 TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
-                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890")), "write");
+
+                ioWriteOpen(storageWriteIo(write));
+
+                TEST_RESULT_VOID(
+                    bufResize(((StorageWriteAzure *)ioWriteDriver(storageWriteIo(write)))->blockBuffer, 17),
+                    "resize part buffer to 17");
+
+                ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
+
+                TEST_RESULT_UINT(
+                    bufSize(((StorageWriteAzure *)ioWriteDriver(storageWriteIo(write)))->blockBuffer), 16,
+                    "part buffer reset to 16 (default)");
+
+                ioWrite(storageWriteIo(write), BUFSTRDEF("90"));
+
+                ioWriteClose(storageWriteIo(write));
+                ioBufferSizeSet(ioBufferSizeDefault);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for / does not exist");

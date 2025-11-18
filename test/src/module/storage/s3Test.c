@@ -1046,12 +1046,12 @@ testRun(void)
                         "</InitiateMultipartUploadResult>");
 
                 testRequestP(
-                    service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=RR55", .content = "1234567890123456",
+                    service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=RR55", .content = "12345678901234567",
                     .sseC = "rA1P");
                 testResponseP(service, .header = "etag:RR551");
 
                 testRequestP(
-                    service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=RR55", .content = "7890",
+                    service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=RR55", .content = "890",
                     .sseC = "rA1P");
                 testResponseP(service, .header = "eTag:RR552");
 
@@ -1069,8 +1069,26 @@ testRun(void)
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<CompleteMultipartUploadResult><ETag>XXX</ETag></CompleteMultipartUploadResult>");
 
+                // Check that block size is updated during write
+                ioBufferSizeSet(9);
                 TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("file.txt")), "new write");
-                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890")), "write");
+
+                ioWriteOpen(storageWriteIo(write));
+
+                TEST_RESULT_VOID(
+                    bufResize(((StorageWriteS3 *)ioWriteDriver(storageWriteIo(write)))->partBuffer, 17),
+                    "resize part buffer to 17");
+
+                ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
+
+                TEST_RESULT_UINT(
+                    bufSize(((StorageWriteS3 *)ioWriteDriver(storageWriteIo(write)))->partBuffer), 16,
+                    "part buffer reset to 16 (default)");
+
+                ioWrite(storageWriteIo(write), BUFSTRDEF("90"));
+
+                ioWriteClose(storageWriteIo(write));
+                ioBufferSizeSet(ioBufferSizeDefault);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("file missing");
