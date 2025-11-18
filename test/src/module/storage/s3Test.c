@@ -28,7 +28,7 @@ appropriate values.
 #define TEST_STORAGE_S3_FILE_MAX                                    ((uint64_t)5 * 1024 * 1024 * 1024 * 1024)
 
 static unsigned int
-storageWriteChunkSplitMax(
+testStorageWriteChunkSplitMax(
     const size_t chunkSizeDefault, const size_t chunkSizeMax, const unsigned int chunkMax, const size_t chunkIncr,
     const unsigned int splitDefault, const uint64_t fileSizeMax)
 {
@@ -48,9 +48,9 @@ storageWriteChunkSplitMax(
             uint64_t chunkSize = (chunkSizeMax - chunkIncr) * (chunkIdx - splitDefault + 1) / (splitIdx - splitDefault);
 
             // If ascending chunk size is less than default then return default
-            if (chunkSize <= chunkSizeDefault + chunkIncr)
+            if (chunkSize <= chunkSizeDefault)
             {
-                chunkSize = chunkSizeDefault + chunkIncr;
+                chunkSize = chunkSizeDefault;
             }
             // Else if ascending chunk size is less evenly divisible by chunk increment then round up
             else if (chunkSize % chunkIncr != 0)
@@ -513,7 +513,7 @@ testRun(void)
                 unsigned int splitDefault = (unsigned int)((1024UL * 1024 * 1024) / TEST_STORAGE_S3_PART_SIZE_DEFAULT) + 1;
                 TEST_RESULT_UINT(splitDefault, STORAGE_S3_SPLIT_DEFAULT, "check part default split");
 
-                unsigned int splitMax = storageWriteChunkSplitMax(
+                unsigned int splitMax = testStorageWriteChunkSplitMax(
                     TEST_STORAGE_S3_PART_SIZE_DEFAULT, STORAGE_CHUNK_SIZE_MAX, TEST_STORAGE_S3_PART_MAX, STORAGE_CHUNK_INCR,
                     splitDefault, TEST_STORAGE_S3_FILE_MAX);
                 TEST_RESULT_UINT(splitMax, STORAGE_S3_SPLIT_MAX, "check part max split");

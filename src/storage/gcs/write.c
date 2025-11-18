@@ -17,7 +17,7 @@ GCS Storage File Write
 Chunk defaults based on limits at https://cloud.google.com/storage/quotas#requests
 ***********************************************************************************************************************************/
 #define STORAGE_GCS_SPLIT_DEFAULT                                   257
-#define STORAGE_GCS_SPLIT_MAX                                       9506
+#define STORAGE_GCS_SPLIT_MAX                                       9505
 
 /***********************************************************************************************************************************
 GCS query tokens
@@ -264,16 +264,15 @@ storageWriteGcs(THIS_VOID, const Buffer *const buffer)
         {
             storageWriteGcsBlockAsync(this, false);
 
-            this->chunkTotal++;
-            size_t size = storageWriteChunkSize(
-                this->chunkSize, STORAGE_GCS_SPLIT_DEFAULT, STORAGE_GCS_SPLIT_MAX, this->chunkTotal * 300);
-            // LOG_INFO_FMT("!!!OLD %zu USED %zu NEW %zu", bufSize(this->partBuffer), bufUsed(this->partBuffer), size);
-            bufResize(this->chunkBuffer, size);
+            size_t size = bufSize(this->chunkBuffer);
 
             bufUsedZero(this->chunkBuffer);
-            // bufResize(
-            //     this->chunkBuffer,
-            //     storageWriteChunkSize(this->chunkSize, STORAGE_GCS_SPLIT_DEFAULT, STORAGE_GCS_SPLIT_MAX, ++this->chunkTotal));
+            bufResize(
+                this->chunkBuffer,
+                storageWriteChunkSize(this->chunkSize, STORAGE_GCS_SPLIT_DEFAULT, STORAGE_GCS_SPLIT_MAX, ++this->chunkTotal));
+
+            if (size != bufSize(this->chunkBuffer))
+                LOG_INFO_FMT("!!!%s IDX %u NEW %zu", strZ(this->interface.name), this->chunkTotal, bufSize(this->chunkBuffer));
         }
     }
     while (bytesTotal != bufUsed(buffer));

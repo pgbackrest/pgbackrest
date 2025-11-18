@@ -197,17 +197,11 @@ storageWriteS3(THIS_VOID, const Buffer *const buffer)
         {
             storageWriteS3PartAsync(this);
 
-            size_t size = bufSize(this->partBuffer);
-            // LOG_INFO_FMT("!!!%s OLD %zu USED %zu", strZ(this->interface.name), bufSize(this->partBuffer), bufUsed(this->partBuffer));
-
             bufUsedZero(this->partBuffer);
             bufResize(
                 this->partBuffer,
                 storageWriteChunkSize(
                     this->partSize, STORAGE_S3_SPLIT_DEFAULT, STORAGE_S3_SPLIT_MAX, strLstSize(this->uploadPartList)));
-
-            if (size != bufSize(this->partBuffer))
-                LOG_INFO_FMT("!!!%s IDX %u NEW %zu", strZ(this->interface.name), strLstSize(this->uploadPartList), bufSize(this->partBuffer));
         }
     }
     while (bytesTotal != bufUsed(buffer));

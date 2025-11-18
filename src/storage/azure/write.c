@@ -16,7 +16,7 @@ Azure Storage File Write
 Block defaults based on limits at https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob?tabs=microsoft-entra-id
 ***********************************************************************************************************************************/
 #define STORAGE_AZURE_SPLIT_DEFAULT                                 257
-#define STORAGE_AZURE_SPLIT_MAX                                     9506
+#define STORAGE_AZURE_SPLIT_MAX                                     9505
 
 /***********************************************************************************************************************************
 Azure HTTP headers
