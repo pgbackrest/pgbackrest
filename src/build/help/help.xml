@@ -436,8 +436,9 @@
                         <text>
                             <p>pgBackRest encrypts all transport connections. This includes the TLS server and client as well client access of object storage.</p>
                             <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2.</admonition>
-                            <p>The accepted cipher suites can be adjusted if need arises. The default value reflects the current <quote>state of the art</quote>.</p>
+                            <p>The accepted cipher suites can be adjusted if need arises. The default is usually a reasonable choice unless you have specific security requirements.</p>
                         </text>
+                        <default>HIGH:MEDIUM:+3DES:!aNULL</default>
                         <example>ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA256:!SSLv1:!SSLv2:!SSLv3:!TLSv1:!TLSv1.1</example>
                     </config-key>
 
