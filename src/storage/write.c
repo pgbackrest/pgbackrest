@@ -95,7 +95,7 @@ storageWriteChunkSize(
     {
         result = chunkSizeDefault;
     }
-    // Else if ascending chunk size is less evenly divisible by chunk increment then round up
+    // Else if ascending chunk size is not evenly divisible by chunk increment then round up
     else if (result % STORAGE_CHUNK_INCR != 0)
         result += STORAGE_CHUNK_INCR - (result % STORAGE_CHUNK_INCR);
 
