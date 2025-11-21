@@ -30,4 +30,19 @@
             </release-item>
         </release-improvement-list>
     </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <github-issue id="2699"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="jamie.nguyen"/>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Remove explicit <setting>max_wal_senders</setting>/<setting>wal_level</setting> configuration from user guide.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
 </release>
