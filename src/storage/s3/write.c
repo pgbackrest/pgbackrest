@@ -11,6 +11,12 @@ S3 Storage File Write
 #include "storage/write.h"
 
 /***********************************************************************************************************************************
+Part defaults based on limits at https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
+***********************************************************************************************************************************/
+#define STORAGE_S3_SPLIT_DEFAULT                                    205
+#define STORAGE_S3_SPLIT_MAX                                        9557
+
+/***********************************************************************************************************************************
 S3 query tokens
 ***********************************************************************************************************************************/
 STRING_STATIC(S3_QUERY_PART_NUMBER_STR,                             "partNumber");
@@ -190,7 +196,12 @@ storageWriteS3(THIS_VOID, const Buffer *const buffer)
         if (bufRemains(this->partBuffer) == 0)
         {
             storageWriteS3PartAsync(this);
+
             bufUsedZero(this->partBuffer);
+            bufResize(
+                this->partBuffer,
+                storageWriteChunkSize(
+                    this->partSize, STORAGE_S3_SPLIT_DEFAULT, STORAGE_S3_SPLIT_MAX, strLstSize(this->uploadPartList)));
         }
     }
     while (bytesTotal != bufUsed(buffer));
@@ -275,6 +286,7 @@ storageWriteS3New(StorageS3 *const storage, const String *const name, const size
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_S3, storage);
         FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM(SIZE, partSize);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);

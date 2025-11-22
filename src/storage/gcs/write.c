@@ -14,6 +14,12 @@ GCS Storage File Write
 #include "storage/write.h"
 
 /***********************************************************************************************************************************
+Chunk defaults based on limits at https://cloud.google.com/storage/quotas#requests
+***********************************************************************************************************************************/
+#define STORAGE_GCS_SPLIT_DEFAULT                                   257
+#define STORAGE_GCS_SPLIT_MAX                                       9505
+
+/***********************************************************************************************************************************
 GCS query tokens
 ***********************************************************************************************************************************/
 STRING_STATIC(GCS_QUERY_UPLOAD_TYPE_STR,                            "uploadType");
@@ -30,6 +36,7 @@ typedef struct StorageWriteGcs
 
     HttpRequest *request;                                           // Async chunk upload request
     size_t chunkSize;                                               // Size of chunks for resumable upload
+    unsigned int chunkTotal;                                        // Total chunks uploaded
     bool tag;                                                       // Are tags available?
     Buffer *chunkBuffer;                                            // Block buffer (stores data until chunkSize is reached)
     const String *uploadId;                                         // Id for resumable upload
@@ -256,7 +263,11 @@ storageWriteGcs(THIS_VOID, const Buffer *const buffer)
         if (bufRemains(this->chunkBuffer) == 0)
         {
             storageWriteGcsBlockAsync(this, false);
+
             bufUsedZero(this->chunkBuffer);
+            bufResize(
+                this->chunkBuffer,
+                storageWriteChunkSize(this->chunkSize, STORAGE_GCS_SPLIT_DEFAULT, STORAGE_GCS_SPLIT_MAX, ++this->chunkTotal));
         }
     }
     while (bytesTotal != bufUsed(buffer));

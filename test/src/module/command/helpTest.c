@@ -657,12 +657,13 @@ testRun(void)
             "process-max values will lead to more memory being consumed overall.\n"                                                \
             "\n"                                                                                                                   \
             "Note that valid chunk sizes vary by storage type and by platform. For example,\n"                                     \
-            "AWS S3 has a minimum chunk size of 5MiB but S3 clones may accept lower values.\n"                                     \
-            "Terminology for chunk size varies by storage type, so when searching min/max\n"                                       \
-            "values use \"part size\" for AWS S3, \"chunk size\" for GCS, and \"block size\" for\n"                                \
-            "Azure. No attempt is made to validate configured chunk sizes so selecting an\n"                                       \
-            "invalid value will lead to errors from the storage service or undefined\n"                                            \
-            "behavior.\n"
+            "AWS S3 has a minimum chunk size of 5MiB. Terminology for chunk size varies by\n"                                      \
+            "storage type, so when searching min/max values use \"part size\" for AWS S3,\n"                                       \
+            "\"chunk size\" for GCS, and \"block size\" for Azure.\n"                                                              \
+            "\n"                                                                                                                   \
+            "If a file is larger than 1GiB (the maximum size PostgreSQL will create by\n"                                          \
+            "default) then the chunk size will be increased incrementally up to the maximum\n"                                     \
+            "allowed in order to complete the file upload.\n"
 
         optionHelp = zNewFmt(
             HELP_OPTION_CHUNK
