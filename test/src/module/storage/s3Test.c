@@ -1046,12 +1046,12 @@ testRun(void)
                         "</InitiateMultipartUploadResult>");
 
                 testRequestP(
-                    service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=RR55", .content = "12345678901234567",
+                    service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=RR55", .content = "1234567890123456",
                     .sseC = "rA1P");
                 testResponseP(service, .header = "etag:RR551");
 
                 testRequestP(
-                    service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=RR55", .content = "890",
+                    service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=RR55", .content = "7890",
                     .sseC = "rA1P");
                 testResponseP(service, .header = "eTag:RR552");
 
@@ -1074,18 +1074,16 @@ testRun(void)
                 TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("file.txt")), "new write");
 
                 ioWriteOpen(storageWriteIo(write));
+                ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
 
                 TEST_RESULT_VOID(
                     bufResize(((StorageWriteS3 *)ioWriteDriver(storageWriteIo(write)))->partBuffer, 17),
                     "resize part buffer to 17");
 
-                ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
+                ioWrite(storageWriteIo(write), BUFSTRDEF("90"));
 
                 TEST_RESULT_UINT(
-                    bufSize(((StorageWriteS3 *)ioWriteDriver(storageWriteIo(write)))->partBuffer), 16,
-                    "part buffer reset to 16 (default)");
-
-                ioWrite(storageWriteIo(write), BUFSTRDEF("90"));
+                    ((StorageWriteS3 *)ioWriteDriver(storageWriteIo(write)))->partSize, 16, "part buffer reset to 16 (default)");
 
                 ioWriteClose(storageWriteIo(write));
                 ioBufferSizeSet(ioBufferSizeDefault);

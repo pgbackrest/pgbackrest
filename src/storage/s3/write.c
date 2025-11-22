@@ -56,31 +56,6 @@ Macros for function logging
     objNameToLog(value, "StorageWriteS3", buffer, bufferSize)
 
 /***********************************************************************************************************************************
-Open the file
-***********************************************************************************************************************************/
-static void
-storageWriteS3Open(THIS_VOID)
-{
-    THIS(StorageWriteS3);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_WRITE_S3, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(this->partBuffer == NULL);
-
-    // Allocate the part buffer
-    MEM_CONTEXT_OBJ_BEGIN(this)
-    {
-        this->partBuffer = bufNew(this->partSize);
-    }
-    MEM_CONTEXT_OBJ_END();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/***********************************************************************************************************************************
 Flush bytes to upload part
 ***********************************************************************************************************************************/
 static void
@@ -176,10 +151,33 @@ storageWriteS3(THIS_VOID, const Buffer *const buffer)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->partBuffer != NULL);
     ASSERT(buffer != NULL);
 
     size_t bytesTotal = 0;
+
+    // !!!
+    size_t partSize;
+
+    if (bufSize(this->partBuffer) == 0)
+    {
+        if (bufFull(buffer))
+            partSize = bufSize(buffer) * 2;
+        else
+            partSize = bufUsed(buffer) + 1;
+    }
+    else
+    {
+        if (bufFull(buffer))
+            partSize = bufSize(this->partBuffer) * 2;
+        else
+            partSize = bufSize(this->partBuffer);
+    }
+
+    if (partSize > this->partSize)
+        partSize = this->partSize;
+
+    bufResize(this->partBuffer, partSize);
+    fprintf(stdout, "!!!SIZE %zu\n", bufSize(this->partBuffer));fflush(stdout);
 
     // Continue until the write buffer has been exhausted
     do
@@ -195,13 +193,13 @@ storageWriteS3(THIS_VOID, const Buffer *const buffer)
         // If the part buffer is full then write it
         if (bufRemains(this->partBuffer) == 0)
         {
-            storageWriteS3PartAsync(this);
+            fprintf(stdout, "!!!WRITE %zu\n", bufSize(this->partBuffer));fflush(stdout);
 
+            storageWriteS3PartAsync(this);
             bufUsedZero(this->partBuffer);
-            bufResize(
-                this->partBuffer,
-                storageWriteChunkSize(
-                    this->partSize, STORAGE_S3_SPLIT_DEFAULT, STORAGE_S3_SPLIT_MAX, strLstSize(this->uploadPartList)));
+
+            this->partSize = storageWriteChunkSize(
+                this->partSize, STORAGE_S3_SPLIT_DEFAULT, STORAGE_S3_SPLIT_MAX, strLstSize(this->uploadPartList));
         }
     }
     while (bytesTotal != bufUsed(buffer));
@@ -298,6 +296,7 @@ storageWriteS3New(StorageS3 *const storage, const String *const name, const size
         {
             .storage = storage,
             .partSize = partSize,
+            .partBuffer = bufNew(0),
 
             .interface = (StorageWriteInterface)
             {
@@ -312,7 +311,6 @@ storageWriteS3New(StorageS3 *const storage, const String *const name, const size
                 .ioInterface = (IoWriteInterface)
                 {
                     .close = storageWriteS3Close,
-                    .open = storageWriteS3Open,
                     .write = storageWriteS3,
                 },
             },
