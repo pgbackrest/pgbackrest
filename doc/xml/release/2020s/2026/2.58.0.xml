@@ -19,6 +19,19 @@
 
         <release-improvement-list>
             <release-item>
+                <github-issue id="2679"/>
+                <github-pull-request id="2701"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="timothee.peignier"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Dynamically size <proper>S3</proper>/<proper>GCS</proper>/<proper>Azure</proper> chunks for large uploads.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2692"/>
 
                 <release-item-contributor-list>
