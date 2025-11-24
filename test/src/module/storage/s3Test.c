@@ -1751,5 +1751,96 @@ testRun(void)
         HRN_FORK_END();
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("storageS3 with HTTP endpoint"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("config with HTTP endpoint (no TLS)");
+
+        StringList *argList = strLstDup(commonArgWithoutEndpointList);
+        hrnCfgArgRawZ(argList, cfgOptRepoS3Endpoint, "http://minio:9000");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        StorageS3 *driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
+
+        // Verify HTTP endpoint is parsed correctly
+        TEST_RESULT_STR_Z(driver->bucketEndpoint, "bucket.minio", "check bucket endpoint");
+
+        // Verify HTTP client is using plain socket (not TLS)
+        char logBuf[STACK_TRACE_PARAM_MAX];
+        TEST_RESULT_VOID(
+            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
+        TEST_RESULT_BOOL(
+            strstr(logBuf, "{ioClient: {type: socket") != NULL, true,
+            "check http client uses plain socket for HTTP");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("config with HTTP endpoint and custom port");
+
+        argList = strLstDup(commonArgWithoutEndpointList);
+        hrnCfgArgRawZ(argList, cfgOptRepoS3Endpoint, "http://minio");
+        hrnCfgArgRawZ(argList, cfgOptRepoStoragePort, "8080");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
+
+        TEST_RESULT_VOID(
+            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
+        TEST_RESULT_BOOL(
+            strstr(logBuf, "{ioClient: {type: socket") != NULL, true,
+            "check http client uses custom port");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("config with HTTPS endpoint");
+
+        argList = strLstDup(commonArgWithoutEndpointList);
+        hrnCfgArgRawZ(argList, cfgOptRepoS3Endpoint, "https://s3.amazonaws.com");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
+
+        // Verify HTTPS endpoint uses TLS client
+        TEST_RESULT_VOID(
+            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
+        TEST_RESULT_BOOL(
+            strstr(logBuf, "{ioClient: {type: tls") != NULL, true,
+            "check http client uses TLS for HTTPS");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("config with endpoint without explicit protocol (defaults to HTTPS)");
+
+        argList = strLstDup(commonArgWithoutEndpointList);
+        hrnCfgArgRawZ(argList, cfgOptRepoS3Endpoint, "s3.amazonaws.com");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
+
+        // Verify endpoint without protocol defaults to HTTPS with TLS client
+        TEST_RESULT_VOID(
+            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
+        TEST_RESULT_BOOL(
+            strstr(logBuf, "{ioClient: {type: tls") != NULL, true,
+            "check endpoint without protocol defaults to HTTPS");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("config with HTTP repo host + S3 https");
+
+        argList = strLstDup(commonArgWithoutEndpointList);
+        hrnCfgArgRawZ(argList, cfgOptRepoS3Endpoint, "https://s3.amazonaws.com");
+        hrnCfgArgRawZ(argList, cfgOptRepoStorageHost, "http://minio:9000");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
+
+        // Verify HTTP host uses plain socket (not TLS)
+        TEST_RESULT_VOID(
+            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
+        TEST_RESULT_Z(
+            logBuf,
+            "{ioClient: {type: socket, driver: {host: minio, port: 9000, timeoutConnect: 60000, timeoutSession: 60000}},"
+            " reusable: 0, timeout: 60000}",
+            "check http host uses plain socket");
+    }
+
     FUNCTION_HARNESS_RETURN_VOID();
 }

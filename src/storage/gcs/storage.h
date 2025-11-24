@@ -4,6 +4,7 @@ GCS Storage
 #ifndef STORAGE_GCS_STORAGE_H
 #define STORAGE_GCS_STORAGE_H
 
+#include "common/io/http/url.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************

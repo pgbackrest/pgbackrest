@@ -1349,5 +1349,100 @@ testRun(void)
         HRN_FORK_END();
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("storageGcs with HTTP endpoint"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("config with HTTP endpoint (no TLS)");
+
+        StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, "bucket");
+        hrnCfgArgRawStrId(argList, cfgOptRepoGcsKeyType, storageGcsKeyTypeToken);
+        hrnCfgEnvRawZ(cfgOptRepoGcsKey, "token");
+        hrnCfgEnvRawZ(cfgOptRepoGcsEndpoint, "http://storage.googleapis.local:4443");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        StorageGcs *driver = (StorageGcs *)storageDriver(storageRepoGet(0, false));
+
+        // Verify HTTP endpoint is parsed correctly
+        TEST_RESULT_STR_Z(driver->endpoint, "storage.googleapis.local", "check endpoint");
+
+        // Verify HTTP client is using plain socket (not TLS)
+        char logBuf[STACK_TRACE_PARAM_MAX];
+        TEST_RESULT_VOID(
+            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
+        TEST_RESULT_BOOL(
+            strstr(logBuf, "{ioClient: {type: socket") != NULL, true,
+            "check http client uses plain socket for HTTP");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("config with HTTP endpoint and custom port");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, "bucket");
+        hrnCfgArgRawStrId(argList, cfgOptRepoGcsKeyType, storageGcsKeyTypeToken);
+        hrnCfgEnvRawZ(cfgOptRepoGcsKey, "token");
+        hrnCfgEnvRawZ(cfgOptRepoGcsEndpoint, "http://storage.googleapis.local:8080");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        driver = (StorageGcs *)storageDriver(storageRepoGet(0, false));
+
+        TEST_RESULT_VOID(
+            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
+        TEST_RESULT_BOOL(
+            strstr(logBuf, "{ioClient: {type: socket") != NULL, true,
+            "check http client uses custom port");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("config with HTTPS endpoint");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, "bucket");
+        hrnCfgArgRawStrId(argList, cfgOptRepoGcsKeyType, storageGcsKeyTypeToken);
+        hrnCfgEnvRawZ(cfgOptRepoGcsKey, "token");
+        hrnCfgEnvRawZ(cfgOptRepoGcsEndpoint, "https://storage.googleapis.com");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        driver = (StorageGcs *)storageDriver(storageRepoGet(0, false));
+
+        // Verify HTTPS endpoint uses TLS client
+        TEST_RESULT_VOID(
+            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
+        TEST_RESULT_BOOL(
+            strstr(logBuf, "{ioClient: {type: tls") != NULL, true,
+            "check http client uses TLS for HTTPS");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("config with endpoint without explicit protocol (defaults to HTTPS)");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, "bucket");
+        hrnCfgArgRawStrId(argList, cfgOptRepoGcsKeyType, storageGcsKeyTypeToken);
+        hrnCfgEnvRawZ(cfgOptRepoGcsKey, "token");
+        hrnCfgEnvRawZ(cfgOptRepoGcsEndpoint, "storage.googleapis.com");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        driver = (StorageGcs *)storageDriver(storageRepoGet(0, false));
+
+        // Verify endpoint without protocol defaults to HTTPS with TLS client
+        TEST_RESULT_VOID(
+            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
+        TEST_RESULT_BOOL(
+            strstr(logBuf, "{ioClient: {type: tls") != NULL, true,
+            "check endpoint without protocol defaults to HTTPS");
+    }
+
     FUNCTION_HARNESS_RETURN_VOID();
 }

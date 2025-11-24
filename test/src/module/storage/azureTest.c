@@ -399,8 +399,8 @@ testRun(void)
             (StorageAzure *)storageDriver(
                 storageAzureNew(
                     STRDEF("/repo"), false, 0, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeShared,
-                    TEST_KEY_SHARED_STR, 16, NULL, STRDEF("blob.core.windows.net"), storageAzureUriStyleHost, 443, 1000, true, NULL,
-                    NULL)),
+                    TEST_KEY_SHARED_STR, 16, NULL, STRDEF("blob.core.windows.net"), storageAzureUriStyleHost, 443, 1000,
+                    httpProtocolTypeHttps, true, NULL, NULL)),
             "new azure storage - shared key");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -441,7 +441,8 @@ testRun(void)
             (StorageAzure *)storageDriver(
                 storageAzureNew(
                     STRDEF("/repo"), false, 0, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeSas, TEST_KEY_SAS_STR,
-                    16, NULL, STRDEF("blob.core.usgovcloudapi.net"), storageAzureUriStyleHost, 443, 1000, true, NULL, NULL)),
+                    16, NULL, STRDEF("blob.core.usgovcloudapi.net"), storageAzureUriStyleHost, 443, 1000, httpProtocolTypeHttps,
+                    true, NULL, NULL)),
             "new azure storage - sas key");
 
         query = httpQueryAdd(httpQueryNewP(), STRDEF("a"), STRDEF("b"));
@@ -1204,6 +1205,127 @@ testRun(void)
             HRN_FORK_PARENT_END();
         }
         HRN_FORK_END();
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("storageAzure with HTTP endpoint"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("config with HTTP endpoint (no TLS)");
+
+        StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
+        hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
+        hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
+        hrnCfgEnvRawZ(cfgOptRepoAzureEndpoint, "http://azurite:10000");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        StorageAzure *driver = (StorageAzure *)storageDriver(storageRepoGet(0, false));
+
+        // Verify HTTP endpoint is parsed correctly
+        TEST_RESULT_STR_Z(driver->host, TEST_ACCOUNT ".azurite", "check host");
+
+        // Verify HTTP client is using plain socket (not TLS)
+        char logBuf[STACK_TRACE_PARAM_MAX];
+        TEST_RESULT_VOID(
+            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
+        TEST_RESULT_BOOL(
+            strstr(logBuf, "{ioClient: {type: socket") != NULL, true,
+            "check http client uses plain socket for HTTP");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("config with HTTP endpoint and custom port");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
+        hrnCfgArgRawZ(argList, cfgOptRepoStoragePort, "8080");
+        hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
+        hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
+        hrnCfgEnvRawZ(cfgOptRepoAzureEndpoint, "http://azurite");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        driver = (StorageAzure *)storageDriver(storageRepoGet(0, false));
+
+        TEST_RESULT_VOID(
+            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
+        TEST_RESULT_BOOL(
+            strstr(logBuf, "{ioClient: {type: socket") != NULL, true,
+            "check http client uses custom port");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("config with HTTPS endpoint");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
+        hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
+        hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
+        hrnCfgEnvRawZ(cfgOptRepoAzureEndpoint, "https://blob.core.windows.net");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        driver = (StorageAzure *)storageDriver(storageRepoGet(0, false));
+
+        // Verify HTTPS endpoint uses TLS client
+        TEST_RESULT_VOID(
+            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
+        TEST_RESULT_BOOL(
+            strstr(logBuf, "{ioClient: {type: tls") != NULL, true,
+            "check http client uses TLS for HTTPS");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("config with endpoint without explicit protocol (defaults to HTTPS)");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
+        hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
+        hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
+        hrnCfgEnvRawZ(cfgOptRepoAzureEndpoint, "blob.core.windows.net");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        driver = (StorageAzure *)storageDriver(storageRepoGet(0, false));
+
+        // Verify endpoint without protocol defaults to HTTPS with TLS client
+        TEST_RESULT_VOID(
+            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
+        TEST_RESULT_BOOL(
+            strstr(logBuf, "{ioClient: {type: tls") != NULL, true,
+            "check endpoint without protocol defaults to HTTPS");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("config with HTTP repo host + Azure HTTPS endpoint");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
+        hrnCfgArgRawZ(argList, cfgOptRepoStorageHost, "http://azurite:10000");
+        hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
+        hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
+        hrnCfgEnvRawZ(cfgOptRepoAzureEndpoint, "https://blob.core.windows.net");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        driver = (StorageAzure *)storageDriver(storageRepoGet(0, false));
+
+        // Verify HTTP host uses plain socket (not TLS)
+        TEST_RESULT_VOID(
+            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
+        TEST_RESULT_Z(
+            logBuf,
+            "{ioClient: {type: socket, driver: {host: azurite, port: 10000, timeoutConnect: 60000, timeoutSession: 60000}},"
+            " reusable: 0, timeout: 60000}",
+            "check http host uses plain socket");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

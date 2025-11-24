@@ -3,6 +3,7 @@ File Descriptor Io Write
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <errno.h>
 #include <unistd.h>
 
 #include "common/debug.h"
@@ -77,8 +78,36 @@ ioFdWrite(THIS_VOID, const Buffer *const buffer)
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
 
-    THROW_ON_SYS_ERROR_FMT(
-        write(this->fd, bufPtrConst(buffer), bufUsed(buffer)) == -1, FileWriteError, "unable to write to %s", strZ(this->name));
+    // Handle partial writes and non-blocking socket operations
+    size_t totalWritten = 0;
+    size_t bufferRemaining = bufUsed(buffer);
+    const uint8_t *bufferPtr = bufPtrConst(buffer);
+
+    while (bufferRemaining > 0)
+    {
+        ssize_t result = fdWrite(this->fd, bufferPtr + totalWritten, bufferRemaining);
+
+        if (result == -1)
+        {
+            // Handle non-blocking socket case where write buffer is full
+            if (errno == EAGAIN)
+            {
+                // Wait for socket to become writable (will throw on timeout)
+                ioFdWriteReady(this, true);
+
+                continue;
+            }
+
+            // Treat all other errors as fatal
+            THROW_SYS_ERROR_FMT(
+                FileWriteError,
+                "unable to finish write to %s (wrote %zu/%zu bytes)",
+                strZ(this->name), totalWritten, bufUsed(buffer));
+        }
+
+        totalWritten += (size_t)result;
+        bufferRemaining -= (size_t)result;
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }
