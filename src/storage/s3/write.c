@@ -153,47 +153,12 @@ storageWriteS3(THIS_VOID, const Buffer *const buffer)
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
 
-    size_t bytesTotal = 0;
-
-    // Resize chunk buffer if it is less than chunk size
-    size_t partBufSize = bufSize(this->partBuffer);
-
-    if (partBufSize < this->partSize)
-    {
-        // If this is the first chunk
-        if (partBufSize == 0)
-        {
-            // If the input buffer is full it usually means there will be more data coming so make space for it
-            if (bufFull(buffer))
-            {
-                partBufSize = bufSize(buffer) * 2;
-            }
-            // Else no more writes are expected so allocate only what is needed. Add one so multi-part write is not forced.
-            else
-                partBufSize = bufUsed(buffer) + 1;
-        }
-        // Else this is a subsequent chunk
-        else
-        {
-            // If the input buffer has been full at least twice then aggressively grow the chunk buffer
-            if (bufFull(buffer))
-            {
-                partBufSize *= 2;
-            }
-            // Else no more writes are expected so allocate only what is needed. Add one so multi-part write is not forced.
-            else if (bufRemains(this->partBuffer) < bufUsed(buffer))
-                partBufSize += bufUsed(buffer) - bufRemains(this->partBuffer) + 1;
-        }
-
-        // Chunk buffer cannot be larger than chunk size
-        if (partBufSize > this->partSize)
-            partBufSize = this->partSize;
-
-        // Resize the buffer
-        bufResize(this->partBuffer, partBufSize);
-    }
+    // Resize chunk buffer
+    storageWriteChunkBufferResize(buffer, this->partBuffer, this->partSize);
 
     // Continue until the write buffer has been exhausted
+    size_t bytesTotal = 0;
+
     do
     {
         // Copy as many bytes as possible into the part buffer
@@ -205,7 +170,7 @@ storageWriteS3(THIS_VOID, const Buffer *const buffer)
         bytesTotal += bytesNext;
 
         // If the part buffer is full then write it
-        if (bufRemains(this->partBuffer) == 0)
+        if (bufUsed(this->partBuffer) == this->partSize)
         {
             storageWriteS3PartAsync(this);
             bufUsedZero(this->partBuffer);

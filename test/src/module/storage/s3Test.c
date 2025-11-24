@@ -1070,7 +1070,7 @@ testRun(void)
                         "<CompleteMultipartUploadResult><ETag>XXX</ETag></CompleteMultipartUploadResult>");
 
                 // Check that block size is updated during write
-                ioBufferSizeSet(9);
+                ioBufferSizeSet(6);
                 TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("file.txt")), "new write");
 
                 ioWriteOpen(storageWriteIo(write));
