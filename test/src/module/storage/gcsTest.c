@@ -711,38 +711,36 @@ testRun(void)
 
                 testRequestP(
                     service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
-                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid2", .contentRange = "0-16/*",
-                    .content = "12345678901234567");
+                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid2", .contentRange = "0-15/*",
+                    .content = "1234567890123456");
                 testResponseP(service, .code = 503);
                 testRequestP(
                     service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
-                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid2", .contentRange = "0-16/*",
-                    .content = "12345678901234567");
+                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid2", .contentRange = "0-15/*",
+                    .content = "1234567890123456");
                 testResponseP(service, .code = 308);
 
                 testRequestP(
                     service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
-                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid2", .contentRange = "17-19/20",
-                    .content = "890");
+                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid2", .contentRange = "16-19/20",
+                    .content = "7890");
                 testResponseP(service, .content = "{\"md5Hash\":\"/YXmLZvrRUKHcexohBiycQ==\",\"size\":\"20\"}");
 
                 // Check that chunk size is updated during write
-                ioBufferSizeSet(9);
+                ioBufferSizeSet(6);
                 TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
 
                 ioWriteOpen(storageWriteIo(write));
+                ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
 
                 TEST_RESULT_VOID(
                     bufResize(((StorageWriteGcs *)ioWriteDriver(storageWriteIo(write)))->chunkBuffer, 17),
                     "resize part buffer to 17");
 
-                ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
+                ioWrite(storageWriteIo(write), BUFSTRDEF("90"));
 
                 TEST_RESULT_UINT(
-                    bufSize(((StorageWriteGcs *)ioWriteDriver(storageWriteIo(write)))->chunkBuffer), 16,
-                    "part buffer reset to 16 (default)");
-
-                ioWrite(storageWriteIo(write), BUFSTRDEF("90"));
+                    ((StorageWriteGcs *)ioWriteDriver(storageWriteIo(write)))->chunkSize, 16, "part buffer reset to 16 (default)");
 
                 ioWriteClose(storageWriteIo(write));
                 ioBufferSizeSet(ioBufferSizeDefault);

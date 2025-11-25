@@ -32,6 +32,17 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2705"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Optimize <proper>S3</proper>/<proper>GCS</proper>/<proper>Azure</proper> chunk size for small files.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2692"/>
 
                 <release-item-contributor-list>

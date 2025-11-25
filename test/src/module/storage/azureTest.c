@@ -707,11 +707,11 @@ testRun(void)
 
                 testRequestP(
                     service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCDx0000000&comp=block",
-                    .content = "12345678901234567");
+                    .content = "1234567890123456");
                 testResponseP(service);
 
                 testRequestP(
-                    service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCDx0000001&comp=block", .content = "890");
+                    service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCDx0000001&comp=block", .content = "7890");
                 testResponseP(service);
 
                 testRequestP(
@@ -725,22 +725,21 @@ testRun(void)
                 testResponseP(service);
 
                 // Check that block size is updated during write
-                ioBufferSizeSet(9);
+                ioBufferSizeSet(6);
                 TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
 
                 ioWriteOpen(storageWriteIo(write));
+                ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
 
                 TEST_RESULT_VOID(
                     bufResize(((StorageWriteAzure *)ioWriteDriver(storageWriteIo(write)))->blockBuffer, 17),
                     "resize part buffer to 17");
 
-                ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
+                ioWrite(storageWriteIo(write), BUFSTRDEF("90"));
 
                 TEST_RESULT_UINT(
-                    bufSize(((StorageWriteAzure *)ioWriteDriver(storageWriteIo(write)))->blockBuffer), 16,
+                    ((StorageWriteAzure *)ioWriteDriver(storageWriteIo(write)))->blockSize, 16,
                     "part buffer reset to 16 (default)");
-
-                ioWrite(storageWriteIo(write), BUFSTRDEF("90"));
 
                 ioWriteClose(storageWriteIo(write));
                 ioBufferSizeSet(ioBufferSizeDefault);
