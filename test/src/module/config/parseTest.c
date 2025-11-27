@@ -1977,6 +1977,7 @@ testRun(void)
         TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptRepoType, 1), STRID6("s3", 0x7d31), "repo2-type is s3");
         TEST_RESULT_UINT(cfgOptionIdxBool(cfgOptRepoSymlink, 1), false, "repo2-symlink is not set");
         TEST_RESULT_UINT(cfgOptionIdxSource(cfgOptRepoSymlink, 1), cfgSourceDefault, "repo2-symlink is default");
+        TEST_RESULT_UINT(cfgOptionIdxNegate(cfgOptRepoSymlink, 1), false, "repo2-symlink is not negated");
 
         TEST_RESULT_STR_Z(cfgOptionIdxDefaultValue(cfgOptBackupStandby, 0), "n", "backup-standby default is false");
         TEST_RESULT_STR_Z(cfgOptionIdxDefaultValue(cfgOptBackupStandby, 0), "n", "backup-standby default is false (again)");
