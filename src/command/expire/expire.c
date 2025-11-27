@@ -1031,12 +1031,11 @@ cmdExpire(void)
             InfoBackup *infoBackup = NULL;
 
             // Is full retention time-based?
-            const bool timeBasedFullRetention =
+            const bool timeBasedFullRetentionCfg =
                 cfgOptionIdxStrId(cfgOptRepoRetentionFullType, repoIdx) == CFGOPTVAL_REPO_RETENTION_FULL_TYPE_TIME;
 
-            // --oldest only works with count-based retention
-            if (expireOldest && timeBasedFullRetention)
-                THROW(OptionInvalidError, "--oldest cannot be used with timed based retention");
+            // Effective retention mode for this run (may be overridden by --oldest)
+            bool timeBasedFullRetentionEff = timeBasedFullRetentionCfg;
 
             TRY_BEGIN()
             {
@@ -1057,6 +1056,16 @@ cmdExpire(void)
                         LOG_INFO_FMT(
                             "repo%u: --oldest will expire the oldest full chain (full count=%u)",
                             repoIdx + 1, fullLstSize);
+
+                        // If time-based retention is configured, force count-based behaviour for this run
+                        if (timeBasedFullRetentionEff)
+                        {
+                            LOG_INFO_FMT(
+                                "repo%u: time-based full retention is set; --oldest will use count-based expiration for this run",
+                                repoIdx + 1);
+
+                            timeBasedFullRetentionEff = false;
+                        }
 
                         cfgOptionIdxSet(cfgOptRepoRetentionFull, repoIdx, cfgSourceParam, VARINT64(fullLstSize - 1));
 
@@ -1101,7 +1110,7 @@ cmdExpire(void)
                 else
                 {
                     // If time-based retention for full backups is set, then expire based on time period
-                    if (timeBasedFullRetention)
+                    if (timeBasedFullRetentionEff)
                     {
                         // If a time period was provided then run time-based expiration otherwise do nothing (the user has already
                         // been warned by the config system that retention-full was not set)
@@ -1128,7 +1137,7 @@ cmdExpire(void)
 
                 // Remove all files on disk that are now expired
                 removeExpiredBackup(infoBackup, adhocBackupLabel, repoIdx);
-                removeExpiredArchive(infoBackup, timeBasedFullRetention, repoIdx);
+                removeExpiredArchive(infoBackup, timeBasedFullRetentionEff, repoIdx);
                 removeExpiredHistory(infoBackup, repoIdx);
             }
             CATCH_ANY()

@@ -2254,7 +2254,7 @@
 
                             <p>When used, archive retention is also temporarily adjusted so WAL for the expired chain can be removed in the same run.</p>
 
-                            <p>This option only works with count-based retention and cannot be used when <br-option>--repo-retention-full-type=time</br-option> is set.</p>
+                            <p>If time-based full retention is configured (using <br-option>--repo-retention-full-type=time</br-option>), <br-option>--oldest</br-option> uses count-based expiration for this run.</p>
 
                             <admonition type="warning">This option cannot be combined with <br-option>--set</br-option>.</admonition>
                         </text>

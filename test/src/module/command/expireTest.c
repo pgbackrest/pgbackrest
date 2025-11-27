@@ -2688,6 +2688,17 @@ testRun(void)
             "\"backup-timestamp-start\":1764234903,\"backup-timestamp-stop\":1764234905,\"backup-type\":\"full\","
             "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20251127-101503F_20251127-101508D={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.58.0dev\","
+            "\"backup-archive-start\":\"000000010000000000000011\",\"backup-archive-stop\":\"000000010000000000000011\","
+            "\"backup-error\":false,"
+            "\"backup-info-repo-size\":2834318,\"backup-info-repo-size-delta\":2687,"
+            "\"backup-info-size\":23813039,\"backup-info-size-delta\":26805,"
+            "\"backup-lsn-start\":\"0/11000028\",\"backup-lsn-stop\":\"0/11000120\","
+            "\"backup-prior\":\"20251127-101503F\",\"backup-reference\":[\"20251127-101503F\"],"
+            "\"backup-timestamp-start\":1764234908,\"backup-timestamp-stop\":1764234910,\"backup-type\":\"diff\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
             "\n"
             "[db]\n"
             "db-catalog-version=202506291\n"
@@ -2708,6 +2719,7 @@ testRun(void)
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20251127-101453F/" BACKUP_MANIFEST_FILE);
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20251127-101453F_20251127-101458D/" BACKUP_MANIFEST_FILE);
         HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20251127-101503F/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20251127-101503F_20251127-101508D/" BACKUP_MANIFEST_FILE);
 
         // Create archive info
         HRN_INFO_PUT(
@@ -2739,9 +2751,14 @@ testRun(void)
             "20251127-101453F_20251127-101458D/backup.manifest\n"
             "20251127-101503F/\n"
             "20251127-101503F/backup.manifest\n"
+            "20251127-101503F_20251127-101508D/\n"
+            "20251127-101503F_20251127-101508D/backup.manifest\n"
             "backup.info\n"
             "backup.info.copy\n",
             .comment = "only oldest and dependents removed");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/18-1/0000000100000000", archiveExpectList(6, 32, "0000000100000000"),
+            .comment = "all prior to 000000010000000000000006 removed from 18-1/0000000100000000");
         TEST_RESULT_LOG(
             "P00   INFO: repo1: --oldest will expire the oldest full chain (full count=4)\n"
             "P00 DETAIL: repo1: enforced repo1-retention-full=3 for --oldest\n"
@@ -2769,9 +2786,14 @@ testRun(void)
             "20251127-101453F_20251127-101458D/backup.manifest\n"
             "20251127-101503F/\n"
             "20251127-101503F/backup.manifest\n"
+            "20251127-101503F_20251127-101508D/\n"
+            "20251127-101503F_20251127-101508D/backup.manifest\n"
             "backup.info\n"
             "backup.info.copy\n",
             .comment = "only oldest and dependents removed");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/18-1/0000000100000000", archiveExpectList(10, 32, "0000000100000000"),
+            .comment = "all prior to 00000001000000000000000A removed from 18-1/0000000100000000");
         TEST_RESULT_LOG(
             "P00   INFO: repo1: --oldest will expire the oldest full chain (full count=3)\n"
             "P00 DETAIL: repo1: enforced repo1-retention-full=2 for --oldest\n"
@@ -2791,7 +2813,7 @@ testRun(void)
         TEST_ERROR(cmdExpire(), OptionInvalidError, "--oldest and --set cannot be used together");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("expire --oldest conflicts with time based retention");
+        TEST_TITLE("expire --oldest with time based retention enforces count-based");
 
         argList = strLstDup(argListBase);
         hrnCfgArgRawBool(argList, cfgOptOldest, true);
@@ -2799,7 +2821,29 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "9999999");
         HRN_CFG_LOAD(cfgCmdExpire, argList);
 
-        TEST_ERROR(cmdExpire(), OptionInvalidError, "--oldest cannot be used with timed based retention");
+        TEST_RESULT_VOID(cmdExpire(), "expire only oldest backup and dependent");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP,
+            "20251127-101503F/\n"
+            "20251127-101503F/backup.manifest\n"
+            "20251127-101503F_20251127-101508D/\n"
+            "20251127-101503F_20251127-101508D/backup.manifest\n"
+            "backup.info\n"
+            "backup.info.copy\n",
+            .comment = "only oldest and dependents removed");
+        TEST_RESULT_LOG(
+            "P00   INFO: repo1: --oldest will expire the oldest full chain (full count=2)\n"
+            "P00   INFO: repo1: time-based full retention is set; --oldest will use count-based expiration for this run\n"
+            "P00 DETAIL: repo1: enforced repo1-retention-full=1 for --oldest\n"
+            "P00 DETAIL: repo1: enforced repo1-retention-archive-type=full and repo1-retention-archive=1 for --oldest\n"
+            "P00   INFO: repo1: expire full backup set 20251127-101453F, 20251127-101453F_20251127-101458D\n"
+            "P00   INFO: repo1: remove expired backup 20251127-101453F_20251127-101458D\n"
+            "P00   INFO: repo1: remove expired backup 20251127-101453F\n"
+            "P00 DETAIL: repo1: 18-1 archive retention on backup 20251127-101503F, start = 00000001000000000000000E\n"
+            "P00   INFO: repo1: 18-1 remove archive, start = 00000001000000000000000A, stop = 00000001000000000000000D");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/18-1/0000000100000000", archiveExpectList(14, 32, "0000000100000000"),
+            .comment = "all prior to 00000001000000000000000E removed from 18-1/0000000100000000");
 
         harnessLogLevelReset();
     }
