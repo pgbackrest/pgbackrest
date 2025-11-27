@@ -2764,7 +2764,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 // Else apply the default for the unresolved dependency, if it exists
                 else if (dependResult.defaultExists)
                 {
-                    // Fully reinitialize since it might have been left partially set because dependencies were not resolved
+                    // Fully reinitialize since it might have been left partially set if dependency was not resolved
                     *configOptionValue = (ConfigOptionValue)
                     {
                         .set = true,
