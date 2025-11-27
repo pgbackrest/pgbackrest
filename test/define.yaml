@@ -620,11 +620,11 @@ unit:
           - storage/s3/storage
           - storage/s3/write
           - storage/read
+          - storage/write
           - storage/helper
 
         include:
           - storage/storage
-          - storage/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: sftp
