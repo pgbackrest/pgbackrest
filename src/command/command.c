@@ -86,17 +86,17 @@ cmdOption(void)
 
                     for (unsigned int optionIdx = 0; optionIdx < optionIdxTotal; optionIdx++)
                     {
-                        // If option was negated
-                        if (cfgOptionIdxNegate(optionId, optionIdx))
-                            strCatFmt(cmdOptionStr, " --no-%s", cfgOptionIdxName(optionId, optionIdx));
-                        // If option was reset
-                        else if (cfgOptionIdxReset(optionId, optionIdx))
-                            strCatFmt(cmdOptionStr, " --reset-%s", cfgOptionIdxName(optionId, optionIdx));
-                        // Else not default
-                        else if (cfgOptionIdxSource(optionId, optionIdx) != cfgSourceDefault)
+                        // Only show non-default options (if an option is explicitly set as the default it will be shown)
+                        if (cfgOptionIdxSource(optionId, optionIdx) != cfgSourceDefault)
                         {
+                            // If option was negated
+                            if (cfgOptionIdxNegate(optionId, optionIdx))
+                                strCatFmt(cmdOptionStr, " --no-%s", cfgOptionIdxName(optionId, optionIdx));
+                            // If option was reset
+                            else if (cfgOptionIdxReset(optionId, optionIdx))
+                                strCatFmt(cmdOptionStr, " --reset-%s", cfgOptionIdxName(optionId, optionIdx));
                             // Don't show redacted options
-                            if (cfgParseOptionSecure(optionId))
+                            else if (cfgParseOptionSecure(optionId))
                                 strCatFmt(cmdOptionStr, " --%s=<redacted>", cfgOptionIdxName(optionId, optionIdx));
                             // Output boolean option
                             else if (cfgParseOptionType(optionId) == cfgOptTypeBoolean)
