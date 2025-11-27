@@ -1009,6 +1009,10 @@ cmdExpire(void)
         {
             adhocBackupLabel = cfgOptionStr(cfgOptSet);
 
+            // Conflict check with the --oldest option
+            if (cfgOptionBool(cfgOptOldest))
+                THROW(OptionInvalidError, "--oldest and --set cannot be used together");
+
             // If the label format is invalid, then error
             if (!regExpMatchOne(backupRegExpP(.full = true, .differential = true, .incremental = true), adhocBackupLabel))
                 THROW_FMT(OptionInvalidValueError, "'%s' is not a valid backup label format", strZ(adhocBackupLabel));
@@ -1017,21 +1021,64 @@ cmdExpire(void)
         // Track any errors that may occur
         unsigned int errorTotal = 0;
 
+        // Check if this run should expire the --oldest backup set
+        const bool expireOldest = cfgOptionValid(cfgOptOldest) ? cfgOptionBool(cfgOptOldest) : false;
+
         for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
         {
             // Get the repo storage in case it is remote and encryption settings need to be pulled down
             const Storage *const storageRepo = storageRepoIdx(repoIdx);
             InfoBackup *infoBackup = NULL;
 
+            // Is full retention time-based?
             const bool timeBasedFullRetention =
                 cfgOptionIdxStrId(cfgOptRepoRetentionFullType, repoIdx) == CFGOPTVAL_REPO_RETENTION_FULL_TYPE_TIME;
 
+            // --oldest only works with count-based retention
+            if (expireOldest && timeBasedFullRetention)
+                THROW(OptionInvalidError, "--oldest cannot be used with timed based retention");
+
             TRY_BEGIN()
             {
-                // Load backup.info
+                // Load backup.info for this repo
                 infoBackup = infoBackupLoadFileReconstruct(
                     storageRepo, INFO_BACKUP_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                     cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+
+                // In --oldest mode, make the oldest full chain eligible by lowering retention for this run
+                if (expireOldest)
+                {
+                    // Count full backups in this repo (we want to expire exactly one oldest chain)
+                    const unsigned int fullLstSize = strLstSize(infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)));
+
+                    // If there is more than one full, temporarily keep one fewer
+                    if (fullLstSize > 1)
+                    {
+                        LOG_INFO_FMT(
+                            "repo%u: --oldest will expire the oldest full chain (full count=%u)",
+                            repoIdx + 1, fullLstSize);
+
+                        cfgOptionIdxSet(cfgOptRepoRetentionFull, repoIdx, cfgSourceParam, VARINT64(fullLstSize - 1));
+
+                        LOG_DETAIL_FMT(
+                            "repo%u: enforced repo%u-retention-full=%u for --oldest",
+                            repoIdx + 1, repoIdx + 1, cfgOptionIdxUInt(cfgOptRepoRetentionFull, repoIdx));
+
+                        // Also lower archive retention so WAL for the expired chain can be removed
+                        cfgOptionIdxSet(cfgOptRepoRetentionArchiveType, repoIdx, cfgSourceParam, VARSTRDEF("full"));
+                        cfgOptionIdxSet(cfgOptRepoRetentionArchive, repoIdx, cfgSourceParam, VARINT64(fullLstSize - 1));
+
+                        LOG_DETAIL_FMT(
+                            "repo%u: enforced repo%u-retention-archive-type=full and repo%u-retention-archive=%u for --oldest",
+                            repoIdx + 1, repoIdx + 1, repoIdx + 1, fullLstSize - 1);
+                    }
+                    else
+                    {
+                        LOG_WARN_FMT(
+                            "repo%u: --oldest requested but no eligible full backup to expire (full count=%u)",
+                            repoIdx + 1, fullLstSize);
+                    }
+                }
 
                 // If a backupLabel was set, then attempt to expire the requested backup
                 if (adhocBackupLabel != NULL)

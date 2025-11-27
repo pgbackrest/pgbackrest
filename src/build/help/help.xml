@@ -2246,6 +2246,20 @@
                 </text>
 
                 <option-list>
+                    <option id="oldest">
+                        <summary>Expire the oldest eligible backup set.</summary>
+
+                        <text>
+                            <p>Expire the oldest full backup chain that can be removed (meaning at least one newer full backup remains). This is equivalent to manually decrementing retention by one, but computed automatically.</p>
+
+                            <p>When used, archive retention is also temporarily adjusted so WAL for the expired chain can be removed in the same run.</p>
+
+                            <p>This option only works with count-based retention and cannot be used when <br-option>--repo-retention-full-type=time</br-option> is set.</p>
+
+                            <admonition type="warning">This option cannot be combined with <br-option>--set</br-option>.</admonition>
+                        </text>
+                    </option>
+
                     <option id="set" name="Set">
                         <summary>Backup set to expire.</summary>
 

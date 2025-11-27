@@ -3603,6 +3603,48 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                      // opt/neutral-umask
     ),                                                                                                          // opt/neutral-umask
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                                  // opt/oldest
+    (                                                                                                                  // opt/oldest
+        PARSE_RULE_OPTION_NAME("oldest"),                                                                              // opt/oldest
+        PARSE_RULE_OPTION_TYPE(Boolean),                                                                               // opt/oldest
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                              // opt/oldest
+        PARSE_RULE_OPTION_SECTION(CommandLine),                                                                        // opt/oldest
+                                                                                                                       // opt/oldest
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                 // opt/oldest
+        (                                                                                                              // opt/oldest
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                          // opt/oldest
+        ),                                                                                                             // opt/oldest
+                                                                                                                       // opt/oldest
+        PARSE_RULE_OPTIONAL                                                                                            // opt/oldest
+        (                                                                                                              // opt/oldest
+            PARSE_RULE_OPTIONAL_GROUP                                                                                  // opt/oldest
+            (                                                                                                          // opt/oldest
+                PARSE_RULE_FILTER_CMD                                                                                  // opt/oldest
+                (                                                                                                      // opt/oldest
+                    PARSE_RULE_VAL_CMD(Expire),                                                                        // opt/oldest
+                ),                                                                                                     // opt/oldest
+                                                                                                                       // opt/oldest
+                PARSE_RULE_OPTIONAL_DEPEND                                                                             // opt/oldest
+                (                                                                                                      // opt/oldest
+                    PARSE_RULE_VAL_OPT(Stanza),                                                                        // opt/oldest
+                ),                                                                                                     // opt/oldest
+                                                                                                                       // opt/oldest
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                            // opt/oldest
+                (                                                                                                      // opt/oldest
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                                         // opt/oldest
+                ),                                                                                                     // opt/oldest
+            ),                                                                                                         // opt/oldest
+                                                                                                                       // opt/oldest
+            PARSE_RULE_OPTIONAL_GROUP                                                                                  // opt/oldest
+            (                                                                                                          // opt/oldest
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                            // opt/oldest
+                (                                                                                                      // opt/oldest
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                                         // opt/oldest
+                ),                                                                                                     // opt/oldest
+            ),                                                                                                         // opt/oldest
+        ),                                                                                                             // opt/oldest
+    ),                                                                                                                 // opt/oldest
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                                  // opt/online
     (                                                                                                                  // opt/online
         PARSE_RULE_OPTION_NAME("online"),                                                                              // opt/online
@@ -11647,6 +11689,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptLogTimestamp,                                                                                         // opt-resolve-order
     cfgOptManifestSaveThreshold,                                                                                // opt-resolve-order
     cfgOptNeutralUmask,                                                                                         // opt-resolve-order
+    cfgOptOldest,                                                                                               // opt-resolve-order
     cfgOptOnline,                                                                                               // opt-resolve-order
     cfgOptOutput,                                                                                               // opt-resolve-order
     cfgOptPageHeaderCheck,                                                                                      // opt-resolve-order

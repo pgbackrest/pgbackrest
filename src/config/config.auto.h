@@ -96,6 +96,7 @@ Option constants
 #define CFGOPT_LOG_TIMESTAMP                                        "log-timestamp"
 #define CFGOPT_MANIFEST_SAVE_THRESHOLD                              "manifest-save-threshold"
 #define CFGOPT_NEUTRAL_UMASK                                        "neutral-umask"
+#define CFGOPT_OLDEST                                               "oldest"
 #define CFGOPT_ONLINE                                               "online"
 #define CFGOPT_OUTPUT                                               "output"
 #define CFGOPT_PAGE_HEADER_CHECK                                    "page-header-check"
@@ -141,7 +142,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            189
+#define CFG_OPTION_TOTAL                                            190
 
 /***********************************************************************************************************************************
 Option value constants
@@ -454,6 +455,7 @@ typedef enum
     cfgOptLogTimestamp,
     cfgOptManifestSaveThreshold,
     cfgOptNeutralUmask,
+    cfgOptOldest,
     cfgOptOnline,
     cfgOptOutput,
     cfgOptPageHeaderCheck,
