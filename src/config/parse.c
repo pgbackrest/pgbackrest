@@ -2382,9 +2382,8 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                     parseOptionValue->found && (optionType == cfgOptTypeBoolean || !parseOptionValue->negate) &&
                     !parseOptionValue->reset;
 
-                // Initialize option value and set source and negate/reset flags
-                *configOptionValue = (ConfigOptionValue){
-                    .negate = parseOptionValue->negate, .reset = parseOptionValue->reset, .source = parseOptionValue->source};
+                // Initialize option value and set negate and reset flag
+                *configOptionValue = (ConfigOptionValue){.negate = parseOptionValue->negate, .reset = parseOptionValue->reset};
 
                 // Is the option valid?
                 CfgParseOptionalRuleState optionalRules = {.defaultDynamicBin = config->bin};
@@ -2481,6 +2480,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                     if (optionSet)
                     {
                         configOptionValue->set = true;
+                        configOptionValue->source = parseOptionValue->source;
 
                         // Check beta status
                         parseOptionBeta(optionId, optionKeyIdx, ruleOption->beta, &parseOptionList[cfgOptBeta]);
@@ -2720,6 +2720,11 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                             }
                         }
                     }
+                    // Else set source when negated (value is already false)
+                    else if (parseOptionValue->negate)
+                    {
+                        configOptionValue->source = parseOptionValue->source;
+                    }
 
                     if ((!configOptionValue->set && !parseOptionValue->negate) || config->help)
                     {
@@ -2759,11 +2764,14 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 // Else apply the default for the unresolved dependency, if it exists
                 else if (dependResult.defaultExists)
                 {
-                    configOptionValue->set = true;
-                    configOptionValue->value = dependResult.defaultValue;
-                    configOptionValue->defaultValue = optionalRules.defaultRaw;
-                    configOptionValue->display = optionalRules.defaultRaw;
-                    configOptionValue->source = cfgSourceDefault;
+                    // Fully reinitialize since it might have been left partially set because dependencies were not resolved
+                    *configOptionValue = (ConfigOptionValue)
+                    {
+                        .set = true,
+                        .value = dependResult.defaultValue,
+                        .defaultValue = optionalRules.defaultRaw,
+                        .display = optionalRules.defaultRaw,
+                    };
                 }
 
                 pckReadFree(optionalRules.pack);
