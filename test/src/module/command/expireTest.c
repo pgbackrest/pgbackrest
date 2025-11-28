@@ -2842,4 +2842,3 @@ testRun(void)
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
-
