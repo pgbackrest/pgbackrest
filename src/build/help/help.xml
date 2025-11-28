@@ -2246,7 +2246,7 @@
                 </text>
 
                 <option-list>
-                    <option id="oldest">
+                    <option id="oldest" name="Oldest">
                         <summary>Expire the oldest eligible backup set.</summary>
 
                         <text>
