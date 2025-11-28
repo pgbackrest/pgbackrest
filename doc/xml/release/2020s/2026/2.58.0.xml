@@ -52,6 +52,18 @@
 
                 <p>Remove support for <proper>PostgreSQL</proper> <id>9.5</id>.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2707"/>
+                <github-pull-request id="2708"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Improve logging of default for options with an unresolved dependency.</p>
+            </release-item>
         </release-improvement-list>
     </release-core-list>
 
