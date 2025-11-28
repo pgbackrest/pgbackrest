@@ -2823,6 +2823,9 @@ testRun(void)
             "backup.info\n"
             "backup.info.copy\n",
             .comment = "only oldest and dependents removed");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/18-1/0000000100000000", archiveExpectList(14, 32, "0000000100000000"),
+            .comment = "all prior to 00000001000000000000000E removed from 18-1/0000000100000000");
         TEST_RESULT_LOG(
             "P00   INFO: repo1: --oldest will expire the oldest full chain (full count=2)\n"
             "P00   INFO: repo1: time-based full retention is set; --oldest will use count-based expiration for this run\n"
@@ -2833,9 +2836,6 @@ testRun(void)
             "P00   INFO: repo1: remove expired backup 20251127-101453F\n"
             "P00 DETAIL: repo1: 18-1 archive retention on backup 20251127-101503F, start = 00000001000000000000000E\n"
             "P00   INFO: repo1: 18-1 remove archive, start = 00000001000000000000000A, stop = 00000001000000000000000D");
-        TEST_STORAGE_LIST(
-            storageRepo(), STORAGE_REPO_ARCHIVE "/18-1/0000000100000000", archiveExpectList(14, 32, "0000000100000000"),
-            .comment = "all prior to 00000001000000000000000E removed from 18-1/0000000100000000");
 
         harnessLogLevelReset();
     }
