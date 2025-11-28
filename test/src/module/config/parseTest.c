@@ -1859,6 +1859,12 @@ testRun(void)
                     "\n"
                     "[global:backup]\n"
                     "repo1-hardlink=y\n"
+                    "repo2-type=s3\n"                               // Set to S3 to test unresolved default below
+                    "repo2-symlink=n\n"                             // This will be unresolved and default to false
+                    "repo2-s3-bucket=x\n"                           // Required for S3 repo
+                    "repo2-s3-endpoint=x\n"                         // Required for S3 repo
+                    "repo2-s3-region=x\n"                           // Required for S3 repo
+                    "repo2-s3-key-type=auto\n"                      // Required for S3 repo
                     "bogus=bogus\n"
                     "no-delta=y\n"
                     "reset-delta=y\n"
@@ -1968,6 +1974,10 @@ testRun(void)
         TEST_RESULT_STR(cfgOptionStrNull(cfgOptPgHost), NULL, "pg2-host is NULL");
         TEST_ERROR(cfgOptionIdxStr(cfgOptPgHost, 1), AssertError, "option 'pg2-host' is null but non-null was requested");
         TEST_RESULT_UINT(cfgOptionUInt64(cfgOptIoTimeout), 60000, "io-timeout is set");
+        TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptRepoType, 1), STRID6("s3", 0x7d31), "repo2-type is s3");
+        TEST_RESULT_UINT(cfgOptionIdxBool(cfgOptRepoSymlink, 1), false, "repo2-symlink is not set");
+        TEST_RESULT_UINT(cfgOptionIdxSource(cfgOptRepoSymlink, 1), cfgSourceDefault, "repo2-symlink is default");
+        TEST_RESULT_UINT(cfgOptionIdxNegate(cfgOptRepoSymlink, 1), false, "repo2-symlink is not negated");
 
         TEST_RESULT_STR_Z(cfgOptionIdxDefaultValue(cfgOptBackupStandby, 0), "n", "backup-standby default is false");
         TEST_RESULT_STR_Z(cfgOptionIdxDefaultValue(cfgOptBackupStandby, 0), "n", "backup-standby default is false (again)");
