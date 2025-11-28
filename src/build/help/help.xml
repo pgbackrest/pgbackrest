@@ -2258,6 +2258,8 @@
 
                             <admonition type="warning">This option cannot be combined with <br-option>--set</br-option>.</admonition>
                         </text>
+
+                        <example>--oldest</example>
                     </option>
 
                     <option id="set" name="Set">
