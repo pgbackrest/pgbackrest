@@ -54,13 +54,12 @@ Catch signals
 static void
 exitOnSignal(const int signalType)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INT, signalType);
-    FUNCTION_LOG_END();
+    // It is not safe to log anything inside signal handlers, since many
+    // functions used in logging are not reentrant.
+    // Disable it here to avoid deadlocks.
+    logInit(logLevelOff, logLevelOff, logLevelOff, false, 0, 1, false);
 
     exit(exitSafe(errorTypeCode(&TermError), false, (SignalType)signalType));
-
-    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
