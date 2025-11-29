@@ -141,7 +141,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            189
+#define CFG_OPTION_TOTAL                                            190
 
 /***********************************************************************************************************************************
 Option value constants
@@ -554,6 +554,7 @@ typedef enum
     cfgOptRepoSftpPublicKeyFile,
     cfgOptRepoStorageCaFile,
     cfgOptRepoStorageCaPath,
+    cfgOptRepoStorageClass,
     cfgOptRepoStorageHost,
     cfgOptRepoStoragePort,
     cfgOptRepoStorageTag,

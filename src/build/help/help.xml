@@ -1226,6 +1226,18 @@
                         <example>/etc/pki/tls/certs</example>
                     </config-key>
 
+                    <config-key id="repo-storage-class" name="Repository Storage Class">
+                        <summary>Repository storage class.</summary>
+
+                        <text>
+                            <p>The storage class to use when storing objects. When not specified the default storage will be used. Any valid storage class with instant access can be specified, such as <id>STANDARD_IA</id>, <id>ONEZONE_IA</id>, <id>GLACIER_IR</id>, or <id>INTELLIGENT_TIERING</id> for S3.</p>
+
+                            <admonition type="caution">When choosing a storage class, consider the trade-offs between cost and retrieval requirements. Be aware that some storage classes have minimum object sizes for billing and minimum storage duration. Consult the documentation for current storage class options and their billing characteristics -- in the vast majority of situations setting the storage class will increase costs rather than reduce them. Always set <setting>repo-bundle</setting> when using this option to avoid small files that may be billed at a higher rate.</admonition>
+                        </text>
+
+                        <example>ONEZONE_IA</example>
+                    </config-key>
+
                     <config-key id="repo-storage-host" name="Repository Storage Host">
                         <summary>Repository storage host.</summary>
 

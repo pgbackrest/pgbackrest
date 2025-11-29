@@ -6,6 +6,19 @@
 
         <release-feature-list>
             <release-item>
+                <github-issue id="371"/>
+                <github-issue id="2671"/>
+                <github-pull-request id="2658"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="felix.buenemann"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add <br-option>repo-storage-class</br-option> option to configure S3 storage class for object uploads.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2693"/>
 
                 <release-item-contributor-list>
