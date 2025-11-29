@@ -1292,16 +1292,27 @@ storageGcsNew(
                 break;
         }
 
-        // Parse the endpoint to extract the host and port
-        const HttpUrl *const url = httpUrlNewParseP(endpoint, .type = httpProtocolTypeHttps);
+        // Parse the endpoint to extract the host, port, and protocol
+        const HttpUrl *const url = httpUrlNewParseP(endpoint, .type = httpProtocolTypeAny, .defaultType = httpProtocolTypeHttps);
         this->endpoint = httpUrlHost(url);
+        const HttpProtocolType protocolType = httpUrlProtocolType(url);
 
         // Create the http client used to service requests
-        this->httpClient = httpClientNew(
-            tlsClientNewP(
+        // Use plain socket for HTTP, TLS for HTTPS
+        IoClient *ioClient;
+
+        if (protocolType == httpProtocolTypeHttp)
+        {
+            ioClient = sckClientNew(this->endpoint, httpUrlPort(url), timeout, timeout);
+        }
+        else
+        {
+            ioClient = tlsClientNewP(
                 sckClientNew(this->endpoint, httpUrlPort(url), timeout, timeout), this->endpoint, timeout, timeout, verifyPeer,
-                .caFile = caFile, .caPath = caPath),
-            timeout);
+                .caFile = caFile, .caPath = caPath);
+        }
+
+        this->httpClient = httpClientNew(ioClient, timeout);
 
         // Create list of redacted headers
         this->headerRedactList = strLstNew();

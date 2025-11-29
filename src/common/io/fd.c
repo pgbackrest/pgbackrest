@@ -7,6 +7,7 @@ File Descriptor Functions
 #include <sys/siginfo.h>
 #endif
 #include <poll.h>
+#include <unistd.h>
 
 #include "common/debug.h"
 #include "common/io/fd.h"
@@ -101,4 +102,24 @@ fdReady(const int fd, const bool read, const bool write, TimeMSec timeout)
     }
 
     FUNCTION_LOG_RETURN(BOOL, result > 0);
+}
+
+/***********************************************************************************************************************************
+Use write() to write to a file descriptor. This is a simple wrapper around the system call to allow for easier unit testing.
+***********************************************************************************************************************************/
+FN_EXTERN ssize_t
+fdWrite(const int fd, const void *const buf, const size_t count)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(INT, fd);
+        FUNCTION_LOG_PARAM_P(VOID, buf);
+        FUNCTION_LOG_PARAM(SIZE, count);
+    FUNCTION_LOG_END();
+
+    ASSERT(fd >= 0);
+    ASSERT(buf != NULL);
+
+    ssize_t result = write(fd, buf, count);
+
+    FUNCTION_LOG_RETURN(SSIZE, result);
 }

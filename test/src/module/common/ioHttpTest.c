@@ -280,6 +280,49 @@ testRun(void)
         TEST_RESULT_Z(logBuf, "{https://test.com:443/}", "check log");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("URL with http:// + defaultType=https uses detected http");
+
+        TEST_ASSIGN(
+            url, httpUrlNewParseP(STRDEF("http://test.com"), .type = httpProtocolTypeAny, .defaultType = httpProtocolTypeHttps),
+            "new");
+        TEST_RESULT_STR_Z(httpUrl(url), "http://test.com", "check url");
+        TEST_RESULT_STR_Z(httpUrlHost(url), "test.com", "check host");
+        TEST_RESULT_UINT(httpUrlPort(url), 80, "check port");
+        TEST_RESULT_UINT(httpUrlProtocolType(url), httpProtocolTypeHttp, "check protocol is http (detected)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("URL with https:// + defaultType=http uses detected https");
+
+        TEST_ASSIGN(
+            url, httpUrlNewParseP(STRDEF("https://test.com"), .type = httpProtocolTypeAny, .defaultType = httpProtocolTypeHttp),
+            "new");
+        TEST_RESULT_STR_Z(httpUrl(url), "https://test.com", "check url");
+        TEST_RESULT_STR_Z(httpUrlHost(url), "test.com", "check host");
+        TEST_RESULT_UINT(httpUrlPort(url), 443, "check port");
+        TEST_RESULT_UINT(httpUrlProtocolType(url), httpProtocolTypeHttps, "check protocol is https (detected)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("URL with no protocol + defaultType=https uses default https");
+
+        TEST_ASSIGN(
+            url, httpUrlNewParseP(STRDEF("test.com:4443"), .type = httpProtocolTypeAny, .defaultType = httpProtocolTypeHttps),
+            "new");
+        TEST_RESULT_STR_Z(httpUrl(url), "test.com:4443", "check url");
+        TEST_RESULT_STR_Z(httpUrlHost(url), "test.com", "check host");
+        TEST_RESULT_UINT(httpUrlPort(url), 4443, "check port");
+        TEST_RESULT_UINT(httpUrlProtocolType(url), httpProtocolTypeHttps, "check protocol is https (default)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("URL with no protocol + defaultType=http uses default http");
+
+        TEST_ASSIGN(
+            url, httpUrlNewParseP(STRDEF("test.com"), .type = httpProtocolTypeAny, .defaultType = httpProtocolTypeHttp), "new");
+        TEST_RESULT_STR_Z(httpUrl(url), "test.com", "check url");
+        TEST_RESULT_STR_Z(httpUrlHost(url), "test.com", "check host");
+        TEST_RESULT_UINT(httpUrlPort(url), 80, "check port");
+        TEST_RESULT_UINT(httpUrlProtocolType(url), httpProtocolTypeHttp, "check protocol is http (default)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("IPv6");
 
         TEST_ASSIGN(url, httpUrlNewParseP(STRDEF("http://[2001:db8::ff00:42:8329]:81"), .type = httpProtocolTypeHttp), "new");

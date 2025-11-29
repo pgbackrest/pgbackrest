@@ -102,7 +102,9 @@ testRun(void)
 
         TEST_ERROR(ioReadLine(execIoRead(exec)), FileReadError, "unable to read from sleep read: [9] Bad file descriptor");
         ioWriteStrLine(execIoWrite(exec), strNew());
-        TEST_ERROR(ioWriteFlush(execIoWrite(exec)), FileWriteError, "unable to write to sleep write: [9] Bad file descriptor");
+        TEST_ERROR(
+            ioWriteFlush(execIoWrite(exec)), FileWriteError,
+            "unable to finish write to sleep write (wrote 0/1 bytes): [9] Bad file descriptor");
 
         sleepMSec(500);
         TEST_RESULT_VOID(execFree(exec), "sleep exited as expected");
