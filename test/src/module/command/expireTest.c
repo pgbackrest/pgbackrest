@@ -2567,7 +2567,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("expire --oldest selects oldest eligible full chain"))
+    if (testBegin("expire --oldest selects oldest eligible full backup set and dependents"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no current backups");
@@ -2752,7 +2752,7 @@ testRun(void)
             storageRepo(), STORAGE_REPO_ARCHIVE "/18-1/0000000100000000", archiveExpectList(6, 32, "0000000100000000"),
             .comment = "all prior to 000000010000000000000006 removed from 18-1/0000000100000000");
         TEST_RESULT_LOG(
-            "P00   INFO: repo1: --oldest will expire the oldest full chain (full count=4)\n"
+            "P00   INFO: repo1: --oldest will expire the oldest full backup set and dependents (full count=4)\n"
             "P00 DETAIL: repo1: enforced repo1-retention-full=3 for --oldest\n"
             "P00 DETAIL: repo1: enforced repo1-retention-archive-type=full and repo1-retention-archive=3 for --oldest\n"
             "P00   INFO: repo1: expire full backup set 20251127-101431F, 20251127-101431F_20251127-101437D\n"
@@ -2787,7 +2787,7 @@ testRun(void)
             storageRepo(), STORAGE_REPO_ARCHIVE "/18-1/0000000100000000", archiveExpectList(10, 32, "0000000100000000"),
             .comment = "all prior to 00000001000000000000000A removed from 18-1/0000000100000000");
         TEST_RESULT_LOG(
-            "P00   INFO: repo1: --oldest will expire the oldest full chain (full count=3)\n"
+            "P00   INFO: repo1: --oldest will expire the oldest full backup set and dependents (full count=3)\n"
             "P00 DETAIL: repo1: enforced repo1-retention-full=2 for --oldest\n"
             "P00 DETAIL: repo1: enforced repo1-retention-archive-type=full and repo1-retention-archive=2 for --oldest\n"
             "P00   INFO: repo1: expire full backup set 20251127-101442F, 20251127-101442F_20251127-101447D\n"
@@ -2827,7 +2827,7 @@ testRun(void)
             storageRepo(), STORAGE_REPO_ARCHIVE "/18-1/0000000100000000", archiveExpectList(14, 32, "0000000100000000"),
             .comment = "all prior to 00000001000000000000000E removed from 18-1/0000000100000000");
         TEST_RESULT_LOG(
-            "P00   INFO: repo1: --oldest will expire the oldest full chain (full count=2)\n"
+            "P00   INFO: repo1: --oldest will expire the oldest full backup set and dependents (full count=2)\n"
             "P00   INFO: repo1: time-based full retention is set; --oldest will use count-based expiration for this run\n"
             "P00 DETAIL: repo1: enforced repo1-retention-full=1 for --oldest\n"
             "P00 DETAIL: repo1: enforced repo1-retention-archive-type=full and repo1-retention-archive=1 for --oldest\n"
