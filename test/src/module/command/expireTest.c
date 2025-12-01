@@ -22,18 +22,14 @@ archiveGenerate(
     const Storage *storage, const char *const archiveStanzaPath, const unsigned int start, unsigned int end, const char *archiveId,
     const char *majorWal)
 {
-    // For simplicity, only allow 2 digits
-    if (end > 99)
-        end = 99;
-
-    String *wal = NULL;
+    // For simplicity, limit the range to 0..255 (i.e. 00..FF in hex)
+    if (end > 255)
+        end = 255;
 
     for (unsigned int i = start; i <= end; i++)
     {
-        if (i < 10)
-            wal = strNewFmt("%s0000000%u-9baedd24b61aa15305732ac678c4e2c102435a09", majorWal, i);
-        else
-            wal = strNewFmt("%s000000%u-9baedd24b61aa15305732ac678c4e2c102435a09", majorWal, i);
+        // i is decimal input, but WAL suffix must be hex (8 digits, zero-padded)
+        String *wal = strNewFmt("%s%08X-9baedd24b61aa15305732ac678c4e2c102435a09", majorWal, i);
 
         storagePutP(
             storageNewWriteP(storage, strNewFmt("%s/%s/%s/%s", archiveStanzaPath, archiveId, majorWal, strZ(wal))),
@@ -46,18 +42,14 @@ archiveExpectList(const unsigned int start, unsigned int end, const char *majorW
 {
     String *result = strNew();
 
-    // For simplicity, only allow 2 digits
-    if (end > 99)
-        end = 99;
-
-    String *wal = NULL;
+    // For simplicity, limit the range to 0..255 (i.e. 00..FF in hex)
+    if (end > 255)
+        end = 255;
 
     for (unsigned int i = start; i <= end; i++)
     {
-        if (i < 10)
-            wal = strNewFmt("%s0000000%u-9baedd24b61aa15305732ac678c4e2c102435a09", majorWal, i);
-        else
-            wal = strNewFmt("%s000000%u-9baedd24b61aa15305732ac678c4e2c102435a09", majorWal, i);
+        // i is decimal input, but WAL suffix must be hex (8 digits, zero-padded)
+        String *wal = strNewFmt("%s%08X-9baedd24b61aa15305732ac678c4e2c102435a09", majorWal, i);
 
         strCatFmt(result, "%s\n", strZ(wal));
     }
@@ -128,8 +120,8 @@ testRun(void)
         "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
         "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
         "20181119-152900F_20181119-152600D={"
-        "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000011\","
-        "\"backup-archive-stop\":\"000000010000000000000011\",\"backup-info-repo-size\":2369186,"
+        "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"00000001000000000000000B\","
+        "\"backup-archive-stop\":\"00000001000000000000000B\",\"backup-info-repo-size\":2369186,"
         "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
         "\"backup-prior\":\"20181119-152900F\",\"backup-reference\":[\"20181119-152900F\"],"
         "\"backup-timestamp-start\":%" PRIu64 ",\"backup-timestamp-stop\":%" PRIu64 ",\"backup-type\":\"diff\","
@@ -987,7 +979,7 @@ testRun(void)
             "0000000200000000/000000020000000000000005-9baedd24b61aa15305732ac678c4e2c102435a09\n"
             "0000000200000000/000000020000000000000007-9baedd24b61aa15305732ac678c4e2c102435a09\n"
             "0000000200000000/000000020000000000000009-9baedd24b61aa15305732ac678c4e2c102435a09\n"
-            "0000000200000000/000000020000000000000010-9baedd24b61aa15305732ac678c4e2c102435a09\n",
+            "0000000200000000/00000002000000000000000A-9baedd24b61aa15305732ac678c4e2c102435a09\n",
             .comment = "repo2: 9.4-1 nothing removed");
 
         TEST_STORAGE_LIST(
@@ -1053,7 +1045,7 @@ testRun(void)
             "0000000200000000/\n"
             "0000000200000000/000000020000000000000002-9baedd24b61aa15305732ac678c4e2c102435a09\n"
             "0000000200000000/000000020000000000000009-9baedd24b61aa15305732ac678c4e2c102435a09\n"
-            "0000000200000000/000000020000000000000010-9baedd24b61aa15305732ac678c4e2c102435a09\n",
+            "0000000200000000/00000002000000000000000A-9baedd24b61aa15305732ac678c4e2c102435a09\n",
             .comment = "repo2: 9.4-1 only archives not meeting retention for archive-retention-type=diff are removed");
 
         TEST_RESULT_LOG(
@@ -2484,11 +2476,11 @@ testRun(void)
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152900F, start = 000000010000000000000009"
             ", stop = 000000010000000000000009\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152900F_20181119-152600D"
-            ", start = 000000010000000000000011\n"
+            ", start = 00000001000000000000000B\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000002, stop = 000000010000000000000003\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000005, stop = 000000010000000000000005\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000008, stop = 000000010000000000000008\n"
-            "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000010, stop = 000000010000000000000010");
+            "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 00000001000000000000000A, stop = 00000001000000000000000A");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire oldest full");

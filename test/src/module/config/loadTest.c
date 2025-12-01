@@ -563,11 +563,11 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Region, 1, "region");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Endpoint, 1, "endpoint");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoS3KeyType, 1, "auto");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoStorageUploadChunkSize, 1, "64KiB");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoStorageUploadChunkSize, 1, "6MiB");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
-        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptRepoStorageUploadChunkSize), 64 * 1024, "chunk size set");
+        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptRepoStorageUploadChunkSize), 6 * 1024 * 1024, "chunk size set");
         TEST_RESULT_UINT(cfgOptionSource(cfgOptRepoStorageUploadChunkSize), cfgSourceParam, "chunk size source is param");
 
         // -------------------------------------------------------------------------------------------------------------------------

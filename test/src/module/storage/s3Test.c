@@ -19,6 +19,54 @@ Constants
 #define S3_TEST_HOST                                                "s3.amazonaws.com"
 
 /***********************************************************************************************************************************
+Calculate splitMax. This defines the point at which the maximum chunk size must be used in order to be able to upload the maximum
+file size. The function is included here but can be used to calculate splitMax for other object stores as well by plugging in the
+appropriate values.
+***********************************************************************************************************************************/
+#define TEST_STORAGE_S3_PART_SIZE_DEFAULT                           (5 * 1024 * 1024)
+#define TEST_STORAGE_S3_PART_MAX                                    10000
+#define TEST_STORAGE_S3_FILE_MAX                                    ((uint64_t)5 * 1024 * 1024 * 1024 * 1024)
+
+static unsigned int
+testStorageWriteChunkSplitMax(
+    const size_t chunkSizeDefault, const size_t chunkSizeMax, const unsigned int chunkMax, const size_t chunkIncr,
+    const unsigned int splitDefault, const uint64_t fileSizeMax)
+{
+    unsigned int splitIdx = chunkMax;
+
+    for (; splitIdx >= splitDefault; splitIdx--)
+    {
+        uint64_t defaultTotal = (uint64_t)splitDefault * chunkSizeDefault;
+        uint64_t maxTotal = (uint64_t)(chunkMax - splitIdx) * chunkSizeMax;
+
+        // Calculate ascending chunks
+        uint64_t ascTotal = 0;
+
+        for (unsigned int chunkIdx = splitDefault; chunkIdx < splitIdx; chunkIdx++)
+        {
+            // Calculate ascending chunk size
+            uint64_t chunkSize = (uint64_t)(chunkSizeMax - chunkIncr) * (chunkIdx - splitDefault + 1) / (splitIdx - splitDefault);
+
+            // If ascending chunk size is less than default then return default
+            if (chunkSize <= chunkSizeDefault)
+            {
+                chunkSize = chunkSizeDefault;
+            }
+            // Else if ascending chunk size is not evenly divisible by chunk increment then round up
+            else if (chunkSize % chunkIncr != 0)
+                chunkSize += chunkIncr - (chunkSize % chunkIncr);
+
+            ascTotal += chunkSize;
+        }
+
+        if (defaultTotal + ascTotal + maxTotal > fileSizeMax)
+            break;
+    }
+
+    return splitIdx;
+}
+
+/***********************************************************************************************************************************
 Helper to build test requests
 ***********************************************************************************************************************************/
 typedef struct TestRequestParam
@@ -458,6 +506,28 @@ testRun(void)
                 TEST_RESULT_STR(s3->path, path, "check path");
                 TEST_RESULT_BOOL(storageFeature(s3, storageFeaturePath), false, "check path feature");
                 TEST_RESULT_UINT(driver->partSize, 5 * 1024 * 1024, "check part size");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("check part sizes");
+
+                unsigned int splitDefault = (unsigned int)((1024UL * 1024 * 1024) / TEST_STORAGE_S3_PART_SIZE_DEFAULT) + 1;
+                TEST_RESULT_UINT(splitDefault, STORAGE_S3_SPLIT_DEFAULT, "check part default split");
+
+                unsigned int splitMax = testStorageWriteChunkSplitMax(
+                    TEST_STORAGE_S3_PART_SIZE_DEFAULT, STORAGE_CHUNK_SIZE_MAX, TEST_STORAGE_S3_PART_MAX, STORAGE_CHUNK_INCR,
+                    splitDefault, TEST_STORAGE_S3_FILE_MAX);
+                TEST_RESULT_UINT(splitMax, STORAGE_S3_SPLIT_MAX, "check part max split");
+
+                uint64_t sizeCheck = 0;
+
+                for (unsigned int chunkIdx = 0; chunkIdx < TEST_STORAGE_S3_PART_MAX; chunkIdx++)
+                {
+                    sizeCheck += storageWriteChunkSize(
+                        TEST_STORAGE_S3_PART_SIZE_DEFAULT, STORAGE_S3_SPLIT_DEFAULT, STORAGE_S3_SPLIT_MAX, chunkIdx);
+                }
+
+                TEST_RESULT_BOOL(sizeCheck >= TEST_STORAGE_S3_FILE_MAX, true, "check part total min");
+                TEST_RESULT_BOOL(sizeCheck < TEST_STORAGE_S3_FILE_MAX + STORAGE_CHUNK_SIZE_MAX, true, "check part total max");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("coverage for noop functions");
@@ -999,8 +1069,24 @@ testRun(void)
                         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                         "<CompleteMultipartUploadResult><ETag>XXX</ETag></CompleteMultipartUploadResult>");
 
+                // Check that block size is updated during write
+                ioBufferSizeSet(6);
                 TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("file.txt")), "new write");
-                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890")), "write");
+
+                ioWriteOpen(storageWriteIo(write));
+                ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
+
+                TEST_RESULT_VOID(
+                    bufResize(((StorageWriteS3 *)ioWriteDriver(storageWriteIo(write)))->partBuffer, 17),
+                    "resize part buffer to 17");
+
+                ioWrite(storageWriteIo(write), BUFSTRDEF("90"));
+
+                TEST_RESULT_UINT(
+                    ((StorageWriteS3 *)ioWriteDriver(storageWriteIo(write)))->partSize, 16, "part buffer reset to 16 (default)");
+
+                ioWriteClose(storageWriteIo(write));
+                ioBufferSizeSet(ioBufferSizeDefault);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("file missing");

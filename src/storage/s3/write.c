@@ -11,6 +11,12 @@ S3 Storage File Write
 #include "storage/write.h"
 
 /***********************************************************************************************************************************
+Part defaults based on limits at https://docs.aws.amazon.com/AmazonS3/latest/userguide/qfacts.html
+***********************************************************************************************************************************/
+#define STORAGE_S3_SPLIT_DEFAULT                                    205
+#define STORAGE_S3_SPLIT_MAX                                        9557
+
+/***********************************************************************************************************************************
 S3 query tokens
 ***********************************************************************************************************************************/
 STRING_STATIC(S3_QUERY_PART_NUMBER_STR,                             "partNumber");
@@ -48,31 +54,6 @@ Macros for function logging
     StorageWriteS3 *
 #define FUNCTION_LOG_STORAGE_WRITE_S3_FORMAT(value, buffer, bufferSize)                                                            \
     objNameToLog(value, "StorageWriteS3", buffer, bufferSize)
-
-/***********************************************************************************************************************************
-Open the file
-***********************************************************************************************************************************/
-static void
-storageWriteS3Open(THIS_VOID)
-{
-    THIS(StorageWriteS3);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_WRITE_S3, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(this->partBuffer == NULL);
-
-    // Allocate the part buffer
-    MEM_CONTEXT_OBJ_BEGIN(this)
-    {
-        this->partBuffer = bufNew(this->partSize);
-    }
-    MEM_CONTEXT_OBJ_END();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
 
 /***********************************************************************************************************************************
 Flush bytes to upload part
@@ -170,12 +151,14 @@ storageWriteS3(THIS_VOID, const Buffer *const buffer)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->partBuffer != NULL);
     ASSERT(buffer != NULL);
 
-    size_t bytesTotal = 0;
+    // Resize chunk buffer
+    storageWriteChunkBufferResize(buffer, this->partBuffer, this->partSize);
 
     // Continue until the write buffer has been exhausted
+    size_t bytesTotal = 0;
+
     do
     {
         // Copy as many bytes as possible into the part buffer
@@ -187,10 +170,13 @@ storageWriteS3(THIS_VOID, const Buffer *const buffer)
         bytesTotal += bytesNext;
 
         // If the part buffer is full then write it
-        if (bufRemains(this->partBuffer) == 0)
+        if (bufUsed(this->partBuffer) == this->partSize)
         {
             storageWriteS3PartAsync(this);
             bufUsedZero(this->partBuffer);
+
+            this->partSize = storageWriteChunkSize(
+                this->partSize, STORAGE_S3_SPLIT_DEFAULT, STORAGE_S3_SPLIT_MAX, strLstSize(this->uploadPartList));
         }
     }
     while (bytesTotal != bufUsed(buffer));
@@ -275,6 +261,7 @@ storageWriteS3New(StorageS3 *const storage, const String *const name, const size
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_S3, storage);
         FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM(SIZE, partSize);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -286,6 +273,7 @@ storageWriteS3New(StorageS3 *const storage, const String *const name, const size
         {
             .storage = storage,
             .partSize = partSize,
+            .partBuffer = bufNew(0),
 
             .interface = (StorageWriteInterface)
             {
@@ -300,7 +288,6 @@ storageWriteS3New(StorageS3 *const storage, const String *const name, const size
                 .ioInterface = (IoWriteInterface)
                 {
                     .close = storageWriteS3Close,
-                    .open = storageWriteS3Open,
                     .write = storageWriteS3,
                 },
             },
