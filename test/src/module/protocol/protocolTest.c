@@ -954,14 +954,8 @@ testRun(void)
 
             HRN_FORK_PARENT_BEGIN()
             {
-                //argList = strLstNew();
-                //hrnCfgArgRawZ(argList, cfgOptTlsCiphers, "ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA256:!SSLv1:!SSLv2:!SSLv3:!TLSv1:!TLSv1.1");
-                //hrnCfgArgRawZ(argList, cfgOptTls13Ciphers, NULL);
-
                 IoServer *const tlsServer = tlsServerNew(
-                    STRDEF("127.0.0.1"), STRDEF(HRN_SERVER_CA), STRDEF(HRN_SERVER_KEY), STRDEF(HRN_SERVER_CERT), 5000,
-                    STRDEF("ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES128-GCM-SHA256:!SSLv1:!SSLv2:!SSLv3:!TLSv1:!TLSv1.1"),
-                    NULL);
+                    STRDEF("127.0.0.1"), STRDEF(HRN_SERVER_CA), STRDEF(HRN_SERVER_KEY), STRDEF(HRN_SERVER_CERT), 5000);
                 IoServer *const socketServer = sckServerNew(STRDEF("127.0.0.1"), testPort, 5000);
                 ProtocolServer *server = NULL;
 

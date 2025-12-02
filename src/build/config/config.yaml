@@ -941,18 +941,19 @@ option:
     command: buffer-size
     depend: tcp-keep-alive-count
 
-  # TLS options:
-  tls-ciphers:
+  # TLS allowed ciphers
+  tls-cipher-12:
     section: global
     type: string
-    required: false
     default-type: quote
     default: HIGH:MEDIUM:+3DES:!aNULL
+    command: buffer-size
 
-  tls13-ciphers:
+  tls-cipher-13:
     section: global
     type: string
     required: false
+    command: buffer-size
 
   # Logging options
   #---------------------------------------------------------------------------------------------------------------------------------

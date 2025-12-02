@@ -9,8 +9,6 @@ GCS Storage
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 
-#include "config/config.h"
-
 #include "common/crypto/common.h"
 #include "common/crypto/hash.h"
 #include "common/debug.h"
@@ -1282,8 +1280,7 @@ storageGcsNew(
                 this->authClient = httpClientNew(
                     tlsClientNewP(
                         sckClientNew(httpUrlHost(this->authUrl), httpUrlPort(this->authUrl), timeout, timeout),
-                        httpUrlHost(this->authUrl), timeout, timeout, verifyPeer, .caFile = caFile, .caPath = caPath,
-                            .tlsCiphers = cfgOptionStr(cfgOptTlsCiphers), .tls13Ciphers = cfgOptionStrNull(cfgOptTls13Ciphers)),
+                        httpUrlHost(this->authUrl), timeout, timeout, verifyPeer, .caFile = caFile, .caPath = caPath),
                     timeout);
 
                 break;
@@ -1303,7 +1300,7 @@ storageGcsNew(
         this->httpClient = httpClientNew(
             tlsClientNewP(
                 sckClientNew(this->endpoint, httpUrlPort(url), timeout, timeout), this->endpoint, timeout, timeout, verifyPeer,
-                .caFile = caFile, .caPath = caPath, cfgOptionStr(cfgOptTlsCiphers), cfgOptionStrNull(cfgOptTls13Ciphers)),
+                .caFile = caFile, .caPath = caPath),
             timeout);
 
         // Create list of redacted headers

@@ -25,7 +25,6 @@ STRING_DECLARE(TLS_STAT_SERVER_STR);
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN IoServer *tlsServerNew(
-    const String *host, const String *caFile, const String *keyFile, const String *certFile, TimeMSec timeout,
-    const String * tlsCiphers, const String * tls13Ciphers);
+    const String *host, const String *caFile, const String *keyFile, const String *certFile, TimeMSec timeout);
 
 #endif

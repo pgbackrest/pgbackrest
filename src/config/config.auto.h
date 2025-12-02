@@ -131,14 +131,14 @@ Option constants
 #define CFGOPT_TCP_KEEP_ALIVE_COUNT                                 "tcp-keep-alive-count"
 #define CFGOPT_TCP_KEEP_ALIVE_IDLE                                  "tcp-keep-alive-idle"
 #define CFGOPT_TCP_KEEP_ALIVE_INTERVAL                              "tcp-keep-alive-interval"
-#define CFGOPT_TLS_CIPHERS                                          "tls-ciphers"
+#define CFGOPT_TLS_CIPHER_12                                        "tls-cipher-12"
+#define CFGOPT_TLS_CIPHER_13                                        "tls-cipher-13"
 #define CFGOPT_TLS_SERVER_ADDRESS                                   "tls-server-address"
 #define CFGOPT_TLS_SERVER_AUTH                                      "tls-server-auth"
 #define CFGOPT_TLS_SERVER_CA_FILE                                   "tls-server-ca-file"
 #define CFGOPT_TLS_SERVER_CERT_FILE                                 "tls-server-cert-file"
 #define CFGOPT_TLS_SERVER_KEY_FILE                                  "tls-server-key-file"
 #define CFGOPT_TLS_SERVER_PORT                                      "tls-server-port"
-#define CFGOPT_TLS13_CIPHERS                                        "tls13-ciphers"
 #define CFGOPT_TYPE                                                 "type"
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
@@ -583,14 +583,14 @@ typedef enum
     cfgOptTcpKeepAliveCount,
     cfgOptTcpKeepAliveIdle,
     cfgOptTcpKeepAliveInterval,
-    cfgOptTlsCiphers,
+    cfgOptTlsCipher12,
+    cfgOptTlsCipher13,
     cfgOptTlsServerAddress,
     cfgOptTlsServerAuth,
     cfgOptTlsServerCaFile,
     cfgOptTlsServerCertFile,
     cfgOptTlsServerKeyFile,
     cfgOptTlsServerPort,
-    cfgOptTls13Ciphers,
     cfgOptType,
     cfgOptVerbose,
     cfgOptVersion,

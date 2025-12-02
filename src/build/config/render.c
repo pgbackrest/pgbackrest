@@ -359,7 +359,7 @@ bldCfgRenderEnumStr(const String *const source)
                         break;
 
                     case '+':
-                        strCatZ(result, "DA");
+                        strCatZ(result, "PL");
                         break;
 
                     case '-':

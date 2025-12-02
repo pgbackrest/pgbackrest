@@ -423,9 +423,8 @@ tlsClientNew(
         FUNCTION_LOG_PARAM(STRING, param.caPath);
         FUNCTION_LOG_PARAM(STRING, param.certFile);
         FUNCTION_LOG_PARAM(STRING, param.keyFile);
-        FUNCTION_LOG_PARAM(STRING, param.tlsCiphers);
-        FUNCTION_LOG_PARAM(STRING, param.tls13Ciphers);
     FUNCTION_LOG_END();
+
     ASSERT(ioClient != NULL);
 
     OBJ_NEW_BEGIN(TlsClient, .childQty = MEM_CONTEXT_QTY_MAX, .callbackQty = 1)
@@ -445,30 +444,6 @@ tlsClientNew(
 
         // Enable safe compatibility options
         SSL_CTX_set_options(this->context, SSL_OP_ALL);
-
-        // Set minimum TLS 1.2
-        cryptoError(
-            SSL_CTX_set_min_proto_version(
-                this->context,
-                TLS1_2_VERSION) != 1,
-            "client: failed to set minumum TLS version to 1.2");
-
-        // Set accepted cipher suites
-        cryptoError(
-            SSL_CTX_set_cipher_list(
-                this->context,
-                strZ(param.tlsCiphers)) != 1,
-        "client: failed to set TLSv1.2 ciphers");
-
-        // only configure TLSv1.3 ciphers if the config option is not empty
-        if (param.tls13Ciphers != NULL)
-        {
-            cryptoError(
-                SSL_CTX_set_ciphersuites (
-                    this->context,
-                    strZ(param.tls13Ciphers)) != 1,
-            "client: failed to set TLSv1.3 ciphers");
-        }
 
         // Set location of CA certificates if the server certificate will be verified
         if (this->verifyPeer)
