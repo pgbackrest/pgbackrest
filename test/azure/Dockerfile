@@ -19,53 +19,12 @@ ARG PGBR_BRANCH="azure-managed-identities"
 # ============================================================================
 # Azure Blob Storage Configuration (Optional)
 # ============================================================================
-# This Dockerfile supports three deployment scenarios:
+# Azure configuration is done at runtime via environment variables for security.
+# See DOCKER_README.md for usage examples and authentication methods.
 #
-# SCENARIO 1: Local Backups Only (Mac/Linux/Windows)
-#   - No Azure configuration needed
-#   - Backups stored locally in /var/lib/pgbackrest (repo1)
-#   Usage:
-#     docker run -e POSTGRES_PASSWORD=secret <image-name>
-#
-# SCENARIO 2: Azure Blob Storage from Local System (Mac/Linux/Windows)
-#   - Use SAS Token or Shared Key authentication
-#   - Backups stored in both local (repo1) and Azure (repo2)
-#   Usage with SAS Token (recommended):
-#     docker run -e POSTGRES_PASSWORD=secret \
-#                -e AZURE_ACCOUNT=<your-storage-account> \
-#                -e AZURE_CONTAINER=<your-container> \
-#                -e AZURE_KEY="<sas-token>" \
-#                -e AZURE_KEY_TYPE=sas \
-#                <image-name>
-#   Usage with Shared Key:
-#     docker run -e POSTGRES_PASSWORD=secret \
-#                -e AZURE_ACCOUNT=<your-storage-account> \
-#                -e AZURE_CONTAINER=<your-container> \
-#                -e AZURE_KEY=<base64-encoded-key> \
-#                -e AZURE_KEY_TYPE=shared \
-#                <image-name>
-#
-# SCENARIO 3: Azure Managed Identity (Azure VMs/Container Instances/AKS)
-#   - No keys needed - uses Azure Managed Identity
-#   - Backups stored in both local (repo1) and Azure (repo2)
-#   - Requires Managed Identity enabled on Azure resource
-#   Usage:
-#     docker run -e POSTGRES_PASSWORD=secret \
-#                -e AZURE_ACCOUNT=<your-storage-account> \
-#                -e AZURE_CONTAINER=<your-container> \
-#                -e AZURE_KEY_TYPE=auto \
-#                <image-name>
-#
-# Azure key types:
-#   - "auto" (Managed Identity) - Only works on Azure VMs/ACI/AKS, no key needed
-#   - "shared" (Shared Key) - Works anywhere, requires base64-encoded storage account key
-#   - "sas" (SAS Token) - Works anywhere, requires SAS token string
+# All Azure credentials (keys, tokens) should be provided at runtime, not build time.
+# No build-time ARGs for sensitive data to avoid security warnings.
 # ============================================================================
-ARG AZURE_ACCOUNT=""
-ARG AZURE_CONTAINER=""
-ARG AZURE_KEY=""
-ARG AZURE_KEY_TYPE="auto"
-ARG AZURE_REPO_PATH="/demo-repo"
 
 USER root
 
@@ -104,6 +63,7 @@ RUN mkdir -p /etc/pgbackrest /var/lib/pgbackrest /var/log/pgbackrest && \
     chown -R postgres:postgres /var/lib/pgbackrest /var/log/pgbackrest /etc/pgbackrest
 
 # Create base config (without Azure)
+# Azure configuration is done at runtime via environment variables
 RUN printf '%s\n' \
       '[global]' \
       'repo1-path=/var/lib/pgbackrest' \
@@ -118,25 +78,6 @@ RUN printf '%s\n' \
       > /etc/pgbackrest/pgbackrest.conf && \
     chown postgres:postgres /etc/pgbackrest/pgbackrest.conf && \
     chmod 660 /etc/pgbackrest/pgbackrest.conf
-
-# Add Azure config if build args are provided
-# For auto (Managed Identity), only account and container are needed
-# For shared/sas, key is also required
-RUN if [ -n "$AZURE_ACCOUNT" ] && [ -n "$AZURE_CONTAINER" ]; then \
-      if [ "$AZURE_KEY_TYPE" = "auto" ] || [ -n "$AZURE_KEY" ]; then \
-        printf '\n%s\n' \
-          'repo2-type=azure' \
-          "repo2-azure-account=${AZURE_ACCOUNT}" \
-          "repo2-azure-container=${AZURE_CONTAINER}" \
-          "repo2-azure-key-type=${AZURE_KEY_TYPE}" \
-          "repo2-path=${AZURE_REPO_PATH}" \
-          'repo2-retention-full=4' \
-          >> /etc/pgbackrest/pgbackrest.conf; \
-        if [ "$AZURE_KEY_TYPE" != "auto" ] && [ -n "$AZURE_KEY" ]; then \
-          echo "repo2-azure-key=${AZURE_KEY}" >> /etc/pgbackrest/pgbackrest.conf; \
-        fi; \
-      fi; \
-    fi
 
 # Create script to configure Azure at runtime via environment variables
 RUN cat > /usr/local/bin/configure-azure.sh <<'SCRIPT_EOF'
