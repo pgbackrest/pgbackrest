@@ -1,6 +1,6 @@
 # pgBackRest Docker Image - Azure Blob Storage
 
-Docker image with PostgreSQL 18 and pgBackRest configured for Azure Blob Storage backups.
+Docker image with PostgreSQL 18 and pgBackRest configured for Azure Blob Storage backups. Supports Azure Managed Identity (AMI), SAS tokens, and shared key authentication.
 
 ## Build
 
@@ -40,15 +40,56 @@ docker run -d \
 ## Authentication Methods
 
 ### Managed Identity (`auto`) - Azure VMs/ACI/AKS
-No keys required. Requires Managed Identity enabled with "Storage Blob Data Contributor" role.
+No keys required. Most secure option for Azure environments.
 
+**Setup (one-time, requires Azure admin):**
 ```bash
+# Enable Managed Identity on VM
+az vm identity assign \
+  --name <vm-name> \
+  --resource-group <rg-name>
+
+# Get Principal ID and grant Storage Blob Data Contributor role
+PRINCIPAL_ID=$(az vm identity show \
+  --name <vm-name> \
+  --resource-group <rg-name> \
+  --query principalId -o tsv)
+
+STORAGE_ACCOUNT_ID=$(az storage account show \
+  --name <storage-account> \
+  --resource-group <rg-name> \
+  --query id -o tsv)
+
+az role assignment create \
+  --assignee "$PRINCIPAL_ID" \
+  --role "Storage Blob Data Contributor" \
+  --scope "$STORAGE_ACCOUNT_ID"
+```
+
+**Usage:**
+```bash
+# On Azure VM
 docker run -d \
   -e POSTGRES_PASSWORD=secret \
   -e AZURE_ACCOUNT=<account> \
   -e AZURE_CONTAINER=<container> \
   -e AZURE_KEY_TYPE=auto \
   pgbackrest-test
+
+# Azure Container Instance (ACI)
+az container create \
+  --resource-group <rg-name> \
+  --name pgbackrest-demo \
+  --image pgbackrest-test \
+  --assign-identity \
+  --environment-variables \
+    POSTGRES_PASSWORD=secret \
+    AZURE_ACCOUNT=<account> \
+    AZURE_CONTAINER=<container> \
+    AZURE_KEY_TYPE=auto \
+  --cpu 2 \
+  --memory 4 \
+  --ports 5432
 ```
 
 ### SAS Token (`sas`) - Recommended for local Docker
@@ -124,7 +165,24 @@ curl -H "Metadata:true" \
   "http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://storage.azure.com/"
 ```
 
+**Verify Managed Identity role assignment:**
+```bash
+az role assignment list \
+  --scope "$STORAGE_ACCOUNT_ID" \
+  --assignee "$PRINCIPAL_ID" \
+  --output table
+```
+
 **Check Azure authentication errors:**
 ```bash
 docker exec pgbackrest-demo cat /var/log/pgbackrest/pgbackrest.log
+```
+
+**Verify blob storage access:**
+```bash
+az storage blob list \
+  --account-name <account> \
+  --container-name <container> \
+  --auth-mode login \
+  --output table
 ```
