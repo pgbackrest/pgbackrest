@@ -14,6 +14,7 @@ Configuration Load
 #include "common/debug.h"
 #include "common/io/io.h"
 #include "common/io/socket/common.h"
+#include "common/io/tls/common.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.intern.h"
@@ -490,6 +491,10 @@ cfgLoad(const unsigned int argListSize, const char *argList[])
                 cfgOptionTest(cfgOptTcpKeepAliveIdle) ? cfgOptionInt(cfgOptTcpKeepAliveIdle) : 0,
                 cfgOptionTest(cfgOptTcpKeepAliveInterval) ? cfgOptionInt(cfgOptTcpKeepAliveInterval) : 0);
         }
+
+        // Initialize TLS settings
+        if (cfgOptionValid(cfgOptTlsCipher12))
+            tlsInit(cfgOptionStr(cfgOptTlsCipher12), cfgOptionStrNull(cfgOptTlsCipher13));
 
         // Set IO buffer size (use the default for help to lower memory usage)
         if (cfgOptionValid(cfgOptBufferSize) && !cfgCommandHelp())
