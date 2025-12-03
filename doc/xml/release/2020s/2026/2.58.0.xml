@@ -1,5 +1,9 @@
 <release date="XXXX-XX-XX" version="2.58.0dev" title="Under Development">
     <release-core-list>
+        <text>
+            <p><b>IMPORTANT NOTE</b>: The minimum values for the <setting>repo-storage-upload-chunk-size</setting> option have increased. They now represent the minimum allowed by the vendors.</p>
+        </text>
+
         <release-feature-list>
             <release-item>
                 <github-pull-request id="2693"/>
@@ -15,6 +19,30 @@
 
         <release-improvement-list>
             <release-item>
+                <github-issue id="2679"/>
+                <github-pull-request id="2701"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="timothee.peignier"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Dynamically size <proper>S3</proper>/<proper>GCS</proper>/<proper>Azure</proper> chunks for large uploads.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2705"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Optimize <proper>S3</proper>/<proper>GCS</proper>/<proper>Azure</proper> chunk size for small files.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2692"/>
 
                 <release-item-contributor-list>
@@ -23,6 +51,18 @@
                 </release-item-contributor-list>
 
                 <p>Remove support for <proper>PostgreSQL</proper> <id>9.5</id>.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2707"/>
+                <github-pull-request id="2708"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Improve logging of default for options with an unresolved dependency.</p>
             </release-item>
         </release-improvement-list>
     </release-core-list>

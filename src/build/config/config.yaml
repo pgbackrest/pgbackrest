@@ -2142,12 +2142,14 @@ option:
     section: global
     group: repo
     type: size
-    required: false
     default:
       - azure: 4MiB
       - gcs: 4MiB
       - s3: 5MiB
-    allow-range: [64KiB, 1TiB]
+    allow-range:
+      - azure: [4MiB, 1GiB]
+      - gcs: [4MiB, 1GiB]
+      - s3: [5MiB, 1GiB]
     command: repo-type
     depend:
       option: repo-type

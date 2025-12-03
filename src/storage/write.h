@@ -110,6 +110,16 @@ storageWriteFree(StorageWrite *const this)
 }
 
 /***********************************************************************************************************************************
+Helper functions
+***********************************************************************************************************************************/
+// Calculate chunk size for multipart upload to an object store
+FN_EXTERN size_t storageWriteChunkSize(
+    size_t chunkSizeDefault, unsigned int defaultSplit, unsigned int maxSplit, unsigned int chunkIdx);
+
+// Resize chunk buffer for multipart upload to an object store
+FN_EXTERN void storageWriteChunkBufferResize(const Buffer *input, Buffer *const chunk, size_t chunkSizeMax);
+
+/***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
 FN_EXTERN void storageWriteToLog(const StorageWrite *this, StringStatic *debugLog);

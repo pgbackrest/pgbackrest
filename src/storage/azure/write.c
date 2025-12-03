@@ -13,6 +13,12 @@ Azure Storage File Write
 #include "storage/write.h"
 
 /***********************************************************************************************************************************
+Block defaults based on limits at https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob
+***********************************************************************************************************************************/
+#define STORAGE_AZURE_SPLIT_DEFAULT                                 257
+#define STORAGE_AZURE_SPLIT_MAX                                     9505
+
+/***********************************************************************************************************************************
 Azure HTTP headers
 ***********************************************************************************************************************************/
 STRING_STATIC(AZURE_HEADER_BLOB_TYPE_STR,                           "x-ms-blob-type");
@@ -54,31 +60,6 @@ Macros for function logging
     StorageWriteAzure *
 #define FUNCTION_LOG_STORAGE_WRITE_AZURE_FORMAT(value, buffer, bufferSize)                                                         \
     objNameToLog(value, "StorageWriteAzure", buffer, bufferSize)
-
-/***********************************************************************************************************************************
-Open the file
-***********************************************************************************************************************************/
-static void
-storageWriteAzureOpen(THIS_VOID)
-{
-    THIS(StorageWriteAzure);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_WRITE_AZURE, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(this->blockBuffer == NULL);
-
-    // Allocate the block buffer
-    MEM_CONTEXT_OBJ_BEGIN(this)
-    {
-        this->blockBuffer = bufNew(this->blockSize);
-    }
-    MEM_CONTEXT_OBJ_END();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
 
 /***********************************************************************************************************************************
 Flush bytes to upload block
@@ -170,11 +151,13 @@ storageWriteAzure(THIS_VOID, const Buffer *const buffer)
 
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
-    ASSERT(this->blockBuffer != NULL);
 
-    size_t bytesTotal = 0;
+    // Resize chunk buffer
+    storageWriteChunkBufferResize(buffer, this->blockBuffer, this->blockSize);
 
     // Continue until the write buffer has been exhausted
+    size_t bytesTotal = 0;
+
     do
     {
         // Copy as many bytes as possible into the block buffer
@@ -186,10 +169,14 @@ storageWriteAzure(THIS_VOID, const Buffer *const buffer)
         bytesTotal += bytesNext;
 
         // If the block buffer is full then write it
-        if (bufRemains(this->blockBuffer) == 0)
+        if (bufUsed(this->blockBuffer) == this->blockSize)
         {
             storageWriteAzureBlockAsync(this);
             bufUsedZero(this->blockBuffer);
+
+            this->blockSize =
+                storageWriteChunkSize(
+                    this->blockSize, STORAGE_AZURE_SPLIT_DEFAULT, STORAGE_AZURE_SPLIT_MAX, strLstSize(this->blockIdList));
         }
     }
     while (bytesTotal != bufUsed(buffer));
@@ -281,6 +268,7 @@ storageWriteAzureNew(StorageAzure *const storage, const String *const name, cons
             .storage = storage,
             .fileId = fileId,
             .blockSize = blockSize,
+            .blockBuffer = bufNew(0),
 
             .interface = (StorageWriteInterface)
             {
@@ -295,7 +283,6 @@ storageWriteAzureNew(StorageAzure *const storage, const String *const name, cons
                 .ioInterface = (IoWriteInterface)
                 {
                     .close = storageWriteAzureClose,
-                    .open = storageWriteAzureOpen,
                     .write = storageWriteAzure,
                 },
             },

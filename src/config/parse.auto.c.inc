@@ -9819,7 +9819,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_NAME("repo-storage-upload-chunk-size"),                              // opt/repo-storage-upload-chunk-size
         PARSE_RULE_OPTION_TYPE(Size),                                                          // opt/repo-storage-upload-chunk-size
         PARSE_RULE_OPTION_RESET(true),                                                         // opt/repo-storage-upload-chunk-size
-        PARSE_RULE_OPTION_REQUIRED(false),                                                     // opt/repo-storage-upload-chunk-size
+        PARSE_RULE_OPTION_REQUIRED(true),                                                      // opt/repo-storage-upload-chunk-size
         PARSE_RULE_OPTION_SECTION(Global),                                                     // opt/repo-storage-upload-chunk-size
         PARSE_RULE_OPTION_GROUP_ID(Repo),                                                      // opt/repo-storage-upload-chunk-size
                                                                                                // opt/repo-storage-upload-chunk-size
@@ -9894,8 +9894,18 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                // opt/repo-storage-upload-chunk-size
                 PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                // opt/repo-storage-upload-chunk-size
                 (                                                                              // opt/repo-storage-upload-chunk-size
-                    PARSE_RULE_VAL_SIZE(64KiB),                                                // opt/repo-storage-upload-chunk-size
-                    PARSE_RULE_VAL_SIZE(1TiB),                                                 // opt/repo-storage-upload-chunk-size
+                    PARSE_RULE_OPTIONAL_ALLOW_RANGE_MAP                                        // opt/repo-storage-upload-chunk-size
+                    (                                                                          // opt/repo-storage-upload-chunk-size
+                        PARSE_RULE_VAL_STRID(Azure),                                           // opt/repo-storage-upload-chunk-size
+                        PARSE_RULE_VAL_SIZE(4MiB),                                             // opt/repo-storage-upload-chunk-size
+                        PARSE_RULE_VAL_SIZE(1GiB),                                             // opt/repo-storage-upload-chunk-size
+                        PARSE_RULE_VAL_STRID(Gcs),                                             // opt/repo-storage-upload-chunk-size
+                        PARSE_RULE_VAL_SIZE(4MiB),                                             // opt/repo-storage-upload-chunk-size
+                        PARSE_RULE_VAL_SIZE(1GiB),                                             // opt/repo-storage-upload-chunk-size
+                        PARSE_RULE_VAL_STRID(S3),                                              // opt/repo-storage-upload-chunk-size
+                        PARSE_RULE_VAL_SIZE(5MiB),                                             // opt/repo-storage-upload-chunk-size
+                        PARSE_RULE_VAL_SIZE(1GiB),                                             // opt/repo-storage-upload-chunk-size
+                    ),                                                                         // opt/repo-storage-upload-chunk-size
                 ),                                                                             // opt/repo-storage-upload-chunk-size
                                                                                                // opt/repo-storage-upload-chunk-size
                 PARSE_RULE_OPTIONAL_DEFAULT                                                    // opt/repo-storage-upload-chunk-size
