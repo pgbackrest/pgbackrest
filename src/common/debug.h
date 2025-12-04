@@ -359,12 +359,12 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
 
 #define FUNCTION_TEST_BEGIN()                                                                                                      \
     FUNCTION_TEST_MEM_CONTEXT_AUDIT_BEGIN();                                                                                       \
-                                                                                                                                   \
+                                                                                                                                    \
     /* Ensure that FUNCTION_LOG_BEGIN() and FUNCTION_TEST_BEGIN() are not both used in a single function by declaring the */       \
     /* same variable that FUNCTION_LOG_BEGIN() uses to track logging */                                                            \
     LogLevel FUNCTION_LOG_LEVEL();                                                                                                 \
     (void)FUNCTION_LOG_LEVEL();                                                                                                    \
-                                                                                                                                   \
+                                                                                                                                    \
     /* Ensure that FUNCTION_TEST_RETURN*() is not used with FUNCTION_LOG_BEGIN*() by declaring a variable that will be */          \
     /* referenced in FUNCTION_TEST_RETURN*() */                                                                                    \
     bool FUNCTION_TEST_BEGIN_exists;                                                                                               \

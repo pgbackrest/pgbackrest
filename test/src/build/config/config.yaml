@@ -213,6 +213,8 @@ option:
   log-level-stderr: {type: string, required: false, command: {noop: {}}}
   pg: {type: string, required: false, command: {noop: {}}}
   pg-path: {type: string, required: false, command: {noop: {}}}
+  repo-azure-key: {type: string, required: false, command: {noop: {}}}
+  repo-azure-key-type: {type: string-id, default: shared, allow-list: [auto, shared, sas], command: {noop: {}}}
   repo-type: {type: string, required: false, command: {noop: {}}}
   repo: {type: string, required: false, command: {noop: {}}}
   spool-path: {type: string, required: false, command: {noop: {}}}

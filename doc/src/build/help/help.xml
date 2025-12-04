@@ -20,6 +20,8 @@
                 <option id="log-level-file"><summary></summary><text><p></p></text></option>
                 <option id="log-level-stderr"><summary></summary><text><p></p></text></option>
                 <option id="repo"><summary></summary><text><p></p></text></option>
+                <option id="repo-azure-key"><summary></summary><text><p></p></text></option>
+                <option id="repo-azure-key-type"><summary></summary><text><p></p></text></option>
                 <option id="repo-type"><summary></summary><text><p></p></text></option>
                 <option id="spool-path"><summary></summary><text><p></p></text></option>
                 <option id="stanza"><summary></summary><text><p></p></text></option>
