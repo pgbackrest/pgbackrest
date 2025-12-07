@@ -582,6 +582,11 @@
     <contributor-id type="github">Underhunden</contributor-id>
 </contributor>
 
+<contributor id="joakim.hindersson">
+    <contributor-name-display>Joakim Hindersson</contributor-name-display>
+    <contributor-id type="github">jhindersson</contributor-id>
+</contributor>
+
 <contributor id="joe.ayers">
     <contributor-name-display>Joe Ayers</contributor-name-display>
 </contributor>

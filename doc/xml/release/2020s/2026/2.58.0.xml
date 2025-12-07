@@ -19,6 +19,17 @@
 
         <release-improvement-list>
             <release-item>
+                <github-pull-request id="2713"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="joakim.hindersson"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Allow dots in S3 bucket names when using path-style URIs.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2679"/>
                 <github-pull-request id="2701"/>
 
