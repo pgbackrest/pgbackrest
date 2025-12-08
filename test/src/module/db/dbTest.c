@@ -17,9 +17,9 @@ Test Database
 Macro to check that replay is making progress -- this does not seem useful enough to be included in the pq harness header
 ***********************************************************************************************************************************/
 #define                                                                                                                            \
-    HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS(                                                                          \
-        sessionParam, walNameParam, lsnNameParam, targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam,  \
-        replayProgressParam, sleepParam)                                                                                   \
+    HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS(                                                                                  \
+        sessionParam, walNameParam, lsnNameParam, targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam,          \
+        replayProgressParam, sleepParam)                                                                                           \
     {.session = sessionParam,                                                                                                      \
         .function = HRN_PQ_SENDQUERY,                                                                                              \
         .param =                                                                                                                   \
@@ -44,9 +44,9 @@ Macro to check that replay is making progress -- this does not seem useful enoug
     {.session = sessionParam, .function = HRN_PQ_GETRESULT, .resultNull = true}
 
 #define                                                                                                                            \
-    HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS_GE_10(                                                                    \
-        sessionParam, targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam, replayProgressParam, sleepParam) \
-    HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS(                                                                              \
+    HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS_GE_10(                                                                            \
+        sessionParam, targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam, replayProgressParam, sleepParam)     \
+    HRN_PQ_SCRIPT_REPLAY_TARGET_REACHED_PROGRESS(                                                                                  \
         sessionParam, "wal", "lsn", targetLsnParam, targetReachedParam, replayLsnParam, replayLastLsnParam, replayProgressParam,   \
         sleepParam)
 
