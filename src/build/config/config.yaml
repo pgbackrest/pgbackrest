@@ -2183,11 +2183,7 @@ option:
     default: blob.core.windows.net
 
   repo-azure-key:
-    section: global
-    group: repo
-    type: string
-    secure: true
-    command: repo-type
+    inherit: repo-azure-account
     required: false
     depend:
       option: repo-azure-key-type
