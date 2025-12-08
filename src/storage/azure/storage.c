@@ -59,7 +59,7 @@ STRING_STATIC(AZURE_XML_TAG_PROPERTIES_STR,                         "Properties"
 STRING_STATIC(AZURE_XML_TAG_VERSION_ID_STR,                         "VersionId");
 
 /***********************************************************************************************************************************
-Automatically get credentials via Azure Managed Identities
+Constants required for Azure Managed Identities
 
 Documentation for the response format is found at:
 https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/how-to-use-vm-token#get-a-token-using-curl
@@ -134,15 +134,11 @@ storageAzureAuth(
 
         // Date header is required for shared key authentication (for signing)
         if (this->keyType == storageAzureKeyTypeShared)
-        {
             httpHeaderPut(httpHeader, HTTP_HEADER_DATE_STR, dateTime);
-        }
 
         // Set version header (required for shared key and auto auth types, not for SAS)
         if (this->keyType != storageAzureKeyTypeSas)
-        {
             httpHeaderPut(httpHeader, AZURE_HEADER_VERSION_STR, AZURE_HEADER_VERSION_VALUE_STR);
-        }
 
         // Shared key authentication
         if (this->keyType == storageAzureKeyTypeShared)
@@ -211,6 +207,7 @@ storageAzureAuth(
                     "SharedKey %s:%s", strZ(this->account),
                     strZ(strNewEncode(encodingBase64, cryptoHmacOne(hashTypeSha256, this->sharedKey, BUFSTR(stringToSign))))));
         }
+        // Auto authentication
         else if (this->keyType == storageAzureKeyTypeAuto)
         {
             const time_t timeBegin = time(NULL);
@@ -257,22 +254,15 @@ storageAzureAuth(
                     MEM_CONTEXT_OBJ_END();
                 }
                 else
-                {
                     httpRequestError(request, response);
-                }
             }
 
-            // Generate authorization header with Bearer prefix
-            const String *const accessTokenHeaderValue = strNewFmt("Bearer %s", strZ(this->accessToken));
-
-            // Add the authorization header
-            httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, accessTokenHeaderValue);
+            // Add authorization header
+            httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("Bearer %s", strZ(this->accessToken)));
         }
         // SAS authentication
         else
-        {
             httpQueryMerge(query, this->sasKey);
-        }
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -887,6 +877,7 @@ storageAzureNew(
     ASSERT(container != NULL);
     ASSERT(account != NULL);
     ASSERT(endpoint != NULL);
+    ASSERT(keyType == storageAzureKeyTypeAuto || key != NULL);
     ASSERT(blockSize != 0);
 
     OBJ_NEW_BEGIN(StorageAzure, .childQty = MEM_CONTEXT_QTY_MAX)
@@ -902,7 +893,6 @@ storageAzureNew(
                 uriStyle == storageAzureUriStyleHost ?
                     strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
             .keyType = keyType,
-            .accessTokenExpirationTime = 0,
         };
 
         // Create tag query string
@@ -913,28 +903,23 @@ storageAzureNew(
             httpQueryFree(query);
         }
 
+        // Initialization by key type
         switch (keyType)
         {
             case storageAzureKeyTypeAuto:
-            {
                 this->credHost = AZURE_CREDENTIAL_HOST_STR;
                 this->credHttpClient = httpClientNew(
                     sckClientNew(this->credHost, AZURE_CREDENTIAL_PORT, timeout, timeout), timeout);
                 break;
-            }
 
             // Store shared key or parse sas query
             case storageAzureKeyTypeShared:
-            {
                 this->sharedKey = bufNewDecode(encodingBase64, key);
                 break;
-            }
 
             case storageAzureKeyTypeSas:
-            {
                 this->sasKey = httpQueryNewStr(key);
                 break;
-            }
         }
 
         // Create the http client used to service requests
