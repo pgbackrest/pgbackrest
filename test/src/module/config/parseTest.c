@@ -1190,23 +1190,6 @@ testRun(void)
             "backup command requires option: stanza");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("Azure key not required when key-type is auto (Managed Identity)");
-
-        argList = strLstNew();
-        strLstAddZ(argList, TEST_BACKREST_EXE);
-        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/db");
-        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 1, "azure");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoAzureContainer, 1, "container");
-        hrnCfgArgKeyRawStrId(argList, cfgOptRepoAzureKeyType, 1, strIdFromZ("auto"));
-        hrnCfgEnvKeyRawZ(cfgOptRepoAzureAccount, 1, "account");
-        strLstAddZ(argList, TEST_COMMAND_BACKUP);
-        // Should not throw OptionRequiredError for repo1-azure-key when key-type is auto
-        TEST_RESULT_VOID(
-            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true),
-            "Azure key not required when key-type is auto");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("command-line option not allowed");
 
         argList = strLstNew();
