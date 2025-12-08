@@ -228,7 +228,7 @@ eval
 
         processBegin(($strVm eq VM_NONE ? "no container" : $strVm) . ' test');
         processExec(
-            "${strTestExe} --gen-check --log-level-test-file=off --no-coverage --vm-max=2 --vm=${strVm}${strVmArchParam}" .
+            "${strTestExe} --gen-check --log-level-test-file=off --no-coverage-report --vm-max=2 --vm=${strVm}${strVmArchParam}" .
                 (@stryParam != 0 ? " --" . join(" --", @stryParam) : ''),
             {bShowOutputAsync => true, bOutLogOnError => false});
         processEnd();
