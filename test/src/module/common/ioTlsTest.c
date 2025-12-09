@@ -151,6 +151,8 @@ testRun(void)
     THROW_ON_SYS_ERROR_FMT(
         chmod(HRN_SERVER_CLIENT_KEY, 0600) == -1, FileModeError, "unable to set mode on " HRN_SERVER_CLIENT_KEY);
 
+    TEST_RESULT_VOID(tlsInit(NULL, NULL), "init null tls ciphers");
+
     // *****************************************************************************************************************************
     if (testBegin("AddressInfo"))
     {
@@ -919,6 +921,10 @@ testRun(void)
 
         // Server on IPv6
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_RESULT_VOID(
+            tlsInit(STRDEF("HIGH:MEDIUM:+3DES:!aNULL"), STRDEF("TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256")),
+            "init tls ciphers");
+
         HRN_FORK_BEGIN()
         {
             const unsigned int testPort = hrnServerPortNext();
