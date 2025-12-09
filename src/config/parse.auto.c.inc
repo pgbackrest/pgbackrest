@@ -9559,6 +9559,85 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                               // opt/repo-storage-ca-path
     ),                                                                                                   // opt/repo-storage-ca-path
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                      // opt/repo-storage-class
+    (                                                                                                      // opt/repo-storage-class
+        PARSE_RULE_OPTION_NAME("repo-storage-class"),                                                      // opt/repo-storage-class
+        PARSE_RULE_OPTION_TYPE(String),                                                                    // opt/repo-storage-class
+        PARSE_RULE_OPTION_RESET(true),                                                                     // opt/repo-storage-class
+        PARSE_RULE_OPTION_REQUIRED(false),                                                                 // opt/repo-storage-class
+        PARSE_RULE_OPTION_SECTION(Global),                                                                 // opt/repo-storage-class
+        PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                  // opt/repo-storage-class
+                                                                                                           // opt/repo-storage-class
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                     // opt/repo-storage-class
+        (                                                                                                  // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                            // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                          // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                         // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                              // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(Check)                                                               // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                              // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                            // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                             // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                              // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                             // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                              // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                             // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                        // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                        // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                       // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                              // opt/repo-storage-class
+        ),                                                                                                 // opt/repo-storage-class
+                                                                                                           // opt/repo-storage-class
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                    // opt/repo-storage-class
+        (                                                                                                  // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                          // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                         // opt/repo-storage-class
+        ),                                                                                                 // opt/repo-storage-class
+                                                                                                           // opt/repo-storage-class
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                    // opt/repo-storage-class
+        (                                                                                                  // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                          // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                         // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                              // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                             // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                              // opt/repo-storage-class
+        ),                                                                                                 // opt/repo-storage-class
+                                                                                                           // opt/repo-storage-class
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                   // opt/repo-storage-class
+        (                                                                                                  // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                            // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                          // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                         // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                              // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(Check)                                                               // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                              // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                            // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                             // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                              // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                             // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                              // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                             // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                        // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                        // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                       // opt/repo-storage-class
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                              // opt/repo-storage-class
+        ),                                                                                                 // opt/repo-storage-class
+                                                                                                           // opt/repo-storage-class
+        PARSE_RULE_OPTIONAL                                                                                // opt/repo-storage-class
+        (                                                                                                  // opt/repo-storage-class
+            PARSE_RULE_OPTIONAL_GROUP                                                                      // opt/repo-storage-class
+            (                                                                                              // opt/repo-storage-class
+                PARSE_RULE_OPTIONAL_DEPEND                                                                 // opt/repo-storage-class
+                (                                                                                          // opt/repo-storage-class
+                    PARSE_RULE_VAL_OPT(RepoType),                                                          // opt/repo-storage-class
+                    PARSE_RULE_VAL_STRID(S3),                                                              // opt/repo-storage-class
+                ),                                                                                         // opt/repo-storage-class
+            ),                                                                                             // opt/repo-storage-class
+        ),                                                                                                 // opt/repo-storage-class
+    ),                                                                                                     // opt/repo-storage-class
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                       // opt/repo-storage-host
     (                                                                                                       // opt/repo-storage-host
         PARSE_RULE_OPTION_NAME("repo-storage-host"),                                                        // opt/repo-storage-host
@@ -11759,6 +11838,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoSftpPublicKeyFile,                                                                                // opt-resolve-order
     cfgOptRepoStorageCaFile,                                                                                    // opt-resolve-order
     cfgOptRepoStorageCaPath,                                                                                    // opt-resolve-order
+    cfgOptRepoStorageClass,                                                                                     // opt-resolve-order
     cfgOptRepoStorageHost,                                                                                      // opt-resolve-order
     cfgOptRepoStoragePort,                                                                                      // opt-resolve-order
     cfgOptRepoStorageTag,                                                                                       // opt-resolve-order

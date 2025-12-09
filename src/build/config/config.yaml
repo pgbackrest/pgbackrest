@@ -2125,6 +2125,17 @@ option:
       repo?-azure-port: {}
       repo?-s3-port: {}
 
+  repo-storage-class:
+    section: global
+    group: repo
+    type: string
+    required: false
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - s3
+
   repo-storage-tag:
     section: global
     group: repo
