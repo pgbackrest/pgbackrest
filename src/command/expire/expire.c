@@ -1041,7 +1041,7 @@ cmdExpire(void)
                     storageRepo, INFO_BACKUP_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                     cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
 
-                // In --oldest mode, make the oldest full backup set eligible by lowering retention for this run
+                // When expire oldest requested, expire the oldest full backup by lowering retention for this execution
                 if (expireOldest)
                 {
                     // Count full backups in this repo (we want to expire the oldest one)
@@ -1050,15 +1050,12 @@ cmdExpire(void)
                     // If there is more than one full, temporarily keep one fewer
                     if (fullLstSize > 1)
                     {
-                        LOG_INFO_FMT(
-                            "repo%u: --oldest will expire the oldest full backup set and dependents (full count=%u)",
-                            repoIdx + 1, fullLstSize);
-
                         // If time-based retention is configured, force count-based behaviour for this run
                         if (timeBasedFullRetention)
                         {
                             LOG_INFO_FMT(
-                                "repo%u: time-based full retention is set; --oldest will use count-based expiration for this run",
+                                "repo%u: expire oldest overrides configured time-based retention with count-based retention for"
+                                " this execution",
                                 repoIdx + 1);
 
                             timeBasedFullRetention = false;
@@ -1066,23 +1063,23 @@ cmdExpire(void)
 
                         cfgOptionIdxSet(cfgOptRepoRetentionFull, repoIdx, cfgSourceParam, VARINT64(fullLstSize - 1));
 
-                        LOG_DETAIL_FMT(
-                            "repo%u: enforced repo%u-retention-full=%u for --oldest",
-                            repoIdx + 1, repoIdx + 1, cfgOptionIdxUInt(cfgOptRepoRetentionFull, repoIdx));
-
-                        // Also lower archive retention so WAL for the expired chain can be removed
+                        // Also lower archive retention so WAL for the expired backups will be removed
                         cfgOptionIdxSet(cfgOptRepoRetentionArchiveType, repoIdx, cfgSourceParam, VARSTRDEF("full"));
                         cfgOptionIdxSet(cfgOptRepoRetentionArchive, repoIdx, cfgSourceParam, VARINT64(fullLstSize - 1));
 
                         LOG_DETAIL_FMT(
-                            "repo%u: enforced repo%u-retention-archive-type=full and repo%u-retention-archive=%u for --oldest",
-                            repoIdx + 1, repoIdx + 1, repoIdx + 1, fullLstSize - 1);
+                            "repo%u: expire oldest enforcing %s=" CFGOPTVAL_REPO_RETENTION_FULL_TYPE_COUNT_Z ", %s=%u, %s="
+                            CFGOPTVAL_DETAIL_LEVEL_FULL_Z ", and %s=%u for this execution",
+                            repoIdx + 1, cfgOptionIdxName(cfgOptRepoRetentionFullType, repoIdx),
+                            cfgOptionIdxName(cfgOptRepoRetentionFull, repoIdx), fullLstSize - 1,
+                            cfgOptionIdxName(cfgOptRepoRetentionArchiveType, repoIdx),
+                            cfgOptionIdxName(cfgOptRepoRetentionArchive, repoIdx), fullLstSize - 1);
                     }
                     else
                     {
                         LOG_WARN_FMT(
-                            "repo%u: --oldest requested but no eligible full backup to expire (full count=%u)",
-                            repoIdx + 1, fullLstSize);
+                            "repo%u: expire oldest requested but no eligible full backup to expire (full count=%u)", repoIdx + 1,
+                            fullLstSize);
                     }
                 }
 

@@ -2254,7 +2254,7 @@
 
                             <p>When used, archive retention is also temporarily adjusted so WAL for the expired backups can be removed in the same run.</p>
 
-                            <p>If time-based full retention is configured (using <br-option>--repo-retention-full-type=time</br-option>), <br-option>--oldest</br-option> uses count-based expiration for this run.</p>
+                            <p>If time-based full retention is configured (using <br-option>--repo-retention-full-type=time</br-option>) then <br-option>--oldest</br-option> uses count-based expiration for this execution.</p>
 
                             <admonition type="warning">This option cannot be combined with <br-option>--set</br-option>.</admonition>
                         </text>
