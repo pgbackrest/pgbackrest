@@ -1076,11 +1076,7 @@ cmdExpire(void)
                             cfgOptionIdxName(cfgOptRepoRetentionArchive, repoIdx), fullLstSize - 1);
                     }
                     else
-                    {
-                        LOG_WARN_FMT(
-                            "repo%u: expire oldest requested but no eligible full backup to expire (full count=%u)", repoIdx + 1,
-                            fullLstSize);
-                    }
+                        LOG_WARN_FMT("repo%u: expire oldest requested but no eligible full backup to expire", repoIdx + 1);
                 }
 
                 // If a backupLabel was set, then attempt to expire the requested backup

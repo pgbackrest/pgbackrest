@@ -2593,7 +2593,7 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdExpire(), "no backups to expire using --oldest");
         TEST_RESULT_LOG(
-            "P00   WARN: repo1: expire oldest requested but no eligible full backup to expire (full count=0)");
+            "P00   WARN: repo1: expire oldest requested but no eligible full backup to expire");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire --oldest - retention setting greater than number of backups on disk");
