@@ -28,7 +28,7 @@ freebsd_13_task:
 # ----------------------------------------------------------------------------------------------------------------------------------
 freebsd_14_task:
   freebsd_instance:
-    image_family: freebsd-14-2
+    image_family: freebsd-14-3
     cpu: 4
     memory: 4G
 
