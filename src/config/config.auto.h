@@ -239,6 +239,8 @@ Option value constants
 #define CFGOPTVAL_REMOTE_TYPE_REPO                                  STRID5("repo", 0x7c0b20)
 #define CFGOPTVAL_REMOTE_TYPE_REPO_Z                                "repo"
 
+#define CFGOPTVAL_REPO_AZURE_KEY_TYPE_AUTO                          STRID5("auto", 0x7d2a10)
+#define CFGOPTVAL_REPO_AZURE_KEY_TYPE_AUTO_Z                        "auto"
 #define CFGOPTVAL_REPO_AZURE_KEY_TYPE_SAS                           STRID5("sas", 0x4c330)
 #define CFGOPTVAL_REPO_AZURE_KEY_TYPE_SAS_Z                         "sas"
 #define CFGOPTVAL_REPO_AZURE_KEY_TYPE_SHARED                        STRID5("shared", 0x85905130)

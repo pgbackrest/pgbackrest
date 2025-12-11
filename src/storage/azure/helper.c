@@ -52,7 +52,7 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
 
         // Ensure the key is valid base64 when key type is shared
         const StorageAzureKeyType keyType = (StorageAzureKeyType)cfgOptionIdxStrId(cfgOptRepoAzureKeyType, repoIdx);
-        const String *const key = cfgOptionIdxStr(cfgOptRepoAzureKey, repoIdx);
+        const String *const key = cfgOptionIdxStrNull(cfgOptRepoAzureKey, repoIdx);
 
         if (keyType == storageAzureKeyTypeShared)
         {
