@@ -6,6 +6,19 @@
 
         <release-feature-list>
             <release-item>
+                <github-issue id="2666"/>
+                <github-pull-request id="2709"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="ron.johnson"/>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Allow expiration of oldest full backup regardless of current retention.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2693"/>
 
                 <release-item-contributor-list>
