@@ -56,6 +56,7 @@ httpUrlNewParse(const String *const url, const HttpUrlNewParseParam param)
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, url);
         FUNCTION_TEST_PARAM(ENUM, param.type);
+        FUNCTION_TEST_PARAM(ENUM, param.defaultType);
     FUNCTION_TEST_END();
 
     ASSERT(url != NULL);
@@ -87,10 +88,11 @@ httpUrlNewParse(const String *const url, const HttpUrlNewParseParam param)
             // If no protocol found then the first part is the host
             if (this->pub.type == httpProtocolTypeAny)
             {
-                // Protocol must be set explicitly
-                ASSERT(param.type != httpProtocolTypeAny);
+                // We must have either an explicitly set protocol via the type parameter or a default protocol
+                // to use if the type is any
+                ASSERT(param.type != httpProtocolTypeAny || param.defaultType != httpProtocolTypeAny);
 
-                this->pub.type = param.type;
+                this->pub.type = param.type != httpProtocolTypeAny ? param.type : param.defaultType;
             }
             // Else protocol was found
             else

@@ -273,6 +273,11 @@ FN_EXTERN size_t typeToLog(const char *typeName, char *buffer, size_t bufferSize
 #define FUNCTION_LOG_STRINGZ_FORMAT(value, buffer, bufferSize)                                                                     \
     strzToLog(value, buffer, bufferSize)
 
+#define FUNCTION_LOG_SSIZE_TYPE                                                                                                    \
+    ssize_t
+#define FUNCTION_LOG_SSIZE_FORMAT(value, buffer, bufferSize)                                                                       \
+    cvtInt64ToZ(value, buffer, bufferSize)
+
 /***********************************************************************************************************************************
 Macros to return function results (or void)
 ***********************************************************************************************************************************/

@@ -32,6 +32,7 @@ typedef struct HttpUrlNewParseParam
 {
     VAR_PARAM_HEADER;
     HttpProtocolType type;                                          // Expected protocol type (httpProtocolTypeAny if any)
+    HttpProtocolType defaultType;                                   // Default protocol type if explicitly set type is any
 } HttpUrlNewParseParam;
 
 #define httpUrlNewParseP(url, ...)                                                                                                 \

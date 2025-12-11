@@ -3,6 +3,8 @@ Harness for Fd Testing
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <errno.h>
+
 #include "common/harnessConfig.h"
 #include "common/harnessDebug.h"
 #include "common/harnessFd.h"
@@ -17,9 +19,13 @@ Shim install state
 ***********************************************************************************************************************************/
 static struct
 {
-    bool localShimFdReady;                                          // Is shim installed?
-    bool localShimFdReadyOne;                                       // Should the shim run once?
+    bool localShimFdReady;                                          // Is fdReady shim installed?
+    bool localShimFdReadyOne;                                       // Should the fdReady shim run once?
     bool localShimFdReadyOneResult;                                 // Shim result for single run
+
+    bool localShimFdWriteOne;                                       // Should fdWrite shim run once?
+    ssize_t localShimFdWriteOneResult;                              // Return value for single run
+    int localShimFdWriteOneErrno;                                   // errno value for single run
 } hrnFdStatic;
 
 /***********************************************************************************************************************************
@@ -91,6 +97,53 @@ hrnFdReadyShimOne(const bool result)
 
     hrnFdStatic.localShimFdReadyOne = true;
     hrnFdStatic.localShimFdReadyOneResult = result;
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Shim fdWrite()
+***********************************************************************************************************************************/
+ssize_t
+fdWrite(int fd, const void *buf, size_t count)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INT, fd);
+        FUNCTION_HARNESS_PARAM_P(VOID, buf);
+        FUNCTION_HARNESS_PARAM(SIZE, count);
+    FUNCTION_HARNESS_END();
+
+    ssize_t result;
+
+    // If shim will run once then return the requested result
+    if (hrnFdStatic.localShimFdWriteOne)
+    {
+        hrnFdStatic.localShimFdWriteOne = false;
+        result = hrnFdStatic.localShimFdWriteOneResult;
+
+        // Set errno if result is -1
+        if (result == -1)
+            errno = hrnFdStatic.localShimFdWriteOneErrno;
+    }
+    // Else call normal function
+    else
+        result = fdWrite_SHIMMED(fd, buf, count);
+
+    FUNCTION_HARNESS_RETURN(SSIZE, result);
+}
+
+/**********************************************************************************************************************************/
+void
+hrnFdWriteShimOne(const ssize_t result, const int errnoValue)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INT64, result);
+        FUNCTION_HARNESS_PARAM(INT, errnoValue);
+    FUNCTION_HARNESS_END();
+
+    hrnFdStatic.localShimFdWriteOne = true;
+    hrnFdStatic.localShimFdWriteOneResult = result;
+    hrnFdStatic.localShimFdWriteOneErrno = errnoValue;
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
