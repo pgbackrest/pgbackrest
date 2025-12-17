@@ -62,7 +62,7 @@ exitOnSignal(const int signalType)
     if (signalType == signalTypeNone)
         signalName = "from child process";
     else
-        signalName = exitSignalName(signalType);
+        signalName = exitSignalName((SignalType) signalType);
 
     logSignal(cfgLogLevelDefault(), signalName);
 
