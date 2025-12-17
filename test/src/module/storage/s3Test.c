@@ -1842,5 +1842,78 @@ testRun(void)
             "check http host uses plain socket");
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("StorageS3 with HTTP server operations"))
+    {
+        HRN_FORK_BEGIN()
+        {
+            const unsigned int testPort = hrnServerPortNext();
+
+            HRN_FORK_CHILD_BEGIN(.prefix = "s3 http server", .timeout = 5000)
+            {
+                TEST_RESULT_VOID(
+                    hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, testPort),
+                    "s3 http server");
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN()
+            {
+                IoWrite *service = hrnServerScriptBegin(
+                    ioFdWriteNewOpen(STRDEF("s3 http client"), HRN_FORK_PARENT_WRITE_FD(0), 2000));
+
+                StringList *argList = strLstDup(commonArgList);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "http://%s:%u", strZ(host), testPort);
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+                Storage *s3 = storageRepoGet(0, true);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file");
+
+                hrnServerScriptAccept(service);
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt");
+                testResponseP(service, .content = "this is a sample file");
+
+                TEST_RESULT_STR_Z(
+                    strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("file.txt")))),
+                    "this is a sample file", "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file with offset and limit");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "1-21");
+                testResponseP(service, .content = "this is a sample file");
+
+                TEST_RESULT_STR_Z(
+                    strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(21)))),
+                    "this is a sample file", "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("put file");
+
+                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt", .content = "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+                testResponseP(service);
+
+                StorageWrite *write = storageNewWriteP(s3, STRDEF("file.txt"));
+                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("ABCDEFGHIJKLMNOPQRSTUVWXYZ")), "put file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error on missing file");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt");
+                testResponseP(service, .code = 404);
+
+                TEST_ERROR(
+                    storageGetP(storageNewReadP(s3, STRDEF("file.txt"))), FileMissingError,
+                    "unable to open missing file '/file.txt' for read");
+
+                hrnServerScriptEnd(service);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+    }
+
     FUNCTION_HARNESS_RETURN_VOID();
 }

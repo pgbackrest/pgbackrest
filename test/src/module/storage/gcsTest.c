@@ -1444,5 +1444,143 @@ testRun(void)
             "check endpoint without protocol defaults to HTTPS");
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("StorageGcs with HTTP server operations"))
+    {
+        HRN_FORK_BEGIN()
+        {
+            const String *const testHost = hrnServerHost();
+            const unsigned int testPort = hrnServerPortNext();
+            const unsigned int testPortAuth = hrnServerPortNext();
+
+            HRN_STORAGE_PUT(storageTest, TEST_KEY_FILE, BUFSTR(strNewFmt(TEST_KEY, strZ(testHost), testPortAuth)));
+
+            HRN_FORK_CHILD_BEGIN(.prefix = "gcs http server", .timeout = 10000)
+            {
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, testPort), "gcs http server");
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_CHILD_BEGIN(.prefix = "auth server", .timeout = 10000)
+            {
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPortAuth), "auth server");
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN()
+            {
+                IoWrite *service = hrnServerScriptBegin(
+                    ioFdWriteNewOpen(STRDEF("gcs http client write"), HRN_FORK_PARENT_WRITE_FD(0), 2000));
+                IoWrite *auth = hrnServerScriptBegin(
+                    ioFdWriteNewOpen(STRDEF("auth http client write"), HRN_FORK_PARENT_WRITE_FD(1), 2000));
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("test service auth");
+
+                StringList *argList = strLstNew();
+                hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+                hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
+                hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
+                hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
+                hrnCfgArgRawFmt(argList, cfgOptRepoGcsEndpoint, "http://%s:%u", strZ(hrnServerHost()), testPort);
+                hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, TEST_IN_CONTAINER);
+                hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_KEY_FILE);
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+                hrnCfgEnvRemoveRaw(cfgOptRepoGcsKey);
+
+                Storage *storage = NULL;
+                TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
+
+                const char *const preamble = "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=";
+                const String *const jwt = storageGcsAuthJwt(((StorageGcs *)storageDriver(storage)), time(NULL));
+
+                String *const authRequest = strCatFmt(
+                    strNew(),
+                    "POST /token HTTP/1.1\r\n"
+                    "user-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n"
+                    "content-length:%zu\r\n"
+                    "content-type:application/x-www-form-urlencoded\r\n"
+                    "host:%s\r\n"
+                    "\r\n"
+                    "%s",
+                    strSize(jwt) + strlen(preamble), strZ(hrnServerHost()), preamble);
+
+                for (unsigned int jwtIdx = 0; jwtIdx < strSize(jwt); jwtIdx++)
+                    strCatChr(authRequest, '?');
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("create bucket");
+
+                hrnServerScriptAccept(auth);
+                hrnServerScriptExpect(auth, authRequest);
+                testResponseP(auth, .content = "{\"access_token\":\"X\",\"token_type\":\"X\",\"expires_in\":120}");
+                hrnServerScriptClose(auth);
+
+                hrnServerScriptAccept(service);
+                testRequestP(service, HTTP_VERB_POST, .noBucket = true, .content = "{\"name\":\"bucket\"}");
+                testResponseP(service);
+
+                storageGcsRequestP(
+                    (StorageGcs *)storageDriver(storage), HTTP_VERB_POST_STR, .noBucket = true,
+                    .content = BUFSTR(
+                        jsonWriteResult(
+                            jsonWriteObjectEnd(
+                                jsonWriteStr(
+                                    jsonWriteKeyZ(jsonWriteObjectBegin(jsonWriteNewP()), GCS_JSON_NAME), STRDEF("bucket"))))));
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("ignore missing file");
+
+                hrnServerScriptAccept(auth);
+                hrnServerScriptExpect(auth, authRequest);
+                testResponseP(auth, .content = "{\"access_token\":\"X\",\"token_type\":\"X\",\"expires_in\":7200}");
+                hrnServerScriptClose(auth);
+
+                hrnServerScriptEnd(auth);
+
+                testRequestP(service, HTTP_VERB_GET, .object = "fi&le.txt", .query = "alt=media");
+                testResponseP(service, .code = 404);
+
+                TEST_RESULT_PTR(
+                    storageGetP(storageNewReadP(storage, STRDEF("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error on missing file");
+
+                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media");
+                testResponseP(service, .code = 404);
+
+                TEST_ERROR(
+                    storageGetP(storageNewReadP(storage, STRDEF("file.txt"))), FileMissingError,
+                    "unable to open missing file '/file.txt' for read");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file with offset and limit");
+
+                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media", .range = "1-21");
+                testResponseP(service, .content = "this is a sample file");
+
+                TEST_RESULT_STR_Z(
+                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(21)))),
+                    "this is a sample file", "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("put file");
+
+                testRequestP(
+                    service, HTTP_VERB_POST, .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=media", .upload = true,
+                    .content = "ABCD");
+                testResponseP(service, .content = "{\"md5Hash\":\"ywjKSnu1+Wg8GRM6hIcspw==\"}");
+
+                StorageWrite *write = storageNewWriteP(storage, STRDEF("file.txt"));
+                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("ABCD")), "put file");
+
+                hrnServerScriptEnd(service);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+    }
+
     FUNCTION_HARNESS_RETURN_VOID();
 }

@@ -1328,5 +1328,86 @@ testRun(void)
             "check http host uses plain socket");
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("StorageAzure with HTTP server operations"))
+    {
+        HRN_FORK_BEGIN()
+        {
+            const unsigned int testPort = hrnServerPortNext();
+
+            HRN_FORK_CHILD_BEGIN(.prefix = "azure http server", .timeout = 5000)
+            {
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, testPort), "azure http server");
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN()
+            {
+                IoWrite *service = hrnServerScriptBegin(
+                    ioFdWriteNewOpen(STRDEF("azure http client"), HRN_FORK_PARENT_WRITE_FD(0), 2000));
+
+                StringList *argList = strLstNew();
+                hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+                hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+                hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
+                hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "http://%s:%u", strZ(hrnServerHost()), testPort);
+                hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, false);
+                hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
+                hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+                Storage *storage = NULL;
+                TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
+
+                driver = (StorageAzure *)storageDriver(storage);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file");
+
+                hrnServerScriptAccept(service);
+                testRequestP(service, HTTP_VERB_GET, "/file.txt");
+                testResponseP(service, .content = "this is a sample file");
+
+                TEST_RESULT_STR_Z(
+                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt")))),
+                    "this is a sample file", "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file with offset and limit");
+
+                testRequestP(service, HTTP_VERB_GET, "/file.txt", .range = "1-21");
+                testResponseP(service, .content = "this is a sample file");
+
+                TEST_RESULT_STR_Z(
+                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(21)))),
+                    "this is a sample file", "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("put file");
+
+                testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+                testResponseP(service);
+
+                StorageWrite *write = storageNewWriteP(storage, STRDEF("file.txt"));
+                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("ABCDEFGHIJKLMNOPQRSTUVWXYZ")), "put file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error on missing file");
+
+                testRequestP(service, HTTP_VERB_GET, "/file.txt");
+                testResponseP(service, .code = 404);
+
+                TEST_ERROR(
+                    storageGetP(storageNewReadP(storage, STRDEF("file.txt"))), FileMissingError,
+                    "unable to open missing file '/file.txt' for read");
+
+                hrnServerScriptEnd(service);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+    }
+
     FUNCTION_HARNESS_RETURN_VOID();
 }
