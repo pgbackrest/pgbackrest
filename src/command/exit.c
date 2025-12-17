@@ -30,15 +30,15 @@ exitSignalName(const SignalType signalType)
     switch (signalType)
     {
         case signalTypeHup:
-            name = "HUP";
+            name = "SIGHUP";
             break;
 
         case signalTypeInt:
-            name = "INT";
+            name = "SIGINT";
             break;
 
         case signalTypeTerm:
-            name = "TERM";
+            name = "SIGTERM";
             break;
 
         case signalTypeNone:
@@ -54,13 +54,21 @@ Catch signals
 static void
 exitOnSignal(const int signalType)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INT, signalType);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, signalType);
+    FUNCTION_TEST_END();
 
-    exit(exitSafe(errorTypeCode(&TermError), false, (SignalType)signalType));
+    const char *signalName;
+    if (signalType == signalTypeNone)
+        signalName = "from child process";
+    else
+        signalName = exitSignalName(signalType);
 
-    FUNCTION_LOG_RETURN_VOID();
+    logSignal(cfgLogLevelDefault(), signalName);
+
+    exit(errorTypeCode(&TermError));
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -142,24 +150,8 @@ exitSafe(int result, const bool error, const SignalType signalType)
     {
         String *errorMessage = NULL;
 
-        if (result != 0)
-        {
-            // On process terminate
-            if (result == errorTypeCode(&TermError))
-            {
-                errorMessage = strCatZ(strNew(), "terminated on signal ");
-
-                // Terminate from a child
-                if (signalType == signalTypeNone)
-                    strCatZ(errorMessage, "from child process");
-                // Else terminated directly
-                else
-                    strCatFmt(errorMessage, "[SIG%s]", exitSignalName(signalType));
-            }
-            // Standard error exit message
-            else if (error)
-                errorMessage = strNewFmt("aborted with exception [%03d]", result);
-        }
+        if (result != 0 && error)
+            errorMessage = strNewFmt("aborted with exception [%03d]", result);
 
         cmdEnd(result, errorMessage);
         strFree(errorMessage);

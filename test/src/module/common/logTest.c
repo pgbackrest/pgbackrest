@@ -328,5 +328,14 @@ testRun(void)
             "P99   INFO: [DRY-RUN] info message 2");
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("logSignal()"))
+    {
+        TEST_RESULT_VOID(logInit(logLevelDebug, logLevelDebug, logLevelDebug, false, 0, 999, false), "init logging to debug");
+
+        TEST_RESULT_VOID(logSignal(logLevelDebug, "SIGNAL_NAME"), "log debug");
+        TEST_RESULT_Z(logBuffer, "terminated on signal SIGNAL_NAME\n", "check log");
+    }
+
     FUNCTION_HARNESS_RETURN_VOID();
 }

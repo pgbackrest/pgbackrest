@@ -540,6 +540,34 @@ logInternal(
 }
 
 FN_EXTERN void
+logSignal(const LogLevel logLevel, const char *signalName)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, logLevel);
+        FUNCTION_TEST_PARAM(STRINGZ, signalName);
+    FUNCTION_TEST_END();
+
+    ASSERT(signalName != NULL);
+
+    LogPreResult logData = {.bufferPos = 0, .logBufferStdErr = 0, .indentSize = 4};
+
+    const char *messagePre = "terminated on signal ";
+
+    // Copy message into buffer and update buffer position
+    strncpy(logBuffer + logData.bufferPos, messagePre, sizeof(logBuffer) - logData.bufferPos - 1);
+    logData.bufferPos += strlen(messagePre);
+    strncpy(logBuffer + logData.bufferPos, signalName, sizeof(logBuffer) - logData.bufferPos - 1);
+    logData.bufferPos += strlen(signalName);
+
+    logBuffer[sizeof(logBuffer) - 1] = 0;
+    logData.logBufferStdErr = logBuffer;
+
+    logPost(&logData, logLevel, LOG_LEVEL_MIN, LOG_LEVEL_MAX);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+FN_EXTERN void
 logInternalFmt(
     const LogLevel logLevel, const LogLevel logRangeMin, const LogLevel logRangeMax, const unsigned int processId,
     const char *const fileName, const char *const functionName, const int code, const char *const format, ...)
