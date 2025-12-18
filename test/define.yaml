@@ -298,6 +298,8 @@ unit:
             common/io/fd:
               function:
                 - fdReady
+            common/io/fdWrite:
+              function:
                 - fdWrite
 
         coverage:

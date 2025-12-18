@@ -26,7 +26,4 @@ fdReadyWrite(const int fd, const TimeMSec timeout)
     return fdReady(fd, false, true, timeout);
 }
 
-// Write to file descriptor (wrapper around write() system call for testing)
-FN_EXTERN ssize_t fdWrite(int fd, const void *buf, size_t count);
-
 #endif

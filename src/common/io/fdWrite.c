@@ -65,6 +65,24 @@ ioFdWriteReady(THIS_VOID, const bool error)
 /***********************************************************************************************************************************
 Write to the file descriptor
 ***********************************************************************************************************************************/
+// Helper wrapper around write() system call for easier unit testing
+static ssize_t
+fdWrite(const int fd, const void *const buf, const size_t count)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, fd);
+        FUNCTION_TEST_PARAM_P(VOID, buf);
+        FUNCTION_TEST_PARAM(SIZE, count);
+    FUNCTION_TEST_END();
+
+    ASSERT(fd >= 0);
+    ASSERT(buf != NULL);
+
+    ssize_t result = write(fd, buf, count);
+
+    FUNCTION_TEST_RETURN(SSIZE, result);
+}
+
 static void
 ioFdWrite(THIS_VOID, const Buffer *const buffer)
 {
