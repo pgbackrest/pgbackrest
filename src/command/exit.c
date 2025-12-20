@@ -58,17 +58,10 @@ exitOnSignal(const int signalType)
         FUNCTION_TEST_PARAM(INT, signalType);
     FUNCTION_TEST_END();
 
-    const char *signalName;
-    if (signalType == signalTypeNone)
-        signalName = "from child process";
-    else
-        signalName = exitSignalName((SignalType) signalType);
-
-    logSignal(cfgLogLevelDefault(), signalName);
-
+    logSignal(cfgLogLevelDefault(), signalType == signalTypeNone ? "from child process" : exitSignalName((SignalType)signalType));
     exit(errorTypeCode(&TermError));
 
-    FUNCTION_TEST_RETURN_VOID();
+    FUNCTION_TEST_NO_RETURN();
 }
 
 /**********************************************************************************************************************************/

@@ -44,7 +44,6 @@ testRun(void)
         HRN_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
-
         HRN_FORK_BEGIN()
         {
             HRN_FORK_CHILD_BEGIN(.expectedExitStatus = errorTypeCode(&TermError))
