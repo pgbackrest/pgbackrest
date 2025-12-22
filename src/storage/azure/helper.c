@@ -32,8 +32,6 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
             cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx), .type = httpProtocolTypeAny, .defaultType = httpProtocolTypeHttps);
         const String *endpoint = httpUrlHost(url);
         unsigned int port = httpUrlPort(url);
-
-        // Get the protocol type from the url
         HttpProtocolType protocolType = httpUrlProtocolType(url);
 
         StorageAzureUriStyle uriStyle = (StorageAzureUriStyle)cfgOptionIdxStrId(cfgOptRepoAzureUriStyle, repoIdx);

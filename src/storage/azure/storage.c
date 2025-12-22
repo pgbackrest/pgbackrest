@@ -826,14 +826,11 @@ storageAzureNew(
         else
             this->sasKey = httpQueryNewStr(key);
 
-        // Create the http client used to service requests
-        // Use plain socket for HTTP, TLS for HTTPS
+        // Create the http client used to service requests. Use plain socket for HTTP, TLS for HTTPS.
         IoClient *ioClient;
 
         if (protocolType == httpProtocolTypeHttp)
-        {
             ioClient = sckClientNew(this->host, port, timeout, timeout);
-        }
         else
         {
             ioClient = tlsClientNewP(

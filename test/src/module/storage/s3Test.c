@@ -465,7 +465,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageS3*(), StorageReadS3, and StorageWriteS3 with HTTPS"))
+    if (testBegin("StorageS3, StorageReadS3, and StorageWriteS3 with HTTPS"))
     {
         HRN_FORK_BEGIN()
         {
@@ -1673,7 +1673,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageS3*(), StorageReadS3, and StorageWriteS3 with HTTP"))
+    if (testBegin("StorageS3, StorageReadS3, and StorageWriteS3 with HTTP"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_FORK_BEGIN()

@@ -1252,11 +1252,10 @@ storageS3New(
             httpQueryFree(query);
         }
 
-        // Create the HTTP client used to service requests
+        // Create the http client used to service requests. Use plain socket for HTTP, TLS for HTTPS.
         if (host == NULL)
             host = this->bucketEndpoint;
 
-        // Use plain socket for HTTP, TLS for HTTPS
         IoClient *ioClient;
 
         if (protocolType == httpProtocolTypeHttp)

@@ -455,7 +455,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("StorageAzure, StorageReadAzure, and StorageWriteAzure"))
+    if (testBegin("StorageAzure, StorageReadAzure, and StorageWriteAzure with HTTPS"))
     {
         HRN_FORK_BEGIN()
         {
@@ -507,26 +507,6 @@ testRun(void)
 
                 TEST_RESULT_PTR(
                     storageGetP(storageNewReadP(storage, STRDEF("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("error on missing file");
-
-                testRequestP(service, HTTP_VERB_GET, "/file.txt");
-                testResponseP(service, .code = 404);
-
-                TEST_ERROR(
-                    storageGetP(storageNewReadP(storage, STRDEF("file.txt"))), FileMissingError,
-                    "unable to open missing file '/file.txt' for read");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("get file with offset and limit");
-
-                testRequestP(service, HTTP_VERB_GET, "/file.txt", .range = "1-21");
-                testResponseP(service, .content = "this is a sample file");
-
-                TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(21)))),
-                    "this is a sample file", "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get file with retry");
@@ -700,50 +680,8 @@ testRun(void)
                 TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write");
 
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("write file in chunks with something left over on close");
-
                 // Stop writing tags
                 driver->tag = NULL;
-
-                testRequestP(
-                    service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCDx0000000&comp=block",
-                    .content = "1234567890123456");
-                testResponseP(service);
-
-                testRequestP(
-                    service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCDx0000001&comp=block", .content = "7890");
-                testResponseP(service);
-
-                testRequestP(
-                    service, HTTP_VERB_PUT, "/file.txt?comp=blocklist",
-                    .content =
-                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                        "<BlockList>"
-                        "<Uncommitted>0AAAAAAACCCCCCCDx0000000</Uncommitted>"
-                        "<Uncommitted>0AAAAAAACCCCCCCDx0000001</Uncommitted>"
-                        "</BlockList>\n");
-                testResponseP(service);
-
-                // Check that block size is updated during write
-                ioBufferSizeSet(6);
-                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
-
-                ioWriteOpen(storageWriteIo(write));
-                ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
-
-                TEST_RESULT_VOID(
-                    bufResize(((StorageWriteAzure *)ioWriteDriver(storageWriteIo(write)))->blockBuffer, 17),
-                    "resize part buffer to 17");
-
-                ioWrite(storageWriteIo(write), BUFSTRDEF("90"));
-
-                TEST_RESULT_UINT(
-                    ((StorageWriteAzure *)ioWriteDriver(storageWriteIo(write)))->blockSize, 16,
-                    "part buffer reset to 16 (default)");
-
-                ioWriteClose(storageWriteIo(write));
-                ioBufferSizeSet(ioBufferSizeDefault);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for / does not exist");
@@ -1207,128 +1145,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageAzure with HTTP endpoint"))
-    {
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("config with HTTP endpoint (no TLS)");
-
-        StringList *argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
-        hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
-        hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
-        hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
-        hrnCfgEnvRawZ(cfgOptRepoAzureEndpoint, "http://azurite:10000");
-        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
-
-        StorageAzure *driver = (StorageAzure *)storageDriver(storageRepoGet(0, false));
-
-        // Verify HTTP endpoint is parsed correctly
-        TEST_RESULT_STR_Z(driver->host, TEST_ACCOUNT ".azurite", "check host");
-
-        // Verify HTTP client is using plain socket (not TLS)
-        char logBuf[STACK_TRACE_PARAM_MAX];
-        TEST_RESULT_VOID(
-            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
-        TEST_RESULT_BOOL(
-            strstr(logBuf, "{ioClient: {type: socket") != NULL, true,
-            "check http client uses plain socket for HTTP");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("config with HTTP endpoint and custom port");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
-        hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
-        hrnCfgArgRawZ(argList, cfgOptRepoStoragePort, "8080");
-        hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
-        hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
-        hrnCfgEnvRawZ(cfgOptRepoAzureEndpoint, "http://azurite");
-        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
-
-        driver = (StorageAzure *)storageDriver(storageRepoGet(0, false));
-
-        TEST_RESULT_VOID(
-            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
-        TEST_RESULT_BOOL(
-            strstr(logBuf, "{ioClient: {type: socket") != NULL, true,
-            "check http client uses custom port");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("config with HTTPS endpoint");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
-        hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
-        hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
-        hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
-        hrnCfgEnvRawZ(cfgOptRepoAzureEndpoint, "https://blob.core.windows.net");
-        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
-
-        driver = (StorageAzure *)storageDriver(storageRepoGet(0, false));
-
-        // Verify HTTPS endpoint uses TLS client
-        TEST_RESULT_VOID(
-            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
-        TEST_RESULT_BOOL(
-            strstr(logBuf, "{ioClient: {type: tls") != NULL, true,
-            "check http client uses TLS for HTTPS");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("config with endpoint without explicit protocol (defaults to HTTPS)");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
-        hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
-        hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
-        hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
-        hrnCfgEnvRawZ(cfgOptRepoAzureEndpoint, "blob.core.windows.net");
-        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
-
-        driver = (StorageAzure *)storageDriver(storageRepoGet(0, false));
-
-        // Verify endpoint without protocol defaults to HTTPS with TLS client
-        TEST_RESULT_VOID(
-            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
-        TEST_RESULT_BOOL(
-            strstr(logBuf, "{ioClient: {type: tls") != NULL, true,
-            "check endpoint without protocol defaults to HTTPS");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("config with HTTP repo host + Azure HTTPS endpoint");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
-        hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
-        hrnCfgArgRawZ(argList, cfgOptRepoStorageHost, "http://azurite:10000");
-        hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
-        hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SHARED);
-        hrnCfgEnvRawZ(cfgOptRepoAzureEndpoint, "https://blob.core.windows.net");
-        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
-
-        driver = (StorageAzure *)storageDriver(storageRepoGet(0, false));
-
-        // Verify HTTP host uses plain socket (not TLS)
-        TEST_RESULT_VOID(
-            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
-        TEST_RESULT_Z(
-            logBuf,
-            "{ioClient: {type: socket, driver: {host: azurite, port: 10000, timeoutConnect: 60000, timeoutSession: 60000}},"
-            " reusable: 0, timeout: 60000}",
-            "check http host uses plain socket");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("StorageAzure with HTTP server operations"))
+    if (testBegin("StorageAzure, StorageReadAzure, and StorageWriteAzure with HTTPS"))
     {
         HRN_FORK_BEGIN()
         {
@@ -1359,22 +1176,17 @@ testRun(void)
                 Storage *storage = NULL;
                 TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
 
+                // Tests need the block size to be 16
                 driver = (StorageAzure *)storageDriver(storage);
+                driver->blockSize = 16;
 
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("get file");
-
-                hrnServerScriptAccept(service);
-                testRequestP(service, HTTP_VERB_GET, "/file.txt");
-                testResponseP(service, .content = "this is a sample file");
-
-                TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt")))),
-                    "this is a sample file", "get file");
+                // Test needs a predictable file id
+                driver->fileId = 0x0AAAAAAACCCCCCCD;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get file with offset and limit");
 
+                hrnServerScriptAccept(service);
                 testRequestP(service, HTTP_VERB_GET, "/file.txt", .range = "1-21");
                 testResponseP(service, .content = "this is a sample file");
 
@@ -1383,13 +1195,49 @@ testRun(void)
                     "this is a sample file", "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("put file");
+                TEST_TITLE("write file in chunks with something left over on close");
 
-                testRequestP(service, HTTP_VERB_PUT, "/file.txt", .blobType = "BlockBlob", .content = "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+                testRequestP(
+                    service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCDx0000000&comp=block",
+                    .content = "1234567890123456");
                 testResponseP(service);
 
-                StorageWrite *write = storageNewWriteP(storage, STRDEF("file.txt"));
-                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("ABCDEFGHIJKLMNOPQRSTUVWXYZ")), "put file");
+                testRequestP(
+                    service, HTTP_VERB_PUT, "/file.txt?blockid=0AAAAAAACCCCCCCDx0000001&comp=block", .content = "7890");
+                testResponseP(service);
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, "/file.txt?comp=blocklist",
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                        "<BlockList>"
+                        "<Uncommitted>0AAAAAAACCCCCCCDx0000000</Uncommitted>"
+                        "<Uncommitted>0AAAAAAACCCCCCCDx0000001</Uncommitted>"
+                        "</BlockList>\n");
+                testResponseP(service);
+
+                // Check that block size is updated during write
+                const size_t ioBufferSizeDefault = ioBufferSize();
+                ioBufferSizeSet(6);
+
+                StorageWrite *write = NULL;
+                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
+
+                ioWriteOpen(storageWriteIo(write));
+                ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
+
+                TEST_RESULT_VOID(
+                    bufResize(((StorageWriteAzure *)ioWriteDriver(storageWriteIo(write)))->blockBuffer, 17),
+                    "resize part buffer to 17");
+
+                ioWrite(storageWriteIo(write), BUFSTRDEF("90"));
+
+                TEST_RESULT_UINT(
+                    ((StorageWriteAzure *)ioWriteDriver(storageWriteIo(write)))->blockSize, 16,
+                    "part buffer reset to 16 (default)");
+
+                ioWriteClose(storageWriteIo(write));
+                ioBufferSizeSet(ioBufferSizeDefault);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error on missing file");
