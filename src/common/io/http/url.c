@@ -88,8 +88,7 @@ httpUrlNewParse(const String *const url, const HttpUrlNewParseParam param)
             // If no protocol found then the first part is the host
             if (this->pub.type == httpProtocolTypeAny)
             {
-                // We must have either an explicitly set protocol via the type parameter or a default protocol
-                // to use if the type is any
+                // Must have either an explicitly set protocol via the type parameter or a default protocol if the type is any
                 ASSERT(param.type != httpProtocolTypeAny || param.defaultType != httpProtocolTypeAny);
 
                 this->pub.type = param.type != httpProtocolTypeAny ? param.type : param.defaultType;
