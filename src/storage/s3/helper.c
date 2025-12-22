@@ -31,14 +31,10 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Parse the endpoint url
-        const String *endpointStr = cfgOptionIdxStr(cfgOptRepoS3Endpoint, repoIdx);
-
-        const HttpUrl *const url = httpUrlNewParseP(endpointStr, .type = httpProtocolTypeAny, .defaultType = httpProtocolTypeHttps);
-
+        const HttpUrl *const url = httpUrlNewParseP(
+            cfgOptionIdxStr(cfgOptRepoS3Endpoint, repoIdx), .type = httpProtocolTypeAny, .defaultType = httpProtocolTypeHttps);
         const String *const endPoint = httpUrlHost(url);
         unsigned int port = httpUrlPort(url);
-
-        // Get the protocol type from the url
         HttpProtocolType protocolType = httpUrlProtocolType(url);
 
         // If host was specified then use it
@@ -46,9 +42,8 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
 
         if (cfgOptionIdxSource(cfgOptRepoStorageHost, repoIdx) != cfgSourceDefault)
         {
-            const String *hostStr = cfgOptionIdxStr(cfgOptRepoStorageHost, repoIdx);
-
-            const HttpUrl *const url = httpUrlNewParseP(hostStr, .type = httpProtocolTypeAny, .defaultType = httpProtocolTypeHttps);
+            const HttpUrl *const url = httpUrlNewParseP(
+                cfgOptionIdxStr(cfgOptRepoStorageHost, repoIdx), .type = httpProtocolTypeAny, .defaultType = httpProtocolTypeHttps);
 
             host = httpUrlHost(url);
             port = httpUrlPort(url);

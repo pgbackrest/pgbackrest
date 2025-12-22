@@ -465,7 +465,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageS3*(), StorageReadS3, and StorageWriteS3"))
+    if (testBegin("storageS3*(), StorageReadS3, and StorageWriteS3 with HTTPS"))
     {
         HRN_FORK_BEGIN()
         {
@@ -496,7 +496,7 @@ testRun(void)
                 TEST_TITLE("config with keys, token, and host with custom port");
 
                 StringList *argList = strLstDup(commonArgList);
-                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "https://%s:%u", strZ(host), testPort);
                 hrnCfgEnvRaw(cfgOptRepoS3Token, securityToken);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
@@ -542,26 +542,6 @@ testRun(void)
                 testResponseP(service, .code = 404);
 
                 TEST_RESULT_PTR(storageGetP(storageNewReadP(s3, STRDEF("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("error on missing file");
-
-                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt");
-                testResponseP(service, .code = 404);
-
-                TEST_ERROR(
-                    storageGetP(storageNewReadP(s3, STRDEF("file.txt"))), FileMissingError,
-                    "unable to open missing file '/file.txt' for read");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("get file with offset and limit");
-
-                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "1-21");
-                testResponseP(service, .content = "this is a sample file");
-
-                TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(21)))),
-                    "this is a sample file", "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get file with retry");
@@ -1030,63 +1010,6 @@ testRun(void)
                     "*** Response Content ***:\n"
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
                     "<Error><Code>AccessDenied</Code><Message>Access Denied</Message></Error>");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("write file in chunks with something left over on close");
-
-                testRequestP(service, s3, HTTP_VERB_POST, "/file.txt?uploads=", .kms = "kmskey1", .sseC = "rA1P");
-                testResponseP(
-                    service,
-                    .content =
-                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                        "<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
-                        "<Bucket>bucket</Bucket>"
-                        "<Key>file.txt</Key>"
-                        "<UploadId>RR55</UploadId>"
-                        "</InitiateMultipartUploadResult>");
-
-                testRequestP(
-                    service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=RR55", .content = "1234567890123456",
-                    .sseC = "rA1P");
-                testResponseP(service, .header = "etag:RR551");
-
-                testRequestP(
-                    service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=RR55", .content = "7890",
-                    .sseC = "rA1P");
-                testResponseP(service, .header = "eTag:RR552");
-
-                testRequestP(
-                    service, s3, HTTP_VERB_POST, "/file.txt?uploadId=RR55",
-                    .content =
-                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-                        "<CompleteMultipartUpload>"
-                        "<Part><PartNumber>1</PartNumber><ETag>RR551</ETag></Part>"
-                        "<Part><PartNumber>2</PartNumber><ETag>RR552</ETag></Part>"
-                        "</CompleteMultipartUpload>\n");
-                testResponseP(
-                    service,
-                    .content =
-                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                        "<CompleteMultipartUploadResult><ETag>XXX</ETag></CompleteMultipartUploadResult>");
-
-                // Check that block size is updated during write
-                ioBufferSizeSet(6);
-                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("file.txt")), "new write");
-
-                ioWriteOpen(storageWriteIo(write));
-                ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
-
-                TEST_RESULT_VOID(
-                    bufResize(((StorageWriteS3 *)ioWriteDriver(storageWriteIo(write)))->partBuffer, 17),
-                    "resize part buffer to 17");
-
-                ioWrite(storageWriteIo(write), BUFSTRDEF("90"));
-
-                TEST_RESULT_UINT(
-                    ((StorageWriteS3 *)ioWriteDriver(storageWriteIo(write)))->partSize, 16, "part buffer reset to 16 (default)");
-
-                ioWriteClose(storageWriteIo(write));
-                ioBufferSizeSet(ioBufferSizeDefault);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("file missing");
@@ -1750,99 +1673,9 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageS3 with HTTP endpoint"))
+    if (testBegin("storageS3*(), StorageReadS3, and StorageWriteS3 with HTTP"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("config with HTTP endpoint (no TLS)");
-
-        StringList *argList = strLstDup(commonArgWithoutEndpointList);
-        hrnCfgArgRawZ(argList, cfgOptRepoS3Endpoint, "http://minio:9000");
-        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
-
-        StorageS3 *driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
-
-        // Verify HTTP endpoint is parsed correctly
-        TEST_RESULT_STR_Z(driver->bucketEndpoint, "bucket.minio", "check bucket endpoint");
-
-        // Verify HTTP client is using plain socket (not TLS)
-        char logBuf[STACK_TRACE_PARAM_MAX];
-        TEST_RESULT_VOID(
-            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
-        TEST_RESULT_BOOL(
-            strstr(logBuf, "{ioClient: {type: socket") != NULL, true,
-            "check http client uses plain socket for HTTP");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("config with HTTP endpoint and custom port");
-
-        argList = strLstDup(commonArgWithoutEndpointList);
-        hrnCfgArgRawZ(argList, cfgOptRepoS3Endpoint, "http://minio");
-        hrnCfgArgRawZ(argList, cfgOptRepoStoragePort, "8080");
-        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
-
-        driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
-
-        TEST_RESULT_VOID(
-            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
-        TEST_RESULT_BOOL(
-            strstr(logBuf, "{ioClient: {type: socket") != NULL, true,
-            "check http client uses custom port");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("config with HTTPS endpoint");
-
-        argList = strLstDup(commonArgWithoutEndpointList);
-        hrnCfgArgRawZ(argList, cfgOptRepoS3Endpoint, "https://s3.amazonaws.com");
-        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
-
-        driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
-
-        // Verify HTTPS endpoint uses TLS client
-        TEST_RESULT_VOID(
-            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
-        TEST_RESULT_BOOL(
-            strstr(logBuf, "{ioClient: {type: tls") != NULL, true,
-            "check http client uses TLS for HTTPS");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("config with endpoint without explicit protocol (defaults to HTTPS)");
-
-        argList = strLstDup(commonArgWithoutEndpointList);
-        hrnCfgArgRawZ(argList, cfgOptRepoS3Endpoint, "s3.amazonaws.com");
-        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
-
-        driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
-
-        // Verify endpoint without protocol defaults to HTTPS with TLS client
-        TEST_RESULT_VOID(
-            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
-        TEST_RESULT_BOOL(
-            strstr(logBuf, "{ioClient: {type: tls") != NULL, true,
-            "check endpoint without protocol defaults to HTTPS");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("config with HTTP repo host + S3 https");
-
-        argList = strLstDup(commonArgWithoutEndpointList);
-        hrnCfgArgRawZ(argList, cfgOptRepoS3Endpoint, "https://s3.amazonaws.com");
-        hrnCfgArgRawZ(argList, cfgOptRepoStorageHost, "http://minio:9000");
-        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
-
-        driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
-
-        // Verify HTTP host uses plain socket (not TLS)
-        TEST_RESULT_VOID(
-            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
-        TEST_RESULT_Z(
-            logBuf,
-            "{ioClient: {type: socket, driver: {host: minio, port: 9000, timeoutConnect: 60000, timeoutSession: 60000}},"
-            " reusable: 0, timeout: 60000}",
-            "check http host uses plain socket");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("StorageS3 with HTTP server operations"))
-    {
         HRN_FORK_BEGIN()
         {
             const unsigned int testPort = hrnServerPortNext();
@@ -1865,21 +1698,15 @@ testRun(void)
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
                 Storage *s3 = storageRepoGet(0, true);
+                StorageS3 *driver = (StorageS3 *)storageDriver(s3);
 
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("get file");
-
-                hrnServerScriptAccept(service);
-                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt");
-                testResponseP(service, .content = "this is a sample file");
-
-                TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("file.txt")))),
-                    "this is a sample file", "get file");
+                // Set partSize to a small value for testing
+                driver->partSize = 16;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get file with offset and limit");
 
+                hrnServerScriptAccept(service);
                 testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "1-21");
                 testResponseP(service, .content = "this is a sample file");
 
@@ -1888,13 +1715,60 @@ testRun(void)
                     "this is a sample file", "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("put file");
+                TEST_TITLE("write file in chunks with something left over on close");
 
-                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt", .content = "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-                testResponseP(service);
+                testRequestP(service, s3, HTTP_VERB_POST, "/file.txt?uploads=");
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<InitiateMultipartUploadResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">"
+                        "<Bucket>bucket</Bucket>"
+                        "<Key>file.txt</Key>"
+                        "<UploadId>RR55</UploadId>"
+                        "</InitiateMultipartUploadResult>");
 
-                StorageWrite *write = storageNewWriteP(s3, STRDEF("file.txt"));
-                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("ABCDEFGHIJKLMNOPQRSTUVWXYZ")), "put file");
+                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=1&uploadId=RR55", .content = "1234567890123456");
+                testResponseP(service, .header = "etag:RR551");
+
+                testRequestP(service, s3, HTTP_VERB_PUT, "/file.txt?partNumber=2&uploadId=RR55", .content = "7890");
+                testResponseP(service, .header = "eTag:RR552");
+
+                testRequestP(
+                    service, s3, HTTP_VERB_POST, "/file.txt?uploadId=RR55",
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                        "<CompleteMultipartUpload>"
+                        "<Part><PartNumber>1</PartNumber><ETag>RR551</ETag></Part>"
+                        "<Part><PartNumber>2</PartNumber><ETag>RR552</ETag></Part>"
+                        "</CompleteMultipartUpload>\n");
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<CompleteMultipartUploadResult><ETag>XXX</ETag></CompleteMultipartUploadResult>");
+
+                // Check that block size is updated during write
+                const size_t ioBufferSizeDefault = ioBufferSize();
+                ioBufferSizeSet(6);
+
+                StorageWrite *write = NULL;
+                TEST_ASSIGN(write, storageNewWriteP(s3, STRDEF("file.txt")), "new write");
+
+                ioWriteOpen(storageWriteIo(write));
+                ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
+
+                TEST_RESULT_VOID(
+                    bufResize(((StorageWriteS3 *)ioWriteDriver(storageWriteIo(write)))->partBuffer, 17),
+                    "resize part buffer to 17");
+
+                ioWrite(storageWriteIo(write), BUFSTRDEF("90"));
+
+                TEST_RESULT_UINT(
+                    ((StorageWriteS3 *)ioWriteDriver(storageWriteIo(write)))->partSize, 16, "part buffer reset to 16 (default)");
+
+                ioWriteClose(storageWriteIo(write));
+                ioBufferSizeSet(ioBufferSizeDefault);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error on missing file");

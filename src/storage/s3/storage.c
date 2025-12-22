@@ -1259,9 +1259,7 @@ storageS3New(
         IoClient *ioClient;
 
         if (protocolType == httpProtocolTypeHttp)
-        {
             ioClient = sckClientNew(host, port, timeout, timeout);
-        }
         else
         {
             ioClient = tlsClientNewP(
