@@ -99,7 +99,7 @@ ioFdWrite(THIS_VOID, const Buffer *const buffer)
 
     while (bufferRemaining > 0)
     {
-        ssize_t result = ioFdWriteInternal(this->fd, bufPtrConst(buffer) + totalWritten, bufferRemaining);
+        const ssize_t result = ioFdWriteInternal(this->fd, bufPtrConst(buffer) + totalWritten, bufferRemaining);
 
         if (result == -1)
         {
