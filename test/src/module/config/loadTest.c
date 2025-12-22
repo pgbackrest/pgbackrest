@@ -423,6 +423,24 @@ testRun(void)
             "HINT: TLS/SSL verification cannot proceed with this bucket name.\n"
             "HINT: remove dots from the bucket name.");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("bucket name with dot succeeds with path-style URIs");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 111, "s3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Bucket, 111, "ok.bucket");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Region, 111, "region");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Endpoint, 111, "endpoint");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3UriStyle, 111, "path");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 111, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "111");
+
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .comment = "dot bucket with uri-style=path");
+
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoS3Bucket), "ok.bucket", "check bucket value");
+
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 111);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 111);
 

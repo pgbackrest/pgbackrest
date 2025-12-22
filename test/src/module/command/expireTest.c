@@ -22,18 +22,14 @@ archiveGenerate(
     const Storage *storage, const char *const archiveStanzaPath, const unsigned int start, unsigned int end, const char *archiveId,
     const char *majorWal)
 {
-    // For simplicity, only allow 2 digits
-    if (end > 99)
-        end = 99;
-
-    String *wal = NULL;
+    // For simplicity, limit the range to 0..255 (i.e. 00..FF in hex)
+    if (end > 255)
+        end = 255;
 
     for (unsigned int i = start; i <= end; i++)
     {
-        if (i < 10)
-            wal = strNewFmt("%s0000000%u-9baedd24b61aa15305732ac678c4e2c102435a09", majorWal, i);
-        else
-            wal = strNewFmt("%s000000%u-9baedd24b61aa15305732ac678c4e2c102435a09", majorWal, i);
+        // i is decimal input, but WAL suffix must be hex (8 digits, zero-padded)
+        String *wal = strNewFmt("%s%08X-9baedd24b61aa15305732ac678c4e2c102435a09", majorWal, i);
 
         storagePutP(
             storageNewWriteP(storage, strNewFmt("%s/%s/%s/%s", archiveStanzaPath, archiveId, majorWal, strZ(wal))),
@@ -46,18 +42,14 @@ archiveExpectList(const unsigned int start, unsigned int end, const char *majorW
 {
     String *result = strNew();
 
-    // For simplicity, only allow 2 digits
-    if (end > 99)
-        end = 99;
-
-    String *wal = NULL;
+    // For simplicity, limit the range to 0..255 (i.e. 00..FF in hex)
+    if (end > 255)
+        end = 255;
 
     for (unsigned int i = start; i <= end; i++)
     {
-        if (i < 10)
-            wal = strNewFmt("%s0000000%u-9baedd24b61aa15305732ac678c4e2c102435a09", majorWal, i);
-        else
-            wal = strNewFmt("%s000000%u-9baedd24b61aa15305732ac678c4e2c102435a09", majorWal, i);
+        // i is decimal input, but WAL suffix must be hex (8 digits, zero-padded)
+        String *wal = strNewFmt("%s%08X-9baedd24b61aa15305732ac678c4e2c102435a09", majorWal, i);
 
         strCatFmt(result, "%s\n", strZ(wal));
     }
@@ -128,8 +120,8 @@ testRun(void)
         "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
         "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
         "20181119-152900F_20181119-152600D={"
-        "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"000000010000000000000011\","
-        "\"backup-archive-stop\":\"000000010000000000000011\",\"backup-info-repo-size\":2369186,"
+        "\"backrest-format\":5,\"backrest-version\":\"2.08dev\",\"backup-archive-start\":\"00000001000000000000000B\","
+        "\"backup-archive-stop\":\"00000001000000000000000B\",\"backup-info-repo-size\":2369186,"
         "\"backup-info-repo-size-delta\":346,\"backup-info-size\":20162900,\"backup-info-size-delta\":8428,"
         "\"backup-prior\":\"20181119-152900F\",\"backup-reference\":[\"20181119-152900F\"],"
         "\"backup-timestamp-start\":%" PRIu64 ",\"backup-timestamp-stop\":%" PRIu64 ",\"backup-type\":\"diff\","
@@ -987,7 +979,7 @@ testRun(void)
             "0000000200000000/000000020000000000000005-9baedd24b61aa15305732ac678c4e2c102435a09\n"
             "0000000200000000/000000020000000000000007-9baedd24b61aa15305732ac678c4e2c102435a09\n"
             "0000000200000000/000000020000000000000009-9baedd24b61aa15305732ac678c4e2c102435a09\n"
-            "0000000200000000/000000020000000000000010-9baedd24b61aa15305732ac678c4e2c102435a09\n",
+            "0000000200000000/00000002000000000000000A-9baedd24b61aa15305732ac678c4e2c102435a09\n",
             .comment = "repo2: 9.4-1 nothing removed");
 
         TEST_STORAGE_LIST(
@@ -1053,7 +1045,7 @@ testRun(void)
             "0000000200000000/\n"
             "0000000200000000/000000020000000000000002-9baedd24b61aa15305732ac678c4e2c102435a09\n"
             "0000000200000000/000000020000000000000009-9baedd24b61aa15305732ac678c4e2c102435a09\n"
-            "0000000200000000/000000020000000000000010-9baedd24b61aa15305732ac678c4e2c102435a09\n",
+            "0000000200000000/00000002000000000000000A-9baedd24b61aa15305732ac678c4e2c102435a09\n",
             .comment = "repo2: 9.4-1 only archives not meeting retention for archive-retention-type=diff are removed");
 
         TEST_RESULT_LOG(
@@ -2484,11 +2476,11 @@ testRun(void)
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152900F, start = 000000010000000000000009"
             ", stop = 000000010000000000000009\n"
             "P00 DETAIL: [DRY-RUN] repo1: 9.4-1 archive retention on backup 20181119-152900F_20181119-152600D"
-            ", start = 000000010000000000000011\n"
+            ", start = 00000001000000000000000B\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000002, stop = 000000010000000000000003\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000005, stop = 000000010000000000000005\n"
             "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000008, stop = 000000010000000000000008\n"
-            "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 000000010000000000000010, stop = 000000010000000000000010");
+            "P00   INFO: [DRY-RUN] repo1: 9.4-1 remove archive, start = 00000001000000000000000A, stop = 00000001000000000000000A");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("expire oldest full");
@@ -2570,6 +2562,278 @@ testRun(void)
             "P00   INFO: repo2: remove expired backup 20181119-152138F\n"
             "P00 DETAIL: repo2: 9.4-1 archive retention on backup 20181119-152800F, start = 000000010000000000000004\n"
             "P00   INFO: repo2: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000003");
+
+        harnessLogLevelReset();
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("expire --oldest selects oldest eligible full backup set and dependents"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("no current backups");
+
+        StringList *argList = strLstDup(argListBase);
+        hrnCfgArgRawBool(argList, cfgOptOldest, true);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
+
+        // Create empty backup.info
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE,
+            "[db]\n"
+            "db-catalog-version=202506291\n"
+            "db-control-version=1800\n"
+            "db-id=1\n"
+            "db-system-id=7577015877005525116\n"
+            "db-version=\"18\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":202506291,\"db-control-version\":1800,\"db-system-id\":7577015877005525116"
+            ",\"db-version\":\"18\"}\n");
+
+        TEST_RESULT_VOID(cmdExpire(), "no backups to expire using --oldest");
+        TEST_RESULT_LOG(
+            "P00   WARN: repo1: expire oldest requested but no eligible full backup to expire");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("expire --oldest - retention setting greater than number of backups on disk");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawBool(argList, cfgOptOldest, true);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "10");
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
+
+        // Create backup.info with 4 full backups
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE,
+            "[backup:current]\n"
+            "20251127-101431F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.58.0dev\","
+            "\"backup-archive-start\":\"000000010000000000000003\",\"backup-archive-stop\":\"000000010000000000000003\","
+            "\"backup-error\":false,"
+            "\"backup-info-repo-size\":2834302,\"backup-info-repo-size-delta\":2834302,"
+            "\"backup-info-size\":23798681,\"backup-info-size-delta\":23798681,"
+            "\"backup-lsn-start\":\"0/3000028\",\"backup-lsn-stop\":\"0/3000158\","
+            "\"backup-timestamp-start\":1764234871,\"backup-timestamp-stop\":1764234872,\"backup-type\":\"full\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20251127-101431F_20251127-101437D={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.58.0dev\","
+            "\"backup-archive-start\":\"000000010000000000000004\",\"backup-archive-stop\":\"000000010000000000000005\","
+            "\"backup-error\":false,"
+            "\"backup-info-repo-size\":2834507,\"backup-info-repo-size-delta\":1806,"
+            "\"backup-info-size\":23800795,\"backup-info-size-delta\":14561,"
+            "\"backup-lsn-start\":\"0/4000028\",\"backup-lsn-stop\":\"0/5000050\","
+            "\"backup-prior\":\"20251127-101431F\",\"backup-reference\":[\"20251127-101431F\"],"
+            "\"backup-timestamp-start\":1764234877,\"backup-timestamp-stop\":1764234878,\"backup-type\":\"diff\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20251127-101442F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.58.0dev\","
+            "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000007\","
+            "\"backup-error\":false,"
+            "\"backup-info-repo-size\":2834654,\"backup-info-repo-size-delta\":2834654,"
+            "\"backup-info-size\":23802910,\"backup-info-size-delta\":23802910,"
+            "\"backup-lsn-start\":\"0/6000028\",\"backup-lsn-stop\":\"0/7000050\","
+            "\"backup-timestamp-start\":1764234882,\"backup-timestamp-stop\":1764234883,\"backup-type\":\"full\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20251127-101442F_20251127-101447D={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.58.0dev\","
+            "\"backup-archive-start\":\"000000010000000000000009\",\"backup-archive-stop\":\"000000010000000000000009\","
+            "\"backup-error\":false,"
+            "\"backup-info-repo-size\":2834794,\"backup-info-repo-size-delta\":2093,"
+            "\"backup-info-size\":23804798,\"backup-info-size-delta\":18564,"
+            "\"backup-lsn-start\":\"0/9000028\",\"backup-lsn-stop\":\"0/9000120\","
+            "\"backup-prior\":\"20251127-101442F\",\"backup-reference\":[\"20251127-101442F\"],"
+            "\"backup-timestamp-start\":1764234887,\"backup-timestamp-stop\":1764234889,\"backup-type\":\"diff\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20251127-101453F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.58.0dev\","
+            "\"backup-archive-start\":\"00000001000000000000000A\",\"backup-archive-stop\":\"00000001000000000000000B\","
+            "\"backup-error\":false,"
+            "\"backup-info-repo-size\":2834939,\"backup-info-repo-size-delta\":2834939,"
+            "\"backup-info-size\":23806912,\"backup-info-size-delta\":23806912,"
+            "\"backup-lsn-start\":\"0/A000028\",\"backup-lsn-stop\":\"0/B031A68\","
+            "\"backup-timestamp-start\":1764234893,\"backup-timestamp-stop\":1764234895,\"backup-type\":\"full\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20251127-101453F_20251127-101458D={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.58.0dev\","
+            "\"backup-archive-start\":\"00000001000000000000000C\",\"backup-archive-stop\":\"00000001000000000000000D\","
+            "\"backup-error\":false,"
+            "\"backup-info-repo-size\":2834016,\"backup-info-repo-size-delta\":69227,"
+            "\"backup-info-size\":23809027,\"backup-info-size-delta\":424201,"
+            "\"backup-lsn-start\":\"0/C000028\",\"backup-lsn-stop\":\"0/D000050\","
+            "\"backup-prior\":\"20251127-101453F\",\"backup-reference\":[\"20251127-101453F\"],"
+            "\"backup-timestamp-start\":1764234898,\"backup-timestamp-stop\":1764234900,\"backup-type\":\"diff\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20251127-101503F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.58.0dev\","
+            "\"backup-archive-start\":\"00000001000000000000000E\",\"backup-archive-stop\":\"00000001000000000000000F\","
+            "\"backup-error\":false,"
+            "\"backup-info-repo-size\":2834177,\"backup-info-repo-size-delta\":2834177,"
+            "\"backup-info-size\":23811144,\"backup-info-size-delta\":23811144,"
+            "\"backup-lsn-start\":\"0/E000028\",\"backup-lsn-stop\":\"0/F000050\","
+            "\"backup-timestamp-start\":1764234903,\"backup-timestamp-stop\":1764234905,\"backup-type\":\"full\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "20251127-101503F_20251127-101508D={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.58.0dev\","
+            "\"backup-archive-start\":\"00000001000000000000000B\",\"backup-archive-stop\":\"00000001000000000000000B\","
+            "\"backup-error\":false,"
+            "\"backup-info-repo-size\":2834318,\"backup-info-repo-size-delta\":2687,"
+            "\"backup-info-size\":23813039,\"backup-info-size-delta\":26805,"
+            "\"backup-lsn-start\":\"0/11000028\",\"backup-lsn-stop\":\"0/11000120\","
+            "\"backup-prior\":\"20251127-101503F\",\"backup-reference\":[\"20251127-101503F\"],"
+            "\"backup-timestamp-start\":1764234908,\"backup-timestamp-stop\":1764234910,\"backup-type\":\"diff\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "\n"
+            "[db]\n"
+            "db-catalog-version=202506291\n"
+            "db-control-version=1800\n"
+            "db-id=1\n"
+            "db-system-id=7577015877005525116\n"
+            "db-version=\"18\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":202506291,\"db-control-version\":1800,\"db-system-id\":7577015877005525116"
+            ",\"db-version\":\"18\"}\n");
+
+        // Add backup directories with manifest file
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20251127-101431F/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20251127-101431F_20251127-101437D/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20251127-101442F/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20251127-101442F_20251127-101447D/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20251127-101453F/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20251127-101453F_20251127-101458D/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20251127-101503F/" BACKUP_MANIFEST_FILE);
+        HRN_STORAGE_PUT_EMPTY(storageRepoWrite(), STORAGE_REPO_BACKUP "/20251127-101503F_20251127-101508D/" BACKUP_MANIFEST_FILE);
+
+        // Create archive info
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "db-system-id=7577015877005525116\n"
+            "db-version=\"18\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":7577015877005525116,\"db-version\":\"18\"}");
+
+        // Create archive directories and generate archive
+        archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 32, "18-1", "0000000100000000");
+
+        // Set the log level to detail so all relevant messages are seen, to make sure the WALs are expired too
+        harnessLogLevelSet(logLevelDetail);
+
+        TEST_RESULT_VOID(cmdExpire(), "expire only oldest backup and dependent");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP,
+            "20251127-101442F/\n"
+            "20251127-101442F/backup.manifest\n"
+            "20251127-101442F_20251127-101447D/\n"
+            "20251127-101442F_20251127-101447D/backup.manifest\n"
+            "20251127-101453F/\n"
+            "20251127-101453F/backup.manifest\n"
+            "20251127-101453F_20251127-101458D/\n"
+            "20251127-101453F_20251127-101458D/backup.manifest\n"
+            "20251127-101503F/\n"
+            "20251127-101503F/backup.manifest\n"
+            "20251127-101503F_20251127-101508D/\n"
+            "20251127-101503F_20251127-101508D/backup.manifest\n"
+            "backup.info\n"
+            "backup.info.copy\n",
+            .comment = "only oldest and dependents removed");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/18-1/0000000100000000", archiveExpectList(6, 32, "0000000100000000"),
+            .comment = "all prior to 000000010000000000000006 removed from 18-1/0000000100000000");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: repo1: expire oldest enforcing repo1-retention-full-type=count, repo1-retention-full=3,"
+            " repo1-retention-archive-type=full, and repo1-retention-archive=3 for this execution\n"
+            "P00   INFO: repo1: expire full backup set 20251127-101431F, 20251127-101431F_20251127-101437D\n"
+            "P00   INFO: repo1: remove expired backup 20251127-101431F_20251127-101437D\n"
+            "P00   INFO: repo1: remove expired backup 20251127-101431F\n"
+            "P00 DETAIL: repo1: 18-1 archive retention on backup 20251127-101442F, start = 000000010000000000000006\n"
+            "P00   INFO: repo1: 18-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000005");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("expire --oldest - retention setting smaller than number of backups on disk");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawBool(argList, cfgOptOldest, true);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "expire only oldest backup and dependent");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP,
+            "20251127-101453F/\n"
+            "20251127-101453F/backup.manifest\n"
+            "20251127-101453F_20251127-101458D/\n"
+            "20251127-101453F_20251127-101458D/backup.manifest\n"
+            "20251127-101503F/\n"
+            "20251127-101503F/backup.manifest\n"
+            "20251127-101503F_20251127-101508D/\n"
+            "20251127-101503F_20251127-101508D/backup.manifest\n"
+            "backup.info\n"
+            "backup.info.copy\n",
+            .comment = "only oldest and dependents removed");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/18-1/0000000100000000", archiveExpectList(10, 32, "0000000100000000"),
+            .comment = "all prior to 00000001000000000000000A removed from 18-1/0000000100000000");
+        TEST_RESULT_LOG(
+            "P00 DETAIL: repo1: expire oldest enforcing repo1-retention-full-type=count, repo1-retention-full=2,"
+            " repo1-retention-archive-type=full, and repo1-retention-archive=2 for this execution\n"
+            "P00   INFO: repo1: expire full backup set 20251127-101442F, 20251127-101442F_20251127-101447D\n"
+            "P00   INFO: repo1: remove expired backup 20251127-101442F_20251127-101447D\n"
+            "P00   INFO: repo1: remove expired backup 20251127-101442F\n"
+            "P00 DETAIL: repo1: 18-1 archive retention on backup 20251127-101453F, start = 00000001000000000000000A\n"
+            "P00   INFO: repo1: 18-1 remove archive, start = 000000010000000000000006, stop = 000000010000000000000009");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("expire --oldest conflicts with --set");
+
+        hrnCfgArgRawZ(argList, cfgOptSet, "20251127-101453F_20251127-101458D");
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
+
+        TEST_ERROR(cmdExpire(), OptionInvalidError, "--oldest and --set cannot be used together");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("expire --oldest with time based retention enforces count-based");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawBool(argList, cfgOptOldest, true);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFullType, "time");
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "9999999");
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "expire only oldest backup and dependent");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP,
+            "20251127-101503F/\n"
+            "20251127-101503F/backup.manifest\n"
+            "20251127-101503F_20251127-101508D/\n"
+            "20251127-101503F_20251127-101508D/backup.manifest\n"
+            "backup.info\n"
+            "backup.info.copy\n",
+            .comment = "only oldest and dependents removed");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/18-1/0000000100000000", archiveExpectList(14, 32, "0000000100000000"),
+            .comment = "all prior to 00000001000000000000000E removed from 18-1/0000000100000000");
+        TEST_RESULT_LOG(
+            "P00   INFO: repo1: expire oldest overrides configured time-based retention with count-based retention for this"
+            " execution\n"
+            "P00 DETAIL: repo1: expire oldest enforcing repo1-retention-full-type=count, repo1-retention-full=1,"
+            " repo1-retention-archive-type=full, and repo1-retention-archive=1 for this execution\n"
+            "P00   INFO: repo1: expire full backup set 20251127-101453F, 20251127-101453F_20251127-101458D\n"
+            "P00   INFO: repo1: remove expired backup 20251127-101453F_20251127-101458D\n"
+            "P00   INFO: repo1: remove expired backup 20251127-101453F\n"
+            "P00 DETAIL: repo1: 18-1 archive retention on backup 20251127-101503F, start = 00000001000000000000000E\n"
+            "P00   INFO: repo1: 18-1 remove archive, start = 00000001000000000000000A, stop = 00000001000000000000000D");
 
         harnessLogLevelReset();
     }

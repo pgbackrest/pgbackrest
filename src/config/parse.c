@@ -2764,10 +2764,14 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 // Else apply the default for the unresolved dependency, if it exists
                 else if (dependResult.defaultExists)
                 {
-                    configOptionValue->set = true;
-                    configOptionValue->value = dependResult.defaultValue;
-                    configOptionValue->defaultValue = optionalRules.defaultRaw;
-                    configOptionValue->display = optionalRules.defaultRaw;
+                    // Fully reinitialize since it might have been left partially set if dependency was not resolved
+                    *configOptionValue = (ConfigOptionValue)
+                    {
+                        .set = true,
+                        .value = dependResult.defaultValue,
+                        .defaultValue = optionalRules.defaultRaw,
+                        .display = optionalRules.defaultRaw,
+                    };
                 }
 
                 pckReadFree(optionalRules.pack);

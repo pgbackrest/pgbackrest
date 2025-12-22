@@ -107,6 +107,52 @@ storageWriteChunkSize(
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
+storageWriteChunkBufferResize(const Buffer *const input, Buffer *const chunk, const size_t chunkSizeMax)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BUFFER, input);
+        FUNCTION_TEST_PARAM(BUFFER, chunk);
+        FUNCTION_TEST_PARAM(SIZE, chunkSizeMax);
+    FUNCTION_TEST_END();
+
+    ASSERT(input != NULL);
+    ASSERT(chunk != NULL);
+    ASSERT(chunkSizeMax > 0);
+
+    // Resize chunk buffer if it is less than max chunk size
+    size_t chunkSize = bufSize(chunk);
+
+    if (chunkSize < chunkSizeMax)
+    {
+        // If the input buffer is full there is very likely more data so increase size of the chunk buffer aggressively
+        if (bufFull(input))
+        {
+            // If this is the first write set chunk size equal to double the input buffer size
+            if (chunkSize == 0)
+            {
+                chunkSize = bufSize(input) * 2;
+            }
+            // Else double chunk size so as not to resize the chunk buffer too many times since prior data must be copied
+            else
+                chunkSize *= 2;
+        }
+        // Else no more writes are expected so allocate only what is needed
+        else
+            chunkSize += bufUsed(input) - bufRemains(chunk);
+
+        // Chunk size cannot be larger than max chunk size
+        if (chunkSize > chunkSizeMax)
+            chunkSize = chunkSizeMax;
+
+        // Resize the chunk buffer
+        bufResize(chunk, chunkSize);
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
 storageWriteToLog(const StorageWrite *const this, StringStatic *const debugLog)
 {
     strStcCat(debugLog, "{type: ");
