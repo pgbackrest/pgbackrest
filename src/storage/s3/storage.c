@@ -1214,6 +1214,7 @@ storageS3New(
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
         FUNCTION_LOG_PARAM(STRING, caFile);
         FUNCTION_LOG_PARAM(STRING, caPath);
+        FUNCTION_LOG_PARAM(BOOL, requesterPays);
     FUNCTION_LOG_END();
 
     ASSERT(path != NULL);

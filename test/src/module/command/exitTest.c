@@ -20,9 +20,9 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("exitSignalName()"))
     {
-        TEST_RESULT_Z(exitSignalName(signalTypeHup), "HUP", "SIGHUP name");
-        TEST_RESULT_Z(exitSignalName(signalTypeInt), "INT", "SIGINT name");
-        TEST_RESULT_Z(exitSignalName(signalTypeTerm), "TERM", "SIGTERM name");
+        TEST_RESULT_Z(exitSignalName(signalTypeHup), "SIGHUP", "SIGHUP name");
+        TEST_RESULT_Z(exitSignalName(signalTypeInt), "SIGINT", "SIGINT name");
+        TEST_RESULT_Z(exitSignalName(signalTypeTerm), "SIGTERM", "SIGTERM name");
         TEST_ERROR(exitSignalName(signalTypeNone), AssertError, "no name for signal none");
     }
 
@@ -38,6 +38,18 @@ testRun(void)
             {
                 exitInit();
                 raise(SIGTERM);
+            }
+            HRN_FORK_CHILD_END();                               // {uncoverable - signal is raised in block}
+        }
+        HRN_FORK_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN(.expectedExitStatus = errorTypeCode(&TermError))
+            {
+                exitInit();
+                exitOnSignal(signalTypeNone); // simulate signal received from child
             }
             HRN_FORK_CHILD_END();                               // {uncoverable - signal is raised in block}
         }
@@ -131,16 +143,6 @@ testRun(void)
                 "P00   INFO: archive-push:async command end: aborted with exception [025]");
         }
         TRY_END();
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_INT(
-            exitSafe(errorTypeCode(&TermError), false, signalTypeNone), errorTypeCode(&TermError), "exit on term with no signal");
-        TEST_RESULT_LOG("P00   INFO: archive-push:async command end: terminated on signal from child process");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_INT(
-            exitSafe(errorTypeCode(&TermError), false, signalTypeTerm), errorTypeCode(&TermError), "exit on term with SIGTERM");
-        TEST_RESULT_LOG("P00   INFO: archive-push:async command end: terminated on signal [SIGTERM]");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();
