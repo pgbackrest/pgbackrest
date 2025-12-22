@@ -3,7 +3,6 @@ File Descriptor Io Write
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <errno.h>
 #include <unistd.h>
 
 #include "common/debug.h"
@@ -65,22 +64,20 @@ ioFdWriteReady(THIS_VOID, const bool error)
 /***********************************************************************************************************************************
 Write to the file descriptor
 ***********************************************************************************************************************************/
-// Helper wrapper around write() system call for easier unit testing
+// Helper wrapper around write() system call for unit testing
 static ssize_t
-fdWrite(const int fd, const void *const buf, const size_t count)
+ioFdWriteInternal(const int fd, const void *const buffer, const size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, fd);
-        FUNCTION_TEST_PARAM_P(VOID, buf);
-        FUNCTION_TEST_PARAM(SIZE, count);
+        FUNCTION_TEST_PARAM_P(VOID, buffer);
+        FUNCTION_TEST_PARAM(SIZE, size);
     FUNCTION_TEST_END();
 
     ASSERT(fd >= 0);
-    ASSERT(buf != NULL);
+    ASSERT(buffer != NULL);
 
-    ssize_t result = write(fd, buf, count);
-
-    FUNCTION_TEST_RETURN(SSIZE, result);
+    FUNCTION_TEST_RETURN(SSIZE, write(fd, buffer, size));
 }
 
 static void
@@ -99,11 +96,10 @@ ioFdWrite(THIS_VOID, const Buffer *const buffer)
     // Handle partial writes and non-blocking socket operations
     size_t totalWritten = 0;
     size_t bufferRemaining = bufUsed(buffer);
-    const uint8_t *bufferPtr = bufPtrConst(buffer);
 
     while (bufferRemaining > 0)
     {
-        ssize_t result = fdWrite(this->fd, bufferPtr + totalWritten, bufferRemaining);
+        ssize_t result = ioFdWriteInternal(this->fd, bufPtrConst(buffer) + totalWritten, bufferRemaining);
 
         if (result == -1)
         {
@@ -118,9 +114,8 @@ ioFdWrite(THIS_VOID, const Buffer *const buffer)
 
             // Treat all other errors as fatal
             THROW_SYS_ERROR_FMT(
-                FileWriteError,
-                "unable to finish write to %s (wrote %zu/%zu bytes)",
-                strZ(this->name), totalWritten, bufUsed(buffer));
+                FileWriteError, "unable to finish write to %s (wrote %zu/%zu bytes)", strZ(this->name), totalWritten,
+                bufUsed(buffer));
         }
 
         totalWritten += (size_t)result;

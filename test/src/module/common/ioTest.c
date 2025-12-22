@@ -844,12 +844,6 @@ testRun(void)
         TRY_END();
 
         close(pipeFds[1]);
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("IoFdWrite EAGAIN handling"))
-    {
-        ioBufferSizeSet(16);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("write with EAGAIN then successful retry");
@@ -861,7 +855,7 @@ testRun(void)
                 int fd = HRN_FORK_CHILD_WRITE_FD();
 
                 // Shim first fdWrite to return EAGAIN
-                hrnFdWriteShimOne(-1, EAGAIN);
+                hrnIoFdWriteInternalShimOne(-1, EAGAIN);
 
                 // Create IoFdWrite which should handle EAGAIN
                 IoWrite *writeFd = ioFdWriteNewOpen(STRDEF("EAGAIN test"), fd, 2000);
@@ -905,7 +899,7 @@ testRun(void)
         TEST_TITLE("write with EAGAIN then timeout");
 
         // Shim first fdWrite to return EAGAIN
-        hrnFdWriteShimOne(-1, EAGAIN);
+        hrnIoFdWriteInternalShimOne(-1, EAGAIN);
 
         // Shim fdReady to return false (simulate timeout after EAGAIN)
         hrnFdReadyShimOne(false);

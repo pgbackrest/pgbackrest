@@ -3,8 +3,6 @@ Harness for Fd Testing
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
-#include <errno.h>
-
 #include "common/harnessConfig.h"
 #include "common/harnessDebug.h"
 #include "common/harnessFd.h"
@@ -23,9 +21,9 @@ static struct
     bool localShimFdReadyOne;                                       // Should the fdReady shim run once?
     bool localShimFdReadyOneResult;                                 // Shim result for single run
 
-    bool localShimFdWriteOne;                                       // Should fdWrite shim run once?
-    ssize_t localShimFdWriteOneResult;                              // Return value for single run
-    int localShimFdWriteOneErrno;                                   // errno value for single run
+    bool localShimIoFdWriteInternalOne;                             // Should ioFdWriteInternal shim run once?
+    ssize_t localShimIoFdWriteInternalOneResult;                    // Return value for single run
+    int localShimIoFdWriteInternalOneErrNo;                         // errno value for single run
 } hrnFdStatic;
 
 /***********************************************************************************************************************************
@@ -102,48 +100,48 @@ hrnFdReadyShimOne(const bool result)
 }
 
 /***********************************************************************************************************************************
-Shim fdWrite()
+Shim ioFdWriteInternal()
 ***********************************************************************************************************************************/
-ssize_t
-fdWrite(int fd, const void *buf, size_t count)
+static ssize_t
+ioFdWriteInternal(const int fd, const void *const buffer, const size_t size)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(INT, fd);
-        FUNCTION_HARNESS_PARAM_P(VOID, buf);
-        FUNCTION_HARNESS_PARAM(SIZE, count);
+        FUNCTION_HARNESS_PARAM_P(VOID, buffer);
+        FUNCTION_HARNESS_PARAM(SIZE, size);
     FUNCTION_HARNESS_END();
 
     ssize_t result;
 
     // If shim will run once then return the requested result
-    if (hrnFdStatic.localShimFdWriteOne)
+    if (hrnFdStatic.localShimIoFdWriteInternalOne)
     {
-        hrnFdStatic.localShimFdWriteOne = false;
-        result = hrnFdStatic.localShimFdWriteOneResult;
+        hrnFdStatic.localShimIoFdWriteInternalOne = false;
+        result = hrnFdStatic.localShimIoFdWriteInternalOneResult;
 
         // Set errno if result is -1
         if (result == -1)
-            errno = hrnFdStatic.localShimFdWriteOneErrno;
+            errno = hrnFdStatic.localShimIoFdWriteInternalOneErrNo;
     }
     // Else call normal function
     else
-        result = fdWrite_SHIMMED(fd, buf, count);
+        result = ioFdWriteInternal_SHIMMED(fd, buffer, size);
 
     FUNCTION_HARNESS_RETURN(SSIZE, result);
 }
 
 /**********************************************************************************************************************************/
 void
-hrnFdWriteShimOne(const ssize_t result, const int errnoValue)
+hrnIoFdWriteInternalShimOne(const ssize_t result, const int errNo)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(INT64, result);
-        FUNCTION_HARNESS_PARAM(INT, errnoValue);
+        FUNCTION_HARNESS_PARAM(INT, errNo);
     FUNCTION_HARNESS_END();
 
-    hrnFdStatic.localShimFdWriteOne = true;
-    hrnFdStatic.localShimFdWriteOneResult = result;
-    hrnFdStatic.localShimFdWriteOneErrno = errnoValue;
+    hrnFdStatic.localShimIoFdWriteInternalOne = true;
+    hrnFdStatic.localShimIoFdWriteInternalOneResult = result;
+    hrnFdStatic.localShimIoFdWriteInternalOneErrNo = errNo;
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
