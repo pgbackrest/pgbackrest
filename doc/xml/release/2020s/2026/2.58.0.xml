@@ -4,6 +4,20 @@
             <p><b>IMPORTANT NOTE</b>: The minimum values for the <setting>repo-storage-upload-chunk-size</setting> option have increased. They now represent the minimum allowed by the vendors.</p>
         </text>
 
+        <release-bug-list>
+            <release-item>
+                <github-issue id="2710"/>
+                <github-pull-request id="2715"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="maxim.michkov"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix deadlock due to logging in signal handler.</p>
+            </release-item>
+        </release-bug-list>
+
         <release-feature-list>
             <release-item>
                 <github-issue id="2666"/>
