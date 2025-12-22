@@ -1184,9 +1184,19 @@ testRun(void)
                 driver->fileId = 0x0AAAAAAACCCCCCCD;
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("get file with offset and limit");
+                TEST_TITLE("error on missing file");
 
                 hrnServerScriptAccept(service);
+                testRequestP(service, HTTP_VERB_GET, "/file.txt");
+                testResponseP(service, .code = 404);
+
+                TEST_ERROR(
+                    storageGetP(storageNewReadP(storage, STRDEF("file.txt"))), FileMissingError,
+                    "unable to open missing file '/file.txt' for read");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file with offset and limit");
+
                 testRequestP(service, HTTP_VERB_GET, "/file.txt", .range = "1-21");
                 testResponseP(service, .content = "this is a sample file");
 
@@ -1238,16 +1248,6 @@ testRun(void)
 
                 ioWriteClose(storageWriteIo(write));
                 ioBufferSizeSet(ioBufferSizeDefault);
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("error on missing file");
-
-                testRequestP(service, HTTP_VERB_GET, "/file.txt");
-                testResponseP(service, .code = 404);
-
-                TEST_ERROR(
-                    storageGetP(storageNewReadP(storage, STRDEF("file.txt"))), FileMissingError,
-                    "unable to open missing file '/file.txt' for read");
 
                 hrnServerScriptEnd(service);
             }

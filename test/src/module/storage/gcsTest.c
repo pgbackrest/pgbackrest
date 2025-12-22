@@ -64,6 +64,32 @@ STRING_STATIC(TEST_TOKEN_STR,                                       TEST_TOKEN);
 // {uncrustify_on}
 
 /***********************************************************************************************************************************
+Helper to generate auth request. The JWT part will need to be ? since it can vary in content and size.
+***********************************************************************************************************************************/
+static String *
+testAuthRequest(const Storage *const storage)
+{
+    const char *const preamble = "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=";
+    const String *const jwt = storageGcsAuthJwt(((StorageGcs *)storageDriver(storage)), time(NULL));
+
+    String *const result = strCatFmt(
+        strNew(),
+        "POST /token HTTP/1.1\r\n"
+        "user-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n"
+        "content-length:%zu\r\n"
+        "content-type:application/x-www-form-urlencoded\r\n"
+        "host:%s\r\n"
+        "\r\n"
+        "%s",
+        strSize(jwt) + strlen(preamble), strZ(hrnServerHost()), preamble);
+
+    for (unsigned int jwtIdx = 0; jwtIdx < strSize(jwt); jwtIdx++)
+        strCatChr(result, '?');
+
+    return result;
+}
+
+/***********************************************************************************************************************************
 Helper to build test requests
 ***********************************************************************************************************************************/
 typedef struct TestRequestParam
@@ -301,7 +327,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("StorageGcs, StorageReadGcs, and StorageWriteGcs"))
+    if (testBegin("StorageGcs, StorageReadGcs, and StorageWriteGcs with HTTPS"))
     {
         HRN_FORK_BEGIN()
         {
@@ -348,7 +374,7 @@ testRun(void)
                 hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
                 hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
                 hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
-                hrnCfgArgRawFmt(argList, cfgOptRepoGcsEndpoint, "%s:%u", strZ(hrnServerHost()), testPort);
+                hrnCfgArgRawFmt(argList, cfgOptRepoGcsEndpoint, "https://%s:%u", strZ(hrnServerHost()), testPort);
                 hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, TEST_IN_CONTAINER);
                 hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_KEY_FILE);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
@@ -357,23 +383,8 @@ testRun(void)
                 Storage *storage = NULL;
                 TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
 
-                // Generate the auth request. The JWT part will need to be ? since it can vary in content and size.
-                const char *const preamble = "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=";
-                const String *const jwt = storageGcsAuthJwt(((StorageGcs *)storageDriver(storage)), time(NULL));
-
-                String *const authRequest = strCatFmt(
-                    strNew(),
-                    "POST /token HTTP/1.1\r\n"
-                    "user-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n"
-                    "content-length:%zu\r\n"
-                    "content-type:application/x-www-form-urlencoded\r\n"
-                    "host:%s\r\n"
-                    "\r\n"
-                    "%s",
-                    strSize(jwt) + strlen(preamble), strZ(hrnServerHost()), preamble);
-
-                for (unsigned int jwtIdx = 0; jwtIdx < strSize(jwt); jwtIdx++)
-                    strCatChr(authRequest, '?');
+                // Generate the auth request
+                const String *const authRequest = testAuthRequest(storage);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("create bucket");
@@ -425,26 +436,6 @@ testRun(void)
 
                 TEST_RESULT_PTR(
                     storageGetP(storageNewReadP(storage, STRDEF("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("error on missing file");
-
-                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media");
-                testResponseP(service, .code = 404);
-
-                TEST_ERROR(
-                    storageGetP(storageNewReadP(storage, STRDEF("file.txt"))), FileMissingError,
-                    "unable to open missing file '/file.txt' for read");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("get file with offset and limit");
-
-                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media", .range = "1-21");
-                testResponseP(service, .content = "this is a sample file");
-
-                TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(21)))),
-                    "this is a sample file", "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get file with retry");
@@ -702,48 +693,6 @@ testRun(void)
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write");
 
                 ((StorageGcs *)storageDriver(storage))->tag = NULL;
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("write file in chunks with something left over on close");
-
-                testRequestP(service, HTTP_VERB_POST, .upload = true, .query = "name=file.txt&uploadType=resumable");
-                testResponseP(service, .header = "x-guploader-uploadid:ulid2");
-
-                testRequestP(
-                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
-                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid2", .contentRange = "0-15/*",
-                    .content = "1234567890123456");
-                testResponseP(service, .code = 503);
-                testRequestP(
-                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
-                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid2", .contentRange = "0-15/*",
-                    .content = "1234567890123456");
-                testResponseP(service, .code = 308);
-
-                testRequestP(
-                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
-                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid2", .contentRange = "16-19/20",
-                    .content = "7890");
-                testResponseP(service, .content = "{\"md5Hash\":\"/YXmLZvrRUKHcexohBiycQ==\",\"size\":\"20\"}");
-
-                // Check that chunk size is updated during write
-                ioBufferSizeSet(6);
-                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
-
-                ioWriteOpen(storageWriteIo(write));
-                ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
-
-                TEST_RESULT_VOID(
-                    bufResize(((StorageWriteGcs *)ioWriteDriver(storageWriteIo(write)))->chunkBuffer, 17),
-                    "resize part buffer to 17");
-
-                ioWrite(storageWriteIo(write), BUFSTRDEF("90"));
-
-                TEST_RESULT_UINT(
-                    ((StorageWriteGcs *)ioWriteDriver(storageWriteIo(write)))->chunkSize, 16, "part buffer reset to 16 (default)");
-
-                ioWriteClose(storageWriteIo(write));
-                ioBufferSizeSet(ioBufferSizeDefault);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error on resumable upload (upload_id is redacted)");
@@ -1348,102 +1297,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageGcs with HTTP endpoint"))
-    {
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("config with HTTP endpoint (no TLS)");
-
-        StringList *argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
-        hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, "bucket");
-        hrnCfgArgRawStrId(argList, cfgOptRepoGcsKeyType, storageGcsKeyTypeToken);
-        hrnCfgEnvRawZ(cfgOptRepoGcsKey, "token");
-        hrnCfgEnvRawZ(cfgOptRepoGcsEndpoint, "http://storage.googleapis.local:4443");
-        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
-
-        StorageGcs *driver = (StorageGcs *)storageDriver(storageRepoGet(0, false));
-
-        // Verify HTTP endpoint is parsed correctly
-        TEST_RESULT_STR_Z(driver->endpoint, "storage.googleapis.local", "check endpoint");
-
-        // Verify HTTP client is using plain socket (not TLS)
-        char logBuf[STACK_TRACE_PARAM_MAX];
-        TEST_RESULT_VOID(
-            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
-        TEST_RESULT_BOOL(
-            strstr(logBuf, "{ioClient: {type: socket") != NULL, true,
-            "check http client uses plain socket for HTTP");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("config with HTTP endpoint and custom port");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
-        hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, "bucket");
-        hrnCfgArgRawStrId(argList, cfgOptRepoGcsKeyType, storageGcsKeyTypeToken);
-        hrnCfgEnvRawZ(cfgOptRepoGcsKey, "token");
-        hrnCfgEnvRawZ(cfgOptRepoGcsEndpoint, "http://storage.googleapis.local:8080");
-        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
-
-        driver = (StorageGcs *)storageDriver(storageRepoGet(0, false));
-
-        TEST_RESULT_VOID(
-            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
-        TEST_RESULT_BOOL(
-            strstr(logBuf, "{ioClient: {type: socket") != NULL, true,
-            "check http client uses custom port");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("config with HTTPS endpoint");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
-        hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, "bucket");
-        hrnCfgArgRawStrId(argList, cfgOptRepoGcsKeyType, storageGcsKeyTypeToken);
-        hrnCfgEnvRawZ(cfgOptRepoGcsKey, "token");
-        hrnCfgEnvRawZ(cfgOptRepoGcsEndpoint, "https://storage.googleapis.com");
-        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
-
-        driver = (StorageGcs *)storageDriver(storageRepoGet(0, false));
-
-        // Verify HTTPS endpoint uses TLS client
-        TEST_RESULT_VOID(
-            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
-        TEST_RESULT_BOOL(
-            strstr(logBuf, "{ioClient: {type: tls") != NULL, true,
-            "check http client uses TLS for HTTPS");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("config with endpoint without explicit protocol (defaults to HTTPS)");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
-        hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, "bucket");
-        hrnCfgArgRawStrId(argList, cfgOptRepoGcsKeyType, storageGcsKeyTypeToken);
-        hrnCfgEnvRawZ(cfgOptRepoGcsKey, "token");
-        hrnCfgEnvRawZ(cfgOptRepoGcsEndpoint, "storage.googleapis.com");
-        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
-
-        driver = (StorageGcs *)storageDriver(storageRepoGet(0, false));
-
-        // Verify endpoint without protocol defaults to HTTPS with TLS client
-        TEST_RESULT_VOID(
-            FUNCTION_LOG_OBJECT_FORMAT(driver->httpClient, httpClientToLog, logBuf, sizeof(logBuf)), "httpClientToLog");
-        TEST_RESULT_BOOL(
-            strstr(logBuf, "{ioClient: {type: tls") != NULL, true,
-            "check endpoint without protocol defaults to HTTPS");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("StorageGcs with HTTP server operations"))
+    if (testBegin("StorageGcs, StorageReadGcs, and StorageWriteGcs with HTTP"))
     {
         HRN_FORK_BEGIN()
         {
@@ -1489,45 +1343,14 @@ testRun(void)
                 Storage *storage = NULL;
                 TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
 
-                const char *const preamble = "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=";
-                const String *const jwt = storageGcsAuthJwt(((StorageGcs *)storageDriver(storage)), time(NULL));
+                // Tests need the chunk size to be 16
+                ((StorageGcs *)storageDriver(storage))->chunkSize = 16;
 
-                String *const authRequest = strCatFmt(
-                    strNew(),
-                    "POST /token HTTP/1.1\r\n"
-                    "user-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n"
-                    "content-length:%zu\r\n"
-                    "content-type:application/x-www-form-urlencoded\r\n"
-                    "host:%s\r\n"
-                    "\r\n"
-                    "%s",
-                    strSize(jwt) + strlen(preamble), strZ(hrnServerHost()), preamble);
-
-                for (unsigned int jwtIdx = 0; jwtIdx < strSize(jwt); jwtIdx++)
-                    strCatChr(authRequest, '?');
+                // Generate the auth request
+                const String *const authRequest = testAuthRequest(storage);
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("create bucket");
-
-                hrnServerScriptAccept(auth);
-                hrnServerScriptExpect(auth, authRequest);
-                testResponseP(auth, .content = "{\"access_token\":\"X\",\"token_type\":\"X\",\"expires_in\":120}");
-                hrnServerScriptClose(auth);
-
-                hrnServerScriptAccept(service);
-                testRequestP(service, HTTP_VERB_POST, .noBucket = true, .content = "{\"name\":\"bucket\"}");
-                testResponseP(service);
-
-                storageGcsRequestP(
-                    (StorageGcs *)storageDriver(storage), HTTP_VERB_POST_STR, .noBucket = true,
-                    .content = BUFSTR(
-                        jsonWriteResult(
-                            jsonWriteObjectEnd(
-                                jsonWriteStr(
-                                    jsonWriteKeyZ(jsonWriteObjectBegin(jsonWriteNewP()), GCS_JSON_NAME), STRDEF("bucket"))))));
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("ignore missing file");
+                TEST_TITLE("error on missing file");
 
                 hrnServerScriptAccept(auth);
                 hrnServerScriptExpect(auth, authRequest);
@@ -1536,15 +1359,7 @@ testRun(void)
 
                 hrnServerScriptEnd(auth);
 
-                testRequestP(service, HTTP_VERB_GET, .object = "fi&le.txt", .query = "alt=media");
-                testResponseP(service, .code = 404);
-
-                TEST_RESULT_PTR(
-                    storageGetP(storageNewReadP(storage, STRDEF("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("error on missing file");
-
+                hrnServerScriptAccept(service);
                 testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media");
                 testResponseP(service, .code = 404);
 
@@ -1563,15 +1378,49 @@ testRun(void)
                     "this is a sample file", "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("put file");
+                TEST_TITLE("write file in chunks with something left over on close");
+
+                testRequestP(service, HTTP_VERB_POST, .upload = true, .query = "name=file.txt&uploadType=resumable");
+                testResponseP(service, .header = "x-guploader-uploadid:ulid2");
 
                 testRequestP(
-                    service, HTTP_VERB_POST, .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=media", .upload = true,
-                    .content = "ABCD");
-                testResponseP(service, .content = "{\"md5Hash\":\"ywjKSnu1+Wg8GRM6hIcspw==\"}");
+                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
+                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid2", .contentRange = "0-15/*",
+                    .content = "1234567890123456");
+                testResponseP(service, .code = 503);
+                testRequestP(
+                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
+                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid2", .contentRange = "0-15/*",
+                    .content = "1234567890123456");
+                testResponseP(service, .code = 308);
 
-                StorageWrite *write = storageNewWriteP(storage, STRDEF("file.txt"));
-                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("ABCD")), "put file");
+                testRequestP(
+                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
+                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid2", .contentRange = "16-19/20",
+                    .content = "7890");
+                testResponseP(service, .content = "{\"md5Hash\":\"/YXmLZvrRUKHcexohBiycQ==\",\"size\":\"20\"}");
+
+                // Check that chunk size is updated during write
+                const size_t ioBufferSizeDefault = ioBufferSize();
+                ioBufferSizeSet(6);
+
+                StorageWrite *write = NULL;
+                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
+
+                ioWriteOpen(storageWriteIo(write));
+                ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
+
+                TEST_RESULT_VOID(
+                    bufResize(((StorageWriteGcs *)ioWriteDriver(storageWriteIo(write)))->chunkBuffer, 17),
+                    "resize part buffer to 17");
+
+                ioWrite(storageWriteIo(write), BUFSTRDEF("90"));
+
+                TEST_RESULT_UINT(
+                    ((StorageWriteGcs *)ioWriteDriver(storageWriteIo(write)))->chunkSize, 16, "part buffer reset to 16 (default)");
+
+                ioWriteClose(storageWriteIo(write));
+                ioBufferSizeSet(ioBufferSizeDefault);
 
                 hrnServerScriptEnd(service);
             }
