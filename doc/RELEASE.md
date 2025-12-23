@@ -35,7 +35,7 @@ to:
 pgbackrest/test/test.pl --code-count
 ```
 
-## Build release documentation. Be sure to install latex using the instructions from the Vagrantfile before running this step.
+## Build release documentation
 ```
 pgbackrest/doc/release.pl --build
 ```

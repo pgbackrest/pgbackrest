@@ -71,14 +71,6 @@ doc/lib/pgBackRestDoc/Html/DocHtmlSite.pm:
   class: doc/core
   type: perl
 
-doc/lib/pgBackRestDoc/Latex/DocLatex.pm:
-  class: doc/core
-  type: perl
-
-doc/lib/pgBackRestDoc/Latex/DocLatexSection.pm:
-  class: doc/core
-  type: perl
-
 doc/lib/pgBackRestDoc/Markdown/DocMarkdown.pm:
   class: doc/core
   type: perl
@@ -102,10 +94,6 @@ doc/release.pl:
 doc/resource/html/default.css:
   class: doc/core
   type: css
-
-doc/resource/latex/preamble.tex:
-  class: doc/core
-  type: latex
 
 doc/src/build/config/config.yaml:
   class: doc/core
