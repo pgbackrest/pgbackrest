@@ -20,6 +20,18 @@
 
         <release-feature-list>
             <release-item>
+                <github-issue id="2340"/>
+                <github-pull-request id="2703"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="will.morland"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>HTTP support for <proper>S3</proper>, <proper>GCS</proper>, and <proper>Azure</proper>.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2666"/>
                 <github-pull-request id="2709"/>
 

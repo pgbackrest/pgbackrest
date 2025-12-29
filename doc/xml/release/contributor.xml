@@ -1206,6 +1206,11 @@
     <contributor-name-display>Will M</contributor-name-display>
 </contributor>
 
+<contributor id="will.morland">
+    <contributor-name-display>Will Morland</contributor-name-display>
+    <contributor-id type="github">wjmorland</contributor-id>
+</contributor>
+
 <contributor id="william.cox">
     <contributor-name-display>William Cox</contributor-name-display>
     <contributor-id type="github">mydimension</contributor-id>
