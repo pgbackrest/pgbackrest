@@ -1145,7 +1145,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("StorageAzure, StorageReadAzure, and StorageWriteAzure with HTTPS"))
+    if (testBegin("StorageAzure, StorageReadAzure, and StorageWriteAzure with HTTP"))
     {
         HRN_FORK_BEGIN()
         {
