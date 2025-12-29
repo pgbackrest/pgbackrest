@@ -542,7 +542,7 @@
                             <p>The following types are supported for authorization:</p>
 
                             <list>
-                                <list-item><id>auto</id> - Automatically authorize using Azure Managed identities</list-item>
+                                <list-item><id>auto</id> - Automatically authorize using Azure managed identities</list-item>
                                 <list-item><id>shared</id> - Shared key</list-item>
                                 <list-item><id>sas</id> - Shared access signature</list-item>
                             </list>

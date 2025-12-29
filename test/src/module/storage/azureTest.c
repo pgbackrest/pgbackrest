@@ -23,6 +23,7 @@ STRING_STATIC(TEST_CONTAINER_STR,                                   TEST_CONTAIN
 STRING_STATIC(TEST_KEY_SAS_STR,                                     TEST_KEY_SAS);
 #define TEST_KEY_SHARED                                             "YXpLZXk="
 STRING_STATIC(TEST_KEY_SHARED_STR,                                  TEST_KEY_SHARED);
+#define TEST_ACCESS_TOKEN                                           "test-access-token-12345"
 
 /***********************************************************************************************************************************
 Helper to build test requests
@@ -69,7 +70,9 @@ testRequest(IoWrite *write, const char *verb, const char *path, TestRequestParam
     strCatZ(request, " HTTP/1.1\r\nuser-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n");
 
     // Add authorization string
-    if (driver->sharedKey != NULL)
+    if (driver->credHttpClient)
+        strCatZ(request, "authorization:Bearer " TEST_ACCESS_TOKEN "\r\n");
+    else if (driver->sharedKey != NULL)
         strCatZ(request, "authorization:SharedKey account:????????????????????????????????????????????\r\n");
 
     // Add content-length
@@ -102,7 +105,7 @@ testRequest(IoWrite *write, const char *verb, const char *path, TestRequestParam
         strCatFmt(request, "x-ms-tags:%s\r\n", param.tag);
 
     // Add version
-    if (driver->sharedKey != NULL)
+    if (driver->sharedKey != NULL || driver->credHttpClient != NULL)
         strCatZ(request, "x-ms-version:2024-08-04\r\n");
 
     // Complete headers
@@ -385,27 +388,6 @@ testRun(void)
             storageRepoGet(0, false), OptionInvalidValueError,
             "invalid value for 'repo1-azure-key' option: base64 size 5 is not evenly divisible by 4\n"
             "HINT: value must be valid base64 when 'repo1-azure-key-type = shared'.");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storage with auto key type (Managed Identity)");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
-        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
-        hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
-        hrnCfgArgRawStrId(argList, cfgOptRepoAzureKeyType, storageAzureKeyTypeAuto);
-        hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
-        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
-
-        TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
-        TEST_RESULT_STR_Z(storage->path, "/repo", "check path");
-        TEST_RESULT_STR(((StorageAzure *)storageDriver(storage))->account, TEST_ACCOUNT_STR, "check account");
-        TEST_RESULT_STR(((StorageAzure *)storageDriver(storage))->container, TEST_CONTAINER_STR, "check container");
-        TEST_RESULT_PTR(((StorageAzure *)storageDriver(storage))->sharedKey, NULL, "check shared key is null");
-        TEST_RESULT_PTR(((StorageAzure *)storageDriver(storage))->sasKey, NULL, "check sas key is null");
-        TEST_RESULT_PTR_NE(((StorageAzure *)storageDriver(storage))->credHttpClient, NULL, "check cred http client exists");
-        TEST_RESULT_STR_Z(((StorageAzure *)storageDriver(storage))->host, TEST_ACCOUNT ".blob.core.windows.net", "check host");
     }
 
     // *****************************************************************************************************************************
@@ -475,181 +457,6 @@ testRun(void)
         TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(header, httpHeaderToLog, logBuf, sizeof(logBuf)), "httpHeaderToLog");
         TEST_RESULT_Z(logBuf, "{content-length: '66', host: 'account.blob.core.usgovcloudapi.net'}", "check headers");
         TEST_RESULT_STR_Z(httpQueryRenderP(query), "a=b&sig=key", "check query");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("Managed Identity auth - initialization");
-
-        TEST_ASSIGN(
-            storage,
-            (StorageAzure *)storageDriver(
-                storageAzureNew(
-                    STRDEF("/repo"), false, 0, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeAuto, NULL, 16, NULL,
-                    STRDEF("blob.core.windows.net"), storageAzureUriStyleHost, 443, 1000, true, NULL, NULL)),
-            "new azure storage - auto key type");
-
-        TEST_RESULT_PTR_NE(storage->credHttpClient, NULL, "check cred http client exists");
-        TEST_RESULT_STR_Z(storage->credHost, "169.254.169.254", "check cred host");
-        TEST_RESULT_PTR(storage->sharedKey, NULL, "check shared key is null");
-        TEST_RESULT_PTR(storage->sasKey, NULL, "check sas key is null");
-        TEST_RESULT_PTR(storage->accessToken, NULL, "check access token is initially null");
-        TEST_RESULT_INT(storage->accessTokenExpirationTime, 0, "check access token expiration is initially 0");
-    }
-
-    // *****************************************************************************************************************************
-    if (testBegin("storageAzureAuth() - Managed Identity"))
-    {
-        HRN_FORK_BEGIN()
-        {
-            const unsigned int credPort = hrnServerPortNext();
-
-            HRN_FORK_CHILD_BEGIN(.prefix = "azure metadata server", .timeout = 5000)
-            {
-                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, credPort), "metadata server");
-            }
-            HRN_FORK_CHILD_END();
-
-            HRN_FORK_PARENT_BEGIN(.prefix = "azure client")
-            {
-                IoWrite *credService = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
-                char logBuf[STACK_TRACE_PARAM_MAX];
-
-                // Create storage with auto key type
-                StorageAzure *storage = NULL;
-                TEST_ASSIGN(
-                    storage,
-                    (StorageAzure *)storageDriver(
-                        storageAzureNew(
-                            STRDEF("/repo"), false, 0, NULL, TEST_CONTAINER_STR, TEST_ACCOUNT_STR, storageAzureKeyTypeAuto, NULL,
-                            16, NULL, STRDEF("blob.core.windows.net"), storageAzureUriStyleHost, 443, 1000, true, NULL,
-                            NULL)),
-                    "new azure storage - auto key type");
-
-                // Override cred http client to point to our test server
-                // Note: In real usage, this would connect to 169.254.169.254:80, but for testing we use our mock server
-                // The old client will be freed when the storage object is freed
-                storage->credHttpClient = httpClientNew(sckClientNew(hrnServerHost(), credPort, 1000, 1000), 1000);
-                // Update credHost to match test server host since we're using a mock server
-                storage->credHost = hrnServerHost();
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("Managed Identity auth - fetch token");
-
-                // Mock metadata endpoint response with access token
-                hrnServerScriptAccept(credService);
-                String *credRequest = strNew();
-                strCatZ(
-                    credRequest,
-                    "GET /metadata/identity/oauth2/token?api-version=2018-02-01&resource="
-                    "https%3A%2F%2Faccount.blob.core.windows.net HTTP/1.1\r\n");
-                strCatFmt(credRequest, "user-agent:%s/%s\r\n", PROJECT_NAME, PROJECT_VERSION);
-                strCatFmt(credRequest, "Metadata:true\r\n");
-                strCatZ(credRequest, "content-length:0\r\n");
-                strCatFmt(credRequest, "host:%s\r\n", strZ(hrnServerHost()));
-                strCatZ(credRequest, "\r\n");
-                hrnServerScriptExpect(credService, credRequest);
-
-                // Response with access token (expires in 3600 seconds)
-                const String *tokenResponse = strNewFmt(
-                    "HTTP/1.1 200 OK\r\n"
-                    "content-type:application/json\r\n"
-                    "content-length:%zu\r\n"
-                    "\r\n"
-                    "{\"access_token\":\"test-access-token-12345\",\"expires_in\":\"3600\"}",
-                    sizeof("{\"access_token\":\"test-access-token-12345\",\"expires_in\":\"3600\"}") - 1);
-                hrnServerScriptReply(credService, tokenResponse);
-
-                // Set expiration time to 0 to force token fetch
-                storage->accessTokenExpirationTime = 0;
-
-                HttpHeader *header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
-                const String *dateTime = STRDEF("Sun, 21 Jun 2020 12:46:19 GMT");
-
-                TEST_RESULT_VOID(
-                    storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path"), NULL, dateTime, header), "auth with token fetch");
-                TEST_RESULT_PTR_NE(storage->accessToken, NULL, "check access token was set");
-                TEST_RESULT_STR_Z(storage->accessToken, "test-access-token-12345", "check access token value");
-                TEST_RESULT_BOOL(storage->accessTokenExpirationTime > 0, true, "check expiration time was set");
-
-                TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(header, httpHeaderToLog, logBuf, sizeof(logBuf)), "httpHeaderToLog");
-                TEST_RESULT_Z(
-                    logBuf,
-                    "{content-length: '0', host: 'account.blob.core.windows.net', x-ms-version: '2024-08-04'"
-                    ", authorization: 'Bearer test-access-token-12345'}",
-                    "check headers with bearer token");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("Managed Identity auth - use cached token");
-
-                // Clear the server script to ensure no new request is made
-                hrnServerScriptClose(credService);
-                hrnServerScriptAccept(credService);
-
-                // Set expiration time far in the future to use cached token
-                storage->accessTokenExpirationTime = time(NULL) + 3600;
-
-                header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
-
-                TEST_RESULT_VOID(
-                    storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path"), NULL, dateTime, header),
-                    "auth with cached token");
-                TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(header, httpHeaderToLog, logBuf, sizeof(logBuf)), "httpHeaderToLog");
-                TEST_RESULT_Z(
-                    logBuf,
-                    "{content-length: '0', host: 'account.blob.core.windows.net', x-ms-version: '2024-08-04'"
-                    ", authorization: 'Bearer test-access-token-12345'}",
-                    "check headers with cached bearer token");
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("Managed Identity auth - token fetch error");
-
-                hrnServerScriptClose(credService);
-                hrnServerScriptAccept(credService);
-
-                // Mock error response from metadata endpoint
-                credRequest = strNew();
-                strCatZ(
-                    credRequest,
-                    "GET /metadata/identity/oauth2/token?api-version=2018-02-01&resource="
-                    "https%3A%2F%2Faccount.blob.core.windows.net HTTP/1.1\r\n");
-                strCatFmt(credRequest, "user-agent:%s/%s\r\n", PROJECT_NAME, PROJECT_VERSION);
-                strCatFmt(credRequest, "Metadata:true\r\n");
-                strCatZ(credRequest, "content-length:0\r\n");
-                strCatFmt(credRequest, "host:%s\r\n", strZ(hrnServerHost()));
-                strCatZ(credRequest, "\r\n");
-                hrnServerScriptExpect(credService, credRequest);
-
-                tokenResponse = strNewZ(
-                    "HTTP/1.1 403 Forbidden\r\n"
-                    "content-length:0\r\n"
-                    "\r\n");
-                hrnServerScriptReply(credService, tokenResponse);
-                hrnServerScriptClose(credService);
-
-                // Set expiration time to 0 to force token fetch
-                storage->accessTokenExpirationTime = 0;
-                storage->accessToken = NULL;
-
-                header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
-
-                TEST_ERROR_FMT(
-                    storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path"), NULL, dateTime, header), ProtocolError,
-                    "HTTP request failed with 403 (Forbidden):\n"
-                    "*** Path/Query ***:\n"
-                    "GET /metadata/identity/oauth2/token?api-version=2018-02-01&resource="
-                    "https%%3A%%2F%%2Faccount.blob.core.windows.net\n"
-                    "*** Request Headers ***:\n"
-                    "Metadata: true\n"
-                    "content-length: 0\n"
-                    "host: %s\n"
-                    "*** Response Headers ***:\n"
-                    "content-length: 0",
-                    strZ(hrnServerHost()));
-
-                hrnServerScriptEnd(credService);
-            }
-            HRN_FORK_PARENT_END();
-        }
-        HRN_FORK_END();
     }
 
     // *****************************************************************************************************************************
@@ -658,6 +465,7 @@ testRun(void)
         HRN_FORK_BEGIN()
         {
             const unsigned int testPort = hrnServerPortNext();
+            const unsigned int testPortAuth = hrnServerPortNext();
 
             HRN_FORK_CHILD_BEGIN(.prefix = "azure server", .timeout = 5000)
             {
@@ -665,9 +473,18 @@ testRun(void)
             }
             HRN_FORK_CHILD_END();
 
+            HRN_FORK_CHILD_BEGIN(.prefix = "azure auth server", .timeout = 5000)
+            {
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, testPortAuth), "azure auth server");
+            }
+            HRN_FORK_CHILD_END();
+
             HRN_FORK_PARENT_BEGIN(.prefix = "azure client")
             {
-                IoWrite *service = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
+                IoWrite *service = hrnServerScriptBegin(
+                    ioFdWriteNewOpen(STRDEF("s3 client write"), HRN_FORK_PARENT_WRITE_FD(0), 2000));
+                IoWrite *auth = hrnServerScriptBegin(
+                    ioFdWriteNewOpen(STRDEF("azure auth client write"), HRN_FORK_PARENT_WRITE_FD(1), 2000));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("test against local host with path-style URIs");
@@ -887,13 +704,88 @@ testRun(void)
                 TEST_RESULT_BOOL(storageInfoP(storage, NULL, .ignoreMissing = true).exists, false, "info for /");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to managed identity");
+
+                argList = strLstNew();
+                hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+                hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+                hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
+                hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(hrnServerHost()), testPort);
+                hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, TEST_IN_CONTAINER);
+                hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
+                hrnCfgEnvRawZ(cfgOptRepoAzureKeyType, "auto");
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+                hrnCfgEnvRemoveRaw(cfgOptRepoAzureKeyType);
+
+                TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
+                driver = (StorageAzure *)storageDriver(storage);
+
+                // Override cred http client to point to our test server
+                // Note: In real usage, this would connect to 169.254.169.254:80, but for testing we use our mock server
+                driver->credHttpClient = httpClientNew(sckClientNew(hrnServerHost(), testPortAuth, 1000, 1000), 1000);
+
+                // Update credHost to match test server host since we're using a mock server
+                driver->credHost = hrnServerHost();
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("managed Identity token fetch error");
+
+                hrnServerScriptAccept(auth);
+
+                // Mock error response from metadata endpoint
+                String *credRequest = strCatFmt(
+                    strNew(),
+                    "GET /metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%%3A%%2F%%2F%s HTTP/1.1\r\n"
+                    "user-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n"
+                    "Metadata:true\r\n"
+                    "content-length:0\r\n"
+                    "host:%s\r\n",
+                    strZ(hrnServerHost()), strZ(hrnServerHost()));
+                hrnServerScriptExpect(auth, credRequest);
+
+                testResponseP(auth, .code = 403, .content = "");
+                hrnServerScriptClose(auth);
+
+                TEST_ERROR_FMT(
+                    storageInfoP(storage, STRDEF("BOGUS"), .ignoreMissing = true), ProtocolError,
+                    "HTTP request failed with 403 (Forbidden):\n"
+                    "*** Path/Query ***:\n"
+                    "GET /metadata/identity/oauth2/token?api-version=2018-02-01&resource="
+                    "https%%3A%%2F%%2F%s\n"
+                    "*** Request Headers ***:\n"
+                    "Metadata: true\n"
+                    "content-length: 0\n"
+                    "host: %s\n"
+                    "*** Response Headers ***:\n"
+                    "content-length: 0",
+                    strZ(hrnServerHost()), strZ(hrnServerHost()));
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for missing file");
 
+                // Check initial credential settings
+                TEST_RESULT_STR_Z(driver->accessToken, "", "check access token value not set");
+                TEST_RESULT_INT(driver->accessTokenExpirationTime, 0, "check expiration time not set");
+
+                // Get managed identity credentials
+                hrnServerScriptAccept(auth);
+                hrnServerScriptExpect(auth, credRequest);
+                testResponseP(auth, .content = "{\"access_token\":\"" TEST_ACCESS_TOKEN "\",\"expires_in\":\"3600\"}");
+
+                // Info for missing file
                 testRequestP(service, HTTP_VERB_HEAD, "/BOGUS");
                 testResponseP(service, .code = 404);
 
                 TEST_RESULT_BOOL(
                     storageInfoP(storage, STRDEF("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
+
+                // Check credential settings after auth (time is a bit imprecise since it is changing but verifies the range)
+                TEST_RESULT_STR_Z(driver->accessToken, TEST_ACCESS_TOKEN, "check access token value");
+                TEST_RESULT_BOOL(driver->accessTokenExpirationTime > time(NULL), true, "check expiration time min");
+                TEST_RESULT_BOOL(driver->accessTokenExpirationTime < time(NULL) + 3600, true, "check expiration time max");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for file");
@@ -907,6 +799,9 @@ testRun(void)
                 TEST_RESULT_UINT(info.type, storageTypeFile, "check type");
                 TEST_RESULT_UINT(info.size, 9999, "check exists");
                 TEST_RESULT_INT(info.timeModified, 1445412480, "check time");
+
+                // Auth service no longer needed
+                hrnServerScriptEnd(auth);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info check existence only");

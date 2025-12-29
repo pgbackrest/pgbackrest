@@ -59,7 +59,7 @@ STRING_STATIC(AZURE_XML_TAG_PROPERTIES_STR,                         "Properties"
 STRING_STATIC(AZURE_XML_TAG_VERSION_ID_STR,                         "VersionId");
 
 /***********************************************************************************************************************************
-Constants required for Azure Managed Identities
+Constants required for Azure managed identities
 
 Documentation for the response format is found at:
 https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/how-to-use-vm-token#get-a-token-using-curl
@@ -94,7 +94,7 @@ struct StorageAzure
 
     uint64_t fileId;                                                // Id to used to make file block identifiers unique
 
-    // For Azure Managed Identities authentication
+    // For Azure managed identities authentication
     HttpClient *credHttpClient;                                     // HTTP client to service credential requests
     const String *credHost;                                         // Credentials host
     String *accessToken;                                            // Access token
@@ -216,8 +216,7 @@ storageAzureAuth(
             {
                 // Retrieve the access token via the Managed Identities endpoint
                 HttpHeader *const authHeader = httpHeaderNew(NULL);
-                httpHeaderAdd(
-                    authHeader, STRDEF("Metadata"), STRDEF("true"));
+                httpHeaderAdd(authHeader, STRDEF("Metadata"), TRUE_STR);
                 httpHeaderAdd(authHeader, HTTP_HEADER_HOST_STR, this->credHost);
                 httpHeaderAdd(authHeader, HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
 
@@ -235,20 +234,20 @@ storageAzureAuth(
                 {
                     // Get credentials and expiration from the JSON response
                     const KeyValue *const credential = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
-
                     const String *const accessToken = varStr(kvGet(credential, AZURE_JSON_TAG_ACCESS_TOKEN_VAR));
                     CHECK(FormatError, accessToken != NULL, "access token missing");
 
                     const Variant *const expiresInStr = kvGet(credential, AZURE_JSON_TAG_EXPIRES_IN_VAR);
                     CHECK(FormatError, expiresInStr != NULL, "expiry missing");
 
-                    const time_t clientTimeoutPeriod = ((time_t)(httpClientTimeout(this->httpClient) / MSEC_PER_SEC * 2));
-                    const time_t expiresIn = (time_t)varInt64Force(expiresInStr);
-
                     MEM_CONTEXT_OBJ_BEGIN(this)
                     {
-                        this->accessToken = strDup(accessToken);
+                        strCat(strTrunc(this->accessToken), accessToken);
+
                         // Subtract http client timeout * 2 so the token does not expire in the middle of http retries
+                        const time_t clientTimeoutPeriod = ((time_t)(httpClientTimeout(this->httpClient) / MSEC_PER_SEC * 2));
+                        const time_t expiresIn = (time_t)varInt64Force(expiresInStr);
+
                         this->accessTokenExpirationTime = timeBegin + expiresIn - clientTimeoutPeriod;
                     }
                     MEM_CONTEXT_OBJ_END();
@@ -908,17 +907,20 @@ storageAzureNew(
         // Initialization by key type
         switch (keyType)
         {
+            // Create authentication client
             case storageAzureKeyTypeAuto:
+                this->accessToken = strNew();
                 this->credHost = AZURE_CREDENTIAL_HOST_STR;
                 this->credHttpClient = httpClientNew(
                     sckClientNew(this->credHost, AZURE_CREDENTIAL_PORT, timeout, timeout), timeout);
                 break;
 
-            // Store shared key or parse sas query
+            // Store shared key
             case storageAzureKeyTypeShared:
                 this->sharedKey = bufNewDecode(encodingBase64, key);
                 break;
 
+            // Parse sas query
             case storageAzureKeyTypeSas:
                 this->sasKey = httpQueryNewStr(key);
                 break;
