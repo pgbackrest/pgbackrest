@@ -45,6 +45,18 @@
             </release-item>
 
             <release-item>
+                <github-issue id="2023"/>
+                <github-pull-request id="2712"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="moiz.ibrar"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Support for <proper>Azure</proper> managed identities.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2693"/>
 
                 <release-item-contributor-list>
