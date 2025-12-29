@@ -335,6 +335,17 @@ option:
     command-role:
       main: {}
 
+  oldest:
+    type: boolean
+    default: false
+    negate: false
+    command:
+      expire:
+        depend:
+          option: stanza
+    command-role:
+      main: {}
+
   online:
     type: boolean
     default: true

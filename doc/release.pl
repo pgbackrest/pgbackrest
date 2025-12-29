@@ -36,7 +36,6 @@ use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
 use pgBackRestDoc::Custom::DocCustomRelease;
 use pgBackRestDoc::Html::DocHtmlSite;
-use pgBackRestDoc::Latex::DocLatex;
 use pgBackRestDoc::Markdown::DocMarkdown;
 use pgBackRestDoc::ProjectInfo;
 
@@ -238,11 +237,6 @@ eval
             &log(INFO, "Generate RHEL documentation");
 
             executeTest("${strDocExe} --deploy --key-var=os-type=rhel --out=html", {bShowOutputAsync => true});
-
-            if (!defined($strVm))
-            {
-                executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=rhel --out=pdf");
-            }
         }
 
         # Generate deployment docs for Debian

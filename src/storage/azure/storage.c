@@ -851,7 +851,8 @@ storageAzureNew(
     const String *const path, const bool write, const time_t targetTime, StoragePathExpressionCallback pathExpressionFunction,
     const String *const container, const String *const account, const StorageAzureKeyType keyType, const String *const key,
     const size_t blockSize, const KeyValue *const tag, const String *const endpoint, const StorageAzureUriStyle uriStyle,
-    const unsigned int port, const TimeMSec timeout, const bool verifyPeer, const String *const caFile, const String *const caPath)
+    const unsigned int port, const TimeMSec timeout, const HttpProtocolType protocolType, const bool verifyPeer,
+    const String *const caFile, const String *const caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -868,6 +869,7 @@ storageAzureNew(
         FUNCTION_LOG_PARAM(ENUM, uriStyle);
         FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+        FUNCTION_LOG_PARAM(ENUM, protocolType);
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
         FUNCTION_LOG_PARAM(STRING, caFile);
         FUNCTION_LOG_PARAM(STRING, caPath);
@@ -922,12 +924,19 @@ storageAzureNew(
                 break;
         }
 
-        // Create the http client used to service requests
-        this->httpClient = httpClientNew(
-            tlsClientNewP(
+        // Create the http client used to service requests. Use plain socket for HTTP, TLS for HTTPS.
+        IoClient *ioClient;
+
+        if (protocolType == httpProtocolTypeHttp)
+            ioClient = sckClientNew(this->host, port, timeout, timeout);
+        else
+        {
+            ioClient = tlsClientNewP(
                 sckClientNew(this->host, port, timeout, timeout), this->host, timeout, timeout, verifyPeer, .caFile = caFile,
-                .caPath = caPath),
-            timeout);
+                .caPath = caPath);
+        }
+
+        this->httpClient = httpClientNew(ioClient, timeout);
 
         // Create list of redacted headers
         this->headerRedactList = strLstNew();

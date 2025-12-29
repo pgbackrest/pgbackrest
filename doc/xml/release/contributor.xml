@@ -582,6 +582,11 @@
     <contributor-id type="github">Underhunden</contributor-id>
 </contributor>
 
+<contributor id="joakim.hindersson">
+    <contributor-name-display>Joakim Hindersson</contributor-name-display>
+    <contributor-id type="github">jhindersson</contributor-id>
+</contributor>
+
 <contributor id="joe.ayers">
     <contributor-name-display>Joe Ayers</contributor-name-display>
 </contributor>
@@ -1199,6 +1204,11 @@
 
 <contributor id="will.m">
     <contributor-name-display>Will M</contributor-name-display>
+</contributor>
+
+<contributor id="will.morland">
+    <contributor-name-display>Will Morland</contributor-name-display>
+    <contributor-id type="github">wjmorland</contributor-id>
 </contributor>
 
 <contributor id="william.cox">

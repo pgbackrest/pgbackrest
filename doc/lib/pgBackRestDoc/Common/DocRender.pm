@@ -82,40 +82,6 @@ my $oRenderTag =
         'admonition' => ['', "\n\n"],
     },
 
-    'latex' =>
-    {
-        'br' => ['\\\vspace{1em}', ''],
-        'quote' => ['``', '"'],
-        'p' => ["\n\\begin{sloppypar}", "\\end{sloppypar}\n"],
-        'b' => ['\textbf{', '}'],
-        'i' => ['\textit{', '}'],
-        # 'bi' => ['', ''],
-        'list' => ["\\begin{itemize}\n", "\\end{itemize}\n"],
-        'list-item' => ['\item ', "\n"],
-        'id' => ['\textnormal{\texttt{', '}}'],
-        'host' => ['\textnormal{\textbf{', '}}'],
-        'file' => ['\textnormal{\texttt{', '}}'],
-        'path' => ['\textnormal{\texttt{', '}}'],
-        'cmd' => ['\textnormal{\texttt{', "}}"],
-        'user' => ['\textnormal{\texttt{', '}}'],
-        'br-option' => ['', ''],
-        # 'param' => ['\texttt{', '}'],
-        # 'setting' => ['\texttt{', '}'],
-        'br-option' => ['\textnormal{\texttt{', '}}'],
-        'br-setting' => ['\textnormal{\texttt{', '}}'],
-        'pg-option' => ['\textnormal{\texttt{', '}}'],
-        'pg-setting' => ['\textnormal{\texttt{', '}}'],
-        'code' => ['\textnormal{\texttt{', '}}'],
-        # 'code' => ['\texttt{', '}'],
-        # 'code-block' => ['', ''],
-        # 'exe' => [undef, ''],
-        'backrest' => [undef, ''],
-        'proper' => ['\textnormal{\texttt{', '}}'],
-        'postgres' => ['PostgreSQL', ''],
-        'admonition' =>
-            ["\n\\vspace{.5em}\\begin{leftbar}\n\\begin{sloppypar}\\textit{\\textbf{", "}\\end{sloppypar}\n\\end{leftbar}\n"],
-    },
-
     'html' =>
     {
         'br' => ['<br/>', ''],
@@ -185,17 +151,13 @@ sub new
     $$oRenderTag{text}{backrest}[0] = "{[project]}";
     $$oRenderTag{text}{exe}[0] = "{[project-exe]}";
 
-    $$oRenderTag{latex}{backrest}[0] = "{[project]}";
-    $$oRenderTag{latex}{exe}[0] = "\\textnormal\{\\texttt\{[project-exe]}}\}\}";
-
     $$oRenderTag{html}{backrest}[0] = "<span class=\"backrest\">{[project]}</span>";
     $$oRenderTag{html}{exe}[0] = "<span class=\"file\">{[project-exe]}</span>";
 
     if (defined($self->{strRenderOutKey}))
     {
         # Copy page data to self
-        my $oRenderOut =
-            $self->{oManifest}->renderOutGet($self->{strType} eq 'latex' ? 'pdf' : $self->{strType}, $self->{strRenderOutKey});
+        my $oRenderOut = $self->{oManifest}->renderOutGet($self->{strType}, $self->{strRenderOutKey});
 
         if (defined($$oRenderOut{source}) && $$oRenderOut{source} eq 'release' && $self->{oManifest}->isBackRest())
         {
@@ -771,10 +733,6 @@ sub processTag
                 {
                     $strUrl = '#' . substr($strSection, 1);
                 }
-                elsif ($strType eq 'latex')
-                {
-                    $strUrl = $strSection;
-                }
                 else
                 {
                     $strUrl = lc($self->processText($oSection->nodeGet('title')->textGet()));
@@ -792,17 +750,6 @@ sub processTag
         elsif ($strType eq 'markdown')
         {
             $strBuffer = '[' . $oTag->valueGet() . '](' . $strUrl . ')';
-        }
-        elsif ($strType eq 'latex')
-        {
-            if ($oTag->paramTest('url'))
-            {
-                $strBuffer = "\\href{$strUrl}{" . $oTag->valueGet() . "}";
-            }
-            else
-            {
-                $strBuffer = "\\hyperref[$strUrl]{" . $oTag->valueGet() . "}";
-            }
         }
         elsif ($strType eq 'text')
         {
@@ -887,7 +834,7 @@ sub processAdmonitionStart
     my $strType = $self->{strType};
     my $strBuffer = '';
 
-    # Note that any changes to the way the HTML, markdown or latex display tags may also need to be made here
+    # Note that any changes to HTML or markdown display tags may also need to be made here
     if ($strType eq 'html')
     {
         my $strType = $oTag->paramGet('type');
@@ -897,10 +844,6 @@ sub processAdmonitionStart
     elsif ($strType eq 'text' || $strType eq 'markdown')
     {
         $strBuffer = uc($oTag->paramGet('type')) . ": ";
-    }
-    elsif ($strType eq 'latex')
-    {
-        $strBuffer = uc($oTag->paramGet('type')) . ": }";
     }
 
     # Return from function and log return values if any
@@ -933,7 +876,7 @@ sub processAdmonitionEnd
     my $strType = $self->{strType};
     my $strBuffer = '';
 
-    # Note that any changes to the way the HTML, markdown or latex display tags may also need to be made here
+    # Note that any changes to HTML or markdown display tags may also need to be made here
     if ($strType eq 'html')
     {
         $strBuffer = '</div>';
@@ -1020,42 +963,6 @@ sub processText
         $strBuffer =~ s/ +/ /g;
         $strBuffer =~ s/^ //smg;
     # }
-
-    if ($strType eq 'latex')
-    {
-        $strBuffer =~ s/\&mdash\;/---/g;
-        $strBuffer =~ s/\&lt\;/\</g;
-        $strBuffer =~ s/\<\=/\$\\leq\$/g;
-        $strBuffer =~ s/\>\=/\$\\geq\$/g;
-        # $strBuffer =~ s/\_/\\_/g;
-
-        # If not a code-block, which is to be taken AS IS, then escape special characters in latex
-        if ($oText->nameGet() ne 'code-block')
-        {
-            # If the previous character is not already a slash (e.g. not already escaped) then insert a slash
-            $strBuffer =~ s/(?<!\\)\#/\\#/g;
-            $strBuffer =~ s/(?<!\\)\%/\\%/g;
-            $strBuffer =~ s/(?<!\\)\_/\\_/g;
-            # $strBuffer =~ s/(?<!\\)\$/\\\$/g;
-
-            # Escape square brackest in list items since they are used for reformatting the bullet item with what is in brackets,
-            # which is not the intention.
-            if ($oText->nameGet() eq 'list-item')
-            {
-                $strBuffer =~ s/\[/\{\[/g;
-                $strBuffer =~ s/\]/\]\}/g;
-            }
-
-            $strBuffer =~ s/\&copy\;/{\\textcopyright}/g;
-            $strBuffer =~ s/\&trade\;/{\\texttrademark}/g;
-            $strBuffer =~ s/\&reg\;/{\\textregistered}/g;
-
-            $strBuffer =~ s/\&rarr\;/{\\textrightarrow}/g;
-
-            # Escape all ampersands after making any other conversions above
-            $strBuffer =~ s/(?<!\\)\&/\\&/g;
-        }
-    }
 
     if ($strType eq 'html')
     {

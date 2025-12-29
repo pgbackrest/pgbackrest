@@ -40,6 +40,9 @@ FN_EXTERN bool logAny(LogLevel logLevel);
 FN_EXTERN LogLevel logLevelEnum(StringId logLevelId);
 FN_EXTERN const char *logLevelStr(LogLevel logLevel);
 
+// Log exit on signal
+FN_EXTERN void logSignal(LogLevel logLevel, const char *signalName);
+
 /***********************************************************************************************************************************
 Macros
 
