@@ -4,6 +4,7 @@ S3 Storage
 #ifndef STORAGE_S3_STORAGE_H
 #define STORAGE_S3_STORAGE_H
 
+#include "common/io/http/url.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
@@ -38,6 +39,7 @@ FN_EXTERN Storage *storageS3New(
     const String *endPoint, StorageS3UriStyle uriStyle, const String *region, StorageS3KeyType keyType, const String *accessKey,
     const String *secretAccessKey, const String *securityToken, const String *kmsKeyId, const String *sseCustomerKey,
     const String *credRole, const String *webIdTokenFile, size_t partSize, const KeyValue *tag, const String *host,
-    unsigned int port, TimeMSec timeout, bool verifyPeer, const String *caFile, const String *caPath, bool requesterPays);
+    unsigned int port, TimeMSec timeout, HttpProtocolType protocolType, bool verifyPeer, const String *caFile, const String *caPath,
+    bool requesterPays);
 
 #endif

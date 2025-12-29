@@ -29,9 +29,10 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
     {
         // Parse the endpoint url
         const HttpUrl *const url = httpUrlNewParseP(
-            cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx), .type = httpProtocolTypeHttps);
+            cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx), .type = httpProtocolTypeAny, .defaultType = httpProtocolTypeHttps);
         const String *endpoint = httpUrlHost(url);
         unsigned int port = httpUrlPort(url);
+        HttpProtocolType protocolType = httpUrlProtocolType(url);
 
         StorageAzureUriStyle uriStyle = (StorageAzureUriStyle)cfgOptionIdxStrId(cfgOptRepoAzureUriStyle, repoIdx);
 
@@ -41,10 +42,11 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
         if (cfgOptionIdxStrNull(cfgOptRepoStorageHost, repoIdx) != NULL)
         {
             const HttpUrl *const url = httpUrlNewParseP(
-                cfgOptionIdxStr(cfgOptRepoStorageHost, repoIdx), .type = httpProtocolTypeHttps);
+                cfgOptionIdxStr(cfgOptRepoStorageHost, repoIdx), .type = httpProtocolTypeAny, .defaultType = httpProtocolTypeHttps);
 
             endpoint = httpUrlHost(url);
             port = httpUrlPort(url);
+            protocolType = httpUrlProtocolType(url);
 
             if (cfgOptionIdxSource(cfgOptRepoAzureUriStyle, repoIdx) == cfgSourceDefault)
                 uriStyle = storageAzureUriStylePath;
@@ -81,7 +83,7 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
                 cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoTargetTime(), pathExpressionCallback,
                 cfgOptionIdxStr(cfgOptRepoAzureContainer, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureAccount, repoIdx), keyType, key,
                 (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx),
-                cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), endpoint, uriStyle, port, ioTimeoutMs(),
+                cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), endpoint, uriStyle, port, ioTimeoutMs(), protocolType,
                 cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
         }

@@ -1185,8 +1185,8 @@ storageS3New(
     const StorageS3KeyType keyType, const String *const accessKey, const String *const secretAccessKey,
     const String *const securityToken, const String *const kmsKeyId, const String *sseCustomerKey, const String *const credRole,
     const String *const webIdTokenFile, const size_t partSize, const KeyValue *const tag, const String *host,
-    const unsigned int port, const TimeMSec timeout, const bool verifyPeer, const String *const caFile, const String *const caPath,
-    const bool requesterPays)
+    const unsigned int port, const TimeMSec timeout, const HttpProtocolType protocolType, const bool verifyPeer,
+    const String *const caFile, const String *const caPath, const bool requesterPays)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -1210,6 +1210,7 @@ storageS3New(
         FUNCTION_LOG_PARAM(STRING, host);
         FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+        FUNCTION_LOG_PARAM(ENUM, protocolType);
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
         FUNCTION_LOG_PARAM(STRING, caFile);
         FUNCTION_LOG_PARAM(STRING, caPath);
@@ -1251,14 +1252,21 @@ storageS3New(
             httpQueryFree(query);
         }
 
-        // Create the HTTP client used to service requests
+        // Create the http client used to service requests. Use plain socket for HTTP, TLS for HTTPS.
         if (host == NULL)
             host = this->bucketEndpoint;
 
-        this->httpClient = httpClientNew(
-            tlsClientNewP(
-                sckClientNew(host, port, timeout, timeout), host, timeout, timeout, verifyPeer, .caFile = caFile, .caPath = caPath),
-            timeout);
+        IoClient *ioClient;
+
+        if (protocolType == httpProtocolTypeHttp)
+            ioClient = sckClientNew(host, port, timeout, timeout);
+        else
+        {
+            ioClient = tlsClientNewP(
+                sckClientNew(host, port, timeout, timeout), host, timeout, timeout, verifyPeer, .caFile = caFile, .caPath = caPath);
+        }
+
+        this->httpClient = httpClientNew(ioClient, timeout);
 
         // Initialize authentication
         switch (this->keyType)

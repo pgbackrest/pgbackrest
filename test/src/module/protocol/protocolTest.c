@@ -343,7 +343,7 @@ testRun(void)
         hrnLogReplaceAdd(" \\[10\\] No child process(es){0,1}", "process(es){0,1}", "processes", false);
 
         TEST_RESULT_LOG(
-            "P00   WARN: unable to write to invalid: [9] Bad file descriptor\n"
+            "P00   WARN: unable to finish write to invalid (wrote 0/12 bytes): [9] Bad file descriptor\n"
             "P00   WARN: unable to wait on child process: [10] No child [processes]");
     }
 
