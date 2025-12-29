@@ -64,22 +64,6 @@
             '{[release-date]}';
         </variable>
         <!-- <variable key="html-logo">&lt;img src=&quot;{[project-logo]}&quot;&gt;</variable> -->
-
-        <!-- PDF variables -->
-        <variable key="pdf-logo">{[doc-path]}/output/latex/logo</variable>
-
-        <variable key="pdf-title1">{[project]} User Guide</variable>
-        <variable key="pdf-title2">Open Source PostgreSQL Backup and Restore Utility</variable>
-        <variable key="pdf-title3">Version {[version]}</variable>
-
-        <variable key="pdf-organization">Crunchy Data Solutions, Inc.</variable>
-        <variable key="pdf-resource-logo">cds-logo.eps</variable>
-
-        <variable key='pdf-footer-left'>{[pdf-title1]}\\{[pdf-title3]}</variable>
-        <variable key='pdf-footer-center'>\ \\-\ \thepage\ -</variable>
-        <variable key='pdf-footer-right'>{[pdf-organization]}\\\today</variable>
-
-        <variable key="pdf-file">CrunchyBackRest-UserGuide-{[version]}</variable>
     </variable-list>
 
     <source-list>
@@ -107,10 +91,6 @@
             <render-source key="command" source="command" menu="Commands"/>
             <render-source key="faq" menu="FAQ"/>
             <render-source key="metric" menu="Metrics"/>
-        </render>
-
-        <render type="pdf" file="{[pdf-file]}">
-            <render-source key="user-guide"/>
         </render>
 
         <render type="markdown">
