@@ -56,7 +56,7 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
 
         // Get role and token
         const StorageS3KeyType keyType = (StorageS3KeyType)cfgOptionIdxStrId(cfgOptRepoS3KeyType, repoIdx);
-        const String *credRole = cfgOptionIdxStrNull(cfgOptRepoS3Role, repoIdx);
+        const String *role = cfgOptionIdxStrNull(cfgOptRepoS3Role, repoIdx);
         const String *tokenFile = NULL;
         const String *credUrl = NULL;
 
@@ -67,10 +67,10 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
             #define S3_ENV_AWS_ROLE_ARN                             "AWS_ROLE_ARN"
             #define S3_ENV_AWS_WEB_IDENTITY_TOKEN_FILE              "AWS_WEB_IDENTITY_TOKEN_FILE"
 
-            const char *const credRoleZ = getenv(S3_ENV_AWS_ROLE_ARN);
+            const char *const roleZ = getenv(S3_ENV_AWS_ROLE_ARN);
             const char *const webIdTokenFileZ = getenv(S3_ENV_AWS_WEB_IDENTITY_TOKEN_FILE);
 
-            if (credRoleZ == NULL || webIdTokenFileZ == NULL)
+            if (roleZ == NULL || webIdTokenFileZ == NULL)
             {
                 THROW_FMT(
                     OptionInvalidError,
@@ -79,7 +79,7 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
                     cfgOptionIdxName(cfgOptRepoS3KeyType, repoIdx));
             }
 
-            credRole = strNewZ(credRoleZ);
+            role = strNewZ(roleZ);
             tokenFile = strNewZ(webIdTokenFileZ);
         }
         // If pod identity authentication then load the credentials url and token filename from environment variables documented here:
@@ -113,7 +113,7 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
                 (StorageS3UriStyle)cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx), cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx),
                 keyType, cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KmsKeyId, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoS3SseCustomerKey, repoIdx), credRole, tokenFile, credUrl,
+                cfgOptionIdxStrNull(cfgOptRepoS3SseCustomerKey, repoIdx), role, tokenFile, credUrl,
                 (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx),
                 cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), host, port, ioTimeoutMs(), protocolType,
                 cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),

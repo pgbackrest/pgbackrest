@@ -444,6 +444,11 @@ Automatically get credentials for an associated pod identity
 
 Documentation is found at: https://docs.aws.amazon.com/eks/latest/APIReference/API_auth_AssumeRoleForPodIdentity.html
 ***********************************************************************************************************************************/
+VARIANT_STRDEF_STATIC(AWS_JSON_ACCESS_KEY_ID_VAR,                   "AccessKeyId");
+VARIANT_STRDEF_STATIC(AWS_JSON_SECRET_ACCESS_KEY_VAR,               "SecretAccessKey");
+VARIANT_STRDEF_STATIC(AWS_JSON_TOKEN_VAR,                           "Token");
+VARIANT_STRDEF_STATIC(AWS_JSON_EXPIRATION_VAR,                      "Expiration");
+
 static void
 storageS3AuthPodId(StorageS3 *const this, const HttpHeader *const header)
 {
@@ -468,17 +473,19 @@ storageS3AuthPodId(StorageS3 *const this, const HttpHeader *const header)
 
         CHECK(FormatError, httpResponseCode(response) != HTTP_RESPONSE_CODE_NOT_FOUND, "invalid response code");
 
+        const KeyValue *const kvResponse = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
+
         // Copy credentials
         MEM_CONTEXT_OBJ_BEGIN(this)
         {
-            this->accessKey = strDup(varStr(kvGet(kvResponse, STRDEF("AccessKeyId"))));
-            this->secretAccessKey = strDup(varStr(kvGet(kvResponse, STRDEF("SecretAccessKey"))));
-            this->securityToken = strDup(varStr(kvGet(kvResponse, STRDEF("Token"))));
+            this->accessKey = strDup(varStr(kvGet(kvResponse, AWS_JSON_ACCESS_KEY_ID_VAR)));
+            this->secretAccessKey = strDup(varStr(kvGet(kvResponse, AWS_JSON_SECRET_ACCESS_KEY_VAR)));
+            this->securityToken = strDup(varStr(kvGet(kvResponse, AWS_JSON_TOKEN_VAR)));
         }
         MEM_CONTEXT_OBJ_END();
 
         // Update expiration time
-        this->credExpirationTime = storageS3CvtTime(strDup(varStr(kvGet(kvResponse, STRDEF("Expiration")))));
+        this->credExpirationTime = storageS3CvtTime(strDup(varStr(kvGet(kvResponse, AWS_JSON_EXPIRATION_VAR))));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1364,10 +1371,11 @@ storageS3New(
                 ASSERT(credUrl != NULL);
                 ASSERT(tokenFile != NULL);
 
-                this->tokenFile = strDup(podIdTokenFile);
-                this->credHost = httpUrlHost(credUrl);
+                const HttpUrl *const url = httpUrlNewParseP(credUrl);
+                this->tokenFile = strDup(tokenFile);
+                this->credHost = httpUrlHost(url);
                 this->credHttpClient = httpClientNew(
-                    sckClientNew(this->credHost, httUrlPort(credUrl), timeout, timeout), timeout);
+                    sckClientNew(this->credHost, httpUrlPort(url), timeout, timeout), timeout);
 
                 break;
             }

@@ -109,6 +109,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("pause"),                                                                                           // val/str
     PARSE_RULE_STRPUB("pg"),                                                                                              // val/str
     PARSE_RULE_STRPUB("pgbackrest"),                                                                                      // val/str
+    PARSE_RULE_STRPUB("pod-id"),                                                                                          // val/str
     PARSE_RULE_STRPUB("posix"),                                                                                           // val/str
     PARSE_RULE_STRPUB("postgres"),                                                                                        // val/str
     PARSE_RULE_STRPUB("prefer"),                                                                                          // val/str
@@ -243,6 +244,7 @@ typedef enum
     parseRuleValStrQT_pause_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_pg_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_pgbackrest_QT,                                                                                 // val/str/enum
+    parseRuleValStrQT_pod_DS_id_QT,                                                                                  // val/str/enum
     parseRuleValStrQT_posix_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_postgres_QT,                                                                                   // val/str/enum
     parseRuleValStrQT_prefer_QT,                                                                                     // val/str/enum
@@ -318,6 +320,7 @@ static const StringId parseRuleValueStrId[] =
     STRID5("path", 0x450300),                                                                                           // val/strid
     STRID5("pause", 0x59d4300),                                                                                         // val/strid
     STRID5("pg", 0xf00),                                                                                                // val/strid
+    STRID5("pod-id", 0x89d91f00),                                                                                       // val/strid
     STRID5("posix", 0x184cdf00),                                                                                        // val/strid
     STRID5("prefer", 0x245316500),                                                                                      // val/strid
     STRID5("preserve", 0x2da45996500),                                                                                  // val/strid
@@ -383,6 +386,7 @@ static const uint8_t parseRuleValueStrIdStrMap[] =
     parseRuleValStrQT_path_QT,                                                                                   // val/strid/strmap
     parseRuleValStrQT_pause_QT,                                                                                  // val/strid/strmap
     parseRuleValStrQT_pg_QT,                                                                                     // val/strid/strmap
+    parseRuleValStrQT_pod_DS_id_QT,                                                                              // val/strid/strmap
     parseRuleValStrQT_posix_QT,                                                                                  // val/strid/strmap
     parseRuleValStrQT_prefer_QT,                                                                                 // val/strid/strmap
     parseRuleValStrQT_preserve_QT,                                                                               // val/strid/strmap
@@ -448,6 +452,7 @@ typedef enum
     parseRuleValStrIdPath,                                                                                         // val/strid/enum
     parseRuleValStrIdPause,                                                                                        // val/strid/enum
     parseRuleValStrIdPg,                                                                                           // val/strid/enum
+    parseRuleValStrIdPodId,                                                                                        // val/strid/enum
     parseRuleValStrIdPosix,                                                                                        // val/strid/enum
     parseRuleValStrIdPrefer,                                                                                       // val/strid/enum
     parseRuleValStrIdPreserve,                                                                                     // val/strid/enum
@@ -8031,6 +8036,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                     PARSE_RULE_VAL_STRID(Shared),                                                            // opt/repo-s3-key-type
                     PARSE_RULE_VAL_STRID(Auto),                                                              // opt/repo-s3-key-type
                     PARSE_RULE_VAL_STRID(WebId),                                                             // opt/repo-s3-key-type
+                    PARSE_RULE_VAL_STRID(PodId),                                                             // opt/repo-s3-key-type
                 ),                                                                                           // opt/repo-s3-key-type
                                                                                                              // opt/repo-s3-key-type
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                  // opt/repo-s3-key-type

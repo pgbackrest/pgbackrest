@@ -1058,13 +1058,13 @@ testRun(void)
 
                 TEST_ERROR(
                     storageRepoGet(0, true), OptionInvalidError,
-                    "option 'repo1-s3-key-type' is 'web-id' but 'AWS_ROLE_ARN' and 'AWS_WEB_IDENTITY_TOKEN_FILE' are not set");
+                    "option 'repo1-s3-key-type' is 'web-id' but 'AWS_ROLE_ARN' or 'AWS_WEB_IDENTITY_TOKEN_FILE' is not set");
 
                 setenv("AWS_ROLE_ARN", TEST_SERVICE_ROLE, true);
 
                 TEST_ERROR(
                     storageRepoGet(0, true), OptionInvalidError,
-                    "option 'repo1-s3-key-type' is 'web-id' but 'AWS_ROLE_ARN' and 'AWS_WEB_IDENTITY_TOKEN_FILE' are not set");
+                    "option 'repo1-s3-key-type' is 'web-id' but 'AWS_ROLE_ARN' or 'AWS_WEB_IDENTITY_TOKEN_FILE' is not set");
 
                 setenv("AWS_WEB_IDENTITY_TOKEN_FILE", TEST_SERVICE_TOKEN_FILE, true);
 
@@ -1072,7 +1072,7 @@ testRun(void)
                 driver = (StorageS3 *)storageDriver(s3);
 
                 TEST_RESULT_STR_Z(driver->credRole, TEST_SERVICE_ROLE, "check role");
-                TEST_RESULT_STR_Z(driver->webIdTokenFile, TEST_SERVICE_TOKEN_FILE, "check token file");
+                TEST_RESULT_STR_Z(driver->tokenFile, TEST_SERVICE_TOKEN_FILE, "check token file");
 
                 // Set partSize to a small value for testing
                 driver->partSize = 16;

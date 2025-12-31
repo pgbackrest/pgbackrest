@@ -2294,6 +2294,7 @@ option:
       - shared
       - auto
       - web-id
+      - pod-id
 
   repo-s3-key:
     section: global
