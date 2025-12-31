@@ -11,6 +11,7 @@ typedef struct Info Info;
 typedef struct InfoSave InfoSave;
 
 #include "common/ini.h"
+#include "common/type/json.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
@@ -31,7 +32,7 @@ Function types for loading and saving
 typedef bool InfoLoadCallback(void *data, unsigned int try);
 // {uncrustify_on}
 
-typedef void InfoLoadNewCallback(void *data, const String *section, const String *key, const String *value);
+typedef void InfoLoadNewCallback(void *data, const String *section, const String *key, JsonRead *value);
 typedef void InfoSaveCallback(void *data, const String *sectionNext, InfoSave *infoSaveData);
 
 /***********************************************************************************************************************************

@@ -99,13 +99,13 @@ typedef struct InfoPgLoadData
 } InfoPgLoadData;
 
 static void
-infoPgLoadCallback(void *const data, const String *const section, const String *const key, const String *const value)
+infoPgLoadCallback(void *const data, const String *const section, const String *const key, JsonRead *const json)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_TEST_PARAM(STRING, value);
+        FUNCTION_TEST_PARAM(JSON_READ, json);
     FUNCTION_TEST_END();
 
     FUNCTION_AUDIT_CALLBACK();
@@ -113,7 +113,7 @@ infoPgLoadCallback(void *const data, const String *const section, const String *
     ASSERT(data != NULL);
     ASSERT(section != NULL);
     ASSERT(key != NULL);
-    ASSERT(value != NULL);
+    ASSERT(json != NULL);
 
     InfoPgLoadData *const loadData = data;
 
@@ -121,14 +121,13 @@ infoPgLoadCallback(void *const data, const String *const section, const String *
     if (strEqZ(section, INFO_SECTION_DB))
     {
         if (strEqZ(key, INFO_KEY_DB_ID))
-            loadData->currentId = varUIntForce(jsonToVar(value));
+            loadData->currentId = jsonReadUInt(json);
     }
     // Process db:history section
     else if (strEqZ(section, INFO_SECTION_DB_HISTORY))
     {
         InfoPgData infoPgData = {.id = cvtZToUInt(strZ(key))};
 
-        JsonRead *const json = jsonReadNew(value);
         jsonReadObjectBegin(json);
 
         // Catalog version
@@ -150,7 +149,7 @@ infoPgLoadCallback(void *const data, const String *const section, const String *
     }
     // Callback if set
     else if (loadData->callbackFunction != NULL)
-        loadData->callbackFunction(loadData->callbackData, section, key, value);
+        loadData->callbackFunction(loadData->callbackData, section, key, json);
 
     FUNCTION_TEST_RETURN_VOID();
 }
