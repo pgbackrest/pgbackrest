@@ -800,6 +800,11 @@
     <contributor-id type="github">mtkunkel</contributor-id>
 </contributor>
 
+<contributor id="matthew.mols">
+    <contributor-name-display>Matthew Mols</contributor-name-display>
+    <contributor-id type="github">mmols</contributor-id>
+</contributor>
+
 <contributor id="maxim.michkov">
     <contributor-name-display>Maxim Michkov</contributor-name-display>
     <contributor-id type="github">silent-observer</contributor-id>
