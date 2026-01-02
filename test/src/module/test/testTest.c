@@ -269,7 +269,6 @@ testRun(void)
             "src/common/type/param.h",
             "src/common/type/stringStatic.h",
             "src/common/type/stringStatic.c",
-            "src/common/type/stringZ.h",
             "test/src/common/harnessDebug.h",
             "test/src/common/harnessLog.h",
             "test/src/common/harnessError.c",
