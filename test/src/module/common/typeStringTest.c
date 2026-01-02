@@ -627,9 +627,9 @@ testRun(void)
         TEST_RESULT_UINT(STRID6("abC-4", TEST_STR6ID5), TEST_STR6ID5, "STRID6()");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("strIdFromStr()");
+        TEST_TITLE("strStrId()");
 
-        TEST_RESULT_UINT(strIdFromStr(STRDEF("abc-")), TEST_STR5ID4, "5 bits 4 chars");
+        TEST_RESULT_UINT(strStrId(STRDEF("abc-")), TEST_STR5ID4, "5 bits 4 chars");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdFromZ()");
@@ -699,13 +699,13 @@ testRun(void)
         TEST_RESULT_Z(buffer6, "abC-40MzZ9+", "    check");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("strIdToStr()");
+        TEST_TITLE("strNewStrId()");
 
-        TEST_RESULT_STR_Z(strIdToStr(TEST_STR5ID1), "a", "5 bits 1 char");
-        TEST_RESULT_STR_Z(strIdToStr(TEST_STR5ID8), "abc-zkz2", "5 bits 8 chars");
+        TEST_RESULT_STR_Z(strNewStrId(TEST_STR5ID1), "a", "5 bits 1 char");
+        TEST_RESULT_STR_Z(strNewStrId(TEST_STR5ID8), "abc-zkz2", "5 bits 8 chars");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("strIdToStr()");
+        TEST_TITLE("strIdToZ()");
 
         char buffer[STRID_MAX + 1];
 
@@ -717,12 +717,12 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("64-bit enum");
 
-        TEST_RESULT_STR_Z(strIdToStr(testStringIdEnumFunc(testStringIdEnumAes256Cbc)), "aes-256-cbc", "pass to enum param");
+        TEST_RESULT_STR_Z(strNewStrId(testStringIdEnumFunc(testStringIdEnumAes256Cbc)), "aes-256-cbc", "pass to enum param");
 
         TestStringIdEnum testEnum = testStringIdEnumRemote;
-        TEST_RESULT_STR_Z(strIdToStr(testEnum), "remote9", "assign to enum");
+        TEST_RESULT_STR_Z(strNewStrId(testEnum), "remote9", "assign to enum");
 
-        TEST_RESULT_STR_Z(strIdToStr(testStringIdEnumTest), "test", "pass to StringId param");
+        TEST_RESULT_STR_Z(strNewStrId(testStringIdEnumTest), "test", "pass to StringId param");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdToLog()");
@@ -742,7 +742,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("small string");
 
-        TEST_RESULT_Z(zNewFmt("id=%d", 777), "id=777", "format");
+        char *string;
+        TEST_ASSIGN(string, zNewFmt("id=%d", 777), "format");
+        TEST_RESULT_Z(string, "id=777", "check");
+        TEST_RESULT_VOID(zFree(string), "free");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("string large enough to need separate allocation");
@@ -757,6 +760,11 @@ testRun(void)
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"
         TEST_RESULT_Z(zNewFmt(format, "%s"), format, "compare");
 #pragma GCC diagnostic pop
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("string id");
+
+        TEST_RESULT_Z(zNewStrId(STRID5("bz2", 0x73420)), "bz2", "string id");
     }
 
     // *****************************************************************************************************************************

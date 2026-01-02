@@ -120,7 +120,7 @@ hrnHostNew(const StringId id, const String *const container, const String *const
             .pub =
             {
                 .id = id,
-                .name = strIdToStr(id),
+                .name = strNewStrId(id),
                 .container = strDup(container),
                 .image = strDup(image),
                 .user = param.user == NULL ? strNewZ("root") : strDup(param.user),
@@ -697,13 +697,13 @@ hrnHostConfig(HrnHost *const this)
             this->pub.repo2Storage = NULL;
 
             strCatZ(config, "\n");
-            strCatFmt(config, "repo1-type=%s\n", strZ(strIdToStr(hrnHostLocal.storage)));
+            strCatFmt(config, "repo1-type=%s\n", zNewStrId(hrnHostLocal.storage));
             strCatFmt(config, "repo1-path=%s\n", strZ(hrnHostRepo1Path(this)));
             strCatZ(config, "repo1-retention-full=2\n");
 
             if (hrnHostLocal.cipherType != cipherTypeNone)
             {
-                strCatFmt(config, "repo1-cipher-type=%s\n", strZ(strIdToStr(hrnHostLocal.cipherType)));
+                strCatFmt(config, "repo1-cipher-type=%s\n", zNewStrId(hrnHostLocal.cipherType));
                 strCatFmt(config, "repo1-cipher-pass=%s\n", strZ(hrnHostLocal.cipherPass));
             }
 
@@ -1115,7 +1115,7 @@ hrnHostBuildRun(const int line, const StringId id, const String *const image)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *const name = strIdToStr(id);
+        const String *const name = strNewStrId(id);
         const bool isPg = strBeginsWithZ(name, "pg");
         const bool isRepo = id == hrnHostLocal.repoHost;
         const String *const container = strNewFmt("test-%u-%s", testIdx(), strZ(name));
@@ -1246,7 +1246,7 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
         if (hrnHostLocal.storage != STORAGE_POSIX_TYPE)
         {
             const char *const fakeCertPath = zNewFmt("%s/doc/resource/fake-cert", hrnPathRepo());
-            const String *const containerName = strNewFmt("test-%u-%s", testIdx(), strZ(strIdToStr(hrnHostLocal.storage)));
+            const String *const containerName = strNewFmt("test-%u-%s", testIdx(), zNewStrId(hrnHostLocal.storage));
 
             switch (hrnHostLocal.storage)
             {

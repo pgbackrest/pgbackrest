@@ -2390,7 +2390,7 @@ manifestLoadCallback(void *const callbackData, const String *const section, cons
         // This new option allows any type of compression to be specified. It must be parsed after the option above so the value
         // does not get overwritten. Since options are stored in alpha order this should always be true.
         else if (strEqZ(key, MANIFEST_KEY_OPTION_COMPRESS_TYPE))
-            manifest->pub.data.backupOptionCompressType = compressTypeEnum(strIdFromStr(jsonReadStr(json)));
+            manifest->pub.data.backupOptionCompressType = compressTypeEnum(strStrId(jsonReadStr(json)));
         else if (strEqZ(key, MANIFEST_KEY_OPTION_HARDLINK))
             manifest->pub.data.backupOptionHardLink = jsonReadBool(json);
         else if (strEqZ(key, MANIFEST_KEY_OPTION_ONLINE))
@@ -2631,7 +2631,7 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
             jsonFromVar(VARINT64(manifest->pub.data.backupTimestampStop)));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_TYPE,
-            jsonFromVar(VARSTR(strIdToStr(manifest->pub.data.backupType))));
+            jsonFromVar(VARSTR(strNewStrId(manifest->pub.data.backupType))));
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
