@@ -309,8 +309,7 @@ protocolServerProcess(ProtocolServer *const this, const VariantList *const retry
                                             {
                                                 THROW_FMT(
                                                     ProtocolError, "unable to find session id %" PRIu64 " for request %s:%s",
-                                                    this->sessionId, strZ(strIdToStr(request.id)),
-                                                    strZ(strIdToStr(request.type)));
+                                                    this->sessionId, zNewStrId(request.id), zNewStrId(request.type));
                                             }
                                         }
 
@@ -328,7 +327,7 @@ protocolServerProcess(ProtocolServer *const this, const VariantList *const retry
                                                     ASSERT(handler->process == NULL);
                                                     CHECK_FMT(
                                                         ProtocolError, this->sessionId != 0, "no session id for request %s:%s",
-                                                        strZ(strIdToStr(request.id)), strZ(strIdToStr(request.type)));
+                                                        zNewStrId(request.id), zNewStrId(request.type));
 
                                                     processResult = handler->processSession(pckReadNew(request.param), sessionData);
                                                 }
@@ -395,7 +394,7 @@ protocolServerProcess(ProtocolServer *const this, const VariantList *const retry
                                             {
                                                 CHECK_FMT(
                                                     ProtocolError, request.type == protocolCommandTypeCancel,
-                                                    "unknown request type '%s'", strZ(strIdToStr(request.type)));
+                                                    "unknown request type '%s'", zNewStrId(request.type));
 
                                                 // Send NULL data
                                                 protocolServerResponseP(this, .close = true);
@@ -473,7 +472,7 @@ protocolServerProcess(ProtocolServer *const this, const VariantList *const retry
 
                         default:
                             THROW_FMT(
-                                ProtocolError, "invalid request '%s' (0x%" PRIx64 ")", strZ(strIdToStr(request.id)), request.id);
+                                ProtocolError, "invalid request '%s' (0x%" PRIx64 ")", zNewStrId(request.id), request.id);
                     }
                 }
 

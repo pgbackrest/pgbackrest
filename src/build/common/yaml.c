@@ -207,14 +207,14 @@ yamlEventCheck(YamlEvent event, YamlEventType type)
         if (event.type == yamlEventTypeScalar)
         {
             THROW_FMT(
-                FormatError, "expected event type '%s' but got scalar '%s' at line %zu, column %zu", strZ(strIdToStr(type)),
+                FormatError, "expected event type '%s' but got scalar '%s' at line %zu, column %zu", zNewStrId(type),
                 strZ(event.value), event.line, event.column);
         }
         else
         {
             THROW_FMT(
-                FormatError, "expected event type '%s' but got '%s' at line %zu, column %zu", strZ(strIdToStr(type)),
-                strZ(strIdToStr(event.type)), event.line, event.column);
+                FormatError, "expected event type '%s' but got '%s' at line %zu, column %zu", zNewStrId(type),
+                zNewStrId(event.type), event.line, event.column);
         }
     }
 
@@ -234,7 +234,7 @@ yamlScalarCheck(const YamlEvent event, const String *const value)
     {
         THROW_FMT(
             FormatError, "expected scalar '%s' but got event type '%s' at line %zu, column %zu", strZ(value),
-            strZ(strIdToStr(event.type)), event.line, event.column);
+            zNewStrId(event.type), event.line, event.column);
     }
 
     if (!strEq(event.value, value))

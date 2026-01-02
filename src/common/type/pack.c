@@ -297,7 +297,7 @@ pckTagStackPopCheck(PackTagStack *const tagStack, const PackTypeMap typeMap)
     ASSERT(typeMap == pckTypeMapArray || typeMap == pckTypeMapObj);
 
     if (tagStack->depth == 0 || tagStack->top->typeMap != typeMap)
-        THROW_FMT(FormatError, "not in %s", strZ(strIdToStr(packTypeMapData[typeMap].type)));
+        THROW_FMT(FormatError, "not in %s", zNewStrId(packTypeMapData[typeMap].type));
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -653,8 +653,7 @@ pckReadTag(PackRead *const this, unsigned int *const id, const PackTypeMap typeM
                 {
                     THROW_FMT(
                         FormatError, "field %u is type '%s' but expected '%s'", this->tagNextId,
-                        strZ(strIdToStr(packTypeMapData[this->tagNextTypeMap].type)),
-                        strZ(strIdToStr(packTypeMapData[typeMap].type)));
+                        zNewStrId(packTypeMapData[this->tagNextTypeMap].type), zNewStrId(packTypeMapData[typeMap].type));
                 }
 
                 this->tagStack.top->idLast = this->tagNextId;

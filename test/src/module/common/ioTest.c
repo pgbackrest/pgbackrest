@@ -356,7 +356,7 @@ testRun(void)
         TEST_RESULT_UINT(ioRead(bufferRead, buffer), 2, "    read 2 bytes");
         TEST_RESULT_UINT(ioRead(bufferRead, buffer), 0, "    read 0 bytes (full buffer)");
         TEST_RESULT_STR_Z(strNewBuf(buffer), "11", "    check read");
-        TEST_RESULT_STR_Z(strIdToStr(ioFilterType(sizeFilter)), "size", "check filter type");
+        TEST_RESULT_STR_Z(strNewStrId(ioFilterType(sizeFilter)), "size", "check filter type");
         TEST_RESULT_BOOL(ioReadEof(bufferRead), false, "    not eof");
 
         TEST_RESULT_VOID(bufUsedZero(buffer), "    zero buffer");

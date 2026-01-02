@@ -196,6 +196,21 @@ strNewPct(const uint64_t dividend, const uint64_t divisor)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
+strNewStrId(const StringId strId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_ID, strId);
+    FUNCTION_TEST_END();
+
+    char buffer[STRID_MAX + 1];
+    const size_t size = strIdToZN(strId, buffer);
+    buffer[size] = '\0';
+
+    FUNCTION_TEST_RETURN(STRING, strNewZN(buffer, size));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN String *
 strNewTime(const char *const format, const time_t timestamp, const StrNewTimeParam param)
 {
     FUNCTION_TEST_BEGIN();

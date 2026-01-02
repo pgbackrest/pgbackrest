@@ -9,9 +9,9 @@ they cannot be directly used in switch statements leading to less efficient if-e
 A StringId encodes a short string into an integer so it can be used in switch statements but may also be readily converted back into
 a string for debugging purposes. StringIds may also be suitable for matching user input providing the strings are short enough.
 
-strIdFromStr("mytest0123a") will return the StringId 0x7de75c51315464d5. Using the value, the string representation can be retrieved
-strIdToStr(0x7de75c51315464d5) which returns "mytest0123+" where the plus at the end signals that the original string was equal to
-or longer than the maximum allowed.
+strIdFromZ("mytest0123a") will return the StringId 0x7de75c51315464d5. Using the value, the string representation can be retrieved
+with strIdToZ(0x7de75c51315464d5, ...) which returns "mytest0123+" where the plus at the end signals that the original string was
+equal to or longer than the maximum allowed.
 
 When assigning a StringId to an enum, it will be necessary to cast the StringId to the enum type if the enum contains all 32-bit
 values, since some compilers will complain about the implicit conversion without a cast. The enum will be 32-bit if all values of
@@ -22,11 +22,10 @@ See bldStrId() for information on generating StringId constants.
 #ifndef COMMON_TYPE_STRINGID_H
 #define COMMON_TYPE_STRINGID_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-
-#include "common/type/string.h"
 
 /***********************************************************************************************************************************
 Maximum number of characters in the string representation of a StringId. When the string representation is equal to or greater than
@@ -65,13 +64,6 @@ Functions
 // string with the same number of encoded characters that did not overflow.
 FN_EXTERN StringId strIdFromZN(const char *buffer, size_t size, bool error);
 
-// Convert String to StringId using strIdFromZN()
-FN_INLINE_ALWAYS StringId
-strIdFromStr(const String *const str)
-{
-    return strIdFromZN(strZ(str), strSize(str), true);
-}
-
 // Convert zero-terminated string to StringId using strIdFromZN()
 FN_INLINE_ALWAYS StringId
 strIdFromZ(const char *const str)
@@ -83,9 +75,6 @@ strIdFromZ(const char *const str)
 // which could be eight characters. However, the caller may know the exact (or max length) in advance and act accordingly. The
 // actual number of bytes written is returned.
 FN_EXTERN size_t strIdToZN(StringId strId, char *const buffer);
-
-// Convert StringId to String
-FN_EXTERN String *strIdToStr(const StringId strId);
 
 // Convert StringId to zero-terminated string. See strIdToZN() for buffer sizing and return value.
 FN_EXTERN size_t strIdToZ(const StringId strId, char *const buffer);

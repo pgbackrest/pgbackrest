@@ -368,20 +368,6 @@ strIdToZN(StringId strId, char *const buffer)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN String *
-strIdToStr(const StringId strId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_ID, strId);
-    FUNCTION_TEST_END();
-
-    char buffer[STRID_MAX + 1];
-    buffer[strIdToZN(strId, buffer)] = '\0';
-
-    FUNCTION_TEST_RETURN(STRING, strNewZ(buffer));
-}
-
-/**********************************************************************************************************************************/
 FN_EXTERN size_t
 strIdToZ(const StringId strId, char *const buffer)
 {

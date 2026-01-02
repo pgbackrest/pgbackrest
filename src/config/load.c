@@ -211,7 +211,7 @@ cfgLoadUpdateOption(void)
                 // retention-full-type is 'time' then the expire command will default the archive retention accordingly.
                 const String *const msgArchiveOff = strNewFmt(
                     "WAL segments will not be expired: option '%s=%s' but",
-                    cfgOptionIdxName(cfgOptRepoRetentionArchiveType, optionIdx), strZ(strIdToStr(archiveRetentionType)));
+                    cfgOptionIdxName(cfgOptRepoRetentionArchiveType, optionIdx), zNewStrId(archiveRetentionType));
 
                 switch (archiveRetentionType)
                 {

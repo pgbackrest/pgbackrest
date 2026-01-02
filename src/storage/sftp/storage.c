@@ -1290,7 +1290,7 @@ storageSftpNew(
 #endif // LIBSSH2_HOSTKEY_HASH_SHA256
 
             default:
-                THROW_FMT(ServiceError, "requested ssh2 hostkey hash type (%s) not available", strZ(strIdToStr(hostKeyHashType)));
+                THROW_FMT(ServiceError, "requested ssh2 hostkey hash type (%s) not available", zNewStrId(hostKeyHashType));
                 break;
         }
 
@@ -1390,7 +1390,7 @@ storageSftpNew(
 
                             THROW_FMT(
                                 ServiceError, "known hosts failure: '%s' %s [%d]: check type [%s]", strZ(host),
-                                storageSftpKnownHostCheckpFailureMsg(rc), rc, strZ(strIdToStr(param.hostKeyCheckType)));
+                                storageSftpKnownHostCheckpFailureMsg(rc), rc, zNewStrId(param.hostKeyCheckType));
 
                             break;
                         }
@@ -1408,8 +1408,7 @@ storageSftpNew(
 
                                 THROW_FMT(
                                     ServiceError, "known hosts failure: '%s': %s [%d]: check type [%s]", strZ(host),
-                                    storageSftpKnownHostCheckpFailureMsg(rc), rc,
-                                    strZ(strIdToStr(param.hostKeyCheckType)));
+                                    storageSftpKnownHostCheckpFailureMsg(rc), rc, zNewStrId(param.hostKeyCheckType));
                             }
                             else
                                 storageSftpUpdateKnownHostsFile(this, hostKeyType, host, hostKey, hostKeyLen);

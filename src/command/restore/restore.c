@@ -1558,7 +1558,7 @@ restoreRecoveryOption(const unsigned int pgVersion)
         {
             // Write the recovery target
             kvPut(
-                result, VARSTR(strNewFmt(RECOVERY_TARGET "_%s", strZ(strIdToStr(cfgOptionStrId(cfgOptType))))),
+                result, VARSTR(strNewFmt(RECOVERY_TARGET "_%s", zNewStrId(cfgOptionStrId(cfgOptType)))),
                 VARSTR(cfgOptionStr(cfgOptTarget)));
 
             // Write recovery_target_inclusive
@@ -1573,7 +1573,7 @@ restoreRecoveryOption(const unsigned int pgVersion)
 
             if (targetAction != CFGOPTVAL_TARGET_ACTION_PAUSE)
             {
-                kvPut(result, VARSTRZ(RECOVERY_TARGET_ACTION), VARSTR(strIdToStr(targetAction)));
+                kvPut(result, VARSTRZ(RECOVERY_TARGET_ACTION), VARSTR(strNewStrId(targetAction)));
             }
         }
 

@@ -7219,7 +7219,7 @@ testRun(void)
 
         TEST_RESULT_BOOL(storage->write, true, "get write enabled");
         TEST_RESULT_UINT(storageType(storage), storage->pub.type, "check type");
-        TEST_RESULT_STR_Z(strIdToStr(storageType(storage)), "sftp", "storage type is sftp");
+        TEST_RESULT_STR_Z(strNewStrId(storageType(storage)), "sftp", "storage type is sftp");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storage)));
 #else
