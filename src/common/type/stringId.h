@@ -9,8 +9,8 @@ they cannot be directly used in switch statements leading to less efficient if-e
 A StringId encodes a short string into an integer so it can be used in switch statements but may also be readily converted back into
 a string for debugging purposes. StringIds may also be suitable for matching user input providing the strings are short enough.
 
-strIdFromZ("mytest0123a") will return the StringId 0x7de75c51315464d5. Using the value, the string representation can be retrieved
-with strIdToZ(0x7de75c51315464d5, ...) which returns "mytest0123+" where the plus at the end signals that the original string was
+strIdFromZ("mytest0123") will return the StringId 0x7de75c51315464d1. Using the value, the string representation can be retrieved
+with strIdToZ(0x7de75c51315464d1, ...) which returns "mytest0123+" where the plus at the end signals that the original string was
 equal to or longer than the maximum allowed.
 
 When assigning a StringId to an enum, it will be necessary to cast the StringId to the enum type if the enum contains all 32-bit
@@ -33,8 +33,8 @@ the MAX, then a plus sign + will be assigned as the last (MAX) character in the 
 when calling strIdToZN. If the buffer needs to be zero-terminated then an extra byte should be added.
 ***********************************************************************************************************************************/
 // Maximum for specific encodings (e.g. 5-bit, 6-bit)
-#define STRID5_MAX                                                  13
-#define STRID6_MAX                                                  11
+#define STRID5_MAX                                                  12
+#define STRID6_MAX                                                  10
 
 // Maximum for any encoding
 #define STRID_MAX                                                   STRID5_MAX
