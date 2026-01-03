@@ -10,7 +10,6 @@ Azure Storage
 #include "common/debug.h"
 #include "common/io/http/client.h"
 #include "common/io/http/common.h"
-#include "common/io/http/url.h"
 #include "common/io/socket/client.h"
 #include "common/io/tls/client.h"
 #include "common/log.h"
