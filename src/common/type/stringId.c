@@ -20,7 +20,6 @@ typedef enum
 Constants used to extract information from the header
 ***********************************************************************************************************************************/
 #define STRING_ID_HEADER_SIZE                                       4
-#define STRING_ID_PREFIX                                            4
 
 /**********************************************************************************************************************************/
 // Helper to do encoding for specified number of bits
@@ -65,25 +64,19 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
             };
             // {uncrustify_on}
 
+            // If size is greater than can be encoded then error
+            if (size > STRID5_MAX)
+                FUNCTION_TEST_RETURN(STRING_ID, 0);
+
             // Make sure the string is valid for this encoding
             for (size_t bufferIdx = 0; bufferIdx < size; bufferIdx++)
             {
-                if (bufferIdx == STRID5_MAX - 1)
-                    break;
-
                 if (map[(uint8_t)buffer[bufferIdx]] == 0)
                     FUNCTION_TEST_RETURN(STRING_ID, 0);
             }
 
             // Set encoding in header
             uint64_t result = stringIdBit5;
-
-            // If size is greater than can be encoded then add prefix bit and adjust size
-            if (size >= STRID5_MAX)
-            {
-                result |= STRING_ID_PREFIX;
-                size = STRID5_MAX - 1;
-            }
 
             // Encode based on the number of characters that need to be encoded
             switch (size)
@@ -132,7 +125,7 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
                     result |= (uint64_t)map[(uint8_t)buffer[1]] << 9;
                     __attribute__((fallthrough));
 
-                case 1:
+                default:
                     result |= (uint64_t)map[(uint8_t)buffer[0]] << 4;
             }
 
@@ -167,25 +160,19 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
             };
             // {uncrustify_on}
 
+            // If size is greater than can be encoded then error
+            if (size > STRID6_MAX)
+                FUNCTION_TEST_RETURN(STRING_ID, 0);
+
             // Make sure the string is valid for this encoding
             for (size_t bufferIdx = 0; bufferIdx < size; bufferIdx++)
             {
-                if (bufferIdx == STRID6_MAX - 1)
-                    break;
-
                 if (map[(uint8_t)buffer[bufferIdx]] == 0)
                     FUNCTION_TEST_RETURN(STRING_ID, 0);
             }
 
             // Set encoding in header
             uint64_t result = stringIdBit6;
-
-            // If size is greater than can be encoded then add prefix bit and adjust size
-            if (size >= STRID6_MAX)
-            {
-                result |= STRING_ID_PREFIX;
-                size = STRID6_MAX - 1;
-            }
 
             // Encode based on the number of characters that need to be encoded
             switch (size)
@@ -226,7 +213,7 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
                     result |= (uint64_t)map[(uint8_t)buffer[1]] << 10;
                     __attribute__((fallthrough));
 
-                case 1:
+                default:
                     result |= (uint64_t)map[(uint8_t)buffer[0]] << 4;
             }
 
@@ -271,9 +258,6 @@ strIdToZN(StringId strId, char *const buffer)
     ASSERT(strId != 0);
     ASSERT(buffer != NULL);
 
-    // Is the StringId a prefix of a longer string?
-    bool prefix = strId & STRING_ID_PREFIX;
-
     // Extract bits used to encode the characters
     StringIdBit bit = (StringIdBit)(strId & STRING_ID_BIT_MASK);
 
@@ -314,13 +298,6 @@ strIdToZN(StringId strId, char *const buffer)
             buffer[11] = map[strId & 0x1F];
             ASSERT(strId >> 5 == 0);
 
-            // If prefix flag is set then append +
-            if (prefix)
-            {
-                buffer[12] = '+';
-                FUNCTION_TEST_RETURN(SIZE, 13);
-            }
-
             FUNCTION_TEST_RETURN(SIZE, 12);
         }
 
@@ -355,30 +332,9 @@ strIdToZN(StringId strId, char *const buffer)
             buffer[9] = map[strId & 0x3F];
             ASSERT(strId >> 6 == 0);
 
-            // If prefix flag is set then append +
-            if (prefix)
-            {
-                buffer[10] = '+';
-                FUNCTION_TEST_RETURN(SIZE, 11);
-            }
-
             FUNCTION_TEST_RETURN(SIZE, 10);
         }
     }
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN String *
-strIdToStr(const StringId strId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_ID, strId);
-    FUNCTION_TEST_END();
-
-    char buffer[STRID_MAX + 1];
-    buffer[strIdToZN(strId, buffer)] = '\0';
-
-    FUNCTION_TEST_RETURN(STRING, strNewZ(buffer));
 }
 
 /**********************************************************************************************************************************/

@@ -113,7 +113,7 @@ compressTypeEnum(const StringId type)
     }
 
     if (result == LENGTH_OF(compressHelperLocal))
-        THROW_FMT(AssertError, "invalid compression type '%s'", strZ(strIdToStr(type)));
+        THROW_FMT(AssertError, "invalid compression type '%s'", zNewStrId(type));
 
     FUNCTION_TEST_RETURN(ENUM, result);
 }

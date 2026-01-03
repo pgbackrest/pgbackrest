@@ -457,7 +457,7 @@ cmdManifestRender(void)
         {
             strCatFmt(result, "{\"label\":\"%s\"", strZ(data->backupLabel));
             strCatFmt(result, ",\"reference\":[%s]", strZ(strLstJoinQuote(manifestReferenceList(manifest), ",", "\"")));
-            strCatFmt(result, ",\"type\":\"%s\"", strZ(strIdToStr(data->backupType)));
+            strCatFmt(result, ",\"type\":\"%s\"", zNewStrId(data->backupType));
             strCatFmt(
                 result, ",\"time\":{\"start\":%" PRId64 ",\"copy\":%" PRId64 ",\"stop\":%" PRId64 "}",
                 (int64_t)data->backupTimestampStart, (int64_t)data->backupTimestampCopyStart, (int64_t)data->backupTimestampStop);
@@ -469,7 +469,7 @@ cmdManifestRender(void)
         {
             strCatFmt(result, "label: %s\n", strZ(data->backupLabel));
             strCatFmt(result, "reference: %s\n", strZ(strLstJoin(manifestReferenceList(manifest), ", ")));
-            strCatFmt(result, "type: %s\n", strZ(strIdToStr(data->backupType)));
+            strCatFmt(result, "type: %s\n", zNewStrId(data->backupType));
 
             int64_t duration = (int64_t)(data->backupTimestampStop - data->backupTimestampStart);
 

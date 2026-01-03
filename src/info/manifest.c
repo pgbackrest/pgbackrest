@@ -2016,13 +2016,13 @@ manifestOwnerDefaultGet(const Variant *const ownerDefault)
 }
 
 static void
-manifestLoadCallback(void *const callbackData, const String *const section, const String *const key, const String *const value)
+manifestLoadCallback(void *const callbackData, const String *const section, const String *const key, JsonRead *const json)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, callbackData);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_TEST_PARAM(STRING, value);
+        FUNCTION_TEST_PARAM(JSON_READ, json);
     FUNCTION_TEST_END();
 
     FUNCTION_AUDIT_CALLBACK();
@@ -2030,6 +2030,7 @@ manifestLoadCallback(void *const callbackData, const String *const section, cons
     ASSERT(callbackData != NULL);
     ASSERT(section != NULL);
     ASSERT(key != NULL);
+    ASSERT(json != NULL);
 
     ManifestLoadData *const loadData = (ManifestLoadData *)callbackData;
     Manifest *const manifest = loadData->manifest;
@@ -2039,7 +2040,6 @@ manifestLoadCallback(void *const callbackData, const String *const section, cons
     {
         ManifestFile file = {.name = key};
 
-        JsonRead *const json = jsonReadNew(value);
         jsonReadObjectBegin(json);
 
         // Block incremental info
@@ -2156,7 +2156,6 @@ manifestLoadCallback(void *const callbackData, const String *const section, cons
         ManifestPath path = {.name = key};
         ManifestLoadFound valueFound = {0};
 
-        JsonRead *const json = jsonReadNew(value);
         jsonReadObjectBegin(json);
 
         if (jsonReadKeyExpectZ(json, MANIFEST_KEY_GROUP))
@@ -2186,7 +2185,6 @@ manifestLoadCallback(void *const callbackData, const String *const section, cons
         ManifestLink link = {.name = key};
         ManifestLoadFound valueFound = {0};
 
-        JsonRead *const json = jsonReadNew(value);
         jsonReadObjectBegin(json);
 
         // Link destination
@@ -2212,40 +2210,52 @@ manifestLoadCallback(void *const callbackData, const String *const section, cons
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEqZ(section, MANIFEST_SECTION_TARGET_FILE_DEFAULT))
     {
-        MEM_CONTEXT_BEGIN(manifest->pub.memContext)
+        if (strEqZ(key, MANIFEST_KEY_MODE))
+            manifest->fileModeDefault = cvtZToMode(strZ(jsonReadStr(json)));
+        else
         {
-            if (strEqZ(key, MANIFEST_KEY_GROUP))
-                manifest->fileGroupDefault = manifestOwnerGet(jsonToVar(value));
-            else if (strEqZ(key, MANIFEST_KEY_MODE))
-                manifest->fileModeDefault = cvtZToMode(strZ(varStr(jsonToVar(value))));
-            else if (strEqZ(key, MANIFEST_KEY_USER))
-                manifest->fileUserDefault = strDup(manifestOwnerGet(jsonToVar(value)));
+            const Variant *const valueVar = jsonReadVar(json);
+
+            MEM_CONTEXT_BEGIN(manifest->pub.memContext)
+            {
+                if (strEqZ(key, MANIFEST_KEY_GROUP))
+                    manifest->fileGroupDefault = strDup(manifestOwnerGet(valueVar));
+                else if (strEqZ(key, MANIFEST_KEY_USER))
+                    manifest->fileUserDefault = strDup(manifestOwnerGet(valueVar));
+            }
+            MEM_CONTEXT_END();
         }
-        MEM_CONTEXT_END();
     }
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEqZ(section, MANIFEST_SECTION_TARGET_PATH_DEFAULT))
     {
-        MEM_CONTEXT_BEGIN(loadData->memContext)
+        if (strEqZ(key, MANIFEST_KEY_MODE))
+            loadData->pathModeDefault = cvtZToMode(strZ(jsonReadStr(json)));
+        else
         {
-            if (strEqZ(key, MANIFEST_KEY_GROUP))
-                loadData->pathGroupDefault = manifestOwnerDefaultGet(jsonToVar(value));
-            else if (strEqZ(key, MANIFEST_KEY_MODE))
-                loadData->pathModeDefault = cvtZToMode(strZ(varStr(jsonToVar(value))));
-            else if (strEqZ(key, MANIFEST_KEY_USER))
-                loadData->pathUserDefault = manifestOwnerDefaultGet(jsonToVar(value));
+            const Variant *const valueVar = jsonReadVar(json);
+
+            MEM_CONTEXT_BEGIN(loadData->memContext)
+            {
+                if (strEqZ(key, MANIFEST_KEY_GROUP))
+                    loadData->pathGroupDefault = manifestOwnerDefaultGet(valueVar);
+                else if (strEqZ(key, MANIFEST_KEY_USER))
+                    loadData->pathUserDefault = manifestOwnerDefaultGet(valueVar);
+            }
+            MEM_CONTEXT_END();
         }
-        MEM_CONTEXT_END();
     }
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEqZ(section, MANIFEST_SECTION_TARGET_LINK_DEFAULT))
     {
+        const Variant *const valueVar = jsonReadVar(json);
+
         MEM_CONTEXT_BEGIN(loadData->memContext)
         {
             if (strEqZ(key, MANIFEST_KEY_GROUP))
-                loadData->linkGroupDefault = manifestOwnerDefaultGet(jsonToVar(value));
+                loadData->linkGroupDefault = manifestOwnerDefaultGet(valueVar);
             else if (strEqZ(key, MANIFEST_KEY_USER))
-                loadData->linkUserDefault = manifestOwnerDefaultGet(jsonToVar(value));
+                loadData->linkUserDefault = manifestOwnerDefaultGet(valueVar);
         }
         MEM_CONTEXT_END();
     }
@@ -2254,7 +2264,6 @@ manifestLoadCallback(void *const callbackData, const String *const section, cons
     {
         ManifestTarget target = {.name = key};
 
-        JsonRead *const json = jsonReadNew(value);
         jsonReadObjectBegin(json);
 
         // File
@@ -2284,7 +2293,6 @@ manifestLoadCallback(void *const callbackData, const String *const section, cons
     {
         ManifestDb db = {.name = key};
 
-        JsonRead *const json = jsonReadNew(value);
         jsonReadObjectBegin(json);
 
         // Database oid
@@ -2301,105 +2309,114 @@ manifestLoadCallback(void *const callbackData, const String *const section, cons
         MEM_CONTEXT_BEGIN(manifest->pub.memContext)
         {
             if (strEqZ(key, MANIFEST_KEY_ANNOTATION))
-                manifest->pub.data.annotation = jsonToVar(value);
+                manifest->pub.data.annotation = jsonReadVar(json);
         }
         MEM_CONTEXT_END();
     }
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEqZ(section, MANIFEST_SECTION_BACKUP))
     {
-        MEM_CONTEXT_BEGIN(manifest->pub.memContext)
+        if (strEqZ(key, MANIFEST_KEY_BACKUP_BLOCK_INCR))
+            manifest->pub.data.blockIncr = jsonReadBool(json);
+        else if (strEqZ(key, MANIFEST_KEY_BACKUP_BUNDLE))
+            manifest->pub.data.bundle = jsonReadBool(json);
+        else if (strEqZ(key, MANIFEST_KEY_BACKUP_BUNDLE_RAW))
+            manifest->pub.data.bundleRaw = jsonReadBool(json);
+        else if (strEqZ(key, MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START))
+            manifest->pub.data.backupTimestampCopyStart = (time_t)jsonReadUInt64(json);
+        else if (strEqZ(key, MANIFEST_KEY_BACKUP_TIMESTAMP_START))
+            manifest->pub.data.backupTimestampStart = (time_t)jsonReadUInt64(json);
+        else if (strEqZ(key, MANIFEST_KEY_BACKUP_TIMESTAMP_STOP))
+            manifest->pub.data.backupTimestampStop = (time_t)jsonReadUInt64(json);
+        else if (strEqZ(key, MANIFEST_KEY_BACKUP_TYPE))
         {
-            if (strEqZ(key, MANIFEST_KEY_BACKUP_ARCHIVE_START))
-                manifest->pub.data.archiveStart = varStr(jsonToVar(value));
-            else if (strEqZ(key, MANIFEST_KEY_BACKUP_ARCHIVE_STOP))
-                manifest->pub.data.archiveStop = varStr(jsonToVar(value));
-            else if (strEqZ(key, MANIFEST_KEY_BACKUP_BLOCK_INCR))
-                manifest->pub.data.blockIncr = varBool(jsonToVar(value));
-            else if (strEqZ(key, MANIFEST_KEY_BACKUP_BUNDLE))
-                manifest->pub.data.bundle = varBool(jsonToVar(value));
-            else if (strEqZ(key, MANIFEST_KEY_BACKUP_BUNDLE_RAW))
-                manifest->pub.data.bundleRaw = varBool(jsonToVar(value));
-            else if (strEqZ(key, MANIFEST_KEY_BACKUP_LABEL))
-                manifest->pub.data.backupLabel = varStr(jsonToVar(value));
-            else if (strEqZ(key, MANIFEST_KEY_BACKUP_LSN_START))
-                manifest->pub.data.lsnStart = varStr(jsonToVar(value));
-            else if (strEqZ(key, MANIFEST_KEY_BACKUP_LSN_STOP))
-                manifest->pub.data.lsnStop = varStr(jsonToVar(value));
-            else if (strEqZ(key, MANIFEST_KEY_BACKUP_PRIOR))
-                manifest->pub.data.backupLabelPrior = varStr(jsonToVar(value));
-            else if (strEqZ(key, MANIFEST_KEY_BACKUP_REFERENCE))
-            {
-                manifest->pub.referenceList = strLstNewSplitZ(varStr(jsonToVar(value)), ",");
-                loadData->referenceListFound = true;
-            }
-            else if (strEqZ(key, MANIFEST_KEY_BACKUP_TIMESTAMP_COPY_START))
-                manifest->pub.data.backupTimestampCopyStart = (time_t)varUInt64(jsonToVar(value));
-            else if (strEqZ(key, MANIFEST_KEY_BACKUP_TIMESTAMP_START))
-                manifest->pub.data.backupTimestampStart = (time_t)varUInt64(jsonToVar(value));
-            else if (strEqZ(key, MANIFEST_KEY_BACKUP_TIMESTAMP_STOP))
-                manifest->pub.data.backupTimestampStop = (time_t)varUInt64(jsonToVar(value));
-            else if (strEqZ(key, MANIFEST_KEY_BACKUP_TYPE))
-            {
-                manifest->pub.data.backupType = (BackupType)strIdFromStr(varStr(jsonToVar(value)));
-                ASSERT(
-                    manifest->pub.data.backupType == backupTypeFull || manifest->pub.data.backupType == backupTypeDiff ||
-                    manifest->pub.data.backupType == backupTypeIncr);
-            }
+            manifest->pub.data.backupType = (BackupType)jsonReadStrId(json);
+            ASSERT(
+                manifest->pub.data.backupType == backupTypeFull || manifest->pub.data.backupType == backupTypeDiff ||
+                manifest->pub.data.backupType == backupTypeIncr);
         }
-        MEM_CONTEXT_END();
+        else
+        {
+            MEM_CONTEXT_BEGIN(manifest->pub.memContext)
+            {
+                String *const valueStr = jsonReadStr(json);
+
+                if (strEqZ(key, MANIFEST_KEY_BACKUP_ARCHIVE_START))
+                    manifest->pub.data.archiveStart = valueStr;
+                else if (strEqZ(key, MANIFEST_KEY_BACKUP_ARCHIVE_STOP))
+                    manifest->pub.data.archiveStop = valueStr;
+                else if (strEqZ(key, MANIFEST_KEY_BACKUP_LABEL))
+                    manifest->pub.data.backupLabel = valueStr;
+                else if (strEqZ(key, MANIFEST_KEY_BACKUP_LSN_START))
+                    manifest->pub.data.lsnStart = valueStr;
+                else if (strEqZ(key, MANIFEST_KEY_BACKUP_LSN_STOP))
+                    manifest->pub.data.lsnStop = valueStr;
+                else if (strEqZ(key, MANIFEST_KEY_BACKUP_PRIOR))
+                    manifest->pub.data.backupLabelPrior = valueStr;
+                else if (strEqZ(key, MANIFEST_KEY_BACKUP_REFERENCE))
+                {
+                    manifest->pub.referenceList = strLstNewSplitZ(valueStr, ",");
+                    loadData->referenceListFound = true;
+
+                    strFree(valueStr);
+                }
+            }
+            MEM_CONTEXT_END();
+        }
     }
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEqZ(section, MANIFEST_SECTION_BACKUP_DB))
     {
         if (strEqZ(key, MANIFEST_KEY_DB_ID))
-            manifest->pub.data.pgId = varUIntForce(jsonToVar(value));
+            manifest->pub.data.pgId = jsonReadUInt(json);
         else if (strEqZ(key, MANIFEST_KEY_DB_SYSTEM_ID))
-            manifest->pub.data.pgSystemId = varUInt64(jsonToVar(value));
+            manifest->pub.data.pgSystemId = jsonReadUInt64(json);
         else if (strEqZ(key, MANIFEST_KEY_DB_CATALOG_VERSION))
-            manifest->pub.data.pgCatalogVersion = varUIntForce(jsonToVar(value));
+            manifest->pub.data.pgCatalogVersion = jsonReadUInt(json);
         else if (strEqZ(key, MANIFEST_KEY_DB_VERSION))
-            manifest->pub.data.pgVersion = pgVersionFromStr(varStr(jsonToVar(value)));
+            manifest->pub.data.pgVersion = pgVersionFromStr(jsonReadStr(json));
     }
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEqZ(section, MANIFEST_SECTION_BACKUP_OPTION))
     {
-        MEM_CONTEXT_BEGIN(manifest->pub.memContext)
+        // Required options
+        if (strEqZ(key, MANIFEST_KEY_OPTION_ARCHIVE_CHECK))
+            manifest->pub.data.backupOptionArchiveCheck = jsonReadBool(json);
+        else if (strEqZ(key, MANIFEST_KEY_OPTION_ARCHIVE_COPY))
+            manifest->pub.data.backupOptionArchiveCopy = jsonReadBool(json);
+        // Historically this option meant to add gz compression
+        else if (strEqZ(key, MANIFEST_KEY_OPTION_COMPRESS))
+            manifest->pub.data.backupOptionCompressType = jsonReadBool(json) ? compressTypeGz : compressTypeNone;
+        // This new option allows any type of compression to be specified. It must be parsed after the option above so the value
+        // does not get overwritten. Since options are stored in alpha order this should always be true.
+        else if (strEqZ(key, MANIFEST_KEY_OPTION_COMPRESS_TYPE))
+            manifest->pub.data.backupOptionCompressType = compressTypeEnum(strStrId(jsonReadStr(json)));
+        else if (strEqZ(key, MANIFEST_KEY_OPTION_HARDLINK))
+            manifest->pub.data.backupOptionHardLink = jsonReadBool(json);
+        else if (strEqZ(key, MANIFEST_KEY_OPTION_ONLINE))
+            manifest->pub.data.backupOptionOnline = jsonReadBool(json);
+        else
         {
-            // Required options
-            if (strEqZ(key, MANIFEST_KEY_OPTION_ARCHIVE_CHECK))
-                manifest->pub.data.backupOptionArchiveCheck = varBool(jsonToVar(value));
-            else if (strEqZ(key, MANIFEST_KEY_OPTION_ARCHIVE_COPY))
-                manifest->pub.data.backupOptionArchiveCopy = varBool(jsonToVar(value));
-            // Historically this option meant to add gz compression
-            else if (strEqZ(key, MANIFEST_KEY_OPTION_COMPRESS))
-                manifest->pub.data.backupOptionCompressType = varBool(jsonToVar(value)) ? compressTypeGz : compressTypeNone;
-            // This new option allows any type of compression to be specified. It must be parsed after the option above so the value
-            // does not get overwritten. Since options are stored in alpha order this should always be true.
-            else if (strEqZ(key, MANIFEST_KEY_OPTION_COMPRESS_TYPE))
-                manifest->pub.data.backupOptionCompressType = compressTypeEnum(strIdFromStr(varStr(jsonToVar(value))));
-            else if (strEqZ(key, MANIFEST_KEY_OPTION_HARDLINK))
-                manifest->pub.data.backupOptionHardLink = varBool(jsonToVar(value));
-            else if (strEqZ(key, MANIFEST_KEY_OPTION_ONLINE))
-                manifest->pub.data.backupOptionOnline = varBool(jsonToVar(value));
-
             // Options that were added after v1.00 and may not be present in every manifest
-            else if (strEqZ(key, MANIFEST_KEY_OPTION_BACKUP_STANDBY))
-                manifest->pub.data.backupOptionStandby = varNewBool(varBool(jsonToVar(value)));
-            else if (strEqZ(key, MANIFEST_KEY_OPTION_BUFFER_SIZE))
-                manifest->pub.data.backupOptionBufferSize = varNewUInt(varUIntForce(jsonToVar(value)));
-            else if (strEqZ(key, MANIFEST_KEY_OPTION_CHECKSUM_PAGE))
-                manifest->pub.data.backupOptionChecksumPage = varDup(jsonToVar(value));
-            else if (strEqZ(key, MANIFEST_KEY_OPTION_COMPRESS_LEVEL))
-                manifest->pub.data.backupOptionCompressLevel = varNewUInt(varUIntForce(jsonToVar(value)));
-            else if (strEqZ(key, MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK))
-                manifest->pub.data.backupOptionCompressLevelNetwork = varNewUInt(varUIntForce(jsonToVar(value)));
-            else if (strEqZ(key, MANIFEST_KEY_OPTION_DELTA))
-                manifest->pub.data.backupOptionDelta = varDup(jsonToVar(value));
-            else if (strEqZ(key, MANIFEST_KEY_OPTION_PROCESS_MAX))
-                manifest->pub.data.backupOptionProcessMax = varNewUInt(varUIntForce(jsonToVar(value)));
+            MEM_CONTEXT_BEGIN(manifest->pub.memContext)
+            {
+                if (strEqZ(key, MANIFEST_KEY_OPTION_BUFFER_SIZE))
+                    manifest->pub.data.backupOptionBufferSize = varNewUInt(jsonReadUInt(json));
+                else if (strEqZ(key, MANIFEST_KEY_OPTION_COMPRESS_LEVEL))
+                    manifest->pub.data.backupOptionCompressLevel = varNewUInt(jsonReadUInt(json));
+                else if (strEqZ(key, MANIFEST_KEY_OPTION_COMPRESS_LEVEL_NETWORK))
+                    manifest->pub.data.backupOptionCompressLevelNetwork = varNewUInt(jsonReadUInt(json));
+                else if (strEqZ(key, MANIFEST_KEY_OPTION_PROCESS_MAX))
+                    manifest->pub.data.backupOptionProcessMax = varNewUInt(jsonReadUInt(json));
+                else if (strEqZ(key, MANIFEST_KEY_OPTION_BACKUP_STANDBY))
+                    manifest->pub.data.backupOptionStandby = varNewBool(jsonReadBool(json));
+                else if (strEqZ(key, MANIFEST_KEY_OPTION_CHECKSUM_PAGE))
+                    manifest->pub.data.backupOptionChecksumPage = jsonReadVar(json);
+                else if (strEqZ(key, MANIFEST_KEY_OPTION_DELTA))
+                    manifest->pub.data.backupOptionDelta = jsonReadVar(json);
+            }
+            MEM_CONTEXT_END();
         }
-        MEM_CONTEXT_END();
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -2614,7 +2631,7 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
             jsonFromVar(VARINT64(manifest->pub.data.backupTimestampStop)));
         infoSaveValue(
             infoSaveData, MANIFEST_SECTION_BACKUP, MANIFEST_KEY_BACKUP_TYPE,
-            jsonFromVar(VARSTR(strIdToStr(manifest->pub.data.backupType))));
+            jsonFromVar(VARSTR(strNewStrId(manifest->pub.data.backupType))));
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------

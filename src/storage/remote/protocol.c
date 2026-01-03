@@ -113,7 +113,7 @@ storageRemoteFilterGroup(IoFilterGroup *const filterGroup, const Pack *const fil
 
                 // Error when the filter was not found
                 if (filterIdx == lstSize(storageRemoteProtocolLocal.filterHandler))
-                    THROW_FMT(AssertError, "unable to add filter '%s'", strZ(strIdToStr(filterKey)));
+                    THROW_FMT(AssertError, "unable to add filter '%s'", zNewStrId(filterKey));
             }
         }
     }

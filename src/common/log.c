@@ -14,6 +14,7 @@ Log Handler
 
 #include "common/debug.h"
 #include "common/log.h"
+#include "common/macro.h"
 #include "common/time.h"
 #include "common/type/convert.h"
 

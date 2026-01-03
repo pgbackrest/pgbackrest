@@ -168,7 +168,7 @@ protocolLocalParam(const ProtocolStorageType protocolStorageType, const unsigned
             kvPut(optionReplace, VARSTRDEF(CFGOPT_PG), VARUINT(cfgOptionGroupIdxToKey(cfgOptGrpPg, hostIdx)));
 
         // Add the remote type
-        kvPut(optionReplace, VARSTRDEF(CFGOPT_REMOTE_TYPE), VARSTR(strIdToStr(protocolStorageType)));
+        kvPut(optionReplace, VARSTRDEF(CFGOPT_REMOTE_TYPE), VARSTR(strNewStrId(protocolStorageType)));
 
         // Only enable file logging on the local when requested
         kvPut(
@@ -584,7 +584,7 @@ protocolRemoteParam(const ProtocolStorageType protocolStorageType, const unsigne
         kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_CONSOLE), VARSTRDEF("off"));
 
         // Add the remote type
-        kvPut(optionReplace, VARSTRDEF(CFGOPT_REMOTE_TYPE), VARSTR(strIdToStr(protocolStorageType)));
+        kvPut(optionReplace, VARSTRDEF(CFGOPT_REMOTE_TYPE), VARSTR(strNewStrId(protocolStorageType)));
 
         // Add lock required on the remote
         if (cfgLockRemoteRequired())
@@ -733,7 +733,7 @@ protocolRemoteExec(
 
         // Create protocol object
         const String *const name = strNewFmt(
-            PROTOCOL_SERVICE_REMOTE "-%u %s protocol on '%s'", processId, strZ(strIdToStr(remoteType)), strZ(host));
+            PROTOCOL_SERVICE_REMOTE "-%u %s protocol on '%s'", processId, zNewStrId(remoteType), strZ(host));
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {

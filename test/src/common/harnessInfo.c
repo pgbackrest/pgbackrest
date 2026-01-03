@@ -108,8 +108,8 @@ Test callback that logs the results to a string
 ***********************************************************************************************************************************/
 void
 harnessInfoLoadNewCallback(
-    void *const callbackData, const String *const section, const String *const key, const String *const value)
+    void *const callbackData, const String *const section, const String *const key, JsonRead *const json)
 {
     if (callbackData != NULL)
-        strCatFmt((String *)callbackData, "[%s] %s=%s\n", strZ(section), strZ(key), strZ(value));
+        strCatFmt((String *)callbackData, "[%s] %s=%s\n", strZ(section), strZ(key), *(const char **)json);
 }
