@@ -74,8 +74,8 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
             {
                 THROW_FMT(
                     OptionInvalidError,
-                    "option '%s' is '" CFGOPTVAL_REPO_S3_KEY_TYPE_WEB_ID_Z "' but '" S3_ENV_AWS_ROLE_ARN "' or"
-                    " '" S3_ENV_AWS_WEB_IDENTITY_TOKEN_FILE "' is not set",
+                    "option '%s' is '" CFGOPTVAL_REPO_S3_KEY_TYPE_WEB_ID_Z "' but '" S3_ENV_AWS_ROLE_ARN "' and"
+                    " '" S3_ENV_AWS_WEB_IDENTITY_TOKEN_FILE "' are not set",
                     cfgOptionIdxName(cfgOptRepoS3KeyType, repoIdx));
             }
 
