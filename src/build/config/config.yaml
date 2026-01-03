@@ -2207,9 +2207,9 @@ option:
     type: string-id
     default: shared
     allow-list:
-      - auto
       - shared
       - sas
+      - auto
 
   repo-azure-uri-style:
     section: global

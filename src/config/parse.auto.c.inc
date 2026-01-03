@@ -5563,9 +5563,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                           // opt/repo-azure-key-type
                 PARSE_RULE_OPTIONAL_ALLOW_LIST                                                            // opt/repo-azure-key-type
                 (                                                                                         // opt/repo-azure-key-type
-                    PARSE_RULE_VAL_STRID(Auto),                                                           // opt/repo-azure-key-type
                     PARSE_RULE_VAL_STRID(Shared),                                                         // opt/repo-azure-key-type
                     PARSE_RULE_VAL_STRID(Sas),                                                            // opt/repo-azure-key-type
+                    PARSE_RULE_VAL_STRID(Auto),                                                           // opt/repo-azure-key-type
                 ),                                                                                        // opt/repo-azure-key-type
                                                                                                           // opt/repo-azure-key-type
                 PARSE_RULE_OPTIONAL_DEFAULT                                                               // opt/repo-azure-key-type
