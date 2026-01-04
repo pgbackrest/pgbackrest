@@ -1374,8 +1374,7 @@ storageS3New(
                 const HttpUrl *const url = httpUrlNewParseP(credUrl);
                 this->tokenFile = strDup(tokenFile);
                 this->credHost = httpUrlHost(url);
-                this->credHttpClient = httpClientNew(
-                    sckClientNew(this->credHost, httpUrlPort(url), timeout, timeout), timeout);
+                this->credHttpClient = httpClientNew(sckClientNew(this->credHost, httpUrlPort(url), timeout, timeout), timeout);
 
                 break;
             }

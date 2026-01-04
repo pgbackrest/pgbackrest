@@ -82,8 +82,8 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
             role = strNewZ(roleZ);
             tokenFile = strNewZ(webIdTokenFileZ);
         }
-        // If pod identity authentication then load the credentials url and token filename from environment variables documented here:
-        // https://docs.aws.amazon.com/eks/latest/userguide/pod-id-how-it-works.html
+        // If pod identity authentication then load the credentials url and token filename from environment variables documented
+        // here: https://docs.aws.amazon.com/eks/latest/userguide/pod-id-how-it-works.html
         else if (keyType == storageS3KeyTypePodId)
         {
             #define S3_ENV_AWS_CONTAINER_CREDENTIALS_FULL_URI       "AWS_CONTAINER_CREDENTIALS_FULL_URI"
@@ -96,8 +96,8 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
             {
                 THROW_FMT(
                     OptionInvalidError,
-                    "option '%s' is '" CFGOPTVAL_REPO_S3_KEY_TYPE_POD_ID_Z "' but '" S3_ENV_AWS_CONTAINER_CREDENTIALS_FULL_URI "' or"
-                    " '" S3_ENV_AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE "' is not set",
+                    "option '%s' is '" CFGOPTVAL_REPO_S3_KEY_TYPE_POD_ID_Z "' but '" S3_ENV_AWS_CONTAINER_CREDENTIALS_FULL_URI "'"
+                    " and '" S3_ENV_AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE "' are not set",
                     cfgOptionIdxName(cfgOptRepoS3KeyType, repoIdx));
             }
 
