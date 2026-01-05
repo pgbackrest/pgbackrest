@@ -1170,9 +1170,10 @@ testRun(void)
                 #define TEST_PODID_RESPONSE                                                                                        \
                     "{\n"                                                                                                          \
                     "    \"AccessKeyId\": \"gg\",\n"                                                                               \
-                    "    \"Expiration\": \"%s\",\n"                                                                                \
                     "    \"SecretAccessKey\": \"hh\",\n"                                                                           \
-                    "    \"Token\": \"mm\"\n"                                                                                      \
+                    "    \"Token\": \"mm\",\n"                                                                                     \
+                    "    \"AccountId\":\"012345678901\",\n"                                                                        \
+                    "    \"Expiration\": \"%s\"\n"                                                                                 \
                     "}"
                 // {uncrustify_on}
 

@@ -473,13 +473,18 @@ storageS3AuthPodId(StorageS3 *const this, const HttpHeader *const header)
         MEM_CONTEXT_OBJ_BEGIN(this)
         {
             this->accessKey = strDup(varStr(kvGet(kvResponse, VARSTRDEF("AccessKeyId"))));
+            CHECK(FormatError, this->accessKey != NULL, "access key missing");
             this->secretAccessKey = strDup(varStr(kvGet(kvResponse, VARSTRDEF("SecretAccessKey"))));
+            CHECK(FormatError, this->secretAccessKey != NULL, "secret access key missing");
             this->securityToken = strDup(varStr(kvGet(kvResponse, VARSTRDEF("Token"))));
+            CHECK(FormatError, this->securityToken != NULL, "token missing");
         }
         MEM_CONTEXT_OBJ_END();
 
         // Update expiration time
-        this->credExpirationTime = storageS3CvtTime(strDup(varStr(kvGet(kvResponse, VARSTRDEF("Expiration")))));
+        const String *const credExpirationTime = varStr(kvGet(kvResponse, VARSTRDEF("Expiration")));
+        CHECK(FormatError, credExpirationTime != NULL, "expiration missing");
+        this->credExpirationTime = storageS3CvtTime(credExpirationTime);
     }
     MEM_CONTEXT_TEMP_END();
 
