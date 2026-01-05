@@ -1163,8 +1163,6 @@ testRun(void)
 
                 hrnServerScriptClose(service);
 
-                #define TEST_PODID_URL                                                                                             \
-                    zNewFmt("http://%s:%u/v1/credentials", strZ(host), testPortAuth)
                 #define TEST_PODID_TOKEN                            "TOKEN-PODID"
                 #define TEST_PODID_TOKEN_FILE                       TEST_PATH "/pod-id-token"
                 #define TEST_PODID_GET                              "/v1/credentials"
@@ -1190,7 +1188,8 @@ testRun(void)
                     "option 'repo1-s3-key-type' is 'pod-id' but 'AWS_CONTAINER_CREDENTIALS_FULL_URI' and"
                     " 'AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE' are not set");
 
-                setenv("AWS_CONTAINER_CREDENTIALS_FULL_URI", TEST_PODID_URL, true);
+                setenv(
+                    "AWS_CONTAINER_CREDENTIALS_FULL_URI", zNewFmt("http://%s:%u/v1/credentials", strZ(host), testPortAuth), true);
 
                 TEST_ERROR(
                     storageRepoGet(0, true), OptionInvalidError,
