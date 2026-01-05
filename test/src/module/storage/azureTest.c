@@ -3,6 +3,8 @@ Test Azure Storage
 ***********************************************************************************************************************************/
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
+#include "common/io/http/client.h"
+#include "common/io/socket/client.h"
 #include "storage/helper.h"
 
 #include "common/harnessConfig.h"
@@ -21,6 +23,7 @@ STRING_STATIC(TEST_CONTAINER_STR,                                   TEST_CONTAIN
 STRING_STATIC(TEST_KEY_SAS_STR,                                     TEST_KEY_SAS);
 #define TEST_KEY_SHARED                                             "YXpLZXk="
 STRING_STATIC(TEST_KEY_SHARED_STR,                                  TEST_KEY_SHARED);
+#define TEST_ACCESS_TOKEN                                           "test-access-token-12345"
 
 /***********************************************************************************************************************************
 Helper to build test requests
@@ -67,7 +70,9 @@ testRequest(IoWrite *write, const char *verb, const char *path, TestRequestParam
     strCatZ(request, " HTTP/1.1\r\nuser-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n");
 
     // Add authorization string
-    if (driver->sharedKey != NULL)
+    if (driver->credHttpClient)
+        strCatZ(request, "authorization:Bearer " TEST_ACCESS_TOKEN "\r\n");
+    else if (driver->sharedKey != NULL)
         strCatZ(request, "authorization:SharedKey account:????????????????????????????????????????????\r\n");
 
     // Add content-length
@@ -100,8 +105,8 @@ testRequest(IoWrite *write, const char *verb, const char *path, TestRequestParam
         strCatFmt(request, "x-ms-tags:%s\r\n", param.tag);
 
     // Add version
-    if (driver->sharedKey != NULL)
-        strCatZ(request, "x-ms-version:2021-06-08\r\n");
+    if (driver->sharedKey != NULL || driver->credHttpClient != NULL)
+        strCatZ(request, "x-ms-version:2024-08-04\r\n");
 
     // Complete headers
     strCatZ(request, "\r\n");
@@ -413,7 +418,7 @@ testRun(void)
         TEST_RESULT_Z(
             logBuf,
             "{content-length: '0', host: 'account.blob.core.windows.net', date: 'Sun, 21 Jun 2020 12:46:19 GMT'"
-            ", x-ms-version: '2021-06-08', authorization: 'SharedKey account:2HRoJbu+G0rqwMjG+6gsb8WWkVo9rJNrDywsrnkmQAE='}",
+            ", x-ms-version: '2024-08-04', authorization: 'SharedKey account:h9heYMD+ErrcIkJATG97G3L9gwom0TQYx/cEj4lAJG4='}",
             "check headers");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -429,8 +434,8 @@ testRun(void)
         TEST_RESULT_Z(
             logBuf,
             "{content-length: '44', content-md5: 'b64f49553d5c441652e95697a2c5949e', host: 'account.blob.core.windows.net'"
-            ", date: 'Sun, 21 Jun 2020 12:46:19 GMT', x-ms-version: '2021-06-08'"
-            ", authorization: 'SharedKey account:nuaRe9f/J91zHEE2x734ARyHJxd6Smju1j8qPrueE6o='}",
+            ", date: 'Sun, 21 Jun 2020 12:46:19 GMT', x-ms-version: '2024-08-04'"
+            ", authorization: 'SharedKey account:GrE62U88ziaAGq+chejwUKmaBOAsyj+QCjrykcE+O+c='}",
             "check headers");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -460,6 +465,7 @@ testRun(void)
         HRN_FORK_BEGIN()
         {
             const unsigned int testPort = hrnServerPortNext();
+            const unsigned int testPortAuth = hrnServerPortNext();
 
             HRN_FORK_CHILD_BEGIN(.prefix = "azure server", .timeout = 5000)
             {
@@ -467,9 +473,18 @@ testRun(void)
             }
             HRN_FORK_CHILD_END();
 
+            HRN_FORK_CHILD_BEGIN(.prefix = "azure auth server", .timeout = 5000)
+            {
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, testPortAuth), "azure auth server");
+            }
+            HRN_FORK_CHILD_END();
+
             HRN_FORK_PARENT_BEGIN(.prefix = "azure client")
             {
-                IoWrite *service = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
+                IoWrite *service = hrnServerScriptBegin(
+                    ioFdWriteNewOpen(STRDEF("s3 client write"), HRN_FORK_PARENT_WRITE_FD(0), 2000));
+                IoWrite *auth = hrnServerScriptBegin(
+                    ioFdWriteNewOpen(STRDEF("azure auth client write"), HRN_FORK_PARENT_WRITE_FD(1), 2000));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("test against local host with path-style URIs");
@@ -583,7 +598,7 @@ testRun(void)
                     "content-length: 0\n"
                     "date: <redacted>\n"
                     "host: %s\n"
-                    "x-ms-version: 2021-06-08\n"
+                    "x-ms-version: 2024-08-04\n"
                     "*** Response Headers ***:\n"
                     "content-length: 7\n"
                     "*** Response Content ***:\n"
@@ -611,7 +626,7 @@ testRun(void)
                     "host: %s\n"
                     "x-ms-blob-type: BlockBlob\n"
                     "x-ms-tags: %%20Key%%202=%%20Value%%202&Key1=Value1\n"
-                    "x-ms-version: 2021-06-08",
+                    "x-ms-version: 2024-08-04",
                     strZ(hrnServerHost()));
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -689,13 +704,88 @@ testRun(void)
                 TEST_RESULT_BOOL(storageInfoP(storage, NULL, .ignoreMissing = true).exists, false, "info for /");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to managed identity");
+
+                argList = strLstNew();
+                hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+                hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_AZURE_TYPE);
+                hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
+                hrnCfgArgRawZ(argList, cfgOptRepoAzureContainer, TEST_CONTAINER);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(hrnServerHost()), testPort);
+                hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, TEST_IN_CONTAINER);
+                hrnCfgEnvRawZ(cfgOptRepoAzureAccount, TEST_ACCOUNT);
+                hrnCfgEnvRawZ(cfgOptRepoAzureKeyType, "auto");
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+                hrnCfgEnvRemoveRaw(cfgOptRepoAzureKeyType);
+
+                TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
+                driver = (StorageAzure *)storageDriver(storage);
+
+                // Override cred http client to point to our test server
+                // Note: In real usage, this would connect to 169.254.169.254:80, but for testing we use our mock server
+                driver->credHttpClient = httpClientNew(sckClientNew(hrnServerHost(), testPortAuth, 1000, 1000), 1000);
+
+                // Update credHost to match test server host since we're using a mock server
+                driver->credHost = hrnServerHost();
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("managed Identity token fetch error");
+
+                hrnServerScriptAccept(auth);
+
+                // Mock error response from metadata endpoint
+                String *credRequest = strCatFmt(
+                    strNew(),
+                    "GET /metadata/identity/oauth2/token?api-version=2018-02-01&resource=https%%3A%%2F%%2F%s HTTP/1.1\r\n"
+                    "user-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n"
+                    "Metadata:true\r\n"
+                    "content-length:0\r\n"
+                    "host:%s\r\n",
+                    strZ(hrnServerHost()), strZ(hrnServerHost()));
+                hrnServerScriptExpect(auth, credRequest);
+
+                testResponseP(auth, .code = 403, .content = "");
+                hrnServerScriptClose(auth);
+
+                TEST_ERROR_FMT(
+                    storageInfoP(storage, STRDEF("BOGUS"), .ignoreMissing = true), ProtocolError,
+                    "HTTP request failed with 403 (Forbidden):\n"
+                    "*** Path/Query ***:\n"
+                    "GET /metadata/identity/oauth2/token?api-version=2018-02-01&resource="
+                    "https%%3A%%2F%%2F%s\n"
+                    "*** Request Headers ***:\n"
+                    "Metadata: true\n"
+                    "content-length: 0\n"
+                    "host: %s\n"
+                    "*** Response Headers ***:\n"
+                    "content-length: 0",
+                    strZ(hrnServerHost()), strZ(hrnServerHost()));
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for missing file");
 
+                // Check initial credential settings
+                TEST_RESULT_STR_Z(driver->accessToken, "", "check access token value not set");
+                TEST_RESULT_INT(driver->accessTokenExpirationTime, 0, "check expiration time not set");
+
+                // Get managed identity credentials
+                hrnServerScriptAccept(auth);
+                hrnServerScriptExpect(auth, credRequest);
+                testResponseP(auth, .content = "{\"access_token\":\"" TEST_ACCESS_TOKEN "\",\"expires_in\":\"3600\"}");
+
+                // Info for missing file
                 testRequestP(service, HTTP_VERB_HEAD, "/BOGUS");
                 testResponseP(service, .code = 404);
 
                 TEST_RESULT_BOOL(
                     storageInfoP(storage, STRDEF("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
+
+                // Check credential settings after auth (time is a bit imprecise since it is changing but verifies the range)
+                TEST_RESULT_STR_Z(driver->accessToken, TEST_ACCESS_TOKEN, "check access token value");
+                TEST_RESULT_BOOL(driver->accessTokenExpirationTime > time(NULL), true, "check expiration time min");
+                TEST_RESULT_BOOL(driver->accessTokenExpirationTime < time(NULL) + 3600, true, "check expiration time max");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info for file");
@@ -709,6 +799,9 @@ testRun(void)
                 TEST_RESULT_UINT(info.type, storageTypeFile, "check type");
                 TEST_RESULT_UINT(info.size, 9999, "check exists");
                 TEST_RESULT_INT(info.timeModified, 1445412480, "check time");
+
+                // Auth service no longer needed
+                hrnServerScriptEnd(auth);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("info check existence only");
