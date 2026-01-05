@@ -416,7 +416,8 @@ storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
         const XmlNode *const xmlCred =
             xmlNodeChild(
                 xmlNodeChild(
-                    xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response))), STRDEF("AssumeRoleWithWebIdentityResult"), true),
+                    xmlDocumentRoot(xmlDocumentNewBuf(httpResponseContent(response))), STRDEF("AssumeRoleWithWebIdentityResult"),
+                    true),
                 STRDEF("Credentials"), true);
 
         const XmlNode *const accessKeyNode = xmlNodeChild(xmlCred, STRDEF("AccessKeyId"), true);
