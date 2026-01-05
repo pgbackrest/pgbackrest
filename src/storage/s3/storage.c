@@ -119,7 +119,7 @@ struct StorageS3
     const String *credHost;                                         // Credentials host
     const String *credPath;                                         // Credential url path
     const String *credRole;                                         // Role to use for credential requests
-    const String *tokenFile;                                        // File containing token to use for web-id or pod-id credential requests
+    const String *tokenFile;                                        // File with token to use for web-id/pod-id credential requests
     time_t credExpirationTime;                                      // Time the temporary credentials expire
 
     // Current signing key and date it is valid for

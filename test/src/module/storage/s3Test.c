@@ -1163,7 +1163,8 @@ testRun(void)
 
                 hrnServerScriptClose(service);
 
-                #define TEST_PODID_URL                              zNewFmt("http://%s:%u/v1/credentials", strZ(host), testPortAuth)
+                #define TEST_PODID_URL                                                                                             \
+                    zNewFmt("http://%s:%u/v1/credentials", strZ(host), testPortAuth)
                 #define TEST_PODID_TOKEN                            "TOKEN-PODID"
                 #define TEST_PODID_TOKEN_FILE                       TEST_PATH "/pod-id-token"
                 #define TEST_PODID_GET                              "/v1/credentials"
@@ -1171,9 +1172,9 @@ testRun(void)
                 #define TEST_PODID_RESPONSE                                                                                        \
                     "{\n"                                                                                                          \
                     "    \"AccessKeyId\": \"gg\",\n"                                                                               \
-                    "    \"Expiration\": \"%s\",\n"                                                                           \
+                    "    \"Expiration\": \"%s\",\n"                                                                                \
                     "    \"SecretAccessKey\": \"hh\",\n"                                                                           \
-                    "    \"Token\": \"mm\"\n"                                                                               \
+                    "    \"Token\": \"mm\"\n"                                                                                      \
                     "}"
                 // {uncrustify_on}
 
