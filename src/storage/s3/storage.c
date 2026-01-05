@@ -117,6 +117,7 @@ struct StorageS3
     // For retrieving temporary security credentials
     HttpClient *credHttpClient;                                     // HTTP client to service credential requests
     const String *credHost;                                         // Credentials host
+    const String *credPath;                                         // Credential url path
     const String *credRole;                                         // Role to use for credential requests
     const String *tokenFile;                                        // File containing token to use for web-id or pod-id credential requests
     time_t credExpirationTime;                                      // Time the temporary credentials expire
@@ -395,8 +396,7 @@ storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Load the token from the given file for each request since the token may be updated during execution
-        const String *const webIdToken = strNewBuf(
-            storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), this->tokenFile)));
+        const String *const webIdToken = strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), this->tokenFile)));
 
         // Get credentials
         HttpQuery *const query = httpQueryNewP();
@@ -442,13 +442,9 @@ storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
 /***********************************************************************************************************************************
 Automatically get credentials for an associated pod identity
 
-Documentation is found at: https://docs.aws.amazon.com/eks/latest/APIReference/API_auth_AssumeRoleForPodIdentity.html
+The AWS documentation does not appear to provide a clear example of how to perform this authorization with using their SDK but this
+link proved helpful: https://securitylabs.datadoghq.com/articles/eks-pod-identity-deep-dive
 ***********************************************************************************************************************************/
-VARIANT_STRDEF_STATIC(AWS_JSON_ACCESS_KEY_ID_VAR,                   "accessKeyId");
-VARIANT_STRDEF_STATIC(AWS_JSON_SECRET_ACCESS_KEY_VAR,               "secretAccessKey");
-VARIANT_STRDEF_STATIC(AWS_JSON_TOKEN_VAR,                           "sessionToken");
-VARIANT_STRDEF_STATIC(AWS_JSON_EXPIRATION_VAR,                      "expiration");
-
 static void
 storageS3AuthPodId(StorageS3 *const this, const HttpHeader *const header)
 {
@@ -460,15 +456,12 @@ storageS3AuthPodId(StorageS3 *const this, const HttpHeader *const header)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Load the token from the given file for each request since the token may be updated during execution
-        // const String *const podIdToken = strNewBuf(
-        //     storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), this->tokenFile))); !!! COMMENT OUT UNTIL NEEDED
+        const String *const podIdToken = strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), this->tokenFile)));
 
         // Get credentials
-        HttpHeader *const tokenHeader = httpHeaderDup(header, NULL);
-        // httpHeaderAdd(tokenHeader, HTTP_HEADER_AUTHORIZATION_STR, podIdToken); !!! SHOULD BE ENCODED IN JSON
-
         HttpRequest *const request = httpRequestNewP(
-            this->credHttpClient, HTTP_VERB_GET_STR, STRDEF("/v1/credentials"), .header = tokenHeader);
+            this->credHttpClient, HTTP_VERB_GET_STR, this->credPath,
+            .header = httpHeaderAdd(httpHeaderDup(header, NULL), HTTP_HEADER_AUTHORIZATION_STR, podIdToken));
         HttpResponse *const response = httpRequestResponse(request, true);
 
         CHECK(FormatError, httpResponseCode(response) != HTTP_RESPONSE_CODE_NOT_FOUND, "invalid response code");
@@ -478,14 +471,14 @@ storageS3AuthPodId(StorageS3 *const this, const HttpHeader *const header)
         // Copy credentials
         MEM_CONTEXT_OBJ_BEGIN(this)
         {
-            this->accessKey = strDup(varStr(kvGet(kvResponse, AWS_JSON_ACCESS_KEY_ID_VAR)));
-            this->secretAccessKey = strDup(varStr(kvGet(kvResponse, AWS_JSON_SECRET_ACCESS_KEY_VAR)));
-            this->securityToken = strDup(varStr(kvGet(kvResponse, AWS_JSON_TOKEN_VAR)));
+            this->accessKey = strDup(varStr(kvGet(kvResponse, VARSTRDEF("AccessKeyId"))));
+            this->secretAccessKey = strDup(varStr(kvGet(kvResponse, VARSTRDEF("SecretAccessKey"))));
+            this->securityToken = strDup(varStr(kvGet(kvResponse, VARSTRDEF("Token"))));
         }
         MEM_CONTEXT_OBJ_END();
 
         // Update expiration time
-        this->credExpirationTime = varInt64Force(kvGet(kvResponse, AWS_JSON_EXPIRATION_VAR));
+        this->credExpirationTime = storageS3CvtTime(strDup(varStr(kvGet(kvResponse, VARSTRDEF("Expiration")))));
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1374,6 +1367,7 @@ storageS3New(
                 const HttpUrl *const url = httpUrlNewParseP(credUrl);
                 this->tokenFile = strDup(tokenFile);
                 this->credHost = httpUrlHost(url);
+                this->credPath = strDup(httpUrlPath(url));
                 this->credExpirationTime = time(NULL);
                 this->credHttpClient = httpClientNew(sckClientNew(this->credHost, httpUrlPort(url), timeout, timeout), timeout);
 

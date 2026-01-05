@@ -75,6 +75,7 @@ typedef struct TestRequestParam
     const char *content;
     const char *accessKey;
     const char *securityToken;
+    const char *authorization;
     const char *range;
     const char *kms;
     const char *sseC;
@@ -148,6 +149,10 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
 
         strCatZ(request, ",Signature=????????????????????????????????????????????????????????????????\r\n");
     }
+
+    // Add authorization
+    if (param.authorization != NULL)
+        strCatFmt(request, "authorization:%s\r\n", param.authorization);
 
     // Add content-length
     strCatFmt(request, "content-length:%zu\r\n", param.content != NULL ? strlen(param.content) : 0);
@@ -1158,17 +1163,17 @@ testRun(void)
 
                 hrnServerScriptClose(service);
 
-                #define TEST_PODID_URL                              zNewFmt("http://%s:%u", strZ(host), testPortAuth)
+                #define TEST_PODID_URL                              zNewFmt("http://%s:%u/v1/credentials", strZ(host), testPortAuth)
                 #define TEST_PODID_TOKEN                            "TOKEN-PODID"
                 #define TEST_PODID_TOKEN_FILE                       TEST_PATH "/pod-id-token"
                 #define TEST_PODID_GET                              "/v1/credentials"
                 // {uncrustify_off - comment inside string}
                 #define TEST_PODID_RESPONSE                                                                                        \
                     "{\n"                                                                                                          \
-                    "    \"accessKeyId\": \"gg\",\n"                                                                               \
-                    "    \"expiration\": %" PRId64 ",\n"                                                                           \
-                    "    \"secretAccessKey\": \"hh\",\n"                                                                           \
-                    "    \"sessionToken\": \"mm\"\n"                                                                               \
+                    "    \"AccessKeyId\": \"gg\",\n"                                                                               \
+                    "    \"Expiration\": \"%s\",\n"                                                                           \
+                    "    \"SecretAccessKey\": \"hh\",\n"                                                                           \
+                    "    \"Token\": \"mm\"\n"                                                                               \
                     "}"
                 // {uncrustify_on}
 
@@ -1209,8 +1214,10 @@ testRun(void)
                 // Get service credentials
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, TEST_PODID_GET);
-                testResponseP(auth, .content = zNewFmt(TEST_PODID_RESPONSE, time(NULL) + (S3_CREDENTIAL_RENEW_SEC - 1)));
+                testRequestP(auth, NULL, HTTP_VERB_GET, TEST_PODID_GET, .authorization = TEST_PODID_TOKEN);
+                testResponseP(
+                    auth,
+                    .content = zNewFmt(TEST_PODID_RESPONSE, strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC - 1)))));
 
                 hrnServerScriptClose(auth);
 
@@ -1236,8 +1243,10 @@ testRun(void)
                 // Get service credentials
                 hrnServerScriptAccept(auth);
 
-                testRequestP(auth, NULL, HTTP_VERB_GET, TEST_PODID_GET);
-                testResponseP(auth, .content = zNewFmt(TEST_PODID_RESPONSE, time(NULL) + (S3_CREDENTIAL_RENEW_SEC * 2)));
+                testRequestP(auth, NULL, HTTP_VERB_GET, TEST_PODID_GET, .authorization = TEST_PODID_TOKEN);
+                testResponseP(
+                    auth,
+                    .content = zNewFmt(TEST_PODID_RESPONSE, strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC * 2)))));
 
                 hrnServerScriptClose(auth);
 
