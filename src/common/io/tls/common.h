@@ -27,6 +27,6 @@ FN_EXTERN void tlsCertNameVerify(const String *name);
 FN_EXTERN void tlsCertKeyLoad(SSL_CTX *context, const String *certFile, const String *keyFile);
 
 // Create TLS context
-FN_EXTERN SSL_CTX *tlsContext(void);
+FN_EXTERN SSL_CTX *tlsContext(bool verifyPeer);
 
 #endif

@@ -436,7 +436,7 @@ tlsClientNew(
             .timeoutConnect = timeoutConnect,
             .timeoutSession = timeoutSession,
             .verifyPeer = verifyPeer,
-            .context = tlsContext(),
+            .context = tlsContext(verifyPeer),
         };
 
         // Set callback to free context
