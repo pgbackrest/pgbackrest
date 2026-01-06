@@ -4,6 +4,7 @@ Azure Storage
 #ifndef STORAGE_AZURE_STORAGE_H
 #define STORAGE_AZURE_STORAGE_H
 
+#include "common/io/http/url.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
@@ -16,6 +17,7 @@ Key type
 ***********************************************************************************************************************************/
 typedef enum
 {
+    storageAzureKeyTypeAuto = STRID5("auto", 0x7d2a10),
     storageAzureKeyTypeShared = STRID5("shared", 0x85905130),
     storageAzureKeyTypeSas = STRID5("sas", 0x4c330),
 } StorageAzureKeyType;
@@ -36,6 +38,6 @@ FN_EXTERN Storage *storageAzureNew(
     const String *path, bool write, time_t targetTime, StoragePathExpressionCallback pathExpressionFunction,
     const String *container, const String *account, StorageAzureKeyType keyType, const String *key, size_t blockSize,
     const KeyValue *tag, const String *endpoint, StorageAzureUriStyle uriStyle, unsigned int port, TimeMSec timeout,
-    bool verifyPeer, const String *caFile, const String *caPath);
+    HttpProtocolType protocolType, bool verifyPeer, const String *caFile, const String *caPath);
 
 #endif

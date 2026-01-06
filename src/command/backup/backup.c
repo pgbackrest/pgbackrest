@@ -940,7 +940,7 @@ backupResumeFind(const Manifest *const manifest, const String *const cipherPassB
                                 {
                                     reason = zNewFmt(
                                         "new backup type '%s' does not match resumable backup type '%s'",
-                                        strZ(cfgOptionDisplay(cfgOptType)), strZ(strIdToStr(manifestResumeData->backupType)));
+                                        strZ(cfgOptionDisplay(cfgOptType)), zNewStrId(manifestResumeData->backupType));
                                 }
                                 // Check prior backup label ??? Do we really care about the prior backup label?
                                 else if (!strEq(manifestResumeData->backupLabelPrior, manifestData(manifest)->backupLabelPrior))
@@ -2642,7 +2642,7 @@ cmdBackup(void)
 
         // Backup info
         LOG_INFO_FMT(
-            "%s backup size = %s, file total = %u", strZ(strIdToStr(manifestData(manifest)->backupType)),
+            "%s backup size = %s, file total = %u", zNewStrId(manifestData(manifest)->backupType),
             strZ(strSizeFormat(infoBackupDataByLabel(infoBackup, manifestData(manifest)->backupLabel)->backupInfoSizeDelta)),
             manifestFileTotal(manifest));
     }

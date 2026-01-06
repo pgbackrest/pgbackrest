@@ -52,7 +52,6 @@ sub codeCountScan
                  $strFile =~ '^doc/output/' ||
                  $strFile =~ '^doc/resource/fake\-cert' ||
                  $strFile =~ '\.png$' ||
-                 $strFile =~ '\.eps$' ||
                  $strFile =~ '\.cache$' ||
                  $strFile =~ '^doc/site/' ||
                  $strFile =~ '^src/build/autom4te.cache/' ||
@@ -153,11 +152,6 @@ sub codeCountScan
         {
             $strType = 'dtd';
             $strForceLang = 'DTD';
-        }
-        elsif ($strFile =~ '\.tex$')
-        {
-            $strType = 'latex';
-            $strForceLang = 'Latex';
         }
         else
         {

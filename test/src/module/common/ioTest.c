@@ -356,7 +356,7 @@ testRun(void)
         TEST_RESULT_UINT(ioRead(bufferRead, buffer), 2, "    read 2 bytes");
         TEST_RESULT_UINT(ioRead(bufferRead, buffer), 0, "    read 0 bytes (full buffer)");
         TEST_RESULT_STR_Z(strNewBuf(buffer), "11", "    check read");
-        TEST_RESULT_STR_Z(strIdToStr(ioFilterType(sizeFilter)), "size", "check filter type");
+        TEST_RESULT_STR_Z(strNewStrId(ioFilterType(sizeFilter)), "size", "check filter type");
         TEST_RESULT_BOOL(ioReadEof(bufferRead), false, "    not eof");
 
         TEST_RESULT_VOID(bufUsedZero(buffer), "    zero buffer");
@@ -783,6 +783,142 @@ testRun(void)
             freeaddrinfo(hostBadAddress);
         }
         TRY_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("partial write handling with pipes");
+
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN()
+            {
+                IoWrite *write = ioFdWriteNewOpen(STRDEF("partial write test"), HRN_FORK_CHILD_WRITE_FD(), 2000);
+
+                // Write data that exercises the partial write loop
+                const Buffer *testBuffer = BUFSTRDEF("test data for partial writes");
+                TEST_RESULT_VOID(ioWrite(write, testBuffer), "write buffer with partial write handling");
+                ioWriteFlush(write);
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN()
+            {
+                IoRead *read = ioFdReadNewOpen(STRDEF("partial write test read"), HRN_FORK_PARENT_READ_FD(0), 2000);
+
+                Buffer *receiveBuffer = bufNew(1024);
+                TEST_RESULT_UINT(ioRead(read, receiveBuffer), 28, "received all bytes");
+                TEST_RESULT_STR_Z(strNewBuf(receiveBuffer), "test data for partial writes", "verify data integrity");
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write error on closed pipe");
+
+        int pipeFds[2];
+        THROW_ON_SYS_ERROR(pipe(pipeFds) == -1, KernelError, "unable to create pipe");
+
+        // Close the read end to cause write errors
+        close(pipeFds[0]);
+
+        IoWrite *write = ioFdWriteNew(STRDEF("closed pipe"), pipeFds[1], 1000);
+        ioWriteOpen(write);
+
+        // Fill the pipe buffer first to ensure subsequent write will fail
+        Buffer *fillBuffer = bufNew(65536);
+        memset(bufPtr(fillBuffer), 'Z', 65536);
+        bufUsedSet(fillBuffer, 65536);
+
+        // Writing to a closed pipe should result in SIGPIPE/EPIPE error
+        // The error message will include the file descriptor name and byte counts
+        TRY_BEGIN()
+        {
+            ioWrite(write, fillBuffer);
+            TEST_RESULT_BOOL(false, true, "expected write to closed pipe to fail");
+        }
+        CATCH_ANY()
+        {
+            TEST_RESULT_BOOL(errorType() == &FileWriteError, true, "check error type");
+            TEST_RESULT_BOOL(strstr(errorMessage(), "unable to finish write to closed pipe") != NULL, true, "check error message");
+        }
+        TRY_END();
+
+        close(pipeFds[1]);
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write with EAGAIN then successful retry");
+
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN()
+            {
+                int fd = HRN_FORK_CHILD_WRITE_FD();
+
+                // Shim first fdWrite to return EAGAIN
+                hrnIoFdWriteInternalShimOne(-1, EAGAIN);
+
+                // Create IoFdWrite which should handle EAGAIN
+                IoWrite *writeFd = ioFdWriteNewOpen(STRDEF("EAGAIN test"), fd, 2000);
+
+                Buffer *buf = bufNew(1024);
+                memset(bufPtr(buf), 'T', 1024);
+                bufUsedSet(buf, 1024);
+
+                TEST_RESULT_VOID(ioWrite(writeFd, buf), "write handles EAGAIN");
+                ioWriteFlush(writeFd);
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN()
+            {
+                // Give child time to start
+                sleepMSec(50);
+
+                IoRead *readFd = ioFdReadNewOpen(STRDEF("EAGAIN read"), HRN_FORK_PARENT_READ_FD(0), 2000);
+
+                Buffer *recvBuf = bufNew(8192);
+                size_t total = 0;
+
+                while (true)
+                {
+                    bufUsedZero(recvBuf);
+                    bufLimitSet(recvBuf, bufSize(recvBuf));
+                    size_t bytes = ioRead(readFd, recvBuf);
+                    if (bytes == 0)
+                        break;
+                    total += bytes;
+                }
+
+                TEST_RESULT_BOOL(total == 1024, true, "received all data after EAGAIN");
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write with EAGAIN then timeout");
+
+        // Shim first fdWrite to return EAGAIN
+        hrnIoFdWriteInternalShimOne(-1, EAGAIN);
+
+        // Shim fdReady to return false (simulate timeout after EAGAIN)
+        hrnFdReadyShimOne(false);
+
+        int pipeFd[2];
+        THROW_ON_SYS_ERROR(pipe(pipeFd) == -1, KernelError, "unable to create pipe");
+
+        IoWrite *writeFd = ioFdWriteNewOpen(STRDEF("EAGAIN timeout"), pipeFd[1], 10);
+
+        Buffer *buf = bufNew(1024);
+        memset(bufPtr(buf), 'Z', 1024);
+        bufUsedSet(buf, 1024);
+
+        TEST_ERROR(
+            ioWrite(writeFd, buf), FileWriteError,
+            "timeout after 10ms waiting for write to 'EAGAIN timeout'");
+
+        close(pipeFd[0]);
+        close(pipeFd[1]);
     }
 
     // *****************************************************************************************************************************

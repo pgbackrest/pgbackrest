@@ -452,7 +452,7 @@ cfgOptionDisplayVar(const Variant *const value, const ConfigOptionType optionTyp
     }
     else if (optionType == cfgOptTypeStringId)
     {
-        FUNCTION_TEST_RETURN_CONST(STRING, strIdToStr(varUInt64(value)));
+        FUNCTION_TEST_RETURN_CONST(STRING, strNewStrId(varUInt64(value)));
     }
 
     FUNCTION_TEST_RETURN(STRING, varStrForce(value));
@@ -906,7 +906,7 @@ cfgOptionIdxSet(
                 if (varType(value) == varTypeUInt64)
                     optionValueType->stringId = varUInt64(value);
                 else
-                    optionValueType->stringId = strIdFromStr(varStr(value));
+                    optionValueType->stringId = strStrId(varStr(value));
 
                 break;
             }

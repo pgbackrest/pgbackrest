@@ -152,18 +152,6 @@ eval
 
     if ($ARGV[0] eq 'doc')
     {
-        if ($strVm eq VM_RH8)
-        {
-            processBegin('LaTeX install');
-            processExec(
-                'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends texlive-latex-base' .
-                    ' texlive-latex-extra texlive-fonts-recommended',
-                {bSuppressStdErr => true});
-            processExec(
-                'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y texlive-font-utils texlive-latex-recommended',
-                {bSuppressStdErr => true});
-        }
-
         processBegin('remove sudo');
         processExec("sudo rm /etc/sudoers.d/${strUser}");
         processEnd();

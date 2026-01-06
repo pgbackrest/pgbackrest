@@ -212,7 +212,7 @@ cfgLoadUpdateOption(void)
                 // retention-full-type is 'time' then the expire command will default the archive retention accordingly.
                 const String *const msgArchiveOff = strNewFmt(
                     "WAL segments will not be expired: option '%s=%s' but",
-                    cfgOptionIdxName(cfgOptRepoRetentionArchiveType, optionIdx), strZ(strIdToStr(archiveRetentionType)));
+                    cfgOptionIdxName(cfgOptRepoRetentionArchiveType, optionIdx), zNewStrId(archiveRetentionType));
 
                 switch (archiveRetentionType)
                 {
@@ -274,10 +274,11 @@ cfgLoadUpdateOption(void)
         }
     }
 
-    // For each possible repo, error if an S3 bucket name contains dots
+    // For each possible repo, error if an S3 bucket name contains dots when using host style URIs
     for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
     {
         if (cfgOptionIdxTest(cfgOptRepoS3Bucket, repoIdx) && cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx) &&
+            cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx) == CFGOPTVAL_REPO_S3_URI_STYLE_HOST &&
             strChr(cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), '.') != -1)
         {
             THROW_FMT(

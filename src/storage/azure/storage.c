@@ -14,6 +14,7 @@ Azure Storage
 #include "common/io/tls/client.h"
 #include "common/log.h"
 #include "common/regExp.h"
+#include "common/type/json.h"
 #include "common/type/object.h"
 #include "common/type/xml.h"
 #include "storage/azure/read.h"
@@ -24,7 +25,7 @@ Azure http headers
 ***********************************************************************************************************************************/
 STRING_STATIC(AZURE_HEADER_TAGS,                                    "x-ms-tags");
 STRING_STATIC(AZURE_HEADER_VERSION_STR,                             "x-ms-version");
-STRING_STATIC(AZURE_HEADER_VERSION_VALUE_STR,                       "2021-06-08");
+STRING_STATIC(AZURE_HEADER_VERSION_VALUE_STR,                       "2024-08-04");
 
 /***********************************************************************************************************************************
 Azure query tokens
@@ -40,6 +41,8 @@ STRING_STATIC(AZURE_QUERY_SIG_STR,                                  "sig");
 STRING_STATIC(AZURE_QUERY_VALUE_LIST_STR,                           "list");
 STRING_EXTERN(AZURE_QUERY_VALUE_CONTAINER_STR,                      AZURE_QUERY_VALUE_CONTAINER);
 STRING_STATIC(AZURE_QUERY_VALUE_VERSIONS_STR,                       "versions");
+STRING_STATIC(AZURE_QUERY_API_VERSION,                              "api-version");
+STRING_STATIC(AZURE_QUERY_RESOURCE,                                 "resource");
 
 /***********************************************************************************************************************************
 XML tags
@@ -55,6 +58,20 @@ STRING_STATIC(AZURE_XML_TAG_PROPERTIES_STR,                         "Properties"
 STRING_STATIC(AZURE_XML_TAG_VERSION_ID_STR,                         "VersionId");
 
 /***********************************************************************************************************************************
+Constants required for Azure managed identities
+
+Documentation for the response format is found at:
+https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/how-to-use-vm-token#get-a-token-using-curl
+***********************************************************************************************************************************/
+STRING_STATIC(AZURE_CREDENTIAL_HOST_STR,                            "169.254.169.254");
+#define AZURE_CREDENTIAL_PORT                                       80
+#define AZURE_CREDENTIAL_PATH                                       "/metadata/identity/oauth2/token"
+#define AZURE_CREDENTIAL_API_VERSION                                "2018-02-01"
+
+VARIANT_STRDEF_STATIC(AZURE_JSON_TAG_ACCESS_TOKEN_VAR,              "access_token");
+VARIANT_STRDEF_STATIC(AZURE_JSON_TAG_EXPIRES_IN_VAR,                "expires_in");
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct StorageAzure
@@ -64,6 +81,7 @@ struct StorageAzure
     StringList *headerRedactList;                                   // List of headers to redact from logging
     StringList *queryRedactList;                                    // List of query keys to redact from logging
 
+    StorageAzureKeyType keyType;                                    // Key type (e.g. storageAzureKeyTypeShared)
     const String *container;                                        // Container to store data in
     const String *account;                                          // Account
     const Buffer *sharedKey;                                        // Shared key
@@ -74,6 +92,12 @@ struct StorageAzure
     const String *pathPrefix;                                       // Account/container prefix
 
     uint64_t fileId;                                                // Id to used to make file block identifiers unique
+
+    // For Azure managed identities authentication
+    HttpClient *credHttpClient;                                     // HTTP client to service credential requests
+    const String *credHost;                                         // Credentials host
+    String *accessToken;                                            // Access token
+    time_t accessTokenExpirationTime;                               // Time the access token expires
 };
 
 /***********************************************************************************************************************************
@@ -104,15 +128,21 @@ storageAzureAuth(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Host header is required for both types of authentication
+        // Set required headers
         httpHeaderPut(httpHeader, HTTP_HEADER_HOST_STR, this->host);
 
-        // Shared key authentication
-        if (this->sharedKey != NULL)
-        {
-            // Set required headers
+        // Date header is required for shared key authentication (for signing)
+        if (this->keyType == storageAzureKeyTypeShared)
             httpHeaderPut(httpHeader, HTTP_HEADER_DATE_STR, dateTime);
+
+        // Set version header (required for shared key and auto auth types, not for SAS)
+        if (this->keyType != storageAzureKeyTypeSas)
             httpHeaderPut(httpHeader, AZURE_HEADER_VERSION_STR, AZURE_HEADER_VERSION_VALUE_STR);
+
+        // Shared key authentication
+        if (this->keyType == storageAzureKeyTypeShared)
+        {
+            ASSERT(this->sharedKey != NULL);
 
             // Generate canonical headers
             String *const headerCanonical = strNew();
@@ -175,6 +205,58 @@ storageAzureAuth(
                 strNewFmt(
                     "SharedKey %s:%s", strZ(this->account),
                     strZ(strNewEncode(encodingBase64, cryptoHmacOne(hashTypeSha256, this->sharedKey, BUFSTR(stringToSign))))));
+        }
+        // Auto authentication
+        else if (this->keyType == storageAzureKeyTypeAuto)
+        {
+            const time_t timeBegin = time(NULL);
+
+            if (timeBegin >= this->accessTokenExpirationTime)
+            {
+                // Retrieve the access token via the Managed Identities endpoint
+                HttpHeader *const authHeader = httpHeaderNew(NULL);
+                httpHeaderAdd(authHeader, STRDEF("Metadata"), TRUE_STR);
+                httpHeaderAdd(authHeader, HTTP_HEADER_HOST_STR, this->credHost);
+                httpHeaderAdd(authHeader, HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
+
+                HttpQuery *const authQuery = httpQueryNewP();
+                httpQueryAdd(authQuery, AZURE_QUERY_API_VERSION, STRDEF(AZURE_CREDENTIAL_API_VERSION));
+                httpQueryAdd(authQuery, AZURE_QUERY_RESOURCE, strNewFmt("https://%s", strZ(this->host)));
+
+                HttpRequest *const request = httpRequestNewP(
+                    this->credHttpClient, HTTP_VERB_GET_STR, STRDEF(AZURE_CREDENTIAL_PATH), .header = authHeader,
+                    .query = authQuery);
+                HttpResponse *const response = httpRequestResponse(request, true);
+
+                // Set the access_token on success and store an expiration time when we should re-fetch it
+                if (httpResponseCodeOk(response))
+                {
+                    // Get credentials and expiration from the JSON response
+                    const KeyValue *const credential = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
+                    const String *const accessToken = varStr(kvGet(credential, AZURE_JSON_TAG_ACCESS_TOKEN_VAR));
+                    CHECK(FormatError, accessToken != NULL, "access token missing");
+
+                    const Variant *const expiresInStr = kvGet(credential, AZURE_JSON_TAG_EXPIRES_IN_VAR);
+                    CHECK(FormatError, expiresInStr != NULL, "expiry missing");
+
+                    MEM_CONTEXT_OBJ_BEGIN(this)
+                    {
+                        strCat(strTrunc(this->accessToken), accessToken);
+
+                        // Subtract http client timeout * 2 so the token does not expire in the middle of http retries
+                        const time_t clientTimeoutPeriod = ((time_t)(httpClientTimeout(this->httpClient) / MSEC_PER_SEC * 2));
+                        const time_t expiresIn = (time_t)varInt64Force(expiresInStr);
+
+                        this->accessTokenExpirationTime = timeBegin + expiresIn - clientTimeoutPeriod;
+                    }
+                    MEM_CONTEXT_OBJ_END();
+                }
+                else
+                    httpRequestError(request, response);
+            }
+
+            // Add authorization header
+            httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, strNewFmt("Bearer %s", strZ(this->accessToken)));
         }
         // SAS authentication
         else
@@ -767,7 +849,8 @@ storageAzureNew(
     const String *const path, const bool write, const time_t targetTime, StoragePathExpressionCallback pathExpressionFunction,
     const String *const container, const String *const account, const StorageAzureKeyType keyType, const String *const key,
     const size_t blockSize, const KeyValue *const tag, const String *const endpoint, const StorageAzureUriStyle uriStyle,
-    const unsigned int port, const TimeMSec timeout, const bool verifyPeer, const String *const caFile, const String *const caPath)
+    const unsigned int port, const TimeMSec timeout, const HttpProtocolType protocolType, const bool verifyPeer,
+    const String *const caFile, const String *const caPath)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -784,6 +867,7 @@ storageAzureNew(
         FUNCTION_LOG_PARAM(ENUM, uriStyle);
         FUNCTION_LOG_PARAM(UINT, port);
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
+        FUNCTION_LOG_PARAM(ENUM, protocolType);
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
         FUNCTION_LOG_PARAM(STRING, caFile);
         FUNCTION_LOG_PARAM(STRING, caPath);
@@ -793,7 +877,7 @@ storageAzureNew(
     ASSERT(container != NULL);
     ASSERT(account != NULL);
     ASSERT(endpoint != NULL);
-    ASSERT(key != NULL);
+    ASSERT(keyType == storageAzureKeyTypeAuto || key != NULL);
     ASSERT(blockSize != 0);
 
     OBJ_NEW_BEGIN(StorageAzure, .childQty = MEM_CONTEXT_QTY_MAX)
@@ -808,6 +892,7 @@ storageAzureNew(
             .pathPrefix =
                 uriStyle == storageAzureUriStyleHost ?
                     strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
+            .keyType = keyType,
         };
 
         // Create tag query string
@@ -818,18 +903,41 @@ storageAzureNew(
             httpQueryFree(query);
         }
 
-        // Store shared key or parse sas query
-        if (keyType == storageAzureKeyTypeShared)
-            this->sharedKey = bufNewDecode(encodingBase64, key);
-        else
-            this->sasKey = httpQueryNewStr(key);
+        // Initialization by key type
+        switch (keyType)
+        {
+            // Create authentication client
+            case storageAzureKeyTypeAuto:
+                this->accessToken = strNew();
+                this->credHost = AZURE_CREDENTIAL_HOST_STR;
+                this->credHttpClient = httpClientNew(
+                    sckClientNew(this->credHost, AZURE_CREDENTIAL_PORT, timeout, timeout), timeout);
+                break;
 
-        // Create the http client used to service requests
-        this->httpClient = httpClientNew(
-            tlsClientNewP(
+            // Store shared key
+            case storageAzureKeyTypeShared:
+                this->sharedKey = bufNewDecode(encodingBase64, key);
+                break;
+
+            // Parse sas query
+            case storageAzureKeyTypeSas:
+                this->sasKey = httpQueryNewStr(key);
+                break;
+        }
+
+        // Create the http client used to service requests. Use plain socket for HTTP, TLS for HTTPS.
+        IoClient *ioClient;
+
+        if (protocolType == httpProtocolTypeHttp)
+            ioClient = sckClientNew(this->host, port, timeout, timeout);
+        else
+        {
+            ioClient = tlsClientNewP(
                 sckClientNew(this->host, port, timeout, timeout), this->host, timeout, timeout, verifyPeer, .caFile = caFile,
-                .caPath = caPath),
-            timeout);
+                .caPath = caPath);
+        }
+
+        this->httpClient = httpClientNew(ioClient, timeout);
 
         // Create list of redacted headers
         this->headerRedactList = strLstNew();

@@ -129,8 +129,7 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
                         break;
 
                     default:
-                        THROW_FMT(
-                            AssertError, "unknown backup script op '%s'", strZ(strIdToStr(hrnBackupLocal.script[scriptIdx].op)));
+                        THROW_FMT(AssertError, "unknown backup script op '%s'", zNewStrId(hrnBackupLocal.script[scriptIdx].op));
                 }
             }
         }

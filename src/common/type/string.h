@@ -40,6 +40,7 @@ typedef struct String String;
 #include "common/assert.h"
 #include "common/encode.h"
 #include "common/type/buffer.h"
+#include "common/type/stringId.h"
 #include "common/type/stringZ.h"
 
 /***********************************************************************************************************************************
@@ -81,6 +82,9 @@ FN_EXTERN String *strNewDiv(uint64_t dividend, uint64_t divisor, StrNewDivParam 
 
 // Create a new fixed length string containing a percentage
 FN_EXTERN String *strNewPct(uint64_t dividend, uint64_t divisor);
+
+// Create string from string id
+FN_EXTERN String *strNewStrId(StringId strId);
 
 // Create a new fixed length string by converting a timestamp
 typedef struct StrNewTimeParam
@@ -218,6 +222,13 @@ FN_EXTERN String *strReplaceChr(String *this, char find, char replace);
 
 // Format sizes (file, buffer, etc.) in human-readable form
 FN_EXTERN String *strSizeFormat(const uint64_t fileSize);
+
+// Convert string to string id
+FN_INLINE_ALWAYS StringId
+strStrId(const String *const this)
+{
+    return strIdFromZN(strZ(this), strSize(this), true);
+}
 
 // Return a substring given only the start position
 FN_EXTERN String *strSub(const String *this, size_t start);

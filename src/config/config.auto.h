@@ -96,6 +96,7 @@ Option constants
 #define CFGOPT_LOG_TIMESTAMP                                        "log-timestamp"
 #define CFGOPT_MANIFEST_SAVE_THRESHOLD                              "manifest-save-threshold"
 #define CFGOPT_NEUTRAL_UMASK                                        "neutral-umask"
+#define CFGOPT_OLDEST                                               "oldest"
 #define CFGOPT_ONLINE                                               "online"
 #define CFGOPT_OUTPUT                                               "output"
 #define CFGOPT_PAGE_HEADER_CHECK                                    "page-header-check"
@@ -143,7 +144,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            191
+#define CFG_OPTION_TOTAL                                            192
 
 /***********************************************************************************************************************************
 Option value constants
@@ -240,6 +241,8 @@ Option value constants
 #define CFGOPTVAL_REMOTE_TYPE_REPO                                  STRID5("repo", 0x7c0b20)
 #define CFGOPTVAL_REMOTE_TYPE_REPO_Z                                "repo"
 
+#define CFGOPTVAL_REPO_AZURE_KEY_TYPE_AUTO                          STRID5("auto", 0x7d2a10)
+#define CFGOPTVAL_REPO_AZURE_KEY_TYPE_AUTO_Z                        "auto"
 #define CFGOPTVAL_REPO_AZURE_KEY_TYPE_SAS                           STRID5("sas", 0x4c330)
 #define CFGOPTVAL_REPO_AZURE_KEY_TYPE_SAS_Z                         "sas"
 #define CFGOPTVAL_REPO_AZURE_KEY_TYPE_SHARED                        STRID5("shared", 0x85905130)
@@ -456,6 +459,7 @@ typedef enum
     cfgOptLogTimestamp,
     cfgOptManifestSaveThreshold,
     cfgOptNeutralUmask,
+    cfgOptOldest,
     cfgOptOnline,
     cfgOptOutput,
     cfgOptPageHeaderCheck,

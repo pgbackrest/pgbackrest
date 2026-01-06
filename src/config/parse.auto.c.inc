@@ -3605,6 +3605,48 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                      // opt/neutral-umask
     ),                                                                                                          // opt/neutral-umask
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                                  // opt/oldest
+    (                                                                                                                  // opt/oldest
+        PARSE_RULE_OPTION_NAME("oldest"),                                                                              // opt/oldest
+        PARSE_RULE_OPTION_TYPE(Boolean),                                                                               // opt/oldest
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                              // opt/oldest
+        PARSE_RULE_OPTION_SECTION(CommandLine),                                                                        // opt/oldest
+                                                                                                                       // opt/oldest
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                 // opt/oldest
+        (                                                                                                              // opt/oldest
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                          // opt/oldest
+        ),                                                                                                             // opt/oldest
+                                                                                                                       // opt/oldest
+        PARSE_RULE_OPTIONAL                                                                                            // opt/oldest
+        (                                                                                                              // opt/oldest
+            PARSE_RULE_OPTIONAL_GROUP                                                                                  // opt/oldest
+            (                                                                                                          // opt/oldest
+                PARSE_RULE_FILTER_CMD                                                                                  // opt/oldest
+                (                                                                                                      // opt/oldest
+                    PARSE_RULE_VAL_CMD(Expire),                                                                        // opt/oldest
+                ),                                                                                                     // opt/oldest
+                                                                                                                       // opt/oldest
+                PARSE_RULE_OPTIONAL_DEPEND                                                                             // opt/oldest
+                (                                                                                                      // opt/oldest
+                    PARSE_RULE_VAL_OPT(Stanza),                                                                        // opt/oldest
+                ),                                                                                                     // opt/oldest
+                                                                                                                       // opt/oldest
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                            // opt/oldest
+                (                                                                                                      // opt/oldest
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                                         // opt/oldest
+                ),                                                                                                     // opt/oldest
+            ),                                                                                                         // opt/oldest
+                                                                                                                       // opt/oldest
+            PARSE_RULE_OPTIONAL_GROUP                                                                                  // opt/oldest
+            (                                                                                                          // opt/oldest
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                            // opt/oldest
+                (                                                                                                      // opt/oldest
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                                         // opt/oldest
+                ),                                                                                                     // opt/oldest
+            ),                                                                                                         // opt/oldest
+        ),                                                                                                             // opt/oldest
+    ),                                                                                                                 // opt/oldest
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                                  // opt/online
     (                                                                                                                  // opt/online
         PARSE_RULE_OPTION_NAME("online"),                                                                              // opt/online
@@ -5369,7 +5411,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_NAME("repo-azure-key"),                                                              // opt/repo-azure-key
         PARSE_RULE_OPTION_TYPE(String),                                                                        // opt/repo-azure-key
         PARSE_RULE_OPTION_RESET(true),                                                                         // opt/repo-azure-key
-        PARSE_RULE_OPTION_REQUIRED(true),                                                                      // opt/repo-azure-key
+        PARSE_RULE_OPTION_REQUIRED(false),                                                                     // opt/repo-azure-key
         PARSE_RULE_OPTION_SECTION(Global),                                                                     // opt/repo-azure-key
         PARSE_RULE_OPTION_SECURE(true),                                                                        // opt/repo-azure-key
         PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                      // opt/repo-azure-key
@@ -5437,8 +5479,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                                  // opt/repo-azure-key
                 PARSE_RULE_OPTIONAL_DEPEND                                                                     // opt/repo-azure-key
                 (                                                                                              // opt/repo-azure-key
-                    PARSE_RULE_VAL_OPT(RepoType),                                                              // opt/repo-azure-key
-                    PARSE_RULE_VAL_STRID(Azure),                                                               // opt/repo-azure-key
+                    PARSE_RULE_VAL_OPT(RepoAzureKeyType),                                                      // opt/repo-azure-key
+                    PARSE_RULE_VAL_STRID(Shared),                                                              // opt/repo-azure-key
+                    PARSE_RULE_VAL_STRID(Sas),                                                                 // opt/repo-azure-key
                 ),                                                                                             // opt/repo-azure-key
             ),                                                                                                 // opt/repo-azure-key
         ),                                                                                                     // opt/repo-azure-key
@@ -5524,6 +5567,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 (                                                                                         // opt/repo-azure-key-type
                     PARSE_RULE_VAL_STRID(Shared),                                                         // opt/repo-azure-key-type
                     PARSE_RULE_VAL_STRID(Sas),                                                            // opt/repo-azure-key-type
+                    PARSE_RULE_VAL_STRID(Auto),                                                           // opt/repo-azure-key-type
                 ),                                                                                        // opt/repo-azure-key-type
                                                                                                           // opt/repo-azure-key-type
                 PARSE_RULE_OPTIONAL_DEFAULT                                                               // opt/repo-azure-key-type
@@ -11796,6 +11840,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptLogTimestamp,                                                                                         // opt-resolve-order
     cfgOptManifestSaveThreshold,                                                                                // opt-resolve-order
     cfgOptNeutralUmask,                                                                                         // opt-resolve-order
+    cfgOptOldest,                                                                                               // opt-resolve-order
     cfgOptOnline,                                                                                               // opt-resolve-order
     cfgOptOutput,                                                                                               // opt-resolve-order
     cfgOptPageHeaderCheck,                                                                                      // opt-resolve-order
@@ -11872,7 +11917,6 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoAzureAccount,                                                                                     // opt-resolve-order
     cfgOptRepoAzureContainer,                                                                                   // opt-resolve-order
     cfgOptRepoAzureEndpoint,                                                                                    // opt-resolve-order
-    cfgOptRepoAzureKey,                                                                                         // opt-resolve-order
     cfgOptRepoAzureKeyType,                                                                                     // opt-resolve-order
     cfgOptRepoAzureUriStyle,                                                                                    // opt-resolve-order
     cfgOptRepoBlock,                                                                                            // opt-resolve-order
@@ -11926,6 +11970,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptPgHostCmd,                                                                                            // opt-resolve-order
     cfgOptPgHostKeyFile,                                                                                        // opt-resolve-order
     cfgOptPgHostPort,                                                                                           // opt-resolve-order
+    cfgOptRepoAzureKey,                                                                                         // opt-resolve-order
     cfgOptRepoGcsBucket,                                                                                        // opt-resolve-order
     cfgOptRepoGcsEndpoint,                                                                                      // opt-resolve-order
     cfgOptRepoGcsKey,                                                                                           // opt-resolve-order

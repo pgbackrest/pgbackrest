@@ -32,9 +32,6 @@ sudo systemctl start docker
 # Install tools
 sudo yum install -y git wget
 
-# Install latex (for building PDF)
-sudo yum install -y texlive texlive-titlesec texlive-sectsty texlive-framed texlive-epstopdf ghostscript
-
 # Install Perl modules via CPAN that do not have packages
 sudo yum install -y yum cpanminus
 sudo yum groupinstall -y "Development Tools" "Development Libraries"

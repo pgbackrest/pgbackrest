@@ -64,6 +64,22 @@ ioFdWriteReady(THIS_VOID, const bool error)
 /***********************************************************************************************************************************
 Write to the file descriptor
 ***********************************************************************************************************************************/
+// Helper wrapper around write() system call for unit testing
+static ssize_t
+ioFdWriteInternal(const int fd, const void *const buffer, const size_t size)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, fd);
+        FUNCTION_TEST_PARAM_P(VOID, buffer);
+        FUNCTION_TEST_PARAM(SIZE, size);
+    FUNCTION_TEST_END();
+
+    ASSERT(fd >= 0);
+    ASSERT(buffer != NULL);
+
+    FUNCTION_TEST_RETURN(SSIZE, write(fd, buffer, size));
+}
+
 static void
 ioFdWrite(THIS_VOID, const Buffer *const buffer)
 {
@@ -77,8 +93,34 @@ ioFdWrite(THIS_VOID, const Buffer *const buffer)
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
 
-    THROW_ON_SYS_ERROR_FMT(
-        write(this->fd, bufPtrConst(buffer), bufUsed(buffer)) == -1, FileWriteError, "unable to write to %s", strZ(this->name));
+    // Handle partial writes and non-blocking socket operations
+    size_t totalWritten = 0;
+    size_t bufferRemaining = bufUsed(buffer);
+
+    while (bufferRemaining > 0)
+    {
+        const ssize_t result = ioFdWriteInternal(this->fd, bufPtrConst(buffer) + totalWritten, bufferRemaining);
+
+        if (result == -1)
+        {
+            // Handle non-blocking socket case where write buffer is full
+            if (errno == EAGAIN)
+            {
+                // Wait for socket to become writable (will throw on timeout)
+                ioFdWriteReady(this, true);
+
+                continue;
+            }
+
+            // Treat all other errors as fatal
+            THROW_SYS_ERROR_FMT(
+                FileWriteError, "unable to finish write to %s (wrote %zu/%zu bytes)", strZ(this->name), totalWritten,
+                bufUsed(buffer));
+        }
+
+        totalWritten += (size_t)result;
+        bufferRemaining -= (size_t)result;
+    }
 
     FUNCTION_LOG_RETURN_VOID();
 }

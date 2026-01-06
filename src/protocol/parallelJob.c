@@ -119,8 +119,7 @@ protocolParallelJobStateSet(ProtocolParallelJob *const this, const ProtocolParal
     else
     {
         THROW_FMT(
-            AssertError, "invalid state transition from '%s' to '%s'", strZ(strIdToStr(protocolParallelJobState(this))),
-            strZ(strIdToStr(state)));
+            AssertError, "invalid state transition from '%s' to '%s'", zNewStrId(protocolParallelJobState(this)), zNewStrId(state));
     }
 
     FUNCTION_LOG_RETURN_VOID();

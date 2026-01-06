@@ -14,6 +14,7 @@ Log Handler
 
 #include "common/debug.h"
 #include "common/log.h"
+#include "common/macro.h"
 #include "common/time.h"
 #include "common/type/convert.h"
 
@@ -504,6 +505,34 @@ logPost(LogPreResult *const logData, const LogLevel logLevel, const LogLevel log
 
         logWriteIndent(logFdFile, logBuffer, logData->indentSize, "log to file");
     }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+#define LOG_SIGNAL_MESSAGE_PRE                                      "terminated on signal "
+
+FN_EXTERN void
+logSignal(const LogLevel logLevel, const char *const signalName)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, logLevel);
+        FUNCTION_TEST_PARAM(STRINGZ, signalName);
+    FUNCTION_TEST_END();
+
+    ASSERT(signalName != NULL);
+    STATIC_ASSERT_STMT(LOG_BUFFER_SIZE >= sizeof(LOG_SIGNAL_MESSAGE_PRE), "invalid log buffer size");
+
+    // Initialize log buffer and data with static signal message
+    memcpy(logBuffer, LOG_SIGNAL_MESSAGE_PRE, sizeof(LOG_SIGNAL_MESSAGE_PRE) - 1);
+    LogPreResult logData = {.bufferPos = sizeof(LOG_SIGNAL_MESSAGE_PRE) - 1, .logBufferStdErr = logBuffer, .indentSize = 4};
+
+    // Add signal name and ensure string is zero-terminated
+    strncpy(logBuffer + logData.bufferPos, signalName, sizeof(logBuffer) - logData.bufferPos - 1);
+    logData.bufferPos += strlen(signalName);
+    logBuffer[sizeof(logBuffer) - 1] = 0;
+
+    logPost(&logData, logLevel, LOG_LEVEL_MIN, LOG_LEVEL_MAX);
 
     FUNCTION_TEST_RETURN_VOID();
 }

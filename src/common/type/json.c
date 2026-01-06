@@ -257,11 +257,7 @@ jsonReadPush(JsonRead *const this, const JsonType type, const bool key)
     const JsonType typeActual = jsonReadTypeNextIgnoreComma(this);
 
     if (typeActual != type)
-    {
-        THROW_FMT(
-            JsonFormatError, "expected '%s' but found '%s' at: %s", strZ(strIdToStr(type)), strZ(strIdToStr(typeActual)),
-            this->json);
-    }
+        THROW_FMT(JsonFormatError, "expected '%s' but found '%s' at: %s", zNewStrId(type), zNewStrId(typeActual), this->json);
 
     // If the container stack has not been created yet
     if (this->stack == NULL)
@@ -1073,7 +1069,7 @@ jsonReadStrId(JsonRead *const this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        result = strIdFromStr(jsonReadStr(this));
+        result = strStrId(jsonReadStr(this));
     }
     MEM_CONTEXT_TEMP_END();
 

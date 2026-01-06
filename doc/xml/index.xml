@@ -20,11 +20,6 @@
         <variable key="backrest-page-configuration">configuration</variable>
         <variable key="backrest-page-command">command</variable>
         <variable key="backrest-page-release">release</variable>
-
-        <variable key="crunchy-url-base">http://www.crunchydata.com</variable>
-        <variable key="crunchy-url-cbm">{[crunchy-url-base]}/crunchy-backup-manager</variable>
-
-        <variable key="resonate-url-base">http://www.resonate.com</variable>
     </variable-list>
 
     <!-- ======================================================================================================================= -->
@@ -201,7 +196,7 @@
     <section id="recognition">
         <title>Recognition</title>
 
-        <p><link url="{[crunchy-url-base]}">Crunchy Data</link> and <link url="{[resonate-url-base]}">Resonate</link> have both generously supported the development of <backrest/>.</p>
+        <p><link url="http://www.crunchydata.com">Crunchy Data</link> and <link url="http://www.resonate.com">Resonate</link> have both generously supported the development of <backrest/>.</p>
 
         <p><link url="https://thenounproject.com/icon/armchair-129971">Armchair</link> graphic by <link url="https://thenounproject.com/sandorsz">Alexander Skowalsky</link>.</p>
     </section>

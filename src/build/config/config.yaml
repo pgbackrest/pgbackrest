@@ -335,6 +335,17 @@ option:
     command-role:
       main: {}
 
+  oldest:
+    type: boolean
+    default: false
+    negate: false
+    command:
+      expire:
+        depend:
+          option: stanza
+    command-role:
+      main: {}
+
   online:
     type: boolean
     default: true
@@ -2198,6 +2209,12 @@ option:
 
   repo-azure-key:
     inherit: repo-azure-account
+    required: false
+    depend:
+      option: repo-azure-key-type
+      list:
+        - shared
+        - sas
 
   repo-azure-key-type:
     inherit: repo-azure-container
@@ -2206,6 +2223,7 @@ option:
     allow-list:
       - shared
       - sas
+      - auto
 
   repo-azure-uri-style:
     section: global

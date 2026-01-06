@@ -75,7 +75,7 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
 
         ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeDecrypt, param.cipherType, BUFSTRZ(param.cipherPass)));
 
-        strCatFmt(filter, "enc[%s,%s] ", strZ(strIdToStr(param.cipherType)), param.cipherPass);
+        strCatFmt(filter, "enc[%s,%s] ", zNewStrId(param.cipherType), param.cipherPass);
     }
 
     // Add decompress filter
