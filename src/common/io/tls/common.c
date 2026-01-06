@@ -214,7 +214,7 @@ tlsInit(const String *const tlsCipher12, const String *const tlsCipher13)
 
 /**********************************************************************************************************************************/
 FN_EXTERN SSL_CTX *
-tlsContext(void)
+tlsContext(const bool verifyPeer)
 {
     FUNCTION_TEST_VOID();
 
@@ -235,16 +235,20 @@ tlsContext(void)
     // Disable auto-retry to prevent SSL_read() from hanging
     SSL_CTX_clear_mode(result, SSL_MODE_AUTO_RETRY);
 
-    // Set minimum TLS version to 1.2
-    cryptoError(SSL_CTX_set_min_proto_version(result, TLS1_2_VERSION) != 1, "unable to set minumum TLS version to 1.2");
+    // Enhance security when verifyPeer is enabled
+    if (verifyPeer)
+    {
+        // Set minimum TLS version to 1.2
+        cryptoError(SSL_CTX_set_min_proto_version(result, TLS1_2_VERSION) != 1, "unable to set minumum TLS version to 1.2");
 
-    // Set allowed ciphers for TLSv1.2 when configured
-    if (tlsCommonLocal.tlsCipher12 != NULL)
-        cryptoError(SSL_CTX_set_cipher_list(result, strZ(tlsCommonLocal.tlsCipher12)) != 1, "unable to set TLSv1.2 ciphers");
+        // Set allowed ciphers for TLSv1.2 when configured
+        if (tlsCommonLocal.tlsCipher12 != NULL)
+            cryptoError(SSL_CTX_set_cipher_list(result, strZ(tlsCommonLocal.tlsCipher12)) != 1, "unable to set TLSv1.2 ciphers");
 
-    // Set allowed ciphers for TLSv1.3 when configured
-    if (tlsCommonLocal.tlsCipher13 != NULL)
-        cryptoError(SSL_CTX_set_ciphersuites(result, strZ(tlsCommonLocal.tlsCipher13)) != 1, "unable to set TLSv1.3 ciphers");
+        // Set allowed ciphers for TLSv1.3 when configured
+        if (tlsCommonLocal.tlsCipher13 != NULL)
+            cryptoError(SSL_CTX_set_ciphersuites(result, strZ(tlsCommonLocal.tlsCipher13)) != 1, "unable to set TLSv1.3 ciphers");
+    }
 
     FUNCTION_TEST_RETURN_TYPE_P(SSL_CTX, result);
 }

@@ -299,7 +299,7 @@ tlsServerNew(
         *this = (TlsServer)
         {
             .host = strDup(host),
-            .context = tlsContext(),
+            .context = tlsContext(true),
             .timeout = timeout,
         };
 
