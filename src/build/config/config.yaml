@@ -956,15 +956,11 @@ option:
   tls-cipher-12:
     section: global
     type: string
-    default-type: quote
-    default: HIGH:MEDIUM:+3DES:!aNULL
+    required: false
     command: buffer-size
 
   tls-cipher-13:
-    section: global
-    type: string
-    required: false
-    command: buffer-size
+    inherit: tls-cipher-12
 
   # Logging options
   #---------------------------------------------------------------------------------------------------------------------------------

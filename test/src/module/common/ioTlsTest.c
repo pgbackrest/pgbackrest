@@ -151,8 +151,6 @@ testRun(void)
     THROW_ON_SYS_ERROR_FMT(
         chmod(HRN_SERVER_CLIENT_KEY, 0600) == -1, FileModeError, "unable to set mode on " HRN_SERVER_CLIENT_KEY);
 
-    TEST_RESULT_VOID(tlsInit(NULL, NULL), "init null tls ciphers");
-
     // *****************************************************************************************************************************
     if (testBegin("AddressInfo"))
     {
@@ -919,12 +917,56 @@ testRun(void)
         }
         HRN_FORK_END();
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("fail on mismatch between allowed TLS cipher suites");
+
+        HRN_FORK_BEGIN()
+        {
+            const unsigned int testPort = hrnServerPortNext();
+
+            HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
+            {
+                TEST_RESULT_VOID(tlsInit(STRDEF("eNULL"), STRDEF("TLS_AES_256_GCM_SHA384")), "disallow TLS 1.2");
+
+                // Start server to test various certificate errors
+                TEST_ERROR(
+                    hrnServerRunP(
+                        HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort, .certificate = STRDEF(HRN_SERVER_CERT),
+                        .key = STRDEF(HRN_SERVER_KEY), .address = STRDEF("::1")),
+                    ServiceError, "TLS error [1:167772353] no shared cipher");
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN(.prefix = "test client", .timeout = 1000)
+            {
+                IoWrite *const tls = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("cipher suite mismatch");
+
+                hrnServerScriptAccept(tls);
+                hrnServerScriptClose(tls);
+
+                TEST_RESULT_VOID(tlsInit(STRDEF("COMPLEMENTOFALL"), STRDEF("TLS_AES_128_GCM_SHA256")), "disallow TLS 1.3");
+
+                TEST_ERROR(
+                    ioClientOpen(
+                        tlsClientNewP(
+                            sckClientNew(STRDEF("::1"), testPort, 5000, 5000), STRDEF("::1"), 0, 0, true,
+                            .caFile = STRDEF(HRN_SERVER_CA))),
+                    ServiceError, "TLS error [1:167773200] sslv3 alert handshake failure");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                hrnServerScriptEnd(tls);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+
+        TEST_RESULT_VOID(tlsInit(NULL, NULL), "init null tls ciphers");
+
         // Server on IPv6
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_RESULT_VOID(
-            tlsInit(STRDEF("HIGH:MEDIUM:+3DES:!aNULL"), STRDEF("TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256")),
-            "init tls ciphers");
-
         HRN_FORK_BEGIN()
         {
             const unsigned int testPort = hrnServerPortNext();

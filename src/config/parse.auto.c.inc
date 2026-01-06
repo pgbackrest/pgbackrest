@@ -71,7 +71,6 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("900"),                                                                                             // val/str
     PARSE_RULE_STRPUB("999"),                                                                                             // val/str
     PARSE_RULE_STRPUB("9999999"),                                                                                         // val/str
-    PARSE_RULE_STRPUB("HIGH:MEDIUM:+3DES:!aNULL"),                                                                        // val/str
     PARSE_RULE_STRPUB("accept-new"),                                                                                      // val/str
     PARSE_RULE_STRPUB("aes-256-cbc"),                                                                                     // val/str
     PARSE_RULE_STRPUB("asc"),                                                                                             // val/str
@@ -206,7 +205,6 @@ typedef enum
     parseRuleValStrQT_900_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_999_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_9999999_QT,                                                                                    // val/str/enum
-    parseRuleValStrQT_HIGH_CO_MEDIUM_CO_PL_3DES_CO_NT_aNULL_QT,                                                      // val/str/enum
     parseRuleValStrQT_accept_DS_new_QT,                                                                              // val/str/enum
     parseRuleValStrQT_aes_DS_256_DS_cbc_QT,                                                                          // val/str/enum
     parseRuleValStrQT_asc_QT,                                                                                        // val/str/enum
@@ -11145,7 +11143,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_NAME("tls-cipher-12"),                                                                // opt/tls-cipher-12
         PARSE_RULE_OPTION_TYPE(String),                                                                         // opt/tls-cipher-12
         PARSE_RULE_OPTION_RESET(true),                                                                          // opt/tls-cipher-12
-        PARSE_RULE_OPTION_REQUIRED(true),                                                                       // opt/tls-cipher-12
+        PARSE_RULE_OPTION_REQUIRED(false),                                                                      // opt/tls-cipher-12
         PARSE_RULE_OPTION_SECTION(Global),                                                                      // opt/tls-cipher-12
                                                                                                                 // opt/tls-cipher-12
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                          // opt/tls-cipher-12
@@ -11205,17 +11203,6 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                             // opt/tls-cipher-12
             PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                            // opt/tls-cipher-12
             PARSE_RULE_OPTION_COMMAND(Verify)                                                                   // opt/tls-cipher-12
-        ),                                                                                                      // opt/tls-cipher-12
-                                                                                                                // opt/tls-cipher-12
-        PARSE_RULE_OPTIONAL                                                                                     // opt/tls-cipher-12
-        (                                                                                                       // opt/tls-cipher-12
-            PARSE_RULE_OPTIONAL_GROUP                                                                           // opt/tls-cipher-12
-            (                                                                                                   // opt/tls-cipher-12
-                PARSE_RULE_OPTIONAL_DEFAULT                                                                     // opt/tls-cipher-12
-                (                                                                                               // opt/tls-cipher-12
-                    PARSE_RULE_VAL_STR(QT_HIGH_CO_MEDIUM_CO_PL_3DES_CO_NT_aNULL_QT),                            // opt/tls-cipher-12
-                ),                                                                                              // opt/tls-cipher-12
-            ),                                                                                                  // opt/tls-cipher-12
         ),                                                                                                      // opt/tls-cipher-12
     ),                                                                                                          // opt/tls-cipher-12
     // -----------------------------------------------------------------------------------------------------------------------------
