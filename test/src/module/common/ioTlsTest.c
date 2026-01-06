@@ -929,11 +929,15 @@ testRun(void)
                 TEST_RESULT_VOID(tlsInit(STRDEF("eNULL"), STRDEF("TLS_AES_256_GCM_SHA384")), "disallow TLS 1.2");
 
                 // Start server to test various certificate errors
-                TEST_ERROR(
+                TEST_ERROR_MULTI(
                     hrnServerRunP(
                         HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort, .certificate = STRDEF(HRN_SERVER_CERT),
                         .key = STRDEF(HRN_SERVER_KEY), .address = STRDEF("::1")),
-                    ServiceError, "TLS error [1:167772353] no shared cipher");
+                    ServiceError,
+                    // TLS >= 3
+                    "TLS error [1:167772353] no shared cipher",
+                    // TLS < 3
+                    "TLS error [1:337678529] no shared cipher");
             }
             HRN_FORK_CHILD_END();
 
@@ -949,12 +953,18 @@ testRun(void)
 
                 TEST_RESULT_VOID(tlsInit(STRDEF("COMPLEMENTOFALL"), STRDEF("TLS_AES_128_GCM_SHA256")), "disallow TLS 1.3");
 
-                TEST_ERROR(
+                TEST_ERROR_MULTI(
                     ioClientOpen(
                         tlsClientNewP(
                             sckClientNew(STRDEF("::1"), testPort, 5000, 5000), STRDEF("::1"), 0, 0, true,
                             .caFile = STRDEF(HRN_SERVER_CA))),
-                    ServiceError, "TLS error [1:167773200] sslv3 alert handshake failure");
+                    ServiceError,
+                    // TLS >= 3
+                    "TLS error [1:167773200] sslv3 alert handshake failure",
+                    // TLS < 3
+                    "TLS error [1:336151568] sslv3 alert handshake failure",
+                    // TLS >= 3 Fedora/Alpine
+                    "TLS error [1:167773200] ssl/tls alert handshake failure");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 hrnServerScriptEnd(tls);
