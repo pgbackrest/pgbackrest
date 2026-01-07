@@ -58,6 +58,18 @@
             </release-item>
 
             <release-item>
+                <github-issue id="2697"/>
+                <github-pull-request id="2700"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="gunnar.bluth"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Allow configuration of TLS cipher suites.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2693"/>
 
                 <release-item-contributor-list>
