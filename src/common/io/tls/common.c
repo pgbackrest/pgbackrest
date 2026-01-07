@@ -174,7 +174,7 @@ tlsCertKeyLoad(SSL_CTX *const context, const String *const certFile, const Strin
 
 /**********************************************************************************************************************************/
 FN_EXTERN SSL_CTX *
-tlsContext(void)
+tlsContext(const bool verifyPeer)
 {
     FUNCTION_TEST_VOID();
 
@@ -189,16 +189,18 @@ tlsContext(void)
     SSL_CTX *const result = SSL_CTX_new(method);
     cryptoError(result == NULL, "unable to create TLS context");
 
-    // Set options
-    SSL_CTX_set_options(
-        result,
-        // Disable SSL
-        SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 |
-        // Disable compression
-        SSL_OP_NO_COMPRESSION);
+    // Disable compression
+    SSL_CTX_set_options(result, SSL_OP_NO_COMPRESSION);
 
     // Disable auto-retry to prevent SSL_read() from hanging
     SSL_CTX_clear_mode(result, SSL_MODE_AUTO_RETRY);
+
+    // Enhance security when verifyPeer is enabled
+    if (verifyPeer)
+    {
+        // Set minimum TLS version to 1.2
+        cryptoError(SSL_CTX_set_min_proto_version(result, TLS1_2_VERSION) != 1, "unable to set minumum TLS version to 1.2");
+    }
 
     FUNCTION_TEST_RETURN_TYPE_P(SSL_CTX, result);
 }

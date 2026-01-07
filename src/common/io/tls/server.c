@@ -299,7 +299,7 @@ tlsServerNew(
         *this = (TlsServer)
         {
             .host = strDup(host),
-            .context = tlsContext(),
+            .context = tlsContext(true),
             .timeout = timeout,
         };
 
@@ -309,8 +309,6 @@ tlsServerNew(
         // Set options
         SSL_CTX_set_options(
             this->context,
-            // Disable SSL and TLS v1/v1.1
-            SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 |
             // Let server set cipher order
             SSL_OP_CIPHER_SERVER_PREFERENCE |
 #ifdef SSL_OP_NO_RENEGOTIATION
