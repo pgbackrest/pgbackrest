@@ -443,8 +443,8 @@ storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
 /***********************************************************************************************************************************
 Automatically get credentials for an associated pod identity
 
-The AWS documentation does not appear to provide a clear example of how to perform this authorization with using their SDK but this
-link proved helpful: https://securitylabs.datadoghq.com/articles/eks-pod-identity-deep-dive
+The AWS documentation does not appear to provide a clear example of how to perform this authorization without using their SDK but
+this article proved helpful: https://securitylabs.datadoghq.com/articles/eks-pod-identity-deep-dive
 ***********************************************************************************************************************************/
 static void
 storageS3AuthPodId(StorageS3 *const this, const HttpHeader *const header)
@@ -466,7 +466,6 @@ storageS3AuthPodId(StorageS3 *const this, const HttpHeader *const header)
         HttpResponse *const response = httpRequestResponse(request, true);
 
         CHECK(FormatError, httpResponseCode(response) != HTTP_RESPONSE_CODE_NOT_FOUND, "invalid response code");
-
         const KeyValue *const kvResponse = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
 
         // Copy credentials
