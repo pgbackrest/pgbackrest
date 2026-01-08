@@ -278,6 +278,8 @@ testRun(void)
             "  --tcp-keep-alive-count              keep-alive count\n"
             "  --tcp-keep-alive-idle               keep-alive idle time\n"
             "  --tcp-keep-alive-interval           keep-alive interval time\n"
+            "  --tls-cipher-12                     allowed TLSv1.2 cipher suites\n"
+            "  --tls-cipher-13                     allowed TLSv1.3 cipher suites\n"
             "\n"
             "Log Options:\n"
             "\n"

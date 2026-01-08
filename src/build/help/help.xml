@@ -430,6 +430,35 @@
 
                         <example>30</example>
                     </config-key>
+
+                    <config-key id="tls-cipher-12" name="TLSv1.2 cipher suites">
+                        <summary>Allowed TLSv1.2 cipher suites.</summary>
+
+                        <text>
+                            <p>All TLS connections between the <backrest/> client and server are encrypted. By default, connections to objects stores (e.g. <proper>S3</proper>) are also encrypted.</p>
+
+                            <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2.</admonition>
+
+                            <p>The accepted cipher suites can be adjusted if need arises. The example is reasonable choice unless you have specific security requirements. If unset (the default), the default of the underlying <proper>OpenSSL</proper> library applies.</p>
+                        </text>
+
+                        <example>HIGH:MEDIUM:+3DES:!aNULL</example>
+                    </config-key>
+
+                    <config-key id="tls-cipher-13" name="TLSv1.3 cipher suites">
+                        <summary>Allowed TLSv1.3 cipher suites.</summary>
+
+                        <text>
+                            <p>All TLS connections between the <backrest/> client and server are encrypted. By default, connections to objects stores (e.g. <proper>S3</proper>) are also encrypted.</p>
+
+                            <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2.</admonition>
+
+                            <p>The accepted cipher suites can be adjusted if need arises. If unset (the default), the default of the underlying <proper>OpenSSL</proper> library applies.</p>
+                        </text>
+
+                        <example>TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256</example>
+                    </config-key>
+
                 </config-key-list>
             </config-section>
 

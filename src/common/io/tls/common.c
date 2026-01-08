@@ -14,6 +14,17 @@ TLS Common
 #include "common/user.h"
 #include "storage/posix/storage.h"
 
+/***********************************************************************************************************************************
+Local variables
+***********************************************************************************************************************************/
+static struct TlsCommonLocal
+{
+    MemContext *memContext;                                         // Mem context for TLS common
+
+    String *tlsCipher12;                                            // Allowed ciphers for TLSv1.2
+    String *tlsCipher13;                                            // Allowed ciphers for TLSv1.3
+} tlsCommonLocal;
+
 /**********************************************************************************************************************************/
 FN_EXTERN Buffer *
 tlsAsn1ToBuf(const ASN1_STRING *const nameAsn1)
@@ -173,6 +184,35 @@ tlsCertKeyLoad(SSL_CTX *const context, const String *const certFile, const Strin
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN void
+tlsInit(const String *const tlsCipher12, const String *const tlsCipher13)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, tlsCipher12);
+        FUNCTION_TEST_PARAM(STRING, tlsCipher13);
+    FUNCTION_TEST_END();
+
+    // Free old mem context (if any)
+    if (tlsCommonLocal.memContext != NULL)
+        memContextFree(tlsCommonLocal.memContext);
+
+    // Initialize mem context
+    MEM_CONTEXT_BEGIN(memContextTop())
+    {
+        MEM_CONTEXT_NEW_BEGIN(TlsCommon, .childQty = MEM_CONTEXT_QTY_MAX)
+        {
+            tlsCommonLocal.memContext = MEM_CONTEXT_NEW();
+            tlsCommonLocal.tlsCipher12 = strDup(tlsCipher12);
+            tlsCommonLocal.tlsCipher13 = strDup(tlsCipher13);
+        }
+        MEM_CONTEXT_NEW_END();
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN SSL_CTX *
 tlsContext(const bool verifyPeer)
 {
@@ -200,6 +240,14 @@ tlsContext(const bool verifyPeer)
     {
         // Set minimum TLS version to 1.2
         cryptoError(SSL_CTX_set_min_proto_version(result, TLS1_2_VERSION) != 1, "unable to set minumum TLS version to 1.2");
+
+        // Set allowed ciphers for TLSv1.2 when configured
+        if (tlsCommonLocal.tlsCipher12 != NULL)
+            cryptoError(SSL_CTX_set_cipher_list(result, strZ(tlsCommonLocal.tlsCipher12)) != 1, "unable to set TLSv1.2 ciphers");
+
+        // Set allowed ciphers for TLSv1.3 when configured
+        if (tlsCommonLocal.tlsCipher13 != NULL)
+            cryptoError(SSL_CTX_set_ciphersuites(result, strZ(tlsCommonLocal.tlsCipher13)) != 1, "unable to set TLSv1.3 ciphers");
     }
 
     FUNCTION_TEST_RETURN_TYPE_P(SSL_CTX, result);

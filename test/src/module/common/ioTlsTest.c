@@ -917,6 +917,64 @@ testRun(void)
         }
         HRN_FORK_END();
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("fail on mismatch between allowed TLS cipher suites");
+
+        HRN_FORK_BEGIN()
+        {
+            const unsigned int testPort = hrnServerPortNext();
+
+            HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
+            {
+                TEST_RESULT_VOID(tlsInit(STRDEF("eNULL"), STRDEF("TLS_AES_256_GCM_SHA384")), "disallow TLS 1.2");
+
+                // Start server to test various certificate errors
+                TEST_ERROR_MULTI(
+                    hrnServerRunP(
+                        HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort, .certificate = STRDEF(HRN_SERVER_CERT),
+                        .key = STRDEF(HRN_SERVER_KEY), .address = STRDEF("::1")),
+                    ServiceError,
+                    // TLS >= 3
+                    "TLS error [1:167772353] no shared cipher",
+                    // TLS < 3
+                    "TLS error [1:337678529] no shared cipher");
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN(.prefix = "test client", .timeout = 1000)
+            {
+                IoWrite *const tls = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("cipher suite mismatch");
+
+                hrnServerScriptAccept(tls);
+                hrnServerScriptClose(tls);
+
+                TEST_RESULT_VOID(tlsInit(STRDEF("COMPLEMENTOFALL"), STRDEF("TLS_AES_128_GCM_SHA256")), "disallow TLS 1.3");
+
+                TEST_ERROR_MULTI(
+                    ioClientOpen(
+                        tlsClientNewP(
+                            sckClientNew(STRDEF("::1"), testPort, 5000, 5000), STRDEF("::1"), 0, 0, true,
+                            .caFile = STRDEF(HRN_SERVER_CA))),
+                    ServiceError,
+                    // TLS >= 3
+                    "TLS error [1:167773200] sslv3 alert handshake failure",
+                    // TLS < 3
+                    "TLS error [1:336151568] sslv3 alert handshake failure",
+                    // TLS >= 3 Fedora/Alpine
+                    "TLS error [1:167773200] ssl/tls alert handshake failure");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                hrnServerScriptEnd(tls);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+
+        TEST_RESULT_VOID(tlsInit(NULL, NULL), "init null tls ciphers");
+
         // Server on IPv6
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_FORK_BEGIN()
