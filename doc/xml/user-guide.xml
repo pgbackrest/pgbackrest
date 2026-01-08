@@ -1689,7 +1689,7 @@
         <section id="bundle">
             <title>File Bundling</title>
 
-            <p>Bundling files together in the repository saves time during the backup and some space in the repository. This is especially pronounced when the repository is stored on an object store such as <proper>S3</proper>. Per-file creation time on object stores is higher and very small files might cost as much to store as larger files.</p>
+            <p>Bundling files together in the repository saves time during the backup and some space in the repository. This is especially pronounced when the repository is stored on an object store such as <proper>S3</proper> or file systems with large block sizes. Per-file creation time on object stores is higher and very small files might cost as much to store as larger files.</p>
 
             <p>The file bundling feature is enabled with the <br-option>repo-bundle</br-option> option.</p>
 
