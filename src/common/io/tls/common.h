@@ -11,6 +11,9 @@ TLS Common
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
+// Initialize TLS with allowed ciphers
+FN_EXTERN void tlsInit(const String *tlsCipher12, const String *tlsCipher13);
+
 // Convert an ASN1 string used in certificates to a Buffer
 FN_EXTERN Buffer *tlsAsn1ToBuf(const ASN1_STRING *nameAsn1);
 
@@ -27,6 +30,6 @@ FN_EXTERN void tlsCertNameVerify(const String *name);
 FN_EXTERN void tlsCertKeyLoad(SSL_CTX *context, const String *certFile, const String *keyFile);
 
 // Create TLS context
-FN_EXTERN SSL_CTX *tlsContext(void);
+FN_EXTERN SSL_CTX *tlsContext(bool verifyPeer);
 
 #endif

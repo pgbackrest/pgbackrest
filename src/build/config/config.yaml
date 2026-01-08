@@ -952,6 +952,16 @@ option:
     command: buffer-size
     depend: tcp-keep-alive-count
 
+  # TLS allowed ciphers
+  tls-cipher-12:
+    section: global
+    type: string
+    required: false
+    command: buffer-size
+
+  tls-cipher-13:
+    inherit: tls-cipher-12
+
   # Logging options
   #---------------------------------------------------------------------------------------------------------------------------------
   log-level-console:

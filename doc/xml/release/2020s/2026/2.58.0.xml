@@ -58,6 +58,18 @@
             </release-item>
 
             <release-item>
+                <github-issue id="2697"/>
+                <github-pull-request id="2700"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="gunnar.bluth"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Allow configuration of TLS cipher suites.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2693"/>
 
                 <release-item-contributor-list>
@@ -79,6 +91,18 @@
                 </release-item-contributor-list>
 
                 <p>Allow dots in S3 bucket names when using path-style URIs.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2720"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="gunnar.bluth"/>
+                </release-item-contributor-list>
+
+                <p>Require TLS &gt;= 1.2 unless verification is disabled.</p>
             </release-item>
 
             <release-item>
