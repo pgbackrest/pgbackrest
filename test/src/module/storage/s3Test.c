@@ -75,6 +75,7 @@ typedef struct TestRequestParam
     const char *content;
     const char *accessKey;
     const char *securityToken;
+    const char *authorization;
     const char *range;
     const char *kms;
     const char *sseC;
@@ -148,6 +149,10 @@ testRequest(IoWrite *write, Storage *s3, const char *verb, const char *path, Tes
 
         strCatZ(request, ",Signature=????????????????????????????????????????????????????????????????\r\n");
     }
+
+    // Add authorization
+    if (param.authorization != NULL)
+        strCatFmt(request, "authorization:%s\r\n", param.authorization);
 
     // Add content-length
     strCatFmt(request, "content-length:%zu\r\n", param.content != NULL ? strlen(param.content) : 0);
@@ -1072,7 +1077,7 @@ testRun(void)
                 driver = (StorageS3 *)storageDriver(s3);
 
                 TEST_RESULT_STR_Z(driver->credRole, TEST_SERVICE_ROLE, "check role");
-                TEST_RESULT_STR_Z(driver->webIdTokenFile, TEST_SERVICE_TOKEN_FILE, "check token file");
+                TEST_RESULT_STR_Z(driver->tokenFile, TEST_SERVICE_TOKEN_FILE, "check token file");
 
                 // Set partSize to a small value for testing
                 driver->partSize = 16;
@@ -1125,9 +1130,6 @@ testRun(void)
                 TEST_RESULT_UINT(info.size, 9999, "check exists");
                 TEST_RESULT_INT(info.timeModified, 1445412480, "check time");
 
-                // Auth service no longer needed
-                hrnServerScriptEnd(auth);
-
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write zero-length file (without kms)");
 
@@ -1157,9 +1159,70 @@ testRun(void)
                     "assertion '!param.errorOnMissing || storageFeature(this, storageFeaturePath)' failed");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to pod-id authentication");
+
+                hrnServerScriptClose(service);
+
+                #define TEST_PODID_TOKEN                            "TOKEN-PODID"
+                #define TEST_PODID_TOKEN_FILE                       TEST_PATH "/pod-id-token"
+                #define TEST_PODID_GET                              "/v1/credentials"
+                // {uncrustify_off - comment inside string}
+                #define TEST_PODID_RESPONSE                                                                                        \
+                    "{\n"                                                                                                          \
+                    "    \"AccessKeyId\": \"gg\",\n"                                                                               \
+                    "    \"SecretAccessKey\": \"hh\",\n"                                                                           \
+                    "    \"Token\": \"mm\",\n"                                                                                     \
+                    "    \"AccountId\":\"012345678901\",\n"                                                                        \
+                    "    \"Expiration\": \"%s\"\n"                                                                                 \
+                    "}"
+                // {uncrustify_on}
+
+                HRN_STORAGE_PUT_Z(storagePosixNewP(TEST_PATH_STR, .write = true), TEST_PODID_TOKEN_FILE, TEST_PODID_TOKEN);
+
+                argList = strLstDup(commonArgList);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
+                hrnCfgArgRawStrId(argList, cfgOptRepoS3KeyType, storageS3KeyTypePodId);
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+                TEST_ERROR(
+                    storageRepoGet(0, true), OptionInvalidError,
+                    "option 'repo1-s3-key-type' is 'pod-id' but 'AWS_CONTAINER_CREDENTIALS_FULL_URI' and"
+                    " 'AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE' are not set");
+
+                setenv(
+                    "AWS_CONTAINER_CREDENTIALS_FULL_URI", zNewFmt("http://%s:%u/v1/credentials", strZ(host), testPortAuth), true);
+
+                TEST_ERROR(
+                    storageRepoGet(0, true), OptionInvalidError,
+                    "option 'repo1-s3-key-type' is 'pod-id' but 'AWS_CONTAINER_CREDENTIALS_FULL_URI' and"
+                    " 'AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE' are not set");
+
+                setenv("AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE", TEST_PODID_TOKEN_FILE, true);
+
+                s3 = storageRepoGet(0, true);
+                driver = (StorageS3 *)storageDriver(s3);
+
+                TEST_RESULT_STR_Z(driver->tokenFile, TEST_PODID_TOKEN_FILE, "check token file");
+
+                // Set partSize to a small value for testing
+                driver->partSize = 16;
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error without xml");
 
-                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
+                // Get service credentials
+                hrnServerScriptAccept(auth);
+
+                testRequestP(auth, NULL, HTTP_VERB_GET, TEST_PODID_GET, .authorization = TEST_PODID_TOKEN);
+                testResponseP(
+                    auth,
+                    .content = zNewFmt(TEST_PODID_RESPONSE, strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC - 1)))));
+
+                hrnServerScriptClose(auth);
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2", .accessKey = "gg", .securityToken = "mm");
                 testResponseP(service, .code = 344);
 
                 TEST_ERROR(
@@ -1177,6 +1240,16 @@ testRun(void)
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error with xml");
+
+                // Get service credentials
+                hrnServerScriptAccept(auth);
+
+                testRequestP(auth, NULL, HTTP_VERB_GET, TEST_PODID_GET, .authorization = TEST_PODID_TOKEN);
+                testResponseP(
+                    auth,
+                    .content = zNewFmt(TEST_PODID_RESPONSE, strZ(testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC * 2)))));
+
+                hrnServerScriptClose(auth);
 
                 testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2");
                 testResponseP(
@@ -1203,6 +1276,9 @@ testRun(void)
                     "content-length: 79\n"
                     "*** Response Content ***:\n"
                     "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Error><Code>SomeOtherCode</Code></Error>");
+
+                // Auth service no longer needed
+                hrnServerScriptEnd(auth);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("list basic level");

@@ -284,6 +284,8 @@ Option value constants
 
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_AUTO                             STRID5("auto", 0x7d2a10)
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_AUTO_Z                           "auto"
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_POD_ID                           STRID5("pod-id", 0x89d91f00)
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_POD_ID_Z                         "pod-id"
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_SHARED                           STRID5("shared", 0x85905130)
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_SHARED_Z                         "shared"
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_WEB_ID                           STRID5("web-id", 0x89d88b70)

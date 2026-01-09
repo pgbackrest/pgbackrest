@@ -58,6 +58,18 @@
             </release-item>
 
             <release-item>
+                <github-issue id="2718"/>
+                <github-pull-request id="2719"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="pierre.bouteloup"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p><i><b>Experimental</b></i> support for <proper>S3</proper> EKS pod identity.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2697"/>
                 <github-pull-request id="2700"/>
 

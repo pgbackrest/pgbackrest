@@ -117,8 +117,9 @@ struct StorageS3
     // For retrieving temporary security credentials
     HttpClient *credHttpClient;                                     // HTTP client to service credential requests
     const String *credHost;                                         // Credentials host
+    const String *credPath;                                         // Credential url path
     const String *credRole;                                         // Role to use for credential requests
-    const String *webIdTokenFile;                                   // File containing token to use for web-id credential requests
+    const String *tokenFile;                                        // File with token to use for web-id/pod-id credential requests
     time_t credExpirationTime;                                      // Time the temporary credentials expire
 
     // Current signing key and date it is valid for
@@ -395,8 +396,7 @@ storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Load the token from the given file for each request since the token may be updated during execution
-        const String *const webIdToken = strNewBuf(
-            storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), this->webIdTokenFile)));
+        const String *const webIdToken = strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), this->tokenFile)));
 
         // Get credentials
         HttpQuery *const query = httpQueryNewP();
@@ -434,6 +434,56 @@ storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
 
         // Update expiration time
         this->credExpirationTime = storageS3CvtTime(xmlNodeContent(xmlNodeChild(xmlCred, STRDEF("Expiration"), true)));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Automatically get credentials for an associated pod identity
+
+The AWS documentation does not appear to provide a clear example of how to perform this authorization without using their SDK but
+this article proved helpful: https://securitylabs.datadoghq.com/articles/eks-pod-identity-deep-dive
+***********************************************************************************************************************************/
+static void
+storageS3AuthPodId(StorageS3 *const this, const HttpHeader *const header)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_S3, this);
+        FUNCTION_LOG_PARAM(HTTP_HEADER, header);
+    FUNCTION_LOG_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Load the token from the given file for each request since the token may be updated during execution
+        const String *const podIdToken = strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), this->tokenFile)));
+
+        // Get credentials
+        HttpRequest *const request = httpRequestNewP(
+            this->credHttpClient, HTTP_VERB_GET_STR, this->credPath,
+            .header = httpHeaderAdd(httpHeaderDup(header, NULL), HTTP_HEADER_AUTHORIZATION_STR, podIdToken));
+        HttpResponse *const response = httpRequestResponse(request, true);
+
+        CHECK(FormatError, httpResponseCode(response) != HTTP_RESPONSE_CODE_NOT_FOUND, "invalid response code");
+        const KeyValue *const kvResponse = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
+
+        // Copy credentials
+        MEM_CONTEXT_OBJ_BEGIN(this)
+        {
+            this->accessKey = strDup(varStr(kvGet(kvResponse, VARSTRDEF("AccessKeyId"))));
+            CHECK(FormatError, this->accessKey != NULL, "access key missing");
+            this->secretAccessKey = strDup(varStr(kvGet(kvResponse, VARSTRDEF("SecretAccessKey"))));
+            CHECK(FormatError, this->secretAccessKey != NULL, "secret access key missing");
+            this->securityToken = strDup(varStr(kvGet(kvResponse, VARSTRDEF("Token"))));
+            CHECK(FormatError, this->securityToken != NULL, "token missing");
+        }
+        MEM_CONTEXT_OBJ_END();
+
+        // Update expiration time
+        const String *const credExpirationTime = varStr(kvGet(kvResponse, VARSTRDEF("Expiration")));
+        CHECK(FormatError, credExpirationTime != NULL, "expiration missing");
+        this->credExpirationTime = storageS3CvtTime(credExpirationTime);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -528,6 +578,11 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
                 // Auto authentication
                 case storageS3KeyTypeAuto:
                     storageS3AuthAuto(this, credHeader);
+                    break;
+
+                // Pod identity authentication
+                case storageS3KeyTypePodId:
+                    storageS3AuthPodId(this, credHeader);
                     break;
 
                 // Web identity authentication
@@ -1185,9 +1240,9 @@ storageS3New(
     const String *const bucket, const String *const endPoint, const StorageS3UriStyle uriStyle, const String *const region,
     const StorageS3KeyType keyType, const String *const accessKey, const String *const secretAccessKey,
     const String *const securityToken, const String *const kmsKeyId, const String *sseCustomerKey, const String *const credRole,
-    const String *const webIdTokenFile, const size_t partSize, const KeyValue *const tag, const String *host,
-    const unsigned int port, const TimeMSec timeout, const HttpProtocolType protocolType, const bool verifyPeer,
-    const String *const caFile, const String *const caPath, const bool requesterPays)
+    const String *const tokenFile, const String *const credUrl, const size_t partSize, const KeyValue *const tag,
+    const String *host, const unsigned int port, const TimeMSec timeout, const HttpProtocolType protocolType,
+    const bool verifyPeer, const String *const caFile, const String *const caPath, const bool requesterPays)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -1205,7 +1260,8 @@ storageS3New(
         FUNCTION_TEST_PARAM(STRING, kmsKeyId);
         FUNCTION_TEST_PARAM(STRING, sseCustomerKey);
         FUNCTION_TEST_PARAM(STRING, credRole);
-        FUNCTION_TEST_PARAM(STRING, webIdTokenFile);
+        FUNCTION_TEST_PARAM(STRING, tokenFile);
+        FUNCTION_TEST_PARAM(STRING, credUrl);
         FUNCTION_LOG_PARAM(SIZE, partSize);
         FUNCTION_LOG_PARAM(KEY_VALUE, tag);
         FUNCTION_LOG_PARAM(STRING, host);
@@ -1291,10 +1347,10 @@ storageS3New(
             {
                 ASSERT(accessKey == NULL && secretAccessKey == NULL && securityToken == NULL);
                 ASSERT(credRole != NULL);
-                ASSERT(webIdTokenFile != NULL);
+                ASSERT(tokenFile != NULL);
 
                 this->credRole = strDup(credRole);
-                this->webIdTokenFile = strDup(webIdTokenFile);
+                this->tokenFile = strDup(tokenFile);
                 this->credHost = S3_STS_HOST_STR;
                 this->credExpirationTime = time(NULL);
                 this->credHttpClient = httpClientNew(
@@ -1302,6 +1358,23 @@ storageS3New(
                         sckClientNew(this->credHost, S3_STS_PORT, timeout, timeout), this->credHost, timeout, timeout, true,
                         .caFile = caFile, .caPath = caPath),
                     timeout);
+
+                break;
+            }
+
+            // Create the HTTP client used to retrieve pod identity security credentials
+            case storageS3KeyTypePodId:
+            {
+                ASSERT(accessKey == NULL && secretAccessKey == NULL && securityToken == NULL);
+                ASSERT(credUrl != NULL);
+                ASSERT(tokenFile != NULL);
+
+                const HttpUrl *const url = httpUrlNewParseP(credUrl);
+                this->tokenFile = strDup(tokenFile);
+                this->credHost = httpUrlHost(url);
+                this->credPath = strDup(httpUrlPath(url));
+                this->credExpirationTime = time(NULL);
+                this->credHttpClient = httpClientNew(sckClientNew(this->credHost, httpUrlPort(url), timeout, timeout), timeout);
 
                 break;
             }
