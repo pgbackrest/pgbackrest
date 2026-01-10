@@ -2594,13 +2594,8 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                                         strZ(cfgParseOptionValueStr(optionType, optionalRules.allowRangeMaxIdx)));
                                 }
                             }
-                            // Else if StringId
-                            else if (optionType == cfgOptTypeStringId)
-                            {
-                                configOptionValue->value.stringId = strIdFromZN(strZ(valueAllow), strSize(valueAllow), false);
-                            }
                             // Else if string make sure it is valid
-                            else
+                            else if (optionType != cfgOptTypeStringId)
                             {
                                 ASSERT(optionType == cfgOptTypePath || optionType == cfgOptTypeString);
 
@@ -2665,8 +2660,15 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                                     switch (ruleOption->type)
                                     {
                                         case cfgOptTypeStringId:
-                                            allowListFound = strEq(PARSE_RULE_VAL_STR_IDX(valueIdx), configOptionValue->display);
+                                        {
+                                            if (strEq(PARSE_RULE_VAL_STR_IDX(valueIdx), configOptionValue->display))
+                                            {
+                                                allowListFound = true;
+                                                configOptionValue->value.stringId = strIdFromZ(strZ(configOptionValue->display));
+                                            }
+
                                             break;
+                                        }
 
                                         default:
                                             allowListFound =
