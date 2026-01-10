@@ -855,17 +855,9 @@ cfgParseOptionValueStr(const ConfigOptionType type, unsigned int valueIdx)
             valueIdx = parseRuleValueTimeStrMap[valueIdx];
             break;
 
-        case cfgOptTypePath:
-        case cfgOptTypeString:
-            break;
-
         default:
-        {
-            ASSERT(type == cfgOptTypeStringId);
-
-            valueIdx = parseRuleValueStrIdStrMap[valueIdx];
+            ASSERT(type == cfgOptTypePath || type == cfgOptTypeString || type == cfgOptTypeStringId);
             break;
-        }
     }
 
     FUNCTION_TEST_RETURN_CONST(STRING, (const String *)&parseRuleValueStr[valueIdx]);
@@ -944,7 +936,7 @@ cfgParseOptionValuePack(PackRead *const ruleData, const ConfigOptionType type, C
                 {
                     ASSERT(type == cfgOptTypeStringId);
 
-                    value->stringId = parseRuleValueStrId[valueIdx];
+                    value->stringId = strIdFromZ(strZ(cfgParseOptionValueStr(type, valueIdx)));
                     break;
                 }
             }
@@ -1315,7 +1307,7 @@ cfgParseOptionalFilterDepend(
                         ASSERT(cfgParseOptionDataType(result.dependId) == cfgOptDataTypeStringId);
                         result.matchValue = pckReadU32P(filter);
 
-                        if (parseRuleValueStrId[result.matchValue] == dependValue->value.stringId)
+                        if (strEq((const String *)&parseRuleValueStr[result.matchValue], dependValue->display))
                             result.valid = true;
 
                         break;
@@ -2674,7 +2666,8 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                                     switch (ruleOption->type)
                                     {
                                         case cfgOptTypeStringId:
-                                            allowListFound = parseRuleValueStrId[valueIdx] == configOptionValue->value.stringId;
+                                            allowListFound = strEq(
+                                                (const String *)&parseRuleValueStr[valueIdx], configOptionValue->display);
                                             break;
 
                                         default:

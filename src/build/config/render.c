@@ -374,7 +374,7 @@ static String *
 bldCfgRenderScalar(const String *const scalar, const String *const optType)
 {
     if (strEq(optType, OPT_TYPE_STRING_ID_STR))
-        return strNewFmt("PARSE_RULE_VAL_STRID(%s)", strZ(bldEnum("", scalar)));
+        return strNewFmt("PARSE_RULE_VAL_STRID(%s)", strZ(bldCfgRenderEnumStr(scalar)));
 
     if (strEq(optType, OPT_TYPE_STRING_STR))
         return strNewFmt("PARSE_RULE_VAL_STR(%s)", strZ(bldCfgRenderEnumStr(scalar)));
@@ -513,8 +513,9 @@ bldCfgRenderAllowList(const List *const allowList, const String *const optType)
     for (unsigned int allowIdx = 0; allowIdx < lstSize(allowList); allowIdx++)
     {
         const BldCfgOptionValue *const allow = lstGet(allowList, allowIdx);
+        const String *const value = strEq(optType, OPT_TYPE_STRING_STR) ? strNewFmt("\"%s\"", strZ(allow->value)) : allow->value;
 
-        strCatFmt(result, "                    %s,\n", strZ(bldCfgRenderScalar(allow->value, optType)));
+        strCatFmt(result, "                    %s,\n", strZ(bldCfgRenderScalar(value, optType)));
 
         if (allow->condition != NULL)
         {
@@ -699,6 +700,14 @@ bldCfgRenderValueRender(
                 strNewFmt(
                     "PARSE_RULE_U32_%zu(parseRuleVal%s##value)", bldCfgRenderVar128Size(strLstSize(ruleValList) - 1), abbr))));
 
+    // Add value macro for StringId
+    if (strEq(optType, OPT_TYPE_STRING_STR))
+    {
+        strCatFmt(
+            result, "%s\n",
+            strZ(bldDefineRender(STRDEF("PARSE_RULE_VAL_STRID(value)"), STRDEF("PARSE_RULE_VAL_STR(QT_##value##_QT)"))));
+    }
+
     // Render values
     strCatFmt(
         result,
@@ -715,8 +724,6 @@ bldCfgRenderValueRender(
 
         if (strEq(optType, OPT_TYPE_STRING_STR))
             strCatFmt(resultVal, "    PARSE_RULE_STRPUB(%s),", strZ(strLstGet(ruleValList, ruleValIdx)));
-        else if (strEq(optType, OPT_TYPE_STRING_ID_STR))
-            strCatFmt(resultVal, "    %s,", strZ(bldStrId(strZ(strLstGet(ruleValList, ruleValIdx)))));
         else if (strEq(optType, OPT_TYPE_INTEGER_STR))
             strCatFmt(resultVal, "    %s,", strZ(strTrim(strLstGet(ruleValList, ruleValIdx))));
         else if (strEq(optType, OPT_TYPE_SIZE_STR))
@@ -729,8 +736,7 @@ bldCfgRenderValueRender(
     strCatZ(result, "\n};\n");
 
     // Render value to string map
-    if (strEq(optType, OPT_TYPE_STRING_ID_STR) || strEq(optType, OPT_TYPE_INTEGER_STR) || strEq(optType, OPT_TYPE_SIZE_STR) ||
-        strEq(optType, OPT_TYPE_TIME_STR))
+    if (strEq(optType, OPT_TYPE_INTEGER_STR) || strEq(optType, OPT_TYPE_SIZE_STR) || strEq(optType, OPT_TYPE_TIME_STR))
     {
         strCatFmt(
             result,
@@ -1399,9 +1405,6 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
     strCat(
         configVal,
         bldCfgRenderValueRender(OPT_TYPE_STRING_STR, ruleValMap, label, "StringPubConst", "String", "Str", "STR", "val/str"));
-    strCat(
-        configVal,
-        bldCfgRenderValueRender(OPT_TYPE_STRING_ID_STR, ruleValMap, label, "StringId", "StringId", "StrId", "STRID", "val/strid"));
     strCat(configVal, bldCfgRenderValueRender(OPT_TYPE_INTEGER_STR, ruleValMap, label, "int", "Int", "Int", "INT", "val/int"));
     strCat(configVal, bldCfgRenderValueRender(OPT_TYPE_SIZE_STR, ruleValMap, label, "int64_t", "Size", "Size", "SIZE", "val/size"));
     strCat(
