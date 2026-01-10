@@ -67,7 +67,10 @@ sub new
                 {bSuppressStdErr => true});
 
     # Get IP Address
-    $self->{strIP} = trim(executeTest("docker inspect --format '\{\{ .NetworkSettings.IPAddress \}\}' $self->{strContainer}"));
+    $self->{strIP} = trim(
+        executeTest(
+            "docker inspect --format '\{\{range .NetworkSettings.Networks\}\}\{\{.IPAddress\}\}\{\{end\}\}'" .
+            " $self->{strContainer}"));
     $self->{bActive} = true;
 
     # Return from function and log return values if any

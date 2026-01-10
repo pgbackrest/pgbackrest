@@ -187,7 +187,10 @@ hrnHostNew(const StringId id, const String *const container, const String *const
 
             // Get IP address
             const String *const ip = strTrim(
-                execOneP(strNewFmt("docker inspect --format '{{ .NetworkSettings.IPAddress }}' %s", strZ(hrnHostContainer(this)))));
+                execOneP(
+                    strNewFmt(
+                        "docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' %s",
+                        strZ(hrnHostContainer(this)))));
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
