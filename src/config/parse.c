@@ -246,6 +246,7 @@ typedef enum
 
 #define PARSE_RULE_VAL_BOOL_TRUE                                    PARSE_RULE_BOOL_TRUE
 #define PARSE_RULE_VAL_BOOL_FALSE                                   PARSE_RULE_BOOL_FALSE
+#define PARSE_RULE_VAL_STR_IDX(valueIdx)                            ((const String *)&parseRuleValueStr[valueIdx])
 
 #define PARSE_RULE_OPTIONAL(...)                                                                                                   \
     .packSize = sizeof((const uint8_t []){PARSE_RULE_PACK(__VA_ARGS__)}),                                                          \
@@ -860,7 +861,7 @@ cfgParseOptionValueStr(const ConfigOptionType type, unsigned int valueIdx)
             break;
     }
 
-    FUNCTION_TEST_RETURN_CONST(STRING, (const String *)&parseRuleValueStr[valueIdx]);
+    FUNCTION_TEST_RETURN_CONST(STRING, PARSE_RULE_VAL_STR_IDX(valueIdx));
 }
 
 /***********************************************************************************************************************************
@@ -927,16 +928,14 @@ cfgParseOptionValuePack(PackRead *const ruleData, const ConfigOptionType type, C
                     value->integer = cfgParseOptionValue(type, valueIdx);
                     break;
 
-                case cfgOptTypePath:
-                case cfgOptTypeString:
-                    value->string = cfgParseOptionValueStr(type, valueIdx);
-                    break;
-
                 default:
                 {
-                    ASSERT(type == cfgOptTypeStringId);
+                    ASSERT(type == cfgOptTypePath || type == cfgOptTypeString || type == cfgOptTypeStringId);
+                    value->string = PARSE_RULE_VAL_STR_IDX(valueIdx);
 
-                    value->stringId = strIdFromZ(strZ(cfgParseOptionValueStr(type, valueIdx)));
+                    if (type == cfgOptTypeStringId)
+                        value->stringId = strIdFromZ(strZ(value->string));
+
                     break;
                 }
             }
@@ -1307,7 +1306,7 @@ cfgParseOptionalFilterDepend(
                         ASSERT(cfgParseOptionDataType(result.dependId) == cfgOptDataTypeStringId);
                         result.matchValue = pckReadU32P(filter);
 
-                        if (strEq((const String *)&parseRuleValueStr[result.matchValue], dependValue->display))
+                        if (strEq(PARSE_RULE_VAL_STR_IDX(result.matchValue), dependValue->display))
                             result.valid = true;
 
                         break;
@@ -2051,8 +2050,8 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
         {
             const String *const configString = cfgFileLoad(
                 storage, parseOptionList,
-                (const String *)&parseRuleValueStr[parseRuleValStrCFGOPTDEF_CONFIG_PATH_SP_QT_FS_QT_SP_PROJECT_CONFIG_FILE],
-                (const String *)&parseRuleValueStr[parseRuleValStrCFGOPTDEF_CONFIG_PATH_SP_QT_FS_QT_SP_PROJECT_CONFIG_INCLUDE_PATH],
+                PARSE_RULE_VAL_STR_IDX(parseRuleValStrCFGOPTDEF_CONFIG_PATH_SP_QT_FS_QT_SP_PROJECT_CONFIG_FILE),
+                PARSE_RULE_VAL_STR_IDX(parseRuleValStrCFGOPTDEF_CONFIG_PATH_SP_QT_FS_QT_SP_PROJECT_CONFIG_INCLUDE_PATH),
                 PGBACKREST_CONFIG_ORIG_PATH_FILE_STR);
 
             iniFree(configParseLocal.ini);
@@ -2589,7 +2588,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                                         optionalRules.allowRangeMatch ?
                                             zNewFmt(
                                                 " when '%s' option = '%s'", dependOptionName,
-                                                strZ(cfgParseOptionValueStr(cfgOptTypeStringId, optionalRules.matchValue))) :
+                                                strZ(PARSE_RULE_VAL_STR_IDX(optionalRules.matchValue))) :
                                             "",
                                         strZ(cfgParseOptionValueStr(optionType, optionalRules.allowRangeMinIdx)),
                                         strZ(cfgParseOptionValueStr(optionType, optionalRules.allowRangeMaxIdx)));
@@ -2666,8 +2665,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                                     switch (ruleOption->type)
                                     {
                                         case cfgOptTypeStringId:
-                                            allowListFound = strEq(
-                                                (const String *)&parseRuleValueStr[valueIdx], configOptionValue->display);
+                                            allowListFound = strEq(PARSE_RULE_VAL_STR_IDX(valueIdx), configOptionValue->display);
                                             break;
 
                                         default:
