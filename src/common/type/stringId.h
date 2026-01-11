@@ -59,9 +59,7 @@ against each other so the str parameter is included only for documentation purpo
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Convert N chars to StringId, If the string is longer than the allowable length for the selected encoding then the StringID will
-// be marked as "partial" and will have a '+' appended whenever it is converted back to a string. This is to distinguish it from a
-// string with the same number of encoded characters that did not overflow.
+// Convert N chars to StringId
 FN_EXTERN StringId strIdFromZN(const char *buffer, size_t size, bool error);
 
 // Convert zero-terminated string to StringId using strIdFromZN()
