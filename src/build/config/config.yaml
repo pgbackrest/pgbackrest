@@ -978,16 +978,12 @@ option:
       - trace
 
   log-level-file:
-    section: global
-    type: string-id
+    inherit: log-level-console
     default: info
-    allow-list: log-level-console
 
   log-level-stderr:
-    section: global
-    type: string-id
+    inherit: log-level-console
     default: off
-    allow-list: log-level-console
 
   log-path:
     section: global
