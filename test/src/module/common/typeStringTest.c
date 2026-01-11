@@ -630,8 +630,6 @@ testRun(void)
         TEST_RESULT_UINT(strIdBitFromZN(stringIdBit6, "abC-40MzZ9", 10), TEST_STR6ID10, "6 bits 10 chars");
         TEST_RESULT_UINT(strIdBitFromZN(stringIdBit6, "abC-40MzZ9Z", 11), 0, "error on too many chars");
 
-        TEST_RESULT_UINT(strIdFromZN("|B", 2, false), 0, "'|' is invalid for 6-bit encoding in '|B'");
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("STRID*()");
 

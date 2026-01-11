@@ -60,13 +60,13 @@ against each other so the str parameter is included only for documentation purpo
 Functions
 ***********************************************************************************************************************************/
 // Convert N chars to StringId
-FN_EXTERN StringId strIdFromZN(const char *buffer, size_t size, bool error);
+FN_EXTERN StringId strIdFromZN(const char *buffer, size_t size);
 
 // Convert zero-terminated string to StringId using strIdFromZN()
 FN_INLINE_ALWAYS StringId
 strIdFromZ(const char *const str)
 {
-    return strIdFromZN(str, strlen(str), true);
+    return strIdFromZN(str, strlen(str));
 }
 
 // Write StringId to characters without zero-terminating. The buffer at ptr must have enough space to write the entire StringId,

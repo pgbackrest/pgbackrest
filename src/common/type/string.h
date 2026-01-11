@@ -227,7 +227,7 @@ FN_EXTERN String *strSizeFormat(const uint64_t fileSize);
 FN_INLINE_ALWAYS StringId
 strStrId(const String *const this)
 {
-    return strIdFromZN(strZ(this), strSize(this), true);
+    return strIdFromZN(strZ(this), strSize(this));
 }
 
 // Return a substring given only the start position

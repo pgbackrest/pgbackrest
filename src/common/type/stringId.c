@@ -223,12 +223,11 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
 }
 
 FN_EXTERN StringId
-strIdFromZN(const char *const buffer, const size_t size, const bool error)
+strIdFromZN(const char *const buffer, const size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VOID, buffer);
         FUNCTION_TEST_PARAM(SIZE, size);
-        FUNCTION_TEST_PARAM(BOOL, error);
     FUNCTION_TEST_END();
 
     StringId result = strIdBitFromZN(stringIdBit5, buffer, size);
@@ -239,7 +238,7 @@ strIdFromZN(const char *const buffer, const size_t size, const bool error)
         result = strIdBitFromZN(stringIdBit6, buffer, size);
 
         // Error when 6-bit encoding also fails
-        if (result == 0 && error)
+        if (result == 0)
             THROW_FMT(FormatError, "'%s' contains invalid characters", buffer);
     }
 
