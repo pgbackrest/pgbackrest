@@ -308,7 +308,7 @@
                   "name" : "azure-server",
                   "option" : "-v {[host-repo-path]}/doc/resource/fake-cert/azure-server.crt:/root/public.crt:ro -v {[host-repo-path]}/doc/resource/fake-cert/azure-server.key:/root/private.key:ro -e AZURITE_ACCOUNTS='pgbackrest:YXpLZXk='",
                   "os" : "debian",
-                  "param" : "azurite-blob --blobPort 443 --blobHost 0.0.0.0 --cert=/root/public.crt --key=/root/private.key",
+                  "param" : "azurite-blob --blobPort 443 --blobHost 0.0.0.0 --cert=/root/public.crt --key=/root/private.key --skipApiVersionCheck",
                   "update-hosts" : false
                },
                "type" : "host",
@@ -6866,7 +6866,7 @@
                   "name" : "azure-server",
                   "option" : "-v {[host-repo-path]}/doc/resource/fake-cert/azure-server.crt:/root/public.crt:ro -v {[host-repo-path]}/doc/resource/fake-cert/azure-server.key:/root/private.key:ro -e AZURITE_ACCOUNTS='pgbackrest:YXpLZXk='",
                   "os" : "rhel",
-                  "param" : "azurite-blob --blobPort 443 --blobHost 0.0.0.0 --cert=/root/public.crt --key=/root/private.key",
+                  "param" : "azurite-blob --blobPort 443 --blobHost 0.0.0.0 --cert=/root/public.crt --key=/root/private.key --skipApiVersionCheck",
                   "update-hosts" : false
                },
                "type" : "host",
