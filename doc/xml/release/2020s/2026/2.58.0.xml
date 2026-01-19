@@ -1,4 +1,4 @@
-<release date="XXXX-XX-XX" version="2.58.0dev" title="Under Development">
+<release date="2026-01-19" version="2.58.0" title="Object Storage Improvements">
     <release-core-list>
         <text>
             <p><b>IMPORTANT NOTE</b>: The minimum values for the <setting>repo-storage-upload-chunk-size</setting> option have increased. They now represent the minimum allowed by the vendors.</p>
@@ -58,8 +58,10 @@
             </release-item>
 
             <release-item>
-                <github-issue id="2718"/>
-                <github-pull-request id="2719"/>
+                <commit subject="Support for S3 EKS pod identity.">
+                    <github-issue id="2718"/>
+                    <github-pull-request id="2719"/>
+                </commit>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="pierre.bouteloup"/>
@@ -70,8 +72,11 @@
             </release-item>
 
             <release-item>
-                <github-issue id="2697"/>
-                <github-pull-request id="2700"/>
+                <commit subject="Allow configuration of TLS cipher suites.">
+                    <github-issue id="2697"/>
+                    <github-pull-request id="2700"/>
+                </commit>
+                <commit subject="Fix flapping common/io-tls unit test added in fbc607a4."/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="gunnar.bluth"/>

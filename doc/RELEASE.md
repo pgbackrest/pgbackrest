@@ -21,13 +21,13 @@ to:
         <release date="2019-05-20" version="2.14.0" title="Bug Fix and Improvements">
 ```
 
-Edit version in `src/version.h`, e.g.:
+Remove development marker `src/version.h`, e.g.:
 ```
-#define PROJECT_VERSION                                             "2.14dev"
+#define PROJECT_VERSION_SUFFIX                                      "dev"
 ```
 to:
 ```
-#define PROJECT_VERSION                                             "2.14.0"
+#define PROJECT_VERSION_SUFFIX                                      ""
 ```
 
 ## Update code counts
@@ -199,11 +199,17 @@ Add new release in `doc/xml/release.xml`, e.g.:
 
 Edit version in `src/version.h`, e.g.:
 ```
-#define PROJECT_VERSION                                             "2.14.0"
+#define PROJECT_VERSION_MAJOR                                       2
+#define PROJECT_VERSION_MINOR                                       58
+#define PROJECT_VERSION_PATCH                                       0
+#define PROJECT_VERSION_SUFFIX                                      ""
 ```
 to:
 ```
-#define PROJECT_VERSION                                             "2.15dev"
+#define PROJECT_VERSION_MAJOR                                       2
+#define PROJECT_VERSION_MINOR                                       59
+#define PROJECT_VERSION_PATCH                                       0
+#define PROJECT_VERSION_SUFFIX                                      "dev"
 ```
 
 Run deploy to generate git history (ctrl-c as soon as the file is generated):

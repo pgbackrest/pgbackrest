@@ -1,5 +1,347 @@
 [
     {
+        "commit": "d206d89d5fd40e9c386a87d326eb9fd5bc5d855c",
+        "date": "2026-01-19 16:29:57 +0700",
+        "subject": "New CI container builds."
+    },
+    {
+        "commit": "b52ebe1fd840d504808a850379bf82439cf50065",
+        "date": "2026-01-15 12:01:51 +0700",
+        "subject": "Suppress Azurite API version checking in documentation builds.",
+        "body": "The az tool used to create the bucket now requires an API version greater than what Azurite supports. This may be a mistake on their part (but has not resolved after a day) or may indicate that Azurite is no longer actively supported.\n\nEither way, for now it is easiest to suppress the version check so CI builds can proceed. Other corrective action can be taken later as needed."
+    },
+    {
+        "commit": "6904cdf5a8e4f66dca626f166eb0f01c42657254",
+        "date": "2026-01-11 21:00:39 +0700",
+        "subject": "Simplify log-level options in config.yaml.",
+        "body": "These were overly verbose -- inheritance is the way to do this."
+    },
+    {
+        "commit": "d76da852ee61a396582eba034d49bf8e8e99b7db",
+        "date": "2026-01-11 18:42:27 +0700",
+        "subject": "Remove unused error parameter from strIdFromZN().",
+        "body": "This parameter was made obsolete in 85caeda4."
+    },
+    {
+        "commit": "d12aa6fcdab125f1bbc68220ac436797296a6623",
+        "date": "2026-01-11 15:02:22 +0700",
+        "subject": "Update strIdFromZN() comment missed in 6e11d650."
+    },
+    {
+        "commit": "35505d63fd4583e290f02dae6d20e102efacf798",
+        "date": "2026-01-10 19:13:55 +0700",
+        "subject": "Use more generic expression to fetch container IP addresses.",
+        "body": "The IP address has been moved in newer versions of Docker but this expression will fetch the IP address from the old or new location."
+    },
+    {
+        "commit": "85caeda4e569bbd1adf3941ac08369f5878d5316",
+        "date": "2026-01-10 15:52:06 +0700",
+        "subject": "Throw errors on invalid StringIds in config/parse.c.",
+        "body": "Now that the StringIds are not stored in parse.auto.c.inc it may not be obvious if an invalid StringId is generated. By moving the encoding to after the value has been validated we can error if the StringId is invalid rather than throwing an error that the value does not exist in the allow list."
+    },
+    {
+        "commit": "58988064733c24f816dcd831e6def717f253c71b",
+        "date": "2026-01-10 15:35:37 +0700",
+        "subject": "Add PARSE_RULE_VAL_STR_IDX() to simplify logic in config/parse.c.",
+        "body": "Mostly this just makes the code cleaner but there are also a few function calls that were replaced with the macro.\n\nAlso tighten up the logic in cfgParseOptionValuePack() a bit even though is not related to this macro change."
+    },
+    {
+        "commit": "31d4aaa19f9ffcd30cdae427e9ab333e7163dcc6",
+        "date": "2026-01-10 15:08:05 +0700",
+        "subject": "Remove generated StringIds from parse.auto.c.inc.",
+        "body": "These StringIds use space and increase churn when new ids are added. It is easy and efficient to use strings for comparison and convert to StringId in code."
+    },
+    {
+        "commit": "79544f64a3ce198f4685f923739def997fcafbce",
+        "date": "2026-01-09 15:18:28 +0700",
+        "subject": "Support for S3 EKS pod identity.",
+        "body": "Fetch credentials automatically using EKS pod identity, which removes the need for static configuration. Credentials are automatically updated before they expire to support long-running commands."
+    },
+    {
+        "commit": "91ad65537f55aa3825b6c7b626a9e1b7cbb1ad4c",
+        "date": "2026-01-08 11:45:14 +0700",
+        "subject": "Fix flapping common/io-tls unit test added in fbc607a4.",
+        "body": "Since the server exits on error in this test there is no need to shut it down when the script completes. This usually worked because the message would arrive before the server had shutdown completely but sometimes it would error on a broken pipe."
+    },
+    {
+        "commit": "a7e5f28511c27f2504a873db26803b26a84df8f1",
+        "date": "2026-01-08 10:53:51 +0700",
+        "subject": "Clarify that bundling is useful for filesystems with large block sizes."
+    },
+    {
+        "commit": "fbc607a48b1fb4ae65c9f2691c44453f02aef2b8",
+        "date": "2026-01-08 09:17:17 +0700",
+        "subject": "Allow configuration of TLS cipher suites.",
+        "body": "Configuration of specific cipher suites may be required for compliance or to use preferred ciphers for security.\n\nCipher suites are applied to the entire process and cannot be configured on a per-connection basis, except that for object store clients (e.g. S3) verification can be disabled."
+    },
+    {
+        "commit": "5b4b20a8d7d17c2bffe106595310853e3f3a9604",
+        "date": "2026-01-07 08:22:01 +0700",
+        "subject": "Require TLS >= 1.2 unless verification is disabled.",
+        "body": "TLS 1.0 and 1.1 have been deprecated since 2021 (see RFC-8996) and TLS 1.2 has been available since 2008. As such it makes sense to require TLS >= 1.2 when verification is enabled. Verification is always enabled for TLS protocol sessions within pgBackRest but can be disabled for object stores (.e.g. S3) to support self-signed certificates on internal servers.\n\nThere is a slight change in behavior when verification is disabled. In prior versions SSL 2/3 would be disabled but now they are allowed (as well as TLS 1.0/1.2). With verification disabled it doesn't seem useful to be picky about protocol versions and disabling TLS 1.0/1.1 could easily cause breakage on older TLS servers."
+    },
+    {
+        "commit": "38f14d73b6a62d06e1ead7942e49a2bb2ae90dab",
+        "date": "2026-01-05 18:42:11 +0700",
+        "subject": "Support for Azure managed identities.",
+        "body": "Fetch credentials automatically using managed identities, which removes the need for static configuration. Credentials are automatically updated before they expire to support long-running commands."
+    },
+    {
+        "commit": "67c8b3462dd4e43e3acc7252d8551b95f3e018f0",
+        "date": "2026-01-05 09:34:46 +0700",
+        "subject": "Fix minor formatting issue."
+    },
+    {
+        "commit": "6e11d65074419498045899d8b391ed17e88c8aae",
+        "date": "2026-01-02 12:02:48 +0700",
+        "subject": "Remove prefix functionality from StringId.",
+        "body": "In practice StringIds that could not be output as the original string were not useful. Remove this functionality to simplify the code and reclaim the bit for other purposes."
+    },
+    {
+        "commit": "d269d1d9bdbb390abda96a9aa613e27fd020f628",
+        "date": "2026-01-02 11:16:28 +0700",
+        "subject": "Move object code out of StringId module.",
+        "body": "Functions for creating String and StringZ objects should be in their respective modules so move them there. This simplifies the dependencies for StringId and is more modular."
+    },
+    {
+        "commit": "911857119663e24d4647a756e9d23b83d14b3fe7",
+        "date": "2026-01-02 10:47:45 +0700",
+        "subject": "Move constants required for debug logging.",
+        "body": "Moving these constants to stringStatic.h reduces the dependency on stringZ.h for low-level debug logging. This makes it possible to add new capabilities to stringZ.c."
+    },
+    {
+        "commit": "84778658ac73b3dd32cfdb7645c5e63ce734aa6a",
+        "date": "2025-12-30 17:40:18 +0700",
+        "subject": "Use JsonRead for all info JSON parsing.",
+        "body": "After JsonRead was introduced the performance-sensitive areas of info were migrated from Variant. However, other areas were left using Variant because they were not important enough to update at that time.\n\nMigrate remaining Variant usage to JsonRead wherever possible for consistency. Also improve memory management to avoid some cruft that would end up in the object mem context and avoid switching to the object mem context when possible."
+    },
+    {
+        "commit": "d88ae742823233b680900906dde69ce415e6384a",
+        "date": "2025-12-29 19:40:26 +0700",
+        "subject": "Fix test comment."
+    },
+    {
+        "commit": "2398dd4d432d312b3641e9fbbcbe0487ad43112d",
+        "date": "2025-12-29 10:39:21 +0700",
+        "subject": "HTTP support for S3, GCS, and Azure.",
+        "body": "Allow users to specify HTTP in the endpoint but default to using HTTPS in all other scenarios to preserve the existing behavior.\n\nExtend HttpUrl with a `defaultType` parameter to support either:\n- Explicitly specifying a protocol via `.type` and enforcing that protocol is used in the URL.\n- Allowing protocol to be parsed from URL, but providing default via `.defaultType` if no protocol is found in the URL.\n\nAdd partial write handling in fdWrite() to support non-blocking socket operations. The write loop now handles EAGAIN errors by waiting for the file descriptor to become writable, and continues writing the remaining bytes when write() returns fewer bytes than requested. This is required for HTTP, which may use non-blocking sockets, but doesn't have built in handling like the TLS client we are using for HTTPS. Also wrap the write() call and add a shim and additional logging for easier unit testing."
+    },
+    {
+        "commit": "1afaab1c1e35d61ee17837f6850d731e25770e1a",
+        "date": "2025-12-23 17:24:49 +0700",
+        "subject": "Removed redundant documentation variables and references."
+    },
+    {
+        "commit": "fdeb46be8337706fb8f7d0730bddaeef47f19f90",
+        "date": "2025-12-23 16:59:08 +0700",
+        "subject": "Remove PDF documentation output.",
+        "body": "PDF output is not longer used by the project. Removal will make documentation maintenance and improvements simpler."
+    },
+    {
+        "commit": "e13c462908c6ee25f8795b5d1373981549d4d5cf",
+        "date": "2025-12-22 14:43:15 +0700",
+        "subject": "Fix deadlock due to logging in signal handler.",
+        "body": "Previously it was possible to achieve a deadlock in a signal handler, for example when SIGTERM (i.e. sent by `pgbackrest stop --force`) arrives when a lock used in `gmtime_r` is taken. Then the next time logging is done, it will deadlock on `gmtime_r`.\n\nIn general, most stdlib functions are not safe to call in signal handlers, only so called async-signal safe functions are. In particular, `snprintf` isn't safe since it is allowed to internally call `malloc`. The `exitSafe` function isn't safe due to extensive use of allocations. Because of this, we need to use a simpler logging format in signal handlers, one that only uses async-signal safe functions."
+    },
+    {
+        "commit": "cc7b9b72718c091de54417f9f35761dcfab610d9",
+        "date": "2025-12-22 14:23:08 +0700",
+        "subject": "Fix missing parameter logging in storageS3New()."
+    },
+    {
+        "commit": "bf2b276dc011464b13039630870934fd42ca473c",
+        "date": "2025-12-11 20:10:32 +0530",
+        "subject": "Allow expiration of oldest full backup regardless of current retention.",
+        "body": "Prior to this commit it was difficult to expire just the oldest full backup while ignoring current retention settings. The user had to manually update retention or script something to automate it. Expiring the oldest full backup is useful when disk space is running low.\n\nAdd the --oldest option to allow expiration of the oldest full backup and any dependent backups regardless of the current retention settings. Archive retention is also adjusted to expire WAL before the oldest retained full backup."
+    },
+    {
+        "commit": "3fdb4a1ea00b442aca5fc714818d293d57490386",
+        "date": "2025-12-07 11:29:12 +0530",
+        "subject": "Allow dots in S3 bucket names when using path-style URIs.",
+        "body": "The reasoning in the FAQ and code about RFC-2818 is only valid when using host style URIs. According to AWS S3 bucket naming standard the allowed characters is any lowercase alphanumeric including dash and dot.\n\nMost self hosted S3 services utilize path based URIs where dots are valid in a bucket name so this check should only apply for host based buckets. Even though its use is not recommended and path-based access is being phased out of AWS S3 it is still valid and should function for other providers."
+    },
+    {
+        "commit": "8a4df08bd2025a122a6ec47788c8b942221bf8d7",
+        "date": "2025-12-07 10:51:19 +0530",
+        "subject": "Update Cirrus-CI FreeBSD 14 runner version."
+    },
+    {
+        "commit": "09efab039aa4c79f1c762eecefeee32c53a3507b",
+        "date": "2025-11-29 11:39:01 +0530",
+        "subject": "Fix WAL segment numbering in command/expire unit test.",
+        "body": "WAL segments were being numbered in decimal format rather than hex. This worked in the prior cases (more or less) but is not correct or flexible."
+    },
+    {
+        "commit": "38ac6387cbbfc6f78a686de657e5a4de4ed59295",
+        "date": "2025-11-28 14:27:36 +0530",
+        "subject": "Improve logging of default for options with an unresolved dependency.",
+        "body": "Options with unresolved dependencies can have an implied default specified. This makes the code a bit simpler since we don't need to check for option validity.\n\nHowever, there was an edge case where if an option was specified in the config file and ultimately the dependency was not resolved then the option would not be marked as default and therefore show up in the option logging at the beginning of a command. The default value was correct so everything operated as expected but the logging was confusing.\n\nIn the case of an implied default, reinitialize the option struct so that any leftover settings will be reset."
+    },
+    {
+        "commit": "28bfa20ba3b860f72ba7ab6c018e37ada99e2109",
+        "date": "2025-11-25 17:28:20 +0530",
+        "subject": "Optimize S3/GCS/Azure chunk size for small files.",
+        "body": "The prior code allocated the entire chunk buffer when the file was opened. However, in practice many files are smaller than the chunk buffer, especially in the main process.\n\nInstead grow the chunk buffer as data comes in to save memory when smaller files are being processed. This adds some overhead for reallocations but modern processors do this very efficiently so it should not be significant compared to the cost of compressing, encrypting, and transferring files. Even so, the growth is fairly aggressive when the input buffers are full so only one or two reallocation are required to get to the default chunk size."
+    },
+    {
+        "commit": "86554faa707292855c2776a0c70b5e212b1e3945",
+        "date": "2025-11-22 20:32:37 +0400",
+        "subject": "Dynamically size S3/GCS/Azure chunks for large uploads.",
+        "body": "Previously an S3 upload with default repo-storage-upload-chunk-size would only work for files <= 50GiB because of the limited number of chunks allowed. GCS has a smaller chunk size default so it topped out at 40GiB. Azure allows 50,000 chunks so it allowed up to 200GiB.\n\nThese are all far larger than files PostgreSQL will create but these days a data directory might also contain files created by plugins that can be much larger.\n\nSince the eventual file size is not known in advance (due to compression) it is hard to pick an appropriate chunk size in advance. Instead, dynamically grow the chunk size over time to reach 5TiB for S3 and GCS (their upper limit). Azure has more parts so it will reach 45TiB, which is smaller than the upper limit of 190TiB, but seems sufficient for now.\n\nThe default buffer size is used for the first GiB (plus some) to provide compatibility with any clones that do not support variable block sizes. There is no evidence that this is a problem but better to be safe.\n\nThe minimum values for repo-storage-upload-chunk-size have been increased to match vendor minimums and simply the chunk size algorithm."
+    },
+    {
+        "commit": "bce97d3ea80675b8eab3dbf692e8bc8f077f30c7",
+        "date": "2025-11-19 10:40:02 +0200",
+        "subject": "Remove explicit max_wal_senders/wal_level configuration from user guide.",
+        "body": "Since PostgreSQL 10 these settings have been defaulted to values required by the user guide so there is no need to explicitly set them.\n\nPostgreSQL 9.5/9.6 are still supported by pgBackRest but are not represented in the user guide since they are EOL."
+    },
+    {
+        "commit": "d83019924bd07bf563ec2d8f7b8417694fd51519",
+        "date": "2025-11-12 14:27:22 +0200",
+        "subject": "Fix 32-bit CI testing.",
+        "body": "32-bit testing was broken by 24802a08, which was attempting to fix multi-architecture builds by using docker to set the architecture.\n\ni386 is not a special case but the prior alternate architectures did not run integration tests. This requires passing the architecture around since the integration test main process runs on the host system, which may be a different architecture."
+    },
+    {
+        "commit": "c6ebfc8faed2609b996f9ab4dd80c7fc6bfd774f",
+        "date": "2025-11-12 11:22:08 +0200",
+        "subject": "Removed unused code in test container build."
+    },
+    {
+        "commit": "0fc7e96f5addb01e7f6f3585e37d209cc17dd956",
+        "date": "2025-11-11 21:06:42 +0200",
+        "subject": "Allow process priority to be set.",
+        "body": "Decreasing process priority makes the pgBackRest processes less likely to interfere with the normal operation of PostgreSQL."
+    },
+    {
+        "commit": "8b9a19e078a9650786433047a05f15637dcac8c6",
+        "date": "2025-11-11 13:24:27 +0200",
+        "subject": "Rearrange options for clarity.",
+        "body": "Especially for pg-* and repo-*, groups options in a way that makes them easier to maintain with headers to make them easier to find."
+    },
+    {
+        "commit": "639f27f67ebc90f11646be8b0863a3f3b3ef088e",
+        "date": "2025-11-11 12:29:59 +0200",
+        "subject": "Move PostgreSQL connection options to the same section.",
+        "body": "This makes maintenance easier. Also fix the command list for db-timeout so it matches pg-database, i.e. all the commands that can connect to the database."
+    },
+    {
+        "commit": "f5b51a5680364ea9488d5666477ba6c9229322d9",
+        "date": "2025-11-11 11:53:59 +0200",
+        "subject": "Add new defines to help with option command maintenance.",
+        "body": "Add +inherit, +role, and -command to help with command maintenance. These allow command lists to automatically add new commands without them needing to be added manually. They should also be easier to read than long command lists."
+    },
+    {
+        "commit": "9653d444f2b831924baf10dd53051c9d49beb02d",
+        "date": "2025-11-11 09:44:41 +0200",
+        "subject": "Use roles to simplify option command lists.",
+        "body": "In many cases the valid commands are based on the commands valid for roles. In these cases derive the commands from a role list rather than an explicit command list.\n\nNot only is this notation more compact but it helps prevent new commands from being missed.\n\nThis exposed a few issues:\n\n1) The cmd option should only be valid when a command supports the local role since it is used to execute the local process. A number of commands were included before that did not have the local role.\n\n2) cmd-ssh should be valid for any command that allows remotes. The annotate command was missing from this list.\n\n3) compress-level-network should be valid for any command that allows remotes. The repo-rm command was missing from this list."
+    },
+    {
+        "commit": "411c1d0a8730c30a04189b79237970d3aa5934c7",
+        "date": "2025-11-11 09:09:15 +0200",
+        "subject": "Cleanup pg-host options for unsupported remote restore.",
+        "body": "Restoring to a remote pg-host is not supported but the options were a bit untidy. Many options were marked as internal but should be invalid. repo-host-type and repo-host are required to let restore know if a pg-host is configured and remain internal but the rest of the pg-host-* options are now invalid for restore.\n\nThe same applies to the archive-get and archive-push commands although these were less likely to cause confusion.\n\nAlso reverse the dependency of pg-host and pg-host-type, i.e. make pg-host-type depend on pg-host, and alter pg-host-cmd and pg-host-user to depend on pg-host-type=ssh."
+    },
+    {
+        "commit": "9be51f9bf370c4ff2a802dbd4fdafd09e2a05810",
+        "date": "2025-11-11 08:52:36 +0200",
+        "subject": "Cleanup repo-host options for remote backup.",
+        "body": "931435c0 added the ability to backup to a remote repo but did not quite get the option updates right. It worked, but a number of options were marked as internal so would not be visible to the user in command-line help.\n\nAlso reverse the dependency of repo-host and repo-host-type, i.e. make repo-host-type depend on repo-host, and alter repo-host-cmd and repo-host-user to depend on repo-host-type=ssh."
+    },
+    {
+        "commit": "7a74fd3fb98b6862ebc71fd7dc55d9cb69a3c3b3",
+        "date": "2025-11-10 20:05:42 +0200",
+        "subject": "Show internal state for commands/options in parse.auto.c.inc.",
+        "body": "Previously internal state was not included because it does not affect how commands/options are used -- only whether they are shown in help. However, this makes it hard to know when the internal state changes because help is generated at build time and in any case is just a binary blob.\n\nInternal state is not stored in the config structures since the macros resolve to nothing but it is handy for debugging to see when internal state has changed."
+    },
+    {
+        "commit": "40381c2fe8415482aa2c874289247704e9d23886",
+        "date": "2025-11-10 19:54:05 +0200",
+        "subject": "Remove overly verbose command role rules.",
+        "body": "The default rules work for most commands so use them. Exceptions for the repo option remain."
+    },
+    {
+        "commit": "2f4765c6faaf5bed8887ccdc8e2bcac23a7ceb29",
+        "date": "2025-11-10 19:34:48 +0200",
+        "subject": "Remove unused start/stop commands on repo options.",
+        "body": "The logic defined start/stop as being valid for no roles but it is simpler to just omit them."
+    },
+    {
+        "commit": "91281b714414201d6a9ec90b0a9bc130bb40297f",
+        "date": "2025-11-10 12:28:05 +0200",
+        "subject": "Migrate document command/option description preprocessing to C.",
+        "body": "The Perl processing of config.yaml put hard limits on the format of that file. To allow flexibility in the file format remove all Perl processing on config.yaml.\n\nThis is just the beginning of migrating the preprocessor to C but even this small bit allows the removal of a lot of Perl code."
+    },
+    {
+        "commit": "186ed610b59f1107d508c84e12da2ccdcdad89d3",
+        "date": "2025-11-09 13:59:20 +0200",
+        "subject": "Remove redundant command lists from src/build/config/config.yaml.",
+        "body": "When not specified, the command list is generated based on all commands valid for the specified roles."
+    },
+    {
+        "commit": "ff64ad688e274b4d495fe9dde88cd8087e32f036",
+        "date": "2025-11-08 15:43:12 +0200",
+        "subject": "Use get_option() for tasks supported by the new meson version.",
+        "body": "55e9969 updated the meson version but only reverted one of the changes implemented in 0eccbc8 where the version was lowered to >= 0.45.\n\nUse get_option() as allowed by the updated version for clearer and more robust build code."
+    },
+    {
+        "commit": "5171e8bde31b9711c9c5b4ccc5170b61c5235548",
+        "date": "2025-11-07 10:01:50 +0200",
+        "subject": "Remove support for PostgreSQL 9.5.",
+        "body": "Per our policy to support five EOL versions of PostgreSQL, 9.5 is no longer supported by pgBackRest. Remove all logic associated with 9.5 and update the tests.\n\nAn effort was made to advance versions as much as possible in the tests while still providing coverage. Hopefully this will reduce churn when future versions expire, though it has created a bit more here.\n\nTests for 9.4/9.5 are left in the expire/info tests to demonstrate that these commands work with old versions present."
+    },
+    {
+        "commit": "1f2b2778ab661155850c88f3d99aaaab617f1483",
+        "date": "2025-11-06 10:21:23 +0200",
+        "subject": "Fix incorrect pg_control struct used for PostgreSQL 9.5.",
+        "body": "The 9.6 pg_control struct was being used for 9.5. This was not detected by testing because the new field introduced for 9.6 fit into an alignment hole in the 9.5 struct so the size of the struct and offset of all other members did not change. Since the new member was not used there was no impact on functionality.\n\n9.5 is being removed in the next release so the only reason to fix this is to make the diff for that change more sensible, and to document that this happened."
+    },
+    {
+        "commit": "1c976ded9156548e23c75bd33e6f67d56adb84cf",
+        "date": "2025-11-05 23:18:29 +0200",
+        "subject": "Remove versioning from static types used by versioned PostgreSQL types.",
+        "body": "Some of these types were versioned at one time. Others were not but it seemed better to version all of them for consistency. In fact this just creates churn when PostgreSQL versions are expired.\n\nAlso move the uint64 type to version.vendor.h since it is only used by versioned types."
+    },
+    {
+        "commit": "339f4ee72ab0fa2a46885575a197f0487014dfd3",
+        "date": "2025-11-05 23:04:04 +0200",
+        "subject": "Remove unused BlockNumber type.",
+        "body": "If this type was ever used it is not used now."
+    },
+    {
+        "commit": "8749601e6da1cc4d03bbfc9040bbb39c9f6ea580",
+        "date": "2025-11-05 22:46:54 +0200",
+        "subject": "Remove explicit versioning from macros using versioned PostgreSQL types.",
+        "body": "Some of these macros have required different implementations according to PostgreSQL version but none of them do now.\n\nThe idea of versioning them even when not required was that it would reduce churn but in fact churn is increased because PostgreSQL versions expire far more often than these macros need version specific implementations."
+    },
+    {
+        "commit": "00621b6b7940e7d2cd38c266d282d92a64636b49",
+        "date": "2025-11-05 21:46:40 +0200",
+        "subject": "Simplify macros in db/db unit test.",
+        "body": "Some of these tests were likely written before the higher-level macros existed. The rest were copied."
+    },
+    {
+        "commit": "c5657eab23de7c926ae3ff8aeb9603e52369b7a0",
+        "date": "2025-11-05 10:58:16 +0200",
+        "subject": "Fix typo in bundling section of user guide.",
+        "body": "repo-bundle-limit controls the size of files included in bundles, not repo-bundle-size, which controls the total size of bundles."
+    },
+    {
+        "commit": "5ef282fc22be6e5f38061a249e023ffafa85672d",
+        "date": "2025-11-05 10:45:44 +0200",
+        "subject": "Improve wording in performance tuning section of user guide."
+    },
+    {
+        "commit": "6e9ea92e8a0534830f6b45a93073cced20daba63",
+        "date": "2025-10-21 15:11:28 +0200",
+        "subject": "Move release notes to decade directories."
+    },
+    {
+        "commit": "713a7732326801ef3f852ad9fa2a3901e7e3f763",
+        "date": "2025-10-18 11:18:32 +0200",
+        "subject": "Begin v2.58.0 development."
+    },
+    {
         "commit": "d9773a31c97077761ee8e7d06e073b0b0734e26f",
         "date": "2025-10-18 11:07:36 +0200",
         "subject": "v2.57.0: Suppress Repository Symlinks"
