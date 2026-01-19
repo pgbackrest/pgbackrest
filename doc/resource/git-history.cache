@@ -1,5 +1,10 @@
 [
     {
+        "commit": "d50cfa9ee0b0b921fb6823165c65f23ff5fed0fc",
+        "date": "2026-01-19 17:03:44 +0700",
+        "subject": "v2.58.0: Object Storage Improvements"
+    },
+    {
         "commit": "d206d89d5fd40e9c386a87d326eb9fd5bc5d855c",
         "date": "2026-01-19 16:29:57 +0700",
         "subject": "New CI container builds."

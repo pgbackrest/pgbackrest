@@ -667,6 +667,10 @@ doc/xml/release/2020s/2026/2.58.0.xml:
   class: doc/source
   type: xml
 
+doc/xml/release/2020s/2026/2.59.0.xml:
+  class: doc/source
+  type: xml
+
 doc/xml/release/contributor.xml:
   class: doc/source
   type: xml
