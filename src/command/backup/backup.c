@@ -185,7 +185,7 @@ backupInit(const InfoBackup *const infoBackup)
     *result = (BackupData){0};
 
     // Don't allow backup from standby when offline
-    StringId backupStandby = cfgOptionStrId(cfgOptBackupStandby);
+    unsigned int backupStandby = cfgOptionSeq(cfgOptBackupStandby);
     const InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
 
     if (!cfgOptionBool(cfgOptOnline) && backupStandby != CFGOPTVAL_BACKUP_STANDBY_N)

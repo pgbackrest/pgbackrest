@@ -1879,7 +1879,7 @@ cmdVerify(void)
             LOG_INFO_FMT("%s", strZ(result));
 
             // Output to console when requested
-            if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT)
+            if (cfgOptionSeq(cfgOptOutput) == CFGOPTVAL_VERIFY_OUTPUT_TEXT)
             {
                 ioFdWriteOneStr(STDOUT_FILENO, result);
                 ioFdWriteOneStr(STDOUT_FILENO, LF_STR);

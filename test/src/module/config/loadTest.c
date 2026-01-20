@@ -717,14 +717,14 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptLockPath, HRN_PATH "/lock");
         hrnCfgArgRawZ(argList, cfgOptLogPath, "/bogus");
         hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "info");
-        hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, CFGOPTVAL_ARCHIVE_MODE_OFF_Z);
+        hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, "off");
         strLstAddZ(argList, CFGCMD_BACKUP);
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for backup");
         cmdLockReleaseP();
 
         // Only the error case is tested here, success is tested in cfgLoad()
         TEST_RESULT_VOID(cfgLoadLogFile(), "attempt to open bogus log file");
-        TEST_RESULT_UINT(cfgOptionStrId(cfgOptLogLevelFile), CFGOPTVAL_LOG_LEVEL_FILE_OFF, "log-level-file should now be off");
+        TEST_RESULT_UINT(cfgOptionSeq(cfgOptLogLevelFile), CFGOPTVAL_LOG_LEVEL_FILE_OFF, "log-level-file should now be off");
     }
 
     // *****************************************************************************************************************************

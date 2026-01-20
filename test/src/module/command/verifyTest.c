@@ -1085,7 +1085,7 @@ testRun(void)
         harnessLogLevelSet(logLevelError);
 
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptVerbose), false, "verbose is false");
-        TEST_RESULT_BOOL((cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT), false, "text is false");
+        TEST_RESULT_BOOL((cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_VERIFY_OUTPUT_TEXT), false, "text is false");
 
         // Redirect stdout to a file
         stdoutSave = dup(STDOUT_FILENO);
@@ -1250,7 +1250,7 @@ testRun(void)
         harnessLogLevelSet(logLevelDetail);
 
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptVerbose), false, "verbose is false");
-        TEST_RESULT_BOOL((cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT), false, "text is false");
+        TEST_RESULT_BOOL((cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_VERIFY_OUTPUT_TEXT), false, "text is false");
 
         // Redirect stdout to a file
         stdoutSave = dup(STDOUT_FILENO);

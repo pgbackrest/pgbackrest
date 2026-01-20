@@ -92,23 +92,6 @@ storageListRender(IoWrite *const write)
 
     FUNCTION_AUDIT_HELPER();
 
-    // Get sort order
-    SortOrder sortOrder = sortOrderAsc;
-
-    switch (cfgOptionStrId(cfgOptSort))
-    {
-        case CFGOPTVAL_SORT_DESC:
-            sortOrder = sortOrderDesc;
-            break;
-
-        case CFGOPTVAL_SORT_NONE:
-            sortOrder = sortOrderNone;
-            break;
-
-        default:
-            ASSERT(cfgOptionStrId(cfgOptSort) == CFGOPTVAL_SORT_ASC);
-    }
-
     // Get path
     const String *path = NULL;
 
@@ -119,7 +102,7 @@ storageListRender(IoWrite *const write)
         THROW(ParamInvalidError, "only one path may be specified");
 
     // Get options
-    const bool json = cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON ? true : false;
+    const bool json = cfgOptionSeq(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON;
     const String *const expression = cfgOptionStrNull(cfgOptFilter);
     RegExp *const regExp = expression == NULL ? NULL : regExpNew(expression);
 
@@ -153,7 +136,8 @@ storageListRender(IoWrite *const write)
 
         // List content of the path
         StorageIterator *const storageItr = storageNewItrP(
-            storageRepo(), path, .sortOrder = sortOrder, .expression = expression, .recurse = cfgOptionBool(cfgOptRecurse));
+            storageRepo(), path, .sortOrder = cfgOptionSeq(cfgOptSort), .expression = expression,
+            .recurse = cfgOptionBool(cfgOptRecurse));
 
         while (storageItrMore(storageItr))
         {

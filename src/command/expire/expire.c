@@ -1032,7 +1032,7 @@ cmdExpire(void)
 
             // Is full retention time-based?
             bool timeBasedFullRetention =
-                cfgOptionIdxStrId(cfgOptRepoRetentionFullType, repoIdx) == CFGOPTVAL_REPO_RETENTION_FULL_TYPE_TIME;
+                cfgOptionIdxSeq(cfgOptRepoRetentionFullType, repoIdx) == CFGOPTVAL_REPO_RETENTION_FULL_TYPE_TIME;
 
             TRY_BEGIN()
             {

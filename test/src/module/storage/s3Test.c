@@ -644,7 +644,7 @@ testRun(void)
                 argList = strLstDup(commonArgList);
                 hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
                 hrnCfgArgRaw(argList, cfgOptRepoS3Role, credRole);
-                hrnCfgArgRawStrId(argList, cfgOptRepoS3KeyType, storageS3KeyTypeAuto);
+                hrnCfgArgRawZ(argList, cfgOptRepoS3KeyType, "auto");
                 hrnCfgArgRawZ(argList, cfgOptRepoS3KmsKeyId, "kmskey1");
                 hrnCfgEnvRawZ(cfgOptRepoS3SseCustomerKey, "rA1P");
                 hrnCfgArgRawZ(argList, cfgOptRepoStorageTag, "Key1=Value1");
@@ -1058,7 +1058,7 @@ testRun(void)
 
                 argList = strLstDup(commonArgList);
                 hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
-                hrnCfgArgRawStrId(argList, cfgOptRepoS3KeyType, storageS3KeyTypeWebId);
+                hrnCfgArgRawZ(argList, cfgOptRepoS3KeyType, "web-id");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
                 TEST_ERROR(
@@ -1181,7 +1181,7 @@ testRun(void)
 
                 argList = strLstDup(commonArgList);
                 hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
-                hrnCfgArgRawStrId(argList, cfgOptRepoS3KeyType, storageS3KeyTypePodId);
+                hrnCfgArgRawZ(argList, cfgOptRepoS3KeyType, "pod-id");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
                 TEST_ERROR(
@@ -1443,7 +1443,7 @@ testRun(void)
                 hrnServerScriptClose(service);
 
                 argList = strLstDup(commonArgList);
-                hrnCfgArgRawStrId(argList, cfgOptRepoS3UriStyle, storageS3UriStylePath);
+                hrnCfgArgRawZ(argList, cfgOptRepoS3UriStyle, "path");
                 hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "https://%s", strZ(host));
                 hrnCfgArgRawFmt(argList, cfgOptRepoStoragePort, "%u", testPort);
                 hrnCfgEnvRemoveRaw(cfgOptRepoS3Token);

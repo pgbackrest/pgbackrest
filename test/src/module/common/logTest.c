@@ -100,10 +100,10 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("logLevelEnum() and logLevelStr()"))
     {
-        TEST_ERROR(logLevelEnum(strIdFromZ(BOGUS_STR)), AssertError, "invalid log level");
-        TEST_RESULT_INT(logLevelEnum(strIdFromZ("off")), logLevelOff, "log level 'OFF' found");
-        TEST_RESULT_INT(logLevelEnum(strIdFromZ("info")), logLevelInfo, "log level 'info' found");
-        TEST_RESULT_INT(logLevelEnum(strIdFromZ("trace")), logLevelTrace, "log level 'TRACE' found");
+        TEST_ERROR(logLevelEnum(LOG_LEVEL_MAX), AssertError, "assertion 'logLevelSeq < LOG_LEVEL_MAX' failed");
+        TEST_RESULT_INT(logLevelEnum(strIdSeq(strIdSeqFromZ("off", 0))), logLevelOff, "log level 'OFF' found");
+        TEST_RESULT_INT(logLevelEnum(strIdSeq(strIdSeqFromZ("info", 3))), logLevelInfo, "log level 'info' found");
+        TEST_RESULT_INT(logLevelEnum(strIdSeq(strIdSeqFromZ("trace", 6))), logLevelTrace, "log level 'TRACE' found");
 
         TEST_ERROR(logLevelStr(999), AssertError, "assertion 'logLevel <= LOG_LEVEL_MAX' failed");
         TEST_RESULT_Z(logLevelStr(logLevelOff), "OFF", "log level 'OFF' found");

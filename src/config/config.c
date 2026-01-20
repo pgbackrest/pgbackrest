@@ -296,6 +296,20 @@ cfgOptionGroupId(const ConfigOption optionId)
 }
 
 /**********************************************************************************************************************************/
+static bool
+cfgOptionSequence(const ConfigOption optionId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, optionId);
+    FUNCTION_TEST_END();
+
+    ASSERT(cfgInited());
+    ASSERT(optionId < CFG_OPTION_TOTAL);
+
+    FUNCTION_TEST_RETURN(BOOL, configLocal->option[optionId].sequence);
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN unsigned int
 cfgOptionGroupIdxDefault(const ConfigOptionGroup groupId)
 {
@@ -599,7 +613,7 @@ cfgOptionIdxReset(const ConfigOption optionId, const unsigned int optionIdx)
 
 /**********************************************************************************************************************************/
 // Helper to enforce constraints when getting options
-static const ConfigOptionValue *
+static ConfigOptionValue *
 cfgOptionIdxInternal(
     const ConfigOption optionId, const unsigned int optionIdx, const ConfigOptionDataType typeRequested, const bool nullAllowed)
 {
@@ -622,7 +636,7 @@ cfgOptionIdxInternal(
 
     // If the option is not NULL then check it is the requested type
     const ConfigOptionData *const option = &configLocal->option[optionId];
-    const ConfigOptionValue *const result = &option->index[optionIdx];
+    ConfigOptionValue *const result = &option->index[optionIdx];
 
     if (result->set)
     {
@@ -637,7 +651,7 @@ cfgOptionIdxInternal(
     else if (!nullAllowed)
         THROW_FMT(AssertError, "option '%s' is null but non-null was requested", cfgOptionIdxName(optionId, optionIdx));
 
-    FUNCTION_TEST_RETURN_TYPE_CONST_P(ConfigOptionValue, result);
+    FUNCTION_TEST_RETURN_TYPE_P(ConfigOptionValue, result);
 }
 
 FN_EXTERN Variant *
@@ -674,6 +688,7 @@ cfgOptionIdxVar(const ConfigOption optionId, const unsigned int optionIdx)
                 FUNCTION_TEST_RETURN(VARIANT, varNewVarLst(optionValueType->list));
 
             case cfgOptDataTypeStringId:
+                cfgOptionIdxStrId(optionId, optionIdx);
                 FUNCTION_TEST_RETURN(VARIANT, varNewUInt64(optionValueType->stringId));
 
             default:
@@ -827,7 +842,31 @@ cfgOptionIdxStrId(const ConfigOption optionId, const unsigned int optionIdx)
         FUNCTION_LOG_PARAM(UINT, optionIdx);
     FUNCTION_LOG_END();
 
-    FUNCTION_LOG_RETURN(STRING_ID, cfgOptionIdxInternal(optionId, optionIdx, cfgOptDataTypeStringId, false)->value.stringId);
+    ConfigOptionValue *const optionValue = cfgOptionIdxInternal(optionId, optionIdx, cfgOptDataTypeStringId, false);
+    ConfigOptionValueType *const optionValueType = &optionValue->value;
+
+    if (optionValueType->stringId == 0)
+    {
+        optionValueType->stringId = strIdFromZN(
+            strZ(optionValue->display), strSize(optionValue->display),
+            cfgOptionSequence(optionId) ? optionValue->sequence : STRING_ID_SEQ_NONE);
+    }
+
+    FUNCTION_LOG_RETURN(STRING_ID, optionValueType->stringId);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN unsigned int
+cfgOptionIdxSeq(const ConfigOption optionId, const unsigned int optionIdx)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(ENUM, optionId);
+        FUNCTION_LOG_PARAM(UINT, optionIdx);
+    FUNCTION_LOG_END();
+
+    ASSERT(cfgOptionSequence(optionId));
+
+    FUNCTION_LOG_RETURN(UINT, cfgOptionIdxInternal(optionId, optionIdx, cfgOptDataTypeStringId, false)->sequence);
 }
 
 /**********************************************************************************************************************************/
@@ -904,9 +943,17 @@ cfgOptionIdxSet(
             case cfgOptDataTypeStringId:
             {
                 if (varType(value) == varTypeUInt64)
+                {
                     optionValueType->stringId = varUInt64(value);
+
+                    if (option->sequence)
+                        optionValue->sequence = (uint8_t)strIdSeq(optionValueType->stringId);
+                }
                 else
+                {
+                    ASSERT(!option->sequence);
                     optionValueType->stringId = strStrId(varStr(value));
+                }
 
                 break;
             }

@@ -221,7 +221,7 @@ testRun(void)
         TEST_TITLE("storage with host but force host-style uri");
 
         hrnCfgArgRawZ(argList, cfgOptRepoStorageHost, "https://test-host");
-        hrnCfgArgRawStrId(argList, cfgOptRepoAzureUriStyle, storageAzureUriStyleHost);
+        hrnCfgArgRawZ(argList, cfgOptRepoAzureUriStyle, "host");
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
@@ -241,7 +241,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         hrnCfgArgRawZ(argList, cfgOptRepoStorageHost, "https://test-host:443");
-        hrnCfgArgRawStrId(argList, cfgOptRepoAzureUriStyle, storageAzureUriStylePath);
+        hrnCfgArgRawZ(argList, cfgOptRepoAzureUriStyle, "path");
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
@@ -262,7 +262,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         hrnCfgArgRawZ(argList, cfgOptRepoStorageHost, "test-host:443");
-        hrnCfgArgRawStrId(argList, cfgOptRepoAzureUriStyle, storageAzureUriStylePath);
+        hrnCfgArgRawZ(argList, cfgOptRepoAzureUriStyle, "path");
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
@@ -283,7 +283,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         hrnCfgArgRawZ(argList, cfgOptRepoStorageHost, "https://test-host:443");
-        hrnCfgArgRawStrId(argList, cfgOptRepoAzureUriStyle, storageAzureUriStyleHost);
+        hrnCfgArgRawZ(argList, cfgOptRepoAzureUriStyle, "host");
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
@@ -303,7 +303,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         hrnCfgArgRawZ(argList, cfgOptRepoStorageHost, "test-host:443");
-        hrnCfgArgRawStrId(argList, cfgOptRepoAzureUriStyle, storageAzureUriStyleHost);
+        hrnCfgArgRawZ(argList, cfgOptRepoAzureUriStyle, "host");
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
@@ -344,7 +344,7 @@ testRun(void)
 
         hrnCfgArgRawZ(argList, cfgOptRepoStorageHost, "test-host");
         hrnCfgArgRawFmt(argList, cfgOptRepoStoragePort, "%u", (const unsigned int) 443);
-        hrnCfgArgRawStrId(argList, cfgOptRepoAzureUriStyle, storageAzureUriStyleHost);
+        hrnCfgArgRawZ(argList, cfgOptRepoAzureUriStyle, "host");
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
@@ -997,7 +997,7 @@ testRun(void)
 
                 hrnServerScriptClose(service);
 
-                hrnCfgArgRawStrId(argList, cfgOptRepoAzureKeyType, storageAzureKeyTypeSas);
+                hrnCfgArgRawZ(argList, cfgOptRepoAzureKeyType, "sas");
                 hrnCfgEnvRawZ(cfgOptRepoAzureKey, TEST_KEY_SAS);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 

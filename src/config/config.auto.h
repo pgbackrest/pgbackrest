@@ -149,16 +149,21 @@ Option constants
 /***********************************************************************************************************************************
 Option value constants
 ***********************************************************************************************************************************/
-#define CFGOPTVAL_ARCHIVE_MODE_OFF                                  STRID5("off", 0x18cf0)
-#define CFGOPTVAL_ARCHIVE_MODE_OFF_Z                                "off"
-#define CFGOPTVAL_ARCHIVE_MODE_PRESERVE                             STRID5("preserve", 0x2da45996500)
+#define CFGOPTVAL_ARCHIVE_MODE_PRESERVE                             0
+#define CFGOPTVAL_ARCHIVE_MODE_PRESERVE_STRID                       STRID5S("preserve", 0, 0x2da45996502)
 #define CFGOPTVAL_ARCHIVE_MODE_PRESERVE_Z                           "preserve"
+#define CFGOPTVAL_ARCHIVE_MODE_OFF                                  1
+#define CFGOPTVAL_ARCHIVE_MODE_OFF_STRID                            STRID5S("off", 1, 0x18cf4)
+#define CFGOPTVAL_ARCHIVE_MODE_OFF_Z                                "off"
 
-#define CFGOPTVAL_BACKUP_STANDBY_N                                  STRID5("n", 0xe0)
+#define CFGOPTVAL_BACKUP_STANDBY_N                                  0
+#define CFGOPTVAL_BACKUP_STANDBY_N_STRID                            STRID5S("n", 0, 0xe2)
 #define CFGOPTVAL_BACKUP_STANDBY_N_Z                                "n"
-#define CFGOPTVAL_BACKUP_STANDBY_PREFER                             STRID5("prefer", 0x245316500)
+#define CFGOPTVAL_BACKUP_STANDBY_PREFER                             1
+#define CFGOPTVAL_BACKUP_STANDBY_PREFER_STRID                       STRID5S("prefer", 1, 0x245316504)
 #define CFGOPTVAL_BACKUP_STANDBY_PREFER_Z                           "prefer"
-#define CFGOPTVAL_BACKUP_STANDBY_Y                                  STRID5("y", 0x190)
+#define CFGOPTVAL_BACKUP_STANDBY_Y                                  2
+#define CFGOPTVAL_BACKUP_STANDBY_Y_STRID                            STRID5S("y", 2, 0x196)
 #define CFGOPTVAL_BACKUP_STANDBY_Y_Z                                "y"
 
 #define CFGOPTVAL_COMPRESS_TYPE_BZ2                                 STRID5("bz2", 0x73420)
@@ -172,64 +177,99 @@ Option value constants
 #define CFGOPTVAL_COMPRESS_TYPE_ZST                                 STRID5("zst", 0x527a0)
 #define CFGOPTVAL_COMPRESS_TYPE_ZST_Z                               "zst"
 
-#define CFGOPTVAL_DETAIL_LEVEL_FULL                                 STRID5("full", 0x632a60)
+#define CFGOPTVAL_DETAIL_LEVEL_FULL                                 0
+#define CFGOPTVAL_DETAIL_LEVEL_FULL_STRID                           STRID5S("full", 0, 0x632a62)
 #define CFGOPTVAL_DETAIL_LEVEL_FULL_Z                               "full"
-#define CFGOPTVAL_DETAIL_LEVEL_PROGRESS                             STRID5("progress", 0x9ccb23be500)
+#define CFGOPTVAL_DETAIL_LEVEL_PROGRESS                             1
+#define CFGOPTVAL_DETAIL_LEVEL_PROGRESS_STRID                       STRID5S("progress", 1, 0x9ccb23be504)
 #define CFGOPTVAL_DETAIL_LEVEL_PROGRESS_Z                           "progress"
 
-#define CFGOPTVAL_LOG_LEVEL_CONSOLE_DEBUG                           STRID5("debug", 0x7a88a40)
-#define CFGOPTVAL_LOG_LEVEL_CONSOLE_DEBUG_Z                         "debug"
-#define CFGOPTVAL_LOG_LEVEL_CONSOLE_DETAIL                          STRID5("detail", 0x1890d0a40)
-#define CFGOPTVAL_LOG_LEVEL_CONSOLE_DETAIL_Z                        "detail"
-#define CFGOPTVAL_LOG_LEVEL_CONSOLE_ERROR                           STRID5("error", 0x127ca450)
-#define CFGOPTVAL_LOG_LEVEL_CONSOLE_ERROR_Z                         "error"
-#define CFGOPTVAL_LOG_LEVEL_CONSOLE_INFO                            STRID5("info", 0x799c90)
-#define CFGOPTVAL_LOG_LEVEL_CONSOLE_INFO_Z                          "info"
-#define CFGOPTVAL_LOG_LEVEL_CONSOLE_OFF                             STRID5("off", 0x18cf0)
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_OFF                             0
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_OFF_STRID                       STRID5S("off", 0, 0x18cf2)
 #define CFGOPTVAL_LOG_LEVEL_CONSOLE_OFF_Z                           "off"
-#define CFGOPTVAL_LOG_LEVEL_CONSOLE_TRACE                           STRID5("trace", 0x5186540)
-#define CFGOPTVAL_LOG_LEVEL_CONSOLE_TRACE_Z                         "trace"
-#define CFGOPTVAL_LOG_LEVEL_CONSOLE_WARN                            STRID5("warn", 0x748370)
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_ERROR                           1
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_ERROR_STRID                     STRID5S("error", 1, 0x127ca454)
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_ERROR_Z                         "error"
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_WARN                            2
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_WARN_STRID                      STRID5S("warn", 2, 0x748376)
 #define CFGOPTVAL_LOG_LEVEL_CONSOLE_WARN_Z                          "warn"
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_INFO                            3
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_INFO_STRID                      STRID5S("info", 3, 0x799c98)
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_INFO_Z                          "info"
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_DETAIL                          4
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_DETAIL_STRID                    STRID5S("detail", 4, 0x1890d0a4a)
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_DETAIL_Z                        "detail"
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_DEBUG                           5
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_DEBUG_STRID                     STRID5S("debug", 5, 0x7a88a4c)
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_DEBUG_Z                         "debug"
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_TRACE                           6
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_TRACE_STRID                     STRID5S("trace", 6, 0xa30ca80e)
+#define CFGOPTVAL_LOG_LEVEL_CONSOLE_TRACE_Z                         "trace"
 
-#define CFGOPTVAL_LOG_LEVEL_FILE_DEBUG                              STRID5("debug", 0x7a88a40)
-#define CFGOPTVAL_LOG_LEVEL_FILE_DEBUG_Z                            "debug"
-#define CFGOPTVAL_LOG_LEVEL_FILE_DETAIL                             STRID5("detail", 0x1890d0a40)
-#define CFGOPTVAL_LOG_LEVEL_FILE_DETAIL_Z                           "detail"
-#define CFGOPTVAL_LOG_LEVEL_FILE_ERROR                              STRID5("error", 0x127ca450)
-#define CFGOPTVAL_LOG_LEVEL_FILE_ERROR_Z                            "error"
-#define CFGOPTVAL_LOG_LEVEL_FILE_INFO                               STRID5("info", 0x799c90)
-#define CFGOPTVAL_LOG_LEVEL_FILE_INFO_Z                             "info"
-#define CFGOPTVAL_LOG_LEVEL_FILE_OFF                                STRID5("off", 0x18cf0)
+#define CFGOPTVAL_LOG_LEVEL_FILE_OFF                                0
+#define CFGOPTVAL_LOG_LEVEL_FILE_OFF_STRID                          STRID5S("off", 0, 0x18cf2)
 #define CFGOPTVAL_LOG_LEVEL_FILE_OFF_Z                              "off"
-#define CFGOPTVAL_LOG_LEVEL_FILE_TRACE                              STRID5("trace", 0x5186540)
-#define CFGOPTVAL_LOG_LEVEL_FILE_TRACE_Z                            "trace"
-#define CFGOPTVAL_LOG_LEVEL_FILE_WARN                               STRID5("warn", 0x748370)
+#define CFGOPTVAL_LOG_LEVEL_FILE_ERROR                              1
+#define CFGOPTVAL_LOG_LEVEL_FILE_ERROR_STRID                        STRID5S("error", 1, 0x127ca454)
+#define CFGOPTVAL_LOG_LEVEL_FILE_ERROR_Z                            "error"
+#define CFGOPTVAL_LOG_LEVEL_FILE_WARN                               2
+#define CFGOPTVAL_LOG_LEVEL_FILE_WARN_STRID                         STRID5S("warn", 2, 0x748376)
 #define CFGOPTVAL_LOG_LEVEL_FILE_WARN_Z                             "warn"
+#define CFGOPTVAL_LOG_LEVEL_FILE_INFO                               3
+#define CFGOPTVAL_LOG_LEVEL_FILE_INFO_STRID                         STRID5S("info", 3, 0x799c98)
+#define CFGOPTVAL_LOG_LEVEL_FILE_INFO_Z                             "info"
+#define CFGOPTVAL_LOG_LEVEL_FILE_DETAIL                             4
+#define CFGOPTVAL_LOG_LEVEL_FILE_DETAIL_STRID                       STRID5S("detail", 4, 0x1890d0a4a)
+#define CFGOPTVAL_LOG_LEVEL_FILE_DETAIL_Z                           "detail"
+#define CFGOPTVAL_LOG_LEVEL_FILE_DEBUG                              5
+#define CFGOPTVAL_LOG_LEVEL_FILE_DEBUG_STRID                        STRID5S("debug", 5, 0x7a88a4c)
+#define CFGOPTVAL_LOG_LEVEL_FILE_DEBUG_Z                            "debug"
+#define CFGOPTVAL_LOG_LEVEL_FILE_TRACE                              6
+#define CFGOPTVAL_LOG_LEVEL_FILE_TRACE_STRID                        STRID5S("trace", 6, 0xa30ca80e)
+#define CFGOPTVAL_LOG_LEVEL_FILE_TRACE_Z                            "trace"
 
-#define CFGOPTVAL_LOG_LEVEL_STDERR_DEBUG                            STRID5("debug", 0x7a88a40)
-#define CFGOPTVAL_LOG_LEVEL_STDERR_DEBUG_Z                          "debug"
-#define CFGOPTVAL_LOG_LEVEL_STDERR_DETAIL                           STRID5("detail", 0x1890d0a40)
-#define CFGOPTVAL_LOG_LEVEL_STDERR_DETAIL_Z                         "detail"
-#define CFGOPTVAL_LOG_LEVEL_STDERR_ERROR                            STRID5("error", 0x127ca450)
-#define CFGOPTVAL_LOG_LEVEL_STDERR_ERROR_Z                          "error"
-#define CFGOPTVAL_LOG_LEVEL_STDERR_INFO                             STRID5("info", 0x799c90)
-#define CFGOPTVAL_LOG_LEVEL_STDERR_INFO_Z                           "info"
-#define CFGOPTVAL_LOG_LEVEL_STDERR_OFF                              STRID5("off", 0x18cf0)
+#define CFGOPTVAL_LOG_LEVEL_STDERR_OFF                              0
+#define CFGOPTVAL_LOG_LEVEL_STDERR_OFF_STRID                        STRID5S("off", 0, 0x18cf2)
 #define CFGOPTVAL_LOG_LEVEL_STDERR_OFF_Z                            "off"
-#define CFGOPTVAL_LOG_LEVEL_STDERR_TRACE                            STRID5("trace", 0x5186540)
-#define CFGOPTVAL_LOG_LEVEL_STDERR_TRACE_Z                          "trace"
-#define CFGOPTVAL_LOG_LEVEL_STDERR_WARN                             STRID5("warn", 0x748370)
+#define CFGOPTVAL_LOG_LEVEL_STDERR_ERROR                            1
+#define CFGOPTVAL_LOG_LEVEL_STDERR_ERROR_STRID                      STRID5S("error", 1, 0x127ca454)
+#define CFGOPTVAL_LOG_LEVEL_STDERR_ERROR_Z                          "error"
+#define CFGOPTVAL_LOG_LEVEL_STDERR_WARN                             2
+#define CFGOPTVAL_LOG_LEVEL_STDERR_WARN_STRID                       STRID5S("warn", 2, 0x748376)
 #define CFGOPTVAL_LOG_LEVEL_STDERR_WARN_Z                           "warn"
+#define CFGOPTVAL_LOG_LEVEL_STDERR_INFO                             3
+#define CFGOPTVAL_LOG_LEVEL_STDERR_INFO_STRID                       STRID5S("info", 3, 0x799c98)
+#define CFGOPTVAL_LOG_LEVEL_STDERR_INFO_Z                           "info"
+#define CFGOPTVAL_LOG_LEVEL_STDERR_DETAIL                           4
+#define CFGOPTVAL_LOG_LEVEL_STDERR_DETAIL_STRID                     STRID5S("detail", 4, 0x1890d0a4a)
+#define CFGOPTVAL_LOG_LEVEL_STDERR_DETAIL_Z                         "detail"
+#define CFGOPTVAL_LOG_LEVEL_STDERR_DEBUG                            5
+#define CFGOPTVAL_LOG_LEVEL_STDERR_DEBUG_STRID                      STRID5S("debug", 5, 0x7a88a4c)
+#define CFGOPTVAL_LOG_LEVEL_STDERR_DEBUG_Z                          "debug"
+#define CFGOPTVAL_LOG_LEVEL_STDERR_TRACE                            6
+#define CFGOPTVAL_LOG_LEVEL_STDERR_TRACE_STRID                      STRID5S("trace", 6, 0xa30ca80e)
+#define CFGOPTVAL_LOG_LEVEL_STDERR_TRACE_Z                          "trace"
 
-#define CFGOPTVAL_OUTPUT_JSON                                       STRID5("json", 0x73e6a0)
-#define CFGOPTVAL_OUTPUT_JSON_Z                                     "json"
-#define CFGOPTVAL_OUTPUT_NONE                                       STRID5("none", 0x2b9ee0)
-#define CFGOPTVAL_OUTPUT_NONE_Z                                     "none"
-#define CFGOPTVAL_OUTPUT_NUM                                        STRID5("num", 0x36ae0)
-#define CFGOPTVAL_OUTPUT_NUM_Z                                      "num"
-#define CFGOPTVAL_OUTPUT_TEXT                                       STRID5("text", 0xa60b40)
+#define CFGOPTVAL_OUTPUT_TEXT                                       0
+#define CFGOPTVAL_OUTPUT_TEXT_STRID                                 STRID5S("text", 0, 0xa60b42)
 #define CFGOPTVAL_OUTPUT_TEXT_Z                                     "text"
+#define CFGOPTVAL_OUTPUT_JSON                                       1
+#define CFGOPTVAL_OUTPUT_JSON_STRID                                 STRID5S("json", 1, 0x73e6a4)
+#define CFGOPTVAL_OUTPUT_JSON_Z                                     "json"
+
+#define CFGOPTVAL_VERIFY_OUTPUT_NONE                                0
+#define CFGOPTVAL_VERIFY_OUTPUT_NONE_STRID                          STRID5S("none", 0, 0x2b9ee2)
+#define CFGOPTVAL_VERIFY_OUTPUT_NONE_Z                              "none"
+#define CFGOPTVAL_VERIFY_OUTPUT_TEXT                                1
+#define CFGOPTVAL_VERIFY_OUTPUT_TEXT_STRID                          STRID5S("text", 1, 0xa60b44)
+#define CFGOPTVAL_VERIFY_OUTPUT_TEXT_Z                              "text"
+
+#define CFGOPTVAL_VERSION_OUTPUT_TEXT                               0
+#define CFGOPTVAL_VERSION_OUTPUT_TEXT_STRID                         STRID5S("text", 0, 0xa60b42)
+#define CFGOPTVAL_VERSION_OUTPUT_TEXT_Z                             "text"
+#define CFGOPTVAL_VERSION_OUTPUT_NUM                                1
+#define CFGOPTVAL_VERSION_OUTPUT_NUM_STRID                          STRID5S("num", 1, 0x36ae4)
+#define CFGOPTVAL_VERSION_OUTPUT_NUM_Z                              "num"
 
 #define CFGOPTVAL_PG_HOST_TYPE_SSH                                  STRID5("ssh", 0x22730)
 #define CFGOPTVAL_PG_HOST_TYPE_SSH_Z                                "ssh"
@@ -241,16 +281,21 @@ Option value constants
 #define CFGOPTVAL_REMOTE_TYPE_REPO                                  STRID5("repo", 0x7c0b20)
 #define CFGOPTVAL_REMOTE_TYPE_REPO_Z                                "repo"
 
-#define CFGOPTVAL_REPO_AZURE_KEY_TYPE_AUTO                          STRID5("auto", 0x7d2a10)
-#define CFGOPTVAL_REPO_AZURE_KEY_TYPE_AUTO_Z                        "auto"
-#define CFGOPTVAL_REPO_AZURE_KEY_TYPE_SAS                           STRID5("sas", 0x4c330)
-#define CFGOPTVAL_REPO_AZURE_KEY_TYPE_SAS_Z                         "sas"
-#define CFGOPTVAL_REPO_AZURE_KEY_TYPE_SHARED                        STRID5("shared", 0x85905130)
+#define CFGOPTVAL_REPO_AZURE_KEY_TYPE_SHARED                        0
+#define CFGOPTVAL_REPO_AZURE_KEY_TYPE_SHARED_STRID                  STRID5S("shared", 0, 0x85905132)
 #define CFGOPTVAL_REPO_AZURE_KEY_TYPE_SHARED_Z                      "shared"
+#define CFGOPTVAL_REPO_AZURE_KEY_TYPE_SAS                           1
+#define CFGOPTVAL_REPO_AZURE_KEY_TYPE_SAS_STRID                     STRID5S("sas", 1, 0x4c334)
+#define CFGOPTVAL_REPO_AZURE_KEY_TYPE_SAS_Z                         "sas"
+#define CFGOPTVAL_REPO_AZURE_KEY_TYPE_AUTO                          2
+#define CFGOPTVAL_REPO_AZURE_KEY_TYPE_AUTO_STRID                    STRID5S("auto", 2, 0x7d2a16)
+#define CFGOPTVAL_REPO_AZURE_KEY_TYPE_AUTO_Z                        "auto"
 
-#define CFGOPTVAL_REPO_AZURE_URI_STYLE_HOST                         STRID5("host", 0xa4de80)
+#define CFGOPTVAL_REPO_AZURE_URI_STYLE_HOST                         0
+#define CFGOPTVAL_REPO_AZURE_URI_STYLE_HOST_STRID                   STRID5S("host", 0, 0xa4de82)
 #define CFGOPTVAL_REPO_AZURE_URI_STYLE_HOST_Z                       "host"
-#define CFGOPTVAL_REPO_AZURE_URI_STYLE_PATH                         STRID5("path", 0x450300)
+#define CFGOPTVAL_REPO_AZURE_URI_STYLE_PATH                         1
+#define CFGOPTVAL_REPO_AZURE_URI_STYLE_PATH_STRID                   STRID5S("path", 1, 0x450304)
 #define CFGOPTVAL_REPO_AZURE_URI_STYLE_PATH_Z                       "path"
 
 #define CFGOPTVAL_REPO_CIPHER_TYPE_AES_256_CBC                      STRID5("aes-256-cbc", 0xc43dfbbcdcca10)
@@ -258,12 +303,15 @@ Option value constants
 #define CFGOPTVAL_REPO_CIPHER_TYPE_NONE                             STRID5("none", 0x2b9ee0)
 #define CFGOPTVAL_REPO_CIPHER_TYPE_NONE_Z                           "none"
 
-#define CFGOPTVAL_REPO_GCS_KEY_TYPE_AUTO                            STRID5("auto", 0x7d2a10)
-#define CFGOPTVAL_REPO_GCS_KEY_TYPE_AUTO_Z                          "auto"
-#define CFGOPTVAL_REPO_GCS_KEY_TYPE_SERVICE                         STRID5("service", 0x1469b48b30)
+#define CFGOPTVAL_REPO_GCS_KEY_TYPE_SERVICE                         0
+#define CFGOPTVAL_REPO_GCS_KEY_TYPE_SERVICE_STRID                   STRID5S("service", 0, 0x1469b48b32)
 #define CFGOPTVAL_REPO_GCS_KEY_TYPE_SERVICE_Z                       "service"
-#define CFGOPTVAL_REPO_GCS_KEY_TYPE_TOKEN                           STRID5("token", 0xe2adf40)
+#define CFGOPTVAL_REPO_GCS_KEY_TYPE_TOKEN                           1
+#define CFGOPTVAL_REPO_GCS_KEY_TYPE_TOKEN_STRID                     STRID5S("token", 1, 0xe2adf44)
 #define CFGOPTVAL_REPO_GCS_KEY_TYPE_TOKEN_Z                         "token"
+#define CFGOPTVAL_REPO_GCS_KEY_TYPE_AUTO                            2
+#define CFGOPTVAL_REPO_GCS_KEY_TYPE_AUTO_STRID                      STRID5S("auto", 2, 0x7d2a16)
+#define CFGOPTVAL_REPO_GCS_KEY_TYPE_AUTO_Z                          "auto"
 
 #define CFGOPTVAL_REPO_HOST_TYPE_SSH                                STRID5("ssh", 0x22730)
 #define CFGOPTVAL_REPO_HOST_TYPE_SSH_Z                              "ssh"
@@ -277,23 +325,31 @@ Option value constants
 #define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_INCR                  STRID5("incr", 0x90dc90)
 #define CFGOPTVAL_REPO_RETENTION_ARCHIVE_TYPE_INCR_Z                "incr"
 
-#define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_COUNT                    STRID5("count", 0x14755e30)
+#define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_COUNT                    0
+#define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_COUNT_STRID              STRID5S("count", 0, 0x14755e32)
 #define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_COUNT_Z                  "count"
-#define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_TIME                     STRID5("time", 0x2b5340)
+#define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_TIME                     1
+#define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_TIME_STRID               STRID5S("time", 1, 0x2b5344)
 #define CFGOPTVAL_REPO_RETENTION_FULL_TYPE_TIME_Z                   "time"
 
-#define CFGOPTVAL_REPO_S3_KEY_TYPE_AUTO                             STRID5("auto", 0x7d2a10)
-#define CFGOPTVAL_REPO_S3_KEY_TYPE_AUTO_Z                           "auto"
-#define CFGOPTVAL_REPO_S3_KEY_TYPE_POD_ID                           STRID5("pod-id", 0x89d91f00)
-#define CFGOPTVAL_REPO_S3_KEY_TYPE_POD_ID_Z                         "pod-id"
-#define CFGOPTVAL_REPO_S3_KEY_TYPE_SHARED                           STRID5("shared", 0x85905130)
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_SHARED                           0
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_SHARED_STRID                     STRID5S("shared", 0, 0x85905132)
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_SHARED_Z                         "shared"
-#define CFGOPTVAL_REPO_S3_KEY_TYPE_WEB_ID                           STRID5("web-id", 0x89d88b70)
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_AUTO                             1
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_AUTO_STRID                       STRID5S("auto", 1, 0x7d2a14)
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_AUTO_Z                           "auto"
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_WEB_ID                           2
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_WEB_ID_STRID                     STRID5S("web-id", 2, 0x89d88b76)
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_WEB_ID_Z                         "web-id"
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_POD_ID                           3
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_POD_ID_STRID                     STRID5S("pod-id", 3, 0x89d91f08)
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_POD_ID_Z                         "pod-id"
 
-#define CFGOPTVAL_REPO_S3_URI_STYLE_HOST                            STRID5("host", 0xa4de80)
+#define CFGOPTVAL_REPO_S3_URI_STYLE_HOST                            0
+#define CFGOPTVAL_REPO_S3_URI_STYLE_HOST_STRID                      STRID5S("host", 0, 0xa4de82)
 #define CFGOPTVAL_REPO_S3_URI_STYLE_HOST_Z                          "host"
-#define CFGOPTVAL_REPO_S3_URI_STYLE_PATH                            STRID5("path", 0x450300)
+#define CFGOPTVAL_REPO_S3_URI_STYLE_PATH                            1
+#define CFGOPTVAL_REPO_S3_URI_STYLE_PATH_STRID                      STRID5S("path", 1, 0x450304)
 #define CFGOPTVAL_REPO_S3_URI_STYLE_PATH_Z                          "path"
 
 #define CFGOPTVAL_REPO_SFTP_HOST_KEY_CHECK_TYPE_ACCEPT_NEW          STRID5("accept-new", 0x2e576e9028c610)
@@ -325,12 +381,15 @@ Option value constants
 #define CFGOPTVAL_REPO_TYPE_SFTP                                    STRID5("sftp", 0x850d30)
 #define CFGOPTVAL_REPO_TYPE_SFTP_Z                                  "sftp"
 
-#define CFGOPTVAL_SORT_ASC                                          STRID5("asc", 0xe610)
-#define CFGOPTVAL_SORT_ASC_Z                                        "asc"
-#define CFGOPTVAL_SORT_DESC                                         STRID5("desc", 0x1cca40)
-#define CFGOPTVAL_SORT_DESC_Z                                       "desc"
-#define CFGOPTVAL_SORT_NONE                                         STRID5("none", 0x2b9ee0)
+#define CFGOPTVAL_SORT_NONE                                         0
+#define CFGOPTVAL_SORT_NONE_STRID                                   STRID5S("none", 0, 0x2b9ee2)
 #define CFGOPTVAL_SORT_NONE_Z                                       "none"
+#define CFGOPTVAL_SORT_ASC                                          1
+#define CFGOPTVAL_SORT_ASC_STRID                                    STRID5S("asc", 1, 0xe614)
+#define CFGOPTVAL_SORT_ASC_Z                                        "asc"
+#define CFGOPTVAL_SORT_DESC                                         2
+#define CFGOPTVAL_SORT_DESC_STRID                                   STRID5S("desc", 2, 0x1cca46)
+#define CFGOPTVAL_SORT_DESC_Z                                       "desc"
 
 #define CFGOPTVAL_TARGET_ACTION_PAUSE                               STRID5("pause", 0x59d4300)
 #define CFGOPTVAL_TARGET_ACTION_PAUSE_Z                             "pause"
@@ -339,30 +398,40 @@ Option value constants
 #define CFGOPTVAL_TARGET_ACTION_SHUTDOWN                            STRID5("shutdown", 0x75de4a55130)
 #define CFGOPTVAL_TARGET_ACTION_SHUTDOWN_Z                          "shutdown"
 
-#define CFGOPTVAL_TYPE_DEFAULT                                      STRID5("default", 0x5195098a40)
-#define CFGOPTVAL_TYPE_DEFAULT_Z                                    "default"
 #define CFGOPTVAL_TYPE_DIFF                                         STRID5("diff", 0x319240)
 #define CFGOPTVAL_TYPE_DIFF_Z                                       "diff"
 #define CFGOPTVAL_TYPE_FULL                                         STRID5("full", 0x632a60)
 #define CFGOPTVAL_TYPE_FULL_Z                                       "full"
-#define CFGOPTVAL_TYPE_IMMEDIATE                                    STRID5("immediate", 0x5a05242b5a90)
-#define CFGOPTVAL_TYPE_IMMEDIATE_Z                                  "immediate"
 #define CFGOPTVAL_TYPE_INCR                                         STRID5("incr", 0x90dc90)
 #define CFGOPTVAL_TYPE_INCR_Z                                       "incr"
-#define CFGOPTVAL_TYPE_LSN                                          STRID5("lsn", 0x3a6c0)
-#define CFGOPTVAL_TYPE_LSN_Z                                        "lsn"
-#define CFGOPTVAL_TYPE_NAME                                         STRID5("name", 0x2b42e0)
-#define CFGOPTVAL_TYPE_NAME_Z                                       "name"
-#define CFGOPTVAL_TYPE_NONE                                         STRID5("none", 0x2b9ee0)
-#define CFGOPTVAL_TYPE_NONE_Z                                       "none"
-#define CFGOPTVAL_TYPE_PRESERVE                                     STRID5("preserve", 0x2da45996500)
-#define CFGOPTVAL_TYPE_PRESERVE_Z                                   "preserve"
-#define CFGOPTVAL_TYPE_STANDBY                                      STRID5("standby", 0x6444706930)
-#define CFGOPTVAL_TYPE_STANDBY_Z                                    "standby"
-#define CFGOPTVAL_TYPE_TIME                                         STRID5("time", 0x2b5340)
-#define CFGOPTVAL_TYPE_TIME_Z                                       "time"
-#define CFGOPTVAL_TYPE_XID                                          STRID5("xid", 0x11380)
-#define CFGOPTVAL_TYPE_XID_Z                                        "xid"
+
+#define CFGOPTVAL_RESTORE_TYPE_DEFAULT                              0
+#define CFGOPTVAL_RESTORE_TYPE_DEFAULT_STRID                        STRID5S("default", 0, 0x5195098a42)
+#define CFGOPTVAL_RESTORE_TYPE_DEFAULT_Z                            "default"
+#define CFGOPTVAL_RESTORE_TYPE_PRESERVE                             1
+#define CFGOPTVAL_RESTORE_TYPE_PRESERVE_STRID                       STRID5S("preserve", 1, 0x2da45996504)
+#define CFGOPTVAL_RESTORE_TYPE_PRESERVE_Z                           "preserve"
+#define CFGOPTVAL_RESTORE_TYPE_IMMEDIATE                            2
+#define CFGOPTVAL_RESTORE_TYPE_IMMEDIATE_STRID                      STRID5S("immediate", 2, 0x5a05242b5a96)
+#define CFGOPTVAL_RESTORE_TYPE_IMMEDIATE_Z                          "immediate"
+#define CFGOPTVAL_RESTORE_TYPE_STANDBY                              3
+#define CFGOPTVAL_RESTORE_TYPE_STANDBY_STRID                        STRID5S("standby", 3, 0x6444706938)
+#define CFGOPTVAL_RESTORE_TYPE_STANDBY_Z                            "standby"
+#define CFGOPTVAL_RESTORE_TYPE_NONE                                 4
+#define CFGOPTVAL_RESTORE_TYPE_NONE_STRID                           STRID5S("none", 4, 0x2b9eea)
+#define CFGOPTVAL_RESTORE_TYPE_NONE_Z                               "none"
+#define CFGOPTVAL_RESTORE_TYPE_NAME                                 5
+#define CFGOPTVAL_RESTORE_TYPE_NAME_STRID                           STRID5S("name", 5, 0x2b42ec)
+#define CFGOPTVAL_RESTORE_TYPE_NAME_Z                               "name"
+#define CFGOPTVAL_RESTORE_TYPE_TIME                                 6
+#define CFGOPTVAL_RESTORE_TYPE_TIME_STRID                           STRID5S("time", 6, 0x56a680e)
+#define CFGOPTVAL_RESTORE_TYPE_TIME_Z                               "time"
+#define CFGOPTVAL_RESTORE_TYPE_LSN                                  7
+#define CFGOPTVAL_RESTORE_TYPE_LSN_STRID                            STRID5S("lsn", 7, 0x74d81e)
+#define CFGOPTVAL_RESTORE_TYPE_LSN_Z                                "lsn"
+#define CFGOPTVAL_RESTORE_TYPE_XID                                  8
+#define CFGOPTVAL_RESTORE_TYPE_XID_STRID                            STRID5S("xid", 8, 0x22702e)
+#define CFGOPTVAL_RESTORE_TYPE_XID_Z                                "xid"
 
 /***********************************************************************************************************************************
 Command enum

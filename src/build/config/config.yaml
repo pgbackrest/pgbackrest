@@ -293,12 +293,13 @@ option:
 
   detail-level:
     type: string-id
+    sequence: true
     default: full
     command:
       info: {}
     allow-list:
-      - progress
       - full
+      - progress
     command-role:
       main: {}
 
@@ -359,6 +360,7 @@ option:
 
   output:
     type: string-id
+    sequence: true
     default: text
     command:
       info: {}
@@ -372,8 +374,8 @@ option:
       version:
         default: text
         allow-list:
-          - num
           - text
+          - num
     allow-list:
       - text
       - json
@@ -529,16 +531,17 @@ option:
           - diff
           - incr
       restore:
+        sequence: true
         allow-list:
-          - lsn
+          - default
+          - preserve
+          - immediate
+          - standby
+          - none
           - name
           - time
+          - lsn
           - xid
-          - preserve
-          - none
-          - immediate
-          - default
-          - standby
         default: default
     command-role:
       main: {}
@@ -651,6 +654,8 @@ option:
   sort:
     type: string-id
     default: asc
+    sequence: true
+    # Keep synced with SortOrder enum
     allow-list:
       - none
       - asc
@@ -967,7 +972,9 @@ option:
   log-level-console:
     section: global
     type: string-id
+    sequence: true
     default: warn
+    # Keep synced with logLevelList array. Note that assert is missing from this list but handled in logLevelEnum().
     allow-list:
       - off
       - error
@@ -1122,6 +1129,7 @@ option:
   backup-standby:
     section: global
     type: string-id
+    sequence: true
     bool-like: true
     default: n
     allow-list:
@@ -1213,10 +1221,11 @@ option:
   archive-mode:
     section: global
     type: string-id
+    sequence: true
     default: preserve
     allow-list:
-      - off
       - preserve
+      - off
     command:
       restore: {}
     command-role:
@@ -1751,6 +1760,7 @@ option:
     section: global
     group: repo
     type: string-id
+    sequence: true
     default: count
     allow-list:
       - count
@@ -2211,7 +2221,9 @@ option:
   repo-azure-key-type:
     inherit: repo-azure-container
     type: string-id
+    sequence: true
     default: shared
+    # Keep synced StorageAzureKeyType enum
     allow-list:
       - shared
       - sas
@@ -2221,7 +2233,9 @@ option:
     section: global
     group: repo
     type: string-id
+    sequence: true
     default: host
+    # Keep synced StorageAzureUriStyle enum
     allow-list:
       - host
       - path
@@ -2249,12 +2263,14 @@ option:
   repo-gcs-key-type:
     section: global
     type: string-id
+    sequence: true
     group: repo
     default: service
+    # Keep synced StorageGcsKeyType enum
     allow-list:
-      - auto
       - service
       - token
+      - auto
     command: repo-type
     depend:
       option: repo-type
@@ -2302,7 +2318,9 @@ option:
   repo-s3-key-type:
     inherit: repo-s3-bucket
     type: string-id
+    sequence: true
     default: shared
+    # Keep synced with StorageS3KeyType enum
     allow-list:
       - shared
       - auto
@@ -2369,7 +2387,9 @@ option:
     section: global
     group: repo
     type: string-id
+    sequence: true
     default: host
+    # Keep synced with StorageS3UriStyle enum
     allow-list:
       - host
       - path

@@ -182,7 +182,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoHardlink), cfgSourceConfig, "repo-hardlink is source config");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 3, "compress-level is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceConfig, "compress-level is source config");
-        TEST_RESULT_UINT(cfgOptionStrId(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_N, "backup-standby not is set");
+        TEST_RESULT_UINT(cfgOptionSeq(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_N, "backup-standby not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBackupStandby), cfgSourceDefault, "backup-standby is source default");
         TEST_RESULT_INT(cfgOptionInt64(cfgOptBufferSize), 65536, "buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceConfig, "backup-standby is source config");
@@ -1338,7 +1338,7 @@ testRun(void)
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidValueError,
             "'^bogus' is not allowed for 'type' option\n"
-            "HINT: allowed values are 'lsn', 'name', 'time', 'xid', 'preserve', 'none', 'immediate', 'default', 'standby'");
+            "HINT: allowed values are 'default', 'preserve', 'immediate', 'standby', 'none', 'name', 'time', 'lsn', 'xid'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("option value invalid (size)");
@@ -1367,7 +1367,7 @@ testRun(void)
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidValueError,
             "'bogus' is not allowed for 'type' option\n"
-            "HINT: allowed values are 'lsn', 'name', 'time', 'xid', 'preserve', 'none', 'immediate', 'default', 'standby'");
+            "HINT: allowed values are 'default', 'preserve', 'immediate', 'standby', 'none', 'name', 'time', 'lsn', 'xid'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("lower and upper bounds for integer ranges");
@@ -1462,6 +1462,27 @@ testRun(void)
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidValueError,
             "'bogus' is not valid for 'protocol-timeout' option");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("option sequences");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, CFGCMD_REPO_LS);
+        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
+        TEST_RESULT_UINT(cfgOptionSeq(cfgOptSort), sortOrderAsc, "default sort order is asc");
+        TEST_RESULT_UINT(cfgOptionStrId(cfgOptSort), CFGOPTVAL_SORT_ASC_STRID, "check StringId");
+
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptSort, cfgSourceParam, VARUINT64(CFGOPTVAL_SORT_NONE_STRID)), "set sort order to none");
+        TEST_RESULT_UINT(cfgOptionSeq(cfgOptSort), sortOrderNone, "sort order is none");
+        TEST_RESULT_UINT(cfgOptionStrId(cfgOptSort), CFGOPTVAL_SORT_NONE_STRID, "check StringId");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        hrnCfgArgRawZ(argList, cfgOptSort, "desc");
+        strLstAddZ(argList, CFGCMD_REPO_LS);
+        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
+        TEST_RESULT_UINT(cfgOptionSeq(cfgOptSort), sortOrderDesc, "default sort order is desc");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("option as environment variables");
@@ -1732,19 +1753,19 @@ testRun(void)
         strLstAddZ(argList, "--no-backup-standby");
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "negate");
-        TEST_RESULT_UINT(cfgOptionStrId(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_N, "backup-standby is n");
+        TEST_RESULT_UINT(cfgOptionSeq(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_N, "backup-standby is n");
 
         argList = strLstDup(argListBase);
         strLstAddZ(argList, "--backup-standby");
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "no arg");
-        TEST_RESULT_UINT(cfgOptionStrId(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_Y, "backup-standby is y");
+        TEST_RESULT_UINT(cfgOptionSeq(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_Y, "backup-standby is y");
 
         argList = strLstDup(argListBase);
         strLstAddZ(argList, "--backup-standby=prefer");
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "prefer arg");
-        TEST_RESULT_UINT(cfgOptionStrId(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_PREFER, "backup-standby is prefer");
+        TEST_RESULT_UINT(cfgOptionSeq(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_PREFER, "backup-standby is prefer");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("various configuration settings");
@@ -1958,7 +1979,7 @@ testRun(void)
         TEST_RESULT_INT(varInt64(cfgOptionVar(cfgOptRepoRetentionFull)), 55, "repo-retention-full as variant");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 6, "compress-level is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceDefault, "compress-level is source config");
-        TEST_RESULT_UINT(cfgOptionStrId(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_N, "backup-standby not is set");
+        TEST_RESULT_UINT(cfgOptionSeq(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_N, "backup-standby not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBackupStandby), cfgSourceDefault, "backup-standby is source default");
         TEST_RESULT_BOOL(cfgOptionIdxReset(cfgOptBackupStandby, 0), true, "backup-standby was reset");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), true, "delta is set");
@@ -2004,6 +2025,11 @@ testRun(void)
 
         TEST_RESULT_UINT(cfgOptionKeyToIdx(cfgOptArchiveTimeout, 1), 0, "check archive-timeout");
         TEST_ERROR(cfgOptionKeyToIdx(cfgOptPgPath, 4), AssertError, "key '4' is not valid for 'pg-path' option");
+
+        TEST_RESULT_VOID(cfgOptionIdxSet(cfgOptType, 0, cfgSourceParam, VARSTRDEF("full")), "set type as string");
+        TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptType, 0), STRID5("full", 0x632a60), "check strid");
+        TEST_RESULT_VOID(cfgOptionIdxSet(cfgOptType, 0, cfgSourceParam, VARUINT64(STRID5("full", 0x632a60))), "set type as strid");
+        TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptType, 0), STRID5("full", 0x632a60), "check strid");
 
         unsetenv("PGBACKREST_BOGUS");
         unsetenv("PGBACKREST_ONLIN");
@@ -2232,11 +2258,9 @@ testRun(void)
         TEST_RESULT_VOID(cfgOptionIdxSet(cfgOptPgPath, 0, cfgSourceParam, NULL), "set pg1-path to NULL");
         TEST_RESULT_STR_Z(cfgOptionIdxStrNull(cfgOptPgPath, 0), NULL, "check pg1-path");
 
-        TEST_RESULT_VOID(cfgOptionIdxSet(cfgOptType, 0, cfgSourceParam, VARUINT64(STRID5("preserve", 0x2da45996500))), "set type");
-        TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptType, 0), STRID5("preserve", 0x2da45996500), "check type");
-
-        TEST_RESULT_VOID(cfgOptionIdxSet(cfgOptType, 0, cfgSourceParam, VARSTRDEF("standby")), "set type");
-        TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptType, 0), STRID5("standby", 0x6444706930), "check type");
+        TEST_RESULT_VOID(
+            cfgOptionIdxSet(cfgOptType, 0, cfgSourceParam, VARUINT64(CFGOPTVAL_RESTORE_TYPE_PRESERVE_STRID)), "set type");
+        TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptType, 0), CFGOPTVAL_RESTORE_TYPE_PRESERVE_STRID, "check type");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("integer default when dependency invalid");

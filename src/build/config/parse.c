@@ -312,6 +312,7 @@ typedef struct BldCfgOptionCommandRaw
     const String *name;                                             // See BldCfgOptionCommand for comments
     const Variant *internal;
     const Variant *required;
+    const Variant *sequence;
     const BldCfgOptionDefaultRaw *defaultValue;
     const BldCfgOptionDependRaw *depend;
     const List *allowList;
@@ -329,6 +330,7 @@ typedef struct BldCfgOptionRaw
     const Variant *required;
     const Variant *negate;
     bool reset;
+    bool sequence;
     DefaultType defaultType;
     const BldCfgOptionDefaultRaw *defaultValue;
     const String *group;
@@ -349,7 +351,7 @@ bldCfgParseAllowListDup(const List *const allowList)
 
     if (allowList != NULL)
     {
-        result = lstNewP(sizeof(BldCfgOptionValue));
+        result = lstNewP(sizeof(BldCfgOptionValue), .comparator = lstComparatorStr);
 
         for (unsigned int valueIdx = 0; valueIdx < lstSize(allowList); valueIdx++)
         {
@@ -383,7 +385,7 @@ bldCfgParseAllowList(Yaml *const yaml, const List *const optList)
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result = lstNewP(sizeof(BldCfgOptionValue));
+                result = lstNewP(sizeof(BldCfgOptionValue), .comparator = lstComparatorStr);
             }
             MEM_CONTEXT_PRIOR_END();
 
@@ -976,6 +978,10 @@ bldCfgParseOptionCommandList(Yaml *const yaml, const List *const cmdList, const 
                                 {
                                     optCmdRaw.required = varNewBool(yamlBoolParse(optCmdDefVal));
                                 }
+                                else if (strEqZ(optCmdDef.value, "sequence"))
+                                {
+                                    optCmdRaw.sequence = varNewBool(yamlBoolParse(optCmdDefVal));
+                                }
                                 else
                                     THROW_FMT(FormatError, "unknown option command definition '%s'", strZ(optCmdDef.value));
                             }
@@ -994,6 +1000,7 @@ bldCfgParseOptionCommandList(Yaml *const yaml, const List *const cmdList, const 
                             .name = strDup(optCmdRaw.name),
                             .internal = varDup(optCmdRaw.internal),
                             .required = varDup(optCmdRaw.required),
+                            .sequence = varDup(optCmdRaw.sequence),
                             .defaultValue = optCmdRaw.defaultValue,
                             .depend = optCmdRaw.depend,
                             .allowList = bldCfgParseAllowListDup(optCmdRaw.allowList),
@@ -1143,6 +1150,10 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                     {
                         optRaw.negate = varNewBool(yamlBoolParse(optDefVal));
                     }
+                    else if (strEqZ(optDef.value, "sequence"))
+                    {
+                        optRaw.sequence = varNewBool(yamlBoolParse(optDefVal));
+                    }
                     else if (strEqZ(optDef.value, "required"))
                     {
                         optRaw.required = varNewBool(yamlBoolParse(optDefVal));
@@ -1234,6 +1245,7 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                     .required = varBool(optRaw->required),
                     .negate = varBool(optRaw->negate),
                     .reset = optRaw->reset,
+                    .sequence = optRaw->sequence,
                     .defaultType = optRaw->defaultType,
                     .defaultValue = bldCfgParseDefaultDup(optRaw->defaultValue),
                     .group = strDup(optRaw->group),
@@ -1278,6 +1290,10 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                 if (optCmd.internal == NULL)
                     optCmd.internal = varNewBool(optRaw->internal);
 
+                // Default sequence to option sequence if not defined
+                if (optCmd.sequence == NULL)
+                    optCmd.sequence = varNewBool(optRaw->sequence);
+
                 // Default command role list if not defined
                 if (optCmd.roleList == NULL)
                 {
@@ -1310,6 +1326,7 @@ bldCfgParseOptionList(Yaml *const yaml, const List *const cmdList, const List *c
                         .name = strDup(optCmd.name),
                         .internal = varBool(optCmd.internal),
                         .required = varBool(optCmd.required),
+                        .sequence = varBool(optCmd.sequence),
                         .defaultValue = bldCfgParseDefaultDup(optCmd.defaultValue),
                         .depend = bldCfgParseDependReconcile(optRaw, optCmd.depend, result),
                         .allowList = bldCfgParseAllowListDup(optCmd.allowList),

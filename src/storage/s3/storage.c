@@ -1237,8 +1237,8 @@ static const StorageInterface storageInterfaceS3 =
 FN_EXTERN Storage *
 storageS3New(
     const String *const path, const bool write, const time_t targetTime, StoragePathExpressionCallback pathExpressionFunction,
-    const String *const bucket, const String *const endPoint, const StorageS3UriStyle uriStyle, const String *const region,
-    const StorageS3KeyType keyType, const String *const accessKey, const String *const secretAccessKey,
+    const String *const bucket, const String *const endPoint, const String *const region, const StorageS3KeyType keyType,
+    const StorageS3UriStyle uriStyle, const String *const accessKey, const String *const secretAccessKey,
     const String *const securityToken, const String *const kmsKeyId, const String *sseCustomerKey, const String *const credRole,
     const String *const tokenFile, const String *const credUrl, const size_t partSize, const KeyValue *const tag,
     const String *host, const unsigned int port, const TimeMSec timeout, const HttpProtocolType protocolType,
@@ -1251,9 +1251,9 @@ storageS3New(
         FUNCTION_LOG_PARAM(FUNCTIONP, pathExpressionFunction);
         FUNCTION_LOG_PARAM(STRING, bucket);
         FUNCTION_LOG_PARAM(STRING, endPoint);
-        FUNCTION_LOG_PARAM(STRING_ID, uriStyle);
         FUNCTION_LOG_PARAM(STRING, region);
-        FUNCTION_LOG_PARAM(STRING_ID, keyType);
+        FUNCTION_LOG_PARAM(ENUM, keyType);
+        FUNCTION_LOG_PARAM(ENUM, uriStyle);
         FUNCTION_TEST_PARAM(STRING, accessKey);
         FUNCTION_TEST_PARAM(STRING, secretAccessKey);
         FUNCTION_TEST_PARAM(STRING, securityToken);

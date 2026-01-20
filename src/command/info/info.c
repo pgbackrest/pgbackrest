@@ -210,7 +210,7 @@ stanzaStatusLockAdd(KeyValue *targetKv, const Variant *const lockKey, const Info
         kvPut(lockKv, STATUS_KEY_LOCK_SIZE_COMPLETE_VAR, VARUINT64(lock->sizeComplete));
         kvPut(lockKv, STATUS_KEY_LOCK_SIZE_VAR, VARUINT64(lock->size));
 
-        if (cfgOptionStrId(cfgOptOutput) != CFGOPTVAL_OUTPUT_JSON)
+        if (cfgOptionSeq(cfgOptOutput) != CFGOPTVAL_OUTPUT_JSON)
             kvPut(lockKv, STATUS_KEY_LOCK_PERCENT_COMPLETE_VAR, VARUINT(cvtPctToUInt(lock->sizeComplete, lock->size)));
     }
 }
@@ -449,7 +449,7 @@ backupListAdd(
     Variant *const backupInfo = varNewKv(kvNew());
 
     // Flags used to decide what data to add
-    const bool outputJson = cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON;
+    const bool outputJson = cfgOptionSeq(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON;
 
     // main keys
     kvPut(varKv(backupInfo), BACKUP_KEY_LABEL_VAR, VARSTR(backupData->backupLabel));
@@ -753,7 +753,7 @@ stanzaInfoList(
     ASSERT(stanzaRepoList != NULL);
 
     // Is full output requested?
-    const bool outputFull = cfgOptionStrId(cfgOptDetailLevel) == CFGOPTVAL_DETAIL_LEVEL_FULL;
+    const bool outputFull = cfgOptionSeq(cfgOptDetailLevel) == CFGOPTVAL_DETAIL_LEVEL_FULL;
 
     VariantList *const result = varLstNew();
 
@@ -1390,7 +1390,7 @@ infoUpdateStanza(
         TRY_BEGIN()
         {
             // If full output is requested read info and manifest files
-            const bool outputFull = cfgOptionStrId(cfgOptDetailLevel) == CFGOPTVAL_DETAIL_LEVEL_FULL;
+            const bool outputFull = cfgOptionSeq(cfgOptDetailLevel) == CFGOPTVAL_DETAIL_LEVEL_FULL;
 
             if (outputFull)
             {
@@ -1493,7 +1493,7 @@ infoRender(void)
         bool backupFound = false;
 
         // If only progress info is requested then details about a specific backup may not be requested
-        if (backupLabel != NULL && cfgOptionStrId(cfgOptDetailLevel) == CFGOPTVAL_DETAIL_LEVEL_PROGRESS)
+        if (backupLabel != NULL && cfgOptionSeq(cfgOptDetailLevel) == CFGOPTVAL_DETAIL_LEVEL_PROGRESS)
         {
             THROW_FMT(OptionInvalidError, "option '%s' cannot be used with option '%s' = '%s'",
                       cfgOptionName(cfgOptSet), cfgOptionName(cfgOptDetailLevel), CFGOPTVAL_DETAIL_LEVEL_PROGRESS_Z);
@@ -1677,13 +1677,13 @@ infoRender(void)
             infoList = stanzaInfoList(stanzaRepoList, backupLabel, repoIdxMin, repoIdxMax);
 
         // Format text output
-        if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT)
+        if (cfgOptionSeq(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT)
         {
             // Process any stanza directories
             if (!varLstEmpty(infoList))
             {
                 // Is full output requested?
-                const bool outputFull = cfgOptionStrId(cfgOptDetailLevel) == CFGOPTVAL_DETAIL_LEVEL_FULL;
+                const bool outputFull = cfgOptionSeq(cfgOptDetailLevel) == CFGOPTVAL_DETAIL_LEVEL_FULL;
 
                 for (unsigned int stanzaIdx = 0; stanzaIdx < varLstSize(infoList); stanzaIdx++)
                 {
@@ -1844,7 +1844,7 @@ infoRender(void)
         // Format json output
         else
         {
-            ASSERT(cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON);
+            ASSERT(cfgOptionSeq(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON);
             resultStr = jsonFromVar(varNewVarLst(infoList));
         }
 

@@ -22,8 +22,8 @@ See bldStrId() for information on generating StringId constants.
 #ifndef COMMON_TYPE_STRINGID_H
 #define COMMON_TYPE_STRINGID_H
 
+#include <limits.h>
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -45,6 +45,11 @@ Constants used to extract information from the header
 #define STRING_ID_BIT_MASK                                          3
 
 /***********************************************************************************************************************************
+Indicator for no sequence value
+***********************************************************************************************************************************/
+#define STRING_ID_SEQ_NONE                                          UINT_MAX
+
+/***********************************************************************************************************************************
 StringId typedef to make them more recognizable in the code
 ***********************************************************************************************************************************/
 typedef uint64_t StringId;
@@ -54,19 +59,28 @@ Macros to define constant StringIds. ALWAYS use bldStrId() to create these macro
 against each other so the str parameter is included only for documentation purposes.
 ***********************************************************************************************************************************/
 #define STRID5(str, strId)                                          strId
+#define STRID5S(str, seq, strId)                                    strId
 #define STRID6(str, strId)                                          strId
+#define STRID6S(str, seq, strId)                                    strId
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-// Convert N chars to StringId
-FN_EXTERN StringId strIdFromZN(const char *buffer, size_t size);
+// Convert N chars to StringId and optionally add sequence
+FN_EXTERN StringId strIdFromZN(const char *buffer, size_t size, unsigned int sequence);
 
-// Convert zero-terminated string to StringId using strIdFromZN()
+// Convert zero-terminated string to StringId and add sequence
+FN_INLINE_ALWAYS StringId
+strIdSeqFromZ(const char *const str, const unsigned int sequence)
+{
+    return strIdFromZN(str, strlen(str), sequence);
+}
+
+// Convert zero-terminated string to StringId
 FN_INLINE_ALWAYS StringId
 strIdFromZ(const char *const str)
 {
-    return strIdFromZN(str, strlen(str));
+    return strIdSeqFromZ(str, STRING_ID_SEQ_NONE);
 }
 
 // Write StringId to characters without zero-terminating. The buffer at ptr must have enough space to write the entire StringId,
@@ -75,7 +89,10 @@ strIdFromZ(const char *const str)
 FN_EXTERN size_t strIdToZN(StringId strId, char *const buffer);
 
 // Convert StringId to zero-terminated string. See strIdToZN() for buffer sizing and return value.
-FN_EXTERN size_t strIdToZ(const StringId strId, char *const buffer);
+FN_EXTERN size_t strIdToZ(StringId strId, char *const buffer);
+
+// Get the sequence for a StringId (or error if none)
+FN_EXTERN unsigned int strIdSeq(StringId strId);
 
 /***********************************************************************************************************************************
 Macros for function logging

@@ -193,6 +193,15 @@ cfgOptionStrId(const ConfigOption optionId)
     return cfgOptionIdxStrId(optionId, cfgOptionIdxDefault(optionId));
 }
 
+// Get config option sequence
+FN_EXTERN unsigned int cfgOptionIdxSeq(ConfigOption optionId, unsigned int optionIdx);
+
+FN_INLINE_ALWAYS unsigned int
+cfgOptionSeq(const ConfigOption optionId)
+{
+    return cfgOptionIdxSeq(optionId, cfgOptionIdxDefault(optionId));
+}
+
 // Get uint config option
 FN_EXTERN unsigned int cfgOptionIdxUInt(ConfigOption optionId, unsigned int optionIdx);
 

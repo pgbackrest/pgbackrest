@@ -173,13 +173,14 @@ protocolLocalParam(const ProtocolStorageType protocolStorageType, const unsigned
         // Only enable file logging on the local when requested
         kvPut(
             optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_FILE),
-            cfgOptionBool(cfgOptLogSubprocess) ? VARUINT64(cfgOptionStrId(cfgOptLogLevelFile)) : VARSTRDEF("off"));
+            VARUINT64(
+                cfgOptionBool(cfgOptLogSubprocess) ? cfgOptionStrId(cfgOptLogLevelFile) : CFGOPTVAL_LOG_LEVEL_FILE_OFF_STRID));
 
         // Always output errors on stderr for debugging purposes
-        kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), VARSTRDEF("error"));
+        kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), VARUINT64(CFGOPTVAL_LOG_LEVEL_STDERR_ERROR_STRID));
 
         // Disable output to stdout since it is used by the protocol
-        kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_CONSOLE), VARSTRDEF("off"));
+        kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_CONSOLE), VARUINT64(CFGOPTVAL_LOG_LEVEL_FILE_OFF_STRID));
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
@@ -575,13 +576,14 @@ protocolRemoteParam(const ProtocolStorageType protocolStorageType, const unsigne
         // Only enable file logging on the remote when requested
         kvPut(
             optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_FILE),
-            cfgOptionBool(cfgOptLogSubprocess) ? VARUINT64(cfgOptionStrId(cfgOptLogLevelFile)) : VARSTRDEF("off"));
+            VARUINT64(
+                cfgOptionBool(cfgOptLogSubprocess) ? cfgOptionStrId(cfgOptLogLevelFile) : CFGOPTVAL_LOG_LEVEL_FILE_OFF_STRID));
 
         // Always output errors on stderr for debugging purposes
-        kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), VARSTRDEF("error"));
+        kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), VARUINT64(CFGOPTVAL_LOG_LEVEL_STDERR_ERROR_STRID));
 
         // Disable output to stdout since it is used by the protocol
-        kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_CONSOLE), VARSTRDEF("off"));
+        kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_CONSOLE), VARUINT64(CFGOPTVAL_LOG_LEVEL_FILE_OFF_STRID));
 
         // Add the remote type
         kvPut(optionReplace, VARSTRDEF(CFGOPT_REMOTE_TYPE), VARSTR(strNewStrId(protocolStorageType)));

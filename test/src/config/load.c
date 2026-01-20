@@ -26,7 +26,7 @@ cfgLoadLogSetting(void)
     bool logTimestamp = true;
 
     if (cfgOptionValid(cfgOptLogLevel))
-        logLevelConsole = logLevelEnum(cfgOptionStrId(cfgOptLogLevel));
+        logLevelConsole = logLevelEnum(cfgOptionSeq(cfgOptLogLevel));
 
     if (cfgOptionValid(cfgOptLogTimestamp))
         logTimestamp = cfgOptionBool(cfgOptLogTimestamp);

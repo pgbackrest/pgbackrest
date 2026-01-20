@@ -631,6 +631,52 @@ testRun(void)
         TEST_RESULT_UINT(strIdBitFromZN(stringIdBit6, "abC-40MzZ9Z", 11), 0, "error on too many chars");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("add sequence");
+
+        TEST_ERROR(strIdFromZN("abcdefghijlm", 12, 6), AssertError, "assertion 'size < (bit ? STRID6_MAX : STRID5_MAX)' failed");
+        TEST_ERROR(strIdFromZN("abcdefghiJ", 10, 6), AssertError, "assertion 'size < (bit ? STRID6_MAX : STRID5_MAX)' failed");
+        TEST_ERROR(strIdFromZN("abcdefghi", 9, 38), AssertError, "assertion 'sequence <= STRING_ID_SEQ_MAX' failed");
+
+        char buffer[STRID_MAX + 1];
+        StringId strId;
+
+        TEST_ASSIGN(strId, strIdFromZN("abc", 3, 0), "5 bits sequence 0");
+        TEST_RESULT_UINT(strId, 0xc412, "check id");
+        strIdToZ(strId, buffer);
+        TEST_RESULT_Z(buffer, "abc", "check string");
+        TEST_RESULT_UINT(strIdSeq(strId), 0, "sequence 0");
+
+        TEST_ASSIGN(strId, strIdFromZN("abcdefhijklm", 12, 5), "5 bits sequence 5");
+        TEST_RESULT_UINT(strId, 0x6b16a4a0c520c41c, "check id");
+        strIdToZ(strId, buffer);
+        TEST_RESULT_Z(buffer, "abcdefhijklm", "check string");
+        TEST_RESULT_UINT(strIdSeq(strId), 5, "sequence 5");
+
+        TEST_ASSIGN(strId, strIdFromZN("abc", 3, 37), "5 bits sequence 37");
+        TEST_RESULT_UINT(strId, 0x1883fe, "check id");
+        strIdToZ(strId, buffer);
+        TEST_RESULT_Z(buffer, "abc", "check string");
+        TEST_RESULT_UINT(strIdSeq(strId), 37, "sequence 37");
+
+        TEST_ASSIGN(strId, strIdFromZN("abcdefhijkl", 11, 6), "5 bits sequence 6");
+        TEST_RESULT_UINT(strId, 0x62d49418a418820e, "check id");
+        strIdToZ(strId, buffer);
+        TEST_RESULT_Z(buffer, "abcdefhijkl", "check string");
+        TEST_RESULT_UINT(strIdSeq(strId), 6, "sequence 6");
+
+        TEST_ASSIGN(strId, strIdFromZN("aBc", 3, 0), "6 bits sequence 0");
+        TEST_RESULT_UINT(strId, 0x39c13, "check id");
+        strIdToZ(strId, buffer);
+        TEST_RESULT_Z(buffer, "aBc", "check string");
+        TEST_RESULT_UINT(strIdSeq(strId), 0, "sequence 0");
+
+        TEST_ASSIGN(strId, strIdFromZN("aBcEfHijK", 9, 37), "6 bits sequence 37");
+        TEST_RESULT_UINT(strId, 0x6051368D507383ff, "check id");
+        strIdToZ(strId, buffer);
+        TEST_RESULT_Z(buffer, "aBcEfHijK", "check string");
+        TEST_RESULT_UINT(strIdSeq(strId), 37, "sequence 37");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("STRID*()");
 
         TEST_RESULT_UINT(STRID5("a", TEST_STR5ID1), TEST_STR5ID1, "STRID5()");
@@ -712,8 +758,6 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdToZ()");
-
-        char buffer[STRID_MAX + 1];
 
         TEST_RESULT_UINT(strIdToZ(TEST_STR5ID1, buffer), 1, "5 bits 1 char");
         TEST_RESULT_Z(buffer, "a", "    check");

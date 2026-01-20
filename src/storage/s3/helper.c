@@ -55,7 +55,7 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
             port = cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx);
 
         // Get role and token
-        const StorageS3KeyType keyType = (StorageS3KeyType)cfgOptionIdxStrId(cfgOptRepoS3KeyType, repoIdx);
+        const StorageS3KeyType keyType = (StorageS3KeyType)cfgOptionIdxSeq(cfgOptRepoS3KeyType, repoIdx);
         const String *role = cfgOptionIdxStrNull(cfgOptRepoS3Role, repoIdx);
         const String *tokenFile = NULL;
         const String *credUrl = NULL;
@@ -110,11 +110,11 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
             result = storageS3New(
                 cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoTargetTime(), pathExpressionCallback,
                 cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint,
-                (StorageS3UriStyle)cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx), cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx),
-                keyType, cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KmsKeyId, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoS3SseCustomerKey, repoIdx), role, tokenFile, credUrl,
-                (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx),
+                cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx), keyType,
+                (StorageS3UriStyle)cfgOptionIdxSeq(cfgOptRepoS3UriStyle, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx),
+                cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx),
+                cfgOptionIdxStrNull(cfgOptRepoS3KmsKeyId, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3SseCustomerKey, repoIdx), role,
+                tokenFile, credUrl, (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx),
                 cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), host, port, ioTimeoutMs(), protocolType,
                 cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx), cfgOptionIdxBool(cfgOptRepoS3RequesterPays, repoIdx));

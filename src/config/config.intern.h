@@ -44,6 +44,7 @@ typedef struct ConfigOptionValue
     bool set;                                                       // Is the option set?
     bool negate;                                                    // Is the option negated?
     bool reset;                                                     // Is the option reset?
+    uint8_t sequence;                                               // Sequence, if any
     unsigned int source;                                            // Where the option came from, i.e. ConfigSource enum
     const String *display;                                          // Current display value, if any. Used for messages, etc.
     const String *defaultValue;                                     // Default value
@@ -55,6 +56,7 @@ typedef struct ConfigOptionData
     const char *name;                                               // Name
     bool valid;                                                     // Is option valid for current command?
     bool group;                                                     // In a group?
+    bool sequence;                                                  // Is there a sequence?
     unsigned int groupId;                                           // Id if in a group
     ConfigOptionDataType dataType;                                  // Underlying data type
     ConfigOptionValue *index;                                       // List of indexed values (only 1 unless the option is indexed)

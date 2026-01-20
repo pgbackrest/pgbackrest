@@ -156,7 +156,7 @@ restoreBackupSet(void)
         // If the set option was not provided by the user but a target was set, then we will need to search for a backup set that
         // satisfies the target condition, else we will use the backup provided
         const String *backupSetRequested = NULL;
-        const StringId targetType = cfgOptionStrId(cfgOptType);
+        const unsigned int targetType = cfgOptionSeq(cfgOptType);
 
         union
         {
@@ -166,7 +166,7 @@ restoreBackupSet(void)
 
         if (cfgOptionSource(cfgOptSet) == cfgSourceDefault)
         {
-            if (targetType == CFGOPTVAL_TYPE_TIME)
+            if (targetType == CFGOPTVAL_RESTORE_TYPE_TIME)
             {
                 TRY_BEGIN()
                 {
@@ -183,7 +183,7 @@ restoreBackupSet(void)
                 }
                 TRY_END();
             }
-            else if (targetType == CFGOPTVAL_TYPE_LSN)
+            else if (targetType == CFGOPTVAL_RESTORE_TYPE_LSN)
                 target.lsn = pgLsnFromStr(cfgOptionStr(cfgOptTarget));
         }
         else
@@ -229,7 +229,7 @@ restoreBackupSet(void)
                 const InfoBackupData latestBackup = infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1);
 
                 // If a target was requested, attempt to determine the backup set
-                if (targetType == CFGOPTVAL_TYPE_TIME || targetType == CFGOPTVAL_TYPE_LSN)
+                if (targetType == CFGOPTVAL_RESTORE_TYPE_TIME || targetType == CFGOPTVAL_RESTORE_TYPE_LSN)
                 {
                     bool found = false;
 
@@ -240,7 +240,7 @@ restoreBackupSet(void)
                         const InfoBackupData backupData = infoBackupData(infoBackup, keyIdx);
 
                         // If target is lsn and no backupLsnStop exists, exit this repo and log that backup may be manually selected
-                        if (targetType == CFGOPTVAL_TYPE_LSN && !backupData.backupLsnStop)
+                        if (targetType == CFGOPTVAL_RESTORE_TYPE_LSN && !backupData.backupLsnStop)
                         {
                             LOG_WARN_FMT(
                                 "%s reached backup from prior version missing required LSN info before finding a match -- backup"
@@ -252,8 +252,8 @@ restoreBackupSet(void)
                         }
 
                         // If the end of the backup is valid for the target, then select this backup
-                        if ((targetType == CFGOPTVAL_TYPE_TIME && backupData.backupTimestampStop < target.time) ||
-                            (targetType == CFGOPTVAL_TYPE_LSN && pgLsnFromStr(backupData.backupLsnStop) <= target.lsn))
+                        if ((targetType == CFGOPTVAL_RESTORE_TYPE_TIME && backupData.backupTimestampStop < target.time) ||
+                            (targetType == CFGOPTVAL_RESTORE_TYPE_LSN && pgLsnFromStr(backupData.backupLsnStop) <= target.lsn))
                         {
                             found = true;
 
@@ -311,11 +311,11 @@ restoreBackupSet(void)
         {
             if (backupSetRequested != NULL)
                 THROW_FMT(BackupSetInvalidError, "backup set %s is not valid", strZ(backupSetRequested));
-            else if (targetType == CFGOPTVAL_TYPE_TIME || targetType == CFGOPTVAL_TYPE_LSN)
+            else if (targetType == CFGOPTVAL_RESTORE_TYPE_TIME || targetType == CFGOPTVAL_RESTORE_TYPE_LSN)
             {
                 THROW_FMT(
                     BackupSetInvalidError, "unable to find backup set with %s '%s'",
-                    targetType == CFGOPTVAL_TYPE_LSN ? "lsn less than or equal to" : "stop time less than",
+                    targetType == CFGOPTVAL_RESTORE_TYPE_LSN ? "lsn less than or equal to" : "stop time less than",
                     strZ(cfgOptionDisplay(cfgOptTarget)));
             }
             else
@@ -1024,7 +1024,7 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
             strLstAdd(cleanData->fileIgnore, BACKUP_MANIFEST_FILE_STR);
 
             // Also ignore recovery files when recovery type = preserve
-            if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_PRESERVE)
+            if (cfgOptionSeq(cfgOptType) == CFGOPTVAL_RESTORE_TYPE_PRESERVE)
             {
                 // If recovery GUCs then three files must be preserved
                 if (manifestData(manifest)->pgVersion >= PG_VERSION_RECOVERY_GUC)
@@ -1114,7 +1114,8 @@ restoreCleanBuild(const Manifest *const manifest, const String *const rootReplac
         }
 
         // Skip postgresql.auto.conf if preserve is set and the PostgreSQL version supports recovery GUCs
-        if (manifestData(manifest)->pgVersion >= PG_VERSION_RECOVERY_GUC && cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_PRESERVE &&
+        if (manifestData(manifest)->pgVersion >= PG_VERSION_RECOVERY_GUC &&
+            cfgOptionSeq(cfgOptType) == CFGOPTVAL_RESTORE_TYPE_PRESERVE &&
             manifestFileExists(manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_FILE_POSTGRESQLAUTOCONF)))
         {
             LOG_DETAIL_FMT("skip '" PG_FILE_POSTGRESQLAUTOCONF "' -- recovery type is preserve");
@@ -1497,7 +1498,7 @@ restoreRecoveryOption(const unsigned int pgVersion)
         }
 
         // If archive-mode is not preserve
-        if (cfgOptionStrId(cfgOptArchiveMode) != CFGOPTVAL_ARCHIVE_MODE_PRESERVE)
+        if (cfgOptionSeq(cfgOptArchiveMode) != CFGOPTVAL_ARCHIVE_MODE_PRESERVE)
         {
             if (pgVersion < PG_VERSION_12)
             {
@@ -1508,7 +1509,7 @@ restoreRecoveryOption(const unsigned int pgVersion)
             }
 
             // The only other valid option is off
-            ASSERT(cfgOptionStrId(cfgOptArchiveMode) == CFGOPTVAL_ARCHIVE_MODE_OFF);
+            ASSERT(cfgOptionSeq(cfgOptArchiveMode) == CFGOPTVAL_ARCHIVE_MODE_OFF);
 
             // If archive-mode=off then set archive_mode=off
             kvPut(result, VARSTRDEF(ARCHIVE_MODE), VARSTRDEF(CFGOPTVAL_ARCHIVE_MODE_OFF_Z));
@@ -1534,7 +1535,7 @@ restoreRecoveryOption(const unsigned int pgVersion)
             kvPut(optionReplace, VARSTRDEF(CFGOPT_CMD), NULL);
 
             kvPut(
-                result, VARSTRZ(RESTORE_COMMAND),
+                result, VARSTRDEF(RESTORE_COMMAND),
                 VARSTR(
                     strNewFmt(
                         "%s %s %%f \"%%p\"", strZ(cfgOptionStr(cfgOptCmd)),
@@ -1542,28 +1543,28 @@ restoreRecoveryOption(const unsigned int pgVersion)
         }
 
         // If recovery type is immediate
-        if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_IMMEDIATE)
+        if (cfgOptionSeq(cfgOptType) == CFGOPTVAL_RESTORE_TYPE_IMMEDIATE)
         {
-            kvPut(result, VARSTRZ(RECOVERY_TARGET), VARSTRZ(CFGOPTVAL_TYPE_IMMEDIATE_Z));
+            kvPut(result, VARSTRDEF(RECOVERY_TARGET), VARSTRDEF(CFGOPTVAL_RESTORE_TYPE_IMMEDIATE_Z));
         }
         // Else recovery type is standby
-        else if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_STANDBY)
+        else if (cfgOptionSeq(cfgOptType) == CFGOPTVAL_RESTORE_TYPE_STANDBY)
         {
             // Write standby_mode for PostgreSQL versions that support it
             if (pgVersion < PG_VERSION_RECOVERY_GUC)
                 kvPut(result, VARSTR(STANDBY_MODE_STR), VARSTRDEF("on"));
         }
         // Else recovery type is not default so write target options
-        else if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_DEFAULT)
+        else if (cfgOptionSeq(cfgOptType) != CFGOPTVAL_RESTORE_TYPE_DEFAULT)
         {
             // Write the recovery target
             kvPut(
-                result, VARSTR(strNewFmt(RECOVERY_TARGET "_%s", zNewStrId(cfgOptionStrId(cfgOptType)))),
+                result, VARSTR(strNewFmt(RECOVERY_TARGET "_%s", strZ(cfgOptionDisplay(cfgOptType)))),
                 VARSTR(cfgOptionStr(cfgOptTarget)));
 
             // Write recovery_target_inclusive
             if (cfgOptionTest(cfgOptTargetExclusive) && cfgOptionBool(cfgOptTargetExclusive))
-                kvPut(result, VARSTRZ(RECOVERY_TARGET_INCLUSIVE), VARSTR(FALSE_STR));
+                kvPut(result, VARSTRDEF(RECOVERY_TARGET_INCLUSIVE), VARSTR(FALSE_STR));
         }
 
         // Write recovery_target_action
@@ -1573,7 +1574,7 @@ restoreRecoveryOption(const unsigned int pgVersion)
 
             if (targetAction != CFGOPTVAL_TARGET_ACTION_PAUSE)
             {
-                kvPut(result, VARSTRZ(RECOVERY_TARGET_ACTION), VARSTR(strNewStrId(targetAction)));
+                kvPut(result, VARSTRDEF(RECOVERY_TARGET_ACTION), VARSTR(strNewStrId(targetAction)));
             }
         }
 
@@ -1582,7 +1583,7 @@ restoreRecoveryOption(const unsigned int pgVersion)
         {
             // Do not set current when PostgreSQL < 12 since this is the default and if current is explicitly set it acts as latest
             if (pgVersion >= PG_VERSION_12 || !strEqZ(cfgOptionStr(cfgOptTargetTimeline), RECOVERY_TARGET_TIMELINE_CURRENT))
-                kvPut(result, VARSTRZ(RECOVERY_TARGET_TIMELINE), VARSTR(cfgOptionStr(cfgOptTargetTimeline)));
+                kvPut(result, VARSTRDEF(RECOVERY_TARGET_TIMELINE), VARSTR(cfgOptionStr(cfgOptTargetTimeline)));
         }
         // Else explicitly set target timeline to "current" when type=immediate and PostgreSQL >= 12. We do this because
         // type=immediate means there won't be any actual attempt to change timelines, but if we leave the target timeline as the
@@ -1593,8 +1594,8 @@ restoreRecoveryOption(const unsigned int pgVersion)
         // least until they aren't really seen in the wild any longer.
         //
         // PostgreSQL < 12 defaults to "current" (but does not accept "current" as a parameter) so no need set it explicitly.
-        else if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_IMMEDIATE && pgVersion >= PG_VERSION_12)
-            kvPut(result, VARSTRZ(RECOVERY_TARGET_TIMELINE), VARSTRDEF(RECOVERY_TARGET_TIMELINE_CURRENT));
+        else if (cfgOptionSeq(cfgOptType) == CFGOPTVAL_RESTORE_TYPE_IMMEDIATE && pgVersion >= PG_VERSION_12)
+            kvPut(result, VARSTRDEF(RECOVERY_TARGET_TIMELINE), VARSTRDEF(RECOVERY_TARGET_TIMELINE_CURRENT));
 
         // Move to prior context
         kvMove(result, memContextPrior());
@@ -1649,7 +1650,7 @@ restoreRecoveryWriteConf(
     FUNCTION_LOG_END();
 
     // Only write recovery.conf if recovery type != none
-    if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_NONE)
+    if (cfgOptionSeq(cfgOptType) != CFGOPTVAL_RESTORE_TYPE_NONE)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -1726,7 +1727,7 @@ restoreRecoveryWriteAutoConf(
             }
 
             // If settings will be appended then format the file so a blank line will be between old and new settings
-            if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_NONE)
+            if (cfgOptionSeq(cfgOptType) != CFGOPTVAL_RESTORE_TYPE_NONE)
             {
                 strTrim(content);
                 strCatZ(content, "\n\n");
@@ -1734,7 +1735,7 @@ restoreRecoveryWriteAutoConf(
         }
 
         // If recovery was requested then write the recovery options
-        if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_NONE)
+        if (cfgOptionSeq(cfgOptType) != CFGOPTVAL_RESTORE_TYPE_NONE)
         {
             // If the user specified standby_mode as a recovery option then error. It's tempting to just set type=standby in this
             // case but since config parsing has already happened the target options could be in an invalid state.
@@ -1756,8 +1757,8 @@ restoreRecoveryWriteAutoConf(
                         THROW_FMT(
                             OptionInvalidError,
                             "'" STANDBY_MODE "' setting is not valid for " PG_NAME " >= %s\n"
-                            "HINT: use --" CFGOPT_TYPE "=" CFGOPTVAL_TYPE_STANDBY_Z " instead of --" CFGOPT_RECOVERY_OPTION "="
-                            STANDBY_MODE "=on.",
+                            "HINT: use --" CFGOPT_TYPE "=" CFGOPTVAL_RESTORE_TYPE_STANDBY_Z " instead of --" CFGOPT_RECOVERY_OPTION
+                            "=" STANDBY_MODE "=on.",
                             strZ(pgVersionToStr(PG_VERSION_RECOVERY_GUC)));
                     }
                 }
@@ -1777,7 +1778,7 @@ restoreRecoveryWriteAutoConf(
             BUFSTR(content));
 
         // The standby.signal file is required for standby mode
-        if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_STANDBY)
+        if (cfgOptionSeq(cfgOptType) == CFGOPTVAL_RESTORE_TYPE_STANDBY)
         {
             storagePutP(
                 storageNewWriteP(
@@ -1787,7 +1788,7 @@ restoreRecoveryWriteAutoConf(
         }
         // Else the recovery.signal file is required for targeted recovery. Skip writing this file if the backup was offline and
         // recovery type is none since PostgreSQL will error in this case when wal_level=minimal.
-        else if (cfgOptionStrId(cfgOptType) != CFGOPTVAL_TYPE_NONE)
+        else if (cfgOptionSeq(cfgOptType) != CFGOPTVAL_RESTORE_TYPE_NONE)
         {
             storagePutP(
                 storageNewWriteP(
@@ -1815,7 +1816,7 @@ restoreRecoveryWrite(const Manifest *const manifest, const StorageInfo *const fi
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If recovery type is preserve then leave recovery file as it is
-        if (cfgOptionStrId(cfgOptType) == CFGOPTVAL_TYPE_PRESERVE)
+        if (cfgOptionSeq(cfgOptType) == CFGOPTVAL_RESTORE_TYPE_PRESERVE)
         {
             // Determine which file recovery settings will be written to
             const String *const recoveryFile =
@@ -1824,7 +1825,7 @@ restoreRecoveryWrite(const Manifest *const manifest, const StorageInfo *const fi
             if (!storageExistsP(storagePg(), recoveryFile))
             {
                 LOG_WARN_FMT(
-                    "recovery type is " CFGOPTVAL_TYPE_PRESERVE_Z " but recovery file does not exist at '%s'",
+                    "recovery type is " CFGOPTVAL_RESTORE_TYPE_PRESERVE_Z " but recovery file does not exist at '%s'",
                     strZ(storagePathP(storagePg(), recoveryFile)));
             }
         }
@@ -2397,7 +2398,7 @@ cmdRestore(void)
                 storageRepoIdx(backupData.repoIdx),
                 strNewFmt("%s-%u", strZ(pgVersionToStr(data->pgVersion)), data->pgId), data->pgVersion,
                 cvtZToUIntBase(strZ(strSubN(data->archiveStart, 0, 8)), 16), pgLsnFromStr(data->lsnStart),
-                cfgOptionStrId(cfgOptType), cfgOptionStrNull(cfgOptTargetTimeline),
+                cfgOptionStrNull(cfgOptTargetTimeline), cfgOptionSeq(cfgOptType),
                 cfgOptionIdxStrId(cfgOptRepoCipherType, backupData.repoIdx), infoArchiveCipherPass(archiveInfo));
         }
 
@@ -2409,7 +2410,7 @@ cmdRestore(void)
         // so this should be a good default. However, if the user explicitly sets type and it does not equal none then they will get
         // an error if wal_level=minimal.
         if (!manifestData(jobData.manifest)->backupOptionOnline && cfgOptionSource(cfgOptType) == cfgSourceDefault)
-            cfgOptionSet(cfgOptType, cfgSourceParam, VARUINT64(CFGOPTVAL_TYPE_NONE));
+            cfgOptionSet(cfgOptType, cfgSourceParam, VARUINT64(CFGOPTVAL_RESTORE_TYPE_NONE_STRID));
 
         // Validate manifest. Don't use strict mode because we'd rather ignore problems that won't affect a restore.
         manifestValidate(jobData.manifest, false);

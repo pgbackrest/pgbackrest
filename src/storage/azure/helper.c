@@ -33,8 +33,7 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
         const String *endpoint = httpUrlHost(url);
         unsigned int port = httpUrlPort(url);
         HttpProtocolType protocolType = httpUrlProtocolType(url);
-
-        StorageAzureUriStyle uriStyle = (StorageAzureUriStyle)cfgOptionIdxStrId(cfgOptRepoAzureUriStyle, repoIdx);
+        StorageAzureUriStyle uriStyle = (StorageAzureUriStyle)cfgOptionIdxSeq(cfgOptRepoAzureUriStyle, repoIdx);
 
         // If the host is set then set it as the endpoint. The host option is used to set path-style URIs when working with Azurite.
         // This was ill-advised, so the uri-style option was added to allow the user to select the URI style used by the server.
@@ -53,7 +52,7 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
         }
 
         // Ensure the key is valid base64 when key type is shared
-        const StorageAzureKeyType keyType = (StorageAzureKeyType)cfgOptionIdxStrId(cfgOptRepoAzureKeyType, repoIdx);
+        const StorageAzureKeyType keyType = (StorageAzureKeyType)cfgOptionIdxSeq(cfgOptRepoAzureKeyType, repoIdx);
         const String *const key = cfgOptionIdxStrNull(cfgOptRepoAzureKey, repoIdx);
 
         if (keyType == storageAzureKeyTypeShared)

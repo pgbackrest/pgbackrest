@@ -84,26 +84,32 @@ testRun(void)
         HRN_STORAGE_PUT_Z(
             storageTest, "repo/test.c",
             "#define STRID5(str, strId)\n"
+            "#define STRID5S(str, seq, strId)\n"
             "#define STRID6(str, strId)\n"
+            "#define STRID6S(str, seq, strId)\n"
             "STR" "ID5(\"abcd\", TEST_STRID)\n"
             "STR" "ID5(\\\"abcd\\\")\n"
             "STR" "ID5(\\\"abcd)\n"
             "STR" "ID5(abcd)\n"
             "STR" "ID5( \"abcd)\n"
             "STRID5(\"abcd\")\n"
-            "STRID5(\"abcd\", 0x20c410)\n");
+            "STRID5(\"abcd\", 0x20c410)\n"
+            "STRID6(\"abcd\", 0x20c410)\n"
+            "STRID6S(\"abcd\", 37, 0x20c410)\n");
 
         TEST_ERROR(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("none"), 3, STRDEF("invalid"),
                 STRDEF("common/stack-trace"), 0, 1, logLevelDebug, true, NULL, NULL, false, false, false, true),
-            FormatError, "4 linter error(s) in 'test.c' (see warnings above)");
+            FormatError, "6 linter error(s) in 'test.c' (see warnings above)");
 
         TEST_RESULT_LOG(
             "P00   WARN: 'STR" "ID5(\\\"abcd)' must have quotes around string parameter '\\\"abcd'\n"
             "P00   WARN: 'STR" "ID5(abcd)' must have quotes around string parameter 'abcd'\n"
             "P00   WARN: 'STR" "ID5( \"abcd)' must have quotes around string parameter '\"abcd'\n"
-            "P00   WARN: 'STRID5(\"abcd\")' should be 'STRID5(\"abcd\", 0x20c410)'");
+            "P00   WARN: 'STRID5(\"abcd\")' should be 'STRID5(\"abcd\", 0x20c410)'\n"
+            "P00   WARN: 'STRID6(\"abcd\", 0x20c410)' should be 'STRID5(\"abcd\", 0x20c410)'\n"
+            "P00   WARN: 'STRID6S(\"abcd\", 37, 0x20c410)' should be 'STRID5S(\"abcd\", 37, 0x41883fe)'");
     }
 
     // *****************************************************************************************************************************

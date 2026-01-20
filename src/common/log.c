@@ -66,66 +66,30 @@ static char logBuffer[LOG_BUFFER_SIZE];
 /**********************************************************************************************************************************/
 #define LOG_LEVEL_TOTAL                                             (LOG_LEVEL_MAX + 1)
 
-static const struct LogLevel
+static const char *const logLevelList[LOG_LEVEL_TOTAL] =
 {
-    const StringId id;                                              // Id
-    const char *const name;                                         // Name
-} logLevelList[LOG_LEVEL_TOTAL] =
-{
-    {
-        .id = STRID5("off", 0x18cf0),
-        .name = "OFF",
-    },
-    {
-        // No id here because this level is not user selectable
-        .name = "ASSERT",
-    },
-    {
-        .id = STRID5("error", 0x127ca450),
-        .name = "ERROR",
-    },
-    {
-        .id = STRID5("warn", 0x748370),
-        .name = "WARN",
-    },
-    {
-        .id = STRID5("info", 0x799c90),
-        .name = "INFO",
-    },
-    {
-        .id = STRID5("detail", 0x1890d0a40),
-        .name = "DETAIL",
-    },
-    {
-        .id = STRID5("debug", 0x7a88a40),
-        .name = "DEBUG",
-    },
-    {
-        .id = STRID5("trace", 0x5186540),
-        .name = "TRACE",
-    },
+    "OFF",
+    "ASSERT",
+    "ERROR",
+    "WARN",
+    "INFO",
+    "DETAIL",
+    "DEBUG",
+    "TRACE",
 };
 
 FN_EXTERN LogLevel
-logLevelEnum(const StringId logLevelId)
+logLevelEnum(unsigned int logLevelSeq)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_ID, logLevelId);
+        FUNCTION_TEST_PARAM(UINT, logLevelSeq);
     FUNCTION_TEST_END();
 
-    ASSERT(logLevelId != 0);
+    ASSERT(logLevelSeq < LOG_LEVEL_MAX);
 
-    LogLevel result = logLevelOff;
+    logLevelSeq += logLevelSeq > 0;
 
-    // Search for the log level
-    for (; result < LOG_LEVEL_TOTAL; result++)
-        if (logLevelId == logLevelList[result].id)
-            break;
-
-    // Check that the log level was found
-    CHECK(AssertError, result != LOG_LEVEL_TOTAL, "invalid log level");
-
-    FUNCTION_TEST_RETURN(ENUM, result);
+    FUNCTION_TEST_RETURN(ENUM, logLevelSeq);
 }
 
 FN_EXTERN const char *
@@ -137,7 +101,7 @@ logLevelStr(const LogLevel logLevel)
 
     ASSERT(logLevel <= LOG_LEVEL_MAX);
 
-    FUNCTION_TEST_RETURN_CONST(STRINGZ, logLevelList[logLevel].name);
+    FUNCTION_TEST_RETURN_CONST(STRINGZ, logLevelList[logLevel]);
 }
 
 /**********************************************************************************************************************************/

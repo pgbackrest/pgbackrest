@@ -60,12 +60,13 @@ option:
 
   output:
     type: string-id
-    default: text
+    sequence: true
     command:
-      version: {}
-    allow-list:
-      - num
-      - text
+      version:
+        default: text
+        allow-list:
+          - num
+          - text
     command-role:
       main: {}
 
@@ -87,6 +88,7 @@ option:
   #---------------------------------------------------------------------------------------------------------------------------------
   log-level:
     type: string-id
+    sequence: true
     default: info
     allow-list:
       - off

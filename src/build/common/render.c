@@ -10,11 +10,14 @@ Build Common
 
 /**********************************************************************************************************************************/
 String *
-bldStrId(const char *const buffer)
+bldStrIdSeq(const char *const buffer, const unsigned int sequence)
 {
-    StringId result = strIdFromZ(buffer);
+    StringId strId = strIdSeqFromZ(buffer, sequence);
 
-    return strNewFmt("STRID%u(\"%s\", 0x%" PRIx64 ")", (unsigned int)(result & STRING_ID_BIT_MASK) + 5, buffer, result);
+    if (sequence == STRING_ID_SEQ_NONE)
+        return strNewFmt("STRID%u(\"%s\", 0x%" PRIx64 ")", (unsigned int)(strId & 1) + 5, buffer, strId);
+
+    return strNewFmt("STRID%uS(\"%s\", %u, 0x%" PRIx64 ")", (unsigned int)(strId & 1) + 5, buffer, strIdSeq(strId), strId);
 }
 
 /**********************************************************************************************************************************/

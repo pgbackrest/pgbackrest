@@ -37,7 +37,7 @@ FN_EXTERN bool logFileSet(const char *logFile);
 FN_EXTERN bool logAny(LogLevel logLevel);
 
 // Convert log level to string and vice versa
-FN_EXTERN LogLevel logLevelEnum(StringId logLevelId);
+FN_EXTERN LogLevel logLevelEnum(unsigned int logLevelSeq);
 FN_EXTERN const char *logLevelStr(LogLevel logLevel);
 
 // Log exit on signal

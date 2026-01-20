@@ -51,13 +51,13 @@ cfgLoadLogSetting(void)
     unsigned int logProcessMax = 1;
 
     if (cfgOptionValid(cfgOptLogLevelConsole))
-        logLevelConsole = logLevelEnum(cfgOptionStrId(cfgOptLogLevelConsole));
+        logLevelConsole = logLevelEnum(cfgOptionSeq(cfgOptLogLevelConsole));
 
     if (cfgOptionValid(cfgOptLogLevelStderr))
-        logLevelStdErr = logLevelEnum(cfgOptionStrId(cfgOptLogLevelStderr));
+        logLevelStdErr = logLevelEnum(cfgOptionSeq(cfgOptLogLevelStderr));
 
     if (cfgOptionValid(cfgOptLogLevelFile))
-        logLevelFile = logLevelEnum(cfgOptionStrId(cfgOptLogLevelFile));
+        logLevelFile = logLevelEnum(cfgOptionSeq(cfgOptLogLevelFile));
 
     if (cfgOptionValid(cfgOptLogTimestamp))
         logTimestamp = cfgOptionBool(cfgOptLogTimestamp);
@@ -218,7 +218,7 @@ cfgLoadUpdateOption(void)
                 {
                     case backupTypeFull:
                     {
-                        if (cfgOptionIdxStrId(cfgOptRepoRetentionFullType, optionIdx) == CFGOPTVAL_REPO_RETENTION_FULL_TYPE_COUNT &&
+                        if (cfgOptionIdxSeq(cfgOptRepoRetentionFullType, optionIdx) == CFGOPTVAL_REPO_RETENTION_FULL_TYPE_COUNT &&
                             cfgOptionIdxTest(cfgOptRepoRetentionFull, optionIdx))
                         {
                             cfgOptionIdxSet(
@@ -278,7 +278,7 @@ cfgLoadUpdateOption(void)
     for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
     {
         if (cfgOptionIdxTest(cfgOptRepoS3Bucket, repoIdx) && cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx) &&
-            cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx) == CFGOPTVAL_REPO_S3_URI_STYLE_HOST &&
+            cfgOptionIdxSeq(cfgOptRepoS3UriStyle, repoIdx) == CFGOPTVAL_REPO_S3_URI_STYLE_HOST &&
             strChr(cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), '.') != -1)
         {
             THROW_FMT(
@@ -432,7 +432,7 @@ cfgLoadLogFile(void)
         {
             // Attempt to open log file
             if (!logFileSet(strZ(cfgLoadLogFileName(cfgCommandRole()))))
-                cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, VARUINT64(CFGOPTVAL_LOG_LEVEL_CONSOLE_OFF));
+                cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, VARUINT64(CFGOPTVAL_LOG_LEVEL_CONSOLE_OFF_STRID));
         }
         MEM_CONTEXT_TEMP_END();
     }

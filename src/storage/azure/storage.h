@@ -17,9 +17,9 @@ Key type
 ***********************************************************************************************************************************/
 typedef enum
 {
-    storageAzureKeyTypeAuto = STRID5("auto", 0x7d2a10),
-    storageAzureKeyTypeShared = STRID5("shared", 0x85905130),
-    storageAzureKeyTypeSas = STRID5("sas", 0x4c330),
+    storageAzureKeyTypeShared,
+    storageAzureKeyTypeSas,
+    storageAzureKeyTypeAuto,
 } StorageAzureKeyType;
 
 /***********************************************************************************************************************************
@@ -27,8 +27,8 @@ URI style
 ***********************************************************************************************************************************/
 typedef enum
 {
-    storageAzureUriStyleHost = STRID5("host", 0xa4de80),
-    storageAzureUriStylePath = STRID5("path", 0x450300),
+    storageAzureUriStyleHost,
+    storageAzureUriStylePath,
 } StorageAzureUriStyle;
 
 /***********************************************************************************************************************************

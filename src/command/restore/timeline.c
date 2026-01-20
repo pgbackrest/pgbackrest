@@ -158,7 +158,7 @@ STRING_STATIC(TIMELINE_LATEST_STR,                                  "latest");
 FN_EXTERN void
 timelineVerify(
     const Storage *const storageRepo, const String *const archiveId, const unsigned int pgVersion,
-    const unsigned int timelineBackup, const uint64_t lsnBackup, const StringId recoveryType, const String *timelineTargetStr,
+    const unsigned int timelineBackup, const uint64_t lsnBackup, const String *timelineTargetStr, const unsigned int recoveryType,
     const CipherType cipherType, const String *const cipherPass)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -167,8 +167,8 @@ timelineVerify(
         FUNCTION_LOG_PARAM(UINT, pgVersion);
         FUNCTION_LOG_PARAM(UINT, timelineBackup);
         FUNCTION_LOG_PARAM(UINT64, lsnBackup);
-        FUNCTION_LOG_PARAM(STRING_ID, recoveryType);
         FUNCTION_LOG_PARAM(STRING, timelineTargetStr);
+        FUNCTION_LOG_PARAM(UINT, recoveryType);
         FUNCTION_LOG_PARAM(STRING_ID, cipherType);
         FUNCTION_LOG_PARAM(STRING, cipherPass);
     FUNCTION_LOG_END();
@@ -184,7 +184,7 @@ timelineVerify(
     // latest timeline.
     if (timelineTargetStr == NULL)
     {
-        if (pgVersion <= PG_VERSION_11 || recoveryType == CFGOPTVAL_TYPE_IMMEDIATE)
+        if (pgVersion <= PG_VERSION_11 || recoveryType == CFGOPTVAL_RESTORE_TYPE_IMMEDIATE)
             timelineTargetStr = TIMELINE_CURRENT_STR;
         else
             timelineTargetStr = TIMELINE_LATEST_STR;

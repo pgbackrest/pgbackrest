@@ -25,7 +25,7 @@ lintStrId(const String *const source)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Check all StringIds
-        RegExp *const strIdExp = regExpNew(STRDEF("STRID(5|6)\\([^)]+\\)"));
+        RegExp *const strIdExp = regExpNew(STRDEF("STRID(5|6)(S){0,1}\\([^)]+\\)"));
         const char *sourcePtr = strZ(source);
 
         while (regExpMatch(strIdExp, STRDEF(sourcePtr)))
@@ -38,7 +38,8 @@ lintStrId(const String *const source)
             sourcePtr = regExpMatchPtr(strIdExp, STRDEF(sourcePtr)) + strSize(match);
 
             // Skip macro definitions
-            if (strEqZ(match, "STRID5(str, strId)") || strEqZ(match, "STRID6(str, strId)"))
+            if (strEqZ(match, "STRID5(str, strId)") || strEqZ(match, "STRID5S(str, seq, strId)") ||
+                strEqZ(match, "STRID6(str, strId)") || strEqZ(match, "STRID6S(str, seq, strId)"))
                 continue;
 
             // Skip test strings
@@ -59,7 +60,15 @@ lintStrId(const String *const source)
             }
 
             // Check validity of the string
-            const String *const expected = bldStrId(strZ(strSubN(param, 1, strSize(param) - 2)));
+            const String *expected;
+
+            if (strBeginsWithZ(match, "STRID5" "(") || strBeginsWithZ(match, "STRID6" "("))
+                expected = bldStrId(strZ(strSubN(param, 1, strSize(param) - 2)));
+            else
+            {
+                expected = bldStrIdSeq(
+                    strZ(strSubN(param, 1, strSize(param) - 2)), cvtZToUInt(strZ(strTrim(strLstGet(paramList, 1)))));
+            }
 
             if (!strEq(match, expected))
             {

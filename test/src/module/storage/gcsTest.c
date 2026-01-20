@@ -258,7 +258,7 @@ testRun(void)
         hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
         hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
         hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
-        hrnCfgArgRawStrId(argList, cfgOptRepoGcsKeyType, storageGcsKeyTypeToken);
+        hrnCfgArgRawZ(argList, cfgOptRepoGcsKeyType, "token");
         hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_TOKEN);
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
@@ -488,7 +488,7 @@ testRun(void)
                 hrnServerScriptClose(service);
 
                 StringList *argListAuto = strLstDup(argList);
-                hrnCfgArgRawStrId(argListAuto, cfgOptRepoGcsKeyType, storageGcsKeyTypeAuto);
+                hrnCfgArgRawZ(argListAuto, cfgOptRepoGcsKeyType, "auto");
                 hrnCfgArgRawZ(argListAuto, cfgOptRepoStorageTag, "Key1=Value1");
                 hrnCfgArgRawZ(argListAuto, cfgOptRepoStorageTag, " Key 2= Value 2");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argListAuto);

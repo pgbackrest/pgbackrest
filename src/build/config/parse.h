@@ -144,6 +144,7 @@ typedef struct BldCfgOptionCommand
     const String *name;                                             // Name
     bool internal;                                                  // Is the option internal?
     bool required;                                                  // Is the option required?
+    bool sequence;                                                  // Sequence added to StringId?
     const BldCfgOptionDefault *defaultValue;                        // Default value, if any
     const BldCfgOptionDepend *depend;                               // Dependency, if any
     const List *allowList;                                          // Allowed value list
@@ -167,6 +168,7 @@ struct BldCfgOption
     bool required;                                                  // Is the option required?
     bool negate;                                                    // Can the option be negated?
     bool reset;                                                     // Can the option be reset?
+    bool sequence;                                                  // Sequence added to StringId?
     DefaultType defaultType;                                        // Type of default
     const BldCfgOptionDefault *defaultValue;                        // Default value, if any
     const String *group;                                            // Option group, if any

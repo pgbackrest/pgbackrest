@@ -35,12 +35,12 @@ testRun(void)
         TEST_TITLE("missing directory");
 
         Buffer *output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT_STRID));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "missing directory (text)");
         TEST_RESULT_STR_Z(strNewBuf(output), "", "check output");
 
         output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_JSON));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_JSON_STRID));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "missing directory (json)");
         TEST_RESULT_STR_Z(
             strNewBuf(output),
@@ -57,12 +57,12 @@ testRun(void)
         HRN_STORAGE_PATH_CREATE(storageRepoWrite(), NULL, .mode = 0700);
 
         output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT_STRID));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "empty directory (text)");
         TEST_RESULT_STR_Z(strNewBuf(output), "", "check output");
 
         output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_JSON));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_JSON_STRID));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "empty directory (json)");
         TEST_RESULT_STR_Z(
             strNewBuf(output),
@@ -100,14 +100,14 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRepoLs, argListTmp);
 
         output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT_STRID));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "empty directory (text)");
         TEST_RESULT_STR_Z(strNewBuf(output), "", "check output");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("add path and file");
 
-        cfgOptionSet(cfgOptSort, cfgSourceParam, VARUINT64(CFGOPTVAL_SORT_ASC));
+        cfgOptionSet(cfgOptSort, cfgSourceParam, VARUINT64(CFGOPTVAL_SORT_ASC_STRID));
 
         HRN_STORAGE_PATH_CREATE(storageRepoWrite(), "bbb");
         HRN_STORAGE_PUT_Z(storageRepoWrite(), "aaa", "TESTDATA", .timeModified = 1578671569);
@@ -117,12 +117,12 @@ testRun(void)
         HRN_SYSTEM("mkfifo " TEST_PATH "/repo/pipe");
 
         output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT_STRID));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "path and file (text)");
         TEST_RESULT_STR_Z(strNewBuf(output), "aaa\nbbb\nlink\npipe\n", "check output");
 
         output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_JSON));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_JSON_STRID));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "path and file (json)");
         TEST_RESULT_STR_Z(
             strNewBuf(output),
@@ -142,10 +142,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("reverse sort");
 
-        cfgOptionSet(cfgOptSort, cfgSourceParam, VARUINT64(CFGOPTVAL_SORT_DESC));
+        cfgOptionSet(cfgOptSort, cfgSourceParam, VARUINT64(CFGOPTVAL_SORT_DESC_STRID));
 
         output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT_STRID));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "path and file (text)");
         TEST_RESULT_STR_Z(strNewBuf(output), "bbb\naaa\n", "check output");
 
@@ -155,7 +155,7 @@ testRun(void)
         cfgOptionSet(cfgOptRecurse, cfgSourceParam, BOOL_TRUE_VAR);
 
         output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT_STRID));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "filter");
         TEST_RESULT_STR_Z(strNewBuf(output), "bbb/ccc\nbbb\naaa\n", "check output");
 
@@ -165,7 +165,7 @@ testRun(void)
         cfgOptionSet(cfgOptFilter, cfgSourceParam, VARSTRDEF("^aaa$"));
 
         output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT_STRID));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "filter");
         TEST_RESULT_STR_Z(strNewBuf(output), "aaa\n", "check output");
 
@@ -209,7 +209,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRepoLs, argListTmp);
 
         output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT_STRID));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "subdirectory");
         TEST_RESULT_STR_Z(strNewBuf(output), "ccc\n", "check output");
 
@@ -221,7 +221,7 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdRepoLs, argListTmp);
 
         output = bufNew(0);
-        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT));
+        cfgOptionSet(cfgOptOutput, cfgSourceParam, VARUINT64(CFGOPTVAL_OUTPUT_TEXT_STRID));
         TEST_RESULT_VOID(storageListRender(ioBufferWriteNew(output)), "subdirectory");
         TEST_RESULT_STR_Z(strNewBuf(output), "ccc\n", "check output");
 

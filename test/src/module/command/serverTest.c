@@ -138,7 +138,7 @@ testRun(void)
                         StringList *argList = strLstNew();
                         hrnCfgArgRawZ(argList, cfgOptConfig, TEST_PATH "/pgbackrest.conf");
                         hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", testPort);
-                        hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, CFGOPTVAL_ARCHIVE_MODE_OFF_Z);
+                        hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, "off");
                         HRN_CFG_LOAD(cfgCmdServer, argList);
 
                         // Init exit signal handlers

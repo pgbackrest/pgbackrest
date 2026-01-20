@@ -374,7 +374,7 @@ helpRender(const Buffer *const helpData)
         ((cfgCommand() == cfgCmdHelp && cfgOptionBool(cfgOptVersion) && !cfgOptionBool(cfgOptHelp)) ||
          cfgCommand() == cfgCmdVersion))
     {
-        if (cfgCommand() == cfgCmdVersion && cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_NUM)
+        if (cfgCommand() == cfgCmdVersion && cfgOptionSeq(cfgOptOutput) == CFGOPTVAL_VERSION_OUTPUT_NUM)
             FUNCTION_TEST_RETURN(STRING, strCatFmt(strTrunc(result), "%d", PROJECT_VERSION_NUM));
         else
         {

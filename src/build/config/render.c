@@ -130,12 +130,17 @@ bldCfgRenderConfigAutoH(const Storage *const storageRepo, const BldCfg bldCfg)
 
         if (strEq(opt->type, OPT_TYPE_STRING_ID_STR))
         {
-            StringList *const allowList = strLstNew();
+            StringList *const groupList = strLstNew();
+            List *const groupAllowList = lstNewP(sizeof(StringList *));
+            StringList *const optionList = strLstNew();
+
+            strLstAddZ(groupList, "@");
+            lstAdd(groupAllowList, &optionList);
 
             if (opt->allowList != NULL)
             {
                 for (unsigned int allowListIdx = 0; allowListIdx < lstSize(opt->allowList); allowListIdx++)
-                    strLstAddIfMissing(allowList, ((const BldCfgOptionValue *)lstGet(opt->allowList, allowListIdx))->value);
+                    strLstAddIfMissing(optionList, ((const BldCfgOptionValue *)lstGet(opt->allowList, allowListIdx))->value);
             }
 
             for (unsigned int optCmdListIdx = 0; optCmdListIdx < lstSize(opt->cmdList); optCmdListIdx++)
@@ -144,34 +149,63 @@ bldCfgRenderConfigAutoH(const Storage *const storageRepo, const BldCfg bldCfg)
 
                 if (optCmd->allowList != NULL)
                 {
+                    StringList *const cmdList = strLstNew();
+
                     for (unsigned int allowListIdx = 0; allowListIdx < lstSize(optCmd->allowList); allowListIdx++)
-                        strLstAddIfMissing(allowList, ((const BldCfgOptionValue *)lstGet(optCmd->allowList, allowListIdx))->value);
+                    {
+                        const String *const value = ((const BldCfgOptionValue *)lstGet(optCmd->allowList, allowListIdx))->value;
+
+                        if (optCmd->sequence)
+                            strLstAdd(cmdList, value);
+                        else
+                            strLstAddIfMissing(optionList, value);
+                    }
+
+                    strLstAdd(groupList, strUpper(strDup(optCmd->name)));
+                    lstAdd(groupAllowList, &cmdList);
                 }
             }
 
-            strLstSort(allowList, sortOrderAsc);
+            if (!opt->sequence)
+                strLstSort(optionList, sortOrderAsc);
 
-            ASSERT(!strLstEmpty(allowList));
-
-            if (lf)
-                strCatChr(config, '\n');
-
-            for (unsigned int allowListIdx = 0; allowListIdx < strLstSize(allowList); allowListIdx++)
+            for (unsigned int groupIdx = 0; groupIdx < strLstSize(groupList); groupIdx++)
             {
-                const String *const allowListItem = strLstGet(allowList, allowListIdx);
-                const String *const constPrefix = strUpper(
-                    strReplaceChr(strNewFmt("CFGOPTVAL_%s_%s", strZ(opt->name), strZ(allowListItem)), '-', '_'));
+                const String *const group =
+                    strEqZ(strLstGet(groupList, groupIdx), "@") ?
+                        EMPTY_STR : strNewFmt("%s_", strZ(strLstGet(groupList, groupIdx)));
+                const StringList *const allowList = *(StringList **)lstGet(groupAllowList, groupIdx);
+                const bool sequence = (groupIdx == 0 && opt->sequence) || (groupIdx != 0 && !strLstEmpty(allowList));
 
-                // Render StringId
-                strCatFmt(config, "%s\n", strZ(bldDefineRender(constPrefix, bldStrId(strZ(allowListItem)))));
+                if (lf && !strLstEmpty(allowList))
+                    strCatChr(config, '\n');
 
-                // Render Z
-                strCatFmt(
-                    config, "%s\n",
-                    strZ(bldDefineRender(strNewFmt("%s_Z", strZ(constPrefix)), strNewFmt("\"%s\"", strZ(allowListItem)))));
+                for (unsigned int allowListIdx = 0; allowListIdx < strLstSize(allowList); allowListIdx++)
+                {
+                    const String *const allowListItem = strLstGet(allowList, allowListIdx);
+                    const String *const constPrefix = strUpper(
+                        strReplaceChr(strNewFmt("CFGOPTVAL_%s%s_%s", strZ(group), strZ(opt->name), strZ(allowListItem)), '-', '_'));
+
+                    // Render sequence
+                    if (sequence)
+                        strCatFmt(config, "%s\n", strZ(bldDefineRender(constPrefix, strNewFmt("%u", allowListIdx))));
+
+                    // Render StringId
+                    strCatFmt(
+                        config, "%s\n",
+                        strZ(
+                            bldDefineRender(
+                                strNewFmt("%s%s", strZ(constPrefix), sequence ? "_STRID" : ""),
+                                bldStrIdSeq(strZ(allowListItem), sequence ? allowListIdx : STRING_ID_SEQ_NONE))));
+
+                    // Render Z
+                    strCatFmt(
+                        config, "%s\n",
+                        strZ(bldDefineRender(strNewFmt("%s_Z", strZ(constPrefix)), strNewFmt("\"%s\"", strZ(allowListItem)))));
+
+                    lf = true;
+                }
             }
-
-            lf = true;
         }
     }
 
@@ -563,7 +597,9 @@ bldCfgRenderDefaultValue(
 }
 
 static String *
-bldCfgRenderDefault(const BldCfgOptionDefault *const defaultValue, const DefaultType defaultType, const String *const optType)
+bldCfgRenderDefault(
+    const BldCfgOptionDefault *const defaultValue, const DefaultType defaultType, const String *const optType,
+    const bool sequence, const List *const allowList)
 {
     ASSERT(defaultValue != NULL);
     ASSERT(optType != NULL);
@@ -580,10 +616,23 @@ bldCfgRenderDefault(const BldCfgOptionDefault *const defaultValue, const Default
         strCatFmt(result, "                    PARSE_RULE_DEFAULT_DYNAMIC(%s),\n", strZ(bldEnum("", defaultValue->value)));
     }
     else if (defaultValue->value != NULL)
+    {
         bldCfgRenderDefaultValue(result, defaultValue->value, defaultType, optType, false);
+
+        if (sequence)
+        {
+            unsigned int allowIdx = lstFindIdx(allowList, &defaultValue->value);
+            CHECK_FMT(
+                FormatError, allowIdx != LIST_NOT_FOUND, "unable to find default '%s' in allow list", strZ(defaultValue->value));
+
+            if (allowIdx != 0)
+                strCatFmt(result, "                    PARSE_RULE_VAL_SEQ(%u),\n", allowIdx);
+        }
+    }
     else
     {
         ASSERT(defaultValue->mapList != NULL);
+        ASSERT(!sequence);
 
         strCatZ(
             result,
@@ -961,6 +1010,9 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
             "        PARSE_RULE_OPTION_TYPE(%s),\n",
             strZ(opt->name), strZ(bldEnum("", opt->type)));
 
+        if (opt->sequence)
+            strCatZ(configOpt, "        PARSE_RULE_OPTION_SEQUENCE(true),\n");
+
         if (opt->internal)
             strCatZ(configOpt, "        PARSE_RULE_OPTION_INTERNAL(true)\n");
 
@@ -1076,11 +1128,12 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
         // Build default optional rules
         KeyValue *const optionalDefaultRule = kvNew();
         const Variant *const ruleDepend = VARSTRDEF("01-depend");
-        const Variant *const ruleAllowRange = VARSTRDEF("02-allow-range");
-        const Variant *const ruleAllowList = VARSTRDEF("03-allow-list");
-        const Variant *const ruleDefault = VARSTRDEF("04-default");
-        const Variant *const ruleRequire = VARSTRDEF("05-require");
-        const Variant *const ruleList[] = {ruleDepend, ruleAllowRange, ruleAllowList, ruleDefault, ruleRequire};
+        const Variant *const ruleSequence = VARSTRDEF("02-sequence");
+        const Variant *const ruleAllowRange = VARSTRDEF("03-allow-range");
+        const Variant *const ruleAllowList = VARSTRDEF("04-allow-list");
+        const Variant *const ruleDefault = VARSTRDEF("05-default");
+        const Variant *const ruleRequire = VARSTRDEF("06-require");
+        const Variant *const ruleList[] = {ruleDepend, ruleSequence, ruleAllowRange, ruleAllowList, ruleDefault, ruleRequire};
 
         if (opt->depend)
             kvAdd(optionalDefaultRule, ruleDepend, VARSTR(bldCfgRenderValid(opt->type, opt->depend)));
@@ -1121,7 +1174,7 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
         {
             kvAdd(
                 optionalDefaultRule, ruleDefault,
-                VARSTR(bldCfgRenderDefault(opt->defaultValue, opt->defaultType, opt->type)));
+                VARSTR(bldCfgRenderDefault(opt->defaultValue, opt->defaultType, opt->type, opt->sequence, opt->allowList)));
 
             if (!strEq(opt->type, OPT_TYPE_BOOLEAN_STR))
             {
@@ -1151,6 +1204,14 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
             if (optCmd->depend != NULL)
                 kvAdd(optionalCmdRuleType, ruleDepend, VARSTR(bldCfgRenderValid(opt->type, optCmd->depend)));
 
+            // Sequences
+            if (optCmd->sequence != opt->sequence)
+            {
+                kvAdd(
+                    optionalCmdRuleType, ruleSequence,
+                    VARSTR(strNewFmt("                PARSE_RULE_OPTIONAL_%sSEQUENCE()", optCmd->required ? "" : "NOT_")));
+            }
+
             // Allow lists
             if (optCmd->allowList != NULL)
             {
@@ -1168,7 +1229,8 @@ bldCfgRenderParseAutoC(const Storage *const storageRepo, const BldCfg bldCfg, co
             {
                 kvAdd(
                     optionalCmdRuleType, ruleDefault,
-                    VARSTR(bldCfgRenderDefault(optCmd->defaultValue, opt->defaultType, opt->type)));
+                    VARSTR(
+                        bldCfgRenderDefault(optCmd->defaultValue, opt->defaultType, opt->type, opt->sequence, optCmd->allowList)));
 
                 if (!strEq(opt->type, OPT_TYPE_BOOLEAN_STR))
                     bldCfgRenderValueAdd(opt->type, opt->defaultType, optCmd->defaultValue->value, ruleValMap);

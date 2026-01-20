@@ -1145,6 +1145,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                            // opt/archive-mode
         PARSE_RULE_OPTION_NAME("archive-mode"),                                                                  // opt/archive-mode
         PARSE_RULE_OPTION_TYPE(StringId),                                                                        // opt/archive-mode
+        PARSE_RULE_OPTION_SEQUENCE(true),                                                                        // opt/archive-mode
         PARSE_RULE_OPTION_RESET(true),                                                                           // opt/archive-mode
         PARSE_RULE_OPTION_REQUIRED(true),                                                                        // opt/archive-mode
         PARSE_RULE_OPTION_SECTION(Global),                                                                       // opt/archive-mode
@@ -1160,8 +1161,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                                    // opt/archive-mode
                 PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                   // opt/archive-mode
                 (                                                                                                // opt/archive-mode
-                    PARSE_RULE_VAL_STRID(off),                                                                   // opt/archive-mode
                     PARSE_RULE_VAL_STRID(preserve),                                                              // opt/archive-mode
+                    PARSE_RULE_VAL_STRID(off),                                                                   // opt/archive-mode
                 ),                                                                                               // opt/archive-mode
                                                                                                                  // opt/archive-mode
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                      // opt/archive-mode
@@ -1281,6 +1282,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                          // opt/backup-standby
         PARSE_RULE_OPTION_NAME("backup-standby"),                                                              // opt/backup-standby
         PARSE_RULE_OPTION_TYPE(StringId),                                                                      // opt/backup-standby
+        PARSE_RULE_OPTION_SEQUENCE(true),                                                                      // opt/backup-standby
         PARSE_RULE_OPTION_BOOL_LIKE(true),                                                                     // opt/backup-standby
         PARSE_RULE_OPTION_NEGATE(true),                                                                        // opt/backup-standby
         PARSE_RULE_OPTION_RESET(true),                                                                         // opt/backup-standby
@@ -2174,6 +2176,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                            // opt/detail-level
         PARSE_RULE_OPTION_NAME("detail-level"),                                                                  // opt/detail-level
         PARSE_RULE_OPTION_TYPE(StringId),                                                                        // opt/detail-level
+        PARSE_RULE_OPTION_SEQUENCE(true),                                                                        // opt/detail-level
         PARSE_RULE_OPTION_REQUIRED(true),                                                                        // opt/detail-level
         PARSE_RULE_OPTION_SECTION(CommandLine),                                                                  // opt/detail-level
                                                                                                                  // opt/detail-level
@@ -2188,8 +2191,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                                    // opt/detail-level
                 PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                   // opt/detail-level
                 (                                                                                                // opt/detail-level
-                    PARSE_RULE_VAL_STRID(progress),                                                              // opt/detail-level
                     PARSE_RULE_VAL_STRID(full),                                                                  // opt/detail-level
+                    PARSE_RULE_VAL_STRID(progress),                                                              // opt/detail-level
                 ),                                                                                               // opt/detail-level
                                                                                                                  // opt/detail-level
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                      // opt/detail-level
@@ -2786,6 +2789,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                       // opt/log-level-console
         PARSE_RULE_OPTION_NAME("log-level-console"),                                                        // opt/log-level-console
         PARSE_RULE_OPTION_TYPE(StringId),                                                                   // opt/log-level-console
+        PARSE_RULE_OPTION_SEQUENCE(true),                                                                   // opt/log-level-console
         PARSE_RULE_OPTION_RESET(true),                                                                      // opt/log-level-console
         PARSE_RULE_OPTION_REQUIRED(true),                                                                   // opt/log-level-console
         PARSE_RULE_OPTION_SECTION(Global),                                                                  // opt/log-level-console
@@ -2869,6 +2873,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                 // opt/log-level-console
                 (                                                                                           // opt/log-level-console
                     PARSE_RULE_VAL_STRID(warn),                                                             // opt/log-level-console
+                    PARSE_RULE_VAL_SEQ(2),                                                                  // opt/log-level-console
                 ),                                                                                          // opt/log-level-console
             ),                                                                                              // opt/log-level-console
         ),                                                                                                  // opt/log-level-console
@@ -2878,6 +2883,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                          // opt/log-level-file
         PARSE_RULE_OPTION_NAME("log-level-file"),                                                              // opt/log-level-file
         PARSE_RULE_OPTION_TYPE(StringId),                                                                      // opt/log-level-file
+        PARSE_RULE_OPTION_SEQUENCE(true),                                                                      // opt/log-level-file
         PARSE_RULE_OPTION_RESET(true),                                                                         // opt/log-level-file
         PARSE_RULE_OPTION_REQUIRED(true),                                                                      // opt/log-level-file
         PARSE_RULE_OPTION_SECTION(Global),                                                                     // opt/log-level-file
@@ -2961,6 +2967,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                    // opt/log-level-file
                 (                                                                                              // opt/log-level-file
                     PARSE_RULE_VAL_STRID(info),                                                                // opt/log-level-file
+                    PARSE_RULE_VAL_SEQ(3),                                                                     // opt/log-level-file
                 ),                                                                                             // opt/log-level-file
             ),                                                                                                 // opt/log-level-file
         ),                                                                                                     // opt/log-level-file
@@ -2970,6 +2977,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                        // opt/log-level-stderr
         PARSE_RULE_OPTION_NAME("log-level-stderr"),                                                          // opt/log-level-stderr
         PARSE_RULE_OPTION_TYPE(StringId),                                                                    // opt/log-level-stderr
+        PARSE_RULE_OPTION_SEQUENCE(true),                                                                    // opt/log-level-stderr
         PARSE_RULE_OPTION_RESET(true),                                                                       // opt/log-level-stderr
         PARSE_RULE_OPTION_REQUIRED(true),                                                                    // opt/log-level-stderr
         PARSE_RULE_OPTION_SECTION(Global),                                                                   // opt/log-level-stderr
@@ -3479,6 +3487,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                                  // opt/output
         PARSE_RULE_OPTION_NAME("output"),                                                                              // opt/output
         PARSE_RULE_OPTION_TYPE(StringId),                                                                              // opt/output
+        PARSE_RULE_OPTION_SEQUENCE(true),                                                                              // opt/output
         PARSE_RULE_OPTION_REQUIRED(true),                                                                              // opt/output
         PARSE_RULE_OPTION_SECTION(CommandLine),                                                                        // opt/output
                                                                                                                        // opt/output
@@ -3521,8 +3530,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                                        // opt/output
                 PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                         // opt/output
                 (                                                                                                      // opt/output
-                    PARSE_RULE_VAL_STRID(num),                                                                         // opt/output
                     PARSE_RULE_VAL_STRID(text),                                                                        // opt/output
+                    PARSE_RULE_VAL_STRID(num),                                                                         // opt/output
                 ),                                                                                                     // opt/output
                                                                                                                        // opt/output
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                            // opt/output
@@ -5292,6 +5301,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                     // opt/repo-azure-key-type
         PARSE_RULE_OPTION_NAME("repo-azure-key-type"),                                                    // opt/repo-azure-key-type
         PARSE_RULE_OPTION_TYPE(StringId),                                                                 // opt/repo-azure-key-type
+        PARSE_RULE_OPTION_SEQUENCE(true),                                                                 // opt/repo-azure-key-type
         PARSE_RULE_OPTION_RESET(true),                                                                    // opt/repo-azure-key-type
         PARSE_RULE_OPTION_REQUIRED(true),                                                                 // opt/repo-azure-key-type
         PARSE_RULE_OPTION_SECTION(Global),                                                                // opt/repo-azure-key-type
@@ -5383,6 +5393,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                    // opt/repo-azure-uri-style
         PARSE_RULE_OPTION_NAME("repo-azure-uri-style"),                                                  // opt/repo-azure-uri-style
         PARSE_RULE_OPTION_TYPE(StringId),                                                                // opt/repo-azure-uri-style
+        PARSE_RULE_OPTION_SEQUENCE(true),                                                                // opt/repo-azure-uri-style
         PARSE_RULE_OPTION_RESET(true),                                                                   // opt/repo-azure-uri-style
         PARSE_RULE_OPTION_REQUIRED(true),                                                                // opt/repo-azure-uri-style
         PARSE_RULE_OPTION_SECTION(Global),                                                               // opt/repo-azure-uri-style
@@ -6183,6 +6194,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                       // opt/repo-gcs-key-type
         PARSE_RULE_OPTION_NAME("repo-gcs-key-type"),                                                        // opt/repo-gcs-key-type
         PARSE_RULE_OPTION_TYPE(StringId),                                                                   // opt/repo-gcs-key-type
+        PARSE_RULE_OPTION_SEQUENCE(true),                                                                   // opt/repo-gcs-key-type
         PARSE_RULE_OPTION_RESET(true),                                                                      // opt/repo-gcs-key-type
         PARSE_RULE_OPTION_REQUIRED(true),                                                                   // opt/repo-gcs-key-type
         PARSE_RULE_OPTION_SECTION(Global),                                                                  // opt/repo-gcs-key-type
@@ -6257,9 +6269,9 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                                                                                                             // opt/repo-gcs-key-type
                 PARSE_RULE_OPTIONAL_ALLOW_LIST                                                              // opt/repo-gcs-key-type
                 (                                                                                           // opt/repo-gcs-key-type
-                    PARSE_RULE_VAL_STRID(auto),                                                             // opt/repo-gcs-key-type
                     PARSE_RULE_VAL_STRID(service),                                                          // opt/repo-gcs-key-type
                     PARSE_RULE_VAL_STRID(token),                                                            // opt/repo-gcs-key-type
+                    PARSE_RULE_VAL_STRID(auto),                                                             // opt/repo-gcs-key-type
                 ),                                                                                          // opt/repo-gcs-key-type
                                                                                                             // opt/repo-gcs-key-type
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                 // opt/repo-gcs-key-type
@@ -7376,6 +7388,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                // opt/repo-retention-full-type
         PARSE_RULE_OPTION_NAME("repo-retention-full-type"),                                          // opt/repo-retention-full-type
         PARSE_RULE_OPTION_TYPE(StringId),                                                            // opt/repo-retention-full-type
+        PARSE_RULE_OPTION_SEQUENCE(true),                                                            // opt/repo-retention-full-type
         PARSE_RULE_OPTION_RESET(true),                                                               // opt/repo-retention-full-type
         PARSE_RULE_OPTION_REQUIRED(true),                                                            // opt/repo-retention-full-type
         PARSE_RULE_OPTION_SECTION(Global),                                                           // opt/repo-retention-full-type
@@ -7759,6 +7772,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                        // opt/repo-s3-key-type
         PARSE_RULE_OPTION_NAME("repo-s3-key-type"),                                                          // opt/repo-s3-key-type
         PARSE_RULE_OPTION_TYPE(StringId),                                                                    // opt/repo-s3-key-type
+        PARSE_RULE_OPTION_SEQUENCE(true),                                                                    // opt/repo-s3-key-type
         PARSE_RULE_OPTION_RESET(true),                                                                       // opt/repo-s3-key-type
         PARSE_RULE_OPTION_REQUIRED(true),                                                                    // opt/repo-s3-key-type
         PARSE_RULE_OPTION_SECTION(Global),                                                                   // opt/repo-s3-key-type
@@ -8334,6 +8348,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                       // opt/repo-s3-uri-style
         PARSE_RULE_OPTION_NAME("repo-s3-uri-style"),                                                        // opt/repo-s3-uri-style
         PARSE_RULE_OPTION_TYPE(StringId),                                                                   // opt/repo-s3-uri-style
+        PARSE_RULE_OPTION_SEQUENCE(true),                                                                   // opt/repo-s3-uri-style
         PARSE_RULE_OPTION_RESET(true),                                                                      // opt/repo-s3-uri-style
         PARSE_RULE_OPTION_REQUIRED(true),                                                                   // opt/repo-s3-uri-style
         PARSE_RULE_OPTION_SECTION(Global),                                                                  // opt/repo-s3-uri-style
@@ -10292,6 +10307,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
     (                                                                                                                    // opt/sort
         PARSE_RULE_OPTION_NAME("sort"),                                                                                  // opt/sort
         PARSE_RULE_OPTION_TYPE(StringId),                                                                                // opt/sort
+        PARSE_RULE_OPTION_SEQUENCE(true),                                                                                // opt/sort
         PARSE_RULE_OPTION_REQUIRED(true),                                                                                // opt/sort
         PARSE_RULE_OPTION_SECTION(CommandLine),                                                                          // opt/sort
                                                                                                                          // opt/sort
@@ -10314,6 +10330,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                              // opt/sort
                 (                                                                                                        // opt/sort
                     PARSE_RULE_VAL_STRID(asc),                                                                           // opt/sort
+                    PARSE_RULE_VAL_SEQ(1),                                                                               // opt/sort
                 ),                                                                                                       // opt/sort
             ),                                                                                                           // opt/sort
         ),                                                                                                               // opt/sort
@@ -11253,17 +11270,19 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                     PARSE_RULE_VAL_CMD(Restore),                                                                         // opt/type
                 ),                                                                                                       // opt/type
                                                                                                                          // opt/type
+                PARSE_RULE_OPTIONAL_SEQUENCE(),                                                                          // opt/type
+                                                                                                                         // opt/type
                 PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                           // opt/type
                 (                                                                                                        // opt/type
-                    PARSE_RULE_VAL_STRID(lsn),                                                                           // opt/type
+                    PARSE_RULE_VAL_STRID(default),                                                                       // opt/type
+                    PARSE_RULE_VAL_STRID(preserve),                                                                      // opt/type
+                    PARSE_RULE_VAL_STRID(immediate),                                                                     // opt/type
+                    PARSE_RULE_VAL_STRID(standby),                                                                       // opt/type
+                    PARSE_RULE_VAL_STRID(none),                                                                          // opt/type
                     PARSE_RULE_VAL_STRID(name),                                                                          // opt/type
                     PARSE_RULE_VAL_STRID(time),                                                                          // opt/type
+                    PARSE_RULE_VAL_STRID(lsn),                                                                           // opt/type
                     PARSE_RULE_VAL_STRID(xid),                                                                           // opt/type
-                    PARSE_RULE_VAL_STRID(preserve),                                                                      // opt/type
-                    PARSE_RULE_VAL_STRID(none),                                                                          // opt/type
-                    PARSE_RULE_VAL_STRID(immediate),                                                                     // opt/type
-                    PARSE_RULE_VAL_STRID(default),                                                                       // opt/type
-                    PARSE_RULE_VAL_STRID(standby),                                                                       // opt/type
                 ),                                                                                                       // opt/type
                                                                                                                          // opt/type
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                              // opt/type

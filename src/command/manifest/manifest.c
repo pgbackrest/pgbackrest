@@ -451,7 +451,7 @@ cmdManifestRender(void)
 
         // Manifest info
         const ManifestData *const data = manifestData(manifest);
-        const bool json = cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON;
+        const bool json = cfgOptionSeq(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON;
 
         if (json)
         {

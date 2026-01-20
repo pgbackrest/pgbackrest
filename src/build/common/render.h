@@ -82,6 +82,14 @@ which can be used in a function, switch, or #define, e.g.:
 
 DO NOT MODIFY either parameter in the macro -- ALWAYS use bldStrId() to create a new constant StringId.
 ***********************************************************************************************************************************/
-String *bldStrId(const char *const buffer);
+// Build StringId define with sequence
+String *bldStrIdSeq(const char *buffer, unsigned int sequence);
+
+// Build StringId define
+FN_INLINE_ALWAYS String *
+bldStrId(const char *const buffer)
+{
+    return bldStrIdSeq(buffer, STRING_ID_SEQ_NONE);
+}
 
 #endif
