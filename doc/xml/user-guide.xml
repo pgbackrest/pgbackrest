@@ -68,11 +68,8 @@
         <variable key="pg-version" if="{[os-type-is-debian]}">{[os-debian-pg-version]}</variable>
         <variable key="pg-version" if="{[os-type-is-rhel]}">{[os-rhel-pg-version]}</variable>
 
-        <variable key="pg-version-nodot" eval="y">my $version = '{[pg-version]}'; $version =~ s/\.//g; return $version;</variable>
-
         <variable key="pg-version-upgrade" if="{[os-type-is-debian]}">17</variable>
         <variable key="pg-version-upgrade" if="{[os-type-is-rhel]}">14</variable>
-        <variable key="pg-version-upgrade-nodot" eval="y">my $version = '{[pg-version-upgrade]}'; $version =~ s/\.//g; return $version;</variable>
 
         <variable key="pg-bin-path" if="{[os-type-is-debian]}">/usr/lib/postgresql/{[pg-version]}/bin</variable>
         <variable key="pg-bin-path" if="{[os-type-is-rhel]}">/usr/pgsql-{[pg-version]}/bin</variable>
@@ -388,7 +385,7 @@
         RUN command -v dnf >/dev/null 2>&amp;1 &amp;&amp; dnf -qy module disable postgresql || true
 
         # Install PostgreSQL
-        RUN yum install -y postgresql{[pg-version-nodot]}-server postgresql{[pg-version-upgrade-nodot]}-server
+        RUN yum install -y postgresql{[pg-version]}-server postgresql{[pg-version-upgrade]}-server
 
         # Install Azure CLI
         RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc
@@ -1043,7 +1040,7 @@
 
             <execute if="{[os-type-is-rhel]}" user="root" pre="y">
                 <exe-cmd>
-                    yum install meson gcc postgresql{[pg-version-nodot]}-devel openssl-devel
+                    yum install meson gcc postgresql{[pg-version]}-devel openssl-devel
                     libxml2-devel lz4-devel libzstd-devel bzip2-devel libyaml-devel libssh2-devel
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
