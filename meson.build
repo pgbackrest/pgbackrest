@@ -249,7 +249,7 @@ configuration.set(
 # Set VR_NON_STRING macro
 if cc.compiles(
         '''int main(void) {__attribute__((nonstring)) static char test[3] = "ABC";}''',
-        args: ['-Wextra', '-Werror'])
+        args: ['-Wattributes', '-Werror'])
     configuration.set(
         'VR_NON_STRING', '__attribute__((nonstring))',
         description: 'Indicate that the char array is intentionally not NULL terminated')
