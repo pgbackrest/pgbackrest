@@ -1,2 +1,16 @@
 <release date="XXXX-XX-XX" version="2.59.0dev" title="UNDER DEVELOPMENT">
+    <release-core-list>
+        <release-improvement-list>
+            <release-item>
+                <github-issue id="2724"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="jorg.plate"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Suppress <id>unused parameter</id> errors in <proper>meson</proper> compiler probes.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-core-list>
 </release>

@@ -150,12 +150,12 @@ add_project_arguments(cc.get_supported_arguments('-fmacro-prefix-map=@0@/test/sr
 configuration = configuration_data()
 
 # Ensure the C compiler supports __builtin_clzl()
-if not cc.links('''int main(int arg, char **argv) {__builtin_clzl(1);}''')
+if not cc.links('''int main(void) {__builtin_clzl(1);}''')
     error('compiler must support __builtin_clzl()')
 endif
 
 # Ensure the C compiler supports __builtin_bswap64()
-if not cc.links('''int main(int arg, char **argv) {__builtin_bswap64(1);}''')
+if not cc.links('''int main(void) {__builtin_bswap64(1);}''')
     error('compiler must support __builtin_bswap64()')
 endif
 
@@ -206,14 +206,14 @@ endif
 # Suppress -Wsign-conversion for C libraries (e.g. musl) that do no accept int without warning for FD_*() macros
 if not cc.compiles(
         '''#include <sys/select.h>
-        int main(int arg, char **argv) {int fd = 1; fd_set s; FD_ZERO(&s); FD_SET(fd, &s); FD_ISSET(fd, &s);}''',
+        int main(void) {int fd = 1; fd_set s; FD_ZERO(&s); FD_SET(fd, &s); FD_ISSET(fd, &s);}''',
         args: ['-Wsign-conversion', '-Werror'])
     message('Disabling -Wsign-conversion because int is not accepted without warning by FD_*() macros')
     add_project_arguments(cc.get_supported_arguments('-Wno-sign-conversion'), language: 'c')
 endif
 
 # Check if the C compiler supports _Static_assert()
-if cc.compiles('''int main(int arg, char **argv) {({ _Static_assert(1, "foo");});} ''')
+if cc.compiles('''int main(void) {({ _Static_assert(1, "foo");});} ''')
   configuration.set('HAVE_STATIC_ASSERT', true, description: 'Does the compiler provide _Static_assert()?')
 endif
 
@@ -248,7 +248,7 @@ configuration.set(
 
 # Set VR_NON_STRING macro
 if cc.compiles(
-        '''int main(int arg, char **argv) {__attribute__((nonstring)) static char test[3] = "ABC";}''',
+        '''int main(void) {__attribute__((nonstring)) static char test[3] = "ABC";}''',
         args: ['-Wextra', '-Werror'])
     configuration.set(
         'VR_NON_STRING', '__attribute__((nonstring))',
