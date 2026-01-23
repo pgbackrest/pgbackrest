@@ -53,7 +53,7 @@ warning_enable = [
     '-Wduplicated-branches',
 
     # Warn if floating-point values are used in equality comparisons
-    '--Wfloat-equal',
+    '-Wfloat-equal',
 
     # Enable -Wformat plus -Wnonnull, -Wformat-nonliteral, -Wformat-security, and -Wformat-y2k
     '-Wformat=2',

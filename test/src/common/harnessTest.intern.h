@@ -60,7 +60,6 @@ void hrnTestResultEnd(void);
 
 // Test results for various types
 void hrnTestResultBool(int actual, int expected);
-void hrnTestResultDouble(double actual, double expected);
 void hrnTestResultInt64(int64_t actual, int64_t expected, HarnessTestResultOperation operation);
 void hrnTestResultPtr(const void *actual, const void *expected, HarnessTestResultOperation operation);
 

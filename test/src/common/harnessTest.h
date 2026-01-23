@@ -259,18 +259,6 @@ Macros to compare results of common data types
 #define TEST_RESULT_BOOL(statement, expected, comment)                                                                             \
     TEST_RESULT_BOOL_PARAM(statement, expected, comment)
 
-#define TEST_RESULT_DOUBLE_PARAM(statement, expected, comment)                                                                     \
-    do                                                                                                                             \
-    {                                                                                                                              \
-        TEST_RESULT_INFO(comment);                                                                                                 \
-        hrnTestResultBegin(#statement, true);                                                                                      \
-        hrnTestResultDouble(statement, expected);                                                                                  \
-    }                                                                                                                              \
-    while (0)
-
-#define TEST_RESULT_DOUBLE(statement, expected, comment)                                                                           \
-    TEST_RESULT_DOUBLE_PARAM(statement, expected, comment)
-
 #define TEST_RESULT_INT_PARAM(statement, expected, operation, comment)                                                             \
     do                                                                                                                             \
     {                                                                                                                              \
