@@ -2,7 +2,7 @@
 
 pgBackRest supports a robust set of features for managing your backup and recovery infrastructure, including: parallel backup/restore, full/differential/incremental backups, block incremental backup, multiple repositories, delta restore, parallel asynchronous archiving, per-file checksums, page checksums (when enabled) validated during backup, multiple compression types, encryption, partial/failed backup resume, backup from standby, tablespace and link support, S3/Azure/GCS/SFTP support, backup expiration, local/remote operation via SSH or TLS, flexible configuration, and more.
 
-pgBackRest can be installed from the [PostgreSQL Yum Repository](https://yum.postgresql.org) or the [PostgreSQL APT Repository](https://apt.postgresql.org) and packages are also available many other distributions. Source code can be downloaded from [releases](https://github.com/pgbackrest/pgbackrest/releases).
+pgBackRest can be installed from the [PostgreSQL Yum Repository](https://yum.postgresql.org) or the [PostgreSQL APT Repository](https://apt.postgresql.org) and packages are also available for many other distributions. Source code can be downloaded from [releases](https://github.com/pgbackrest/pgbackrest/releases).
 
 ## New Features and Improvements
 
