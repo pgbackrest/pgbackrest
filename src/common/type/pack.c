@@ -143,67 +143,72 @@ typedef struct PackTypeMapData
 static const PackTypeMapData packTypeMapData[] =
 {
     // Unknown type map data should not be used
-    {0},
+    [pckTypeMapUnknown] = {0},
 
     // Types that can be encoded entirely in the tag
+    [pckTypeMapArray] =
     {
         .type = pckTypeArray,
     },
+    [pckTypeMapBool] =
     {
         .type = pckTypeBool,
         .valueSingleBit = true,
     },
+    [pckTypeMapI32] =
     {
         .type = pckTypeI32,
         .valueMultiBit = true,
     },
+    [pckTypeMapI64] =
     {
         .type = pckTypeI64,
         .valueMultiBit = true,
     },
+    [pckTypeMapObj] =
     {
         .type = pckTypeObj,
     },
-    // Placeholders for unused type that can be encoded entirely in the tag
-    {0},
+    [pckTypeMapStr] =
     {
         .type = pckTypeStr,
         .valueSingleBit = true,
         .size = true,
     },
+    [pckTypeMapU32] =
     {
         .type = pckTypeU32,
         .valueMultiBit = true,
     },
+    [pckTypeMapU64] =
     {
         .type = pckTypeU64,
         .valueMultiBit = true,
     },
+    [pckTypeMapStrId] =
     {
         .type = pckTypeStrId,
         .valueMultiBit = true,
     },
 
-    // Placeholders for unused types that can be encoded entirely in the tag
-    {0},
-    {0},
-    {0},
-    {0},
-
     // Types that require an extra byte to encode
+    [pckTypeMapTime] =
     {
         .type = pckTypeTime,
         .valueMultiBit = true,
     },
+    [pckTypeMapBin] =
     {
         .type = pckTypeBin,
         .valueSingleBit = true,
         .size = true,
     },
+    [pckTypeMapPack] =
     {
         .type = pckTypePack,
         .size = true,
     },
+    [pckTypeMapMode] =
     {
         .type = pckTypeMode,
         .valueMultiBit = true,

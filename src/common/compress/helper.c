@@ -44,11 +44,13 @@ static const struct CompressHelperLocal
     IoFilter *(*decompressNew)(bool);                               // Function to create new decompression filter
 } compressHelperLocal[] =
 {
+    [compressTypeNone] =
     {
         .typeId = STRID5("none", 0x2b9ee0),
         .type = STRDEF(COMPRESS_TYPE_NONE),
         .ext = STRDEF(""),
     },
+    [compressTypeBz2] =
     {
         .typeId = STRID5("bz2", 0x73420),
         .type = STRDEF(BZ2_EXT),
@@ -58,6 +60,7 @@ static const struct CompressHelperLocal
         .decompressType = BZ2_DECOMPRESS_FILTER_TYPE,
         .decompressNew = bz2DecompressNew,
     },
+    [compressTypeGz] =
     {
         .typeId = STRID5("gz", 0x3470),
         .type = STRDEF(GZ_EXT),
@@ -67,6 +70,7 @@ static const struct CompressHelperLocal
         .decompressType = GZ_DECOMPRESS_FILTER_TYPE,
         .decompressNew = gzDecompressNew,
     },
+    [compressTypeLz4] =
     {
         .typeId = STRID6("lz4", 0x2068c1),
         .type = STRDEF(LZ4_EXT),
@@ -76,6 +80,7 @@ static const struct CompressHelperLocal
         .decompressType = LZ4_DECOMPRESS_FILTER_TYPE,
         .decompressNew = lz4DecompressNew,
     },
+    [compressTypeZst] =
     {
         .typeId = STRID5("zst", 0x527a0),
         .type = STRDEF(ZST_EXT),
@@ -87,6 +92,7 @@ static const struct CompressHelperLocal
         .decompressNew = zstDecompressNew,
 #endif
     },
+    [compressTypeXz] =
     {
         .typeId = STRID5("xz", 0x3580),
         .type = STRDEF(XZ_EXT),
