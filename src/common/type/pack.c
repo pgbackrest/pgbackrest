@@ -145,7 +145,7 @@ static const PackTypeMapData packTypeMapData[] =
     // Unknown type map data should not be used
     {0},
 
-    // Formats that can be encoded entirely in the tag
+    // Types that can be encoded entirely in the tag
     {
         .type = pckTypeArray,
     },
@@ -190,7 +190,7 @@ static const PackTypeMapData packTypeMapData[] =
     {0},
     {0},
 
-    // Formats that require an extra byte to encode
+    // Types that require an extra byte to encode
     {
         .type = pckTypeTime,
         .valueMultiBit = true,
