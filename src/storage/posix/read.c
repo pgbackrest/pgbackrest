@@ -233,7 +233,7 @@ storageReadPosixNew(
                 .type = STORAGE_POSIX_TYPE,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
-                .rangeList = .rangeList,
+                .rangeList = rangeList,
 
                 .ioInterface = (IoReadInterface)
                 {

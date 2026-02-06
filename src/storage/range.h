@@ -26,6 +26,8 @@ storageRangeListNew(void)
     return (StorageRangeList *)OBJ_NAME(lstNewP(sizeof(StorageRange)), StorageRangeList::List);
 }
 
+FN_EXTERN StorageRangeList *storageRangeListNewOne(uint64_t offset, const Variant *limit);
+
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/

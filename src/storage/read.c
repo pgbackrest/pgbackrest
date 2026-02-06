@@ -228,14 +228,14 @@ storageReadNew(void *const driver, StorageReadInterface *const interface)
             },
         };
 
-        if (rangeList != NULL)
+        if (interface->rangeList != NULL)
         {
-            const StorageRange *const range = storageRangeListGet(rangeList, 0);
+            const StorageRange *const range = storageRangeListGet(interface->rangeList, 0);
 
-            this->offset = range->offset;
-            this->pub.interface->offset = this->offset;
-            this->limit = varDup(range->limit);
-            this->pub.interface->limit = this->offset->limit;
+            this->pub.offset = range->offset;
+            this->pub.interface->offset = this->pub.offset;
+            this->pub.limit = varDup(range->limit);
+            this->pub.interface->limit = this->pub.limit;
         }
     }
     OBJ_NEW_END();

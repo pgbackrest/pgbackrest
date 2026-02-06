@@ -19,7 +19,7 @@ typedef struct StorageReadInterface
     bool ignoreMissing;
     bool retry;                                                     // Are read retries allowed?
     bool version;                                                   // Read version
-    StorageRangeList *rangeList;                                    // Range list (for reading ranges from a file)
+    const StorageRangeList *rangeList;                              // Range list (for reading ranges from a file)
     uint64_t offset;                                                // Where to start reading in the file
     Variant *limit;                                                 // Limit how many bytes are read (NULL for no limit)
     const String *versionId;                                        // File version to read
@@ -36,7 +36,7 @@ typedef struct StorageReadPub
     StorageReadInterface *interface;                                // File data (name, driver type, etc.)
     IoRead *io;                                                     // Read interface
     uint64_t offset;                                                // Where to start reading in the file
-    const Variant *limit;                                           // Limit how many bytes are read (NULL for no limit)
+    Variant *limit;                                                 // Limit how many bytes are read (NULL for no limit)
     bool ignoreMissing;                                             // Ignore missing file?
 } StorageReadPub;
 

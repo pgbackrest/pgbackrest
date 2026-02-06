@@ -260,8 +260,8 @@ storageReadRemoteClose(THIS_VOID)
 FN_EXTERN StorageRead *
 storageReadRemoteNew(
     StorageRemote *const storage, ProtocolClient *const client, const String *const name, const bool ignoreMissing,
-    const bool compressible, const unsigned int compressLevel, const uint64_t offset, const Variant *const limit,
-    const bool version, const String *const versionId)
+    const bool compressible, const unsigned int compressLevel, const StorageRangeList *const rangeList, const bool version,
+    const String *const versionId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, storage);
@@ -270,8 +270,7 @@ storageReadRemoteNew(
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, compressible);
         FUNCTION_LOG_PARAM(UINT, compressLevel);
-        FUNCTION_LOG_PARAM(UINT64, offset);
-        FUNCTION_LOG_PARAM(VARIANT, limit);
+        FUNCTION_LOG_PARAM(STORAGE_RANGE_LIST, rangeList);
         FUNCTION_LOG_PARAM(BOOL, version);
         FUNCTION_LOG_PARAM(STRING, versionId);
     FUNCTION_LOG_END();
@@ -295,8 +294,7 @@ storageReadRemoteNew(
                 .compressible = compressible,
                 .compressLevel = compressLevel,
                 .ignoreMissing = ignoreMissing,
-                .offset = offset,
-                .limit = varDup(limit),
+                .rangeList = rangeList,
                 .version = version,
                 .versionId = strDup(versionId),
 

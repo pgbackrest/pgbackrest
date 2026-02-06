@@ -423,15 +423,15 @@ storageRemoteReadOpenProtocol(PackRead *const param)
     {
         const String *file = pckReadStrP(param);
         const bool ignoreMissing = pckReadBoolP(param);
-        const uint64_t offset = pckReadU64P(param);
-        const Variant *const limit = pckReadNullP(param) ? NULL : VARUINT64(pckReadU64P(param));
+        // const uint64_t offset = pckReadU64P(param);
+        // const Variant *const limit = pckReadNullP(param) ? NULL : VARUINT64(pckReadU64P(param));
         const bool version = pckReadBoolP(param);
         const String *const versionId = pckReadStrP(param);
         const Pack *const filter = pckReadPackP(param);
 
         // Create the read object
         StorageRead *const fileRead = storageInterfaceNewReadP(
-            storageRemoteProtocolLocal.driver, file, ignoreMissing, .offset = offset, .limit = limit, .version = version,
+            storageRemoteProtocolLocal.driver, file, ignoreMissing, .rangeList = NULL /* !!! */, .version = version,
             .versionId = versionId);
 
         // Set filter group based on passed filters

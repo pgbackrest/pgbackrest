@@ -200,14 +200,13 @@ hrnStorageReadTestFd(const THIS_VOID)
 
 static StorageRead *
 hrnStorageReadTestNew(
-    StoragePosix *const storage, const String *name, const bool ignoreMissing, const uint64_t offset,
-    const Variant *const limit, const bool version, const String *const versionId)
+    StoragePosix *const storage, const String *name, const bool ignoreMissing, const StorageRangeList *const rangeList,
+    const bool version, const String *const versionId)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(STRING, name);
         FUNCTION_HARNESS_PARAM(BOOL, ignoreMissing);
-        FUNCTION_HARNESS_PARAM(UINT64, offset);
-        FUNCTION_HARNESS_PARAM(VARIANT, limit);
+        FUNCTION_HARNESS_PARAM(STORAGE_RANGE_LIST, rangeList);
         FUNCTION_HARNESS_PARAM(BOOL, version);
         FUNCTION_HARNESS_PARAM(STRING, versionId);
     FUNCTION_HARNESS_END();
@@ -220,7 +219,7 @@ hrnStorageReadTestNew(
         if (versionId)
             name = strNewFmt("%s/" HRN_STORAGE_TEST_SECRET "/%s/%s", strZ(strPath(name)), strZ(strBase(name)), strZ(versionId));
 
-        StorageRead *const posix = storageReadPosixNew(storage, name, ignoreMissing, offset, limit);
+        StorageRead *const posix = storageReadPosixNew(storage, name, ignoreMissing, rangeList);
 
         // Copy the interface and update with our functions
         StorageReadInterface interface = *storageReadInterface(posix);
@@ -495,8 +494,7 @@ hrnStorageTestNewRead(THIS_VOID, const String *file, const bool ignoreMissing, c
         FUNCTION_HARNESS_PARAM(HRN_STORAGE_TEST, this);
         FUNCTION_HARNESS_PARAM(STRING, file);
         FUNCTION_HARNESS_PARAM(BOOL, ignoreMissing);
-        FUNCTION_HARNESS_PARAM(UINT64, param.offset);
-        FUNCTION_HARNESS_PARAM(VARIANT, param.limit);
+        FUNCTION_HARNESS_PARAM(STORAGE_RANGE_LIST, param.rangeList);
         FUNCTION_HARNESS_PARAM(BOOL, param.version);
         FUNCTION_HARNESS_PARAM(STRING, param.versionId);
     FUNCTION_HARNESS_END();
@@ -508,7 +506,7 @@ hrnStorageTestNewRead(THIS_VOID, const String *file, const bool ignoreMissing, c
     FUNCTION_HARNESS_RETURN(
         STORAGE_READ,
         hrnStorageReadTestNew(
-            storageDriver(this->storagePosix), file, ignoreMissing, param.offset, param.limit, param.version, param.versionId));
+            storageDriver(this->storagePosix), file, ignoreMissing, param.rangeList, param.version, param.versionId));
 }
 
 static StorageWrite *

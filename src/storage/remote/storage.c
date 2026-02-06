@@ -271,8 +271,7 @@ storageRemoteNewRead(THIS_VOID, const String *const file, const bool ignoreMissi
         FUNCTION_LOG_PARAM(STRING, file);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, param.compressible);
-        FUNCTION_LOG_PARAM(UINT64, param.offset);
-        FUNCTION_LOG_PARAM(VARIANT, param.limit);
+        FUNCTION_LOG_PARAM(STORAGE_RANGE_LIST, param.rangeList);
         FUNCTION_LOG_PARAM(BOOL, param.version);
         FUNCTION_LOG_PARAM(STRING, param.versionId);
     FUNCTION_LOG_END();
@@ -284,7 +283,7 @@ storageRemoteNewRead(THIS_VOID, const String *const file, const bool ignoreMissi
         STORAGE_READ,
         storageReadRemoteNew(
             this, this->client, file, ignoreMissing, this->compressLevel > 0 ? param.compressible : false, this->compressLevel,
-            param.offset, param.limit, param.version, param.versionId));
+            param.rangeList, param.version, param.versionId));
 }
 
 /**********************************************************************************************************************************/

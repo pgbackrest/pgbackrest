@@ -507,7 +507,6 @@ storageNewRead(const Storage *const this, const String *const fileExp, const Sto
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(param.limit == NULL || varType(param.limit) == varTypeUInt64);
 
     StorageRead *result = NULL;
 
@@ -525,9 +524,11 @@ storageNewRead(const Storage *const this, const String *const fileExp, const Sto
                 THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(path));
         }
 
+        fprintf(stdout, "%s range list = %d", strZ(fileExp), param.rangeList != NULL);fflush(stdout);
+
         result = storageReadMove(
             storageInterfaceNewReadP(
-                storageDriver(this), path, param.ignoreMissing, .compressible = param.compressible, .rangeList = rangeList,
+                storageDriver(this), path, param.ignoreMissing, .compressible = param.compressible, .rangeList = param.rangeList,
                 .version = this->targetTime != 0, .versionId = versionId),
             memContextPrior());
     }
