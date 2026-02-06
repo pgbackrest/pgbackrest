@@ -503,8 +503,7 @@ storageNewRead(const Storage *const this, const String *const fileExp, const Sto
         FUNCTION_LOG_PARAM(STRING, fileExp);
         FUNCTION_LOG_PARAM(BOOL, param.ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, param.compressible);
-        FUNCTION_LOG_PARAM(UINT64, param.offset);
-        FUNCTION_LOG_PARAM(VARIANT, param.limit);
+        FUNCTION_LOG_PARAM(STORAGE_RANGE_LIST, param.rangeList);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -528,8 +527,8 @@ storageNewRead(const Storage *const this, const String *const fileExp, const Sto
 
         result = storageReadMove(
             storageInterfaceNewReadP(
-                storageDriver(this), path, param.ignoreMissing, .compressible = param.compressible, .offset = param.offset,
-                .limit = param.limit, .version = this->targetTime != 0, .versionId = versionId),
+                storageDriver(this), path, param.ignoreMissing, .compressible = param.compressible, .rangeList = rangeList,
+                .version = this->targetTime != 0, .versionId = versionId),
             memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();

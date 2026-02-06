@@ -224,11 +224,19 @@ storageReadNew(void *const driver, StorageReadInterface *const interface)
             {
                 .interface = interface,
                 .io = ioReadNew(this, storageIoReadInterfaceCopy),
-                .offset = interface->offset,
-                .limit = varDup(interface->limit),
                 .ignoreMissing = interface->ignoreMissing,
             },
         };
+
+        if (rangeList != NULL)
+        {
+            const StorageRange *const range = storageRangeListGet(rangeList, 0);
+
+            this->offset = range->offset;
+            this->pub.interface->offset = this->offset;
+            this->limit = varDup(range->limit);
+            this->pub.interface->limit = this->offset->limit;
+        }
     }
     OBJ_NEW_END();
 

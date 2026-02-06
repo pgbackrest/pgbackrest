@@ -113,11 +113,8 @@ typedef struct StorageInterfaceNewReadParam
     // Is the file compressible? This is used when the file must be moved across a network and temporary compression is helpful.
     bool compressible;
 
-    // Where to start reading in the file
-    const uint64_t offset;
-
-    // Limit bytes read from the file. NULL for no limit.
-    const Variant *limit;
+    // Range list (for reading ranges from a file)
+    StorageRangeList *rangeList;
 
     // Target a specific file version. This requires a boolean as well as the versionId because file missing is indicated when the
     // file is opened rather than when it is created. So if version = true and versionId = NULL then the file will be reported as

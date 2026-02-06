@@ -4,6 +4,7 @@ Storage Read Interface Internal
 #ifndef STORAGE_READ_INTERN_H
 #define STORAGE_READ_INTERN_H
 
+#include "storage/range.h"
 #include "common/io/read.h"
 
 /***********************************************************************************************************************************
@@ -16,10 +17,11 @@ typedef struct StorageReadInterface
     bool compressible;                                              // Is this file compressible?
     unsigned int compressLevel;                                     // Level to use for compression
     bool ignoreMissing;
-    uint64_t offset;                                                // Where to start reading in the file
-    Variant *limit;                                                 // Limit how many bytes are read (NULL for no limit)
     bool retry;                                                     // Are read retries allowed?
     bool version;                                                   // Read version
+    StorageRangeList *rangeList;                                    // Range list (for reading ranges from a file)
+    uint64_t offset;                                                // Where to start reading in the file
+    Variant *limit;                                                 // Limit how many bytes are read (NULL for no limit)
     const String *versionId;                                        // File version to read
     IoReadInterface ioInterface;
 } StorageReadInterface;

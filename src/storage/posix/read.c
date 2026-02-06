@@ -208,14 +208,12 @@ storageReadPosixFd(const THIS_VOID)
 /**********************************************************************************************************************************/
 FN_EXTERN StorageRead *
 storageReadPosixNew(
-    StoragePosix *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset,
-    const Variant *const limit)
+    StoragePosix *const storage, const String *const name, const bool ignoreMissing, const StorageRangeList *const rangeList)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
-        FUNCTION_LOG_PARAM(UINT64, offset);
-        FUNCTION_LOG_PARAM(VARIANT, limit);
+        FUNCTION_LOG_PARAM(STORAGE_RANGE_LIST, rangeList);
     FUNCTION_LOG_END();
 
     ASSERT(name != NULL);
@@ -237,8 +235,7 @@ storageReadPosixNew(
                 .type = STORAGE_POSIX_TYPE,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
-                .offset = offset,
-                .limit = varDup(limit),
+                .rangeList = .rangeList,
 
                 .ioInterface = (IoReadInterface)
                 {
