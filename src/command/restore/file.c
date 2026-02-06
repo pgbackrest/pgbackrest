@@ -269,7 +269,7 @@ restoreFile(
                             repoFileRead = storageNewReadP(
                                 storageRepoIdx(repoIdx), repoFile,
                                 .compressible = repoFileCompressType == compressTypeNone && cipherPass == NULL,
-                                .offset = file->offset, .limit = repoFileLimit != 0 ? VARUINT64(repoFileLimit) : NULL);
+                                storageRangeListNewOne(file->offset, repoFileLimit != 0 ? VARUINT64(repoFileLimit) : NULL));
 
                             ioReadOpen(storageReadIo(repoFileRead));
                         }
@@ -324,7 +324,7 @@ restoreFile(
                                 backupFileRepoPathP(
                                     strLstGet(referenceList, read->reference), .manifestName = file->manifestFile,
                                     .bundleId = read->bundleId, .blockIncr = true),
-                                .offset = read->offset, .limit = VARUINT64(read->size));
+                                storageRangeListNewOne(read->offset, VARUINT64(read->size)));
                             ioReadOpen(storageReadIo(superBlockRead));
 
                             // Write updated blocks to the file

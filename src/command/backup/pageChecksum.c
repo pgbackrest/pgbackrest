@@ -141,8 +141,8 @@ pageChecksumProcess(THIS_VOID, const Buffer *const input)
                     const Buffer *const pageRetry = storageGetP(
                         storageNewReadP(
                             storagePosixNewP(FSLASH_STR), this->fileName,
-                            .offset = (uint64_t)(blockNo % this->segmentPageTotal) * this->pageSize,
-                            .limit = VARUINT64(this->pageSize)));
+                            .rangeList = storageRangeListNewOne(
+                                (uint64_t)(blockNo % this->segmentPageTotal) * this->pageSize, VARUINT64(this->pageSize))));
 
                     // Check if the page has changed since it was last read
                     changed = !bufEq(pageRetry, BUF(pageHeader, this->pageSize));

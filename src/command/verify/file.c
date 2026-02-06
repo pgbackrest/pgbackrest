@@ -41,7 +41,7 @@ verifyFile(
     {
         // Prepare the file for reading
         IoRead *const read = storageReadIo(
-            storageNewReadP(storageRepo(), filePathName, .ignoreMissing = true, .offset = offset, .limit = limit));
+            storageNewReadP(storageRepo(), filePathName, .ignoreMissing = true, storageRangeListNewOne(offset, limit)));
         IoFilterGroup *const filterGroup = ioReadFilterGroup(read);
 
         // Add decryption filter

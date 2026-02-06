@@ -93,7 +93,8 @@ backupFile(
                     IoRead *const read = storageReadIo(
                         storageNewReadP(
                             storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing,
-                            .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSizeOriginal) : NULL));
+                            .rangeList = storageRangeListNewOne(
+                                0, file->pgFileCopyExactSize ? VARUINT64(file->pgFileSizeOriginal) : NULL)));
                     ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
                     ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
 
@@ -208,7 +209,8 @@ backupFile(
                         readIo = storageReadIo(
                             storageNewReadP(
                                 storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing, .compressible = compressible,
-                                .limit = file->pgFileCopyExactSize ? VARUINT64(file->pgFileSizeOriginal) : NULL));
+                                .rangeList = storageRangeListNewOne(
+                                    0, file->pgFileCopyExactSize ? VARUINT64(file->pgFileSizeOriginal) : NULL)));
                     }
 
                     ioFilterGroupAdd(ioReadFilterGroup(readIo), cryptoHashNew(hashTypeSha1));
@@ -248,8 +250,9 @@ backupFile(
                         if (file->blockIncrMapPriorFile != NULL)
                         {
                             StorageRead *const blockMapRead = storageNewReadP(
-                                storageRepo(), file->blockIncrMapPriorFile, .offset = file->blockIncrMapPriorOffset,
-                                .limit = VARUINT64(file->blockIncrMapPriorSize));
+                                storageRepo(), file->blockIncrMapPriorFile,
+                                .rangeList = storageRangeListNewOne(
+                                    file->blockIncrMapPriorOffset, VARUINT64(file->blockIncrMapPriorSize)));
 
                             if (cipherType != cipherTypeNone)
                             {
