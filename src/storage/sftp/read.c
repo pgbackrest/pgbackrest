@@ -111,7 +111,7 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
     {
         // Rather than enable/disable limit checking just use a big number when there is no limit. We can feel pretty confident that
         // no files will be > UINT64_MAX in size.
-        const size_t limit = this->interface.limit == NULL ? UINT64_MAX : varUInt64(this->interface.limit);
+        const uint64_t limit = this->interface.limit == NULL ? UINT64_MAX : varUInt64(this->interface.limit);
 
         // Determine expected bytes to read. If remaining size in the buffer would exceed the limit then reduce the expected read.
         size_t expectedBytes = bufRemains(buffer);
