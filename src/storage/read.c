@@ -234,8 +234,17 @@ storageReadNew(void *const driver, StorageReadInterface *const interface)
 
             this->pub.offset = range->offset;
             this->pub.interface->offset = this->pub.offset;
-            this->pub.limit = varDup(range->limit);
-            this->pub.interface->limit = this->pub.limit;
+
+            if (range->limit != NULL)
+            {
+                this->pub.limit = varDup(range->limit);
+
+                MEM_CONTEXT_OBJ_BEGIN(this->driver)
+                {
+                    this->pub.interface->limit = varDup(range->limit);
+                }
+                MEM_CONTEXT_OBJ_END();
+            }
         }
     }
     OBJ_NEW_END();

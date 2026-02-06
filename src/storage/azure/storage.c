@@ -695,8 +695,7 @@ storageAzureNewRead(THIS_VOID, const String *const file, const bool ignoreMissin
         FUNCTION_LOG_PARAM(STORAGE_AZURE, this);
         FUNCTION_LOG_PARAM(STRING, file);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
-        FUNCTION_LOG_PARAM(UINT64, param.offset);
-        FUNCTION_LOG_PARAM(VARIANT, param.limit);
+        FUNCTION_LOG_PARAM(STORAGE_RANGE_LIST, param.rangeList);
         FUNCTION_LOG_PARAM(BOOL, param.version);
         FUNCTION_LOG_PARAM(STRING, param.versionId);
     FUNCTION_LOG_END();
@@ -705,7 +704,7 @@ storageAzureNewRead(THIS_VOID, const String *const file, const bool ignoreMissin
     ASSERT(file != NULL);
 
     FUNCTION_LOG_RETURN(
-        STORAGE_READ, storageReadAzureNew(this, file, ignoreMissing, param.offset, param.limit, param.version, param.versionId));
+        STORAGE_READ, storageReadAzureNew(this, file, ignoreMissing, param.rangeList, param.version, param.versionId));
 }
 
 /**********************************************************************************************************************************/

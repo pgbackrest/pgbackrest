@@ -473,7 +473,9 @@ testRun(void)
                 ioBufferSizeSet(20);
 
                 TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(29)))),
+                    strNewBuf(
+                        storageGetP(
+                            storageNewReadP(storage, STRDEF("file.txt"), .rangeList = storageRangeListNewOne(1, VARUINT64(29))))),
                     "2345678911234567892123456789", "get file");
 
                 ioBufferSizeSet(ioBufferSizeDefault);
@@ -1374,7 +1376,9 @@ testRun(void)
                 testResponseP(service, .content = "this is a sample file");
 
                 TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(21)))),
+                    strNewBuf(
+                        storageGetP(
+                            storageNewReadP(storage, STRDEF("file.txt"), .rangeList = storageRangeListNewOne(1, VARUINT64(21))))),
                     "this is a sample file", "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------

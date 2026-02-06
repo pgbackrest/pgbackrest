@@ -142,22 +142,20 @@ storageReadS3Close(THIS_VOID)
 /**********************************************************************************************************************************/
 FN_EXTERN StorageRead *
 storageReadS3New(
-    StorageS3 *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset, const Variant *const limit,
+    StorageS3 *const storage, const String *const name, const bool ignoreMissing, const StorageRangeList *const rangeList,
     const bool version, const String *const versionId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_S3, storage);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
-        FUNCTION_LOG_PARAM(UINT64, offset);
-        FUNCTION_LOG_PARAM(VARIANT, limit);
+        FUNCTION_LOG_PARAM(STORAGE_RANGE_LIST, rangeList);
         FUNCTION_LOG_PARAM(BOOL, version);
         FUNCTION_LOG_PARAM(STRING, versionId);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
     ASSERT(name != NULL);
-    ASSERT(limit == NULL || varUInt64(limit) > 0);
 
     OBJ_NEW_BEGIN(StorageReadS3, .childQty = MEM_CONTEXT_QTY_MAX)
     {
@@ -170,8 +168,7 @@ storageReadS3New(
                 .type = STORAGE_S3_TYPE,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
-                .offset = offset,
-                .limit = varDup(limit),
+                .rangeList = rangeList,
                 .retry = true,
                 .version = version,
                 .versionId = strDup(versionId),
