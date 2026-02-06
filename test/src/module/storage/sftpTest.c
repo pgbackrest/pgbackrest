@@ -6036,7 +6036,7 @@ testRun(void)
         TEST_ERROR(
             storageGetP(
                 storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = storageRangeListNewOne(UINT64_MAX, NULL))),
-                FileOpenError, "unable to seek to 18446744073709551615 in file '" TEST_PATH "/test.txt'");
+            FileOpenError, "unable to seek to 18446744073709551615 in file '" TEST_PATH "/test.txt'");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
