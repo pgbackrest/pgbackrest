@@ -246,7 +246,7 @@ storageReadSftpEof(THIS_VOID)
 FN_EXTERN StorageRead *
 storageReadSftpNew(
     StorageSftp *const storage, const String *const name, const bool ignoreMissing, LIBSSH2_SESSION *const session,
-    LIBSSH2_SFTP *const sftpSession, LIBSSH2_SFTP_HANDLE *const sftpHandle, const uint64_t offset, const Variant *const limit)
+    LIBSSH2_SFTP *const sftpSession, LIBSSH2_SFTP_HANDLE *const sftpHandle, const StorageRangeList *const rangeList)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, name);
@@ -254,8 +254,7 @@ storageReadSftpNew(
         FUNCTION_LOG_PARAM_P(VOID, session);
         FUNCTION_LOG_PARAM_P(VOID, sftpSession);
         FUNCTION_LOG_PARAM_P(VOID, sftpHandle);
-        FUNCTION_LOG_PARAM(UINT64, offset);
-        FUNCTION_LOG_PARAM(VARIANT, limit);
+        FUNCTION_LOG_PARAM(STORAGE_RANGE_LIST, rangeList);
     FUNCTION_LOG_END();
 
     ASSERT(name != NULL);
@@ -274,8 +273,7 @@ storageReadSftpNew(
                 .type = STORAGE_SFTP_TYPE,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
-                .offset = offset,
-                .limit = varDup(limit),
+                .rangeList = rangeList,
 
                 .ioInterface = (IoReadInterface)
                 {

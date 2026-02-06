@@ -48,6 +48,13 @@ storageRangeListSize(const StorageRangeList *const this)
     return lstSize((const List *)this);
 }
 
+// Is the range list empty?
+FN_INLINE_ALWAYS unsigned int
+storageRangeListEmpty(const StorageRangeList *const this)
+{
+    return storageRangeListSize(this) == 0;
+}
+
 /***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/

@@ -199,20 +199,36 @@ storageReadRemoteOpen(THIS_VOID)
                 compressFilterP(compressTypeLz4, (int)this->interface.compressLevel, .raw = true));
         }
 
+        // Write params
         PackWrite *const param = protocolPackNew();
 
         pckWriteStrP(param, this->interface.name);
         pckWriteBoolP(param, this->interface.ignoreMissing);
-        pckWriteU64P(param, this->interface.offset);
-
-        if (this->interface.limit == NULL)
-            pckWriteNullP(param);
-        else
-            pckWriteU64P(param, varUInt64(this->interface.limit));
-
         pckWriteBoolP(param, this->interface.version);
         pckWriteStrP(param, this->interface.versionId);
         pckWritePackP(param, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
+
+        // Write range list
+        if (this->interface.rangeList != NULL)
+        {
+            ASSERT(!storageRangeListEmpty(this->interface.rangeList));
+
+            pckWriteArrayBeginP(param);
+
+            for (unsigned int rangeIdx = 0; rangeIdx < storageRangeListSize(this->interface.rangeList); rangeIdx++)
+            {
+                const StorageRange *const range = storageRangeListGet(this->interface.rangeList, rangeIdx);
+
+                pckWriteU64P(param, range->offset, .defaultWrite = true);
+
+                if (range->limit != NULL)
+                    pckWriteU64P(param, varUInt64(range->limit));
+                else
+                    pckWriteNullP(param);
+            }
+
+            pckWriteArrayEndP(param);
+        }
 
         // If the file exists
         PackRead *const packRead = protocolClientSessionOpenP(this->session, .param = param);

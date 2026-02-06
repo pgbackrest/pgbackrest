@@ -230,6 +230,8 @@ storageReadNew(void *const driver, StorageReadInterface *const interface)
 
         if (interface->rangeList != NULL)
         {
+            ASSERT(!storageRangeListEmpty(interface->rangeList));
+            // !!! MAKE THIS WORK WITH A LIST
             const StorageRange *const range = storageRangeListGet(interface->rangeList, 0);
 
             this->pub.offset = range->offset;

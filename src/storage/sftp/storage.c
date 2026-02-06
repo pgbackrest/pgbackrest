@@ -922,8 +922,7 @@ storageSftpNewRead(THIS_VOID, const String *const file, const bool ignoreMissing
         FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
         FUNCTION_LOG_PARAM(STRING, file);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
-        FUNCTION_LOG_PARAM(UINT64, param.offset);
-        FUNCTION_LOG_PARAM(VARIANT, param.limit);
+        FUNCTION_LOG_PARAM(STORAGE_RANGE_LIST, param.rangeList);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -933,8 +932,7 @@ storageSftpNewRead(THIS_VOID, const String *const file, const bool ignoreMissing
 
     FUNCTION_LOG_RETURN(
         STORAGE_READ,
-        storageReadSftpNew(
-            this, file, ignoreMissing, this->session, this->sftpSession, this->sftpHandle, param.offset, param.limit));
+        storageReadSftpNew(this, file, ignoreMissing, this->session, this->sftpSession, this->sftpHandle, param.rangeList));
 }
 
 /**********************************************************************************************************************************/

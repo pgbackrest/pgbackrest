@@ -308,7 +308,9 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read file with limit");
 
-        TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF("test.txt"), .limit = VARUINT64(11)), "get file");
+        TEST_ASSIGN(
+            fileRead, storageNewReadP(storageRepo, STRDEF("test.txt"), .rangeList = storageRangeListNewOne(0, VARUINT64(11))),
+            "get file");
         TEST_RESULT_STR_Z(strNewBuf(storageGetP(fileRead)), "BABABABABAB", "check contents");
         TEST_RESULT_UINT(((StorageReadRemote *)fileRead->driver)->protocolReadBytes, 11, "check read size");
 
@@ -319,7 +321,9 @@ testRun(void)
         ioBufferSizeSet(11);
         buffer = bufNew(11);
 
-        TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF("test.txt"), .limit = VARUINT64(11)), "get file");
+        TEST_ASSIGN(
+            fileRead, storageNewReadP(storageRepo, STRDEF("test.txt"), .rangeList = storageRangeListNewOne(0, VARUINT64(11))),
+            "get file");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(fileRead)), true, "open read");
         TEST_RESULT_UINT(ioRead(storageReadIo(fileRead), buffer), 11, "partial read");
         TEST_RESULT_STR_Z(strNewBuf(buffer), "BABABABABAB", "check contents");
@@ -336,7 +340,9 @@ testRun(void)
 
         StorageRead *fileRead2 = NULL;
         TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF("test.txt")), "get file");
-        TEST_ASSIGN(fileRead2, storageNewReadP(storageRepo, STRDEF("test.txt"), .limit = VARUINT64(11)), "get file");
+        TEST_ASSIGN(
+            fileRead2, storageNewReadP(storageRepo, STRDEF("test.txt"), .rangeList = storageRangeListNewOne(0, VARUINT64(11))),
+            "get file");
 
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(fileRead)), true, "open read");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(fileRead2)), true, "open read file 2");
@@ -375,7 +381,10 @@ testRun(void)
         HRN_STORAGE_PUT_Z(storageTest, TEST_PATH "/repo128/test.txt", "TESTDATA!");
 
         TEST_ASSIGN(
-            fileRead, storageNewReadP(storageRepo, STRDEF(TEST_PATH "/repo128/test.txt"), .limit = VARUINT64(8)), "new read");
+            fileRead,
+            storageNewReadP(
+                storageRepo, STRDEF(TEST_PATH "/repo128/test.txt"), .rangeList = storageRangeListNewOne(0, VARUINT64(8))),
+            "new read");
 
         IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(fileRead));
         ioFilterGroupAdd(filterGroup, ioSizeNew());
@@ -400,7 +409,10 @@ testRun(void)
         HRN_STORAGE_PUT_Z(storageTest, TEST_PATH "/repo128/test.txt", "TESTDATA");
 
         TEST_ASSIGN(
-            fileRead, storageNewReadP(storageRepo, STRDEF(TEST_PATH "/repo128/test.txt"), .limit = VARUINT64(8)), "new read");
+            fileRead,
+            storageNewReadP(
+                storageRepo, STRDEF(TEST_PATH "/repo128/test.txt"), .rangeList = storageRangeListNewOne(0, VARUINT64(8))),
+            "new read");
 
         filterGroup = ioReadFilterGroup(storageReadIo(fileRead));
         ioFilterGroupAdd(filterGroup, ioSizeNew());
