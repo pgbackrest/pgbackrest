@@ -23,7 +23,6 @@ typedef struct StorageReadPosix
 
     int fd;                                                         // File descriptor
     uint64_t current;                                               // Current bytes read from file
-    uint64_t limit;                                                 // Limit bytes to be read from file (UINT64_MAX for no limit)
     bool eof;
 } StorageReadPosix;
 
@@ -124,11 +123,15 @@ storageReadPosix(THIS_VOID, Buffer *const buffer, const bool block)
 
     if (!this->eof)
     {
+        // Rather than enable/disable limit checking just use a big number when there is no limit. We can feel pretty confident that
+        // no files will be > UINT64_MAX in size.
+        const uint64_t limit = this->interface.limit == NULL ? UINT64_MAX : varUInt64(this->interface.limit);
+
         // Determine expected bytes to read. If remaining size in the buffer would exceed the limit then reduce the expected read.
         size_t expectedBytes = bufRemains(buffer);
 
-        if (this->current + expectedBytes > this->limit)
-            expectedBytes = (size_t)(this->limit - this->current);
+        if (this->current + expectedBytes > limit)
+            expectedBytes = (size_t)(limit - this->current);
 
         // Read from file
         actualBytes = read(this->fd, bufRemainsPtr(buffer), expectedBytes);
@@ -143,7 +146,7 @@ storageReadPosix(THIS_VOID, Buffer *const buffer, const bool block)
 
         // If less data than expected was read or the limit has been reached then EOF. The file may not actually be EOF but we are
         // not concerned with files that are growing. Just read up to the point where the file is being extended.
-        if ((size_t)actualBytes != expectedBytes || this->current == this->limit)
+        if ((size_t)actualBytes != expectedBytes || this->current == limit)
             this->eof = true;
     }
 
@@ -224,11 +227,6 @@ storageReadPosixNew(
         {
             .storage = storage,
             .fd = -1,
-
-            // Rather than enable/disable limit checking just use a big number when there is no limit. We can feel pretty confident
-            // that no files will be > UINT64_MAX in size. This is a copy of the interface limit but it simplifies the code during
-            // read so it seems worthwhile.
-            .limit = limit == NULL ? UINT64_MAX : varUInt64(limit),
 
             .interface = (StorageReadInterface)
             {
