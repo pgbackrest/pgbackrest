@@ -2347,6 +2347,14 @@ src/storage/posix/write.h:
   class: core
   type: c/h
 
+src/storage/range.c:
+  class: core
+  type: c
+
+src/storage/range.h:
+  class: core
+  type: c/h
+
 src/storage/read.c:
   class: core
   type: c
