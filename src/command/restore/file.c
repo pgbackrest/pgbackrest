@@ -222,15 +222,16 @@ restoreFile(
 
         for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
         {
-            // Use a per-file mem context to reduce memory usage
-            MEM_CONTEXT_TEMP_BEGIN()
-            {
-                const RestoreFile *const file = lstGet(fileList, fileIdx);
-                RestoreFileResult *const fileResult = lstGet(result, fileIdx);
+            // Copy file from repository to database
+            RestoreFileResult *const fileResult = lstGet(result, fileIdx);
 
-                // Copy file from repository to database
-                if (fileResult->result == restoreResultCopy)
+            if (fileResult->result == restoreResultCopy)
+            {
+                // Use a per-file mem context to reduce memory usage
+                MEM_CONTEXT_TEMP_BEGIN()
                 {
+                    const RestoreFile *const file = lstGet(fileList, fileIdx);
+
                     // If no repo file is currently open
                     if (repoFileLimit == 0)
                     {
@@ -414,8 +415,8 @@ restoreFile(
                             strZ(strNewEncode(encodingHex, checksum)), strZ(strNewEncode(encodingHex, file->checksum)));
                     }
                 }
+                MEM_CONTEXT_TEMP_END();
             }
-            MEM_CONTEXT_TEMP_END();
         }
     }
     MEM_CONTEXT_TEMP_END();
