@@ -169,7 +169,10 @@ storageReadPosixClose(THIS_VOID)
 
     memContextCallbackClear(objMemContext(this));
     storageReadPosixFreeResource(this);
+
     this->fd = -1;
+    this->current = 0;
+    this->eof = false;
 
     FUNCTION_LOG_RETURN_VOID();
 }

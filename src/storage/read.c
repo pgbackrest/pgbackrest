@@ -18,6 +18,7 @@ struct StorageRead
     void *driver;                                                   // Driver
     uint64_t bytesRead;                                             // Bytes that have been successfully read
     StorageRangeList *rangeList;                                    // Range list (for reading ranges from a file)
+    unsigned int rangeIdx;                                          // Current range
     bool rangeDefault;                                              // Is the range default (i.e. entire file)
 };
 
@@ -28,6 +29,31 @@ Macros for function logging
     StorageReadInterface
 #define FUNCTION_LOG_STORAGE_READ_INTERFACE_FORMAT(value, buffer, bufferSize)                                                      \
     objNameToLog(&value, "StorageReadInterface", buffer, bufferSize)
+
+/***********************************************************************************************************************************
+Set range offset and limit
+***********************************************************************************************************************************/
+static void
+storageReadRangeSet(StorageRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_READ, this);
+    FUNCTION_TEST_END();
+
+    const StorageRange *const range = storageRangeListGet(this->rangeList, this->rangeIdx);
+    this->pub.interface->offset = range->offset;
+
+    if (range->limit != NULL)
+    {
+        MEM_CONTEXT_OBJ_BEGIN(this->driver)
+        {
+            this->pub.interface->limit = varDup(range->limit);
+        }
+        MEM_CONTEXT_OBJ_END();
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
 Open the file
@@ -128,6 +154,20 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
         }
     }
     MEM_CONTEXT_TEMP_END();
+
+    // If read is complete and there are more ranges then reopen the file with the next range
+    if (this->pub.interface->ioInterface.eof(this->driver) && this->rangeIdx < storageRangeListSize(this->rangeList) - 1)
+    {
+        // Close the file
+        this->pub.interface->ioInterface.close(this->driver);
+
+        // Set new range
+        this->rangeIdx++;
+        storageReadRangeSet(this);
+
+        // Open file with new offset/limit
+        this->pub.interface->ioInterface.open(this->driver);
+    }
 
     FUNCTION_LOG_RETURN(SIZE, result);
 }
@@ -243,25 +283,15 @@ storageReadNew(void *const driver, StorageReadInterface *const interface, const 
             },
         };
 
+        // If range is provided then duplicate it
         if (rangeList != NULL)
         {
             ASSERT(!storageRangeListEmpty(rangeList));
-            // !!! MAKE THIS WORK WITH A LIST
-            const StorageRange *const range = storageRangeListGet(rangeList, 0);
 
-            this->pub.interface->offset = range->offset;
-
-            if (range->limit != NULL)
-            {
-                MEM_CONTEXT_OBJ_BEGIN(this->driver)
-                {
-                    this->pub.interface->limit = varDup(range->limit);
-                }
-                MEM_CONTEXT_OBJ_END();
-            }
-
-            this->rangeList = storageRangeListNewOne(range->offset, range->limit);
+            this->rangeList = storageRangeListDup(rangeList);
+            storageReadRangeSet(this);
         }
+        // Else create a default range
         else
         {
             this->rangeList = storageRangeListNewOne(0, NULL);

@@ -1302,6 +1302,26 @@ testRun(void)
         TEST_RESULT_VOID(storageReadFree(storageNewReadP(storageTest, fileName)), "free file");
 
         TEST_RESULT_VOID(storageReadMove(NULL, memContextTop()), "move null file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read multiple ranges");
+
+        TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, fileName), BUFSTRDEF("AABBCCDDEEFF")), "write test file");
+
+        StorageRangeList *rangeList = storageRangeListNew();
+        storageRangeListAdd(rangeList, 2, VARUINT64(2));
+        storageRangeListAdd(rangeList, 4, VARUINT64(2));
+        storageRangeListAdd(rangeList, 8, VARUINT64(2));
+        storageRangeListAdd(rangeList, 10, NULL);
+
+        TEST_RESULT_UINT(storageRangeListSize(rangeList), 2, "check range list size");
+        TEST_RESULT_UINT(storageRangeListGet(rangeList, 0)->offset, 2, "check range 0 offset");
+        TEST_RESULT_UINT(varUInt64(storageRangeListGet(rangeList, 0)->limit), 4, "check range 0 limit");
+        TEST_RESULT_UINT(storageRangeListGet(rangeList, 1)->offset, 8, "check range 1 offset");
+        TEST_RESULT_BOOL(storageRangeListGet(rangeList, 1)->limit == NULL, true, "check range 1 limit");
+
+        TEST_RESULT_STR_Z(
+            strNewBuf(storageGetP(storageNewReadP(storageTest, fileName, .rangeList = rangeList))), "BBCCEEFF", "check content");
     }
 
     // *****************************************************************************************************************************

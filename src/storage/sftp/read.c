@@ -221,6 +221,8 @@ storageReadSftpClose(THIS_VOID)
     }
 
     this->sftpHandle = NULL;
+    this->current = 0;
+    this->eof = false;
 
     FUNCTION_LOG_RETURN_VOID();
 }

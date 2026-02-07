@@ -28,6 +28,9 @@ storageRangeListNew(void)
 
 FN_EXTERN StorageRangeList *storageRangeListNewOne(uint64_t offset, const Variant *limit);
 
+// Duplicate range list
+FN_EXTERN StorageRangeList *storageRangeListDup(const StorageRangeList *this);
+
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
