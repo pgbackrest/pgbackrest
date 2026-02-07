@@ -1265,8 +1265,8 @@ testRun(void)
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file");
         TEST_RESULT_STR(storageReadName(file), fileName, "check file name");
         TEST_RESULT_UINT(storageReadType(file), STORAGE_POSIX_TYPE, "check file type");
-        TEST_RESULT_UINT(storageReadOffset(file), 0, "check offset");
-        TEST_RESULT_UINT(varUInt64(storageReadLimit(file)), 44, "check limit");
+        TEST_RESULT_UINT(storageRangeListGet(storageReadRangeList(file), 0)->offset, 0, "check offset");
+        TEST_RESULT_UINT(varUInt64(storageRangeListGet(storageReadRangeList(file), 0)->limit), 44, "check limit");
 
         TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "load data");
         bufCat(buffer, outBuffer);

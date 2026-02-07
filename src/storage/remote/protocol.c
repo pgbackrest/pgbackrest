@@ -435,7 +435,7 @@ storageRemoteReadOpenProtocol(PackRead *const param)
             rangeList = storageRangeListNew();
             pckReadArrayBeginP(param);
 
-            while (pckReadNext(param))
+            while (!pckReadNullP(param))
             {
                 StorageRange range = {.offset = pckReadU64P(param)};
 

@@ -40,13 +40,6 @@ storageReadIo(const StorageRead *const this)
     return THIS_PUB(StorageRead)->io;
 }
 
-// Is there a read limit? NULL for no limit.
-FN_INLINE_ALWAYS const Variant *
-storageReadLimit(const StorageRead *const this)
-{
-    return THIS_PUB(StorageRead)->limit;
-}
-
 // File name
 FN_INLINE_ALWAYS const String *
 storageReadName(const StorageRead *const this)
@@ -54,12 +47,8 @@ storageReadName(const StorageRead *const this)
     return storageReadInterface(this)->name;
 }
 
-// Is there a read limit? NULL for no limit.
-FN_INLINE_ALWAYS uint64_t
-storageReadOffset(const StorageRead *const this)
-{
-    return THIS_PUB(StorageRead)->offset;
-}
+// Range list (for reading ranges from a file)
+FN_EXTERN const StorageRangeList *storageReadRangeList(const StorageRead *this);
 
 // Get file type
 FN_INLINE_ALWAYS StringId

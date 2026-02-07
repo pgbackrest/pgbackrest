@@ -17,6 +17,8 @@ struct StorageRead
     StorageReadPub pub;                                             // Publicly accessible variables
     void *driver;                                                   // Driver
     uint64_t bytesRead;                                             // Bytes that have been successfully read
+    StorageRangeList *rangeList;                                    // Range list (for reading ranges from a file)
+    bool rangeDefault;                                              // Is the range default (i.e. entire file)
 };
 
 /***********************************************************************************************************************************
@@ -100,15 +102,16 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
                     this->pub.interface->ignoreMissing = false;
 
                     // Update offset and limit (when present) based on how many bytes have been successfully read
-                    this->pub.interface->offset = this->pub.offset + this->bytesRead;
+                    const StorageRange *const range = storageRangeListGet(this->rangeList, 0);
+                    this->pub.interface->offset = range->offset + this->bytesRead;
 
-                    if (this->pub.limit != NULL)
+                    if (range->limit != NULL)
                     {
                         varFree(this->pub.interface->limit);
 
                         MEM_CONTEXT_OBJ_BEGIN(this->driver)
                         {
-                            this->pub.interface->limit = varNewUInt64(varUInt64(this->pub.limit) - this->bytesRead);
+                            this->pub.interface->limit = varNewUInt64(varUInt64(range->limit) - this->bytesRead);
                         }
                         MEM_CONTEXT_OBJ_END();
                     }
@@ -183,6 +186,17 @@ storageReadFd(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN const StorageRangeList *
+storageReadRangeList(const StorageRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_READ, this);
+    FUNCTION_TEST_END();
+
+    FUNCTION_TEST_RETURN(STORAGE_RANGE_LIST, this->rangeDefault ? NULL : this->rangeList);
+}
+
+/**********************************************************************************************************************************/
 static const IoReadInterface storageIoReadInterface =
 {
     .open = storageReadOpen,
@@ -193,11 +207,12 @@ static const IoReadInterface storageIoReadInterface =
 };
 
 FN_EXTERN StorageRead *
-storageReadNew(void *const driver, StorageReadInterface *const interface)
+storageReadNew(void *const driver, StorageReadInterface *const interface, const StorageRangeList *const rangeList)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
         FUNCTION_LOG_PARAM_P(STORAGE_READ_INTERFACE, interface);
+        FUNCTION_LOG_PARAM(STORAGE_RANGE_LIST, rangeList);
     FUNCTION_LOG_END();
 
     FUNCTION_AUDIT_HELPER();
@@ -228,25 +243,29 @@ storageReadNew(void *const driver, StorageReadInterface *const interface)
             },
         };
 
-        if (interface->rangeList != NULL)
+        if (rangeList != NULL)
         {
-            ASSERT(!storageRangeListEmpty(interface->rangeList));
+            ASSERT(!storageRangeListEmpty(rangeList));
             // !!! MAKE THIS WORK WITH A LIST
-            const StorageRange *const range = storageRangeListGet(interface->rangeList, 0);
+            const StorageRange *const range = storageRangeListGet(rangeList, 0);
 
-            this->pub.offset = range->offset;
-            this->pub.interface->offset = this->pub.offset;
+            this->pub.interface->offset = range->offset;
 
             if (range->limit != NULL)
             {
-                this->pub.limit = varDup(range->limit);
-
                 MEM_CONTEXT_OBJ_BEGIN(this->driver)
                 {
                     this->pub.interface->limit = varDup(range->limit);
                 }
                 MEM_CONTEXT_OBJ_END();
             }
+
+            this->rangeList = storageRangeListNewOne(range->offset, range->limit);
+        }
+        else
+        {
+            this->rangeList = storageRangeListNewOne(0, NULL);
+            this->rangeDefault = true;
         }
     }
     OBJ_NEW_END();

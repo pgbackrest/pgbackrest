@@ -233,7 +233,6 @@ storageReadPosixNew(
                 .type = STORAGE_POSIX_TYPE,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
-                .rangeList = rangeList,
 
                 .ioInterface = (IoReadInterface)
                 {
@@ -248,5 +247,5 @@ storageReadPosixNew(
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface));
+    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface, rangeList));
 }

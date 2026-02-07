@@ -209,15 +209,17 @@ storageReadRemoteOpen(THIS_VOID)
         pckWritePackP(param, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
 
         // Write range list
-        if (this->interface.rangeList != NULL)
+        const StorageRangeList *const rangeList = storageReadRangeList(this->read);
+
+        if (rangeList != NULL)
         {
-            ASSERT(!storageRangeListEmpty(this->interface.rangeList));
+            ASSERT(!storageRangeListEmpty(rangeList));
 
             pckWriteArrayBeginP(param);
 
-            for (unsigned int rangeIdx = 0; rangeIdx < storageRangeListSize(this->interface.rangeList); rangeIdx++)
+            for (unsigned int rangeIdx = 0; rangeIdx < storageRangeListSize(rangeList); rangeIdx++)
             {
-                const StorageRange *const range = storageRangeListGet(this->interface.rangeList, rangeIdx);
+                const StorageRange *const range = storageRangeListGet(rangeList, rangeIdx);
 
                 pckWriteU64P(param, range->offset, .defaultWrite = true);
 
@@ -310,7 +312,6 @@ storageReadRemoteNew(
                 .compressible = compressible,
                 .compressLevel = compressLevel,
                 .ignoreMissing = ignoreMissing,
-                .rangeList = rangeList,
                 .version = version,
                 .versionId = strDup(versionId),
 
@@ -326,7 +327,7 @@ storageReadRemoteNew(
     }
     OBJ_NEW_END();
 
-    this->read = storageReadNew(OBJ_NAME(this, StorageRead::StorageReadRemote), &this->interface);
+    this->read = storageReadNew(OBJ_NAME(this, StorageRead::StorageReadRemote), &this->interface, rangeList);
 
     ASSERT(this != NULL);
     FUNCTION_LOG_RETURN(STORAGE_READ, this->read);

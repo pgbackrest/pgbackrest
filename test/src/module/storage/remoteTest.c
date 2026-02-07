@@ -406,12 +406,12 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read into sink (no data returned)");
 
-        HRN_STORAGE_PUT_Z(storageTest, TEST_PATH "/repo128/test.txt", "TESTDATA");
+        HRN_STORAGE_PUT_Z(storageTest, TEST_PATH "/repo128/test.txt", "ATESTDATA");
 
         TEST_ASSIGN(
             fileRead,
             storageNewReadP(
-                storageRepo, STRDEF(TEST_PATH "/repo128/test.txt"), .rangeList = storageRangeListNewOne(0, VARUINT64(8))),
+                storageRepo, STRDEF(TEST_PATH "/repo128/test.txt"), .rangeList = storageRangeListNewOne(1, NULL)),
             "new read");
 
         filterGroup = ioReadFilterGroup(storageReadIo(fileRead));

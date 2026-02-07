@@ -273,7 +273,6 @@ storageReadSftpNew(
                 .type = STORAGE_SFTP_TYPE,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
-                .rangeList = rangeList,
 
                 .ioInterface = (IoReadInterface)
                 {
@@ -287,7 +286,7 @@ storageReadSftpNew(
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface));
+    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface, rangeList));
 }
 
 #endif // HAVE_LIBSSH2

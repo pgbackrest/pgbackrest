@@ -17,16 +17,15 @@ typedef struct StorageReadInterface
     bool compressible;                                              // Is this file compressible?
     unsigned int compressLevel;                                     // Level to use for compression
     bool ignoreMissing;
-    bool retry;                                                     // Are read retries allowed?
-    bool version;                                                   // Read version
-    const StorageRangeList *rangeList;                              // Range list (for reading ranges from a file)
     uint64_t offset;                                                // Where to start reading in the file
     Variant *limit;                                                 // Limit how many bytes are read (NULL for no limit)
+    bool retry;                                                     // Are read retries allowed?
+    bool version;                                                   // Read version
     const String *versionId;                                        // File version to read
     IoReadInterface ioInterface;
 } StorageReadInterface;
 
-FN_EXTERN StorageRead *storageReadNew(void *driver, StorageReadInterface *interface);
+FN_EXTERN StorageRead *storageReadNew(void *driver, StorageReadInterface *interface, const StorageRangeList *rangeList);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -35,8 +34,6 @@ typedef struct StorageReadPub
 {
     StorageReadInterface *interface;                                // File data (name, driver type, etc.)
     IoRead *io;                                                     // Read interface
-    uint64_t offset;                                                // Where to start reading in the file
-    Variant *limit;                                                 // Limit how many bytes are read (NULL for no limit)
     bool ignoreMissing;                                             // Ignore missing file?
 } StorageReadPub;
 

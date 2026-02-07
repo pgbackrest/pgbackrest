@@ -168,7 +168,6 @@ storageReadAzureNew(
                 .type = STORAGE_AZURE_TYPE,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
-                .rangeList = rangeList,
                 .retry = true,
                 .version = version,
                 .versionId = strDup(versionId),
@@ -185,5 +184,5 @@ storageReadAzureNew(
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface));
+    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface, rangeList));
 }

@@ -168,7 +168,6 @@ storageReadS3New(
                 .type = STORAGE_S3_TYPE,
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
-                .rangeList = rangeList,
                 .retry = true,
                 .version = version,
                 .versionId = strDup(versionId),
@@ -185,5 +184,5 @@ storageReadS3New(
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface));
+    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface, rangeList));
 }
