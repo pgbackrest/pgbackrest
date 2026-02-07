@@ -68,7 +68,7 @@ storageRangeListAdd(StorageRangeList *const this, const uint64_t offset, const V
             {
                 MEM_CONTEXT_OBJ_BEGIN(this)
                 {
-                    rangePrior->limit = varNewUInt64(rangePrior->offset + rangePriorLimit);
+                    rangePrior->limit = varNewUInt64(rangePriorLimit + varUInt64(limit));
                 }
                 MEM_CONTEXT_OBJ_END();
             }
@@ -78,7 +78,10 @@ storageRangeListAdd(StorageRangeList *const this, const uint64_t offset, const V
             FUNCTION_TEST_RETURN(STORAGE_RANGE, rangePrior);
         }
 
-        CHECK(AssertError, offset > rangePrior->offset + rangePriorLimit, "new range must be after prior range");
+        CHECK_FMT(
+            AssertError, offset > rangePrior->offset + rangePriorLimit,
+            "new range offset %" PRIu64 " must be after prior range (%" PRIu64 "/%" PRIu64 ")", offset, rangePrior->offset,
+            rangePriorLimit);
     }
 
     StorageRange range = {.offset = offset};

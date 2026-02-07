@@ -53,6 +53,8 @@ restoreFile(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Check files to determine which ones need to be restored
+        StorageRangeList *const rangeList = storageRangeListNew();
+
         for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
         {
             // Use a per-file mem context to reduce memory usage
@@ -212,211 +214,171 @@ restoreFile(
                     // Report the file as zeroed or zero-length
                     fileResult->result = restoreResultZero;
                 }
+
+                // If the file will be copied add it to the range list
+                if (fileResult->result == restoreResultCopy)
+                    storageRangeListAdd(rangeList, file->offset, file->limit);
             }
             MEM_CONTEXT_TEMP_END();
         }
 
         // Copy files from repository to database
-        StorageRead *repoFileRead = NULL;
-        uint64_t repoFileLimit = 0;
-
-        for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
+        if (!storageRangeListEmpty(rangeList))
         {
-            // Use a per-file mem context to reduce memory usage
-            MEM_CONTEXT_TEMP_BEGIN()
+            // Create and open the repo file
+            StorageRead *const repoFileRead = storageNewReadP(
+                storageRepoIdx(repoIdx), repoFile, .compressible = repoFileCompressType == compressTypeNone && cipherPass == NULL,
+                .rangeList = rangeList);
+
+            ioReadOpen(storageReadIo(repoFileRead));
+
+            for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
             {
-                const RestoreFile *const file = lstGet(fileList, fileIdx);
+                // Copy file from repository to database
                 RestoreFileResult *const fileResult = lstGet(result, fileIdx);
 
-                // Copy file from repository to database
                 if (fileResult->result == restoreResultCopy)
                 {
-                    // If no repo file is currently open
-                    if (repoFileLimit == 0)
+                    // Use a per-file mem context to reduce memory usage
+                    MEM_CONTEXT_TEMP_BEGIN()
                     {
-                        // If a limit is specified then we need to use it, even if there is only one pg file to copy, because we
-                        // might be reading from the middle of a repo file containing many pg files
-                        if (file->limit != NULL)
-                        {
-                            ASSERT(varUInt64(file->limit) != 0);
-                            repoFileLimit = varUInt64(file->limit);
+                        const RestoreFile *const file = lstGet(fileList, fileIdx);
 
-                            // Determine how many files can be copied with one read
-                            for (unsigned int fileNextIdx = fileIdx + 1; fileNextIdx < lstSize(fileList); fileNextIdx++)
+                        // Create pg file
+                        StorageWrite *const pgFileWrite = storageNewWriteP(
+                            storagePgWrite(), file->name, .modeFile = file->mode, .user = file->user, .group = file->group,
+                            .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true,
+                            .noTruncate = file->blockChecksum != NULL);
+
+                        // If block incremental file
+                        const Buffer *checksum = NULL;
+
+                        if (file->blockIncrMapSize != 0)
+                        {
+                            ASSERT(referenceList != NULL);
+
+                            // Read block map. This will be compared to the block checksum list already created to determine which
+                            // blocks need to be fetched from the repository. If we got here there must be at least one block to
+                            // fetch.
+                            IoRead *const blockMapRead = ioLimitReadNew(storageReadIo(repoFileRead), varUInt64(file->limit));
+
+                            if (cipherPass != NULL)
                             {
-                                // Only files that are being copied are considered
-                                if (((const RestoreFileResult *)lstGet(result, fileNextIdx))->result == restoreResultCopy)
+                                ioFilterGroupAdd(
+                                    ioReadFilterGroup(blockMapRead),
+                                    cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), .raw = true));
+                            }
+
+                            ioReadOpen(blockMapRead);
+
+                            const BlockMap *const blockMap = blockMapNewRead(
+                                blockMapRead, file->blockIncrSize, file->blockIncrChecksumSize);
+
+                            // Open file to write
+                            ioWriteOpen(storageWriteIo(pgFileWrite));
+
+                            // Apply delta to file
+                            BlockDelta *const blockDelta = blockDeltaNew(
+                                blockMap, file->blockIncrSize, file->blockIncrChecksumSize, file->blockChecksum,
+                                cipherPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc, cipherPass, repoFileCompressType);
+
+                            for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
+                            {
+                                const BlockDeltaRead *const read = blockDeltaReadGet(blockDelta, readIdx);
+
+                                // Open the super block list for read. Using one read for all super blocks is cheaper than reading
+                                // from the file multiple times, which is especially noticeable on object stores.
+                                StorageRead *const superBlockRead = storageNewReadP(
+                                    storageRepoIdx(repoIdx),
+                                    backupFileRepoPathP(
+                                        strLstGet(referenceList, read->reference), .manifestName = file->manifestFile,
+                                        .bundleId = read->bundleId, .blockIncr = true),
+                                    .rangeList = storageRangeListNewOne(read->offset, VARUINT64(read->size)));
+                                ioReadOpen(storageReadIo(superBlockRead));
+
+                                // Write updated blocks to the file
+                                const BlockDeltaWrite *deltaWrite = blockDeltaNext(blockDelta, read, storageReadIo(superBlockRead));
+
+                                while (deltaWrite != NULL)
                                 {
-                                    const RestoreFile *const fileNext = lstGet(fileList, fileNextIdx);
-                                    ASSERT(fileNext->limit != NULL && varUInt64(fileNext->limit) != 0);
+                                    // Seek to the block offset. It is possible we are already at the correct position but it is
+                                    // easier and safer to let lseek() figure this out.
+                                    THROW_ON_SYS_ERROR_FMT(
+                                        lseek(ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)deltaWrite->offset, SEEK_SET) == -1,
+                                        FileOpenError, STORAGE_ERROR_READ_SEEK, deltaWrite->offset,
+                                        strZ(storagePathP(storagePg(), file->name)));
 
-                                    // Break if the offset is not the first file's offset + limit of all additional files so far
-                                    if (fileNext->offset != file->offset + repoFileLimit)
-                                        break;
+                                    // Write block
+                                    ioWrite(storageWriteIo(pgFileWrite), deltaWrite->block);
+                                    fileResult->blockIncrDeltaSize += bufUsed(deltaWrite->block);
 
-                                    repoFileLimit += varUInt64(fileNext->limit);
+                                    // Flush writes since we may seek to a new location for the next block
+                                    ioWriteFlush(storageWriteIo(pgFileWrite));
+
+                                    deltaWrite = blockDeltaNext(blockDelta, read, storageReadIo(superBlockRead));
                                 }
-                                // Else if the file was not copied then there is a gap so break
-                                else
-                                    break;
+
+                                storageReadFree(superBlockRead);
                             }
+
+                            // Close the file to complete the update
+                            ioWriteClose(storageWriteIo(pgFileWrite));
+
+                            // Calculate checksum. In theory this is not needed because the file should always be reconstructed
+                            // correctly. However, it seems better to check and the pages should still be buffered making the
+                            // operation very fast.
+                            IoRead *const read = storageReadIo(storageNewReadP(storagePg(), file->name));
+
+                            ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
+                            ioReadDrain(read);
+
+                            checksum = pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
                         }
-
-                        // Create and open the repo file. It needs to be created in the prior context because it will live longer
-                        // than a single loop when more than one file is being read.
-                        MEM_CONTEXT_PRIOR_BEGIN()
+                        // Else normal file
+                        else
                         {
-                            repoFileRead = storageNewReadP(
-                                storageRepoIdx(repoIdx), repoFile,
-                                .compressible = repoFileCompressType == compressTypeNone && cipherPass == NULL,
-                                .rangeList = storageRangeListNewOne(
-                                    file->offset, repoFileLimit != 0 ? VARUINT64(repoFileLimit) : NULL));
+                            IoFilterGroup *const filterGroup = ioWriteFilterGroup(storageWriteIo(pgFileWrite));
 
-                            ioReadOpen(storageReadIo(repoFileRead));
-                        }
-                        MEM_CONTEXT_PRIOR_END();
-                    }
-
-                    // Create pg file
-                    StorageWrite *const pgFileWrite = storageNewWriteP(
-                        storagePgWrite(), file->name, .modeFile = file->mode, .user = file->user, .group = file->group,
-                        .timeModified = file->timeModified, .noAtomic = true, .noCreatePath = true, .noSyncPath = true,
-                        .noTruncate = file->blockChecksum != NULL);
-
-                    // If block incremental file
-                    const Buffer *checksum = NULL;
-
-                    if (file->blockIncrMapSize != 0)
-                    {
-                        ASSERT(referenceList != NULL);
-
-                        // Read block map. This will be compared to the block checksum list already created to determine which
-                        // blocks need to be fetched from the repository. If we got here there must be at least one block to fetch.
-                        IoRead *const blockMapRead = ioLimitReadNew(storageReadIo(repoFileRead), varUInt64(file->limit));
-
-                        if (cipherPass != NULL)
-                        {
-                            ioFilterGroupAdd(
-                                ioReadFilterGroup(blockMapRead),
-                                cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), .raw = true));
-                        }
-
-                        ioReadOpen(blockMapRead);
-
-                        const BlockMap *const blockMap = blockMapNewRead(
-                            blockMapRead, file->blockIncrSize, file->blockIncrChecksumSize);
-
-                        // Open file to write
-                        ioWriteOpen(storageWriteIo(pgFileWrite));
-
-                        // Apply delta to file
-                        BlockDelta *const blockDelta = blockDeltaNew(
-                            blockMap, file->blockIncrSize, file->blockIncrChecksumSize, file->blockChecksum,
-                            cipherPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc, cipherPass, repoFileCompressType);
-
-                        for (unsigned int readIdx = 0; readIdx < blockDeltaReadSize(blockDelta); readIdx++)
-                        {
-                            const BlockDeltaRead *const read = blockDeltaReadGet(blockDelta, readIdx);
-
-                            // Open the super block list for read. Using one read for all super blocks is cheaper than reading from
-                            // the file multiple times, which is especially noticeable on object stores.
-                            StorageRead *const superBlockRead = storageNewReadP(
-                                storageRepoIdx(repoIdx),
-                                backupFileRepoPathP(
-                                    strLstGet(referenceList, read->reference), .manifestName = file->manifestFile,
-                                    .bundleId = read->bundleId, .blockIncr = true),
-                                .rangeList = storageRangeListNewOne(read->offset, VARUINT64(read->size)));
-                            ioReadOpen(storageReadIo(superBlockRead));
-
-                            // Write updated blocks to the file
-                            const BlockDeltaWrite *deltaWrite = blockDeltaNext(blockDelta, read, storageReadIo(superBlockRead));
-
-                            while (deltaWrite != NULL)
+                            // Add decryption filter
+                            if (cipherPass != NULL)
                             {
-                                // Seek to the block offset. It is possible we are already at the correct position but it is easier
-                                // and safer to let lseek() figure this out.
-                                THROW_ON_SYS_ERROR_FMT(
-                                    lseek(ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)deltaWrite->offset, SEEK_SET) == -1,
-                                    FileOpenError, STORAGE_ERROR_READ_SEEK, deltaWrite->offset,
-                                    strZ(storagePathP(storagePg(), file->name)));
-
-                                // Write block
-                                ioWrite(storageWriteIo(pgFileWrite), deltaWrite->block);
-                                fileResult->blockIncrDeltaSize += bufUsed(deltaWrite->block);
-
-                                // Flush writes since we may seek to a new location for the next block
-                                ioWriteFlush(storageWriteIo(pgFileWrite));
-
-                                deltaWrite = blockDeltaNext(blockDelta, read, storageReadIo(superBlockRead));
+                                ioFilterGroupAdd(
+                                    filterGroup,
+                                    cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), .raw = bundleRaw));
                             }
 
-                            storageReadFree(superBlockRead);
+                            // Add decompression filter
+                            if (repoFileCompressType != compressTypeNone)
+                                ioFilterGroupAdd(filterGroup, decompressFilterP(repoFileCompressType, .raw = bundleRaw));
+
+                            // Add sha1 filter
+                            ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
+
+                            // Add size filter
+                            ioFilterGroupAdd(filterGroup, ioSizeNew());
+
+                            // Copy file
+                            ioWriteOpen(storageWriteIo(pgFileWrite));
+                            ioCopyP(storageReadIo(repoFileRead), storageWriteIo(pgFileWrite), .limit = file->limit);
+                            ioWriteClose(storageWriteIo(pgFileWrite));
+
+                            // Get checksum result
+                            checksum = pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE));
                         }
 
-                        // Close the file to complete the update
-                        ioWriteClose(storageWriteIo(pgFileWrite));
-
-                        // Calculate checksum. In theory this is not needed because the file should always be reconstructed
-                        // correctly. However, it seems better to check and the pages should still be buffered making the operation
-                        // very fast.
-                        IoRead *const read = storageReadIo(storageNewReadP(storagePg(), file->name));
-
-                        ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
-                        ioReadDrain(read);
-
-                        checksum = pckReadBinP(ioFilterGroupResultP(ioReadFilterGroup(read), CRYPTO_HASH_FILTER_TYPE));
-                    }
-                    // Else normal file
-                    else
-                    {
-                        IoFilterGroup *const filterGroup = ioWriteFilterGroup(storageWriteIo(pgFileWrite));
-
-                        // Add decryption filter
-                        if (cipherPass != NULL)
+                        // Validate checksum
+                        if (!bufEq(file->checksum, checksum))
                         {
-                            ioFilterGroupAdd(
-                                filterGroup,
-                                cipherBlockNewP(cipherModeDecrypt, cipherTypeAes256Cbc, BUFSTR(cipherPass), .raw = bundleRaw));
+                            THROW_FMT(
+                                ChecksumError,
+                                "error restoring '%s': actual checksum '%s' does not match expected checksum '%s'",
+                                strZ(file->name), strZ(strNewEncode(encodingHex, checksum)),
+                                strZ(strNewEncode(encodingHex, file->checksum)));
                         }
-
-                        // Add decompression filter
-                        if (repoFileCompressType != compressTypeNone)
-                            ioFilterGroupAdd(filterGroup, decompressFilterP(repoFileCompressType, .raw = bundleRaw));
-
-                        // Add sha1 filter
-                        ioFilterGroupAdd(filterGroup, cryptoHashNew(hashTypeSha1));
-
-                        // Add size filter
-                        ioFilterGroupAdd(filterGroup, ioSizeNew());
-
-                        // Copy file
-                        ioWriteOpen(storageWriteIo(pgFileWrite));
-                        ioCopyP(storageReadIo(repoFileRead), storageWriteIo(pgFileWrite), .limit = file->limit);
-                        ioWriteClose(storageWriteIo(pgFileWrite));
-
-                        // Get checksum result
-                        checksum = pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE));
                     }
-
-                    // If more than one file is being copied from a single read then decrement the limit
-                    if (repoFileLimit != 0)
-                        repoFileLimit -= varUInt64(file->limit);
-
-                    // Free the repo file when there are no more files to copy from it
-                    if (repoFileLimit == 0)
-                        storageReadFree(repoFileRead);
-
-                    // Validate checksum
-                    if (!bufEq(file->checksum, checksum))
-                    {
-                        THROW_FMT(
-                            ChecksumError,
-                            "error restoring '%s': actual checksum '%s' does not match expected checksum '%s'", strZ(file->name),
-                            strZ(strNewEncode(encodingHex, checksum)), strZ(strNewEncode(encodingHex, file->checksum)));
-                    }
+                    MEM_CONTEXT_TEMP_END();
                 }
             }
-            MEM_CONTEXT_TEMP_END();
         }
     }
     MEM_CONTEXT_TEMP_END();
