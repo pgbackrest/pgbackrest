@@ -239,7 +239,7 @@ hrnStorageReadTestNew(
     }
     OBJ_NEW_END();
 
-    FUNCTION_HARNESS_RETURN(STORAGE_READ, storageReadNew(this, &this->interface, rangeList));
+    FUNCTION_HARNESS_RETURN(STORAGE_READ, storageReadNew(this, &this->interface, rangeList, false));
 }
 
 /***********************************************************************************************************************************

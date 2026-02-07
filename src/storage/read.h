@@ -48,7 +48,11 @@ storageReadName(const StorageRead *const this)
 }
 
 // Range list (for reading ranges from a file)
-FN_EXTERN const StorageRangeList *storageReadRangeList(const StorageRead *this);
+FN_INLINE_ALWAYS const StorageRangeList *
+storageReadRangeList(const StorageRead *const this)
+{
+    return storageReadInterface(this)->rangeList;
+}
 
 // Get file type
 FN_INLINE_ALWAYS StringId

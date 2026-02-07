@@ -19,7 +19,6 @@ struct StorageRead
     uint64_t bytesRead;                                             // Bytes that have been successfully read
     StorageRangeList *rangeList;                                    // Range list (for reading ranges from a file)
     unsigned int rangeIdx;                                          // Current range
-    bool rangeDefault;                                              // Is the range default (i.e. entire file)
 };
 
 /***********************************************************************************************************************************
@@ -226,17 +225,6 @@ storageReadFd(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN const StorageRangeList *
-storageReadRangeList(const StorageRead *const this)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_READ, this);
-    FUNCTION_TEST_END();
-
-    FUNCTION_TEST_RETURN(STORAGE_RANGE_LIST, this->rangeDefault ? NULL : this->rangeList);
-}
-
-/**********************************************************************************************************************************/
 static const IoReadInterface storageIoReadInterface =
 {
     .open = storageReadOpen,
@@ -247,12 +235,14 @@ static const IoReadInterface storageIoReadInterface =
 };
 
 FN_EXTERN StorageRead *
-storageReadNew(void *const driver, StorageReadInterface *const interface, const StorageRangeList *const rangeList)
+storageReadNew(
+    void *const driver, StorageReadInterface *const interface, const StorageRangeList *const rangeList, const bool remote)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
         FUNCTION_LOG_PARAM_P(STORAGE_READ_INTERFACE, interface);
         FUNCTION_LOG_PARAM(STORAGE_RANGE_LIST, rangeList);
+        FUNCTION_LOG_PARAM(BOOL, remote);
     FUNCTION_LOG_END();
 
     FUNCTION_AUDIT_HELPER();
@@ -288,15 +278,19 @@ storageReadNew(void *const driver, StorageReadInterface *const interface, const 
         {
             ASSERT(!storageRangeListEmpty(rangeList));
 
-            this->rangeList = storageRangeListDup(rangeList);
-            storageReadRangeSet(this);
+            this->pub.interface->rangeList = storageRangeListDup(rangeList);
+
+            if (remote)
+                this->rangeList = storageRangeListNewOne(0, NULL);
+            else
+            {
+                this->rangeList = storageRangeListDup(rangeList);
+                storageReadRangeSet(this);
+            }
         }
         // Else create a default range
         else
-        {
             this->rangeList = storageRangeListNewOne(0, NULL);
-            this->rangeDefault = true;
-        }
     }
     OBJ_NEW_END();
 

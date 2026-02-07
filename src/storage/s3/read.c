@@ -184,5 +184,5 @@ storageReadS3New(
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface, rangeList));
+    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface, rangeList, false));
 }

@@ -17,6 +17,7 @@ typedef struct StorageReadInterface
     bool compressible;                                              // Is this file compressible?
     unsigned int compressLevel;                                     // Level to use for compression
     bool ignoreMissing;
+    const StorageRangeList *rangeList;                              // Range list (for reading ranges from a file)
     uint64_t offset;                                                // Where to start reading in the file
     Variant *limit;                                                 // Limit how many bytes are read (NULL for no limit)
     bool retry;                                                     // Are read retries allowed?
@@ -25,7 +26,8 @@ typedef struct StorageReadInterface
     IoReadInterface ioInterface;
 } StorageReadInterface;
 
-FN_EXTERN StorageRead *storageReadNew(void *driver, StorageReadInterface *interface, const StorageRangeList *rangeList);
+FN_EXTERN StorageRead *storageReadNew(
+    void *driver, StorageReadInterface *interface, const StorageRangeList *rangeList, bool remote);
 
 /***********************************************************************************************************************************
 Getters/Setters
