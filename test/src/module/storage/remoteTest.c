@@ -428,17 +428,17 @@ testRun(void)
             "filter results");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        // TEST_TITLE("read multiple ranges");
+        TEST_TITLE("read multiple ranges");
 
-        // HRN_STORAGE_PUT_Z(storageTest, TEST_PATH "/repo128/test.txt", "AABBCCDDEEFF");
+        HRN_STORAGE_PUT_Z(storageTest, TEST_PATH "/pg256/test.txt", "AABBCCDDEEFF");
 
-        // StorageRangeList *rangeList = storageRangeListNew();
-        // storageRangeListAdd(rangeList, 2, VARUINT64(4));
-        // storageRangeListAdd(rangeList, 8, NULL);
+        StorageRangeList *rangeList = storageRangeListNew();
+        storageRangeListAdd(rangeList, 2, VARUINT64(4));
+        storageRangeListAdd(rangeList, 8, NULL);
 
-        // TEST_RESULT_STR_Z(
-        //     strNewBuf(storageGetP(storageNewReadP(storageRepo, STRDEF(TEST_PATH "/repo128/test.txt"), .rangeList = rangeList))),
-        //     "BBCCEEFF", "check content");
+        TEST_RESULT_STR_Z(
+            strNewBuf(storageGetP(storageNewReadP(storagePg, STRDEF(TEST_PATH "/pg256/test.txt"), .rangeList = rangeList))),
+            "BBCCEEFF", "check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on invalid filter");
