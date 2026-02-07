@@ -293,7 +293,7 @@ restoreFile(
                                     backupFileRepoPathP(
                                         strLstGet(referenceList, read->reference), .manifestName = file->manifestFile,
                                         .bundleId = read->bundleId, .blockIncr = true),
-                                    .rangeList = storageRangeListNewOne(read->offset, VARUINT64(read->size)));
+                                    .rangeList = read->rangeList);
                                 ioReadOpen(storageReadIo(superBlockRead));
 
                                 // Write updated blocks to the file

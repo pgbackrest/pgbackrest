@@ -33,9 +33,14 @@ hrnBlockDeltaRender(const BlockMap *const blockMap, const size_t blockSize, cons
     {
         const BlockDeltaRead *const read = blockDeltaReadGet(blockDelta, readIdx);
 
-        strCatFmt(
-            result, "read {reference: %u, bundleId: %" PRIu64 ", offset: %" PRIu64 ", size: %" PRIu64 "}\n", read->reference,
-            read->bundleId, read->offset, read->size);
+        for (unsigned int rangeIdx = 0; rangeIdx < storageRangeListSize(read->rangeList); rangeIdx++)
+        {
+            const StorageRange *const range = storageRangeListGet(read->rangeList, rangeIdx);
+
+            strCatFmt(
+                result, "read {reference: %u, bundleId: %" PRIu64 ", offset: %" PRIu64 ", size: %" PRIu64 "}\n", read->reference,
+                read->bundleId, range->offset, varUInt64(range->limit));
+        }
 
         for (unsigned int superBlockIdx = 0; superBlockIdx < lstSize(read->superBlockList); superBlockIdx++)
         {

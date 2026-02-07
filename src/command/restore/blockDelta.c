@@ -51,6 +51,7 @@ struct BlockDelta
 typedef struct BlockDeltaReference
 {
     unsigned int reference;                                         // Reference
+    uint64_t bundleId;                                              // Bundle Id
     List *blockList;                                                // List of blocks in the block map for the reference
 } BlockDeltaReference;
 
@@ -116,10 +117,15 @@ blockDeltaNew(
                     // If the reference has not been added
                     if (referenceData == NULL)
                     {
-                        const BlockDeltaReference *const referenceData = lstAdd(
-                            referenceList,
-                            &(BlockDeltaReference){.reference = reference, .blockList = lstNewP(sizeof(unsigned int))});
-                        lstAdd(referenceData->blockList, &blockMapIdx);
+                        const BlockDeltaReference referenceDataNew =
+                        {
+                            .reference = reference,
+                            .bundleId = blockMapItem->bundleId,
+                            .blockList = lstNewP(sizeof(unsigned int)),
+                        };
+
+                        lstAdd(referenceList, &referenceDataNew);
+                        lstAdd(referenceDataNew.blockList, &blockMapIdx);
                     }
                     // Else add the new block
                     else
@@ -138,30 +144,24 @@ blockDeltaNew(
                 const BlockDeltaSuperBlock *blockDeltaSuperBlock = NULL;
                 const BlockMapItem *blockMapItemPrior = NULL;
 
+                MEM_CONTEXT_OBJ_BEGIN(this->pub.readList)
+                {
+                    const BlockDeltaRead blockDeltaReadNew =
+                    {
+                        .reference = referenceData->reference,
+                        .bundleId = referenceData->bundleId,
+                        .rangeList = storageRangeListNew(),
+                        .superBlockList = lstNewP(sizeof(BlockDeltaSuperBlock)),
+                    };
+
+                    blockDeltaRead = lstAdd(this->pub.readList, &blockDeltaReadNew);
+                }
+                MEM_CONTEXT_OBJ_END();
+
                 for (unsigned int blockIdx = 0; blockIdx < lstSize(referenceData->blockList); blockIdx++)
                 {
                     const unsigned int blockMapIdx = *(unsigned int *)lstGet(referenceData->blockList, blockIdx);
                     const BlockMapItem *const blockMapItem = blockMapGet(blockMap, blockMapIdx);
-
-                    // Add read when it has changed
-                    if (blockMapItemPrior == NULL ||
-                        (blockMapItemPrior->offset != blockMapItem->offset &&
-                         blockMapItemPrior->offset + blockMapItemPrior->size != blockMapItem->offset))
-                    {
-                        MEM_CONTEXT_OBJ_BEGIN(this->pub.readList)
-                        {
-                            const BlockDeltaRead blockDeltaReadNew =
-                            {
-                                .reference = blockMapItem->reference,
-                                .bundleId = blockMapItem->bundleId,
-                                .offset = blockMapItem->offset,
-                                .superBlockList = lstNewP(sizeof(BlockDeltaSuperBlock)),
-                            };
-
-                            blockDeltaRead = lstAdd(this->pub.readList, &blockDeltaReadNew);
-                        }
-                        MEM_CONTEXT_OBJ_END();
-                    }
 
                     // Add super block when it has changed
                     if (blockMapItemPrior == NULL || blockMapItemPrior->offset != blockMapItem->offset)
@@ -176,7 +176,7 @@ blockDeltaNew(
                             };
 
                             blockDeltaSuperBlock = lstAdd(blockDeltaRead->superBlockList, &blockDeltaSuperBlockNew);
-                            blockDeltaRead->size += blockMapItem->size;
+                            storageRangeListAdd(blockDeltaRead->rangeList, blockMapItem->offset, VARUINT64(blockMapItem->size));
                         }
                         MEM_CONTEXT_OBJ_END();
                     }

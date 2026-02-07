@@ -136,8 +136,7 @@ testBackupValidateFile(
                 strLstGet(manifestReferenceList(manifest), read->reference), .manifestName = file.name,
                 .bundleId = read->bundleId, .blockIncr = true);
 
-            IoRead *blockRead = storageReadIo(
-                storageNewReadP(storage, blockName, .rangeList = storageRangeListNewOne(read->offset, VARUINT64(read->size))));
+            IoRead *blockRead = storageReadIo(storageNewReadP(storage, blockName, .rangeList = read->rangeList));
             ioReadOpen(blockRead);
 
             const BlockDeltaWrite *deltaWrite = blockDeltaNext(blockDelta, read, blockRead);
@@ -880,9 +879,9 @@ testRun(void)
             "  super block {max: 1, size: 8}\n"
             "    block {no: 0, offset: 5}\n"
             "read {reference: 0, bundleId: 1, offset: 1, size: 5}\n"
+            "read {reference: 0, bundleId: 1, offset: 7, size: 99}\n"
             "  super block {max: 1, size: 5}\n"
             "    block {no: 0, offset: 2}\n"
-            "read {reference: 0, bundleId: 1, offset: 7, size: 99}\n"
             "  super block {max: 1, size: 99}\n"
             "    block {no: 0, offset: 4}\n",
             "check delta");
