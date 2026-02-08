@@ -179,6 +179,28 @@ storageWritePosix(THIS_VOID, const Buffer *const buffer)
 }
 
 /***********************************************************************************************************************************
+Seek to specified position relative to beginning of file
+***********************************************************************************************************************************/
+static void
+storageWritePosixSeek(THIS_VOID, const uint64_t position)
+{
+    THIS(StorageWritePosix);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_POSIX, this);
+        FUNCTION_LOG_PARAM(UINT64, position);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->fd != -1);
+
+    THROW_ON_SYS_ERROR_FMT(
+        lseek(this->fd, (off_t)position, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, position, strZ(this->nameTmp));
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Close the file
 ***********************************************************************************************************************************/
 static void
@@ -301,6 +323,7 @@ storageWritePosixNew(
                     .close = storageWritePosixClose,
                     .fd = storageWritePosixFd,
                     .open = storageWritePosixOpen,
+                    .seek = storageWritePosixSeek,
                     .write = storageWritePosix,
                 },
             },
