@@ -273,12 +273,12 @@ storageReadNew(
             },
         };
 
-        // If range is provided then duplicate it
+        // If range is provided
         if (rangeList != NULL)
         {
             ASSERT(!storageRangeListEmpty(rangeList));
 
-            // Copy range reported through the public getter (not used internally)
+            // Range reported through the public getter (not used internally)
             this->pub.rangeList = storageRangeListDup(rangeList);
 
             // If this is a proxy for another read object then use a default range. The range list will be processed elsewhere.
@@ -293,7 +293,7 @@ storageReadNew(
                 storageReadRangeSet(this);
             }
         }
-        // Else create a default range
+        // Else use default range
         else
             this->rangeList = DEFAULT_STGRNGLST;
     }

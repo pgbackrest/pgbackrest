@@ -45,6 +45,7 @@ storageRangeListAdd(StorageRangeList *const this, const uint64_t offset, const V
 
     ASSERT(this != NULL);
 
+    // Check if new range can be combined with prior range
     StorageRange *const rangePrior = storageRangeListEmpty(this) ? NULL : storageRangeListGet(this, storageRangeListSize(this) - 1);
 
     if (rangePrior != NULL)
@@ -52,8 +53,10 @@ storageRangeListAdd(StorageRangeList *const this, const uint64_t offset, const V
         CHECK(AssertError, rangePrior->limit != NULL, "cannot add range after range with NULL limit");
         const uint64_t rangePriorLimit = varUInt64(rangePrior->limit);
 
+        // If new range continues the prior range then combine them
         if (offset == rangePrior->offset + rangePriorLimit)
         {
+            // If new limit is not NULL then combine it with prior limit
             if (limit != NULL)
             {
                 MEM_CONTEXT_OBJ_BEGIN(this)
@@ -62,18 +65,21 @@ storageRangeListAdd(StorageRangeList *const this, const uint64_t offset, const V
                 }
                 MEM_CONTEXT_OBJ_END();
             }
+            // Else remove the limit
             else
                 rangePrior->limit = NULL;
 
             FUNCTION_TEST_RETURN(STORAGE_RANGE, rangePrior);
         }
 
+        // Check that the new range is after the prior range
         CHECK_FMT(
             AssertError, offset > rangePrior->offset + rangePriorLimit,
             "new range offset %" PRIu64 " must be after prior range (%" PRIu64 "/%" PRIu64 ")", offset, rangePrior->offset,
             rangePriorLimit);
     }
 
+    // Add new range
     StorageRange range = {.offset = offset};
 
     if (limit != NULL)
