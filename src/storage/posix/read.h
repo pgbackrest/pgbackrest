@@ -11,6 +11,6 @@ Posix Storage Read
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN StorageRead *storageReadPosixNew(
-    StoragePosix *storage, const String *name, bool ignoreMissing, uint64_t offset, const Variant *limit);
+    StoragePosix *storage, const String *name, bool ignoreMissing, const StorageRangeList *rangeList);
 
 #endif

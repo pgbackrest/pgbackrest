@@ -62,8 +62,8 @@ testBackupValidateFile(
     if (file.checksumRepoSha1 != NULL)
     {
         StorageRead *read = storageNewReadP(
-            storage, strNewFmt("%s/%s", strZ(path), strZ(fileName)), .offset = file.bundleOffset,
-            .limit = VARUINT64(file.sizeRepo));
+            storage, strNewFmt("%s/%s", strZ(path), strZ(fileName)),
+            .rangeList = STGRNGLST1DEF(file.bundleOffset, VARUINT64(file.sizeRepo)));
         const Buffer *const checksum = cryptoHashOne(hashTypeSha1, storageGetP(read));
 
         if (!bufEq(checksum, BUF(file.checksumRepoSha1, HASH_TYPE_SHA1_SIZE)))
@@ -81,8 +81,8 @@ testBackupValidateFile(
         // Read block map
         StorageRead *read = storageNewReadP(
             storage, strNewFmt("%s/%s", strZ(path), strZ(fileName)),
-            .offset = file.bundleOffset + file.sizeRepo - file.blockIncrMapSize,
-            .limit = VARUINT64(file.blockIncrMapSize));
+            .rangeList = STGRNGLST1DEF(
+                file.bundleOffset + file.sizeRepo - file.blockIncrMapSize, VARUINT64(file.blockIncrMapSize)));
 
         if (cipherType != cipherTypeNone)
         {
@@ -136,9 +136,7 @@ testBackupValidateFile(
                 strLstGet(manifestReferenceList(manifest), read->reference), .manifestName = file.name,
                 .bundleId = read->bundleId, .blockIncr = true);
 
-            IoRead *blockRead = storageReadIo(
-                storageNewReadP(
-                    storage, blockName, .offset = read->offset, .limit = VARUINT64(read->size)));
+            IoRead *blockRead = storageReadIo(storageNewReadP(storage, blockName, .rangeList = read->rangeList));
             ioReadOpen(blockRead);
 
             const BlockDeltaWrite *deltaWrite = blockDeltaNext(blockDelta, read, blockRead);
@@ -163,8 +161,8 @@ testBackupValidateFile(
     else
     {
         StorageRead *read = storageNewReadP(
-            storage, strNewFmt("%s/%s", strZ(path), strZ(fileName)), .offset = file.bundleOffset,
-            .limit = VARUINT64(file.sizeRepo));
+            storage, strNewFmt("%s/%s", strZ(path), strZ(fileName)),
+            .rangeList = STGRNGLST1DEF(file.bundleOffset, VARUINT64(file.sizeRepo)));
         const bool raw = file.bundleId != 0 && manifest->pub.data.bundleRaw;
 
         if (cipherType != cipherTypeNone)
@@ -881,9 +879,9 @@ testRun(void)
             "  super block {max: 1, size: 8}\n"
             "    block {no: 0, offset: 5}\n"
             "read {reference: 0, bundleId: 1, offset: 1, size: 5}\n"
+            "read {reference: 0, bundleId: 1, offset: 7, size: 99}\n"
             "  super block {max: 1, size: 5}\n"
             "    block {no: 0, offset: 2}\n"
-            "read {reference: 0, bundleId: 1, offset: 7, size: 99}\n"
             "  super block {max: 1, size: 99}\n"
             "    block {no: 0, offset: 4}\n",
             "check delta");

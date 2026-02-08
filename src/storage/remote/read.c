@@ -199,20 +199,38 @@ storageReadRemoteOpen(THIS_VOID)
                 compressFilterP(compressTypeLz4, (int)this->interface.compressLevel, .raw = true));
         }
 
+        // Write params
         PackWrite *const param = protocolPackNew();
 
         pckWriteStrP(param, this->interface.name);
         pckWriteBoolP(param, this->interface.ignoreMissing);
-        pckWriteU64P(param, this->interface.offset);
-
-        if (this->interface.limit == NULL)
-            pckWriteNullP(param);
-        else
-            pckWriteU64P(param, varUInt64(this->interface.limit));
-
         pckWriteBoolP(param, this->interface.version);
         pckWriteStrP(param, this->interface.versionId);
         pckWritePackP(param, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
+
+        // Write range list
+        const StorageRangeList *const rangeList = storageReadRangeList(this->read);
+
+        if (rangeList != NULL)
+        {
+            ASSERT(!storageRangeListEmpty(rangeList));
+
+            pckWriteArrayBeginP(param);
+
+            for (unsigned int rangeIdx = 0; rangeIdx < storageRangeListSize(rangeList); rangeIdx++)
+            {
+                const StorageRange *const range = storageRangeListGet(rangeList, rangeIdx);
+
+                pckWriteU64P(param, range->offset, .defaultWrite = true);
+
+                if (range->limit != NULL)
+                    pckWriteU64P(param, varUInt64(range->limit));
+                else
+                    pckWriteNullP(param);
+            }
+
+            pckWriteArrayEndP(param);
+        }
 
         // If the file exists
         PackRead *const packRead = protocolClientSessionOpenP(this->session, .param = param);
@@ -260,8 +278,8 @@ storageReadRemoteClose(THIS_VOID)
 FN_EXTERN StorageRead *
 storageReadRemoteNew(
     StorageRemote *const storage, ProtocolClient *const client, const String *const name, const bool ignoreMissing,
-    const bool compressible, const unsigned int compressLevel, const uint64_t offset, const Variant *const limit,
-    const bool version, const String *const versionId)
+    const bool compressible, const unsigned int compressLevel, const StorageRangeList *const rangeList, const bool version,
+    const String *const versionId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, storage);
@@ -270,8 +288,7 @@ storageReadRemoteNew(
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, compressible);
         FUNCTION_LOG_PARAM(UINT, compressLevel);
-        FUNCTION_LOG_PARAM(UINT64, offset);
-        FUNCTION_LOG_PARAM(VARIANT, limit);
+        FUNCTION_LOG_PARAM(STORAGE_RANGE_LIST, rangeList);
         FUNCTION_LOG_PARAM(BOOL, version);
         FUNCTION_LOG_PARAM(STRING, versionId);
     FUNCTION_LOG_END();
@@ -295,8 +312,6 @@ storageReadRemoteNew(
                 .compressible = compressible,
                 .compressLevel = compressLevel,
                 .ignoreMissing = ignoreMissing,
-                .offset = offset,
-                .limit = varDup(limit),
                 .version = version,
                 .versionId = strDup(versionId),
 
@@ -312,7 +327,7 @@ storageReadRemoteNew(
     }
     OBJ_NEW_END();
 
-    this->read = storageReadNew(OBJ_NAME(this, StorageRead::StorageReadRemote), &this->interface);
+    this->read = storageReadNew(OBJ_NAME(this, StorageRead::StorageReadRemote), &this->interface, rangeList, true);
 
     ASSERT(this != NULL);
     FUNCTION_LOG_RETURN(STORAGE_READ, this->read);

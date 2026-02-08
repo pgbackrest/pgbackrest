@@ -10,6 +10,7 @@ optional because the file to restore may not exist so all the blocks will need t
 #include "command/backup/blockMap.h"
 #include "common/compress/helper.h"
 #include "common/crypto/common.h"
+#include "storage/range.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -21,8 +22,7 @@ typedef struct BlockDeltaRead
 {
     unsigned int reference;                                         // Reference to read from
     uint64_t bundleId;                                              // Bundle to read from
-    uint64_t offset;                                                // Offset to begin read from
-    uint64_t size;                                                  // Size of the read
+    StorageRangeList *rangeList;                                    // Range list
     List *superBlockList;                                           // Super block list
 } BlockDeltaRead;
 

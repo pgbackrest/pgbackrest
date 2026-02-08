@@ -17,6 +17,8 @@ struct StorageRead
     StorageReadPub pub;                                             // Publicly accessible variables
     void *driver;                                                   // Driver
     uint64_t bytesRead;                                             // Bytes that have been successfully read
+    const StorageRangeList *rangeList;                              // Range list (for reading ranges from a file)
+    unsigned int rangeIdx;                                          // Current range
 };
 
 /***********************************************************************************************************************************
@@ -26,6 +28,33 @@ Macros for function logging
     StorageReadInterface
 #define FUNCTION_LOG_STORAGE_READ_INTERFACE_FORMAT(value, buffer, bufferSize)                                                      \
     objNameToLog(&value, "StorageReadInterface", buffer, bufferSize)
+
+/***********************************************************************************************************************************
+Set range offset and limit
+***********************************************************************************************************************************/
+static void
+storageReadRangeSet(StorageRead *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_READ, this);
+    FUNCTION_TEST_END();
+
+    const StorageRange *const range = storageRangeListGet(this->rangeList, this->rangeIdx);
+    this->pub.interface->offset = range->offset;
+
+    if (range->limit != NULL)
+    {
+        MEM_CONTEXT_OBJ_BEGIN(this->driver)
+        {
+            this->pub.interface->limit = varDup(range->limit);
+        }
+        MEM_CONTEXT_OBJ_END();
+    }
+    else
+        this->pub.interface->limit = NULL;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
 Open the file
@@ -100,15 +129,16 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
                     this->pub.interface->ignoreMissing = false;
 
                     // Update offset and limit (when present) based on how many bytes have been successfully read
-                    this->pub.interface->offset = this->pub.offset + this->bytesRead;
+                    const StorageRange *const range = storageRangeListGet(this->rangeList, 0);
+                    this->pub.interface->offset = range->offset + this->bytesRead;
 
-                    if (this->pub.limit != NULL)
+                    if (range->limit != NULL)
                     {
                         varFree(this->pub.interface->limit);
 
                         MEM_CONTEXT_OBJ_BEGIN(this->driver)
                         {
-                            this->pub.interface->limit = varNewUInt64(varUInt64(this->pub.limit) - this->bytesRead);
+                            this->pub.interface->limit = varNewUInt64(varUInt64(range->limit) - this->bytesRead);
                         }
                         MEM_CONTEXT_OBJ_END();
                     }
@@ -125,6 +155,20 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
         }
     }
     MEM_CONTEXT_TEMP_END();
+
+    // If read is complete and there are more ranges then reopen the file with the next range
+    if (this->pub.interface->ioInterface.eof(this->driver) && this->rangeIdx < storageRangeListSize(this->rangeList) - 1)
+    {
+        // Close the file
+        this->pub.interface->ioInterface.close(this->driver);
+
+        // Set new range
+        this->rangeIdx++;
+        storageReadRangeSet(this);
+
+        // Open file with new offset/limit
+        this->pub.interface->ioInterface.open(this->driver);
+    }
 
     FUNCTION_LOG_RETURN(SIZE, result);
 }
@@ -193,11 +237,14 @@ static const IoReadInterface storageIoReadInterface =
 };
 
 FN_EXTERN StorageRead *
-storageReadNew(void *const driver, StorageReadInterface *const interface)
+storageReadNew(
+    void *const driver, StorageReadInterface *const interface, const StorageRangeList *const rangeList, const bool proxy)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
         FUNCTION_LOG_PARAM_P(STORAGE_READ_INTERFACE, interface);
+        FUNCTION_LOG_PARAM(STORAGE_RANGE_LIST, rangeList);
+        FUNCTION_LOG_PARAM(BOOL, proxy);
     FUNCTION_LOG_END();
 
     FUNCTION_AUDIT_HELPER();
@@ -224,11 +271,33 @@ storageReadNew(void *const driver, StorageReadInterface *const interface)
             {
                 .interface = interface,
                 .io = ioReadNew(this, storageIoReadInterfaceCopy),
-                .offset = interface->offset,
-                .limit = varDup(interface->limit),
                 .ignoreMissing = interface->ignoreMissing,
             },
         };
+
+        // If range is provided
+        if (rangeList != NULL)
+        {
+            ASSERT(!storageRangeListEmpty(rangeList));
+
+            // Range reported through the public getter (not used internally)
+            this->pub.rangeList = storageRangeListDup(rangeList);
+
+            // If this is a proxy for another read object then use a default range. The range list will be processed elsewhere.
+            if (proxy)
+            {
+                this->rangeList = DEFAULT_STGRNGLST;
+            }
+            // Else process the range list locally
+            else
+            {
+                this->rangeList = storageRangeListDup(rangeList);
+                storageReadRangeSet(this);
+            }
+        }
+        // Else use default range
+        else
+            this->rangeList = DEFAULT_STGRNGLST;
     }
     OBJ_NEW_END();
 

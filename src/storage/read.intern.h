@@ -5,6 +5,7 @@ Storage Read Interface Internal
 #define STORAGE_READ_INTERN_H
 
 #include "common/io/read.h"
+#include "storage/range.h"
 
 /***********************************************************************************************************************************
 Constructors
@@ -24,7 +25,8 @@ typedef struct StorageReadInterface
     IoReadInterface ioInterface;
 } StorageReadInterface;
 
-FN_EXTERN StorageRead *storageReadNew(void *driver, StorageReadInterface *interface);
+FN_EXTERN StorageRead *storageReadNew(
+    void *driver, StorageReadInterface *interface, const StorageRangeList *rangeList, bool proxy);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -33,8 +35,7 @@ typedef struct StorageReadPub
 {
     StorageReadInterface *interface;                                // File data (name, driver type, etc.)
     IoRead *io;                                                     // Read interface
-    uint64_t offset;                                                // Where to start reading in the file
-    const Variant *limit;                                           // Limit how many bytes are read (NULL for no limit)
+    const StorageRangeList *rangeList;                              // Range list (for reading ranges from a file)
     bool ignoreMissing;                                             // Ignore missing file?
 } StorageReadPub;
 

@@ -570,7 +570,7 @@ testRun(void)
                 ioBufferSizeSet(ioBufferSizeDefault);
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("get file with retry, offset, and limit");
+                TEST_TITLE("get file with retry and ranges");
 
                 testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "1-29");
                 testResponseP(service, .content = "23456789112345678921X", .contentSize = VARUINT(30));
@@ -581,11 +581,21 @@ testRun(void)
                 testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "21-29");
                 testResponseP(service, .content = "23456789");
 
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "35-37");
+                testResponseP(service, .content = "YYY");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "50-");
+                testResponseP(service, .content = "ZZZZ");
+
                 ioBufferSizeSet(20);
 
                 TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(29)))),
-                    "2345678911234567892123456789", "get file");
+                    strNewBuf(
+                        storageGetP(
+                            storageNewReadP(
+                                s3, STRDEF("file.txt"),
+                                .rangeList = STGRNGLSTDEF({1, VARUINT64(29)}, {35, VARUINT64(3)}, {50, NULL})))),
+                    "2345678911234567892123456789YYYZZZZ", "get file");
 
                 ioBufferSizeSet(ioBufferSizeDefault);
 
@@ -618,7 +628,7 @@ testRun(void)
 
                 TRY_BEGIN()
                 {
-                    storageGetP(storageNewReadP(s3, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(29)));
+                    storageGetP(storageNewReadP(s3, STRDEF("file.txt"), .rangeList = STGRNGLST1DEF(1, VARUINT64(29))));
                 }
                 CATCH_ANY()
                 {
@@ -1797,7 +1807,9 @@ testRun(void)
                 testResponseP(service, .content = "this is a sample file");
 
                 TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(21)))),
+                    strNewBuf(
+                        storageGetP(
+                            storageNewReadP(s3, STRDEF("file.txt"), .rangeList = STGRNGLST1DEF(1, VARUINT64(21))))),
                     "this is a sample file", "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------

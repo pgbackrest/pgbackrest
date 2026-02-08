@@ -354,6 +354,7 @@ unit:
           - storage/posix/write
           - storage/iterator
           - storage/list
+          - storage/range
           - storage/read
           - storage/storage
           - storage/write
@@ -563,6 +564,7 @@ unit:
           - storage/helper
           - storage/iterator
           - storage/list
+          - storage/range
           - storage/read
           - storage/storage
           - storage/write
