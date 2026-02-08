@@ -114,7 +114,7 @@ typedef struct StorageInterfaceNewReadParam
     bool compressible;
 
     // Range list (for reading ranges from a file)
-    StorageRangeList *rangeList;
+    const StorageRangeList *rangeList;
 
     // Target a specific file version. This requires a boolean as well as the versionId because file missing is indicated when the
     // file is opened rather than when it is created. So if version = true and versionId = NULL then the file will be reported as

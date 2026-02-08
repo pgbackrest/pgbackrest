@@ -20,13 +20,22 @@ typedef struct StorageRange
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
+// New range list
 FN_INLINE_ALWAYS StorageRangeList *
 storageRangeListNew(void)
 {
     return (StorageRangeList *)OBJ_NAME(lstNewP(sizeof(StorageRange)), StorageRangeList::List);
 }
 
+// New range list with a single range
 FN_EXTERN StorageRangeList *storageRangeListNewOne(uint64_t offset, const Variant *limit);
+
+// New range list with a single default range
+FN_INLINE_ALWAYS StorageRangeList *
+storageRangeListNewDefault(void)
+{
+    return storageRangeListNewOne(0, NULL);
+}
 
 // Duplicate range list
 FN_EXTERN StorageRangeList *storageRangeListDup(const StorageRangeList *this);

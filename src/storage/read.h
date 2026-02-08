@@ -51,7 +51,7 @@ storageReadName(const StorageRead *const this)
 FN_INLINE_ALWAYS const StorageRangeList *
 storageReadRangeList(const StorageRead *const this)
 {
-    return storageReadInterface(this)->rangeList;
+    return THIS_PUB(StorageRead)->rangeList;
 }
 
 // Get file type

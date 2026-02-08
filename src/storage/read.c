@@ -236,13 +236,13 @@ static const IoReadInterface storageIoReadInterface =
 
 FN_EXTERN StorageRead *
 storageReadNew(
-    void *const driver, StorageReadInterface *const interface, const StorageRangeList *const rangeList, const bool remote)
+    void *const driver, StorageReadInterface *const interface, const StorageRangeList *const rangeList, const bool proxy)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
         FUNCTION_LOG_PARAM_P(STORAGE_READ_INTERFACE, interface);
         FUNCTION_LOG_PARAM(STORAGE_RANGE_LIST, rangeList);
-        FUNCTION_LOG_PARAM(BOOL, remote);
+        FUNCTION_LOG_PARAM(BOOL, proxy);
     FUNCTION_LOG_END();
 
     FUNCTION_AUDIT_HELPER();
@@ -278,10 +278,15 @@ storageReadNew(
         {
             ASSERT(!storageRangeListEmpty(rangeList));
 
-            this->pub.interface->rangeList = storageRangeListDup(rangeList);
+            // Copy range reported through the public getter (not used internally)
+            this->pub.rangeList = storageRangeListDup(rangeList);
 
-            if (remote)
-                this->rangeList = storageRangeListNewOne(0, NULL);
+            // If this is a proxy for another read object then use a default range. The range list will be processed elsewhere.
+            if (proxy)
+            {
+                this->rangeList = storageRangeListNewDefault();
+            }
+            // Else process the range list locally
             else
             {
                 this->rangeList = storageRangeListDup(rangeList);
@@ -290,7 +295,7 @@ storageReadNew(
         }
         // Else create a default range
         else
-            this->rangeList = storageRangeListNewOne(0, NULL);
+            this->rangeList = storageRangeListNewDefault();
     }
     OBJ_NEW_END();
 

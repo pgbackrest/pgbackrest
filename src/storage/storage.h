@@ -155,7 +155,7 @@ typedef struct StorageNewReadParam
     bool compressible;
 
     // Range list (for reading ranges from a file)
-    StorageRangeList *rangeList;
+    const StorageRangeList *rangeList;
 } StorageNewReadParam;
 
 #define storageNewReadP(this, pathExp, ...)                                                                                        \
