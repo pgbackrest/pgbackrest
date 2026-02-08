@@ -3,7 +3,11 @@ Restore Command
 ***********************************************************************************************************************************/
 #include "build.auto.h"
 
+#include <unistd.h>
+
 #include "command/lock.h"
+#include "command/restore/file.h"
+#include "command/restore/protocol.h"
 #include "command/restore/restore.h"
 #include "command/restore/timeline.h"
 #include "common/regExp.h"
@@ -11,10 +15,12 @@ Restore Command
 #include "config/exec.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
+#include "info/manifest.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "protocol/helper.h"
 #include "protocol/parallel.h"
+#include "storage/helper.h"
 
 #include "clean.c.inc"
 #include "config.c.inc"
