@@ -67,8 +67,7 @@ test.pl [options]
    --clean              clean working and result paths for a completely fresh build
    --clean-only         execute --clean and exit
    --pg-version         version of postgres to test (all, defaults to minimal)
-   --build-only         build the binary (and honor --build-package) but don't run tests
-   --build-package      build the package
+   --build-only         build the binary but don't run tests
    --build-max          max processes to use for builds (default 4)
    --c-only             only run C tests
    --container-only     only run tests that must be run in a container
@@ -148,7 +147,6 @@ my $strVmArch;
 my $bVmBuild = false;
 my $bVmForce = false;
 my $bBuildOnly = false;
-my $bBuildPackage = false;
 my $iBuildMax = 4;
 my $bCoverageOnly = false;
 my $bCoverageSummary = false;
@@ -197,7 +195,6 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-cleanup' => \$bNoCleanup,
             'pg-version=s' => \$strPgVersion,
             'build-only' => \$bBuildOnly,
-            'build-package' => \$bBuildPackage,
             'build-max=s' => \$iBuildMax,
             'coverage-only' => \$bCoverageOnly,
             'coverage-summary' => \$bCoverageSummary,
@@ -631,7 +628,7 @@ eval
         }
     }
 
-    # Build the binary and packages
+    # Build the binary
     #-------------------------------------------------------------------------------------------------------------------------------
     if (!$bDryRun)
     {
@@ -684,194 +681,6 @@ eval
         if ($strVm ne VM_NONE)
         {
             executeTest("docker rm -f test-build");
-        }
-
-        # Build the package
-        #---------------------------------------------------------------------------------------------------------------------------
-        if ($bBuildPackage && $strVm ne VM_NONE)
-        {
-            my $strPackagePath = "${strBackRestBase}/test/result/package";
-
-            # Loop through VMs to do the package builds
-            my @stryBuildVm = $strVm eq VM_ALL ? VM_LIST : ($strVm);
-            $oStorageBackRest->pathCreate($strPackagePath, {bIgnoreExists => true, bCreateParent => true});
-
-            foreach my $strBuildVM (@stryBuildVm)
-            {
-                my $strBuildPath = "${strPackagePath}/${strBuildVM}";
-
-                if ($oVm->{$strBuildVM}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
-                {
-                    &log(INFO, "build package for ${strBuildVM} (${strBuildPath})");
-
-                    if ($strVm ne VM_NONE)
-                    {
-                        executeTest(
-                            "docker run${strPlatform} -itd -h test-build --name=test-build" .
-                            " -v ${strBackRestBase}:${strBackRestBase} ${strImage}",
-                            {bSuppressStdErr => true});
-                    }
-
-                    $oStorageBackRest->pathCreate($strBuildPath, {bIgnoreExists => true, bCreateParent => true});
-
-                    # Clone a copy of the debian package repo
-                    executeTest(
-                        ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
-                        "bash -c 'git clone https://salsa.debian.org/postgresql/pgbackrest.git /root/package-src 2>&1'");
-
-                    executeTest(
-                        "rsync -rL --exclude=.vagrant --exclude=.git --exclude=test/result ${strBackRestBase}/" .
-                            " ${strBuildPath}/");
-                    executeTest(
-                        ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
-                        "bash -c 'cp -r /root/package-src/debian ${strBuildPath} && sudo chown -R " . TEST_USER .
-                        " ${strBuildPath}'");
-
-                    # Patch files in debian package builds
-                    #
-                    # Use these commands to create a new patch (may need to modify first line):
-                    # BRDIR=/home/vagrant/pgbackrest;BRVM=u22;BRPATCHFILE=${BRDIR?}/test/patch/debian-package.patch
-                    # DBDIR=${BRDIR?}/test/result/package/${BRVM}/debian
-                    # diff -Naur ${DBDIR?}.old ${DBDIR}.new > ${BRPATCHFILE?}
-                    my $strDebianPackagePatch = "${strBackRestBase}/test/patch/debian-package.patch";
-
-                    if ($oStorageBackRest->exists($strDebianPackagePatch))
-                    {
-                        executeTest("cp -r ${strBuildPath}/debian ${strBuildPath}/debian.old");
-                        executeTest("patch -d ${strBuildPath}/debian < ${strDebianPackagePatch}");
-                        executeTest("cp -r ${strBuildPath}/debian ${strBuildPath}/debian.new");
-                    }
-
-                    # If dev build then disable static release date used for reproducibility
-                    my $bVersionDev = PROJECT_VERSION =~ /dev$/;
-
-                    if ($bVersionDev)
-                    {
-                        my $strRules = ${$oStorageBackRest->get("${strBuildPath}/debian/rules")};
-
-                        $strRules =~ s/\-\-var\=release-date-static\=y/\-\-var\=release-date-static\=n/g;
-                        $strRules =~ s/\-\-out\=html \-\-cache\-only/\-\-out\=html \-\-no\-exe/g;
-
-                        $oStorageBackRest->put("${strBuildPath}/debian/rules", $strRules);
-                    }
-
-                    # Remove patches that should be applied to core code
-                    $oStorageBackRest->remove("${strBuildPath}/debian/patches", {bRecurse => true, bIgnoreExists => true});
-
-                    # Update changelog to add experimental version
-                    $oStorageBackRest->put("${strBuildPath}/debian/changelog",
-                        "pgbackrest (${\PROJECT_VERSION}-0." . ($bVersionDev ? 'D' : 'P') . strftime("%Y%m%d%H%M%S", gmtime) .
-                            ") experimental; urgency=medium\n" .
-                        "\n" .
-                        '  * Automated experimental ' . ($bVersionDev ? 'development' : 'production') . " build.\n" .
-                        "\n" .
-                        ' -- David Steele <david@pgbackrest.org>  ' . strftime("%a, %e %b %Y %H:%M:%S %z", gmtime) . "\n\n" .
-                        ${$oStorageBackRest->get("${strBuildPath}/debian/changelog")});
-
-                    executeTest(
-                        ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
-                        "bash -c 'cd ${strBuildPath} && debuild -d -i -us -uc -b'");
-
-                    executeTest(
-                        ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
-                        "bash -c 'rm -f ${strPackagePath}/${strBuildVM}/*.build ${strPackagePath}/${strBuildVM}/*.changes" .
-                        " ${strPackagePath}/${strBuildVM}/pgbackrest-doc*'");
-
-                    if ($strVm ne VM_NONE)
-                    {
-                        executeTest("docker rm -f test-build");
-                    }
-                }
-
-                if ($oVm->{$strBuildVM}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
-                {
-                    &log(INFO, "build package for ${strBuildVM} (${strBuildPath})");
-
-                    # Create build container
-                    if ($strVm ne VM_NONE)
-                    {
-                        executeTest(
-                            "docker run${strPlatform} -itd -h test-build --name=test-build" .
-                            " -v ${strBackRestBase}:${strBackRestBase} ${strImage}",
-                            {bSuppressStdErr => true});
-                    }
-
-                    # Fetching specific files is fragile but even a shallow clone of the entire pgrpms repo is very expensive.
-                    # Using 'git archive' does not seem to work: access denied or repository not exported: /git/pgrpms.git.
-                    executeTest(
-                        ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
-                        "bash -c \"" .
-                        "mkdir /root/package-src && " .
-                        "wget -q -O /root/package-src/pgbackrest-conf.patch " .
-                            "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;hb=refs/heads/mas"."ter;" .
-                            "f=rpm/redhat/mas"."ter/common/pgbackrest/mas"."ter/pgbackrest-conf.patch' && " .
-                        "wget -q -O /root/package-src/pgbackrest.logrotate " .
-                            "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;hb=refs/heads/mas"."ter;" .
-                            "f=rpm/redhat/mas"."ter/common/pgbackrest/mas"."ter/pgbackrest.logrotate' && " .
-                        "wget -q -O /root/package-src/pgbackrest.spec " .
-                            "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;hb=refs/heads/mas"."ter;" .
-                            "f=rpm/redhat/mas"."ter/common/pgbackrest/mas"."ter/pgbackrest.spec'\"");
-
-                    # Create build directories
-                    $oStorageBackRest->pathCreate($strBuildPath, {bIgnoreExists => true, bCreateParent => true});
-                    $oStorageBackRest->pathCreate("${strBuildPath}/SOURCES", {bIgnoreExists => true, bCreateParent => true});
-                    $oStorageBackRest->pathCreate("${strBuildPath}/SPECS", {bIgnoreExists => true, bCreateParent => true});
-                    $oStorageBackRest->pathCreate("${strBuildPath}/RPMS", {bIgnoreExists => true, bCreateParent => true});
-                    $oStorageBackRest->pathCreate("${strBuildPath}/BUILD", {bIgnoreExists => true, bCreateParent => true});
-
-                    # Install PostreSQL 11 development for package builds
-                    executeTest(
-                        ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
-                        "bash -c 'yum install -y postgresql11-devel 2>&1'");
-
-                    # Copy source files
-                    executeTest(
-                        "tar --transform='s_^_pgbackrest-release-${\PROJECT_VERSION}/_'" .
-                            " -czf ${strBuildPath}/SOURCES/${\PROJECT_VERSION}.tar.gz -C ${strBackRestBase}" .
-                            " src LICENSE");
-
-                    # Copy package files
-                    executeTest(
-                        ($strVm ne VM_NONE ? "docker exec -i test-build " : '') . "bash -c '" .
-                        "ln -s ${strBuildPath} /root/rpmbuild && " .
-                        "cp /root/package-src/pgbackrest.spec ${strBuildPath}/SPECS && " .
-                        "cp /root/package-src/*.patch ${strBuildPath}/SOURCES && " .
-                        "cp /root/package-src/pgbackrest.logrotate ${strBuildPath}/SOURCES && " .
-                        "sudo chown -R " . TEST_USER . " ${strBuildPath}'");
-
-                    # Patch files in RHEL package builds
-                    #
-                    # Use these commands to create a new patch (may need to modify first line):
-                    # BRDIR=/home/vagrant/pgbackrest;BRVM=rh8;BRPATCHFILE=${BRDIR?}/test/patch/rhel-package.patch
-                    # PKDIR=${BRDIR?}/test/result/package/${BRVM}/SPECS
-                    # diff -Naur ${PKDIR?}.old ${PKDIR}.new > ${BRPATCHFILE?}
-                    my $strPackagePatch = "${strBackRestBase}/test/patch/rhel-package.patch";
-
-                    if ($oStorageBackRest->exists($strPackagePatch))
-                    {
-                        executeTest("cp -r ${strBuildPath}/SPECS ${strBuildPath}/SPECS.old");
-                        executeTest("patch -d ${strBuildPath}/SPECS < ${strPackagePatch}");
-                        executeTest("cp -r ${strBuildPath}/SPECS ${strBuildPath}/SPECS.new");
-                    }
-
-                    # Update version number to match current version
-                    my $strSpec = ${$oStorageBackRest->get("${strBuildPath}/SPECS/pgbackrest.spec")};
-                    $strSpec =~ s/^Version\:.*$/Version\:\t${\PROJECT_VERSION}/gm;
-                    $oStorageBackRest->put("${strBuildPath}/SPECS/pgbackrest.spec", $strSpec);
-
-                    # Build package
-                    executeTest(
-                        ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
-                        "rpmbuild --define 'pgmajorversion %{nil}' -v -bb --clean root/rpmbuild/SPECS/pgbackrest.spec",
-                        {bSuppressStdErr => true});
-
-                    # Remove build container
-                    if ($strVm ne VM_NONE)
-                    {
-                        executeTest("docker rm -f test-build");
-                    }
-                }
-            }
         }
 
         # Exit if only testing builds
