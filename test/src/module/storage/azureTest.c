@@ -567,8 +567,9 @@ testRun(void)
                 TEST_RESULT_STR_Z(
                     strNewBuf(
                         storageGetP(
-                            storageNewReadP(storage, STRDEF("file.txt"),
-                            .rangeList = STGRNGLSTDEF({1, VARUINT64(29)}, {35, VARUINT64(3)}, {50, NULL})))),
+                            storageNewReadP(
+                                storage, STRDEF("file.txt"),
+                                .rangeList = STGRNGLSTDEF({1, VARUINT64(29)}, {35, VARUINT64(3)}, {50, NULL})))),
                     "2345678911234567892123456789YYYZZZZ", "get file");
 
                 ioBufferSizeSet(ioBufferSizeDefault);
