@@ -459,7 +459,7 @@ testRun(void)
                 ioBufferSizeSet(ioBufferSizeDefault);
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("get file with retry, offset, and limit");
+                TEST_TITLE("get file with retry and ranges");
 
                 testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media", .range = "1-29");
                 testResponseP(service, .content = "23456789112345678921X", .contentSize = VARUINT(30));
@@ -470,13 +470,20 @@ testRun(void)
                 testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media", .range = "21-29");
                 testResponseP(service, .content = "23456789");
 
+                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media", .range = "35-37");
+                testResponseP(service, .content = "YYY");
+
+                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media", .range = "50-");
+                testResponseP(service, .content = "ZZZZ");
+
                 ioBufferSizeSet(20);
 
                 TEST_RESULT_STR_Z(
                     strNewBuf(
                         storageGetP(
-                            storageNewReadP(storage, STRDEF("file.txt"), .rangeList = STGRNGLSTDEF(1, VARUINT64(29))))),
-                    "2345678911234567892123456789", "get file");
+                            storageNewReadP(storage, STRDEF("file.txt"),
+                            .rangeList = STGRNGLSTDEF({1, VARUINT64(29)}, {35, VARUINT64(3)}, {50, NULL})))),
+                    "2345678911234567892123456789YYYZZZZ", "get file");
 
                 ioBufferSizeSet(ioBufferSizeDefault);
 
@@ -1378,7 +1385,7 @@ testRun(void)
                 TEST_RESULT_STR_Z(
                     strNewBuf(
                         storageGetP(
-                            storageNewReadP(storage, STRDEF("file.txt"), .rangeList = STGRNGLSTDEF(1, VARUINT64(21))))),
+                            storageNewReadP(storage, STRDEF("file.txt"), .rangeList = STGRNGLST1DEF(1, VARUINT64(21))))),
                     "this is a sample file", "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------

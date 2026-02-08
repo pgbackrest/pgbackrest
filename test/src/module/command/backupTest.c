@@ -63,7 +63,7 @@ testBackupValidateFile(
     {
         StorageRead *read = storageNewReadP(
             storage, strNewFmt("%s/%s", strZ(path), strZ(fileName)),
-            .rangeList = STGRNGLSTDEF(file.bundleOffset, VARUINT64(file.sizeRepo)));
+            .rangeList = STGRNGLST1DEF(file.bundleOffset, VARUINT64(file.sizeRepo)));
         const Buffer *const checksum = cryptoHashOne(hashTypeSha1, storageGetP(read));
 
         if (!bufEq(checksum, BUF(file.checksumRepoSha1, HASH_TYPE_SHA1_SIZE)))
@@ -81,7 +81,8 @@ testBackupValidateFile(
         // Read block map
         StorageRead *read = storageNewReadP(
             storage, strNewFmt("%s/%s", strZ(path), strZ(fileName)),
-            .rangeList = STGRNGLSTDEF(file.bundleOffset + file.sizeRepo - file.blockIncrMapSize, VARUINT64(file.blockIncrMapSize)));
+            .rangeList = STGRNGLST1DEF(
+                file.bundleOffset + file.sizeRepo - file.blockIncrMapSize, VARUINT64(file.blockIncrMapSize)));
 
         if (cipherType != cipherTypeNone)
         {
@@ -161,7 +162,7 @@ testBackupValidateFile(
     {
         StorageRead *read = storageNewReadP(
             storage, strNewFmt("%s/%s", strZ(path), strZ(fileName)),
-            .rangeList = STGRNGLSTDEF(file.bundleOffset, VARUINT64(file.sizeRepo)));
+            .rangeList = STGRNGLST1DEF(file.bundleOffset, VARUINT64(file.sizeRepo)));
         const bool raw = file.bundleId != 0 && manifest->pub.data.bundleRaw;
 
         if (cipherType != cipherTypeNone)

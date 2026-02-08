@@ -309,7 +309,7 @@ testRun(void)
         TEST_TITLE("read file with limit");
 
         TEST_ASSIGN(
-            fileRead, storageNewReadP(storageRepo, STRDEF("test.txt"), .rangeList = STGRNGLSTDEF(0, VARUINT64(11))),
+            fileRead, storageNewReadP(storageRepo, STRDEF("test.txt"), .rangeList = STGRNGLST1DEF(0, VARUINT64(11))),
             "get file");
         TEST_RESULT_STR_Z(strNewBuf(storageGetP(fileRead)), "BABABABABAB", "check contents");
         TEST_RESULT_UINT(((StorageReadRemote *)fileRead->driver)->protocolReadBytes, 11, "check read size");
@@ -322,7 +322,7 @@ testRun(void)
         buffer = bufNew(11);
 
         TEST_ASSIGN(
-            fileRead, storageNewReadP(storageRepo, STRDEF("test.txt"), .rangeList = STGRNGLSTDEF(0, VARUINT64(11))),
+            fileRead, storageNewReadP(storageRepo, STRDEF("test.txt"), .rangeList = STGRNGLST1DEF(0, VARUINT64(11))),
             "get file");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(fileRead)), true, "open read");
         TEST_RESULT_UINT(ioRead(storageReadIo(fileRead), buffer), 11, "partial read");
@@ -341,7 +341,7 @@ testRun(void)
         StorageRead *fileRead2 = NULL;
         TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF("test.txt")), "get file");
         TEST_ASSIGN(
-            fileRead2, storageNewReadP(storageRepo, STRDEF("test.txt"), .rangeList = STGRNGLSTDEF(0, VARUINT64(11))),
+            fileRead2, storageNewReadP(storageRepo, STRDEF("test.txt"), .rangeList = STGRNGLST1DEF(0, VARUINT64(11))),
             "get file");
 
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(fileRead)), true, "open read");
@@ -383,7 +383,7 @@ testRun(void)
         TEST_ASSIGN(
             fileRead,
             storageNewReadP(
-                storageRepo, STRDEF(TEST_PATH "/repo128/test.txt"), .rangeList = STGRNGLSTDEF(0, VARUINT64(8))),
+                storageRepo, STRDEF(TEST_PATH "/repo128/test.txt"), .rangeList = STGRNGLST1DEF(0, VARUINT64(8))),
             "new read");
 
         IoFilterGroup *filterGroup = ioReadFilterGroup(storageReadIo(fileRead));
@@ -411,7 +411,7 @@ testRun(void)
         TEST_ASSIGN(
             fileRead,
             storageNewReadP(
-                storageRepo, STRDEF(TEST_PATH "/repo128/test.txt"), .rangeList = STGRNGLSTDEF(1, NULL)),
+                storageRepo, STRDEF(TEST_PATH "/repo128/test.txt"), .rangeList = STGRNGLST1DEF(1, NULL)),
             "new read");
 
         filterGroup = ioReadFilterGroup(storageReadIo(fileRead));

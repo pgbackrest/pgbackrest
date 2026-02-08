@@ -75,21 +75,25 @@ to StorageRangeList * will result in a segfault due to modifying read-only memor
 By convention all List constant identifiers are appended with _STGRNGLST.
 ***********************************************************************************************************************************/
 // Create a range list constant inline
-#define STGRNGLSTDEF(offsetParam, limitParam)                                                                                      \
-    ((const StorageRangeList *)LSTDEF(((StorageRange[1]){{.offset = offsetParam, .limit = limitParam}})))
+#define STGRNGLSTDEF(...)                                                                                                          \
+    ((const StorageRangeList *)LSTDEF(((StorageRange[]){__VA_ARGS__})))
+
+// Create a range list constant inline with one range
+#define STGRNGLST1DEF(offsetParam, limitParam)                                                                                     \
+    STGRNGLSTDEF({.offset = offsetParam, .limit = limitParam})
 
 // Used to define range list constants that will be externed using STGRNGLST_DECLARE(). Must be used in a .c file.
-#define STGRNGLST_EXTERN(name, offset, limit)                                                                                      \
-    VR_EXTERN_DEFINE const StorageRangeList *const name = STGRNGLSTDEF(offset, limit)
+#define STGRNGLST1_EXTERN(name, offset, limit)                                                                                     \
+    VR_EXTERN_DEFINE const StorageRangeList *const name = STGRNGLST1DEF(offset, limit)
 
 // Used to declare externed range list constants defined with STGRNGLST_EXTERN(). Must be used in a .h file.
-#define STGRNGLST_DECLARE(name)                                                                                                    \
+#define STGRNGLST1_DECLARE(name)                                                                                                   \
     VR_EXTERN_DECLARE const StorageRangeList *const name
 
 /***********************************************************************************************************************************
 Constant range lists that are generally useful
 ***********************************************************************************************************************************/
-STGRNGLST_DECLARE(DEFAULT_STGRNGLST);
+STGRNGLST1_DECLARE(DEFAULT_STGRNGLST);
 
 /***********************************************************************************************************************************
 Macros for function logging

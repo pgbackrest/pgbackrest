@@ -50,6 +50,8 @@ storageReadRangeSet(StorageRead *const this)
         }
         MEM_CONTEXT_OBJ_END();
     }
+    else
+        this->pub.interface->limit = NULL;
 
     FUNCTION_TEST_RETURN_VOID();
 }

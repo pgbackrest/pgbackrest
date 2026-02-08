@@ -6035,7 +6035,7 @@ testRun(void)
 
         TEST_ERROR(
             storageGetP(
-                storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = STGRNGLSTDEF(UINT64_MAX, NULL))),
+                storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = STGRNGLST1DEF(UINT64_MAX, NULL))),
             FileOpenError, "unable to seek to 18446744073709551615 in file '" TEST_PATH "/test.txt'");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -6098,7 +6098,7 @@ testRun(void)
         TEST_ASSIGN(
             buffer,
             storageGetP(
-                storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = STGRNGLSTDEF(0, VARUINT64(7)))),
+                storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = STGRNGLST1DEF(0, VARUINT64(7)))),
             "get");
         TEST_RESULT_UINT(bufSize(buffer), 7, "check size");
         TEST_RESULT_BOOL(memcmp(bufPtrConst(buffer), "TESTFIL", bufSize(buffer)) == 0, true, "check content");
@@ -6106,14 +6106,20 @@ testRun(void)
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("read offset bytes");
+        TEST_TITLE("read ranges");
 
         hrnLibSsh2ScriptSet((HrnLibSsh2 [])
         {
             HRNLIBSSH2_MACRO_STARTUP(),
+            // Read first range
             {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.txt\",1,0,0]"},
-            {.function = HRNLIBSSH2_SFTP_SEEK64, .param = "[4]"},
+            {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 2, .readBuffer = STRDEF("XX")},
+            {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE},
+
+            // Read next range
+            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "/test.txt\",1,0,0]"},
             // Simulate seeking offset 4
+            {.function = HRNLIBSSH2_SFTP_SEEK64, .param = "[4]"},
             {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 2, .readBuffer = STRDEF("FI")},
             {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 2, .readBuffer = STRDEF("LE")},
             {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 1, .readBuffer = STRDEF("\n")},
@@ -6134,10 +6140,13 @@ testRun(void)
             .knownHosts = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoSftpKnownHost, repoIdx)), .write = true);
 
         TEST_ASSIGN(
-            buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = STGRNGLSTDEF(4, NULL))),
+            buffer,
+            storageGetP(
+                storageNewReadP(
+                    storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = STGRNGLSTDEF({0, VARUINT64(2)}, {4, NULL}))),
             "get");
-        TEST_RESULT_UINT(bufSize(buffer), 5, "check size");
-        TEST_RESULT_BOOL(memcmp(bufPtrConst(buffer), "FILE\n", bufSize(buffer)) == 0, true, "check content");
+        TEST_RESULT_UINT(bufSize(buffer), 7, "check size");
+        TEST_RESULT_BOOL(memcmp(bufPtrConst(buffer), "XXFILE\n", bufSize(buffer)) == 0, true, "check content");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
 
@@ -6617,7 +6626,7 @@ testRun(void)
             TEST_ASSIGN(
                 file,
                 storageReadMove(
-                    storageNewReadP(storageTest, fileName, .rangeList = STGRNGLSTDEF(0, VARUINT64(44))), memContextPrior()),
+                    storageNewReadP(storageTest, fileName, .rangeList = STGRNGLST1DEF(0, VARUINT64(44))), memContextPrior()),
                 "new read file");
         }
         MEM_CONTEXT_TEMP_END();
@@ -6668,6 +6677,9 @@ testRun(void)
 #else
         TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("get file with ranges !!!");
     }
 
     // *****************************************************************************************************************************

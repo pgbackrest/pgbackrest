@@ -228,7 +228,7 @@ cmdManifestBlockDeltaRender(const Manifest *const manifest, const ManifestFile *
                     file->reference != NULL ? file->reference : manifestData(manifest)->backupLabel, .manifestName = file->name,
                     .bundleId = file->bundleId, .compressType = manifestData(manifest)->backupOptionCompressType,
                     .blockIncr = true),
-                .rangeList = STGRNGLSTDEF(
+                .rangeList = STGRNGLST1DEF(
                     file->bundleOffset + file->sizeRepo - file->blockIncrMapSize, VARUINT64(file->blockIncrMapSize)));
 
             if (manifestCipherSubPass(manifest) != NULL)
