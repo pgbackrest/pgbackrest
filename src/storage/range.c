@@ -7,20 +7,10 @@ Storage Range
 #include "common/log.h"
 #include "storage/range.h"
 
-/**********************************************************************************************************************************/
-FN_EXTERN StorageRangeList *
-storageRangeListNewOne(const uint64_t offset, const Variant *const limit)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_LOG_PARAM(UINT64, offset);
-        FUNCTION_LOG_PARAM(VARIANT, limit);
-    FUNCTION_TEST_END();
-
-    StorageRangeList *const result = storageRangeListNew();
-    storageRangeListAdd(result, offset, limit);
-
-    FUNCTION_TEST_RETURN(STORAGE_RANGE_LIST, result);
-}
+/***********************************************************************************************************************************
+Constant range lists that are generally useful
+***********************************************************************************************************************************/
+STGRNGLST_EXTERN(DEFAULT_STGRNGLST, 0, NULL);
 
 /**********************************************************************************************************************************/
 FN_EXTERN StorageRangeList *

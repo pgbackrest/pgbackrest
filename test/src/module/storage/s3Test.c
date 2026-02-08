@@ -586,7 +586,7 @@ testRun(void)
                 TEST_RESULT_STR_Z(
                     strNewBuf(
                         storageGetP(
-                            storageNewReadP(s3, STRDEF("file.txt"), .rangeList = storageRangeListNewOne(1, VARUINT64(29))))),
+                            storageNewReadP(s3, STRDEF("file.txt"), .rangeList = STGRNGLSTDEF(1, VARUINT64(29))))),
                     "2345678911234567892123456789", "get file");
 
                 ioBufferSizeSet(ioBufferSizeDefault);
@@ -620,7 +620,7 @@ testRun(void)
 
                 TRY_BEGIN()
                 {
-                    storageGetP(storageNewReadP(s3, STRDEF("file.txt"), .rangeList = storageRangeListNewOne(1, VARUINT64(29))));
+                    storageGetP(storageNewReadP(s3, STRDEF("file.txt"), .rangeList = STGRNGLSTDEF(1, VARUINT64(29))));
                 }
                 CATCH_ANY()
                 {
@@ -1801,7 +1801,7 @@ testRun(void)
                 TEST_RESULT_STR_Z(
                     strNewBuf(
                         storageGetP(
-                            storageNewReadP(s3, STRDEF("file.txt"), .rangeList = storageRangeListNewOne(1, VARUINT64(21))))),
+                            storageNewReadP(s3, STRDEF("file.txt"), .rangeList = STGRNGLSTDEF(1, VARUINT64(21))))),
                     "this is a sample file", "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------

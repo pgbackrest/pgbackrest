@@ -27,16 +27,6 @@ storageRangeListNew(void)
     return (StorageRangeList *)OBJ_NAME(lstNewP(sizeof(StorageRange)), StorageRangeList::List);
 }
 
-// New range list with a single range
-FN_EXTERN StorageRangeList *storageRangeListNewOne(uint64_t offset, const Variant *limit);
-
-// New range list with a single default range
-FN_INLINE_ALWAYS StorageRangeList *
-storageRangeListNewDefault(void)
-{
-    return storageRangeListNewOne(0, NULL);
-}
-
 // Duplicate range list
 FN_EXTERN StorageRangeList *storageRangeListDup(const StorageRangeList *this);
 
@@ -75,6 +65,31 @@ storageRangeListFree(StorageRangeList *const this)
 {
     objFree(this);
 }
+
+/***********************************************************************************************************************************
+Macros for constant range list
+
+Note that lists created in this way are declared as const so can't be modified or freed by the storageRangeList*() methods. Casting
+to StorageRangeList * will result in a segfault due to modifying read-only memory.
+
+By convention all List constant identifiers are appended with _STGRNGLST.
+***********************************************************************************************************************************/
+// Create a range list constant inline
+#define STGRNGLSTDEF(offsetParam, limitParam)                                                                                      \
+    ((const StorageRangeList *)LSTDEF(((StorageRange[1]){{.offset = offsetParam, .limit = limitParam}})))
+
+// Used to define range list constants that will be externed using STGRNGLST_DECLARE(). Must be used in a .c file.
+#define STGRNGLST_EXTERN(name, offset, limit)                                                                                      \
+    VR_EXTERN_DEFINE const StorageRangeList *const name = STGRNGLSTDEF(offset, limit)
+
+// Used to declare externed range list constants defined with STGRNGLST_EXTERN(). Must be used in a .h file.
+#define STGRNGLST_DECLARE(name)                                                                                                    \
+    VR_EXTERN_DECLARE const StorageRangeList *const name
+
+/***********************************************************************************************************************************
+Constant range lists that are generally useful
+***********************************************************************************************************************************/
+STGRNGLST_DECLARE(DEFAULT_STGRNGLST);
 
 /***********************************************************************************************************************************
 Macros for function logging

@@ -17,7 +17,7 @@ struct StorageRead
     StorageReadPub pub;                                             // Publicly accessible variables
     void *driver;                                                   // Driver
     uint64_t bytesRead;                                             // Bytes that have been successfully read
-    StorageRangeList *rangeList;                                    // Range list (for reading ranges from a file)
+    const StorageRangeList *rangeList;                              // Range list (for reading ranges from a file)
     unsigned int rangeIdx;                                          // Current range
 };
 
@@ -284,7 +284,7 @@ storageReadNew(
             // If this is a proxy for another read object then use a default range. The range list will be processed elsewhere.
             if (proxy)
             {
-                this->rangeList = storageRangeListNewDefault();
+                this->rangeList = DEFAULT_STGRNGLST;
             }
             // Else process the range list locally
             else
@@ -295,7 +295,7 @@ storageReadNew(
         }
         // Else create a default range
         else
-            this->rangeList = storageRangeListNewDefault();
+            this->rangeList = DEFAULT_STGRNGLST;
     }
     OBJ_NEW_END();
 
