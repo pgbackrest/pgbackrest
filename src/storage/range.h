@@ -1,5 +1,8 @@
 /***********************************************************************************************************************************
 Storage Range
+
+Storage ranges specify which portions of a file to read. This simplifies complex read scenarios where part of files need to be read
+in a specific order for processing. Adjacent ranges are automatically combined to reduce the total number of reads.
 ***********************************************************************************************************************************/
 #ifndef STORAGE_RANGE_H
 #define STORAGE_RANGE_H
@@ -69,10 +72,12 @@ storageRangeListFree(StorageRangeList *const this)
 /***********************************************************************************************************************************
 Macros for constant range list
 
+Frequently used range lists can be declared with these macros at compile time rather than dynamically at run time.
+
 Note that lists created in this way are declared as const so can't be modified or freed by the storageRangeList*() methods. Casting
 to StorageRangeList * will result in a segfault due to modifying read-only memory.
 
-By convention all List constant identifiers are appended with _STGRNGLST.
+By convention all range list constant identifiers are appended with _STGRNGLST.
 ***********************************************************************************************************************************/
 // Create a range list constant inline
 #define STGRNGLSTDEF(...)                                                                                                          \
