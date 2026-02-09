@@ -195,7 +195,7 @@ storageWritePosixSeek(THIS_VOID, const uint64_t position)
     ASSERT(this->fd != -1);
 
     THROW_ON_SYS_ERROR_FMT(
-        lseek(this->fd, (off_t)position, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK, position, strZ(this->nameTmp));
+        lseek(this->fd, (off_t)position, SEEK_SET) == -1, FileWriteError, STORAGE_ERROR_WRITE_SEEK, position, strZ(this->nameTmp));
 
     FUNCTION_LOG_RETURN_VOID();
 }
