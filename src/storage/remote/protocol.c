@@ -532,7 +532,7 @@ storageRemoteWriteProtocol(PackRead *const param, void *const fileWrite)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
-        FUNCTION_LOG_PARAM(STORAGE_READ, fileWrite);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE, fileWrite);
     FUNCTION_LOG_END();
 
     ASSERT(param != NULL);
