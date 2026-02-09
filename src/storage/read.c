@@ -166,6 +166,10 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
         this->rangeIdx++;
         storageReadRangeSet(this);
 
+        // The file must not be missing when reading the next range. If we got here then the file must have existed originally and
+        // it if is missing now we want a hard error.
+        this->pub.interface->ignoreMissing = false;
+
         // Open file with new offset/limit
         this->pub.interface->ioInterface.open(this->driver);
     }
