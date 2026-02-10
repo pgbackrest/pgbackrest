@@ -66,7 +66,7 @@ Destructor
 FN_INLINE_ALWAYS void
 storageRangeListFree(StorageRangeList *const this)
 {
-    objFree(this);
+    lstFree((List *)this);
 }
 
 /***********************************************************************************************************************************
