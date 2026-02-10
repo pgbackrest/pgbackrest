@@ -140,6 +140,14 @@ storageReadS3Close(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
+static const IoReadInterface storageReadS3Interface =
+{
+    .close = storageReadS3Close,
+    .eof = storageReadS3Eof,
+    .open = storageReadS3Open,
+    .read = storageReadS3,
+};
+
 FN_EXTERN StorageRead *
 storageReadS3New(
     StorageS3 *const storage, const String *const name, const bool ignoreMissing, const StorageRangeList *const rangeList,
@@ -162,27 +170,13 @@ storageReadS3New(
         *this = (StorageReadS3)
         {
             .storage = storage,
-
-            .interface = (StorageReadInterface)
-            {
-                .type = STORAGE_S3_TYPE,
-                .name = strDup(name),
-                .ignoreMissing = ignoreMissing,
-                .retry = true,
-                .version = version,
-                .versionId = strDup(versionId),
-
-                .ioInterface = (IoReadInterface)
-                {
-                    .eof = storageReadS3Eof,
-                    .open = storageReadS3Open,
-                    .read = storageReadS3,
-                    .close = storageReadS3Close,
-                },
-            },
         };
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface, rangeList, false));
+    FUNCTION_LOG_RETURN(
+        STORAGE_READ,
+        storageReadNewP(
+            this, STORAGE_S3_TYPE, name, ignoreMissing, rangeList, &storageReadS3Interface, .version = version,
+            .versionId = versionId, .retry = true));
 }

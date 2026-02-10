@@ -212,6 +212,15 @@ storageReadPosixFd(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
+static const IoReadInterface storageReadPosixInterface =
+{
+    .close = storageReadPosixClose,
+    .eof = storageReadPosixEof,
+    .fd = storageReadPosixFd,
+    .open = storageReadPosixOpen,
+    .read = storageReadPosix,
+};
+
 FN_EXTERN StorageRead *
 storageReadPosixNew(
     StoragePosix *const storage, const String *const name, const bool ignoreMissing, const StorageRangeList *const rangeList)
@@ -230,25 +239,10 @@ storageReadPosixNew(
         {
             .storage = storage,
             .fd = -1,
-
-            .interface = (StorageReadInterface)
-            {
-                .type = STORAGE_POSIX_TYPE,
-                .name = strDup(name),
-                .ignoreMissing = ignoreMissing,
-
-                .ioInterface = (IoReadInterface)
-                {
-                    .close = storageReadPosixClose,
-                    .eof = storageReadPosixEof,
-                    .fd = storageReadPosixFd,
-                    .open = storageReadPosixOpen,
-                    .read = storageReadPosix,
-                },
-            },
         };
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface, rangeList, false));
+    FUNCTION_LOG_RETURN(
+        STORAGE_READ, storageReadNewP(this, STORAGE_POSIX_TYPE, name, ignoreMissing, rangeList, &storageReadPosixInterface));
 }

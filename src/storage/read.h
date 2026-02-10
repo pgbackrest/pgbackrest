@@ -58,7 +58,7 @@ storageReadRangeList(const StorageRead *const this)
 FN_INLINE_ALWAYS StringId
 storageReadType(const StorageRead *const this)
 {
-    return storageReadInterface(this)->type;
+    return THIS_PUB(StorageRead)->type;
 }
 
 /***********************************************************************************************************************************

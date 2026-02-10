@@ -16,9 +16,11 @@ struct StorageRead
 {
     StorageReadPub pub;                                             // Publicly accessible variables
     void *driver;                                                   // Driver
+    IoReadInterface ioInterface;                                    // Driver Io interface
     uint64_t bytesRead;                                             // Bytes that have been successfully read
     const StorageRangeList *rangeList;                              // Range list (for reading ranges from a file)
     unsigned int rangeIdx;                                          // Current range
+    bool retry;                                                     // Are read retries allowed?
 };
 
 /***********************************************************************************************************************************
@@ -28,6 +30,15 @@ Macros for function logging
     StorageReadInterface
 #define FUNCTION_LOG_STORAGE_READ_INTERFACE_FORMAT(value, buffer, bufferSize)                                                      \
     objNameToLog(&value, "StorageReadInterface", buffer, bufferSize)
+
+/***********************************************************************************************************************************
+Get driver interface
+***********************************************************************************************************************************/
+FN_INLINE_ALWAYS StorageReadInterface *
+storageReadDriverInterface(StorageRead *const this)
+{
+    return (StorageReadInterface *)this->driver;
+}
 
 /***********************************************************************************************************************************
 Set range offset and limit
@@ -40,18 +51,18 @@ storageReadRangeSet(StorageRead *const this)
     FUNCTION_TEST_END();
 
     const StorageRange *const range = storageRangeListGet(this->rangeList, this->rangeIdx);
-    this->pub.interface->offset = range->offset;
+    storageReadDriverInterface(this)->offset = range->offset;
 
     if (range->limit != NULL)
     {
         MEM_CONTEXT_OBJ_BEGIN(this->driver)
         {
-            this->pub.interface->limit = varDup(range->limit);
+            storageReadDriverInterface(this)->limit = varDup(range->limit);
         }
         MEM_CONTEXT_OBJ_END();
     }
     else
-        this->pub.interface->limit = NULL;
+        storageReadDriverInterface(this)->limit = NULL;
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -70,7 +81,12 @@ storageReadOpen(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(BOOL, this->pub.interface->ioInterface.open(this->driver));
+    const bool result = this->ioInterface.open(this->driver);
+
+    // Now that the file is open disable ignore missing. On retry the file must not be missing so we want a hard error.
+    storageReadDriverInterface(this)->ignoreMissing = false;
+
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************
@@ -96,14 +112,14 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
     {
         // Use a specific number of tries here instead of a timeout because the underlying operations already have timeouts and
         // failures will generally happen after some delay, so it is not clear what timeout would be appropriate here.
-        unsigned int try = this->pub.interface->retry ? 3 : 1;
+        unsigned int try = this->retry ? 3 : 1;
 
         // While tries remaining
         while (try > 0)
         {
             TRY_BEGIN()
             {
-                this->pub.interface->ioInterface.read(this->driver, buffer, block);
+                this->ioInterface.read(this->driver, buffer, block);
 
                 // Account for bytes that have been read
                 result += bufUsed(buffer) - bufUsedBegin;
@@ -119,32 +135,28 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
                 if (try > 1)
                 {
                     // Close the file
-                    this->pub.interface->ioInterface.close(this->driver);
+                    this->ioInterface.close(this->driver);
 
                     // Ignore partial reads and restart from the last successful read
                     bufUsedSet(buffer, bufUsedBegin);
 
-                    // The file must not be missing on retry. If we got here then the file must have existed originally and it if is
-                    // missing now we want a hard error.
-                    this->pub.interface->ignoreMissing = false;
-
                     // Update offset and limit (when present) based on how many bytes have been successfully read
                     const StorageRange *const range = storageRangeListGet(this->rangeList, 0);
-                    this->pub.interface->offset = range->offset + this->bytesRead;
+                    storageReadDriverInterface(this)->offset = range->offset + this->bytesRead;
 
                     if (range->limit != NULL)
                     {
-                        varFree(this->pub.interface->limit);
+                        varFree(storageReadDriverInterface(this)->limit);
 
                         MEM_CONTEXT_OBJ_BEGIN(this->driver)
                         {
-                            this->pub.interface->limit = varNewUInt64(varUInt64(range->limit) - this->bytesRead);
+                            storageReadDriverInterface(this)->limit = varNewUInt64(varUInt64(range->limit) - this->bytesRead);
                         }
                         MEM_CONTEXT_OBJ_END();
                     }
 
                     // Open file with new offset/limit
-                    this->pub.interface->ioInterface.open(this->driver);
+                    this->ioInterface.open(this->driver);
                 }
                 else
                     RETHROW();
@@ -157,21 +169,17 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
     MEM_CONTEXT_TEMP_END();
 
     // If read is complete and there are more ranges then reopen the file with the next range
-    if (this->pub.interface->ioInterface.eof(this->driver) && this->rangeIdx < storageRangeListSize(this->rangeList) - 1)
+    if (this->ioInterface.eof(this->driver) && this->rangeIdx < storageRangeListSize(this->rangeList) - 1)
     {
         // Close the file
-        this->pub.interface->ioInterface.close(this->driver);
+        this->ioInterface.close(this->driver);
 
         // Set new range
         this->rangeIdx++;
         storageReadRangeSet(this);
 
-        // The file must not be missing when reading the next range. If we got here then the file must have existed originally and
-        // it if is missing now we want a hard error.
-        this->pub.interface->ignoreMissing = false;
-
         // Open file with new offset/limit
-        this->pub.interface->ioInterface.open(this->driver);
+        this->ioInterface.open(this->driver);
     }
 
     FUNCTION_LOG_RETURN(SIZE, result);
@@ -191,7 +199,7 @@ storageReadClose(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    this->pub.interface->ioInterface.close(this->driver);
+    this->ioInterface.close(this->driver);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -210,7 +218,7 @@ storageReadEof(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->pub.interface->ioInterface.eof(this->driver));
+    FUNCTION_TEST_RETURN(BOOL, this->ioInterface.eof(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -227,7 +235,7 @@ storageReadFd(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(INT, this->pub.interface->ioInterface.fd(this->driver));
+    FUNCTION_TEST_RETURN(INT, this->ioInterface.fd(this->driver));
 }
 
 /**********************************************************************************************************************************/
@@ -242,28 +250,37 @@ static const IoReadInterface storageIoReadInterface =
 
 FN_EXTERN StorageRead *
 storageReadNew(
-    void *const driver, StorageReadInterface *const interface, const StorageRangeList *const rangeList, const bool proxy)
+    void *const driver, const StringId type, const String *const name, const bool ignoreMissing,
+    const StorageRangeList *const rangeList, const IoReadInterface *const ioInterface, const StorageReadNewParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
-        FUNCTION_LOG_PARAM_P(STORAGE_READ_INTERFACE, interface);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
+        FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(STORAGE_RANGE_LIST, rangeList);
-        FUNCTION_LOG_PARAM(BOOL, proxy);
+        FUNCTION_LOG_PARAM_P(VOID, ioInterface);
+        FUNCTION_LOG_PARAM(BOOL, param.retry);
+        FUNCTION_LOG_PARAM(BOOL, param.proxy);
+        FUNCTION_LOG_PARAM(BOOL, param.version);
+        FUNCTION_LOG_PARAM(STRING, param.versionId);
     FUNCTION_LOG_END();
 
     FUNCTION_AUDIT_HELPER();
 
     ASSERT(driver != NULL);
-    ASSERT(interface != NULL);
-    ASSERT(interface->ioInterface.eof != NULL);
-    ASSERT(interface->ioInterface.close != NULL);
-    ASSERT(interface->ioInterface.open != NULL);
-    ASSERT(interface->ioInterface.read != NULL);
+    ASSERT(type != 0);
+    ASSERT(name != NULL);
+    ASSERT(ioInterface != NULL);
+    ASSERT(ioInterface->eof != NULL);
+    ASSERT(ioInterface->close != NULL);
+    ASSERT(ioInterface->open != NULL);
+    ASSERT(ioInterface->read != NULL);
 
     // Remove fd method if it does not exist in the driver
     IoReadInterface storageIoReadInterfaceCopy = storageIoReadInterface;
 
-    if (interface->ioInterface.fd == NULL)
+    if (ioInterface->fd == NULL)
         storageIoReadInterfaceCopy.fd = NULL;
 
     OBJ_NEW_BEGIN(StorageRead, .childQty = MEM_CONTEXT_QTY_MAX)
@@ -271,13 +288,29 @@ storageReadNew(
         *this = (StorageRead)
         {
             .driver = objMove(driver, memContextCurrent()),
+            .ioInterface = *ioInterface,
+            .retry = param.retry,
             .pub =
             {
-                .interface = interface,
+                .interface =
+                {
+                    .name = strDup(name),
+                    .ignoreMissing = ignoreMissing,
+                    .version = param.version,
+                    .versionId = strDup(param.versionId),
+                },
+                .type = type,
                 .io = ioReadNew(this, storageIoReadInterfaceCopy),
-                .ignoreMissing = interface->ignoreMissing,
             },
         };
+
+        // Copy the interface into the driver and duplicate variables that must be local to the driver
+        MEM_CONTEXT_OBJ_BEGIN(this->driver)
+        {
+            *(storageReadDriverInterface(this)) = this->pub.interface;
+            storageReadDriverInterface(this)->limit = varDup(storageReadInterface(this)->limit);
+        }
+        MEM_CONTEXT_OBJ_END();
 
         // If range is provided
         if (rangeList != NULL)
@@ -288,14 +321,14 @@ storageReadNew(
             this->pub.rangeList = storageRangeListDup(rangeList);
 
             // If this is a proxy for another read object then use a default range. The range list will be processed elsewhere.
-            if (proxy)
+            if (param.proxy)
             {
                 this->rangeList = DEFAULT_STGRNGLST;
             }
             // Else process the range list locally
             else
             {
-                this->rangeList = storageRangeListDup(rangeList);
+                this->rangeList = this->pub.rangeList;
                 storageReadRangeSet(this);
             }
         }

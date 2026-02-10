@@ -97,7 +97,7 @@ storageWriteTruncate(const StorageWrite *const this)
 FN_INLINE_ALWAYS StringId
 storageWriteType(const StorageWrite *const this)
 {
-    return storageWriteInterface(this)->type;
+    return THIS_PUB(StorageWrite)->type;
 }
 
 /***********************************************************************************************************************************

@@ -307,6 +307,12 @@ storageWriteGcsClose(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
+static const IoWriteInterface storageWriteGcsInterface =
+{
+    .close = storageWriteGcsClose,
+    .write = storageWriteGcs,
+};
+
 FN_EXTERN StorageWrite *
 storageWriteGcsNew(StorageGcs *const storage, const String *const name, const size_t chunkSize, const bool tag)
 {
@@ -329,26 +335,10 @@ storageWriteGcsNew(StorageGcs *const storage, const String *const name, const si
             .chunkBuffer = bufNew(0),
             .md5hash = cryptoHashNew(hashTypeMd5),
             .tag = tag,
-
-            .interface = (StorageWriteInterface)
-            {
-                .type = STORAGE_GCS_TYPE,
-                .name = strDup(name),
-                .atomic = true,
-                .createPath = true,
-                .syncFile = true,
-                .syncPath = true,
-                .truncate = true,
-
-                .ioInterface = (IoWriteInterface)
-                {
-                    .close = storageWriteGcsClose,
-                    .write = storageWriteGcs,
-                },
-            },
         };
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteNew(this, &this->interface));
+    FUNCTION_LOG_RETURN(
+        STORAGE_WRITE, storageWriteNewP(this, STORAGE_GCS_TYPE, name, true, true, true, true, true, &storageWriteGcsInterface));
 }

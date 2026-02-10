@@ -248,6 +248,12 @@ storageWriteAzureClose(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
+static const IoWriteInterface storageWriteAzureInterface =
+{
+    .close = storageWriteAzureClose,
+    .write = storageWriteAzure,
+};
+
 FN_EXTERN StorageWrite *
 storageWriteAzureNew(StorageAzure *const storage, const String *const name, const uint64_t fileId, const size_t blockSize)
 {
@@ -269,26 +275,10 @@ storageWriteAzureNew(StorageAzure *const storage, const String *const name, cons
             .fileId = fileId,
             .blockSize = blockSize,
             .blockBuffer = bufNew(0),
-
-            .interface = (StorageWriteInterface)
-            {
-                .type = STORAGE_AZURE_TYPE,
-                .name = strDup(name),
-                .atomic = true,
-                .createPath = true,
-                .syncFile = true,
-                .syncPath = true,
-                .truncate = true,
-
-                .ioInterface = (IoWriteInterface)
-                {
-                    .close = storageWriteAzureClose,
-                    .write = storageWriteAzure,
-                },
-            },
         };
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteNew(this, &this->interface));
+    FUNCTION_LOG_RETURN(
+        STORAGE_WRITE, storageWriteNewP(this, STORAGE_AZURE_TYPE, name, true, true, true, true, true, &storageWriteAzureInterface));
 }

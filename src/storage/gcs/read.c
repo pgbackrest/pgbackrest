@@ -143,6 +143,14 @@ storageReadGcsClose(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
+static const IoReadInterface storageReadGcsInterface =
+{
+    .close = storageReadGcsClose,
+    .eof = storageReadGcsEof,
+    .open = storageReadGcsOpen,
+    .read = storageReadGcs,
+};
+
 FN_EXTERN StorageRead *
 storageReadGcsNew(
     StorageGcs *const storage, const String *const name, const bool ignoreMissing, const StorageRangeList *const rangeList,
@@ -165,27 +173,13 @@ storageReadGcsNew(
         *this = (StorageReadGcs)
         {
             .storage = storage,
-
-            .interface = (StorageReadInterface)
-            {
-                .type = STORAGE_GCS_TYPE,
-                .name = strDup(name),
-                .ignoreMissing = ignoreMissing,
-                .retry = true,
-                .version = version,
-                .versionId = strDup(versionId),
-
-                .ioInterface = (IoReadInterface)
-                {
-                    .eof = storageReadGcsEof,
-                    .open = storageReadGcsOpen,
-                    .read = storageReadGcs,
-                    .close = storageReadGcsClose,
-                },
-            },
         };
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface, rangeList, false));
+    FUNCTION_LOG_RETURN(
+        STORAGE_READ,
+        storageReadNewP(
+            this, STORAGE_GCS_TYPE, name, ignoreMissing, rangeList, &storageReadGcsInterface, .version = version,
+            .versionId = versionId, .retry = true));
 }
