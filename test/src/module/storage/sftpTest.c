@@ -6121,8 +6121,7 @@ testRun(void)
             {.function = HRNLIBSSH2_SFTP_SEEK64, .param = "[4]"},
             {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 2, .readBuffer = STRDEF("FI")},
             {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 2, .readBuffer = STRDEF("LE")},
-            {.function = HRNLIBSSH2_SFTP_READ, .param = "[2]", .resultInt = 1, .readBuffer = STRDEF("\n")},
-            {.function = HRNLIBSSH2_SFTP_READ, .param = "[1]", .resultInt = 0},
+            {.function = HRNLIBSSH2_SFTP_READ, .param = "[1]", .resultInt = 1, .readBuffer = STRDEF("\n")},
             {.function = HRNLIBSSH2_SFTP_CLOSE_HANDLE},
             HRNLIBSSH2_MACRO_SHUTDOWN()
         });
