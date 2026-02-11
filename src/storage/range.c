@@ -53,8 +53,6 @@ storageRangeListAdd(StorageRangeList *const this, const uint64_t offset, const u
         CHECK(AssertError, storageRangeLimit(rangePrior), "cannot add range after range with no limit");
         CHECK(AssertError, limit != STORAGE_RANGE_NO_LIMIT, "range with no limit must be first");
 
-        ASSERT(storageRangeLimit(rangePrior));
-
         // If new range continues the prior range then combine them
         if (offset == rangePrior->offset + rangePrior->limit)
         {
