@@ -41,8 +41,9 @@ verifyFile(
     {
         // Prepare the file for reading
         IoRead *const read = storageReadIo(
-            storageNewReadP(storageRepo(), filePathName, .ignoreMissing = true,
-            .rangeList = limit == NULL ? NULL : STGRNGLST1DEF(offset, varUInt64(limit))));
+            storageNewReadP(
+                storageRepo(), filePathName, .ignoreMissing = true,
+                .rangeList = limit == NULL ? NULL : STGRNGLST1DEF(offset, varUInt64(limit))));
         IoFilterGroup *const filterGroup = ioReadFilterGroup(read);
 
         // Add decryption filter

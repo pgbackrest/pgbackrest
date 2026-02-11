@@ -44,13 +44,15 @@ storageRangeListAdd(StorageRangeList *const this, const uint64_t offset, const u
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-    // !!! ASSERT(limit != UINT64_MAX);
 
     // Check if new range can be combined with prior range
     StorageRange *const rangePrior = storageRangeListEmpty(this) ? NULL : storageRangeListGet(this, storageRangeListSize(this) - 1);
 
     if (rangePrior != NULL)
     {
+        CHECK(AssertError, storageRangeLimit(rangePrior), "cannot add range after range with no limit");
+        CHECK(AssertError, limit != STORAGE_RANGE_NO_LIMIT, "range with no limit must be first");
+
         ASSERT(storageRangeLimit(rangePrior));
 
         // If new range continues the prior range then combine them

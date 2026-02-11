@@ -6034,7 +6034,9 @@ testRun(void)
             .knownHosts = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoSftpKnownHost, repoIdx)), .write = true);
 
         TEST_ERROR(
-            storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = STGRNGLST1DEF(UINT64_MAX, 0))),
+            storageGetP(
+                storageNewReadP(
+                    storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = STGRNGLST1DEF(UINT64_MAX, STORAGE_RANGE_NO_LIMIT))),
             FileOpenError, "unable to seek to 18446744073709551615 in file '" TEST_PATH "/test.txt'");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -6670,9 +6672,6 @@ testRun(void)
 #else
         TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("get file with ranges !!!");
     }
 
     // *****************************************************************************************************************************

@@ -148,7 +148,7 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
 
                 // libssh2 sftp lseek seems to return LIBSSH2_FX_BAD_MESSAGE on a seek too far
                 if ((sftpErr = libssh2_sftp_last_error(this->sftpSession)) == LIBSSH2_FX_BAD_MESSAGE &&
-                     this->interface.range.offset > 0)
+                    this->interface.range.offset > 0)
                 {
                     THROW_FMT(FileOpenError, STORAGE_ERROR_READ_SEEK, this->interface.range.offset, strZ(this->interface.name));
                 }

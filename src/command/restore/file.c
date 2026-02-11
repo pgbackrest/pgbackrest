@@ -216,9 +216,11 @@ restoreFile(
                 }
 
                 // If the file will be copied add it to the range list
-                // !!! BETTER WAY TO DO THIS?
                 if (fileResult->result == restoreResultCopy)
-                    storageRangeListAdd(rangeList, file->offset, file->limit == NULL ? UINT64_MAX : varUInt64(file->limit));
+                {
+                    storageRangeListAdd(
+                        rangeList, file->offset, file->limit == NULL ? STORAGE_RANGE_NO_LIMIT : varUInt64(file->limit));
+                }
             }
             MEM_CONTEXT_TEMP_END();
         }
