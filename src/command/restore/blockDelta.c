@@ -176,7 +176,7 @@ blockDeltaNew(
                             };
 
                             blockDeltaSuperBlock = lstAdd(blockDeltaRead->superBlockList, &blockDeltaSuperBlockNew);
-                            storageRangeListAdd(blockDeltaRead->rangeList, blockMapItem->offset, VARUINT64(blockMapItem->size));
+                            storageRangeListAdd(blockDeltaRead->rangeList, blockMapItem->offset, blockMapItem->size);
                         }
                         MEM_CONTEXT_OBJ_END();
                     }

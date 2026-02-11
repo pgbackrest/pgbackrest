@@ -13,8 +13,7 @@ Constructors
 typedef struct StorageReadInterface
 {
     const String *name;                                             // File name
-    uint64_t offset;                                                // Where to start reading in the file
-    Variant *limit;                                                 // Limit how many bytes are read (NULL for no limit)
+    StorageRange range;                                             // Range of bytes to read within the file
     bool ignoreMissing;                                             // Ignore missing file?
     bool version;                                                   // Read version
     const String *versionId;                                        // File version to read

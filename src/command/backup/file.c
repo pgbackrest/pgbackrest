@@ -93,7 +93,7 @@ backupFile(
                     IoRead *const read = storageReadIo(
                         storageNewReadP(
                             storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing,
-                            .rangeList = STGRNGLST1DEF(0, file->pgFileCopyExactSize ? VARUINT64(file->pgFileSizeOriginal) : NULL)));
+                            .rangeList = file->pgFileCopyExactSize ? STGRNGLST1DEF(0,  file->pgFileSizeOriginal) : NULL));
                     ioFilterGroupAdd(ioReadFilterGroup(read), cryptoHashNew(hashTypeSha1));
                     ioFilterGroupAdd(ioReadFilterGroup(read), ioSizeNew());
 
@@ -208,8 +208,7 @@ backupFile(
                         readIo = storageReadIo(
                             storageNewReadP(
                                 storagePg(), file->pgFile, .ignoreMissing = file->pgFileIgnoreMissing, .compressible = compressible,
-                                .rangeList = STGRNGLST1DEF(
-                                    0, file->pgFileCopyExactSize ? VARUINT64(file->pgFileSizeOriginal) : NULL)));
+                                .rangeList = file->pgFileCopyExactSize ? STGRNGLST1DEF(0, file->pgFileSizeOriginal) : NULL));
                     }
 
                     ioFilterGroupAdd(ioReadFilterGroup(readIo), cryptoHashNew(hashTypeSha1));
@@ -250,7 +249,7 @@ backupFile(
                         {
                             StorageRead *const blockMapRead = storageNewReadP(
                                 storageRepo(), file->blockIncrMapPriorFile,
-                                .rangeList = STGRNGLST1DEF(file->blockIncrMapPriorOffset, VARUINT64(file->blockIncrMapPriorSize)));
+                                .rangeList = STGRNGLST1DEF(file->blockIncrMapPriorOffset, file->blockIncrMapPriorSize));
 
                             if (cipherType != cipherTypeNone)
                             {

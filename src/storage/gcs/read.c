@@ -65,7 +65,9 @@ storageReadGcsOpen(THIS_VOID)
 
             this->httpResponse = storageGcsRequestP(
                 this->storage, HTTP_VERB_GET_STR, .object = this->interface.name,
-                .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
+                .header = httpHeaderPutRange(
+                    httpHeaderNew(NULL), this->interface.range.offset,
+                    storageRangeLimit(&this->interface.range) ? VARUINT64(this->interface.range.limit) : NULL),
                 .allowMissing = true, .contentIo = true, .query = query);
         }
         MEM_CONTEXT_OBJ_END();

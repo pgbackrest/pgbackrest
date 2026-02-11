@@ -1121,34 +1121,23 @@ testRun(void)
 
         TEST_ERROR(
             storageGetP(
-                storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = STGRNGLST1DEF(UINT64_MAX, NULL))),
+                storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = STGRNGLST1DEF(UINT64_MAX, 0))),
             FileOpenError, "unable to seek to 18446744073709551615 in file '" TEST_PATH "/test.txt': [22] Invalid argument");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read limited bytes");
 
         TEST_ASSIGN(
-            buffer,
-            storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = STGRNGLST1DEF(0, VARUINT64(7)))),
+            buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = STGRNGLST1DEF(0, 7))),
             "get");
         TEST_RESULT_UINT(bufSize(buffer), 7, "check size");
         TEST_RESULT_BOOL(memcmp(bufPtrConst(buffer), "TESTFIL", bufSize(buffer)) == 0, true, "check content");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("read offset bytes");
-
-        TEST_ASSIGN(
-            buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = STGRNGLST1DEF(4, NULL))),
-            "get");
-        TEST_RESULT_UINT(bufSize(buffer), 5, "check size");
-        TEST_RESULT_BOOL(memcmp(bufPtrConst(buffer), "FILE\n", bufSize(buffer)) == 0, true, "check content");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read offset/limited bytes");
 
         TEST_ASSIGN(
-            buffer,
-            storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = STGRNGLST1DEF(4, VARUINT64(4)))),
+            buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = STGRNGLST1DEF(4, 4))),
             "get");
         TEST_RESULT_UINT(bufSize(buffer), 4, "check size");
         TEST_RESULT_BOOL(memcmp(bufPtrConst(buffer), "FILE", bufSize(buffer)) == 0, true, "check content");
@@ -1251,9 +1240,7 @@ testRun(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             TEST_ASSIGN(
-                file,
-                storageReadMove(
-                    storageNewReadP(storageTest, fileName, .rangeList = STGRNGLST1DEF(0, VARUINT64(44))), memContextPrior()),
+                file, storageReadMove(storageNewReadP(storageTest, fileName, .rangeList = STGRNGLST1DEF(0, 44)), memContextPrior()),
                 "new read file");
         }
         MEM_CONTEXT_TEMP_END();
@@ -1262,7 +1249,7 @@ testRun(void)
         TEST_RESULT_STR(storageReadName(file), fileName, "check file name");
         TEST_RESULT_UINT(storageReadType(file), STORAGE_POSIX_TYPE, "check file type");
         TEST_RESULT_UINT(storageRangeListGet(storageReadRangeList(file), 0)->offset, 0, "check offset");
-        TEST_RESULT_UINT(varUInt64(storageRangeListGet(storageReadRangeList(file), 0)->limit), 44, "check limit");
+        TEST_RESULT_UINT(storageRangeListGet(storageReadRangeList(file), 0)->limit, 44, "check limit");
 
         TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "load data");
         bufCat(buffer, outBuffer);
@@ -1305,16 +1292,16 @@ testRun(void)
         TEST_RESULT_VOID(storagePutP(storageNewWriteP(storageTest, fileName), BUFSTRDEF("AABBCCDDEEFF")), "write test file");
 
         StorageRangeList *rangeList = storageRangeListNew();
-        storageRangeListAdd(rangeList, 2, VARUINT64(2));
-        storageRangeListAdd(rangeList, 4, VARUINT64(2));
-        storageRangeListAdd(rangeList, 8, VARUINT64(2));
-        storageRangeListAdd(rangeList, 10, NULL);
+        storageRangeListAdd(rangeList, 2, 2);
+        storageRangeListAdd(rangeList, 4, 2);
+        storageRangeListAdd(rangeList, 8, 2);
+        storageRangeListAdd(rangeList, 10, 2);
 
         TEST_RESULT_UINT(storageRangeListSize(rangeList), 2, "check range list size");
         TEST_RESULT_UINT(storageRangeListGet(rangeList, 0)->offset, 2, "check range 0 offset");
-        TEST_RESULT_UINT(varUInt64(storageRangeListGet(rangeList, 0)->limit), 4, "check range 0 limit");
+        TEST_RESULT_UINT(storageRangeListGet(rangeList, 0)->limit, 4, "check range 0 limit");
         TEST_RESULT_UINT(storageRangeListGet(rangeList, 1)->offset, 8, "check range 1 offset");
-        TEST_RESULT_BOOL(storageRangeListGet(rangeList, 1)->limit == NULL, true, "check range 1 limit");
+        TEST_RESULT_UINT(storageRangeListGet(rangeList, 1)->limit, 4, "check range 1 limit");
 
         TEST_RESULT_STR_Z(
             strNewBuf(storageGetP(storageNewReadP(storageTest, fileName, .rangeList = rangeList))), "BBCCEEFF", "check content");

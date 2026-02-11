@@ -224,11 +224,7 @@ storageReadRemoteOpen(THIS_VOID)
                 const StorageRange *const range = storageRangeListGet(rangeList, rangeIdx);
 
                 pckWriteU64P(param, range->offset, .defaultWrite = true);
-
-                if (range->limit != NULL)
-                    pckWriteU64P(param, varUInt64(range->limit));
-                else
-                    pckWriteNullP(param);
+                pckWriteU64P(param, range->limit);
             }
 
             pckWriteArrayEndP(param);

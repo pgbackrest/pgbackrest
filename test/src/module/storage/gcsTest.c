@@ -473,7 +473,7 @@ testRun(void)
                 testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media", .range = "35-37");
                 testResponseP(service, .content = "YYY");
 
-                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media", .range = "50-");
+                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media", .range = "50-53");
                 testResponseP(service, .content = "ZZZZ");
 
                 ioBufferSizeSet(20);
@@ -481,9 +481,7 @@ testRun(void)
                 TEST_RESULT_STR_Z(
                     strNewBuf(
                         storageGetP(
-                            storageNewReadP(
-                                storage, STRDEF("file.txt"),
-                                .rangeList = STGRNGLSTDEF({1, VARUINT64(29)}, {35, VARUINT64(3)}, {50, NULL})))),
+                            storageNewReadP(storage, STRDEF("file.txt"), .rangeList = STGRNGLSTDEF({1, 29}, {35, 3}, {50, 4})))),
                     "2345678911234567892123456789YYYZZZZ", "get file");
 
                 ioBufferSizeSet(ioBufferSizeDefault);
@@ -1384,9 +1382,7 @@ testRun(void)
                 testResponseP(service, .content = "this is a sample file");
 
                 TEST_RESULT_STR_Z(
-                    strNewBuf(
-                        storageGetP(
-                            storageNewReadP(storage, STRDEF("file.txt"), .rangeList = STGRNGLST1DEF(1, VARUINT64(21))))),
+                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt"), .rangeList = STGRNGLST1DEF(1, 21)))),
                     "this is a sample file", "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------

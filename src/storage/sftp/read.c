@@ -80,8 +80,8 @@ storageReadSftpOpen(THIS_VOID)
     else
     {
         // Seek to offset, libssh2_sftp_seek64 returns void
-        if (this->interface.offset != 0)
-            libssh2_sftp_seek64(this->sftpHandle, this->interface.offset);
+        if (this->interface.range.offset != 0)
+            libssh2_sftp_seek64(this->sftpHandle, this->interface.range.offset);
     }
 
     FUNCTION_LOG_RETURN(BOOL, this->sftpHandle != NULL);
@@ -109,15 +109,11 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
     // Read if EOF has not been reached
     if (!this->eof)
     {
-        // Rather than enable/disable limit checking just use a big number when there is no limit. We can feel pretty confident that
-        // no files will be > UINT64_MAX in size.
-        const uint64_t limit = this->interface.limit == NULL ? UINT64_MAX : varUInt64(this->interface.limit);
-
         // Determine expected bytes to read. If remaining size in the buffer would exceed the limit then reduce the expected read.
         size_t expectedBytes = bufRemains(buffer);
 
-        if (this->current + expectedBytes > limit)
-            expectedBytes = (size_t)(limit - this->current);
+        if (this->current + expectedBytes > this->interface.range.limit)
+            expectedBytes = (size_t)(this->interface.range.limit - this->current);
 
         bufLimitSet(buffer, expectedBytes);
         ssize_t rc = 0;
@@ -151,8 +147,11 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
                 uint64_t sftpErr = 0;
 
                 // libssh2 sftp lseek seems to return LIBSSH2_FX_BAD_MESSAGE on a seek too far
-                if ((sftpErr = libssh2_sftp_last_error(this->sftpSession)) == LIBSSH2_FX_BAD_MESSAGE && this->interface.offset > 0)
-                    THROW_FMT(FileOpenError, STORAGE_ERROR_READ_SEEK, this->interface.offset, strZ(this->interface.name));
+                if ((sftpErr = libssh2_sftp_last_error(this->sftpSession)) == LIBSSH2_FX_BAD_MESSAGE &&
+                     this->interface.range.offset > 0)
+                {
+                    THROW_FMT(FileOpenError, STORAGE_ERROR_READ_SEEK, this->interface.range.offset, strZ(this->interface.name));
+                }
                 else
                     THROW_FMT(FileReadError, "unable to read '%s': sftp errno [%" PRIu64 "]", strZ(this->interface.name), sftpErr);
             }
@@ -171,7 +170,7 @@ storageReadSftp(THIS_VOID, Buffer *const buffer, const bool block)
 
         // If less data than expected was read or the limit has been reached then EOF. The file may not actually be EOF but we are
         // not concerned with files that are growing. Just read up to the point where the file is being extended.
-        if ((size_t)actualBytes != expectedBytes || this->current == limit)
+        if ((size_t)actualBytes != expectedBytes || this->current == this->interface.range.limit)
             this->eof = true;
     }
 

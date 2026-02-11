@@ -16,8 +16,8 @@ typedef struct StorageRangeList StorageRangeList;
 
 typedef struct StorageRange
 {
-    uint64_t offset;
-    const Variant *limit;
+    uint64_t offset;                                                // Offset to start read
+    uint64_t limit;                                                 // Bytes to read
 } StorageRange;
 
 /***********************************************************************************************************************************
@@ -37,7 +37,7 @@ FN_EXTERN StorageRangeList *storageRangeListDup(const StorageRangeList *this);
 Functions
 ***********************************************************************************************************************************/
 // Add a range
-FN_EXTERN StorageRange *storageRangeListAdd(StorageRangeList *this, uint64_t offset, const Variant *limit);
+FN_EXTERN StorageRange *storageRangeListAdd(StorageRangeList *this, uint64_t offset, uint64_t limit);
 
 // Get a range
 FN_INLINE_ALWAYS StorageRange *
@@ -58,6 +58,13 @@ FN_INLINE_ALWAYS unsigned int
 storageRangeListEmpty(const StorageRangeList *const this)
 {
     return storageRangeListSize(this) == 0;
+}
+
+// Does the storage range have a limit?
+FN_INLINE_ALWAYS bool
+storageRangeLimit(const StorageRange *const range)
+{
+    return range->limit != UINT64_MAX;
 }
 
 /***********************************************************************************************************************************

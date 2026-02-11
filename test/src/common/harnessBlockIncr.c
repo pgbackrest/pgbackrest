@@ -39,7 +39,7 @@ hrnBlockDeltaRender(const BlockMap *const blockMap, const size_t blockSize, cons
 
             strCatFmt(
                 result, "read {reference: %u, bundleId: %" PRIu64 ", offset: %" PRIu64 ", size: %" PRIu64 "}\n", read->reference,
-                read->bundleId, range->offset, varUInt64(range->limit));
+                read->bundleId, range->offset, range->limit);
         }
 
         for (unsigned int superBlockIdx = 0; superBlockIdx < lstSize(read->superBlockList); superBlockIdx++)

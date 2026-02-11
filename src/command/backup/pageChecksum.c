@@ -142,7 +142,7 @@ pageChecksumProcess(THIS_VOID, const Buffer *const input)
                         storageNewReadP(
                             storagePosixNewP(FSLASH_STR), this->fileName,
                             .rangeList = STGRNGLST1DEF(
-                                (uint64_t)(blockNo % this->segmentPageTotal) * this->pageSize, VARUINT64(this->pageSize))));
+                                (uint64_t)(blockNo % this->segmentPageTotal) * this->pageSize, this->pageSize)));
 
                     // Check if the page has changed since it was last read
                     changed = !bufEq(pageRetry, BUF(pageHeader, this->pageSize));

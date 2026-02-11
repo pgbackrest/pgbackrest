@@ -50,19 +50,7 @@ storageReadRangeSet(StorageRead *const this)
         FUNCTION_TEST_PARAM(STORAGE_READ, this);
     FUNCTION_TEST_END();
 
-    const StorageRange *const range = storageRangeListGet(this->rangeList, this->rangeIdx);
-    storageReadDriverInterface(this)->offset = range->offset;
-
-    if (range->limit != NULL)
-    {
-        MEM_CONTEXT_OBJ_BEGIN(this->driver)
-        {
-            storageReadDriverInterface(this)->limit = varDup(range->limit);
-        }
-        MEM_CONTEXT_OBJ_END();
-    }
-    else
-        storageReadDriverInterface(this)->limit = NULL;
+    storageReadDriverInterface(this)->range = *(storageRangeListGet(this->rangeList, this->rangeIdx));
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -142,18 +130,10 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
 
                     // Update offset and limit (when present) based on how many bytes have been successfully read
                     const StorageRange *const range = storageRangeListGet(this->rangeList, 0);
-                    storageReadDriverInterface(this)->offset = range->offset + this->bytesRead;
+                    storageReadDriverInterface(this)->range.offset = range->offset + this->bytesRead;
 
-                    if (range->limit != NULL)
-                    {
-                        varFree(storageReadDriverInterface(this)->limit);
-
-                        MEM_CONTEXT_OBJ_BEGIN(this->driver)
-                        {
-                            storageReadDriverInterface(this)->limit = varNewUInt64(varUInt64(range->limit) - this->bytesRead);
-                        }
-                        MEM_CONTEXT_OBJ_END();
-                    }
+                    if (storageRangeLimit(range))
+                        storageReadDriverInterface(this)->range.limit = range->limit - this->bytesRead;
 
                     // Open file with new offset/limit
                     this->ioInterface.open(this->driver);
@@ -304,11 +284,10 @@ storageReadNew(
             },
         };
 
-        // Copy the interface into the driver and duplicate variables that must be local to the driver
+        // Copy the interface into the driver
         MEM_CONTEXT_OBJ_BEGIN(this->driver)
         {
             *(storageReadDriverInterface(this)) = this->pub.interface;
-            storageReadDriverInterface(this)->limit = varDup(storageReadInterface(this)->limit);
         }
         MEM_CONTEXT_OBJ_END();
 
@@ -327,14 +306,13 @@ storageReadNew(
             }
             // Else process the range list locally
             else
-            {
                 this->rangeList = this->pub.rangeList;
-                storageReadRangeSet(this);
-            }
         }
         // Else use default range
         else
             this->rangeList = DEFAULT_STGRNGLST;
+
+        storageReadRangeSet(this);
     }
     OBJ_NEW_END();
 

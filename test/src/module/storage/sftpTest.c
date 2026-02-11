@@ -6034,8 +6034,7 @@ testRun(void)
             .knownHosts = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoSftpKnownHost, repoIdx)), .write = true);
 
         TEST_ERROR(
-            storageGetP(
-                storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = STGRNGLST1DEF(UINT64_MAX, NULL))),
+            storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = STGRNGLST1DEF(UINT64_MAX, 0))),
             FileOpenError, "unable to seek to 18446744073709551615 in file '" TEST_PATH "/test.txt'");
 
         memContextFree(objMemContext((StorageSftp *)storageDriver(storageTest)));
@@ -6096,9 +6095,7 @@ testRun(void)
             .knownHosts = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoSftpKnownHost, repoIdx)), .write = true);
 
         TEST_ASSIGN(
-            buffer,
-            storageGetP(
-                storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = STGRNGLST1DEF(0, VARUINT64(7)))),
+            buffer, storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = STGRNGLST1DEF(0, 7))),
             "get");
         TEST_RESULT_UINT(bufSize(buffer), 7, "check size");
         TEST_RESULT_BOOL(memcmp(bufPtrConst(buffer), "TESTFIL", bufSize(buffer)) == 0, true, "check content");
@@ -6141,9 +6138,7 @@ testRun(void)
 
         TEST_ASSIGN(
             buffer,
-            storageGetP(
-                storageNewReadP(
-                    storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = STGRNGLSTDEF({0, VARUINT64(2)}, {4, NULL}))),
+            storageGetP(storageNewReadP(storageTest, STRDEF(TEST_PATH "/test.txt"), .rangeList = STGRNGLSTDEF({0, 2}, {4, 5}))),
             "get");
         TEST_RESULT_UINT(bufSize(buffer), 7, "check size");
         TEST_RESULT_BOOL(memcmp(bufPtrConst(buffer), "XXFILE\n", bufSize(buffer)) == 0, true, "check content");
@@ -6624,9 +6619,7 @@ testRun(void)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             TEST_ASSIGN(
-                file,
-                storageReadMove(
-                    storageNewReadP(storageTest, fileName, .rangeList = STGRNGLST1DEF(0, VARUINT64(44))), memContextPrior()),
+                file, storageReadMove(storageNewReadP(storageTest, fileName, .rangeList = STGRNGLST1DEF(0, 44)), memContextPrior()),
                 "new read file");
         }
         MEM_CONTEXT_TEMP_END();
@@ -6635,7 +6628,7 @@ testRun(void)
         TEST_RESULT_STR(storageReadName(file), fileName, "check file name");
         TEST_RESULT_UINT(storageReadType(file), STORAGE_SFTP_TYPE, "check file type");
         TEST_RESULT_UINT(storageRangeListGet(storageReadRangeList(file), 0)->offset, 0, "check offset");
-        TEST_RESULT_UINT(varUInt64(storageRangeListGet(storageReadRangeList(file), 0)->limit), 44, "check limit");
+        TEST_RESULT_UINT(storageRangeListGet(storageReadRangeList(file), 0)->limit, 44, "check limit");
 
         TEST_RESULT_VOID(ioRead(storageReadIo(file), outBuffer), "load data");
         bufCat(buffer, outBuffer);

@@ -62,7 +62,9 @@ storageReadAzureOpen(THIS_VOID)
                 .query =
                     this->interface.version ?
                         httpQueryPut(httpQueryNewP(), AZURE_QUERY_VERSION_ID_STR, this->interface.versionId) : NULL,
-                .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
+                .header = httpHeaderPutRange(
+                    httpHeaderNew(NULL), this->interface.range.offset,
+                    storageRangeLimit(&this->interface.range) ? VARUINT64(this->interface.range.limit) : NULL),
                 .allowMissing = true, .contentIo = true);
         }
         MEM_CONTEXT_OBJ_END();

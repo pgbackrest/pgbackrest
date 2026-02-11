@@ -90,11 +90,11 @@ storageReadPosixOpen(THIS_VOID)
         memContextCallbackSet(objMemContext(this), storageReadPosixFreeResource, this);
 
         // Seek to offset
-        if (this->interface.offset != 0)
+        if (this->interface.range.offset != 0)
         {
             THROW_ON_SYS_ERROR_FMT(
-                lseek(this->fd, (off_t)this->interface.offset, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK,
-                this->interface.offset, strZ(this->interface.name));
+                lseek(this->fd, (off_t)this->interface.range.offset, SEEK_SET) == -1, FileOpenError, STORAGE_ERROR_READ_SEEK,
+                this->interface.range.offset, strZ(this->interface.name));
         }
     }
 
@@ -123,15 +123,11 @@ storageReadPosix(THIS_VOID, Buffer *const buffer, const bool block)
 
     if (!this->eof)
     {
-        // Rather than enable/disable limit checking just use a big number when there is no limit. We can feel pretty confident that
-        // no files will be > UINT64_MAX in size.
-        const uint64_t limit = this->interface.limit == NULL ? UINT64_MAX : varUInt64(this->interface.limit);
-
         // Determine expected bytes to read. If remaining size in the buffer would exceed the limit then reduce the expected read.
         size_t expectedBytes = bufRemains(buffer);
 
-        if (this->current + expectedBytes > limit)
-            expectedBytes = (size_t)(limit - this->current);
+        if (this->current + expectedBytes > this->interface.range.limit)
+            expectedBytes = (size_t)(this->interface.range.limit - this->current);
 
         // Read from file
         actualBytes = read(this->fd, bufRemainsPtr(buffer), expectedBytes);
@@ -146,7 +142,7 @@ storageReadPosix(THIS_VOID, Buffer *const buffer, const bool block)
 
         // If less data than expected was read or the limit has been reached then EOF. The file may not actually be EOF but we are
         // not concerned with files that are growing. Just read up to the point where the file is being extended.
-        if ((size_t)actualBytes != expectedBytes || this->current == limit)
+        if ((size_t)actualBytes != expectedBytes || this->current == this->interface.range.limit)
             this->eof = true;
     }
 

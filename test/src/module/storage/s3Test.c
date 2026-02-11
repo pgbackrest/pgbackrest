@@ -584,7 +584,7 @@ testRun(void)
                 testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "35-37");
                 testResponseP(service, .content = "YYY");
 
-                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "50-");
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "50-53");
                 testResponseP(service, .content = "ZZZZ");
 
                 ioBufferSizeSet(20);
@@ -592,9 +592,7 @@ testRun(void)
                 TEST_RESULT_STR_Z(
                     strNewBuf(
                         storageGetP(
-                            storageNewReadP(
-                                s3, STRDEF("file.txt"),
-                                .rangeList = STGRNGLSTDEF({1, VARUINT64(29)}, {35, VARUINT64(3)}, {50, NULL})))),
+                            storageNewReadP(s3, STRDEF("file.txt"), .rangeList = STGRNGLSTDEF({1, 29}, {35, 3}, {50, 4})))),
                     "2345678911234567892123456789YYYZZZZ", "get file");
 
                 ioBufferSizeSet(ioBufferSizeDefault);
@@ -628,7 +626,7 @@ testRun(void)
 
                 TRY_BEGIN()
                 {
-                    storageGetP(storageNewReadP(s3, STRDEF("file.txt"), .rangeList = STGRNGLST1DEF(1, VARUINT64(29))));
+                    storageGetP(storageNewReadP(s3, STRDEF("file.txt"), .rangeList = STGRNGLST1DEF(1, 29)));
                 }
                 CATCH_ANY()
                 {
@@ -1807,9 +1805,7 @@ testRun(void)
                 testResponseP(service, .content = "this is a sample file");
 
                 TEST_RESULT_STR_Z(
-                    strNewBuf(
-                        storageGetP(
-                            storageNewReadP(s3, STRDEF("file.txt"), .rangeList = STGRNGLST1DEF(1, VARUINT64(21))))),
+                    strNewBuf(storageGetP(storageNewReadP(s3, STRDEF("file.txt"), .rangeList = STGRNGLST1DEF(1, 21)))),
                     "this is a sample file", "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------

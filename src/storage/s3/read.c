@@ -59,7 +59,9 @@ storageReadS3Open(THIS_VOID)
         {
             this->httpResponse = storageS3RequestP(
                 this->storage, HTTP_VERB_GET_STR, this->interface.name,
-                .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
+                .header = httpHeaderPutRange(
+                    httpHeaderNew(NULL), this->interface.range.offset,
+                    storageRangeLimit(&this->interface.range) ? VARUINT64(this->interface.range.limit) : NULL),
                 .query =
                     this->interface.versionId == NULL
                         ? NULL : httpQueryPut(httpQueryNewP(), STRDEF("versionId"), this->interface.versionId),
