@@ -985,6 +985,8 @@ testCvgGenerate(
 
             if (strEndsWithZ(coverageName, ".vendor.c"))
                 coverageName = strNewFmt("%s.inc", strZ(coverageName));
+            else if (strEndsWithZ(coverageName, ".inc.c"))
+                coverageName = strNewFmt("%s.c.inc", strZ(strSubN(coverageName, 0, strSize(coverageName) - 6)));
 
             strLstAdd(coverageModList, coverageName);
         }
