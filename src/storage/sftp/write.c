@@ -337,6 +337,13 @@ storageWriteSftpClose(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
+static const IoWriteInterface storageWriteSftpInterface =
+{
+    .close = storageWriteSftpClose,
+    .open = storageWriteSftpOpen,
+    .write = storageWriteSftp,
+};
+
 FN_EXTERN StorageWrite *
 storageWriteSftpNew(
     StorageSftp *const storage, const String *const name, LIBSSH2_SESSION *const session, LIBSSH2_SFTP *const sftpSession,
@@ -371,40 +378,20 @@ storageWriteSftpNew(
         *this = (StorageWriteSftp)
         {
             .storage = storage,
+            .nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(name)) : strDup(name),
             .path = strPath(name),
             .session = session,
             .sftpSession = sftpSession,
             .sftpHandle = sftpHandle,
-
-            .interface = (StorageWriteInterface)
-            {
-                .type = STORAGE_SFTP_TYPE,
-                .name = strDup(name),
-                .atomic = atomic,
-                .createPath = createPath,
-                .group = strDup(group),
-                .modeFile = modeFile,
-                .modePath = modePath,
-                .syncFile = syncFile,
-                .truncate = truncate,
-                .user = strDup(user),
-                .timeModified = timeModified,
-
-                .ioInterface = (IoWriteInterface)
-                {
-                    .close = storageWriteSftpClose,
-                    .open = storageWriteSftpOpen,
-                    .write = storageWriteSftp,
-                },
-            },
         };
-
-        // Create temp file name
-        this->nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(name)) : this->interface.name;
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteNew(this, &this->interface));
+    FUNCTION_LOG_RETURN(
+        STORAGE_WRITE,
+        storageWriteNewP(
+            this, STORAGE_SFTP_TYPE, name, createPath, atomic, truncate, false, syncFile, &storageWriteSftpInterface,
+            .user = user, .group = group, .modePath = modePath, .modeFile = modeFile, .timeModified = timeModified));
 }
 
 #endif // HAVE_LIBSSH2

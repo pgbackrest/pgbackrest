@@ -44,7 +44,7 @@ storageReadIo(const StorageRead *const this)
 FN_INLINE_ALWAYS const Variant *
 storageReadLimit(const StorageRead *const this)
 {
-    return THIS_PUB(StorageRead)->limit;
+    return storageReadInterface(this)->limit;
 }
 
 // File name
@@ -58,14 +58,14 @@ storageReadName(const StorageRead *const this)
 FN_INLINE_ALWAYS uint64_t
 storageReadOffset(const StorageRead *const this)
 {
-    return THIS_PUB(StorageRead)->offset;
+    return storageReadInterface(this)->offset;
 }
 
 // Get file type
 FN_INLINE_ALWAYS StringId
 storageReadType(const StorageRead *const this)
 {
-    return storageReadInterface(this)->type;
+    return THIS_PUB(StorageRead)->type;
 }
 
 /***********************************************************************************************************************************
