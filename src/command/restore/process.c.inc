@@ -23,42 +23,42 @@ restoreProcessQueueComparator(const void *const item1, const void *const item2)
     if (file1.size == 0)
     {
         if (file2.size != 0)
-            FUNCTION_TEST_RETURN(INT, -1);
+            FUNCTION_TEST_RETURN(INT, 1);
     }
     else if (file2.size == 0)
-        FUNCTION_TEST_RETURN(INT, 1);
+        FUNCTION_TEST_RETURN(INT, -1);
 
     // If the bundle id differs that is enough to determine order
     if (file1.bundleId < file2.bundleId)
-        FUNCTION_TEST_RETURN(INT, 1);
-    else if (file1.bundleId > file2.bundleId)
         FUNCTION_TEST_RETURN(INT, -1);
+    else if (file1.bundleId > file2.bundleId)
+        FUNCTION_TEST_RETURN(INT, 1);
 
     // If the bundle ids are 0
     if (file1.bundleId == 0)
     {
         // If the size differs then that's enough to determine order
         if (file1.size < file2.size)
-            FUNCTION_TEST_RETURN(INT, -1);
-        else if (file1.size > file2.size)
             FUNCTION_TEST_RETURN(INT, 1);
+        else if (file1.size > file2.size)
+            FUNCTION_TEST_RETURN(INT, -1);
 
         // If size is the same then use name to generate a deterministic ordering (names must be unique)
         ASSERT(!strEq(file1.name, file2.name));
-        FUNCTION_TEST_RETURN(INT, strCmp(file1.name, file2.name));
+        FUNCTION_TEST_RETURN(INT, strCmp(file2.name, file1.name));
     }
 
     // If the reference differs that is enough to determine order
     if (file1.reference == NULL)
     {
         if (file2.reference != NULL)
-            FUNCTION_TEST_RETURN(INT, -1);
+            FUNCTION_TEST_RETURN(INT, 1);
     }
     else if (file2.reference == NULL)
-        FUNCTION_TEST_RETURN(INT, 1);
+        FUNCTION_TEST_RETURN(INT, -1);
     else
     {
-        const int backupLabelCmp = strCmp(file1.reference, file2.reference) * -1;
+        const int backupLabelCmp = strCmp(file2.reference, file1.reference) * -1;
 
         if (backupLabelCmp != 0)
             FUNCTION_TEST_RETURN(INT, backupLabelCmp);
@@ -68,9 +68,9 @@ restoreProcessQueueComparator(const void *const item1, const void *const item2)
     ASSERT(file1.bundleOffset != file2.bundleOffset);
 
     if (file1.bundleOffset < file2.bundleOffset)
-        FUNCTION_TEST_RETURN(INT, 1);
+        FUNCTION_TEST_RETURN(INT, -1);
 
-    FUNCTION_TEST_RETURN(INT, -1);
+    FUNCTION_TEST_RETURN(INT, 1);
 }
 
 static uint64_t
@@ -147,7 +147,7 @@ restoreProcessQueue(const Manifest *const manifest, List **const queueList)
         restoreProcessQueueComparatorManifest = manifest;
 
         for (unsigned int targetIdx = 0; targetIdx < strLstSize(targetList); targetIdx++)
-            lstSort(*(List **)lstGet(*queueList, targetIdx), sortOrderDesc);
+            lstSort(*(List **)lstGet(*queueList, targetIdx), sortOrderAsc);
 
         // Move process queues to prior context
         lstMove(*queueList, memContextPrior());
