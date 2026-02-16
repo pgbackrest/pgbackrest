@@ -306,6 +306,8 @@ restoreFile(
                         const BlockMap *const blockMap = blockMapNewRead(
                             blockMapRead, file->blockIncrSize, file->blockIncrChecksumSize);
 
+                        ioReadFree(blockMapRead);
+
                         // Open file to write
                         ioWriteOpen(storageWriteIo(pgFileWrite));
 

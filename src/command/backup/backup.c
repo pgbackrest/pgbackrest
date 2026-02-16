@@ -1742,22 +1742,22 @@ backupProcessQueueComparator(const void *const item1, const void *const item2)
         file2.size > backupProcessQueueComparatorBundleLimit)
     {
         if (file1.size < file2.size)
-            FUNCTION_TEST_RETURN(INT, -1);
-        else if (file1.size > file2.size)
             FUNCTION_TEST_RETURN(INT, 1);
+        else if (file1.size > file2.size)
+            FUNCTION_TEST_RETURN(INT, -1);
     }
 
-    // If bundling order by time ascending so that older files are bundled with older files and newer with newer
+    // If bundling order by time desc so that older files are bundled with older files and newer with newer
     if (backupProcessQueueComparatorBundle)
     {
         if (file1.timestamp > file2.timestamp)
-            FUNCTION_TEST_RETURN(INT, -1);
-        else if (file1.timestamp < file2.timestamp)
             FUNCTION_TEST_RETURN(INT, 1);
+        else if (file1.timestamp < file2.timestamp)
+            FUNCTION_TEST_RETURN(INT, -1);
     }
 
     // If size/time is the same then use name to generate a deterministic ordering (names must be unique)
-    FUNCTION_TEST_RETURN(INT, strCmp(file1.name, file2.name));
+    FUNCTION_TEST_RETURN(INT, strCmp(file2.name, file1.name));
 }
 
 // Helper to generate the backup queues
@@ -1885,7 +1885,7 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
         backupProcessQueueComparatorBundleLimit = jobData->bundleLimit;
 
         for (unsigned int queueIdx = 0; queueIdx < lstSize(jobData->queueList); queueIdx++)
-            lstSort(*(List **)lstGet(jobData->queueList, queueIdx), sortOrderDesc);
+            lstSort(*(List **)lstGet(jobData->queueList, queueIdx), sortOrderAsc);
 
         // Move process queues to prior context
         lstMove(jobData->queueList, memContextPrior());

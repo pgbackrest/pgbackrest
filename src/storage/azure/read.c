@@ -140,6 +140,14 @@ storageReadAzureClose(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
+static const IoReadInterface storageReadAzureInterface =
+{
+    .close = storageReadAzureClose,
+    .eof = storageReadAzureEof,
+    .open = storageReadAzureOpen,
+    .read = storageReadAzure,
+};
+
 FN_EXTERN StorageRead *
 storageReadAzureNew(
     StorageAzure *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset,
@@ -163,29 +171,13 @@ storageReadAzureNew(
         *this = (StorageReadAzure)
         {
             .storage = storage,
-
-            .interface = (StorageReadInterface)
-            {
-                .type = STORAGE_AZURE_TYPE,
-                .name = strDup(name),
-                .ignoreMissing = ignoreMissing,
-                .offset = offset,
-                .limit = varDup(limit),
-                .retry = true,
-                .version = version,
-                .versionId = strDup(versionId),
-
-                .ioInterface = (IoReadInterface)
-                {
-                    .eof = storageReadAzureEof,
-                    .open = storageReadAzureOpen,
-                    .read = storageReadAzure,
-                    .close = storageReadAzureClose,
-                },
-            },
         };
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface));
+    FUNCTION_LOG_RETURN(
+        STORAGE_READ,
+        storageReadNewP(
+            this, STORAGE_AZURE_TYPE, name, ignoreMissing, offset, limit, &storageReadAzureInterface, .version = version,
+            .versionId = versionId, .retry = true));
 }

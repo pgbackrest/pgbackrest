@@ -67,7 +67,12 @@ testBackupValidateFile(
         const Buffer *const checksum = cryptoHashOne(hashTypeSha1, storageGetP(read));
 
         if (!bufEq(checksum, BUF(file.checksumRepoSha1, HASH_TYPE_SHA1_SIZE)))
-            THROW_FMT(AssertError, "'%s' repo checksum does match manifest", strZ(file.name));
+        {
+            THROW_FMT(
+                AssertError, "'%s' repo checksum %s does not match manifest checksum %s", strZ(file.name),
+                strZ(strNewEncode(encodingHex, checksum)),
+                strZ(strNewEncode(encodingHex, BUF(file.checksumRepoSha1, HASH_TYPE_SHA1_SIZE))));
+        }
     }
 
     // Calculate checksum/size and decompress if needed
@@ -93,10 +98,8 @@ testBackupValidateFile(
 
         ioReadOpen(storageReadIo(read));
 
-        const BlockMap *const blockMap = blockMapNewRead(
-            storageReadIo(read), file.blockIncrSize, file.blockIncrChecksumSize);
-
         // Build map log
+        const BlockMap *const blockMap = blockMapNewRead(storageReadIo(read), file.blockIncrSize, file.blockIncrChecksumSize);
         String *const mapLog = strNew();
         const BlockMapItem *blockMapItemLast = NULL;
 
@@ -190,16 +193,20 @@ testBackupValidateFile(
 
     // Validate checksum
     if (!bufEq(checksum, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE)))
-        THROW_FMT(AssertError, "'%s' checksum does match manifest", strZ(file.name));
+        THROW_FMT(AssertError, "'%s' checksum does not match manifest", strZ(file.name));
 
     // Test size and repo-size
     // -------------------------------------------------------------------------------------------------------------
     if (size != file.size)
-        THROW_FMT(AssertError, "'%s' size does match manifest", strZ(file.name));
+        THROW_FMT(AssertError, "'%s' size does not match manifest", strZ(file.name));
 
     // Repo size can only be compared to file size when not bundled
     if (file.bundleId == 0 && fileSize != file.sizeRepo)
-        THROW_FMT(AssertError, "'%s' repo size does match manifest", strZ(file.name));
+    {
+        THROW_FMT(
+            AssertError, "'%s' repo size %" PRIu64 " does not match manifest size %" PRIu64, strZ(file.name), fileSize,
+            file.sizeRepo);
+    }
 
     // Timestamp
     // -------------------------------------------------------------------------------------------------------------

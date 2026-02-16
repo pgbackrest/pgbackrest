@@ -960,10 +960,16 @@ unit:
         coverage:
           - command/restore/blockChecksum
           - command/restore/blockDelta
+          - command/restore/clean.inc: included
+          - command/restore/config.inc: included
           - command/restore/file
+          - command/restore/process.inc: included
           - command/restore/protocol
+          - command/restore/remap.inc: included
           - command/restore/restore
+          - command/restore/select.inc: included
           - command/restore/timeline
+          - command/restore/validate.inc: included
 
         include:
           - common/user
