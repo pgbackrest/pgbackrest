@@ -23,6 +23,7 @@ typedef struct StorageReadS3
     StorageReadInterface interface;                                 // Interface
     StorageS3 *storage;                                             // Storage that created this object
 
+    HttpRequest *httpRequest;                                       // HTTP request
     HttpResponse *httpResponse;                                     // HTTP response
 } StorageReadS3;
 
@@ -37,6 +38,37 @@ Macros for function logging
 /***********************************************************************************************************************************
 Open the file
 ***********************************************************************************************************************************/
+static bool
+storageReadS3OpenAsync(StorageReadS3 *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_S3, this);
+    FUNCTION_LOG_END();
+
+    bool result = false;
+
+    // Wait for response
+    MEM_CONTEXT_OBJ_BEGIN(this)
+    {
+        this->httpResponse = storageS3ResponseP(this->httpRequest, .allowMissing = true, .contentIo = true);
+
+        httpRequestFree(this->httpRequest);
+        this->httpRequest = NULL;
+    }
+    MEM_CONTEXT_OBJ_END();
+
+    // If file exists
+    if (httpResponseCodeOk(this->httpResponse))
+    {
+        result = true;
+    }
+    // Else error unless ignore missing
+    else if (!this->interface.ignoreMissing)
+        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
 static bool
 storageReadS3Open(THIS_VOID)
 {
@@ -57,23 +89,24 @@ storageReadS3Open(THIS_VOID)
         // Request the file
         MEM_CONTEXT_OBJ_BEGIN(this)
         {
-            this->httpResponse = storageS3RequestP(
+            this->httpRequest = storageS3RequestAsyncP(
                 this->storage, HTTP_VERB_GET_STR, this->interface.name,
                 .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
                 .query =
                     this->interface.versionId == NULL
                         ? NULL : httpQueryPut(httpQueryNewP(), STRDEF("versionId"), this->interface.versionId),
-                .allowMissing = true, .contentIo = true, .sseC = true);
+                .sseC = true);
         }
         MEM_CONTEXT_OBJ_END();
 
-        if (httpResponseCodeOk(this->httpResponse))
+        // Wait for response when file missing needs to be reported
+        if (this->interface.ignoreMissing)
         {
-            result = true;
+            result = storageReadS3OpenAsync(this);
         }
-        // Else error unless ignore missing
-        else if (!this->interface.ignoreMissing)
-            THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
+        // Else assume that the file exists for now (it will be checked during read)
+        else
+            result = true;
     }
 
     FUNCTION_LOG_RETURN(BOOL, result);
@@ -93,9 +126,14 @@ storageReadS3(THIS_VOID, Buffer *const buffer, const bool block)
         FUNCTION_LOG_PARAM(BOOL, block);
     FUNCTION_LOG_END();
 
-    ASSERT(this != NULL && this->httpResponse != NULL);
-    ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
+    ASSERT(this != NULL);
     ASSERT(buffer != NULL && !bufFull(buffer));
+
+    // Complete the open if it was async
+    if (this->httpResponse == NULL)
+        storageReadS3OpenAsync(this);
+
+    ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
 
     FUNCTION_LOG_RETURN(SIZE, ioRead(httpResponseIoRead(this->httpResponse), buffer));
 }
@@ -112,7 +150,12 @@ storageReadS3Eof(THIS_VOID)
         FUNCTION_TEST_PARAM(STORAGE_READ_S3, this);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL && this->httpResponse != NULL);
+    ASSERT(this != NULL);
+
+    // In async mode we may not have a response yet so return false
+    if (this->httpResponse == NULL)
+        FUNCTION_TEST_RETURN(BOOL, false);
+
     ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
 
     FUNCTION_TEST_RETURN(BOOL, ioReadEof(httpResponseIoRead(this->httpResponse)));
@@ -133,6 +176,7 @@ storageReadS3Close(THIS_VOID)
     ASSERT(this != NULL);
     ASSERT(this->httpResponse != NULL);
 
+    httpRequestFree(this->httpRequest);
     httpResponseFree(this->httpResponse);
     this->httpResponse = NULL;
 

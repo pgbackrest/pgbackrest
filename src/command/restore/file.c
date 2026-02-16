@@ -53,6 +53,8 @@ restoreFile(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Check files to determine which ones need to be restored
+        StorageReadMulti *const repoFileRead = storageNewReadMultiP(storageRepoIdx(repoIdx));
+
         for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
         {
             // Use a per-file mem context to reduce memory usage
@@ -212,13 +214,20 @@ restoreFile(
                     // Report the file as zeroed or zero-length
                     fileResult->result = restoreResultZero;
                 }
+
+                // If the file will be copied add it to the read list
+                if (fileResult->result == restoreResultCopy)
+                {
+                    storageReadMultiAddP(
+                        repoFileRead, repoFile, .compressible = repoFileCompressType == compressTypeNone && cipherPass == NULL,
+                        .offset = file->offset, .limit = file->limit);
+                }
             }
             MEM_CONTEXT_TEMP_END();
         }
 
         // Copy files from repository to database
-        StorageRead *repoFileRead = NULL;
-        uint64_t repoFileLimit = 0;
+        ioReadOpen(storageReadMultiIo(repoFileRead));
 
         for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
         {
@@ -231,51 +240,6 @@ restoreFile(
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
                     const RestoreFile *const file = lstGet(fileList, fileIdx);
-
-                    // If no repo file is currently open
-                    if (repoFileLimit == 0)
-                    {
-                        // If a limit is specified then we need to use it, even if there is only one pg file to copy, because we
-                        // might be reading from the middle of a repo file containing many pg files
-                        if (file->limit != NULL)
-                        {
-                            ASSERT(varUInt64(file->limit) != 0);
-                            repoFileLimit = varUInt64(file->limit);
-
-                            // Determine how many files can be copied with one read
-                            for (unsigned int fileNextIdx = fileIdx + 1; fileNextIdx < lstSize(fileList); fileNextIdx++)
-                            {
-                                // Only files that are being copied are considered
-                                if (((const RestoreFileResult *)lstGet(result, fileNextIdx))->result == restoreResultCopy)
-                                {
-                                    const RestoreFile *const fileNext = lstGet(fileList, fileNextIdx);
-                                    ASSERT(fileNext->limit != NULL && varUInt64(fileNext->limit) != 0);
-
-                                    // Break if the offset is not the first file's offset + limit of all additional files so far
-                                    if (fileNext->offset != file->offset + repoFileLimit)
-                                        break;
-
-                                    repoFileLimit += varUInt64(fileNext->limit);
-                                }
-                                // Else if the file was not copied then there is a gap so break
-                                else
-                                    break;
-                            }
-                        }
-
-                        // Create and open the repo file. It needs to be created in the prior context because it will live longer
-                        // than a single loop when more than one file is being read.
-                        MEM_CONTEXT_PRIOR_BEGIN()
-                        {
-                            repoFileRead = storageNewReadP(
-                                storageRepoIdx(repoIdx), repoFile,
-                                .compressible = repoFileCompressType == compressTypeNone && cipherPass == NULL,
-                                .offset = file->offset, .limit = repoFileLimit != 0 ? VARUINT64(repoFileLimit) : NULL);
-
-                            ioReadOpen(storageReadIo(repoFileRead));
-                        }
-                        MEM_CONTEXT_PRIOR_END();
-                    }
 
                     // Create pg file
                     StorageWrite *const pgFileWrite = storageNewWriteP(
@@ -292,7 +256,7 @@ restoreFile(
 
                         // Read block map. This will be compared to the block checksum list already created to determine which
                         // blocks need to be fetched from the repository. If we got here there must be at least one block to fetch.
-                        IoRead *const blockMapRead = ioLimitReadNew(storageReadIo(repoFileRead), varUInt64(file->limit));
+                        IoRead *const blockMapRead = ioLimitReadNew(storageReadMultiIo(repoFileRead), varUInt64(file->limit));
 
                         if (cipherPass != NULL)
                         {
@@ -393,20 +357,12 @@ restoreFile(
 
                         // Copy file
                         ioWriteOpen(storageWriteIo(pgFileWrite));
-                        ioCopyP(storageReadIo(repoFileRead), storageWriteIo(pgFileWrite), .limit = file->limit);
+                        ioCopyP(storageReadMultiIo(repoFileRead), storageWriteIo(pgFileWrite), .limit = file->limit);
                         ioWriteClose(storageWriteIo(pgFileWrite));
 
                         // Get checksum result
                         checksum = pckReadBinP(ioFilterGroupResultP(filterGroup, CRYPTO_HASH_FILTER_TYPE));
                     }
-
-                    // If more than one file is being copied from a single read then decrement the limit
-                    if (repoFileLimit != 0)
-                        repoFileLimit -= varUInt64(file->limit);
-
-                    // Free the repo file when there are no more files to copy from it
-                    if (repoFileLimit == 0)
-                        storageReadFree(repoFileRead);
 
                     // Validate checksum
                     if (!bufEq(file->checksum, checksum))

@@ -70,6 +70,8 @@ storageReadGcsOpen(THIS_VOID)
         }
         MEM_CONTEXT_OBJ_END();
 
+        // !!! NEED TO ADD ASYNC FUNCTIONALITY
+
         if (httpResponseCodeOk(this->httpResponse))
         {
             result = true;

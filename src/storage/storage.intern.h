@@ -296,6 +296,12 @@ typedef struct StorageInterface
     // Features implemented by the storage driver
     uint64_t feature;
 
+    // Allowed number of concurrent read/writes
+    unsigned int concurrency;
+
+    // Bytes to read over rather than open file with new offset
+    uint64_t readOver;
+
     // Required functions
     StorageInterfaceInfo *info;
     StorageInterfaceList *list;

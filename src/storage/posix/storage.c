@@ -623,6 +623,9 @@ storagePosixNewInternal(
             .interface = storageInterfacePosix,
         };
 
+        // Set concurrency
+        this->interface.concurrency = 1;
+
         // Disable path sync when not supported
         if (!pathSync)
             this->interface.pathSync = NULL;

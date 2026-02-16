@@ -67,6 +67,7 @@ storageNew(
     ASSERT(interface.newWrite != NULL);
     ASSERT(interface.pathRemove != NULL);
     ASSERT(interface.remove != NULL);
+    ASSERT(interface.concurrency != 0);
 
     OBJ_NEW_BEGIN(Storage, .childQty = MEM_CONTEXT_QTY_MAX)
     {
@@ -535,6 +536,20 @@ storageNewRead(const Storage *const this, const String *const fileExp, const Sto
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STORAGE_READ, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN StorageReadMulti *
+storageNewReadMulti(const Storage *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_LOG_RETURN(
+        STORAGE_READ_MULTI, storageReadMultiNew(this, this->pub.interface.concurrency, this->pub.interface.readOver));
 }
 
 /**********************************************************************************************************************************/

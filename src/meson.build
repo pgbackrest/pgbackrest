@@ -39,6 +39,7 @@ src_common = files(
     'common/io/bufferRead.c',
     'common/io/bufferWrite.c',
     'common/io/io.c',
+    'common/io/limitRead.c',
     'common/io/read.c',
     'common/io/write.c',
     'common/log.c',
@@ -67,6 +68,7 @@ src_common = files(
     'storage/iterator.c',
     'storage/list.c',
     'storage/read.c',
+    'storage/readMulti.c',
     'storage/storage.c',
     'storage/write.c',
 )
@@ -205,7 +207,6 @@ src_pgbackrest = [
     'common/io/http/response.c',
     'common/io/http/session.c',
     'common/io/http/url.c',
-    'common/io/limitRead.c',
     'common/io/server.c',
     'common/io/session.c',
     'common/io/socket/address.c',

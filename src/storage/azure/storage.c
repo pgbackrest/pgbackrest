@@ -895,6 +895,10 @@ storageAzureNew(
             .keyType = keyType,
         };
 
+        // Set concurrency
+        this->interface.concurrency = 1;
+        // !!! ADD READ OVER
+
         // Create tag query string
         if (tag != NULL)
         {

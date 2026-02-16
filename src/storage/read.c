@@ -52,12 +52,7 @@ storageReadOpen(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    const bool result = this->ioInterface.open(this->driver);
-
-    // Now that the file is open disable ignore missing. On retry the file must not be missing so we want a hard error.
-    storageReadDriverInterface(this)->ignoreMissing = false;
-
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, this->ioInterface.open(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -102,14 +97,17 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
             CATCH_ANY()
             {
                 // If there is another try remaining then close the file and reopen it to the new position, taking into account any
-                // bytes that have already been read
-                if (try > 1)
+                // bytes that have already been read. Do not retry when the file is missing.
+                if (try > 1 && !errorInstanceOf(&FileMissingError))
                 {
                     // Close the file
                     this->ioInterface.close(this->driver);
 
                     // Ignore partial reads and restart from the last successful read
                     bufUsedSet(buffer, bufUsedBegin);
+
+                    // Disable ignore missing. On retry the file must not be missing so we want a hard error.
+                    storageReadDriverInterface(this)->ignoreMissing = false;
 
                     // Update offset and limit (when present) based on how many bytes have been successfully read
                     storageReadDriverInterface(this)->offset = storageReadInterface(this)->offset + this->bytesRead;

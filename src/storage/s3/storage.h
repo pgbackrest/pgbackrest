@@ -41,6 +41,6 @@ FN_EXTERN Storage *storageS3New(
     const String *secretAccessKey, const String *securityToken, const String *kmsKeyId, const String *sseCustomerKey,
     const String *credRole, const String *tokenFile, const String *credUrl, size_t partSize, const KeyValue *tag,
     const String *host, unsigned int port, TimeMSec timeout, HttpProtocolType protocolType, bool verifyPeer, const String *caFile,
-    const String *caPath, bool requesterPays);
+    const String *caPath, bool requesterPays, unsigned int concurrency, uint64_t readOver);
 
 #endif

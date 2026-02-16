@@ -788,7 +788,7 @@ hrnHostConfig(HrnHost *const this)
                             hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_S3_BUCKET), STRDEF(HRN_HOST_S3_ENDPOINT),
                             STR(HRN_HOST_S3_REGION), storageS3KeyTypeShared, storageS3UriStyleHost, STRDEF(HRN_HOST_S3_ACCESS_KEY),
                             STRDEF(HRN_HOST_S3_ACCESS_SECRET_KEY), NULL, NULL, NULL, NULL, NULL, NULL, 5 * 1024 * 1024, NULL,
-                            hrnHostIp(s3), 443, ioTimeoutMs(), httpProtocolTypeHttps, false, NULL, NULL, NULL);
+                            hrnHostIp(s3), 443, ioTimeoutMs(), httpProtocolTypeHttps, false, NULL, NULL, NULL, 2, 8192);
                     }
                     MEM_CONTEXT_OBJ_END();
 

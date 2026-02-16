@@ -1242,7 +1242,8 @@ storageS3New(
     const String *const securityToken, const String *const kmsKeyId, const String *sseCustomerKey, const String *const credRole,
     const String *const tokenFile, const String *const credUrl, const size_t partSize, const KeyValue *const tag,
     const String *host, const unsigned int port, const TimeMSec timeout, const HttpProtocolType protocolType,
-    const bool verifyPeer, const String *const caFile, const String *const caPath, const bool requesterPays)
+    const bool verifyPeer, const String *const caFile, const String *const caPath, const bool requesterPays,
+    const unsigned int concurrency, const uint64_t readOver)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -1272,6 +1273,8 @@ storageS3New(
         FUNCTION_LOG_PARAM(STRING, caFile);
         FUNCTION_LOG_PARAM(STRING, caPath);
         FUNCTION_LOG_PARAM(BOOL, requesterPays);
+        FUNCTION_LOG_PARAM(UINT, concurrency);
+        FUNCTION_LOG_PARAM(UINT64, readOver);
     FUNCTION_LOG_END();
 
     ASSERT(path != NULL);
@@ -1300,6 +1303,10 @@ storageS3New(
             // Force the signing key to be generated on the first run
             .signingKeyDate = YYYYMMDD_STR,
         };
+
+        // Set concurrency and read over
+        this->interface.concurrency = concurrency;
+        this->interface.readOver = readOver;
 
         // Create tag query string
         if (write && tag != NULL)

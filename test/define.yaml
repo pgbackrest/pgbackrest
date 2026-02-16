@@ -355,6 +355,7 @@ unit:
           - storage/iterator
           - storage/list
           - storage/read
+          - storage/readMulti
           - storage/storage
           - storage/write
 
@@ -624,6 +625,7 @@ unit:
           - storage/s3/storage
           - storage/s3/write
           - storage/read
+          - storage/readMulti
           - storage/write
           - storage/helper
 
