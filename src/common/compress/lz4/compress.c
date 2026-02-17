@@ -3,7 +3,7 @@ LZ4 Compress
 
 Developed against version r131 using the documentation in https://github.com/lz4/lz4/blob/r131/lib/lz4frame.h.
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <lz4frame.h>
 #include <stdio.h>

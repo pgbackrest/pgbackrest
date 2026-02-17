@@ -3,7 +3,7 @@ Pq Test Harness
 ***********************************************************************************************************************************/
 #ifndef HARNESS_PQ_REAL
 
-#include "build.auto.h"
+#include <build.h>
 
 #include <string.h>
 

@@ -3,7 +3,7 @@ Verify Command
 
 Verify contents of the repository.
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <stdlib.h>
 #include <string.h>

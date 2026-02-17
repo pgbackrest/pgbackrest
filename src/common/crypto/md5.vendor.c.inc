@@ -35,7 +35,7 @@
  * compile-time configuration.
  */
 
-#include "build.auto.h"
+#include <build.h>
 
 #include <string.h>
 

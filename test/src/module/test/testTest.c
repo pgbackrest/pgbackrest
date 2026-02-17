@@ -260,6 +260,7 @@ testRun(void)
 
         TEST_COPY(
             storageRepo, storageTest,
+            "src/build.h",
             "src/common/assert.h",
             "src/common/debug.c",
             "src/common/debug.h",

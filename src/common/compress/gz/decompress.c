@@ -3,7 +3,7 @@ Gz Decompress
 
 Based on the documentation at https://github.com/madler/zlib/blob/master/zlib.h
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <stdio.h>
 #include <zlib.h>

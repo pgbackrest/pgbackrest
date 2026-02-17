@@ -3,7 +3,7 @@ S3 Storage Read
 
 Based on the documentation at https://cloud.google.com/storage/docs/json_api/v1/objects/get
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "common/debug.h"
 #include "common/io/http/client.h"

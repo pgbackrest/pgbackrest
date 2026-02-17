@@ -27,7 +27,7 @@ The block map is stored as a flag and a series of reference, super block, and bl
 
 References, super blocks, and blocks are encoded with a bit that indicates when the last one has been reached.
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "command/backup/blockMap.h"
 #include "common/debug.h"
