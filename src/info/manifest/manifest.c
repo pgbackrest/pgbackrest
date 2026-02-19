@@ -13,7 +13,7 @@ Backup Manifest Handler
 #include "common/regExp.h"
 #include "common/type/json.h"
 #include "common/type/list.h"
-#include "info/manifest.h"
+#include "info/manifest/manifest.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/storage.h"

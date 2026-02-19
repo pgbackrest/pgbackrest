@@ -22,7 +22,7 @@ Restore File
 #include "common/io/limitRead.h"
 #include "common/log.h"
 #include "config/config.h"
-#include "info/manifest.h"
+#include "info/manifest/manifest.h"
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/

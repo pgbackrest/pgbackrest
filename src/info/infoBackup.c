@@ -19,7 +19,6 @@ Backup Info Handler
 #include "common/type/json.h"
 #include "common/type/list.h"
 #include "info/infoBackup.h"
-#include "info/manifest.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
