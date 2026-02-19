@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Harness for Creating Test Backups
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <string.h>
 
@@ -11,7 +11,7 @@ Harness for Creating Test Backups
 #include "common/crypto/hash.h"
 #include "config/config.h"
 #include "info/infoArchive.h"
-#include "info/manifest.h"
+#include "info/manifest/manifest.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
 #include "storage/posix/storage.h"

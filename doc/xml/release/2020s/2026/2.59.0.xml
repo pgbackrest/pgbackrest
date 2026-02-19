@@ -12,5 +12,19 @@
                 <p>Suppress <id>unused parameter</id> errors in <proper>meson</proper> compiler probes.</p>
             </release-item>
         </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-issue id="2731"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Refactor restore module into included modules.</p>
+            </release-item>
+        </release-development-list>
     </release-core-list>
 </release>

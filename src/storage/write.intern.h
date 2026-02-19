@@ -17,26 +17,37 @@ Constructors
 ***********************************************************************************************************************************/
 typedef struct StorageWriteInterface
 {
-    StringId type;                                                  // Storage type
-    const String *name;
-
-    bool atomic;
+    const String *name;                                             // File name
+    bool createPath;                                                // Will the path be created if required?
+    bool atomic;                                                    // Are writes atomic?
     bool truncate;                                                  // Truncate file if it exists
-    bool createPath;
-    bool compressible;                                              // Is this file compressible?
-    unsigned int compressLevel;                                     // Level to use for compression
-    const String *group;                                            // Group that owns the file
-    mode_t modeFile;
-    mode_t modePath;
-    bool syncFile;
-    bool syncPath;
-    time_t timeModified;                                            // Time file was last modified
-    const String *user;                                             // User that owns the file
-
-    IoWriteInterface ioInterface;
+    bool syncPath;                                                  // Will path be synced?
+    bool syncFile;                                                  // Will file be synced?
+    const String *user;                                             // Set user ownership
+    const String *group;                                            // Set group ownership
+    mode_t modePath;                                                // Path mode
+    mode_t modeFile;                                                // File mode
+    time_t timeModified;                                            // Set modification time
 } StorageWriteInterface;
 
-FN_EXTERN StorageWrite *storageWriteNew(void *driver, const StorageWriteInterface *interface);
+typedef struct StorageWriteNewParam
+{
+    VAR_PARAM_HEADER;
+    const String *user;                                             // Set user ownership
+    const String *group;                                            // Set group ownership
+    mode_t modePath;                                                // Path mode
+    mode_t modeFile;                                                // File mode
+    time_t timeModified;                                            // Set modification time
+} StorageWriteNewParam;
+
+#define storageWriteNewP(driver, type, name, createPath, atomic, truncate, syncPath, syncFile, ioInterface, ...)                   \
+    storageWriteNew(                                                                                                               \
+        driver, type, name, createPath, atomic, truncate, syncPath, syncFile, ioInterface,                                         \
+        (StorageWriteNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN StorageWrite *storageWriteNew(
+    void *driver, StringId type, const String *name, bool createPath, bool atomic, bool truncate, bool syncPath, bool syncFile,
+    const IoWriteInterface *ioInterface, StorageWriteNewParam param);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -45,6 +56,7 @@ typedef struct StorageWritePub
 {
     const StorageWriteInterface *interface;                         // File data (name, driver type, etc.)
     IoWrite *io;                                                    // Write interface
+    StringId type;                                                  // Storage type
 } StorageWritePub;
 
 // Write interface

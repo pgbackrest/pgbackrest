@@ -770,10 +770,10 @@ unit:
         harness:
           name: manifest
           shim:
-            info/manifest: ~
+            info/manifest/manifest: ~
 
         coverage:
-          - info/manifest
+          - info/manifest/manifest
 
         depend:
           - command/backup/common
@@ -948,7 +948,7 @@ unit:
 
         include:
           - info/info
-          - info/manifest
+          - info/manifest/manifest
           - storage/storage
 
       # ----------------------------------------------------------------------------------------------------------------------------
@@ -960,15 +960,21 @@ unit:
         coverage:
           - command/restore/blockChecksum
           - command/restore/blockDelta
+          - command/restore/clean.inc: included
+          - command/restore/config.inc: included
           - command/restore/file
+          - command/restore/process.inc: included
           - command/restore/protocol
+          - command/restore/remap.inc: included
           - command/restore/restore
+          - command/restore/select.inc: included
           - command/restore/timeline
+          - command/restore/validate.inc: included
 
         include:
           - common/user
           - info/infoBackup
-          - info/manifest
+          - info/manifest/manifest
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: manifest

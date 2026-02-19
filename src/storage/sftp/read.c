@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 SFTP Storage Read
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #ifdef HAVE_LIBSSH2
 
@@ -243,6 +243,14 @@ storageReadSftpEof(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
+static const IoReadInterface storageReadSftpInterface =
+{
+    .close = storageReadSftpClose,
+    .eof = storageReadSftpEof,
+    .open = storageReadSftpOpen,
+    .read = storageReadSftp,
+};
+
 FN_EXTERN StorageRead *
 storageReadSftpNew(
     StorageSftp *const storage, const String *const name, const bool ignoreMissing, LIBSSH2_SESSION *const session,
@@ -268,28 +276,12 @@ storageReadSftpNew(
             .session = session,
             .sftpSession = sftpSession,
             .sftpHandle = sftpHandle,
-
-            .interface = (StorageReadInterface)
-            {
-                .type = STORAGE_SFTP_TYPE,
-                .name = strDup(name),
-                .ignoreMissing = ignoreMissing,
-                .offset = offset,
-                .limit = varDup(limit),
-
-                .ioInterface = (IoReadInterface)
-                {
-                    .close = storageReadSftpClose,
-                    .eof = storageReadSftpEof,
-                    .open = storageReadSftpOpen,
-                    .read = storageReadSftp,
-                },
-            },
         };
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface));
+    FUNCTION_LOG_RETURN(
+        STORAGE_READ, storageReadNewP(this, STORAGE_SFTP_TYPE, name, ignoreMissing, offset, limit, &storageReadSftpInterface));
 }
 
 #endif // HAVE_LIBSSH2

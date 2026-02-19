@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Remote Storage File write
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "common/compress/helper.h"
 #include "common/debug.h"
@@ -23,6 +23,8 @@ typedef struct StorageWriteRemote
     StorageWrite *write;                                            // Storage write interface
     ProtocolClient *client;                                         // Protocol client to make requests with
     ProtocolClientSession *session;                                 // Protocol session for requests
+    bool compressible;                                              // Is this file compressible?
+    unsigned int compressLevel;                                     // Level to use for compression
 
 #ifdef DEBUG
     uint64_t protocolWriteBytes;                                    // How many bytes were written to the protocol layer?
@@ -54,7 +56,7 @@ storageWriteRemoteOpen(THIS_VOID)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If the file is compressible add decompression filter on the remote
-        if (this->interface.compressible)
+        if (this->compressible)
         {
             ioFilterGroupInsert(
                 ioWriteFilterGroup(storageWriteIo(this->write)), 0, decompressFilterP(compressTypeLz4, .raw = true));
@@ -80,11 +82,11 @@ storageWriteRemoteOpen(THIS_VOID)
         ioFilterGroupClear(ioWriteFilterGroup(storageWriteIo(this->write)));
 
         // If the file is compressible add compression filter locally
-        if (this->interface.compressible)
+        if (this->compressible)
         {
             ioFilterGroupAdd(
                 ioWriteFilterGroup(storageWriteIo(this->write)),
-                compressFilterP(compressTypeLz4, (int)this->interface.compressLevel, .raw = true));
+                compressFilterP(compressTypeLz4, (int)this->compressLevel, .raw = true));
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -161,6 +163,13 @@ storageWriteRemoteClose(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
+static const IoWriteInterface storageWriteRemoteInterface =
+{
+    .close = storageWriteRemoteClose,
+    .open = storageWriteRemoteOpen,
+    .write = storageWriteRemote,
+};
+
 FN_EXTERN StorageWrite *
 storageWriteRemoteNew(
     StorageRemote *const storage, ProtocolClient *const client, const String *const name, const mode_t modeFile,
@@ -196,34 +205,14 @@ storageWriteRemoteNew(
             .storage = storage,
             .client = client,
             .session = protocolClientSessionNewP(client, PROTOCOL_COMMAND_STORAGE_WRITE, .async = true),
-
-            .interface = (StorageWriteInterface)
-            {
-                .type = STORAGE_REMOTE_TYPE,
-                .name = strDup(name),
-                .atomic = atomic,
-                .compressible = compressible,
-                .compressLevel = compressLevel,
-                .createPath = createPath,
-                .group = strDup(group),
-                .modeFile = modeFile,
-                .modePath = modePath,
-                .syncFile = syncFile,
-                .syncPath = syncPath,
-                .truncate = true,
-                .user = strDup(user),
-                .timeModified = timeModified,
-
-                .ioInterface = (IoWriteInterface)
-                {
-                    .close = storageWriteRemoteClose,
-                    .open = storageWriteRemoteOpen,
-                    .write = storageWriteRemote,
-                },
-            },
+            .compressible = compressible,
+            .compressLevel = compressLevel,
         };
 
-        this->write = storageWriteNew(OBJ_NAME(this, StorageWrite::StorageWriteRemote), &this->interface);
+        this->write = storageWriteNewP(
+            OBJ_NAME(this, StorageWrite::StorageWriteRemote), STORAGE_REMOTE_TYPE, name, createPath, atomic, true, syncPath,
+            syncFile, &storageWriteRemoteInterface, .user = user, .group = group, .modePath = modePath, .modeFile = modeFile,
+            .timeModified = timeModified);
     }
     OBJ_NEW_END();
 

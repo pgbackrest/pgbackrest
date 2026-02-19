@@ -225,27 +225,6 @@ endif
 # Set configuration path
 configuration.set_quoted('CFGOPTDEF_CONFIG_PATH', get_option('configdir'), description: 'Configuration path')
 
-# Set FN_NO_RETURN macro
-configuration.set('FN_NO_RETURN', '__attribute__((__noreturn__))', description: 'Indicate that a function does not return')
-
-# Set FN_INLINE_ALWAYS macro
-configuration.set(
-    'FN_INLINE_ALWAYS', '__attribute__((always_inline)) static inline',
-    description: 'Indicate that a function should always be inlined'
-)
-
-# Set FN_PRINTF macro
-configuration.set(
-    'FN_PRINTF(fmt, args)', '__attribute__((format(printf, fmt, args)))',
-    description: 'Indicate that a function is formatted like printf (and provide format and args position)'
-)
-
-# Set FN_STRFTIME macro
-configuration.set(
-    'FN_STRFTIME(fmt)', '__attribute__((format(strftime, fmt, 0)))',
-    description: 'Indicate that a function is formatted like strftime (and provide format position)'
-)
-
 # Set VR_NON_STRING macro
 if cc.compiles(
         '''int main(void) {__attribute__((nonstring)) static char test[3] = "ABC";}''',

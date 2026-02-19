@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Remote Storage Protocol Handler
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "common/compress/helper.h"
 #include "common/debug.h"
@@ -532,7 +532,7 @@ storageRemoteWriteProtocol(PackRead *const param, void *const fileWrite)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
-        FUNCTION_LOG_PARAM(STORAGE_READ, fileWrite);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE, fileWrite);
     FUNCTION_LOG_END();
 
     ASSERT(param != NULL);

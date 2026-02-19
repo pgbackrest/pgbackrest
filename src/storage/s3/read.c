@@ -3,7 +3,7 @@ S3 Storage Read
 
 Based on the documentation at https://cloud.google.com/storage/docs/json_api/v1/objects/get
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "common/debug.h"
 #include "common/io/http/client.h"
@@ -140,6 +140,14 @@ storageReadS3Close(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
+static const IoReadInterface storageReadS3Interface =
+{
+    .close = storageReadS3Close,
+    .eof = storageReadS3Eof,
+    .open = storageReadS3Open,
+    .read = storageReadS3,
+};
+
 FN_EXTERN StorageRead *
 storageReadS3New(
     StorageS3 *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset, const Variant *const limit,
@@ -164,29 +172,13 @@ storageReadS3New(
         *this = (StorageReadS3)
         {
             .storage = storage,
-
-            .interface = (StorageReadInterface)
-            {
-                .type = STORAGE_S3_TYPE,
-                .name = strDup(name),
-                .ignoreMissing = ignoreMissing,
-                .offset = offset,
-                .limit = varDup(limit),
-                .retry = true,
-                .version = version,
-                .versionId = strDup(versionId),
-
-                .ioInterface = (IoReadInterface)
-                {
-                    .eof = storageReadS3Eof,
-                    .open = storageReadS3Open,
-                    .read = storageReadS3,
-                    .close = storageReadS3Close,
-                },
-            },
         };
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface));
+    FUNCTION_LOG_RETURN(
+        STORAGE_READ,
+        storageReadNewP(
+            this, STORAGE_S3_TYPE, name, ignoreMissing, offset, limit, &storageReadS3Interface, .version = version,
+            .versionId = versionId, .retry = true));
 }

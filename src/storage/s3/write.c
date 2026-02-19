@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 S3 Storage File Write
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "common/debug.h"
 #include "common/log.h"
@@ -255,6 +255,12 @@ storageWriteS3Close(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
+static const IoWriteInterface storageWriteS3Interface =
+{
+    .close = storageWriteS3Close,
+    .write = storageWriteS3,
+};
+
 FN_EXTERN StorageWrite *
 storageWriteS3New(StorageS3 *const storage, const String *const name, const size_t partSize)
 {
@@ -274,26 +280,10 @@ storageWriteS3New(StorageS3 *const storage, const String *const name, const size
             .storage = storage,
             .partSize = partSize,
             .partBuffer = bufNew(0),
-
-            .interface = (StorageWriteInterface)
-            {
-                .type = STORAGE_S3_TYPE,
-                .name = strDup(name),
-                .atomic = true,
-                .createPath = true,
-                .syncFile = true,
-                .syncPath = true,
-                .truncate = true,
-
-                .ioInterface = (IoWriteInterface)
-                {
-                    .close = storageWriteS3Close,
-                    .write = storageWriteS3,
-                },
-            },
         };
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteNew(this, &this->interface));
+    FUNCTION_LOG_RETURN(
+        STORAGE_WRITE, storageWriteNewP(this, STORAGE_S3_TYPE, name, true, true, true, true, true, &storageWriteS3Interface));
 }

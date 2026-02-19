@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Storage Write Interface
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "common/debug.h"
 #include "common/log.h"
@@ -29,26 +29,61 @@ This object expects its context to be created in advance. This is so the calling
 required multiple functions and contexts to make it safe.
 ***********************************************************************************************************************************/
 FN_EXTERN StorageWrite *
-storageWriteNew(void *const driver, const StorageWriteInterface *const interface)
+storageWriteNew(
+    void *const driver, const StringId type, const String *const name, const bool createPath, const bool atomic,
+    const bool truncate, const bool syncPath, const bool syncFile, const IoWriteInterface *const ioInterface,
+    const StorageWriteNewParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM_P(VOID, driver);
-        FUNCTION_LOG_PARAM_P(STORAGE_WRITE_INTERFACE, interface);
+        FUNCTION_LOG_PARAM(STRING_ID, type);
+        FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM(BOOL, createPath);
+        FUNCTION_LOG_PARAM(BOOL, atomic);
+        FUNCTION_LOG_PARAM(BOOL, truncate);
+        FUNCTION_LOG_PARAM(BOOL, syncPath);
+        FUNCTION_LOG_PARAM(BOOL, syncFile);
+        FUNCTION_LOG_PARAM_P(IO_WRITE_INTERFACE, ioInterface);
+        FUNCTION_LOG_PARAM(STRING, param.user);
+        FUNCTION_LOG_PARAM(STRING, param.group);
+        FUNCTION_LOG_PARAM(UINT, param.modePath);
+        FUNCTION_LOG_PARAM(UINT, param.modeFile);
+        FUNCTION_LOG_PARAM(TIME, param.timeModified);
     FUNCTION_LOG_END();
 
     FUNCTION_AUDIT_HELPER();
 
     ASSERT(driver != NULL);
-    ASSERT(interface != NULL);
+    ASSERT(name != NULL);
+    ASSERT(ioInterface != NULL);
+    ASSERT(ioInterface->close != NULL);
+    ASSERT(ioInterface->write != NULL);
 
     OBJ_NEW_BEGIN(StorageWrite, .childQty = MEM_CONTEXT_QTY_MAX)
     {
+        // Initialize the interface
+        *((StorageWriteInterface *)driver) = (StorageWriteInterface)
+        {
+            .name = strDup(name),
+            .createPath = createPath,
+            .atomic = atomic,
+            .truncate = truncate,
+            .syncPath = syncPath,
+            .syncFile = syncFile,
+            .user = strDup(param.user),
+            .group = strDup(param.group),
+            .modePath = param.modePath,
+            .modeFile = param.modeFile,
+            .timeModified = param.timeModified,
+        };
+
         *this = (StorageWrite)
         {
             .pub =
             {
-                .interface = interface,
-                .io = ioWriteNew(driver, interface->ioInterface),
+                .interface = driver,
+                .io = ioWriteNew(driver, *ioInterface),
+                .type = type,
             },
         };
     }
