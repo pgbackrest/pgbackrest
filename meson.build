@@ -19,7 +19,7 @@ project(
         'unity_size=100000',
 
         # Compiler options
-        'c_std=c99',
+        'c_std=c11',
     ],
 )
 
