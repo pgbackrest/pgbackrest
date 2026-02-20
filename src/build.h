@@ -16,7 +16,7 @@ Function attributes
 #define FN_NO_RETURN                                                __attribute__((__noreturn__))
 
 // Indicate that a function should always be inlined
-#define FN_INLINE_ALWAYS                                            __attribute__((always_inline)) static inline
+#define FN_INLINE_ALWAYS                                            __attribute__((__always_inline__)) static inline
 
 // Indicate that a function is formatted like printf (and provide format and args position)
 #define FN_PRINTF(fmt, args)                                        __attribute__((format(printf, fmt, args)))
