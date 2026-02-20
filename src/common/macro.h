@@ -7,6 +7,9 @@ Portions Copyright (c) 1994, Regents of the University of California
 #ifndef COMMON_MACRO_H
 #define COMMON_MACRO_H
 
+#include <assert.h>
+#include <stdalign.h>
+
 /***********************************************************************************************************************************
 Convert the parameter to a zero-terminated string
 
@@ -29,35 +32,11 @@ Useful for ensuring coverage in cases where compared values may be always ascend
     while (0)
 
 /***********************************************************************************************************************************
-If the "condition" (a compile-time-constant expression) evaluates to false then throw a compile error using the "message" (a string
-literal).
-
-gcc 4.6 and up supports _Static_assert(), but there are bizarre syntactic placement restrictions. Macros STATIC_ASSERT_STMT() and
-STATIC_ASSERT_EXP() make it safe to use as a statement or in an expression, respectively.
-
-Otherwise we fall back on a kluge that assumes the compiler will complain about a negative width for a struct bit-field. This will
-not include a helpful error message, but it beats not getting an error at all. Note that when std=c99 it looks like gcc is using the
-same kluge.
-
-Adapted from PostgreSQL src/include/c.h.
+C11 supports static_assert but there are some syntactic placement restrictions. STATIC_ASSERT_EXP() makes it safe to use in an
+expression.
 ***********************************************************************************************************************************/
-#ifdef HAVE_STATIC_ASSERT
-
-#define STATIC_ASSERT_STMT(condition, message)                                                                                     \
-    do {_Static_assert(condition, message);} while (0)
-
 #define STATIC_ASSERT_EXPR(condition, message)                                                                                     \
-    ((void)({STATIC_ASSERT_STMT(condition, message); true;}))
-
-#else
-
-#define STATIC_ASSERT_STMT(condition, message)                                                                                     \
-    ((void)sizeof(struct {int static_assert_failure : (condition) ? 1 : -1;}))
-
-#define STATIC_ASSERT_EXPR(condition, message)                                                                                     \
-    STATIC_ASSERT_STMT(condition, message)
-
-#endif
+    ((void)({static_assert(condition, message); true;}))
 
 /***********************************************************************************************************************************
 Allows casting const-ness away from an expression, but doesn't allow changing the type. Enforcement of the latter currently only
@@ -81,18 +60,11 @@ Adapted from PostgreSQL src/include/c.h.
 #endif
 
 /***********************************************************************************************************************************
-Determine the alignment of a data type
-
-This macro reduces to a constant so it is safe to use anywhere a constant is allowed, e.g. a switch statement case.
-***********************************************************************************************************************************/
-#define ALIGN_OF(type) ((size_t)&((struct {char c; type t;} *)0)->t)
-
-/***********************************************************************************************************************************
 Determine the byte offset required to align a type after an arbitrary number of bytes
 
 This is useful for determining how to correctly align a type in a buffer that is being dynamically built up like a struct.
 ***********************************************************************************************************************************/
-#define ALIGN_OFFSET(type, bytes) (ALIGN_OF(type) - ((bytes) % ALIGN_OF(type)))
+#define ALIGN_OFFSET(type, bytes) (alignof(type) - ((bytes) % alignof(type)))
 
 /***********************************************************************************************************************************
 Determine size of a type in a struct
