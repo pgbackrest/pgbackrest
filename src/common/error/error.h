@@ -318,24 +318,24 @@ FN_EXTERN jmp_buf *errorInternalJump(void);
 FN_EXTERN bool errorInternalCatch(const ErrorType *errorTypeCatch, bool fatalCatch);
 
 // Propagate the error up so it can be caught
-FN_EXTERN FN_NO_RETURN void errorInternalPropagate(void);
+FN_EXTERN noreturn void errorInternalPropagate(void);
 
 // End the try block
 FN_EXTERN void errorInternalTryEnd(void);
 
 // Throw an error
-FN_EXTERN FN_NO_RETURN void errorInternalThrow(
+FN_EXTERN noreturn void errorInternalThrow(
     const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message,
     const char *stackTrace);
-FN_EXTERN FN_NO_RETURN FN_PRINTF(5, 6) void errorInternalThrowFmt(
+FN_EXTERN noreturn FN_PRINTF(5, 6) void errorInternalThrowFmt(
     const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *format, ...);
 
 // Throw a system error
-FN_EXTERN FN_NO_RETURN void errorInternalThrowSys(
+FN_EXTERN noreturn void errorInternalThrowSys(
     int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *message);
 
 // Throw a formatted system error
-FN_EXTERN FN_NO_RETURN FN_PRINTF(6, 7) void errorInternalThrowSysFmt(
+FN_EXTERN FN_PRINTF(6, 7) noreturn void errorInternalThrowSysFmt(
     int errNo, const ErrorType *errorType, const char *fileName, const char *functionName, int fileLine, const char *format, ...);
 
 // Versions of the above for coverage testing which checks the error condition inside the function

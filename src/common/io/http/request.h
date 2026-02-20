@@ -143,7 +143,7 @@ Request Functions
 FN_EXTERN HttpResponse *httpRequestResponse(HttpRequest *this, bool contentCache);
 
 // Throw an error if the request failed
-FN_EXTERN FN_NO_RETURN void httpRequestError(const HttpRequest *this, HttpResponse *response);
+FN_EXTERN noreturn void httpRequestError(const HttpRequest *this, HttpResponse *response);
 
 // Move to a new parent mem context
 FN_INLINE_ALWAYS HttpRequest *
