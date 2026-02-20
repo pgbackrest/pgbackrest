@@ -637,7 +637,8 @@ testRun(void)
             // Not musl libc
             "unable to get address for '99.99.99.99.99': [-2] Name or service not known",
             // Musl libc
-            "unable to get address for '99.99.99.99.99': [-2] Name does not resolve");
+            "unable to get address for '99.99.99.99.99': [-2] Name does not resolve",
+            "unable to get address for '99.99.99.99.99': [-3] Temporary failure in name resolution");
 
         // Set TLS client timeout higher than socket timeout to ensure that TLS retries are covered
         TEST_ASSIGN(

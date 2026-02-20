@@ -94,12 +94,12 @@ testRun(void)
         TEST_ERROR_FMT(
             lockAcquireP(noPermLock), LockAcquireError,
             "unable to acquire lock on file '%s': Permission denied\n"
-            "HINT: does '" TEST_USER ":" TEST_GROUP "' running pgBackRest have permissions on the '%s' file?",
+            "HINT: does '" TEST_USER ":" TEST_GROUP "' running " PROJECT_NAME " have permissions on the '%s' file?",
             strZ(noPermLock), strZ(noPermLock));
         TEST_ERROR_FMT(
             lockAcquireP(noPermLock, .returnOnNoLock = true), LockAcquireError,
             "unable to acquire lock on file '%s': Permission denied\n"
-            "HINT: does '" TEST_USER ":" TEST_GROUP "' running pgBackRest have permissions on the '%s' file?",
+            "HINT: does '" TEST_USER ":" TEST_GROUP "' running " PROJECT_NAME " have permissions on the '%s' file?",
             strZ(noPermLock), strZ(noPermLock));
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -136,7 +136,7 @@ testRun(void)
                 TEST_ERROR_FMT(
                     lockAcquireP(lockFileExecName), LockAcquireError,
                     "unable to acquire lock on file '" TEST_PATH "/%s': Resource temporarily unavailable\n"
-                    "HINT: is another pgBackRest process running?",
+                    "HINT: is another " PROJECT_NAME " process running?",
                     strZ(lockFileExecName));
 
                 TEST_RESULT_BOOL(lockAcquireP(lockFileExecName, .returnOnNoLock = true), false, "fail but return");
@@ -148,7 +148,7 @@ testRun(void)
                 TEST_ERROR_FMT(
                     lockAcquireP(lockFileExec2Name), LockAcquireError,
                     "unable to acquire lock on file '" TEST_PATH "/%s': Resource temporarily unavailable\n"
-                    "HINT: is another pgBackRest process running?",
+                    "HINT: is another " PROJECT_NAME " process running?",
                     strZ(lockFileExec2Name));
 
                 // Notify child to release lock

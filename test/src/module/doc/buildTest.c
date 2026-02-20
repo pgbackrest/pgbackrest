@@ -469,13 +469,13 @@ testRun(void)
             storageTest,
             "doc/output/man/pgbackrest.1.txt",
             "NAME\n"
-            "  pgBackRest - Reliable PostgreSQL Backup & Restore\n"
+            "  " PROJECT_NAME " - Reliable PostgreSQL Backup & Restore\n"
             "\n"
             "SYNOPSIS\n"
             "  pgbackrest [options] [command]\n"
             "\n"
             "DESCRIPTION\n"
-            "  pgBackRest is a reliable backup and restore solution for PostgreSQL...\n"
+            "  " PROJECT_NAME " is a reliable backup and restore solution for PostgreSQL...\n"
             "\n"
             "COMMANDS\n"
             "  backup  backup command summary.\n"
