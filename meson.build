@@ -24,7 +24,7 @@ project(
 cc = meson.get_compiler('c')
 
 ####################################################################################################################################
-# Check for C11 compiler support
+# Check for C11 compiler support (setting c_std has no effect -- works in 1.8.1 so likely a bug in our version)
 ####################################################################################################################################
 c11_test = '''
 #if !defined __STDC_VERSION__ || __STDC_VERSION__ < 201112L
