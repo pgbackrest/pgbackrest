@@ -159,6 +159,11 @@ if not cc.links('''int main(void) {__builtin_bswap64(1);}''')
     error('compiler must support __builtin_bswap64()')
 endif
 
+# Check C compiler support for __builtin_types_compatible_p
+if cc.compiles('''int main(void) {__builtin_types_compatible_p(char *, const char *);}''')
+    configuration.set('HAVE_BUILTIN_TYPES_COMPATIBLE_P', true, description: 'Is __builtin_types_compatible_p present?')
+endif
+
 # Find optional backtrace library
 lib_backtrace = cc.find_library('backtrace', required: false)
 
