@@ -1045,6 +1045,24 @@ testRun(void)
         TEST_RESULT_VOID(storageWritePosixClose(ioWriteDriver(storageWriteIo(file))), "close file again");
         TEST_RESULT_INT(storageInfoP(storageTest, strPath(fileName)).mode, 0700, "check path mode");
         TEST_RESULT_INT(storageInfoP(storageTest, fileName).mode, 0600, "check file mode");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write with fseek");
+
+        HRN_STORAGE_PUT_Z(storageTest, "fseek.txt", "XXXXZZYYYY");
+        TEST_STORAGE_GET(storageTest, "fseek.txt", "XXXXZZYYYY");
+
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, STRDEF("fseek.txt"), .noTruncate = true, .noAtomic = true), "open write");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open");
+        TEST_RESULT_VOID(ioWrite(storageWriteIo(file), BUFSTRDEF("AA")), "write");
+        TEST_RESULT_VOID(ioWrite(storageWriteIo(file), BUFSTRDEF("AA")), "write");
+
+        TEST_RESULT_VOID(ioWriteSeek(storageWriteIo(file), 6), "seek");
+        TEST_RESULT_VOID(ioWrite(storageWriteIo(file), BUFSTRDEF("BB")), "write");
+        TEST_RESULT_VOID(ioWrite(storageWriteIo(file), BUFSTRDEF("BB")), "write");
+        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close");
+
+        TEST_STORAGE_GET(storageTest, "fseek.txt", "AAAAZZBBBB");
     }
 
     // *****************************************************************************************************************************
