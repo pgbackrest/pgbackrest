@@ -3,7 +3,7 @@ C Test Wrapper
 
 This wrapper runs the C unit tests.
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 // Enable FUNCTION_TEST*() macros for enhanced debugging
 {[C_TEST_DEBUG_TEST_TRACE]}

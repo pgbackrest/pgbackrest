@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Expire Command
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "command/archive/common.h"
 #include "command/backup/common.h"
@@ -14,7 +14,6 @@ Expire Command
 #include "config/config.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
-#include "info/manifest.h"
 #include "protocol/helper.h"
 #include "storage/helper.h"
 

@@ -7,8 +7,8 @@ timestamps, etc. A list of databases is also included for selective restore.
 The purpose of the manifest is to allow the restore command to confidently reconstruct the PostgreSQL data directory and ensure that
 nothing is missing or corrupt. It is also useful for reporting, e.g. size of backup, backup time, etc.
 ***********************************************************************************************************************************/
-#ifndef INFO_MANIFEST_H
-#define INFO_MANIFEST_H
+#ifndef INFO_MANIFEST_MANIFEST_H
+#define INFO_MANIFEST_MANIFEST_H
 
 #include "common/type/string.h"
 

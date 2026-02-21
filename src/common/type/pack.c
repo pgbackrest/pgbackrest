@@ -91,7 +91,7 @@ Array and object types:
         field within the array/object
 
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <string.h>
 

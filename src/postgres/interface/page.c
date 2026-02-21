@@ -3,7 +3,7 @@ PostgreSQL Page Checksum
 
 Adapted from PostgreSQL src/include/storage/checksum_impl.h.
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <string.h>
 

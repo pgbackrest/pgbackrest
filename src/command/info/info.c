@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Info Command
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <string.h>
 #include <sys/types.h>
@@ -23,7 +23,7 @@ Info Command
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
 #include "info/infoPg.h"
-#include "info/manifest.h"
+#include "info/manifest/manifest.h"
 #include "postgres/interface.h"
 #include "storage/helper.h"
 
