@@ -2,6 +2,18 @@
     <release-core-list>
         <release-improvement-list>
             <release-item>
+                <github-issue id="2732"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Improve seek performance during block incremental delta restore.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2724"/>
 
                 <release-item-contributor-list>
