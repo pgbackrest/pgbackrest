@@ -1735,6 +1735,7 @@ testRun(void)
             manifestResume->pub.info = infoNew(NULL);
             manifestResume->pub.data.backupType = backupTypeFull;
             manifestResume->pub.data.backupLabel = strNewZ("20191003-105320F");
+            manifestResume->pub.data.backupTimestampStart = 1482182860;
             manifestResume->pub.data.pgVersion = PG_VERSION_12;
         }
         OBJ_NEW_END();
@@ -1864,6 +1865,7 @@ testRun(void)
         OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
+            manifest->pub.data.backupTimestampStart = 1482182860;
             HRN_MANIFEST_FILE_ADD(manifest, .name = "pg_data/test");
         }
         OBJ_NEW_END();
@@ -2178,7 +2180,8 @@ testRun(void)
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
-                storagePg(), PG_VERSION_14, hrnPgCatalogVersion(PG_VERSION_14), 0, true, false, false, false, NULL, NULL, NULL);
+                storagePg(), PG_VERSION_14, hrnPgCatalogVersion(PG_VERSION_14), backupTimeStart, true, false, false, false, NULL,
+                NULL, NULL);
 
             manifestResume->pub.data.backupType = backupTypeFull;
             const String *resumeLabel = backupLabelCreate(backupTypeFull, NULL, backupTimeStart);
@@ -2257,7 +2260,8 @@ testRun(void)
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
-                storagePg(), PG_VERSION_14, hrnPgCatalogVersion(PG_VERSION_14), 0, true, false, false, false, NULL, NULL, NULL);
+                storagePg(), PG_VERSION_14, hrnPgCatalogVersion(PG_VERSION_14), backupTimeStart, true, false, false, false, NULL,
+                NULL, NULL);
 
             manifestResume->pub.data.backupType = backupTypeFull;
             manifestResume->pub.data.backupOptionCompressType = compressTypeGz;
@@ -2418,7 +2422,8 @@ testRun(void)
 
             // Create a backup manifest that looks like a halted backup manifest
             Manifest *manifestResume = manifestNewBuild(
-                storagePg(), PG_VERSION_14, hrnPgCatalogVersion(PG_VERSION_14), 0, true, false, false, false, NULL, NULL, NULL);
+                storagePg(), PG_VERSION_14, hrnPgCatalogVersion(PG_VERSION_14), backupTimeStart, true, false, false, false, NULL,
+                NULL, NULL);
 
             manifestResume->pub.data.backupOptionCompressType = compressTypeGz;
             const String *resumeLabel = backupLabelCreate(backupTypeFull, NULL, backupTimeStart - 100000);

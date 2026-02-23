@@ -130,7 +130,7 @@ testRun(void)
         "[backup]\n"                                                                                                               \
         "backup-label=null\n"                                                                                                      \
         "backup-timestamp-copy-start=0\n"                                                                                          \
-        "backup-timestamp-start=0\n"                                                                                               \
+        "backup-timestamp-start=1565282114\n"                                                                                      \
         "backup-timestamp-stop=0\n"                                                                                                \
         "backup-type=\"full\"\n"
 
@@ -1161,7 +1161,7 @@ testRun(void)
             "[backup]\n"
             "backup-label=\"20181119-152900F\"\n"
             "backup-timestamp-copy-start=0\n"
-            "backup-timestamp-start=0\n"
+            "backup-timestamp-start=1565282114\n"
             "backup-timestamp-stop=0\n"
             "backup-type=\"full\"\n"
             "\n"
@@ -1192,7 +1192,7 @@ testRun(void)
             "[backup]\n"
             "backup-label=\"20181119-152900F_20181119-152909D\"\n"
             "backup-timestamp-copy-start=0\n"
-            "backup-timestamp-start=0\n"
+            "backup-timestamp-start=1565282114\n"
             "backup-timestamp-stop=0\n"
             "backup-type=\"diff\"\n"
             "\n"
@@ -2160,7 +2160,7 @@ testRun(void)
             "backup-archive-stop=\"000000050000000800000004\"\n"
             "backup-label=\"20181119-153300F\"\n"
             "backup-timestamp-copy-start=0\n"
-            "backup-timestamp-start=0\n"
+            "backup-timestamp-start=1565282114\n"
             "backup-timestamp-stop=0\n"
             "backup-type=\"full\"\n"
             "\n"
