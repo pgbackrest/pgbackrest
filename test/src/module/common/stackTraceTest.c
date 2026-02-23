@@ -7,33 +7,33 @@ Test Stack Trace Handler
 
 #ifdef HAVE_LIBBACKTRACE
 
-static FN_NO_RETURN void
+static noreturn void
 testStackTraceError3(void)
 {
     stackTracePush("module/common/stackTraceTest.c", "testStackTraceError3", logLevelTrace);
     THROW(FormatError, "test error");
 }
 
-static FN_NO_RETURN void
+static noreturn void
 testStackTraceError2(void)
 {
     testStackTraceError3();
 }
 
-static FN_NO_RETURN void
+static noreturn void
 testStackTraceError1(void)
 {
     stackTracePush("src/file1.c", "testStackTraceError1", logLevelDebug);
     testStackTraceError2();
 }
 
-static FN_NO_RETURN void
+static noreturn void
 testStackTraceError5(void)
 {
     THROW_FMT(FormatError, "test error fmt");
 }
 
-static FN_NO_RETURN void
+static noreturn void
 testStackTraceError4(void)
 {
     stackTracePush("file4.c", "testStackTraceError4", logLevelTrace);
