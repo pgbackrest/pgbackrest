@@ -1589,7 +1589,7 @@ testRun(void)
                             "\"status\":{"
                                 "\"code\":4,"
                                 "\"lock\":{"
-                                    "\"backup\":{\"held\":true,\"size\":3159000,\"size-cplt\":1435765},"
+                                    "\"backup\":{\"held\":true,\"repo\":[{\"key\":1,\"size\":3159000,\"size-cplt\":1435765}],\"size\":3159000,\"size-cplt\":1435765},"
                                     "\"restore\":{\"held\":false}"
                                 "},"
                                 "\"message\":\"different across repos\""
@@ -1752,7 +1752,7 @@ testRun(void)
                             "\"status\":{"
                                 "\"code\":0,"
                                 "\"lock\":{"
-                                    "\"backup\":{\"held\":true,\"size\":3159000,\"size-cplt\":1435765},"
+                                    "\"backup\":{\"held\":true,\"repo\":[{\"key\":1,\"size\":3159000,\"size-cplt\":1435765}],\"size\":3159000,\"size-cplt\":1435765},"
                                     "\"restore\":{\"held\":false}"
                                 "},"
                                 "\"message\":\"ok\""
@@ -1882,6 +1882,8 @@ testRun(void)
                     infoRender(),
                     "stanza: stanza1\n"
                     "    status: ok (backup/expire running - 65.28% complete, restore running - 65.28% complete)\n"
+                    "        backup repo1: 55.55% complete\n"
+                    "        backup repo2: 75.00% complete\n"
                     "    cipher: mixed\n"
                     "        repo1: none\n"
                     "        repo2: aes-256-cbc\n"
@@ -1934,6 +1936,7 @@ testRun(void)
                     "\n"
                     "stanza: stanza2\n"
                     "    status: mixed (backup/expire running - 55.55% complete)\n"
+                    "        backup repo1: 55.55% complete\n"
                     "        repo1: error (no valid backups)\n"
                     "        repo2: error (missing stanza path)\n"
                     "    cipher: mixed\n"
@@ -1977,9 +1980,12 @@ testRun(void)
                     infoRender(),
                     "stanza: stanza1\n"
                     "    status: ok (backup/expire running - 65.28% complete, restore running - 65.28% complete)\n"
+                    "        backup repo1: 55.55% complete\n"
+                    "        backup repo2: 75.00% complete\n"
                     "\n"
                     "stanza: stanza2\n"
                     "    status: ok (backup/expire running - 55.55% complete)\n"
+                    "        backup repo1: 55.55% complete\n"
                     "\n"
                     "stanza: stanza3\n"
                     "    status: ok\n"
@@ -1987,6 +1993,108 @@ testRun(void)
                     "stanza: stanza4\n"
                     "    status: ok (restore running - 12.34% complete)\n",
                     "text (progress only) - multiple stanzas, multi-repo with valid backups, backup lock held on one stanza");
+
+                HRN_CFG_LOAD(cfgCmdInfo, argListMultiRepoJsonProgressOnly);
+                TEST_RESULT_STR_Z(
+                    infoRender(),
+                    // {uncrustify_off - indentation}
+                    "["
+                        "{"
+                            "\"name\":\"stanza1\","
+                            "\"status\":{"
+                                "\"code\":0,"
+                                "\"lock\":{"
+                                    "\"backup\":{\"held\":true,\"repo\":[{\"key\":1,\"size\":3159000,\"size-cplt\":1754830},{\"key\":2,\"size\":3159000,\"size-cplt\":2369250}],\"size\":6318000,\"size-cplt\":4124080},"
+                                    "\"restore\":{\"held\":true,\"size\":6318000,\"size-cplt\":4124080}"
+                                "},"
+                                "\"message\":\"ok\""
+                            "}"
+                        "},"
+                        "{"
+                            "\"name\":\"stanza2\","
+                            "\"status\":{"
+                                "\"code\":0,"
+                                "\"lock\":{"
+                                    "\"backup\":{\"held\":true,\"repo\":[{\"key\":1,\"size\":3159000,\"size-cplt\":1754830}],\"size\":3159000,\"size-cplt\":1754830},"
+                                    "\"restore\":{\"held\":false}"
+                                "},"
+                                "\"message\":\"ok\""
+                            "}"
+                        "},"
+                        "{"
+                            "\"name\":\"stanza3\","
+                            "\"status\":{"
+                                "\"code\":0,"
+                                "\"lock\":{"
+                                    "\"backup\":{\"held\":false},"
+                                    "\"restore\":{\"held\":false}"
+                                "},"
+                                "\"message\":\"ok\""
+                            "}"
+                        "},"
+                        "{"
+                            "\"name\":\"stanza4\","
+                            "\"status\":{"
+                                "\"code\":0,"
+                                "\"lock\":{"
+                                    "\"backup\":{\"held\":false},"
+                                    "\"restore\":{\"held\":true,\"size\":3159000,\"size-cplt\":389820}"
+                                "},"
+                                "\"message\":\"ok\""
+                            "}"
+                        "}"
+                    "]",
+                    // {uncrustify_on}
+                    "json (progress only) - multiple stanzas, multi-repo backup locks with per-repo detail");
+
+                // Test --repo filter with active backup locks: only repo2 data should appear for stanza1
+                StringList *argListMultiRepoRepo2ProgressOnly = strLstDup(argListMultiRepoProgressOnly);
+                hrnCfgArgRawZ(argListMultiRepoRepo2ProgressOnly, cfgOptRepo, "2");
+
+                HRN_CFG_LOAD(cfgCmdInfo, argListMultiRepoRepo2ProgressOnly);
+                TEST_RESULT_STR_Z(
+                    infoRender(),
+                    "stanza: stanza1\n"
+                    "    status: ok (backup/expire running - 75.00% complete, restore running - 75.00% complete)\n"
+                    "        backup repo2: 75.00% complete\n"
+                    "\n"
+                    "stanza: stanza3\n"
+                    "    status: ok\n",
+                    "text (progress only, --repo=2) - only repo2 backup lock shown, stanza2 repo1-only lock filtered out");
+
+                StringList *argListMultiRepoRepo2JsonProgressOnly = strLstDup(argListMultiRepoJsonProgressOnly);
+                hrnCfgArgRawZ(argListMultiRepoRepo2JsonProgressOnly, cfgOptRepo, "2");
+
+                HRN_CFG_LOAD(cfgCmdInfo, argListMultiRepoRepo2JsonProgressOnly);
+                TEST_RESULT_STR_Z(
+                    infoRender(),
+                    // {uncrustify_off - indentation}
+                    "["
+                        "{"
+                            "\"name\":\"stanza1\","
+                            "\"status\":{"
+                                "\"code\":0,"
+                                "\"lock\":{"
+                                    "\"backup\":{\"held\":true,\"repo\":[{\"key\":2,\"size\":3159000,\"size-cplt\":2369250}],\"size\":3159000,\"size-cplt\":2369250},"
+                                    "\"restore\":{\"held\":true,\"size\":3159000,\"size-cplt\":2369250}"
+                                "},"
+                                "\"message\":\"ok\""
+                            "}"
+                        "},"
+                        "{"
+                            "\"name\":\"stanza3\","
+                            "\"status\":{"
+                                "\"code\":0,"
+                                "\"lock\":{"
+                                    "\"backup\":{\"held\":false},"
+                                    "\"restore\":{\"held\":false}"
+                                "},"
+                                "\"message\":\"ok\""
+                            "}"
+                        "}"
+                    "]",
+                    // {uncrustify_on}
+                    "json (progress only, --repo=2) - only repo2 backup lock in repo array, stanza2 filtered out");
 
                 // Notify child to release lock
                 HRN_FORK_PARENT_NOTIFY_PUT(0);
