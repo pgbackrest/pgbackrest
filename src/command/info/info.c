@@ -114,25 +114,6 @@ STRING_STATIC(INFO_STANZA_INVALID_STR,                              "[invalid]")
 /***********************************************************************************************************************************
 Data types and structures
 ***********************************************************************************************************************************/
-// Repository information for a stanza
-typedef struct InfoRepoData
-{
-    unsigned int key;                                               // User-defined repo key
-    CipherType cipher;                                              // Encryption type
-    const String *cipherPass;                                       // Passphrase if the repo is encrypted (else NULL)
-    int stanzaStatus;                                               // Status code of the stanza on this repo
-    unsigned int backupIdx;                                         // Index of the next backup that may be a candidate for sorting
-    InfoBackup *backupInfo;                                         // Contents of the backup.info file of the stanza on this repo
-    InfoArchive *archiveInfo;                                       // Contents of the archive.info file of the stanza on this repo
-    Manifest *manifest;                                             // Contents of manifest if backup requested and is on this repo
-    String *error;                                                  // Formatted error
-} InfoRepoData;
-
-#define FUNCTION_LOG_INFO_REPO_DATA_TYPE                                                                                           \
-    InfoRepoData *
-#define FUNCTION_LOG_INFO_REPO_DATA_FORMAT(value, buffer, bufferSize)                                                              \
-    objNameToLog(value, "InfoRepoData", buffer, bufferSize)
-
 // Information for a lockfile of a stanza
 typedef struct InfoStanzaLock
 {
@@ -146,13 +127,32 @@ typedef struct InfoStanzaLock
 #define FUNCTION_LOG_INFO_STANZA_LOCK_FORMAT(value, buffer, bufferSize)                                                            \
     objNameToLog(value, "InfoStanzaLock", buffer, bufferSize)
 
+// Repository information for a stanza
+typedef struct InfoRepoData
+{
+    unsigned int key;                                               // User-defined repo key
+    CipherType cipher;                                              // Encryption type
+    const String *cipherPass;                                       // Passphrase if the repo is encrypted (else NULL)
+    int stanzaStatus;                                               // Status code of the stanza on this repo
+    unsigned int backupIdx;                                         // Index of the next backup that may be a candidate for sorting
+    InfoBackup *backupInfo;                                         // Contents of the backup.info file of the stanza on this repo
+    InfoArchive *archiveInfo;                                       // Contents of the archive.info file of the stanza on this repo
+    Manifest *manifest;                                             // Contents of manifest if backup requested and is on this repo
+    String *error;                                                  // Formatted error
+    InfoStanzaLock backupLock;                                      // Info for backup lock on this repo
+} InfoRepoData;
+
+#define FUNCTION_LOG_INFO_REPO_DATA_TYPE                                                                                           \
+    InfoRepoData *
+#define FUNCTION_LOG_INFO_REPO_DATA_FORMAT(value, buffer, bufferSize)                                                              \
+    objNameToLog(value, "InfoRepoData", buffer, bufferSize)
+
 // Stanza with repository list of information for each repository
 typedef struct InfoStanzaRepo
 {
     const String *name;                                             // Name of the stanza
     uint64_t currentPgSystemId;                                     // Current postgres system id for the stanza
     unsigned int currentPgVersion;                                  // Current postgres version for the stanza
-    InfoStanzaLock backupLock;                                      // Info for backup lock
     InfoStanzaLock restoreLock;                                     // Info for restore lock
     InfoRepoData *repoList;                                         // List of configured repositories
 } InfoStanzaRepo;
@@ -216,15 +216,91 @@ stanzaStatusLockAdd(KeyValue *targetKv, const Variant *const lockKey, const Info
 }
 
 /***********************************************************************************************************************************
+Add per-repo backup lock information to the target key-value
+***********************************************************************************************************************************/
+static void
+stanzaStatusBackupLockAdd(
+    KeyValue *targetKv, const InfoRepoData *const repoList, const unsigned int repoIdxMin, const unsigned int repoIdxMax)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(KEY_VALUE, targetKv);
+        FUNCTION_TEST_PARAM(INFO_REPO_DATA, repoList);
+        FUNCTION_TEST_PARAM(UINT, repoIdxMin);
+        FUNCTION_TEST_PARAM(UINT, repoIdxMax);
+    FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
+
+    ASSERT(targetKv != NULL);
+    ASSERT(repoList != NULL);
+    ASSERT(repoIdxMin <= repoIdxMax);
+
+    KeyValue *const lockKv = kvPutKv(targetKv, STATUS_KEY_LOCK_BACKUP_VAR);
+    bool held = false;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        VariantList *const repoLockList = varLstNew();
+        uint64_t sizeTotal = 0;
+        uint64_t sizeCompleteTotal = 0;
+
+        for (unsigned int repoIdx = repoIdxMin; repoIdx <= repoIdxMax; repoIdx++)
+        {
+            const InfoStanzaLock *const lock = &repoList[repoIdx].backupLock;
+
+            if (lock->held)
+            {
+                held = true;
+
+                if (lock->size != 0)
+                {
+                    sizeTotal += lock->size;
+                    sizeCompleteTotal += lock->sizeComplete;
+
+                    Variant *const repoLockInfo = varNewKv(kvNew());
+                    kvPut(varKv(repoLockInfo), REPO_KEY_KEY_VAR, VARUINT(repoList[repoIdx].key));
+                    kvPut(varKv(repoLockInfo), STATUS_KEY_LOCK_SIZE_VAR, VARUINT64(lock->size));
+                    kvPut(varKv(repoLockInfo), STATUS_KEY_LOCK_SIZE_COMPLETE_VAR, VARUINT64(lock->sizeComplete));
+                    varLstAdd(repoLockList, repoLockInfo);
+                }
+            }
+        }
+
+        kvPut(lockKv, STATUS_KEY_LOCK_HELD_VAR, VARBOOL(held));
+
+        if (!varLstEmpty(repoLockList))
+        {
+            // Add summed size/size-cplt for backwards compatibility
+            kvPut(lockKv, STATUS_KEY_LOCK_SIZE_COMPLETE_VAR, VARUINT64(sizeCompleteTotal));
+            kvPut(lockKv, STATUS_KEY_LOCK_SIZE_VAR, VARUINT64(sizeTotal));
+
+            // Add pct-cplt for text output only
+            if (cfgOptionSeq(cfgOptOutput) != CFGOPTVAL_OUTPUT_JSON)
+                kvPut(lockKv, STATUS_KEY_LOCK_PERCENT_COMPLETE_VAR, VARUINT(cvtPctToUInt(sizeCompleteTotal, sizeTotal)));
+
+            // Add per-repo detail
+            kvPut(lockKv, STANZA_KEY_REPO_VAR, varNewVarLst(repoLockList));
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Set the overall error status code and message for the stanza to the code and message passed
 ***********************************************************************************************************************************/
 static void
-stanzaStatus(const int code, const InfoStanzaRepo *const stanzaData, const Variant *const stanzaInfo)
+stanzaStatus(
+    const int code, const InfoStanzaRepo *const stanzaData, const Variant *const stanzaInfo, const unsigned int repoIdxMin,
+    const unsigned int repoIdxMax)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(INT, code);
         FUNCTION_TEST_PARAM(INFO_STANZA_REPO, stanzaData);
         FUNCTION_TEST_PARAM(VARIANT, stanzaInfo);
+        FUNCTION_TEST_PARAM(UINT, repoIdxMin);
+        FUNCTION_TEST_PARAM(UINT, repoIdxMax);
     FUNCTION_TEST_END();
 
     ASSERT((code >= 0 && code <= 6) || code == 99);
@@ -273,7 +349,7 @@ stanzaStatus(const int code, const InfoStanzaRepo *const stanzaData, const Varia
     // Construct a specific lock part
     KeyValue *const lockKv = kvPutKv(statusKv, STATUS_KEY_LOCK_VAR);
 
-    stanzaStatusLockAdd(lockKv, STATUS_KEY_LOCK_BACKUP_VAR, &stanzaData->backupLock);
+    stanzaStatusBackupLockAdd(lockKv, stanzaData->repoList, repoIdxMin, repoIdxMax);
     stanzaStatusLockAdd(lockKv, STATUS_KEY_LOCK_RESTORE_VAR, &stanzaData->restoreLock);
 
     FUNCTION_TEST_RETURN_VOID();
@@ -898,7 +974,7 @@ stanzaInfoList(
         }
 
         // Set the overall stanza status and gather progress information
-        stanzaStatus(stanzaStatusCode, stanzaData, stanzaInfo);
+        stanzaStatus(stanzaStatusCode, stanzaData, stanzaInfo, repoIdxMin, repoIdxMax);
 
         varLstAdd(result, stanzaInfo);
     }
@@ -1441,7 +1517,7 @@ infoUpdateStanza(
             // performance, so the lock files are read unconditionally -- though they may be outdated in this case.
             if (stanzaRepo->repoList[repoIdx].backupInfo != NULL || !outputFull)
             {
-                infoUpdateStanzaLock(&stanzaRepo->backupLock, stanzaRepo->name, repoIdx, lockTypeBackup);
+                infoUpdateStanzaLock(&stanzaRepo->repoList[repoIdx].backupLock, stanzaRepo->name, repoIdx, lockTypeBackup);
                 infoUpdateStanzaLock(&stanzaRepo->restoreLock, stanzaRepo->name, repoIdx, lockTypeRestore);
             }
 
@@ -1762,6 +1838,28 @@ infoRender(void)
                         // Status: ok/mixed
                         else
                             strCatFmt(resultStr, "%s\n", strZ(statusLabelStr));
+                    }
+
+                    // Output per-repo backup progress
+                    const Variant *const backupRepoVar = kvGet(backupLockKv, STANZA_KEY_REPO_VAR);
+                    const VariantList *const backupRepoList =
+                        backupRepoVar != NULL ? varVarLst(backupRepoVar) : NULL;
+
+                    if (backupRepoList != NULL)
+                    {
+                        for (unsigned int repoLockIdx = 0; repoLockIdx < varLstSize(backupRepoList); repoLockIdx++)
+                        {
+                            const KeyValue *const repoLockKv = varKv(varLstGet(backupRepoList, repoLockIdx));
+
+                            strCatFmt(
+                                resultStr, "        backup repo%u: %s complete\n",
+                                varUInt(kvGet(repoLockKv, REPO_KEY_KEY_VAR)),
+                                strZ(strNewPct(
+                                         cvtPctToUInt(
+                                             varUInt64(kvGet(repoLockKv, STATUS_KEY_LOCK_SIZE_COMPLETE_VAR)),
+                                             varUInt64(kvGet(repoLockKv, STATUS_KEY_LOCK_SIZE_VAR))),
+                                         10000)));
+                        }
                     }
 
                     // Output the status per repo
