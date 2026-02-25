@@ -367,7 +367,7 @@ testRun(void)
         TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(decompress, zstDecompressToLog, buffer, sizeof(buffer)), "zstDecompressToLog");
         TEST_RESULT_Z(buffer, "{inputSame: true, inputOffset: 999, frameDone false, done: true}", "check log");
 #else
-        TEST_ERROR(compressTypePresent(compressTypeZst), OptionInvalidValueError, "pgBackRest not built with zst support");
+        TEST_ERROR(compressTypePresent(compressTypeZst), OptionInvalidValueError, PROJECT_NAME " not built with zst support");
 #endif // HAVE_LIBZST
     }
 
@@ -390,7 +390,7 @@ testRun(void)
         TEST_TITLE("compressTypePresent()");
 
         TEST_RESULT_VOID(compressTypePresent(compressTypeNone), "type none always present");
-        TEST_ERROR(compressTypePresent(compressTypeXz), OptionInvalidValueError, "pgBackRest not built with xz support");
+        TEST_ERROR(compressTypePresent(compressTypeXz), OptionInvalidValueError, PROJECT_NAME " not built with xz support");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compressTypeFromName()");
