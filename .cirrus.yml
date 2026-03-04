@@ -7,28 +7,27 @@ only_if: $CIRRUS_BRANCH == 'integration' || $CIRRUS_PR != '' || $CIRRUS_BRANCH =
 # No auto-cancel on integration
 auto_cancellation: $CIRRUS_BRANCH != 'integration'
 
-# FreeBSD 13
+# FreeBSD 14
 # ----------------------------------------------------------------------------------------------------------------------------------
-freebsd_13_task:
+freebsd_14_task:
   freebsd_instance:
-    image_family: freebsd-13-5
+    image_family: freebsd-14-3
     cpu: 4
     memory: 4G
 
   install_script: pkg update && pkg upgrade -y libiconv && pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync meson
 
   script:
-    - rsync --version
     - cd .. && perl ${CIRRUS_WORKING_DIR}/test/test.pl --make-cmd=gmake --vm-max=2 --no-coverage --no-valgrind --module=command --test=backup
 
   debug_script:
     - ls -lah ${CIRRUS_WORKING_DIR}
 
-# FreeBSD 14
+# FreeBSD 15
 # ----------------------------------------------------------------------------------------------------------------------------------
-freebsd_14_task:
+freebsd_15_task:
   freebsd_instance:
-    image_family: freebsd-14-3
+    image_family: freebsd-15-0-amd64-ufs
     cpu: 4
     memory: 4G
 
