@@ -73,8 +73,8 @@ use constant VM_D11                                                 => 'd11';
     push @EXPORT, qw(VM_D11);
 use constant VM_RH8                                                 => 'rh8';
     push @EXPORT, qw(VM_RH8);
-use constant VM_F42                                                 => 'f42';
-    push @EXPORT, qw(VM_F42);
+use constant VM_F43                                                 => 'f43';
+    push @EXPORT, qw(VM_F43);
 use constant VM_U22                                                 => 'u22';
     push @EXPORT, qw(VM_U22);
 
@@ -164,21 +164,21 @@ my $oyVm =
         ],
     },
 
-    # Fedora 42
-    &VM_F42 =>
+    # Fedora 43
+    &VM_F43 =>
     {
         &VM_OS_BASE => VM_OS_BASE_RHEL,
-        &VM_IMAGE => 'fedora:42',
+        &VM_IMAGE => 'fedora:43',
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
         &VMDEF_COVERAGE_C => true,
 
         &VM_DB =>
         [
-            PG_VERSION_13,
             PG_VERSION_14,
             PG_VERSION_15,
             PG_VERSION_16,
             PG_VERSION_17,
+            PG_VERSION_18,
         ],
 
         &VM_DB_TEST =>
