@@ -380,9 +380,7 @@ Table Elements
     color: #27689d;
 }
 
-.table-header-row
-{
-}
+/*.table-header-row*/
 
 .table-header-left,
 .table-header-center,
@@ -412,9 +410,7 @@ Table Elements
     width: 100%;
 }
 
-.table-row
-{
-}
+/*.table-row*/
 
 .table-data-left,
 .table-data-center,
