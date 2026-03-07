@@ -565,6 +565,34 @@ li.list-unordered
 }
 
 /*******************************************************************************
+Sponsor
+*******************************************************************************/
+.sponsor-list
+{
+    overflow: hidden;
+    margin-bottom: 1.5em;
+    margin-right: 1.5em;
+}
+
+.sponsor
+{
+    float:left;
+    text-align: center;
+    margin-top: 1.5em;
+    margin-left: 1.5em;
+}
+
+.sponsor-img
+{
+    width: 75px;
+}
+
+.sponsor-title
+{
+    white-space: nowrap;
+}
+
+/*******************************************************************************
 Admonition
 *******************************************************************************/
 .admonition

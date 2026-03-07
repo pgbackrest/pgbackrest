@@ -339,6 +339,7 @@ eval
                         "${strBasePath}/resource/html/" . $oManifest->variableGet('project-favicon') : undef,
                     defined($oManifest->variableGet('project-logo')) ?
                         "${strBasePath}/resource/" . $oManifest->variableGet('project-logo') : undef,
+                    "${strBasePath}/resource/sponsor",
                     !$bNoExe
                 );
 

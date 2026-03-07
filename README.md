@@ -110,8 +110,14 @@ pgBackRest is completely free and open source under the [MIT](https://github.com
 
 Creating a robust disaster recovery policy with proper replication and backup strategies can be a very complex and daunting task. You may find that you need help during the architecture phase and ongoing support to ensure that your enterprise continues running smoothly. There are a variety of PostgreSQL support companies that can provide this service.
 
-## Recognition
+## Sponsorship
 
-[Crunchy Data](http://www.crunchydata.com) and [Resonate](http://www.resonate.com) have both generously supported the development of pgBackRest.
+pgBackRest would not exist without sponsors. Writing new features, fixing bugs, reviewing contributions, answering questions from the community, and maintenance all take a considerable amount of time. Please consider a [sponsorship](https://github.com/sponsors/dwsteele) if you use pgBackRest in your enterprise.
+
+Current sponsors: [Supabase](https://supabase.com).
+
+Past sponsors: [Crunchy Data](https://crunchydata.com), [Resonate](https://resonate.com).
+
+## Recognition
 
 [Armchair](https://thenounproject.com/icon/armchair-129971) graphic by [Alexander Skowalsky](https://thenounproject.com/sandorsz).
