@@ -1668,6 +1668,17 @@ verifyProcess(const bool verboseText)
             {
                 jobData.backupList = strLstSort(
                     storageListP(storage, STORAGE_REPO_BACKUP_STR, .expression = backupRegExpStr), sortOrderAsc);
+
+                // Warn if backups on disk are not described in backup.info
+                for (unsigned int repoIdx = 0; repoIdx < strLstSize(jobData.backupList); repoIdx++)
+                {
+                    const String *const label = strLstGet(jobData.backupList, repoIdx);
+
+                    if (!infoBackupLabelExists(backupInfo, label))
+                    {
+                        LOG_WARN_FMT("backup '%s' is not described in " INFO_BACKUP_FILE,strZ(label));
+                    }
+                }
             }
 
             if (!backupLabelInvalid && backupLabel != NULL && strLstEmpty(jobData.backupList))
@@ -1691,6 +1702,31 @@ verifyProcess(const bool verboseText)
             // Check for block map dependencies if --set option is specified
             if (!backupLabelInvalid && backupLabel != NULL)
                 verifyBackupSet(&jobData, backupLabel);
+
+            // Check if backup.info contains backups not on disk and add them for processing.
+            if (backupLabel == NULL)
+            {
+                const StringList *infoBackupLabelList = infoBackupDataLabelList(backupInfo, NULL);
+
+                for (unsigned int infoIdx = 0; infoIdx < strLstSize(infoBackupLabelList); infoIdx++)
+                {
+                    const String *infoLabel = strLstGet(infoBackupLabelList, infoIdx);
+
+                    if (strLstFindIdxP(jobData.backupList, infoLabel) == LIST_NOT_FOUND)
+                    {
+                        LOG_WARN_FMT(
+                            "backup '%s' exists in " INFO_BACKUP_FILE " but was not found on disk",
+                            strZ(infoLabel));
+
+                        MEM_CONTEXT_BEGIN(jobData.memContext)
+                        {
+                            strLstAdd(jobData.backupList, strDup(infoLabel));
+                        }
+                        MEM_CONTEXT_END();
+                    }
+                }
+                jobData.backupList = strLstSort(jobData.backupList, sortOrderAsc);
+            }
 
             // Only begin processing if there are some archives or backups in the repo
             if (!backupLabelInvalid && (!strLstEmpty(jobData.archiveIdList) || !strLstEmpty(jobData.backupList)))
