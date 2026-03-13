@@ -953,7 +953,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
-        total: 16
+        total: 17
 
         harness: restore
 
@@ -963,6 +963,7 @@ unit:
           - command/restore/clean.inc: included
           - command/restore/config.inc: included
           - command/restore/file
+          - command/restore/fuse.inc: included
           - command/restore/process.inc: included
           - command/restore/protocol
           - command/restore/remap.inc: included

@@ -174,6 +174,13 @@ endif
 # Find required bz2 library
 lib_bz2 = cc.find_library('bz2')
 
+# Find optional fuse library
+lib_fuse = dependency('fuse3', version: '>=3.0.2', required: get_option('libfuse'))
+
+if lib_fuse.found()
+    configuration.set('HAVE_LIBFUSE', true, description: 'Is libfuse present?')
+endif
+
 # Find required lz4 library
 lib_lz4 = dependency('liblz4')
 

@@ -95,6 +95,7 @@ Option constants
 #define CFGOPT_LOG_SUBPROCESS                                       "log-subprocess"
 #define CFGOPT_LOG_TIMESTAMP                                        "log-timestamp"
 #define CFGOPT_MANIFEST_SAVE_THRESHOLD                              "manifest-save-threshold"
+#define CFGOPT_MOUNT                                                "mount"
 #define CFGOPT_NEUTRAL_UMASK                                        "neutral-umask"
 #define CFGOPT_OLDEST                                               "oldest"
 #define CFGOPT_ONLINE                                               "online"
@@ -144,7 +145,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            192
+#define CFG_OPTION_TOTAL                                            193
 
 /***********************************************************************************************************************************
 Option value constants
@@ -249,6 +250,13 @@ Option value constants
 #define CFGOPTVAL_LOG_LEVEL_STDERR_TRACE                            6
 #define CFGOPTVAL_LOG_LEVEL_STDERR_TRACE_STRID                      STRID5S("trace", 6, 0xa30ca80e)
 #define CFGOPTVAL_LOG_LEVEL_STDERR_TRACE_Z                          "trace"
+
+#define CFGOPTVAL_MOUNT_NONE                                        0
+#define CFGOPTVAL_MOUNT_NONE_STRID                                  STRID5S("none", 0, 0x2b9ee2)
+#define CFGOPTVAL_MOUNT_NONE_Z                                      "none"
+#define CFGOPTVAL_MOUNT_FUSE                                        1
+#define CFGOPTVAL_MOUNT_FUSE_STRID                                  STRID5S("fuse", 1, 0x2cea64)
+#define CFGOPTVAL_MOUNT_FUSE_Z                                      "fuse"
 
 #define CFGOPTVAL_OUTPUT_TEXT                                       0
 #define CFGOPTVAL_OUTPUT_TEXT_STRID                                 STRID5S("text", 0, 0xa60b42)
@@ -529,6 +537,7 @@ typedef enum
     cfgOptLogSubprocess,
     cfgOptLogTimestamp,
     cfgOptManifestSaveThreshold,
+    cfgOptMount,
     cfgOptNeutralUmask,
     cfgOptOldest,
     cfgOptOnline,

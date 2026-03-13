@@ -280,6 +280,7 @@ executable(
     dependencies: [
         lib_backtrace,
         lib_bz2,
+        lib_fuse,
         lib_openssl,
         lib_lz4,
         lib_pq,

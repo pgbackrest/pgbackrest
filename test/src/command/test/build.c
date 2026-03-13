@@ -574,6 +574,7 @@ testBldUnit(TestBuild *const this)
         strCatZ(
             mesonBuild,
             "        lib_bz2,\n"
+            "        lib_fuse,\n"
             "        lib_openssl,\n"
             "        lib_lz4,\n"
             "        lib_pq,\n"

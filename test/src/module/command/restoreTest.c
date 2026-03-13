@@ -3449,6 +3449,88 @@ testRun(void)
         // Check that file was restored to full size with a partial write
         TEST_RESULT_LOG_EMPTY_OR_CONTAINS(", bi 128KB/256KB, ");
 
+        hrnCfgEnvRemoveRaw(cfgOptRepoCipherPass);
+        hrnStorageHelperRepoShimSet(true);
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("restore with mount"))
+    {
+        hrnStorageHelperRepoShimSet(true);
+
+        const String *pgPath = STRDEF(TEST_PATH "/pg");
+        const String *repoPath = STRDEF(TEST_PATH "/repo");
+
+        // Created pg_control and PG_VERSION
+        HRN_PG_CONTROL_PUT(storagePgWrite(), PG_VERSION_18);
+        HRN_STORAGE_PUT_Z(storagePgWrite(), PG_FILE_PGVERSION, PG_VERSION_18_Z "\n");
+
+        // Create encrypted stanza
+        StringList *argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
+        HRN_CFG_LOAD(cfgCmdStanzaCreate, argList);
+
+        TEST_RESULT_VOID(cmdStanzaCreate(), "stanza create");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("full backup without compression");
+
+        // Zeroed file
+        time_t timeBase = time(NULL);
+        Buffer *relation = bufNew(2 * 1024);
+        memset(bufPtr(relation), 0, bufSize(relation));
+        bufUsedSet(relation, bufSize(relation));
+
+        HRN_STORAGE_PUT(storagePgWrite(), PG_PATH_BASE "/1/2", relation, .timeModified = timeBase - 2);
+
+        // Add postgresql.auto.conf to contain recovery settings
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF, .timeModified = timeBase - 1);
+
+        // Backup
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "1");
+        hrnCfgArgRawStrId(argList, cfgOptType, backupTypeFull);
+        hrnCfgArgRawBool(argList, cfgOptOnline, false);
+        hrnCfgArgRawZ(argList, cfgOptCompressType, "none");
+        HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        TEST_RESULT_VOID(hrnCmdBackup(), "backup");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("delta restore with block incr");
+
+        // Restore configuration to repo1
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
+        hrnCfgArgRaw(argList, cfgOptRepoPath, repoPath);
+        hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
+        hrnCfgArgRawZ(argList, cfgOptMount, "fuse");
+        HRN_CFG_LOAD(cfgCmdRestore, argList);
+
+        HRN_STORAGE_PATH_REMOVE(storagePgIdxWrite(0), NULL, .recurse = true);
+
+        TEST_RESULT_VOID(hrnCmdRestore(), "restore");
+
+        TEST_STORAGE_LIST(
+            storagePg(), NULL,
+            "PG_VERSION\n"
+            "base/\n"
+            "base/1/\n"
+            "base/1/2\n"
+            "base/1/3\n"
+            "base/1/44\n"
+            "global/\n"
+            "global/pg_control\n"
+            "postgresql.auto.conf\n",
+            .level = storageInfoLevelType);
+
         hrnStorageHelperRepoShimSet(true);
     }
 

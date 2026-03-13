@@ -450,6 +450,16 @@ option:
         required: false
       verify: {}
 
+  mount:
+    type: string-id
+    default: none
+    sequence: true
+    command:
+      restore: {}
+    allow-list:
+      - none
+      - fuse: HAVE_LIBFUSE
+
   target:
     type: string
     command:

@@ -89,6 +89,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("error"),                                                                                           // val/str
     PARSE_RULE_STRPUB("fingerprint"),                                                                                     // val/str
     PARSE_RULE_STRPUB("full"),                                                                                            // val/str
+    PARSE_RULE_STRPUB("fuse"),                                                                                            // val/str
     PARSE_RULE_STRPUB("gcs"),                                                                                             // val/str
     PARSE_RULE_STRPUB("gz"),                                                                                              // val/str
     PARSE_RULE_STRPUB("host"),                                                                                            // val/str
@@ -224,6 +225,7 @@ typedef enum
     parseRuleValStrQT_error_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_fingerprint_QT,                                                                                // val/str/enum
     parseRuleValStrQT_full_QT,                                                                                       // val/str/enum
+    parseRuleValStrQT_fuse_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_gcs_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_gz_QT,                                                                                         // val/str/enum
     parseRuleValStrQT_host_QT,                                                                                       // val/str/enum
@@ -3337,6 +3339,50 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),                                                                                        // opt/manifest-save-threshold
         ),                                                                                            // opt/manifest-save-threshold
     ),                                                                                                // opt/manifest-save-threshold
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                                   // opt/mount
+    (                                                                                                                   // opt/mount
+        PARSE_RULE_OPTION_NAME("mount"),                                                                                // opt/mount
+        PARSE_RULE_OPTION_TYPE(StringId),                                                                               // opt/mount
+        PARSE_RULE_OPTION_SEQUENCE(true),                                                                               // opt/mount
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                               // opt/mount
+        PARSE_RULE_OPTION_SECTION(CommandLine),                                                                         // opt/mount
+                                                                                                                        // opt/mount
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                  // opt/mount
+        (                                                                                                               // opt/mount
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                          // opt/mount
+        ),                                                                                                              // opt/mount
+                                                                                                                        // opt/mount
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                                 // opt/mount
+        (                                                                                                               // opt/mount
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                          // opt/mount
+        ),                                                                                                              // opt/mount
+                                                                                                                        // opt/mount
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                                // opt/mount
+        (                                                                                                               // opt/mount
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                          // opt/mount
+        ),                                                                                                              // opt/mount
+                                                                                                                        // opt/mount
+        PARSE_RULE_OPTIONAL                                                                                             // opt/mount
+        (                                                                                                               // opt/mount
+            PARSE_RULE_OPTIONAL_GROUP                                                                                   // opt/mount
+            (                                                                                                           // opt/mount
+                PARSE_RULE_OPTIONAL_ALLOW_LIST                                                                          // opt/mount
+                (                                                                                                       // opt/mount
+                    PARSE_RULE_VAL_STRID(none),                                                                         // opt/mount
+                    PARSE_RULE_VAL_STRID(fuse),                                                                         // opt/mount
+#ifndef HAVE_LIBFUSE                                                                                                    // opt/mount
+                        PARSE_RULE_BOOL_FALSE,                                                                          // opt/mount
+#endif                                                                                                                  // opt/mount
+                ),                                                                                                      // opt/mount
+                                                                                                                        // opt/mount
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                             // opt/mount
+                (                                                                                                       // opt/mount
+                    PARSE_RULE_VAL_STRID(none),                                                                         // opt/mount
+                ),                                                                                                      // opt/mount
+            ),                                                                                                          // opt/mount
+        ),                                                                                                              // opt/mount
+    ),                                                                                                                  // opt/mount
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                           // opt/neutral-umask
     (                                                                                                           // opt/neutral-umask
@@ -11649,6 +11695,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptLogSubprocess,                                                                                        // opt-resolve-order
     cfgOptLogTimestamp,                                                                                         // opt-resolve-order
     cfgOptManifestSaveThreshold,                                                                                // opt-resolve-order
+    cfgOptMount,                                                                                                // opt-resolve-order
     cfgOptNeutralUmask,                                                                                         // opt-resolve-order
     cfgOptOldest,                                                                                               // opt-resolve-order
     cfgOptOnline,                                                                                               // opt-resolve-order

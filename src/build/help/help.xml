@@ -2534,6 +2534,16 @@
                         <example>y</example>
                     </option>
 
+                    <option id="mount" name="!!!">
+                        <summary>!!!.</summary>
+
+                        <text>
+                            <p>!!!</p>
+                        </text>
+
+                        <example>fuse</example>
+                    </option>
+
                     <option id="type" name="Type">
                         <summary>Recovery type.</summary>
 
