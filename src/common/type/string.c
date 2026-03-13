@@ -798,6 +798,27 @@ strPath(const String *const this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
+strFileName(const String *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    const char *end = this->pub.buffer + strSize(this);
+    const char *ptr = end;
+
+    while (ptr > this->pub.buffer && *(ptr - 1) != '/')
+        ptr--;
+
+    FUNCTION_TEST_RETURN(
+        STRING,
+        strNewZN(ptr, (size_t)(end - ptr)));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN String *
 strPathAbsolute(const String *const this, const String *const base)
 {
     FUNCTION_TEST_BEGIN();

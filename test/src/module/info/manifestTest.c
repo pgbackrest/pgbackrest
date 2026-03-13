@@ -2047,4 +2047,84 @@ testRun(void)
         TEST_RESULT_VOID(manifestFree(manifest), "free manifest");
         TEST_RESULT_VOID(manifestFree(NULL), "free null manifest");
     }
+
+    // *****************************************************************************************************************************
+    if (testBegin("manifestCustomFileAdd(), manifestCustomFileUpdate() and manifestSave()/manifestNewLoad()"))
+    {
+        Manifest *manifest = NULL;
+
+        HRN_STORAGE_PATH_CREATE(storageTest, "pg", .mode = 0700);
+        Storage *storagePg = storagePosixNewP(STRDEF(TEST_PATH "/pg"));
+
+        // Add a tablespace to tablespaceList that does exist
+        PackWrite *tablespaceList = pckWriteNewP();
+
+        pckWriteArrayBeginP(tablespaceList);
+        pckWriteU32P(tablespaceList, 2);
+        pckWriteStrP(tablespaceList, STRDEF("tblspc2"));
+        pckWriteArrayEndP(tablespaceList);
+        pckWriteArrayBeginP(tablespaceList);
+        pckWriteU32P(tablespaceList, 1);
+        pckWriteStrP(tablespaceList, STRDEF("tblspc1"));
+        pckWriteArrayEndP(tablespaceList);
+        pckWriteEndP(tablespaceList);
+
+        TEST_ASSIGN(
+            manifest,
+            manifestNewBuild(
+                storagePg, PG_VERSION_94, hrnPgCatalogVersion(PG_VERSION_94), 0, false, false, false, false, NULL, NULL,
+                pckWriteResult(tablespaceList)),
+            "build manifest");
+
+        #define TEST_CUSTOM_FILE_NAME STRDEF("somefile.txt")
+
+        ManifestFile customFile =
+        {
+            .name = TEST_CUSTOM_FILE_NAME,
+            .mode = 0600,
+            .size = 42,
+            .sizeOriginal = 43,
+            .sizeRepo = 44,
+            .timestamp = time(NULL),
+            .checksumSha1 = bufPtr(bufNewDecode(encodingHex, STR("deadbeef5e6b4b0d3255bfef95601890afd80709"))),
+        };
+
+        TEST_RESULT_VOID(manifestCustomFileAdd(manifest, &customFile), "manifestCustomFileAdd");
+        TEST_RESULT_UINT(manifestCustomFileTotal(manifest), 1, "manifestCustomFileTotal");
+
+        ManifestFilePack **const filePack = manifestCustomFilePackFindInternal(manifest, TEST_CUSTOM_FILE_NAME);
+        TEST_RESULT_PTR_NE(filePack, NULL, "file in the manifest");
+
+        ManifestFile file = manifestFileUnpack(manifest, *filePack);
+
+        TEST_RESULT_UINT(file.size, 42, "size");
+
+        ManifestFile manifestFile = manifestCustomFile(manifest, 0);
+
+        manifestFile.size = 45;
+        TEST_RESULT_VOID(manifestCustomFileUpdate(manifest, &manifestFile), "update");
+        TEST_RESULT_UINT(manifestCustomFileTotal(manifest), 1, "manifestCustomFileTotal");
+
+        ManifestFile manifestFile2 = manifestCustomFile(manifest, 0);
+        TEST_RESULT_UINT(manifestFile2.size, 45, "size");
+
+        Buffer *contentSave = bufNew(0);
+        TEST_RESULT_VOID(manifestSave(manifest, ioBufferWriteNew(contentSave)), "save manifest");
+
+        Manifest *manifest2 = NULL;
+
+        TEST_ASSIGN(
+            manifest2,
+            manifestNewLoad(ioBufferReadNew(contentSave)),
+            "load manifest"
+            );
+        TEST_RESULT_PTR_NE(manifest2, NULL, "manifest loaded");
+        TEST_RESULT_UINT(manifestCustomFileTotal(manifest2), 1, "manifestCustomFileTotal");
+        manifestFile2 = manifestCustomFile(manifest2, 0);
+        TEST_RESULT_UINT(manifestFile2.size, 45, "size");
+
+        // Try to find non-existent file
+        TEST_ERROR(manifestCustomFilePackFindInternal(manifest2, STRDEF("badbadfile.txt")),
+                   AssertError, "unable to find 'badbadfile.txt' in manifest file list");
+    }
 }

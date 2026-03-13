@@ -120,7 +120,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("strBase(), strPath(), and strPathAbsolute()"))
+    if (testBegin("strBase(), strPath(), strPathAbsolute() and strFileName()"))
     {
         TEST_RESULT_STR_Z(strBase(STRDEF("")), "", "empty string");
         TEST_RESULT_STR_Z(strBase(STRDEF("/")), "", "/ only");
@@ -143,6 +143,11 @@ testRun(void)
         TEST_RESULT_STR_Z(strPathAbsolute(STRDEF("../"), STRDEF("/path1")), "/", "simple relative path with trailing /");
         TEST_RESULT_STR_Z(
             strPathAbsolute(STRDEF("../path2/.././path3"), STRDEF("/base1/base2")), "/base1/path3", "complex relative path");
+
+        TEST_RESULT_STR_Z(strFileName(STRDEF("/path/to/file")), "file", "filename");
+        TEST_RESULT_STR_Z(strFileName(STRDEF("/path/to/file.ext")), "file.ext", "filename with extension");
+        TEST_RESULT_STR_Z(strFileName(STRDEF("/path/to/file.ext/")), "", "empty filename if trailing /");
+        TEST_RESULT_STR_Z(strFileName(STRDEF("")), "", "empty string");
     }
 
     // *****************************************************************************************************************************

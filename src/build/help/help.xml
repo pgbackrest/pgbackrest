@@ -2414,6 +2414,27 @@
                 </option-list>
             </command>
 
+            <command id="repo-push" name="Repository Push File">
+                <summary>Upload a metadata file to the repository.</summary>
+
+                <text>
+                    <p>Upload a metadata file to the repository. The metadata file is stored in the same storage as the restore point and inherits the compression settings defined in the pgBackRest configuration.</p>
+                </text>
+
+                <option-list>
+                    <option id="set" name="Set">
+                        <summary>Backup set.</summary>
+
+                        <text>
+                            <p>Identifier of the backup set (restore point). The metadata file will be placed in this set's directory.</p>
+                        </text>
+
+                        <example>20150131-153358F_20150131-153401I</example>
+                    </option>
+                </option-list>
+
+            </command>
+
             <command id="repo-put" name="Repository Put File">
                 <summary>Put a file in the repository.</summary>
 

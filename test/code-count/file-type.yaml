@@ -1127,6 +1127,14 @@ src/command/repo/ls.h:
   class: core
   type: c/h
 
+src/command/repo/push.c:
+  class: core
+  type: c
+
+src/command/repo/push.h:
+  class: core
+  type: c/h
+
 src/command/repo/put.c:
   class: core
   type: c

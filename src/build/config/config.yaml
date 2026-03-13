@@ -107,6 +107,16 @@ command:
     log-level-default: DEBUG
     parameter-allowed: true
 
+  repo-push:
+    command-role:
+      async: {}
+      local: {}
+      remote: {}
+    internal: true
+    log-file: false
+    log-level-default: DEBUG
+    parameter-allowed: true
+
   repo-put:
     command-role:
       remote: {}
@@ -328,6 +338,7 @@ option:
       backup: {}
       check: {}
       expire: {}
+      repo-push: {}
       restore: {}
       stanza-create: {}
       stanza-upgrade: {}
@@ -392,6 +403,8 @@ option:
       manifest:
         default: latest
         required: true
+      repo-push:
+        required: true
       restore:
         default: latest
         required: true
@@ -425,6 +438,8 @@ option:
         required: false
       repo-ls:
         required: false
+      repo-push:
+        required: true
       repo-put:
         required: false
       repo-rm:
@@ -572,6 +587,7 @@ option:
       manifest: {}
       repo-get: {}
       repo-ls: {}
+      repo-push: {}
       repo-put: {}
       repo-rm: {}
       restore: {}
@@ -614,6 +630,7 @@ option:
       manifest: {}
       repo-get: {}
       repo-ls: {}
+      repo-push: {}
       repo-put: {}
       repo-rm: {}
       restore: {}
@@ -785,6 +802,7 @@ option:
     command:
       archive-push: {}
       backup: {}
+      repo-push: {}
     command-role:
       main: {}
 
@@ -812,6 +830,7 @@ option:
       manifest: {}
       repo-get: {}
       repo-ls: {}
+      repo-push: {}
       repo-put: {}
       restore: {}
       stanza-create: {}
@@ -1731,6 +1750,9 @@ option:
         command-role:
           main: {}
           remote: {}
+      repo-push:
+        command-role:
+          main: {}
       repo-put:
         command-role:
           main: {}
@@ -1848,6 +1870,10 @@ option:
           main: {}
           remote: {}
       repo-ls:
+        command-role:
+          main: {}
+          remote: {}
+      repo-push:
         command-role:
           main: {}
           remote: {}

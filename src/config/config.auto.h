@@ -20,6 +20,7 @@ Command constants
 #define CFGCMD_MANIFEST                                             "manifest"
 #define CFGCMD_REPO_GET                                             "repo-get"
 #define CFGCMD_REPO_LS                                              "repo-ls"
+#define CFGCMD_REPO_PUSH                                            "repo-push"
 #define CFGCMD_REPO_PUT                                             "repo-put"
 #define CFGCMD_REPO_RM                                              "repo-rm"
 #define CFGCMD_RESTORE                                              "restore"
@@ -33,7 +34,7 @@ Command constants
 #define CFGCMD_VERIFY                                               "verify"
 #define CFGCMD_VERSION                                              "version"
 
-#define CFG_COMMAND_TOTAL                                           23
+#define CFG_COMMAND_TOTAL                                           24
 
 /***********************************************************************************************************************************
 Option group constants
@@ -371,6 +372,7 @@ typedef enum
     cfgCmdManifest,
     cfgCmdRepoGet,
     cfgCmdRepoLs,
+    cfgCmdRepoPush,
     cfgCmdRepoPut,
     cfgCmdRepoRm,
     cfgCmdRestore,

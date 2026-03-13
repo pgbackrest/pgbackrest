@@ -419,6 +419,30 @@ manifestFileAdd(Manifest *const this, ManifestFile *const file)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+FN_EXTERN void
+manifestCustomFileAdd(Manifest *const this, ManifestFile *const file)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(file->name != NULL);
+
+    file->user = manifestOwnerCache(this, file->user);
+    file->group = manifestOwnerCache(this, file->group);
+
+    MEM_CONTEXT_BEGIN(lstMemContext(this->pub.customFileList))
+    {
+        const ManifestFilePack *const filePack = manifestFilePack(this, file);
+        lstAdd(this->pub.customFileList, &filePack);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 // Update file pack by creating a new one and then freeing the old one
 static void
 manifestFilePackUpdate(Manifest *const this, ManifestFilePack **const filePack, const ManifestFile *const file)
@@ -434,6 +458,31 @@ manifestFilePackUpdate(Manifest *const this, ManifestFilePack **const filePack, 
     ASSERT(file != NULL);
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.fileList))
+    {
+        ManifestFilePack *const filePackOld = *filePack;
+        *filePack = manifestFilePack(this, file);
+        memFree(filePackOld);
+    }
+    MEM_CONTEXT_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+// Update custom file pack by creating a new one and then freeing the old one
+static void
+manifestCustomFilePackUpdate(Manifest *const this, ManifestFilePack **const filePack, const ManifestFile *const file)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM_P(VOID, filePack);
+        FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(filePack != NULL);
+    ASSERT(file != NULL);
+
+    MEM_CONTEXT_BEGIN(lstMemContext(this->pub.customFileList))
     {
         ManifestFilePack *const filePackOld = *filePack;
         *filePack = manifestFilePack(this, file);
@@ -557,6 +606,7 @@ manifestNewInternal(void)
             .linkList = lstNewP(sizeof(ManifestLink), .comparator = lstComparatorStr),
             .pathList = lstNewP(sizeof(ManifestPath), .comparator = lstComparatorStr),
             .targetList = lstNewP(sizeof(ManifestTarget), .comparator = lstComparatorStr),
+            .customFileList = lstNewP(sizeof(ManifestFilePack *), .comparator = lstComparatorStr),
             .referenceList = strLstNew(),
         },
         .ownerList = strLstNew(),
@@ -1867,6 +1917,8 @@ manifestBuildComplete(
 #define MANIFEST_SECTION_TARGET_PATH                                "target:path"
 #define MANIFEST_SECTION_TARGET_PATH_DEFAULT                        "target:path:default"
 
+#define MANIFEST_SECTION_CUSTOM_FILE                                "custom:file"
+
 #define MANIFEST_KEY_ANNOTATION                                     "annotation"
 #define MANIFEST_KEY_BACKUP_ARCHIVE_START                           "backup-archive-start"
 #define MANIFEST_KEY_BACKUP_ARCHIVE_STOP                            "backup-archive-stop"
@@ -1994,6 +2046,119 @@ manifestOwnerDefaultGet(const Variant *const ownerDefault)
 }
 
 static void
+manifestLoadFileEntry(Manifest *const manifest, ManifestLoadData *const loadData, const String *const key, const String *const value, ManifestFile *file)
+{
+    JsonRead *const json = jsonReadNew(value);
+    jsonReadObjectBegin(json);
+
+    // Block incremental info
+    if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BLOCK_INCR))
+    {
+        file->blockIncrSize = (size_t)jsonReadUInt64(json) * BLOCK_INCR_SIZE_FACTOR;
+
+        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BLOCK_INCR_CHECKSUM))
+            file->blockIncrChecksumSize = (size_t)jsonReadUInt64(json);
+        else
+            file->blockIncrChecksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN;
+
+        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BLOCK_INCR_MAP))
+            file->blockIncrMapSize = jsonReadUInt64(json);
+    }
+
+    // Bundle info
+    if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BUNDLE_ID))
+    {
+        file->bundleId = jsonReadUInt64(json);
+
+        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BUNDLE_OFFSET))
+            file->bundleOffset = jsonReadUInt64(json);
+    }
+
+    // The checksum might not exist if this is a partial save that was done during the backup to preserve checksums for already
+    // backed up files
+    if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_CHECKSUM))
+        file->checksumSha1 = bufPtr(bufNewDecode(encodingHex, jsonReadStr(json)));
+
+    // Page checksum errors
+    if (jsonReadKeyExpectZ(json, MANIFEST_KEY_CHECKSUM_PAGE))
+    {
+        file->checksumPage = true;
+        file->checksumPageError = !jsonReadBool(json);
+
+        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_CHECKSUM_PAGE_ERROR))
+            file->checksumPageErrorList = jsonFromVar(jsonReadVar(json));
+    }
+
+    // Group
+    if (jsonReadKeyExpectZ(json, MANIFEST_KEY_GROUP))
+        file->group = manifestOwnerGet(jsonReadVar(json));
+    else
+        file->group = manifest->fileGroupDefault;
+
+    // Mode
+    if (jsonReadKeyExpectZ(json, MANIFEST_KEY_MODE))
+        file->mode = cvtZToMode(strZ(jsonReadStr(json)));
+    else
+        file->mode = manifest->fileModeDefault;
+
+    // The repo checksum might not exist if this is a partial save that was done during the backup to preserve checksums for
+    // already backed up files or if this is an older manifest
+    if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_CHECKSUM_REPO))
+        file->checksumRepoSha1 = bufPtr(bufNewDecode(encodingHex, jsonReadStr(json)));
+
+    // Reference
+    if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_REFERENCE))
+    {
+        file->reference = jsonReadStr(json);
+
+        if (!loadData->referenceListFound)
+            file->reference = strLstAddIfMissing(manifest->pub.referenceList, file->reference);
+    }
+
+    // If "repo-size" is not present in the manifest file, then it is the same as size (i.e. uncompressed) - to save space,
+    // the repo-size is only stored in the manifest file if it is different than size.
+    const bool sizeRepoExists = jsonReadKeyExpectStrId(json, MANIFEST_KEY_SIZE_REPO);
+
+    if (sizeRepoExists)
+        file->sizeRepo = jsonReadUInt64(json);
+
+    // Size is required so error if it is not present. Older versions removed the size before the backup to ensure that the
+    // manifest was updated during the backup, so size can be missing in partial manifests. This error will prevent older
+    // partials from being resumed.
+    if (!jsonReadKeyExpectStrId(json, MANIFEST_KEY_SIZE))
+        THROW_FMT(FormatError, "missing size for file '%s'", strZ(key));
+
+    file->size = jsonReadUInt64(json);
+
+    // If repo size did not exist then
+    if (!sizeRepoExists)
+        file->sizeRepo = file->size;
+
+    // If file size is zero then assign the static zero hash
+    if (file->size == 0)
+        file->checksumSha1 = bufPtrConst(HASH_TYPE_SHA1_ZERO_BUF);
+
+    // If original is not present in the manifest file then it is the same as size (i.e. the file did not change size during
+    // copy) -- to save space the original size is only stored in the manifest file if it is different than size.
+    if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_SIZE_ORIGINAL))
+        file->sizeOriginal = jsonReadUInt64(json);
+    else
+        file->sizeOriginal = file->size;
+
+    // Timestamp is required so error if it is not present
+    if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_TIMESTAMP))
+        file->timestamp = (time_t)jsonReadInt64(json);
+    else
+        THROW_FMT(FormatError, "missing timestamp for file '%s'", strZ(key));
+
+    // User
+    if (jsonReadKeyExpectZ(json, MANIFEST_KEY_USER))
+        file->user = manifestOwnerGet(jsonReadVar(json));
+    else
+        file->user = manifest->fileUserDefault;
+}
+
+static void
 manifestLoadCallback(void *const callbackData, const String *const section, const String *const key, const String *const value)
 {
     FUNCTION_TEST_BEGIN();
@@ -2017,116 +2182,18 @@ manifestLoadCallback(void *const callbackData, const String *const section, cons
     {
         ManifestFile file = {.name = key};
 
-        JsonRead *const json = jsonReadNew(value);
-        jsonReadObjectBegin(json);
-
-        // Block incremental info
-        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BLOCK_INCR))
-        {
-            file.blockIncrSize = (size_t)jsonReadUInt64(json) * BLOCK_INCR_SIZE_FACTOR;
-
-            if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BLOCK_INCR_CHECKSUM))
-                file.blockIncrChecksumSize = (size_t)jsonReadUInt64(json);
-            else
-                file.blockIncrChecksumSize = BLOCK_INCR_CHECKSUM_SIZE_MIN;
-
-            if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BLOCK_INCR_MAP))
-                file.blockIncrMapSize = jsonReadUInt64(json);
-        }
-
-        // Bundle info
-        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BUNDLE_ID))
-        {
-            file.bundleId = jsonReadUInt64(json);
-
-            if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_BUNDLE_OFFSET))
-                file.bundleOffset = jsonReadUInt64(json);
-        }
-
-        // The checksum might not exist if this is a partial save that was done during the backup to preserve checksums for already
-        // backed up files
-        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_CHECKSUM))
-            file.checksumSha1 = bufPtr(bufNewDecode(encodingHex, jsonReadStr(json)));
-
-        // Page checksum errors
-        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_CHECKSUM_PAGE))
-        {
-            file.checksumPage = true;
-            file.checksumPageError = !jsonReadBool(json);
-
-            if (jsonReadKeyExpectZ(json, MANIFEST_KEY_CHECKSUM_PAGE_ERROR))
-                file.checksumPageErrorList = jsonFromVar(jsonReadVar(json));
-        }
-
-        // Group
-        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_GROUP))
-            file.group = manifestOwnerGet(jsonReadVar(json));
-        else
-            file.group = manifest->fileGroupDefault;
-
-        // Mode
-        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_MODE))
-            file.mode = cvtZToMode(strZ(jsonReadStr(json)));
-        else
-            file.mode = manifest->fileModeDefault;
-
-        // The repo checksum might not exist if this is a partial save that was done during the backup to preserve checksums for
-        // already backed up files or if this is an older manifest
-        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_CHECKSUM_REPO))
-            file.checksumRepoSha1 = bufPtr(bufNewDecode(encodingHex, jsonReadStr(json)));
-
-        // Reference
-        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_REFERENCE))
-        {
-            file.reference = jsonReadStr(json);
-
-            if (!loadData->referenceListFound)
-                file.reference = strLstAddIfMissing(manifest->pub.referenceList, file.reference);
-        }
-
-        // If "repo-size" is not present in the manifest file, then it is the same as size (i.e. uncompressed) - to save space,
-        // the repo-size is only stored in the manifest file if it is different than size.
-        const bool sizeRepoExists = jsonReadKeyExpectStrId(json, MANIFEST_KEY_SIZE_REPO);
-
-        if (sizeRepoExists)
-            file.sizeRepo = jsonReadUInt64(json);
-
-        // Size is required so error if it is not present. Older versions removed the size before the backup to ensure that the
-        // manifest was updated during the backup, so size can be missing in partial manifests. This error will prevent older
-        // partials from being resumed.
-        if (!jsonReadKeyExpectStrId(json, MANIFEST_KEY_SIZE))
-            THROW_FMT(FormatError, "missing size for file '%s'", strZ(key));
-
-        file.size = jsonReadUInt64(json);
-
-        // If repo size did not exist then
-        if (!sizeRepoExists)
-            file.sizeRepo = file.size;
-
-        // If file size is zero then assign the static zero hash
-        if (file.size == 0)
-            file.checksumSha1 = bufPtrConst(HASH_TYPE_SHA1_ZERO_BUF);
-
-        // If original is not present in the manifest file then it is the same as size (i.e. the file did not change size during
-        // copy) -- to save space the original size is only stored in the manifest file if it is different than size.
-        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_SIZE_ORIGINAL))
-            file.sizeOriginal = jsonReadUInt64(json);
-        else
-            file.sizeOriginal = file.size;
-
-        // Timestamp is required so error if it is not present
-        if (jsonReadKeyExpectStrId(json, MANIFEST_KEY_TIMESTAMP))
-            file.timestamp = (time_t)jsonReadInt64(json);
-        else
-            THROW_FMT(FormatError, "missing timestamp for file '%s'", strZ(key));
-
-        // User
-        if (jsonReadKeyExpectZ(json, MANIFEST_KEY_USER))
-            file.user = manifestOwnerGet(jsonReadVar(json));
-        else
-            file.user = manifest->fileUserDefault;
+        manifestLoadFileEntry(manifest, loadData, key, value, &file);
 
         manifestFileAdd(manifest, &file);
+    }
+    // -----------------------------------------------------------------------------------------------------------------------------
+    else if (strEqZ(section, MANIFEST_SECTION_CUSTOM_FILE))
+    {
+        ManifestFile file = {.name = key};
+
+        manifestLoadFileEntry(manifest, loadData, key, value, &file);
+
+        manifestCustomFileAdd(manifest, &file);
     }
     // -----------------------------------------------------------------------------------------------------------------------------
     else if (strEqZ(section, MANIFEST_SECTION_TARGET_PATH))
@@ -2501,6 +2568,84 @@ manifestOwnerVar(const String *const ownerDefault)
 }
 
 static void
+manifestSaveFileEntry(const ManifestFile *file, ManifestSaveData *const saveData, const char *section, InfoSave *const infoSaveData)
+{
+    JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
+
+    // Block incremental info
+    if (file->blockIncrSize != 0)
+    {
+        jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_BLOCK_INCR), file->blockIncrSize / BLOCK_INCR_SIZE_FACTOR);
+
+        if (file->blockIncrChecksumSize != BLOCK_INCR_CHECKSUM_SIZE_MIN)
+            jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_BLOCK_INCR_CHECKSUM), file->blockIncrChecksumSize);
+
+        if (file->blockIncrMapSize != 0)
+            jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_BLOCK_INCR_MAP), file->blockIncrMapSize);
+    }
+
+    // Bundle info
+    if (file->bundleId != 0)
+    {
+        jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_BUNDLE_ID), file->bundleId);
+
+        if (file->bundleOffset != 0)
+            jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_BUNDLE_OFFSET), file->bundleOffset);
+    }
+
+    // Save if the file size is not zero and the checksum exists. The checksum might not exist if this is a partial save
+    // performed during a backup.
+    if (file->size != 0 && file->checksumSha1 != NULL)
+    {
+        jsonWriteStr(
+            jsonWriteKeyStrId(json, MANIFEST_KEY_CHECKSUM),
+            strNewEncode(encodingHex, BUF(file->checksumSha1, HASH_TYPE_SHA1_SIZE)));
+    }
+
+    if (file->checksumPage)
+    {
+        jsonWriteBool(jsonWriteKeyZ(json, MANIFEST_KEY_CHECKSUM_PAGE), !file->checksumPageError);
+
+        if (file->checksumPageErrorList != NULL)
+            jsonWriteJson(jsonWriteKeyZ(json, MANIFEST_KEY_CHECKSUM_PAGE_ERROR), file->checksumPageErrorList);
+    }
+
+    if (!varEq(manifestOwnerVar(file->group), saveData->groupDefault))
+        jsonWriteVar(jsonWriteKeyZ(json, MANIFEST_KEY_GROUP), manifestOwnerVar(file->group));
+
+    if (file->mode != saveData->fileModeDefault)
+        jsonWriteStrFmt(jsonWriteKeyZ(json, MANIFEST_KEY_MODE), "%04o", file->mode);
+
+    // Save if the repo checksum is not null. The repo checksum for zero-length files may vary depending on compression
+    // and encryption applied.
+    if (file->checksumRepoSha1 != NULL)
+    {
+        jsonWriteStr(
+            jsonWriteKeyStrId(json, MANIFEST_KEY_CHECKSUM_REPO),
+            strNewEncode(encodingHex, BUF(file->checksumRepoSha1, HASH_TYPE_SHA1_SIZE)));
+    }
+
+    if (file->reference != NULL)
+        jsonWriteStr(jsonWriteKeyStrId(json, MANIFEST_KEY_REFERENCE), file->reference);
+
+    if (file->sizeRepo != file->size)
+        jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_SIZE_REPO), file->sizeRepo);
+
+    jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_SIZE), file->size);
+
+    if (file->sizeOriginal != file->size)
+        jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_SIZE_ORIGINAL), file->sizeOriginal);
+
+    jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_TIMESTAMP), (uint64_t)file->timestamp);
+
+    if (!varEq(manifestOwnerVar(file->user), saveData->userDefault))
+        jsonWriteVar(jsonWriteKeyZ(json, MANIFEST_KEY_USER), manifestOwnerVar(file->user));
+
+    infoSaveValue(
+        infoSaveData, section, strZ(file->name), jsonWriteResult(jsonWriteObjectEnd(json)));
+}
+
+static void
 manifestSaveCallback(void *const callbackData, const String *const sectionNext, InfoSave *const infoSaveData)
 {
     FUNCTION_TEST_BEGIN();
@@ -2726,6 +2871,23 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
     }
 
     // -----------------------------------------------------------------------------------------------------------------------------
+    if (infoSaveSection(infoSaveData, MANIFEST_SECTION_CUSTOM_FILE, sectionNext))
+    {
+        MEM_CONTEXT_TEMP_RESET_BEGIN()
+        {
+            for (unsigned int fileIdx = 0; fileIdx < manifestCustomFileTotal(manifest); fileIdx++)
+            {
+                const ManifestFile file = manifestCustomFile(manifest, fileIdx);
+
+                manifestSaveFileEntry(&file, saveData, MANIFEST_SECTION_CUSTOM_FILE, infoSaveData);
+
+                MEM_CONTEXT_TEMP_RESET(1000);
+            }
+        }
+        MEM_CONTEXT_TEMP_END();
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------------------
     if (infoSaveSection(infoSaveData, MANIFEST_SECTION_DB, sectionNext))
     {
         MEM_CONTEXT_TEMP_RESET_BEGIN()
@@ -2765,79 +2927,8 @@ manifestSaveCallback(void *const callbackData, const String *const sectionNext, 
             for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
             {
                 const ManifestFile file = manifestFile(manifest, fileIdx);
-                JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
 
-                // Block incremental info
-                if (file.blockIncrSize != 0)
-                {
-                    jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_BLOCK_INCR), file.blockIncrSize / BLOCK_INCR_SIZE_FACTOR);
-
-                    if (file.blockIncrChecksumSize != BLOCK_INCR_CHECKSUM_SIZE_MIN)
-                        jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_BLOCK_INCR_CHECKSUM), file.blockIncrChecksumSize);
-
-                    if (file.blockIncrMapSize != 0)
-                        jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_BLOCK_INCR_MAP), file.blockIncrMapSize);
-                }
-
-                // Bundle info
-                if (file.bundleId != 0)
-                {
-                    jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_BUNDLE_ID), file.bundleId);
-
-                    if (file.bundleOffset != 0)
-                        jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_BUNDLE_OFFSET), file.bundleOffset);
-                }
-
-                // Save if the file size is not zero and the checksum exists. The checksum might not exist if this is a partial save
-                // performed during a backup.
-                if (file.size != 0 && file.checksumSha1 != NULL)
-                {
-                    jsonWriteStr(
-                        jsonWriteKeyStrId(json, MANIFEST_KEY_CHECKSUM),
-                        strNewEncode(encodingHex, BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE)));
-                }
-
-                if (file.checksumPage)
-                {
-                    jsonWriteBool(jsonWriteKeyZ(json, MANIFEST_KEY_CHECKSUM_PAGE), !file.checksumPageError);
-
-                    if (file.checksumPageErrorList != NULL)
-                        jsonWriteJson(jsonWriteKeyZ(json, MANIFEST_KEY_CHECKSUM_PAGE_ERROR), file.checksumPageErrorList);
-                }
-
-                if (!varEq(manifestOwnerVar(file.group), saveData->groupDefault))
-                    jsonWriteVar(jsonWriteKeyZ(json, MANIFEST_KEY_GROUP), manifestOwnerVar(file.group));
-
-                if (file.mode != saveData->fileModeDefault)
-                    jsonWriteStrFmt(jsonWriteKeyZ(json, MANIFEST_KEY_MODE), "%04o", file.mode);
-
-                // Save if the repo checksum is not null. The repo checksum for zero-length files may vary depending on compression
-                // and encryption applied.
-                if (file.checksumRepoSha1 != NULL)
-                {
-                    jsonWriteStr(
-                        jsonWriteKeyStrId(json, MANIFEST_KEY_CHECKSUM_REPO),
-                        strNewEncode(encodingHex, BUF(file.checksumRepoSha1, HASH_TYPE_SHA1_SIZE)));
-                }
-
-                if (file.reference != NULL)
-                    jsonWriteStr(jsonWriteKeyStrId(json, MANIFEST_KEY_REFERENCE), file.reference);
-
-                if (file.sizeRepo != file.size)
-                    jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_SIZE_REPO), file.sizeRepo);
-
-                jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_SIZE), file.size);
-
-                if (file.sizeOriginal != file.size)
-                    jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_SIZE_ORIGINAL), file.sizeOriginal);
-
-                jsonWriteUInt64(jsonWriteKeyStrId(json, MANIFEST_KEY_TIMESTAMP), (uint64_t)file.timestamp);
-
-                if (!varEq(manifestOwnerVar(file.user), saveData->userDefault))
-                    jsonWriteVar(jsonWriteKeyZ(json, MANIFEST_KEY_USER), manifestOwnerVar(file.user));
-
-                infoSaveValue(
-                    infoSaveData, MANIFEST_SECTION_TARGET_FILE, strZ(file.name), jsonWriteResult(jsonWriteObjectEnd(json)));
+                manifestSaveFileEntry(&file, saveData, MANIFEST_SECTION_TARGET_FILE, infoSaveData);
 
                 MEM_CONTEXT_TEMP_RESET(1000);
             }
@@ -3043,6 +3134,25 @@ manifestFilePackFindInternal(const Manifest *const this, const String *const nam
     FUNCTION_TEST_RETURN_TYPE_PP(ManifestFilePack, filePack);
 }
 
+static ManifestFilePack **
+manifestCustomFilePackFindInternal(const Manifest *const this, const String *const name)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(STRING, name);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(name != NULL);
+
+    ManifestFilePack **const filePack = lstFind(this->pub.customFileList, &name);
+
+    if (filePack == NULL)
+        THROW_FMT(AssertError, "unable to find '%s' in manifest file list", strZ(name));
+
+    FUNCTION_TEST_RETURN_TYPE_PP(ManifestFilePack, filePack);
+}
+
 const ManifestFilePack *
 manifestFilePackFind(const Manifest *const this, const String *const name)
 {
@@ -3092,6 +3202,28 @@ manifestFileUpdate(Manifest *const this, const ManifestFile *const file)
 
     ManifestFilePack **const filePack = manifestFilePackFindInternal(this, file->name);
     manifestFilePackUpdate(this, filePack, file);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+FN_EXTERN void
+manifestCustomFileUpdate(Manifest *const this, const ManifestFile *file)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(file != NULL);
+    ASSERT(
+        (!file->checksumPage && !file->checksumPageError && file->checksumPageErrorList == NULL) ||
+        (file->checksumPage && !file->checksumPageError && file->checksumPageErrorList == NULL) ||
+        (file->checksumPage && file->checksumPageError));
+    ASSERT(file->size != 0 || (file->bundleId == 0 && file->bundleOffset == 0));
+
+    ManifestFilePack **const filePack = manifestCustomFilePackFindInternal(this, file->name);
+    manifestCustomFilePackUpdate(this, filePack, file);
 
     FUNCTION_TEST_RETURN_VOID();
 }

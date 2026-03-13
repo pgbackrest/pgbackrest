@@ -197,6 +197,9 @@ FN_EXTERN String *strLower(String *this);
 // Return the path part of a string (i.e. everything before the last / or "" if there is no /)
 FN_EXTERN String *strPath(const String *this);
 
+// Return the file name part of a string (i.e. everything after the last / or "" if there is no /)
+FN_EXTERN String *strFileName(const String *const this);
+
 // Combine with a base path to get an absolute path
 FN_EXTERN String *strPathAbsolute(const String *this, const String *base);
 

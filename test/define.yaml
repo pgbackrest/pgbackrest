@@ -811,7 +811,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: manifest
-        total: 6
+        total: 7
         harness:
           name: manifest
           shim:
@@ -1023,12 +1023,13 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: repo
-        total: 3
+        total: 4
 
         coverage:
           - command/repo/common
           - command/repo/get
           - command/repo/ls
+          - command/repo/push
           - command/repo/put
           - command/repo/rm
 

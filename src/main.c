@@ -25,6 +25,7 @@ Main
 #include "command/remote/remote.h"
 #include "command/repo/get.h"
 #include "command/repo/ls.h"
+#include "command/repo/push.h"
 #include "command/repo/put.h"
 #include "command/repo/rm.h"
 #include "command/restore/restore.h"
@@ -197,6 +198,12 @@ main(int argListSize, const char *argList[])
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRepoLs:
                     cmdStorageList();
+                    break;
+
+                // Repository push metadata file command
+                // -----------------------------------------------------------------------------------------------------------------
+                case cfgCmdRepoPush:
+                    cmdStoragePush();
                     break;
 
                 // Repository put file command

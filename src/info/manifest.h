@@ -236,6 +236,7 @@ typedef struct ManifestPub
     List *linkList;                                                 // List of links
     List *pathList;                                                 // List of paths
     List *targetList;                                               // List of targets
+    List *customFileList;                                           // List of custom files
     StringList *referenceList;                                      // List of file references
 } ManifestPub;
 
@@ -342,6 +343,13 @@ manifestFilePackGet(const Manifest *const this, const unsigned int fileIdx)
     return *(ManifestFilePack **)lstGet(THIS_PUB(Manifest)->fileList, fileIdx);
 }
 
+// Get custom file in pack format by index
+FN_INLINE_ALWAYS const ManifestFilePack *
+manifestCustomFilePackGet(const Manifest *const this, const unsigned int fileIdx)
+{
+    return *(ManifestFilePack **)lstGet(THIS_PUB(Manifest)->customFileList, fileIdx);
+}
+
 // Get file name
 FN_INLINE_ALWAYS const String *
 manifestFileNameGet(const Manifest *const this, const unsigned int fileIdx)
@@ -356,8 +364,18 @@ manifestFile(const Manifest *const this, const unsigned int fileIdx)
     return manifestFileUnpack(this, manifestFilePackGet(this, fileIdx));
 }
 
+// Get custom file by index
+FN_INLINE_ALWAYS ManifestFile
+manifestCustomFile(const Manifest *const this, const unsigned int fileIdx)
+{
+    return manifestFileUnpack(this, manifestCustomFilePackGet(this, fileIdx));
+}
+
 // Add a file
 FN_EXTERN void manifestFileAdd(Manifest *this, ManifestFile *file);
+
+// Add a file to the custom file list
+FN_EXTERN void manifestCustomFileAdd(Manifest *this, ManifestFile *file);
 
 // Find file in pack format by name
 FN_EXTERN const ManifestFilePack *manifestFilePackFind(const Manifest *this, const String *name);
@@ -386,8 +404,17 @@ manifestFileTotal(const Manifest *const this)
     return lstSize(THIS_PUB(Manifest)->fileList);
 }
 
+FN_INLINE_ALWAYS unsigned int
+manifestCustomFileTotal(const Manifest *const this)
+{
+    return lstSize(THIS_PUB(Manifest)->customFileList);
+}
+
 // Update a file with new data
 FN_EXTERN void manifestFileUpdate(Manifest *const this, const ManifestFile *file);
+
+// Update a custom file with new data
+FN_EXTERN void manifestCustomFileUpdate(Manifest *const this, const ManifestFile *file);
 
 /***********************************************************************************************************************************
 Link functions and getters/setters
