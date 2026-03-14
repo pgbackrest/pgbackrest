@@ -1,4 +1,4 @@
-#define FUSE_USE_VERSION 30
+#define FUSE_USE_VERSION 31
 
 #include <fuse.h>
 
@@ -231,13 +231,6 @@ restoreMount(Manifest *const manifest, const Storage *const storage, const Strin
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        char bin[] = "bin";
-        char mount[1024];
-        strcpy(mount, strZ(cfgOptionStrNull(cfgOptPgPath)));
-        char *argList[] = {bin, mount, 0};
-
-        struct fuse_args args = FUSE_ARGS_INIT(2, argList);
-
         cmdRestoreMountFuseLocal = (struct CmdRestoreMountFuseLocal)
         {
             .manifest = manifest,
@@ -245,21 +238,42 @@ restoreMount(Manifest *const manifest, const Storage *const storage, const Strin
             .label = label,
         };
 
-        // cmdRestoreMountFuseLocal.pathList = lstNewP(sizeof(CmdRestoreMountFusePath), .comparator = lstComparatorStr);
+        // char bin[] = "bin";
+        // char mount[1024];
+        // strcpy(mount, strZ(cfgOptionStrNull(cfgOptPgPath)));
+        // char *argList[] = {bin, mount, 0};
 
-        // for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
-        // {
-        //     const ManifestPath *const path = manifestPath(manifest, pathIdx);
+        // struct fuse_args args = FUSE_ARGS_INIT(2, argList);
 
-        //     if (strBeginsWithZ(path->name, "pg_data/"))
-        //     {
-        //         if (strstr(strZ(path->name) + 8, "/") == NULL)
-        //             filler(buf, strBaseZ(path->name), NULL, 0, 0);
-        //     }
-        // }
+        // fuse_main(args.argc, args.argv, &restoreMountFuseOper, NULL);
+        // fuse_opt_free_args(&args);
 
-        fuse_main(args.argc, args.argv, &restoreMountFuseOper, NULL);
-        fuse_opt_free_args(&args);
+        // char bin[] = "bin";
+        // char *argList[] = {bin, 0};
+
+        struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
+        fuse_opt_add_arg(&args, PROJECT_NAME);
+
+        struct fuse *const fuse = fuse_new(&args, &restoreMountFuseOper, sizeof(restoreMountFuseOper), NULL);
+
+        if (fuse == NULL)
+            THROW(AssertError, "fuse_new() failed");
+
+        if (fuse_mount(fuse, strZ(cfgOptionStrNull(cfgOptPgPath))) != 0)
+            THROW(AssertError, "fuse_mount() failed");
+
+        // if (fuse_daemonize(false) != 0)
+        //     THROW(AssertError, "fuse_daemonize() failed");
+
+        if (fuse_set_signal_handlers(fuse_get_session(fuse)) != 0)
+            THROW(AssertError, "fuse_set_signal_handlers() failed");
+
+        fuse_loop(fuse);
+
+        fuse_remove_signal_handlers(fuse_get_session(fuse));
+        fuse_unmount(fuse);
+        fuse_destroy(fuse);
+        fprintf(stdout, "GOT HERE!!!\n");fflush(stdout);
     }
     MEM_CONTEXT_TEMP_END();
 

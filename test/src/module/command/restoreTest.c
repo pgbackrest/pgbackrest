@@ -15,6 +15,7 @@ Test Restore Command
 #include "common/harnessBackup.h"
 #include "common/harnessBlockIncr.h"
 #include "common/harnessConfig.h"
+#include "common/harnessFork.h"
 #include "common/harnessInfo.h"
 #include "common/harnessManifest.h"
 #include "common/harnessPostgres.h"
@@ -3450,6 +3451,7 @@ testRun(void)
         TEST_RESULT_LOG_EMPTY_OR_CONTAINS(", bi 128KB/256KB, ");
 
         hrnCfgEnvRemoveRaw(cfgOptRepoCipherPass);
+        harnessLogLevelSet(logLevelWarn);
         hrnStorageHelperRepoShimSet(true);
     }
 
@@ -3503,7 +3505,7 @@ testRun(void)
         TEST_RESULT_VOID(hrnCmdBackup(), "backup");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("delta restore with block incr");
+        TEST_TITLE("delta restore with mount");
 
         // Restore configuration to repo1
         argList = strLstNew();
@@ -3516,20 +3518,37 @@ testRun(void)
 
         HRN_STORAGE_PATH_REMOVE(storagePgIdxWrite(0), NULL, .recurse = true);
 
-        TEST_RESULT_VOID(hrnCmdRestore(), "restore");
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN()
+            {
+                TEST_RESULT_VOID(hrnCmdRestore(), "restore");
+            }
+            HRN_FORK_CHILD_END();
 
-        TEST_STORAGE_LIST(
-            storagePg(), NULL,
-            "PG_VERSION\n"
-            "base/\n"
-            "base/1/\n"
-            "base/1/2\n"
-            "base/1/3\n"
-            "base/1/44\n"
-            "global/\n"
-            "global/pg_control\n"
-            "postgresql.auto.conf\n",
-            .level = storageInfoLevelType);
+            HRN_FORK_PARENT_BEGIN()
+            {
+                while (!storagePathExistsP(storagePg(), cfgOptionStrNull(cfgOptPgPath)))
+                    sleepMSec(100);
+
+                // HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_tblspc");
+
+                TEST_STORAGE_LIST(
+                    storagePg(), NULL,
+                    "PG_VERSION\n"
+                    "base/\n"
+                    "base/1/\n"
+                    "base/1/2\n"
+                    "global/\n"
+                    "global/pg_control\n"
+                    "postgresql.auto.conf\n",
+                    .level = storageInfoLevelType);
+
+                HRN_SYSTEM_FMT("umount %s", strZ(cfgOptionStrNull(cfgOptPgPath)));
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
 
         hrnStorageHelperRepoShimSet(true);
     }

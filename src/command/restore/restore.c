@@ -125,7 +125,7 @@ cmdRestore(void)
         const String *const expression = restoreSelectiveExpression(jobData.manifest);
         jobData.zeroExp = expression == NULL ? NULL : regExpNew(expression);
 
-        // Clean the data directory and build path/link structure
+        // Clean the data directory and build path/link structure (!!!FOR MOUNT WE'D RATHER JUST HAVE A SINGLE EMPTY DIR
         restoreCleanBuild(jobData.manifest, jobData.rootReplaceUser, jobData.rootReplaceGroup);
 
         // !!!
