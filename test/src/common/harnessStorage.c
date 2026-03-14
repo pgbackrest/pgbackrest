@@ -230,7 +230,10 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
 
             if (info.type == storageTypeFile)
             {
-                strCatFmt(item, "s=%" PRIu64 ", t=%" PRId64, info.size, (int64_t)info.timeModified);
+                strCatFmt(item, "s=%" PRIu64, info.size);
+
+                if (!param.noTimestamp)
+                    strCatFmt(item, ", t=%" PRId64, (int64_t)info.timeModified);
 
                 if (info.versionId != NULL)
                     strCatFmt(item, ", v=%s", strZ(info.versionId));

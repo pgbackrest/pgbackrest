@@ -69,6 +69,7 @@ typedef struct HrnStorageListParam
     bool noRecurse;                                                 // Do not recurse into subdirectories
     bool includeDot;                                                // Include . paths/links
     StorageInfoLevel level;                                         // Level of storage info to test
+    bool noTimestamp;                                               // Suppress timestamp
     bool levelForce;                                                // Use the level specified (rather than updating default)
     SortOrder sortOrder;                                            // Sort order
     const char *expression;                                         // Filter the list based on expression

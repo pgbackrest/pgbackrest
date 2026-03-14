@@ -2,21 +2,22 @@
 
 #include <fuse.h>
 
-// typedef struct CmdRestoreMountFusePath
-// {
-//     const String *name;                                             // Name
-//     mode_t mode;                                                    // Mode
-//     uid_t user;                                                     // User
-//     gid_t group;                                                    // Group
-//     const ManifestPath *path;                                       // Path
-// } CmdRestoreMountFusePath;
+typedef struct CmdRestoreMountFusePath
+{
+    const String *name;                                             // Name
+    mode_t mode;                                                    // Mode
+    uid_t user;                                                     // User
+    gid_t group;                                                    // Group
+    time_t timestamp;                                               // Timestamp
+    const ManifestPath *path;                                       // Path
+} CmdRestoreMountFusePath;
 
 static struct CmdRestoreMountFuseLocal
 {
     Manifest *manifest;                                             // Manifest containing base files to mount
     const Storage *storage;                                         // Repository storage
     const String *label;                                            // Backup label
-    // List *pathList;                                                 // Path list
+    List *pathList;                                                 // Path list
 } cmdRestoreMountFuseLocal;
 
 static String *
@@ -42,33 +43,38 @@ restoreMountFuseInit(struct fuse_conn_info *const conn, struct fuse_config *cons
 }
 
 static int
-restoreMountFuseGetAttr(const char *const path, struct stat *const stbuf, struct fuse_file_info *const fi)
+restoreMountFuseGetAttr(const char *const pathZ, struct stat *const stbuf, struct fuse_file_info *const fi)
 {
     (void) fi;
     int res = 0;
 
+    fprintf(stdout, "!!!GETATTR %s\n", pathZ);fflush(stdout);
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         const Manifest *const manifest = cmdRestoreMountFuseLocal.manifest;
-        String *const manifestName = restoreMountManifestPath(path);
-        const ManifestPath *const manifestPath = manifestPathFindDefault(manifest, manifestName, NULL);
+        const String *const pathStr = STR(pathZ);
+        const CmdRestoreMountFusePath *const path = lstFind(cmdRestoreMountFuseLocal.pathList, &pathStr);
 
-        if (manifestPath != NULL)
+        if (path != NULL)
         {
             *stbuf = (struct stat)
             {
-                .st_mode = S_IFDIR | manifestPath->mode,
+                .st_mode = S_IFDIR | path->mode,
                 .st_nlink = 2,
-                .st_uid = userIdFromName(manifestPath->user),
-                .st_gid = groupIdFromName(manifestPath->group),
-                .st_size = sizeof(ManifestPath), // !!! Change this to sizeof new path struct
-                .st_mtime = manifestData(manifest)->backupTimestampStop,
+                .st_uid = path->user,
+                .st_gid = path->group,
+                .st_size = sizeof(CmdRestoreMountFusePath),
+                .st_atime = path->timestamp,
+                .st_mtime = path->timestamp,
+                .st_ctime = path->timestamp,
             };
         }
         else
         {
             TRY_BEGIN()
             {
+                String *const manifestName = restoreMountManifestPath(pathZ);
                 const ManifestFile manifestFile = manifestFileFind(manifest, manifestName);
 
                 *stbuf = (struct stat)
@@ -78,11 +84,14 @@ restoreMountFuseGetAttr(const char *const path, struct stat *const stbuf, struct
                     .st_uid = userIdFromName(manifestFile.user),
                     .st_gid = groupIdFromName(manifestFile.group),
                     .st_size = (off_t)manifestFile.size,
+                    .st_atime = manifestFile.timestamp,
                     .st_mtime = manifestFile.timestamp,
+                    .st_ctime = manifestFile.timestamp,
                 };
             }
             CATCH_FATAL()
             {
+                fprintf(stdout, "!!!  GETATTR NOT FOUND %s\n", pathZ);fflush(stdout);
                 res = -ENOENT;
             }
             TRY_END();
@@ -102,28 +111,35 @@ restoreMountFuseReadDir(
     (void) fi;
     (void) flags;
 
+    fprintf(stdout, "!!!READIR %s\n", path);fflush(stdout);
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         const Manifest *const manifest = cmdRestoreMountFuseLocal.manifest;
         String *const manifestName = restoreMountManifestPath(path);
-        const ManifestPath *const manifestPathParent = manifestPathFindDefault(manifest, manifestName, NULL);
+        String *const pathName = strCatZ(strNew(), path);
+        const CmdRestoreMountFusePath *const pathParent = lstFind(cmdRestoreMountFuseLocal.pathList, &pathName);
 
-        if (manifestPathParent == NULL)
-            return -ENOENT;
+        ASSERT(pathParent != NULL);
 
         filler(buf, ".", NULL, 0, 0);
         filler(buf, "..", NULL, 0, 0);
 
         strCatChr(manifestName, '/');
 
-        for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
-        {
-            const ManifestPath *const manifestPathSub = manifestPath(manifest, pathIdx);
+        if (!strEq(pathName, FSLASH_STR))
+            strCatChr(pathName, '/');
 
-            if (strBeginsWith(manifestPathSub->name, manifestName))
+        for (unsigned int pathIdx = 0; pathIdx < lstSize(cmdRestoreMountFuseLocal.pathList); pathIdx++)
+        {
+            const CmdRestoreMountFusePath *const pathSub = lstGet(cmdRestoreMountFuseLocal.pathList, pathIdx);
+
+            // fprintf(stdout, "!!!READIR CHECK SUB %s PARENT %s\n", strZ(pathSub->name), strZ(pathName));fflush(stdout);
+
+            if (strBeginsWith(pathSub->name, pathName) && !strEq(pathSub->name, pathName))
             {
-                if (strstr(strZ(manifestPathSub->name) + strSize(manifestName), "/") == NULL)
-                    filler(buf, strBaseZ(manifestPathSub->name), NULL, 0, 0);
+                if (strstr(strZ(pathSub->name) + strSize(pathName), "/") == NULL)
+                    filler(buf, strBaseZ(pathSub->name), NULL, 0, 0);
             }
         }
 
@@ -212,11 +228,51 @@ restoreMountFuseRead(const char *const path, char *const buf, size_t size, const
     return result;
 }
 
+static int restoreMountFuseMkDir(const char *const pathZ, const mode_t mode)
+{
+    fprintf(stdout, "!!!MKDIR %s\n", pathZ);fflush(stdout);
+
+    ASSERT_DECLARE(const String *const pathStr = STR(pathZ));
+    ASSERT(lstFind(cmdRestoreMountFuseLocal.pathList, &pathStr) == NULL);
+
+    MEM_CONTEXT_OBJ_BEGIN(cmdRestoreMountFuseLocal.pathList)
+    {
+        const CmdRestoreMountFusePath pathNew =
+        {
+            .name = strNewZ(pathZ),
+            .mode = mode,
+            .user = userId(),
+            .group = groupId(),
+            .timestamp = time(NULL),
+        };
+
+        lstAdd(cmdRestoreMountFuseLocal.pathList, &pathNew);
+        lstSort(cmdRestoreMountFuseLocal.pathList, sortOrderAsc);
+    }
+    MEM_CONTEXT_OBJ_END();
+
+    return 0;
+}
+
+static int restoreMountFuseRmDir(const char *const pathZ)
+{
+    fprintf(stdout, "!!!RMDIR %s\n", pathZ);fflush(stdout);
+
+    const String *const pathStr = STR(pathZ);
+    ASSERT(lstFind(cmdRestoreMountFuseLocal.pathList, &pathStr) != NULL);
+
+    lstRemove(cmdRestoreMountFuseLocal.pathList, &pathStr);
+
+    return 0;
+}
+
 static const struct fuse_operations restoreMountFuseOper =
 {
     .init = restoreMountFuseInit,
     .getattr = restoreMountFuseGetAttr,
     .readdir = restoreMountFuseReadDir,
+    .mkdir = restoreMountFuseMkDir,
+    .rmdir = restoreMountFuseRmDir,
     .open = restoreMountFuseOpen,
     .read = restoreMountFuseRead,
 };
@@ -236,7 +292,35 @@ restoreMount(Manifest *const manifest, const Storage *const storage, const Strin
             .manifest = manifest,
             .storage = storage,
             .label = label,
+            .pathList = lstNewP(sizeof(CmdRestoreMountFusePath), .comparator = lstComparatorStr),
         };
+
+        MEM_CONTEXT_OBJ_BEGIN(cmdRestoreMountFuseLocal.pathList)
+        {
+            for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
+            {
+                const ManifestPath *const path = manifestPath(manifest, pathIdx);
+
+                fprintf(stdout, "!!!PATH %s\n", strZ(path->name));fflush(stdout);
+
+                const CmdRestoreMountFusePath pathNew =
+                {
+                    .name =
+                        strEq(path->name, MANIFEST_TARGET_PGDATA_STR) ?
+                            strNewZ("/") : strSub(path->name, sizeof(MANIFEST_TARGET_PGDATA) - 1),
+                    .mode = path->mode,
+                    .user = userIdFromName(path->user),
+                    .group = groupIdFromName(path->group),
+                    .timestamp = manifestData(manifest)->backupTimestampStop,
+                    .path = path,
+                };
+
+                lstAdd(cmdRestoreMountFuseLocal.pathList, &pathNew);
+            }
+
+            lstSort(cmdRestoreMountFuseLocal.pathList, sortOrderAsc);
+        }
+        MEM_CONTEXT_OBJ_END();
 
         // char bin[] = "bin";
         // char mount[1024];

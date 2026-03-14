@@ -3531,18 +3531,21 @@ testRun(void)
                 while (!storagePathExistsP(storagePg(), cfgOptionStrNull(cfgOptPgPath)))
                     sleepMSec(100);
 
-                // HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_tblspc");
+                HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_tblspc", .mode = 0777);
+                HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_tblspc2");
+                HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_tblspc2");
 
                 TEST_STORAGE_LIST(
                     storagePg(), NULL,
-                    "PG_VERSION\n"
-                    "base/\n"
-                    "base/1/\n"
-                    "base/1/2\n"
-                    "global/\n"
-                    "global/pg_control\n"
-                    "postgresql.auto.conf\n",
-                    .level = storageInfoLevelType);
+                    "PG_VERSION {s=3, u=vagrant, g=docker, m=0640}\n"
+                    "base/ {u=vagrant, g=docker, m=0750}\n"
+                    "base/1/ {u=vagrant, g=docker, m=0750}\n"
+                    "base/1/2 {s=2048, u=vagrant, g=docker, m=0640}\n"
+                    "global/ {u=vagrant, g=docker, m=0750}\n"
+                    "global/pg_control {s=8192, u=vagrant, g=docker, m=0640}\n"
+                    "pg_tblspc/ {u=vagrant, g=docker, m=0777}\n"
+                    "postgresql.auto.conf {s=0, u=vagrant, g=docker, m=0640}\n",
+                    .level = storageInfoLevelDetail, .noTimestamp = true);
 
                 HRN_SYSTEM_FMT("umount %s", strZ(cfgOptionStrNull(cfgOptPgPath)));
             }
