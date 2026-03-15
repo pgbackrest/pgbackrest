@@ -540,6 +540,8 @@ static int restoreMountFuseRename(const char *const fromZ, const char *const toZ
     {
         strFree(file->name);
         file->name = strNewZ(toZ);
+
+        lstSort(cmdRestoreMountFuseLocal.fileList, sortOrderAsc);
     }
     MEM_CONTEXT_OBJ_END();
 
