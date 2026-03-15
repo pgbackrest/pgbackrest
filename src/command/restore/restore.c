@@ -263,8 +263,7 @@ cmdRestore(void)
             }
 
             LOG_INFO(
-                "restore " PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL " (performed last to ensure aborted restores cannot be"
-                " started)");
+                "restore " PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL " (performed last to ensure aborted restores cannot be started)");
 
             storageMoveP(
                 storagePgWrite(),
