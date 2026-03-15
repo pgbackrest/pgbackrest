@@ -208,9 +208,9 @@ cmdRestore(void)
             {
                 const String *const pgPath = manifestTargetPath(jobData.manifest, target);
 
-                // Don't sync the same path twice. There can be multiple links to files in the same path, but syncing it more
-                // than once makes the logs noisy and looks like a bug even though it doesn't hurt anything or realistically
-                // affect performance.
+                // Don't sync the same path twice. There can be multiple links to files in the same path, but syncing it more than
+                // once makes the logs noisy and looks like a bug even though it doesn't hurt anything or realistically affect
+                // performance.
                 if (strLstExists(pathSynced, pgPath))
                     continue;
                 else
@@ -227,8 +227,8 @@ cmdRestore(void)
         {
             const String *const manifestName = manifestPath(jobData.manifest, pathIdx)->name;
 
-            // Skip the pg_tblspc path because it only maps to the manifest. We should remove this in a future release but not
-            // much can be done about it for now.
+            // Skip the pg_tblspc path because it only maps to the manifest. We should remove this in a future release but not much
+            // can be done about it for now.
             if (strEqZ(manifestName, MANIFEST_TARGET_PGTBLSPC))
                 continue;
 
@@ -242,8 +242,8 @@ cmdRestore(void)
             storagePathSyncP(storagePgWrite(), pgPath);
         }
 
-        // Rename pg_control to remove the temp extension. This is done last to prevent a partially restored (or unsynced)
-        // cluster from being started.
+        // Rename pg_control to remove the temp extension. This is done last to prevent a partially restored (or unsynced) cluster
+        // from being started.
         if (storageExistsP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT)))
         {
             // Invalidate the checkpoint in pg_control so the cluster cannot be started without backup_label
