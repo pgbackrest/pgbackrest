@@ -132,10 +132,17 @@ cmdRestore(void)
         restoreCleanBuild(jobData.manifest, jobData.rootReplaceUser, jobData.rootReplaceGroup);
 
         // !!!
+        uint64_t sizeRestored = 0;
+        const String *const pgControlTemp = STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT);
+
         if (cfgOptionSeq(cfgOptMount) == CFGOPTVAL_MOUNT_FUSE)
         {
             storagePathCreateP(storageSpoolWrite(), STORAGE_SPOOL_MOUNT_STR);
             restoreMount(jobData.manifest, storageRepoIdx(backupData.repoIdx), storageSpoolWrite(), backupData.backupSet);
+
+            // Wait for the mount to become available
+            if (!storageExistsP(storagePg(), pgControlTemp, .timeout = ioTimeoutMs()))
+                THROW(AssertError, "unable to detect mount");
         }
         else
         {
@@ -151,9 +158,6 @@ cmdRestore(void)
 
             for (unsigned int processIdx = 1; processIdx <= cfgOptionUInt(cfgOptProcessMax); processIdx++)
                 protocolParallelClientAdd(parallelExec, protocolLocalGet(protocolStorageTypeRepo, 0, processIdx));
-
-            // Process jobs
-            uint64_t sizeRestored = 0;
 
             // Initialize percent complete and bytes completed/total
             unsigned int currentPercentComplete = 0;
@@ -181,100 +185,103 @@ cmdRestore(void)
             }
             MEM_CONTEXT_TEMP_END();
 
-            // Write recovery settings. Use the data directory to set permissions and ownership for recovery files.
-            StorageInfo fileInfo = storageInfoP(storagePg(), NULL);
-            fileInfo.user = restoreManifestOwnerReplace(fileInfo.user, jobData.rootReplaceUser);
-            fileInfo.group = restoreManifestOwnerReplace(fileInfo.group, jobData.rootReplaceGroup);
-            fileInfo.mode = fileInfo.mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-
-            restoreRecoveryWrite(jobData.manifest, &fileInfo);
-
             // Remove backup.manifest
             storageRemoveP(storagePgWrite(), BACKUP_MANIFEST_FILE_STR);
+        }
 
-            // Sync file link paths. These need to be synced separately because they are not linked from the data directory.
-            StringList *const pathSynced = strLstNew();
+        // Write recovery settings. Use the data directory to set permissions and ownership for recovery files.
+        StorageInfo fileInfo = storageInfoP(storagePg(), NULL);
+        fileInfo.user = restoreManifestOwnerReplace(fileInfo.user, jobData.rootReplaceUser);
+        fileInfo.group = restoreManifestOwnerReplace(fileInfo.group, jobData.rootReplaceGroup);
+        fileInfo.mode = fileInfo.mode & (S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
-            for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(jobData.manifest); targetIdx++)
+        restoreRecoveryWrite(jobData.manifest, &fileInfo);
+
+        // Sync file link paths. These need to be synced separately because they are not linked from the data directory.
+        StringList *const pathSynced = strLstNew();
+
+        for (unsigned int targetIdx = 0; targetIdx < manifestTargetTotal(jobData.manifest); targetIdx++)
+        {
+            const ManifestTarget *const target = manifestTarget(jobData.manifest, targetIdx);
+
+            if (target->type == manifestTargetTypeLink && target->file != NULL)
             {
-                const ManifestTarget *const target = manifestTarget(jobData.manifest, targetIdx);
+                const String *const pgPath = manifestTargetPath(jobData.manifest, target);
 
-                if (target->type == manifestTargetTypeLink && target->file != NULL)
-                {
-                    const String *const pgPath = manifestTargetPath(jobData.manifest, target);
-
-                    // Don't sync the same path twice. There can be multiple links to files in the same path, but syncing it more
-                    // than once makes the logs noisy and looks like a bug even though it doesn't hurt anything or realistically
-                    // affect performance.
-                    if (strLstExists(pathSynced, pgPath))
-                        continue;
-                    else
-                        strLstAdd(pathSynced, pgPath);
-
-                    // Sync the path
-                    LOG_DETAIL_FMT("sync path '%s'", strZ(pgPath));
-                    storagePathSyncP(storageLocalWrite(), pgPath);
-                }
-            }
-
-            // Sync paths in the data directory
-            for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(jobData.manifest); pathIdx++)
-            {
-                const String *const manifestName = manifestPath(jobData.manifest, pathIdx)->name;
-
-                // Skip the pg_tblspc path because it only maps to the manifest. We should remove this in a future release but not
-                // much can be done about it for now.
-                if (strEqZ(manifestName, MANIFEST_TARGET_PGTBLSPC))
+                // Don't sync the same path twice. There can be multiple links to files in the same path, but syncing it more
+                // than once makes the logs noisy and looks like a bug even though it doesn't hurt anything or realistically
+                // affect performance.
+                if (strLstExists(pathSynced, pgPath))
                     continue;
+                else
+                    strLstAdd(pathSynced, pgPath);
 
-                // We'll sync global after pg_control is written
-                if (strEq(manifestName, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL)))
-                    continue;
-
-                const String *const pgPath = storagePathP(storagePg(), manifestPathPg(manifestName));
-
+                // Sync the path
                 LOG_DETAIL_FMT("sync path '%s'", strZ(pgPath));
-                storagePathSyncP(storagePgWrite(), pgPath);
+                storagePathSyncP(storageLocalWrite(), pgPath);
             }
+        }
 
-            // Rename pg_control to remove the temp extension. This is done last to prevent a partially restored (or unsynced)
-            // cluster from being started.
-            if (storageExistsP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT)))
+        // Sync paths in the data directory
+        for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(jobData.manifest); pathIdx++)
+        {
+            const String *const manifestName = manifestPath(jobData.manifest, pathIdx)->name;
+
+            // Skip the pg_tblspc path because it only maps to the manifest. We should remove this in a future release but not
+            // much can be done about it for now.
+            if (strEqZ(manifestName, MANIFEST_TARGET_PGTBLSPC))
+                continue;
+
+            // We'll sync global after pg_control is written
+            if (strEq(manifestName, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL)))
+                continue;
+
+            const String *const pgPath = storagePathP(storagePg(), manifestPathPg(manifestName));
+
+            LOG_DETAIL_FMT("sync path '%s'", strZ(pgPath));
+            storagePathSyncP(storagePgWrite(), pgPath);
+        }
+
+        // Rename pg_control to remove the temp extension. This is done last to prevent a partially restored (or unsynced)
+        // cluster from being started.
+        if (storageExistsP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT)))
+        {
+            // Invalidate the checkpoint in pg_control so the cluster cannot be started without backup_label
+            if (manifestData(jobData.manifest)->backupOptionOnline)
             {
-                // Invalidate the checkpoint in pg_control so the cluster cannot be started without backup_label
-                if (manifestData(jobData.manifest)->backupOptionOnline)
-                {
-                    Buffer *const pgControlBuffer = storageGetP(
-                        storageNewReadP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT)));
-                    const ManifestFile pgControlFile = manifestFileFind(
-                        jobData.manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL));
+                Buffer *const pgControlBuffer = storageGetP(
+                    storageNewReadP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT)));
+                const ManifestFile pgControlFile = manifestFileFind(
+                    jobData.manifest, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL));
 
-                    pgControlCheckpointInvalidate(pgControlBuffer, cfgOptionStrNull(cfgOptPgVersionForce));
-                    storagePutP(
-                        storageNewWriteP(
-                            storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT),
-                            .timeModified = pgControlFile.timestamp, .noAtomic = true, .noCreatePath = true, .noSyncPath = true),
-                        pgControlBuffer);
-                }
-
-                LOG_INFO(
-                    "restore " PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL " (performed last to ensure aborted restores cannot be"
-                    " started)");
-
-                storageMoveP(
-                    storagePgWrite(),
-                    storageNewReadP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT)),
-                    storageNewWriteP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL), .noSyncPath = true));
+                pgControlCheckpointInvalidate(pgControlBuffer, cfgOptionStrNull(cfgOptPgVersionForce));
+                storagePutP(
+                    storageNewWriteP(
+                        storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT),
+                        .timeModified = pgControlFile.timestamp, .noAtomic = true, .noCreatePath = true, .noSyncPath = true),
+                    pgControlBuffer);
             }
-            else
-                LOG_WARN("backup does not contain '" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "' -- cluster will not start");
 
-            // Sync global path to persist pg_control rename. If this fails or if the system crashes before it can complete, then
-            // pg_control should retain the temp extension, which will prevent the cluster from being started.
-            LOG_DETAIL_FMT("sync path '%s'", strZ(storagePathP(storagePg(), PG_PATH_GLOBAL_STR)));
-            storagePathSyncP(storagePgWrite(), PG_PATH_GLOBAL_STR);
+            LOG_INFO(
+                "restore " PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL " (performed last to ensure aborted restores cannot be"
+                " started)");
 
-            // Restore info
+            storageMoveP(
+                storagePgWrite(),
+                storageNewReadP(storagePg(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT)),
+                storageNewWriteP(storagePgWrite(), STRDEF(PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL), .noSyncPath = true));
+        }
+        else
+            LOG_WARN("backup does not contain '" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "' -- cluster will not start");
+
+        // Sync global path to persist pg_control rename. If this fails or if the system crashes before it can complete, then
+        // pg_control should retain the temp extension, which will prevent the cluster from being started.
+        LOG_DETAIL_FMT("sync path '%s'", strZ(storagePathP(storagePg(), PG_PATH_GLOBAL_STR)));
+        storagePathSyncP(storagePgWrite(), PG_PATH_GLOBAL_STR);
+
+        // Restore info
+        if (cfgOptionSeq(cfgOptMount) != CFGOPTVAL_MOUNT_FUSE)
+        {
             LOG_INFO_FMT(
                 "restore size = %s, file total = %u", strZ(strSizeFormat(sizeRestored)), manifestFileTotal(jobData.manifest));
         }
