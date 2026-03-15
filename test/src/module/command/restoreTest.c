@@ -3535,16 +3535,23 @@ testRun(void)
                 HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_tblspc2");
                 HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_tblspc2");
 
+                TEST_STORAGE_GET(storagePg(), PG_FILE_PGVERSION, PG_VERSION_18_Z "\n");
+                HRN_STORAGE_PUT(storagePgWrite(), "test", BUFSTRDEF("TEST_DATA"));
+
+                HRN_STORAGE_PUT(storagePgWrite(), "test_remove", BUFSTRDEF("TEST_REMOVE_DATA"));
+                HRN_STORAGE_REMOVE(storagePgWrite(), "test_remove");
+
                 TEST_STORAGE_LIST(
                     storagePg(), NULL,
-                    "PG_VERSION {s=3, u=vagrant, g=docker, m=0640}\n"
-                    "base/ {u=vagrant, g=docker, m=0750}\n"
-                    "base/1/ {u=vagrant, g=docker, m=0750}\n"
-                    "base/1/2 {s=2048, u=vagrant, g=docker, m=0640}\n"
-                    "global/ {u=vagrant, g=docker, m=0750}\n"
-                    "global/pg_control {s=8192, u=vagrant, g=docker, m=0640}\n"
-                    "pg_tblspc/ {u=vagrant, g=docker, m=0777}\n"
-                    "postgresql.auto.conf {s=0, u=vagrant, g=docker, m=0640}\n",
+                    "PG_VERSION {s=3, u=" TEST_USER ", g=" TEST_GROUP ", m=0640}\n"
+                    "base/ {u=" TEST_USER ", g=" TEST_GROUP ", m=0750}\n"
+                    "base/1/ {u=" TEST_USER ", g=" TEST_GROUP ", m=0750}\n"
+                    "base/1/2 {s=2048, u=" TEST_USER ", g=" TEST_GROUP ", m=0640}\n"
+                    "global/ {u=" TEST_USER ", g=" TEST_GROUP ", m=0750}\n"
+                    "global/pg_control {s=8192, u=" TEST_USER ", g=" TEST_GROUP ", m=0640}\n"
+                    "pg_tblspc/ {u=" TEST_USER ", g=" TEST_GROUP ", m=0777}\n"
+                    "postgresql.auto.conf {s=0, u=" TEST_USER ", g=" TEST_GROUP ", m=0640}\n"
+                    "test {s=9, u=" TEST_USER ", g=" TEST_GROUP ", m=0640}\n",
                     .level = storageInfoLevelDetail, .noTimestamp = true);
 
                 HRN_SYSTEM_FMT("umount %s", strZ(cfgOptionStrNull(cfgOptPgPath)));

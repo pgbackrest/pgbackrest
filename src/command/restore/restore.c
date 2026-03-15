@@ -52,6 +52,9 @@ cmdRestore(void)
         // better to be safe. Missing stanza spool paths are ignored.
         storagePathRemoveP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_STR, .recurse = true);
 
+        // !!!
+        storagePathRemoveP(storageSpoolWrite(), STORAGE_SPOOL_MOUNT_STR, .recurse = true);
+
         // Get the backup set
         const RestoreBackupData backupData = restoreBackupSet();
 
@@ -131,7 +134,8 @@ cmdRestore(void)
         // !!!
         if (cfgOptionSeq(cfgOptMount) == CFGOPTVAL_MOUNT_FUSE)
         {
-            restoreMount(jobData.manifest, storageRepoIdx(backupData.repoIdx), backupData.backupSet);
+            storagePathCreateP(storageSpoolWrite(), STORAGE_SPOOL_MOUNT_STR);
+            restoreMount(jobData.manifest, storageRepoIdx(backupData.repoIdx), storageSpoolWrite(), backupData.backupSet);
         }
         else
         {

@@ -373,7 +373,9 @@ hrnStoragePut(
     compressExtCat(fileStr, param.compressType);
 
     // Create file
-    StorageWrite *destination = storageNewWriteP(storage, fileStr, .modeFile = param.modeFile, .timeModified = param.timeModified);
+    StorageWrite *destination = storageNewWriteP(
+        storage, fileStr, .modeFile = param.modeFile, .timeModified = param.timeModified, .noAtomic = true, .noSyncPath = true,
+        .noSyncFile = true);
     IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(destination));
 
     // Declare an information filter for displaying parameters to the output

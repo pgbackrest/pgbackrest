@@ -21,6 +21,7 @@ Storage path constants
 STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_STR,                            STORAGE_SPOOL_ARCHIVE);
 STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_IN_STR,                         STORAGE_SPOOL_ARCHIVE_IN);
 STRING_EXTERN(STORAGE_SPOOL_ARCHIVE_OUT_STR,                        STORAGE_SPOOL_ARCHIVE_OUT);
+STRING_EXTERN(STORAGE_SPOOL_MOUNT_STR,                              STORAGE_SPOOL_MOUNT);
 
 STRING_EXTERN(STORAGE_REPO_ARCHIVE_STR,                             STORAGE_REPO_ARCHIVE);
 STRING_EXTERN(STORAGE_REPO_BACKUP_STR,                              STORAGE_REPO_BACKUP);
@@ -527,6 +528,13 @@ storageSpoolPathExpression(const String *const expression, const String *const p
             result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/out", strZ(storageHelper.stanza));
         else
             result = strNewFmt(STORAGE_PATH_ARCHIVE "/%s/out/%s", strZ(storageHelper.stanza), strZ(path));
+    }
+    else if (strEqZ(expression, STORAGE_SPOOL_MOUNT))
+    {
+        if (path == NULL)
+            result = strNewFmt(STORAGE_PATH_MOUNT "/%s", strZ(storageHelper.stanza));
+        else
+            result = strNewFmt(STORAGE_PATH_MOUNT "/%s/%s", strZ(storageHelper.stanza), strZ(path));
     }
     else
         THROW_FMT(AssertError, "invalid expression '%s'", strZ(expression));
