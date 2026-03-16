@@ -29,29 +29,62 @@ typedef struct CmdRestoreMountFuseFile
     const ManifestFilePack *filePack;                               // Manifest file pack
 } CmdRestoreMountFuseFile;
 
-static struct CmdRestoreMountFuseLocal
+typedef struct CmdRestoreMountFuseSession
 {
     Manifest *manifest;                                             // Manifest containing base files to mount
     const Storage *storageRepo;                                     // Repository storage
-    const Storage *storageSpool;                                    // Spool storage
+    const Storage *storageSpool;                                    // Spool storage (for backing files)
     const String *label;                                            // Backup label
     List *pathList;                                                 // Path list
     List *fileList;                                                 // File list
     uint32_t fileId;                                                // File id sequence
-} cmdRestoreMountFuseLocal;
+} CmdRestoreMountFuseSession;
 
-// static String *
-// restoreMountManifestPath(const char *const path)
-// {
-//     String *const result = strNew();
+static CmdRestoreMountFuseSession *
+restoreMountFuseSession(void)
+{
+    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_RETURN_P(VOID, fuse_get_context()->private_data);
+}
 
-//     if (strcmp(path, "/") == 0)
-//         strCatZ(result, MANIFEST_TARGET_PGDATA);
-//     else
-//         strCatFmt(result, MANIFEST_TARGET_PGDATA "%s", path);
+static struct CmdRestoreMountFusePath *
+restoreMountFusePathFind(const char *const pathZ)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_LOG_PARAM(STRINGZ, pathZ);
+    FUNCTION_TEST_END();
 
-//     return result;
-// }
+    const String *const pathStr = STR(pathZ);
+
+    FUNCTION_TEST_RETURN_P(VOID, lstFind(restoreMountFuseSession()->pathList, &pathStr));
+}
+
+static struct CmdRestoreMountFuseFile *
+restoreMountFuseFileFind(const char *const fileZ)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_LOG_PARAM(STRINGZ, fileZ);
+    FUNCTION_TEST_END();
+
+    const String *const fileStr = STR(fileZ);
+
+    FUNCTION_TEST_RETURN_P(VOID, lstFind(restoreMountFuseSession()->fileList, &fileStr));
+}
+
+static String *
+restoreMountFuseFileName(const CmdRestoreMountFuseFile *const file)
+{
+    // FUNCTION_TEST_BEGIN();
+    //     FUNCTION_LOG_PARAM_P(VOID, file);
+    // FUNCTION_TEST_END();
+
+    // ASSERT(file != NULL);
+
+    // FUNCTION_TEST_RETURN(
+    //     STRING, storagePathP(restoreMountFuseSession()->storageSpool, strNewFmt(STORAGE_SPOOL_MOUNT "/%u", file->id)));
+
+    return storagePathP(restoreMountFuseSession()->storageSpool, strNewFmt(STORAGE_SPOOL_MOUNT "/%u", file->id));
+}
 
 static void *
 restoreMountFuseInit(struct fuse_conn_info *const conn, struct fuse_config *const cfg)
@@ -63,9 +96,17 @@ restoreMountFuseInit(struct fuse_conn_info *const conn, struct fuse_config *cons
 
     ASSERT(cfg != NULL);
 
+    // Disable kernel cache since the underlying files are cached
     cfg->kernel_cache = 1;
+    cfg->direct_io = 1;
 
-    FUNCTION_TEST_RETURN_P(VOID, NULL);
+	// Use large buffer
+	conn->max_write = 1 * 1024 * 1024;
+
+    // Our timestamps are only accurate to 1 second
+    conn->time_gran = 1000000000;
+
+    FUNCTION_TEST_RETURN_P(VOID, restoreMountFuseSession());
 }
 
 static int
@@ -82,12 +123,9 @@ restoreMountFuseGetAttr(const char *const pathZ, struct stat *const stbuf, struc
 
     int result = 0;
 
-    // fprintf(stdout, "!!!GETATTR %s\n", pathZ);fflush(stdout);
-
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *const pathStr = STR(pathZ);
-        const CmdRestoreMountFuseFile *const file = lstFind(cmdRestoreMountFuseLocal.fileList, &pathStr);
+        const CmdRestoreMountFuseFile *const file = restoreMountFuseFileFind(pathZ);
 
         if (file != NULL)
         {
@@ -105,7 +143,7 @@ restoreMountFuseGetAttr(const char *const pathZ, struct stat *const stbuf, struc
         }
         else
         {
-            const CmdRestoreMountFusePath *const path = lstFind(cmdRestoreMountFuseLocal.pathList, &pathStr);
+            const CmdRestoreMountFusePath *const path = restoreMountFusePathFind(pathZ);
 
             if (path != NULL)
             {
@@ -122,9 +160,7 @@ restoreMountFuseGetAttr(const char *const pathZ, struct stat *const stbuf, struc
                 };
             }
             else
-            {
                 result = -ENOENT;
-            }
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -150,12 +186,12 @@ restoreMountFuseReadDir(
     ASSERT(buffer != NULL);
     ASSERT(filler != NULL);
 
-    // fprintf(stdout, "!!!READIR %s\n", pathZ);fflush(stdout);
+    const CmdRestoreMountFuseSession *const session = restoreMountFuseSession();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         String *const pathStr = strCatZ(strNew(), pathZ);
-        const CmdRestoreMountFusePath *const path = lstFind(cmdRestoreMountFuseLocal.pathList, &pathStr);
+        const CmdRestoreMountFusePath *const path = restoreMountFusePathFind(pathZ);
         ASSERT(path != NULL);
 
         filler(buffer, ".", NULL, 0, 0);
@@ -164,11 +200,9 @@ restoreMountFuseReadDir(
         if (!strEq(pathStr, FSLASH_STR))
             strCatChr(pathStr, '/');
 
-        for (unsigned int pathIdx = 1; pathIdx < lstSize(cmdRestoreMountFuseLocal.pathList); pathIdx++)
+        for (unsigned int pathIdx = 1; pathIdx < lstSize(session->pathList); pathIdx++)
         {
-            const CmdRestoreMountFusePath *const pathSub = lstGet(cmdRestoreMountFuseLocal.pathList, pathIdx);
-
-            // fprintf(stdout, "!!!READIR CHECK SUB %s PARENT %s\n", strZ(pathSub->name), strZ(pathStr));fflush(stdout);
+            const CmdRestoreMountFusePath *const pathSub = lstGet(session->pathList, pathIdx);
 
             if (strBeginsWith(pathSub->name, pathStr))
             {
@@ -177,9 +211,9 @@ restoreMountFuseReadDir(
             }
         }
 
-        for (unsigned int fileIdx = 0; fileIdx < lstSize(cmdRestoreMountFuseLocal.fileList); fileIdx++)
+        for (unsigned int fileIdx = 0; fileIdx < lstSize(session->fileList); fileIdx++)
         {
-            const CmdRestoreMountFuseFile *const file = lstGet(cmdRestoreMountFuseLocal.fileList, fileIdx);
+            const CmdRestoreMountFuseFile *const file = lstGet(session->fileList, fileIdx);
 
             if (strBeginsWith(file->name, pathStr))
             {
@@ -204,39 +238,30 @@ restoreMountFuseCreate(const char *const pathZ, const mode_t mode, struct fuse_f
 
     int result = 0;
 
-    fprintf(stdout, "!!!CREATE %s\n", pathZ);fflush(stdout);
+    CmdRestoreMountFuseSession *const session = restoreMountFuseSession();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *const pathStr = STR(pathZ);
-        ASSERT(lstFind(cmdRestoreMountFuseLocal.fileList, &pathStr) == NULL);
-        uint32_t fileId;
+        ASSERT(restoreMountFuseFileFind(pathZ) == NULL);
 
-        MEM_CONTEXT_OBJ_BEGIN(cmdRestoreMountFuseLocal.fileList)
+        MEM_CONTEXT_OBJ_BEGIN(session->fileList)
         {
             const CmdRestoreMountFuseFile fileNew =
             {
                 .name = strNewZ(pathZ),
-                .id = ++cmdRestoreMountFuseLocal.fileId,
+                .id = ++session->fileId,
                 .mode = mode,
                 .user = userId(),
                 .group = groupId(),
                 .timestamp = time(NULL),
             };
 
-            lstAdd(cmdRestoreMountFuseLocal.fileList, &fileNew);
-            lstSort(cmdRestoreMountFuseLocal.fileList, sortOrderAsc);
-
-            fileId = fileNew.id;
+            lstAdd(session->fileList, &fileNew);
+            lstSort(session->fileList, sortOrderAsc);
         }
         MEM_CONTEXT_OBJ_END();
 
-        const String *const fileStr = storagePathP(
-            cmdRestoreMountFuseLocal.storageSpool, strNewFmt(STORAGE_SPOOL_MOUNT "/%u", fileId));
-
-        const int fh = open(strZ(fileStr), fi->flags, mode);
-
-        // fprintf(stdout, "!!!  CREATE %s RESULT %d\n", strZ(fileStr), fh);fflush(stdout);
+        const int fh = open(strZ(restoreMountFuseFileName(restoreMountFuseFileFind(pathZ))), fi->flags, mode);
 
         if (fh == -1)
         {
@@ -261,19 +286,19 @@ restoreMountFusePersist(CmdRestoreMountFuseFile *const file)
 
     if (file->id == 0)
     {
+        CmdRestoreMountFuseSession *const session = restoreMountFuseSession();
+
         MEM_CONTEXT_TEMP_BEGIN()
         {
             ASSERT(file->filePack != NULL);
-            const ManifestFile manifestFile = manifestFileUnpack(cmdRestoreMountFuseLocal.manifest, file->filePack);
+            const ManifestFile manifestFile = manifestFileUnpack(session->manifest, file->filePack);
 
-            file->id = ++cmdRestoreMountFuseLocal.fileId;
+            file->id = ++session->fileId;
 
             StorageRead *const storageRead = storageNewReadP(
-                cmdRestoreMountFuseLocal.storageRepo,
-                strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(cmdRestoreMountFuseLocal.label), strZ(manifestFile.name)));
+                session->storageRepo, strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(session->label), strZ(manifestFile.name)));
             StorageWrite *const storageWrite = storageNewWriteP(
-                cmdRestoreMountFuseLocal.storageSpool, strNewFmt(STORAGE_SPOOL_MOUNT "/%u", file->id), .noAtomic = true,
-                .noSyncPath = true, .noSyncFile = true);
+                session->storageSpool, restoreMountFuseFileName(file), .noAtomic = true, .noSyncPath = true, .noSyncFile = true);
 
             storageCopyP(storageRead, storageWrite);
         }
@@ -294,10 +319,7 @@ restoreMountFuseOpenInternal(CmdRestoreMountFuseFile *const file, const int flag
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *const spoolPathStr = storagePathP(
-            cmdRestoreMountFuseLocal.storageSpool, strNewFmt(STORAGE_SPOOL_MOUNT "/%u", file->id));
-
-        result = open(strZ(spoolPathStr), flags);
+        result = open(strZ(restoreMountFuseFileName(file)), flags);
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -305,19 +327,16 @@ restoreMountFuseOpenInternal(CmdRestoreMountFuseFile *const file, const int flag
 }
 
 static int
-restoreMountFuseOpen(const char *const pathZ, struct fuse_file_info *const fi)
+restoreMountFuseOpen(const char *const fileZ, struct fuse_file_info *const fi)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRINGZ, pathZ);
+        FUNCTION_LOG_PARAM(STRINGZ, fileZ);
         FUNCTION_LOG_PARAM_P(VOID, fi);
     FUNCTION_LOG_END();
 
     int result = 0;
 
-    fprintf(stdout, "!!!OPEN %s\n", pathZ);fflush(stdout);
-
-    const String *const pathStr = STR(pathZ);
-    CmdRestoreMountFuseFile *const file = lstFind(cmdRestoreMountFuseLocal.fileList, &pathStr);
+    CmdRestoreMountFuseFile *const file = restoreMountFuseFileFind(fileZ);
 
     if (file == NULL)
         result = -ENOENT;
@@ -326,53 +345,41 @@ restoreMountFuseOpen(const char *const pathZ, struct fuse_file_info *const fi)
         restoreMountFusePersist(file);
         const int fd = restoreMountFuseOpenInternal(file, fi->flags);
 
-        fprintf(stdout, "!!!  OPEN INTERNAL %s ID %u FD %d\n", pathZ, file->id, fd);fflush(stdout);
-
         if (result == -1)
             result = -errno;
         else
-        {
-
-                /* Enable direct_io when open has flags O_DIRECT to enjoy the feature
-                parallel_direct_writes (i.e., to get a shared lock, not exclusive lock,
-                for writes to the same file). */
-            // if (fi->flags & O_DIRECT) {
-            //     fi->direct_io = 1;
-            //     fi->parallel_direct_writes = 1;
-            // }
-
             fi->fh = (uint64_t)fd;
-        }
     }
 
     FUNCTION_LOG_RETURN(INT, result);
 }
 
 static int
-restoreMountFuseRead(const char *const pathZ, char *const buffer, size_t size, const off_t offset, struct fuse_file_info *const fi)
+restoreMountFuseRead(
+    const char *const fileZ, char *const buffer, const size_t size, const off_t offset, struct fuse_file_info *const fi)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRINGZ, pathZ);
-        FUNCTION_LOG_PARAM_P(VOID, buffer);
+        FUNCTION_LOG_PARAM(STRINGZ, fileZ);
+        (void)buffer;
         FUNCTION_LOG_PARAM(SIZE, size);
         FUNCTION_LOG_PARAM(INT64, offset);
         FUNCTION_LOG_PARAM_P(VOID, fi);
     FUNCTION_LOG_END();
 
+    ASSERT(fileZ != NULL);
+    ASSERT(buffer != NULL);
     ASSERT(size > 0);
     ASSERT(offset >= 0);
 
     int result = 0;
-
-    fprintf(stdout, "!!!READ %s OFFSET %zu SIZE %zu\n", pathZ, (size_t)offset, size);fflush(stdout);
 
     // Read requested range
     int fd;
 
     if (fi == NULL)
     {
-        const String *const pathStr = STR(pathZ);
-        CmdRestoreMountFuseFile *const file = lstFind(cmdRestoreMountFuseLocal.fileList, &pathStr);
+        CmdRestoreMountFuseFile *const file = restoreMountFuseFileFind(fileZ);
+        ASSERT(file != NULL);
 
         restoreMountFusePersist(file);
         fd = restoreMountFuseOpenInternal(file, O_RDONLY);
@@ -386,8 +393,6 @@ restoreMountFuseRead(const char *const pathZ, char *const buffer, size_t size, c
     {
         result = (int)pread(fd, buffer, size, offset);
 
-        fprintf(stdout, "!!!  READ RESULT OFFSET %zu SIZE %zu FD %d RESULT %d ERR %d STR %s\n", (size_t)offset, size, fd, result, errno, strerror(errno));fflush(stdout);
-
         if (result == -1)
             result = -errno;
 
@@ -400,42 +405,40 @@ restoreMountFuseRead(const char *const pathZ, char *const buffer, size_t size, c
 
 static int
 restoreMountFuseWrite(
-    const char *const pathZ, const char *const buffer, const size_t size, const off_t offset, struct fuse_file_info *const fi)
+    const char *const fileZ, const char *const buffer, const size_t size, const off_t offset, struct fuse_file_info *const fi)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRINGZ, pathZ);
+        FUNCTION_LOG_PARAM(STRINGZ, fileZ);
         FUNCTION_LOG_PARAM_P(VOID, buffer);
         FUNCTION_LOG_PARAM(SIZE, size);
         FUNCTION_LOG_PARAM(INT64, offset);
         FUNCTION_LOG_PARAM_P(VOID, fi);
     FUNCTION_LOG_END();
 
-    ASSERT(pathZ != NULL);
+    ASSERT(fileZ != NULL);
     ASSERT(buffer != NULL);
     ASSERT(size > 0);
     ASSERT(offset >= 0);
 
-    int fd;
-    int result;
-
-    fprintf(stdout, "!!!WRITE %s OFFSET %zu SIZE %zu\n", pathZ, (size_t)offset, size);fflush(stdout);
-
-    const String *const pathStr = STR(pathZ);
-    CmdRestoreMountFuseFile *const file = lstFind(cmdRestoreMountFuseLocal.fileList, &pathStr);
+    CmdRestoreMountFuseFile *const file = restoreMountFuseFileFind(fileZ);
     ASSERT(file != NULL);
 
     file->timestamp = time(NULL);
 
+    int fd;
+
     if (fi == NULL)
     {
-        String *const fileStr = storagePathP(
-            cmdRestoreMountFuseLocal.storageSpool, strNewFmt(STORAGE_SPOOL_MOUNT "/%u", file->id));
-
-        fd = open(strZ(fileStr), O_WRONLY);
-        strFree(fileStr);
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            fd = open(strZ(restoreMountFuseFileName(file)), O_WRONLY);
+        }
+        MEM_CONTEXT_TEMP_END();
     }
     else
         fd = (int)fi->fh;
+
+    int result;
 
     if (fd == -1)
         result = -errno;
@@ -464,8 +467,6 @@ restoreMountFuseRelease(const char *const pathZ, struct fuse_file_info *const fi
         FUNCTION_LOG_PARAM_P(VOID, fi);
     FUNCTION_LOG_END();
 
-    fprintf(stdout, "!!!RELEASE %s\n", pathZ);fflush(stdout);
-
     close((int)fi->fh);
 
     FUNCTION_LOG_RETURN(INT, 0);
@@ -478,12 +479,11 @@ static int restoreMountFuseMkDir(const char *const pathZ, const mode_t mode)
         FUNCTION_LOG_PARAM(MODE, mode);
     FUNCTION_LOG_END();
 
-    // fprintf(stdout, "!!!MKDIR %s\n", pathZ);fflush(stdout);
+    ASSERT(restoreMountFusePathFind(pathZ) == NULL);
 
-    ASSERT_DECLARE(const String *const pathStr = STR(pathZ));
-    ASSERT(lstFind(cmdRestoreMountFuseLocal.pathList, &pathStr) == NULL);
+    const CmdRestoreMountFuseSession *const session = restoreMountFuseSession();
 
-    MEM_CONTEXT_OBJ_BEGIN(cmdRestoreMountFuseLocal.pathList)
+    MEM_CONTEXT_OBJ_BEGIN(session->pathList)
     {
         const CmdRestoreMountFusePath pathNew =
         {
@@ -494,8 +494,8 @@ static int restoreMountFuseMkDir(const char *const pathZ, const mode_t mode)
             .timestamp = time(NULL),
         };
 
-        lstAdd(cmdRestoreMountFuseLocal.pathList, &pathNew);
-        lstSort(cmdRestoreMountFuseLocal.pathList, sortOrderAsc);
+        lstAdd(session->pathList, &pathNew);
+        lstSort(session->pathList, sortOrderAsc);
     }
     MEM_CONTEXT_OBJ_END();
 
@@ -508,12 +508,10 @@ static int restoreMountFuseRmDir(const char *const pathZ)
         FUNCTION_LOG_PARAM(STRINGZ, pathZ);
     FUNCTION_LOG_END();
 
-    // fprintf(stdout, "!!!RMDIR %s\n", pathZ);fflush(stdout);
-
     const String *const pathStr = STR(pathZ);
-    ASSERT(lstFind(cmdRestoreMountFuseLocal.pathList, &pathStr) != NULL);
+    ASSERT(restoreMountFusePathFind(pathZ) != NULL);
 
-    lstRemove(cmdRestoreMountFuseLocal.pathList, &pathStr);
+    lstRemove(restoreMountFuseSession()->pathList, &pathStr);
 
     FUNCTION_LOG_RETURN(INT, 0);
 }
@@ -525,63 +523,59 @@ static int restoreMountFuseRename(const char *const fromZ, const char *const toZ
         FUNCTION_LOG_PARAM(STRINGZ, toZ);
         FUNCTION_LOG_PARAM(UINT, flags);
     FUNCTION_LOG_END();
-    // fprintf(stdout, "!!!RENAME %s to %s FLAGS %u\n", fromZ, toZ, flags);fflush(stdout);
 
-    if (flags)
-        return -EINVAL;
+    const CmdRestoreMountFuseSession *const session = restoreMountFuseSession();
+    int result = 0;
 
-    // !!! Check to be sure toZ does not already exist
+    // !!! MAKE SURE toZ does not exist
 
-    const String *const pathStr = STR(fromZ);
-    CmdRestoreMountFuseFile *const file = lstFind(cmdRestoreMountFuseLocal.fileList, &pathStr);
-    ASSERT(file != NULL);
-
-    MEM_CONTEXT_OBJ_BEGIN(cmdRestoreMountFuseLocal.fileList)
+    if (flags) // !!! MAYBE MAKE THIS CHECK AN ASSERT?
+        result = -EINVAL;
+    else
     {
-        strFree(file->name);
-        file->name = strNewZ(toZ);
+        CmdRestoreMountFuseFile *const file = restoreMountFuseFileFind(fromZ);
+        ASSERT(file != NULL);
 
-        lstSort(cmdRestoreMountFuseLocal.fileList, sortOrderAsc);
+        MEM_CONTEXT_OBJ_BEGIN(session->fileList)
+        {
+            strFree(file->name);
+            file->name = strNewZ(toZ);
+
+            lstSort(session->fileList, sortOrderAsc);
+        }
+        MEM_CONTEXT_OBJ_END();
     }
-    MEM_CONTEXT_OBJ_END();
 
-    FUNCTION_LOG_RETURN(INT, 0);
+    FUNCTION_LOG_RETURN(INT, result);
 }
 
 static int
-restoreMountFuseUnlink(const char *const pathZ)
+restoreMountFuseUnlink(const char *const fileZ)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRINGZ, pathZ);
+        FUNCTION_LOG_PARAM(STRINGZ, fileZ);
     FUNCTION_LOG_END();
-
-    fprintf(stdout, "!!!UNLINK %s\n", pathZ);fflush(stdout);
 
     int result = 0;
 
-    const String *const pathStr = STR(pathZ);
-    CmdRestoreMountFuseFile *const file = lstFind(cmdRestoreMountFuseLocal.fileList, &pathStr);
-
-    // if (strEqZ(file, "/standby.signal") || strEqZ(file, "/recovery.signal"));
-    //     result = -ENOENT;
+    const CmdRestoreMountFuseFile *const file = restoreMountFuseFileFind(fileZ);
 
     if (file == NULL)
         result = -ENOENT;
     else
     {
-        MEM_CONTEXT_TEMP_BEGIN()
+        if (file->id != 0)
         {
-            if (file->id != 0)
+            MEM_CONTEXT_TEMP_BEGIN()
             {
-                String *const fileStr = storagePathP(
-                    cmdRestoreMountFuseLocal.storageSpool, strNewFmt(STORAGE_SPOOL_MOUNT "/%u", file->id));
-
-                THROW_ON_SYS_ERROR_FMT(unlink(strZ(fileStr)) == -1, FileRemoveError, "unable to remove '%s'", strZ(fileStr));
+                THROW_ON_SYS_ERROR_FMT(
+                    unlink(strZ(restoreMountFuseFileName(file))) == -1, FileRemoveError, "unable to remove '%s'", fileZ);
             }
-
-            lstRemove(cmdRestoreMountFuseLocal.fileList, &pathStr);
+            MEM_CONTEXT_TEMP_END();
         }
-        MEM_CONTEXT_TEMP_END();
+
+        const String *const fileStr = STR(fileZ);
+        lstRemove(restoreMountFuseSession()->fileList, &fileStr);
     }
 
     FUNCTION_LOG_RETURN(INT, result);
@@ -605,29 +599,39 @@ restoreMountFuseUTimeNS(const char *path, const struct timespec ts[2],
 }
 
 static int
-restoreMountFuseTruncate(const char *const pathZ, const off_t size, struct fuse_file_info *const fi)
+restoreMountFuseTruncate(const char *const fileZ, const off_t size, struct fuse_file_info *const fi)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRINGZ, pathZ);
+        FUNCTION_LOG_PARAM(STRINGZ, fileZ);
         FUNCTION_LOG_PARAM(INT64, size);
         FUNCTION_LOG_PARAM_P(VOID, fi);
     FUNCTION_LOG_END();
 
     int result = 0;
 
-    const String *const pathStr = STR(pathZ);
-    CmdRestoreMountFuseFile *const file = lstFind(cmdRestoreMountFuseLocal.fileList, &pathStr);
-    ASSERT(file != NULL);
+    CmdRestoreMountFuseFile *const file = restoreMountFuseFileFind(fileZ);
 
-    file->timestamp = time(NULL);
-
-    if (fi != NULL)
-        result = ftruncate((int)fi->fh, size);
+    if (file == NULL)
+        result = -ENOENT;
     else
-        result = truncate(pathZ, size);
+    {
+        file->timestamp = time(NULL);
+        file->size = (uint64_t)size;
 
-    if (result == -1)
-        result = -errno;
+        if (fi != NULL)
+            result = ftruncate((int)fi->fh, size);
+        else
+        {
+            MEM_CONTEXT_TEMP_BEGIN()
+            {
+                result = truncate(strZ(restoreMountFuseFileName(file)), size);
+            }
+            MEM_CONTEXT_TEMP_END();
+        }
+
+        if (result == -1)
+            result = -errno;
+    }
 
     FUNCTION_LOG_RETURN(INT, result);
 }
@@ -674,7 +678,7 @@ restoreMount(
 
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            cmdRestoreMountFuseLocal = (struct CmdRestoreMountFuseLocal)
+            CmdRestoreMountFuseSession session =
             {
                 .manifest = manifest,
                 .storageRepo = storageRepo,
@@ -685,14 +689,11 @@ restoreMount(
             };
 
             // Load paths
-            MEM_CONTEXT_OBJ_BEGIN(cmdRestoreMountFuseLocal.pathList)
+            MEM_CONTEXT_OBJ_BEGIN(session.pathList)
             {
                 for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
                 {
                     const ManifestPath *const path = manifestPath(manifest, pathIdx);
-
-                    // fprintf(stdout, "!!!PATH %s\n", strZ(path->name));fflush(stdout);
-
                     const CmdRestoreMountFusePath pathNew =
                     {
                         .name =
@@ -705,23 +706,20 @@ restoreMount(
                         .path = path,
                     };
 
-                    lstAdd(cmdRestoreMountFuseLocal.pathList, &pathNew);
+                    lstAdd(session.pathList, &pathNew);
                 }
 
-                lstSort(cmdRestoreMountFuseLocal.pathList, sortOrderAsc);
+                lstSort(session.pathList, sortOrderAsc);
             }
             MEM_CONTEXT_OBJ_END();
 
             // Load files
-            MEM_CONTEXT_OBJ_BEGIN(cmdRestoreMountFuseLocal.fileList)
+            MEM_CONTEXT_OBJ_BEGIN(session.fileList)
             {
                 for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
                 {
                     const ManifestFilePack *const filePack = manifestFilePackGet(manifest, fileIdx);
                     const ManifestFile file = manifestFileUnpack(manifest, filePack);
-
-                    // fprintf(stdout, "!!!FILE %s\n", strZ(file.name));fflush(stdout);
-
                     const CmdRestoreMountFuseFile fileNew =
                     {
                         .name =
@@ -736,39 +734,23 @@ restoreMount(
                         .filePack = filePack,
                     };
 
-                    lstAdd(cmdRestoreMountFuseLocal.fileList, &fileNew);
+                    lstAdd(session.fileList, &fileNew);
                 }
 
-                lstSort(cmdRestoreMountFuseLocal.fileList, sortOrderAsc);
+                lstSort(session.fileList, sortOrderAsc);
             }
             MEM_CONTEXT_OBJ_END();
-
-            // char bin[] = "bin";
-            // char mount[1024];
-            // strcpy(mount, strZ(cfgOptionStrNull(cfgOptPgPath)));
-            // char *argList[] = {bin, mount, 0};
-
-            // struct fuse_args args = FUSE_ARGS_INIT(2, argList);
-
-            // fuse_main(args.argc, args.argv, &restoreMountFuseOper, NULL);
-            // fuse_opt_free_args(&args);
-
-            // char bin[] = "bin";
-            // char *argList[] = {bin, 0};
 
             struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
             fuse_opt_add_arg(&args, PROJECT_NAME);
 
-            struct fuse *const fuse = fuse_new(&args, &restoreMountFuseOper, sizeof(restoreMountFuseOper), NULL);
+            struct fuse *const fuse = fuse_new(&args, &restoreMountFuseOper, sizeof(restoreMountFuseOper), &session);
 
             if (fuse == NULL) // {uncovered_branch - !!!}
                 THROW(AssertError, "fuse_new() failed"); // {uncovered - !!!}
 
             if (fuse_mount(fuse, strZ(cfgOptionStrNull(cfgOptPgPath))) != 0) // {uncovered_branch - !!!}
                 THROW(AssertError, "fuse_mount() failed"); // {uncovered - !!!}
-
-            // if (fuse_daemonize(false) != 0)
-            //     THROW(AssertError, "fuse_daemonize() failed");
 
             if (fuse_set_signal_handlers(fuse_get_session(fuse)) != 0) // {uncovered_branch - !!!}
                 THROW(AssertError, "fuse_set_signal_handlers() failed"); // {uncovered - !!!}
@@ -778,7 +760,6 @@ restoreMount(
             fuse_remove_signal_handlers(fuse_get_session(fuse));
             fuse_unmount(fuse);
             fuse_destroy(fuse);
-            // fprintf(stdout, "GOT HERE!!!\n");fflush(stdout);
 
             exit(0);
         }
