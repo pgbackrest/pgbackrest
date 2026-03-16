@@ -14,7 +14,6 @@ typedef struct CmdRestoreMountFusePath
     uid_t user;                                                     // User
     gid_t group;                                                    // Group
     time_t timestamp;                                               // Timestamp
-    const ManifestPath *path;                                       // Manifest path
 } CmdRestoreMountFusePath;
 
 typedef struct CmdRestoreMountFuseFile
@@ -40,6 +39,9 @@ typedef struct CmdRestoreMountFuseSession
     uint32_t fileId;                                                // File id sequence
 } CmdRestoreMountFuseSession;
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static CmdRestoreMountFuseSession *
 restoreMountFuseSession(void)
 {
@@ -47,6 +49,9 @@ restoreMountFuseSession(void)
     FUNCTION_TEST_RETURN_P(VOID, fuse_get_context()->private_data);
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static struct CmdRestoreMountFusePath *
 restoreMountFusePathFind(const char *const pathZ)
 {
@@ -59,6 +64,9 @@ restoreMountFusePathFind(const char *const pathZ)
     FUNCTION_TEST_RETURN_P(VOID, lstFind(restoreMountFuseSession()->pathList, &pathStr));
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static struct CmdRestoreMountFuseFile *
 restoreMountFuseFileFind(const char *const fileZ)
 {
@@ -71,6 +79,9 @@ restoreMountFuseFileFind(const char *const fileZ)
     FUNCTION_TEST_RETURN_P(VOID, lstFind(restoreMountFuseSession()->fileList, &fileStr));
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static String *
 restoreMountFuseFileName(const CmdRestoreMountFuseFile *const file)
 {
@@ -86,6 +97,9 @@ restoreMountFuseFileName(const CmdRestoreMountFuseFile *const file)
     return storagePathP(restoreMountFuseSession()->storageSpool, strNewFmt(STORAGE_SPOOL_MOUNT "/%u", file->id));
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static void *
 restoreMountFuseInit(struct fuse_conn_info *const conn, struct fuse_config *const cfg)
 {
@@ -98,9 +112,11 @@ restoreMountFuseInit(struct fuse_conn_info *const conn, struct fuse_config *cons
 
     // Disable kernel cache since the underlying files are cached
     cfg->kernel_cache = 1;
+
+    // Enable direct io since caching is disabled
     cfg->direct_io = 1;
 
-	// Use large buffer
+	// Use a large buffer
 	conn->max_write = 1 * 1024 * 1024;
 
     // Our timestamps are only accurate to 1 second
@@ -109,13 +125,16 @@ restoreMountFuseInit(struct fuse_conn_info *const conn, struct fuse_config *cons
     FUNCTION_TEST_RETURN_P(VOID, restoreMountFuseSession());
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static int
-restoreMountFuseGetAttr(const char *const pathZ, struct stat *const stbuf, struct fuse_file_info *const fi)
+restoreMountFuseGetAttr(const char *const pathZ, struct stat *const stbuf, struct fuse_file_info *const fileInfo)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRINGZ, pathZ);
         (void)stbuf;
-        (void)fi;
+        (void)fileInfo;
     FUNCTION_LOG_END();
 
     ASSERT(pathZ != NULL);
@@ -168,17 +187,20 @@ restoreMountFuseGetAttr(const char *const pathZ, struct stat *const stbuf, struc
     FUNCTION_LOG_RETURN(INT, result);
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static int
 restoreMountFuseReadDir(
     const char *const pathZ, void *const buffer, const fuse_fill_dir_t filler, const off_t offset,
-    struct fuse_file_info *const fi, const enum fuse_readdir_flags flags)
+    struct fuse_file_info *const fileInfo, const enum fuse_readdir_flags flags)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRINGZ, pathZ);
         (void)buffer;
         (void)filler;
         (void)offset;
-        (void)fi;
+        (void)fileInfo;
         (void)flags;
     FUNCTION_LOG_END();
 
@@ -227,13 +249,16 @@ restoreMountFuseReadDir(
     FUNCTION_LOG_RETURN(INT, 0);
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static int
-restoreMountFuseCreate(const char *const pathZ, const mode_t mode, struct fuse_file_info *const fi)
+restoreMountFuseCreate(const char *const pathZ, const mode_t mode, struct fuse_file_info *const fileInfo)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRINGZ, pathZ);
         FUNCTION_LOG_PARAM(MODE, mode);
-        FUNCTION_LOG_PARAM_P(VOID, fi);
+        FUNCTION_LOG_PARAM_P(VOID, fileInfo);
     FUNCTION_LOG_END();
 
     int result = 0;
@@ -261,7 +286,7 @@ restoreMountFuseCreate(const char *const pathZ, const mode_t mode, struct fuse_f
         }
         MEM_CONTEXT_OBJ_END();
 
-        const int fh = open(strZ(restoreMountFuseFileName(restoreMountFuseFileFind(pathZ))), fi->flags, mode);
+        const int fh = open(strZ(restoreMountFuseFileName(restoreMountFuseFileFind(pathZ))), fileInfo->flags, mode);
 
         if (fh == -1)
         {
@@ -270,13 +295,16 @@ restoreMountFuseCreate(const char *const pathZ, const mode_t mode, struct fuse_f
 
         }
         else
-            fi->fh = (uint64_t)fh;
+            fileInfo->fh = (uint64_t)fh;
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(INT, result);
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static void
 restoreMountFusePersist(CmdRestoreMountFuseFile *const file)
 {
@@ -308,6 +336,9 @@ restoreMountFusePersist(CmdRestoreMountFuseFile *const file)
     FUNCTION_LOG_RETURN_VOID();
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static int
 restoreMountFuseOpenInternal(CmdRestoreMountFuseFile *const file, const int flags)
 {
@@ -326,12 +357,15 @@ restoreMountFuseOpenInternal(CmdRestoreMountFuseFile *const file, const int flag
     FUNCTION_LOG_RETURN(INT, result);
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static int
-restoreMountFuseOpen(const char *const fileZ, struct fuse_file_info *const fi)
+restoreMountFuseOpen(const char *const fileZ, struct fuse_file_info *const fileInfo)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRINGZ, fileZ);
-        FUNCTION_LOG_PARAM_P(VOID, fi);
+        FUNCTION_LOG_PARAM_P(VOID, fileInfo);
     FUNCTION_LOG_END();
 
     int result = 0;
@@ -343,27 +377,30 @@ restoreMountFuseOpen(const char *const fileZ, struct fuse_file_info *const fi)
     else
     {
         restoreMountFusePersist(file);
-        const int fd = restoreMountFuseOpenInternal(file, fi->flags);
+        const int fd = restoreMountFuseOpenInternal(file, fileInfo->flags);
 
         if (result == -1)
             result = -errno;
         else
-            fi->fh = (uint64_t)fd;
+            fileInfo->fh = (uint64_t)fd;
     }
 
     FUNCTION_LOG_RETURN(INT, result);
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static int
 restoreMountFuseRead(
-    const char *const fileZ, char *const buffer, const size_t size, const off_t offset, struct fuse_file_info *const fi)
+    const char *const fileZ, char *const buffer, const size_t size, const off_t offset, struct fuse_file_info *const fileInfo)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRINGZ, fileZ);
         (void)buffer;
         FUNCTION_LOG_PARAM(SIZE, size);
         FUNCTION_LOG_PARAM(INT64, offset);
-        FUNCTION_LOG_PARAM_P(VOID, fi);
+        FUNCTION_LOG_PARAM_P(VOID, fileInfo);
     FUNCTION_LOG_END();
 
     ASSERT(fileZ != NULL);
@@ -376,7 +413,7 @@ restoreMountFuseRead(
     // Read requested range
     int fd;
 
-    if (fi == NULL)
+    if (fileInfo == NULL)
     {
         CmdRestoreMountFuseFile *const file = restoreMountFuseFileFind(fileZ);
         ASSERT(file != NULL);
@@ -385,7 +422,7 @@ restoreMountFuseRead(
         fd = restoreMountFuseOpenInternal(file, O_RDONLY);
     }
     else
-        fd = (int)fi->fh;
+        fd = (int)fileInfo->fh;
 
     if (fd == -1)
         result = -errno;
@@ -396,23 +433,26 @@ restoreMountFuseRead(
         if (result == -1)
             result = -errno;
 
-        if (fi == NULL)
+        if (fileInfo == NULL)
             close(fd);
     }
 
     FUNCTION_LOG_RETURN(INT, result);
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static int
 restoreMountFuseWrite(
-    const char *const fileZ, const char *const buffer, const size_t size, const off_t offset, struct fuse_file_info *const fi)
+    const char *const fileZ, const char *const buffer, const size_t size, const off_t offset, struct fuse_file_info *const fileInfo)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRINGZ, fileZ);
         FUNCTION_LOG_PARAM_P(VOID, buffer);
         FUNCTION_LOG_PARAM(SIZE, size);
         FUNCTION_LOG_PARAM(INT64, offset);
-        FUNCTION_LOG_PARAM_P(VOID, fi);
+        FUNCTION_LOG_PARAM_P(VOID, fileInfo);
     FUNCTION_LOG_END();
 
     ASSERT(fileZ != NULL);
@@ -427,7 +467,7 @@ restoreMountFuseWrite(
 
     int fd;
 
-    if (fi == NULL)
+    if (fileInfo == NULL)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
@@ -436,7 +476,7 @@ restoreMountFuseWrite(
         MEM_CONTEXT_TEMP_END();
     }
     else
-        fd = (int)fi->fh;
+        fd = (int)fileInfo->fh;
 
     int result;
 
@@ -452,26 +492,32 @@ restoreMountFuseWrite(
         if (result == -1)
             result = -errno;
 
-        if (fi == NULL)
+        if (fileInfo == NULL)
             close(fd);
     }
 
     FUNCTION_LOG_RETURN(INT, result);
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static int
-restoreMountFuseRelease(const char *const pathZ, struct fuse_file_info *const fi)
+restoreMountFuseRelease(const char *const pathZ, struct fuse_file_info *const fileInfo)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRINGZ, pathZ);
-        FUNCTION_LOG_PARAM_P(VOID, fi);
+        FUNCTION_LOG_PARAM_P(VOID, fileInfo);
     FUNCTION_LOG_END();
 
-    close((int)fi->fh);
+    close((int)fileInfo->fh);
 
     FUNCTION_LOG_RETURN(INT, 0);
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static int restoreMountFuseMkDir(const char *const pathZ, const mode_t mode)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -502,6 +548,9 @@ static int restoreMountFuseMkDir(const char *const pathZ, const mode_t mode)
     FUNCTION_LOG_RETURN(INT, 0);
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static int restoreMountFuseRmDir(const char *const pathZ)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -516,6 +565,9 @@ static int restoreMountFuseRmDir(const char *const pathZ)
     FUNCTION_LOG_RETURN(INT, 0);
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static int restoreMountFuseRename(const char *const fromZ, const char *const toZ, const unsigned int flags)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -549,6 +601,9 @@ static int restoreMountFuseRename(const char *const fromZ, const char *const toZ
     FUNCTION_LOG_RETURN(INT, result);
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static int
 restoreMountFuseUnlink(const char *const fileZ)
 {
@@ -581,13 +636,16 @@ restoreMountFuseUnlink(const char *const fileZ)
     FUNCTION_LOG_RETURN(INT, result);
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static int
 restoreMountFuseUTimeNS(const char *path, const struct timespec ts[2],
-               struct fuse_file_info *fi)
+               struct fuse_file_info *const fileInfo)
 {
     (void)path;
     (void)ts;
-    (void)fi;
+    (void)fileInfo;
     // int res;
 
     // /* don't use utime/utimes since they follow symlinks */
@@ -598,13 +656,16 @@ restoreMountFuseUTimeNS(const char *path, const struct timespec ts[2],
     return 0;
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static int
-restoreMountFuseTruncate(const char *const fileZ, const off_t size, struct fuse_file_info *const fi)
+restoreMountFuseTruncate(const char *const fileZ, const off_t size, struct fuse_file_info *const fileInfo)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRINGZ, fileZ);
         FUNCTION_LOG_PARAM(INT64, size);
-        FUNCTION_LOG_PARAM_P(VOID, fi);
+        FUNCTION_LOG_PARAM_P(VOID, fileInfo);
     FUNCTION_LOG_END();
 
     int result = 0;
@@ -618,8 +679,8 @@ restoreMountFuseTruncate(const char *const fileZ, const off_t size, struct fuse_
         file->timestamp = time(NULL);
         file->size = (uint64_t)size;
 
-        if (fi != NULL)
-            result = ftruncate((int)fi->fh, size);
+        if (fileInfo != NULL)
+            result = ftruncate((int)fileInfo->fh, size);
         else
         {
             MEM_CONTEXT_TEMP_BEGIN()
@@ -636,6 +697,9 @@ restoreMountFuseTruncate(const char *const fileZ, const off_t size, struct fuse_
     FUNCTION_LOG_RETURN(INT, result);
 }
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static const struct fuse_operations restoreMountFuseOper =
 {
     .init = restoreMountFuseInit,
@@ -643,6 +707,7 @@ static const struct fuse_operations restoreMountFuseOper =
     // .chmod =
     // .chown =
     // .lseek =
+    // !!! FOR SYMLINK WE COULD INTERCEPT SYMLINK CREATION AND JUST CREATE A DIR in PG_TBLSPC
     .readdir = restoreMountFuseReadDir,
     .mkdir = restoreMountFuseMkDir,
     .rmdir = restoreMountFuseRmDir,
@@ -658,6 +723,9 @@ static const struct fuse_operations restoreMountFuseOper =
     .truncate = restoreMountFuseTruncate,
 };
 
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static void
 restoreMount(
     Manifest *const manifest, const Storage *const storageRepo, const Storage *const storageSpool, const String *const label)
@@ -703,7 +771,6 @@ restoreMount(
                         .user = userIdFromName(path->user),
                         .group = groupIdFromName(path->group),
                         .timestamp = manifestData(manifest)->backupTimestampStop,
-                        .path = path,
                     };
 
                     lstAdd(session.pathList, &pathNew);
