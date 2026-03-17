@@ -860,6 +860,7 @@ unit:
           - command/archive/push/file
           - command/archive/push/protocol
           - command/archive/push/push
+          - command/command
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: stanza
