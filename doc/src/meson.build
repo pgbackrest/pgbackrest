@@ -40,6 +40,7 @@ src_doc = [
     '../../src/common/io/fd.c',
     '../../src/common/io/fdRead.c',
     '../../src/common/io/fdWrite.c',
+    '../../src/common/fork.c',
     '../../src/common/lock.c',
     '../../src/common/stat.c',
     '../../src/config/config.c',
