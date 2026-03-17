@@ -226,8 +226,14 @@ main(int argListSize, const char *argList[])
                 // Restore command
                 // -----------------------------------------------------------------------------------------------------------------
                 case cfgCmdRestore:
-                    cmdRestore();
+                {
+                    if (commandRole == cfgCmdRoleAsync)
+                        cmdRestoreAsync();
+                    else
+                        cmdRestore();
+
                     break;
+                }
 
                 // Stanza create command
                 // -----------------------------------------------------------------------------------------------------------------

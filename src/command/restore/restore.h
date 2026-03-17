@@ -10,4 +10,7 @@ Functions
 // Restore a backup
 FN_EXTERN void cmdRestore(void);
 
+// Create a FUSE filesystem containing the backup
+FN_EXTERN void cmdRestoreAsync(void);
+
 #endif

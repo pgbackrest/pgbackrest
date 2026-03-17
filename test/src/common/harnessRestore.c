@@ -25,7 +25,7 @@ hrnCmdRestore(void)
     }
     FINALLY()
     {
-        cmdLockReleaseP();
+        cmdLockReleaseP(.returnOnNoLock = true);
     }
     TRY_END();
 

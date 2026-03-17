@@ -33,7 +33,6 @@ typedef struct CmdRestoreMountFuseSession
     Manifest *manifest;                                             // Manifest containing base files to mount
     const Storage *storageRepo;                                     // Repository storage
     const Storage *storageSpool;                                    // Spool storage (for backing files)
-    const String *label;                                            // Backup label
     List *pathList;                                                 // Path list
     List *fileList;                                                 // File list
     uint32_t fileId;                                                // File id sequence
@@ -324,7 +323,9 @@ restoreMountFusePersist(CmdRestoreMountFuseFile *const file)
             file->id = ++session->fileId;
 
             StorageRead *const storageRead = storageNewReadP(
-                session->storageRepo, strNewFmt(STORAGE_REPO_BACKUP "/%s/%s", strZ(session->label), strZ(manifestFile.name)));
+                session->storageRepo,
+                strNewFmt(
+                    STORAGE_REPO_BACKUP "/%s/%s", strZ(manifestData(session->manifest)->backupLabel), strZ(manifestFile.name)));
             StorageWrite *const storageWrite = storageNewWriteP(
                 session->storageSpool, restoreMountFuseFileName(file), .noAtomic = true, .noSyncPath = true, .noSyncFile = true);
 
@@ -703,135 +704,130 @@ restoreMountFuseTruncate(const char *const fileZ, const off_t size, struct fuse_
 static const struct fuse_operations restoreMountFuseOper =
 {
     .init = restoreMountFuseInit,
+
     .getattr = restoreMountFuseGetAttr,
+    .readdir = restoreMountFuseReadDir,
     // .chmod =
     // .chown =
-    // .lseek =
-    // !!! FOR SYMLINK WE COULD INTERCEPT SYMLINK CREATION AND JUST CREATE A DIR in PG_TBLSPC
-    .readdir = restoreMountFuseReadDir,
+
     .mkdir = restoreMountFuseMkDir,
     .rmdir = restoreMountFuseRmDir,
 
-    .unlink = restoreMountFuseUnlink,
-    .rename = restoreMountFuseRename,
+    // !!! FOR SYMLINK WE COULD INTERCEPT SYMLINK CREATION AND JUST CREATE A DIR in PG_TBLSPC
+
     .create = restoreMountFuseCreate,
     .open = restoreMountFuseOpen,
     .read = restoreMountFuseRead,
     .write = restoreMountFuseWrite,
+    // .lseek =
     .release = restoreMountFuseRelease,
     .utimens = restoreMountFuseUTimeNS,
     .truncate = restoreMountFuseTruncate,
+    .unlink = restoreMountFuseUnlink,
+    .rename = restoreMountFuseRename,
 };
 
 /***********************************************************************************************************************************
 !!!
 ***********************************************************************************************************************************/
-static void
-restoreMount(
-    Manifest *const manifest, const Storage *const storageRepo, const Storage *const storageSpool, const String *const label)
+FN_EXTERN void
+cmdRestoreAsync(void)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(MANIFEST, manifest);
-        FUNCTION_LOG_PARAM(STORAGE, storageRepo);
-        FUNCTION_LOG_PARAM(STORAGE, storageSpool);
-        FUNCTION_LOG_PARAM(STRING, label);
-    FUNCTION_LOG_END();
+    FUNCTION_LOG_VOID(logLevelDebug);
 
-    const pid_t pid = forkSafe();
+    ASSERT(cfgOptionSeq(cfgOptMount) != CFGOPTVAL_MOUNT_NONE);
 
-    if (pid == 0)
+    MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Detach from parent process
-        forkDetach();
+        // Get information for the current user
+        userInit();
 
-        MEM_CONTEXT_TEMP_BEGIN()
+        // Initialize session
+        CmdRestoreMountFuseSession session =
         {
-            CmdRestoreMountFuseSession session =
-            {
-                .manifest = manifest,
-                .storageRepo = storageRepo,
-                .storageSpool = storageSpool,
-                .label = label,
-                .pathList = lstNewP(sizeof(CmdRestoreMountFusePath), .comparator = lstComparatorStr),
-                .fileList = lstNewP(sizeof(CmdRestoreMountFuseFile), .comparator = lstComparatorStr),
-            };
+            .manifest = manifestLoadFile(
+                storageSpool(), STRDEF(STORAGE_SPOOL_MOUNT "/" BACKUP_MANIFEST_FILE), cipherTypeNone, NULL),
+            .storageRepo = storageRepo(),
+            .storageSpool = storageSpoolWrite(),
+            .pathList = lstNewP(sizeof(CmdRestoreMountFusePath), .comparator = lstComparatorStr),
+            .fileList = lstNewP(sizeof(CmdRestoreMountFuseFile), .comparator = lstComparatorStr),
+        };
 
-            // Load paths
-            MEM_CONTEXT_OBJ_BEGIN(session.pathList)
+        // Load paths
+        MEM_CONTEXT_OBJ_BEGIN(session.pathList)
+        {
+            for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(session.manifest); pathIdx++)
             {
-                for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(manifest); pathIdx++)
+                const ManifestPath *const path = manifestPath(session.manifest, pathIdx);
+                const CmdRestoreMountFusePath pathNew =
                 {
-                    const ManifestPath *const path = manifestPath(manifest, pathIdx);
-                    const CmdRestoreMountFusePath pathNew =
-                    {
-                        .name =
-                            strEq(path->name, MANIFEST_TARGET_PGDATA_STR) ?
-                                strNewZ("/") : strSub(path->name, sizeof(MANIFEST_TARGET_PGDATA) - 1),
-                        .mode = path->mode,
-                        .user = userIdFromName(path->user),
-                        .group = groupIdFromName(path->group),
-                        .timestamp = manifestData(manifest)->backupTimestampStop,
-                    };
+                    .name =
+                        strEq(path->name, MANIFEST_TARGET_PGDATA_STR) ?
+                            strNewZ("/") : strSub(path->name, sizeof(MANIFEST_TARGET_PGDATA) - 1),
+                    .mode = path->mode,
+                    .user = userIdFromName(path->user),
+                    .group = groupIdFromName(path->group),
+                    .timestamp = manifestData(session.manifest)->backupTimestampStop,
+                };
 
-                    lstAdd(session.pathList, &pathNew);
-                }
-
-                lstSort(session.pathList, sortOrderAsc);
+                lstAdd(session.pathList, &pathNew);
             }
-            MEM_CONTEXT_OBJ_END();
 
-            // Load files
-            MEM_CONTEXT_OBJ_BEGIN(session.fileList)
-            {
-                for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
-                {
-                    const ManifestFilePack *const filePack = manifestFilePackGet(manifest, fileIdx);
-                    const ManifestFile file = manifestFileUnpack(manifest, filePack);
-                    const CmdRestoreMountFuseFile fileNew =
-                    {
-                        .name =
-                            strEqZ(file.name, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ?
-                                strNewZ("/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT) :
-                                strSub(file.name, sizeof(MANIFEST_TARGET_PGDATA) - 1),
-                        .mode = file.mode,
-                        .user = userIdFromName(file.user),
-                        .group = groupIdFromName(file.group),
-                        .timestamp = file.timestamp,
-                        .size = file.size,
-                        .filePack = filePack,
-                    };
-
-                    lstAdd(session.fileList, &fileNew);
-                }
-
-                lstSort(session.fileList, sortOrderAsc);
-            }
-            MEM_CONTEXT_OBJ_END();
-
-            struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
-            fuse_opt_add_arg(&args, PROJECT_NAME);
-
-            struct fuse *const fuse = fuse_new(&args, &restoreMountFuseOper, sizeof(restoreMountFuseOper), &session);
-
-            if (fuse == NULL) // {uncovered_branch - !!!}
-                THROW(AssertError, "fuse_new() failed"); // {uncovered - !!!}
-
-            if (fuse_mount(fuse, strZ(cfgOptionStrNull(cfgOptPgPath))) != 0) // {uncovered_branch - !!!}
-                THROW(AssertError, "fuse_mount() failed"); // {uncovered - !!!}
-
-            if (fuse_set_signal_handlers(fuse_get_session(fuse)) != 0) // {uncovered_branch - !!!}
-                THROW(AssertError, "fuse_set_signal_handlers() failed"); // {uncovered - !!!}
-
-            fuse_loop(fuse);
-
-            fuse_remove_signal_handlers(fuse_get_session(fuse));
-            fuse_unmount(fuse);
-            fuse_destroy(fuse);
-
-            exit(0);
+            lstSort(session.pathList, sortOrderAsc);
         }
-        MEM_CONTEXT_TEMP_END();
+        MEM_CONTEXT_OBJ_END();
+
+        // Load files
+        MEM_CONTEXT_OBJ_BEGIN(session.fileList)
+        {
+            for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(session.manifest); fileIdx++)
+            {
+                const ManifestFilePack *const filePack = manifestFilePackGet(session.manifest, fileIdx);
+                const ManifestFile file = manifestFileUnpack(session.manifest, filePack);
+                const CmdRestoreMountFuseFile fileNew =
+                {
+                    .name =
+                        strEqZ(file.name, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ?
+                            strNewZ("/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT) :
+                            strSub(file.name, sizeof(MANIFEST_TARGET_PGDATA) - 1),
+                    .mode = file.mode,
+                    .user = userIdFromName(file.user),
+                    .group = groupIdFromName(file.group),
+                    .timestamp = file.timestamp,
+                    .size = file.size,
+                    .filePack = filePack,
+                };
+
+                lstAdd(session.fileList, &fileNew);
+            }
+
+            lstSort(session.fileList, sortOrderAsc);
+        }
+        MEM_CONTEXT_OBJ_END();
+
+        struct fuse_args args = FUSE_ARGS_INIT(0, NULL);
+        fuse_opt_add_arg(&args, PROJECT_NAME);
+
+        struct fuse *const fuse = fuse_new(&args, &restoreMountFuseOper, sizeof(restoreMountFuseOper), &session);
+
+        if (fuse == NULL) // {uncovered_branch - !!!}
+            THROW(AssertError, "fuse_new() failed"); // {uncovered - !!!}
+
+        if (fuse_mount(fuse, strZ(cfgOptionStrNull(cfgOptPgPath))) != 0) // {uncovered_branch - !!!}
+            THROW(AssertError, "fuse_mount() failed"); // {uncovered - !!!}
+
+        if (fuse_set_signal_handlers(fuse_get_session(fuse)) != 0) // {uncovered_branch - !!!}
+            THROW(AssertError, "fuse_set_signal_handlers() failed"); // {uncovered - !!!}
+
+        // Processing loop
+        fuse_loop(fuse);
+
+        // Unmount and destroy the filesystem
+        fuse_remove_signal_handlers(fuse_get_session(fuse));
+        fuse_unmount(fuse);
+        fuse_destroy(fuse);
     }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }

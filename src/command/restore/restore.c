@@ -6,6 +6,7 @@ Restore Command
 #include <unistd.h>
 
 #include "command/lock.h"
+#include "command/command.h"
 #include "command/restore/file.h"
 #include "command/restore/protocol.h"
 #include "command/restore/restore.h"
@@ -137,8 +138,28 @@ cmdRestore(void)
 
         if (cfgOptionSeq(cfgOptMount) == CFGOPTVAL_MOUNT_FUSE)
         {
+            // Save manifest to the spool path so it can be used to build the filesystem
             storagePathCreateP(storageSpoolWrite(), STORAGE_SPOOL_MOUNT_STR);
-            restoreMount(jobData.manifest, storageRepoIdx(backupData.repoIdx), storageSpoolWrite(), backupData.backupSet);
+            manifestSave(
+                jobData.manifest, storageWriteIo(storageNewWriteP(storageSpoolWrite(),
+                STRDEF(STORAGE_SPOOL_MOUNT "/" BACKUP_MANIFEST_FILE))));
+
+            // The async process should not output on the console at all
+            KeyValue *const optionReplace = kvNew();
+
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_CONSOLE), VARSTRDEF("off"));
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_LOG_LEVEL_STDERR), VARSTRDEF("off"));
+            kvPut(optionReplace, VARSTRDEF(CFGOPT_REPO), VARUINT(cfgOptionGroupIdxToKey(cfgOptGrpRepo, backupData.repoIdx)));
+
+            // Generate command options
+            StringList *const commandExec = cfgExecParam(cfgCmdRestore, cfgCmdRoleAsync, optionReplace, true, false);
+            strLstInsert(commandExec, 0, cfgBin());
+
+            // Release the lock so the child process can acquire it
+            cmdLockReleaseP();
+
+            // Execute the async process
+            cmdAsyncExec(CFGCMD_RESTORE, commandExec);
 
             // Wait for the mount to become available
             if (!storageExistsP(storagePg(), pgControlTemp, .timeout = ioTimeoutMs()))
