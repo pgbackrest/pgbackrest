@@ -10,6 +10,7 @@
 typedef struct CmdRestoreMountFusePath
 {
     const String *name;                                             // Name
+    const String *link;                                             // Path is a virtual symlink
     mode_t mode;                                                    // Mode
     uid_t user;                                                     // User
     gid_t group;                                                    // Group
@@ -115,8 +116,8 @@ restoreMountFuseInit(struct fuse_conn_info *const conn, struct fuse_config *cons
     // Enable direct io since caching is disabled
     cfg->direct_io = 1;
 
-	// Use a large buffer
-	conn->max_write = 1 * 1024 * 1024;
+    // Use a large buffer
+    conn->max_write = 1 * 1024 * 1024;
 
     // Our timestamps are only accurate to 1 second
     conn->time_gran = 1000000000;
@@ -165,17 +166,34 @@ restoreMountFuseGetAttr(const char *const pathZ, struct stat *const stbuf, struc
 
             if (path != NULL)
             {
-                *stbuf = (struct stat)
+                if (path->link != NULL)
                 {
-                    .st_mode = S_IFDIR | path->mode,
-                    .st_nlink = 2,
-                    .st_uid = path->user,
-                    .st_gid = path->group,
-                    .st_size = sizeof(CmdRestoreMountFusePath),
-                    .st_atime = path->timestamp,
-                    .st_mtime = path->timestamp,
-                    .st_ctime = path->timestamp,
-                };
+                    *stbuf = (struct stat)
+                    {
+                        .st_mode = S_IFLNK | path->mode,
+                        .st_nlink = 2,
+                        .st_uid = path->user,
+                        .st_gid = path->group,
+                        .st_size = sizeof(CmdRestoreMountFusePath),
+                        .st_atime = path->timestamp,
+                        .st_mtime = path->timestamp,
+                        .st_ctime = path->timestamp,
+                    };
+                }
+                else
+                {
+                    *stbuf = (struct stat)
+                    {
+                        .st_mode = S_IFDIR | path->mode,
+                        .st_nlink = 2,
+                        .st_uid = path->user,
+                        .st_gid = path->group,
+                        .st_size = sizeof(CmdRestoreMountFusePath),
+                        .st_atime = path->timestamp,
+                        .st_mtime = path->timestamp,
+                        .st_ctime = path->timestamp,
+                    };
+                }
             }
             else
                 result = -ENOENT;
@@ -701,6 +719,66 @@ restoreMountFuseTruncate(const char *const fileZ, const off_t size, struct fuse_
 /***********************************************************************************************************************************
 !!!
 ***********************************************************************************************************************************/
+static int restoreMountFuseSymLink(const char *const fromZ, const char *const toZ)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        (void)fromZ;
+        FUNCTION_LOG_PARAM(STRINGZ, toZ);
+    FUNCTION_LOG_END();
+
+    const CmdRestoreMountFuseSession *const session = restoreMountFuseSession();
+    int result = restoreMountFuseMkDir(toZ, restoreMountFusePathFind("/")->mode);
+    CmdRestoreMountFusePath *const path = restoreMountFusePathFind(toZ);
+
+    MEM_CONTEXT_OBJ_BEGIN(restoreMountFuseSession()->pathList)
+    {
+        path->link = strNewFmt("../.pgbrfs/ts/%s", toZ + sizeof("/pg_tblspc"));
+
+        CmdRestoreMountFusePath pathNew =
+        {
+            .name = strNewFmt("/.pgbrfs/ts/%s", toZ + sizeof("/pg_tblspc")),
+            .mode = path->mode,
+            .user = path->user,
+            .group = path->group,
+            .timestamp = time(NULL),
+        };
+
+        lstAdd(restoreMountFuseSession()->pathList, &pathNew);
+
+        pathNew.name = strNewFmt(
+            "%s/%s", strZ(pathNew.name),
+            strZ(pgTablespaceId(manifestData(session->manifest)->pgVersion, manifestData(session->manifest)->pgCatalogVersion)));
+        lstAdd(restoreMountFuseSession()->pathList, &pathNew);
+
+        lstSort(restoreMountFuseSession()->pathList, sortOrderAsc);
+    }
+    MEM_CONTEXT_OBJ_END();
+
+    FUNCTION_LOG_RETURN(INT, result);
+}
+
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
+static int restoreMountFuseReadLink(const char *const linkZ, char *const buffer, const size_t size)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRINGZ, linkZ);
+        FUNCTION_LOG_PARAM_P(VOID, buffer);
+        FUNCTION_LOG_PARAM(SIZE, size);
+    FUNCTION_LOG_END();
+
+    CmdRestoreMountFusePath *const link = restoreMountFusePathFind(linkZ);
+
+    // !!! NEED TO CHECK SIZE HERE
+    strncpy(buffer, strZ(link->link), size - 1);
+    buffer[size - 1] = '\0';
+
+    return 0;
+}
+/***********************************************************************************************************************************
+!!!
+***********************************************************************************************************************************/
 static const struct fuse_operations restoreMountFuseOper =
 {
     .init = restoreMountFuseInit,
@@ -725,11 +803,41 @@ static const struct fuse_operations restoreMountFuseOper =
     .truncate = restoreMountFuseTruncate,
     .unlink = restoreMountFuseUnlink,
     .rename = restoreMountFuseRename,
+    .symlink = restoreMountFuseSymLink,
+    .readlink = restoreMountFuseReadLink,
 };
 
 /***********************************************************************************************************************************
 !!!
 ***********************************************************************************************************************************/
+// Helper to convert manifest paths to pg paths
+static String *
+cmdRestoreAsyncName(const String *const manifestName)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_LOG_PARAM(STRING, manifestName);
+    FUNCTION_TEST_END();
+
+    if (strBeginsWithZ(manifestName, MANIFEST_TARGET_PGDATA "/"))
+    {
+        if (strEqZ(manifestName, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL))
+            FUNCTION_TEST_RETURN(STRING, strNewZ("/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT));
+
+        FUNCTION_TEST_RETURN(STRING, strSub(manifestName, sizeof(MANIFEST_TARGET_PGDATA) - 1));
+    }
+
+    if (strBeginsWithZ(manifestName, MANIFEST_TARGET_PGTBLSPC "/"))
+    {
+        if (strstr(strZ(manifestName) + sizeof(MANIFEST_TARGET_PGTBLSPC), "/") != NULL)
+            FUNCTION_TEST_RETURN(STRING, strNewFmt("/.pgbrfs/ts/%s", strZ(manifestName) + sizeof(MANIFEST_TARGET_PGTBLSPC)));
+
+        FUNCTION_TEST_RETURN(STRING, strNewFmt("/%s", strZ(manifestName)));
+    }
+
+    ASSERT(strEq(manifestName, MANIFEST_TARGET_PGDATA_STR));
+    FUNCTION_TEST_RETURN(STRING, strNewZ("/"));
+}
+
 FN_EXTERN void
 cmdRestoreAsync(void)
 {
@@ -756,19 +864,51 @@ cmdRestoreAsync(void)
         // Load paths
         MEM_CONTEXT_OBJ_BEGIN(session.pathList)
         {
+            bool fsAdded = false;
+
             for (unsigned int pathIdx = 0; pathIdx < manifestPathTotal(session.manifest); pathIdx++)
             {
                 const ManifestPath *const path = manifestPath(session.manifest, pathIdx);
-                const CmdRestoreMountFusePath pathNew =
+
+                // Skip this path since is a duplicate of pg_data/pg_tblspc
+                if (strEq(path->name, MANIFEST_TARGET_PGTBLSPC_STR))
+                    continue;
+
+                CmdRestoreMountFusePath pathNew =
                 {
-                    .name =
-                        strEq(path->name, MANIFEST_TARGET_PGDATA_STR) ?
-                            strNewZ("/") : strSub(path->name, sizeof(MANIFEST_TARGET_PGDATA) - 1),
+                    .name = cmdRestoreAsyncName(path->name),
                     .mode = path->mode,
                     .user = userIdFromName(path->user),
                     .group = groupIdFromName(path->group),
                     .timestamp = manifestData(session.manifest)->backupTimestampStop,
                 };
+
+                if (strBeginsWithZ(pathNew.name, "/" MANIFEST_TARGET_PGTBLSPC "/"))
+                {
+                    CmdRestoreMountFusePath pathFs =
+                    {
+                        .mode = path->mode,
+                        .user = userIdFromName(path->user),
+                        .group = groupIdFromName(path->group),
+                        .timestamp = time(NULL),
+                    };
+
+                    if (!fsAdded)
+                    {
+                        pathFs.name = strNewZ("/.pgbrfs"),
+                        lstAdd(session.pathList, &pathFs);
+
+                        pathFs.name = strNewZ("/.pgbrfs/ts");
+                        lstAdd(session.pathList, &pathFs);
+
+                        fsAdded = true;
+                    }
+
+                    pathFs.name = strNewFmt("/.pgbrfs/ts/%s", strBaseZ(pathNew.name));
+                    lstAdd(session.pathList, &pathFs);
+
+                    pathNew.link = strNewFmt("../.pgbrfs/ts/%s", strBaseZ(pathNew.name));
+                }
 
                 lstAdd(session.pathList, &pathNew);
             }
@@ -784,12 +924,10 @@ cmdRestoreAsync(void)
             {
                 const ManifestFilePack *const filePack = manifestFilePackGet(session.manifest, fileIdx);
                 const ManifestFile file = manifestFileUnpack(session.manifest, filePack);
+
                 const CmdRestoreMountFuseFile fileNew =
                 {
-                    .name =
-                        strEqZ(file.name, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) ?
-                            strNewZ("/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL "." STORAGE_FILE_TEMP_EXT) :
-                            strSub(file.name, sizeof(MANIFEST_TARGET_PGDATA) - 1),
+                    .name = cmdRestoreAsyncName(file.name),
                     .mode = file.mode,
                     .user = userIdFromName(file.user),
                     .group = groupIdFromName(file.group),

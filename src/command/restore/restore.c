@@ -138,6 +138,8 @@ cmdRestore(void)
 
         if (cfgOptionSeq(cfgOptMount) == CFGOPTVAL_MOUNT_FUSE)
         {
+            // !!! SET ARCHIVE MODE = OFF
+
             // Save manifest to the spool path so it can be used to build the filesystem
             storagePathCreateP(storageSpoolWrite(), STORAGE_SPOOL_MOUNT_STR);
             manifestSave(

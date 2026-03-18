@@ -3491,6 +3491,14 @@ testRun(void)
         // Add postgresql.auto.conf to contain recovery settings
         HRN_STORAGE_PUT_EMPTY(storagePgWrite(), PG_FILE_POSTGRESQLAUTOCONF, .timeModified = timeBase - 1);
 
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), PG_PATH_PGTBLSPC);
+        THROW_ON_SYS_ERROR(
+            symlink("../../pg1-tblspc/256", strZ(storagePathP(storagePg(), STRDEF(PG_PATH_PGTBLSPC "/256")))) == -1,
+            FileOpenError, "unable to create symlink");
+
+        HRN_STORAGE_PUT_EMPTY(
+            storageTest, zNewFmt("pg1-tblspc/256/%s/1/5", strZ(pgTablespaceId(PG_VERSION_18, hrnPgCatalogVersion(PG_VERSION_18)))));
+
         // Backup
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
@@ -3514,13 +3522,19 @@ testRun(void)
         hrnCfgArgRaw(argList, cfgOptPgPath, pgPath);
         hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
         hrnCfgArgRawZ(argList, cfgOptMount, "fuse");
+        hrnCfgArgRawZ(argList, cfgOptIoTimeout, "5");
         HRN_CFG_LOAD(cfgCmdRestore, argList);
 
         HRN_STORAGE_PATH_REMOVE(storagePgIdxWrite(0), NULL, .recurse = true);
 
+        HRN_STORAGE_PATH_REMOVE(
+            storageTest, zNewFmt("pg1-tblspc/256/%s", strZ(pgTablespaceId(PG_VERSION_18, hrnPgCatalogVersion(PG_VERSION_18)))),
+            .recurse = true);
+        HRN_STORAGE_PATH_CREATE(
+            storageTest, zNewFmt("pg1-tblspc/256/%s", strZ(pgTablespaceId(PG_VERSION_18, hrnPgCatalogVersion(PG_VERSION_18)))));
+
         TEST_RESULT_VOID(hrnCmdRestore(), "restore");
 
-        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_tblspc", .mode = 0777);
         HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_tblspc2");
         HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_tblspc2");
 
@@ -3530,15 +3544,29 @@ testRun(void)
         HRN_STORAGE_PUT(storagePgWrite(), "test_remove", BUFSTRDEF("TEST_REMOVE_DATA"));
         HRN_STORAGE_REMOVE(storagePgWrite(), "test_remove");
 
+        THROW_ON_SYS_ERROR(
+            symlink("../../pg1-tblspc/256", strZ(storagePathP(storagePg(), STRDEF(PG_PATH_PGTBLSPC "/512")))) == -1,
+            FileOpenError, "unable to create symlink");
+
         TEST_STORAGE_LIST(
             storagePg(), NULL,
+            ".pgbrfs/ {u=" TEST_USER ", g=" TEST_GROUP ", m=0750}\n"
+            ".pgbrfs/ts/ {u=" TEST_USER ", g=" TEST_GROUP ", m=0750}\n"
+            ".pgbrfs/ts/256/ {u=" TEST_USER ", g=" TEST_GROUP ", m=0750}\n"
+            ".pgbrfs/ts/256/PG_18_202506291/ {u=" TEST_USER ", g=" TEST_GROUP ", m=0750}\n"
+            ".pgbrfs/ts/256/PG_18_202506291/1/ {u=" TEST_USER ", g=" TEST_GROUP ", m=0750}\n"
+            ".pgbrfs/ts/256/PG_18_202506291/1/5 {s=0, u=" TEST_USER ", g=" TEST_GROUP ", m=0640}\n"
+            ".pgbrfs/ts/512/ {u=" TEST_USER ", g=" TEST_GROUP ", m=0750}\n"
+            ".pgbrfs/ts/512/PG_18_202506291/ {u=" TEST_USER ", g=" TEST_GROUP ", m=0750}\n"
             "PG_VERSION {s=3, u=" TEST_USER ", g=" TEST_GROUP ", m=0640}\n"
             "base/ {u=" TEST_USER ", g=" TEST_GROUP ", m=0750}\n"
             "base/1/ {u=" TEST_USER ", g=" TEST_GROUP ", m=0750}\n"
             "base/1/2 {s=2048, u=" TEST_USER ", g=" TEST_GROUP ", m=0640}\n"
             "global/ {u=" TEST_USER ", g=" TEST_GROUP ", m=0750}\n"
             "global/pg_control {s=8192, u=" TEST_USER ", g=" TEST_GROUP ", m=0640}\n"
-            "pg_tblspc/ {u=" TEST_USER ", g=" TEST_GROUP ", m=0777}\n"
+            "pg_tblspc/ {u=" TEST_USER ", g=" TEST_GROUP ", m=0750}\n"
+            "pg_tblspc/256> {d=../.pgbrfs/ts/256, u=" TEST_USER ", g=" TEST_GROUP "}\n"
+            "pg_tblspc/512> {d=../.pgbrfs/ts/512, u=" TEST_USER ", g=" TEST_GROUP "}\n"
             "postgresql.auto.conf {s=0, u=" TEST_USER ", g=" TEST_GROUP ", m=0640}\n"
             "test {s=9, u=" TEST_USER ", g=" TEST_GROUP ", m=0640}\n",
             .level = storageInfoLevelDetail, .noTimestamp = true);
