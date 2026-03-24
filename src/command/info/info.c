@@ -220,7 +220,7 @@ Add per-repo backup lock information to the target key-value
 ***********************************************************************************************************************************/
 static void
 stanzaStatusBackupLockAdd(
-    KeyValue *targetKv, const InfoRepoData *const repoList, const unsigned int repoIdxMin, const unsigned int repoIdxMax)
+    KeyValue *const targetKv, const InfoRepoData *const repoList, const unsigned int repoIdxMin, const unsigned int repoIdxMax)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(KEY_VALUE, targetKv);
@@ -240,6 +240,7 @@ stanzaStatusBackupLockAdd(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Report backup progress per repo
         VariantList *const repoLockList = varLstNew();
         uint64_t sizeTotal = 0;
         uint64_t sizeCompleteTotal = 0;
@@ -254,18 +255,19 @@ stanzaStatusBackupLockAdd(
 
                 if (lock->size != 0)
                 {
-                    sizeTotal += lock->size;
-                    sizeCompleteTotal += lock->sizeComplete;
-
                     Variant *const repoLockInfo = varNewKv(kvNew());
                     kvPut(varKv(repoLockInfo), REPO_KEY_KEY_VAR, VARUINT(repoList[repoIdx].key));
                     kvPut(varKv(repoLockInfo), STATUS_KEY_LOCK_SIZE_VAR, VARUINT64(lock->size));
                     kvPut(varKv(repoLockInfo), STATUS_KEY_LOCK_SIZE_COMPLETE_VAR, VARUINT64(lock->sizeComplete));
                     varLstAdd(repoLockList, repoLockInfo);
+
+                    sizeTotal += lock->size;
+                    sizeCompleteTotal += lock->sizeComplete;
                 }
             }
         }
 
+        // Report backup progress aggregated across all repos
         kvPut(lockKv, STATUS_KEY_LOCK_HELD_VAR, VARBOOL(held));
 
         if (!varLstEmpty(repoLockList))
@@ -1842,8 +1844,7 @@ infoRender(void)
 
                     // Output per-repo backup progress
                     const Variant *const backupRepoVar = kvGet(backupLockKv, STANZA_KEY_REPO_VAR);
-                    const VariantList *const backupRepoList =
-                        backupRepoVar != NULL ? varVarLst(backupRepoVar) : NULL;
+                    const VariantList *const backupRepoList = backupRepoVar != NULL ? varVarLst(backupRepoVar) : NULL;
 
                     if (backupRepoList != NULL)
                     {
@@ -1852,7 +1853,7 @@ infoRender(void)
                             const KeyValue *const repoLockKv = varKv(varLstGet(backupRepoList, repoLockIdx));
 
                             strCatFmt(
-                                resultStr, "        backup repo%u: %s complete\n",
+                                resultStr, "        repo%u backup: %s complete\n",
                                 varUInt(kvGet(repoLockKv, REPO_KEY_KEY_VAR)),
                                 strZ(strNewPct(
                                          cvtPctToUInt(
