@@ -251,6 +251,28 @@ sub sectionProcess
                 $strMarkdown .= "\n\n- " . $self->processText($oListItem->textGet());
             }
         }
+        # Add a sponsor list
+        elsif ($oChild->nameGet() eq 'sponsor-list')
+        {
+            my $bFirst = true;
+
+            foreach my $oSponsor ($oChild->nodeList())
+            {
+                if ($bFirst)
+                {
+                    $strMarkdown .= ' ';
+                    $bFirst = false;
+                }
+                else
+                {
+                    $strMarkdown .= ', ';
+                }
+
+                $strMarkdown .= '[' . $oSponsor->valueGet() . '](' . $oSponsor->paramGet('url') . ')';
+            }
+
+            $strMarkdown .= '.';
+        }
         # Add a subsection
         elsif ($oChild->nameGet() eq 'section')
         {

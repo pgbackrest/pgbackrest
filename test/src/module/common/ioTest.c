@@ -70,6 +70,17 @@ testIoWriteClose(void *driver)
 }
 
 /***********************************************************************************************************************************
+Test seek function
+***********************************************************************************************************************************/
+static void
+testBufferWriteSeek(THIS_VOID, uint64_t position)
+{
+    THIS(IoBufferWrite);
+    (void)position;
+    bufCat(this->write, BUFSTRDEF("SEEK"));
+}
+
+/***********************************************************************************************************************************
 Test filter that counts total bytes
 ***********************************************************************************************************************************/
 typedef struct IoTestFilterSize
@@ -599,6 +610,23 @@ testRun(void)
             pckReadU64P(ioFilterGroupResultP(filterGroup, ioFilterType(sizeFilter))), 9, "    check filter result");
         TEST_RESULT_UINT(
             pckReadU64P(ioFilterGroupResultP(filterGroup, STRID5("size2", 0x1c2e9330))), 22, "    check filter result");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("seek");
+
+        buffer = bufNew(0);
+        TEST_ASSIGN(bufferWrite, ioBufferWriteNew(buffer), "create buffer write object");
+
+        bufferWrite->pub.interface.seek = testBufferWriteSeek;
+
+        TEST_RESULT_VOID(ioWriteOpen(bufferWrite), "open");
+        TEST_RESULT_VOID(ioWrite(bufferWrite, BUFSTRDEF("XXX")), "write");
+        TEST_RESULT_VOID(ioWriteSeek(bufferWrite, 3), "seek to current position");
+        TEST_RESULT_VOID(ioWriteSeek(bufferWrite, 4), "seek to new position");
+        TEST_RESULT_VOID(ioWrite(bufferWrite, BUFSTRDEF("XXX")), "write");
+        TEST_RESULT_VOID(ioWriteClose(bufferWrite), "close");
+
+        TEST_RESULT_STR_Z(strNewBuf(buffer), "XXXSEEKXXX", "check buffer");
     }
 
     // *****************************************************************************************************************************
