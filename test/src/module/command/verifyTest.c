@@ -1305,8 +1305,8 @@ testRun(void)
         // Check output of verify command stored in file
         TEST_STORAGE_GET(storageTest, strZ(stdoutFile), "", .remove = true);
         TEST_RESULT_LOG(
-            "P00   WARN: backup '20181119-153000F' is not described in backup.info\n"
-            "P00   WARN: backup '20181119-152138F' exists in backup.info but was not found on disk\n"
+            "P00   WARN: backup '20181119-153000F' found in the repository but not in backup.info\n"
+            "P00   WARN: backup '20181119-152138F' found in backup.info but not in the repository\n"
             "P00 DETAIL: archive path '9.6-1' is empty\n"
             "P00 DETAIL: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
             "P01   INFO: invalid checksum"
@@ -1377,8 +1377,8 @@ testRun(void)
             "  backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 6, total valid files: 3\n"
             "    missing: 1, checksum invalid: 1, other: 1", "verify text output, not verbose, with verify failures");
         TEST_RESULT_LOG(
-            "P00   WARN: backup '20181119-153000F' is not described in backup.info\n"
-            "P00   WARN: backup '20181119-152138F' exists in backup.info but was not found on disk\n"
+            "P00   WARN: backup '20181119-153000F' found in the repository but not in backup.info\n"
+            "P00   WARN: backup '20181119-152138F' found in backup.info but not in the repository\n"
             "P01   INFO: invalid checksum"
             " '11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
             "P01   INFO: invalid size"

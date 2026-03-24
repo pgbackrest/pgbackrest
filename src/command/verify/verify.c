@@ -1675,7 +1675,7 @@ verifyProcess(const bool verboseText)
                     const String *const label = strLstGet(jobData.backupList, repoIdx);
 
                     if (!infoBackupLabelExists(backupInfo, label))
-                        LOG_WARN_FMT("backup '%s' is not described in " INFO_BACKUP_FILE, strZ(label));
+                        LOG_WARN_FMT("backup '%s' found in the repository but not in " INFO_BACKUP_FILE, strZ(label));
                 }
             }
 
@@ -1712,7 +1712,7 @@ verifyProcess(const bool verboseText)
 
                     if (strLstFindIdxP(jobData.backupList, infoLabel) == LIST_NOT_FOUND)
                     {
-                        LOG_WARN_FMT("backup '%s' exists in " INFO_BACKUP_FILE " but was not found on disk", strZ(infoLabel));
+                        LOG_WARN_FMT("backup '%s' found in " INFO_BACKUP_FILE " but not in the repository", strZ(infoLabel));
 
                         MEM_CONTEXT_BEGIN(jobData.memContext)
                         {
