@@ -1715,12 +1715,7 @@ verifyProcess(const bool verboseText)
                     if (strLstFindIdxP(jobData.backupList, infoLabel) == LIST_NOT_FOUND)
                     {
                         LOG_WARN_FMT("backup '%s' found in " INFO_BACKUP_FILE " but not in the repository", strZ(infoLabel));
-
-                        MEM_CONTEXT_BEGIN(jobData.memContext)
-                        {
-                            strLstAdd(jobData.backupList, strDup(infoLabel));
-                        }
-                        MEM_CONTEXT_END();
+                        strLstAdd(jobData.backupList, infoLabel);
                     }
                 }
 
