@@ -1675,9 +1675,7 @@ verifyProcess(const bool verboseText)
                     const String *const label = strLstGet(jobData.backupList, repoIdx);
 
                     if (!infoBackupLabelExists(backupInfo, label))
-                    {
-                        LOG_WARN_FMT("backup '%s' is not described in " INFO_BACKUP_FILE,strZ(label));
-                    }
+                        LOG_WARN_FMT("backup '%s' is not described in " INFO_BACKUP_FILE, strZ(label));
                 }
             }
 
@@ -1706,17 +1704,15 @@ verifyProcess(const bool verboseText)
             // Check if backup.info contains backups not on disk and add them for processing.
             if (backupLabel == NULL)
             {
-                const StringList *infoBackupLabelList = infoBackupDataLabelList(backupInfo, NULL);
+                const StringList *const infoBackupLabelList = infoBackupDataLabelList(backupInfo, NULL);
 
                 for (unsigned int infoIdx = 0; infoIdx < strLstSize(infoBackupLabelList); infoIdx++)
                 {
-                    const String *infoLabel = strLstGet(infoBackupLabelList, infoIdx);
+                    const String *const infoLabel = strLstGet(infoBackupLabelList, infoIdx);
 
                     if (strLstFindIdxP(jobData.backupList, infoLabel) == LIST_NOT_FOUND)
                     {
-                        LOG_WARN_FMT(
-                            "backup '%s' exists in " INFO_BACKUP_FILE " but was not found on disk",
-                            strZ(infoLabel));
+                        LOG_WARN_FMT("backup '%s' exists in " INFO_BACKUP_FILE " but was not found on disk", strZ(infoLabel));
 
                         MEM_CONTEXT_BEGIN(jobData.memContext)
                         {
@@ -1725,6 +1721,7 @@ verifyProcess(const bool verboseText)
                         MEM_CONTEXT_END();
                     }
                 }
+
                 jobData.backupList = strLstSort(jobData.backupList, sortOrderAsc);
             }
 
