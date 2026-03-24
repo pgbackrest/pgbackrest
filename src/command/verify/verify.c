@@ -1701,7 +1701,7 @@ verifyProcess(const bool verboseText)
             if (!backupLabelInvalid && backupLabel != NULL)
                 verifyBackupSet(&jobData, backupLabel);
 
-            // Check if backup.info contains backups not on disk and add them for processing.
+            // Check if backup.info contains backups not on disk and add them for processing
             if (backupLabel == NULL)
             {
                 const StringList *const infoBackupLabelList = infoBackupDataLabelList(backupInfo, NULL);
