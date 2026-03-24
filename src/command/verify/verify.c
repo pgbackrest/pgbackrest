@@ -1669,7 +1669,9 @@ verifyProcess(const bool verboseText)
                 jobData.backupList = strLstSort(
                     storageListP(storage, STORAGE_REPO_BACKUP_STR, .expression = backupRegExpStr), sortOrderAsc);
 
-                // Warn if backups on disk are not described in backup.info
+                // Warn if backups in the repository are not described in backup.info. Do not add them for processing since it is
+                // possible for backups to exist in the repository but not in backup.info if an error occurs while backups are being
+                // expired.
                 for (unsigned int repoIdx = 0; repoIdx < strLstSize(jobData.backupList); repoIdx++)
                 {
                     const String *const label = strLstGet(jobData.backupList, repoIdx);
@@ -1701,7 +1703,7 @@ verifyProcess(const bool verboseText)
             if (!backupLabelInvalid && backupLabel != NULL)
                 verifyBackupSet(&jobData, backupLabel);
 
-            // Check if backup.info contains backups not on disk and add them for processing
+            // Check if backup.info contains backups not found in the repository and add them for processing
             if (backupLabel == NULL)
             {
                 const StringList *const infoBackupLabelList = infoBackupDataLabelList(backupInfo, NULL);
