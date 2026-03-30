@@ -582,6 +582,7 @@ testBldUnit(TestBuild *const this)
             "        lib_yaml,\n"
             "        lib_z,\n"
             "        lib_zstd,\n"
+            "        lib_systemd,\n"
             "    ],\n"
             ")\n");
 

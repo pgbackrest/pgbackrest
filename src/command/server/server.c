@@ -4,6 +4,9 @@ Server Command
 #include <build.h>
 
 #include <sys/wait.h>
+#ifdef HAVE_LIBSYSTEMD
+#include <systemd/sd-daemon.h>
+#endif
 
 #include "command/exit.h"
 #include "command/remote/remote.h"
@@ -125,6 +128,9 @@ cmdServer(const unsigned int argListSize, const char *argList[])
     serverLocal.argListSize = argListSize;
     serverLocal.argList = argList;
 
+#ifdef HAVE_LIBSYSTEMD
+    sd_notify(0, "READY=1");
+#endif
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Set signal handlers
@@ -199,6 +205,9 @@ cmdServer(const unsigned int argListSize, const char *argList[])
     // Terminate any remaining children on SIGTERM. Disable the callback so it does not fire in the middle of the loop.
     if (serverLocal.sigTerm)
     {
+#ifdef HAVE_LIBSYSTEMD
+        sd_notify(0, "STOPPING=1");
+#endif
         sigaction(SIGCHLD, &(struct sigaction){.sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT}, NULL);
 
         for (unsigned int processIdx = 0; processIdx < lstSize(serverLocal.processList); processIdx++)

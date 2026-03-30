@@ -282,6 +282,7 @@ executable(
         lib_bz2,
         lib_openssl,
         lib_lz4,
+        lib_systemd,
         lib_pq,
         lib_ssh2,
         lib_xml,

@@ -194,6 +194,12 @@ lib_z = dependency('zlib')
 
 configuration.set('ZLIB_CONST', true, description: 'Require zlib const input buffer')
 
+# Find required systemd library
+lib_systemd = dependency('libsystemd', required: get_option('libsystemd'))
+if lib_systemd.found()
+    configuration.set('HAVE_LIBSYSTEMD', true, description: 'Is libsystemd present?')
+endif
+
 # Find optional libssh2 library
 lib_ssh2 = dependency('libssh2', required: get_option('libssh2'))
 

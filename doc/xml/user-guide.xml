@@ -465,7 +465,7 @@
                     echo 'StartLimitIntervalSec=0' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo '' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo '[Service]' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
-                    echo 'Type=simple' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo 'Type=notify' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo 'Restart=always' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo 'RestartSec=1' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo 'User={[setup-tls-user]}' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
