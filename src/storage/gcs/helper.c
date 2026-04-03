@@ -28,7 +28,8 @@ storageGcsHelper(const unsigned int repoIdx, const bool write, StoragePathExpres
         cfgOptionIdxStrNull(cfgOptRepoGcsKey, repoIdx), (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx),
         cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), cfgOptionIdxStr(cfgOptRepoGcsEndpoint, repoIdx), ioTimeoutMs(),
         cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
-        cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx), cfgOptionIdxStrNull(cfgOptRepoGcsUserProject, repoIdx));
+        cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx), cfgOptionIdxStrNull(cfgOptRepoGcsUserProject, repoIdx),
+        cfgOptionIdxUInt(cfgOptRepoStorageConcurrency, repoIdx), cfgOptionIdxUInt64(cfgOptRepoStorageReadOver, repoIdx));
 
     FUNCTION_LOG_RETURN(STORAGE, result);
 }

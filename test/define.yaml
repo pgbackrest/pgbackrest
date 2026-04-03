@@ -597,6 +597,7 @@ unit:
 
         include:
           - storage/helper
+          - storage/readMulti
           - storage/storage
           - storage/write
 
@@ -612,6 +613,7 @@ unit:
 
         include:
           - storage/helper
+          - storage/readMulti
           - storage/storage
           - storage/write
 

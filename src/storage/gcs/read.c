@@ -24,6 +24,7 @@ typedef struct StorageReadGcs
     StorageReadInterface interface;                                 // Interface
     StorageGcs *storage;                                            // Storage that created this object
 
+    HttpRequest *httpRequest;                                       // HTTP request
     HttpResponse *httpResponse;                                     // HTTP response
 } StorageReadGcs;
 
@@ -38,6 +39,37 @@ Macros for function logging
 /***********************************************************************************************************************************
 Open the file
 ***********************************************************************************************************************************/
+static bool
+storageReadGcsOpenAsync(StorageReadGcs *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_GCS, this);
+    FUNCTION_LOG_END();
+
+    bool result = false;
+
+    // Wait for response
+    MEM_CONTEXT_OBJ_BEGIN(this)
+    {
+        this->httpResponse = storageGcsResponseP(this->httpRequest, .allowMissing = true, .contentIo = true);
+
+        httpRequestFree(this->httpRequest);
+        this->httpRequest = NULL;
+    }
+    MEM_CONTEXT_OBJ_END();
+
+    // If file exists
+    if (httpResponseCodeOk(this->httpResponse))
+    {
+        result = true;
+    }
+    // Else error unless ignore missing
+    else if (!this->interface.ignoreMissing)
+        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
 static bool
 storageReadGcsOpen(THIS_VOID)
 {
@@ -63,22 +95,21 @@ storageReadGcsOpen(THIS_VOID)
             if (this->interface.versionId)
                 httpQueryAdd(query, varStr(GCS_JSON_GENERATION_VAR), this->interface.versionId);
 
-            this->httpResponse = storageGcsRequestP(
+            this->httpRequest = storageGcsRequestAsyncP(
                 this->storage, HTTP_VERB_GET_STR, .object = this->interface.name,
                 .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
-                .allowMissing = true, .contentIo = true, .query = query);
+                .query = query);
         }
         MEM_CONTEXT_OBJ_END();
 
-        // !!! NEED TO ADD ASYNC FUNCTIONALITY
-
-        if (httpResponseCodeOk(this->httpResponse))
+        // Wait for response when file missing needs to be reported
+        if (this->interface.ignoreMissing)
         {
-            result = true;
+            result = storageReadGcsOpenAsync(this);
         }
-        // Else error unless ignore missing
-        else if (!this->interface.ignoreMissing)
-            THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
+        // Else assume that the file exists for now (it will be checked during read)
+        else
+            result = true;
     }
 
     FUNCTION_LOG_RETURN(BOOL, result);
@@ -98,9 +129,14 @@ storageReadGcs(THIS_VOID, Buffer *const buffer, const bool block)
         FUNCTION_LOG_PARAM(BOOL, block);
     FUNCTION_LOG_END();
 
-    ASSERT(this != NULL && this->httpResponse != NULL);
-    ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
+    ASSERT(this != NULL);
     ASSERT(buffer != NULL && !bufFull(buffer));
+
+    // Complete the open if it was async
+    if (this->httpResponse == NULL)
+        storageReadGcsOpenAsync(this);
+
+    ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
 
     FUNCTION_LOG_RETURN(SIZE, ioRead(httpResponseIoRead(this->httpResponse), buffer));
 }
@@ -117,7 +153,12 @@ storageReadGcsEof(THIS_VOID)
         FUNCTION_TEST_PARAM(STORAGE_READ_GCS, this);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL && this->httpResponse != NULL);
+    ASSERT(this != NULL);
+
+    // In async mode we may not have a response yet so return false
+    if (this->httpResponse == NULL)
+        FUNCTION_TEST_RETURN(BOOL, false);
+
     ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
 
     FUNCTION_TEST_RETURN(BOOL, ioReadEof(httpResponseIoRead(this->httpResponse)));
@@ -138,6 +179,7 @@ storageReadGcsClose(THIS_VOID)
     ASSERT(this != NULL);
     ASSERT(this->httpResponse != NULL);
 
+    httpRequestFree(this->httpRequest);
     httpResponseFree(this->httpResponse);
     this->httpResponse = NULL;
 

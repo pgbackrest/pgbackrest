@@ -850,7 +850,7 @@ storageAzureNew(
     const String *const container, const String *const account, const StorageAzureKeyType keyType, const String *const key,
     const size_t blockSize, const KeyValue *const tag, const String *const endpoint, const StorageAzureUriStyle uriStyle,
     const unsigned int port, const TimeMSec timeout, const HttpProtocolType protocolType, const bool verifyPeer,
-    const String *const caFile, const String *const caPath)
+    const String *const caFile, const String *const caPath, const unsigned int concurrency, const uint64_t readOver)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -871,6 +871,8 @@ storageAzureNew(
         FUNCTION_LOG_PARAM(BOOL, verifyPeer);
         FUNCTION_LOG_PARAM(STRING, caFile);
         FUNCTION_LOG_PARAM(STRING, caPath);
+        FUNCTION_LOG_PARAM(UINT, concurrency);
+        FUNCTION_LOG_PARAM(UINT64, readOver);
     FUNCTION_LOG_END();
 
     ASSERT(path != NULL);
@@ -895,9 +897,9 @@ storageAzureNew(
             .keyType = keyType,
         };
 
-        // Set concurrency
-        this->interface.concurrency = 1;
-        // !!! ADD READ OVER
+        // Set concurrency and read over
+        this->interface.concurrency = concurrency;
+        this->interface.readOver = readOver;
 
         // Create tag query string
         if (tag != NULL)
