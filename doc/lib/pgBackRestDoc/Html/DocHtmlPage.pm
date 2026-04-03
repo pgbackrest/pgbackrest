@@ -499,6 +499,21 @@ sub sectionProcess
                 $oList->addNew(HTML_LI, 'list-unordered', {strContent => $self->processText($oListItem->textGet())});
             }
         }
+        # Add a sponsor list
+        elsif ($oChild->nameGet() eq 'sponsor-list')
+        {
+            my $oSponsorList = $oSectionBodyElement->addNew(HTML_DIV, "sponsor-list");
+
+            foreach my $oSponsor ($oChild->nodeList())
+            {
+                my $oSponsorLink = $oSponsorList->addNew(
+                    HTML_DIV, "sponsor")->addNew(HTML_A, undef, {strRef => $oSponsor->paramGet('url')});
+                $oSponsorLink->addNew(
+                    HTML_IMG, "sponsor-img",
+                    {strExtra => 'src="sponsor/' . $oSponsor->paramGet('img') . '" alt="' . $oSponsor->valueGet() . '"'});
+                $oSponsorLink->addNew(HTML_DIV, "sponsor-title", {strContent => $oSponsor->valueGet()});
+            }
+        }
         # Add a subtitle
         elsif ($oChild->nameGet() eq 'subtitle')
         {

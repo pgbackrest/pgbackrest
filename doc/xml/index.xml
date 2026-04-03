@@ -193,10 +193,23 @@
     </section>
 
     <!-- ======================================================================================================================= -->
+    <section id="sponsorship">
+        <title>Sponsorship</title>
+
+        <p><backrest/> would not exist without sponsors. Writing new features, fixing bugs, reviewing contributions, answering questions from the community, and maintenance all take a considerable amount of time. Please consider a <link url="{[github-url-root]}/sponsors/dwsteele">sponsorship</link> if you use <backrest/> in your enterprise.</p>
+
+        <p>Current sponsors:</p>
+
+        <sponsor-list>
+            <sponsor img="supabase.svg" url="https://supabase.com">Supabase</sponsor>
+        </sponsor-list>
+
+        <p>Past sponsors: <link url="https://crunchydata.com">Crunchy Data</link>, <link url="https://resonate.com">Resonate</link>.</p>
+    </section>
+
+    <!-- ======================================================================================================================= -->
     <section id="recognition">
         <title>Recognition</title>
-
-        <p><link url="http://www.crunchydata.com">Crunchy Data</link> and <link url="http://www.resonate.com">Resonate</link> have both generously supported the development of <backrest/>.</p>
 
         <p><link url="https://thenounproject.com/icon/armchair-129971">Armchair</link> graphic by <link url="https://thenounproject.com/sandorsz">Alexander Skowalsky</link>.</p>
     </section>

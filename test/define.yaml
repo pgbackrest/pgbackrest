@@ -774,10 +774,10 @@ unit:
         harness:
           name: manifest
           shim:
-            info/manifest: ~
+            info/manifest/manifest: ~
 
         coverage:
-          - info/manifest
+          - info/manifest/manifest
 
         depend:
           - command/backup/common
@@ -864,6 +864,7 @@ unit:
           - command/archive/push/file
           - command/archive/push/protocol
           - command/archive/push/push
+          - command/command
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: stanza
@@ -952,7 +953,7 @@ unit:
 
         include:
           - info/info
-          - info/manifest
+          - info/manifest/manifest
           - storage/storage
 
       # ----------------------------------------------------------------------------------------------------------------------------
@@ -978,7 +979,7 @@ unit:
         include:
           - common/user
           - info/infoBackup
-          - info/manifest
+          - info/manifest/manifest
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: manifest

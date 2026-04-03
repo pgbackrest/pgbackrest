@@ -72,7 +72,7 @@ testRun(void)
         TEST_RESULT_UINT(pgInterface[0].version, PG_VERSION_MAX, "check max version");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("unknown control version");
+        TEST_TITLE("unknown catalog version");
 
         HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(storageTest, PG_VERSION_15, 1501, .catalogVersion = 202211111);
 

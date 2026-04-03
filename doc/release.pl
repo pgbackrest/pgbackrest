@@ -282,7 +282,7 @@ eval
         &log(INFO, '...Deploy to repository');
         executeTest("rm -rf ${strDeployPath}/prior/${strVersion}");
         executeTest("mkdir ${strDeployPath}/prior/${strVersion}");
-        executeTest("cp ${strDocHtml}/* ${strDeployPath}/prior/${strVersion}");
+        executeTest("cp -r ${strDocHtml}/* ${strDeployPath}/prior/${strVersion}");
 
         # Generate docs for the main website
         if (!$bDev)
@@ -297,7 +297,7 @@ eval
             &log(INFO, '...Deploy to repository');
             executeTest("rm -rf ${strDeployPath}/dev");
             executeTest("find ${strDeployPath} -maxdepth 1 -type f -exec rm {} +");
-            executeTest("cp ${strDocHtml}/* ${strDeployPath}");
+            executeTest("cp -r ${strDocHtml}/* ${strDeployPath}");
             executeTest("cp ${strDocPath}/../README.md ${strDeployPath}");
             executeTest("cp ${strDocPath}/../LICENSE ${strDeployPath}");
         }

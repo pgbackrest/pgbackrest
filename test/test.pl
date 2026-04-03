@@ -542,7 +542,7 @@ eval
         foreach my $strFile (sort(keys(%{$hManifest})))
         {
             # Skip non-C files
-            next if $hManifest->{$strFile}{type} ne 'f' || ($strFile !~ /\.c$/ && $strFile !~ /\.h$/);
+            next if $hManifest->{$strFile}{type} ne 'f' || ($strFile !~ /\.c.inc$/ && $strFile !~ /\.c$/ && $strFile !~ /\.h$/);
 
             # Skip files that do are not version controlled
             next if !defined($hRepoManifest->{$strFile});
@@ -551,9 +551,9 @@ eval
             next if
                 # Does not format correctly because it is a template
                 $strFile eq 'test/src/test.c' ||
-                # Contains code copied directly from PostgreSQL
-                $strFile eq 'src/postgres/interface/static.vendor.h' ||
-                $strFile eq 'src/postgres/interface/version.vendor.h';
+                # Skip vendorized and automatically generated files
+                $strFile =~ /\.vendor\.h$/ ||
+                $strFile =~ /\.(vendor|auto)\.c\.inc$/;
 
             $strCommand .= " ${strBackRestBase}/${strFile}";
         }

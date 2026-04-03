@@ -18,7 +18,7 @@ running out of memory on the test systems or taking an undue amount of time. It 
 #include "common/time.h"
 #include "common/type/list.h"
 #include "common/type/object.h"
-#include "info/manifest.h"
+#include "info/manifest/manifest.h"
 #include "postgres/version.h"
 #include "storage/posix/storage.h"
 

@@ -483,12 +483,13 @@ sub containerBuild
                             "pgdg-redhat-repo-latest.noarch.rpm && \\\n" .
                         "    dnf -qy module disable postgresql && \\\n";
                 }
-                elsif ($strOS eq VM_F42)
+                elsif ($strOS eq VM_F43)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-42-" . hostArch() . "/" .
-                            "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-43-" . hostArch() . "/" .
+                            "pgdg-fedora-repo-latest.noarch.rpm && \\\n" .
+                        "    yum -y install libcurl-devel && \\\n"
                 }
 
                 $strScript .= "    yum -y install postgresql-devel";

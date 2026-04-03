@@ -2091,11 +2091,11 @@ src/info/infoPg.h:
   class: core
   type: c/h
 
-src/info/manifest.c:
+src/info/manifest/manifest.c:
   class: core
   type: c
 
-src/info/manifest.h:
+src/info/manifest/manifest.h:
   class: core
   type: c/h
 

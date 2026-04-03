@@ -113,7 +113,7 @@
     <!ATTLIST cmd-description key CDATA #REQUIRED>
 
 <!ELEMENT section (title?,
-                   ((p|text|list|table|host-add|execute-list|backrest-config|postgres-config|cmd-description|
+                   ((p|text|list|table|host-add|execute-list|backrest-config|postgres-config|cmd-description|sponsor-list|
                      option-description|code-block|block|section|admonition)*))>
     <!ATTLIST section id CDATA #REQUIRED>
     <!ATTLIST section if CDATA "">
@@ -139,6 +139,12 @@
 <!ELEMENT default (#PCDATA)>
 <!ELEMENT allow (#PCDATA)>
 <!ELEMENT example (#PCDATA)>
+
+<!ELEMENT sponsor-list (sponsor+)>
+
+<!ELEMENT sponsor (#PCDATA)>
+    <!ATTLIST sponsor img CDATA #REQUIRED>
+    <!ATTLIST sponsor url CDATA #REQUIRED>
 
 <!ELEMENT contributor-list (contributor+)>
 

@@ -17,6 +17,7 @@ struct IoWrite
 {
     IoWritePub pub;                                                 // Publicly accessible variables
     Buffer *output;                                                 // Output buffer
+    uint64_t position;                                              // Current write position
 
 #ifdef DEBUG
     bool filterGroupSet;                                            // Were filters set?
@@ -69,7 +70,7 @@ ioWriteOpen(IoWrite *const this)
     if (ioWriteInterface(this)->open != NULL)
         ioWriteInterface(this)->open(ioWriteDriver(this));
 
-    // Track whether filters were added to prevent flush() from being called later since flush() won't work with most filters
+    // Track whether filters were added to prevent seek()/flush() from being called later since they won't work with most filters
 #ifdef DEBUG
     this->filterGroupSet = ioFilterGroupSize(this->pub.filterGroup) > 0;
 #endif
@@ -107,6 +108,7 @@ ioWrite(IoWrite *const this, const Buffer *const buffer)
             if (bufRemains(this->output) == 0)
             {
                 ioWriteInterface(this)->write(ioWriteDriver(this), this->output);
+                this->position += bufUsed(this->output);
                 bufUsedZero(this->output);
             }
         }
@@ -224,6 +226,34 @@ ioWriteFlush(IoWrite *const this)
     {
         ioWriteInterface(this)->write(ioWriteDriver(this), this->output);
         bufUsedZero(this->output);
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+ioWriteSeek(IoWrite *const this, const uint64_t position)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_WRITE, this);
+        FUNCTION_LOG_PARAM(UINT64, position);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->opened && !this->closed);
+    ASSERT(!this->filterGroupSet);
+    ASSERT(ioWriteInterface(this)->write != NULL);
+
+    // If the requested position is not the current position then flush writes and seek. Writes must be flushed first so they will
+    // not later end up in the wrong location.
+    if (position != this->position)
+    {
+        ioWriteFlush(this);
+        ioWriteInterface(this)->seek(ioWriteDriver(this), position);
+
+        // Update current position
+        this->position = position;
     }
 
     FUNCTION_LOG_RETURN_VOID();

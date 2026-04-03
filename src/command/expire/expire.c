@@ -14,7 +14,6 @@ Expire Command
 #include "config/config.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
-#include "info/manifest.h"
 #include "protocol/helper.h"
 #include "storage/helper.h"
 

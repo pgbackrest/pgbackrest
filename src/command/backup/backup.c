@@ -32,7 +32,7 @@ Backup Command
 #include "db/helper.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
-#include "info/manifest.h"
+#include "info/manifest/manifest.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "protocol/helper.h"
