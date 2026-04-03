@@ -171,7 +171,9 @@ testRun(void)
                         }
 
                         // Check that sd_notify calls were made
+#ifdef HAVE_LIBSYSTEMD
                         hrnSystemDCheck();
+#endif
                     }
                     HRN_FORK_CHILD_END();
 
@@ -279,7 +281,9 @@ testRun(void)
                         }
 
                         // Check that sd_notify calls were made
+#ifdef HAVE_LIBSYSTEMD
                         hrnSystemDCheck();
+#endif
                     }
                     HRN_FORK_CHILD_END();
 

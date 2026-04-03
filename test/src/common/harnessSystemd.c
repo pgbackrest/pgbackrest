@@ -3,6 +3,8 @@ Systemd Harness
 ***********************************************************************************************************************************/
 #include <build.h>
 
+#include <string.h>
+
 #include "common/debug.h"
 #include "common/log.h"
 
@@ -13,9 +15,11 @@ static struct
 {
     bool ready;
     bool stopping;
-} hrnSystemDStatic;
+} hrnSystemdStatic;
 
-/**********************************************************************************************************************************/
+/***********************************************************************************************************************************
+Shim sd_notify to track notify state
+***********************************************************************************************************************************/
 int
 sd_notify(int unset_environment, const char *state)
 {
@@ -29,18 +33,18 @@ sd_notify(int unset_environment, const char *state)
 
     if (strcmp(state, "READY=1") == 0)
     {
-        ASSERT(!hrnSystemDStatic.stopping);
-        hrnSystemDStatic.ready = true;
+        ASSERT(!hrnSystemdStatic.stopping);
+        hrnSystemdStatic.ready = true;
     }
     else if (strcmp(state, "STOPPING=1") == 0)
     {
-        ASSERT(hrnSystemDStatic.ready);
-        hrnSystemDStatic.stopping = true;
+        ASSERT(hrnSystemdStatic.ready);
+        hrnSystemdStatic.stopping = true;
     }
     else
         THROW_FMT(AssertError, "unknown sd_notify state '%s'", state);
 
-    FUNCTION_HARNESS_RETURN(INT, 0);
+    FUNCTION_HARNESS_RETURN(INT, 1);
 }
 
 /**********************************************************************************************************************************/
@@ -49,7 +53,7 @@ hrnSystemDCheck(void)
 {
     FUNCTION_HARNESS_VOID();
 
-    ASSERT(hrnSystemDStatic.ready && hrnSystemDStatic.stopping);
+    ASSERT(hrnSystemdStatic.ready && hrnSystemdStatic.stopping);
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
