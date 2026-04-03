@@ -128,9 +128,6 @@ cmdServer(const unsigned int argListSize, const char *argList[])
     serverLocal.argListSize = argListSize;
     serverLocal.argList = argList;
 
-#ifdef HAVE_LIBSYSTEMD
-    sd_notify(0, "READY=1");
-#endif
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Set signal handlers
@@ -139,6 +136,11 @@ cmdServer(const unsigned int argListSize, const char *argList[])
         sigaction(
             SIGCHLD, &(struct sigaction){.sa_sigaction = cmdServerSigChild, .sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT | SA_SIGINFO},
             NULL);
+
+        // Notify systemd that we are ready to accept connections
+#ifdef HAVE_LIBSYSTEMD
+        sd_notify(0, "READY=1");
+#endif
 
         // Accept connections indefinitely. The only way to exit this loop is for the process to receive a signal.
         do
@@ -205,9 +207,11 @@ cmdServer(const unsigned int argListSize, const char *argList[])
     // Terminate any remaining children on SIGTERM. Disable the callback so it does not fire in the middle of the loop.
     if (serverLocal.sigTerm)
     {
+        // Notify systemd that we are shutting down
 #ifdef HAVE_LIBSYSTEMD
         sd_notify(0, "STOPPING=1");
 #endif
+
         sigaction(SIGCHLD, &(struct sigaction){.sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT}, NULL);
 
         for (unsigned int processIdx = 0; processIdx < lstSize(serverLocal.processList); processIdx++)
