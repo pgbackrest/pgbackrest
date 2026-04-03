@@ -549,6 +549,21 @@ testRun(void)
                 TEST_RESULT_PTR(storageGetP(storageNewReadP(s3, STRDEF("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file but close before read");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt");
+                testResponseP(service, .content = "12345678911234567892");
+
+                hrnServerScriptClose(service);
+                hrnServerScriptAccept(service);
+
+                StorageReadMulti *readMulti;
+                TEST_ASSIGN(readMulti, storageNewReadMultiP(s3), "new read multi");
+                TEST_RESULT_VOID(storageReadMultiAddP(readMulti, STRDEF("file.txt")), "add read");
+                TEST_RESULT_VOID(ioReadOpen(storageReadMultiIo(readMulti)), "open read");
+                TEST_RESULT_VOID(ioReadClose(storageReadMultiIo(readMulti)), "close read");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get file with retry");
 
                 testRequestP(service, s3, HTTP_VERB_GET, "/file.txt");
@@ -563,7 +578,6 @@ testRun(void)
                 const size_t ioBufferSizeDefault = ioBufferSize();
                 ioBufferSizeSet(20);
 
-                StorageReadMulti *readMulti;
                 TEST_ASSIGN(readMulti, storageNewReadMultiP(s3), "new read multi");
                 TEST_RESULT_VOID(
                     storageReadMultiAddP(readMulti, STRDEF("file.txt"), .offset = 0, .limit = NULL), "add read");

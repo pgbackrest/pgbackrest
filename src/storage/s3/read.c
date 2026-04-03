@@ -174,9 +174,9 @@ storageReadS3Close(THIS_VOID)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->httpResponse != NULL);
 
     httpRequestFree(this->httpRequest);
+    this->httpRequest = NULL;
     httpResponseFree(this->httpResponse);
     this->httpResponse = NULL;
 

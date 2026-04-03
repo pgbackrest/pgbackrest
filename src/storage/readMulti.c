@@ -62,6 +62,9 @@ storageReadMultiQueue(StorageReadMulti *const this, const bool prelim)
         FUNCTION_LOG_PARAM(BOOL, prelim);
     FUNCTION_LOG_END();
 
+    ASSERT(this != NULL);
+    ASSERT(!prelim || !lstEmpty(this->requestList));
+
     // If the read queue is less than max then queue more reads
     if (lstSize(this->queue) < this->queueMax)
     {
@@ -161,7 +164,10 @@ storageReadMulti(THIS_VOID, Buffer *const buffer, const bool block)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    // ASSERT(buffer != NULL && !bufEmpty(buffer));
+    ASSERT(!this->eof);
+    ASSERT(!lstEmpty(this->requestList));
+    ASSERT(!lstEmpty(this->queue));
+    ASSERT(buffer != NULL && bufEmpty(buffer));
 
     size_t result = 0;
 
@@ -236,7 +242,8 @@ storageReadMultiClose(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    // this->ioInterface.close(this->driver);
+    for (unsigned int queueIdx = 0; queueIdx < lstSize(this->queue); queueIdx++)
+        ioReadClose(storageReadIo(*(StorageRead **)lstGet(this->queue, queueIdx)));
 
     FUNCTION_LOG_RETURN_VOID();
 }
