@@ -356,7 +356,6 @@ testRun(void)
                         "        lib_yaml,\n"
                         "        lib_z,\n"
                         "        lib_zstd,\n"
-                        "        lib_systemd,\n"
                         "    ],\n"
                         ")\n",
                         strZ(mesonBuildRoot)));
@@ -480,7 +479,6 @@ testRun(void)
                         "        lib_yaml,\n"
                         "        lib_z,\n"
                         "        lib_zstd,\n"
-                        "        lib_systemd,\n"
                         "    ],\n"
                         ")\n",
                         strZ(mesonBuildRoot)));
@@ -708,7 +706,6 @@ testRun(void)
                         "        lib_yaml,\n"
                         "        lib_z,\n"
                         "        lib_zstd,\n"
-                        "        lib_systemd,\n"
                         "    ],\n"
                         ")\n",
                         strZ(mesonBuildRoot)));
@@ -893,7 +890,6 @@ testRun(void)
                         "        lib_yaml,\n"
                         "        lib_z,\n"
                         "        lib_zstd,\n"
-                        "        lib_systemd,\n"
                         "    ],\n"
                         ")\n",
                         strZ(mesonBuildRoot)));
@@ -1071,7 +1067,6 @@ testRun(void)
                         "        lib_yaml,\n"
                         "        lib_z,\n"
                         "        lib_zstd,\n"
-                        "        lib_systemd,\n"
                         "    ],\n"
                         ")\n",
                         strZ(mesonBuildRoot)));

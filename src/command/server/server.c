@@ -204,14 +204,14 @@ cmdServer(const unsigned int argListSize, const char *argList[])
     }
     MEM_CONTEXT_TEMP_END();
 
+    // Notify systemd that we are shutting down
+#ifdef HAVE_LIBSYSTEMD
+    sd_notify(0, "STOPPING=1");
+#endif
+
     // Terminate any remaining children on SIGTERM. Disable the callback so it does not fire in the middle of the loop.
     if (serverLocal.sigTerm)
     {
-        // Notify systemd that we are shutting down
-#ifdef HAVE_LIBSYSTEMD
-        sd_notify(0, "STOPPING=1");
-#endif
-
         sigaction(SIGCHLD, &(struct sigaction){.sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT}, NULL);
 
         for (unsigned int processIdx = 0; processIdx < lstSize(serverLocal.processList); processIdx++)
