@@ -110,11 +110,8 @@ restoreMountFuseInit(struct fuse_conn_info *const conn, struct fuse_config *cons
 
     ASSERT(cfg != NULL);
 
-    // Disable kernel cache since the underlying files are cached
+    // Allow the kernel to cache the underlying files
     cfg->kernel_cache = 1;
-
-    // Enable direct io since caching is disabled
-    cfg->direct_io = 1;
 
     // Use a large buffer
     conn->max_write = 1 * 1024 * 1024;
@@ -309,7 +306,6 @@ restoreMountFuseCreate(const char *const pathZ, const mode_t mode, struct fuse_f
         {
             LOG_DEBUG_FMT("ERROR %s", strerror(errno));
             result = -errno;
-
         }
         else
             fileInfo->fh = (uint64_t)fh;
@@ -398,7 +394,7 @@ restoreMountFuseOpen(const char *const fileZ, struct fuse_file_info *const fileI
         restoreMountFusePersist(file);
         const int fd = restoreMountFuseOpenInternal(file, fileInfo->flags);
 
-        if (result == -1)
+        if (fd == -1)
             result = -errno;
         else
             fileInfo->fh = (uint64_t)fd;
