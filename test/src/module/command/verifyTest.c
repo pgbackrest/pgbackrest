@@ -2013,6 +2013,8 @@ testRun(void)
         // Check output of verify command stored in file
         TEST_STORAGE_GET(storageTest, strZ(stdoutFile), "", .remove = true);
         TEST_RESULT_LOG(
+            "P00   WARN: backup '20181119-153000F' found in the repository but not in backup.info\n"
+            "P00   WARN: backup '20181119-152138F' found in backup.info but not in the repository\n"
             "P00 DETAIL: archive path '9.4-1' is empty\n"
             "P00 DETAIL: path '11-2/0000000100000000' does not contain any valid WAL to be processed\n"
             "P01   INFO: invalid checksum"
@@ -2025,6 +2027,10 @@ testRun(void)
             "/11-2/0000000200000008/000000020000000800000003-656817043007aa2100c44c712bcb456db705dab9' for read:"
             " [13] Permission denied\n"
             "            [RETRY DETAIL OMITTED]\n"
+            "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest' for read\n"
+            "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152138F/backup.manifest.copy'"
+            " for read\n"
+            "P00 DETAIL: manifest missing for '20181119-152138F' - backup may have expired\n"
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152800F/backup.manifest' for read\n"
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152800F/backup.manifest.copy'"
             " for read\n"
@@ -2047,6 +2053,7 @@ testRun(void)
             "            status: error\n"
             "              archiveId: 11-2, total WAL checked: 8, total valid WAL: 5\n"
             "                checksum invalid: 1, size invalid: 1, other: 1\n"
+            "              backup: 20181119-152138F, status: manifest missing, total files checked: 0, total valid files: 0\n"
             "              backup: 20181119-152800F, status: manifest missing, total files checked: 0, total valid files: 0\n"
             "              backup: 20181119-152810F, status: invalid, total files checked: 0, total valid files: 0\n"
             "              backup: 20181119-152900F, status: invalid, total files checked: 3, total valid files: 2\n"
@@ -2070,6 +2077,7 @@ testRun(void)
             "status: error\n"
             "  archiveId: 11-2, total WAL checked: 8, total valid WAL: 5\n"
             "    checksum invalid: 1, size invalid: 1, other: 1\n"
+            "  backup: 20181119-152138F, status: manifest missing, total files checked: 0, total valid files: 0\n"
             "  backup: 20181119-152800F, status: manifest missing, total files checked: 0, total valid files: 0\n"
             "  backup: 20181119-152810F, status: invalid, total files checked: 0, total valid files: 0\n"
             "  backup: 20181119-152900F, status: invalid, total files checked: 3, total valid files: 2\n"
@@ -2077,6 +2085,8 @@ testRun(void)
             "  backup: 20181119-152900F_20181119-152909D, status: invalid, total files checked: 6, total valid files: 3\n"
             "    missing: 1, checksum invalid: 1, other: 1", "verify text output, not verbose, with verify failures");
         TEST_RESULT_LOG(
+            "P00   WARN: backup '20181119-153000F' found in the repository but not in backup.info\n"
+            "P00   WARN: backup '20181119-152138F' found in backup.info but not in the repository\n"
             "P01   INFO: invalid checksum"
             " '11-2/0000000200000007/000000020000000700000FFD-a6e1a64f0813352bc2e97f116a1800377e17d2e4.gz'\n"
             "P01   INFO: invalid size"
@@ -2584,6 +2594,7 @@ testRun(void)
             "verifyProcess() JSON missing no total file verify");
 
         TEST_RESULT_LOG(
+            "P00   WARN: backup '20181119-152800F' found in the repository but not in backup.info\n"
             "P00 DETAIL: no archives exist in the repo\n"
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152800F/backup.manifest' for read\n"
             "P00   INFO: backup '20181119-152800F' appears to be in progress, skipping"
