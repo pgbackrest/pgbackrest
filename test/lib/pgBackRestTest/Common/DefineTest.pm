@@ -62,8 +62,6 @@ use constant TESTDEF_VM                                             => 'vm';
 
 use constant TESTDEF_COVERAGE_FULL                                  => 'full';
     push @EXPORT, qw(TESTDEF_COVERAGE_FULL);
-use constant TESTDEF_COVERAGE_NOCODE                                => 'noCode';
-    push @EXPORT, qw(TESTDEF_COVERAGE_NOCODE);
 
 ####################################################################################################################################
 # Process normalized data into a more queryable form
@@ -272,25 +270,5 @@ sub testDefModuleTest
 }
 
 push @EXPORT, qw(testDefModuleTest);
-
-####################################################################################################################################
-# testDefCoverageType
-####################################################################################################################################
-sub testDefCoverageType
-{
-    return $hCoverageType;
-}
-
-push @EXPORT, qw(testDefCoverageType);
-
-####################################################################################################################################
-# testDefCoverageList
-####################################################################################################################################
-sub testDefCoverageList
-{
-    return $hCoverageList;
-}
-
-push @EXPORT, qw(testDefCoverageList);
 
 1;

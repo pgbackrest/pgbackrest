@@ -565,7 +565,7 @@ sub backrestConfig
             my $strLocalFile = abs_path(dirname($0)) . '/output/pgbackrest.conf';
 
             # Save the ini file
-            $self->{oManifest}->storage()->put($strLocalFile, iniRender($self->{config}{$strHostName}{$$hCacheKey{file}}, true));
+            $self->{oManifest}->storage()->put($strLocalFile, iniRender($self->{config}{$strHostName}{$$hCacheKey{file}}));
 
             $oHost->copyTo(
                 $strLocalFile, $$hCacheKey{file},
@@ -582,7 +582,7 @@ sub backrestConfig
                 delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL});
             }
 
-            $self->{oManifest}->storage()->put("${strLocalFile}.clean", iniRender($oConfigClean, true));
+            $self->{oManifest}->storage()->put("${strLocalFile}.clean", iniRender($oConfigClean));
 
             # Push config file into the cache
             $strConfig = ${$self->{oManifest}->storage()->get("${strLocalFile}.clean")};

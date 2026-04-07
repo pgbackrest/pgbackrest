@@ -9,40 +9,9 @@ use Carp qw(confess);
 
 use Exporter qw(import);
     our @EXPORT = qw();
-use File::Basename qw(dirname);
-use POSIX qw(ceil);
 use Time::HiRes qw(gettimeofday usleep);
 
 use pgBackRestDoc::Common::Log;
-
-####################################################################################################################################
-# Wait constants
-####################################################################################################################################
-use constant WAIT_TIME_MINIMUM                                          => .1;
-    push @EXPORT, qw(WAIT_TIME_MINIMUM);
-
-####################################################################################################################################
-# waitRemainder
-####################################################################################################################################
-sub waitRemainder
-{
-    my $bWait = shift;
-
-    my $lTimeBegin = gettimeofday();
-
-    if (!defined($bWait) || $bWait)
-    {
-        my $lSleepMs = ceil(((int($lTimeBegin) + 1.05) - $lTimeBegin) * 1000);
-
-        usleep($lSleepMs * 1000);
-
-        &log(TRACE, "WAIT_REMAINDER: slept ${lSleepMs}ms: begin ${lTimeBegin}, end " . gettimeofday());
-    }
-
-    return int($lTimeBegin);
-}
-
-push @EXPORT, qw(waitRemainder);
 
 ####################################################################################################################################
 # waitHiRes
@@ -151,23 +120,5 @@ sub waitMore
 }
 
 push @EXPORT, qw(waitMore);
-
-####################################################################################################################################
-# waitInterval
-####################################################################################################################################
-sub waitInterval
-{
-    my $oWait = shift;
-
-    # Error if oWait is not defined
-    if (!defined($oWait))
-    {
-        confess &log(ERROR, "oWait is not defined");
-    }
-
-    return int(($$oWait{time_end} - $$oWait{time_begin}) * 1000) / 1000;
-}
-
-push @EXPORT, qw(waitInterval);
 
 1;

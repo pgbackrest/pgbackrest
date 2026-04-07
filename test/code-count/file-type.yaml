@@ -2547,10 +2547,6 @@ test/lib/pgBackRestTest/Common/Io/Handle.pm:
   class: test/harness
   type: perl
 
-test/lib/pgBackRestTest/Common/Io/Process.pm:
-  class: test/harness
-  type: perl
-
 test/lib/pgBackRestTest/Common/JobTest.pm:
   class: test/harness
   type: perl
