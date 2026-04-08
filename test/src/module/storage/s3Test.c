@@ -405,6 +405,64 @@ testRun(void)
             ",SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token"
             ",Signature=85278841678ccbc0f137759265030d7b5e237868dd36eea658426b18344d1685",
             "check authorization header");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("s3-outposts endpoint uses s3-outposts signing service");
+
+        hrnCfgEnvRemoveRaw(cfgOptRepoS3Token);
+
+        argList = strLstDup(commonArgWithoutEndpointList);
+        hrnCfgArgRawZ(argList, cfgOptRepoS3Endpoint, "s3-outposts.us-east-1.amazonaws.com");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
+
+        TEST_RESULT_STR_Z(driver->signingService, "s3-outposts", "check signing service is s3-outposts");
+        TEST_RESULT_STR(
+            driver->bucketEndpoint, STRDEF("bucket.s3-outposts.us-east-1.amazonaws.com"), "check outposts bucket endpoint");
+
+        header = httpHeaderNew(NULL);
+        query = httpQueryNewP();
+        httpQueryAdd(query, STRDEF("list-type"), STRDEF("2"));
+
+        TEST_RESULT_VOID(
+            storageS3Auth(
+                driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, STRDEF(HASH_TYPE_SHA256_ZERO)),
+            "generate authorization");
+        TEST_RESULT_STR_Z(
+            httpHeaderGet(header, STRDEF("authorization")),
+            "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20170606/us-east-1/s3-outposts/aws4_request"
+            ",SignedHeaders=host;x-amz-content-sha256;x-amz-date"
+            ",Signature=f1845d56d10e6fea0702f4dc45ab7431da492e12eb81c5abc9eb72e3a01aadf6",
+            "check s3-outposts authorization header");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("s3-outposts signing key regeneration on date change");
+
+        const Buffer *outpostsSigningKey = driver->signingKey;
+
+        TEST_RESULT_VOID(
+            storageS3Auth(
+                driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20180814T080808Z"), header, STRDEF(HASH_TYPE_SHA256_ZERO)),
+            "generate authorization");
+        TEST_RESULT_STR_Z(
+            httpHeaderGet(header, STRDEF("authorization")),
+            "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20180814/us-east-1/s3-outposts/aws4_request"
+            ",SignedHeaders=host;x-amz-content-sha256;x-amz-date"
+            ",Signature=fa2ae79d909f6b5b5b0fc82f5a5c4441c26e893fbd953725d479fcec5c883ded",
+            "check s3-outposts authorization header after date change");
+        TEST_RESULT_BOOL(driver->signingKey != outpostsSigningKey, true, "check signing key was regenerated");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("standard s3 endpoint uses s3 signing service");
+
+        argList = strLstDup(commonArgWithoutEndpointList);
+        hrnCfgArgRaw(argList, cfgOptRepoS3Endpoint, endPoint);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
+
+        TEST_RESULT_STR_Z(driver->signingService, "s3", "check signing service is s3 for standard endpoint");
     }
 
     // *****************************************************************************************************************************

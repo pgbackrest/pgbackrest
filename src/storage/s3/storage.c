@@ -71,7 +71,9 @@ STRING_STATIC(S3_XML_TAG_SIZE_STR,                                  "Size");
 AWS authentication v4 constants
 ***********************************************************************************************************************************/
 #define S3                                                          "s3"
-BUFFER_STRDEF_STATIC(S3_BUF,                                        S3);
+#define S3_OUTPOSTS                                                 "s3-outposts"
+STRING_STATIC(S3_SIGNING_SERVICE_STR,                               S3);
+STRING_STATIC(S3_OUTPOSTS_SIGNING_SERVICE_STR,                      S3_OUTPOSTS);
 #define AWS4                                                        "AWS4"
 #define AWS4_REQUEST                                                "aws4_request"
 BUFFER_STRDEF_STATIC(AWS4_REQUEST_BUF,                              AWS4_REQUEST);
@@ -93,6 +95,7 @@ struct StorageS3
 
     const String *bucket;                                           // Bucket to store data in
     const String *region;                                           // e.g. us-east-1
+    const String *signingService;                                   // SigV4 signing service ("s3" or "s3-outposts")
     StorageS3KeyType keyType;                                       // Key type (e.g. storageS3KeyTypeShared)
     String *accessKey;                                              // Access key
     String *secretAccessKey;                                        // Secret access key
@@ -190,8 +193,8 @@ storageS3Auth(
 
         // Generate string to sign
         const String *const stringToSign = strNewFmt(
-            AWS4_HMAC_SHA256 "\n%s\n%s/%s/" S3 "/" AWS4_REQUEST "\n%s", strZ(dateTime), strZ(date), strZ(this->region),
-            strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha256, BUFSTR(canonicalRequest)))));
+            AWS4_HMAC_SHA256 "\n%s\n%s/%s/%s/" AWS4_REQUEST "\n%s", strZ(dateTime), strZ(date), strZ(this->region),
+            strZ(this->signingService), strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha256, BUFSTR(canonicalRequest)))));
 
         // Generate signing key. This key only needs to be regenerated every seven days but we'll do it once a day to keep the
         // logic simple. It's a relatively expensive operation so we'd rather not do it for every request.
@@ -201,7 +204,7 @@ storageS3Auth(
             const Buffer *const dateKey = cryptoHmacOne(
                 hashTypeSha256, BUFSTR(strNewFmt(AWS4 "%s", strZ(this->secretAccessKey))), BUFSTR(date));
             const Buffer *const regionKey = cryptoHmacOne(hashTypeSha256, dateKey, BUFSTR(this->region));
-            const Buffer *const serviceKey = cryptoHmacOne(hashTypeSha256, regionKey, S3_BUF);
+            const Buffer *const serviceKey = cryptoHmacOne(hashTypeSha256, regionKey, BUFSTR(this->signingService));
 
             // Switch to the object context so signing key and date are not lost
             MEM_CONTEXT_OBJ_BEGIN(this)
@@ -214,8 +217,8 @@ storageS3Auth(
 
         // Generate authorization header
         const String *const authorization = strNewFmt(
-            AWS4_HMAC_SHA256 " Credential=%s/%s/%s/" S3 "/" AWS4_REQUEST ",SignedHeaders=%s,Signature=%s",
-            strZ(this->accessKey), strZ(date), strZ(this->region), strZ(signedHeaders),
+            AWS4_HMAC_SHA256 " Credential=%s/%s/%s/%s/" AWS4_REQUEST ",SignedHeaders=%s,Signature=%s",
+            strZ(this->accessKey), strZ(date), strZ(this->region), strZ(this->signingService), strZ(signedHeaders),
             strZ(strNewEncode(encodingHex, cryptoHmacOne(hashTypeSha256, this->signingKey, BUFSTR(stringToSign)))));
 
         httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, authorization);
@@ -1140,6 +1143,11 @@ storageS3New(
             .interface = storageInterfaceS3,
             .bucket = strDup(bucket),
             .region = strDup(region),
+
+            // Use "s3-outposts" signing service when endpoint contains "s3-outposts", otherwise use "s3"
+            .signingService =
+                strstr(strZ(endPoint), S3_OUTPOSTS) != NULL ? S3_OUTPOSTS_SIGNING_SERVICE_STR : S3_SIGNING_SERVICE_STR,
+
             .keyType = keyType,
             .kmsKeyId = strDup(kmsKeyId),
             .sseCustomerKey = strDup(sseCustomerKey),
