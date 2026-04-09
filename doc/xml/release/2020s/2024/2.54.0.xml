@@ -1,0 +1,178 @@
+<release date="2024-10-21" version="2.54.0" title="Target Time for Versioned Storage">
+    <release-core-list>
+        <text>
+            <p><b>NOTE TO PACKAGERS</b>: This is last feature release to support the <proper>autoconf</proper>/<proper>make</proper> build. Please migrate to <proper>meson</proper> if you have not already done so. 2.54.X patch releases (if any) will continue to support <proper>autoconf</proper>/<proper>make</proper>.</p>
+        </text>
+
+        <release-bug-list>
+            <release-item>
+                <commit subject="Move fd module shim to io module test."/>
+                <commit subject="Allow fdReady() shim to be run only once with a specified return value."/>
+                <commit subject="Refactor Wait object to expose remaining wait as waitRemains()."/>
+                <commit subject="Fix PostgreSQL query performance for large datasets.">
+                    <github-issue id="2458"/>
+                    <github-pull-request id="2459"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="antoine.millet"/>
+                    <release-item-contributor id="thibault.vincent"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                    <!-- Actually tester, but we don't have a tag for that yet -->
+                    <release-item-reviewer id="antoine.millet"/>
+                </release-item-contributor-list>
+
+                <p>Fix <postgres/> query performance for large datasets.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <github-pull-request id="2404"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Allow repositories on versioned storage to be read at a target time.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2378"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Allow requested standby backup to proceed with no standby.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2399"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Summarize backup reference list for <cmd>info</cmd> command text output.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2428"/>
+                <github-pull-request id="2429"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="brent.graveland"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Refresh web-id token for each <proper>S3</proper> authentication.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2453"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Correctly display current values for indexed options in help.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2403"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Save <file>backup.info</file> only when contents have changed.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2436"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Remove limitation on reading files in parallel during restore.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2439"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Improve <proper>SFTP</proper> error messages.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-pull-request id="2108"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Protocol command multiplexing.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-feature-list>
+            <release-item>
+                <github-pull-request id="2446"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add performance tuning section to user guide.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <github-issue id="2464"/>
+                <github-pull-request id="2467"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="gurucubano"/>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Clarify source for <setting>data_directory</setting>.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2462"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="daniel.westermann"/>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Better logic for deciding when a summary should be lower-cased.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
+</release>

@@ -20,10 +20,11 @@ testRun(void)
         TEST_RESULT_STR_Z(bldEnum("pre", STRDEF("option-name")), "preOptionName", "enum");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("bldStrId()");
+        TEST_TITLE("bldStrId*()");
 
         TEST_RESULT_STR_Z(bldStrId("abc"), "STRID5(\"abc\", 0xc410)", "5-bit");
         TEST_RESULT_STR_Z(bldStrId("ABC"), "STRID6(\"ABC\", 0x289e61)", "6-bit");
+        TEST_RESULT_STR_Z(bldStrIdSeq("ABC", 37), "STRID6S(\"ABC\", 37, 0x513cdff)", "6-bit with sequence");
     }
 
     // *****************************************************************************************************************************

@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Posix Storage File write
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -14,7 +14,7 @@ Posix Storage File write
 #include "common/type/object.h"
 #include "common/user.h"
 #include "storage/posix/write.h"
-#include "storage/write.intern.h"
+#include "storage/write.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -179,6 +179,28 @@ storageWritePosix(THIS_VOID, const Buffer *const buffer)
 }
 
 /***********************************************************************************************************************************
+Seek to specified position relative to beginning of file
+***********************************************************************************************************************************/
+static void
+storageWritePosixSeek(THIS_VOID, const uint64_t position)
+{
+    THIS(StorageWritePosix);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE_POSIX, this);
+        FUNCTION_LOG_PARAM(UINT64, position);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->fd != -1);
+
+    THROW_ON_SYS_ERROR_FMT(
+        lseek(this->fd, (off_t)position, SEEK_SET) == -1, FileWriteError, STORAGE_ERROR_WRITE_SEEK, position, strZ(this->nameTmp));
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Close the file
 ***********************************************************************************************************************************/
 static void
@@ -247,6 +269,15 @@ storageWritePosixFd(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
+static const IoWriteInterface storageWritePosixInterface =
+{
+    .close = storageWritePosixClose,
+    .fd = storageWritePosixFd,
+    .open = storageWritePosixOpen,
+    .seek = storageWritePosixSeek,
+    .write = storageWritePosix,
+};
+
 FN_EXTERN StorageWrite *
 storageWritePosixNew(
     StoragePosix *const storage, const String *const name, const mode_t modeFile, const mode_t modePath, const String *const user,
@@ -278,38 +309,16 @@ storageWritePosixNew(
         *this = (StorageWritePosix)
         {
             .storage = storage,
+            .nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(name)) : strDup(name),
             .path = strPath(name),
             .fd = -1,
-
-            .interface = (StorageWriteInterface)
-            {
-                .type = STORAGE_POSIX_TYPE,
-                .name = strDup(name),
-                .atomic = atomic,
-                .createPath = createPath,
-                .group = strDup(group),
-                .modeFile = modeFile,
-                .modePath = modePath,
-                .syncFile = syncFile,
-                .syncPath = syncPath,
-                .truncate = truncate,
-                .user = strDup(user),
-                .timeModified = timeModified,
-
-                .ioInterface = (IoWriteInterface)
-                {
-                    .close = storageWritePosixClose,
-                    .fd = storageWritePosixFd,
-                    .open = storageWritePosixOpen,
-                    .write = storageWritePosix,
-                },
-            },
         };
-
-        // Create temp file name
-        this->nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(name)) : this->interface.name;
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteNew(this, &this->interface));
+    FUNCTION_LOG_RETURN(
+        STORAGE_WRITE,
+        storageWriteNewP(
+            this, STORAGE_POSIX_TYPE, name, createPath, atomic, truncate, syncPath, syncFile, &storageWritePosixInterface,
+            .user = user, .group = group, .modePath = modePath, .modeFile = modeFile, .timeModified = timeModified));
 }

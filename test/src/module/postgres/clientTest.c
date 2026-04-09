@@ -144,6 +144,32 @@ testRun(void)
         #undef TEST_QUERY
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("unable to execute query that returns no results");
+
+        #define TEST_PQ_ERROR                                                                                                      \
+            "ERROR:  must be superuser or have privileges of pg_checkpoint to do CHECKPOINT"
+        #define TEST_QUERY                                          "checkpoint"
+
+#ifndef HARNESS_PQ_REAL
+        HRN_PQ_SCRIPT_SET(
+            {.function = HRN_PQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
+            {.function = HRN_PQ_CONSUMEINPUT},
+            {.function = HRN_PQ_ISBUSY},
+            {.function = HRN_PQ_GETRESULT},
+            {.function = HRN_PQ_RESULTSTATUS, .resultInt = PGRES_FATAL_ERROR},
+            {.function = HRN_PQ_RESULTERRORMESSAGE, .resultZ = TEST_PQ_ERROR},
+            {.function = HRN_PQ_CLEAR},
+            {.function = HRN_PQ_GETRESULT, .resultNull = true});
+#endif
+
+        TEST_ERROR(
+            pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultNone), DbQueryError,
+            "unable to execute query '" TEST_QUERY "': " TEST_PQ_ERROR);
+
+        #undef TEST_PQ_ERROR
+        #undef TEST_QUERY
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("query timeout");
 
         #define TEST_QUERY                                          "select pg_sleep(3000)"
@@ -153,10 +179,13 @@ testRun(void)
             {.function = HRN_PQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
             {.function = HRN_PQ_CONSUMEINPUT, .sleep = 600},
             {.function = HRN_PQ_ISBUSY, .resultInt = 1},
+            {.function = HRN_PQ_SOCKET, .resultInt = 1},
             {.function = HRN_PQ_CONSUMEINPUT},
             {.function = HRN_PQ_ISBUSY, .resultInt = 1},
+            {.function = HRN_PQ_SOCKET, .resultInt = 1},
             {.function = HRN_PQ_CONSUMEINPUT},
             {.function = HRN_PQ_ISBUSY, .resultInt = 1},
+            {.function = HRN_PQ_SOCKET},
             {.function = HRN_PQ_GETCANCEL},
             {.function = HRN_PQ_CANCEL, .resultInt = 1},
             {.function = HRN_PQ_FREECANCEL},
@@ -182,10 +211,13 @@ testRun(void)
             {.function = HRN_PQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
             {.function = HRN_PQ_CONSUMEINPUT, .sleep = 300},
             {.function = HRN_PQ_ISBUSY, .resultInt = 1},
+            {.function = HRN_PQ_SOCKET, .resultInt = 1},
             {.function = HRN_PQ_CONSUMEINPUT, .sleep = 300},
             {.function = HRN_PQ_ISBUSY, .resultInt = 1},
+            {.function = HRN_PQ_SOCKET, .resultInt = 1},
             {.function = HRN_PQ_CONSUMEINPUT},
             {.function = HRN_PQ_ISBUSY, .resultInt = 1},
+            {.function = HRN_PQ_SOCKET},
             {.function = HRN_PQ_GETCANCEL},
             {.function = HRN_PQ_CANCEL, .resultInt = 0, .resultZ = TEST_PQ_ERROR},
             {.function = HRN_PQ_FREECANCEL});
@@ -208,10 +240,13 @@ testRun(void)
             {.function = HRN_PQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
             {.function = HRN_PQ_CONSUMEINPUT, .sleep = 600},
             {.function = HRN_PQ_ISBUSY, .resultInt = 1},
+            {.function = HRN_PQ_SOCKET, .resultInt = 1},
             {.function = HRN_PQ_CONSUMEINPUT},
             {.function = HRN_PQ_ISBUSY, .resultInt = 1},
+            {.function = HRN_PQ_SOCKET, .resultInt = 1},
             {.function = HRN_PQ_CONSUMEINPUT},
             {.function = HRN_PQ_ISBUSY, .resultInt = 1},
+            {.function = HRN_PQ_SOCKET},
             {.function = HRN_PQ_GETCANCEL, .resultNull = true});
 
         TEST_ERROR(
@@ -497,8 +532,7 @@ testRun(void)
             {.function = HRN_PQ_FINISH},
             {.function = HRN_PQ_GETRESULT, .resultNull = true});
 #endif
-        TEST_RESULT_VOID(pgClientClose(client), "close client");
-        TEST_RESULT_VOID(pgClientClose(client), "close client again");
+        TEST_RESULT_VOID(pgClientFree(client), "free client");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

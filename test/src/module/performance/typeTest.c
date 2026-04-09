@@ -18,7 +18,7 @@ running out of memory on the test systems or taking an undue amount of time. It 
 #include "common/time.h"
 #include "common/type/list.h"
 #include "common/type/object.h"
-#include "info/manifest.h"
+#include "info/manifest/manifest.h"
 #include "postgres/version.h"
 #include "storage/posix/storage.h"
 
@@ -31,7 +31,7 @@ Test sort comparator
 static int
 testComparator(const void *item1, const void *item2)
 {
-    return LST_COMPARATOR_CMP(*(int *)item1, *(int *)item2);
+    return LST_COMPARATOR_CMP(*(const int *)item1, *(const int *)item2);
 }
 
 /***********************************************************************************************************************************
@@ -248,7 +248,7 @@ testRun(void)
 
             *driver = (StorageTestManifestNewBuild)
             {
-                .interface = storageInterfaceTestDummy,
+                .interface = hrnStorageInterfaceDummy,
                 .fileTotal = 100000 * (unsigned int)TEST_SCALE,
             };
         }
@@ -258,7 +258,7 @@ testRun(void)
         driver->interface.list = storageTestManifestNewBuildList;
 
         const Storage *const storagePg = storageNew(
-            strIdFromZ("test"), STRDEF("/pg"), 0, 0, false, NULL, driver, driver->interface);
+            strIdFromZ("test"), STRDEF("/pg"), 0, 0, false, 0, NULL, driver, driver->interface);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("build manifest");

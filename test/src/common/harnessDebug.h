@@ -8,7 +8,7 @@ C Debug Harness
 
 #include "common/debug.h"
 
-// Set line numer of the current function in the stack trace. This is used to give more detailed info about which test macro caused
+// Set line number of the current function in the stack trace. This is used to give more detailed info about which test macro caused
 // an error.
 #ifdef DEBUG
 #define FUNCTION_HARNESS_STACK_TRACE_LINE_SET(lineNo)                                                                              \
@@ -45,6 +45,14 @@ C Debug Harness
     while (0)
 
 #define FUNCTION_HARNESS_RETURN(typeMacroPrefix, ...)                                                                              \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        STACK_TRACE_POP(false);                                                                                                    \
+        return __VA_ARGS__;                                                                                                        \
+    }                                                                                                                              \
+    while (0)
+
+#define FUNCTION_HARNESS_RETURN_STRUCT(...)                                                                                        \
     do                                                                                                                             \
     {                                                                                                                              \
         STACK_TRACE_POP(false);                                                                                                    \

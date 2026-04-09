@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Convert C Types
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <ctype.h>
 #include <inttypes.h>
@@ -13,6 +13,7 @@ Convert C Types
 
 #include "common/debug.h"
 #include "common/macro.h"
+#include "common/time.h"
 #include "common/type/convert.h"
 
 /***********************************************************************************************************************************
@@ -117,48 +118,245 @@ cvtBoolToConstZ(bool value)
     return value ? TRUE_Z : FALSE_Z;
 }
 
-/**********************************************************************************************************************************/
-FN_EXTERN size_t
-cvtDoubleToZ(const double value, char *const buffer, const size_t bufferSize)
+/***********************************************************************************************************************************
+Round an integer contained in a string
+***********************************************************************************************************************************/
+static size_t
+cvtRound(size_t result, char *const buffer, const size_t bufferSize)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(DOUBLE, value);
+        FUNCTION_TEST_PARAM(SIZE, result);
         FUNCTION_TEST_PARAM_P(CHARDATA, buffer);
         FUNCTION_TEST_PARAM(SIZE, bufferSize);
     FUNCTION_TEST_END();
 
     ASSERT(buffer != NULL);
+    ASSERT(bufferSize > 0);
 
-    // Convert to a string
-    const size_t result = (size_t)snprintf(buffer, bufferSize, "%lf", value);
+    for (int roundIdx = (int)result - 2; roundIdx >= 0; roundIdx--)
+    {
+        // Round when the rounding digit is >= 5 (current digit needs to be incremented) or the current digit > 9 (prior carry
+        // overflowed and needs to be carried again)
+        if (((roundIdx == (int)result - 2) && buffer[roundIdx + 1] >= '5') || buffer[roundIdx] > '9')
+        {
+            // Carry to the prior digit
+            if (buffer[roundIdx] >= '9')
+            {
+                // If this is the first digit then add a new prior digit to carry to. Since it will start as zero we can just
+                // set it to one.
+                if (roundIdx == 0)
+                {
+                    if (result + 1 >= bufferSize)
+                        THROW(AssertError, "buffer overflow");
+
+                    memmove(buffer + 1, buffer, ++result);
+                    buffer[1] = '0';
+                    buffer[0] = '1';
+                }
+                // Else set current digit to zero and carry to prior digit. An overflow is handled on the next iteration.
+                else
+                {
+                    buffer[roundIdx] = '0';
+                    buffer[roundIdx - 1]++;
+                }
+            }
+            // Else increment current digit
+            else
+                buffer[roundIdx]++;
+        }
+        // Else stop rounding
+        else
+            break;
+    }
+
+    // Remove rightmost digit used to start rounding
+    result--;
+    buffer[result] = '\0';
+
+    // Return string length
+    FUNCTION_TEST_RETURN(SIZE, result);
+}
+
+/***********************************************************************************************************************************
+Separate the fractional part of an integer container in a string
+***********************************************************************************************************************************/
+static size_t
+cvtFraction(size_t result, const unsigned int precision, const bool trim, char *const buffer, const size_t bufferSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(SIZE, result);
+        FUNCTION_TEST_PARAM(UINT, precision);
+        FUNCTION_TEST_PARAM(BOOL, trim);
+        FUNCTION_TEST_PARAM_P(CHARDATA, buffer);
+        FUNCTION_TEST_PARAM(SIZE, bufferSize);
+    FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
+    ASSERT(bufferSize > 0);
+
+    // Add decimal point
+    if (result + 1 >= bufferSize)
+        THROW(AssertError, "buffer overflow");
+
+    memmove(buffer + result - precision + 1, buffer + result - precision, precision + 1);
+    buffer[result - precision] = '.';
+    buffer[++result] = '\0';
+
+    // Strip off any final 0s and the decimal point if there are no non-zero digits after it
+    if (trim)
+    {
+        char *end = buffer + result - 1;
+
+        while (*end == '0' || *end == '.')
+        {
+            // It should not be possible to go past the beginning because a decimal point is always written
+            ASSERT(end > buffer);
+
+            end--;
+
+            if (*(end + 1) == '.')
+                break;
+        }
+
+        // Zero terminate the string
+        end[1] = 0;
+
+        // Calculate length
+        result = (size_t)(end - buffer + 1);
+    }
+
+    // Return string length
+    FUNCTION_TEST_RETURN(SIZE, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN unsigned int
+cvtPctToUInt(const uint64_t dividend, const uint64_t divisor)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT64, dividend);
+        FUNCTION_TEST_PARAM(UINT64, divisor);
+    FUNCTION_TEST_END();
+
+    ASSERT(dividend <= divisor);
+
+    // If 100% then return a fixed value to avoid any rounding throwing off the result
+    if (dividend == divisor)
+        FUNCTION_TEST_RETURN(UINT, 10000);
+
+    // Calculate percentage
+    char buffer[CVT_PCT_BUFFER_SIZE];
+
+    size_t size = (size_t)snprintf(buffer, sizeof(buffer), "%04" PRIu64, (uint64_t)((double)dividend / (double)divisor * 100000));
+
+    // Round
+    cvtRound(size, buffer, sizeof(buffer));
+
+    FUNCTION_TEST_RETURN(UINT, cvtZToUInt(buffer));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN size_t
+cvtPctToZ(const uint64_t dividend, const uint64_t divisor, char *const buffer, const size_t bufferSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT64, dividend);
+        FUNCTION_TEST_PARAM(UINT64, divisor);
+        FUNCTION_TEST_PARAM_P(CHARDATA, buffer);
+        FUNCTION_TEST_PARAM(SIZE, bufferSize);
+    FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
+    ASSERT(bufferSize > 0);
+    ASSERT(dividend <= divisor);
+
+    // Calculate percentage as an integer
+    size_t result = (size_t)snprintf(buffer, bufferSize, "%03u", cvtPctToUInt(dividend, divisor));
 
     if (result >= bufferSize)
         THROW(AssertError, "buffer overflow");
 
-    // Any formatted double should be at least 8 characters, i.e. 0.000000
-    ASSERT(strlen(buffer) >= 8);
-    // Any formatted double should have a decimal point
-    ASSERT(strchr(buffer, '.') != NULL);
+    // Separate fractional part
+    result = cvtFraction(result, 2, false, buffer, bufferSize);
 
-    // Strip off any final 0s and the decimal point if there are no non-zero digits after it
-    char *end = buffer + strlen(buffer) - 1;
+    // Add percent sign
+    if (result + 1 >= bufferSize)
+        THROW(AssertError, "buffer overflow");
 
-    while (*end == '0' || *end == '.')
+    buffer[result++] = '%';
+    buffer[result] = '\0';
+
+    // Return string length
+    FUNCTION_TEST_RETURN(SIZE, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN size_t
+cvtDivToZ(
+    const uint64_t dividend, const uint64_t divisor, const unsigned int precision, const bool trim, char *const buffer,
+    const size_t bufferSize)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(UINT64, dividend);
+        FUNCTION_TEST_PARAM(UINT64, divisor);
+        FUNCTION_TEST_PARAM(UINT, precision);
+        FUNCTION_TEST_PARAM(BOOL, trim);
+        FUNCTION_TEST_PARAM_P(CHARDATA, buffer);
+        FUNCTION_TEST_PARAM(SIZE, bufferSize);
+    FUNCTION_TEST_END();
+
+    ASSERT(buffer != NULL);
+    ASSERT(bufferSize > 0);
+
+    // Determine multiplier for precision digits
+    unsigned int multiplier = 1;
+
+    switch (precision)
     {
-        // It should not be possible to go past the beginning because format "%lf" will always write a decimal point
-        ASSERT(end > buffer);
+        case 0:
+            break;
 
-        end--;
+        case 1:
+            multiplier = 10;
+            break;
 
-        if (*(end + 1) == '.')
+        case 2:
+            multiplier = 100;
+            break;
+
+        default:
+            CHECK_FMT(AssertError, precision <= 3, "precision %u is invalid", precision);
+            multiplier = 1000;
             break;
     }
 
-    // Zero terminate the string
-    end[1] = 0;
+    CHECK_FMT(AssertError, dividend <= UINT64_MAX / multiplier, "dividend %" PRIu64 " is too large", dividend);
+
+    // If possible add a digit for rounding
+    bool round = false;
+
+    if (dividend <= UINT64_MAX / (multiplier * 10))
+    {
+        round = true;
+        multiplier *= 10;
+    }
+
+    // Convert to string
+    size_t result = (size_t)snprintf(buffer, bufferSize, "%0*" PRIu64, (int)precision, dividend * multiplier / divisor);
+
+    if (result >= bufferSize)
+        THROW(AssertError, "buffer overflow");
+
+    // Round
+    if (round)
+        result = cvtRound(result, buffer, bufferSize);
+
+    // Separate fractional part
+    if (precision > 0)
+        result = cvtFraction(result, precision, trim, buffer, bufferSize);
 
     // Return string length
-    FUNCTION_TEST_RETURN(SIZE, (size_t)(end - buffer + 1));
+    FUNCTION_TEST_RETURN(SIZE, result);
 }
 
 /**********************************************************************************************************************************/
@@ -359,6 +557,9 @@ cvtTimeToZ(const char *const format, const time_t value, char *const buffer, con
     FUNCTION_TEST_END();
 
     ASSERT(buffer != NULL);
+    // Musl libc does not behave like other C libraries when formatting %s as output from gmtime_r() so forbid it entirely, see
+    // https://www.openwall.com/lists/musl/2025/06/02/3 for details.
+    ASSERT(!param.utc || strstr(format, "%s") == NULL);
 
     struct tm timePart;
 
@@ -373,6 +574,110 @@ cvtTimeToZ(const char *const format, const time_t value, char *const buffer, con
         THROW(AssertError, "buffer overflow");
 
     FUNCTION_TEST_RETURN(SIZE, result);
+}
+
+/**********************************************************************************************************************************/
+// Helper to convert a time part, e.g. year
+static int
+cvtZNToTimePart(const char *const time, const char *const part, const size_t partSize)
+{
+    int result = 0;
+    int power = 1;
+
+    for (size_t partIdx = partSize - 1; partIdx < partSize; partIdx--)
+    {
+        if (!isdigit(part[partIdx]))
+            THROW_FMT(FormatError, "invalid date/time %s", time);
+
+        result += (part[partIdx] - '0') * power;
+        power *= 10;
+    }
+
+    return result;
+}
+
+FN_EXTERN time_t
+cvtZToTime(const char *const time)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRINGZ, time);
+    FUNCTION_TEST_END();
+
+    ASSERT(time != NULL);
+
+    // Validate structure of date/time
+    if (strlen(time) < 19 || time[4] != '-' || time[7] != '-' || time[10] != ' ' || time[13] != ':' || time[16] != ':')
+        THROW_FMT(FormatError, "invalid date/time %s", time);
+
+    // Parse date/time
+    const int year = cvtZNToTimePart(time, time, 4);
+    const int month = cvtZNToTimePart(time, time + 5, 2);
+    const int day = cvtZNToTimePart(time, time + 8, 2);
+    const int hour = cvtZNToTimePart(time, time + 11, 2);
+    const int minute = cvtZNToTimePart(time, time + 14, 2);
+    const int second = cvtZNToTimePart(time, time + 17, 2);
+
+    // Confirm date and time parts are valid
+    datePartsValid(year, month, day);
+    timePartsValid(hour, minute, second);
+
+    // Consume milliseconds when present (they are omitted from the result)
+    const char *part = time + 19;
+
+    if ((*part == '.' || *part == ',') && strlen(part) >= 2)
+    {
+        part++;
+
+        while (*part != 0 && isdigit(*part))
+            part++;
+    }
+
+    // Add timezone offset when present
+    if ((*part == '+' || *part == '-') && strlen(part) >= 3)
+    {
+        const int offsetHour = cvtZNToTimePart(time, part + 1, 2) * (*part == '-' ? -1 : 1);
+        part += 3;
+
+        // Offset separator is optional
+        if (*part == ':')
+            part++;
+
+        // Offset minutes are optional
+        int offsetMinute = 0;
+
+        if (strlen(part) == 2)
+        {
+            offsetMinute = cvtZNToTimePart(time, part, 2);
+            part += 2;
+        }
+
+        // Make sure there is nothing left over
+        if (*part != 0)
+            THROW_FMT(FormatError, "invalid date/time %s", time);
+
+        FUNCTION_TEST_RETURN(
+            TIME, epochFromParts(year, month, day, hour, minute, second, tzOffsetSeconds(offsetHour, offsetMinute)));
+    }
+
+    // Make sure there is nothing left over
+    if (*part != 0)
+        THROW_FMT(FormatError, "invalid date/time %s", time);
+
+    // If no timezone was specified then use the current timezone. Set tm_isdst to -1 to force mktime to consider if DST. For
+    // example, if system time is America/New_York then 2019-09-14 20:02:49 was a time in DST so the Epoch value should be
+    // 1568505769 (and not 1568509369 which would be 2019-09-14 21:02:49 - an hour too late).
+    struct tm timePart =
+    {
+        .tm_year = year - 1900,
+        .tm_mon = month - 1,
+        .tm_mday = day,
+        .tm_hour = hour,
+        .tm_min = minute,
+        .tm_sec = second,
+        .tm_isdst = -1,
+    };
+
+    FUNCTION_TEST_RETURN(TIME, mktime(&timePart));
 }
 
 /**********************************************************************************************************************************/
@@ -533,7 +838,7 @@ cvtUInt64ToVarInt128(uint64_t value, uint8_t *const buffer, size_t *const buffer
     while (value >= 0x80)
     {
         // Encode the lower order 7 bits, adding the continuation bit to indicate there is more data
-        buffer[*bufferPos] = (unsigned char)value | 0x80;
+        buffer[*bufferPos] = (uint8_t)value | 0x80;
 
         // Shift the value to remove bits that have been encoded
         value >>= 7;
@@ -547,7 +852,7 @@ cvtUInt64ToVarInt128(uint64_t value, uint8_t *const buffer, size_t *const buffer
     }
 
     // Encode the last 7 bits of value
-    buffer[*bufferPos] = (unsigned char)value;
+    buffer[*bufferPos] = (uint8_t)value;
     (*bufferPos)++;
 
     FUNCTION_TEST_RETURN_VOID();

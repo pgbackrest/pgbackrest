@@ -18,7 +18,7 @@ typedef struct XmlNodeList XmlNodeList;
 #include "common/memContext.h"
 #include "common/type/list.h"
 #include "common/type/object.h"
-#include "common/type/string.h"
+#include "common/type/stringList.h"
 
 /***********************************************************************************************************************************
 Document Constructors
@@ -44,7 +44,7 @@ FN_EXTERN Buffer *xmlDocumentBuf(const XmlDocument *this);
 FN_INLINE_ALWAYS XmlNode *
 xmlDocumentRoot(const XmlDocument *const this)
 {
-    return ((XmlDocumentPub *const)this)->root;
+    return ((const XmlDocumentPub *const)this)->root;
 }
 
 /***********************************************************************************************************************************
@@ -77,9 +77,15 @@ xmlNodeChild(const XmlNode *const this, const String *const name, const bool err
 // List of child nodes
 FN_EXTERN XmlNodeList *xmlNodeChildList(const XmlNode *this, const String *name);
 
+// List of child nodes using multiple names
+FN_EXTERN XmlNodeList *xmlNodeChildListMulti(const XmlNode *this, const StringList *nameList);
+
 // Node content
 FN_EXTERN String *xmlNodeContent(const XmlNode *this);
 FN_EXTERN void xmlNodeContentSet(XmlNode *this, const String *content);
+
+// Node name
+FN_EXTERN String *xmlNodeName(const XmlNode *this);
 
 /***********************************************************************************************************************************
 Node List Getters
@@ -88,14 +94,14 @@ Node List Getters
 FN_INLINE_ALWAYS XmlNode *
 xmlNodeLstGet(const XmlNodeList *const this, const unsigned int listIdx)
 {
-    return *(XmlNode **)lstGet((List *const)this, listIdx);
+    return *(XmlNode **)lstGet((const List *const)this, listIdx);
 }
 
 // Node list size
 FN_INLINE_ALWAYS unsigned int
 xmlNodeLstSize(const XmlNodeList *const this)
 {
-    return lstSize((List *const)this);
+    return lstSize((const List *const)this);
 }
 
 /***********************************************************************************************************************************

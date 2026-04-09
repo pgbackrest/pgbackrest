@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 GCS Storage Read
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "common/debug.h"
 #include "common/io/http/client.h"
@@ -9,7 +9,7 @@ GCS Storage Read
 #include "common/log.h"
 #include "common/type/object.h"
 #include "storage/gcs/read.h"
-#include "storage/read.intern.h"
+#include "storage/read.h"
 
 /***********************************************************************************************************************************
 GCS query tokens
@@ -52,24 +52,32 @@ storageReadGcsOpen(THIS_VOID)
 
     bool result = false;
 
-    // Request the file
-    MEM_CONTEXT_OBJ_BEGIN(this)
+    // Read if not versioned or if versionId is not null
+    if (!this->interface.version || this->interface.versionId != NULL)
     {
-        this->httpResponse = storageGcsRequestP(
-            this->storage, HTTP_VERB_GET_STR, .object = this->interface.name,
-            .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
-            .allowMissing = true, .contentIo = true,
-            .query = httpQueryAdd(httpQueryNewP(), GCS_QUERY_ALT_STR, GCS_QUERY_MEDIA_STR));
-    }
-    MEM_CONTEXT_OBJ_END();
+        // Request the file
+        MEM_CONTEXT_OBJ_BEGIN(this)
+        {
+            HttpQuery *const query = httpQueryAdd(httpQueryNewP(), GCS_QUERY_ALT_STR, GCS_QUERY_MEDIA_STR);
 
-    if (httpResponseCodeOk(this->httpResponse))
-    {
-        result = true;
+            if (this->interface.versionId)
+                httpQueryAdd(query, varStr(GCS_JSON_GENERATION_VAR), this->interface.versionId);
+
+            this->httpResponse = storageGcsRequestP(
+                this->storage, HTTP_VERB_GET_STR, .object = this->interface.name,
+                .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
+                .allowMissing = true, .contentIo = true, .query = query);
+        }
+        MEM_CONTEXT_OBJ_END();
+
+        if (httpResponseCodeOk(this->httpResponse))
+        {
+            result = true;
+        }
+        // Else error unless ignore missing
+        else if (!this->interface.ignoreMissing)
+            THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
     }
-    // Else error unless ignore missing
-    else if (!this->interface.ignoreMissing)
-        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
@@ -113,11 +121,40 @@ storageReadGcsEof(THIS_VOID)
     FUNCTION_TEST_RETURN(BOOL, ioReadEof(httpResponseIoRead(this->httpResponse)));
 }
 
+/***********************************************************************************************************************************
+Close the file
+***********************************************************************************************************************************/
+static void
+storageReadGcsClose(THIS_VOID)
+{
+    THIS(StorageReadGcs);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_GCS, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->httpResponse != NULL);
+
+    httpResponseFree(this->httpResponse);
+    this->httpResponse = NULL;
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
+static const IoReadInterface storageReadGcsInterface =
+{
+    .close = storageReadGcsClose,
+    .eof = storageReadGcsEof,
+    .open = storageReadGcsOpen,
+    .read = storageReadGcs,
+};
+
 FN_EXTERN StorageRead *
 storageReadGcsNew(
     StorageGcs *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset,
-    const Variant *const limit)
+    const Variant *const limit, const bool version, const String *const versionId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_GCS, storage);
@@ -125,6 +162,8 @@ storageReadGcsNew(
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
+        FUNCTION_LOG_PARAM(BOOL, version);
+        FUNCTION_LOG_PARAM(STRING, versionId);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -135,25 +174,13 @@ storageReadGcsNew(
         *this = (StorageReadGcs)
         {
             .storage = storage,
-
-            .interface = (StorageReadInterface)
-            {
-                .type = STORAGE_GCS_TYPE,
-                .name = strDup(name),
-                .ignoreMissing = ignoreMissing,
-                .offset = offset,
-                .limit = varDup(limit),
-
-                .ioInterface = (IoReadInterface)
-                {
-                    .eof = storageReadGcsEof,
-                    .open = storageReadGcsOpen,
-                    .read = storageReadGcs,
-                },
-            },
         };
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface));
+    FUNCTION_LOG_RETURN(
+        STORAGE_READ,
+        storageReadNewP(
+            this, STORAGE_GCS_TYPE, name, ignoreMissing, offset, limit, &storageReadGcsInterface, .version = version,
+            .versionId = versionId, .retry = true));
 }

@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Log Handler
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -14,6 +14,7 @@ Log Handler
 
 #include "common/debug.h"
 #include "common/log.h"
+#include "common/macro.h"
 #include "common/time.h"
 #include "common/type/convert.h"
 
@@ -65,66 +66,30 @@ static char logBuffer[LOG_BUFFER_SIZE];
 /**********************************************************************************************************************************/
 #define LOG_LEVEL_TOTAL                                             (LOG_LEVEL_MAX + 1)
 
-static const struct LogLevel
+static const char *const logLevelList[LOG_LEVEL_TOTAL] =
 {
-    const StringId id;                                              // Id
-    const char *const name;                                         // Name
-} logLevelList[LOG_LEVEL_TOTAL] =
-{
-    {
-        .id = STRID5("off", 0x18cf0),
-        .name = "OFF",
-    },
-    {
-        // No id here because this level is not user selectable
-        .name = "ASSERT",
-    },
-    {
-        .id = STRID5("error", 0x127ca450),
-        .name = "ERROR",
-    },
-    {
-        .id = STRID5("warn", 0x748370),
-        .name = "WARN",
-    },
-    {
-        .id = STRID5("info", 0x799c90),
-        .name = "INFO",
-    },
-    {
-        .id = STRID5("detail", 0x1890d0a40),
-        .name = "DETAIL",
-    },
-    {
-        .id = STRID5("debug", 0x7a88a40),
-        .name = "DEBUG",
-    },
-    {
-        .id = STRID5("trace", 0x5186540),
-        .name = "TRACE",
-    },
+    "OFF",
+    "ASSERT",
+    "ERROR",
+    "WARN",
+    "INFO",
+    "DETAIL",
+    "DEBUG",
+    "TRACE",
 };
 
 FN_EXTERN LogLevel
-logLevelEnum(const StringId logLevelId)
+logLevelEnum(unsigned int logLevelSeq)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_ID, logLevelId);
+        FUNCTION_TEST_PARAM(UINT, logLevelSeq);
     FUNCTION_TEST_END();
 
-    ASSERT(logLevelId != 0);
+    ASSERT(logLevelSeq < LOG_LEVEL_MAX);
 
-    LogLevel result = logLevelOff;
+    logLevelSeq += logLevelSeq > 0;
 
-    // Search for the log level
-    for (; result < LOG_LEVEL_TOTAL; result++)
-        if (logLevelId == logLevelList[result].id)
-            break;
-
-    // Check that the log level was found
-    CHECK(AssertError, result != LOG_LEVEL_TOTAL, "invalid log level");
-
-    FUNCTION_TEST_RETURN(ENUM, result);
+    FUNCTION_TEST_RETURN(ENUM, logLevelSeq);
 }
 
 FN_EXTERN const char *
@@ -136,7 +101,7 @@ logLevelStr(const LogLevel logLevel)
 
     ASSERT(logLevel <= LOG_LEVEL_MAX);
 
-    FUNCTION_TEST_RETURN_CONST(STRINGZ, logLevelList[logLevel].name);
+    FUNCTION_TEST_RETURN_CONST(STRINGZ, logLevelList[logLevel]);
 }
 
 /**********************************************************************************************************************************/
@@ -246,7 +211,7 @@ logFileSet(const char *const logFile)
 
         if (logFdFile == -1)
         {
-            int errNo = errno;
+            const int errNo = errno;
             LOG_WARN_FMT(
                 "unable to open log file '%s': %s\nNOTE: process will continue without log file.", logFile, strerror(errNo));
             result = false;
@@ -504,6 +469,34 @@ logPost(LogPreResult *const logData, const LogLevel logLevel, const LogLevel log
 
         logWriteIndent(logFdFile, logBuffer, logData->indentSize, "log to file");
     }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+#define LOG_SIGNAL_MESSAGE_PRE                                      "terminated on signal "
+
+FN_EXTERN void
+logSignal(const LogLevel logLevel, const char *const signalName)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(ENUM, logLevel);
+        FUNCTION_TEST_PARAM(STRINGZ, signalName);
+    FUNCTION_TEST_END();
+
+    ASSERT(signalName != NULL);
+    STATIC_ASSERT_STMT(LOG_BUFFER_SIZE >= sizeof(LOG_SIGNAL_MESSAGE_PRE), "invalid log buffer size");
+
+    // Initialize log buffer and data with static signal message
+    memcpy(logBuffer, LOG_SIGNAL_MESSAGE_PRE, sizeof(LOG_SIGNAL_MESSAGE_PRE) - 1);
+    LogPreResult logData = {.bufferPos = sizeof(LOG_SIGNAL_MESSAGE_PRE) - 1, .logBufferStdErr = logBuffer, .indentSize = 4};
+
+    // Add signal name and ensure string is zero-terminated
+    strncpy(logBuffer + logData.bufferPos, signalName, sizeof(logBuffer) - logData.bufferPos - 1);
+    logData.bufferPos += strlen(signalName);
+    logBuffer[sizeof(logBuffer) - 1] = 0;
+
+    logPost(&logData, logLevel, LOG_LEVEL_MIN, LOG_LEVEL_MAX);
 
     FUNCTION_TEST_RETURN_VOID();
 }

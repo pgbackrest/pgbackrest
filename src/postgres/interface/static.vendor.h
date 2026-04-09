@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 PostgreSQL Types That Do Not Vary By Version
 
-Portions Copyright (c) 1996-2024, PostgreSQL Global Development Group
+Portions Copyright (c) 1996-2026, PostgreSQL Global Development Group
 Portions Copyright (c) 1994, Regents of the University of California
 
 For each supported release of PostgreSQL check the types in this file to see if they have changed. The easiest way to do this is to
@@ -34,10 +34,6 @@ typedef uint16_t uint16;
 // uint32 type
 // ---------------------------------------------------------------------------------------------------------------------------------
 typedef uint32_t uint32;
-
-// uint64 type
-// ---------------------------------------------------------------------------------------------------------------------------------
-typedef uint64_t uint64;
 
 // TransactionId type
 // ---------------------------------------------------------------------------------------------------------------------------------
@@ -75,28 +71,6 @@ typedef struct ItemIdData
 				lp_flags:2,		/* state of line pointer, see below */
 				lp_len:15;		/* byte length of tuple */
 } ItemIdData;
-
-/***********************************************************************************************************************************
-Types from src/include/storage/block.h
-***********************************************************************************************************************************/
-
-// BlockNumber type
-// ---------------------------------------------------------------------------------------------------------------------------------
-/*
- * BlockNumber:
- *
- * each data file (heap or index) is divided into postgres disk blocks
- * (which may be thought of as the unit of i/o -- a postgres buffer
- * contains exactly one disk block).  the blocks are numbered
- * sequentially, 0 to 0xFFFFFFFE.
- *
- * InvalidBlockNumber is the same thing as P_NEW in bufmgr.h.
- *
- * the access methods, the buffer manager and the storage manager are
- * more or less the only pieces of code that should be accessing disk
- * blocks directly.
- */
-typedef uint32 BlockNumber;
 
 /***********************************************************************************************************************************
 Types from src/include/storage/bufpage.h

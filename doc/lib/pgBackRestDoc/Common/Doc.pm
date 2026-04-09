@@ -620,24 +620,6 @@ sub valueGet
 }
 
 ####################################################################################################################################
-# valueSet
-####################################################################################################################################
-sub valueSet
-{
-    my $self = shift;
-    my $strValue = shift;
-
-    # Assign function parameters, defaults, and log debug info
-    my $strOperation = logDebugParam(__PACKAGE__ . '->valueSet');
-
-    # Set the value
-    ${$self->{oDoc}}{value} = $strValue;
-
-    # Return from function and log return values if any
-    return logDebugReturn($strOperation);
-}
-
-####################################################################################################################################
 # paramGet
 #
 # Get a parameter from a node.

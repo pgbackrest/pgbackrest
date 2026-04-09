@@ -380,9 +380,7 @@ Table Elements
     color: #27689d;
 }
 
-.table-header-row
-{
-}
+/*.table-header-row*/
 
 .table-header-left,
 .table-header-center,
@@ -412,9 +410,7 @@ Table Elements
     width: 100%;
 }
 
-.table-row
-{
-}
+/*.table-row*/
 
 .table-data-left,
 .table-data-center,
@@ -562,6 +558,34 @@ ul.list-unordered
 li.list-unordered
 {
     margin-top: .5em;
+}
+
+/*******************************************************************************
+Sponsor
+*******************************************************************************/
+.sponsor-list
+{
+    overflow: hidden;
+    margin-bottom: 1.5em;
+    margin-right: 1.5em;
+}
+
+.sponsor
+{
+    float:left;
+    text-align: center;
+    margin-top: 1.5em;
+    margin-left: 1.5em;
+}
+
+.sponsor-img
+{
+    width: 75px;
+}
+
+.sponsor-title
+{
+    white-space: nowrap;
 }
 
 /*******************************************************************************

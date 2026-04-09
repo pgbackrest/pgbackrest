@@ -4,7 +4,7 @@
 project(
     'pgbackrest',
     ['c'],
-    version: '2.53.1',
+    version: '2.59.0dev',
     license: 'MIT',
     meson_version: '>=0.47',
     default_options: [
@@ -40,6 +40,9 @@ endif
 ####################################################################################################################################
 # Enable as many additional warnings as possible to catch potential errors
 warning_enable = [
+    # Warn whenever a pointer is cast so as to remove a type qualifier from the target type
+    '-Wcast-qual',
+
     # Warn for implicit conversions that may alter a value
     '-Wconversion',
 
@@ -49,17 +52,32 @@ warning_enable = [
     # Warn when an if-else has identical branches
     '-Wduplicated-branches',
 
-    # Warn if the format string is not a string literal and cannot be checked
-    '-Wformat-nonliteral',
+    # Warn if floating-point values are used in equality comparisons
+    '-Wfloat-equal',
 
-    # Enable -Wformat plus additional format checks
+    # Enable -Wformat plus -Wnonnull, -Wformat-nonliteral, -Wformat-security, and -Wformat-y2k
     '-Wformat=2',
+
+    # Warn about calls to formatted input/output functions such as sprintf and vsprintf that might overflow the destination buffer
+    '-Wformat-overflow=2',
 
     # Warn if the format string requires an unsigned argument and the argument is signed and vice versa
     '-Wformat-signedness',
 
+    # Warn about uninitialized variables which are initialized with themselves
+    '-Winit-self',
+
+    # Warn if a global function is defined without a previous prototype declaration
+    '-Wmissing-prototypes',
+
+    # Warn if a global variable is defined without a previous declaration
+    '-Wmissing-variable-declarations',
+
     # Warn about anything that depends on the “size of” a function type or of void
     '-Wpointer-arith',
+
+    # Warn if anything is declared more than once in the same scope, even when the extra declaration is valid and changes nothing
+    '-Wredundant-decls',
 
     # Warn if a function is declared or defined without specifying the argument types
     '-Wstrict-prototypes',
@@ -79,18 +97,14 @@ warning_disable = [
 
     # Warn if a structure’s initializer has some fields missing. Disable so we can initialize with {0}.
     '-Wno-missing-field-initializers',
-
-    # Warn when a switch case falls through. Disable because this an useful aspect of switches and tests should catch problems.
-    '-Wno-implicit-fallthrough',
 ]
 
 add_project_arguments(cc.get_supported_arguments(warning_enable, warning_disable), language: 'c')
 
 ####################################################################################################################################
-# Enable additional optimizations for release builds. We would prefer to use `get_option('optimization') in ['2', '3']` when our
-# minimum version is high enough to allow it.
+# Enable additional optimizations for appropriate levels
 ####################################################################################################################################
-if get_option('buildtype') == 'release'
+if get_option('optimization') in ['2', '3']
     optimization_enable = [
         # Unroll loops whose number of iterations can be determined at compile time or upon entry to the loop
         '-funroll-loops',
@@ -136,13 +150,18 @@ add_project_arguments(cc.get_supported_arguments('-fmacro-prefix-map=@0@/test/sr
 configuration = configuration_data()
 
 # Ensure the C compiler supports __builtin_clzl()
-if not cc.links('''int main(int arg, char **argv) {__builtin_clzl(1);}''')
+if not cc.links('''int main(void) {__builtin_clzl(1);}''')
     error('compiler must support __builtin_clzl()')
 endif
 
 # Ensure the C compiler supports __builtin_bswap64()
-if not cc.links('''int main(int arg, char **argv) {__builtin_bswap64(1);}''')
+if not cc.links('''int main(void) {__builtin_bswap64(1);}''')
     error('compiler must support __builtin_bswap64()')
+endif
+
+# Check C compiler support for __builtin_types_compatible_p
+if cc.compiles('''int main(void) {__builtin_types_compatible_p(char *, const char *);}''')
+    configuration.set('HAVE_BUILTIN_TYPES_COMPATIBLE_P', true, description: 'Is __builtin_types_compatible_p present?')
 endif
 
 # Find optional backtrace library
@@ -155,10 +174,8 @@ endif
 # Find required bz2 library
 lib_bz2 = cc.find_library('bz2')
 
-# Find optional lz4 library
+# Find required lz4 library
 lib_lz4 = dependency('liblz4')
-
-configuration.set('HAVE_LIBLZ4', true, description: 'Is liblz4 present?')
 
 # Find required openssl library
 lib_openssl = dependency('openssl', version : '>=1.1.1')
@@ -191,39 +208,39 @@ if lib_zstd.found()
     configuration.set('HAVE_LIBZST', true, description: 'Is libzstd present?')
 endif
 
+# Suppress -Wsign-conversion for C libraries (e.g. musl) that do no accept int without warning for FD_*() macros
+if not cc.compiles(
+        '''#include <sys/select.h>
+        int main(void) {int fd = 1; fd_set s; FD_ZERO(&s); FD_SET(fd, &s); FD_ISSET(fd, &s);}''',
+        args: ['-Wsign-conversion', '-Werror'])
+    message('Disabling -Wsign-conversion because int is not accepted without warning by FD_*() macros')
+    add_project_arguments(cc.get_supported_arguments('-Wno-sign-conversion'), language: 'c')
+endif
+
 # Check if the C compiler supports _Static_assert()
-if cc.compiles('''int main(int arg, char **argv) {({ _Static_assert(1, "foo");});} ''')
+if cc.compiles('''int main(void) {({ _Static_assert(1, "foo");});} ''')
   configuration.set('HAVE_STATIC_ASSERT', true, description: 'Does the compiler provide _Static_assert()?')
 endif
 
-# Enable debug code. We would prefer to use `get_option('debug')` when our minimum version is high enough to allow it.
-if get_option('buildtype') == 'debug' or get_option('buildtype') == 'debugoptimized'
+# Enable debug code
+if get_option('debug')
     configuration.set('DEBUG', true, description: 'Enable debug code')
 endif
 
 # Set configuration path
 configuration.set_quoted('CFGOPTDEF_CONFIG_PATH', get_option('configdir'), description: 'Configuration path')
 
-# Set FN_NO_RETURN macro
-configuration.set('FN_NO_RETURN', '__attribute__((__noreturn__))', description: 'Indicate that a function does not return')
-
-# Set FN_INLINE_ALWAYS macro
-configuration.set(
-    'FN_INLINE_ALWAYS', '__attribute__((always_inline)) static inline',
-    description: 'Indicate that a function should always be inlined'
-)
-
-# Set FN_PRINTF macro
-configuration.set(
-    'FN_PRINTF(fmt, args)', '__attribute__((format(printf, fmt, args)))',
-    description: 'Indicate that a function is formatted like printf (and provide format and args position)'
-)
-
-# Set FN_STRFTIME macro
-configuration.set(
-    'FN_STRFTIME(fmt)', '__attribute__((format(strftime, fmt, 0)))',
-    description: 'Indicate that a function is formatted like strftime (and provide format position)'
-)
+# Set VR_NON_STRING macro
+if cc.compiles(
+        '''int main(void) {__attribute__((nonstring)) static char test[3] = "ABC";}''',
+        args: ['-Wattributes', '-Werror'])
+    configuration.set(
+        'VR_NON_STRING', '__attribute__((nonstring))',
+        description: 'Indicate that the char array is intentionally not NULL terminated')
+else
+    configuration.set(
+        'VR_NON_STRING', '', description: 'Indicate that the char array is intentionally not NULL terminated')
+endif
 
 ####################################################################################################################################
 # Include subdirs

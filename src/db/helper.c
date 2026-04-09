@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Database Helper
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "common/debug.h"
 #include "config/config.h"
@@ -38,7 +38,7 @@ dbGetIdx(const unsigned int pgIdx)
                 NULL, storagePgIdx(pgIdx), applicationName);
         }
         else
-            result = dbNew(NULL, protocolRemoteGet(protocolStorageTypePg, pgIdx), storagePgIdx(pgIdx), applicationName);
+            result = dbNew(NULL, protocolRemoteGet(protocolStorageTypePg, pgIdx, true), storagePgIdx(pgIdx), applicationName);
 
         dbMove(result, memContextPrior());
     }
@@ -48,17 +48,17 @@ dbGetIdx(const unsigned int pgIdx)
 }
 
 FN_EXTERN DbGetResult
-dbGet(const bool primaryOnly, const bool primaryRequired, const bool standbyRequired)
+dbGet(const bool primaryOnly, const bool primaryRequired, const StringId standbyRequired)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(BOOL, primaryOnly);
         FUNCTION_LOG_PARAM(BOOL, primaryRequired);
-        FUNCTION_LOG_PARAM(BOOL, standbyRequired);
+        FUNCTION_LOG_PARAM(STRING_ID, standbyRequired);
     FUNCTION_LOG_END();
 
     FUNCTION_AUDIT_STRUCT();
 
-    ASSERT(!(primaryOnly && standbyRequired));
+    ASSERT(!(primaryOnly && standbyRequired == CFGOPTVAL_BACKUP_STANDBY_Y));
 
     DbGetResult result = {0};
 
@@ -136,7 +136,7 @@ dbGet(const bool primaryOnly, const bool primaryRequired, const bool standbyRequ
         }
 
         // Error if no standby was found
-        if (result.standby == NULL && standbyRequired)
+        if (result.standby == NULL && standbyRequired == CFGOPTVAL_BACKUP_STANDBY_Y)
             THROW(DbConnectError, "unable to find standby cluster - cannot proceed");
 
         dbMove(result.primary, memContextPrior());

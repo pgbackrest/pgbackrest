@@ -21,11 +21,6 @@ typedef struct IoWrite IoWrite;
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
-typedef struct IoWritePub
-{
-    IoFilterGroup *filterGroup;                                     // IO filters
-} IoWritePub;
-
 // Filter group. Filters must be set before open and cannot be reset
 FN_INLINE_ALWAYS IoFilterGroup *
 ioWriteFilterGroup(IoWrite *const this)
@@ -71,6 +66,9 @@ FN_EXTERN void ioWriteVarIntU64(IoWrite *this, uint64_t value);
 
 // Flush any data in the output buffer. This does not end writing and will not work if filters are present.
 FN_EXTERN void ioWriteFlush(IoWrite *this);
+
+// Seek to specified position relative to beginning of write
+FN_EXTERN void ioWriteSeek(IoWrite *this, uint64_t position);
 
 // Close the IO and write any additional data that has not been written yet
 FN_EXTERN void ioWriteClose(IoWrite *this);

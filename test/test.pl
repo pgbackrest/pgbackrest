@@ -67,14 +67,12 @@ test.pl [options]
    --clean              clean working and result paths for a completely fresh build
    --clean-only         execute --clean and exit
    --pg-version         version of postgres to test (all, defaults to minimal)
-   --build-only         build the binary (and honor --build-package) but don't run tests
-   --build-package      build the package
+   --build-only         build the binary but don't run tests
    --build-max          max processes to use for builds (default 4)
    --c-only             only run C tests
    --container-only     only run tests that must be run in a container
    --no-performance     do not run performance tests
    --gen-only           only run auto-generation
-   --min-gen            only run required code generation
    --gen-check          check that auto-generated files are correct (used in CI to detect changes)
    --code-count         generate code counts
    --no-back-trace      don't run backrace on C unit tests (may be slow with valgrind)
@@ -108,6 +106,7 @@ test.pl [options]
 
  VM Options:
    --vm                 docker container to build/test (e.g. rh8)
+   --vm-arch            docker container architecture
    --vm-build           build Docker containers
    --vm-force           force a rebuild of Docker containers
    --vm-out             Show VM output (default false)
@@ -144,10 +143,10 @@ my $bHelp = false;
 my $bQuiet = false;
 my $strPgVersion = 'minimal';
 my $strVm = VM_NONE;
+my $strVmArch;
 my $bVmBuild = false;
 my $bVmForce = false;
 my $bBuildOnly = false;
-my $bBuildPackage = false;
 my $iBuildMax = 4;
 my $bCoverageOnly = false;
 my $bCoverageSummary = false;
@@ -158,7 +157,6 @@ my $bContainerOnly = false;
 my $bNoPerformance = false;
 my $bGenOnly = false;
 my $bGenCheck = false;
-my $bMinGen = false;
 my $bCodeCount = false;
 my $bProfile = false;
 my $bNoBackTrace = false;
@@ -185,6 +183,7 @@ GetOptions ('q|quiet' => \$bQuiet,
             'log-level-test-file=s' => \$strLogLevelTestFile,
             'no-log-timestamp' => \$bNoLogTimestamp,
             'vm=s' => \$strVm,
+            'vm-arch=s' => \$strVmArch,
             'vm-out' => \$bVmOut,
             'vm-build' => \$bVmBuild,
             'vm-force' => \$bVmForce,
@@ -196,7 +195,6 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-cleanup' => \$bNoCleanup,
             'pg-version=s' => \$strPgVersion,
             'build-only' => \$bBuildOnly,
-            'build-package' => \$bBuildPackage,
             'build-max=s' => \$iBuildMax,
             'coverage-only' => \$bCoverageOnly,
             'coverage-summary' => \$bCoverageSummary,
@@ -207,7 +205,6 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-performance' => \$bNoPerformance,
             'gen-only' => \$bGenOnly,
             'gen-check' => \$bGenCheck,
-            'min-gen' => \$bMinGen,
             'code-count' => \$bCodeCount,
             'code-format' => \$bCodeFormat,
             'code-format-check' => \$bCodeFormatCheck,
@@ -248,14 +245,6 @@ eval
     {
         syswrite(*STDOUT, "invalid parameter\n\n");
         pod2usage();
-    }
-
-    ################################################################################################################################
-    # Disable code generation on dry-run
-    ################################################################################################################################
-    if ($bDryRun)
-    {
-        $bMinGen = true;
     }
 
     ################################################################################################################################
@@ -375,7 +364,7 @@ eval
     ################################################################################################################################
     if ($bVmBuild)
     {
-        containerBuild($oStorageBackRest, $strVm, $bVmForce);
+        containerBuild($oStorageBackRest, $strVm, $strVmArch, $bVmForce);
         exit 0;
     }
 
@@ -429,104 +418,6 @@ eval
         }
     }
 
-    # Auto-generate configure files unless --min-gen specified
-    #-------------------------------------------------------------------------------------------------------------------------------
-    if (!$bMinGen)
-    {
-        &log(INFO, "autogenerate configure");
-
-        # Auto-generate version for configure.ac script
-        #-----------------------------------------------------------------------------------------------------------------------
-        my $strConfigureAcOld = ${$oStorageTest->get("${strBackRestBase}/src/build/configure.ac")};
-        my $strConfigureAcNew;
-
-        foreach my $strLine (split("\n", $strConfigureAcOld))
-        {
-            if ($strLine =~ /^AC_INIT\(/)
-            {
-                $strLine = 'AC_INIT([' . PROJECT_NAME . '], [' . PROJECT_VERSION . '])';
-            }
-
-            $strConfigureAcNew .= "${strLine}\n";
-        }
-
-        # Save into the src dir
-        my @stryBuilt;
-        my $strBuilt = 'src/build/configure.ac';
-
-        if (buildPutDiffers($oStorageBackRest, "${strBackRestBase}/${strBuilt}", $strConfigureAcNew))
-        {
-            push(@stryBuilt, $strBuilt);
-        }
-
-        # Error when checking that files have already been generated but they change
-        if ($bGenCheck && @stryBuilt)
-        {
-            confess &log(
-                ERROR,
-                "unexpected autogeneration of version in configure.ac script: " . join(', ', @stryBuilt) . ":\n" .
-                    trim(executeTest("git -C ${strBackRestBase} diff")));
-        }
-
-        &log(INFO,
-            "    autogenerated version in configure.ac script: " . (@stryBuilt ? join(', ', @stryBuilt) : 'no changes'));
-
-        # Auto-generate configure script
-        #-----------------------------------------------------------------------------------------------------------------------
-        # Set build file
-        @stryBuilt = ();
-        $strBuilt = 'src/configure';
-
-        # Get configure.ac and configure to see if anything has changed
-        my $strConfigureAc = ${$oStorageBackRest->get('src/build/configure.ac')};
-        my $strConfigureAcHash = sha1_hex($strConfigureAc);
-        my $rstrConfigure = $oStorageBackRest->get($oStorageBackRest->openRead($strBuilt, {bIgnoreMissing => true}));
-
-        # Check if configure needs to be regenerated
-        if (!defined($rstrConfigure) || !defined($$rstrConfigure) ||
-            $strConfigureAcHash ne substr($$rstrConfigure, length($$rstrConfigure) - 41, 40))
-        {
-            # Generate aclocal.m4
-            my $strAcLocal = executeTest("cd ${strBackRestBase}/src/build && aclocal --OUT=-");
-            $strAcLocal = trim($strAcLocal) . "\n";
-
-            buildPutDiffers($oStorageBackRest, "${strBackRestBase}/src/build/aclocal.m4", $strAcLocal);
-
-            # Generate configure
-            my $strConfigure = executeTest("cd ${strBackRestBase}/src/build && autoconf --output=-");
-            $strConfigure =
-                trim($strConfigure) . "\n\n# Generated from src/build/configure.ac sha1 ${strConfigureAcHash}\n";
-
-            # Remove cache created by autconf
-            executeTest("rm -rf ${strBackRestBase}/src/build/autom4te.cache");
-
-            # Remove unused options from help
-            my $strDirList =
-                "sbin|libexec|sysconf|sharedstate|localstate|runstate|lib|include|oldinclude|dataroot|data|info" .
-                "|locale|man|doc|html|dvi|pdf|ps";
-
-            $strConfigure =~ s/^  --(${strDirList})*dir=DIR.*\n//mg;
-
-            # Save into the src dir
-            $oStorageBackRest->put(
-                $oStorageBackRest->openWrite("${strBackRestBase}/${strBuilt}", {strMode => '0755'}), $strConfigure);
-
-            # Add to built list
-            push(@stryBuilt, $strBuilt);
-        }
-
-        # Error when checking that files have already been generated but they change
-        if ($bGenCheck && @stryBuilt)
-        {
-            confess &log(
-                ERROR,
-                "unexpected autogeneration of configure script: " . join(', ', @stryBuilt) . ":\n" .
-                    trim(executeTest("git -C ${strBackRestBase} diff")));
-        }
-
-        &log(INFO, "    autogenerated configure script: " . (@stryBuilt ? join(', ', @stryBuilt) : 'no changes'));
-    }
-
     # Auto-generate version for root meson.build script
     #-------------------------------------------------------------------------------------------------------------------------------
     my $strMesonBuildOld = ${$oStorageTest->get("${strBackRestBase}/meson.build")};
@@ -544,8 +435,35 @@ eval
 
     buildPutDiffers($oStorageBackRest, "${strBackRestBase}/meson.build", $strMesonBuildNew);
 
+    # Auto-generate version for version.h
+    #-------------------------------------------------------------------------------------------------------------------------------
+    my $strVersionCOld = ${$oStorageTest->get("${strBackRestBase}/src/version.h")};
+    my $strVersionCNew;
+
+    foreach my $strLine (split("\n", $strVersionCOld))
+    {
+        if ($strLine =~ /^#define PROJECT_VERSION /)
+        {
+            $strLine = "#define PROJECT_VERSION" . (' ' x 45) . '"' . PROJECT_VERSION . '"';
+        }
+
+        if ($strLine =~ /^#define PROJECT_VERSION_NUM /)
+        {
+            $strLine =
+                "#define PROJECT_VERSION_NUM" . (' ' x 41) .
+                sprintf('%d%03d%03d', PROJECT_VERSION_MAJOR, PROJECT_VERSION_MINOR, PROJECT_VERSION_PATCH);
+        }
+
+        $strVersionCNew .= "${strLine}\n";
+    }
+
+    buildPutDiffers($oStorageBackRest, "${strBackRestBase}/src/version.h", $strVersionCNew);
+
     # Start build container if vm is not none
     #-------------------------------------------------------------------------------------------------------------------------------
+    my $strPlatform = defined($strVmArch) ? " --platform linux/${strVmArch}" : '';
+    my $strImage = containerRepo() . ":${strVm}-test" . (defined($strVmArch) ? "-${strVmArch}" : '-' . hostArch());
+
     if ($strVm ne VM_NONE)
     {
         my $strCCachePath = "${strTestPath}/ccache-0/${strVm}";
@@ -556,9 +474,9 @@ eval
         }
 
         executeTest(
-            "docker run -itd -h test-build --name=test-build" .
+            "docker run${strPlatform} -itd -h test-build --name=test-build" .
                 " -v ${strBackRestBase}:${strBackRestBase} -v ${strTestPath}:${strTestPath}" .
-                " -v ${strCCachePath}:/home/${\TEST_USER}/.ccache" . ' ' . containerRepo() . ":${strVm}-test",
+                " -v ${strCCachePath}:/home/${\TEST_USER}/.ccache" . " ${strImage}",
             {bSuppressStdErr => true});
     }
 
@@ -569,7 +487,7 @@ eval
     # Create the repo path -- this should hopefully prevent obvious rsync errors below
     $oStorageTest->pathCreate($strRepoCachePath, {strMode => '0770', bIgnoreExists => true, bCreateParent => true});
 
-    # Auto-generate code files (if --min-gen specified then do minimum required)
+    # Auto-generate code files (if --dry-run specified then do minimum required)
     #-------------------------------------------------------------------------------------------------------------------------------
     my $strBuildPath = "${strTestPath}/build/none";
     my $strBuildNinja = "${strBuildPath}/build.ninja";
@@ -578,12 +496,12 @@ eval
 
     # Setup build if it does not exist
     my $strGenerateCommand =
-        "ninja -C ${strBuildPath} src/build-code" .
-        ($bMinGen ? '' : " && \\\n${strBuildPath}/src/build-code config ${strBackRestBase}/src") .
-        ($bMinGen ? '' : " && \\\n${strBuildPath}/src/build-code error ${strBackRestBase}/src") .
-        ($bMinGen ? '' : " && \\\n${strBuildPath}/src/build-code postgres-version ${strBackRestBase}/src") .
+        "ninja -C ${strBuildPath} src/build-code 2>&1" .
+        ($bDryRun ? '' : " && \\\n${strBuildPath}/src/build-code config ${strBackRestBase}/src") .
+        ($bDryRun ? '' : " && \\\n${strBuildPath}/src/build-code error ${strBackRestBase}/src") .
+        ($bDryRun ? '' : " && \\\n${strBuildPath}/src/build-code postgres-version ${strBackRestBase}/src") .
         " && \\\n${strBuildPath}/src/build-code postgres ${strBackRestBase}/src ${strRepoCachePath}" .
-        " && \\\nninja -C ${strBuildPath} test/src/test-pgbackrest";
+        " && \\\nninja -C ${strBuildPath} test/src/test-pgbackrest 2>&1";
 
     if (!-e $strBuildNinja)
     {
@@ -624,7 +542,7 @@ eval
         foreach my $strFile (sort(keys(%{$hManifest})))
         {
             # Skip non-C files
-            next if $hManifest->{$strFile}{type} ne 'f' || ($strFile !~ /\.c$/ && $strFile !~ /\.h$/);
+            next if $hManifest->{$strFile}{type} ne 'f' || ($strFile !~ /\.c.inc$/ && $strFile !~ /\.c$/ && $strFile !~ /\.h$/);
 
             # Skip files that do are not version controlled
             next if !defined($hRepoManifest->{$strFile});
@@ -633,9 +551,9 @@ eval
             next if
                 # Does not format correctly because it is a template
                 $strFile eq 'test/src/test.c' ||
-                # Contains code copied directly from PostgreSQL
-                $strFile eq 'src/postgres/interface/static.vendor.h' ||
-                $strFile eq 'src/postgres/interface/version.vendor.h';
+                # Skip vendorized and automatically generated files
+                $strFile =~ /\.vendor\.h$/ ||
+                $strFile =~ /\.(vendor|auto)\.c\.inc$/;
 
             $strCommand .= " ${strBackRestBase}/${strFile}";
         }
@@ -651,8 +569,6 @@ eval
 
             if ($strFile eq 'doc/doc.pl' ||
                 $strFile eq 'doc/release.pl' ||
-                $strFile eq 'src/build/install-sh' ||
-                $strFile eq 'src/configure' ||
                 $strFile eq 'test/ci.pl' ||
                 $strFile eq 'test/test.pl' ||
                 $hManifest->{$strFile}{type} eq 'd')
@@ -712,7 +628,7 @@ eval
         }
     }
 
-    # Build the binary and packages
+    # Build the binary
     #-------------------------------------------------------------------------------------------------------------------------------
     if (!$bDryRun)
     {
@@ -741,7 +657,7 @@ eval
                     # Setup build if it does not exist
                     my $strBuildCommand =
                         "ninja -C ${strBuildPath}" . ($bBinRequired ? ' src/pgbackrest' : '') .
-                        ($bUnitRequired ? ' test/src/test-pgbackrest' : '');
+                        ($bUnitRequired ? ' test/src/test-pgbackrest' : '') .  ' 2>&1';
 
                     if (!-e $strBuildNinja)
                     {
@@ -765,194 +681,6 @@ eval
         if ($strVm ne VM_NONE)
         {
             executeTest("docker rm -f test-build");
-        }
-
-        # Build the package
-        #---------------------------------------------------------------------------------------------------------------------------
-        if ($bBuildPackage && $strVm ne VM_NONE)
-        {
-            my $strPackagePath = "${strBackRestBase}/test/result/package";
-
-            # Loop through VMs to do the package builds
-            my @stryBuildVm = $strVm eq VM_ALL ? VM_LIST : ($strVm);
-            $oStorageBackRest->pathCreate($strPackagePath, {bIgnoreExists => true, bCreateParent => true});
-
-            foreach my $strBuildVM (@stryBuildVm)
-            {
-                my $strBuildPath = "${strPackagePath}/${strBuildVM}";
-
-                if ($oVm->{$strBuildVM}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
-                {
-                    &log(INFO, "build package for ${strBuildVM} (${strBuildPath})");
-
-                    if ($strVm ne VM_NONE)
-                    {
-                        executeTest(
-                            "docker run -itd -h test-build --name=test-build" .
-                            " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-test",
-                            {bSuppressStdErr => true});
-                    }
-
-                    $oStorageBackRest->pathCreate($strBuildPath, {bIgnoreExists => true, bCreateParent => true});
-
-                    # Clone a copy of the debian package repo
-                    executeTest(
-                        ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
-                        "bash -c 'git clone https://salsa.debian.org/postgresql/pgbackrest.git /root/package-src 2>&1'");
-
-                    executeTest(
-                        "rsync -rL --exclude=.vagrant --exclude=.git --exclude=test/result ${strBackRestBase}/" .
-                            " ${strBuildPath}/");
-                    executeTest(
-                        ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
-                        "bash -c 'cp -r /root/package-src/debian ${strBuildPath} && sudo chown -R " . TEST_USER .
-                        " ${strBuildPath}'");
-
-                    # Patch files in debian package builds
-                    #
-                    # Use these commands to create a new patch (may need to modify first line):
-                    # BRDIR=/home/vagrant/pgbackrest;BRVM=u22;BRPATCHFILE=${BRDIR?}/test/patch/debian-package.patch
-                    # DBDIR=${BRDIR?}/test/result/package/${BRVM}/debian
-                    # diff -Naur ${DBDIR?}.old ${DBDIR}.new > ${BRPATCHFILE?}
-                    my $strDebianPackagePatch = "${strBackRestBase}/test/patch/debian-package.patch";
-
-                    if ($oStorageBackRest->exists($strDebianPackagePatch))
-                    {
-                        executeTest("cp -r ${strBuildPath}/debian ${strBuildPath}/debian.old");
-                        executeTest("patch -d ${strBuildPath}/debian < ${strDebianPackagePatch}");
-                        executeTest("cp -r ${strBuildPath}/debian ${strBuildPath}/debian.new");
-                    }
-
-                    # If dev build then disable static release date used for reproducibility
-                    my $bVersionDev = PROJECT_VERSION =~ /dev$/;
-
-                    if ($bVersionDev)
-                    {
-                        my $strRules = ${$oStorageBackRest->get("${strBuildPath}/debian/rules")};
-
-                        $strRules =~ s/\-\-var\=release-date-static\=y/\-\-var\=release-date-static\=n/g;
-                        $strRules =~ s/\-\-out\=html \-\-cache\-only/\-\-out\=html \-\-no\-exe/g;
-
-                        $oStorageBackRest->put("${strBuildPath}/debian/rules", $strRules);
-                    }
-
-                    # Remove patches that should be applied to core code
-                    $oStorageBackRest->remove("${strBuildPath}/debian/patches", {bRecurse => true, bIgnoreExists => true});
-
-                    # Update changelog to add experimental version
-                    $oStorageBackRest->put("${strBuildPath}/debian/changelog",
-                        "pgbackrest (${\PROJECT_VERSION}-0." . ($bVersionDev ? 'D' : 'P') . strftime("%Y%m%d%H%M%S", gmtime) .
-                            ") experimental; urgency=medium\n" .
-                        "\n" .
-                        '  * Automated experimental ' . ($bVersionDev ? 'development' : 'production') . " build.\n" .
-                        "\n" .
-                        ' -- David Steele <david@pgbackrest.org>  ' . strftime("%a, %e %b %Y %H:%M:%S %z", gmtime) . "\n\n" .
-                        ${$oStorageBackRest->get("${strBuildPath}/debian/changelog")});
-
-                    executeTest(
-                        ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
-                        "bash -c 'cd ${strBuildPath} && debuild -d -i -us -uc -b'");
-
-                    executeTest(
-                        ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
-                        "bash -c 'rm -f ${strPackagePath}/${strBuildVM}/*.build ${strPackagePath}/${strBuildVM}/*.changes" .
-                        " ${strPackagePath}/${strBuildVM}/pgbackrest-doc*'");
-
-                    if ($strVm ne VM_NONE)
-                    {
-                        executeTest("docker rm -f test-build");
-                    }
-                }
-
-                if ($oVm->{$strBuildVM}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
-                {
-                    &log(INFO, "build package for ${strBuildVM} (${strBuildPath})");
-
-                    # Create build container
-                    if ($strVm ne VM_NONE)
-                    {
-                        executeTest(
-                            "docker run -itd -h test-build --name=test-build" .
-                            " -v ${strBackRestBase}:${strBackRestBase} " . containerRepo() . ":${strBuildVM}-test",
-                            {bSuppressStdErr => true});
-                    }
-
-                    # Fetching specific files is fragile but even a shallow clone of the entire pgrpms repo is very expensive.
-                    # Using 'git archive' does not seem to work: access denied or repository not exported: /git/pgrpms.git.
-                    executeTest(
-                        ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
-                        "bash -c \"" .
-                        "mkdir /root/package-src && " .
-                        "wget -q -O /root/package-src/pgbackrest-conf.patch " .
-                            "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;hb=refs/heads/mas"."ter;" .
-                            "f=rpm/redhat/mas"."ter/common/pgbackrest/mas"."ter/pgbackrest-conf.patch' && " .
-                        "wget -q -O /root/package-src/pgbackrest.logrotate " .
-                            "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;hb=refs/heads/mas"."ter;" .
-                            "f=rpm/redhat/mas"."ter/common/pgbackrest/mas"."ter/pgbackrest.logrotate' && " .
-                        "wget -q -O /root/package-src/pgbackrest.spec " .
-                            "'https://git.postgresql.org/gitweb/?p=pgrpms.git;a=blob_plain;hb=refs/heads/mas"."ter;" .
-                            "f=rpm/redhat/mas"."ter/common/pgbackrest/mas"."ter/pgbackrest.spec'\"");
-
-                    # Create build directories
-                    $oStorageBackRest->pathCreate($strBuildPath, {bIgnoreExists => true, bCreateParent => true});
-                    $oStorageBackRest->pathCreate("${strBuildPath}/SOURCES", {bIgnoreExists => true, bCreateParent => true});
-                    $oStorageBackRest->pathCreate("${strBuildPath}/SPECS", {bIgnoreExists => true, bCreateParent => true});
-                    $oStorageBackRest->pathCreate("${strBuildPath}/RPMS", {bIgnoreExists => true, bCreateParent => true});
-                    $oStorageBackRest->pathCreate("${strBuildPath}/BUILD", {bIgnoreExists => true, bCreateParent => true});
-
-                    # Install PostreSQL 11 development for package builds
-                    executeTest(
-                        ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
-                        "bash -c 'yum install -y postgresql11-devel 2>&1'");
-
-                    # Copy source files
-                    executeTest(
-                        "tar --transform='s_^_pgbackrest-release-${\PROJECT_VERSION}/_'" .
-                            " -czf ${strBuildPath}/SOURCES/${\PROJECT_VERSION}.tar.gz -C ${strBackRestBase}" .
-                            " src LICENSE");
-
-                    # Copy package files
-                    executeTest(
-                        ($strVm ne VM_NONE ? "docker exec -i test-build " : '') . "bash -c '" .
-                        "ln -s ${strBuildPath} /root/rpmbuild && " .
-                        "cp /root/package-src/pgbackrest.spec ${strBuildPath}/SPECS && " .
-                        "cp /root/package-src/*.patch ${strBuildPath}/SOURCES && " .
-                        "cp /root/package-src/pgbackrest.logrotate ${strBuildPath}/SOURCES && " .
-                        "sudo chown -R " . TEST_USER . " ${strBuildPath}'");
-
-                    # Patch files in RHEL package builds
-                    #
-                    # Use these commands to create a new patch (may need to modify first line):
-                    # BRDIR=/home/vagrant/pgbackrest;BRVM=rh8;BRPATCHFILE=${BRDIR?}/test/patch/rhel-package.patch
-                    # PKDIR=${BRDIR?}/test/result/package/${BRVM}/SPECS
-                    # diff -Naur ${PKDIR?}.old ${PKDIR}.new > ${BRPATCHFILE?}
-                    my $strPackagePatch = "${strBackRestBase}/test/patch/rhel-package.patch";
-
-                    if ($oStorageBackRest->exists($strPackagePatch))
-                    {
-                        executeTest("cp -r ${strBuildPath}/SPECS ${strBuildPath}/SPECS.old");
-                        executeTest("patch -d ${strBuildPath}/SPECS < ${strPackagePatch}");
-                        executeTest("cp -r ${strBuildPath}/SPECS ${strBuildPath}/SPECS.new");
-                    }
-
-                    # Update version number to match current version
-                    my $strSpec = ${$oStorageBackRest->get("${strBuildPath}/SPECS/pgbackrest.spec")};
-                    $strSpec =~ s/^Version\:.*$/Version\:\t${\PROJECT_VERSION}/gm;
-                    $oStorageBackRest->put("${strBuildPath}/SPECS/pgbackrest.spec", $strSpec);
-
-                    # Build package
-                    executeTest(
-                        ($strVm ne VM_NONE ? "docker exec -i test-build " : '') .
-                        "rpmbuild --define 'pgmajorversion %{nil}' -v -bb --clean root/rpmbuild/SPECS/pgbackrest.spec",
-                        {bSuppressStdErr => true});
-
-                    # Remove build container
-                    if ($strVm ne VM_NONE)
-                    {
-                        executeTest("docker rm -f test-build");
-                    }
-                }
-            }
         }
 
         # Exit if only testing builds
@@ -1052,10 +780,10 @@ eval
             if (!defined($$oyProcess[$iVmIdx]) && $iTestIdx < @{$oyTestRun})
             {
                 my $oJob = new pgBackRestTest::Common::JobTest(
-                    $oStorageTest, $strBackRestBase, $strTestPath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut, $iVmIdx, $iVmMax,
-                    $strMakeCmd, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest, $strLogLevelTestFile, !$bNoLogTimestamp,
-                    $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoBackTrace, !$bNoValgrind, !$bNoCoverage, $bCoverageSummary,
-                    !$bNoOptimize, $bProfile, $iScale, $strTimeZone, !$bNoDebug, $bDebugTestTrace,
+                    $oStorageTest, $strBackRestBase, $strTestPath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut, $strPlatform,
+                    $strVmArch, $strImage, $iVmIdx, $iVmMax, $strMakeCmd, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest,
+                    $strLogLevelTestFile, !$bNoLogTimestamp, $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoBackTrace, !$bNoValgrind,
+                    !$bNoCoverage, $bCoverageSummary, !$bNoOptimize, $bProfile, $iScale, $strTimeZone, !$bNoDebug, $bDebugTestTrace,
                     $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));
                 $iTestIdx++;
 

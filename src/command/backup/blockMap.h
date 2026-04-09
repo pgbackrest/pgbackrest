@@ -25,7 +25,7 @@ typedef struct BlockMapItem
     uint64_t offset;                                                // Offset of super block into the bundle
     uint64_t size;                                                  // Stored super block size (with compression, etc.)
     uint64_t block;                                                 // Block no inside of super block
-    unsigned char checksum[XX_HASH_SIZE_MAX];                       // Checksum of the block
+    uint8_t checksum[XX_HASH_SIZE_MAX];                             // Checksum of the block
 } BlockMapItem;
 
 /***********************************************************************************************************************************
@@ -62,14 +62,14 @@ Getters/Setters
 FN_INLINE_ALWAYS BlockMapItem *
 blockMapGet(const BlockMap *const this, const unsigned int mapIdx)
 {
-    return (BlockMapItem *)lstGet((List *const)this, mapIdx);
+    return (BlockMapItem *)lstGet((const List *const)this, mapIdx);
 }
 
 // Block map size
 FN_INLINE_ALWAYS unsigned int
 blockMapSize(const BlockMap *const this)
 {
-    return lstSize((List *const)this);
+    return lstSize((const List *const)this);
 }
 
 /***********************************************************************************************************************************

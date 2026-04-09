@@ -29,14 +29,11 @@ use pgBackRestTest::Common::Storage;
 use pgBackRestTest::Common::StoragePosix;
 
 use pgBackRestDoc::Common::Doc;
-use pgBackRestDoc::Common::DocConfig;
 use pgBackRestDoc::Common::DocManifest;
-use pgBackRestDoc::Common::DocRender;
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
 use pgBackRestDoc::Html::DocHtmlSite;
-use pgBackRestDoc::Latex::DocLatex;
 use pgBackRestDoc::Markdown::DocMarkdown;
 use pgBackRestDoc::ProjectInfo;
 
@@ -65,7 +62,7 @@ doc.pl [options]
    --var            Override defined variable
    --key-var        Override defined variable and use in cache key
    --doc-path       Document path to render (manifest.xml should be located here)
-   --out            Output types (html, pdf, markdown)
+   --out            Output types (html, markdown)
    --out-preserve   Don't clean output directory
    --require        Require only certain sections of the document (to speed testing)
    --include        Include source in generation (links will reference website)
@@ -299,7 +296,7 @@ eval
         # Clean contents of out directory
         if (!$bOutPreserve)
         {
-            my $strOutputPath = $strOutput eq 'pdf' ? "${strOutputPath}/latex" : "${strOutputPath}/$strOutput";
+            my $strOutputPath = "${strOutputPath}/$strOutput";
 
             # Clean the current out path if it exists
             if (-e $strOutputPath)
@@ -342,24 +339,11 @@ eval
                         "${strBasePath}/resource/html/" . $oManifest->variableGet('project-favicon') : undef,
                     defined($oManifest->variableGet('project-logo')) ?
                         "${strBasePath}/resource/" . $oManifest->variableGet('project-logo') : undef,
+                    "${strBasePath}/resource/sponsor",
                     !$bNoExe
                 );
 
             $oHtmlSite->process();
-        }
-        elsif ($strOutput eq 'pdf')
-        {
-            my $oLatex =
-                new pgBackRestDoc::Latex::DocLatex
-                (
-                    $oManifest,
-                    "${strBasePath}/xml",
-                    "${strOutputPath}/latex",
-                    "${strBasePath}/resource/latex/preamble.tex",
-                    !$bNoExe
-                );
-
-            $oLatex->process();
         }
     }
 

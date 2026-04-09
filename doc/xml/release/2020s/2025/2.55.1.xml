@@ -1,0 +1,32 @@
+<release date="2025-05-05" version="2.55.1" title="Bug Fixes">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="2613"/>
+                <github-pull-request id="2615"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="frank.brendel"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Revert <quote>calculate content-md5 on S3 only when required</quote>.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2610"/>
+                <github-pull-request id="2611"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="wolfgang.walther"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                    <release-item-reviewer id="wolfgang.walther"/>
+                </release-item-contributor-list>
+
+                <p>Fix lower bounds checking for option keys.</p>
+            </release-item>
+        </release-bug-list>
+    </release-core-list>
+</release>

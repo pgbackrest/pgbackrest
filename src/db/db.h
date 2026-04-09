@@ -109,7 +109,7 @@ typedef struct DbBackupStartResult
     String *walSegmentCheck;                                        // Segment used to check archiving, may be NULL
 } DbBackupStartResult;
 
-FN_EXTERN DbBackupStartResult dbBackupStart(Db *this, bool startFast, bool stopAuto, bool archiveCheck);
+FN_EXTERN DbBackupStartResult dbBackupStart(Db *this, bool startFast, bool archiveCheck);
 
 // Stop backup and return starting lsn, wal segment name, backup label, and tablespace map
 typedef struct DbBackupStopResult
@@ -129,7 +129,7 @@ FN_EXTERN Pack *dbList(Db *this);
 FN_EXTERN void dbReplayWait(Db *this, const String *targetLsn, uint32_t targetTimeline, TimeMSec timeout);
 
 // Check that the cluster is alive and correctly configured during the backup
-FN_EXTERN void dbPing(Db *const this, bool force);
+FN_EXTERN void dbPing(Db *this, bool force);
 
 // Epoch time on the PostgreSQL host in ms
 FN_EXTERN TimeMSec dbTimeMSec(Db *this);

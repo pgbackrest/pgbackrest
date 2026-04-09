@@ -1,11 +1,12 @@
 /***********************************************************************************************************************************
 Postgres Client
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <libpq-fe.h>
 
 #include "common/debug.h"
+#include "common/io/fd.h"
 #include "common/log.h"
 #include "common/wait.h"
 #include "postgres/client.h"
@@ -198,7 +199,7 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
             PQconsumeInput(this->connection);
             busy = PQisBusy(this->connection);
         }
-        while (busy && waitMore(wait));
+        while (busy && fdReadyRead(PQsocket(this->connection), waitRemains(wait)));
 
         // If the query is still busy after the timeout attempt to cancel
         if (busy)
@@ -242,16 +243,17 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
             }
             else
             {
-                if (resultType == pgClientQueryResultNone)
-                    THROW_FMT(DbQueryError, "no result expected from '%s'", strZ(query));
-
-                // Expect some rows to be returned
+                // If no tuples then the result is an error
                 if (resultStatus != PGRES_TUPLES_OK)
                 {
                     THROW_FMT(
                         DbQueryError, "unable to execute query '%s': %s", strZ(query),
                         strZ(strTrim(strNewZ(PQresultErrorMessage(pgResult)))));
                 }
+
+                // Expect some rows to be returned
+                if (resultType == pgClientQueryResultNone)
+                    THROW_FMT(DbQueryError, "no result expected from '%s'", strZ(query));
 
                 // Fetch row and column values
                 PackWrite *const pack = pckWriteNewP();
@@ -352,26 +354,6 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(PACK, result);
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN void
-pgClientClose(PgClient *const this)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(PG_CLIENT, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-
-    if (this->connection != NULL)
-    {
-        memContextCallbackClear(objMemContext(this));
-        PQfinish(this->connection);
-        this->connection = NULL;
-    }
-
-    FUNCTION_LOG_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/

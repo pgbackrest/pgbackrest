@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Backup Command
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <string.h>
 #include <sys/stat.h>
@@ -32,7 +32,7 @@ Backup Command
 #include "db/helper.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
-#include "info/manifest.h"
+#include "info/manifest/manifest.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "protocol/helper.h"
@@ -185,14 +185,14 @@ backupInit(const InfoBackup *const infoBackup)
     *result = (BackupData){0};
 
     // Don't allow backup from standby when offline
-    bool backupStandby = cfgOptionBool(cfgOptBackupStandby);
+    unsigned int backupStandby = cfgOptionSeq(cfgOptBackupStandby);
     const InfoPgData infoPg = infoPgDataCurrent(infoBackupPg(infoBackup));
 
-    if (!cfgOptionBool(cfgOptOnline) && backupStandby)
+    if (!cfgOptionBool(cfgOptOnline) && backupStandby != CFGOPTVAL_BACKUP_STANDBY_N)
     {
         LOG_WARN(
             "option " CFGOPT_BACKUP_STANDBY " is enabled but backup is offline - backups will be performed from the primary");
-        backupStandby = false;
+        backupStandby = CFGOPTVAL_BACKUP_STANDBY_N;
     }
 
     // Get database info when online
@@ -200,7 +200,11 @@ backupInit(const InfoBackup *const infoBackup)
 
     if (cfgOptionBool(cfgOptOnline))
     {
-        const DbGetResult dbInfo = dbGet(!backupStandby, true, backupStandby);
+        const DbGetResult dbInfo = dbGet(backupStandby == CFGOPTVAL_BACKUP_STANDBY_N, true, backupStandby);
+
+        // If no standby was found but using the primary is allowed then warn and proceed
+        if (backupStandby == CFGOPTVAL_BACKUP_STANDBY_PREFER && dbInfo.standby == NULL)
+            LOG_WARN("unable to find a standby to perform the backup, using primary instead");
 
         result->pgIdxPrimary = dbInfo.primaryIdx;
         result->dbPrimary = dbInfo.primary;
@@ -315,12 +319,9 @@ static const ManifestBlockIncrChecksumSizeMap manifestBlockIncrChecksumSizeMapDe
 // All maps
 static const ManifestBlockIncrMap manifestBlockIncrMap =
 {
-    .sizeMap = manifestBlockIncrSizeMapDefault,
-    .sizeMapSize = LENGTH_OF(manifestBlockIncrSizeMapDefault),
-    .ageMap = manifestBlockIncrAgeMapDefault,
-    .ageMapSize = LENGTH_OF(manifestBlockIncrAgeMapDefault),
-    .checksumSizeMap = manifestBlockIncrChecksumSizeMapDefault,
-    .checksumSizeMapSize = LENGTH_OF(manifestBlockIncrChecksumSizeMapDefault),
+    .sizeMap = LSTDEF(manifestBlockIncrSizeMapDefault),
+    .ageMap = LSTDEF(manifestBlockIncrAgeMapDefault),
+    .checksumSizeMap = LSTDEF(manifestBlockIncrChecksumSizeMapDefault),
 };
 
 // Convert map size
@@ -333,28 +334,27 @@ backupBlockIncrMapSize(const ConfigOption optionId, const unsigned int optionKey
         FUNCTION_TEST_PARAM(STRING, value);
     FUNCTION_TEST_END();
 
-    unsigned int result = 0;
+    int64_t result;
 
     TRY_BEGIN()
     {
-        const int64_t valueI64 = cfgParseSize(value);
+        result = cfgParseSize(value);
 
-        if (valueI64 <= UINT_MAX)
-            result = (unsigned int)valueI64;
+        // Error if value is out of range (no need for an error message since that will be generated in the catch block)
+        if (result <= 0 || result > UINT_MAX)
+            THROW(OptionInvalidValueError, "");
     }
     CATCH_ANY()
-    {
-    }
-    TRY_END();
-
-    if (result == 0)
     {
         THROW_FMT(
             OptionInvalidValueError, "'%s' is not valid for '%s' option", strZ(value),
             cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
     }
+    TRY_END();
 
-    FUNCTION_TEST_RETURN(UINT, result);
+    ASSERT(result > 0 && result < UINT_MAX);
+
+    FUNCTION_TEST_RETURN(UINT, (unsigned int)result);
 }
 
 // Convert map checksum size
@@ -425,8 +425,7 @@ backupBlockIncrMap(void)
 
             lstSort(map, sortOrderDesc);
 
-            result.sizeMap = lstGet(map, 0);
-            result.sizeMapSize = lstSize(map);
+            result.sizeMap = map;
         }
 
         // Build age map
@@ -452,8 +451,7 @@ backupBlockIncrMap(void)
 
             lstSort(map, sortOrderDesc);
 
-            result.ageMap = lstGet(map, 0);
-            result.ageMapSize = lstSize(map);
+            result.ageMap = map;
         }
 
         // Build checksum size map
@@ -482,8 +480,7 @@ backupBlockIncrMap(void)
 
             lstSort(map, sortOrderDesc);
 
-            result.checksumSizeMap = lstGet(map, 0);
-            result.checksumSizeMapSize = lstSize(map);
+            result.checksumSizeMap = map;
         }
     }
 
@@ -898,17 +895,17 @@ backupResumeFind(const Manifest *const manifest, const String *const cipherPassB
             {
                 const bool resume = cfgOptionBool(cfgOptResume) && cfgOptionStrId(cfgOptType) == backupTypeFull;
                 bool usable = false;
-                const String *reason = STRDEF("resume only valid for full backup");
+                const char *reason = "resume only valid for full backup";
                 Manifest *manifestResume = NULL;
 
                 if (cfgOptionStrId(cfgOptType) == backupTypeFull)
                 {
-                    reason = STRDEF("partially deleted by prior resume or invalid");
+                    reason = "partially deleted by prior resume or invalid";
 
                     // Resumable backups must have backup.manifest.copy
                     if (storageExistsP(storageRepo(), strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFile))))
                     {
-                        reason = strNewZ("resume is disabled");
+                        reason = "resume is disabled";
 
                         // Attempt to read the manifest file in the resumable backup to see if it can be used. If any error at all
                         // occurs then the backup will be considered unusable and a resume will not be attempted.
@@ -921,7 +918,7 @@ backupResumeFind(const Manifest *const manifest, const String *const cipherPassB
                             }
                             CATCH_ANY()
                             {
-                                reason = strNewFmt("unable to read %s" INFO_COPY_EXT, strZ(manifestFile));
+                                reason = zNewFmt("unable to read %s" INFO_COPY_EXT, strZ(manifestFile));
                             }
                             TRY_END();
 
@@ -934,21 +931,21 @@ backupResumeFind(const Manifest *const manifest, const String *const cipherPassB
                                 // the cost.
                                 if (!strEq(manifestResumeData->backrestVersion, manifestData(manifest)->backrestVersion))
                                 {
-                                    reason = strNewFmt(
+                                    reason = zNewFmt(
                                         "new " PROJECT_NAME " version '%s' does not match resumable " PROJECT_NAME " version '%s'",
                                         strZ(manifestData(manifest)->backrestVersion), strZ(manifestResumeData->backrestVersion));
                                 }
                                 // Check backup type because new backup label must be the same type as resume backup label
                                 else if (manifestResumeData->backupType != cfgOptionStrId(cfgOptType))
                                 {
-                                    reason = strNewFmt(
+                                    reason = zNewFmt(
                                         "new backup type '%s' does not match resumable backup type '%s'",
-                                        strZ(cfgOptionDisplay(cfgOptType)), strZ(strIdToStr(manifestResumeData->backupType)));
+                                        strZ(cfgOptionDisplay(cfgOptType)), zNewStrId(manifestResumeData->backupType));
                                 }
                                 // Check prior backup label ??? Do we really care about the prior backup label?
                                 else if (!strEq(manifestResumeData->backupLabelPrior, manifestData(manifest)->backupLabelPrior))
                                 {
-                                    reason = strNewFmt(
+                                    reason = zNewFmt(
                                         "new prior backup label '%s' does not match resumable prior backup label '%s'",
                                         manifestResumeData->backupLabelPrior ?
                                             strZ(manifestResumeData->backupLabelPrior) : "<undef>",
@@ -960,7 +957,7 @@ backupResumeFind(const Manifest *const manifest, const String *const cipherPassB
                                     manifestResumeData->backupOptionCompressType !=
                                     compressTypeEnum(cfgOptionStrId(cfgOptCompressType)))
                                 {
-                                    reason = strNewFmt(
+                                    reason = zNewFmt(
                                         "new compression '%s' does not match resumable compression '%s'",
                                         strZ(cfgOptionDisplay(cfgOptCompressType)),
                                         strZ(compressTypeStr(manifestResumeData->backupOptionCompressType)));
@@ -981,8 +978,7 @@ backupResumeFind(const Manifest *const manifest, const String *const cipherPassB
                 else
                 {
                     LOG_FMT(
-                        resume ? logLevelWarn : logLevelInfo, 0, "backup '%s' cannot be resumed: %s", strZ(backupLabel),
-                        strZ(reason));
+                        resume ? logLevelWarn : logLevelInfo, 0, "backup '%s' cannot be resumed: %s", strZ(backupLabel), reason);
 
                     storagePathRemoveP(
                         storageRepoWrite(), strNewFmt(STORAGE_REPO_BACKUP "/%s", strZ(backupLabel)), .recurse = true);
@@ -1094,13 +1090,11 @@ backupStart(const BackupData *const backupData)
 
             // Start backup
             LOG_INFO_FMT(
-                "execute %sexclusive backup start: backup begins after the %s checkpoint completes",
-                backupData->version >= PG_VERSION_96 ? "non-" : "",
+                "execute backup start: backup begins after the %s checkpoint completes",
                 cfgOptionBool(cfgOptStartFast) ? "requested immediate" : "next regular");
 
             const DbBackupStartResult dbBackupStartResult = dbBackupStart(
-                backupData->dbPrimary, cfgOptionBool(cfgOptStartFast), cfgOptionBool(cfgOptStopAuto),
-                cfgOptionBool(cfgOptArchiveCheck));
+                backupData->dbPrimary, cfgOptionBool(cfgOptStartFast), cfgOptionBool(cfgOptArchiveCheck));
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
@@ -1267,8 +1261,7 @@ backupStop(BackupData *const backupData, Manifest *const manifest)
         {
             // Stop the backup
             LOG_INFO_FMT(
-                "execute %sexclusive backup stop and wait for all WAL segments to archive",
-                backupData->version >= PG_VERSION_96 ? "non-" : "");
+                "execute backup stop and wait for all WAL segments to archive");
 
             const DbBackupStopResult dbBackupStopResult = dbBackupStop(backupData->dbPrimary);
 
@@ -1459,11 +1452,10 @@ backupJobResult(
                 if (copySize != file.sizeOriginal)
                     strCatFmt(logProgress, "%s->", strZ(strSizeFormat(file.sizeOriginal)));
 
-                // Store percentComplete as an integer
-                percentComplete = sizeTotal == 0 ? 10000 : (unsigned int)(((double)*sizeProgress / (double)sizeTotal) * 10000);
+                // Store percentComplete as an integer (used to update progress in the lock file)
+                percentComplete = cvtPctToUInt(*sizeProgress, sizeTotal);
 
-                strCatFmt(
-                    logProgress, "%s, %u.%02u%%", strZ(strSizeFormat(copySize)), percentComplete / 100, percentComplete % 100);
+                strCatFmt(logProgress, "%s, %s", strZ(strSizeFormat(copySize)), strZ(strNewPct(*sizeProgress, sizeTotal)));
 
                 // Format log checksum
                 const String *const logChecksum =
@@ -1572,12 +1564,12 @@ backupJobResult(
                                 }
 
                                 // Make message plural when appropriate
-                                const String *const plural = errorTotalMin > 1 ? STRDEF("s") : EMPTY_STR;
+                                const char *const plural = errorTotalMin > 1 ? "s" : "";
 
                                 // ??? Update formatting after migration
                                 LOG_WARN_FMT(
-                                    "invalid page checksum%s found in file %s at page%s %s", strZ(plural), strZ(fileLog),
-                                    strZ(plural), strZ(error));
+                                    "invalid page checksum%s found in file %s at page%s %s", plural, strZ(fileLog), plural,
+                                    strZ(error));
                             }
                         }
                     }
@@ -1666,7 +1658,7 @@ Check that the clusters are alive and correctly configured during the backup
 static void
 backupDbPing(const BackupData *const backupData, const bool force)
 {
-    FUNCTION_LOG_BEGIN(logLevelDebug);
+    FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(BACKUP_DATA, backupData);
         FUNCTION_LOG_PARAM(BOOL, force);
     FUNCTION_LOG_END();
@@ -1742,30 +1734,30 @@ backupProcessQueueComparator(const void *const item1, const void *const item2)
     ASSERT(item2 != NULL);
 
     // Unpack files
-    const ManifestFile file1 = manifestFileUnpack(backupProcessQueueComparatorManifest, *(const ManifestFilePack **)item1);
-    const ManifestFile file2 = manifestFileUnpack(backupProcessQueueComparatorManifest, *(const ManifestFilePack **)item2);
+    const ManifestFile file1 = manifestFileUnpack(backupProcessQueueComparatorManifest, *(const ManifestFilePack *const *)item1);
+    const ManifestFile file2 = manifestFileUnpack(backupProcessQueueComparatorManifest, *(const ManifestFilePack *const *)item2);
 
     // If the size differs then that's enough to determine order
     if (!backupProcessQueueComparatorBundle || file1.size > backupProcessQueueComparatorBundleLimit ||
         file2.size > backupProcessQueueComparatorBundleLimit)
     {
         if (file1.size < file2.size)
-            FUNCTION_TEST_RETURN(INT, -1);
-        else if (file1.size > file2.size)
             FUNCTION_TEST_RETURN(INT, 1);
+        else if (file1.size > file2.size)
+            FUNCTION_TEST_RETURN(INT, -1);
     }
 
-    // If bundling order by time ascending so that older files are bundled with older files and newer with newer
+    // If bundling order by time desc so that older files are bundled with older files and newer with newer
     if (backupProcessQueueComparatorBundle)
     {
         if (file1.timestamp > file2.timestamp)
-            FUNCTION_TEST_RETURN(INT, -1);
-        else if (file1.timestamp < file2.timestamp)
             FUNCTION_TEST_RETURN(INT, 1);
+        else if (file1.timestamp < file2.timestamp)
+            FUNCTION_TEST_RETURN(INT, -1);
     }
 
     // If size/time is the same then use name to generate a deterministic ordering (names must be unique)
-    FUNCTION_TEST_RETURN(INT, strCmp(file1.name, file2.name));
+    FUNCTION_TEST_RETURN(INT, strCmp(file2.name, file1.name));
 }
 
 // Helper to generate the backup queues
@@ -1893,7 +1885,7 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
         backupProcessQueueComparatorBundleLimit = jobData->bundleLimit;
 
         for (unsigned int queueIdx = 0; queueIdx < lstSize(jobData->queueList); queueIdx++)
-            lstSort(*(List **)lstGet(jobData->queueList, queueIdx), sortOrderDesc);
+            lstSort(*(List **)lstGet(jobData->queueList, queueIdx), sortOrderAsc);
 
         // Move process queues to prior context
         lstMove(jobData->queueList, memContextPrior());
@@ -1951,7 +1943,6 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
         const int queueEnd = queueIdx;
 
         // Create backup job
-        ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_BACKUP_FILE);
         PackWrite *param = NULL;
         uint64_t fileTotal = 0;
         uint64_t fileSize = 0;
@@ -1980,7 +1971,7 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                 // Add common parameters before first file
                 if (param == NULL)
                 {
-                    param = protocolCommandParam(command);
+                    param = protocolPackNew();
 
                     if (bundle && file.size <= jobData->bundleLimit)
                     {
@@ -2068,7 +2059,8 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
                 // Assign job to result
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
-                    result = protocolParallelJobNew(bundle ? VARUINT64(jobData->bundleId) : VARSTR(fileName), command);
+                    result = protocolParallelJobNew(
+                        bundle ? VARUINT64(jobData->bundleId) : VARSTR(fileName), PROTOCOL_COMMAND_BACKUP_FILE, param);
 
                     if (bundle)
                         jobData->bundleId++;
@@ -2541,9 +2533,6 @@ cmdBackup(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
-    // Verify the repo is local
-    repoIsLocalVerify();
-
     // Test for stop file
     lockStopTest();
 
@@ -2556,6 +2545,9 @@ cmdBackup(void)
                 "repo option not specified, defaulting to %s",
                 cfgOptionGroupName(cfgOptGrpRepo, cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
         }
+
+        // Get the repo storage in case it is remote and encryption settings need to be pulled down
+        storageRepo();
 
         // Load backup.info
         InfoBackup *const infoBackup = infoBackupLoadFileReconstruct(
@@ -2618,7 +2610,7 @@ cmdBackup(void)
         if (backupData->dbStandby != NULL)
         {
             dbFree(backupData->dbStandby);
-            protocolRemoteFree(backupData->pgIdxStandby);
+            protocolHelperFree(protocolRemoteGet(protocolStorageTypePg, backupData->pgIdxStandby, false));
         }
 
         // Stop the backup
@@ -2642,7 +2634,7 @@ cmdBackup(void)
         // The primary protocol connection won't be used anymore so free it. This needs to happen after backupArchiveCheckCopy() so
         // the backup lock is held on the remote which allows conditional archiving based on the backup lock. Any further access to
         // the primary storage object may result in an error (likely eof).
-        protocolRemoteFree(backupData->pgIdxPrimary);
+        protocolHelperFree(protocolRemoteGet(protocolStorageTypePg, backupData->pgIdxPrimary, false));
 
         // Complete the backup
         LOG_INFO_FMT("new backup label = %s", strZ(manifestData(manifest)->backupLabel));
@@ -2650,7 +2642,7 @@ cmdBackup(void)
 
         // Backup info
         LOG_INFO_FMT(
-            "%s backup size = %s, file total = %u", strZ(strIdToStr(manifestData(manifest)->backupType)),
+            "%s backup size = %s, file total = %u", zNewStrId(manifestData(manifest)->backupType),
             strZ(strSizeFormat(infoBackupDataByLabel(infoBackup, manifestData(manifest)->backupLabel)->backupInfoSizeDelta)),
             manifestFileTotal(manifest));
     }

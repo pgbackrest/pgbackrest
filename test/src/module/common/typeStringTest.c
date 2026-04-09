@@ -12,7 +12,7 @@ Test enum and function to ensure 64-bit enums work properly
 typedef enum
 {
     testStringIdEnumAes256Cbc = STRID5("aes-256-cbc", 0xc43dfbbcdcca10),
-    testStringIdEnumRemote = STRID6("remote", 0x1543cd1521),
+    testStringIdEnumRemote = STRID6("remote9", 0x251543cd1521),
     testStringIdEnumTest = STRID5("test", 0xa4cb40),
 } TestStringIdEnum;
 
@@ -65,9 +65,16 @@ testRun(void)
         TEST_RESULT_STR_Z(strNewBuf(buffer), "12345678", "new string from buffer");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("new from double");
+        TEST_TITLE("new from division");
 
-        TEST_RESULT_STR_Z(strNewDbl(999.1), "999.1", "new");
+        TEST_RESULT_STR_Z(strNewDivP(9991, 10, .precision = 2), "999.10", "new div");
+        TEST_RESULT_STR_Z(strNewDivP(9991, 10, .precision = 2, .trim = true), "999.1", "new div");
+        TEST_RESULT_STR_Z(strNewDivP(9991, 10, .precision = 0), "999", "new div");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("new from percentage");
+
+        TEST_RESULT_STR_Z(strNewPct(2, 3), "66.67%", "new pct");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("new from time");
@@ -347,6 +354,7 @@ testRun(void)
         TEST_RESULT_STR_Z(strSizeFormat(20162900), "19.2MB", "19.2 MB");
         TEST_RESULT_STR_Z(strSizeFormat(1073741824), "1GB", "1 GB");
         TEST_RESULT_STR_Z(strSizeFormat(1073741824 + 107374183), "1.1GB", "1.1 GB");
+        TEST_RESULT_STR_Z(strSizeFormat(UINT64_MAX / 10), "1717986918.3GB", "uint64 max / 10");
         TEST_RESULT_STR_Z(strSizeFormat(UINT64_MAX), "17179869183GB", "uint64 max");
     }
 
@@ -582,13 +590,20 @@ testRun(void)
         #define TEST_STR5ID10                                       (TEST_STR5ID9 | (uint64_t)('y' - 96) << 49)
         #define TEST_STR5ID11                                       (TEST_STR5ID10 | (uint64_t)('5' - 24) << 54)
         #define TEST_STR5ID12                                       (TEST_STR5ID11 | (uint64_t)('6' - 24) << 59)
-        #define TEST_STR5ID13                                       (TEST_STR5ID12 | STRING_ID_PREFIX)
 
         TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "a", 1), TEST_STR5ID1, "5 bits 1 char");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "ab", 2), TEST_STR5ID2, "5 bits 2 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "abc", 3), TEST_STR5ID3, "5 bits 3 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "abc-", 4), TEST_STR5ID4, "5 bits 4 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "abc-z", 5), TEST_STR5ID5, "5 bits 5 chars");
         TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "abc-zk", 6), TEST_STR5ID6, "5 bits 6 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "abc-zkz", 7), TEST_STR5ID7, "5 bits 7 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "abc-zkz2", 8), TEST_STR5ID8, "5 bits 8 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "abc-zkz2-", 9), TEST_STR5ID9, "5 bits 9 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "abc-zkz2-y", 10), TEST_STR5ID10, "5 bits 10 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "abc-zkz2-y5", 11), TEST_STR5ID11, "5 bits 11 chars");
         TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "abc-zkz2-y56", 12), TEST_STR5ID12, "5 bits 12 chars");
-        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "abc-zkz2-y56?", 13), TEST_STR5ID13, "5 bits 13 chars");
-        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "abc-zkz2-y56??", 14), TEST_STR5ID13, "5 bits 14 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "abc-zkz2-y56X", 13), 0, "error on too many chars");
 
         TEST_RESULT_UINT(strIdBitFromZN(stringIdBit5, "AB", 2), 0, "'A' is invalid for 5-bit encoding in 'AB'");
 
@@ -602,15 +617,64 @@ testRun(void)
         #define TEST_STR6ID8                                        (TEST_STR6ID7 | (uint64_t)('z' - 96) << 46)
         #define TEST_STR6ID9                                        (TEST_STR6ID8 | (uint64_t)('Z' - 27) << 52)
         #define TEST_STR6ID10                                       (TEST_STR6ID9 | (uint64_t)('9' - 20) << 58)
-        #define TEST_STR6ID11                                       (TEST_STR6ID10 | STRING_ID_PREFIX)
 
         TEST_RESULT_UINT(strIdBitFromZN(stringIdBit6, "a", 1), TEST_STR6ID1, "6 bits 1 char");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit6, "ab", 2), TEST_STR6ID2, "6 bits 2 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit6, "abC", 3), TEST_STR6ID3, "6 bits 3 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit6, "abC-", 4), TEST_STR6ID4, "6 bits 4 chars");
         TEST_RESULT_UINT(strIdBitFromZN(stringIdBit6, "abC-4", 5), TEST_STR6ID5, "6 bits 5 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit6, "abC-40", 6), TEST_STR6ID6, "6 bits 6 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit6, "abC-40M", 7), TEST_STR6ID7, "6 bits 7 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit6, "abC-40Mz", 8), TEST_STR6ID8, "6 bits 8 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit6, "abC-40MzZ", 9), TEST_STR6ID9, "6 bits 9 chars");
         TEST_RESULT_UINT(strIdBitFromZN(stringIdBit6, "abC-40MzZ9", 10), TEST_STR6ID10, "6 bits 10 chars");
-        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit6, "abC-40MzZ9?", 11), TEST_STR6ID11, "6 bits 11 chars");
-        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit6, "abC-40MzZ9??", 12), TEST_STR6ID11, "6 bits 12 chars");
+        TEST_RESULT_UINT(strIdBitFromZN(stringIdBit6, "abC-40MzZ9Z", 11), 0, "error on too many chars");
 
-        TEST_RESULT_UINT(strIdFromZN("|B", 2, false), 0, "'|' is invalid for 6-bit encoding in '|B'");
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("add sequence");
+
+        TEST_ERROR(strIdFromZN("abcdefghijlm", 12, 6), AssertError, "assertion 'size < (bit ? STRID6_MAX : STRID5_MAX)' failed");
+        TEST_ERROR(strIdFromZN("abcdefghiJ", 10, 6), AssertError, "assertion 'size < (bit ? STRID6_MAX : STRID5_MAX)' failed");
+        TEST_ERROR(strIdFromZN("abcdefghi", 9, 38), AssertError, "assertion 'sequence <= STRING_ID_SEQ_MAX' failed");
+
+        char buffer[STRID_MAX + 1];
+        StringId strId;
+
+        TEST_ASSIGN(strId, strIdFromZN("abc", 3, 0), "5 bits sequence 0");
+        TEST_RESULT_UINT(strId, 0xc412, "check id");
+        strIdToZ(strId, buffer);
+        TEST_RESULT_Z(buffer, "abc", "check string");
+        TEST_RESULT_UINT(strIdSeq(strId), 0, "sequence 0");
+
+        TEST_ASSIGN(strId, strIdFromZN("abcdefhijklm", 12, 5), "5 bits sequence 5");
+        TEST_RESULT_UINT(strId, 0x6b16a4a0c520c41c, "check id");
+        strIdToZ(strId, buffer);
+        TEST_RESULT_Z(buffer, "abcdefhijklm", "check string");
+        TEST_RESULT_UINT(strIdSeq(strId), 5, "sequence 5");
+
+        TEST_ASSIGN(strId, strIdFromZN("abc", 3, 37), "5 bits sequence 37");
+        TEST_RESULT_UINT(strId, 0x1883fe, "check id");
+        strIdToZ(strId, buffer);
+        TEST_RESULT_Z(buffer, "abc", "check string");
+        TEST_RESULT_UINT(strIdSeq(strId), 37, "sequence 37");
+
+        TEST_ASSIGN(strId, strIdFromZN("abcdefhijkl", 11, 6), "5 bits sequence 6");
+        TEST_RESULT_UINT(strId, 0x62d49418a418820e, "check id");
+        strIdToZ(strId, buffer);
+        TEST_RESULT_Z(buffer, "abcdefhijkl", "check string");
+        TEST_RESULT_UINT(strIdSeq(strId), 6, "sequence 6");
+
+        TEST_ASSIGN(strId, strIdFromZN("aBc", 3, 0), "6 bits sequence 0");
+        TEST_RESULT_UINT(strId, 0x39c13, "check id");
+        strIdToZ(strId, buffer);
+        TEST_RESULT_Z(buffer, "aBc", "check string");
+        TEST_RESULT_UINT(strIdSeq(strId), 0, "sequence 0");
+
+        TEST_ASSIGN(strId, strIdFromZN("aBcEfHijK", 9, 37), "6 bits sequence 37");
+        TEST_RESULT_UINT(strId, 0x6051368D507383ff, "check id");
+        strIdToZ(strId, buffer);
+        TEST_RESULT_Z(buffer, "aBcEfHijK", "check string");
+        TEST_RESULT_UINT(strIdSeq(strId), 37, "sequence 37");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("STRID*()");
@@ -619,9 +683,9 @@ testRun(void)
         TEST_RESULT_UINT(STRID6("abC-4", TEST_STR6ID5), TEST_STR6ID5, "STRID6()");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("strIdFromStr()");
+        TEST_TITLE("strStrId()");
 
-        TEST_RESULT_UINT(strIdFromStr(STRDEF("abc-")), TEST_STR5ID4, "5 bits 4 chars");
+        TEST_RESULT_UINT(strStrId(STRDEF("abc-")), TEST_STR5ID4, "5 bits 4 chars");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdFromZ()");
@@ -662,8 +726,6 @@ testRun(void)
         TEST_RESULT_Z(buffer5, "abc-zkz2-y5XX", "    check");
         TEST_RESULT_UINT(strIdToZN(TEST_STR5ID12, buffer5), 12, "5 bits 12 chars");
         TEST_RESULT_Z(buffer5, "abc-zkz2-y56X", "    check");
-        TEST_RESULT_UINT(strIdToZN(TEST_STR5ID13, buffer5), 13, "5 bits 13 chars");
-        TEST_RESULT_Z(buffer5, "abc-zkz2-y56+", "    check");
 
         char buffer6[] = "XXXXXXXXXXX";
 
@@ -687,19 +749,15 @@ testRun(void)
         TEST_RESULT_Z(buffer6, "abC-40MzZXX", "    check");
         TEST_RESULT_UINT(strIdToZN(TEST_STR6ID10, buffer6), 10, "6 bits 10 chars");
         TEST_RESULT_Z(buffer6, "abC-40MzZ9X", "    check");
-        TEST_RESULT_UINT(strIdToZN(TEST_STR6ID11, buffer6), 11, "6 bits 11 chars");
-        TEST_RESULT_Z(buffer6, "abC-40MzZ9+", "    check");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("strIdToStr()");
+        TEST_TITLE("strNewStrId()");
 
-        TEST_RESULT_STR_Z(strIdToStr(TEST_STR5ID1), "a", "5 bits 1 char");
-        TEST_RESULT_STR_Z(strIdToStr(TEST_STR5ID8), "abc-zkz2", "5 bits 8 chars");
+        TEST_RESULT_STR_Z(strNewStrId(TEST_STR5ID1), "a", "5 bits 1 char");
+        TEST_RESULT_STR_Z(strNewStrId(TEST_STR5ID8), "abc-zkz2", "5 bits 8 chars");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("strIdToStr()");
-
-        char buffer[STRID_MAX + 1];
+        TEST_TITLE("strIdToZ()");
 
         TEST_RESULT_UINT(strIdToZ(TEST_STR5ID1, buffer), 1, "5 bits 1 char");
         TEST_RESULT_Z(buffer, "a", "    check");
@@ -709,12 +767,12 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("64-bit enum");
 
-        TEST_RESULT_STR_Z(strIdToStr(testStringIdEnumFunc(testStringIdEnumAes256Cbc)), "aes-256-cbc", "pass to enum param");
+        TEST_RESULT_STR_Z(strNewStrId(testStringIdEnumFunc(testStringIdEnumAes256Cbc)), "aes-256-cbc", "pass to enum param");
 
         TestStringIdEnum testEnum = testStringIdEnumRemote;
-        TEST_RESULT_STR_Z(strIdToStr(testEnum), "remote", "assign to enum");
+        TEST_RESULT_STR_Z(strNewStrId(testEnum), "remote9", "assign to enum");
 
-        TEST_RESULT_STR_Z(strIdToStr(testStringIdEnumTest), "test", "pass to StringId param");
+        TEST_RESULT_STR_Z(strNewStrId(testStringIdEnumTest), "test", "pass to StringId param");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("strIdToLog()");
@@ -734,7 +792,10 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("small string");
 
-        TEST_RESULT_Z(zNewFmt("id=%d", 777), "id=777", "format");
+        char *string;
+        TEST_ASSIGN(string, zNewFmt("id=%d", 777), "format");
+        TEST_RESULT_Z(string, "id=777", "check");
+        TEST_RESULT_VOID(zFree(string), "free");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("string large enough to need separate allocation");
@@ -749,6 +810,11 @@ testRun(void)
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"
         TEST_RESULT_Z(zNewFmt(format, "%s"), format, "compare");
 #pragma GCC diagnostic pop
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("string id");
+
+        TEST_RESULT_Z(zNewStrId(STRID5("bz2", 0x73420)), "bz2", "string id");
     }
 
     // *****************************************************************************************************************************

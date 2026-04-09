@@ -3,8 +3,6 @@ LZ4 Decompress
 
 Decompress IO from the lz4 format.
 ***********************************************************************************************************************************/
-#ifdef HAVE_LIBLZ4
-
 #ifndef COMMON_COMPRESS_LZ4_DECOMPRESS_H
 #define COMMON_COMPRESS_LZ4_DECOMPRESS_H
 
@@ -21,5 +19,3 @@ Constructors
 FN_EXTERN IoFilter *lz4DecompressNew(bool raw);
 
 #endif
-
-#endif // HAVE_LIBLZ4

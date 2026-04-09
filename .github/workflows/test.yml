@@ -14,7 +14,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
 
     strategy:
       # Let all the jobs run to completion even if one fails
@@ -28,17 +28,14 @@ jobs:
       # tackle the slowest tests first.
       matrix:
         include:
-          # All integration tests for oldest Debian
-          - param: test --vm=u20 --param=module=integration
-
           # All tests (without coverage or valgrind) for 32-bit
-          - param: test --vm=d11 --param=no-performance --param=no-coverage --param=no-valgrind
+          - param: test --vm=d11 --vm-arch=i386 --param=no-performance --param=no-coverage --param=no-valgrind
 
           # Debian/Ubuntu documentation
-          - param: doc --vm=u20
+          - param: doc --vm=u22
 
           # All integration tests
-          - param: test --vm=u22 --param=build-package --param=module=integration
+          - param: test --vm=u22 --param=module=integration
 
           # All unit tests with coverage, backtrace and alternate timezone
           - param: test --vm=u22 --param=c-only --param=no-valgrind --param=tz=America/New_York
@@ -47,7 +44,10 @@ jobs:
           - param: test --vm=u22 --param=c-only --param=no-coverage --param=no-back-trace
 
           # All unit tests on the newest gcc available
-          - param: test --vm=f40 --param=c-only --param=no-valgrind --param=no-coverage --param=no-performance
+          - param: test --vm=f43 --param=c-only --param=no-valgrind --param=no-coverage --param=no-performance
+
+          # All unit tests on musl libc
+          - param: test --vm=a321 --param=c-only --param=no-coverage --param=no-performance
 
           # RHEL documentation
           - param: doc --vm=rh8
@@ -71,19 +71,9 @@ jobs:
         run: |
           cat ${GITHUB_WORKSPACE?}/pgbackrest/test/result/coverage/coverage.html
 
-  # Basic tests on other architectures using emulation. The emulation is so slow that running all the unit tests would be too
-  # expensive, but this at least shows that the build works and some of the more complex tests run. In particular, it is good to
-  # test on one big-endian architecture to be sure that checksums are correct.
-  arch:
-    runs-on: ubuntu-20.04
-
-    strategy:
-      matrix:
-        include:
-          - arch: ppc64le
-            distro: ubuntu20.04
-          - arch: s390x
-            distro: ubuntu20.04
+  # Unit tests on aarch64 with valgrind
+  aarch64:
+    runs-on: ubuntu-22.04-arm
 
     steps:
       - name: Checkout Code
@@ -92,27 +82,46 @@ jobs:
           path: pgbackrest
 
       - name: Run Test
-        uses: uraimo/run-on-arch-action@v2
-        id: runcmd
+        run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl test --vm=u22 --param=c-only --param=no-coverage --param=no-back-trace --param=build-max=2
+
+  # Basic tests on other architectures using emulation. The emulation is so slow that running all the unit tests would be too
+  # expensive, but this at least shows that the build works and some of the more complex tests run. In particular, it is good to
+  # test on one big-endian architecture to be sure that checksums are correct.
+  arch:
+    runs-on: ubuntu-24.04
+
+    strategy:
+      # Let all the jobs run to completion even if one fails
+      fail-fast: false
+
+      matrix:
+        include:
+          - arch: 'ppc64le'
+          - arch: 's390x'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
         with:
-          arch: ${{matrix.arch}}
-          distro: ${{matrix.distro}}
+          path: pgbackrest
 
-          # Cache builds
-          githubToken: ${{github.token}}
+      - name: Install
+        run: |
+          sudo apt-get update
+          sudo DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y perl sudo libxml-checker-perl libyaml-perl rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config make gcc ccache meson git liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev
+          docker run --privileged --rm tonistiigi/binfmt --install all
 
-          install: |
-            apt-get update
-            DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y perl sudo libxml-checker-perl libyaml-perl rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config make gcc ccache python3-distutils meson git liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev
+      - name: Build VM
+        run: ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm-build --vm=u22 --vm-arch=${{matrix.arch}}
 
-          run: |
-            git config --global --add safe.directory ${GITHUB_WORKSPACE?}/pgbackrest
-            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --min-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup
-            ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --min-gen --no-valgrind --no-coverage --no-optimize --build-max=2 --module=postgres --test=interface
+      - name: Run Test
+        run: |
+          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup
+          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --no-optimize --build-max=2 --module=postgres --test=interface
 
   # Run meson unity build to check for errors, unused functions, and externed functions
   unity:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout Code
@@ -149,7 +158,7 @@ jobs:
           cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl test --param=code-format-check
 
   codeql:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     permissions:
       actions: read
@@ -167,7 +176,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Packages
-        run: sudo apt-get install -y --no-install-recommends libyaml-dev
+        run: sudo apt-get install -y --no-install-recommends libyaml-dev libbz2-dev meson
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
@@ -175,7 +184,7 @@ jobs:
           languages: ${{matrix.language}}
 
       - name: Build
-        run: ${GITHUB_WORKSPACE?}/src/configure && make -j 2
+        run: meson setup ${HOME?}/build ${GITHUB_WORKSPACE?} && ninja -C ${HOME?}/build
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3

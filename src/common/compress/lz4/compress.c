@@ -3,14 +3,13 @@ LZ4 Compress
 
 Developed against version r131 using the documentation in https://github.com/lz4/lz4/blob/r131/lib/lz4frame.h.
 ***********************************************************************************************************************************/
-#include "build.auto.h"
-
-#ifdef HAVE_LIBLZ4
+#include <build.h>
 
 #include <lz4frame.h>
 #include <stdio.h>
 #include <string.h>
 
+#include "common/compress/common.h"
 #include "common/compress/lz4/common.h"
 #include "common/compress/lz4/compress.h"
 #include "common/debug.h"
@@ -273,26 +272,9 @@ lz4CompressNew(const int level, const bool raw)
     }
     OBJ_NEW_END();
 
-    // Create param list
-    Pack *paramList;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        PackWrite *const packWrite = pckWriteNewP();
-
-        pckWriteI32P(packWrite, level);
-        pckWriteBoolP(packWrite, raw);
-        pckWriteEndP(packWrite);
-
-        paramList = pckMove(pckWriteResult(packWrite), memContextPrior());
-    }
-    MEM_CONTEXT_TEMP_END();
-
     FUNCTION_LOG_RETURN(
         IO_FILTER,
         ioFilterNewP(
-            LZ4_COMPRESS_FILTER_TYPE, this, paramList, .done = lz4CompressDone, .inOut = lz4CompressProcess,
+            LZ4_COMPRESS_FILTER_TYPE, this, compressParamList(level, raw), .done = lz4CompressDone, .inOut = lz4CompressProcess,
             .inputSame = lz4CompressInputSame));
 }
-
-#endif // HAVE_LIBLZ4

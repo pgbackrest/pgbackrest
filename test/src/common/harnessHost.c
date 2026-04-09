@@ -1,21 +1,22 @@
 /***********************************************************************************************************************************
 Host Harness
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "build/common/exec.h"
 #include "common/compress/helper.h"
 #include "common/crypto/common.h"
 #include "common/error/retry.h"
 #include "common/io/io.h"
+#include "common/type/json.h"
 #include "common/wait.h"
 #include "config/config.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
-#include "storage/azure/storage.h"
-#include "storage/gcs/storage.h"
+#include "storage/azure/storage.intern.h"
+#include "storage/gcs/storage.intern.h"
 #include "storage/posix/storage.h"
-#include "storage/s3/storage.h"
+#include "storage/s3/storage.intern.h"
 #include "storage/sftp/storage.h"
 
 #include "common/harnessDebug.h"
@@ -84,11 +85,13 @@ static struct HrnHostLocal
     CipherType cipherType;                                          // Cipher type
     const String *cipherPass;                                       // Cipher passphrase
     unsigned int repoTotal;                                         // Repository total
+    unsigned int restoreTotal;                                      // Restore counter used to name spool path
     bool tls;                                                       // Use TLS instead of SSH?
     bool bundle;                                                    // Bundling enabled?
     bool blockIncr;                                                 // Block incremental enabled?
     bool archiveAsync;                                              // Async archiving enabled?
     bool nonVersionSpecific;                                        // Run non version-specific tests?
+    bool versioning;                                                // Is versioning enabled in the repo storage?
 
     List *hostList;                                                 // List of hosts
 } hrnHostLocal;
@@ -117,7 +120,7 @@ hrnHostNew(const StringId id, const String *const container, const String *const
             .pub =
             {
                 .id = id,
-                .name = strIdToStr(id),
+                .name = strNewStrId(id),
                 .container = strDup(container),
                 .image = strDup(image),
                 .user = param.user == NULL ? strNewZ("root") : strDup(param.user),
@@ -142,7 +145,7 @@ hrnHostNew(const StringId id, const String *const container, const String *const
             this->pub.pgLogFile = strNewFmt("%s/postgresql.log", strZ(hrnHostLogPath(this)));
             this->pub.repo1Path = strNewFmt("%s/repo1", strZ(hrnHostDataPath(this)));
             this->pub.repo2Path = strNewFmt("%s/repo2", strZ(hrnHostDataPath(this)));
-            this->pub.spoolPath = strNewFmt("%s/spool", strZ(hrnHostDataPath(this)));
+            this->pub.spoolPath = strNewFmt("%s/spool/0000", strZ(hrnHostDataPath(this)));
         }
 
         MEM_CONTEXT_TEMP_BEGIN()
@@ -158,7 +161,8 @@ hrnHostNew(const StringId id, const String *const container, const String *const
 
             // Run container
             String *const command = strCatFmt(
-                strNew(), "docker run -itd -h %s --name=%s", strZ(hrnHostName(this)), strZ(hrnHostContainer(this)));
+                strNew(), "docker run -itd -h %s --platform linux/%s --name=%s", strZ(hrnHostName(this)), testArchitecture(),
+                strZ(hrnHostContainer(this)));
 
             if (hrnHostDataPath(this) != NULL)
             {
@@ -183,7 +187,10 @@ hrnHostNew(const StringId id, const String *const container, const String *const
 
             // Get IP address
             const String *const ip = strTrim(
-                execOneP(strNewFmt("docker inspect --format '{{ .NetworkSettings.IPAddress }}' %s", strZ(hrnHostContainer(this)))));
+                execOneP(
+                    strNewFmt(
+                        "docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' %s",
+                        strZ(hrnHostContainer(this)))));
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
@@ -286,6 +293,13 @@ hrnHostExecBr(HrnHost *const this, const char *const command, const HrnHostExecB
 
         strCatFmt(commandStr, " %s", command);
 
+        // Set unique spool path
+        if (strcmp(command, CFGCMD_RESTORE) == 0 && hrnHostLocal.archiveAsync)
+        {
+            this->pub.spoolPath = strNewFmt("%s/spool/%04u", strZ(hrnHostDataPath(this)), hrnHostLocal.restoreTotal++);
+            hrnHostConfigUpdateP();
+        }
+
         if (param.param != NULL)
             strCatFmt(commandStr, " %s", param.param);
 
@@ -297,7 +311,7 @@ hrnHostExecBr(HrnHost *const this, const char *const command, const HrnHostExecB
 }
 
 /**********************************************************************************************************************************/
-void
+static void
 hrnHostPgConf(HrnHost *const this)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -446,6 +460,30 @@ hrnHostPgStop(HrnHost *const this)
         const String *const command = strNewFmt(
             "%s/pg_ctl stop -D '%s' -l '%s' -s -w", strZ(hrnHostPgBinPath(this)), strZ(hrnHostPgDataPath(this)),
             strZ(hrnHostPgLogFile(this)));
+
+        hrnHostExecP(this, command);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+hrnHostPgPromote(HrnHost *const this)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(HRN_HOST, this);
+    FUNCTION_HARNESS_END();
+
+    ASSERT(this != NULL);
+    ASSERT(hrnHostIsPg(this));
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Promote pg
+        const String *const command = strNewFmt(
+            "%s/pg_ctl promote -D '%s' -s -w", strZ(hrnHostPgBinPath(this)), strZ(hrnHostPgDataPath(this)));
 
         hrnHostExecP(this, command);
     }
@@ -662,13 +700,13 @@ hrnHostConfig(HrnHost *const this)
             this->pub.repo2Storage = NULL;
 
             strCatZ(config, "\n");
-            strCatFmt(config, "repo1-type=%s\n", strZ(strIdToStr(hrnHostLocal.storage)));
+            strCatFmt(config, "repo1-type=%s\n", zNewStrId(hrnHostLocal.storage));
             strCatFmt(config, "repo1-path=%s\n", strZ(hrnHostRepo1Path(this)));
             strCatZ(config, "repo1-retention-full=2\n");
 
             if (hrnHostLocal.cipherType != cipherTypeNone)
             {
-                strCatFmt(config, "repo1-cipher-type=%s\n", strZ(strIdToStr(hrnHostLocal.cipherType)));
+                strCatFmt(config, "repo1-cipher-type=%s\n", zNewStrId(hrnHostLocal.cipherType));
                 strCatFmt(config, "repo1-cipher-pass=%s\n", strZ(hrnHostLocal.cipherPass));
             }
 
@@ -702,9 +740,9 @@ hrnHostConfig(HrnHost *const this)
                         HrnHost *const azure = hrnHostGet(HRN_HOST_AZURE);
 
                         this->pub.repo1Storage = storageAzureNew(
-                            hrnHostRepo1Path(this), true, NULL, STRDEF(HRN_HOST_AZURE_CONTAINER), STRDEF(HRN_HOST_AZURE_ACCOUNT),
+                            hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_AZURE_CONTAINER), STRDEF(HRN_HOST_AZURE_ACCOUNT),
                             storageAzureKeyTypeShared, STRDEF(HRN_HOST_AZURE_KEY), 4 * 1024 * 1024, NULL, hrnHostIp(azure),
-                            storageAzureUriStylePath, 443, ioTimeoutMs(), false, NULL, NULL);
+                            storageAzureUriStylePath, 443, ioTimeoutMs(), httpProtocolTypeHttps, false, NULL, NULL);
                     }
                     MEM_CONTEXT_OBJ_END();
 
@@ -724,9 +762,9 @@ hrnHostConfig(HrnHost *const this)
                         HrnHost *const gcs = hrnHostGet(HRN_HOST_GCS);
 
                         this->pub.repo1Storage = storageGcsNew(
-                            hrnHostRepo1Path(this), true, NULL, STRDEF(HRN_HOST_GCS_BUCKET), storageGcsKeyTypeToken,
+                            hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_GCS_BUCKET), storageGcsKeyTypeToken,
                             STRDEF(HRN_HOST_GCS_KEY), 4 * 1024 * 1024, NULL,
-                            strNewFmt("%s:%d", strZ(hrnHostIp(gcs)), HRN_HOST_GCS_PORT), ioTimeoutMs(), false, NULL, NULL);
+                            strNewFmt("%s:%d", strZ(hrnHostIp(gcs)), HRN_HOST_GCS_PORT), ioTimeoutMs(), false, NULL, NULL, NULL);
                     }
                     MEM_CONTEXT_OBJ_END();
 
@@ -747,10 +785,10 @@ hrnHostConfig(HrnHost *const this)
                         HrnHost *const s3 = hrnHostGet(HRN_HOST_S3);
 
                         this->pub.repo1Storage = storageS3New(
-                            hrnHostRepo1Path(this), true, NULL, STRDEF(HRN_HOST_S3_BUCKET), STRDEF(HRN_HOST_S3_ENDPOINT),
-                            storageS3UriStyleHost, STR(HRN_HOST_S3_REGION), storageS3KeyTypeShared, STRDEF(HRN_HOST_S3_ACCESS_KEY),
-                            STRDEF(HRN_HOST_S3_ACCESS_SECRET_KEY), NULL, NULL, NULL, NULL, NULL, 5 * 1024 * 1024, NULL,
-                            hrnHostIp(s3), 443, ioTimeoutMs(), false, NULL, NULL);
+                            hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_S3_BUCKET), STRDEF(HRN_HOST_S3_ENDPOINT),
+                            STR(HRN_HOST_S3_REGION), storageS3KeyTypeShared, storageS3UriStyleHost, STRDEF(HRN_HOST_S3_ACCESS_KEY),
+                            STRDEF(HRN_HOST_S3_ACCESS_SECRET_KEY), NULL, NULL, NULL, NULL, NULL, NULL, 5 * 1024 * 1024, NULL,
+                            hrnHostIp(s3), 443, ioTimeoutMs(), httpProtocolTypeHttps, false, NULL, NULL, NULL);
                     }
                     MEM_CONTEXT_OBJ_END();
 
@@ -1036,6 +1074,13 @@ hrnHostRepoTotal(void)
     FUNCTION_HARNESS_RETURN(UINT, hrnHostLocal.repoTotal);
 }
 
+bool
+hrnHostRepoVersioning(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RETURN(UINT, hrnHostLocal.versioning);
+}
+
 /**********************************************************************************************************************************/
 void
 hrnHostConfigUpdate(const HrnHostConfigUpdateParam param)
@@ -1061,22 +1106,22 @@ hrnHostConfigUpdate(const HrnHostConfigUpdateParam param)
 /**********************************************************************************************************************************/
 // Helper to run a host
 static HrnHost *
-hrnHostBuildRun(const int line, const StringId id)
+hrnHostBuildRun(const int line, const StringId id, const String *const image)
 {
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(INT, line);
         FUNCTION_HARNESS_PARAM(STRING_ID, id);
+        FUNCTION_HARNESS_PARAM(STRING, image);
     FUNCTION_HARNESS_END();
 
     HrnHost *result;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        const String *const name = strIdToStr(id);
+        const String *const name = strNewStrId(id);
         const bool isPg = strBeginsWithZ(name, "pg");
         const bool isRepo = id == hrnHostLocal.repoHost;
         const String *const container = strNewFmt("test-%u-%s", testIdx(), strZ(name));
-        const String *const image = strNewFmt("pgbackrest/test:%s-test", testVm());
         const String *const dataPath = strNewFmt("%s/%s", testPath(), strZ(name));
         String *const option = strNewFmt(
             "-v '%s/cfg:/etc/pgbackrest:ro' -v '%s:/usr/bin/pgbackrest:ro' -v '%s:%s:ro'", strZ(dataPath), testProjectExe(),
@@ -1170,7 +1215,7 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
         hrnHostLocal.pgVersion = pgVersionFromStr(STR(testDef->pg));
         hrnHostLocal.repoHost = strIdFromZ(testDef->repo);
         hrnHostLocal.storage = strIdFromZ(testDef->stg);
-        hrnHostLocal.compressType = compressTypeFromName(STR(testDef->cmp));
+        hrnHostLocal.compressType = compressTypeEnum(strIdFromZ(testDef->cmp));
         hrnHostLocal.cipherType = testDef->enc ? cipherTypeAes256Cbc : cipherTypeNone;
         hrnHostLocal.cipherPass = testDef->enc ? strNewZ(HRN_CIPHER_PASSPHRASE) : NULL;
         hrnHostLocal.repoTotal = testDef->rt;
@@ -1190,11 +1235,13 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
         hrnHostLocal.nonVersionSpecific);
 
     // Create pg hosts
-    hrnHostBuildRun(line, HRN_HOST_PG1);
-    HrnHost *const pg2 = hrnHostBuildRun(line, HRN_HOST_PG2);
+    const String *const image = strNewFmt("pgbackrest/test:%s-test-%s", testVm(), testArchitecture());
+
+    hrnHostBuildRun(line, HRN_HOST_PG1, image);
+    HrnHost *const pg2 = hrnHostBuildRun(line, HRN_HOST_PG2, image);
 
     // Create repo host if the destination is repo
-    HrnHost *const repo = hrnHostLocal.repoHost == HRN_HOST_REPO ? hrnHostBuildRun(line, HRN_HOST_REPO) : pg2;
+    HrnHost *const repo = hrnHostLocal.repoHost == HRN_HOST_REPO ? hrnHostBuildRun(line, HRN_HOST_REPO, image) : pg2;
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
@@ -1202,7 +1249,7 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
         if (hrnHostLocal.storage != STORAGE_POSIX_TYPE)
         {
             const char *const fakeCertPath = zNewFmt("%s/doc/resource/fake-cert", hrnPathRepo());
-            const String *const containerName = strNewFmt("test-%u-%s", testIdx(), strZ(strIdToStr(hrnHostLocal.storage)));
+            const String *const containerName = strNewFmt("test-%u-%s", testIdx(), zNewStrId(hrnHostLocal.storage));
 
             switch (hrnHostLocal.storage)
             {
@@ -1251,8 +1298,8 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
                     MEM_CONTEXT_PRIOR_BEGIN()
                     {
                         hrnHostNewP(
-                            HRN_HOST_S3, containerName, STRDEF("minio/minio:RELEASE.2024-07-15T19-02-30Z"), .option = option,
-                            .param = param, .noUpdateHosts = true);
+                            HRN_HOST_S3, containerName, STRDEF("minio/minio"), .option = option, .param = param,
+                            .noUpdateHosts = true);
                     }
                     MEM_CONTEXT_PRIOR_END();
 
@@ -1276,8 +1323,7 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
 
                     MEM_CONTEXT_PRIOR_BEGIN()
                     {
-                        hrnHostNewP(
-                            HRN_HOST_SFTP, containerName, strNewFmt("pgbackrest/test:%s-test", testVm()), .noUpdateHosts = true);
+                        hrnHostNewP(HRN_HOST_SFTP, containerName, hrnHostImage(pg2), .noUpdateHosts = true);
                     }
                     MEM_CONTEXT_PRIOR_END();
 
@@ -1291,11 +1337,42 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
     // Write pgBackRest configuration for hosts
     hrnHostConfigUpdateP();
 
-    // Create the repo for object stores
-    if (hrnHostLocal.storage == STORAGE_AZURE_TYPE || hrnHostLocal.storage == STORAGE_GCS_TYPE ||
-        hrnHostLocal.storage == STORAGE_S3_TYPE)
+    // Create the bucket/container for object stores
+    switch (hrnHostLocal.storage)
     {
-        hrnHostExecBrP(repo, CFGCMD_REPO_CREATE, .option = "--repo=1");
+        case STORAGE_AZURE_TYPE:
+        {
+            storageAzureRequestP(
+                (StorageAzure *)storageDriver(hrnHostRepo1Storage(repo)), HTTP_VERB_PUT_STR,
+                .query = httpQueryAdd(httpQueryNewP(), AZURE_QUERY_RESTYPE_STR, AZURE_QUERY_VALUE_CONTAINER_STR));
+
+            break;
+        }
+
+        case STORAGE_GCS_TYPE:
+        {
+            JsonWrite *const json = jsonWriteObjectBegin(jsonWriteNewP());
+            jsonWriteStr(jsonWriteKeyZ(json, GCS_JSON_NAME), STRDEF(HRN_HOST_GCS_BUCKET));
+            jsonWriteObjectEnd(json);
+
+            storageGcsRequestP(
+                (StorageGcs *)storageDriver(hrnHostRepo1Storage(repo)), HTTP_VERB_POST_STR, .noBucket = true,
+                .content = BUFSTR(jsonWriteResult(json)));
+
+            break;
+        }
+
+        case STORAGE_S3_TYPE:
+        {
+            storageS3RequestP((StorageS3 *)storageDriver(hrnHostRepo1Storage(repo)), HTTP_VERB_PUT_STR, FSLASH_STR);
+            storageS3RequestP(
+                (StorageS3 *)storageDriver(hrnHostRepo1Storage(repo)), HTTP_VERB_PUT_STR, FSLASH_STR,
+                .query = httpQueryAdd(httpQueryNewP(), STRDEF("versioning"), STRDEF("")),
+                .content = BUFSTRDEF("<VersioningConfiguration><Status>Enabled</Status></VersioningConfiguration>"));
+
+            hrnHostLocal.versioning = true;
+            break;
+        }
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

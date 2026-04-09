@@ -189,7 +189,7 @@ testRun(void)
         TEST_RESULT_VOID(jsonReadObjectEnd(read), "object end");
 
         TEST_RESULT_STR_Z(jsonReadStr(read), "abc/", "str");
-        TEST_RESULT_STR_Z(strIdToStr(jsonReadStrId(read)), "def", "strid");
+        TEST_RESULT_STR_Z(strNewStrId(jsonReadStrId(read)), "def", "strid");
         TEST_RESULT_STR_Z(jsonReadStr(read), NULL, "str null");
         TEST_RESULT_STRLST_Z(jsonReadStrLst(read), "a\nb\n", "str list");
         TEST_RESULT_UINT(jsonReadUInt(read), 123, "uint");

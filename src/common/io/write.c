@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 IO Write Interface
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <string.h>
 
@@ -16,9 +16,8 @@ Object type
 struct IoWrite
 {
     IoWritePub pub;                                                 // Publicly accessible variables
-    void *driver;                                                   // Driver object
-    IoWriteInterface interface;                                     // Driver interface
     Buffer *output;                                                 // Output buffer
+    uint64_t position;                                              // Current write position
 
 #ifdef DEBUG
     bool filterGroupSet;                                            // Were filters set?
@@ -45,10 +44,10 @@ ioWriteNew(void *const driver, const IoWriteInterface interface)
         {
             .pub =
             {
+                .driver = objMoveToInterface(driver, this, memContextPrior()),
+                .interface = interface,
                 .filterGroup = ioFilterGroupNew(),
             },
-            .driver = objMoveToInterface(driver, this, memContextPrior()),
-            .interface = interface,
             .output = bufNew(ioBufferSize()),
         };
     }
@@ -68,10 +67,10 @@ ioWriteOpen(IoWrite *const this)
     ASSERT(this != NULL);
     ASSERT(!this->opened && !this->closed);
 
-    if (this->interface.open != NULL)
-        this->interface.open(this->driver);
+    if (ioWriteInterface(this)->open != NULL)
+        ioWriteInterface(this)->open(ioWriteDriver(this));
 
-    // Track whether filters were added to prevent flush() from being called later since flush() won't work with most filters
+    // Track whether filters were added to prevent seek()/flush() from being called later since they won't work with most filters
 #ifdef DEBUG
     this->filterGroupSet = ioFilterGroupSize(this->pub.filterGroup) > 0;
 #endif
@@ -108,7 +107,8 @@ ioWrite(IoWrite *const this, const Buffer *const buffer)
             // Write data if the buffer is full
             if (bufRemains(this->output) == 0)
             {
-                this->interface.write(this->driver, this->output);
+                ioWriteInterface(this)->write(ioWriteDriver(this), this->output);
+                this->position += bufUsed(this->output);
                 bufUsedZero(this->output);
             }
         }
@@ -149,8 +149,8 @@ ioWriteReady(IoWrite *const this, const IoWriteReadyParam param)
 
     bool result = true;
 
-    if (this->interface.ready != NULL)
-        result = this->interface.ready(this->driver, param.error);
+    if (ioWriteInterface(this)->ready != NULL)
+        result = ioWriteInterface(this)->ready(ioWriteDriver(this), param.error);
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
@@ -201,7 +201,7 @@ ioWriteVarIntU64(IoWrite *const this, const uint64_t value)
 
     ASSERT(this != NULL);
 
-    unsigned char buffer[CVT_VARINT128_BUFFER_SIZE];
+    uint8_t buffer[CVT_VARINT128_BUFFER_SIZE];
     size_t bufferPos = 0;
 
     cvtUInt64ToVarInt128(value, buffer, &bufferPos, sizeof(buffer));
@@ -224,8 +224,36 @@ ioWriteFlush(IoWrite *const this)
 
     if (!bufEmpty(this->output))
     {
-        this->interface.write(this->driver, this->output);
+        ioWriteInterface(this)->write(ioWriteDriver(this), this->output);
         bufUsedZero(this->output);
+    }
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+ioWriteSeek(IoWrite *const this, const uint64_t position)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(IO_WRITE, this);
+        FUNCTION_LOG_PARAM(UINT64, position);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->opened && !this->closed);
+    ASSERT(!this->filterGroupSet);
+    ASSERT(ioWriteInterface(this)->write != NULL);
+
+    // If the requested position is not the current position then flush writes and seek. Writes must be flushed first so they will
+    // not later end up in the wrong location.
+    if (position != this->position)
+    {
+        ioWriteFlush(this);
+        ioWriteInterface(this)->seek(ioWriteDriver(this), position);
+
+        // Update current position
+        this->position = position;
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -250,7 +278,7 @@ ioWriteClose(IoWrite *const this)
         // Write data if the buffer is full or if this is the last buffer to be written
         if (bufRemains(this->output) == 0 || (ioFilterGroupDone(this->pub.filterGroup) && !bufEmpty(this->output)))
         {
-            this->interface.write(this->driver, this->output);
+            ioWriteInterface(this)->write(ioWriteDriver(this), this->output);
             bufUsedZero(this->output);
         }
     }
@@ -260,8 +288,8 @@ ioWriteClose(IoWrite *const this)
     ioFilterGroupClose(this->pub.filterGroup);
 
     // Close the driver if there is a close function
-    if (this->interface.close != NULL)
-        this->interface.close(this->driver);
+    if (ioWriteInterface(this)->close != NULL)
+        ioWriteInterface(this)->close(ioWriteDriver(this));
 
 #ifdef DEBUG
     this->closed = true;
@@ -280,5 +308,5 @@ ioWriteFd(const IoWrite *const this)
 
     ASSERT(this != NULL);
 
-    FUNCTION_LOG_RETURN(INT, this->interface.fd == NULL ? -1 : this->interface.fd(this->driver));
+    FUNCTION_LOG_RETURN(INT, ioWriteInterface(this)->fd == NULL ? -1 : ioWriteInterface(this)->fd(ioWriteDriver(this)));
 }

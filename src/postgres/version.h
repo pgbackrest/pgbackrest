@@ -14,15 +14,6 @@ PostgreSQL name
 /***********************************************************************************************************************************
 Version where various PostgreSQL capabilities were introduced
 ***********************************************************************************************************************************/
-// tablespace_map is created during backup
-#define PG_VERSION_TABLESPACE_MAP                                   PG_VERSION_95
-
-// recovery target action supported
-#define PG_VERSION_RECOVERY_TARGET_ACTION                           PG_VERSION_95
-
-// parallel query supported
-#define PG_VERSION_PARALLEL_QUERY                                   PG_VERSION_96
-
 // xlog was renamed to wal
 #define PG_VERSION_WAL_RENAME                                       PG_VERSION_10
 

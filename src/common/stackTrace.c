@@ -1,14 +1,13 @@
 /***********************************************************************************************************************************
 Stack Trace Handler
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 
 #ifdef HAVE_LIBBACKTRACE
-    #include <backtrace-supported.h>
     #include <backtrace.h>
 #endif
 

@@ -44,8 +44,10 @@ typedef struct ConfigOptionValue
     bool set;                                                       // Is the option set?
     bool negate;                                                    // Is the option negated?
     bool reset;                                                     // Is the option reset?
+    uint8_t sequence;                                               // Sequence, if any
     unsigned int source;                                            // Where the option came from, i.e. ConfigSource enum
     const String *display;                                          // Current display value, if any. Used for messages, etc.
+    const String *defaultValue;                                     // Default value
     ConfigOptionValueType value;                                    // Option value
 } ConfigOptionValue;
 
@@ -54,9 +56,9 @@ typedef struct ConfigOptionData
     const char *name;                                               // Name
     bool valid;                                                     // Is option valid for current command?
     bool group;                                                     // In a group?
+    bool sequence;                                                  // Is there a sequence?
     unsigned int groupId;                                           // Id if in a group
     ConfigOptionDataType dataType;                                  // Underlying data type
-    const String *defaultValue;                                     // Default value
     ConfigOptionValue *index;                                       // List of indexed values (only 1 unless the option is indexed)
     const String **indexName;                                       // Index names (e.g. repo1-path, repo2-path)
 } ConfigOptionData;
@@ -69,7 +71,7 @@ typedef struct Config
     ConfigCommand command;                                          // Current command
     ConfigCommandRole commandRole;                                  // Current command role
 
-    String *exe;                                                    // Location of the executable
+    String *bin;                                                    // Path to current pgbackrest binary
     bool help;                                                      // Was help requested for the command?
     bool lockRequired;                                              // Is an immediate lock required?
     bool lockRemoteRequired;                                        // Is a lock required on the remote?
@@ -87,6 +89,9 @@ Init Function
 ***********************************************************************************************************************************/
 // Init with new configuration
 FN_EXTERN void cfgInit(Config *config);
+
+// Has the configuration been initialized?
+FN_EXTERN bool cfgInited(void);
 
 /***********************************************************************************************************************************
 Command Functions
@@ -107,7 +112,7 @@ FN_EXTERN unsigned int cfgOptionGroupId(ConfigOption optionId);
 Option Functions
 ***********************************************************************************************************************************/
 // Option default - should only be called by the help command
-FN_EXTERN const String *cfgOptionDefault(ConfigOption optionId);
+FN_EXTERN const String *cfgOptionIdxDefaultValue(ConfigOption optionId, unsigned int optionIdx);
 
 // Format a variant for display using the supplied option type. cfgOptionDisplay()/cfgOptionIdxDisplay() should be used whenever
 // possible, but sometimes the variant needs to be manipulated before being formatted.

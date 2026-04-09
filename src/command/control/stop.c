@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Stop Command
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -11,6 +11,7 @@ Stop Command
 #include <unistd.h>
 
 #include "command/control/common.h"
+#include "command/control/stop.h"
 #include "common/debug.h"
 #include "common/lock.h"
 #include "common/type/convert.h"

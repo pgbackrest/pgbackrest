@@ -38,17 +38,6 @@ use constant TEST_GROUP_ID                                          => getgrnam(
     push @EXPORT, qw(TEST_GROUP_ID);
 
 ####################################################################################################################################
-# Cert file constants
-####################################################################################################################################
-use constant CERT_FAKE_PATH                                         => '/etc/fake-cert';
-use constant CERT_FAKE_CA                                           => CERT_FAKE_PATH . '/ca.crt';
-    push @EXPORT, qw(CERT_FAKE_CA);
-use constant CERT_FAKE_SERVER                                       => CERT_FAKE_PATH . '/server.crt';
-    push @EXPORT, qw(CERT_FAKE_SERVER);
-use constant CERT_FAKE_SERVER_KEY                                   => CERT_FAKE_PATH . '/server.key';
-    push @EXPORT, qw(CERT_FAKE_SERVER_KEY);
-
-####################################################################################################################################
 # Container Debug - speeds container debugging by splitting each section into a separate intermediate container
 ####################################################################################################################################
 use constant CONTAINER_DEBUG                                        => false;
@@ -84,6 +73,7 @@ sub containerWrite
     my $oStorageDocker = shift;
     my $strTempPath = shift;
     my $strOS = shift;
+    my $strArch = shift;
     my $strTitle = shift;
     my $strImageParent = shift;
     my $strImage = shift;
@@ -104,14 +94,16 @@ sub containerWrite
     my $strScriptSha1;
     my $bCached = false;
 
-    if ($strImage =~ /\-base$/)
+    if ($strImage =~ /\-base\-/)
     {
         $strScriptSha1 = sha1_hex($strScript);
 
         foreach my $strBuild (reverse(keys(%{$hContainerCache})))
         {
-            if (defined($hContainerCache->{$strBuild}{hostArch()}{$strOS}) &&
-                $hContainerCache->{$strBuild}{hostArch()}{$strOS} eq $strScriptSha1)
+            my $strArchLookup = defined($strArch) ? $strArch : hostArch();
+
+            if (defined($hContainerCache->{$strBuild}{$strArchLookup}{$strOS}) &&
+                $hContainerCache->{$strBuild}{$strArchLookup}{$strOS} eq $strScriptSha1)
             {
                 &log(INFO, "Using cached ${strTag}-${strBuild} image (${strScriptSha1}) ...");
 
@@ -132,7 +124,8 @@ sub containerWrite
     # Write the image
     $oStorageDocker->put("${strTempPath}/${strImage}", trim($strScript) . "\n");
     executeTest(
-        'docker build' . (defined($bForce) && $bForce ? ' --no-cache' : '') . " -f ${strTempPath}/${strImage} -t ${strTag} " .
+        'docker build' . (defined($strArch) ? " --platform linux/${strArch}" : '') .
+        (defined($bForce) && $bForce ? ' --no-cache' : '') . " -f ${strTempPath}/${strImage} -t ${strTag} " .
             $oStorageDocker->pathGet('test'),
         {bSuppressStdErr => true, bShowOutputAsync => (logLevel())[1] eq DETAIL});
 }
@@ -146,7 +139,16 @@ sub groupCreate
     my $strName = shift;
     my $iId = shift;
 
-    return "groupadd -f -g${iId} ${strName}";
+    my $oVm = vmGet();
+
+    if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL || $$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+    {
+        return "groupadd -f -g${iId} ${strName}";
+    }
+    elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_ALPINE)
+    {
+        return "addgroup -g${iId} ${strName}";
+    }
 }
 
 sub userCreate
@@ -162,7 +164,7 @@ sub userCreate
     {
         return "adduser -g${strGroup} -u${iId} -N ${strName}";
     }
-    elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+    elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN || $$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_ALPINE)
     {
         return "adduser --uid=${iId} --ingroup=${strGroup} --disabled-password --gecos \"\" ${strName}";
     }
@@ -178,7 +180,6 @@ sub sshSetup
     my $strOS = shift;
     my $strUser = shift;
     my $strGroup = shift;
-    my $bControlMtr = shift;
 
     my $strUserPath = $strUser eq 'root' ? "/${strUser}" : "/home/${strUser}";
 
@@ -218,14 +219,6 @@ sub sshSetup
              "hLYkuCyAkdvbRInZcQjYiWf2yP6gJaAsnab5Eu9b user\@pgbackrest-test' > ${strUserPath}/.ssh/authorized_keys && \\\n" .
         "    echo 'Host *' > ${strUserPath}/.ssh/config && \\\n" .
         "    echo '    StrictHostKeyChecking no' >> ${strUserPath}/.ssh/config && \\\n";
-
-    if ($bControlMtr)
-    {
-        $strScript .=
-            "    echo '    ControlMas'.'ter auto' >> ${strUserPath}/.ssh/config && \\\n" .
-            "    echo '    ControlPath /tmp/\%r\@\%h:\%p' >> ${strUserPath}/.ssh/config && \\\n" .
-            "    echo '    ControlPersist 30' >> ${strUserPath}/.ssh/config && \\\n";
-    }
 
     $strScript .=
         "    cp ${strUserPath}/.ssh/authorized_keys ${strUserPath}/.ssh/id_rsa.pub && \\\n" .
@@ -273,7 +266,7 @@ sub caSetup
     {
         $strCertFile = '/etc/pki/ca-trust/source/anchors';
     }
-    elsif ($strOsBase eq VM_OS_BASE_DEBIAN)
+    elsif ($strOsBase eq VM_OS_BASE_DEBIAN || $strOsBase eq VM_OS_BASE_ALPINE)
     {
         $strCertFile = '/usr/local/share/ca-certificates';
     }
@@ -297,7 +290,7 @@ sub caSetup
         $strScript .=
             "    update-ca-trust extract";
     }
-    elsif ($strOsBase eq VM_OS_BASE_DEBIAN)
+    elsif ($strOsBase eq VM_OS_BASE_DEBIAN || $strOsBase eq VM_OS_BASE_ALPINE)
     {
         $strScript .=
             "    update-ca-certificates";
@@ -323,9 +316,13 @@ sub entryPointSetup
     {
         $strScript .= 'rm -rf /run/nologin && /usr/sbin/sshd -D';
     }
-    else
+    elsif ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
     {
         $strScript .= 'service ssh restart && bash';
+    }
+    elsif ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_ALPINE)
+    {
+        $strScript .= '/usr/sbin/sshd -D';
     }
 
     return $strScript;
@@ -338,6 +335,7 @@ sub containerBuild
 {
     my $oStorageDocker = shift;
     my $strVm = shift;
+    my $strArch = shift;
     my $bVmForce = shift;
 
     # Create temp path
@@ -378,8 +376,9 @@ sub containerBuild
 
         # Base image
         ###########################################################################################################################
-        my $strImageParent = "$$oVm{$strOS}{&VM_IMAGE}";
-        my $strImage = "${strOS}-base";
+        my $strImageParent = $oVm->{$strOS}{&VM_IMAGE};
+        $strArch = defined($strArch) ? $strArch : hostArch();
+        my $strImage = "${strOS}-base" . (defined($strArch) ? "-${strArch}" : '-' . hostArch());
         my $strCopy = undef;
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -403,9 +402,9 @@ sub containerBuild
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl \\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
                 "        libyaml-devel zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 perl-JSON-PP ccache meson \\\n" .
-                "        libssh2-devel";
+                "        libssh2-devel zstd libzstd-devel";
         }
-        else
+        elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
             $strScript .=
                 "    export DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive && \\\n" .
@@ -415,25 +414,23 @@ sub containerBuild
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
                 "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config \\\n" .
                 "        libbz2-dev bzip2 libyaml-dev libjson-pp-perl liblz4-dev liblz4-tool gnupg lsb-release ccache meson \\\n" .
-                "        libssh2-1-dev";
+                "        libssh2-1-dev libcurl4-openssl-dev";
 
-            if ($strOS eq VM_U20 || $strOS eq VM_U22)
+            if ($strOS eq VM_U22)
             {
                 $strScript .= " valgrind";
             }
-        }
 
-        # Add zst command-line tool and development libs when available
-        if (vmWithZst($strOS))
+            $strScript .= ' zstd libzstd-dev';
+        }
+        elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_ALPINE)
         {
-            if ($oVm->{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
-            {
-                $strScript .= ' zstd libzstd-devel';
-            }
-            else
-            {
-                $strScript .= ' zstd libzstd-dev';
-            }
+            $strScript .=
+                "    apk update && \\\n" .
+                "    apk add --no-cache sudo openssh git rsync tzdata openssh ca-certificates openrc bash && \\\n" .
+                "    rc-update add sshd && \\\n" .
+                "    apk add --no-cache meson build-base libpq-dev openssl-dev libxml2-dev pkgconfig lz4-dev bzip2-dev\\\n" .
+                "        openssh-keygen zlib-dev yaml-dev libssh2-dev perl perl-yaml-libyaml valgrind lz4 zstd zstd-dev";
         }
 
         #---------------------------------------------------------------------------------------------------------------------------
@@ -456,8 +453,11 @@ sub containerBuild
         #---------------------------------------------------------------------------------------------------------------------------
         if (!$bDeprecated)
         {
-            $strScript .= sectionHeader() .
-                "# Install PostgreSQL packages\n";
+            if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL || $$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+            {
+                $strScript .= sectionHeader() .
+                    "# Install PostgreSQL packages\n";
+            }
 
             if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
             {
@@ -472,26 +472,25 @@ sub containerBuild
                             "pgdg-redhat-repo-latest.noarch.rpm && \\\n" .
                         "    dnf -qy module disable postgresql && \\\n";
                 }
-                elsif ($strOS eq VM_F40)
+                elsif ($strOS eq VM_F43)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-40-" . hostArch() . "/" .
-                            "pgdg-fedora-repo-latest.noarch.rpm && \\\n";
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-43-" . hostArch() . "/" .
+                            "pgdg-fedora-repo-latest.noarch.rpm && \\\n" .
+                        "    yum -y install libcurl-devel && \\\n"
                 }
 
                 $strScript .= "    yum -y install postgresql-devel";
             }
-            else
+            elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
             {
                 # Install repo from apt.postgresql.org
                 if (vmPgRepo($strVm))
                 {
                     $strScript .=
-                        "    echo \"deb http://apt.postgresql.org/pub/repos/apt/ \$(lsb_release -s -c)-pgdg main" .
-                            ($strOS eq VM_U22 ? ' 17' : '') . "\" >> /etc/apt/sources.list.d/pgdg.list && \\\n" .
-                        "    wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - && \\\n" .
-                        "    apt-get update && \\\n";
+                        "    apt-get install -y --no-install-recommends postgresql-common && \\\n" .
+                        "    /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y && \\\n";
                 }
 
                 $strScript .=
@@ -500,7 +499,8 @@ sub containerBuild
                         "/etc/postgresql-common/createcluster.conf";
             }
 
-            if (defined($oOS->{&VM_DB}) && @{$oOS->{&VM_DB}} > 0)
+            if (defined($oOS->{&VM_DB}) && @{$oOS->{&VM_DB}} > 0 &&
+                ($strArch eq VM_ARCH_AARCH64 || $strArch eq VM_ARCH_X86_64 || $strArch eq VM_ARCH_I386))
             {
                 $strScript .= sectionHeader() .
                     "# Install PostgreSQL\n";
@@ -509,10 +509,14 @@ sub containerBuild
                 {
                     $strScript .= "    yum -y install";
                 }
-                else
+                elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
                 {
                     $strScript .= "    apt-get install -y --no-install-recommends";
-                 }
+                }
+                elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_ALPINE)
+                {
+                    $strScript .= "    apk add --no-cache";
+                }
 
                 # Construct list of databases to install
                 foreach my $strDbVersion (@{$oOS->{&VM_DB}})
@@ -530,15 +534,23 @@ sub containerBuild
                             $strScript .= " postgresql${strDbVersionNoDot}-devel";
                         }
                     }
-                    else
+                    elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
                     {
+                        # Disable PostgreSQL 18 on architectures that do not support it yet
+                        next if ($strDbVersion eq '18' &&
+                            !($strOS eq VM_U22 && ($strArch eq VM_ARCH_AARCH64 || $strArch eq VM_ARCH_X86_64)));
+
                         $strScript .= " postgresql-${strDbVersion}";
+                    }
+                    elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_ALPINE)
+                    {
+                        $strScript .= " postgresql${strDbVersion}";
                     }
                 }
             }
         }
 
-        # Add path to lastest version of postgres
+        # Add path to latest version of postgres
         if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
         {
             $strScript .=
@@ -559,14 +571,14 @@ sub containerBuild
         }
 
         containerWrite(
-            $oStorageDocker, $strTempPath, $strOS, 'Base', $strImageParent, $strImage, $strCopy, $strScript, $bVmForce);
+            $oStorageDocker, $strTempPath, $strOS, $strArch, 'Base', $strImageParent, $strImage, $strCopy, $strScript, $bVmForce);
 
         # Test image
         ########################################################################################################################
         if (!$bDeprecated)
         {
-            $strImageParent = containerRepo() . ":${strOS}-base";
-            $strImage = "${strOS}-test";
+            $strImageParent = containerRepo() . ":${strImage}";
+            $strImage = "${strOS}-test" . (defined($strArch) ? "-${strArch}" : '-' . hostArch());
 
             $strCopy = undef;
             $strScript = '';
@@ -613,6 +625,14 @@ sub containerBuild
                 '    mkdir -m 750 /home/' . TEST_USER . "/test && \\\n" .
                 '    chown ' . TEST_USER . ':' . TEST_GROUP . ' /home/' . TEST_USER . "/test";
 
+            # On Alpine the test account must have a password for SSH logon
+            if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_ALPINE)
+            {
+                $strScript .=
+                    " && \\\n" .
+                    "    passwd -d '" . TEST_USER . "' " . TEST_USER;
+            }
+
             $strScript .= sectionHeader() .
                 "# Configure sudo\n";
 
@@ -631,8 +651,7 @@ sub containerBuild
                     "    echo '%" . TEST_GROUP . " ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers";
             }
 
-            $strScript .=
-                sshSetup($strOS, TEST_USER, TEST_GROUP, $$oVm{$strOS}{&VM_CONTROL_MTR});
+            $strScript .= sshSetup($strOS, TEST_USER, TEST_GROUP);
 
             $strScript .= sectionHeader() .
                 "# Make " . TEST_USER . " home dir readable\n" .
@@ -641,7 +660,8 @@ sub containerBuild
             $strScript .= entryPointSetup($strOS);
 
             containerWrite(
-                $oStorageDocker, $strTempPath, $strOS, 'Test', $strImageParent, $strImage, $strCopy, $strScript, $bVmForce);
+                $oStorageDocker, $strTempPath, $strOS, $strArch, 'Test', $strImageParent, $strImage, $strCopy, $strScript,
+                $bVmForce);
         }
     }
 

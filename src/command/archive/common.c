@@ -1,17 +1,13 @@
 /***********************************************************************************************************************************
 Archive Common
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
-#include <stdint.h>
 #include <stdlib.h>
-#include <string.h>
-#include <sys/wait.h>
 #include <unistd.h>
 
 #include "command/archive/common.h"
 #include "common/debug.h"
-#include "common/fork.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "common/regExp.h"
@@ -237,71 +233,14 @@ archiveAsyncStatusOkWrite(const ArchiveMode archiveMode, const String *const wal
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
-archiveAsyncExec(const ArchiveMode archiveMode, const StringList *const commandExec)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STRING_ID, archiveMode);
-        FUNCTION_LOG_PARAM(STRING_LIST, commandExec);
-    FUNCTION_LOG_END();
-
-    ASSERT(commandExec != NULL);
-
-    // Fork off the async process
-    const pid_t pid = forkSafe();
-
-    if (pid == 0)
-    {
-        // Disable logging and close log file
-        logClose();
-
-        // Detach from parent process
-        forkDetach();
-
-        // Close any open file descriptors above the standard three (stdin, stdout, stderr). Don't check the return value since we
-        // don't know which file descriptors are actually open (might be none). It's possible that there are open files >= 1024 but
-        // there is no easy way to detect that and this should give us enough descriptors to do our work.
-        for (int fd = 3; fd < 1024; fd++)
-            close(fd);
-
-        // Execute the binary. This statement will not return if it is successful.
-        THROW_ON_SYS_ERROR_FMT(
-            execvp(strZ(strLstGet(commandExec, 0)), (char **const)strLstPtr(commandExec)) == -1, ExecuteError,
-            "unable to execute asynchronous '%s'", archiveMode == archiveModeGet ? CFGCMD_ARCHIVE_GET : CFGCMD_ARCHIVE_PUSH);
-    }
-
-#ifdef DEBUG_EXEC_TIME
-    // Get the time to measure how long it takes for the forked process to exit
-    const TimeMSec timeBegin = timeMSec();
-#endif
-
-    // The process that was just forked should return immediately
-    int processStatus;
-
-    THROW_ON_SYS_ERROR(waitpid(pid, &processStatus, 0) == -1, ExecuteError, "unable to wait for forked process");
-
-    // The first fork should exit with success. If not, something went wrong during the second fork.
-    CHECK(ExecuteError, WIFEXITED(processStatus) && WEXITSTATUS(processStatus) == 0, "error on first fork");
-
-#ifdef DEBUG_EXEC_TIME
-    // If the process does not exit immediately then something probably went wrong with the double fork. It's possible that this
-    // test will fail on very slow systems so it may need to be tuned. The idea is to make sure that the waitpid() above is not
-    // waiting on the async process.
-    CHECK(AssertError, timeMSec() - timeBegin < 10, "the process does not exit immediately");
-#endif
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
-/**********************************************************************************************************************************/
 FN_EXTERN int
 archiveIdComparator(const void *const archiveId1, const void *const archiveId2)
 {
-    ASSERT(strstr(strZ(*(String **)archiveId1), "-") != NULL);
-    ASSERT(strstr(strZ(*(String **)archiveId2), "-") != NULL);
+    ASSERT(strstr(strZ(*(const String *const *)archiveId1), "-") != NULL);
+    ASSERT(strstr(strZ(*(const String *const *)archiveId2), "-") != NULL);
 
-    const int id1 = cvtZToInt(strstr(strZ(*(String **)archiveId1), "-") + 1);
-    const int id2 = cvtZToInt(strstr(strZ(*(String **)archiveId2), "-") + 1);
+    const int id1 = cvtZToInt(strstr(strZ(*(const String *const *)archiveId1), "-") + 1);
+    const int id2 = cvtZToInt(strstr(strZ(*(const String *const *)archiveId2), "-") + 1);
 
     return LST_COMPARATOR_CMP(id1, id2);
 }

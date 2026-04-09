@@ -58,12 +58,58 @@ testRun(void)
     const Storage *const storageTest = storagePosixNewP(STRDEF(TEST_PATH), .write = true);
 
     // *****************************************************************************************************************************
-    if (testBegin("cmdBldPathRelative()"))
+    if (testBegin("cmdBldPathRelative() and cmdTestVmArchFix()"))
     {
+        TEST_TITLE("cmdBldPathRelative()");
+
         TEST_ERROR(cmdBldPathRelative(STRDEF("/tmp"), STRDEF("/tmp")), AssertError, "assertion '!strEq(base, compare)' failed");
 
         TEST_RESULT_STR_Z(cmdBldPathRelative(STRDEF("/tmp/sub"), STRDEF("/tmp")), "..", "compare is sub of base");
         TEST_RESULT_STR_Z(cmdBldPathRelative(STRDEF("/tmp"), STRDEF("/tmp/sub")), "sub", "base is sub of compare");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("cmdTestVmArchFix()");
+
+        TEST_RESULT_STR_Z(cmdTestVmArchFix(STRDEF("i686")), "i386", "i686 -> i386");
+        TEST_RESULT_STR_Z(cmdTestVmArchFix(STRDEF("arm64")), "aarch64", "arm64 -> aarch64");
+        TEST_RESULT_STR_Z(cmdTestVmArchFix(STRDEF("x86_64")), "x86_64", "x86_64 -> x86_64");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("lint*()"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("lintStrId()");
+
+        HRN_STORAGE_PUT_Z(
+            storageTest, "repo/test.c",
+            "#define STRID5(str, strId)\n"
+            "#define STRID5S(str, seq, strId)\n"
+            "#define STRID6(str, strId)\n"
+            "#define STRID6S(str, seq, strId)\n"
+            "STR" "ID5(\"abcd\", TEST_STRID)\n"
+            "STR" "ID5(\\\"abcd\\\")\n"
+            "STR" "ID5(\\\"abcd)\n"
+            "STR" "ID5(abcd)\n"
+            "STR" "ID5( \"abcd)\n"
+            "STRID5(\"abcd\")\n"
+            "STRID5(\"abcd\", 0x20c410)\n"
+            "STRID6(\"abcd\", 0x20c410)\n"
+            "STRID6S(\"abcd\", 37, 0x20c410)\n");
+
+        TEST_ERROR(
+            cmdTest(
+                STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("none"), 3, STRDEF("invalid"),
+                STRDEF("common/stack-trace"), 0, 1, logLevelDebug, true, NULL, NULL, false, false, false, true),
+            FormatError, "6 linter error(s) in 'test.c' (see warnings above)");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: 'STR" "ID5(\\\"abcd)' must have quotes around string parameter '\\\"abcd'\n"
+            "P00   WARN: 'STR" "ID5(abcd)' must have quotes around string parameter 'abcd'\n"
+            "P00   WARN: 'STR" "ID5( \"abcd)' must have quotes around string parameter '\"abcd'\n"
+            "P00   WARN: 'STRID5(\"abcd\")' should be 'STRID5(\"abcd\", 0x20c410)'\n"
+            "P00   WARN: 'STRID6(\"abcd\", 0x20c410)' should be 'STRID5(\"abcd\", 0x20c410)'\n"
+            "P00   WARN: 'STRID6S(\"abcd\", 37, 0x20c410)' should be 'STRID5S(\"abcd\", 37, 0x41883fe)'");
     }
 
     // *****************************************************************************************************************************
@@ -121,6 +167,10 @@ testRun(void)
         strReplace(testC, STRDEF("{[C_TEST_USER_ID]}"), STRDEF(TEST_USER_ID_Z));
         strReplace(testC, STRDEF("{[C_TEST_USER_ID_Z]}"), STRDEF("\"" TEST_USER_ID_Z "\""));
         strReplace(testC, STRDEF("{[C_TEST_USER_LEN]}"), strNewFmt("%zu", sizeof(TEST_USER) - 1));
+        strReplace(testC, STRDEF("{[C_TEST_ARCHITECTURE]}"), STRDEF(TEST_ARCHITECTURE));
+
+        const String *const architecture =
+            strEqZ(strTrim(execOneP(STRDEF("uname -m"))), TEST_ARCHITECTURE) ? NULL : strNewZ(TEST_ARCHITECTURE);
 
         // Test definition
         // -------------------------------------------------------------------------------------------------------------------------
@@ -210,6 +260,7 @@ testRun(void)
 
         TEST_COPY(
             storageRepo, storageTest,
+            "src/build.h",
             "src/common/assert.h",
             "src/common/debug.c",
             "src/common/debug.h",
@@ -225,7 +276,6 @@ testRun(void)
             "src/common/type/param.h",
             "src/common/type/stringStatic.h",
             "src/common/type/stringStatic.c",
-            "src/common/type/stringZ.h",
             "test/src/common/harnessDebug.h",
             "test/src/common/harnessLog.h",
             "test/src/common/harnessError.c",
@@ -243,7 +293,7 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("none"), 3, STRDEF("invalid"),
-                STRDEF("common/stack-trace"), 0, 1, logLevelDebug, true, NULL, false, false, false, true),
+                STRDEF("common/stack-trace"), 0, 1, logLevelDebug, true, NULL, architecture, false, false, false, true),
             "new build");
 
         // Older versions of ninja may error on a rebuild so a retry may occur
@@ -370,7 +420,7 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("none"), 3, STRDEF("invalid"),
-                STRDEF("common/error"), 5, 1, logLevelDebug, true, NULL, false, false, false, true),
+                STRDEF("common/error"), 5, 1, logLevelDebug, true, NULL, architecture, false, false, false, true),
             "new build");
 
         // Older versions of ninja may error on a rebuild so a retry may occur
@@ -502,12 +552,13 @@ testRun(void)
         HRN_STORAGE_PUT_Z(storageTest, "repo/test/src/common/shim.c", strZ(shimC));
         HRN_STORAGE_PUT_Z(
             storageTest, "repo/test/src/common/shim2.c",
+            "int noShimFunc3(void);"
             "int noShimFunc3(void)\n"
             "{\n"
             "    return 888;\n"
             "}\n");
 
-        strReplace(shimC, STRDEF("int\nshimFunc(void)"), STRDEF("int\nshimFunc_SHIMMED(void)"));
+        strReplace(shimC, STRDEF("int\nshimFunc(void)"), STRDEF("int shimFunc_SHIMMED(void); int\nshimFunc_SHIMMED(void)"));
         strReplace(
             shimC, STRDEF("static int\nshimFunc2("),
             STRDEF("static int shimFunc2(int param1, int param2); static int\nshimFunc2_SHIMMED("));
@@ -567,7 +618,13 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3, STRDEF("invalid"),
-                STRDEF("test/shim"), 0, 1, logLevelDebug, true, NULL, true, true, true, true),
+                STRDEF("test/shim"), 0, 1, logLevelDebug, true, NULL, architecture, true,
+#ifdef DEBUG_COVERAGE
+                true,
+#else
+                false,
+#endif
+                true, true),
             "new build");
 
         // Older versions of ninja may error on a rebuild so a retry may occur
@@ -622,12 +679,14 @@ testRun(void)
                         "    sources: src_unit,\n"
                         "    c_args: [\n"
                         "        '-O2',\n"
+#ifdef DEBUG_COVERAGE
                         "        '-pg',\n"
                         "        '-no-pie',\n"
                         "    ],\n"
                         "    link_args: [\n"
                         "        '-pg',\n"
                         "        '-no-pie',\n"
+#endif
                         "    ],\n"
                         "    include_directories:\n"
                         "        include_directories(\n"
@@ -679,9 +738,17 @@ testRun(void)
                 strReplace(testCDup, STRDEF("{[C_TEST_VM]}"), STRDEF("uXX"));
                 strReplace(testCDup, STRDEF("{[C_TEST_PG_VERSION]}"), STRDEF("invalid"));
                 strReplace(testCDup, STRDEF("{[C_TEST_LOG_EXPECT]}"), STRDEF("true"));
+#ifdef DEBUG_COVERAGE
                 strReplace(testCDup, STRDEF("{[C_TEST_DEBUG_TEST_TRACE]}"), STRDEF("// Debug test trace not enabled"));
+#else
+                strReplace(testCDup, STRDEF("{[C_TEST_DEBUG_TEST_TRACE]}"), STRDEF("#define DEBUG_TEST_TRACE"));
+#endif
                 strReplace(testCDup, STRDEF("{[C_TEST_PATH_BUILD]}"), STRDEF(TEST_PATH "/test/unit-3/uXX/build"));
+#ifdef DEBUG_COVERAGE
                 strReplace(testCDup, STRDEF("{[C_TEST_PROFILE]}"), STRDEF("true"));
+#else
+                strReplace(testCDup, STRDEF("{[C_TEST_PROFILE]}"), STRDEF("false"));
+#endif
                 strReplace(testCDup, STRDEF("{[C_TEST_PROJECT_EXE]}"), STRDEF(TEST_PATH "/test/build/uXX/src/pgbackrest"));
                 strReplace(testCDup, STRDEF("{[C_TEST_TZ]}"), STRDEF("// No timezone specified"));
 
@@ -714,7 +781,13 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3, STRDEF("invalid"),
-                STRDEF("test/shim"), 0, 1, logLevelDebug, true, NULL, true, true, true, true),
+                STRDEF("test/shim"), 0, 1, logLevelDebug, true, NULL, architecture, true,
+#ifdef DEBUG_COVERAGE
+                true,
+#else
+                false,
+#endif
+                true, true),
             "new build");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -737,7 +810,13 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3, STRDEF("invalid"),
-                STRDEF("real/all"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false, true, false, true),
+                STRDEF("real/all"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), architecture, false,
+#ifdef DEBUG_COVERAGE
+                true,
+#else
+                false,
+#endif
+                false, true),
             "new build");
 
         storageUnit = storagePosixNewP(STRDEF(TEST_PATH "/test/unit-3/none"));
@@ -783,6 +862,7 @@ testRun(void)
                         "executable(\n"
                         "    'test-unit',\n"
                         "    sources: src_unit,\n"
+#ifdef DEBUG_COVERAGE
                         "    c_args: [\n"
                         "        '-pg',\n"
                         "        '-no-pie',\n"
@@ -791,6 +871,7 @@ testRun(void)
                         "        '-pg',\n"
                         "        '-no-pie',\n"
                         "    ],\n"
+#endif
                         "    include_directories:\n"
                         "        include_directories(\n"
                         "            '.',\n"
@@ -844,9 +925,17 @@ testRun(void)
                 strReplace(testCDup, STRDEF("{[C_TEST_VM]}"), STRDEF("uXX"));
                 strReplace(testCDup, STRDEF("{[C_TEST_PG_VERSION]}"), STRDEF("invalid"));
                 strReplace(testCDup, STRDEF("{[C_TEST_LOG_EXPECT]}"), STRDEF("false"));
+#ifdef DEBUG_COVERAGE
                 strReplace(testCDup, STRDEF("{[C_TEST_DEBUG_TEST_TRACE]}"), STRDEF("// Debug test trace not enabled"));
+#else
+                strReplace(testCDup, STRDEF("{[C_TEST_DEBUG_TEST_TRACE]}"), STRDEF("#define DEBUG_TEST_TRACE"));
+#endif
                 strReplace(testCDup, STRDEF("{[C_TEST_PATH_BUILD]}"), STRDEF(TEST_PATH "/test/unit-3/none/build"));
+#ifdef DEBUG_COVERAGE
                 strReplace(testCDup, STRDEF("{[C_TEST_PROFILE]}"), STRDEF("true"));
+#else
+                strReplace(testCDup, STRDEF("{[C_TEST_PROFILE]}"), STRDEF("false"));
+#endif
                 strReplace(testCDup, STRDEF("{[C_TEST_PROJECT_EXE]}"), STRDEF(TEST_PATH "/test/build/uXX/src/pgbackrest"));
                 strReplace(testCDup, STRDEF("{[C_TEST_TZ]}"), STRDEF("hrnTzSet(\"America/New_York\");"));
 
@@ -890,7 +979,13 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3, STRDEF("invalid"),
-                STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false, true, false, false),
+                STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), architecture, false,
+#ifdef DEBUG_COVERAGE
+                true,
+#else
+                false,
+#endif
+                false, false),
             "new build");
 
         TEST_RESULT_LOG(
@@ -946,12 +1041,14 @@ testRun(void)
                         "    sources: src_unit,\n"
                         "    c_args: [\n"
                         "        '-O2',\n"
+#ifdef DEBUG_COVERAGE
                         "        '-pg',\n"
                         "        '-no-pie',\n"
                         "    ],\n"
                         "    link_args: [\n"
                         "        '-pg',\n"
                         "        '-no-pie',\n"
+#endif
                         "    ],\n"
                         "    include_directories:\n"
                         "        include_directories(\n"
@@ -1004,7 +1101,11 @@ testRun(void)
                 strReplace(testCDup, STRDEF("{[C_TEST_LOG_EXPECT]}"), STRDEF("false"));
                 strReplace(testCDup, STRDEF("{[C_TEST_DEBUG_TEST_TRACE]}"), STRDEF("// Debug test trace not enabled"));
                 strReplace(testCDup, STRDEF("{[C_TEST_PATH_BUILD]}"), STRDEF(TEST_PATH "/test/unit-3/uXX/build"));
+#ifdef DEBUG_COVERAGE
                 strReplace(testCDup, STRDEF("{[C_TEST_PROFILE]}"), STRDEF("true"));
+#else
+                strReplace(testCDup, STRDEF("{[C_TEST_PROFILE]}"), STRDEF("false"));
+#endif
                 strReplace(testCDup, STRDEF("{[C_TEST_PROJECT_EXE]}"), STRDEF(TEST_PATH "/test/build/uXX/src/pgbackrest"));
                 strReplace(testCDup, STRDEF("{[C_TEST_TZ]}"), STRDEF("hrnTzSet(\"America/New_York\");"));
 
@@ -1029,7 +1130,8 @@ testRun(void)
         TEST_RESULT_VOID(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3, STRDEF("invalid"),
-                STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false, false, false, false),
+                STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), STRDEF(TEST_ARCHITECTURE), false,
+                false, false, false),
             "new build");
 
         // Older versions of ninja may error on a rebuild so a retry may occur
@@ -1069,7 +1171,8 @@ testRun(void)
         TEST_ERROR(
             cmdTest(
                 STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("uXX"), 3, STRDEF("invalid"),
-                STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), false, false, false, false),
+                STRDEF("performance/type"), 0, 1, logLevelDebug, true, STRDEF("America/New_York"), architecture, false, false,
+                false, false),
             FileOpenError,
             "build failed for unit performance/type: unable to open file '" TEST_PATH "/repo/meson.build' for read: [13] Permission"
             " denied");

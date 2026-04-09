@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 IO Filter Group
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <stdio.h>
 
@@ -20,7 +20,7 @@ Contains the filter object and inout/output buffers.
 ***********************************************************************************************************************************/
 typedef struct IoFilterData
 {
-    const Buffer **input;                                           // Input buffer for filter
+    const Buffer *const *input;                                     // Input buffer for filter
     Buffer *inputLocal;                                             // Non-null if a locally created buffer that can be cleared
     IoFilter *filter;                                               // Filter to apply
     Buffer *output;                                                 // Output buffer for filter
@@ -200,12 +200,14 @@ ioFilterGroupOpen(IoFilterGroup *const this)
                 // This cast is required because the compiler can't guarantee the const-ness of this object, i.e. it could be
                 // modified in other parts of the code. This is actually expected and the only reason we need this const is to match
                 // the const-ness of the input buffer provided by the caller.
-                filterData->input = (const Buffer **)lastOutputBuffer;
+                filterData->input = (const Buffer *const *)lastOutputBuffer;
                 filterData->inputLocal = *lastOutputBuffer;
             }
 
             // If this is not the last output filter then create a new output buffer for it. The output buffer for the last filter
             // will be provided to the process function.
+            ASSERT(ioFilterGroupSize(this) != 0);
+
             if (ioFilterOutput(filterData->filter) && filterIdx < ioFilterGroupSize(this) - 1)
             {
                 filterData->output = bufNew(ioBufferSize());

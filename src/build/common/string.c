@@ -4,6 +4,8 @@ String Handler Extensions
 // Include core module
 #include "common/type/string.c"
 
+#include "build/common/string.h"
+
 /**********************************************************************************************************************************/
 String *
 strUpper(String *const this)

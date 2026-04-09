@@ -91,7 +91,7 @@ Array and object types:
         field within the array/object
 
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <string.h>
 
@@ -143,67 +143,72 @@ typedef struct PackTypeMapData
 static const PackTypeMapData packTypeMapData[] =
 {
     // Unknown type map data should not be used
-    {0},
+    [pckTypeMapUnknown] = {0},
 
-    // Formats that can be encoded entirely in the tag
+    // Types that can be encoded entirely in the tag
+    [pckTypeMapArray] =
     {
         .type = pckTypeArray,
     },
+    [pckTypeMapBool] =
     {
         .type = pckTypeBool,
         .valueSingleBit = true,
     },
+    [pckTypeMapI32] =
     {
         .type = pckTypeI32,
         .valueMultiBit = true,
     },
+    [pckTypeMapI64] =
     {
         .type = pckTypeI64,
         .valueMultiBit = true,
     },
+    [pckTypeMapObj] =
     {
         .type = pckTypeObj,
     },
-    // Placeholders for unused type that can be encoded entirely in the tag
-    {0},
+    [pckTypeMapStr] =
     {
         .type = pckTypeStr,
         .valueSingleBit = true,
         .size = true,
     },
+    [pckTypeMapU32] =
     {
         .type = pckTypeU32,
         .valueMultiBit = true,
     },
+    [pckTypeMapU64] =
     {
         .type = pckTypeU64,
         .valueMultiBit = true,
     },
+    [pckTypeMapStrId] =
     {
         .type = pckTypeStrId,
         .valueMultiBit = true,
     },
 
-    // Placeholders for unused types that can be encoded entirely in the tag
-    {0},
-    {0},
-    {0},
-    {0},
-
-    // Formats that require an extra byte to encode
+    // Types that require an extra byte to encode
+    [pckTypeMapTime] =
     {
         .type = pckTypeTime,
         .valueMultiBit = true,
     },
+    [pckTypeMapBin] =
     {
         .type = pckTypeBin,
         .valueSingleBit = true,
         .size = true,
     },
+    [pckTypeMapPack] =
     {
         .type = pckTypePack,
         .size = true,
     },
+    [pckTypeMapMode] =
     {
         .type = pckTypeMode,
         .valueMultiBit = true,
@@ -297,7 +302,7 @@ pckTagStackPopCheck(PackTagStack *const tagStack, const PackTypeMap typeMap)
     ASSERT(typeMap == pckTypeMapArray || typeMap == pckTypeMapObj);
 
     if (tagStack->depth == 0 || tagStack->top->typeMap != typeMap)
-        THROW_FMT(FormatError, "not in %s", strZ(strIdToStr(packTypeMapData[typeMap].type)));
+        THROW_FMT(FormatError, "not in %s", zNewStrId(packTypeMapData[typeMap].type));
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -384,7 +389,7 @@ pckReadNew(const Pack *const pack)
 }
 
 FN_EXTERN PackRead *
-pckReadNewC(const unsigned char *const buffer, const size_t size)
+pckReadNewC(const uint8_t *const buffer, const size_t size)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, buffer);
@@ -653,8 +658,7 @@ pckReadTag(PackRead *const this, unsigned int *const id, const PackTypeMap typeM
                 {
                     THROW_FMT(
                         FormatError, "field %u is type '%s' but expected '%s'", this->tagNextId,
-                        strZ(strIdToStr(packTypeMapData[this->tagNextTypeMap].type)),
-                        strZ(strIdToStr(packTypeMapData[typeMap].type)));
+                        zNewStrId(packTypeMapData[this->tagNextTypeMap].type), zNewStrId(packTypeMapData[typeMap].type));
                 }
 
                 this->tagStack.top->idLast = this->tagNextId;
@@ -739,7 +743,7 @@ pckReadConsume(PackRead *const this)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN const unsigned char *
+FN_EXTERN const uint8_t *
 pckReadBufPtr(PackRead *const this)
 {
     FUNCTION_TEST_BEGIN();
@@ -750,7 +754,7 @@ pckReadBufPtr(PackRead *const this)
     ASSERT(packTypeMapData[this->tagNextTypeMap].size);
     ASSERT(this->buffer == NULL);
 
-    FUNCTION_TEST_RETURN_CONST_P(UCHARDATA, this->bufferPtr + this->bufferPos);
+    FUNCTION_TEST_RETURN_CONST_P(BYTEDATA, this->bufferPtr + this->bufferPos);
 }
 
 /**********************************************************************************************************************************/
@@ -1104,7 +1108,7 @@ pckReadStr(PackRead *const this, PckReadStrParam param)
         while (strSize(result) != sizeExpected)
         {
             const size_t sizeRead = pckReadBuffer(this, sizeExpected - strSize(result));
-            strCatZN(result, (char *)this->bufferPtr + this->bufferPos, sizeRead);
+            strCatZN(result, (const char *)this->bufferPtr + this->bufferPos, sizeRead);
             this->bufferPos += sizeRead;
         }
     }
@@ -1371,7 +1375,7 @@ pckWriteU64Internal(PackWrite *const this, const uint64_t value)
 
     ASSERT(this != NULL);
 
-    unsigned char buffer[CVT_VARINT128_BUFFER_SIZE];
+    uint8_t buffer[CVT_VARINT128_BUFFER_SIZE];
     size_t size = 0;
 
     cvtUInt64ToVarInt128(value, buffer, &size, sizeof(buffer));
@@ -1746,8 +1750,8 @@ pckWritePack(PackWrite *const this, const Pack *const value, const PckWritePackP
         ASSERT(value != NULL);
 
         pckWriteTag(this, pckTypeMapPack, param.id, 0);
-        pckWriteU64Internal(this, bufUsed((Buffer *)value));
-        pckWriteBuffer(this, (Buffer *)value);
+        pckWriteU64Internal(this, bufUsed((const Buffer *)value));
+        pckWriteBuffer(this, (const Buffer *)value);
     }
 
     FUNCTION_TEST_RETURN(PACK_WRITE, this);

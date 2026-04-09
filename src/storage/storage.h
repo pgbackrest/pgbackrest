@@ -46,7 +46,7 @@ typedef enum
     // etc.) for storage that does not support paths.
     storageFeaturePath,
 
-    // Do paths need to be synced to ensure contents are durable? storeageFeaturePath must also be enabled.
+    // Do paths need to be synced to ensure contents are durable? storageFeaturePath must also be enabled.
     storageFeaturePathSync,
 
     // Does the storage support hardlinks? Hardlinks allow the same file to be linked into multiple paths to save space.
@@ -57,6 +57,9 @@ typedef enum
 
     // Does the storage support detailed info, i.e. user, group, mode, link destination, etc.
     storageFeatureInfoDetail,
+
+    // Does the storage support versioning?
+    storageFeatureVersioning,
 } StorageFeature;
 
 /***********************************************************************************************************************************

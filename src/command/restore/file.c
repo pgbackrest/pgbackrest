@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Restore File
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -22,7 +22,7 @@ Restore File
 #include "common/io/limitRead.h"
 #include "common/log.h"
 #include "config/config.h"
-#include "info/manifest.h"
+#include "info/manifest/manifest.h"
 #include "storage/helper.h"
 
 /**********************************************************************************************************************************/
@@ -222,15 +222,16 @@ restoreFile(
 
         for (unsigned int fileIdx = 0; fileIdx < lstSize(fileList); fileIdx++)
         {
-            // Use a per-file mem context to reduce memory usage
-            MEM_CONTEXT_TEMP_BEGIN()
-            {
-                const RestoreFile *const file = lstGet(fileList, fileIdx);
-                RestoreFileResult *const fileResult = lstGet(result, fileIdx);
+            // Copy file from repository to database
+            RestoreFileResult *const fileResult = lstGet(result, fileIdx);
 
-                // Copy file from repository to database
-                if (fileResult->result == restoreResultCopy)
+            if (fileResult->result == restoreResultCopy)
+            {
+                // Use a per-file mem context to reduce memory usage
+                MEM_CONTEXT_TEMP_BEGIN()
                 {
+                    const RestoreFile *const file = lstGet(fileList, fileIdx);
+
                     // If no repo file is currently open
                     if (repoFileLimit == 0)
                     {
@@ -241,29 +242,24 @@ restoreFile(
                             ASSERT(varUInt64(file->limit) != 0);
                             repoFileLimit = varUInt64(file->limit);
 
-                            // Multiple files cannot be read when the file to read is a block incremental. This is because the
-                            // remote protocol does not support multiple open files at once.
-                            if (file->blockIncrMapSize == 0)
+                            // Determine how many files can be copied with one read
+                            for (unsigned int fileNextIdx = fileIdx + 1; fileNextIdx < lstSize(fileList); fileNextIdx++)
                             {
-                                // Determine how many files can be copied with one read
-                                for (unsigned int fileNextIdx = fileIdx + 1; fileNextIdx < lstSize(fileList); fileNextIdx++)
+                                // Only files that are being copied are considered
+                                if (((const RestoreFileResult *)lstGet(result, fileNextIdx))->result == restoreResultCopy)
                                 {
-                                    // Only files that are being copied are considered
-                                    if (((const RestoreFileResult *)lstGet(result, fileNextIdx))->result == restoreResultCopy)
-                                    {
-                                        const RestoreFile *const fileNext = lstGet(fileList, fileNextIdx);
-                                        ASSERT(fileNext->limit != NULL && varUInt64(fileNext->limit) != 0);
+                                    const RestoreFile *const fileNext = lstGet(fileList, fileNextIdx);
+                                    ASSERT(fileNext->limit != NULL && varUInt64(fileNext->limit) != 0);
 
-                                        // Break if the offset is not the first file's offset + limit of all additional files so far
-                                        if (fileNext->offset != file->offset + repoFileLimit)
-                                            break;
-
-                                        repoFileLimit += varUInt64(fileNext->limit);
-                                    }
-                                    // Else if the file was not copied then there is a gap so break
-                                    else
+                                    // Break if the offset is not the first file's offset + limit of all additional files so far
+                                    if (fileNext->offset != file->offset + repoFileLimit)
                                         break;
+
+                                    repoFileLimit += varUInt64(fileNext->limit);
                                 }
+                                // Else if the file was not copied then there is a gap so break
+                                else
+                                    break;
                             }
                         }
 
@@ -310,8 +306,7 @@ restoreFile(
                         const BlockMap *const blockMap = blockMapNewRead(
                             blockMapRead, file->blockIncrSize, file->blockIncrChecksumSize);
 
-                        // The repo file needs to be closed so that block lists can be read from the remote protocol
-                        ioReadClose(storageReadIo(repoFileRead));
+                        ioReadFree(blockMapRead);
 
                         // Open file to write
                         ioWriteOpen(storageWriteIo(pgFileWrite));
@@ -328,7 +323,7 @@ restoreFile(
                             // Open the super block list for read. Using one read for all super blocks is cheaper than reading from
                             // the file multiple times, which is especially noticeable on object stores.
                             StorageRead *const superBlockRead = storageNewReadP(
-                                storageRepo(),
+                                storageRepoIdx(repoIdx),
                                 backupFileRepoPathP(
                                     strLstGet(referenceList, read->reference), .manifestName = file->manifestFile,
                                     .bundleId = read->bundleId, .blockIncr = true),
@@ -341,18 +336,12 @@ restoreFile(
                             while (deltaWrite != NULL)
                             {
                                 // Seek to the block offset. It is possible we are already at the correct position but it is easier
-                                // and safer to let lseek() figure this out.
-                                THROW_ON_SYS_ERROR_FMT(
-                                    lseek(ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)deltaWrite->offset, SEEK_SET) == -1,
-                                    FileOpenError, STORAGE_ERROR_READ_SEEK, deltaWrite->offset,
-                                    strZ(storagePathP(storagePg(), file->name)));
+                                // and safer to let ioWriteSeek() figure it out.
+                                ioWriteSeek(storageWriteIo(pgFileWrite), deltaWrite->offset);
 
                                 // Write block
                                 ioWrite(storageWriteIo(pgFileWrite), deltaWrite->block);
                                 fileResult->blockIncrDeltaSize += bufUsed(deltaWrite->block);
-
-                                // Flush writes since we may seek to a new location for the next block
-                                ioWriteFlush(storageWriteIo(pgFileWrite));
 
                                 deltaWrite = blockDeltaNext(blockDelta, read, storageReadIo(superBlockRead));
                             }
@@ -422,8 +411,8 @@ restoreFile(
                             strZ(strNewEncode(encodingHex, checksum)), strZ(strNewEncode(encodingHex, file->checksum)));
                     }
                 }
+                MEM_CONTEXT_TEMP_END();
             }
-            MEM_CONTEXT_TEMP_END();
         }
     }
     MEM_CONTEXT_TEMP_END();

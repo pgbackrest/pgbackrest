@@ -7,6 +7,16 @@ Parse Configuration Yaml
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************
+Default types
+***********************************************************************************************************************************/
+typedef enum
+{
+    defaultTypeQuote = 0,
+    defaultTypeLiteral,
+    defaultTypeDynamic,
+} DefaultType;
+
+/***********************************************************************************************************************************
 Command role constants
 ***********************************************************************************************************************************/
 #define CMD_ROLE_ASYNC                                              "async"
@@ -89,6 +99,32 @@ typedef struct BldCfgOptionGroup
 
 typedef struct BldCfgOption BldCfgOption;                           // Forward declaration
 
+typedef struct BldCfgOptionAllowRangeMap
+{
+    const String *map;                                              // Map value
+    const String *min;                                              // Min value
+    const String *max;                                              // Max value
+} BldCfgOptionAllowRangeMap;
+
+typedef struct BldCfgOptionAllowRange
+{
+    const String *min;                                              // Min value
+    const String *max;                                              // Max value
+    const List *mapList;                                            // List of default mappings
+} BldCfgOptionAllowRange;
+
+typedef struct BldCfgOptionDefaultMap
+{
+    const String *map;                                              // Map value
+    const String *value;                                            // Default value
+} BldCfgOptionDefaultMap;
+
+typedef struct BldCfgOptionDefault
+{
+    const String *value;                                            // Default value
+    const List *mapList;                                            // List of default mappings
+} BldCfgOptionDefault;
+
 typedef struct BldCfgOptionDepend
 {
     const BldCfgOption *option;                                     // Option dependency is on
@@ -108,7 +144,8 @@ typedef struct BldCfgOptionCommand
     const String *name;                                             // Name
     bool internal;                                                  // Is the option internal?
     bool required;                                                  // Is the option required?
-    const String *defaultValue;                                     // Default value, if any
+    bool sequence;                                                  // Sequence added to StringId?
+    const BldCfgOptionDefault *defaultValue;                        // Default value, if any
     const BldCfgOptionDepend *depend;                               // Dependency, if any
     const List *allowList;                                          // Allowed value list
     const StringList *roleList;                                     // Roles valid for the command
@@ -125,19 +162,20 @@ struct BldCfgOption
     const String *name;                                             // Name
     const String *type;                                             // Option type, e.g. integer
     const String *section;                                          // Option section, i.e. stanza or global
+    bool boolLike;                                                  // Option accepts y/n and can be treated as bool?
     bool internal;                                                  // Is the option internal?
     bool beta;                                                      // Is the option beta?
     bool required;                                                  // Is the option required?
     bool negate;                                                    // Can the option be negated?
     bool reset;                                                     // Can the option be reset?
-    const String *defaultValue;                                     // Default value, if any
-    bool defaultLiteral;                                            // Should default be interpreted literally, i.e. not a string
+    bool sequence;                                                  // Sequence added to StringId?
+    DefaultType defaultType;                                        // Type of default
+    const BldCfgOptionDefault *defaultValue;                        // Default value, if any
     const String *group;                                            // Option group, if any
     bool secure;                                                    // Does the option contain a secret?
     const BldCfgOptionDepend *depend;                               // Dependency, if any
     const List *allowList;                                          // Allowed value list
-    const String *allowRangeMin;                                    // Allow range min, if any
-    const String *allowRangeMax;                                    // Allow range max, if any
+    const BldCfgOptionAllowRange *allowRange;                       // Allow range, if any
     const List *cmdList;                                            // Command override list
     const List *deprecateList;                                      // List of option deprecations
 };

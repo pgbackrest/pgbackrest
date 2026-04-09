@@ -85,6 +85,18 @@ testRun(void)
         TEST_RESULT_BOOL(end - begin < wait->waitTime + 1200, true, "    upper range check");
 
         TEST_RESULT_VOID(waitFree(wait), "    free wait");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("waitRemainder()");
+
+        TEST_ASSIGN(wait, waitNew(500), "new wait = 500ms");
+        TEST_RESULT_BOOL(waitRemains(wait) <= 500, true, "check initial wait remainder");
+        TEST_RESULT_BOOL(waitRemains(wait) > 400, true, "check initial wait remainder");
+
+        sleepMSec(100);
+
+        TEST_RESULT_BOOL(waitRemains(wait) <= 400, true, "check updated wait remainder");
+        TEST_RESULT_BOOL(waitRemains(wait) > 300, true, "check updated wait remainder");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

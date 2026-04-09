@@ -326,7 +326,7 @@ typedef struct HrnHostExecBrParam
 
 String *hrnHostExecBr(HrnHost *this, const char *command, HrnHostExecBrParam param);
 
-// Create/start/stop Pg cluster
+// Create/start/stop/promote pg cluster
 #define HRN_HOST_PG_CREATE(this)                                                                                                   \
     do                                                                                                                             \
     {                                                                                                                              \
@@ -356,6 +356,16 @@ void hrnHostPgStart(HrnHost *this);
     while (0)
 
 void hrnHostPgStop(HrnHost *this);
+
+#define HRN_HOST_PG_PROMOTE(this)                                                                                                  \
+    do                                                                                                                             \
+    {                                                                                                                              \
+        TEST_RESULT_INFO_FMT("%s: promote pg cluster", strZ(hrnHostName(this)));                                                   \
+        hrnHostPgPromote(this);                                                                                                    \
+    }                                                                                                                              \
+    while (0)
+
+void hrnHostPgPromote(HrnHost *this);
 
 // Query
 PackRead *hrnHostSql(HrnHost *this, const String *statement, const PgClientQueryResult resultType);
@@ -388,7 +398,7 @@ hrnHostSqlValue(HrnHost *const this, const char *const statement)
 }
 
 #define HRN_HOST_SQL_VALUE(this, statement)                                                                                        \
-    HRN_HOST_SQL(this, statement, pgClientQueryResulColumn)
+    HRN_HOST_SQL(this, statement, pgClientQueryResultColumn)
 
 // Test a single value
 void hrnHostSqlTest(HrnHost *this, const String *statement, const String *expected);
@@ -449,6 +459,9 @@ HrnHost *hrnHostRepo(void);
 
 // Repo total
 unsigned int hrnHostRepoTotal(void);
+
+// Does the primary repo have versioning enabled?
+bool hrnHostRepoVersioning(void);
 
 // Get a host by name
 HrnHost *hrnHostGet(StringId id);

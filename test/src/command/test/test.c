@@ -1,12 +1,14 @@
 /***********************************************************************************************************************************
 Test Command
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <stdlib.h>
 
 #include "build/common/exec.h"
 #include "command/test/build.h"
+#include "command/test/lint.h"
+#include "command/test/test.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "config/config.h"
@@ -46,13 +48,31 @@ cmdTestPathCreate(const Storage *const storage, const String *const path)
     FUNCTION_LOG_RETURN_VOID();
 }
 
+/***********************************************************************************************************************************
+Fix vm architectures to project standard
+***********************************************************************************************************************************/
+static const String *
+cmdTestVmArchFix(const String *vmArch)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, vmArch);
+    FUNCTION_LOG_END();
+
+    if (strEqZ(vmArch, "i686"))
+        vmArch = strNewZ("i386");
+    else if (strEqZ(vmArch, "arm64"))
+        vmArch = strNewZ("aarch64");
+
+    FUNCTION_LOG_RETURN_CONST(STRING, vmArch);
+}
+
 /**********************************************************************************************************************************/
 void
 cmdTest(
     const String *const pathRepo, const String *const pathTest, const String *vm, const unsigned int vmId,
     const String *const pgVersion, const String *moduleName, const unsigned int test, const uint64_t scale, const LogLevel logLevel,
-    const bool logTime, const String *const timeZone, const bool coverage, const bool profile, const bool optimize,
-    const bool backTrace)
+    const bool logTime, const String *const timeZone, const String *architecture, const bool coverage, const bool profile,
+    const bool optimize, const bool backTrace)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, pathRepo);
@@ -66,6 +86,7 @@ cmdTest(
         FUNCTION_LOG_PARAM(ENUM, logLevel);
         FUNCTION_LOG_PARAM(BOOL, logTime);
         FUNCTION_LOG_PARAM(STRING, timeZone);
+        FUNCTION_LOG_PARAM(STRING, architecture);
         FUNCTION_LOG_PARAM(BOOL, coverage);
         FUNCTION_LOG_PARAM(BOOL, profile);
         FUNCTION_LOG_PARAM(BOOL, optimize);
@@ -74,6 +95,9 @@ cmdTest(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        // Linter
+        lintAll(pathRepo);
+
         // Find test
         ASSERT(moduleName != NULL);
 
@@ -89,6 +113,10 @@ cmdTest(
         if (module->type == testDefTypeIntegration)
             vm = strNewZ("none");
 
+        // Get test architecture
+        if (architecture == NULL)
+            architecture = cmdTestVmArchFix(strTrim(execOneP(STRDEF("uname -m"))));
+
         // Build test
         bool buildRetry = false;
         const String *const pathUnit = strNewFmt("%s/unit-%u/%s", strZ(pathTest), vmId, strZ(vm));
@@ -101,8 +129,8 @@ cmdTest(
             {
                 // Build unit
                 TestBuild *const testBld = testBldNew(
-                    pathRepo, pathTest, vm, vmInt, vmId, pgVersion, module, test, scale, logLevel, logTime, timeZone, coverage,
-                    profile, optimize, backTrace);
+                    pathRepo, pathTest, vm, vmInt, vmId, pgVersion, module, test, scale, logLevel, logTime, timeZone, architecture,
+                    coverage, profile, optimize, backTrace);
                 testBldUnit(testBld);
 
                 // Meson setup

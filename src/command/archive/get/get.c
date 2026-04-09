@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Archive Get Command
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +11,7 @@ Archive Get Command
 
 #include "command/archive/common.h"
 #include "command/archive/get/file.h"
+#include "command/archive/get/get.h"
 #include "command/archive/get/protocol.h"
 #include "command/command.h"
 #include "command/lock.h"
@@ -27,7 +28,7 @@ Archive Get Command
 #include "protocol/helper.h"
 #include "protocol/parallel.h"
 #include "storage/helper.h"
-#include "storage/write.intern.h"
+#include "storage/write.h"
 
 /***********************************************************************************************************************************
 Constants for log messages that are used multiple times to keep them consistent
@@ -747,7 +748,7 @@ cmdArchiveGet(void)
 
                     // Generate command options
                     StringList *const commandExec = cfgExecParam(cfgCmdArchiveGet, cfgCmdRoleAsync, optionReplace, true, false);
-                    strLstInsert(commandExec, 0, cfgExe());
+                    strLstInsert(commandExec, 0, cfgBin());
 
                     // Clean the current queue using the list of WAL that we ideally want in the queue. queueNeed() will return the
                     // list of WAL needed to fill the queue and this will be passed to the async process.
@@ -765,7 +766,7 @@ cmdArchiveGet(void)
                     cmdLockReleaseP();
 
                     // Execute the async process
-                    archiveAsyncExec(archiveModeGet, commandExec);
+                    cmdAsyncExec(CFGCMD_ARCHIVE_GET, commandExec);
 
                     // Mark the async process as forked so it doesn't get forked again. A single run of the async process should be
                     // enough to do the job, running it again won't help anything.
@@ -792,7 +793,9 @@ cmdArchiveGet(void)
                         ArchiveTimeoutError,
                         "unable to get WAL file '%s' from the archive asynchronously after %s second(s)\n"
                         "HINT: check '%s' for errors.",
-                        strZ(walSegment), strZ(strNewDbl((double)cfgOptionInt64(cfgOptArchiveTimeout) / MSEC_PER_SEC)),
+                        strZ(walSegment),
+                        strZ(
+                            strNewDivP((uint64_t)cfgOptionInt64(cfgOptArchiveTimeout), MSEC_PER_SEC, .precision = 3, .trim = true)),
                         strZ(cfgLoadLogFileName(cfgCmdRoleAsync)));
                 }
                 // Else report that the WAL segment could not be found
@@ -878,8 +881,7 @@ archiveGetAsyncCallback(void *const data, const unsigned int clientIdx)
             const ArchiveFileMap *const archiveFileMap = lstGet(jobData->archiveFileMapList, jobData->archiveFileIdx);
             jobData->archiveFileIdx++;
 
-            ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_GET_FILE);
-            PackWrite *const param = protocolCommandParam(command);
+            PackWrite *const param = protocolPackNew();
 
             pckWriteStrP(param, archiveFileMap->request);
 
@@ -897,7 +899,7 @@ archiveGetAsyncCallback(void *const data, const unsigned int clientIdx)
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result = protocolParallelJobNew(VARSTR(archiveFileMap->request), command);
+                result = protocolParallelJobNew(VARSTR(archiveFileMap->request), PROTOCOL_COMMAND_ARCHIVE_GET_FILE, param);
             }
             MEM_CONTEXT_PRIOR_END();
         }

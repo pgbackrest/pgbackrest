@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 PostgreSQL Interface
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <string.h>
 
@@ -63,25 +63,25 @@ typedef struct PgInterface
     unsigned int version;
 
     // Does pg_control match this version of PostgreSQL?
-    bool (*controlIs)(const unsigned char *);
+    bool (*controlIs)(const uint8_t *);
 
     // Convert pg_control to a common data structure
-    PgControl (*control)(const unsigned char *);
+    PgControl (*control)(const uint8_t *);
 
     // Get control crc offset
     size_t (*controlCrcOffset)(void);
 
     // Invalidate control checkpoint
-    void (*controlCheckpointInvalidate)(unsigned char *);
+    void (*controlCheckpointInvalidate)(uint8_t *);
 
     // Get the control version for this version of PostgreSQL
     uint32_t (*controlVersion)(void);
 
     // Does the WAL header match this version of PostgreSQL?
-    bool (*walIs)(const unsigned char *);
+    bool (*walIs)(const uint8_t *);
 
     // Convert WAL header to a common data structure
-    PgWal (*wal)(const unsigned char *);
+    PgWal (*wal)(const uint8_t *);
 } PgInterface;
 
 // Include auto-generated interfaces
@@ -207,10 +207,8 @@ pgControlCrcValidate(const Buffer *const controlFile, const PgInterface *const i
     do
     {
         // Calculate CRC and retrieve expected CRC
-        const uint32_t crcCalculated =
-            interface->version > PG_VERSION_94 ?
-                crc32cOne(bufPtrConst(controlFile), result) : crc32One(bufPtrConst(controlFile), result);
-        const uint32_t crcExpected = *((uint32_t *)(bufPtrConst(controlFile) + result));
+        const uint32_t crcCalculated = crc32cOne(bufPtrConst(controlFile), result);
+        const uint32_t crcExpected = *((const uint32_t *)(bufPtrConst(controlFile) + result));
 
         // If CRC does not match
         if (crcCalculated != crcExpected)
@@ -261,9 +259,7 @@ pgControlCrcUpdate(Buffer *const controlFile, const unsigned int pgVersion, cons
     ASSERT(pgVersion != 0);
     ASSERT(crcOffset != 0);
 
-    *((uint32_t *)(bufPtr(controlFile) + crcOffset)) =
-        pgVersion > PG_VERSION_94 ?
-            crc32cOne(bufPtrConst(controlFile), crcOffset) : crc32One(bufPtrConst(controlFile), crcOffset);
+    *((uint32_t *)(bufPtr(controlFile) + crcOffset)) = crc32cOne(bufPtrConst(controlFile), crcOffset);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -743,7 +739,7 @@ pgVersionFromStr(const String *const version)
 
     ASSERT(version != NULL);
 
-    // If format not number.number (9.4) or number only (10) then error. No check for valid/supported PG version is on purpose.
+    // If format not number.number (9.6) or number only (10) then error. No check for valid/supported PG version is on purpose.
     if (!regExpMatchOne(STRDEF("^[0-9]+[.]*[0-9]+$"), version))
         THROW_FMT(AssertError, "version %s format is invalid", strZ(version));
 

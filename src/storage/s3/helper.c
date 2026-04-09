@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 S3 Storage Helper
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <stdlib.h>
 
@@ -10,6 +10,7 @@ S3 Storage Helper
 #include "common/io/io.h"
 #include "common/log.h"
 #include "config/config.h"
+#include "storage/helper.h"
 #include "storage/posix/storage.h"
 #include "storage/s3/helper.h"
 
@@ -30,9 +31,11 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Parse the endpoint url
-        const HttpUrl *const url = httpUrlNewParseP(cfgOptionIdxStr(cfgOptRepoS3Endpoint, repoIdx), .type = httpProtocolTypeHttps);
+        const HttpUrl *const url = httpUrlNewParseP(
+            cfgOptionIdxStr(cfgOptRepoS3Endpoint, repoIdx), .type = httpProtocolTypeAny, .defaultType = httpProtocolTypeHttps);
         const String *const endPoint = httpUrlHost(url);
         unsigned int port = httpUrlPort(url);
+        HttpProtocolType protocolType = httpUrlProtocolType(url);
 
         // If host was specified then use it
         const String *host = NULL;
@@ -40,10 +43,11 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
         if (cfgOptionIdxSource(cfgOptRepoStorageHost, repoIdx) != cfgSourceDefault)
         {
             const HttpUrl *const url = httpUrlNewParseP(
-                cfgOptionIdxStr(cfgOptRepoStorageHost, repoIdx), .type = httpProtocolTypeHttps);
+                cfgOptionIdxStr(cfgOptRepoStorageHost, repoIdx), .type = httpProtocolTypeAny, .defaultType = httpProtocolTypeHttps);
 
             host = httpUrlHost(url);
             port = httpUrlPort(url);
+            protocolType = httpUrlProtocolType(url);
         }
 
         // If port was specified, overwrite the parsed/default port
@@ -51,11 +55,12 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
             port = cfgOptionIdxUInt(cfgOptRepoStoragePort, repoIdx);
 
         // Get role and token
-        const StorageS3KeyType keyType = (StorageS3KeyType)cfgOptionIdxStrId(cfgOptRepoS3KeyType, repoIdx);
+        const StorageS3KeyType keyType = (StorageS3KeyType)cfgOptionIdxSeq(cfgOptRepoS3KeyType, repoIdx);
         const String *role = cfgOptionIdxStrNull(cfgOptRepoS3Role, repoIdx);
-        const String *webIdToken = NULL;
+        const String *tokenFile = NULL;
+        const String *credUrl = NULL;
 
-        // If web identity authentication then load the role and token from environment variables documented here:
+        // If web identity authentication then load the role and token filename from environment variables documented here:
         // https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts-technical-overview.html
         if (keyType == storageS3KeyTypeWebId)
         {
@@ -75,22 +80,44 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
             }
 
             role = strNewZ(roleZ);
-            webIdToken = strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), STR(webIdTokenFileZ))));
+            tokenFile = strNewZ(webIdTokenFileZ);
+        }
+        // If pod identity authentication then load the credentials url and token filename from environment variables documented
+        // here: https://docs.aws.amazon.com/eks/latest/userguide/pod-id-how-it-works.html
+        else if (keyType == storageS3KeyTypePodId)
+        {
+            #define S3_ENV_AWS_CONTAINER_CREDENTIALS_FULL_URI       "AWS_CONTAINER_CREDENTIALS_FULL_URI"
+            #define S3_ENV_AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE   "AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE"
+
+            const char *const credUrlZ = getenv(S3_ENV_AWS_CONTAINER_CREDENTIALS_FULL_URI);
+            const char *const podIdTokenFileZ = getenv(S3_ENV_AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE);
+
+            if (credUrlZ == NULL || podIdTokenFileZ == NULL)
+            {
+                THROW_FMT(
+                    OptionInvalidError,
+                    "option '%s' is '" CFGOPTVAL_REPO_S3_KEY_TYPE_POD_ID_Z "' but '" S3_ENV_AWS_CONTAINER_CREDENTIALS_FULL_URI "'"
+                    " and '" S3_ENV_AWS_CONTAINER_AUTHORIZATION_TOKEN_FILE "' are not set",
+                    cfgOptionIdxName(cfgOptRepoS3KeyType, repoIdx));
+            }
+
+            credUrl = strNewZ(credUrlZ);
+            tokenFile = strNewZ(podIdTokenFileZ);
         }
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = storageS3New(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, pathExpressionCallback,
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoTargetTime(), pathExpressionCallback,
                 cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint,
-                (StorageS3UriStyle)cfgOptionIdxStrId(cfgOptRepoS3UriStyle, repoIdx), cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx),
-                keyType, cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3KmsKeyId, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoS3SseCustomerKey, repoIdx), role, webIdToken,
-                (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx),
-                cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), host, port, ioTimeoutMs(),
+                cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx), keyType,
+                (StorageS3UriStyle)cfgOptionIdxSeq(cfgOptRepoS3UriStyle, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx),
+                cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx),
+                cfgOptionIdxStrNull(cfgOptRepoS3KmsKeyId, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3SseCustomerKey, repoIdx), role,
+                tokenFile, credUrl, (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx),
+                cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), host, port, ioTimeoutMs(), protocolType,
                 cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
-                cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
+                cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx), cfgOptionIdxBool(cfgOptRepoS3RequesterPays, repoIdx));
         }
         MEM_CONTEXT_PRIOR_END();
     }

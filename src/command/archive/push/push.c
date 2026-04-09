@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Archive Push Command
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <string.h>
 #include <unistd.h>
@@ -9,6 +9,7 @@ Archive Push Command
 #include "command/archive/common.h"
 #include "command/archive/push/file.h"
 #include "command/archive/push/protocol.h"
+#include "command/archive/push/push.h"
 #include "command/command.h"
 #include "command/control/common.h"
 #include "command/lock.h"
@@ -361,7 +362,7 @@ cmdArchivePush(void)
 
                     // Generate command options
                     StringList *const commandExec = cfgExecParam(cfgCmdArchivePush, cfgCmdRoleAsync, optionReplace, true, false);
-                    strLstInsert(commandExec, 0, cfgExe());
+                    strLstInsert(commandExec, 0, cfgBin());
                     strLstAdd(commandExec, strPath(walFile));
 
                     // Clear errors for the current archive file
@@ -371,7 +372,7 @@ cmdArchivePush(void)
                     cmdLockReleaseP();
 
                     // Execute the async process
-                    archiveAsyncExec(archiveModePush, commandExec);
+                    cmdAsyncExec(CFGCMD_ARCHIVE_PUSH, commandExec);
 
                     // Mark the async process as forked so it doesn't get forked again. A single run of the async process should be
                     // enough to do the job, running it again won't help anything.
@@ -464,8 +465,7 @@ archivePushAsyncCallback(void *const data, const unsigned int clientIdx)
             const String *const walFile = strLstGet(jobData->walFileList, jobData->walFileIdx);
             jobData->walFileIdx++;
 
-            ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE);
-            PackWrite *const param = protocolCommandParam(command);
+            PackWrite *const param = protocolPackNew();
 
             pckWriteStrP(param, strNewFmt("%s/%s", strZ(jobData->walPath), strZ(walFile)));
             pckWriteBoolP(param, cfgOptionBool(cfgOptArchiveHeaderCheck));
@@ -496,7 +496,7 @@ archivePushAsyncCallback(void *const data, const unsigned int clientIdx)
 
             MEM_CONTEXT_PRIOR_BEGIN()
             {
-                result = protocolParallelJobNew(VARSTR(walFile), command);
+                result = protocolParallelJobNew(VARSTR(walFile), PROTOCOL_COMMAND_ARCHIVE_PUSH_FILE, param);
             }
             MEM_CONTEXT_PRIOR_END();
         }

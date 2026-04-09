@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Log Test Harness
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <fcntl.h>
 #include <regex.h>
@@ -15,6 +15,7 @@ Log Test Harness
 #include "common/type/stringList.h"
 
 #include "common/harnessDebug.h"
+#include "common/harnessLog.h"
 #include "common/harnessTest.h"
 
 /***********************************************************************************************************************************
@@ -25,9 +26,9 @@ Include shimmed C modules
 /***********************************************************************************************************************************
 Log settings for testing
 ***********************************************************************************************************************************/
-LogLevel logLevelTest = logLevelInfo;
-LogLevel logLevelTestDefault = logLevelOff;
-bool logDryRunTest = false;
+static LogLevel logLevelTest = logLevelInfo;
+static LogLevel logLevelTestDefault = logLevelOff;
+static bool logDryRunTest = false;
 
 /***********************************************************************************************************************************
 Name of file where logs are stored for testing
@@ -37,7 +38,7 @@ static char logFile[1024];
 /***********************************************************************************************************************************
 Buffer where log results are loaded for comparison purposes
 ***********************************************************************************************************************************/
-char harnessLogBuffer[256 * 1024];
+static char harnessLogBuffer[256 * 1024];
 
 /***********************************************************************************************************************************
 Open a log file -- centralized here for error handling
@@ -64,6 +65,8 @@ harnessLogOpen(const char *logFile, int flags, int mode)
 /***********************************************************************************************************************************
 Initialize log for testing
 ***********************************************************************************************************************************/
+#ifdef HRN_FEATURE_LOG
+
 void
 harnessLogInit(void)
 {
@@ -78,6 +81,8 @@ harnessLogInit(void)
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
+
+#endif
 
 /**********************************************************************************************************************************/
 void
@@ -169,6 +174,8 @@ Change default test log level
 
 Set the default log level for output to the console (for testing).
 ***********************************************************************************************************************************/
+#ifdef HRN_FEATURE_LOG
+
 void
 harnessLogLevelDefaultSet(LogLevel logLevel)
 {
@@ -181,6 +188,8 @@ hrnLogProcessIdSet(unsigned int processId)
 {
     logProcessId = processId;
 }
+
+#endif
 
 /***********************************************************************************************************************************
 Load log result from file into the log buffer
@@ -295,6 +304,32 @@ hrnLogReplaceAdd(const char *expression, const char *expressionSub, const char *
     FUNCTION_HARNESS_RETURN_VOID();
 }
 
+void
+hrnLogReplaceRemove(const char *const expression)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(STRINGZ, expression);
+    FUNCTION_HARNESS_END();
+
+    unsigned int replaceIdx = 0;
+
+    for (; replaceIdx < lstSize(harnessLog.replaceList); replaceIdx++)
+    {
+        const HarnessLogReplace *const logReplace = lstGet(harnessLog.replaceList, replaceIdx);
+
+        if (strEqZ(logReplace->expression, expression))
+        {
+            lstRemoveIdx(harnessLog.replaceList, replaceIdx);
+            break;
+        }
+    }
+
+    if (replaceIdx == lstSize(harnessLog.replaceList))
+        THROW_FMT(AssertError, "expression '%s' not found in replace list", expression);
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
 void
 hrnLogReplaceClear(void)
@@ -342,7 +377,7 @@ hrnLogReplace(void)
                         if (!regExpMatch(logReplace->regExpSub, match))
                         {
                             THROW_FMT(
-                                AssertError, "unable to find sub expression '%s' in '%s' extracted with expresion '%s'",
+                                AssertError, "unable to find sub expression '%s' in '%s' extracted with expression '%s'",
                                 strZ(logReplace->expressionSub), strZ(match), strZ(logReplace->expression));
                         }
 
@@ -445,6 +480,8 @@ harnessLogResultEmptyOrContains(const char *const contains)
 /***********************************************************************************************************************************
 Make sure nothing is left in the log after all tests have completed
 ***********************************************************************************************************************************/
+#ifdef HRN_FEATURE_LOG
+
 void
 harnessLogFinal(void)
 {
@@ -461,3 +498,5 @@ harnessLogFinal(void)
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
+
+#endif

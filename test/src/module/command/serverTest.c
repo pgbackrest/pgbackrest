@@ -13,7 +13,7 @@ Test Server Command
 /***********************************************************************************************************************************
 Test Run
 ***********************************************************************************************************************************/
-void
+static void
 testRun(void)
 {
     FUNCTION_HARNESS_VOID();
@@ -48,29 +48,32 @@ testRun(void)
                 HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
                 // Client 1
+                ProtocolClient *clientRemote = protocolRemoteGet(protocolStorageTypeRepo, 0, true);
                 const Storage *storageRemote = NULL;
                 TEST_ASSIGN(
                     storageRemote,
                     storageRemoteNew(
-                        STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL,
-                        protocolRemoteGet(protocolStorageTypeRepo, 0), cfgOptionUInt(cfgOptCompressLevelNetwork)),
+                        STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, 0, NULL,
+                        protocolRemoteGet(protocolStorageTypeRepo, 0, true), cfgOptionUInt(cfgOptCompressLevelNetwork)),
                     "new storage 1");
 
                 HRN_STORAGE_PUT_Z(storageRemote, "client1.txt", "CLIENT1");
 
-                TEST_RESULT_VOID(protocolRemoteFree(0), "free client 1");
+                TEST_RESULT_VOID(protocolHelperFree(clientRemote), "free client 1");
 
                 // Client 2
+                clientRemote = protocolRemoteGet(protocolStorageTypeRepo, 0, true);
+
                 TEST_ASSIGN(
                     storageRemote,
                     storageRemoteNew(
-                        STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL,
-                        protocolRemoteGet(protocolStorageTypeRepo, 0), cfgOptionUInt(cfgOptCompressLevelNetwork)),
+                        STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, 0, NULL,
+                        protocolRemoteGet(protocolStorageTypeRepo, 0, true), cfgOptionUInt(cfgOptCompressLevelNetwork)),
                     "new storage 2");
 
                 HRN_STORAGE_PUT_Z(storageRemote, "client2.txt", "CLIENT2");
 
-                TEST_RESULT_VOID(protocolRemoteFree(0), "free client 2");
+                TEST_RESULT_VOID(protocolHelperFree(clientRemote), "free client 2");
 
                 // Notify parent on exit
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -95,17 +98,19 @@ testRun(void)
                 HRN_CFG_LOAD(cfgCmdBackup, argList, .role = cfgCmdRoleLocal);
 
                 // Client 3
+                ProtocolClient *const clientRemote = protocolRemoteGet(protocolStorageTypePg, 0, true);
                 const Storage *storageRemote = NULL;
+
                 TEST_ASSIGN(
                     storageRemote,
                     storageRemoteNew(
-                        STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, NULL,
-                        protocolRemoteGet(protocolStorageTypePg, 0), cfgOptionUInt(cfgOptCompressLevelNetwork)),
+                        STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, true, 0, NULL,
+                        protocolRemoteGet(protocolStorageTypePg, 0, true), cfgOptionUInt(cfgOptCompressLevelNetwork)),
                     "new storage 3");
 
                 HRN_STORAGE_PUT_Z(storageRemote, "client3.txt", "CLIENT3");
 
-                TEST_RESULT_VOID(protocolRemoteFree(0), "free client 3");
+                TEST_RESULT_VOID(protocolHelperFree(clientRemote), "free client 3");
 
                 // Notify parent on exit
                 HRN_FORK_CHILD_NOTIFY_PUT();
@@ -127,13 +132,13 @@ testRun(void)
                             CFGOPT_TLS_SERVER_CA_FILE "=" HRN_SERVER_CA "\n"
                             CFGOPT_TLS_SERVER_CERT_FILE "=" HRN_SERVER_CERT "\n"
                             CFGOPT_TLS_SERVER_KEY_FILE "=" HRN_SERVER_KEY "\n"
-                            CFGOPT_TLS_SERVER_AUTH "=pgbackrest-client=db\n"
+                            CFGOPT_TLS_SERVER_AUTH "=pgbackrest-client=bogus1,db,bogus2\n"
                             "repo1-path=" TEST_PATH "/repo\n");
 
                         StringList *argList = strLstNew();
                         hrnCfgArgRawZ(argList, cfgOptConfig, TEST_PATH "/pgbackrest.conf");
                         hrnCfgArgRawFmt(argList, cfgOptTlsServerPort, "%u", testPort);
-                        hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, CFGOPTVAL_ARCHIVE_MODE_OFF_Z);
+                        hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, "off");
                         HRN_CFG_LOAD(cfgCmdServer, argList);
 
                         // Init exit signal handlers
@@ -152,7 +157,7 @@ testRun(void)
                         pid_t pid = getpid();
 
                         // Add parameters to arg list required for a reload
-                        strLstInsert(argList, 0, cfgExe());
+                        strLstInsert(argList, 0, cfgBin());
                         strLstAddZ(argList, CFGCMD_SERVER);
 
                         TEST_RESULT_VOID(cmdServer(strLstSize(argList), strLstPtr(argList)), "server");

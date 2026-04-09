@@ -7,10 +7,6 @@ doc/lib/pgBackRestDoc/Common/Doc.pm:
   class: doc/core
   type: perl
 
-doc/lib/pgBackRestDoc/Common/DocConfig.pm:
-  class: doc/core
-  type: perl
-
 doc/lib/pgBackRestDoc/Common/DocExecute.pm:
   class: doc/core
   type: perl
@@ -47,10 +43,6 @@ doc/lib/pgBackRestDoc/Common/String.pm:
   class: doc/core
   type: perl
 
-doc/lib/pgBackRestDoc/Custom/DocConfigData.pm:
-  class: doc/core
-  type: perl
-
 doc/lib/pgBackRestDoc/Custom/DocCustomRelease.pm:
   class: doc/core
   type: perl
@@ -68,14 +60,6 @@ doc/lib/pgBackRestDoc/Html/DocHtmlPage.pm:
   type: perl
 
 doc/lib/pgBackRestDoc/Html/DocHtmlSite.pm:
-  class: doc/core
-  type: perl
-
-doc/lib/pgBackRestDoc/Latex/DocLatex.pm:
-  class: doc/core
-  type: perl
-
-doc/lib/pgBackRestDoc/Latex/DocLatexSection.pm:
   class: doc/core
   type: perl
 
@@ -103,10 +87,6 @@ doc/resource/html/default.css:
   class: doc/core
   type: css
 
-doc/resource/latex/preamble.tex:
-  class: doc/core
-  type: latex
-
 doc/src/build/config/config.yaml:
   class: doc/core
   type: yaml
@@ -128,6 +108,14 @@ doc/src/command/build/man.c:
   type: c
 
 doc/src/command/build/man.h:
+  class: doc/core
+  type: c/h
+
+doc/src/command/build/pre.c:
+  class: doc/core
+  type: c
+
+doc/src/command/build/pre.h:
   class: doc/core
   type: c/h
 
@@ -203,447 +191,483 @@ doc/xml/release.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2014/0.10.xml:
+doc/xml/release/2010s/2014/0.10.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2014/0.11.xml:
+doc/xml/release/2010s/2014/0.11.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2014/0.15.xml:
+doc/xml/release/2010s/2014/0.15.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2014/0.16.xml:
+doc/xml/release/2010s/2014/0.16.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2014/0.17.xml:
+doc/xml/release/2010s/2014/0.17.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2014/0.18.xml:
+doc/xml/release/2010s/2014/0.18.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2014/0.19.xml:
+doc/xml/release/2010s/2014/0.19.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2014/0.30.xml:
+doc/xml/release/2010s/2014/0.30.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2015/0.50.xml:
+doc/xml/release/2010s/2015/0.50.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2015/0.60.xml:
+doc/xml/release/2010s/2015/0.60.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2015/0.61.xml:
+doc/xml/release/2010s/2015/0.61.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2015/0.65.xml:
+doc/xml/release/2010s/2015/0.65.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2015/0.70.xml:
+doc/xml/release/2010s/2015/0.70.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2015/0.75.xml:
+doc/xml/release/2010s/2015/0.75.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2015/0.77.xml:
+doc/xml/release/2010s/2015/0.77.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2015/0.78.xml:
+doc/xml/release/2010s/2015/0.78.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2015/0.80.xml:
+doc/xml/release/2010s/2015/0.80.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2015/0.82.xml:
+doc/xml/release/2010s/2015/0.82.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2015/0.85.xml:
+doc/xml/release/2010s/2015/0.85.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2015/0.87.xml:
+doc/xml/release/2010s/2015/0.87.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2015/0.88.xml:
+doc/xml/release/2010s/2015/0.88.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2015/0.89.xml:
+doc/xml/release/2010s/2015/0.89.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2016/0.90.xml:
+doc/xml/release/2010s/2016/0.90.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2016/0.91.xml:
+doc/xml/release/2010s/2016/0.91.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2016/0.92.xml:
+doc/xml/release/2010s/2016/0.92.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2016/1.00.xml:
+doc/xml/release/2010s/2016/1.00.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2016/1.01.xml:
+doc/xml/release/2010s/2016/1.01.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2016/1.02.xml:
+doc/xml/release/2010s/2016/1.02.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2016/1.03.xml:
+doc/xml/release/2010s/2016/1.03.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2016/1.04.xml:
+doc/xml/release/2010s/2016/1.04.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2016/1.05.xml:
+doc/xml/release/2010s/2016/1.05.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2016/1.06.xml:
+doc/xml/release/2010s/2016/1.06.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2016/1.07.xml:
+doc/xml/release/2010s/2016/1.07.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2016/1.08.xml:
+doc/xml/release/2010s/2016/1.08.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2016/1.09.xml:
+doc/xml/release/2010s/2016/1.09.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2016/1.10.xml:
+doc/xml/release/2010s/2016/1.10.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2016/1.11.xml:
+doc/xml/release/2010s/2016/1.11.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2016/1.12.xml:
+doc/xml/release/2010s/2016/1.12.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2017/1.13.xml:
+doc/xml/release/2010s/2017/1.13.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2017/1.14.xml:
+doc/xml/release/2010s/2017/1.14.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2017/1.15.xml:
+doc/xml/release/2010s/2017/1.15.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2017/1.16.xml:
+doc/xml/release/2010s/2017/1.16.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2017/1.17.xml:
+doc/xml/release/2010s/2017/1.17.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2017/1.18.xml:
+doc/xml/release/2010s/2017/1.18.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2017/1.19.xml:
+doc/xml/release/2010s/2017/1.19.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2017/1.20.xml:
+doc/xml/release/2010s/2017/1.20.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2017/1.21.xml:
+doc/xml/release/2010s/2017/1.21.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2017/1.22.xml:
+doc/xml/release/2010s/2017/1.22.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2017/1.23.xml:
+doc/xml/release/2010s/2017/1.23.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2017/1.24.xml:
+doc/xml/release/2010s/2017/1.24.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2017/1.25.xml:
+doc/xml/release/2010s/2017/1.25.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2017/1.26.xml:
+doc/xml/release/2010s/2017/1.26.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2017/1.27.xml:
+doc/xml/release/2010s/2017/1.27.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2018/1.28.xml:
+doc/xml/release/2010s/2018/1.28.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2018/1.29.xml:
+doc/xml/release/2010s/2018/1.29.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2018/2.00.xml:
+doc/xml/release/2010s/2018/2.00.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2018/2.01.xml:
+doc/xml/release/2010s/2018/2.01.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2018/2.02.xml:
+doc/xml/release/2010s/2018/2.02.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2018/2.03.xml:
+doc/xml/release/2010s/2018/2.03.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2018/2.04.xml:
+doc/xml/release/2010s/2018/2.04.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2018/2.05.xml:
+doc/xml/release/2010s/2018/2.05.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2018/2.06.xml:
+doc/xml/release/2010s/2018/2.06.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2018/2.07.xml:
+doc/xml/release/2010s/2018/2.07.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2019/2.08.xml:
+doc/xml/release/2010s/2019/2.08.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2019/2.09.xml:
+doc/xml/release/2010s/2019/2.09.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2019/2.10.xml:
+doc/xml/release/2010s/2019/2.10.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2019/2.11.xml:
+doc/xml/release/2010s/2019/2.11.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2019/2.12.xml:
+doc/xml/release/2010s/2019/2.12.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2019/2.13.xml:
+doc/xml/release/2010s/2019/2.13.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2019/2.14.xml:
+doc/xml/release/2010s/2019/2.14.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2019/2.15.xml:
+doc/xml/release/2010s/2019/2.15.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2019/2.16.xml:
+doc/xml/release/2010s/2019/2.16.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2019/2.17.xml:
+doc/xml/release/2010s/2019/2.17.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2019/2.18.xml:
+doc/xml/release/2010s/2019/2.18.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2019/2.19.xml:
+doc/xml/release/2010s/2019/2.19.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2019/2.20.xml:
+doc/xml/release/2010s/2019/2.20.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2020/2.21.xml:
+doc/xml/release/2020s/2020/2.21.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2020/2.22.xml:
+doc/xml/release/2020s/2020/2.22.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2020/2.23.xml:
+doc/xml/release/2020s/2020/2.23.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2020/2.24.xml:
+doc/xml/release/2020s/2020/2.24.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2020/2.25.xml:
+doc/xml/release/2020s/2020/2.25.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2020/2.26.xml:
+doc/xml/release/2020s/2020/2.26.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2020/2.27.xml:
+doc/xml/release/2020s/2020/2.27.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2020/2.28.xml:
+doc/xml/release/2020s/2020/2.28.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2020/2.29.xml:
+doc/xml/release/2020s/2020/2.29.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2020/2.30.xml:
+doc/xml/release/2020s/2020/2.30.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2020/2.31.xml:
+doc/xml/release/2020s/2020/2.31.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2021/2.32.xml:
+doc/xml/release/2020s/2021/2.32.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2021/2.33.xml:
+doc/xml/release/2020s/2021/2.33.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2021/2.34.xml:
+doc/xml/release/2020s/2021/2.34.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2021/2.35.xml:
+doc/xml/release/2020s/2021/2.35.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2021/2.36.xml:
+doc/xml/release/2020s/2021/2.36.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2022/2.37.xml:
+doc/xml/release/2020s/2022/2.37.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2022/2.38.xml:
+doc/xml/release/2020s/2022/2.38.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2022/2.39.xml:
+doc/xml/release/2020s/2022/2.39.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2022/2.40.xml:
+doc/xml/release/2020s/2022/2.40.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2022/2.41.xml:
+doc/xml/release/2020s/2022/2.41.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2022/2.42.xml:
+doc/xml/release/2020s/2022/2.42.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2022/2.43.xml:
+doc/xml/release/2020s/2022/2.43.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2023/2.44.xml:
+doc/xml/release/2020s/2023/2.44.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2023/2.45.xml:
+doc/xml/release/2020s/2023/2.45.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2023/2.46.xml:
+doc/xml/release/2020s/2023/2.46.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2023/2.47.xml:
+doc/xml/release/2020s/2023/2.47.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2023/2.48.xml:
+doc/xml/release/2020s/2023/2.48.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2023/2.49.xml:
+doc/xml/release/2020s/2023/2.49.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2024/2.50.xml:
+doc/xml/release/2020s/2024/2.50.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2024/2.51.xml:
+doc/xml/release/2020s/2024/2.51.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2024/2.52.1.xml:
+doc/xml/release/2020s/2024/2.52.1.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2024/2.52.xml:
+doc/xml/release/2020s/2024/2.52.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2024/2.53.1.xml:
+doc/xml/release/2020s/2024/2.53.1.xml:
   class: doc/source
   type: xml
 
-doc/xml/release/2024/2.53.xml:
+doc/xml/release/2020s/2024/2.53.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020s/2024/2.54.0.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020s/2024/2.54.1.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020s/2025/2.54.2.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020s/2025/2.55.0.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020s/2025/2.55.1.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020s/2025/2.56.0.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020s/2025/2.57.0.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020s/2026/2.58.0.xml:
+  class: doc/source
+  type: xml
+
+doc/xml/release/2020s/2026/2.59.0.xml:
   class: doc/source
   type: xml
 
@@ -666,18 +690,6 @@ meson.build:
 meson_options.txt:
   class: build
   type: meson
-
-src/Makefile.in:
-  class: build
-  type: make
-
-src/build.auto.h.in:
-  class: core
-  type: c/h
-
-src/build/aclocal.m4:
-  class: build
-  type: make
 
 src/build/common/exec.c:
   class: build
@@ -735,14 +747,6 @@ src/build/common/yaml.h:
   class: build
   type: c/h
 
-src/build/config.guess:
-  class: build
-  type: make
-
-src/build/config.sub:
-  class: build
-  type: make
-
 src/build/config/config.yaml:
   class: build
   type: yaml
@@ -762,10 +766,6 @@ src/build/config/render.c:
 src/build/config/render.h:
   class: build
   type: c/h
-
-src/build/configure.ac:
-  class: build
-  type: make
 
 src/build/error/error.yaml:
   class: build
@@ -789,7 +789,7 @@ src/build/error/render.h:
 
 src/build/help/help.xml:
   class: build
-  type: make
+  type: xml
 
 src/build/help/parse.c:
   class: build
@@ -806,10 +806,6 @@ src/build/help/render.c:
 src/build/help/render.h:
   class: build
   type: c/h
-
-src/build/install-sh:
-  class: build
-  type: make
 
 src/build/main.c:
   class: build
@@ -1099,14 +1095,6 @@ src/command/repo/common.h:
   class: core
   type: c/h
 
-src/command/repo/create.c:
-  class: core
-  type: c
-
-src/command/repo/create.h:
-  class: core
-  type: c/h
-
 src/command/repo/get.c:
   class: core
   type: c
@@ -1176,6 +1164,14 @@ src/command/restore/restore.c:
   type: c
 
 src/command/restore/restore.h:
+  class: core
+  type: c/h
+
+src/command/restore/timeline.c:
+  class: core
+  type: c
+
+src/command/restore/timeline.h:
   class: core
   type: c/h
 
@@ -1279,6 +1275,14 @@ src/common/compress/bz2/decompress.h:
   class: core
   type: c/h
 
+src/common/compress/common.c:
+  class: core
+  type: c
+
+src/common/compress/common.h:
+  class: core
+  type: c/h
+
 src/common/compress/gz/common.c:
   class: core
   type: c
@@ -1308,10 +1312,6 @@ src/common/compress/helper.c:
   type: c
 
 src/common/compress/helper.h:
-  class: core
-  type: c/h
-
-src/common/compress/helper.intern.h:
   class: core
   type: c/h
 
@@ -2035,10 +2035,6 @@ src/config/protocol.h:
   class: core
   type: c/h
 
-src/configure:
-  class: build
-  type: make
-
 src/db/db.c:
   class: core
   type: c
@@ -2095,11 +2091,11 @@ src/info/infoPg.h:
   class: core
   type: c/h
 
-src/info/manifest.c:
+src/info/manifest/manifest.c:
   class: core
   type: c
 
-src/info/manifest.h:
+src/info/manifest/manifest.h:
   class: core
   type: c/h
 
@@ -2172,14 +2168,6 @@ src/protocol/client.c:
   type: c
 
 src/protocol/client.h:
-  class: core
-  type: c/h
-
-src/protocol/command.c:
-  class: core
-  type: c
-
-src/protocol/command.h:
   class: core
   type: c/h
 
@@ -2559,10 +2547,6 @@ test/lib/pgBackRestTest/Common/Io/Handle.pm:
   class: test/harness
   type: perl
 
-test/lib/pgBackRestTest/Common/Io/Process.pm:
-  class: test/harness
-  type: perl
-
 test/lib/pgBackRestTest/Common/JobTest.pm:
   class: test/harness
   type: perl
@@ -2632,6 +2616,14 @@ test/src/command/test/define.c:
   type: c
 
 test/src/command/test/define.h:
+  class: test/harness
+  type: c/h
+
+test/src/command/test/lint.c:
+  class: test/harness
+  type: c
+
+test/src/command/test/lint.h:
   class: test/harness
   type: c/h
 
@@ -2763,14 +2755,6 @@ test/src/common/harnessPostgres.h:
   class: test/harness
   type: c/h
 
-test/src/common/harnessPostgres/harness094.c:
-  class: test/harness
-  type: c
-
-test/src/common/harnessPostgres/harness095.c:
-  class: test/harness
-  type: c
-
 test/src/common/harnessPostgres/harness096.c:
   class: test/harness
   type: c
@@ -2807,6 +2791,10 @@ test/src/common/harnessPostgres/harness170.c:
   class: test/harness
   type: c
 
+test/src/common/harnessPostgres/harness180.c:
+  class: test/harness
+  type: c
+
 test/src/common/harnessPostgres/harnessVersion.intern.h:
   class: test/harness
   type: c/h
@@ -2824,6 +2812,14 @@ test/src/common/harnessProtocol.c:
   type: c
 
 test/src/common/harnessProtocol.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessRestore.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessRestore.h:
   class: test/harness
   type: c/h
 
@@ -2856,6 +2852,14 @@ test/src/common/harnessStorage.c:
   type: c
 
 test/src/common/harnessStorage.h:
+  class: test/harness
+  type: c/h
+
+test/src/common/harnessStorageHelper.c:
+  class: test/harness
+  type: c
+
+test/src/common/harnessStorageHelper.h:
   class: test/harness
   type: c/h
 

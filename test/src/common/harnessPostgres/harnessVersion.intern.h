@@ -14,10 +14,6 @@ Macros to create harness functions per PostgreSQL version.
 /***********************************************************************************************************************************
 Get the catalog version
 ***********************************************************************************************************************************/
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_94
-
 #define HRN_PG_INTERFACE_CATALOG_VERSION(version)                                                                                  \
     uint32_t                                                                                                                       \
     hrnPgInterfaceCatalogVersion##version(void)                                                                                    \
@@ -25,19 +21,13 @@ Get the catalog version
         return CATALOG_VERSION_NO;                                                                                                 \
     }
 
-#endif
-
 /***********************************************************************************************************************************
 Create a pg_control file
 ***********************************************************************************************************************************/
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_94
-
 #define HRN_PG_INTERFACE_CONTROL_TEST(version)                                                                                     \
     void                                                                                                                           \
     hrnPgInterfaceControl##version(                                                                                                \
-        const unsigned int controlVersion, const unsigned int crc, const PgControl pgControl, unsigned char *const buffer)         \
+        const unsigned int controlVersion, const unsigned int crc, const PgControl pgControl, uint8_t *const buffer)               \
     {                                                                                                                              \
         ASSERT(buffer != NULL);                                                                                                    \
                                                                                                                                    \
@@ -56,33 +46,21 @@ Create a pg_control file
             .data_checksum_version = pgControl.pageChecksumVersion,                                                                \
         };                                                                                                                         \
                                                                                                                                    \
-        ((ControlFileData *)buffer)->crc =                                                                                         \
-            crc == 0 ?                                                                                                             \
-                (PG_VERSION > PG_VERSION_94 ?                                                                                      \
-                    crc32cOne(buffer, offsetof(ControlFileData, crc)) : crc32One(buffer, offsetof(ControlFileData, crc))) :        \
-                crc;                                                                                                               \
+        ((ControlFileData *)buffer)->crc = crc == 0 ? crc32cOne(buffer, offsetof(ControlFileData, crc)) : crc;                     \
     }
-
-#endif
 
 /***********************************************************************************************************************************
 Create a WAL file
 ***********************************************************************************************************************************/
-#if PG_VERSION > PG_VERSION_MAX
-
-#elif PG_VERSION >= PG_VERSION_94
-
 #define HRN_PG_INTERFACE_WAL_TEST(version)                                                                                         \
     void                                                                                                                           \
-    hrnPgInterfaceWal##version(const unsigned int magic, const PgWal pgWal, unsigned char *const buffer)                           \
+    hrnPgInterfaceWal##version(const unsigned int magic, const PgWal pgWal, uint8_t *const buffer)                                 \
     {                                                                                                                              \
         ((XLogLongPageHeaderData *)buffer)->std.xlp_magic = magic == 0 ? XLOG_PAGE_MAGIC : (uint16)magic;                          \
         ((XLogLongPageHeaderData *)buffer)->std.xlp_info = XLP_LONG_HEADER;                                                        \
         ((XLogLongPageHeaderData *)buffer)->xlp_sysid = pgWal.systemId;                                                            \
         ((XLogLongPageHeaderData *)buffer)->xlp_seg_size = pgWal.size;                                                             \
     }
-
-#endif
 
 /***********************************************************************************************************************************
 Call all macros with a single macro to make the vXXX.c files as simple as possible

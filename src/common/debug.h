@@ -8,7 +8,6 @@ Debug Routines
 #include "common/stackTrace.h"
 #include "common/type/convert.h"
 #include "common/type/stringStatic.h"
-#include "common/type/stringZ.h"
 
 /***********************************************************************************************************************************
 These functions allow auditing of child mem contexts and allocations that are left in the calling context when a function exits.
@@ -200,11 +199,6 @@ FN_EXTERN size_t typeToLog(const char *typeName, char *buffer, size_t bufferSize
 #define FUNCTION_LOG_CHARPY_FORMAT(value, buffer, bufferSize)                                                                      \
     ptrToLog(value, "char *[]", buffer, bufferSize)
 
-#define FUNCTION_LOG_DOUBLE_TYPE                                                                                                   \
-    double
-#define FUNCTION_LOG_DOUBLE_FORMAT(value, buffer, bufferSize)                                                                      \
-    cvtDoubleToZ(value, buffer, bufferSize)
-
 #define FUNCTION_LOG_INT_TYPE                                                                                                      \
     int
 #define FUNCTION_LOG_INT_FORMAT(value, buffer, bufferSize)                                                                         \
@@ -233,10 +227,10 @@ FN_EXTERN size_t typeToLog(const char *typeName, char *buffer, size_t bufferSize
 #define FUNCTION_LOG_TIMEMSEC_FORMAT(value, buffer, bufferSize)                                                                    \
     cvtUInt64ToZ(value, buffer, bufferSize)
 
-#define FUNCTION_LOG_UCHARDATA_TYPE                                                                                                \
-    unsigned char
-#define FUNCTION_LOG_UCHARDATA_FORMAT(value, buffer, bufferSize)                                                                   \
-    typeToLog("(unsigned char)", buffer, bufferSize)
+#define FUNCTION_LOG_BYTEDATA_TYPE                                                                                                 \
+    uint8_t
+#define FUNCTION_LOG_BYTEDATA_FORMAT(value, buffer, bufferSize)                                                                    \
+    typeToLog("(uint8_t)", buffer, bufferSize)
 
 #define FUNCTION_LOG_SIZE_TYPE                                                                                                     \
     size_t
@@ -277,6 +271,11 @@ FN_EXTERN size_t typeToLog(const char *typeName, char *buffer, size_t bufferSize
     char *
 #define FUNCTION_LOG_STRINGZ_FORMAT(value, buffer, bufferSize)                                                                     \
     strzToLog(value, buffer, bufferSize)
+
+#define FUNCTION_LOG_SSIZE_TYPE                                                                                                    \
+    ssize_t
+#define FUNCTION_LOG_SSIZE_FORMAT(value, buffer, bufferSize)                                                                       \
+    cvtInt64ToZ(value, buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Macros to return function results (or void)
@@ -339,6 +338,7 @@ Macros to return function results (or void)
         STACK_TRACE_POP(false);                                                                                                    \
                                                                                                                                    \
         LOG(FUNCTION_LOG_LEVEL(), 0, "=> void");                                                                                   \
+        return;                                                                                                                    \
     }                                                                                                                              \
     while (0)
 
@@ -389,7 +389,7 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
     FUNCTION_LOG_PARAM_PP(typeName, param)
 
 #define FUNCTION_TEST_END()                                                                                                        \
-        (void)FUNCTION_TEST_BEGIN_exists; /* CHECK for presense of FUNCTION_TEST_BEGIN*() */                                       \
+        (void)FUNCTION_TEST_BEGIN_exists; /* CHECK for presence of FUNCTION_TEST_BEGIN*() */                                       \
                                                                                                                                    \
         stackTraceTestStart();                                                                                                     \
     }
@@ -401,7 +401,7 @@ Ignore DEBUG_TEST_TRACE_MACRO if DEBUG is not defined because the underlying fun
 #define FUNCTION_TEST_RETURN_TYPE_BASE(typePre, type, typePost, ...)                                                               \
     do                                                                                                                             \
     {                                                                                                                              \
-        (void)FUNCTION_TEST_BEGIN_exists; /* CHECK for presense of FUNCTION_TEST_BEGIN*() */                                       \
+        (void)FUNCTION_TEST_BEGIN_exists; /* CHECK for presence of FUNCTION_TEST_BEGIN*() */                                       \
                                                                                                                                    \
         typePre type typePost FUNCTION_TEST_result = __VA_ARGS__;                                                                  \
                                                                                                                                    \

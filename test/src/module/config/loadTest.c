@@ -104,7 +104,13 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo1");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoRetentionFull, 1, "1");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+        hrnCfgArgRawBool(argList, cfgOptStopAuto, true);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+        TEST_RESULT_LOG(
+            "P00   WARN: option 'stop-auto' is deprecated\n"
+            "            HINT: all supported versions use non-exclusive backup.\n"
+            "            HINT: stop using this option to avoid an error when it is removed.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("local default repo paths for cifs repo type must be different");
@@ -134,39 +140,6 @@ testRun(void)
 
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 3);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 3);
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("repo-host-cmd is defaulted when null");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
-        HRN_CFG_LOAD(cfgCmdCheck, argList);
-
-        cfgOptionIdxSet(cfgOptRepoHost, 0, cfgSourceParam, varNewStrZ("repo-host"));
-
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command is updated");
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoHostCmd, 0), testProjectExe(), "check repo1-host-cmd");
-
-        cfgOptionIdxSet(cfgOptRepoHostCmd, 0, cfgSourceParam, VARSTRDEF("/other"));
-
-        TEST_RESULT_VOID(cfgLoadUpdateOption(), "repo remote command was already set");
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoHostCmd, 0), "/other", "check repo1-host-cmd");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("pg-host-cmd is defaulted when null");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 1, "pg1");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 99, "/pg99");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgHost, 99, "pg99");
-        hrnCfgArgKeyRawZ(argList, cfgOptPgHostCmd, 99, "pg99-exe");
-        HRN_CFG_LOAD(cfgCmdCheck, argList);
-
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgHostCmd, 0), testProjectExe(), "check pg1-host-cmd");
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgHostCmd, 1), "pg99-exe", "check pg99-host-cmd");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("db-timeout set but not protocol timeout");
@@ -450,6 +423,24 @@ testRun(void)
             "HINT: TLS/SSL verification cannot proceed with this bucket name.\n"
             "HINT: remove dots from the bucket name.");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("bucket name with dot succeeds with path-style URIs");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoType, 111, "s3");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Bucket, 111, "ok.bucket");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Region, 111, "region");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Endpoint, 111, "endpoint");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoS3UriStyle, 111, "path");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 111, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepo, "111");
+
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .comment = "dot bucket with uri-style=path");
+
+        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoS3Bucket), "ok.bucket", "check bucket value");
+
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3Key, 111);
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 111);
 
@@ -492,6 +483,24 @@ testRun(void)
         hrnCfgEnvKeyRemoveRaw(cfgOptRepoS3KeySecret, 1);
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("repo is set when repo-target-time is set");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
+        hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-08 12:12:12+00");
+        TEST_ERROR(
+            hrnCfgLoadP(cfgCmdInfo, argList), OptionInvalidError, "option 'repo-target-time' not valid without option 'repo'");
+
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        TEST_ERROR(
+            hrnCfgLoadP(cfgCmdArchiveGet, argList), OptionInvalidError,
+            "option 'repo-target-time' not valid without option 'repo'");
+
+        hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("compress-type=none when compress=n");
 
         argList = strLstNew();
@@ -517,38 +526,15 @@ testRun(void)
         TEST_RESULT_BOOL(cfgOptionValid(cfgOptCompress), false, "compress is not valid");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error on invalid compress level");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-        hrnCfgArgRawZ(argList, cfgOptCompressType, "gz");
-        hrnCfgArgRawZ(argList, cfgOptCompressLevel, "-2");
-
-        TEST_ERROR(
-            hrnCfgLoadP(cfgCmdArchivePush, argList), OptionInvalidValueError,
-            "'-2' is out of range for 'compress-level' option when 'compress-type' option = 'gz'");
-
-        argList = strLstNew();
-        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
-        hrnCfgArgRawZ(argList, cfgOptCompressType, "gz");
-        hrnCfgArgRawZ(argList, cfgOptCompressLevel, "10");
-
-        TEST_ERROR(
-            hrnCfgLoadP(cfgCmdArchivePush, argList), OptionInvalidValueError,
-            "'10' is out of range for 'compress-level' option when 'compress-type' option = 'gz'");
-
-        // In practice level should not be used here but preserve the prior behavior in case something depends on it
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("do not check range when compress-type = none");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptCompressType, "none");
-        hrnCfgArgRawZ(argList, cfgOptCompressLevel, "3");
 
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
         TEST_RESULT_UINT(cfgOptionStrId(cfgOptCompressType), CFGOPTVAL_COMPRESS_TYPE_NONE, "compress-type=none");
-        TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 3, "compress-level=3");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 0, "compress-level=0");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("warn when compress-type and compress both set");
@@ -595,11 +581,11 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Region, 1, "region");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoS3Endpoint, 1, "endpoint");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoS3KeyType, 1, "auto");
-        hrnCfgArgKeyRawZ(argList, cfgOptRepoStorageUploadChunkSize, 1, "64KiB");
+        hrnCfgArgKeyRawZ(argList, cfgOptRepoStorageUploadChunkSize, 1, "6MiB");
         hrnCfgArgKeyRawZ(argList, cfgOptRepoPath, 1, "/repo");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
-        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptRepoStorageUploadChunkSize), 64 * 1024, "chunk size set");
+        TEST_RESULT_UINT(cfgOptionUInt64(cfgOptRepoStorageUploadChunkSize), 6 * 1024 * 1024, "chunk size set");
         TEST_RESULT_UINT(cfgOptionSource(cfgOptRepoStorageUploadChunkSize), cfgSourceParam, "chunk size source is param");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -731,23 +717,40 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptLockPath, HRN_PATH "/lock");
         hrnCfgArgRawZ(argList, cfgOptLogPath, "/bogus");
         hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "info");
-        hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, CFGOPTVAL_ARCHIVE_MODE_OFF_Z);
+        hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, "off");
         strLstAddZ(argList, CFGCMD_BACKUP);
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for backup");
         cmdLockReleaseP();
 
         // Only the error case is tested here, success is tested in cfgLoad()
         TEST_RESULT_VOID(cfgLoadLogFile(), "attempt to open bogus log file");
-        TEST_RESULT_UINT(cfgOptionStrId(cfgOptLogLevelFile), CFGOPTVAL_LOG_LEVEL_FILE_OFF, "log-level-file should now be off");
+        TEST_RESULT_UINT(cfgOptionSeq(cfgOptLogLevelFile), CFGOPTVAL_LOG_LEVEL_FILE_OFF, "log-level-file should now be off");
     }
 
     // *****************************************************************************************************************************
     if (testBegin("cfgLoad()"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("dry-run valid, --no-dry-run");
+        TEST_TITLE("TLS cipher suites");
 
         StringList *argList = strLstNew();
+        strLstAddZ(argList, PROJECT_BIN);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptLockPath, HRN_PATH "/lock");
+        hrnCfgArgRawZ(argList, cfgOptTlsCipher12, "HIGH:MEDIUM:+3DES:!aNULL");
+        hrnCfgArgRawZ(argList, cfgOptTlsCipher13, "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256");
+        strLstAddZ(argList, CFGCMD_EXPIRE);
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
+        TEST_RESULT_STR_Z(tlsCommonLocal.tlsCipher12, "HIGH:MEDIUM:+3DES:!aNULL", "check tls1.2 cipher suites");
+        TEST_RESULT_STR_Z(
+            tlsCommonLocal.tlsCipher13, "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256", "check tls1.3 cipher suites");
+        cmdLockReleaseP();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("dry-run valid, --no-dry-run");
+
+        argList = strLstNew();
         strLstAddZ(argList, PROJECT_BIN);
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptLockPath, HRN_PATH "/lock");
@@ -862,8 +865,10 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "off");
         hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
 
+        ioBufferSizeSet(333);
+
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "help command for backup");
-        TEST_RESULT_UINT(ioBufferSize(), 1048576, "buffer size set to option default");
+        TEST_RESULT_UINT(ioBufferSize(), 333, "buffer size not updated by help command");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("help command for help");
@@ -873,11 +878,13 @@ testRun(void)
         strLstAddZ(argList, "help");
         strLstAddZ(argList, "help");
 
+        ioBufferSizeSet(333);
+
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config");
-        TEST_RESULT_UINT(ioBufferSize(), 1048576, "buffer size set to option default");
+        TEST_RESULT_UINT(ioBufferSize(), 333, "buffer size not updated by help command");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("command takes lock and opens log file and uses custom tcp settings");
+        TEST_TITLE("command takes lock, opens log file, uses custom tcp settings, and sets priority");
 
         socketLocal = (struct SocketLocal){.init = false};
         struct stat statLog;
@@ -895,6 +902,7 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptTcpKeepAliveCount, "11");
         hrnCfgArgRawZ(argList, cfgOptTcpKeepAliveIdle, "2222");
         hrnCfgArgRawZ(argList, cfgOptTcpKeepAliveInterval, "888");
+        hrnCfgArgRawZ(argList, cfgOptPriority, "19");
         strLstAddZ(argList, CFGCMD_BACKUP);
 
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "lock and open log file");
@@ -906,6 +914,7 @@ testRun(void)
         TEST_RESULT_INT(socketLocal.tcpKeepAliveCount, 11, "check socketLocal.tcpKeepAliveCount");
         TEST_RESULT_INT(socketLocal.tcpKeepAliveIdle, 2222, "check socketLocal.tcpKeepAliveIdle");
         TEST_RESULT_INT(socketLocal.tcpKeepAliveInterval, 888, "check socketLocal.tcpKeepAliveInterval");
+        TEST_RESULT_INT(getpriority(PRIO_PROCESS, (id_t)getpid()), 19, "check priority");
 
         cmdLockReleaseP();
 

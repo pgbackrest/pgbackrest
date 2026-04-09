@@ -101,22 +101,14 @@ unit:
           - common/assert: noCode
 
       # ----------------------------------------------------------------------------------------------------------------------------
-      - name: mem-context
-        total: 8
-        feature: memContext
+      - name: type-convert
+        total: 13
 
         coverage:
-          - common/memContext
+          - common/type/convert
 
         depend:
-          - common/type/convert
-
-      # ----------------------------------------------------------------------------------------------------------------------------
-      - name: type-convert
-        total: 12
-
-        coverage:
-          - common/type/convert
+          - common/time
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: time
@@ -130,6 +122,14 @@ unit:
 
         coverage:
           - common/time
+
+      # ----------------------------------------------------------------------------------------------------------------------------
+      - name: mem-context
+        total: 8
+        feature: memContext
+
+        coverage:
+          - common/memContext
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: encode
@@ -216,7 +216,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: log
-        total: 5
+        total: 6
         feature: log
         harness:
           name: log
@@ -292,6 +292,15 @@ unit:
         total: 6
         feature: IO
         harness: pack
+        harness:
+          name: fd
+          shim:
+            common/io/fd:
+              function:
+                - fdReady
+            common/io/fdWrite:
+              function:
+                - ioFdWriteInternal
 
         coverage:
           - common/io/bufferRead
@@ -336,6 +345,7 @@ unit:
           - common/compress/zst/common
           - common/compress/zst/compress
           - common/compress/zst/decompress
+          - common/compress/common
           - common/compress/helper
 
         depend:
@@ -352,7 +362,10 @@ unit:
       - name: crypto
         total: 4
         feature: STORAGE
-        harness: storage
+        harness:
+          name: storage
+          shim:
+            storage/posix/storage: ~
 
         coverage:
           - common/crypto/cipherBlock
@@ -436,6 +449,12 @@ unit:
             common/lock:
               function:
                 - lockInit
+        harness:
+          name: storageHelper
+          shim:
+            storage/helper:
+              function:
+                - storageRepoGet
 
         coverage:
           - common/lock
@@ -453,7 +472,6 @@ unit:
           - postgres/interface/crc32
           - postgres/interface/page
           - protocol/client
-          - protocol/command
           - protocol/helper
           - protocol/server
           - storage/helper
@@ -481,7 +499,6 @@ unit:
 
         coverage:
           - protocol/client
-          - protocol/command
           - protocol/helper
           - protocol/parallel
           - protocol/parallelJob
@@ -513,6 +530,7 @@ unit:
 
         include:
           - common/io/socket/common
+          - common/io/tls/common
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: exec
@@ -534,7 +552,7 @@ unit:
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: posix
-        total: 23
+        total: 24
 
         coverage:
           - storage/cifs/helper
@@ -551,7 +569,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote
-        total: 10
+        total: 11
 
         coverage:
           - storage/remote/read
@@ -562,12 +580,13 @@ unit:
           - storage/storage
 
         include:
+          - protocol/client
           - storage/read
           - storage/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: azure
-        total: 3
+        total: 4
 
         coverage:
           - storage/azure/helper
@@ -582,7 +601,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: gcs
-        total: 3
+        total: 4
 
         coverage:
           - storage/gcs/helper
@@ -597,31 +616,26 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: s3
-        total: 2
+        total: 3
 
         coverage:
           - storage/s3/helper
           - storage/s3/read
           - storage/s3/storage
           - storage/s3/write
+          - storage/read
+          - storage/write
           - storage/helper
 
         include:
           - storage/storage
-          - storage/write
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: sftp
-        total: 19
+        total: 20
         harness:
           name: libSsh2
           integration: false
-        harness:
-          name: fd
-          shim:
-            common/io/fd:
-              function:
-                - fdReady
 
         coverage:
           - storage/sftp/helper
@@ -709,11 +723,12 @@ unit:
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: test
-        total: 2
+        total: 3
 
         coverage:
           - test/command/test/build
           - test/command/test/define
+          - test/command/test/lint
           - test/command/test/test
 
       # ----------------------------------------------------------------------------------------------------------------------------
@@ -755,10 +770,10 @@ unit:
         harness:
           name: manifest
           shim:
-            info/manifest: ~
+            info/manifest/manifest: ~
 
         coverage:
-          - info/manifest
+          - info/manifest/manifest
 
         depend:
           - command/backup/common
@@ -845,6 +860,7 @@ unit:
           - command/archive/push/file
           - command/archive/push/protocol
           - command/archive/push/push
+          - command/command
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: stanza
@@ -877,7 +893,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: expire
-        total: 8
+        total: 9
 
         coverage:
           - command/expire/expire
@@ -933,24 +949,33 @@ unit:
 
         include:
           - info/info
-          - info/manifest
+          - info/manifest/manifest
           - storage/storage
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: restore
-        total: 15
+        total: 16
+
+        harness: restore
 
         coverage:
           - command/restore/blockChecksum
           - command/restore/blockDelta
+          - command/restore/clean.inc: included
+          - command/restore/config.inc: included
           - command/restore/file
+          - command/restore/process.inc: included
           - command/restore/protocol
+          - command/restore/remap.inc: included
           - command/restore/restore
+          - command/restore/select.inc: included
+          - command/restore/timeline
+          - command/restore/validate.inc: included
 
         include:
           - common/user
           - info/infoBackup
-          - info/manifest
+          - info/manifest/manifest
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: manifest
@@ -961,7 +986,7 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: repo
-        total: 4
+        total: 3
 
         coverage:
           - command/repo/common
@@ -970,14 +995,9 @@ unit:
           - command/repo/put
           - command/repo/rm
 
-        include:
-          # command/repo/create is currently for testing purposes only so coverage is not provided except in integration. In the
-          # future this will probably be rolled into a custom object store server implementation.
-          - command/repo/create
-
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: verify
-        total: 12
+        total: 14
 
         coverage:
           - command/verify/file
@@ -1024,6 +1044,7 @@ unit:
         coverage:
           - doc/command/build/build
           - doc/command/build/man
+          - doc/command/build/pre
           - doc/command/build/reference
 
 # **********************************************************************************************************************************

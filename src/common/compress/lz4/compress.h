@@ -3,8 +3,6 @@ LZ4 Compress
 
 Compress IO to the lz4 format.
 ***********************************************************************************************************************************/
-#ifdef HAVE_LIBLZ4
-
 #ifndef COMMON_COMPRESS_LZ4_COMPRESS_H
 #define COMMON_COMPRESS_LZ4_COMPRESS_H
 
@@ -18,7 +16,6 @@ Filter type constant
 /***********************************************************************************************************************************
 Level constants
 ***********************************************************************************************************************************/
-#define LZ4_COMPRESS_LEVEL_DEFAULT                                  1
 #define LZ4_COMPRESS_LEVEL_MIN                                      -5
 #define LZ4_COMPRESS_LEVEL_MAX                                      12
 
@@ -28,5 +25,3 @@ Constructors
 FN_EXTERN IoFilter *lz4CompressNew(int level, bool raw);
 
 #endif
-
-#endif // HAVE_LIBLZ4

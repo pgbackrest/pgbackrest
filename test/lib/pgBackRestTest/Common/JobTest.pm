@@ -51,6 +51,9 @@ sub new
         $self->{oTest},
         $self->{bDryRun},
         $self->{bVmOut},
+        $self->{strPlatform},
+        $self->{strVmArch},
+        $self->{strImage},
         $self->{iVmIdx},
         $self->{iVmMax},
         $self->{strMakeCmd},
@@ -84,6 +87,9 @@ sub new
             {name => 'oTest'},
             {name => 'bDryRun'},
             {name => 'bVmOut'},
+            {name => 'strPlatform'},
+            {name => 'strVmArch', required => false},
+            {name => 'strImage'},
             {name => 'iVmIdx'},
             {name => 'iVmMax'},
             {name => 'strMakeCmd'},
@@ -164,7 +170,7 @@ sub run
             ($self->{iTry} > 1 ? ' (retry ' . ($self->{iTry} - 1) . ')' : '');
 
         my $strImage = 'test-' . $self->{iVmIdx};
-        my $strDbVersion = (defined($self->{oTest}->{&TEST_DB}) ? $self->{oTest}->{&TEST_DB} : PG_VERSION_94);
+        my $strDbVersion = (defined($self->{oTest}->{&TEST_DB}) ? $self->{oTest}->{&TEST_DB} : PG_VERSION_96);
         $strDbVersion =~ s/\.//;
 
         &log($self->{bDryRun} && !$self->{bVmOut} || $self->{bShowOutputAsync} ? INFO : DETAIL, "${strTest}" .
@@ -207,15 +213,15 @@ sub run
                     my $strBuildPath = $self->{strTestPath} . '/build/' . $self->{oTest}->{&TEST_VM};
 
                     executeTest(
-                        'docker run -itd -h ' . $self->{oTest}->{&TEST_VM} . "-test --name=${strImage}" .
-                        " -v ${strHostTestPath}:${strVmTestPath}" .
+                        'docker run' . $self->{strPlatform} . ' -itd -h ' .
+                        $self->{oTest}->{&TEST_VM} . "-test --name=${strImage} -v ${strHostTestPath}:${strVmTestPath}" .
                         ($self->{oTest}->{&TEST_C} ? " -v $self->{strUnitPath}:$self->{strUnitPath}" : '') .
                         ($self->{oTest}->{&TEST_C} ? " -v $self->{strDataPath}:$self->{strDataPath}" : '') .
                         " -v $self->{strBackRestBase}:$self->{strBackRestBase}" .
                         " -v $self->{strRepoPath}:$self->{strRepoPath}" .
                         ($self->{oTest}->{&TEST_C} ? " -v ${strBuildPath}:${strBuildPath}:ro" : '') .
                         ($self->{oTest}->{&TEST_C} ? " -v ${strCCachePath}:/home/${\TEST_USER}/.ccache" : '') .
-                        ' ' . containerRepo() . ':' . $self->{oTest}->{&TEST_VM} . '-test',
+                        ' ' . $self->{strImage},
                         {bSuppressStdErr => true});
                 }
             }
@@ -255,6 +261,7 @@ sub run
                 $self->{strTestPath} . "/build/${strVm}/test/src/test-pgbackrest" .
                     ' --repo-path=' . $self->{strTestPath} . '/repo' . ' --test-path=' . $self->{strTestPath} .
                     " --log-level=$self->{strLogLevel}" . ' --vm=' . $self->{oTest}->{&TEST_VM} .
+                    (defined($self->{strVmArch}) ? ' --vm-arch=' . $self->{strVmArch} : '') .
                     ' --vm-id=' . $self->{iVmIdx} . ($self->{bProfile} ? ' --profile' : '') . $strCommandRunParam .
                     ($self->{bLogTimestamp} ? '' : ' --no-log-timestamp') .
                     ($self->{strTimeZone} ? " --tz='$self->{strTimeZone}'" : '') .

@@ -19,6 +19,8 @@ Required buffer sizes
 ***********************************************************************************************************************************/
 #define CVT_BOOL_BUFFER_SIZE                                        6
 #define CVT_BASE10_BUFFER_SIZE                                      64
+#define CVT_DIV_BUFFER_SIZE                                         68
+#define CVT_PCT_BUFFER_SIZE                                         8
 #define CVT_VARINT128_BUFFER_SIZE                                   10
 
 /***********************************************************************************************************************************
@@ -34,11 +36,17 @@ cvtCharToZ(const char value, char *const buffer, const size_t bufferSize)
     return (size_t)snprintf(buffer, bufferSize, "%c", value);
 }
 
-// Convert double to zero-terminated string
-FN_EXTERN size_t cvtDoubleToZ(double value, char *buffer, size_t bufferSize);
+// Convert percentage to an integer. This is useful for exporting a percentage in a way that does not incur rounding.
+FN_EXTERN unsigned int cvtPctToUInt(uint64_t dividend, uint64_t divisor);
+
+// Convert percentage to zero-terminated string. This is more reproducible than formatting the results of floating point division.
+FN_EXTERN size_t cvtPctToZ(uint64_t dividend, uint64_t divisor, char *buffer, size_t bufferSize);
+
+// Convert division to zero-terminated string. This is more reproducible than formatting the results of floating point division.
+FN_EXTERN size_t cvtDivToZ(uint64_t dividend, uint64_t divisor, unsigned int precision, bool trim, char *buffer, size_t bufferSize);
 
 // Convert int to zero-terminated string and vice versa
-FN_EXTERN size_t cvtIntToZ(int value, char *buffer, size_t bufferSize);
+FN_EXTERN size_t cvtIntToZ(const int value, char *buffer, size_t bufferSize);
 FN_EXTERN int cvtZToInt(const char *value);
 FN_EXTERN int cvtZToIntBase(const char *value, int base);
 FN_EXTERN int cvtZSubNToIntBase(const char *value, size_t offset, size_t size, int base);
@@ -108,6 +116,10 @@ typedef struct CvtTimeToZParam
 
 FN_EXTERN FN_STRFTIME(1) size_t cvtTimeToZ(
     const char *format, time_t value, char *buffer, size_t bufferSize, CvtTimeToZParam param);
+
+// Convert zero-terminated string with the following format to time_t:
+// ^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}((\,|\.)[0-9]{1,6})?((\+|\-)[0-9]{2}(:?)([0-9]{2})?)?$
+FN_EXTERN time_t cvtZToTime(const char *time);
 
 // Convert uint to zero-terminated string and vice versa
 FN_EXTERN size_t cvtUIntToZ(unsigned int value, char *buffer, size_t bufferSize);

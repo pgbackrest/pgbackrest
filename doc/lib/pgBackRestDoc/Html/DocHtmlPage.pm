@@ -12,7 +12,6 @@ use Data::Dumper;
 use Exporter qw(import);
     our @EXPORT = qw();
 
-use pgBackRestDoc::Common::DocConfig;
 use pgBackRestDoc::Common::DocManifest;
 use pgBackRestDoc::Common::DocRender;
 use pgBackRestDoc::Html::DocHtmlBuilder;
@@ -470,36 +469,6 @@ sub sectionProcess
                 addNew(HTML_DIV, 'section-body-text',
                        {strContent => $self->processText($oChild->textGet())});
         }
-        # Add option descriptive text
-        elsif ($oChild->nameGet() eq 'option-description')
-        {
-            my $strOption = $oChild->paramGet("key");
-            my $oDescription = ${$self->{oReference}->{oConfigHash}}{&CONFIG_HELP_OPTION}{$strOption}{&CONFIG_HELP_DESCRIPTION};
-
-            if (!defined($oDescription))
-            {
-                confess &log(ERROR, "unable to find ${strOption} option in sections - try adding option?");
-            }
-
-            $oSectionBodyElement->
-                addNew(HTML_DIV, 'section-body-text',
-                       {strContent => $self->processText($oDescription)});
-        }
-        # Add cmd descriptive text
-        elsif ($oChild->nameGet() eq 'cmd-description')
-        {
-            my $strCommand = $oChild->paramGet("key");
-            my $oDescription = ${$self->{oReference}->{oConfigHash}}{&CONFIG_HELP_COMMAND}{$strCommand}{&CONFIG_HELP_DESCRIPTION};
-
-            if (!defined($oDescription))
-            {
-                confess &log(ERROR, "unable to find ${strCommand} command in sections - try adding command?");
-            }
-
-            $oSectionBodyElement->
-                addNew(HTML_DIV, 'section-body-text',
-                       {strContent => $self->processText($oDescription)});
-        }
         # Add/remove backrest config options
         elsif ($oChild->nameGet() eq 'backrest-config')
         {
@@ -528,6 +497,21 @@ sub sectionProcess
             foreach my $oListItem ($oChild->nodeList())
             {
                 $oList->addNew(HTML_LI, 'list-unordered', {strContent => $self->processText($oListItem->textGet())});
+            }
+        }
+        # Add a sponsor list
+        elsif ($oChild->nameGet() eq 'sponsor-list')
+        {
+            my $oSponsorList = $oSectionBodyElement->addNew(HTML_DIV, "sponsor-list");
+
+            foreach my $oSponsor ($oChild->nodeList())
+            {
+                my $oSponsorLink = $oSponsorList->addNew(
+                    HTML_DIV, "sponsor")->addNew(HTML_A, undef, {strRef => $oSponsor->paramGet('url')});
+                $oSponsorLink->addNew(
+                    HTML_IMG, "sponsor-img",
+                    {strExtra => 'src="sponsor/' . $oSponsor->paramGet('img') . '" alt="' . $oSponsor->valueGet() . '"'});
+                $oSponsorLink->addNew(HTML_DIV, "sponsor-title", {strContent => $oSponsor->valueGet()});
             }
         }
         # Add a subtitle

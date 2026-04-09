@@ -1,11 +1,10 @@
 /***********************************************************************************************************************************
 Protocol Parallel Job
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "common/debug.h"
 #include "common/log.h"
-#include "protocol/command.h"
 #include "protocol/parallelJob.h"
 
 /***********************************************************************************************************************************
@@ -18,11 +17,12 @@ struct ProtocolParallelJob
 
 /**********************************************************************************************************************************/
 FN_EXTERN ProtocolParallelJob *
-protocolParallelJobNew(const Variant *key, ProtocolCommand *command)
+protocolParallelJobNew(const Variant *const key, const StringId command, PackWrite *const param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(VARIANT, key);
-        FUNCTION_LOG_PARAM(PROTOCOL_COMMAND, command);
+        FUNCTION_LOG_PARAM(STRING_ID, command);
+        FUNCTION_LOG_PARAM(PACK_WRITE, param);
     FUNCTION_LOG_END();
 
     OBJ_NEW_BEGIN(ProtocolParallelJob, .childQty = MEM_CONTEXT_QTY_MAX)
@@ -33,10 +33,10 @@ protocolParallelJobNew(const Variant *key, ProtocolCommand *command)
             {
                 .state = protocolParallelJobStatePending,
                 .key = varDup(key),
+                .command = command,
+                .param = pckWriteMove(param, objMemContext(this)),
             },
         };
-
-        this->pub.command = protocolCommandMove(command, objMemContext(this));
     }
     OBJ_NEW_END();
 
@@ -45,7 +45,7 @@ protocolParallelJobNew(const Variant *key, ProtocolCommand *command)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const String *message)
+protocolParallelJobErrorSet(ProtocolParallelJob *const this, const int code, const String *const message)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, this);
@@ -69,7 +69,7 @@ protocolParallelJobErrorSet(ProtocolParallelJob *this, int code, const String *m
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-protocolParallelJobProcessIdSet(ProtocolParallelJob *this, unsigned int processId)
+protocolParallelJobProcessIdSet(ProtocolParallelJob *const this, const unsigned int processId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, this);
@@ -103,7 +103,7 @@ protocolParallelJobResultSet(ProtocolParallelJob *const this, PackRead *const re
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-protocolParallelJobStateSet(ProtocolParallelJob *this, ProtocolParallelJobState state)
+protocolParallelJobStateSet(ProtocolParallelJob *const this, const ProtocolParallelJobState state)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(PROTOCOL_PARALLEL_JOB, this);
@@ -119,8 +119,7 @@ protocolParallelJobStateSet(ProtocolParallelJob *this, ProtocolParallelJobState 
     else
     {
         THROW_FMT(
-            AssertError, "invalid state transition from '%s' to '%s'", strZ(strIdToStr(protocolParallelJobState(this))),
-            strZ(strIdToStr(state)));
+            AssertError, "invalid state transition from '%s' to '%s'", zNewStrId(protocolParallelJobState(this)), zNewStrId(state));
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -136,7 +135,8 @@ protocolParallelJobToLog(const ProtocolParallelJob *const this, StringStatic *co
     varToLog(protocolParallelJobKey(this), debugLog);
 
     strStcCat(debugLog, ", command: ");
-    protocolCommandToLog(protocolParallelJobCommand(this), debugLog);
+    strStcResultSizeInc(
+        debugLog, strIdToLog(protocolParallelJobCommand(this), strStcRemains(debugLog), strStcRemainsSize(debugLog)));
 
     strStcCat(debugLog, ", result: ");
     strStcResultSizeInc(

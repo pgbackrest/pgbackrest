@@ -179,17 +179,24 @@ By convention all variant constant identifiers are appended with _VAR.
 #define VARINT64(dataParam)                                                                                                        \
     ((const Variant *)&(const VariantInt64Pub){.type = varTypeInt64, .data = dataParam})
 
-// Create a String Variant constant inline from any zero-terminated string
+// Create a String Variant constant inline from any zero-terminated string. The struct must be kept in sync with VariantStringPub
+// (except for const qualifiers)
+typedef struct VariantStringPubConst
+{
+    VARIANT_COMMON
+    const String *data;                                             // String data
+} VariantStringPubConst;
+
 #define VARSTRZ(dataParam)                                                                                                         \
-    ((const Variant *)&(const VariantStringPub){.type = varTypeString, .data = (String *)STR(dataParam)})
+    ((const Variant *)&(const VariantStringPubConst){.type = varTypeString, .data = (const String *)STR(dataParam)})
 
 // Create a String Variant constant inline from a #define or inline string constant
 #define VARSTRDEF(dataParam)                                                                                                       \
-    ((const Variant *)&(const VariantStringPub){.type = varTypeString, .data = (String *)STRDEF(dataParam)})
+    ((const Variant *)&(const VariantStringPubConst){.type = varTypeString, .data = (const String *)STRDEF(dataParam)})
 
 // Create a String Variant constant inline from a String constant
 #define VARSTR(dataParam)                                                                                                          \
-    ((const Variant *)&(const VariantStringPub){.type = varTypeString, .data = (String *)(dataParam)})
+    ((const Variant *)&(const VariantStringPubConst){.type = varTypeString, .data = (const String *)(dataParam)})
 
 // Used to define String Variant constants that will be externed using VARIANT_DECLARE(). Must be used in a .c file.
 #define VARIANT_STRDEF_EXTERN(name, dataParam)                                                                                     \

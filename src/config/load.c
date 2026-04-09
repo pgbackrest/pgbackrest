@@ -1,19 +1,20 @@
 /***********************************************************************************************************************************
 Configuration Load
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <string.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 #include "command/command.h"
 #include "command/lock.h"
-#include "common/compress/helper.intern.h"
 #include "common/crypto/common.h"
 #include "common/debug.h"
 #include "common/io/io.h"
 #include "common/io/socket/common.h"
+#include "common/io/tls/common.h"
 #include "common/log.h"
 #include "common/memContext.h"
 #include "config/config.intern.h"
@@ -50,13 +51,13 @@ cfgLoadLogSetting(void)
     unsigned int logProcessMax = 1;
 
     if (cfgOptionValid(cfgOptLogLevelConsole))
-        logLevelConsole = logLevelEnum(cfgOptionStrId(cfgOptLogLevelConsole));
+        logLevelConsole = logLevelEnum(cfgOptionSeq(cfgOptLogLevelConsole));
 
     if (cfgOptionValid(cfgOptLogLevelStderr))
-        logLevelStdErr = logLevelEnum(cfgOptionStrId(cfgOptLogLevelStderr));
+        logLevelStdErr = logLevelEnum(cfgOptionSeq(cfgOptLogLevelStderr));
 
     if (cfgOptionValid(cfgOptLogLevelFile))
-        logLevelFile = logLevelEnum(cfgOptionStrId(cfgOptLogLevelFile));
+        logLevelFile = logLevelEnum(cfgOptionSeq(cfgOptLogLevelFile));
 
     if (cfgOptionValid(cfgOptLogTimestamp))
         logTimestamp = cfgOptionBool(cfgOptLogTimestamp);
@@ -118,18 +119,6 @@ cfgLoadUpdateOption(void)
             }
         }
     }
-
-    // Set default for cmd
-    if (cfgOptionValid(cfgOptCmd))
-        cfgOptionDefaultSet(cfgOptCmd, VARSTR(cfgExe()));
-
-    // Set default for repo-host-cmd
-    if (cfgOptionValid(cfgOptRepoHostCmd))
-        cfgOptionDefaultSet(cfgOptRepoHostCmd, VARSTR(cfgExe()));
-
-    // Set default for pg-host-cmd
-    if (cfgOptionValid(cfgOptPgHostCmd))
-        cfgOptionDefaultSet(cfgOptPgHostCmd, VARSTR(cfgExe()));
 
     // Protocol timeout should be greater than db timeout
     if (cfgOptionTest(cfgOptDbTimeout) && cfgOptionTest(cfgOptProtocolTimeout) &&
@@ -223,13 +212,13 @@ cfgLoadUpdateOption(void)
                 // retention-full-type is 'time' then the expire command will default the archive retention accordingly.
                 const String *const msgArchiveOff = strNewFmt(
                     "WAL segments will not be expired: option '%s=%s' but",
-                    cfgOptionIdxName(cfgOptRepoRetentionArchiveType, optionIdx), strZ(strIdToStr(archiveRetentionType)));
+                    cfgOptionIdxName(cfgOptRepoRetentionArchiveType, optionIdx), zNewStrId(archiveRetentionType));
 
                 switch (archiveRetentionType)
                 {
                     case backupTypeFull:
                     {
-                        if (cfgOptionIdxStrId(cfgOptRepoRetentionFullType, optionIdx) == CFGOPTVAL_REPO_RETENTION_FULL_TYPE_COUNT &&
+                        if (cfgOptionIdxSeq(cfgOptRepoRetentionFullType, optionIdx) == CFGOPTVAL_REPO_RETENTION_FULL_TYPE_COUNT &&
                             cfgOptionIdxTest(cfgOptRepoRetentionFull, optionIdx))
                         {
                             cfgOptionIdxSet(
@@ -285,10 +274,11 @@ cfgLoadUpdateOption(void)
         }
     }
 
-    // For each possible repo, error if an S3 bucket name contains dots
+    // For each possible repo, error if an S3 bucket name contains dots when using host style URIs
     for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
     {
         if (cfgOptionIdxTest(cfgOptRepoS3Bucket, repoIdx) && cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx) &&
+            cfgOptionIdxSeq(cfgOptRepoS3UriStyle, repoIdx) == CFGOPTVAL_REPO_S3_URI_STYLE_HOST &&
             strChr(cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), '.') != -1)
         {
             THROW_FMT(
@@ -298,48 +288,6 @@ cfgLoadUpdateOption(void)
                 "HINT: TLS/SSL verification cannot proceed with this bucket name.\n"
                 "HINT: remove dots from the bucket name.",
                 strZ(cfgOptionIdxDisplay(cfgOptRepoS3Bucket, repoIdx)), cfgOptionIdxName(cfgOptRepoS3Bucket, repoIdx));
-        }
-    }
-
-    // Set default upload chunk size if not set
-    if (cfgOptionValid(cfgOptRepoStorageUploadChunkSize))
-    {
-        for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
-        {
-            if (!cfgOptionIdxTest(cfgOptRepoStorageUploadChunkSize, repoIdx))
-            {
-                cfgOptionIdxSet(
-                    cfgOptRepoStorageUploadChunkSize, repoIdx, cfgSourceDefault,
-                    VARINT64((cfgOptionIdxStrId(cfgOptRepoType, repoIdx) == CFGOPTVAL_REPO_TYPE_S3 ? 5 : 4) * 1024 * 1024));
-            }
-        }
-    }
-
-    // Set pg-host-port/repo-host-port default when pg-host-type/repo-host-type is tls. ??? This should be handled in the parser but
-    // it requires a default that depends on another option value and that is not currently possible.
-    #define HOST_PORT_TLS                                           8432
-
-    if (cfgOptionValid(cfgOptRepoHostPort))
-    {
-        for (unsigned int repoIdx = 0; repoIdx < cfgOptionGroupIdxTotal(cfgOptGrpRepo); repoIdx++)
-        {
-            if (cfgOptionIdxStrId(cfgOptRepoHostType, repoIdx) == CFGOPTVAL_REPO_HOST_TYPE_TLS &&
-                cfgOptionIdxSource(cfgOptRepoHostPort, repoIdx) == cfgSourceDefault)
-            {
-                cfgOptionIdxSet(cfgOptRepoHostPort, repoIdx, cfgSourceDefault, VARINT64(HOST_PORT_TLS));
-            }
-        }
-    }
-
-    if (cfgOptionValid(cfgOptPgHostPort))
-    {
-        for (unsigned int pgIdx = 0; pgIdx < cfgOptionGroupIdxTotal(cfgOptGrpPg); pgIdx++)
-        {
-            if (cfgOptionIdxStrId(cfgOptPgHostType, pgIdx) == CFGOPTVAL_PG_HOST_TYPE_TLS &&
-                cfgOptionIdxSource(cfgOptPgHostPort, pgIdx) == cfgSourceDefault)
-            {
-                cfgOptionIdxSet(cfgOptPgHostPort, pgIdx, cfgSourceDefault, VARINT64(HOST_PORT_TLS));
-            }
         }
     }
 
@@ -358,34 +306,15 @@ cfgLoadUpdateOption(void)
             // Set compress-type to none. Eventually the compress option will be deprecated and removed so this reduces code churn
             // when that happens.
             if (!cfgOptionBool(cfgOptCompress) && cfgOptionSource(cfgOptCompressType) == cfgSourceDefault)
+            {
                 cfgOptionSet(cfgOptCompressType, cfgSourceParam, VARUINT64(CFGOPTVAL_COMPRESS_TYPE_NONE));
+                cfgOptionSet(cfgOptCompressLevel, cfgSourceDefault, VARINT64(0));
+            }
         }
 
         // Now invalidate compress so it can't be used and won't be passed to child processes
         cfgOptionInvalidate(cfgOptCompress);
         cfgOptionSet(cfgOptCompress, cfgSourceDefault, NULL);
-    }
-
-    // Update compress-level default based on the compression type. Also check that level range is valid per compression type.
-    if (cfgOptionValid(cfgOptCompressLevel))
-    {
-        const CompressType compressType = compressTypeEnum(cfgOptionStrId(cfgOptCompressType));
-
-        if (cfgOptionSource(cfgOptCompressLevel) == cfgSourceDefault)
-        {
-            cfgOptionSet(cfgOptCompressLevel, cfgSourceDefault, VARINT64(compressLevelDefault(compressType)));
-        }
-        else if (compressType != compressTypeNone)
-        {
-            if (cfgOptionInt(cfgOptCompressLevel) < compressLevelMin(compressType) ||
-                cfgOptionInt(cfgOptCompressLevel) > compressLevelMax(compressType))
-            {
-                THROW_FMT(
-                    OptionInvalidValueError,
-                    "'%d' is out of range for '" CFGOPT_COMPRESS_LEVEL "' option when '" CFGOPT_COMPRESS_TYPE "' option = '%s'",
-                    cfgOptionInt(cfgOptCompressLevel), strZ(strIdToStr(cfgOptionStrId(cfgOptCompressType))));
-            }
-        }
     }
 
     // Error if repo-sftp--host-key-check-type is explicitly set to anything other than fingerprint and repo-sftp-host-fingerprint
@@ -439,6 +368,21 @@ cfgLoadUpdateOption(void)
         }
     }
 
+    // A repo must be specified when targeting time. Not all repo types support versioning so rather than try to skip repos in that
+    // case it seems to be easier to just target a specific repo. Also, depending on the type of corruption, different repos might
+    // require different target times.
+    if (cfgOptionTest(cfgOptRepoTargetTime) && cfgOptionSource(cfgOptRepo) == cfgSourceDefault)
+        THROW_FMT(OptionInvalidError, "option '" CFGOPT_REPO_TARGET_TIME "' not valid without option '" CFGOPT_REPO "'");
+
+    // The stop-auto option is deprecated
+    if (cfgOptionValid(cfgOptStopAuto) && cfgOptionSource(cfgOptStopAuto) != cfgSourceDefault)
+    {
+        LOG_WARN(
+            "option '" CFGOPT_STOP_AUTO "' is deprecated\n"
+            "HINT: all supported versions use non-exclusive backup.\n"
+            "HINT: stop using this option to avoid an error when it is removed.");
+    }
+
     FUNCTION_LOG_RETURN_VOID();
 }
 
@@ -488,7 +432,7 @@ cfgLoadLogFile(void)
         {
             // Attempt to open log file
             if (!logFileSet(strZ(cfgLoadLogFileName(cfgCommandRole()))))
-                cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, VARUINT64(CFGOPTVAL_LOG_LEVEL_CONSOLE_OFF));
+                cfgOptionSet(cfgOptLogLevelFile, cfgSourceParam, VARUINT64(CFGOPTVAL_LOG_LEVEL_CONSOLE_OFF_STRID));
         }
         MEM_CONTEXT_TEMP_END();
     }
@@ -525,57 +469,73 @@ cfgLoad(const unsigned int argListSize, const char *argList[])
         if (cfgOptionValid(cfgOptNeutralUmask) && cfgOptionBool(cfgOptNeutralUmask))
             umask(0000);
 
-        // If a command is set
-        if (cfgCommand() != cfgCmdNone)
+        if (cfgOptionValid(cfgOptPriority) && cfgOptionSource(cfgOptPriority) != cfgSourceDefault)
         {
-            // Initialize TCP settings
-            if (cfgOptionValid(cfgOptSckKeepAlive))
-            {
-                sckInit(
-                    cfgOptionBool(cfgOptSckBlock),
-                    cfgOptionBool(cfgOptSckKeepAlive),
-                    cfgOptionTest(cfgOptTcpKeepAliveCount) ? cfgOptionInt(cfgOptTcpKeepAliveCount) : 0,
-                    cfgOptionTest(cfgOptTcpKeepAliveIdle) ? cfgOptionInt(cfgOptTcpKeepAliveIdle) : 0,
-                    cfgOptionTest(cfgOptTcpKeepAliveInterval) ? cfgOptionInt(cfgOptTcpKeepAliveInterval) : 0);
-            }
-
-            // Set IO buffer size
-            if (cfgOptionValid(cfgOptBufferSize))
-                ioBufferSizeSet(cfgOptionUInt(cfgOptBufferSize));
-
-            // Set IO timeout
-            if (cfgOptionValid(cfgOptIoTimeout))
-                ioTimeoutMsSet(cfgOptionUInt64(cfgOptIoTimeout));
-
-            // Open the log file if this command logs to a file
-            cfgLoadLogFile();
-
-            // Create the exec-id used to identify all locals and remotes spawned by this process. This allows lock contention to be
-            // easily resolved and makes it easier to associate processes from various logs.
-            if (cfgOptionValid(cfgOptExecId) && !cfgOptionTest(cfgOptExecId))
-            {
-                // Generate some random bytes
-                uint32_t execRandom;
-                cryptoRandomBytes((unsigned char *)&execRandom, sizeof(execRandom));
-
-                // Format a string with the pid and the random bytes to serve as the exec id
-                cfgOptionSet(cfgOptExecId, cfgSourceParam, VARSTR(strNewFmt("%d-%08x", getpid(), execRandom)));
-            }
-
-            // Begin the command
-            cmdBegin();
-
-            // Initialize the lock module
-            if (cfgOptionTest(cfgOptLockPath))
-                lockInit(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptExecId));
-
-            // Acquire a lock if this command requires a lock
-            if (cfgLockType() != lockTypeNone && !cfgCommandHelp() && cfgLockRequired())
-                cmdLockAcquireP();
-
-            // Update options that have complex rules
-            cfgLoadUpdateOption();
+            // Sign conversion is ignored here due to type conflicts between setpriority() and getpid() on different platforms.
+            // Linux returns _pid_t (int) from getpid() but accepts id_t (unsigned int) in setpriority(). FreeBSD (but not MacOS)
+            // uses int for both. Presumably implicit conversion will work appropriately on each platform so just let that happen.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+            THROW_ON_SYS_ERROR(
+                setpriority(PRIO_PROCESS, getpid(), cfgOptionInt(cfgOptPriority)) == -1, KernelError,
+                "unable to set process priority");
+#pragma GCC diagnostic pop
         }
+
+        // Initialize TCP settings
+        if (cfgOptionValid(cfgOptSckKeepAlive))
+        {
+            sckInit(
+                cfgOptionBool(cfgOptSckBlock),
+                cfgOptionBool(cfgOptSckKeepAlive),
+                cfgOptionTest(cfgOptTcpKeepAliveCount) ? cfgOptionInt(cfgOptTcpKeepAliveCount) : 0,
+                cfgOptionTest(cfgOptTcpKeepAliveIdle) ? cfgOptionInt(cfgOptTcpKeepAliveIdle) : 0,
+                cfgOptionTest(cfgOptTcpKeepAliveInterval) ? cfgOptionInt(cfgOptTcpKeepAliveInterval) : 0);
+        }
+
+        // Initialize TLS settings
+        if (cfgOptionValid(cfgOptTlsCipher12))
+        {
+            ASSERT(cfgOptionValid(cfgOptTlsCipher13));
+            tlsInit(cfgOptionStrNull(cfgOptTlsCipher12), cfgOptionStrNull(cfgOptTlsCipher13));
+        }
+
+        // Set IO buffer size (use the default for help to lower memory usage)
+        if (cfgOptionValid(cfgOptBufferSize) && !cfgCommandHelp())
+            ioBufferSizeSet(cfgOptionUInt(cfgOptBufferSize));
+
+        // Set IO timeout
+        if (cfgOptionValid(cfgOptIoTimeout))
+            ioTimeoutMsSet(cfgOptionUInt64(cfgOptIoTimeout));
+
+        // Open the log file if this command logs to a file
+        cfgLoadLogFile();
+
+        // Create the exec-id used to identify all locals and remotes spawned by this process. This allows lock contention to be
+        // easily resolved and makes it easier to associate processes from various logs.
+        if (cfgOptionValid(cfgOptExecId) && !cfgOptionTest(cfgOptExecId))
+        {
+            // Generate some random bytes
+            uint32_t execRandom;
+            cryptoRandomBytes((uint8_t *)&execRandom, sizeof(execRandom));
+
+            // Format a string with the pid and the random bytes to serve as the exec id
+            cfgOptionSet(cfgOptExecId, cfgSourceParam, VARSTR(strNewFmt("%d-%08x", getpid(), execRandom)));
+        }
+
+        // Begin the command
+        cmdBegin();
+
+        // Initialize the lock module
+        if (cfgOptionTest(cfgOptLockPath))
+            lockInit(cfgOptionStr(cfgOptLockPath), cfgOptionStr(cfgOptExecId));
+
+        // Acquire a lock if this command requires a lock
+        if (cfgLockType() != lockTypeNone && !cfgCommandHelp() && cfgLockRequired())
+            cmdLockAcquireP();
+
+        // Update options that have complex rules
+        cfgLoadUpdateOption();
     }
     MEM_CONTEXT_TEMP_END();
 

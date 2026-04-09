@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Time Harness
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "common/harnessDebug.h"
 #include "common/harnessTime.h"
@@ -33,6 +33,26 @@ hrnTimeMSecSet(const TimeMSec *const timeList, const size_t timeListSize)
     hrnTimeLocal.timeList = timeList;
     hrnTimeLocal.timeListSize = timeListSize;
     hrnTimeLocal.timeListCurrent = 0;
+
+    FUNCTION_HARNESS_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+void
+hrnSleepRemainder(void)
+{
+    FUNCTION_HARNESS_VOID();
+
+    TimeMSec target;
+
+    do
+    {
+        const TimeMSec current = timeMSec();
+        target = (current / 1000 + 1) * 1000;
+
+        sleepMSec(target - current);
+    }
+    while (timeMSec() < target);
 
     FUNCTION_HARNESS_RETURN_VOID();
 }

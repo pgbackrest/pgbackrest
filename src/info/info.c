@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Info Handler
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -220,7 +220,7 @@ infoNewLoad(IoRead *const read, InfoLoadNewCallback *const callbackFunction, voi
                         }
                         // Else pass to callback for processing
                         else
-                            callbackFunction(callbackData, value->section, value->key, value->value);
+                            callbackFunction(callbackData, value->section, value->key, jsonReadNew(value->value));
 
                         value = iniValueNext(ini);
                         MEM_CONTEXT_TEMP_RESET(1000);

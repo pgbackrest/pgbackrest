@@ -1,5 +1,28 @@
 /***********************************************************************************************************************************
 Protocol Client
+
+There are three ways to make a request using the client:
+
+1. Synchronous
+
+This is the most common way to make a request. Simply call protocolClientRequestP() and process the result.
+
+2. Synchronous with Session
+
+In some cases it is useful to keep session state between requests. An example of this is queries against a database where it is more
+efficient to maintain the connection to the database between queries. The session is created with protocolClientSessionNewP(),
+opened with protocolClientSessionOpenP(), and closed with protocolClientSessionClose(). Requests are made with
+protocolClientSessionRequest().
+
+3. Asynchronous with Session
+
+Asynchronous requests provide better performance by allowing the client and server to process at the same time. An example of this
+is reading a file where a asynchronous request for the next block of data can be sent before the current block is being processed.
+The next block should be waiting when processing of the current block is complete. The same session functions are used for creation,
+open, and close, except that .async = true is passed to protocolClientSessionNewP(). Asynchronous requests are made with
+protocolClientSessionRequestAsync() and the responses are read with protocolClientSessionResponse(). Note that there can only be one
+outstanding asynchronous request, therefore protocolClientSessionResponse() must be called before
+protocolClientSessionRequestAsync() can be called again.
 ***********************************************************************************************************************************/
 #ifndef PROTOCOL_CLIENT_H
 #define PROTOCOL_CLIENT_H
@@ -9,28 +32,36 @@ Message types used by the protocol
 ***********************************************************************************************************************************/
 typedef enum
 {
-    // Data passed between client and server in either direction. This can be used as many times as needed.
-    protocolMessageTypeData = 0,
+    // Data passed from server to client
+    protocolMessageTypeResponse = 0,
 
-    // Indicates no more data for the server to return to the client and ends the command
-    protocolMessageTypeDataEnd = 1,
+    // Request sent from the client to the server
+    protocolMessageTypeRequest = 1,
 
-    // Command sent from the client to the server
-    protocolMessageTypeCommand = 2,
-
-    // An error occurred on the server and the command ended abnormally. protocolMessageTypeDataEnd will not be sent to the client.
-    protocolMessageTypeError = 3,
+    // An error occurred on the server and the request ended abnormally. protocolMessageTypeResponse will not be sent to the client.
+    protocolMessageTypeError = 2,
 } ProtocolMessageType;
+
+/***********************************************************************************************************************************
+Command types
+***********************************************************************************************************************************/
+typedef enum
+{
+    protocolCommandTypeOpen = STRID5("opn", 0x3a0f0),               // Open command for processing
+    protocolCommandTypeProcess = STRID5("prc", 0xe500),             // Process command
+    protocolCommandTypeClose = STRID5("cls", 0x4d830),              // Close command
+    protocolCommandTypeCancel = STRID5("cnc", 0xdc30),              // Cancel command
+} ProtocolCommandType;
 
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 typedef struct ProtocolClient ProtocolClient;
+typedef struct ProtocolClientSession ProtocolClientSession;
 
 #include "common/io/read.h"
 #include "common/io/write.h"
 #include "common/type/object.h"
-#include "protocol/command.h"
 
 /***********************************************************************************************************************************
 Constants
@@ -57,12 +88,12 @@ protocolPackNew(void)
 }
 
 /***********************************************************************************************************************************
-Constructors
+Client Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN ProtocolClient *protocolClientNew(const String *name, const String *service, IoRead *read, IoWrite *write);
 
 /***********************************************************************************************************************************
-Getters/Setters
+Client Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct ProtocolClientPub
 {
@@ -77,11 +108,8 @@ protocolClientIoReadFd(ProtocolClient *const this)
 }
 
 /***********************************************************************************************************************************
-Functions
+Client Functions
 ***********************************************************************************************************************************/
-// Execute a command and get the result
-FN_EXTERN PackRead *protocolClientExecute(ProtocolClient *this, ProtocolCommand *command, bool resultRequired);
-
 // Move to a new parent mem context
 FN_INLINE_ALWAYS ProtocolClient *
 protocolClientMove(ProtocolClient *const this, MemContext *const parentNew)
@@ -99,21 +127,107 @@ protocolClientNoExit(ProtocolClient *const this)
 // Send noop to test connection or keep it alive
 FN_EXTERN void protocolClientNoOp(ProtocolClient *this);
 
-// Get data put by the server
-FN_EXTERN PackRead *protocolClientDataGet(ProtocolClient *this);
-FN_EXTERN void protocolClientDataEndGet(ProtocolClient *this);
+// Simple request that does not require a session or async
+typedef struct ProtocolClientRequestParam
+{
+    VAR_PARAM_HEADER;
+    PackWrite *param;
+} ProtocolClientRequestParam;
 
-// Put command to the server
-FN_EXTERN void protocolClientCommandPut(ProtocolClient *this, ProtocolCommand *command, const bool dataPut);
+#define protocolClientRequestP(this, command, ...)                                                                                          \
+    protocolClientRequest(this, command, (ProtocolClientRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-// Put data to the server
-FN_EXTERN void protocolClientDataPut(ProtocolClient *this, PackWrite *data);
+FN_EXTERN PackRead *protocolClientRequest(ProtocolClient *this, StringId command, ProtocolClientRequestParam param);
 
 /***********************************************************************************************************************************
-Destructor
+Client Destructor
 ***********************************************************************************************************************************/
 FN_INLINE_ALWAYS void
 protocolClientFree(ProtocolClient *const this)
+{
+    objFree(this);
+}
+
+/***********************************************************************************************************************************
+Session Constructors
+***********************************************************************************************************************************/
+// New session
+typedef struct ProtocolClientSessionNewParam
+{
+    VAR_PARAM_HEADER;
+    bool async;                                                     // Async requests allowed?
+} ProtocolClientSessionNewParam;
+
+#define protocolClientSessionNewP(client, command, ...)                                                                            \
+    protocolClientSessionNew(client, command, (ProtocolClientSessionNewParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN ProtocolClientSession *protocolClientSessionNew(
+    ProtocolClient *client, StringId command, ProtocolClientSessionNewParam param);
+
+/***********************************************************************************************************************************
+Session Getters/Setters
+***********************************************************************************************************************************/
+typedef struct ProtocolClientSessionPub
+{
+    bool open;                                                      // Is the session open?
+    bool queued;                                                    // Is a response currently queued?
+} ProtocolClientSessionPub;
+
+// Is a response currently queued?
+FN_INLINE_ALWAYS bool
+protocolClientSessionQueued(const ProtocolClientSession *const this)
+{
+    return THIS_PUB(ProtocolClientSession)->queued;
+}
+
+// Is the session closed?
+FN_INLINE_ALWAYS bool
+protocolClientSessionClosed(const ProtocolClientSession *const this)
+{
+    return !THIS_PUB(ProtocolClientSession)->open;
+}
+
+/***********************************************************************************************************************************
+Session Functions
+***********************************************************************************************************************************/
+// Session open
+typedef struct ProtocolClientSessionOpenParam
+{
+    VAR_PARAM_HEADER;
+    PackWrite *param;
+} ProtocolClientSessionOpenParam;
+
+#define protocolClientSessionOpenP(this, ...)                                                                                      \
+    protocolClientSessionOpen(this, (ProtocolClientSessionOpenParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN PackRead *protocolClientSessionOpen(ProtocolClientSession *const this, ProtocolClientSessionOpenParam param);
+
+// Session request
+#define protocolClientSessionRequestP(this, ...)                                                                                   \
+    protocolClientSessionRequest(this, (ProtocolClientRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN PackRead *protocolClientSessionRequest(ProtocolClientSession *const this, ProtocolClientRequestParam param);
+
+// Session async request
+#define protocolClientSessionRequestAsyncP(this, ...)                                                                              \
+    protocolClientSessionRequestAsync(this, (ProtocolClientRequestParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN void protocolClientSessionRequestAsync(ProtocolClientSession *const this, ProtocolClientRequestParam param);
+
+// Session response after a call to protocolClientSessionRequestAsyncP()
+FN_EXTERN PackRead *protocolClientSessionResponse(ProtocolClientSession *const this);
+
+// Session close
+FN_EXTERN PackRead *protocolClientSessionClose(ProtocolClientSession *const this);
+
+// Session cancel
+FN_EXTERN void protocolClientSessionCancel(ProtocolClientSession *const this);
+
+/***********************************************************************************************************************************
+Session Destructor
+***********************************************************************************************************************************/
+FN_INLINE_ALWAYS void
+protocolClientSessionFree(ProtocolClientSession *const this)
 {
     objFree(this);
 }
@@ -127,5 +241,12 @@ FN_EXTERN void protocolClientToLog(const ProtocolClient *this, StringStatic *deb
     ProtocolClient *
 #define FUNCTION_LOG_PROTOCOL_CLIENT_FORMAT(value, buffer, bufferSize)                                                             \
     FUNCTION_LOG_OBJECT_FORMAT(value, protocolClientToLog, buffer, bufferSize)
+
+FN_EXTERN void protocolClientSessionToLog(const ProtocolClientSession *this, StringStatic *debugLog);
+
+#define FUNCTION_LOG_PROTOCOL_CLIENT_SESSION_TYPE                                                                                  \
+    ProtocolClientSession *
+#define FUNCTION_LOG_PROTOCOL_CLIENT_SESSION_FORMAT(value, buffer, bufferSize)                                                     \
+    FUNCTION_LOG_OBJECT_FORMAT(value, protocolClientSessionToLog, buffer, bufferSize)
 
 #endif

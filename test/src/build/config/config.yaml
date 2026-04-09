@@ -65,6 +65,14 @@ option:
     command:
       test: {}
 
+  help:
+    type: boolean
+    default: false
+    command:
+      help: {}
+    command-role:
+      main: {}
+
   neutral-umask:
     type: boolean
     internal: true
@@ -75,6 +83,18 @@ option:
     default: false
     command:
       test: {}
+
+  output:
+    type: string-id
+    sequence: true
+    command:
+      version:
+        default: text
+        allow-list:
+          - num
+          - text
+    command-role:
+      main: {}
 
   pg-version:
     type: string
@@ -123,10 +143,25 @@ option:
     command:
       test: {}
 
+  version:
+    type: boolean
+    default: false
+    command:
+      help: {}
+    command-role:
+      main: {}
+
   vm:
     type: string
     internal: true
     default: none
+    command:
+      test: {}
+
+  vm-arch:
+    type: string
+    internal: true
+    required: false
     command:
       test: {}
 
@@ -142,6 +177,7 @@ option:
   #---------------------------------------------------------------------------------------------------------------------------------
   log-level:
     type: string-id
+    sequence: true
     default: info
     allow-list:
       - off
@@ -165,12 +201,13 @@ option:
   # Options that are not used but must be present for modules to compile. All must have a default or not be required.
   #---------------------------------------------------------------------------------------------------------------------------------
   beta: {type: boolean, default: false, command: {noop: {}}}
+  cmd: {type: string, default-type: dynamic, default: bin, command: {noop: {}}}
   compress-level-network: {type: string, required: false, command: {noop: {}}}
   config: {
-    type: string, internal: true, default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE, default-literal: true, negate: true}
+    type: string, internal: true, default-type: literal, default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_FILE, negate: true}
   config-path: {type: string, required: false, command: {noop: {}}}
   config-include-path: {
-    type: string, default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH, default-literal: true, command: {noop: {}}}
+    type: string, default-type: literal, default: CFGOPTDEF_CONFIG_PATH "/" PROJECT_CONFIG_INCLUDE_PATH, command: {noop: {}}}
   job-retry: {type: time, default: 0, deprecate: {job-retry-old: {}}, command: {noop: {}}}
   job-retry-interval: {type: string, required: false, command: {noop: {}}}
   lock: {type: list, required: false, command: {noop: {}}}

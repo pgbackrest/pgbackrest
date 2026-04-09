@@ -230,15 +230,6 @@
 
                         <text>
                             <p>Sets the level to be used for file compression when <setting>compress-type</setting> does not equal <id>none</id> or <setting>compress=y</setting> (deprecated).</p>
-
-                            <p>The following are the defaults levels based on <setting>compress-type</setting> when <setting>compress-level</setting> is not specified:</p>
-
-                            <list>
-                                <list-item><id>bz2</id> - 9</list-item>
-                                <list-item><id>gz</id> - 6</list-item>
-                                <list-item><id>lz4</id> - 1</list-item>
-                                <list-item><id>zst</id> - 3</list-item>
-                            </list>
                         </text>
 
                         <allow>0-9</allow>
@@ -249,7 +240,7 @@
                         <summary>Network compression level.</summary>
 
                         <text>
-                            <p>Sets the network compression level when <setting>compress-type=none</setting> and the command is not run on the same host as the repository. Compression is used to reduce network traffic but can be disabled by setting <setting>compress-level-network=0</setting>. When <setting>compress-type</setting> does not equal <id>none</id> the <setting>compress-level-network</setting> setting is ignored and <setting>compress-level</setting> is used instead so that the file is only compressed once.</p>
+                            <p>Sets the network compression level when <setting>compress-type=none</setting> and the command is not run on the same host as the repository. Compression is used to reduce network traffic. When <setting>compress-type</setting> does not equal <id>none</id> the <setting>compress-level-network</setting> setting is ignored and <setting>compress-level</setting> is used instead so that the file is only compressed once.</p>
                         </text>
 
                         <allow>0-9</allow>
@@ -334,6 +325,16 @@
                         <example>n</example>
                     </config-key>
 
+                    <config-key id="priority" name="Set Process Priority">
+                        <summary>Set process priority.</summary>
+
+                        <text>
+                            <p>Defines how much priority (i.e. niceness) will be given to the process by the kernel scheduler. Positive values decrease priority and negative values increase priority. In most case processes do not have permission to increase their priority.</p>
+                        </text>
+
+                        <example>19</example>
+                    </config-key>
+
                     <config-key id="spool-path" name="Spool Path">
                         <summary>Path where transient data is stored.</summary>
 
@@ -342,7 +343,7 @@
 
                             <p>The asynchronous <cmd>archive-push</cmd> command writes acknowledgements into the spool path when it has successfully stored WAL in the archive (and errors on failure) so the foreground process can quickly notify <postgres/>. Acknowledgement files are very small (zero on success and a few hundred bytes on error).</p>
 
-                            <p>The asynchronous <cmd>archive-get</cmd> command queues WAL in the spool path so it can be provided very quickly when <postgres/> requests it. Moving files to <postgres/> is most efficient when the spool path is on the same filesystem as <path>pg_xlog</path>/<path>pg_wal</path>.</p>
+                            <p>The asynchronous <cmd>archive-get</cmd> command queues WAL in the spool path so it can be provided very quickly when <postgres/> requests it. Moving files to <postgres/> is most efficient when the spool path is on the same filesystem as <path>pg_xlog</path>/<path>pg_wal</path>. However, it is not recommended to place the spool path <i>within</i> the <path>pg_xlog</path>/<path>pg_wal</path> directory as this may cause issues for <postgres/> utilities such as <file>pg_rewind</file>.</p>
 
                             <p>The data stored in the spool path is not strictly temporary since it can and should survive a reboot. However, loss of the data in the spool path is not a problem. <backrest/> will simply recheck each WAL segment to ensure it is safely archived for <cmd>archive-push</cmd> and rebuild the queue for <cmd>archive-get</cmd>.</p>
 
@@ -429,6 +430,35 @@
 
                         <example>30</example>
                     </config-key>
+
+                    <config-key id="tls-cipher-12" name="TLSv1.2 cipher suites">
+                        <summary>Allowed TLSv1.2 cipher suites.</summary>
+
+                        <text>
+                            <p>All TLS connections between the <backrest/> client and server are encrypted. By default, connections to objects stores (e.g. <proper>S3</proper>) are also encrypted.</p>
+
+                            <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2.</admonition>
+
+                            <p>The accepted cipher suites can be adjusted if need arises. The example is reasonable choice unless you have specific security requirements. If unset (the default), the default of the underlying <proper>OpenSSL</proper> library applies.</p>
+                        </text>
+
+                        <example>HIGH:MEDIUM:+3DES:!aNULL</example>
+                    </config-key>
+
+                    <config-key id="tls-cipher-13" name="TLSv1.3 cipher suites">
+                        <summary>Allowed TLSv1.3 cipher suites.</summary>
+
+                        <text>
+                            <p>All TLS connections between the <backrest/> client and server are encrypted. By default, connections to objects stores (e.g. <proper>S3</proper>) are also encrypted.</p>
+
+                            <admonition type="note">The absolute minimum security level for any transport connection is TLSv1.2.</admonition>
+
+                            <p>The accepted cipher suites can be adjusted if need arises. If unset (the default), the default of the underlying <proper>OpenSSL</proper> library applies.</p>
+                        </text>
+
+                        <example>TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256</example>
+                    </config-key>
+
                 </config-key-list>
             </config-section>
 
@@ -543,6 +573,7 @@
                             <list>
                                 <list-item><id>shared</id> - Shared key</list-item>
                                 <list-item><id>sas</id> - Shared access signature</list-item>
+                                <list-item><id>auto</id> - Automatically authorize using Azure managed identities</list-item>
                             </list>
                         </text>
 
@@ -718,6 +749,16 @@
                         <example>auto</example>
                     </config-key>
 
+                    <config-key id="repo-gcs-user-project" name="GCS Repository Project ID">
+                        <summary>GCS project ID.</summary>
+
+                        <text>
+                            <p>GCS project ID used to determine request billing.</p>
+                        </text>
+
+                        <example>my-project</example>
+                    </config-key>
+
                     <config-key id="repo-host-type" name="Repository Host Protocol Type">
                         <summary>Repository host protocol type.</summary>
 
@@ -790,7 +831,6 @@
                             <p>Required only if the path to the <backrest/> command is different on the local and repository hosts. If not defined, the repository host command will be set the same as the local command.</p>
                         </text>
 
-                        <default>same as local</default>
                         <example>/usr/lib/backrest/bin/pgbackrest</example>
                     </config-key>
 
@@ -839,6 +879,8 @@
 
                         <text>
                             <p>Use this option to specify a non-default port for the repository host protocol.</p>
+
+                            <admonition type="note">When <setting>repo-host-type=ssh</setting> there is no default for <setting>repo-host-port</setting>. In this case the port will be whatever is configured for the command specified by <setting>cmd-ssh</setting>.</admonition>
                         </text>
 
                         <example>25</example>
@@ -890,7 +932,13 @@
                         <summary>Retention type for full backups.</summary>
 
                         <text>
-                            <p>Determines whether the <setting>repo-retention-full</setting> setting represents a time period (days) or count of full backups to keep. If set to <setting>time</setting> then full backups older than <setting>repo-retention-full</setting> will be removed from the repository if there is at least one backup that is equal to or greater than the <setting>repo-retention-full</setting> setting. For example, if <setting>repo-retention-full</setting> is 30 (days) and there are 2 full backups: one 25 days old and one 35 days old, no full backups will be expired because expiring the 35 day old backup would leave only the 25 day old backup, which would violate the 30 day retention policy of having at least one backup 30 days old before an older one can be expired. Archived WAL older than the oldest full backup remaining will be automatically expired unless <setting>repo-retention-archive-type</setting> and <setting>repo-retention-archive</setting> are explicitly set.</p>
+                            <p>Determines whether the <setting>repo-retention-full</setting> setting represents a time period (days) or count of full backups to keep.</p>
+
+                            <p>If set to <setting>time</setting> then full backups older than <setting>repo-retention-full</setting> will be removed from the repository if there is at least one other backup that is equal to or greater than the <setting>repo-retention-full</setting> setting. For example, if <setting>repo-retention-full</setting> is 30 (days) and there are 2 full backups: one 25 days old and one 35 days old, no full backups will be expired because expiring the 35 day old backup would leave only the 25 day old backup, which would violate the 30 day retention policy of having at least one backup 30 days old before an older one can be expired. Archived WAL older than the oldest full backup remaining will be automatically expired unless <setting>repo-retention-archive-type</setting> and <setting>repo-retention-archive</setting> are explicitly set.</p>
+
+                            <p>If set to <setting>count</setting> then full backups that exceed <setting>repo-retention-full</setting> will be expired. For example, if <setting>repo-retention-full</setting> is <setting>4</setting> and a fifth full backup is completed, then the oldest full backup will be expired to keep the count at 4.</p>
+
+                            <p>Note that a backup must be successfully completed before it will be considered for retention. For example, if <setting>repo-retention-full-type</setting> is <setting>count</setting> and <setting>repo-retention-full</setting> is <setting>2</setting>, then there must be 3 complete full backups before the oldest will be expired.</p>
                         </text>
 
                         <example>time</example>
@@ -901,6 +949,8 @@
 
                         <text>
                             <p>When a differential backup expires, all incremental backups associated with the differential backup will also expire. When not defined all differential backups will be kept until the full backups they depend on expire.</p>
+
+                            <p>Note that full backups are included in the count of differential backups for the purpose of expiration. This slightly reduces the number of differential backups that need to be retained in most cases.</p>
                         </text>
 
                         <example>3</example>
@@ -994,7 +1044,7 @@
                         <summary>S3 repository KMS key.</summary>
 
                         <text>
-                            <p>Setting this option enables S3 server-side encryption using the specified AWS key management service key.</p>
+                            <p>Enables S3 server-side encryption using the specified AWS key management service key.</p>
                         </text>
 
                         <example>bceb4f13-6939-4be3-910d-df54dee817b7</example>
@@ -1045,13 +1095,23 @@
                     </config-key>
 
                     <config-key id="repo-s3-sse-customer-key" name="S3 Repository SSE Customer Key">
-                        <summary>S3 Repository SSE Customer Key.</summary>
+                        <summary>S3 repository SSE customer key.</summary>
 
                         <text>
-                            <p>Setting this option enables S3 server-side encryption using the specified customer key.</p>
+                            <p>Enables S3 server-side encryption using the specified customer key.</p>
                         </text>
 
                         <example>bceb4f13-6939-4be3-910d-df54dee817b7</example>
+                    </config-key>
+
+                    <config-key id="repo-s3-requester-pays" name="S3 Repository Requestor Pays">
+                        <summary>S3 repository requester pays.</summary>
+
+                        <text>
+                            <p>Enables S3 requester pays.</p>
+                        </text>
+
+                        <example>n</example>
                     </config-key>
 
                     <config-key id="repo-s3-uri-style" name="S3 Repository URI Style">
@@ -1236,15 +1296,9 @@
 
                             <p>A larger chunk size will generally lead to better performance because it will minimize upload requests and allow more files to be uploaded in a single request rather than in chunks. The disadvantage is that memory usage will be higher and because the chunk buffer must be allocated per process, larger <br-option>process-max</br-option> values will lead to more memory being consumed overall.</p>
 
-                            <p>Default chunk sizes by repo type:</p>
+                            <p>Note that valid chunk sizes vary by storage type and by platform. For example, <proper>AWS S3</proper> has a minimum chunk size of 5MiB. Terminology for chunk size varies by storage type, so when searching min/max values use <quote>part size</quote> for <proper>AWS S3</proper>, <quote>chunk size</quote> for <proper>GCS</proper>, and <quote>block size</quote> for <proper>Azure</proper>.</p>
 
-                            <list>
-                                <list-item><id>azure</id> - 4MiB</list-item>
-                                <list-item><id>gcs</id> - 4MiB</list-item>
-                                <list-item><id>s3</id> - 5MiB</list-item>
-                            </list>
-
-                            <p>Note that valid chunk sizes vary by storage type and by platform. For example, <proper>AWS S3</proper> has a minimum chunk size of 5MiB but <proper>S3</proper> clones may accept lower values. Terminology for chunk size varies by storage type, so when searching min/max values use <quote>part size</quote> for <proper>AWS S3</proper>, <quote>chunk size</quote> for <proper>GCS</proper>, and <quote>block size</quote> for <proper>Azure</proper>. No attempt is made to validate configured chunk sizes so selecting an invalid value will lead to errors from the storage service or undefined behavior.</p>
+                            <p>If a file is larger than 1GiB (the maximum size <postgres/> will create by default) then the chunk size will be increased incrementally up to the maximum allowed in order to complete the file upload.</p>
                         </text>
 
                         <example>16MiB</example>
@@ -1258,6 +1312,34 @@
                         </text>
 
                         <example>n</example>
+                    </config-key>
+
+                    <config-key id="repo-symlink" name="Repository Symlink">
+                        <summary>Create symlinks within the repository.</summary>
+
+                        <text>
+                            <p>Enable creation of the <file>lastest</file> and tablespace symlinks. These symlinks are most useful when using snapshots to do in-place recovery in the repository, which is an uncommon use case.</p>
+
+                            <p>While this feature is likely not useful for the vast majority of users it remains on by default for legacy purposes. However, it may be useful to disable symlinks for Posix-like storage that does not support them.</p>
+                        </text>
+
+                        <example>n</example>
+                    </config-key>
+
+                    <config-key id="repo-target-time" name="Target Time for Repository">
+                        <summary>Target time for repository.</summary>
+
+                        <text>
+                            <p>The target time defines the time that commands use to read a repository on versioned storage. This allows the command to read the repository as it was at a point-in-time in order to recover data that has been deleted or corrupted by user accident or malware.</p>
+
+                            <p>Versioned storage is supported by <proper>S3</proper>, <proper>GCS</proper>, and <proper>Azure</proper> but is generally not enabled by default. In addition to enabling versioning, it may be useful to enable object locking for <proper>S3</proper> and soft delete for <proper>GCS</proper> or <proper>Azure</proper>.</p>
+
+                            <p>When the <br-option>repo-target-time</br-option> option is specified then the <br-option>repo</br-option> option must also be provided. It is likely that not all repository types will support versioning and in general it makes sense to target a single repository for recovery.</p>
+
+                            <p>Note that comparisons to the storage timestamp are &lt;= the timestamp provided and milliseconds are truncated from the timestamp when provided.</p>
+                        </text>
+
+                        <example>2024-08-08 12:12:12+00</example>
                     </config-key>
 
                     <config-key id="repo-type" name="Repository Type">
@@ -1376,6 +1458,14 @@
 
                         <text>
                             <p>Enable backup from standby to reduce load on the primary cluster. This option requires that both the <host>primary</host> and <host>standby</host> hosts be configured.</p>
+
+                            <p>The following modes are supported:</p>
+
+                            <list>
+                                <list-item><id>y</id> - Standby is required for backup.</list-item>
+                                <list-item><id>prefer</id> - Backup from standby if available otherwise backup from primary.</list-item>
+                                <list-item><id>n</id> - Backup from primary only.</list-item>
+                            </list>
                         </text>
 
                         <example>y</example>
@@ -1563,7 +1653,7 @@
                                 <list-item><id>preserve</id> - preserve current <setting>archive_mode</setting> setting.</list-item>
                             </list>
 
-                            <p><b>NOTE</b>: This option is not available on <postgres/> &amp;lt; 12.</p>
+                            <p><b>NOTE</b>: This option is not available on <postgres/> &lt; 12.</p>
                         </text>
 
                         <example>off</example>
@@ -1652,6 +1742,8 @@
                             <p>Tablespaces are restored into their original locations by default. This behavior can be modified for each tablespace with the <setting>tablespace-map</setting> option, but it is sometimes preferable to remap all tablespaces to a new directory all at once. This is particularly useful for development or staging systems that may not have the same storage layout as the original system where the backup was generated.</p>
 
                             <p>The path specified will be the parent path used to create all the tablespaces in the backup.</p>
+
+                            <admonition type="caution">Tablespaces created after the backup started will not be mapped. Make a new backup after a tablespace is created if tablespace mapping is required.</admonition>
                         </text>
 
                         <example>/data/tablespace</example>
@@ -1671,10 +1763,10 @@
                         <text>
                             <p>Clients are authorized on the server by verifying their certificate and checking their certificate CN (Common Name) against a list on the server configured with the <br-option>tls-server-auth</br-option> option.</p>
 
-                            <p>A client CN can be authorized for as many stanzas as needed by repeating the <br-option>tls-server-auth</br-option> option, or for all stanzas by specifying <br-option>tls-server-auth=client-cn=*</br-option>. Wildcards may not be specified for the client CN.</p>
+                            <p>A client CN can be authorized for as many stanzas as needed by providing a comma-separated list to the <br-option>tls-server-auth</br-option> option or for all stanzas by specifying <br-option>tls-server-auth=client-cn=*</br-option>. Wildcards may not be specified for the client CN.</p>
                         </text>
 
-                        <example>client-cn=stanza1</example>
+                        <example>client-cn=stanza1,stanza2</example>
                     </config-key>
 
                     <config-key id="tls-server-ca-file" name="TLS Server Certificate Authorities">
@@ -1744,7 +1836,6 @@
                             <p>Required only if the path to the <backrest/> command is different on the local and <postgres/> hosts. If not defined, the <postgres/> host command will be set the same as the local command.</p>
                         </text>
 
-                        <default>same as local</default>
                         <example>/usr/lib/backrest/bin/pgbackrest</example>
                     </config-key>
 
@@ -1879,7 +1970,7 @@
                         <summary><postgres/> data directory.</summary>
 
                         <text>
-                            <p>This should be the same as the <setting>data_directory</setting> setting in <file>postgresql.conf</file>. Even though this value can be read from <file>postgresql.conf</file> or <postgres/> it is prudent to set it in case those resources are not available during a restore or offline backup scenario.</p>
+                            <p>This should be the same as the <setting>data_directory</setting> reported by <postgres/>. Even though this value can be read from various places, it is prudent to set it in case those resources are not available during a restore or offline backup scenario.</p>
 
                             <p>The <setting>pg-path</setting> option is tested against the value reported by <postgres/> on every online backup so it should always be current.</p>
                         </text>
@@ -1901,7 +1992,7 @@
                         <summary><postgres/> unix socket path.</summary>
 
                         <text>
-                            <p>The unix socket directory that was specified when <postgres/> was started. <backrest/> will automatically look in the standard location for your OS so there is usually no need to specify this setting unless the socket directory was explicitly modified with the <setting>unix_socket_directory</setting> setting in <file>postgresql.conf</file>.</p>
+                            <p>The unix socket directory that was specified when <postgres/> was started. <backrest/> will automatically look in the standard location for your OS so there is usually no need to specify this setting unless the socket directory was explicitly modified with the <setting>unix_socket_directories</setting> setting in <file>postgresql.conf</file>.</p>
                         </text>
 
                         <example>/var/run/postgresql</example>
@@ -1922,6 +2013,8 @@
 
                         <text>
                             <p>Use this option to specify a non-default port for the <postgres/> host protocol.</p>
+
+                            <admonition type="note">When <setting>pg-host-type=ssh</setting> there is no default for <setting>pg-host-port</setting>. In this case the port will be whatever is configured for the command specified by <setting>cmd-ssh</setting>.</admonition>
                         </text>
 
                         <example>25</example>
@@ -2175,12 +2268,30 @@
                 <summary>Expire backups that exceed retention.</summary>
 
                 <text>
-                    <p><backrest/> does full backup rotation based on the retention type which can be a count or a time period. When a count is specified, then expiration is not concerned with when the backups were created but with how many must be retained. Differential and Incremental backups are count-based but will always be expired when the backup they depend on is expired. See sections <link page="user-guide" section="/retention/full">Full Backup Retention</link> and <link page="user-guide" section="/retention/diff">Differential Backup Retention</link> for details and examples. Archived WAL is retained by default for backups that have not expired, however, although not recommended, this schedule can be modified per repository with the retention-archive options. See section <link page="user-guide" section="/retention/archive">Archive Retention</link> for details and examples.</p>
+                    <p><backrest/> does full backup rotation based on the retention type which can be a count or a time period. When a count is specified, then expiration is not concerned with when the backups were created but with how many must be retained. Differential backups are count-based but will always be expired when the full backup they depend on is expired. Incremental backups are not expired by retention independently &amp;mdash; they are always expired with their related full or differential backup. See sections <link page="user-guide" section="/retention/full">Full Backup Retention</link> and <link page="user-guide" section="/retention/diff">Differential Backup Retention</link> for details and examples.</p>
+
+                    <p>Archived WAL is retained by default for backups that have not expired, however, although not recommended, this schedule can be modified per repository with the retention-archive options. See section <link page="user-guide" section="/retention/archive">Archive Retention</link> for details and examples.</p>
 
                     <p>The <cmd>expire</cmd> command is run automatically after each successful backup and can also be run by the user. When run by the user, expiration will occur as defined by the retention settings for each configured repository. If the <br-option>{[dash]}-repo</br-option> option is provided, expiration will occur only on the specified repository. Expiration can also be limited by the user to a specific backup set with the <br-option>--set</br-option> option and, unless the <br-option>{[dash]}-repo</br-option> option is specified, all repositories will be searched and any matching the set criteria will be expired. It should be noted that the archive retention schedule will be checked and performed any time the <cmd>expire</cmd> command is run.</p>
                 </text>
 
                 <option-list>
+                    <option id="oldest" name="Oldest">
+                        <summary>Expire the oldest eligible backup set.</summary>
+
+                        <text>
+                            <p>Expire the oldest full backup set that can be removed (meaning at least one newer full backup remains). This is equivalent to manually decrementing retention by one, but computed automatically. All backups related to the expired full backup set (differential and incremental) are also expired.</p>
+
+                            <p>When used, archive retention is also temporarily adjusted so WAL for the expired backups can be removed in the same run.</p>
+
+                            <p>If time-based full retention is configured (using <br-option>--repo-retention-full-type=time</br-option>) then <br-option>--oldest</br-option> uses count-based expiration for this execution.</p>
+
+                            <admonition type="warning">This option cannot be combined with <br-option>--set</br-option>.</admonition>
+                        </text>
+
+                        <example>y</example>
+                    </option>
+
                     <option id="set" name="Set">
                         <summary>Backup set to expire.</summary>
 
@@ -2220,8 +2331,8 @@
                             <p>The following output types are supported:</p>
 
                             <list>
-                                <list-item><id>text</id></list-item>
-                                <list-item><id>json</id></list-item>
+                                <list-item><id>text</id> - Human-readable summary of manifest information.</list-item>
+                                <list-item><id>json</id> - Exhaustive machine-readable manifest information in JSON format.</list-item>
                             </list>
                         </text>
 
@@ -2258,14 +2369,6 @@
                         <example>20150131-153358F_20150131-153401I</example>
                     </option>
                 </option-list>
-            </command>
-
-            <command id="repo-create" name="Create Repository">
-                <summary>Create the repository.</summary>
-
-                <text>
-                    <p>Create the repository (path, bucket, etc.) on the default repository. If more than one repository is configured, the command will default to the highest priority repository (e.g. <id>repo1</id>) unless the <br-option>{[dash]}-repo</br-option> option is specified. If <setting>repo-type=s3</setting> the bucket will be created.</p>
-                </text>
             </command>
 
             <command id="repo-get" name="Repository Get">
@@ -2439,7 +2542,7 @@
 
                             <list>
                                 <list-item><id>default</id> - recover to the end of the archive stream.</list-item>
-                                <list-item><id>immediate</id> - recover only until the database becomes consistent. This option is only supported on <postgres/> &gt;= 9.4.</list-item>
+                                <list-item><id>immediate</id> - recover only until the database becomes consistent.</list-item>
                                 <list-item><id>lsn</id> - recover to the LSN (Log Sequence Number) specified in <br-option>--target</br-option>. This option is only supported on <postgres/> &gt;= 10.</list-item>
                                 <list-item><id>name</id> - recover the restore point specified in <br-option>--target</br-option>.</list-item>
                                 <list-item><id>xid</id> - recover to the transaction id specified in <br-option>--target</br-option>.</list-item>
@@ -2517,9 +2620,11 @@
 
                     <p>For machine-readable output use <br-option>--output=json</br-option>. The JSON output contains far more information than the text output and is kept stable unless a bug is found.</p>
 
+                    <p>To speed up execution, limit the output to only progress information by specifying <br-option>--detail-level=progress</br-option>. Note that this skips all checks except for availability of the stanza.</p>
+
                     <p>Each stanza has a separate section and it is possible to limit output to a single stanza with the <br-option>--stanza</br-option> option. The stanza '<id>status</id>' gives a brief indication of the stanza's health. If this is '<id>ok</id>' then <backrest/> is functioning normally. If there are multiple repositories, then a status of '<id>mixed</id>' indicates that the stanza is not in a healthy state on one or more of the repositories; in this case the state of the stanza will be detailed per repository. For cases in which an error on a repository occurred that is not one of the known error codes, then an error code of '<id>other</id>' will be used and the full error details will be provided. The '<id>wal archive min/max</id>' shows the minimum and maximum WAL currently stored in the archive and, in the case of multiple repositories, will be reported across all repositories unless the <br-option>{[dash]}-repo</br-option> option is set. Note that there may be gaps due to archive retention policies or other reasons.</p>
 
-                    <p>The '<id>backup/expire running</id>' message will appear beside the '<id>status</id>' information if one of those commands is currently running on the host.</p>
+                    <p>The '<id>backup/expire running</id>' and/or '<id>restore running</id>' messages will appear beside the '<id>status</id>' information if any of those commands are currently running on the host.</p>
 
                     <p>The backups are displayed oldest to newest. The oldest backup will <i>always</i> be a full backup (indicated by an <id>F</id> at the end of the label) but the newest backup can be full, differential (ends with <id>D</id>), or incremental (ends with <id>I</id>).</p>
 
@@ -2531,12 +2636,27 @@
 
                     <p>The '<id>repo</id>' indicates in which repository this backup resides. The '<id>backup set size</id>' includes all the files from this backup and any referenced backups in the repository that are required to restore the database from this backup while '<id>backup size</id>' includes only the files in this backup (these will also be the same for full backups). Repository sizes reflect compressed file sizes if compression is enabled in <backrest/>.</p>
 
-                    <p>The '<id>backup reference list</id>' contains the additional backups that are required to restore this backup.</p>
+                    <p>The '<id>backup reference total</id>' summarizes the list of additional backups that are required to restore this backup. Use the <br-option>--set</br-option> option to display the complete reference list.</p>
 
                     <!-- Note, linking to the User Guide is limited since it can cause a cyclical reference -->
                 </text>
 
                 <option-list>
+                    <option id="detail-level" name="Detail level">
+                        <summary>Output detail level.</summary>
+
+                        <text>
+                            <p>The following levels are supported:</p>
+
+                            <list>
+                                <list-item><id>progress</id> - Output only the current backup/expire progress. This level cannot be used with the <br-option>--set</br-option> option.</list-item>
+                                <list-item><id>full</id> - Output full info.</list-item>
+                            </list>
+                        </text>
+
+                        <example>progress</example>
+                    </option>
+
                     <option id="output" name="Output">
                         <summary>Output format.</summary>
 
@@ -2556,7 +2676,7 @@
                         <summary>Backup set to detail.</summary>
 
                         <text>
-                            <p>Details include a list of databases (with OIDs) in the backup set (excluding template databases), tablespaces (with OIDs) with the destination where they will be restored by default, and symlinks with the destination where they will be restored when <setting>--link-all</setting> is specified.</p>
+                            <p>Details include a complete list of additional backups that are required to restore this backup, a list of databases (with OIDs) in the backup set (excluding template databases), tablespaces (with OIDs) with the destination where they will be restored by default, and symlinks with the destination where they will be restored when <setting>--link-all</setting> is specified.</p>
                         </text>
 
                         <example>20150131-153358F_20150131-153401I</example>
@@ -2566,7 +2686,13 @@
                         <summary>Filter on backup type.</summary>
 
                         <text>
-                            <p>Filter the output using one of the following backup types: <id>full</id>, <id>incr</id>, <id>diff</id>.</p>
+                            <p>Filter the output using one of the following backup types:</p>
+
+                            <list>
+                                <list-item><id>full</id> - Output only full backups.</list-item>
+                                <list-item><id>diff</id> - Output only differential backups.</list-item>
+                                <list-item><id>incr</id> - Output only incremental backups.</list-item>
+                            </list>
                         </text>
 
                         <example>full</example>
@@ -2580,6 +2706,28 @@
                 <text>
                     <p>Three levels of help are provided. If no command is specified then general help will be displayed. If a command is specified (e.g. <cmd>pgbackrest help backup</cmd>) then a full description of the command will be displayed along with a list of valid options. If an option is specified in addition to a command (e.g. <cmd>pgbackrest help backup type</cmd>) then a full description of the option as it applies to the command will be displayed.</p>
                 </text>
+
+                <option-list>
+                    <option id="help" name="Display Help">
+                        <summary>Display help.</summary>
+
+                        <text>
+                            <p>Displays help even if the <cmd>help</cmd> command is not specified and overrides the <br-option>--version</br-option> option.</p>
+                        </text>
+
+                        <example>y</example>
+                    </option>
+
+                    <option id="version" name="Display Version">
+                        <summary>Display version.</summary>
+
+                        <text>
+                            <p>Displays version even if the <cmd>version</cmd> or <cmd>help</cmd> command is not specified.</p>
+                        </text>
+
+                        <example>y</example>
+                    </option>
+                </option-list>
             </command>
 
             <command id="server" name="Server">
@@ -2631,10 +2779,10 @@
             </command>
 
             <command id="verify" name="Verify">
-                <summary>Verify contents of the repository.</summary>
+                <summary>Verify contents of a repository.</summary>
 
                 <text>
-                    <p>Verify determines if the backups and archives in the repository are valid.</p>
+                    <p>Verify determines if the backups and archives in a repository are valid.</p>
                 </text>
 
                 <option-list>
@@ -2651,7 +2799,12 @@
                     <option id="output" name="Output">
                         <summary>Output type.</summary>
 
-                        <text> <p>Output may be none (default) or text. Requesting text generates output to stdout.</p>
+                        <text>
+                            <p>The following output types are supported:</p>
+                                <list>
+                                    <list-item><id>none</id> - No verify output.</list-item>
+                                    <list-item><id>text</id> - Output verify information to stdout.</list-item>
+                                </list>
                         </text>
 
                         <example>text</example>
@@ -2675,6 +2828,22 @@
                 <text>
                     <p>Displays installed <backrest/> version.</p>
                 </text>
+
+                <option-list>
+                    <option id="output" name="Output">
+                        <summary>Output type.</summary>
+
+                        <text>
+                            <p>The following output types are supported:</p>
+                            <list>
+                                <list-item><id>text</id> - Display the installed <backrest/> version as text.</list-item>
+                                <list-item><id>num</id> - Display the installed <backrest/> version as an integer.</list-item>
+                            </list>
+                        </text>
+
+                        <example>num</example>
+                    </option>
+                </option-list>
             </command>
 
             <command id="stanza-create" name="Stanza Create">

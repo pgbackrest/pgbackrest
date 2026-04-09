@@ -82,12 +82,12 @@ testRun(void)
 
     // Config functions that are not tested with parse
     // *****************************************************************************************************************************
-    if (testBegin("cfg*()"))
+    if (testBegin("cfgInited()"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("config command defaults to none before cfgInit()");
 
-        TEST_RESULT_UINT(cfgCommand(), cfgCmdNone, "command is none");
+        TEST_RESULT_BOOL(cfgInited(), false, "config is not inited");
     }
 
     // config and config-include-path options
@@ -182,7 +182,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoHardlink), cfgSourceConfig, "repo-hardlink is source config");
         TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 3, "compress-level is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceConfig, "compress-level is source config");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "backup-standby not is set");
+        TEST_RESULT_UINT(cfgOptionSeq(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_N, "backup-standby not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBackupStandby), cfgSourceDefault, "backup-standby is source default");
         TEST_RESULT_INT(cfgOptionInt64(cfgOptBufferSize), 65536, "buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceConfig, "backup-standby is source config");
@@ -821,14 +821,24 @@ testRun(void)
             "option 'reset-force' cannot be reset");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("error if option exceeds key max");
+        TEST_TITLE("error if option less than key min");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, "--pg0-path=/dude");
+        TEST_ERROR(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
+            "option 'pg0-path' key must be between 1 and 256");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error if option greater than key max");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
         strLstAddZ(argList, "--pg257-path");
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
-            "option 'pg257-path' key exceeds maximum of 256");
+            "option 'pg257-path' key must be between 1 and 256");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error if option begins with a number");
@@ -1250,7 +1260,7 @@ testRun(void)
         strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
-            "option 'repo1-host-user' not valid without option 'repo1-host'");
+            "option 'repo1-host-user' not valid without option 'repo1-host-type'");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
@@ -1328,7 +1338,7 @@ testRun(void)
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidValueError,
             "'^bogus' is not allowed for 'type' option\n"
-            "HINT: allowed values are 'lsn', 'name', 'time', 'xid', 'preserve', 'none', 'immediate', 'default', 'standby'");
+            "HINT: allowed values are 'default', 'preserve', 'immediate', 'standby', 'none', 'name', 'time', 'lsn', 'xid'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("option value invalid (size)");
@@ -1357,7 +1367,7 @@ testRun(void)
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidValueError,
             "'bogus' is not allowed for 'type' option\n"
-            "HINT: allowed values are 'lsn', 'name', 'time', 'xid', 'preserve', 'none', 'immediate', 'default', 'standby'");
+            "HINT: allowed values are 'default', 'preserve', 'immediate', 'standby', 'none', 'name', 'time', 'lsn', 'xid'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("lower and upper bounds for integer ranges");
@@ -1377,12 +1387,44 @@ testRun(void)
         strLstAddZ(argList, TEST_BACKREST_EXE);
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/db");
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptCompressLevelNetwork, "-6");
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+        TEST_ERROR(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidValueError,
+            "'-6' is out of range for 'compress-level-network' option\n"
+            "HINT: allowed range is -5 to 12 inclusive");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptCompressLevelNetwork, "-5");
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevelNetwork), -5, "compress level is set");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptProcessMax, "65536");
         strLstAddZ(argList, TEST_COMMAND_RESTORE);
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidValueError,
             "'65536' is out of range for 'process-max' option\n"
             "HINT: allowed range is 1 to 999 inclusive");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/db");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptCompressType, "gz");
+        hrnCfgArgRawZ(argList, cfgOptCompressLevel, "-2");
+        strLstAddZ(argList, TEST_COMMAND_BACKUP);
+        TEST_ERROR(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidValueError,
+            "'-2' is out of range for 'compress-level' option when 'compress-type' option = 'gz'\n"
+            "HINT: allowed range is -1 to 9 inclusive");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("character value when integer expected");
@@ -1420,6 +1462,27 @@ testRun(void)
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidValueError,
             "'bogus' is not valid for 'protocol-timeout' option");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("option sequences");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        strLstAddZ(argList, CFGCMD_REPO_LS);
+        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
+        TEST_RESULT_UINT(cfgOptionSeq(cfgOptSort), sortOrderAsc, "default sort order is asc");
+        TEST_RESULT_UINT(cfgOptionStrId(cfgOptSort), CFGOPTVAL_SORT_ASC_STRID, "check StringId");
+
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptSort, cfgSourceParam, VARUINT64(CFGOPTVAL_SORT_NONE_STRID)), "set sort order to none");
+        TEST_RESULT_UINT(cfgOptionSeq(cfgOptSort), sortOrderNone, "sort order is none");
+        TEST_RESULT_UINT(cfgOptionStrId(cfgOptSort), CFGOPTVAL_SORT_NONE_STRID, "check StringId");
+
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        hrnCfgArgRawZ(argList, cfgOptSort, "desc");
+        strLstAddZ(argList, CFGCMD_REPO_LS);
+        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
+        TEST_RESULT_UINT(cfgOptionSeq(cfgOptSort), sortOrderDesc, "default sort order is desc");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("option as environment variables");
@@ -1547,8 +1610,8 @@ testRun(void)
         hrnLogLevelStdOutSet(logLevelOff);
         hrnLogLevelStdErrSet(logLevelOff);
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList)), "no command");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command is none");
+        TEST_RESULT_BOOL(cfgCommandHelp(), false, "help is not set");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
         TEST_RESULT_INT(hrnLogLevelStdOut(), logLevelWarn, "console logging is warn");
         TEST_RESULT_INT(hrnLogLevelStdErr(), logLevelOff, "stderr logging is off");
         harnessLogLevelReset();
@@ -1561,8 +1624,8 @@ testRun(void)
         strLstAddZ(argList, "help");
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "help command");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command is help");
+        TEST_RESULT_BOOL(cfgCommandHelp(), false, "command help is not set");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
 
         argList = strLstNew();
         strLstAddZ(argList, TEST_BACKREST_EXE);
@@ -1571,7 +1634,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "help for version command");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
+        TEST_RESULT_BOOL(cfgCommandHelp(), true, "command help is set");
         TEST_RESULT_INT(cfgCommand(), cfgCmdVersion, "command is version");
         TEST_RESULT_Z(cfgCommandName(), "version", "command name is version");
 
@@ -1582,7 +1645,7 @@ testRun(void)
 
         TEST_RESULT_VOID(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
+        TEST_RESULT_BOOL(cfgCommandHelp(), true, "command help is set");
         TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -1593,8 +1656,9 @@ testRun(void)
         strLstAddZ(argList, "--help");
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command is none");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
+        TEST_RESULT_BOOL(cfgCommandHelp(), false, "command help is not set");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptHelp), true, "help option is set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("version option");
@@ -1604,8 +1668,9 @@ testRun(void)
         strLstAddZ(argList, "--version");
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
-        TEST_RESULT_BOOL(cfgCommandHelp(), false, "help is not set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdVersion, "command is version");
+        TEST_RESULT_BOOL(cfgCommandHelp(), false, "command help is not set");
+        TEST_RESULT_UINT(cfgCommand(), cfgCmdHelp, "command is help");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptVersion), true, "version option is set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("help and version options");
@@ -1616,8 +1681,10 @@ testRun(void)
         strLstAddZ(argList, "--version");
 
         TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load config");
-        TEST_RESULT_BOOL(cfgCommandHelp(), true, "help is not set");
-        TEST_RESULT_INT(cfgCommand(), cfgCmdNone, "command is none");
+        TEST_RESULT_BOOL(cfgCommandHelp(), false, "help is not set");
+        TEST_RESULT_INT(cfgCommand(), cfgCmdHelp, "command is help");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptHelp), true, "version option is set");
+        TEST_RESULT_BOOL(cfgOptionBool(cfgOptVersion), true, "version option is set");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on command with --help option");
@@ -1629,7 +1696,7 @@ testRun(void)
 
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
-            "invalid option '--help'");
+            "option 'help' not valid for command 'backup'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("error on command with --version option");
@@ -1641,7 +1708,7 @@ testRun(void)
 
         TEST_ERROR(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), OptionInvalidError,
-            "invalid option '--version'");
+            "option 'version' not valid for command 'backup'");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("help command - should not fail on missing options");
@@ -1672,6 +1739,33 @@ testRun(void)
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "command arguments");
         TEST_RESULT_STRLST_Z(
             cfgCommandParam(), "000000010000000200000003\n/path/to/wal/RECOVERYWAL\n", "check command arguments");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("bool-like");
+
+        StringList *argListBase = strLstNew();
+        strLstAddZ(argListBase, TEST_BACKREST_EXE);
+        strLstAddZ(argListBase, "backup");
+        strLstAddZ(argListBase, "--stanza=test");
+        strLstAddZ(argListBase, "--pg1-path=/");
+
+        argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--no-backup-standby");
+
+        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "negate");
+        TEST_RESULT_UINT(cfgOptionSeq(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_N, "backup-standby is n");
+
+        argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--backup-standby");
+
+        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "no arg");
+        TEST_RESULT_UINT(cfgOptionSeq(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_Y, "backup-standby is y");
+
+        argList = strLstDup(argListBase);
+        strLstAddZ(argList, "--backup-standby=prefer");
+
+        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "prefer arg");
+        TEST_RESULT_UINT(cfgOptionSeq(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_PREFER, "backup-standby is prefer");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("various configuration settings");
@@ -1706,7 +1800,7 @@ testRun(void)
         TEST_RESULT_STR_Z(cfgCommandRoleName(), "backup", "command/role name is backup");
         TEST_RESULT_STR_Z(cfgParseCommandRoleStr(cfgCmdRoleMain), NULL, "main role name is NULL");
 
-        TEST_RESULT_STR_Z(cfgExe(), TEST_BACKREST_EXE, "exe is set");
+        TEST_RESULT_STR_Z(cfgBin(), TEST_BACKREST_EXE, "bin is set");
 
         TEST_RESULT_BOOL(cfgOptionTest(cfgOptConfig), false, "config is not set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptConfig), cfgSourceParam, "config is source param");
@@ -1772,20 +1866,26 @@ testRun(void)
         setenv("PGBACKREST_ONLINE", "y", true);
         setenv("PGBACKREST_DELTA", "y", true);
         setenv("PGBACKREST_START_FAST", "n", true);
-        setenv("PGBACKREST_PG1_SOCKET_PATH", "/path/to/socket", true);
+        setenv("PGBACKREST_PG1_SOCKET_PATH", "@socket", true);
 
         storagePutP(
             storageNewWriteP(storageTestWrite, configFile),
             BUFSTR(
                 strNewFmt(
                     "[global]\n"
-                    "compress-level=3\n"
+                    "compress-type=gz\n"
                     "spool-path=/path/to/spool\n"
                     "lock-path=/\n"
                     "pg1-path=/not/path/to/db\n"
                     "\n"
                     "[global:backup]\n"
                     "repo1-hardlink=y\n"
+                    "repo2-type=s3\n"                               // Set to S3 to test unresolved default below
+                    "repo2-symlink=n\n"                             // This will be unresolved and default to false
+                    "repo2-s3-bucket=x\n"                           // Required for S3 repo
+                    "repo2-s3-endpoint=x\n"                         // Required for S3 repo
+                    "repo2-s3-region=x\n"                           // Required for S3 repo
+                    "repo2-s3-key-type=auto\n"                      // Required for S3 repo
                     "bogus=bogus\n"
                     "no-delta=y\n"
                     "reset-delta=y\n"
@@ -1811,6 +1911,7 @@ testRun(void)
                     "%s=ignore\n"
                     "%s=/path/to/db2\n"
                     "pg3-host=ignore\n"
+                    "repo1-host=ssh-host\n"
                     "recovery-option=c=d\n",
                     cfgParseOptionKeyIdxName(cfgOptPgHost, 1), cfgParseOptionKeyIdxName(cfgOptPgPath, 1))));
 
@@ -1851,12 +1952,14 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptPgPath), cfgSourceConfig, "pg1-path is source config");
         TEST_RESULT_STR_Z(
             cfgOptionIdxStr(cfgOptPgPath, cfgOptionKeyToIdx(cfgOptPgPath, 256)), "/path/to/db256", "pg256-path is set");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoHost, 0), "ssh-host", "repo1-host is set");
+        TEST_RESULT_BOOL(cfgOptionIdxTest(cfgOptRepoHostPort, 0), false, "repo1-host-port is not set for ssh");
         TEST_RESULT_UINT(varUInt64(cfgOptionVar(cfgOptType)), STRID5("incr", 0x90dc90), "check type");
         TEST_RESULT_STR_Z(
             cfgOptionDisplayVar(VARUINT64(STRID5("incr", 0x90dc90)), cfgOptTypeStringId), "incr", "check type display");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptLockPath), "/", "lock-path is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptLockPath), cfgSourceConfig, "lock-path is source config");
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 0), "/path/to/socket", "pg1-socket-path is set");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 0), "@socket", "pg1-socket-path is set");
         TEST_RESULT_INT(cfgOptionIdxSource(cfgOptPgSocketPath, 0), cfgSourceConfig, "pg1-socket-path is config param");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptOnline), false, "online not is set");
         TEST_RESULT_STR_Z(cfgOptionDisplay(cfgOptOnline), "false", "online display is false");
@@ -1874,9 +1977,9 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptRepoHardlink), cfgSourceConfig, "repo-hardlink is source config");
         TEST_RESULT_UINT(cfgOptionUInt(cfgOptRepoRetentionFull), 55, "repo-retention-full is set");
         TEST_RESULT_INT(varInt64(cfgOptionVar(cfgOptRepoRetentionFull)), 55, "repo-retention-full as variant");
-        TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 3, "compress-level is set");
-        TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceConfig, "compress-level is source config");
-        TEST_RESULT_BOOL(cfgOptionBool(cfgOptBackupStandby), false, "backup-standby not is set");
+        TEST_RESULT_INT(cfgOptionInt(cfgOptCompressLevel), 6, "compress-level is set");
+        TEST_RESULT_INT(cfgOptionSource(cfgOptCompressLevel), cfgSourceDefault, "compress-level is source config");
+        TEST_RESULT_UINT(cfgOptionSeq(cfgOptBackupStandby), CFGOPTVAL_BACKUP_STANDBY_N, "backup-standby not is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBackupStandby), cfgSourceDefault, "backup-standby is source default");
         TEST_RESULT_BOOL(cfgOptionIdxReset(cfgOptBackupStandby, 0), true, "backup-standby was reset");
         TEST_RESULT_BOOL(cfgOptionBool(cfgOptDelta), true, "delta is set");
@@ -1884,7 +1987,7 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionInt64(cfgOptBufferSize), 65536, "buffer-size is set");
         TEST_RESULT_INT(cfgOptionSource(cfgOptBufferSize), cfgSourceConfig, "backup-standby is source config");
         TEST_RESULT_UINT(cfgOptionUInt64(cfgOptDbTimeout), 1800000, "db-timeout is set");
-        TEST_RESULT_STR_Z(cfgOptionDisplay(cfgOptDbTimeout), "1800", "db-timeout display");
+        TEST_RESULT_STR_Z(cfgOptionDisplay(cfgOptDbTimeout), "30m", "db-timeout display");
         TEST_RESULT_UINT(cfgOptionUInt64(cfgOptProtocolTimeout), 3600000, "protocol-timeout is set");
         TEST_RESULT_UINT(cfgOptionIdxUInt(cfgOptPgPort, 1), 5432, "pg2-port is set");
         TEST_RESULT_UINT(cfgOptionIdxUInt64(cfgOptPgPort, 1), 5432, "pg2-port is set");
@@ -1892,22 +1995,26 @@ testRun(void)
         TEST_RESULT_STR(cfgOptionStrNull(cfgOptPgHost), NULL, "pg2-host is NULL");
         TEST_ERROR(cfgOptionIdxStr(cfgOptPgHost, 1), AssertError, "option 'pg2-host' is null but non-null was requested");
         TEST_RESULT_UINT(cfgOptionUInt64(cfgOptIoTimeout), 60000, "io-timeout is set");
+        TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptRepoType, 1), STRID6("s3", 0x7d31), "repo2-type is s3");
+        TEST_RESULT_UINT(cfgOptionIdxBool(cfgOptRepoSymlink, 1), false, "repo2-symlink is not set");
+        TEST_RESULT_UINT(cfgOptionIdxSource(cfgOptRepoSymlink, 1), cfgSourceDefault, "repo2-symlink is default");
+        TEST_RESULT_UINT(cfgOptionIdxNegate(cfgOptRepoSymlink, 1), false, "repo2-symlink is not negated");
 
-        TEST_RESULT_BOOL(cfgParseOptionRequired(cfgCmdBackup, cfgOptPgHost), false, "pg-host is not required for backup");
-        TEST_RESULT_BOOL(cfgParseOptionRequired(cfgCmdInfo, cfgOptStanza), false, "stanza is not required for info");
+        TEST_RESULT_STR_Z(cfgOptionIdxDefaultValue(cfgOptBackupStandby, 0), "n", "backup-standby default is false");
+        TEST_RESULT_STR_Z(cfgOptionIdxDefaultValue(cfgOptBackupStandby, 0), "n", "backup-standby default is false (again)");
+        TEST_RESULT_PTR(cfgOptionIdxDefaultValue(cfgOptPgHost, 0), NULL, "pg-host default is NULL");
+        TEST_RESULT_STR_Z(cfgOptionIdxDefaultValue(cfgOptLogLevelConsole, 0), "warn", "log-level-console default is warn");
+        TEST_RESULT_STR_Z(cfgOptionIdxDefaultValue(cfgOptPgPort, 0), "5432", "pg-port default is 5432");
+        TEST_RESULT_STR_Z(cfgOptionIdxDisplay(cfgOptPgPort, 0), "5432", "pg-port display is 5432");
+        TEST_RESULT_VOID(cfgOptionSet(cfgOptDbTimeout, cfgSourceDefault, VARINT64(30000)), "set db-timeout default");
+        TEST_RESULT_STR_Z(cfgOptionIdxDefaultValue(cfgOptDbTimeout, 0), "30", "db-timeout default is 30m");
 
-        TEST_RESULT_STR_Z(cfgOptionDefault(cfgOptBackupStandby), "n", "backup-standby default is false");
-        TEST_RESULT_STR_Z(cfgOptionDefault(cfgOptBackupStandby), "n", "backup-standby default is false (again)");
-        TEST_RESULT_PTR(cfgOptionDefault(cfgOptPgHost), NULL, "pg-host default is NULL");
-        TEST_RESULT_STR_Z(cfgOptionDefault(cfgOptLogLevelConsole), "warn", "log-level-console default is warn");
-        TEST_RESULT_STR_Z(cfgOptionDefault(cfgOptPgPort), "5432", "pg-port default is 5432");
-        TEST_RESULT_STR_Z(cfgOptionDisplay(cfgOptPgPort), "5432", "pg-port display is 5432");
-        TEST_RESULT_STR_Z(cfgOptionDefault(cfgOptDbTimeout), "30m", "db-timeout default is 30m");
-
-        TEST_RESULT_VOID(cfgOptionDefaultSet(cfgOptPgSocketPath, VARSTRDEF("/default")), "set pg-socket-path default");
-        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 0), "/path/to/socket", "pg1-socket-path unchanged");
+        TEST_RESULT_VOID(
+            cfgOptionIdxSet(cfgOptPgSocketPath, 1, cfgSourceDefault, VARSTRDEF("/default")), "set pg-socket-path default");
+        TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 0), "@socket", "pg1-socket-path unchanged");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptPgSocketPath, 1), "/default", "pg2-socket-path is new default");
         TEST_RESULT_STR_Z(cfgOptionIdxDisplay(cfgOptPgSocketPath, 1), "/default", "pg2-socket-path display");
+        TEST_RESULT_UINT(cfgOptionIdxTotal(cfgOptPgSocketPath), 3, "pg-socket-path index total");
 
         TEST_ERROR(cfgOptionDisplay(cfgOptTarget), AssertError, "option 'target' is not valid for the current command");
         TEST_ERROR(cfgOptionLst(cfgOptDbInclude), AssertError, "option 'db-include' is not valid for the current command");
@@ -1918,6 +2025,11 @@ testRun(void)
 
         TEST_RESULT_UINT(cfgOptionKeyToIdx(cfgOptArchiveTimeout, 1), 0, "check archive-timeout");
         TEST_ERROR(cfgOptionKeyToIdx(cfgOptPgPath, 4), AssertError, "key '4' is not valid for 'pg-path' option");
+
+        TEST_RESULT_VOID(cfgOptionIdxSet(cfgOptType, 0, cfgSourceParam, VARSTRDEF("full")), "set type as string");
+        TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptType, 0), STRID5("full", 0x632a60), "check strid");
+        TEST_RESULT_VOID(cfgOptionIdxSet(cfgOptType, 0, cfgSourceParam, VARUINT64(STRID5("full", 0x632a60))), "set type as strid");
+        TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptType, 0), STRID5("full", 0x632a60), "check strid");
 
         unsetenv("PGBACKREST_BOGUS");
         unsetenv("PGBACKREST_ONLIN");
@@ -1987,9 +2099,10 @@ testRun(void)
         strLstAddZ(argList, TEST_COMMAND_BACKUP);
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/path/to/1");
-        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList)), "load local config");
+        TEST_RESULT_VOID(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load local config");
 
-        TEST_RESULT_STR_Z(cfgExe(), "pgbackrest", "--cmd not provided; cfgExe() returns " TEST_BACKREST_EXE);
+        TEST_RESULT_STR_Z(cfgBin(), "pgbackrest", "--cmd not provided; cfgBin() returns " TEST_BACKREST_EXE);
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
@@ -2004,9 +2117,11 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/path/to/1");
         hrnCfgArgRawZ(argList, cfgOptCmd, "pgbackrest_wrapper.sh");
-        TEST_RESULT_VOID(cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList)), "load local config");
+        TEST_RESULT_VOID(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true), "load local config");
 
-        TEST_RESULT_STR_Z(cfgOptionStr(cfgOptCmd), "pgbackrest_wrapper.sh", "--cmd provided; cmd is returned as pgbackrest_wrapper.sh");
+        TEST_RESULT_STR_Z(
+            cfgOptionStr(cfgOptCmd), "pgbackrest_wrapper.sh", "--cmd provided; cmd is returned as pgbackrest_wrapper.sh");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("default job retry and valid duplicate options");
@@ -2036,6 +2151,7 @@ testRun(void)
         strLstAddZ(argList, TEST_BACKREST_EXE);
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/db");
         hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "a=b");
+        hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "c=d");
         hrnCfgArgRawZ(argList, cfgOptRecoveryOption, "c=de=fg hi");
         hrnCfgArgRawZ(argList, cfgOptStanza, "db");
         hrnCfgArgRawZ(argList, cfgOptJobRetry, "0");
@@ -2043,6 +2159,8 @@ testRun(void)
         TEST_RESULT_VOID(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true),
             TEST_COMMAND_RESTORE " command");
+
+        TEST_RESULT_LOG("P00   WARN: key 'c' value 'd' is overwritten with 'de=fg hi' for 'recovery-option' option");
 
         TEST_RESULT_PTR(cfgCommandJobRetry(), NULL, "no job retries");
 
@@ -2053,7 +2171,8 @@ testRun(void)
         TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, VARSTRDEF("a"))), "b", "check recovery option");
         TEST_ASSIGN(recoveryKv, varKv(cfgOptionIdxVar(cfgOptRecoveryOption, 0)), "get recovery options");
         TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, VARSTRDEF("c"))), "de=fg hi", "check recovery option");
-        TEST_RESULT_BOOL(cfgLockRequired(), false, "restore command does not require lock");
+        TEST_RESULT_BOOL(cfgLockRequired(), true, "restore command requires lock");
+        TEST_RESULT_UINT(cfgLockType(), lockTypeRestore, "restore command requires restore lock type");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("recovery options, config file");
@@ -2078,6 +2197,8 @@ testRun(void)
         TEST_RESULT_VOID(
             cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true),
             TEST_COMMAND_RESTORE " command");
+
+        TEST_RESULT_LOG("P00   WARN: key 'hijk' value 'l' is overwritten with 'override' for 'recovery-option' option");
 
         TEST_ASSIGN(recoveryKv, cfgOptionKv(cfgOptRecoveryOption), "get recovery options");
         TEST_RESULT_STR_Z(varStr(kvGet(recoveryKv, VARSTRDEF("f"))), "g", "check recovery option");
@@ -2137,11 +2258,22 @@ testRun(void)
         TEST_RESULT_VOID(cfgOptionIdxSet(cfgOptPgPath, 0, cfgSourceParam, NULL), "set pg1-path to NULL");
         TEST_RESULT_STR_Z(cfgOptionIdxStrNull(cfgOptPgPath, 0), NULL, "check pg1-path");
 
-        TEST_RESULT_VOID(cfgOptionIdxSet(cfgOptType, 0, cfgSourceParam, VARUINT64(STRID5("preserve", 0x2da45996500))), "set type");
-        TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptType, 0), STRID5("preserve", 0x2da45996500), "check type");
+        TEST_RESULT_VOID(
+            cfgOptionIdxSet(cfgOptType, 0, cfgSourceParam, VARUINT64(CFGOPTVAL_RESTORE_TYPE_PRESERVE_STRID)), "set type");
+        TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptType, 0), CFGOPTVAL_RESTORE_TYPE_PRESERVE_STRID, "check type");
 
-        TEST_RESULT_VOID(cfgOptionIdxSet(cfgOptType, 0, cfgSourceParam, VARSTRDEF("standby")), "set type");
-        TEST_RESULT_UINT(cfgOptionIdxStrId(cfgOptType, 0), STRID5("standby", 0x6444706930), "check type");
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("integer default when dependency invalid");
+        {
+            argList = strLstNew();
+            hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+            hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, "/pg1");
+            hrnCfgEnvKeyRawZ(cfgOptRepoRetentionFull, 1, "1");
+            hrnCfgEnvRawZ(cfgOptCompressType, "none");
+            HRN_CFG_LOAD(cfgCmdBackup, argList);
+
+            TEST_RESULT_UINT(cfgOptionUInt(cfgOptCompressLevel), 0, "compress-level is 0");
+        }
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("stanza options should not be loaded for commands that don't take a stanza");
@@ -2283,6 +2415,52 @@ testRun(void)
                 "HINT: if pgBackRest was installed from a package, does the package support this feature?\n"
                 "HINT: if pgBackRest was built from source, were the required development packages installed?");
         }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("version and help (without command) do not load env");
+        {
+            argList = strLstNew();
+            strLstAddZ(argList, "backup");
+            setenv("PGBACKREST_INVALID", "xxx", true);
+
+            // Warn on invalid env var
+            HRN_CFG_LOAD(cfgCmdHelp, argList);
+            TEST_RESULT_LOG("P00   WARN: environment contains invalid option 'invalid'");
+
+            // No warning for invalid env var
+            argList = strLstNew();
+            HRN_CFG_LOAD(cfgCmdHelp, argList);
+            HRN_CFG_LOAD(cfgCmdVersion, argList);
+
+            unsetenv("PGBACKREST_INVALID");
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+#ifdef TEST_CONTAINER_REQUIRED
+        TEST_TITLE("version and help (without command) do not load config or read env");
+        {
+            HRN_SYSTEM(
+                "echo '[global' | sudo tee " PGBACKREST_CONFIG_ORIG_PATH_FILE
+                " && sudo chmod 600 " PGBACKREST_CONFIG_ORIG_PATH_FILE);
+
+            argList = strLstNew();
+            strLstAddZ(argList, TEST_BACKREST_EXE);
+            strLstAddZ(argList, "help");
+            strLstAddZ(argList, "backup");
+
+            // Error on unreadable config
+            TEST_ERROR(
+                cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true),
+                FileOpenError, "unable to open file '/etc/pgbackrest.conf' for read: [13] Permission denied");
+
+            // No error on unreadable config
+            argList = strLstNew();
+            HRN_CFG_LOAD(cfgCmdHelp, argList);
+            HRN_CFG_LOAD(cfgCmdVersion, argList);
+
+            HRN_SYSTEM("sudo rm " PGBACKREST_CONFIG_ORIG_PATH_FILE);
+        }
+#endif
     }
 
     // *****************************************************************************************************************************

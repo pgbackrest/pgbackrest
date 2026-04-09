@@ -40,6 +40,7 @@ typedef struct String String;
 #include "common/assert.h"
 #include "common/encode.h"
 #include "common/type/buffer.h"
+#include "common/type/stringId.h"
 #include "common/type/stringZ.h"
 
 /***********************************************************************************************************************************
@@ -66,8 +67,24 @@ FN_EXTERN String *strNewZN(const char *string, size_t size);
 // will be copied but only the data before the NULL character will be used as a string.
 FN_EXTERN String *strNewBuf(const Buffer *buffer);
 
-// Create a new fixed length string by converting the double value
-FN_EXTERN String *strNewDbl(double value);
+// Create a new fixed length string by performing division
+typedef struct StrNewDivParam
+{
+    VAR_PARAM_HEADER;
+    unsigned int precision;                                         // Digits of precision after the decimal
+    bool trim;                                                      // Trim trailing zeros and decimal point?
+} StrNewDivParam;
+
+#define strNewDivP(dividend, divisor, ...)                                                                                         \
+    strNewDiv(dividend, divisor, (StrNewDivParam){VAR_PARAM_INIT, __VA_ARGS__})
+
+FN_EXTERN String *strNewDiv(uint64_t dividend, uint64_t divisor, StrNewDivParam param);
+
+// Create a new fixed length string containing a percentage
+FN_EXTERN String *strNewPct(uint64_t dividend, uint64_t divisor);
+
+// Create string from string id
+FN_EXTERN String *strNewStrId(StringId strId);
 
 // Create a new fixed length string by converting a timestamp
 typedef struct StrNewTimeParam
@@ -206,6 +223,13 @@ FN_EXTERN String *strReplaceChr(String *this, char find, char replace);
 // Format sizes (file, buffer, etc.) in human-readable form
 FN_EXTERN String *strSizeFormat(const uint64_t fileSize);
 
+// Convert string to string id
+FN_INLINE_ALWAYS StringId
+strStrId(const String *const this)
+{
+    return strIdFromZN(strZ(this), strSize(this), STRING_ID_SEQ_NONE);
+}
+
 // Return a substring given only the start position
 FN_EXTERN String *strSub(const String *this, size_t start);
 
@@ -244,8 +268,16 @@ will result in a segfault due to modifying read-only memory.
 
 By convention all string constant identifiers are appended with _STR.
 ***********************************************************************************************************************************/
+// This struct must be kept in sync with StringPub (except for const qualifiers)
+typedef struct StringPubConst
+{
+    uint64_t size : 32;                                             // Actual size of the string
+    uint64_t extra : 32;                                            // Extra space allocated for expansion
+    const char *buffer;                                             // String buffer
+} StringPubConst;
+
 #define STR_SIZE(bufferParam, sizeParam)                                                                                           \
-    ((const String *const)&(const StringPub){.buffer = (char *)(bufferParam), .size = (unsigned int)(sizeParam)})
+    ((const String *const)&(const StringPubConst){.buffer = (const char *const)(bufferParam), .size = (unsigned int)(sizeParam)})
 
 // Create a String constant inline from any zero-terminated string
 #define STR(buffer)                                                                                                                \

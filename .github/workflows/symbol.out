@@ -26,6 +26,7 @@ backtrace_syminfo_to_full_callback
 backtrace_syminfo_to_full_error_callback
 backtrace_uncompress_lzma
 backtrace_uncompress_zdebug
+backtrace_uncompress_zstd
 backtrace_vector_finish
 backtrace_vector_grow
 backtrace_vector_release
@@ -33,5 +34,4 @@ data_start
 environ@GLIBC_2.2.5
 main
 stderr@GLIBC_2.2.5
-stdout@GLIBC_2.2.5
 xmlFree@LIBXML2_2.4.30

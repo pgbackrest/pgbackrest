@@ -64,6 +64,32 @@ STRING_STATIC(TEST_TOKEN_STR,                                       TEST_TOKEN);
 // {uncrustify_on}
 
 /***********************************************************************************************************************************
+Helper to generate auth request. The JWT part will need to be ? since it can vary in content and size.
+***********************************************************************************************************************************/
+static String *
+testAuthRequest(const Storage *const storage)
+{
+    const char *const preamble = "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=";
+    const String *const jwt = storageGcsAuthJwt(((StorageGcs *)storageDriver(storage)), time(NULL));
+
+    String *const result = strCatFmt(
+        strNew(),
+        "POST /token HTTP/1.1\r\n"
+        "user-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n"
+        "content-length:%zu\r\n"
+        "content-type:application/x-www-form-urlencoded\r\n"
+        "host:%s\r\n"
+        "\r\n"
+        "%s",
+        strSize(jwt) + strlen(preamble), strZ(hrnServerHost()), preamble);
+
+    for (unsigned int jwtIdx = 0; jwtIdx < strSize(jwt); jwtIdx++)
+        strCatChr(result, '?');
+
+    return result;
+}
+
+/***********************************************************************************************************************************
 Helper to build test requests
 ***********************************************************************************************************************************/
 typedef struct TestRequestParam
@@ -153,6 +179,7 @@ typedef struct TestResponseParam
     bool multiPart;
     const char *header;
     const char *content;
+    const Variant *contentSize;
 } TestResponseParam;
 
 #define testResponseP(write, ...)                                                                                                  \
@@ -198,7 +225,7 @@ testResponse(IoWrite *write, TestResponseParam param)
             "content-length:%zu\r\n"
             "\r\n"
             "%s",
-            strlen(param.content), param.content);
+            param.contentSize != NULL ? varUInt(param.contentSize) : strlen(param.content), param.content);
     }
     else
         strCatZ(response, "\r\n");
@@ -231,7 +258,7 @@ testRun(void)
         hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
         hrnCfgArgRawZ(argList, cfgOptRepoPath, "/repo");
         hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
-        hrnCfgArgRawStrId(argList, cfgOptRepoGcsKeyType, storageGcsKeyTypeToken);
+        hrnCfgArgRawZ(argList, cfgOptRepoGcsKeyType, "token");
         hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_TOKEN);
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
@@ -259,8 +286,8 @@ testRun(void)
             storage,
             (StorageGcs *)storageDriver(
                 storageGcsNew(
-                    STRDEF("/repo"), false, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
-                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
+                    STRDEF("/repo"), false, 0, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
+                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL, NULL)),
             "read-only gcs storage - service key");
         TEST_RESULT_STR_Z(httpUrlHost(storage->authUrl), "test.com", "check host");
         TEST_RESULT_STR_Z(httpUrlPath(storage->authUrl), "/token", "check path");
@@ -284,8 +311,8 @@ testRun(void)
             storage,
             (StorageGcs *)storageDriver(
                 storageGcsNew(
-                    STRDEF("/repo"), true, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
-                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL)),
+                    STRDEF("/repo"), true, 0, NULL, TEST_BUCKET_STR, storageGcsKeyTypeService, TEST_KEY_FILE_STR, TEST_CHUNK_SIZE,
+                    NULL, TEST_ENDPOINT_STR, TEST_TIMEOUT, true, NULL, NULL, NULL)),
             "read/write gcs storage - service key");
 
         TEST_RESULT_STR_Z(
@@ -300,7 +327,7 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("StorageGcs, StorageReadGcs, and StorageWriteGcs"))
+    if (testBegin("StorageGcs, StorageReadGcs, and StorageWriteGcs with HTTPS"))
     {
         HRN_FORK_BEGIN()
         {
@@ -347,7 +374,7 @@ testRun(void)
                 hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
                 hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
                 hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
-                hrnCfgArgRawFmt(argList, cfgOptRepoGcsEndpoint, "%s:%u", strZ(hrnServerHost()), testPort);
+                hrnCfgArgRawFmt(argList, cfgOptRepoGcsEndpoint, "https://%s:%u", strZ(hrnServerHost()), testPort);
                 hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, TEST_IN_CONTAINER);
                 hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_KEY_FILE);
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
@@ -356,23 +383,8 @@ testRun(void)
                 Storage *storage = NULL;
                 TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
 
-                // Generate the auth request. The JWT part will need to be ? since it can vary in content and size.
-                const char *const preamble = "grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=";
-                const String *const jwt = storageGcsAuthJwt(((StorageGcs *)storageDriver(storage)), time(NULL));
-
-                String *const authRequest = strCatFmt(
-                    strNew(),
-                    "POST /token HTTP/1.1\r\n"
-                    "user-agent:" PROJECT_NAME "/" PROJECT_VERSION "\r\n"
-                    "content-length:%zu\r\n"
-                    "content-type:application/x-www-form-urlencoded\r\n"
-                    "host:%s\r\n"
-                    "\r\n"
-                    "%s",
-                    strSize(jwt) + strlen(preamble), strZ(hrnServerHost()), preamble);
-
-                for (unsigned int jwtIdx = 0; jwtIdx < strSize(jwt); jwtIdx++)
-                    strCatChr(authRequest, '?');
+                // Generate the auth request
+                const String *const authRequest = testAuthRequest(storage);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("create bucket");
@@ -426,24 +438,49 @@ testRun(void)
                     storageGetP(storageNewReadP(storage, STRDEF("fi&le.txt"), .ignoreMissing = true)), NULL, "get file");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("error on missing file");
+                TEST_TITLE("get file with retry");
 
                 testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media");
-                testResponseP(service, .code = 404);
+                testResponseP(service, .content = "12345678911234567892", .contentSize = VARUINT(30));
 
-                TEST_ERROR(
-                    storageGetP(storageNewReadP(storage, STRDEF("file.txt"))), FileMissingError,
-                    "unable to open missing file '/file.txt' for read");
+                hrnServerScriptClose(service);
+                hrnServerScriptAccept(service);
 
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("get file with offset and limit");
+                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media", .range = "20-");
+                testResponseP(service, .content = "1234567893");
 
-                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media", .range = "1-21");
-                testResponseP(service, .content = "this is a sample file");
+                const size_t ioBufferSizeDefault = ioBufferSize();
+                ioBufferSizeSet(20);
 
                 TEST_RESULT_STR_Z(
-                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(21)))),
-                    "this is a sample file", "get file");
+                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt")))), "123456789112345678921234567893",
+                    "get file");
+
+                ioBufferSizeSet(ioBufferSizeDefault);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file with retry, offset, and limit");
+
+                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media", .range = "1-29");
+                testResponseP(service, .content = "23456789112345678921X", .contentSize = VARUINT(30));
+
+                hrnServerScriptAbort(service);
+                hrnServerScriptAccept(service);
+
+                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media", .range = "21-29");
+                testResponseP(service, .content = "23456789");
+
+                ioBufferSizeSet(20);
+
+                TEST_RESULT_STR_Z(
+                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(29)))),
+                    "2345678911234567892123456789", "get file");
+
+                ioBufferSizeSet(ioBufferSizeDefault);
+
+                // Close to reset buffer size
+                hrnServerScriptClose(service);
+                hrnServerScriptAccept(service);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("switch to auto auth");
@@ -451,7 +488,7 @@ testRun(void)
                 hrnServerScriptClose(service);
 
                 StringList *argListAuto = strLstDup(argList);
-                hrnCfgArgRawStrId(argListAuto, cfgOptRepoGcsKeyType, storageGcsKeyTypeAuto);
+                hrnCfgArgRawZ(argListAuto, cfgOptRepoGcsKeyType, "auto");
                 hrnCfgArgRawZ(argListAuto, cfgOptRepoStorageTag, "Key1=Value1");
                 hrnCfgArgRawZ(argListAuto, cfgOptRepoStorageTag, " Key 2= Value 2");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argListAuto);
@@ -568,7 +605,7 @@ testRun(void)
                 TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
                 TEST_RESULT_BOOL(storageWriteTruncate(write), true, "file will be truncated");
 
-                TEST_RESULT_VOID(storageWriteGcsClose(write->driver), "close file again");
+                TEST_RESULT_VOID(storageWriteGcsClose(ioWriteDriver(storageWriteIo(write))), "close file again");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write zero-length file");
@@ -656,32 +693,6 @@ testRun(void)
                 TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890123456789012")), "write");
 
                 ((StorageGcs *)storageDriver(storage))->tag = NULL;
-
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("write file in chunks with something left over on close");
-
-                testRequestP(service, HTTP_VERB_POST, .upload = true, .query = "name=file.txt&uploadType=resumable");
-                testResponseP(service, .header = "x-guploader-uploadid:ulid2");
-
-                testRequestP(
-                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
-                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid2", .contentRange = "0-15/*",
-                    .content = "1234567890123456");
-                testResponseP(service, .code = 503);
-                testRequestP(
-                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
-                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid2", .contentRange = "0-15/*",
-                    .content = "1234567890123456");
-                testResponseP(service, .code = 308);
-
-                testRequestP(
-                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
-                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid2", .contentRange = "16-19/20",
-                    .content = "7890");
-                testResponseP(service, .content = "{\"md5Hash\":\"/YXmLZvrRUKHcexohBiycQ==\",\"size\":\"20\"}");
-
-                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
-                TEST_RESULT_VOID(storagePutP(write, BUFSTRDEF("12345678901234567890")), "write");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("error on resumable upload (upload_id is redacted)");
@@ -1115,6 +1126,302 @@ testRun(void)
                 TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), "remove");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to user project");
+
+                hrnServerScriptClose(service);
+
+                StringList *argListUserProject = strLstDup(argList);
+                hrnCfgArgRawZ(argListUserProject, cfgOptRepoGcsUserProject, "usrprj");
+                hrnCfgArgRawZ(argListUserProject, cfgOptRepoRetentionFull, "1");
+                HRN_CFG_LOAD(cfgCmdExpire, argListUserProject);
+
+                TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("remove file");
+
+                testRequestP(service, HTTP_VERB_DELETE, .object = "path/to/test.txt", .query = "userProject=usrprj");
+                testResponseP(service);
+
+                TEST_RESULT_VOID(storageRemoveP(storage, STRDEF("/path/to/test.txt")), "remove");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("info for missing file");
+
+                testRequestP(service, HTTP_VERB_GET, .object = "BOGUS", .query = "fields=size%2Cupdated&userProject=usrprj");
+                testResponseP(service, .code = 404);
+
+                TEST_RESULT_BOOL(
+                    storageInfoP(storage, STRDEF("BOGUS"), .ignoreMissing = true).exists, false, "file does not exist");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to target time");
+
+                hrnServerScriptClose(service);
+
+                hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
+                hrnCfgArgRawZ(argList, cfgOptRepo, "1");
+                hrnCfgArgRawZ(argList, cfgOptRepoTargetTime, "2024-08-04 02:54:09+00");
+                HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
+
+                TEST_ASSIGN(storage, storageRepoGet(0, false), "get repo storage");
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("list with time limit (basic)");
+
+                testRequestP(
+                    service, HTTP_VERB_GET,
+                    .query =
+                        "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%2Csize%2Cupdated%2Cgeneration%29"
+                        "&prefix=path%2Fto%2F&versions=true");
+                testResponseP(
+                    service,
+                    .content =
+                        "{"
+                        "  \"nextPageToken\": \"ueGx\","
+                        "  \"prefixes\": ["
+                        "     \"path/to/path1/\""
+                        "  ],"
+                        "  \"items\": ["
+                        "    {"
+                        "      \"name\": \"path/to/test1.txt\","
+                        "      \"updated\": \"2024-08-04T02:54:01.999Z\","
+                        "      \"size\": \"999\","
+                        "      \"generation\": \"1724645450428444\""
+                        "    }"
+                        "  ]"
+                        "}");
+
+                testRequestP(
+                    service, HTTP_VERB_GET,
+                    .query =
+                        "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%2Csize%2Cupdated%2Cgeneration%29"
+                        "&pageToken=ueGx&prefix=path%2Fto%2F&versions=true");
+                testResponseP(
+                    service,
+                    .content =
+                        "{"
+                        "  \"prefixes\": ["
+                        "     \"path/to/path2/\""
+                        "  ],"
+                        "  \"items\": ["
+                        "    {"
+                        "      \"name\": \"path/to/test1.txt\","
+                        "      \"updated\": \"2024-08-04T02:54:09.123Z\","
+                        "      \"size\": \"787\","
+                        "      \"generation\": \"1724645450428555\""
+                        "    },"
+                        "    {"
+                        "      \"name\": \"path/to/test1.txt\","
+                        "      \"updated\": \"2024-08-04T02:54:10.123Z\""
+                        "    }"
+                        "  ]"
+                        "}");
+
+                TEST_STORAGE_LIST(
+                    storage, "/path/to",
+                    "path1/\n"
+                    "path2/\n"
+                    "test1.txt {s=787, t=1722740050, v=1724645450428555}\n",
+                    .level = storageInfoLevelBasic, .noRecurse = true);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("list with time limit (exists)");
+
+                testRequestP(
+                    service, HTTP_VERB_GET,
+                    .query =
+                        "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%2Cupdated%2Cgeneration%29"
+                        "&prefix=path%2Fto%2F&versions=true");
+                testResponseP(
+                    service,
+                    .content =
+                        "{"
+                        "  \"items\": ["
+                        "    {"
+                        "      \"name\": \"path/to/test1.txt\","
+                        "      \"updated\": \"2024-08-04T02:54:09.999Z\","
+                        "      \"generation\": \"1724645450428444\""
+                        "    }"
+                        "  ]"
+                        "}");
+
+                TEST_STORAGE_LIST(
+                    storage, "/path/to",
+                    "test1.txt\n",
+                    .noRecurse = true);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file with time limit");
+
+                testRequestP(
+                    service, HTTP_VERB_GET,
+                    .query =
+                        "delimiter=%2F&fields=nextPageToken%2Cprefixes%2Citems%28name%2Csize%2Cupdated%2Cgeneration%29"
+                        "&versions=true");
+                testResponseP(
+                    service,
+                    .content =
+                        "{"
+                        "  \"items\": ["
+                        "    {"
+                        "      \"name\": \"file.txt\","
+                        "      \"updated\": \"2024-08-04T02:54:09.999Z\","
+                        "      \"size\": \"6\","
+                        "      \"generation\": \"1724645450428444\""
+                        "    }"
+                        "  ]"
+                        "}");
+
+                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media?generation=1724645450428444");
+                testResponseP(service, .content = "123456");
+
+                TEST_RESULT_STR_Z(strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt")))), "123456", "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get missing file with time limit");
+
+                TEST_RESULT_PTR(
+                    storageGetP(storageNewReadP(storage, STRDEF("missing_file"), .ignoreMissing = true)), NULL, "missing file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                hrnServerScriptEnd(service);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("StorageGcs, StorageReadGcs, and StorageWriteGcs with HTTP"))
+    {
+        HRN_FORK_BEGIN()
+        {
+            const String *const testHost = hrnServerHost();
+            const unsigned int testPort = hrnServerPortNext();
+            const unsigned int testPortAuth = hrnServerPortNext();
+
+            HRN_STORAGE_PUT(storageTest, TEST_KEY_FILE, BUFSTR(strNewFmt(TEST_KEY, strZ(testHost), testPortAuth)));
+
+            HRN_FORK_CHILD_BEGIN(.prefix = "gcs http server", .timeout = 10000)
+            {
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolSocket, testPort), "gcs http server");
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_CHILD_BEGIN(.prefix = "auth server", .timeout = 10000)
+            {
+                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPortAuth), "auth server");
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN()
+            {
+                IoWrite *service = hrnServerScriptBegin(
+                    ioFdWriteNewOpen(STRDEF("gcs http client write"), HRN_FORK_PARENT_WRITE_FD(0), 2000));
+                IoWrite *auth = hrnServerScriptBegin(
+                    ioFdWriteNewOpen(STRDEF("auth http client write"), HRN_FORK_PARENT_WRITE_FD(1), 2000));
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("test service auth");
+
+                StringList *argList = strLstNew();
+                hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+                hrnCfgArgRawStrId(argList, cfgOptRepoType, STORAGE_GCS_TYPE);
+                hrnCfgArgRawZ(argList, cfgOptRepoPath, "/");
+                hrnCfgArgRawZ(argList, cfgOptRepoGcsBucket, TEST_BUCKET);
+                hrnCfgArgRawFmt(argList, cfgOptRepoGcsEndpoint, "http://%s:%u", strZ(hrnServerHost()), testPort);
+                hrnCfgArgRawBool(argList, cfgOptRepoStorageVerifyTls, TEST_IN_CONTAINER);
+                hrnCfgEnvRawZ(cfgOptRepoGcsKey, TEST_KEY_FILE);
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+                hrnCfgEnvRemoveRaw(cfgOptRepoGcsKey);
+
+                Storage *storage = NULL;
+                TEST_ASSIGN(storage, storageRepoGet(0, true), "get repo storage");
+
+                // Tests need the chunk size to be 16
+                ((StorageGcs *)storageDriver(storage))->chunkSize = 16;
+
+                // Generate the auth request
+                const String *const authRequest = testAuthRequest(storage);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error on missing file");
+
+                hrnServerScriptAccept(auth);
+                hrnServerScriptExpect(auth, authRequest);
+                testResponseP(auth, .content = "{\"access_token\":\"X\",\"token_type\":\"X\",\"expires_in\":7200}");
+                hrnServerScriptClose(auth);
+
+                hrnServerScriptEnd(auth);
+
+                hrnServerScriptAccept(service);
+                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media");
+                testResponseP(service, .code = 404);
+
+                TEST_ERROR(
+                    storageGetP(storageNewReadP(storage, STRDEF("file.txt"))), FileMissingError,
+                    "unable to open missing file '/file.txt' for read");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file with offset and limit");
+
+                testRequestP(service, HTTP_VERB_GET, .object = "file.txt", .query = "alt=media", .range = "1-21");
+                testResponseP(service, .content = "this is a sample file");
+
+                TEST_RESULT_STR_Z(
+                    strNewBuf(storageGetP(storageNewReadP(storage, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(21)))),
+                    "this is a sample file", "get file");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("write file in chunks with something left over on close");
+
+                testRequestP(service, HTTP_VERB_POST, .upload = true, .query = "name=file.txt&uploadType=resumable");
+                testResponseP(service, .header = "x-guploader-uploadid:ulid2");
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
+                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid2", .contentRange = "0-15/*",
+                    .content = "1234567890123456");
+                testResponseP(service, .code = 503);
+                testRequestP(
+                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
+                    .query = "name=file.txt&uploadType=resumable&upload_id=ulid2", .contentRange = "0-15/*",
+                    .content = "1234567890123456");
+                testResponseP(service, .code = 308);
+
+                testRequestP(
+                    service, HTTP_VERB_PUT, .upload = true, .noAuth = true,
+                    .query = "fields=md5Hash%2Csize&name=file.txt&uploadType=resumable&upload_id=ulid2", .contentRange = "16-19/20",
+                    .content = "7890");
+                testResponseP(service, .content = "{\"md5Hash\":\"/YXmLZvrRUKHcexohBiycQ==\",\"size\":\"20\"}");
+
+                // Check that chunk size is updated during write
+                const size_t ioBufferSizeDefault = ioBufferSize();
+                ioBufferSizeSet(6);
+
+                StorageWrite *write = NULL;
+                TEST_ASSIGN(write, storageNewWriteP(storage, STRDEF("file.txt")), "new write");
+
+                ioWriteOpen(storageWriteIo(write));
+                ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
+
+                TEST_RESULT_VOID(
+                    bufResize(((StorageWriteGcs *)ioWriteDriver(storageWriteIo(write)))->chunkBuffer, 17),
+                    "resize part buffer to 17");
+
+                ioWrite(storageWriteIo(write), BUFSTRDEF("90"));
+
+                TEST_RESULT_UINT(
+                    ((StorageWriteGcs *)ioWriteDriver(storageWriteIo(write)))->chunkSize, 16, "part buffer reset to 16 (default)");
+
+                ioWriteClose(storageWriteIo(write));
+                ioBufferSizeSet(ioBufferSizeDefault);
+
                 hrnServerScriptEnd(service);
             }
             HRN_FORK_PARENT_END();

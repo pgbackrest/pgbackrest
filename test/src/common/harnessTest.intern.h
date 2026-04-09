@@ -41,8 +41,8 @@ Functions
 ***********************************************************************************************************************************/
 void hrnInit(
     const char *testExe, const char *testProjectExe, bool testContainer, bool testLogExpect, unsigned int testIdx, bool timing,
-    const char *testPath, const char *testUser, const char *testVm, const char *testPgVersion, const char *testDataPath,
-    const char *testRepoPath);
+    const char *architecture, const char *testPath, const char *testUser, const char *testVm, const char *testPgVersion,
+    const char *testDataPath, const char *testRepoPath);
 void hrnAdd(int run, bool selected);
 void hrnComplete(void);
 
@@ -60,7 +60,6 @@ void hrnTestResultEnd(void);
 
 // Test results for various types
 void hrnTestResultBool(int actual, int expected);
-void hrnTestResultDouble(double actual, double expected);
 void hrnTestResultInt64(int64_t actual, int64_t expected, HarnessTestResultOperation operation);
 void hrnTestResultPtr(const void *actual, const void *expected, HarnessTestResultOperation operation);
 

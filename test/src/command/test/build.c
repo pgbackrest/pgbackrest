@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Test Build Handler
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "build/common/render.h"
 #include "command/test/build.h"
@@ -31,8 +31,8 @@ TestBuild *
 testBldNew(
     const String *const pathRepo, const String *const pathTest, const String *const vm, const String *const vmInt,
     const unsigned int vmId, const String *const pgVersion, const TestDefModule *const module, const unsigned int test,
-    const uint64_t scale, const LogLevel logLevel, const bool logTime, const String *const timeZone, const bool coverage,
-    const bool profile, const bool optimize, const bool backTrace)
+    const uint64_t scale, const LogLevel logLevel, const bool logTime, const String *const timeZone,
+    const String *const architecture, const bool coverage, const bool profile, const bool optimize, const bool backTrace)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, pathRepo);
@@ -47,6 +47,7 @@ testBldNew(
         FUNCTION_LOG_PARAM(ENUM, logLevel);
         FUNCTION_LOG_PARAM(BOOL, logTime);
         FUNCTION_LOG_PARAM(STRING, timeZone);
+        FUNCTION_LOG_PARAM(STRING, architecture);
         FUNCTION_LOG_PARAM(BOOL, coverage);
         FUNCTION_LOG_PARAM(BOOL, profile);
         FUNCTION_LOG_PARAM(BOOL, optimize);
@@ -78,6 +79,7 @@ testBldNew(
                 .logLevel = logLevel,
                 .logTime = logTime,
                 .timeZone = strDup(timeZone),
+                .architecture = strDup(architecture),
                 .coverage = coverage,
                 .profile = profile,
                 .optimize = optimize,
@@ -127,33 +129,37 @@ testBldShim(const String *const shimC, const StringList *const functionList)
                     ASSERT(inIdx > 0);
                     found = true;
 
-                    // If static then build a declaration so the function is able to call itself
+                    // For static functions add a forward declaration with the original name so the function can be called from the
+                    // module. For extern functions add a forward declaration with the shimmed name so there is no warning from
+                    // missing-prototypes.
+                    strCatChr(result, ' ');
+
                     if (strBeginsWithZ(strLstGet(inList, inIdx - 1), "static "))
-                    {
-                        strCatChr(result, ' ');
                         strCat(result, in);
-                        unsigned int scanIdx = inIdx + 1;
+                    else
+                        strCatFmt(result, "%s_SHIMMED%s", strZ(function), strZ(strSub(in, strSize(function))));
 
-                        while (true)
-                        {
-                            // In a properly formatted C file the end of the list can never be reached
-                            ASSERT(scanIdx < strLstSize(inList));
+                    unsigned int scanIdx = inIdx + 1;
 
-                            const String *const scan = strLstGet(inList, scanIdx);
+                    while (true)
+                    {
+                        // In a properly formatted C file the end of the list can never be reached
+                        ASSERT(scanIdx < strLstSize(inList));
 
-                            if (strEqZ(scan, "{"))
-                                break;
+                        const String *const scan = strLstGet(inList, scanIdx);
 
-                            if (strEndsWithZ(strLstGet(inList, scanIdx - 1), ","))
-                                strCatChr(result, ' ');
+                        if (strEqZ(scan, "{"))
+                            break;
 
-                            strCat(result, strTrim(strDup(scan)));
-                            scanIdx++;
-                        }
+                        if (strEndsWithZ(strLstGet(inList, scanIdx - 1), ","))
+                            strCatChr(result, ' ');
 
-                        strCatZ(result, "; ");
-                        strCat(result, strLstGet(inList, inIdx - 1));
+                        strCat(result, strTrim(strDup(scan)));
+                        scanIdx++;
                     }
+
+                    strCatZ(result, "; ");
+                    strCat(result, strLstGet(inList, inIdx - 1));
 
                     // Alter the function name so it can be shimmed
                     strCatFmt(result, "\n%s_SHIMMED%s", strZ(function), strZ(strSub(in, strSize(function))));
@@ -664,6 +670,9 @@ testBldUnit(TestBuild *const this)
 
         // Log time/timestamp
         strReplace(testC, STRDEF("{[C_TEST_TIMING]}"), STR(cvtBoolToConstZ(testBldLogTime(this))));
+
+        // Test architecture
+        strReplace(testC, STRDEF("{[C_TEST_ARCHITECTURE]}"), testBldArchitecture(this));
 
         // Test timezone
         strReplace(

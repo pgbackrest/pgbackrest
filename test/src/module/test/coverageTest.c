@@ -32,6 +32,7 @@ testRun(void)
             "      - name: error\n"
             "        total: 1\n"
             "        coverage:\n"
+            "          - common/error/sub/error.inc: included\n"
             "          - common/error/sub/error.vendor: included\n"
             "          - doc/common/error/error: included\n"
             "          - test/common/error/error\n"
@@ -71,6 +72,14 @@ testRun(void)
             storageTest, "test/repo/doc/src/common/error/error.c",
             /* 01 */ "int\n"
             /* 02 */ "returnCode(int code)\n"
+            /* 03 */ "{\n"
+            /* 04 */ "    return code;\n"
+            /* 05 */ "}\n");
+
+        HRN_STORAGE_PUT_Z(
+            storageTest, "test/repo/src/common/error/sub/error.c.inc",
+            /* 01 */ "int\n"
+            /* 02 */ "returnCodeInc(int code)\n"
             /* 03 */ "{\n"
             /* 04 */ "    return code;\n"
             /* 05 */ "}\n");
@@ -137,6 +146,23 @@ testRun(void)
                                 "\"end_line\": 5"
                             "}"
                         "],"
+                        "\"file\": \"../../../repo/test/src/common/error/sub/error.c.inc\""
+                    "},"
+                    "{"
+                        "\"lines\": ["
+                            "{"
+                                "\"count\": 1,"
+                                "\"line_number\": 4"
+                            "}"
+                        "],"
+                        "\"functions\": ["
+                            "{"
+                                "\"start_line\": 2,"
+                                "\"name\": \"returnCodeInc\","
+                                "\"execution_count\": 1,"
+                                "\"end_line\": 5"
+                            "}"
+                        "],"
                         "\"file\": \"../../../repo/test/src/common/error/sub/error.vendor.c.inc\""
                     "},"
                     "{"
@@ -170,7 +196,7 @@ testRun(void)
             /* 06 */ "    logLevelAny = logLevelStdOut;\n"
             /* 07 */ "\n"
             /* 08 */ "    if (logLevelStdErr > logLevelAny)\n"
-            /* 09 */ "        logLevelAny = logLevelStdErr;\n"
+            /* 09 */ "        FUNCTION_LOG_RETURN_VOID();\n"
             /* 10 */ "\n"
             /* 11 */ "    if (logLevelFile > logLevelAny && logFdFile != -1)\n"
             /* 12 */ "        logLevelAny = logLevelFile;\n"
@@ -275,6 +301,21 @@ testRun(void)
                                 "\"count\": 7,"
                                 "\"junk\": 0,"
                                 "\"line_number\": 8"
+                            "},"
+                            "{"
+                                "\"branches\": [],"
+                                "\"count\": 1,"
+                                "\"line_number\": 9"
+                            "},"
+                            "{"
+                                "\"branches\": [],"
+                                "\"count\": 1,"
+                                "\"line_number\": 14"
+                            "},"
+                            "{"
+                                "\"branches\": [],"
+                                "\"count\": 1,"
+                                "\"line_number\": 21"
                             "},"
                             "{"
                                 "\"branches\": [],"
@@ -390,6 +431,7 @@ testRun(void)
             TEST_CVG_HTML_PRE
             TEST_CVG_HTML_TOC_PRE
             TEST_CVG_HTML_TOC_COVERED_PRE "doc/src/common/error/error.c" TEST_CVG_HTML_TOC_COVERED_POST
+            TEST_CVG_HTML_TOC_COVERED_PRE "src/common/error/sub/error.c.inc" TEST_CVG_HTML_TOC_COVERED_POST
             TEST_CVG_HTML_TOC_COVERED_PRE "src/common/error/sub/error.vendor.c.inc" TEST_CVG_HTML_TOC_COVERED_POST
             TEST_CVG_HTML_TOC_POST
             TEST_CVG_HTML_POST);
@@ -403,7 +445,7 @@ testRun(void)
 
         TEST_RESULT_INT(testCvgGenerate(pathRepo, pathTest, STRDEF("vm"), true, moduleList), 2, "generate");
         TEST_RESULT_LOG(
-            "P00   WARN: module 'src/common/log.c' is not fully covered (3/8 lines, 1/2 branches)\n"
+            "P00   WARN: module 'src/common/log.c' is not fully covered (4/9 lines, 1/2 branches)\n"
             "P00   WARN: module 'src/common/log2.c' is not fully covered (2/2 lines, 1/2 branches)");
 
         TEST_STORAGE_GET(
@@ -412,21 +454,21 @@ testRun(void)
             "    <table-cell>common</table-cell>\n"
             "    <table-cell>2/3 (66.67%)</table-cell>\n"
             "    <table-cell>2/4 (50.00%)</table-cell>\n"
-            "    <table-cell>5/10 (50.00%)</table-cell>\n"
+            "    <table-cell>6/11 (54.55%)</table-cell>\n"
             "</table-row>\n"
             "\n"
             "<table-row>\n"
             "    <table-cell>common/error/sub</table-cell>\n"
-            "    <table-cell>1/1 (100.0%)</table-cell>\n"
+            "    <table-cell>2/2 (100.00%)</table-cell>\n"
             "    <table-cell>---</table-cell>\n"
-            "    <table-cell>1/1 (100.0%)</table-cell>\n"
+            "    <table-cell>2/2 (100.00%)</table-cell>\n"
             "</table-row>\n"
             "\n"
             "<table-row>\n"
             "    <table-cell>TOTAL</table-cell>\n"
-            "    <table-cell>3/4 (75.00%)</table-cell>\n"
+            "    <table-cell>4/5 (80.00%)</table-cell>\n"
             "    <table-cell>2/4 (50.00%)</table-cell>\n"
-            "    <table-cell>6/11 (54.55%)</table-cell>\n"
+            "    <table-cell>8/13 (61.54%)</table-cell>\n"
             "</table-row>\n");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -434,7 +476,7 @@ testRun(void)
 
         TEST_RESULT_INT(testCvgGenerate(pathRepo, pathTest, STRDEF("vm"), false, moduleList), 2, "generate");
         TEST_RESULT_LOG(
-            "P00   WARN: module 'src/common/log.c' is not fully covered (4/8 lines, 1/2 branches)\n"
+            "P00   WARN: module 'src/common/log.c' is not fully covered (5/9 lines, 1/2 branches)\n"
             "P00   WARN: module 'src/common/log2.c' is not fully covered (2/2 lines, 1/2 branches)");
 
         TEST_STORAGE_GET(
@@ -443,6 +485,7 @@ testRun(void)
 
             TEST_CVG_HTML_TOC_PRE
             TEST_CVG_HTML_TOC_COVERED_PRE "doc/src/common/error/error.c" TEST_CVG_HTML_TOC_COVERED_POST
+            TEST_CVG_HTML_TOC_COVERED_PRE "src/common/error/sub/error.c.inc" TEST_CVG_HTML_TOC_COVERED_POST
             TEST_CVG_HTML_TOC_COVERED_PRE "src/common/error/sub/error.vendor.c.inc" TEST_CVG_HTML_TOC_COVERED_POST
             TEST_CVG_HTML_TOC_UNCOVERED_PRE "src/common/log.c" TEST_CVG_HTML_TOC_UNCOVERED_MID "src/common/log.c"
             TEST_CVG_HTML_TOC_UNCOVERED_POST
@@ -469,7 +512,7 @@ testRun(void)
             TEST_CVG_HTML_RPT_LINE_PRE "8" TEST_CVG_HTML_RPT_BRANCH_UNCOVERED_PRE "[+ -]" TEST_CVG_HTML_RPT_BRANCH_UNCOVERED_POST
             TEST_CVG_HTML_RPT_CODE "    if (logLevelStdErr > logLevelAny)" TEST_CVG_HTML_RPT_LINE_POST
             TEST_CVG_HTML_RPT_LINE_PRE "9" TEST_CVG_HTML_RPT_BRANCH_COVERED
-            TEST_CVG_HTML_RPT_CODE "        logLevelAny = logLevelStdErr;" TEST_CVG_HTML_RPT_LINE_POST
+            TEST_CVG_HTML_RPT_CODE "        FUNCTION_LOG_RETURN_VOID();" TEST_CVG_HTML_RPT_LINE_POST
             TEST_CVG_HTML_RPT_LINE_PRE "10" TEST_CVG_HTML_RPT_BRANCH_COVERED
             TEST_CVG_HTML_RPT_CODE "" TEST_CVG_HTML_RPT_LINE_POST
             TEST_CVG_HTML_RPT_LINE_PRE "11" TEST_CVG_HTML_RPT_BRANCH_COVERED

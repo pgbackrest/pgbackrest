@@ -1,11 +1,12 @@
 /***********************************************************************************************************************************
 Expire Command
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "command/archive/common.h"
 #include "command/backup/common.h"
 #include "command/control/common.h"
+#include "command/expire/expire.h"
 #include "common/debug.h"
 #include "common/regExp.h"
 #include "common/time.h"
@@ -13,7 +14,6 @@ Expire Command
 #include "config/config.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
-#include "info/manifest.h"
 #include "protocol/helper.h"
 #include "storage/helper.h"
 
@@ -39,7 +39,7 @@ typedef struct ArchiveRange
 Given a backup label, expire a backup and all its dependents (if any).
 ***********************************************************************************************************************************/
 static StringList *
-expireBackup(const InfoBackup *const infoBackup, const String *const backupLabel, const unsigned int repoIdx)
+expireBackup(InfoBackup *const infoBackup, const String *const backupLabel, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -93,12 +93,12 @@ expireBackup(const InfoBackup *const infoBackup, const String *const backupLabel
 Function to expire a selected backup (and all its dependents) regardless of retention rules.
 ***********************************************************************************************************************************/
 static unsigned int
-expireAdhocBackup(const InfoBackup *const infoBackup, const String *const backupLabel, const unsigned int repoIdx)
+expireAdhocBackup(InfoBackup *const infoBackup, const String *const backupLabel, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
         FUNCTION_LOG_PARAM(STRING, backupLabel);
-        FUNCTION_TEST_PARAM(UINT, repoIdx);
+        FUNCTION_LOG_PARAM(UINT, repoIdx);
     FUNCTION_LOG_END();
 
     ASSERT(infoBackup != NULL);
@@ -170,7 +170,7 @@ expireAdhocBackup(const InfoBackup *const infoBackup, const String *const backup
 Expire differential backups
 ***********************************************************************************************************************************/
 static unsigned int
-expireDiffBackup(const InfoBackup *const infoBackup, const unsigned int repoIdx)
+expireDiffBackup(InfoBackup *const infoBackup, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -227,7 +227,7 @@ expireDiffBackup(const InfoBackup *const infoBackup, const unsigned int repoIdx)
 Expire full backups
 ***********************************************************************************************************************************/
 static unsigned int
-expireFullBackup(const InfoBackup *const infoBackup, const unsigned int repoIdx)
+expireFullBackup(InfoBackup *const infoBackup, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -278,7 +278,7 @@ expireFullBackup(const InfoBackup *const infoBackup, const unsigned int repoIdx)
 Expire backups based on time
 ***********************************************************************************************************************************/
 static unsigned int
-expireTimeBasedBackup(const InfoBackup *const infoBackup, const time_t minTimestamp, const unsigned int repoIdx)
+expireTimeBasedBackup(InfoBackup *const infoBackup, const time_t minTimestamp, const unsigned int repoIdx)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(INFO_BACKUP, infoBackup);
@@ -448,7 +448,7 @@ removeExpiredArchive(const InfoBackup *const infoBackup, const bool timeBasedFul
                     cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
                 const InfoPg *const infoArchivePgData = infoArchivePg(infoArchive);
 
-                // Get a list of archive directories (e.g. 9.4-1, 10-2, etc) sorted by the db-id (number after the dash).
+                // Get a list of archive directories (e.g. 9.6-1, 10-2, etc) sorted by the db-id (number after the dash).
                 const StringList *const listArchiveDisk = strLstSort(
                     strLstComparatorSet(
                         storageListP(
@@ -506,7 +506,7 @@ removeExpiredArchive(const InfoBackup *const infoBackup, const bool timeBasedFul
                         const unsigned int archivePgId = cvtZToUInt(strrchr(strZ(archiveId), '-') + 1);
 
                         // From the global list of backups to retain, create a list of backups, oldest to newest, associated with
-                        // this archiveId (e.g. 9.4-1), e.g. If globalBackupRetention has 4F, 3F, 2F, 1F then
+                        // this archiveId (e.g. 9.6-1), e.g. If globalBackupRetention has 4F, 3F, 2F, 1F then
                         // localBackupRetentionList will have 1F, 2F, 3F, 4F (assuming they all have same history id)
                         for (unsigned int retentionIdx = strLstSize(globalBackupRetentionList) - 1;
                              (int)retentionIdx >= 0; retentionIdx--)
@@ -676,9 +676,16 @@ removeExpiredArchive(const InfoBackup *const infoBackup, const bool timeBasedFul
                                             .recurse = true);
                                     }
 
+                                    LOG_DETAIL_FMT(
+                                        "%s: %s remove archive path %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx),
+                                        strZ(archiveId), strZ(walPath));
+
                                     archiveExpire.total++;
-                                    archiveExpire.start = strDup(walPath);
                                     archiveExpire.stop = strDup(walPath);
+
+                                    // Update start for the first WAL path removed
+                                    if (archiveExpire.start == NULL)
+                                        archiveExpire.start = strDup(walPath);
                                 }
                                 // Else delete individual files instead if the major path is less than or equal to the most recent
                                 // retention backup. This optimization prevents scanning though major paths that could not possibly
@@ -821,7 +828,7 @@ removeExpiredBackup(const InfoBackup *const infoBackup, const String *const adho
         unsigned int backupIdx = 0;
 
         // Only remove the resumable backup if there is a possibility it is a dependent of the adhoc label being expired
-        if (adhocBackupLabel != NULL)
+        if (adhocBackupLabel != NULL && !strLstEmpty(backupList))
         {
             const String *const manifestFileName = strNewFmt(
                 STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(strLstGet(backupList, backupIdx)));
@@ -976,9 +983,6 @@ cmdExpire(void)
 {
     FUNCTION_LOG_VOID(logLevelDebug);
 
-    // Verify the repo is local
-    repoIsLocalVerify();
-
     // Test for stop file
     lockStopTest();
 
@@ -999,10 +1003,17 @@ cmdExpire(void)
         const String *adhocBackupLabel = NULL;
         bool adhocBackupFound = false;
 
+        // Check if this run should expire the --oldest backup set
+        const bool expireOldest = cfgOptionValid(cfgOptOldest) ? cfgOptionBool(cfgOptOldest) : false;
+
         // If the --set option is valid (i.e. expire is called on its own) then check the label format
         if (cfgOptionTest(cfgOptSet))
         {
             adhocBackupLabel = cfgOptionStr(cfgOptSet);
+
+            // Conflict check with the --oldest option
+            if (expireOldest)
+                THROW(OptionInvalidError, "--oldest and --set cannot be used together");
 
             // If the label format is invalid, then error
             if (!regExpMatchOne(backupRegExpP(.full = true, .differential = true, .incremental = true), adhocBackupLabel))
@@ -1018,15 +1029,54 @@ cmdExpire(void)
             const Storage *const storageRepo = storageRepoIdx(repoIdx);
             InfoBackup *infoBackup = NULL;
 
-            const bool timeBasedFullRetention =
-                cfgOptionIdxStrId(cfgOptRepoRetentionFullType, repoIdx) == CFGOPTVAL_REPO_RETENTION_FULL_TYPE_TIME;
+            // Is full retention time-based?
+            bool timeBasedFullRetention =
+                cfgOptionIdxSeq(cfgOptRepoRetentionFullType, repoIdx) == CFGOPTVAL_REPO_RETENTION_FULL_TYPE_TIME;
 
             TRY_BEGIN()
             {
-                // Load backup.info
+                // Load backup.info for this repo
                 infoBackup = infoBackupLoadFileReconstruct(
                     storageRepo, INFO_BACKUP_PATH_FILE_STR, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                     cfgOptionIdxStrNull(cfgOptRepoCipherPass, repoIdx));
+
+                // When expire oldest requested, expire the oldest full backup by lowering retention for this execution
+                if (expireOldest)
+                {
+                    // Count full backups in this repo (we want to expire the oldest one)
+                    const unsigned int fullLstSize = strLstSize(infoBackupDataLabelList(infoBackup, backupRegExpP(.full = true)));
+
+                    // If there is more than one full, temporarily keep one fewer
+                    if (fullLstSize > 1)
+                    {
+                        // If time-based retention is configured, force count-based behaviour for this run
+                        if (timeBasedFullRetention)
+                        {
+                            LOG_INFO_FMT(
+                                "repo%u: expire oldest overrides configured time-based retention with count-based retention for"
+                                " this execution",
+                                repoIdx + 1);
+
+                            timeBasedFullRetention = false;
+                        }
+
+                        cfgOptionIdxSet(cfgOptRepoRetentionFull, repoIdx, cfgSourceParam, VARINT64(fullLstSize - 1));
+
+                        // Also lower archive retention so WAL for the expired backups will be removed
+                        cfgOptionIdxSet(cfgOptRepoRetentionArchiveType, repoIdx, cfgSourceParam, VARSTRDEF("full"));
+                        cfgOptionIdxSet(cfgOptRepoRetentionArchive, repoIdx, cfgSourceParam, VARINT64(fullLstSize - 1));
+
+                        LOG_DETAIL_FMT(
+                            "repo%u: expire oldest enforcing %s=" CFGOPTVAL_REPO_RETENTION_FULL_TYPE_COUNT_Z ", %s=%u, %s="
+                            CFGOPTVAL_DETAIL_LEVEL_FULL_Z ", and %s=%u for this execution",
+                            repoIdx + 1, cfgOptionIdxName(cfgOptRepoRetentionFullType, repoIdx),
+                            cfgOptionIdxName(cfgOptRepoRetentionFull, repoIdx), fullLstSize - 1,
+                            cfgOptionIdxName(cfgOptRepoRetentionArchiveType, repoIdx),
+                            cfgOptionIdxName(cfgOptRepoRetentionArchive, repoIdx), fullLstSize - 1);
+                    }
+                    else
+                        LOG_WARN_FMT("repo%u: expire oldest requested but no eligible full backup to expire", repoIdx + 1);
+                }
 
                 // If a backupLabel was set, then attempt to expire the requested backup
                 if (adhocBackupLabel != NULL)

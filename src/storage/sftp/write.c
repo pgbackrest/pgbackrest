@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 SFTP Storage File Write
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #ifdef HAVE_LIBSSH2
 
@@ -9,7 +9,7 @@ SFTP Storage File Write
 #include "common/log.h"
 #include "common/user.h"
 #include "storage/sftp/write.h"
-#include "storage/write.intern.h"
+#include "storage/write.h"
 
 /***********************************************************************************************************************************
 Object type
@@ -337,12 +337,19 @@ storageWriteSftpClose(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
+static const IoWriteInterface storageWriteSftpInterface =
+{
+    .close = storageWriteSftpClose,
+    .open = storageWriteSftpOpen,
+    .write = storageWriteSftp,
+};
+
 FN_EXTERN StorageWrite *
 storageWriteSftpNew(
     StorageSftp *const storage, const String *const name, LIBSSH2_SESSION *const session, LIBSSH2_SFTP *const sftpSession,
     LIBSSH2_SFTP_HANDLE *const sftpHandle, const mode_t modeFile, const mode_t modePath, const String *const user,
-    const String *const group, const time_t timeModified, const bool createPath, const bool syncFile, const bool syncPath,
-    const bool atomic, const bool truncate)
+    const String *const group, const time_t timeModified, const bool createPath, const bool syncFile, const bool atomic,
+    const bool truncate)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_SFTP, storage);
@@ -357,7 +364,6 @@ storageWriteSftpNew(
         FUNCTION_LOG_PARAM(TIME, timeModified);
         FUNCTION_LOG_PARAM(BOOL, createPath);
         FUNCTION_LOG_PARAM(BOOL, syncFile);
-        FUNCTION_LOG_PARAM(BOOL, syncPath);
         FUNCTION_LOG_PARAM(BOOL, atomic);
         FUNCTION_LOG_PARAM(BOOL, truncate);
     FUNCTION_LOG_END();
@@ -372,41 +378,20 @@ storageWriteSftpNew(
         *this = (StorageWriteSftp)
         {
             .storage = storage,
+            .nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(name)) : strDup(name),
             .path = strPath(name),
             .session = session,
             .sftpSession = sftpSession,
             .sftpHandle = sftpHandle,
-
-            .interface = (StorageWriteInterface)
-            {
-                .type = STORAGE_SFTP_TYPE,
-                .name = strDup(name),
-                .atomic = atomic,
-                .createPath = createPath,
-                .group = strDup(group),
-                .modeFile = modeFile,
-                .modePath = modePath,
-                .syncFile = syncFile,
-                .syncPath = syncPath,
-                .truncate = truncate,
-                .user = strDup(user),
-                .timeModified = timeModified,
-
-                .ioInterface = (IoWriteInterface)
-                {
-                    .close = storageWriteSftpClose,
-                    .open = storageWriteSftpOpen,
-                    .write = storageWriteSftp,
-                },
-            },
         };
-
-        // Create temp file name
-        this->nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(name)) : this->interface.name;
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteNew(this, &this->interface));
+    FUNCTION_LOG_RETURN(
+        STORAGE_WRITE,
+        storageWriteNewP(
+            this, STORAGE_SFTP_TYPE, name, createPath, atomic, truncate, false, syncFile, &storageWriteSftpInterface,
+            .user = user, .group = group, .modePath = modePath, .modeFile = modeFile, .timeModified = timeModified));
 }
 
 #endif // HAVE_LIBSSH2

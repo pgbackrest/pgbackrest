@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Server Test Harness
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -47,7 +47,7 @@ Constants
 /***********************************************************************************************************************************
 Local data
 ***********************************************************************************************************************************/
-struct HrnServerLocal
+static struct HrnServerLocal
 {
     unsigned int portOffsetNext;                                    // Next server port offset to be returned
 } hrnServerLocal;
@@ -300,7 +300,19 @@ hrnServerRun(IoRead *const read, const HrnServerProtocol protocol, const unsigne
 
                 // Start TLS if requested
                 if (protocol == hrnServerProtocolTls)
+                {
+                    // Generate as many TLS errors as requested
+                    if (param.tlsErrorTotal > 0)
+                    {
+                        ioSessionClose(serverSession);
+                        ioSessionFree(serverSession);
+                        param.tlsErrorTotal--;
+
+                        serverSession = ioServerAccept(socketServer, NULL);
+                    }
+
                     serverSession = ioServerAccept(tlsServer, serverSession);
+                }
 
                 break;
             }
@@ -330,28 +342,36 @@ hrnServerRun(IoRead *const read, const HrnServerProtocol protocol, const unsigne
 
                 TRY_BEGIN()
                 {
-                    ioRead(ioSessionIoReadP(serverSession), buffer);
+                    // Read one byte at a time so we can error with partial data
+                    Buffer *const bufferOne = bufNew(1);
+
+                    for (size_t size = 1; size <= bufSize(buffer); size++)
+                    {
+                        ioReadSmall(ioSessionIoReadP(serverSession), bufferOne);
+
+                        bufCat(buffer, bufferOne);
+                        bufUsedZero(bufferOne);
+                    }
                 }
                 CATCH(FileReadError)
                 {
-                    // If nothing was read then throw the original error
-                    if (bufEmpty(buffer))
-                        THROW_FMT(AssertError, "server expected '%s' but got EOF", strZ(expected));
+                    THROW_FMT(
+                        AssertError, "server expected:\n'%s' but got short read:\n'%s'", strZ(expected), strZ(strNewBuf(buffer)));
                 }
                 TRY_END();
 
                 // Treat any ? characters as wildcards so variable elements (e.g. auth hashes) can be ignored
-                String *actual = strNewBuf(buffer);
-
-                for (unsigned int actualIdx = 0; actualIdx < strSize(actual); actualIdx++)
+                for (unsigned int bufferIdx = 0; bufferIdx < bufUsed(buffer); bufferIdx++)
                 {
-                    if (strZ(expected)[actualIdx] == '?')
-                        ((char *)strZ(actual))[actualIdx] = '?';
+                    if (strZ(expected)[bufferIdx] == '?')
+                        bufPtr(buffer)[bufferIdx] = '?';
                 }
+
+                const String *actual = strNewBuf(buffer);
 
                 // Error if actual does not match expected
                 if (!strEq(actual, expected))
-                    THROW_FMT(AssertError, "server expected '%s' but got '%s'", strZ(expected), strZ(actual));
+                    THROW_FMT(AssertError, "server expected:\n'%s' but got:\n'%s'", strZ(expected), strZ(actual));
 
                 break;
             }

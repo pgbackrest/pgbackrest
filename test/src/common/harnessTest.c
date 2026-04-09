@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 C Test Harness
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <fcntl.h>
 #include <stdio.h>
@@ -37,6 +37,7 @@ static bool testContainerData = false;
 static bool testLogExpectData = false;
 static unsigned int testIdxData = 0;
 static bool testTiming = true;
+static const char *testArchitectureData = NULL;
 static const char *testPathData = NULL;
 static const char *testUserData = NULL;
 static const char *testVmData = NULL;
@@ -59,21 +60,14 @@ static struct HarnessTestLocal
 } harnessTestLocal;
 
 /***********************************************************************************************************************************
-Extern functions
-***********************************************************************************************************************************/
-#ifdef HRN_FEATURE_LOG
-void harnessLogInit(void);
-void harnessLogFinal(void);
-#endif
-
-/***********************************************************************************************************************************
 Initialize harness
 ***********************************************************************************************************************************/
 void
 hrnInit(
     const char *const testExe, const char *const testProjectExe, const bool testContainer, const bool testLogExpect,
-    const unsigned int testIdx, const bool timing, const char *const testPath, const char *const testUser, const char *const testVm,
-    const char *const testPgVersion,const char *const testDataPath, const char *const testRepoPath)
+    const unsigned int testIdx, const bool timing, const char *const architecture, const char *const testPath,
+    const char *const testUser, const char *const testVm, const char *const testPgVersion,const char *const testDataPath,
+    const char *const testRepoPath)
 {
     FUNCTION_HARNESS_VOID();
 
@@ -85,6 +79,7 @@ hrnInit(
     (void)testLogExpectData;
     testIdxData = testIdx;
     testTiming = timing;
+    testArchitectureData = architecture;
     testPathData = testPath;
     testUserData = testUser;
     testVmData = testVm;
@@ -154,8 +149,8 @@ testBegin(const char *name)
             // Clear out the test directory so the next test starts clean
             char buffer[2048];
             snprintf(
-                buffer, sizeof(buffer), "%schmod -R 700 %s/" "* > /dev/null 2>&1;%srm -rf %s/" "*", testContainer() ? "sudo " : "",
-                testPath(), testContainer() ? "sudo " : "", testPath());
+                buffer, sizeof(buffer), "%schmod -R 700 %s/" "* > /dev/null 2>&1;%sfind %s -mindepth 1 -delete",
+                testContainer() ? "sudo " : "", testPath(), testContainer() ? "sudo " : "", testPath());
 
             if (system(buffer) != 0)
             {
@@ -166,8 +161,8 @@ testBegin(const char *name)
 
             // Clear out the data directory so the next test starts clean
             snprintf(
-                buffer, sizeof(buffer), "%schmod -R 700 %s/" "* > /dev/null 2>&1;%srm -rf %s/" "*", testContainer() ? "sudo " : "",
-                hrnPath(), testContainer() ? "sudo " : "", hrnPath());
+                buffer, sizeof(buffer), "%schmod -R 700 %s/" "* > /dev/null 2>&1;%sfind %s -mindepth 1 -delete",
+                testContainer() ? "sudo " : "", hrnPath(), testContainer() ? "sudo " : "", hrnPath());
 
             if (system(buffer) != 0)
             {
@@ -234,7 +229,7 @@ hrnComplete(void)
 
 /**********************************************************************************************************************************/
 void
-hrnFileRead(const char *fileName, unsigned char *buffer, size_t bufferSize)
+hrnFileRead(const char *fileName, uint8_t *buffer, size_t bufferSize)
 {
     int result = open(fileName, O_RDONLY, 0660);
 
@@ -261,7 +256,7 @@ hrnFileRead(const char *fileName, unsigned char *buffer, size_t bufferSize)
 
 /**********************************************************************************************************************************/
 void
-hrnFileWrite(const char *fileName, const unsigned char *buffer, size_t bufferSize)
+hrnFileWrite(const char *fileName, const uint8_t *buffer, size_t bufferSize)
 {
     int result = open(fileName, O_WRONLY | O_CREAT | O_TRUNC, 0660);
 
@@ -283,7 +278,7 @@ hrnFileWrite(const char *fileName, const unsigned char *buffer, size_t bufferSiz
 }
 
 /**********************************************************************************************************************************/
-char harnessDiffBuffer[256 * 1024];
+static char harnessDiffBuffer[256 * 1024];
 
 const char *
 hrnDiff(const char *expected, const char *actual)
@@ -298,12 +293,12 @@ hrnDiff(const char *expected, const char *actual)
     // Write expected file
     char expectedFile[1024];
     snprintf(expectedFile, sizeof(expectedFile), "%s/diff.expected", hrnPath());
-    hrnFileWrite(expectedFile, (unsigned char *)expected, strlen(expected));
+    hrnFileWrite(expectedFile, (const uint8_t *)expected, strlen(expected));
 
     // Write actual file
     char actualFile[1024];
     snprintf(actualFile, sizeof(actualFile), "%s/diff.actual", hrnPath());
-    hrnFileWrite(actualFile, (unsigned char *)actual, strlen(actual));
+    hrnFileWrite(actualFile, (const uint8_t *)actual, strlen(actual));
 
     // Perform diff
     char command[2560];
@@ -319,7 +314,7 @@ hrnDiff(const char *expected, const char *actual)
     // Read result
     char resultFile[1024];
     snprintf(resultFile, sizeof(resultFile), "%s/diff.result", hrnPath());
-    hrnFileRead(resultFile, (unsigned char *)harnessDiffBuffer, sizeof(harnessDiffBuffer));
+    hrnFileRead(resultFile, (uint8_t *)harnessDiffBuffer, sizeof(harnessDiffBuffer));
 
     // Remove last linefeed from diff output
     harnessDiffBuffer[strlen(harnessDiffBuffer) - 1] = 0;
@@ -525,25 +520,6 @@ hrnTestResultBool(int actual, int expected)
 }
 
 void
-hrnTestResultDouble(double actual, double expected)
-{
-    ASSERT(harnessTestLocal.result.running);
-
-    if (actual != expected)
-    {
-        char actualZ[256];
-        char expectedZ[256];
-
-        snprintf(actualZ, sizeof(actualZ), "%f", actual);
-        snprintf(expectedZ, sizeof(expectedZ), "%f", expected);
-
-        hrnTestResultDiff(actualZ, expectedZ);
-    }
-
-    hrnTestResultEnd();
-}
-
-void
 hrnTestResultInt64(int64_t actual, int64_t expected, HarnessTestResultOperation operation)
 {
     ASSERT(harnessTestLocal.result.running);
@@ -691,7 +667,7 @@ hrnTestResultZ(const char *actual, const char *expected, HarnessTestResultOperat
         case harnessTestResultOperationNe:
             result =
                 (actual == NULL && expected != NULL) || (actual != NULL && expected == NULL) ||
-                (actual != NULL && expected != NULL && strcmp(actual, expected) == 0);
+                (actual != NULL && expected != NULL && strcmp(actual, expected) != 0);
             break;
     }
 
@@ -757,6 +733,14 @@ testUser(void)
 {
     FUNCTION_HARNESS_VOID();
     FUNCTION_HARNESS_RETURN(STRINGZ, testUserData);
+}
+
+/**********************************************************************************************************************************/
+const char *
+testArchitecture(void)
+{
+    FUNCTION_HARNESS_VOID();
+    FUNCTION_HARNESS_RETURN(STRINGZ, testArchitectureData);
 }
 
 /**********************************************************************************************************************************/

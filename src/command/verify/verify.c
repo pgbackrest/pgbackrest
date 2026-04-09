@@ -3,7 +3,7 @@ Verify Command
 
 Verify contents of the repository.
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -20,10 +20,11 @@ Verify contents of the repository.
 #include "common/io/fdWrite.h"
 #include "common/io/io.h"
 #include "common/log.h"
+#include "common/regExp.h"
 #include "config/config.h"
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"
-#include "info/manifest.h"
+#include "info/manifest/manifest.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "protocol/helper.h"
@@ -109,7 +110,7 @@ typedef struct VerifyBackupResult
     List *invalidFileList;                                          // List of invalid files found in the backup
 } VerifyBackupResult;
 
-// Job data stucture for processing and results collection
+// Job data structure for processing and results collection
 typedef struct VerifyJobData
 {
     MemContext *memContext;                                         // Context for memory allocations in this struct
@@ -128,6 +129,9 @@ typedef struct VerifyJobData
     unsigned int jobErrorTotal;                                     // Total errors that occurred during the job execution
     List *archiveIdResultList;                                      // Archive results
     List *backupResultList;                                         // Backup results
+    bool enableArchiveFilter;                                       // Only check archives in the specified range
+    const String *archiveStart;                                     // Start of the WAL range to be verified
+    const String *archiveStop;                                      // End of the WAL range to be verified
 } VerifyJobData;
 
 /***********************************************************************************************************************************
@@ -370,11 +374,11 @@ verifyManifestFile(
     unsigned int *const jobErrorTotal)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_TEST_PARAM_P(VERIFY_BACKUP_RESULT, backupResult);  // The result set for the backup being processed
+        FUNCTION_LOG_PARAM_P(VERIFY_BACKUP_RESULT, backupResult);   // The result set for the backup being processed
         FUNCTION_TEST_PARAM(STRING, cipherPass);                    // Passphrase to access the manifest file
         FUNCTION_LOG_PARAM(BOOL, currentBackup);                    // Is this possibly a backup currently in progress?
-        FUNCTION_TEST_PARAM(INFO_PG, pgHistory);                    // Database history
-        FUNCTION_TEST_PARAM_P(UINT, jobErrorTotal);                 // Pointer to the overall job error total
+        FUNCTION_LOG_PARAM(INFO_PG, pgHistory);                     // Database history
+        FUNCTION_LOG_PARAM_P(UINT, jobErrorTotal);                  // Pointer to the overall job error total
     FUNCTION_LOG_END();
 
     Manifest *result = NULL;
@@ -639,6 +643,82 @@ verifyCreateArchiveIdRange(
 }
 
 /***********************************************************************************************************************************
+Check if backup is block incremental and populate backup list from its references and set the WAL range to verify based on WAL
+required to make the backup consistent.
+***********************************************************************************************************************************/
+static void
+verifyBackupSet(VerifyJobData *const jobData, const String *const backupLabel)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, jobData);                       // Pointer to the job data
+        FUNCTION_TEST_PARAM(STRING, backupLabel);                   // Label of backup to check
+    FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_HELPER();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        TRY_BEGIN()
+        {
+            const Manifest *const manifest = manifestLoadFile(
+                storageRepo(), strNewFmt(STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(backupLabel)),
+                cfgOptionStrId(cfgOptRepoCipherType), jobData->manifestCipherPass);
+
+            // Check files for block incremental
+            bool hasBlockIncr = false;
+
+            for (unsigned int fileIdx = 0; fileIdx < manifestFileTotal(manifest); fileIdx++)
+            {
+                const ManifestFile file = manifestFile(manifest, fileIdx);
+
+                if (file.blockIncrMapSize != 0)
+                {
+                    hasBlockIncr = true;
+                    break;
+                }
+            }
+
+            // Block incremental backups can depend on any referenced backups through block maps which means we have to verify all
+            // referenced backups as well. ??? Make this more efficient by verifying only required blocks.
+            if (hasBlockIncr)
+            {
+                const StringList *const referenceList = manifestReferenceList(manifest);
+
+                MEM_CONTEXT_BEGIN(jobData->memContext)
+                {
+                    for (unsigned int referenceIdx = 0; referenceIdx < strLstSize(referenceList); referenceIdx++)
+                        strLstAddIfMissing(jobData->backupList, strLstGet(referenceList, referenceIdx));
+
+                    strLstSort(jobData->backupList, sortOrderAsc);
+                }
+                MEM_CONTEXT_END();
+            }
+
+            // Save WAL range required to make the backup consistent
+            MEM_CONTEXT_BEGIN(jobData->memContext)
+            {
+                const ManifestData *const manData = manifestData(manifest);
+
+                jobData->archiveStart = strDup(manData->archiveStart);
+                jobData->archiveStop = strDup(manData->archiveStop);
+            }
+            MEM_CONTEXT_END();
+        }
+        CATCH_ANY()
+        {
+            jobData->archiveStart = NULL;
+            jobData->archiveStop = NULL;
+        }
+        TRY_END();
+
+        jobData->enableArchiveFilter = true;
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Return verify jobs for the archive
 ***********************************************************************************************************************************/
 static ProtocolParallelJob *
@@ -716,6 +796,37 @@ verifyArchive(VerifyJobData *const jobData)
                         }
                         MEM_CONTEXT_END();
 
+                        // Filter WAL files if needed
+                        if (jobData->enableArchiveFilter)
+                        {
+                            // If backup manifest is broken, skip all archives to report the error immediately
+                            if (!jobData->archiveStart)
+                                jobData->walFileList = strLstNew();
+
+                            // Skip WAL files that come before range
+                            while (strLstSize(jobData->walFileList) > 0)
+                            {
+                                const String *const item = strLstGet(jobData->walFileList, 0);
+
+                                if (strCmp(strSubN(item, 0, WAL_SEGMENT_NAME_SIZE), jobData->archiveStart) < 0)
+                                    jobData->walFileList = strLstRemoveIdx(jobData->walFileList, 0);
+                                else
+                                    break;
+                            }
+
+                            // Skip WAL files that come after range
+                            while (strLstSize(jobData->walFileList) > 0)
+                            {
+                                unsigned int lastIdx = strLstSize(jobData->walFileList) - 1;
+                                const String *const item = strLstGet(jobData->walFileList, lastIdx);
+
+                                if (strCmp(strSubN(item, 0, WAL_SEGMENT_NAME_SIZE), jobData->archiveStop) > 0)
+                                    jobData->walFileList = strLstRemoveIdx(jobData->walFileList, lastIdx);
+                                else
+                                    break;
+                            }
+                        }
+
                         if (!strLstEmpty(jobData->walFileList))
                         {
                             if (archiveResult->pgWalInfo.size == 0)
@@ -754,8 +865,7 @@ verifyArchive(VerifyJobData *const jobData)
                             encodingHex, strSubN(fileName, WAL_SEGMENT_NAME_SIZE + 1, HASH_TYPE_SHA1_SIZE_HEX));
 
                         // Set up the job
-                        ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
-                        PackWrite *const param = protocolCommandParam(command);
+                        PackWrite *const param = protocolPackNew();
 
                         pckWriteStrP(param, filePathName);
                         pckWriteBoolP(param, false);
@@ -769,7 +879,7 @@ verifyArchive(VerifyJobData *const jobData)
 
                         MEM_CONTEXT_PRIOR_BEGIN()
                         {
-                            result = protocolParallelJobNew(VARSTR(jobKey), command);
+                            result = protocolParallelJobNew(VARSTR(jobKey), PROTOCOL_COMMAND_VERIFY_FILE, param);
                         }
                         MEM_CONTEXT_PRIOR_END();
 
@@ -856,7 +966,7 @@ verifyBackup(VerifyJobData *const jobData)
                 VerifyBackupResult *const backupResult = lstGetLast(jobData->backupResultList);
 
                 // If currentBackup is set (meaning the newest backup label on disk was not in the db:current section when the
-                // backup.info file was read) and this is the same label, then set inProgessBackup to true, else false.
+                // backup.info file was read) and this is the same label, then set inProgressBackup to true, else false.
                 // inProgressBackup may be changed in verifyManifestFile if a main backup.manifest exists since that would indicate
                 // the backup completed during the verify process.
                 const bool inProgressBackup = strEq(jobData->currentBackup, backupResult->backupLabel);
@@ -980,8 +1090,8 @@ verifyBackup(VerifyJobData *const jobData)
                         if (fileBackupLabel != NULL)
                         {
                             // Set up the job
-                            ProtocolCommand *const command = protocolCommandNew(PROTOCOL_COMMAND_VERIFY_FILE);
-                            PackWrite *const param = protocolCommandParam(command);
+                            PackWrite *const param = protocolPackNew();
+
                             const String *const filePathName = backupFileRepoPathP(
                                 fileBackupLabel, .manifestName = fileData.name, .bundleId = fileData.bundleId,
                                 .compressType = manifestData(jobData->manifest)->backupOptionCompressType,
@@ -1021,7 +1131,7 @@ verifyBackup(VerifyJobData *const jobData)
 
                             MEM_CONTEXT_PRIOR_BEGIN()
                             {
-                                result = protocolParallelJobNew(VARSTR(jobKey), command);
+                                result = protocolParallelJobNew(VARSTR(jobKey), PROTOCOL_COMMAND_VERIFY_FILE, param);
                             }
                             MEM_CONTEXT_PRIOR_END();
                         }
@@ -1470,7 +1580,7 @@ static String *
 verifyProcess(const bool verboseText)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_TEST_PARAM(BOOL, verboseText);                     // Is verbose output requested?
+        FUNCTION_LOG_PARAM(BOOL, verboseText);                      // Is verbose output requested?
     FUNCTION_LOG_END();
 
     String *const result = strNew();
@@ -1535,22 +1645,85 @@ verifyProcess(const bool verboseText)
                 .backupResultList = lstNewP(sizeof(VerifyBackupResult), .comparator = lstComparatorStr),
             };
 
-            // Get a list of backups in the repo sorted ascending
-            jobData.backupList = strLstSort(
-                storageListP(
-                    storage, STORAGE_REPO_BACKUP_STR,
-                    .expression = backupRegExpP(.full = true, .differential = true, .incremental = true)),
-                sortOrderAsc);
+            // Use backup label if specified via --set
+            const String *const backupLabel = cfgOptionStrNull(cfgOptSet);
+            const String *backupRegExpStr = backupRegExpP(.full = true, .differential = true, .incremental = true);
+            bool backupLabelInvalid = false;
 
-            // Get a list of archive Ids in the repo (e.g. 9.4-1, 10-2, etc) sorted ascending by the db-id (number after the dash)
-            jobData.archiveIdList = strLstSort(
-                strLstComparatorSet(
-                    storageListP(storage, STORAGE_REPO_ARCHIVE_STR, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
-                    archiveIdComparator),
-                sortOrderAsc);
+            if (backupLabel != NULL)
+            {
+                if (!regExpMatchOne(backupRegExpStr, backupLabel))
+                {
+                    strCatFmt(resultStr, "\n  '%s' is not a valid backup label format", strZ(backupLabel));
+
+                    backupLabelInvalid = true;
+                    errorTotal++;
+                }
+                else
+                    backupRegExpStr = strNewFmt("^%s$", strZ(backupLabel));
+            }
+
+            // Get a list of backups in the repo sorted ascending
+            if (!backupLabelInvalid)
+            {
+                jobData.backupList = strLstSort(
+                    storageListP(storage, STORAGE_REPO_BACKUP_STR, .expression = backupRegExpStr), sortOrderAsc);
+
+                // Warn if backups in the repository are not described in backup.info. Do not add them for processing since it is
+                // possible for backups to exist in the repository but not in backup.info if an error occurs while backups are being
+                // expired.
+                for (unsigned int repoIdx = 0; repoIdx < strLstSize(jobData.backupList); repoIdx++)
+                {
+                    const String *const label = strLstGet(jobData.backupList, repoIdx);
+
+                    if (!infoBackupLabelExists(backupInfo, label))
+                        LOG_WARN_FMT("backup '%s' found in the repository but not in " INFO_BACKUP_FILE, strZ(label));
+                }
+            }
+
+            if (!backupLabelInvalid && backupLabel != NULL && strLstEmpty(jobData.backupList))
+            {
+                strCatFmt(resultStr, "\n  backup set %s is not valid", strZ(backupLabel));
+
+                backupLabelInvalid = true;
+                errorTotal++;
+            }
+
+            // Get a list of archive ids in the repo (e.g. 9.4-1, 10-2, etc) sorted ascending by the db-id (number after the dash)
+            if (!backupLabelInvalid)
+            {
+                jobData.archiveIdList = strLstSort(
+                    strLstComparatorSet(
+                        storageListP(storage, STORAGE_REPO_ARCHIVE_STR, .expression = STRDEF(REGEX_ARCHIVE_DIR_DB_VERSION)),
+                        archiveIdComparator),
+                    sortOrderAsc);
+            }
+
+            // Check for block map dependencies if --set option is specified
+            if (!backupLabelInvalid && backupLabel != NULL)
+                verifyBackupSet(&jobData, backupLabel);
+
+            // Check if backup.info contains backups not found in the repository and add them for processing
+            if (backupLabel == NULL)
+            {
+                const StringList *const infoBackupLabelList = infoBackupDataLabelList(backupInfo, NULL);
+
+                for (unsigned int infoIdx = 0; infoIdx < strLstSize(infoBackupLabelList); infoIdx++)
+                {
+                    const String *const infoLabel = strLstGet(infoBackupLabelList, infoIdx);
+
+                    if (strLstFindIdxP(jobData.backupList, infoLabel) == LIST_NOT_FOUND)
+                    {
+                        LOG_WARN_FMT("backup '%s' found in " INFO_BACKUP_FILE " but not in the repository", strZ(infoLabel));
+                        strLstAdd(jobData.backupList, infoLabel);
+                    }
+                }
+
+                jobData.backupList = strLstSort(jobData.backupList, sortOrderAsc);
+            }
 
             // Only begin processing if there are some archives or backups in the repo
-            if (!strLstEmpty(jobData.archiveIdList) || !strLstEmpty(jobData.backupList))
+            if (!backupLabelInvalid && (!strLstEmpty(jobData.archiveIdList) || !strLstEmpty(jobData.backupList)))
             {
                 // Warn if there are no archives or there are no backups in the repo so that the callback need not try to
                 // distinguish between having processed all of the list or if the list was missing in the first place
@@ -1700,7 +1873,7 @@ verifyProcess(const bool verboseText)
                 // Report results
                 resultStr = verifyRender(jobData.archiveIdResultList, jobData.backupResultList, verboseText);
             }
-            else
+            else if (!backupLabelInvalid)
                 strCatZ(resultStr, "\n    no archives or backups exist in the repo");
 
             errorTotal += jobData.jobErrorTotal;
@@ -1736,7 +1909,7 @@ cmdVerify(void)
             LOG_INFO_FMT("%s", strZ(result));
 
             // Output to console when requested
-            if (cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_TEXT)
+            if (cfgOptionSeq(cfgOptOutput) == CFGOPTVAL_VERIFY_OUTPUT_TEXT)
             {
                 ioFdWriteOneStr(STDOUT_FILENO, result);
                 ioFdWriteOneStr(STDOUT_FILENO, LF_STR);

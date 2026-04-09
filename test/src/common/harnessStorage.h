@@ -17,6 +17,7 @@ typedef struct TestStorageGetParam
 {
     VAR_PARAM_HEADER;
     bool remove;                                                    // Remove file after testing?
+    bool nullOnMissing;                                             // NULL when file is missing
     CompressType compressType;                                      // Compression extension added to file name (limited gz and bz2)
     CipherType cipherType;
     const char *cipherPass;                                         // If pass=null but cipherType set, defaults to TEST_CIPHER_PASS
@@ -45,6 +46,7 @@ typedef struct TestStorageExistsParam
     VAR_PARAM_HEADER;
     bool remove;                                                    // Remove file after testing?
     const char *comment;                                            // Comment
+    TimeMSec timeout;                                               // Wait for file to exist
 } TestStorageExistsParam;
 
 #define TEST_STORAGE_EXISTS(storage, file, ...)                                                                                    \
@@ -263,9 +265,8 @@ typedef struct HrnStorageTimeParam
 void hrnStorageTime(const Storage *const storage, const char *const path, const time_t modified, const HrnStorageTimeParam param);
 
 /***********************************************************************************************************************************
-Dummy interface for constructing test storage drivers. All required functions are stubbed out so this interface can be copied and
-specific functions replaced for testing.
+Dummy interface for constructing test storage drivers. All functions and features are pulled from the Posix driver.
 ***********************************************************************************************************************************/
-extern const StorageInterface storageInterfaceTestDummy;
+extern const StorageInterface hrnStorageInterfaceDummy;
 
 #endif

@@ -6,6 +6,7 @@ Real Integration Test
 #include "info/infoBackup.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
+#include "storage/helper.h"
 
 #include "common/harnessErrorRetry.h"
 #include "common/harnessHost.h"
@@ -18,17 +19,16 @@ Test definition
 static HrnHostTestDefine testMatrix[] =
 {
     // {uncrustify_off - struct alignment}
-    {.pg = "9.4", .repo =  "pg2", .tls = 0, .stg = "azure", .enc = 1, .cmp =  "lz4", .rt = 1, .bnd = 1, .bi = 0},
-    {.pg = "9.5", .repo = "repo", .tls = 1, .stg =    "s3", .enc = 0, .cmp =  "bz2", .rt = 1, .bnd = 1, .bi = 1},
-    {.pg = "9.6", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1},
+    {.pg = "9.6", .repo = "repo", .tls = 0, .stg = "azure", .enc = 0, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1},
     {.pg =  "10", .repo =  "pg2", .tls = 0, .stg =  "sftp", .enc = 1, .cmp =   "gz", .rt = 1, .bnd = 1, .bi = 0},
     {.pg =  "11", .repo = "repo", .tls = 1, .stg =   "gcs", .enc = 0, .cmp =  "zst", .rt = 2, .bnd = 0, .bi = 0},
     {.pg =  "12", .repo = "repo", .tls = 0, .stg =    "s3", .enc = 1, .cmp =  "lz4", .rt = 1, .bnd = 1, .bi = 1},
-    {.pg =  "13", .repo =  "pg2", .tls = 1, .stg =  "sftp", .enc = 0, .cmp =  "zst", .rt = 1, .bnd = 1, .bi = 1},
+    {.pg =  "13", .repo =  "pg2", .tls = 1, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
     {.pg =  "14", .repo = "repo", .tls = 0, .stg =   "gcs", .enc = 0, .cmp =  "lz4", .rt = 1, .bnd = 1, .bi = 0},
-    {.pg =  "15", .repo =  "pg2", .tls = 0, .stg = "azure", .enc = 0, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1},
-    {.pg =  "16", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
+    {.pg =  "15", .repo =  "pg2", .tls = 0, .stg = "azure", .enc = 1, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1},
+    {.pg =  "16", .repo = "repo", .tls = 0, .stg =  "sftp", .enc = 0, .cmp =  "zst", .rt = 1, .bnd = 1, .bi = 1},
     {.pg =  "17", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
+    {.pg =  "18", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
     // {uncrustify_on}
 };
 
@@ -161,6 +161,17 @@ testRun(void)
 
             HRN_HOST_PG_START(pg2);
 
+            // Promote the standby to create a new timeline that can be used to test timeline verification. Once the new timeline
+            // has been created restore again to get the standby back on the same timeline as the primary.
+            HRN_HOST_PG_PROMOTE(pg2);
+            TEST_STORAGE_EXISTS(
+                hrnHostRepo1Storage(repo),
+                zNewFmt("archive/" HRN_STANZA "/%s-1/00000002.history", strZ(pgVersionToStr(hrnHostPgVersion()))), .timeout = 5000);
+
+            HRN_HOST_PG_STOP(pg2);
+            TEST_HOST_BR(pg2, CFGCMD_RESTORE, .option = zNewFmt("%s --delta --target-timeline=current", option));
+            HRN_HOST_PG_START(pg2);
+
             // Check standby
             TEST_HOST_BR(pg2, CFGCMD_CHECK);
 
@@ -224,7 +235,8 @@ testRun(void)
         HRN_HOST_WAL_SWITCH(pg1);
 
         TEST_STORAGE_EXISTS(
-            hrnHostDataStorage(pg1), zNewFmt("%s/" HRN_STANZA "-archive-push-async.log", strZ(hrnHostLogPath(pg1))));
+            hrnHostDataStorage(pg1), zNewFmt("%s/" HRN_STANZA "-archive-push-async.log", strZ(hrnHostLogPath(pg1))),
+            .timeout = 5000);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("setup time target");
@@ -246,16 +258,13 @@ testRun(void)
             // Create a database that can be excluded from restores
             HRN_HOST_SQL_EXEC(pg1, "create database exclude_me with tablespace ts1");
 
-            // Check that backup fails for <= 9.5 when another backup is already running
-            if (hrnHostPgVersion() <= PG_VERSION_95)
-            {
-                HRN_HOST_SQL_EXEC(pg1, "perform pg_start_backup('test backup that will be restarted', true)");
-                TEST_HOST_BR(repo, CFGCMD_BACKUP, .resultExpect = errorTypeCode(&DbQueryError));
-            }
-
-            // Include stop auto here so backups for <= 9.5 will stop the prior backup
+            // Backup from pg1 to show that backups can be done from the primary when a repo host exists, that a primary backup
+            // works after a standby backup, and that disabling bundling and block incremental works.
             HRN_HOST_SQL_EXEC(pg1, "update status set message = '" TEST_STATUS_INCR "'");
-            TEST_HOST_BR(repo, CFGCMD_BACKUP, .option = "--type=incr --delta --stop-auto");
+            TEST_HOST_BR(pg1, CFGCMD_BACKUP, .option = "--type=incr --delta");
+
+            // Check that expire works remotely (increase full retention to make it a noop)
+            TEST_HOST_BR(pg1, CFGCMD_EXPIRE, .option = "--repo1-retention-full=99");
         }
 
         // Get exclude_me database oid
@@ -284,13 +293,24 @@ testRun(void)
         TEST_LOG("name target = " TEST_RESTORE_POINT);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("primary restore (default target)");
+        TEST_TITLE("primary restore fails on timeline verification");
         {
             // Stop the cluster
             HRN_HOST_PG_STOP(pg1);
 
-            // Restore
-            TEST_HOST_BR(pg1, CFGCMD_RESTORE, .option = zNewFmt("--force --repo=%u", hrnHostRepoTotal()));
+            // Restore fails because timeline 2 was created before the backup selected for restore. Specify target timeline latest
+            // because PostgreSQL < 12 defaults to current.
+            TEST_HOST_BR(
+                pg1, CFGCMD_RESTORE, .option = "--delta --target-timeline=latest", .resultExpect = errorTypeCode(&DbMismatchError));
+        }
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("primary restore (default target)");
+        {
+            // Restore on current timeline to skip the invalid timeline unrelated to the backup
+            TEST_HOST_BR(
+                pg1, CFGCMD_RESTORE,
+                .option = zNewFmt("--force --target-timeline=current --repo=%u", hrnHostRepoTotal()));
             HRN_HOST_PG_START(pg1);
 
             // Check that backup recovered to the expected target
@@ -306,7 +326,8 @@ testRun(void)
             // Stop the cluster and try again
             HRN_HOST_PG_STOP(pg1);
 
-            // Restore
+            // Restore immediate and promote -- this avoids checking the invalid timeline since immediate recovery is always along
+            // the current timeline. The promotion will create a new timeline so subsequent tests will pass timeline verification.
             TEST_HOST_BR(pg1, CFGCMD_RESTORE, .option = "--delta --type=immediate --target-action=promote --db-exclude=exclude_me");
             HRN_HOST_PG_START(pg1);
 
@@ -355,7 +376,7 @@ testRun(void)
             HRN_HOST_WAL_SWITCH(pg1);
         }
 
-        // Store the time so it can be used in a later test
+        // Store the timeline so it can be used in a later test
         const char *const xidTimeline = strZ(
             pckReadStrP(
                 hrnHostSqlValue(
@@ -380,6 +401,11 @@ testRun(void)
             // Check that backup recovered to the expected target
             TEST_HOST_SQL_ONE_STR_Z(pg1, "select message from status", TEST_STATUS_TIME);
         }
+
+        // Store the time where the entire timeline captured in xidTimeline above exists so it can be used in a later test. We need
+        // to capture this here (instead of above) to be sure that all the timeline WAL has been archived.
+        const char *const xidTime = strZ(pckReadStrP(hrnHostSqlValue(pg1, "select current_timestamp::text")));
+        TEST_LOG_FMT("xid time = %s", xidTime);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("primary restore (time xid, exclusive)");
@@ -420,7 +446,21 @@ testRun(void)
             // Stop the cluster
             HRN_HOST_PG_STOP(pg1);
 
-            TEST_HOST_BR(pg1, CFGCMD_RESTORE, .option = zNewFmt("--delta --type=standby --target-timeline=%s", xidTimeline));
+            // If repo is versioned then delete the repo to test repo-target-time
+            if (hrnHostRepoVersioning())
+            {
+                // Stop pgbackrest
+                TEST_HOST_BR(repo, CFGCMD_STOP);
+
+                // Delete stanza
+                TEST_HOST_BR(repo, CFGCMD_STANZA_DELETE);
+            }
+
+            TEST_HOST_BR(
+                pg1, CFGCMD_RESTORE,
+                .option = zNewFmt(
+                    "--delta --type=standby --target-timeline=%s%s", xidTimeline,
+                    hrnHostRepoVersioning() ? zNewFmt(" --repo=1 --repo-target-time=\"%s\"", xidTime) : ""));
             HRN_HOST_PG_START(pg1);
 
             // Check that backup recovered to the expected target
@@ -428,7 +468,7 @@ testRun(void)
         }
 
         // -------------------------------------------------------------------------------------------------------------------------
-        if (hrnHostNonVersionSpecific())
+        if (!hrnHostRepoVersioning() && hrnHostNonVersionSpecific())
         {
             TEST_TITLE("stanza-delete --force with pgbackrest stopped");
 
