@@ -217,44 +217,73 @@ storagePosixList(THIS_VOID, const String *const path, const StorageInfoLevel lev
     // Directory was found
     else
     {
-        result = storageLstNew(level);
-
         TRY_BEGIN()
         {
             MEM_CONTEXT_TEMP_RESET_BEGIN()
             {
-                // Read the directory entries
-                const struct dirent *dirEntry = readdir(dir);
+				bool isFirstEntry;
+				unsigned int listRetries = 0;
+				const struct dirent *dirEntry;
 
-                while (dirEntry != NULL)
+				do
                 {
-                    // Always skip . and ..
-                    if (!strEqZ(DOT_STR, dirEntry->d_name) && !strEqZ(DOTDOT_STR, dirEntry->d_name))
-                    {
-                        // If only making a list of files that exist then no need to go get detailed info which requires calling
-                        // stat() and is therefore relatively slow
-                        if (level == storageInfoLevelExists)
-                        {
-                            const StorageInfo storageInfo =
-                            {
-                                .name = STR(dirEntry->d_name),
-                                .level = storageInfoLevelExists,
-                                .exists = true,
-                            };
-
-                            storageLstAdd(result, &storageInfo);
-                        }
-                        // Else more info is required which requires a call to stat()
-                        else
-                            storagePosixListEntry(this, result, path, dirEntry->d_name, level);
-                    }
-
-                    // Get next entry
+                    isFirstEntry = true;
+                    result = storageLstNew(level);
                     dirEntry = readdir(dir);
 
-                    // Reset the memory context occasionally so we don't use too much memory or slow down processing
-                    MEM_CONTEXT_TEMP_RESET(1000);
+                    while (dirEntry != NULL)
+                    {
+						// Restart from the beginning if the FS spurously returned 0-cookie
+						if (dirEntry->d_off == 0 && !isFirstEntry)
+                        {
+                            listRetries++;
+
+                            // Restart the listing
+                            storageLstFree(result);
+                            result = NULL;
+
+                            if (listRetries > 3)
+                            {
+                                THROW_SYS_ERROR_FMT(PathSyncError, "unable to consistently read directory '%s' in 3 retries",
+                                                    strZ(path));
+                            }
+
+                            // Ensure we're really in the beginning
+                            rewinddir(dir);
+
+                            break;
+                        }
+
+                        // Always skip . and ..
+                        if (!strEqZ(DOT_STR, dirEntry->d_name) && !strEqZ(DOTDOT_STR, dirEntry->d_name))
+                        {
+                            // If only making a list of files that exist then no need to go get detailed info which requires calling
+                            // stat() and is therefore relatively slow
+                            if (level == storageInfoLevelExists)
+                            {
+                                const StorageInfo storageInfo =
+                                {
+                                    .name = STR(dirEntry->d_name),
+                                    .level = storageInfoLevelExists,
+                                    .exists = true,
+                                };
+
+                                storageLstAdd(result, &storageInfo);
+                            }
+                            // Else more info is required which requires a call to stat()
+                            else
+                                storagePosixListEntry(this, result, path, dirEntry->d_name, level);
+                        }
+
+                        isFirstEntry = false;
+                        // Get next entry
+                        dirEntry = readdir(dir);
+
+                        // Reset the memory context occasionally so we don't use too much memory or slow down processing
+                        MEM_CONTEXT_TEMP_RESET(1000);
+                    }
                 }
+                while (dirEntry != NULL && dirEntry->d_off == 0 && !isFirstEntry);
             }
             MEM_CONTEXT_TEMP_END();
         }
