@@ -9,6 +9,7 @@ Test Posix/CIFS Storage
 #include "common/harnessConfig.h"
 #include "common/harnessFork.h"
 #include "common/harnessStorage.h"
+#include "common/harnessStoragePosix.h"
 #include "common/harnessTime.h"
 
 /***********************************************************************************************************************************
@@ -567,6 +568,32 @@ testRun(void)
         TEST_RESULT_VOID(
             storagePutP(storageNewWriteP(storageTest, STRDEF("bbb.txt")), BUFSTRDEF("bbb")), "write bbb.text");
         TEST_RESULT_STRLST_Z(storageListP(storageTest, NULL, .expression = STRDEF("^bbb")), "bbb.txt\n", "dir list");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("cookie reset mid-listing restarts enumeration");
+
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, STRDEF("cookie/aaa")), BUFSTRDEF("")), "write cookie/aaa");
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageTest, STRDEF("cookie/bbb")), BUFSTRDEF("")), "write cookie/bbb");
+
+        // Inject d_off == 0 on the 2nd readdir call (after "." is read, isFirstEntry becomes false) once. The loop restarts and
+        // completes successfully on the second attempt.
+        hrnStoragePosixReadDirZeroCookieSet(2, 1);
+
+        TEST_RESULT_STRLST_Z(
+            strLstSort(storageListP(storageTest, STRDEF("cookie")), sortOrderAsc), "aaa\nbbb\n",
+            "list survives one cookie reset");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("cookie reset exceeding retry limit throws");
+
+        // Inject indefinitely — the loop exhausts all 3 retries and throws on the 4th restart attempt.
+        hrnStoragePosixReadDirZeroCookieSet(2, UINT_MAX);
+
+        TEST_ERROR_FMT(
+            storageListP(storageTest, STRDEF("cookie")), PathSyncError,
+            "unable to consistently read directory '%s/cookie' in 3 retries", TEST_PATH);
     }
 
     // *****************************************************************************************************************************

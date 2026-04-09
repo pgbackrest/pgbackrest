@@ -601,6 +601,13 @@ unit:
       - name: posix
         total: 24
 
+        harness:
+          name: storagePosix
+          shim:
+            storage/posix/storage:
+              function:
+                - storagePosixReadDir
+
         coverage:
           - storage/cifs/helper
           - storage/cifs/storage

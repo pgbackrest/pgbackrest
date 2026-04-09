@@ -187,6 +187,13 @@ storagePosixListEntry(
     FUNCTION_TEST_RETURN_VOID();
 }
 
+// Helper to read the next directory entry, extracted for shimming in tests
+static struct dirent *
+storagePosixReadDir(DIR *const dir)
+{
+    return readdir(dir);
+}
+
 static StorageList *
 storagePosixList(THIS_VOID, const String *const path, const StorageInfoLevel level, const StorageInterfaceListParam param)
 {
@@ -229,7 +236,7 @@ storagePosixList(THIS_VOID, const String *const path, const StorageInfoLevel lev
                 {
                     isFirstEntry = true;
                     result = storageLstNew(level);
-                    dirEntry = readdir(dir);
+                    dirEntry = storagePosixReadDir(dir);
 
                     while (dirEntry != NULL)
                     {
@@ -277,7 +284,7 @@ storagePosixList(THIS_VOID, const String *const path, const StorageInfoLevel lev
 
                         isFirstEntry = false;
                         // Get next entry
-                        dirEntry = readdir(dir);
+                        dirEntry = storagePosixReadDir(dir);
 
                         // Reset the memory context occasionally so we don't use too much memory or slow down processing
                         MEM_CONTEXT_TEMP_RESET(1000);
