@@ -101,6 +101,15 @@ testRun(void)
         "\n"                                                                                                                       \
         TEST_BACKUP_DB2_HISTORY
 
+    #define TEST_NO_CURRENT_BACKUP                                                                                                 \
+        "[db]\n"                                                                                                                   \
+        TEST_BACKUP_DB2_11                                                                                                         \
+        "\n"                                                                                                                       \
+        "[db:history]\n"                                                                                                           \
+        TEST_BACKUP_DB1_HISTORY                                                                                                    \
+        "\n"                                                                                                                       \
+        TEST_BACKUP_DB2_HISTORY
+
     #define TEST_ARCHIVE_INFO_BASE                                                                                                 \
         "[db]\n"                                                                                                                   \
         "db-id=1\n"                                                                                                                \
@@ -1109,7 +1118,7 @@ testRun(void)
         TEST_TITLE("backup.info and copy valid but checksum mismatch, archive.info checksum invalid, archive.info copy valid");
 
         HRN_INFO_PUT(
-            storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_BACKUP_INFO_MULTI_HISTORY_BASE, .comment = "valid backup.info");
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_NO_CURRENT_BACKUP, .comment = "valid backup.info");
         HRN_STORAGE_PUT_Z(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_INVALID_BACKREST_INFO, .comment = "invalid archive.info");
         HRN_INFO_PUT(
@@ -1144,7 +1153,7 @@ testRun(void)
         TEST_TITLE("backup.info and copy valid and checksums match, archive.info and copy valid, but checksum mismatch");
 
         HRN_INFO_PUT(
-            storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_BACKUP_INFO_MULTI_HISTORY_BASE,
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_NO_CURRENT_BACKUP,
             .comment = "valid backup.info.copy");
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE, .comment = "valid archive.info");
@@ -1310,7 +1319,7 @@ testRun(void)
         TEST_TITLE("backup.info and copy valid but checksum mismatch, archive.info checksum invalid, archive.info copy valid");
 
         HRN_INFO_PUT(
-            storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_BACKUP_INFO_MULTI_HISTORY_BASE, .comment = "valid backup.info");
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_NO_CURRENT_BACKUP, .comment = "valid backup.info");
         HRN_STORAGE_PUT_Z(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_INVALID_BACKREST_INFO, .comment = "invalid archive.info");
         HRN_INFO_PUT(
@@ -1360,7 +1369,7 @@ testRun(void)
         TEST_TITLE("backup.info and copy valid and checksums match, archive.info and copy valid, but checksum mismatch");
 
         HRN_INFO_PUT(
-            storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_BACKUP_INFO_MULTI_HISTORY_BASE,
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_NO_CURRENT_BACKUP,
             .comment = "valid backup.info.copy");
         HRN_INFO_PUT(
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE, .comment = "valid archive.info");
@@ -1533,15 +1542,6 @@ testRun(void)
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("valid info files, WAL files present, no backups");
-
-        #define TEST_NO_CURRENT_BACKUP                                                                                             \
-            "[db]\n"                                                                                                               \
-            TEST_BACKUP_DB2_11                                                                                                     \
-            "\n"                                                                                                                   \
-            "[db:history]\n"                                                                                                       \
-            TEST_BACKUP_DB1_HISTORY                                                                                                \
-            "\n"                                                                                                                   \
-            TEST_BACKUP_DB2_HISTORY
 
         HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_NO_CURRENT_BACKUP, .comment = "no current backups");
         HRN_INFO_PUT(
@@ -1954,6 +1954,44 @@ testRun(void)
             storageRepoIdxWrite(0), STORAGE_REPO_BACKUP "/20181119-153000F",
             .comment = "create empty backup path for newest backup so in-progress");
 
+        #define TEST_BACKUP_DB1_CURRENT_FULL3_DIFF1                                                                                \
+            "20181119-152900F_20181119-152909D={"                                                                                  \
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","                                                              \
+            "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000007\","          \
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"                                           \
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"                                                   \
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","                 \
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"             \
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+
+        #define TEST_BACKUP_DB1_CURRENT_FULL4                                                                                      \
+            "20181119-152810F={"                                                                                                   \
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","                                                              \
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"                                           \
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"                                                   \
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","                 \
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"             \
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+
+        #define TEST_BACKUP_INFO                                                                                                   \
+            "[backup:current]\n"                                                                                                   \
+            TEST_BACKUP_DB1_CURRENT_FULL1                                                                                          \
+            TEST_BACKUP_DB1_CURRENT_FULL2                                                                                          \
+            TEST_BACKUP_DB1_CURRENT_FULL3                                                                                          \
+            TEST_BACKUP_DB1_CURRENT_FULL3_DIFF1                                                                                    \
+            TEST_BACKUP_DB1_CURRENT_FULL4                                                                                          \
+            "\n"                                                                                                                   \
+            "[db]\n"                                                                                                               \
+            TEST_BACKUP_DB2_11                                                                                                     \
+            "\n"                                                                                                                   \
+            "[db:history]\n"                                                                                                       \
+            TEST_BACKUP_DB1_HISTORY                                                                                                \
+            "\n"                                                                                                                   \
+            TEST_BACKUP_DB2_HISTORY
+
+        HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_BACKUP_INFO);
+        HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_BACKUP_INFO);
+
         // Set log level to capture ranges
         harnessLogLevelSet(logLevelDetail);
 
@@ -2243,6 +2281,65 @@ testRun(void)
             storageRepoIdxWrite(0), STORAGE_REPO_BACKUP "/20181119-153200F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
             strZ(manifestContent), .comment = "valid manifest copy");
 
+        #define TEST_BACKUP_DB2_CURRENT_FULL4                                                                                      \
+            "20181119-152900F={"                                                                                                   \
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","                                                              \
+            "\"backup-archive-start\":\"000000040000000800000002\",\"backup-archive-stop\":\"000000040000000800000004\","          \
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"                                           \
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"                                                   \
+            "\"backup-timestamp-start\":0,\"backup-timestamp-stop\":0,\"backup-type\":\"full\","                                   \
+            "\"db-id\":2,\"option-archive-check\":false,\"option-archive-copy\":false,\"option-backup-standby\":false,"            \
+            "\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":false,\"option-online\":false}\n"
+
+        #define TEST_BACKUP_DB2_CURRENT_FULL5                                                                                      \
+            "20181119-153000F={"                                                                                                   \
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","                                                              \
+            "\"backup-archive-start\":\"000000040000000800000004\",\"backup-archive-stop\":\"000000040000000800000005\","          \
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"                                           \
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"                                                   \
+            "\"backup-timestamp-start\":0,\"backup-timestamp-stop\":0,\"backup-type\":\"full\","                                   \
+            "\"db-id\":2,\"option-archive-check\":false,\"option-archive-copy\":false,\"option-backup-standby\":false,"            \
+            "\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":false,\"option-online\":false}\n"
+
+        #define TEST_BACKUP_DB2_CURRENT_FULL6                                                                                      \
+            "20181119-153100F={"                                                                                                   \
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","                                                              \
+            "\"backup-archive-start\":\"000000040000000800000006\",\"backup-archive-stop\":\"000000040000000800000007\","          \
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"                                           \
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"                                                   \
+            "\"backup-timestamp-start\":0,\"backup-timestamp-stop\":0,\"backup-type\":\"full\","                                   \
+            "\"db-id\":2,\"option-archive-check\":false,\"option-archive-copy\":false,\"option-backup-standby\":false,"            \
+            "\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":false,\"option-online\":false}\n"
+
+        #define TEST_BACKUP_DB2_CURRENT_FULL7                                                                                      \
+            "20181119-153200F={"                                                                                                   \
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","                                                              \
+            "\"backup-archive-start\":\"000000040000000800000006\",\"backup-archive-stop\":\"000000040000000800000007\","          \
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"                                           \
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"                                                   \
+            "\"backup-timestamp-start\":0,\"backup-timestamp-stop\":0,\"backup-type\":\"full\","                                   \
+            "\"db-id\":2,\"option-archive-check\":false,\"option-archive-copy\":false,\"option-backup-standby\":false,"            \
+            "\"option-checksum-page\":false,\"option-compress\":false,\"option-hardlink\":false,\"option-online\":false}\n"
+
+        #undef TEST_BACKUP_INFO
+        #define TEST_BACKUP_INFO                                                                                                   \
+            "[backup:current]\n"                                                                                                   \
+            TEST_BACKUP_DB2_CURRENT_FULL4                                                                                          \
+            TEST_BACKUP_DB2_CURRENT_FULL5                                                                                          \
+            TEST_BACKUP_DB2_CURRENT_FULL6                                                                                          \
+            TEST_BACKUP_DB2_CURRENT_FULL7                                                                                          \
+            "\n"                                                                                                                   \
+            "[db]\n"                                                                                                               \
+            TEST_BACKUP_DB2_11                                                                                                     \
+            "\n"                                                                                                                   \
+            "[db:history]\n"                                                                                                       \
+            TEST_BACKUP_DB1_HISTORY                                                                                                \
+            "\n"                                                                                                                   \
+            TEST_BACKUP_DB2_HISTORY
+
+        HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_BACKUP_INFO);
+        HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_BACKUP_INFO);
+
         // Set log level to capture ranges
         harnessLogLevelSet(logLevelDetail);
 
@@ -2453,16 +2550,10 @@ testRun(void)
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
             .comment = "valid archive.info.copy");
 
-        #define TEST_NO_CURRENT_BACKUP                                                                                             \
-            "[db]\n"                                                                                                               \
-            TEST_BACKUP_DB2_11                                                                                                     \
-            "\n"                                                                                                                   \
-            "[db:history]\n"                                                                                                       \
-            TEST_BACKUP_DB1_HISTORY                                                                                                \
-            "\n"                                                                                                                   \
-            TEST_BACKUP_DB2_HISTORY
-
         HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_NO_CURRENT_BACKUP, .comment = "no current backups");
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_NO_CURRENT_BACKUP, .comment = "no current backups copy");
 
         HRN_STORAGE_PATH_CREATE(
             storageRepoIdxWrite(0), STORAGE_REPO_BACKUP "/20181119-152800F", .comment = "prior backup path missing manifests");
@@ -2493,7 +2584,6 @@ testRun(void)
             "verifyProcess() JSON missing no total file verify");
 
         TEST_RESULT_LOG(
-            "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/backup.info.copy' for read\n"
             "P00 DETAIL: no archives exist in the repo\n"
             "P00 DETAIL: unable to open missing file '" TEST_PATH "/repo/backup/db/20181119-152800F/backup.manifest' for read\n"
             "P00   INFO: backup '20181119-152800F' appears to be in progress, skipping"
@@ -2538,11 +2628,11 @@ testRun(void)
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
             .comment = "valid archive.info.copy");
 
+        #undef TEST_BACKUP_INFO
         #define TEST_BACKUP_INFO                                                                                                   \
             "[backup:current]\n"                                                                                                   \
             TEST_BACKUP_DB1_CURRENT_FULL3                                                                                          \
             TEST_BACKUP_DB1_CURRENT_FULL3_DIFF1                                                                                    \
-            TEST_BACKUP_DB2_CURRENT_FULL1                                                                                          \
             "\n"                                                                                                                   \
             "[db]\n"                                                                                                               \
             TEST_BACKUP_DB2_11                                                                                                     \
@@ -2638,6 +2728,24 @@ testRun(void)
         // Set process max to 1 and add more files to check so first backup completes before second is checked
         hrnCfgArgRawZ(argList, cfgOptProcessMax, "1");
         HRN_CFG_LOAD(cfgCmdVerify, argList);
+
+        #undef TEST_BACKUP_INFO
+        #define TEST_BACKUP_INFO                                                                                                   \
+            "[backup:current]\n"                                                                                                   \
+            TEST_BACKUP_DB1_CURRENT_FULL3                                                                                          \
+            TEST_BACKUP_DB1_CURRENT_FULL3_DIFF1                                                                                    \
+            TEST_BACKUP_DB2_CURRENT_FULL1                                                                                          \
+            "\n"                                                                                                                   \
+            "[db]\n"                                                                                                               \
+            TEST_BACKUP_DB2_11                                                                                                     \
+            "\n"                                                                                                                   \
+            "[db:history]\n"                                                                                                       \
+            TEST_BACKUP_DB1_HISTORY                                                                                                \
+            "\n"                                                                                                                   \
+            TEST_BACKUP_DB2_HISTORY
+
+        HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_BACKUP_INFO);
+        HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_BACKUP_INFO);
 
         String *manifestContent = strNewFmt(
             TEST_MANIFEST_HEADER
@@ -2803,11 +2911,11 @@ testRun(void)
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
             .comment = "valid archive.info.copy");
 
+        #undef TEST_BACKUP_INFO
         #define TEST_BACKUP_INFO                                                                                                   \
             "[backup:current]\n"                                                                                                   \
             TEST_BACKUP_DB1_CURRENT_FULL3                                                                                          \
             TEST_BACKUP_DB1_CURRENT_FULL3_DIFF1                                                                                    \
-            TEST_BACKUP_DB2_CURRENT_FULL1                                                                                          \
             "\n"                                                                                                                   \
             "[db]\n"                                                                                                               \
             TEST_BACKUP_DB2_11                                                                                                     \
@@ -2920,26 +3028,6 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptVerbose, "y");
         HRN_CFG_LOAD(cfgCmdVerify, argList);
 
-        #define TEST_BACKUP_DB1_CURRENT_FULL3_DIFF1                                                                                \
-            "20181119-152900F_20181119-152909D={"                                                                                  \
-            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","                                                              \
-            "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000007\","          \
-            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"                                           \
-            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"                                                   \
-            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","                 \
-            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"             \
-            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-
-        #define TEST_BACKUP_DB2_CURRENT_FULL1                                                                                      \
-            "20201119-163000F={"                                                                                                   \
-            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","                                                              \
-            "\"backup-archive-start\":\"000000020000000000000001\",\"backup-archive-stop\":\"000000020000000000000001\","          \
-            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"                                           \
-            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"                                                   \
-            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","                 \
-            "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"             \
-            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
-
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("prior backup verification incomplete - referenced file checked verbose, text output");
 
@@ -2949,11 +3037,11 @@ testRun(void)
             storageRepoWrite(), INFO_ARCHIVE_PATH_FILE INFO_COPY_EXT, TEST_ARCHIVE_INFO_MULTI_HISTORY_BASE,
             .comment = "valid archive.info.copy");
 
+        #undef TEST_BACKUP_INFO
         #define TEST_BACKUP_INFO                                                                                                   \
             "[backup:current]\n"                                                                                                   \
             TEST_BACKUP_DB1_CURRENT_FULL3                                                                                          \
             TEST_BACKUP_DB1_CURRENT_FULL3_DIFF1                                                                                    \
-            TEST_BACKUP_DB2_CURRENT_FULL1                                                                                          \
             "\n"                                                                                                                   \
             "[db]\n"                                                                                                               \
             TEST_BACKUP_DB2_11                                                                                                     \
@@ -3301,11 +3389,22 @@ testRun(void)
             "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"             \
             "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
 
+        #define TEST_BACKUP_DB2_CURRENT_FULL2                                                                                      \
+            "20181119-153300F={"                                                                                                   \
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","                                                              \
+            "\"backup-archive-start\":\"000000050000000800000003\",\"backup-archive-stop\":\"000000050000000800000004\","          \
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"                                           \
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"                                                   \
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","                 \
+            "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"             \
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+
         #undef TEST_BACKUP_INFO
         #define TEST_BACKUP_INFO                                                                                                   \
             "[backup:current]\n"                                                                                                   \
             TEST_BACKUP_DB1_CURRENT_FULL3                                                                                          \
             TEST_BACKUP_DB1_CURRENT_FULL3_DIFF1                                                                                    \
+            TEST_BACKUP_DB2_CURRENT_FULL2                                                                                          \
             "\n"                                                                                                                   \
             "[db]\n"                                                                                                               \
             TEST_BACKUP_DB2_11                                                                                                     \
@@ -3604,6 +3703,35 @@ testRun(void)
                           STORAGE_REPO_BACKUP "/20181119-153400F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT,
                           strZ(manifestContent),
                           .comment = "invalid manifest copy - full");
+
+        #define TEST_BACKUP_DB2_CURRENT_FULL3                                                                                      \
+            "20181119-153400F={"                                                                                                   \
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","                                                              \
+            "\"backup-archive-start\":\"000000050000000800000003\",\"backup-archive-stop\":\"000000050000000800000004\","          \
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"                                           \
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"                                                   \
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","                 \
+            "\"db-id\":2,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"             \
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+
+        #undef TEST_BACKUP_INFO
+        #define TEST_BACKUP_INFO                                                                                                   \
+            "[backup:current]\n"                                                                                                   \
+            TEST_BACKUP_DB1_CURRENT_FULL3                                                                                          \
+            TEST_BACKUP_DB1_CURRENT_FULL3_DIFF1                                                                                    \
+            TEST_BACKUP_DB2_CURRENT_FULL2                                                                                          \
+            TEST_BACKUP_DB2_CURRENT_FULL3                                                                                          \
+            "\n"                                                                                                                   \
+            "[db]\n"                                                                                                               \
+            TEST_BACKUP_DB2_11                                                                                                     \
+            "\n"                                                                                                                   \
+            "[db:history]\n"                                                                                                       \
+            TEST_BACKUP_DB1_HISTORY                                                                                                \
+            "\n"                                                                                                                   \
+            TEST_BACKUP_DB2_HISTORY
+
+        HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE, TEST_BACKUP_INFO);
+        HRN_INFO_PUT(storageRepoWrite(), INFO_BACKUP_PATH_FILE INFO_COPY_EXT, TEST_BACKUP_INFO);
 
         // Should not check any WAL files
         TEST_RESULT_STR_Z(
