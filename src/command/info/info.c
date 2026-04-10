@@ -1842,11 +1842,11 @@ infoRender(void)
                             strCatFmt(resultStr, "%s\n", strZ(statusLabelStr));
                     }
 
-                    // Output per-repo backup progress
+                    // Output per-repo backup progress when multiple backups are running
                     const Variant *const backupRepoVar = kvGet(backupLockKv, STANZA_KEY_REPO_VAR);
                     const VariantList *const backupRepoList = backupRepoVar != NULL ? varVarLst(backupRepoVar) : NULL;
 
-                    if (backupRepoList != NULL)
+                    if (backupRepoList != NULL && varLstSize(backupRepoList) > 1)
                     {
                         for (unsigned int repoLockIdx = 0; repoLockIdx < varLstSize(backupRepoList); repoLockIdx++)
                         {

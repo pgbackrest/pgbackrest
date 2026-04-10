@@ -1936,7 +1936,6 @@ testRun(void)
                     "\n"
                     "stanza: stanza2\n"
                     "    status: mixed (backup/expire running - 55.55% complete)\n"
-                    "        repo1 backup: 55.55% complete\n"
                     "        repo1: error (no valid backups)\n"
                     "        repo2: error (missing stanza path)\n"
                     "    cipher: mixed\n"
@@ -1985,7 +1984,6 @@ testRun(void)
                     "\n"
                     "stanza: stanza2\n"
                     "    status: ok (backup/expire running - 55.55% complete)\n"
-                    "        repo1 backup: 55.55% complete\n"
                     "\n"
                     "stanza: stanza3\n"
                     "    status: ok\n"
@@ -2056,7 +2054,6 @@ testRun(void)
                     infoRender(),
                     "stanza: stanza1\n"
                     "    status: ok (backup/expire running - 75.00% complete, restore running - 75.00% complete)\n"
-                    "        repo2 backup: 75.00% complete\n"
                     "\n"
                     "stanza: stanza3\n"
                     "    status: ok\n",
