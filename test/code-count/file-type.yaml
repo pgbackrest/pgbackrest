@@ -103,6 +103,14 @@ doc/src/command/build/build.h:
   class: doc/core
   type: c/h
 
+doc/src/command/build/eval.c:
+  class: doc/core
+  type: c
+
+doc/src/command/build/eval.h:
+  class: doc/core
+  type: c/h
+
 doc/src/command/build/man.c:
   class: doc/core
   type: c
@@ -3172,6 +3180,10 @@ test/src/module/db/dbTest.c:
   type: c
 
 test/src/module/doc/buildTest.c:
+  class: test/module
+  type: c
+
+test/src/module/doc/evalTest.c:
   class: test/module
   type: c
 
