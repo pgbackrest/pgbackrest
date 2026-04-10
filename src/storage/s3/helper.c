@@ -110,7 +110,7 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
             result = storageS3New(
                 cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoTargetTime(), pathExpressionCallback,
                 cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint,
-                cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx), keyType,
+                cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx), cfgOptionIdxStr(cfgOptRepoS3Service, repoIdx), keyType,
                 (StorageS3UriStyle)cfgOptionIdxSeq(cfgOptRepoS3UriStyle, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoS3KmsKeyId, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3SseCustomerKey, repoIdx), role,

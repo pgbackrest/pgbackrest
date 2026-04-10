@@ -1240,8 +1240,8 @@ static const StorageInterface storageInterfaceS3 =
 FN_EXTERN Storage *
 storageS3New(
     const String *const path, const bool write, const time_t targetTime, StoragePathExpressionCallback pathExpressionFunction,
-    const String *const bucket, const String *const endPoint, const String *const region, const StorageS3KeyType keyType,
-    const StorageS3UriStyle uriStyle, const String *const accessKey, const String *const secretAccessKey,
+    const String *const bucket, const String *const endPoint, const String *const region, const String *const service,
+    const StorageS3KeyType keyType, const StorageS3UriStyle uriStyle, const String *const accessKey, const String *const secretAccessKey,
     const String *const securityToken, const String *const kmsKeyId, const String *sseCustomerKey, const String *const credRole,
     const String *const tokenFile, const String *const credUrl, const size_t partSize, const KeyValue *const tag,
     const String *host, const unsigned int port, const TimeMSec timeout, const HttpProtocolType protocolType,
@@ -1255,6 +1255,7 @@ storageS3New(
         FUNCTION_LOG_PARAM(STRING, bucket);
         FUNCTION_LOG_PARAM(STRING, endPoint);
         FUNCTION_LOG_PARAM(STRING, region);
+        FUNCTION_LOG_PARAM(STRING, service);
         FUNCTION_LOG_PARAM(ENUM, keyType);
         FUNCTION_LOG_PARAM(ENUM, uriStyle);
         FUNCTION_TEST_PARAM(STRING, accessKey);
@@ -1290,11 +1291,7 @@ storageS3New(
             .interface = storageInterfaceS3,
             .bucket = strDup(bucket),
             .region = strDup(region),
-
-            // Use "s3-outposts" signing service when endpoint contains "s3-outposts", otherwise use "s3"
-            .signingService =
-                strstr(strZ(endPoint), S3_OUTPOSTS) != NULL ? S3_OUTPOSTS_SIGNING_SERVICE_STR : S3_SIGNING_SERVICE_STR,
-
+            .signingService = strEqZ(service, S3_OUTPOSTS) ? S3_OUTPOSTS_SIGNING_SERVICE_STR : S3_SIGNING_SERVICE_STR,
             .keyType = keyType,
             .kmsKeyId = strDup(kmsKeyId),
             .requesterPays = requesterPays,

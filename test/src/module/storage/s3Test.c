@@ -469,12 +469,13 @@ testRun(void)
             "check authorization header");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("s3-outposts endpoint uses s3-outposts signing service");
+        TEST_TITLE("repo-s3-service=s3-outposts uses s3-outposts signing service");
 
         hrnCfgEnvRemoveRaw(cfgOptRepoS3Token);
 
         argList = strLstDup(commonArgWithoutEndpointList);
         hrnCfgArgRawZ(argList, cfgOptRepoS3Endpoint, "s3-outposts.us-east-1.amazonaws.com");
+        hrnCfgArgRawZ(argList, cfgOptRepoS3Service, "s3-outposts");
         HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
         driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
@@ -499,7 +500,7 @@ testRun(void)
             "check s3-outposts authorization header");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("s3-outposts signing key regeneration on date change");
+        TEST_TITLE("repo-s3-service=s3-outposts signing key regeneration on date change");
 
         const Buffer *outpostsSigningKey = driver->signingKey;
 
@@ -516,7 +517,7 @@ testRun(void)
         TEST_RESULT_BOOL(driver->signingKey != outpostsSigningKey, true, "check signing key was regenerated");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("standard s3 endpoint uses s3 signing service");
+        TEST_TITLE("default repo-s3-service uses s3 signing service");
 
         argList = strLstDup(commonArgWithoutEndpointList);
         hrnCfgArgRaw(argList, cfgOptRepoS3Endpoint, endPoint);
@@ -524,7 +525,7 @@ testRun(void)
 
         driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
 
-        TEST_RESULT_STR_Z(driver->signingService, "s3", "check signing service is s3 for standard endpoint");
+        TEST_RESULT_STR_Z(driver->signingService, "s3", "check signing service is s3 for default repo-s3-service");
     }
 
     // *****************************************************************************************************************************
