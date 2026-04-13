@@ -57,7 +57,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: pgbackrest
 
@@ -77,7 +77,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: pgbackrest
 
@@ -101,7 +101,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: pgbackrest
 
@@ -173,7 +173,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: pgbackrest
 
@@ -197,7 +197,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: pgbackrest
 
@@ -221,13 +221,13 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install Packages
         run: sudo apt-get install -y --no-install-recommends libyaml-dev libbz2-dev meson
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: ${{matrix.language}}
 
@@ -235,4 +235,4 @@ jobs:
         run: meson setup ${HOME?}/build ${GITHUB_WORKSPACE?} && ninja -C ${HOME?}/build
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
