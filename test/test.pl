@@ -101,7 +101,6 @@ test.pl [options]
    --log-level-test     log level to use for C tests (defaults to OFF)
    --log-level-test-file log level to use for file logging in integration tests (defaults to TRACE)
    --no-log-timestamp   suppress timestamps, timings, etc. Used to generate documentation.
-   --make-cmd           gnu-compatible make command (defaults to make)
    --quiet, -q          equivalent to --log-level=off
 
  VM Options:
@@ -137,7 +136,6 @@ my $bCodeFormatCheck = false;
 my $bNoCleanup = false;
 my $strPgSqlBin;
 my $strTestPath;
-my $strMakeCmd = 'make';
 my $bVersion = false;
 my $bHelp = false;
 my $bQuiet = false;
@@ -177,7 +175,6 @@ GetOptions ('q|quiet' => \$bQuiet,
             'clean-only' => \$bCleanOnly,
             'psql-bin=s' => \$strPgSqlBin,
             'test-path=s' => \$strTestPath,
-            'make-cmd=s' => \$strMakeCmd,
             'log-level=s' => \$strLogLevel,
             'log-level-test=s' => \$strLogLevelTest,
             'log-level-test-file=s' => \$strLogLevelTestFile,
@@ -523,6 +520,7 @@ eval
     executeTest(
         "git -C ${strBackRestBase} ls-files -c --others --exclude-standard |" .
             " rsync -rLtW --delete --files-from=- --exclude=test/result" .
+            " --exclude=src/postgres/interface.auto.c.inc --exclude=src/command/help/help.auto.c.inc" .
             # This option is not supported on MacOS. The eventual plan is to remove the need for it.
             (trim(`uname`) ne 'Darwin' ? ' --ignore-missing-args' : '') .
             " ${strBackRestBase}/ ${strRepoCachePath}");
@@ -781,7 +779,7 @@ eval
             {
                 my $oJob = new pgBackRestTest::Common::JobTest(
                     $oStorageTest, $strBackRestBase, $strTestPath, $$oyTestRun[$iTestIdx], $bDryRun, $bVmOut, $strPlatform,
-                    $strVmArch, $strImage, $iVmIdx, $iVmMax, $strMakeCmd, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest,
+                    $strVmArch, $strImage, $iVmIdx, $iVmMax, $iTestIdx, $iTestMax, $strLogLevel, $strLogLevelTest,
                     $strLogLevelTestFile, !$bNoLogTimestamp, $bShowOutputAsync, $bNoCleanup, $iRetry, !$bNoBackTrace, !$bNoValgrind,
                     !$bNoCoverage, $bCoverageSummary, !$bNoOptimize, $bProfile, $iScale, $strTimeZone, !$bNoDebug, $bDebugTestTrace,
                     $iBuildMax / $iVmMax < 1 ? 1 : int($iBuildMax / $iVmMax));

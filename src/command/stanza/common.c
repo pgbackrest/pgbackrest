@@ -19,7 +19,7 @@ FN_EXTERN String *
 cipherPassGen(const CipherType cipherType)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING_ID, cipherType);
     FUNCTION_TEST_END();
 
     String *result = NULL;

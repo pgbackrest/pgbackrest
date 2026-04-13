@@ -119,6 +119,54 @@ jobs:
           ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup
           ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --no-optimize --build-max=2 --module=postgres --test=interface
 
+  # Selected unit tests on MacOS
+  macos:
+    runs-on: macos-26
+    env:
+      LDFLAGS: -L/opt/homebrew/opt/openssl@3/lib -L/opt/homebrew/opt/libpq/lib -L/opt/homebrew/opt/libxml2/lib -L/opt/homebrew/opt/libyaml/lib
+      CPPFLAGS: -I/opt/homebrew/opt/openssl@3/include -I/opt/homebrew/opt/libpq/include -I/opt/homebrew/opt/libxml2/include/libxml2 -I/opt/homebrew/opt/libyaml/include
+      PERL5LIB: /opt/homebrew/opt/perl5/lib/perl5
+      PKG_CONFIG_PATH: /opt/homebrew/opt/libpq/lib/pkgconfig:/opt/homebrew/opt/openssl@3/lib/pkgconfig
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Install
+        run: brew install -q pkg-config openssl@3 libpq libxml2 libyaml meson
+
+      - name: Debug
+        run: |
+          pwd
+          echo ${HOME?}
+          ls -lah
+          ls -lah ${GITHUB_WORKSPACE?}
+
+      - name: Run Test
+        run: cd .. && ${GITHUB_WORKSPACE?}/test/test.pl --vm-max=2 --no-coverage --no-valgrind  --module=command --test=backup --test=info --test=archive-push
+
+  # Selected unit tests on FreeBSD
+  freebsd:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        os:
+          - version: '14.3'
+          - version: '15.0'
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run Test
+        uses: cross-platform-actions/action@v1.0.0
+        with:
+          operating_system: freebsd
+          version: ${{matrix.os.version}}
+          run: |
+            uname -a
+            sudo pkg update && sudo pkg upgrade -y libiconv && sudo pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync meson
+            cd .. && perl ${GITHUB_WORKSPACE?}/test/test.pl --vm-max=2 --no-coverage --no-valgrind  --module=command --test=backup --test=info --test=archive-push
+
   # Run meson unity build to check for errors, unused functions, and externed functions
   unity:
     runs-on: ubuntu-24.04
