@@ -77,10 +77,6 @@ STRING_STATIC(S3_XML_TAG_VERSION_ID_STR,                            "VersionId")
 /***********************************************************************************************************************************
 AWS authentication v4 constants
 ***********************************************************************************************************************************/
-#define S3                                                          "s3"
-#define S3_OUTPOSTS                                                 "s3-outposts"
-STRING_STATIC(S3_SIGNING_SERVICE_STR,                               S3);
-STRING_STATIC(S3_OUTPOSTS_SIGNING_SERVICE_STR,                      S3_OUTPOSTS);
 #define AWS4                                                        "AWS4"
 #define AWS4_REQUEST                                                "aws4_request"
 BUFFER_STRDEF_STATIC(AWS4_REQUEST_BUF,                              AWS4_REQUEST);
@@ -102,7 +98,7 @@ struct StorageS3
 
     const String *bucket;                                           // Bucket to store data in
     const String *region;                                           // e.g. us-east-1
-    const String *signingService;                                   // SigV4 signing service ("s3" or "s3-outposts")
+    const String *signingService;                                   // SigV4 signing service
     StorageS3KeyType keyType;                                       // Key type (e.g. storageS3KeyTypeShared)
     String *accessKey;                                              // Access key
     String *secretAccessKey;                                        // Secret access key
@@ -1291,7 +1287,7 @@ storageS3New(
             .interface = storageInterfaceS3,
             .bucket = strDup(bucket),
             .region = strDup(region),
-            .signingService = strEqZ(service, S3_OUTPOSTS) ? S3_OUTPOSTS_SIGNING_SERVICE_STR : S3_SIGNING_SERVICE_STR,
+            .signingService = strDup(service),
             .keyType = keyType,
             .kmsKeyId = strDup(kmsKeyId),
             .requesterPays = requesterPays,
