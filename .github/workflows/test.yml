@@ -12,6 +12,10 @@ on:
       - '**-ci'
       - '**-cig'
 
+# Limit permissions on the repository
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-22.04
