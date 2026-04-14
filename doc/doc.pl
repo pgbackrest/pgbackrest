@@ -221,6 +221,7 @@ eval
     my $strBuildPath = "${strBasePath}/output/build";
     my $strRepoPath = dirname($strBasePath);
     my $strBuildNinja = "${strBuildPath}/build.ninja";
+    my $strBuildVar = "";
 
     &log(INFO, "build C helper");
 
@@ -229,9 +230,16 @@ eval
         executeTest("meson setup -Dwerror=true -Dfatal-errors=true -Dbuildtype=debug ${strBuildPath} ${strRepoPath}");
     }
 
+    foreach my $strVar (sort(keys(%{$rhVariableOverride})))
+    {
+        $strBuildVar .= " --var=${strVar}=\"" . $rhVariableOverride->{$strVar} . '"';
+    }
+
+    $strBuildVar .= " --var=debug=" . ($bDebug ? 'y' : 'n');
+
     executeTest("ninja -C ${strBuildPath} doc/src/doc-pgbackrest");
     executeTest(
-        "${strBuildPath}/doc/src/doc-pgbackrest --repo-path=${strRepoPath}" .
+        "${strBuildPath}/doc/src/doc-pgbackrest --repo-path=${strRepoPath}${strBuildVar}" .
             ($strLogLevel ne 'info' ? " --log-level=${strLogLevel}" : ''),
         {bShowOutputAsync => true});
 

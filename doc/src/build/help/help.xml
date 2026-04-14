@@ -132,6 +132,18 @@
                 <text>
                     <p>Build the specified documentation module.</p>
                 </text>
+
+                <option-list>
+                    <option id="var" name="Set variable">
+                        <summary>Set variable.</summary>
+
+                        <text>
+                            <p>This will override the variable as defined in the XML.</p>
+                        </text>
+
+                        <example>os-type=rhel</example>
+                    </option>
+                </option-list>
             </command>
 
             <command id="version">

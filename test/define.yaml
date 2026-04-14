@@ -1039,13 +1039,15 @@ unit:
     test:
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: build
-        total: 1
+        total: 2
 
         coverage:
           - doc/command/build/build
+          - doc/command/build/eval
           - doc/command/build/man
           - doc/command/build/pre
           - doc/command/build/reference
+          - doc/command/build/varStore
 
 # **********************************************************************************************************************************
 # Integration tests

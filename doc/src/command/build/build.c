@@ -14,14 +14,16 @@ Build Command
 
 /**********************************************************************************************************************************/
 void
-cmdBuild(const String *const pathRepo)
+cmdBuild(const String *const pathRepo, const KeyValue *const varKv)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, pathRepo);
+        FUNCTION_LOG_PARAM(KEY_VALUE, varKv);
     FUNCTION_LOG_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
+        VarStore *const varStore = varStoreNew();
         Storage *const storageRepo = storagePosixNewP(pathRepo, .write = true);
         const BldCfg bldCfg = bldCfgParse(storageRepo);
         const BldHlp bldHlp = bldHlpParse(storageRepo, bldCfg, true);
@@ -29,6 +31,18 @@ cmdBuild(const String *const pathRepo)
             xmlDocumentNewBuf(storageGetP(storageNewReadP(storageRepo, STRDEF("doc/xml/index.xml")))));
         XmlDocument *const userGuide = xmlDocumentNewBuf(
             storageGetP(storageNewReadP(storageRepo, STRDEF("doc/xml/user-guide.xml"))));
+
+        // Load variables from command-line
+        if (varKv != NULL)
+        {
+            const VariantList *const varList = kvKeyList(varKv);
+
+            for (unsigned int varIdx = 0; varIdx < varLstSize(varList); varIdx++)
+            {
+                const Variant *const key = varLstGet(varList, varIdx);
+                varStoreAdd(varStore, varStr(key), varStr(kvGet(varKv, key)));
+            }
+        }
 
         storagePutP(
             storageNewWriteP(storageRepo, STRDEF("doc/output/xml/command.xml")),
@@ -38,7 +52,7 @@ cmdBuild(const String *const pathRepo)
             xmlDocumentBuf(referenceConfigurationRender(&bldCfg, &bldHlp)));
         storagePutP(
             storageNewWriteP(storageRepo, STRDEF("doc/output/xml/user-guide.xml")),
-            xmlDocumentBuf(buildPre(userGuide, &bldCfg, &bldHlp)));
+            xmlDocumentBuf(buildPre(userGuide, &bldCfg, &bldHlp, varStore)));
         storagePutP(
             storageNewWriteP(storageRepo, STRDEF("doc/output/man/" PROJECT_BIN ".1.txt")),
             BUFSTR(referenceManRender(index, &bldCfg, &bldHlp)));
