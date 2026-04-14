@@ -19,7 +19,6 @@ use File::Basename qw(dirname);
 #-----------------------------------------------------------------------------------------------------------------------------------
 push @EXPORT, qw(PROJECT_NAME);
 push @EXPORT, qw(PROJECT_EXE);
-push @EXPORT, qw(PROJECT_CONF);
 
 # Project Version Number
 #
@@ -29,8 +28,6 @@ push @EXPORT, qw(PROJECT_CONF);
 push @EXPORT, qw(PROJECT_VERSION_MAJOR);
 push @EXPORT, qw(PROJECT_VERSION_MINOR);
 push @EXPORT, qw(PROJECT_VERSION_PATCH);
-push @EXPORT, qw(PROJECT_VERSION_SUFFIX);
-
 push @EXPORT, qw(PROJECT_VERSION);
 
 # Repository Format Number
@@ -38,8 +35,6 @@ push @EXPORT, qw(PROJECT_VERSION);
 # Defines format for info and manifest files as well as on-disk structure. If this number changes then the repository will be
 # invalid unless migration functions are written.
 #-----------------------------------------------------------------------------------------------------------------------------------
-push @EXPORT, qw(REPOSITORY_FORMAT);
-
 ####################################################################################################################################
 # Load project info from src/version.h
 ####################################################################################################################################
@@ -58,7 +53,6 @@ foreach my $strLine (split("\n", $strProjectInfo))
     elsif ($strLine =~ /^#define PROJECT_BIN/)
     {
         eval("use constant PROJECT_EXE => " . (split(" ", $strLine))[-1]);
-        eval("use constant PROJECT_CONF => " . (split(" ", $strLine))[-1] . " . \'.conf\'");
     }
     elsif ($strLine =~ /^#define PROJECT_VERSION_MAJOR/)
     {
@@ -75,10 +69,6 @@ foreach my $strLine (split("\n", $strProjectInfo))
     elsif ($strLine =~ /^#define PROJECT_VERSION_SUFFIX/)
     {
         eval("use constant PROJECT_VERSION_SUFFIX => " . (split(" ", $strLine))[-1]);
-    }
-    elsif ($strLine =~ /^#define REPOSITORY_FORMAT/)
-    {
-        eval("use constant REPOSITORY_FORMAT => " . (split(" ", $strLine))[-1]);
     }
 }
 

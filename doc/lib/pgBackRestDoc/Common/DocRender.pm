@@ -416,7 +416,7 @@ sub build
         }
 
         # Set log to true if this section has an execute list. This helps reduce the info logging by only showing sections that are
-        # likely to take a log time.
+        # likely to take a long time.
         $oNode->paramSet('log', $self->{bExe} && $oNode->nodeList('execute-list', false) > 0 ? true : false);
 
         # If section content is being pulled from elsewhere go get the content
@@ -457,54 +457,6 @@ sub build
             &log(DEBUG, "modify link section from '" . $oNode->paramGet('section') . "' to '${strNewPath}'");
 
             $oNode->paramSet('section', $strNewPath);
-        }
-    }
-    # Store block defines
-    elsif ($strName eq 'block-define')
-    {
-        my $strBlockId = $oNode->paramGet('id');
-
-        if (defined($self->{oyBlockDefine}{$strBlockId}))
-        {
-            confess &log(ERROR, "block ${strBlockId} is already defined");
-        }
-
-        $self->{oyBlockDefine}{$strBlockId} = dclone($oNode->{oDoc}{children});
-        $oParent->nodeRemove($oNode);
-    }
-    # Copy blocks
-    elsif ($strName eq 'block')
-    {
-        my $strBlockId = $oNode->paramGet('id');
-
-        if (!defined($self->{oyBlockDefine}{$strBlockId}))
-        {
-            confess &log(ERROR, "block ${strBlockId} is not defined");
-        }
-
-        my $strNodeJSON = $self->{oJSON}->encode($self->{oyBlockDefine}{$strBlockId});
-
-        foreach my $oVariable ($oNode->nodeList('block-variable-replace', false))
-        {
-            my $strVariableKey = $oVariable->paramGet('key');
-            my $strVariableReplace = $oVariable->valueGet();
-
-            $strNodeJSON =~ s/\{\[$strVariableKey\]\}/$strVariableReplace/g;
-        }
-
-        my ($iReplaceIdx, $iReplaceTotal) = $oParent->nodeReplace($oNode, $self->{oJSON}->decode($strNodeJSON));
-
-        # Build any new children that were added
-        my $iChildIdx = 0;
-
-        foreach my $oChild ($oParent->nodeList(undef, false))
-        {
-            if ($iChildIdx >= $iReplaceIdx && $iChildIdx < ($iReplaceIdx + $iReplaceTotal))
-            {
-                $self->build($oChild, $oParent, $strPath, $strPathPrefix);
-            }
-
-            $iChildIdx++;
         }
     }
     # Check for pre-execute statements

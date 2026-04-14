@@ -24,8 +24,13 @@ XmlDocument *xmlDocumentNewParam(const String *rootNode, XmlDocumentNewParam par
 /***********************************************************************************************************************************
 Node Getters/Setters
 ***********************************************************************************************************************************/
-// Get/set node attribute
+// Get node attribute
 String *xmlNodeAttribute(const XmlNode *this, const String *name);
+
+// Remove node attribute
+void xmlNodeAttributeRemove(XmlNode *this, const String *name);
+
+// Set node attribute
 void xmlNodeAttributeSet(XmlNode *this, const String *name, const String *value);
 
 /***********************************************************************************************************************************
@@ -40,7 +45,19 @@ void xmlNodeChildInsert(XmlNode *this, const XmlNode *child);
 // Replace a node with the child nodes
 void xmlNodeChildReplace(XmlNode *this, const XmlNode *child);
 
+// Get list of attribute names
+StringList *xmlNodeAttributeList(const XmlNode *this);
+
 // Get list of all child nodes
-XmlNodeList *xmlNodeChildListAll(const XmlNode *this);
+XmlNodeList *xmlNodeChildListAll(const XmlNode *this, bool text);
+
+// Set text node content (replaces existing content, unlike xmlNodeContentSet which appends)
+void xmlNodeTextSet(XmlNode *this, const String *content);
+
+// Duplicate node
+XmlNode *xmlNodeDup(const XmlNode *this);
+
+// Remove node
+void xmlNodeRemove(XmlNode *this);
 
 #endif

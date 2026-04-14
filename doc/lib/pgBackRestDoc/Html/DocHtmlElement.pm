@@ -26,8 +26,6 @@ use constant HTML_DIV                                               => 'div';
     push @EXPORT, qw(HTML_DIV);
 use constant HTML_IMG                                               => 'img';
     push @EXPORT, qw(HTML_IMG);
-use constant HTML_SPAN                                              => 'span';
-    push @EXPORT, qw(HTML_SPAN);
 use constant HTML_TABLE                                             => 'table';
     push @EXPORT, qw(HTML_TABLE);
 use constant HTML_TABLE_CAPTION                                     => 'caption';
