@@ -1237,11 +1237,12 @@ FN_EXTERN Storage *
 storageS3New(
     const String *const path, const bool write, const time_t targetTime, StoragePathExpressionCallback pathExpressionFunction,
     const String *const bucket, const String *const endPoint, const String *const region, const String *const service,
-    const StorageS3KeyType keyType, const StorageS3UriStyle uriStyle, const String *const accessKey, const String *const secretAccessKey,
-    const String *const securityToken, const String *const kmsKeyId, const String *sseCustomerKey, const String *const credRole,
-    const String *const tokenFile, const String *const credUrl, const size_t partSize, const KeyValue *const tag,
-    const String *host, const unsigned int port, const TimeMSec timeout, const HttpProtocolType protocolType,
-    const bool verifyPeer, const String *const caFile, const String *const caPath, const bool requesterPays)
+    const StorageS3KeyType keyType, const StorageS3UriStyle uriStyle, const String *const accessKey,
+    const String *const secretAccessKey, const String *const securityToken, const String *const kmsKeyId,
+    const String *sseCustomerKey, const String *const credRole, const String *const tokenFile, const String *const credUrl,
+    const size_t partSize, const KeyValue *const tag, const String *host, const unsigned int port, const TimeMSec timeout,
+    const HttpProtocolType protocolType, const bool verifyPeer, const String *const caFile, const String *const caPath,
+    const bool requesterPays)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
