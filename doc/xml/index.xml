@@ -26,6 +26,8 @@
     <section id="obsolescence">
         <title>NOTICE OF OBSOLESCENCE</title>
 
+        <p>TL;DR: pgBackRest is no longer being maintained. If you fork pgBackRest, please select a new name for your project.</p>
+
         <p>After a lot of thought, I have decided to stop working on pgBackRest. I did not come to this decision lightly. pgBackRest has been my passion project for the last thirteen years, and I was fortunate to have corporate sponsorship for much of this time, but there were also many late nights and weekends as I worked to make pgBackRest the project it is today, aided by numerous contributors. Every open-source developer knows exactly what I mean and how much of your life gets devoted to a special project.</p>
 
         <p>Since Crunchy Data was sold, I have been maintaining pgBackRest and looking for a position that would allow me to continue the work, but so far I have not been successful. Likewise, my efforts to secure sponsorship have also fallen far short of what I need to make the project viable.</p>
