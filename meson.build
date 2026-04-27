@@ -19,12 +19,29 @@ project(
         'unity_size=100000',
 
         # Compiler options
-        'c_std=c99',
+        'c_std=c11',
     ],
 )
 
 # Selected C compiler
 cc = meson.get_compiler('c')
+
+####################################################################################################################################
+# Check for C11 compiler support (setting c_std has no effect -- works in 1.8.1 so likely a bug in our version)
+####################################################################################################################################
+c11_test = '''
+#if !defined __STDC_VERSION__ || __STDC_VERSION__ < 201112L
+# error "C compiler does not advertise C11 conformance"
+#endif
+'''
+
+if not cc.compiles(c11_test)
+    if cc.compiles(c11_test, args: '-std=c11')
+        add_project_arguments('-std=c11', language: 'c')
+    else
+        error('C compiler does not support C11')
+    endif
+endif
 
 ####################################################################################################################################
 # OS-specific settings
@@ -215,11 +232,6 @@ if not cc.compiles(
         args: ['-Wsign-conversion', '-Werror'])
     message('Disabling -Wsign-conversion because int is not accepted without warning by FD_*() macros')
     add_project_arguments(cc.get_supported_arguments('-Wno-sign-conversion'), language: 'c')
-endif
-
-# Check if the C compiler supports _Static_assert()
-if cc.compiles('''int main(void) {({ _Static_assert(1, "foo");});} ''')
-  configuration.set('HAVE_STATIC_ASSERT', true, description: 'Does the compiler provide _Static_assert()?')
 endif
 
 # Enable debug code
