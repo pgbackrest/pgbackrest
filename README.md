@@ -1,12 +1,22 @@
 # pgBackRest <br/> Reliable PostgreSQL Backup & Restore
 
+## NOTICE OF OBSOLESCENCE
+
+After a lot of thought, I have decided to stop working on pgBackRest. I did not come to this decision lightly. pgBackRest has been my passion project for the last thirteen years, and I was fortunate to have corporate sponsorship for much of this time, but there were also many late nights and weekends as I worked to make pgBackRest the project it is today, aided by numerous contributors. Every open-source developer knows exactly what I mean and how much of your life gets devoted to a special project.
+
+Since Crunchy Data was sold, I have been maintaining pgBackRest and looking for a position that would allow me to continue the work, but so far I have not been successful. Likewise, my efforts to secure sponsorship have also fallen far short of what I need to make the project viable.
+
+Like everyone else, I need to make a living, and the range of pgBackRest-related roles is very limited. I can now consider a wider variety of opportunities, but those will not leave me time to work on pgBackRest, which requires a fair amount of time for maintenance, bug fixes, PR reviews, answering issues, etc. That does not even include time to write new features, which is what I really love to do. Rather than do the work poorly and/or sporadically, I think it makes more sense to have a hard stop.
+
+I imagine at some point pgBackRest will be forked, but that will be a new project with new maintainers, and they will need to build trust the same way we did.
+
+Again, many thanks to all the pgBackRest contributors over the years. It was a pleasure working with you!
+
 ## Introduction
 
 pgBackRest is a reliable backup and restore solution for PostgreSQL that seamlessly scales up to the largest databases and workloads.
 
 pgBackRest [v2.58.0](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.58.0) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
-
-Please give us a star on [GitHub](https://github.com/pgbackrest/pgbackrest) if you like pgBackRest! Consider a [sponsorship](https://github.com/sponsors/dwsteele) if you use pgBackRest in your enterprise.
 
 ## Features
 
@@ -98,19 +108,9 @@ pgBackRest strives to be easy to configure and operate:
 
 - [Configuration reference](http://www.pgbackrest.org/configuration.html) for creating pgBackRest configurations.
 
-## Contributions
-
-Contributions to pgBackRest are always welcome! Please see our [Contributing Guidelines](https://github.com/pgbackrest/pgbackrest/blob/main/CONTRIBUTING.md) for details on how to contribute features, improvements or issues.
-
-## Support
-
-pgBackRest is completely free and open source under the [MIT](https://github.com/pgbackrest/pgbackrest/blob/main/LICENSE) license. You may use it for personal or commercial purposes without any restrictions whatsoever. Bug reports are taken very seriously and will be addressed as quickly as possible. Please report bugs [here]({[github-url-base}]/issues).
-
-Creating a robust disaster recovery policy with proper replication and backup strategies can be a very complex and daunting task. You may find that you need help during the architecture phase and ongoing support to ensure that your enterprise continues running smoothly. There are a variety of PostgreSQL support companies that can provide this service.
-
 ## Sponsorship
 
-pgBackRest would not exist without sponsors. Writing new features, fixing bugs, reviewing contributions, answering questions from the community, and maintenance all take a considerable amount of time. Please consider a [sponsorship](https://github.com/sponsors/dwsteele) if you use pgBackRest in your enterprise.
+pgBackRest would not exist without sponsors. Writing new features, fixing bugs, reviewing contributions, answering questions from the community, and maintenance all take a considerable amount of time.
 
 Current sponsors: [Supabase](https://supabase.com).
 

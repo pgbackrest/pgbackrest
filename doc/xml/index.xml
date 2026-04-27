@@ -23,14 +23,27 @@
     </variable-list>
 
     <!-- ======================================================================================================================= -->
+    <section id="obsolescence">
+        <title>NOTICE OF OBSOLESCENCE</title>
+
+        <p>After a lot of thought, I have decided to stop working on pgBackRest. I did not come to this decision lightly. pgBackRest has been my passion project for the last thirteen years, and I was fortunate to have corporate sponsorship for much of this time, but there were also many late nights and weekends as I worked to make pgBackRest the project it is today, aided by numerous contributors. Every open-source developer knows exactly what I mean and how much of your life gets devoted to a special project.</p>
+
+        <p>Since Crunchy Data was sold, I have been maintaining pgBackRest and looking for a position that would allow me to continue the work, but so far I have not been successful. Likewise, my efforts to secure sponsorship have also fallen far short of what I need to make the project viable.</p>
+
+        <p>Like everyone else, I need to make a living, and the range of pgBackRest-related roles is very limited. I can now consider a wider variety of opportunities, but those will not leave me time to work on pgBackRest, which requires a fair amount of time for maintenance, bug fixes, PR reviews, answering issues, etc. That does not even include time to write new features, which is what I really love to do. Rather than do the work poorly and/or sporadically, I think it makes more sense to have a hard stop.</p>
+
+        <p>I imagine at some point pgBackRest will be forked, but that will be a new project with new maintainers, and they will need to build trust the same way we did.</p>
+
+        <p>Again, many thanks to all the pgBackRest contributors over the years. It was a pleasure working with you!</p>
+    </section>
+
+    <!-- ======================================================================================================================= -->
     <section id="introduction">
         <title>Introduction</title>
 
         <p><backrest/> is a reliable backup and restore solution for <postgres/> that seamlessly scales up to the largest databases and workloads.</p>
 
         <p><backrest/> <link url="{[github-url-base]}/releases/tag/release/{[version-stable]}">v{[version-stable]}</link> is the current stable release. Release notes are on the <link page="{[backrest-page-release]}">Releases</link> page.</p>
-
-        <p>Please give us a star on <link url="{[github-url-base]}">GitHub</link> if you like <backrest/>! Consider a <link url="{[github-url-root]}/sponsors/dwsteele">sponsorship</link> if you use <backrest/> in your enterprise.</p>
     </section>
 
     <!-- ======================================================================================================================= -->
@@ -175,26 +188,10 @@
     </section>
 
     <!-- ======================================================================================================================= -->
-    <section id="contributions">
-        <title>Contributions</title>
-
-        <p>Contributions to <backrest/> are always welcome! Please see our <link url="{[github-url-contributing]}">Contributing Guidelines</link> for details on how to contribute features, improvements or issues.</p>
-    </section>
-
-    <!-- ======================================================================================================================= -->
-    <section id="support">
-        <title>Support</title>
-
-        <p><backrest/> is completely free and open source under the <link url="{[github-url-license]}">MIT</link> license. You may use it for personal or commercial purposes without any restrictions whatsoever. Bug reports are taken very seriously and will be addressed as quickly as possible. Please report bugs <link url="{[github-url-base}]/issues">here</link>.</p>
-
-        <p>Creating a robust disaster recovery policy with proper replication and backup strategies can be a very complex and daunting task. You may find that you need help during the architecture phase and ongoing support to ensure that your enterprise continues running smoothly. There are a variety of <postgres/> support companies that can provide this service.</p>
-    </section>
-
-    <!-- ======================================================================================================================= -->
     <section id="sponsorship">
         <title>Sponsorship</title>
 
-        <p><backrest/> would not exist without sponsors. Writing new features, fixing bugs, reviewing contributions, answering questions from the community, and maintenance all take a considerable amount of time. Please consider a <link url="{[github-url-root]}/sponsors/dwsteele">sponsorship</link> if you use <backrest/> in your enterprise.</p>
+        <p><backrest/> would not exist without sponsors. Writing new features, fixing bugs, reviewing contributions, answering questions from the community, and maintenance all take a considerable amount of time.</p>
 
         <p>Current sponsors:</p>
 
