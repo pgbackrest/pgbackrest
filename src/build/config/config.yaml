@@ -2383,6 +2383,10 @@ option:
       list:
         - s3
 
+  repo-s3-service:
+    inherit: repo-s3-bucket
+    default: s3
+
   repo-s3-uri-style:
     section: global
     group: repo
