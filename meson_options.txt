@@ -2,3 +2,4 @@ option('configdir', type: 'string', value: '/etc/pgbackrest', description: 'Conf
 option('fatal-errors', type: 'boolean', value: false, description: 'Stop compilation on first error')
 option('libssh2', type: 'feature', value: 'auto', description: 'Enable SFTP storage support')
 option('libzstd', type: 'feature', value: 'auto', description: 'Enable Zstandard compression support')
+option('libsystemd', type: 'feature', value: 'auto', description: 'Enable systemd notify support')

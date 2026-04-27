@@ -4,6 +4,9 @@ Server Command
 #include <build.h>
 
 #include <sys/wait.h>
+#ifdef HAVE_LIBSYSTEMD
+#include <systemd/sd-daemon.h>
+#endif
 
 #include "command/exit.h"
 #include "command/remote/remote.h"
@@ -134,6 +137,11 @@ cmdServer(const unsigned int argListSize, const char *argList[])
             SIGCHLD, &(struct sigaction){.sa_sigaction = cmdServerSigChild, .sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT | SA_SIGINFO},
             NULL);
 
+        // Notify systemd that we are ready to accept connections
+#ifdef HAVE_LIBSYSTEMD
+        sd_notify(0, "READY=1");
+#endif
+
         // Accept connections indefinitely. The only way to exit this loop is for the process to receive a signal.
         do
         {
@@ -195,6 +203,11 @@ cmdServer(const unsigned int argListSize, const char *argList[])
         while (!serverLocal.sigTerm);
     }
     MEM_CONTEXT_TEMP_END();
+
+    // Notify systemd that we are shutting down
+#ifdef HAVE_LIBSYSTEMD
+    sd_notify(0, "STOPPING=1");
+#endif
 
     // Terminate any remaining children on SIGTERM. Disable the callback so it does not fire in the middle of the loop.
     if (serverLocal.sigTerm)

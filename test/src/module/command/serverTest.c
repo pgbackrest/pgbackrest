@@ -9,6 +9,7 @@ Test Server Command
 #include "common/harnessFork.h"
 #include "common/harnessServer.h"
 #include "common/harnessStorage.h"
+#include "common/harnessSystemd.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -168,6 +169,11 @@ testRun(void)
                             HRN_FORK_CHILD_NOTIFY_PUT();
                             exit(0);
                         }
+
+                        // Check that sd_notify calls were made
+#ifdef HAVE_LIBSYSTEMD
+                        hrnSystemDCheck();
+#endif
                     }
                     HRN_FORK_CHILD_END();
 
@@ -273,6 +279,11 @@ testRun(void)
                             HRN_FORK_CHILD_NOTIFY_PUT();
                             exit(0);
                         }
+
+                        // Check that sd_notify calls were made
+#ifdef HAVE_LIBSYSTEMD
+                        hrnSystemDCheck();
+#endif
                     }
                     HRN_FORK_CHILD_END();
 
