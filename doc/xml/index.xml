@@ -24,7 +24,19 @@
 
     <!-- ======================================================================================================================= -->
     <section id="obsolescence">
-        <title>NOTICE OF OBSOLESCENCE</title>
+        <title>MAINTENANCE UPDATE</title>
+
+        <p>After I announced that I am no longer maintaining pgBackRest my inbox blew up. It took a while to sort through the messages &amp;mdash; many of them were well wishes and thank-yous for my work over the years.</p>
+
+        <p>But a pattern soon emerged. It is clear that many pgBackRest users, especially those with pgBackRest users of their own to support, would prefer the project to continue with me as the primary maintainer. I would like nothing more, but after months of fundraising I had just decided it wasn't going to happen.</p>
+
+        <p>Now the situation has changed, and it appears all but certain that I will be able to secure enough funding to continue the project. This time pgBackRest will be funded by a coalition of sponsors so that a single acquisition will no longer affect my ability to continue work on the project. We should also be able to bring on another maintainer to distribute the workload and provide continuity in the future.</p>
+
+        <p>I know this has been a shock and there is a lot of uncertainty. Please be patient &amp;mdash; the current version of pgBackRest works, and there are no critical outstanding bugs or security issues so there is no need to immediately fork the project.</p>
+
+        <p>I expect to make a more definitive announcement by the end of the week. Until then, please hold tight and know that we are actively working to revive pgBackRest.</p>
+
+        <p>PRIOR NOTICE OF OBSOLESCENCE:</p>
 
         <p>TL;DR: pgBackRest is no longer being maintained. If you fork pgBackRest, please select a new name for your project.</p>
 

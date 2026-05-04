@@ -1,6 +1,18 @@
 # pgBackRest <br/> Reliable PostgreSQL Backup & Restore
 
-## NOTICE OF OBSOLESCENCE
+## MAINTENANCE UPDATE
+
+After I announced that I am no longer maintaining pgBackRest my inbox blew up. It took a while to sort through the messages &mdash; many of them were well wishes and thank-yous for my work over the years.
+
+But a pattern soon emerged. It is clear that many pgBackRest users, especially those with pgBackRest users of their own to support, would prefer the project to continue with me as the primary maintainer. I would like nothing more, but after months of fundraising I had just decided it wasn't going to happen.
+
+Now the situation has changed, and it appears all but certain that I will be able to secure enough funding to continue the project. This time pgBackRest will be funded by a coalition of sponsors so that a single acquisition will no longer affect my ability to continue work on the project. We should also be able to bring on another maintainer to distribute the workload and provide continuity in the future.
+
+I know this has been a shock and there is a lot of uncertainty. Please be patient &mdash; the current version of pgBackRest works, and there are no critical outstanding bugs or security issues so there is no need to immediately fork the project.
+
+I expect to make a more definitive announcement by the end of the week. Until then, please hold tight and know that we are actively working to revive pgBackRest.
+
+PRIOR NOTICE OF OBSOLESCENCE:
 
 TL;DR: pgBackRest is no longer being maintained. If you fork pgBackRest, please select a new name for your project.
 
