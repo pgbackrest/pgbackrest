@@ -489,9 +489,6 @@ storageRemoteNew(
             .interface = storageInterfaceRemote,
         };
 
-        // Set concurrency
-        this->interface.concurrency = 1;
-
         // Get storage features from the remote
         MEM_CONTEXT_TEMP_BEGIN()
         {

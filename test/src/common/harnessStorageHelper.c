@@ -687,9 +687,6 @@ hrnStorageTestNew(
                 path, .write = write, .modeFile = STORAGE_MODE_FILE_DEFAULT, .modePath = STORAGE_MODE_PATH_DEFAULT,
                 .pathExpressionFunction = pathExpressionFunction),
         };
-
-        // Set concurrency
-        this->interface.concurrency = 1;
     }
     OBJ_NEW_END();
 

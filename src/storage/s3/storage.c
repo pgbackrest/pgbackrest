@@ -1243,7 +1243,7 @@ storageS3New(
     const String *const tokenFile, const String *const credUrl, const size_t partSize, const KeyValue *const tag,
     const String *host, const unsigned int port, const TimeMSec timeout, const HttpProtocolType protocolType,
     const bool verifyPeer, const String *const caFile, const String *const caPath, const bool requesterPays,
-    const unsigned int concurrency, const uint64_t readOver)
+    const unsigned int prefetch, const uint64_t readOver)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -1273,7 +1273,7 @@ storageS3New(
         FUNCTION_LOG_PARAM(STRING, caFile);
         FUNCTION_LOG_PARAM(STRING, caPath);
         FUNCTION_LOG_PARAM(BOOL, requesterPays);
-        FUNCTION_LOG_PARAM(UINT, concurrency);
+        FUNCTION_LOG_PARAM(UINT, prefetch);
         FUNCTION_LOG_PARAM(UINT64, readOver);
     FUNCTION_LOG_END();
 
@@ -1304,8 +1304,8 @@ storageS3New(
             .signingKeyDate = YYYYMMDD_STR,
         };
 
-        // Set concurrency and read over
-        this->interface.concurrency = concurrency;
+        // Set prefetch and read over
+        this->interface.prefetch = prefetch;
         this->interface.readOver = readOver;
 
         // Create tag query string

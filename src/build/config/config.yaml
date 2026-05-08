@@ -2165,12 +2165,12 @@ option:
         - gcs
         - s3
 
-  repo-storage-concurrency:
+  repo-storage-prefetch:
     section: global
     group: repo
     type: integer
-    default: 4
-    allow-range: [1, 1024]
+    default: 3
+    allow-range: [0, 1024]
     command: repo-type
     depend:
       option: repo-type
@@ -2183,7 +2183,7 @@ option:
     section: global
     group: repo
     type: size
-    default: 8KiB
+    default: 64KiB
     allow-range: [0B, 1MiB]
     command: repo-type
     depend:

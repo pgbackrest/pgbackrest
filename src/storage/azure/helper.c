@@ -85,7 +85,7 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
                 cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), endpoint, uriStyle, port, ioTimeoutMs(), protocolType,
                 cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx),
-                cfgOptionIdxUInt(cfgOptRepoStorageConcurrency, repoIdx), cfgOptionIdxUInt64(cfgOptRepoStorageReadOver, repoIdx));
+                cfgOptionIdxUInt(cfgOptRepoStoragePrefetch, repoIdx), cfgOptionIdxUInt64(cfgOptRepoStorageReadOver, repoIdx));
         }
         MEM_CONTEXT_PRIOR_END();
     }

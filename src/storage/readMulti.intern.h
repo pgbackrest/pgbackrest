@@ -10,7 +10,7 @@ Storage Read Multi Internal
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN StorageReadMulti *storageReadMultiNew(const Storage *storage, unsigned int concurrency, uint64_t readOver);
+FN_EXTERN StorageReadMulti *storageReadMultiNew(const Storage *storage, unsigned int prefetch, uint64_t readOver);
 
 /***********************************************************************************************************************************
 Getters/Setters

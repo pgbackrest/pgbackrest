@@ -1235,9 +1235,6 @@ storageSftpNew(
             .timeout = timeout,
         };
 
-        // Set concurrency
-        this->interface.concurrency = 1;
-
         // Init SFTP session
         if (libssh2_init(0) != 0)
             THROW_FMT(ServiceError, "unable to init libssh2");

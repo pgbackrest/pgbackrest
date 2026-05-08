@@ -360,16 +360,16 @@ static const IoReadInterface storageIoReadMultiInterface =
 };
 
 FN_EXTERN StorageReadMulti *
-storageReadMultiNew(const Storage *const storage, const unsigned int concurrency, const uint64_t readOver)
+storageReadMultiNew(const Storage *const storage, const unsigned int prefetch, const uint64_t readOver)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE, storage);
-        FUNCTION_LOG_PARAM(UINT, concurrency);
+        FUNCTION_LOG_PARAM(UINT, prefetch);
         FUNCTION_LOG_PARAM(UINT64, readOver);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
-    ASSERT(concurrency != 0);
+    ASSERT(prefetch != 0);
 
     OBJ_NEW_BEGIN(StorageReadMulti, .childQty = MEM_CONTEXT_QTY_MAX)
     {
@@ -378,7 +378,7 @@ storageReadMultiNew(const Storage *const storage, const unsigned int concurrency
             .storage = storage,
             .requestList = lstNewP(sizeof(StorageReadMultiRequest), .comparator = lstComparatorStr),
             .queue = lstNewP(sizeof(StorageRead *)),
-            .queueMax = concurrency,
+            .queueMax = prefetch + 1,
             .readOver = readOver,
             .pub =
             {
