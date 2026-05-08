@@ -125,9 +125,11 @@ testRun(void)
                         ioFdReadNewOpen(STRDEF("server read"), HRN_FORK_PARENT_READ_FD(0), 5000),
                         ioFdWriteNewOpen(STRDEF("server write"), HRN_FORK_PARENT_WRITE_FD(0), 5000)), "new client");
 
-                TEST_ERROR(
+                TEST_ERROR_MULTI(
                     protocolClientNoOp(client), PathCreateError,
-                    "raised from test: unable to create path '/bogus': [13] Permission denied");
+                    "raised from test: unable to create path '/bogus': [13] Permission denied",
+                    // MacOS
+                    "raised from test: unable to create path '/bogus': [30] Read-only file system");
 
                 // Do not send the exit command before freeing since the server has already errored
                 TEST_RESULT_VOID(protocolClientNoExit(client), "client no exit");

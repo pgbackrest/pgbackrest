@@ -98,8 +98,6 @@ pgBackRest strives to be easy to configure and operate:
 
 - [Configuration reference](http://www.pgbackrest.org/configuration.html) for creating pgBackRest configurations.
 
-Documentation for v1 can be found [here](http://www.pgbackrest.org/1). No further releases are planned for v1 because v2 is backward-compatible with v1 options and repositories.
-
 ## Contributions
 
 Contributions to pgBackRest are always welcome! Please see our [Contributing Guidelines](https://github.com/pgbackrest/pgbackrest/blob/main/CONTRIBUTING.md) for details on how to contribute features, improvements or issues.

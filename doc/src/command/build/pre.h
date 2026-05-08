@@ -6,12 +6,13 @@ Build Preprocessor
 
 #include "build/config/parse.h"
 #include "build/help/parse.h"
+#include "command/build/varStore.h"
 #include "common/type/xml.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 // Build command reference
-XmlDocument *buildPre(XmlDocument *xml, const BldCfg *bldCfg, const BldHlp *bldHlp);
+XmlDocument *buildPre(XmlDocument *xml, const BldCfg *bldCfg, const BldHlp *bldHlp, VarStore *varStore);
 
 #endif
