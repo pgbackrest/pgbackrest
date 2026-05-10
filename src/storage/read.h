@@ -29,7 +29,7 @@ Getters/Setters
 typedef struct StorageReadPub
 {
     const Storage *storage;                                         // Storage
-    StringId type;                                                  // Storage type !!!
+    StringId type;                                                  // Storage type
     const String *name;                                             // File name
     uint64_t offset;                                                // Where to start reading in the file
     Variant *limit;                                                 // Limit how many bytes are read (NULL for no limit)

@@ -20,7 +20,7 @@ Object type
 
 typedef struct StorageReadS3
 {
-    const IoReadInterface *interface;                               // Interface
+    const StorageReadInterface *interface;                          // Interface
     StorageS3 *storage;                                             // Storage that created this object
     const String *name;                                             // File name
     uint64_t offset;                                                // Read offset
@@ -29,14 +29,6 @@ typedef struct StorageReadS3
 
     HttpResponse *httpResponse;                                     // HTTP response
 } StorageReadS3;
-
-/***********************************************************************************************************************************
-Macros for function logging
-***********************************************************************************************************************************/
-#define FUNCTION_LOG_STORAGE_READ_S3_TYPE                                                                                          \
-    StorageReadS3 *
-#define FUNCTION_LOG_STORAGE_READ_S3_FORMAT(value, buffer, bufferSize)                                                             \
-    objNameToLog(value, "StorageReadS3", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Open the file
@@ -80,7 +72,8 @@ storageReadS3(THIS_VOID, Buffer *const buffer, const bool block)
         FUNCTION_LOG_PARAM(BOOL, block);
     FUNCTION_LOG_END();
 
-    ASSERT(this != NULL && this->httpResponse != NULL);
+    ASSERT(this != NULL);
+    ASSERT(this->httpResponse != NULL);
     ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
     ASSERT(buffer != NULL && !bufFull(buffer));
 
@@ -127,7 +120,7 @@ storageReadS3Close(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-static const IoReadInterface storageReadS3Interface =
+static const StorageReadInterface storageReadS3Interface =
 {
     .close = storageReadS3Close,
     .eof = storageReadS3Eof,
@@ -136,7 +129,7 @@ static const IoReadInterface storageReadS3Interface =
 };
 
 /**********************************************************************************************************************************/
-FN_EXTERN void *
+FN_EXTERN StorageReadS3 *
 storageReadS3New(
     StorageS3 *const storage, const String *const name, const uint64_t offset, const Variant *const limit,
     const String *const versionId)
@@ -167,5 +160,5 @@ storageReadS3New(
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(this);
+    FUNCTION_LOG_RETURN(STORAGE_READ_S3, this);
 }

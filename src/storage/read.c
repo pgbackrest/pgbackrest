@@ -15,9 +15,11 @@ Object type
 struct StorageRead
 {
     StorageReadPub pub;                                             // Publicly accessible variables
+    const Storage *storage;                                         // Storage
     void *driver;                                                   // Driver
     uint64_t bytesRead;                                             // Bytes that have been successfully read
     bool retry;                                                     // Are read retries allowed?
+    bool compressible;                                              // Is the read compressible?
 };
 
 /***********************************************************************************************************************************
@@ -51,13 +53,18 @@ storageReadOpen(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    const bool result = storageReadDriverInterface(this)->open(this->driver);
+    bool result = false;
 
-    if (!result && !this->pub.ignoreMissing)
-        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->pub.name));
+    if (!this->pub.version || this->pub.versionId != NULL)
+    {
+        result = storageReadDriverInterface(this)->open(this->driver);
 
-    // Now that the file is open disable ignore missing. On retry the file must not be missing so we want a hard error.
-    this->pub.ignoreMissing = false;
+        if (!result && !this->pub.ignoreMissing)
+            THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->pub.name));
+
+        // Now that the file is open disable ignore missing. On retry the file must not be missing so we want a hard error.
+        this->pub.ignoreMissing = false;
+    }
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
@@ -113,23 +120,20 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
                     // Ignore partial reads and restart from the last successful read
                     bufUsedSet(buffer, bufUsedBegin);
 
-                    // Update offset and limit (when present) based on how many bytes have been successfully read
-                    // this->pub.offset += this->bytesRead;
+                    // Driver with new offset/limit
+                    const Variant *const limit =
+                        this->pub.limit != NULL ? varNewUInt64(varUInt64(this->pub.limit) - this->bytesRead) : NULL;
 
-                    // if (this->limit != NULL)
-                    // {
-                    //     varFree(this->limit);
+                    MEM_CONTEXT_OBJ_BEGIN(this)
+                    {
+                        objFree(this->driver);
 
-                    //     MEM_CONTEXT_OBJ_BEGIN(this->driver)
-                    //     {
-                    //         this->limit = varNewUInt64(varUInt64(this->limit) - this->bytesRead);
-                    //     }
-                    //     MEM_CONTEXT_OBJ_END();
-                    // }
-
-                    // Open file with new offset/limit
-                    THROW(AssertError, "!!!NOT YET IMPLEMENTED");
-                    // storageReadDriverInterface(this)->open(this->driver);
+                        this->driver = storageInterfaceNewReadP(
+                            storageDriver(this->storage), this->pub.name, .compressible = this->compressible,
+                            .offset = this->pub.offset + this->bytesRead, .limit = limit, .versionId = this->pub.versionId);
+                        storageReadOpen(this);
+                    }
+                    MEM_CONTEXT_OBJ_END();
                 }
                 else
                     RETHROW();
@@ -232,14 +236,15 @@ storageReadNew(
     {
         *this = (StorageRead)
         {
+            .storage = storage,
             .driver = storageInterfaceNewReadP(
                 storageDriver(storage), name, .compressible = compressible, .offset = offset, .limit = limit,
                 .versionId = versionId),
             .retry = storageFeature(storage, storageFeatureReadRetry),
+            .compressible = compressible,
             .pub =
             {
-                .storage = storage,
-                .type = storageType(storage), // !!!
+                .type = storageType(storage),
                 .name = strDup(name),
                 .ignoreMissing = ignoreMissing,
                 .offset = offset,
