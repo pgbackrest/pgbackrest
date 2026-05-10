@@ -31,10 +31,10 @@ Macros for function logging
 /***********************************************************************************************************************************
 Get driver interface
 ***********************************************************************************************************************************/
-FN_INLINE_ALWAYS const IoReadInterface *
+FN_INLINE_ALWAYS const StorageReadInterface *
 storageReadDriverInterface(const StorageRead *const this)
 {
-    return *(IoReadInterface **)this->driver;
+    return *(StorageReadInterface **)this->driver;
 }
 
 /***********************************************************************************************************************************
@@ -233,7 +233,7 @@ storageReadNew(
         *this = (StorageRead)
         {
             .driver = storageInterfaceNewReadP(
-                storageDriver(storage), name, .compressible = compressible, .offset = offset, .limit = limit, .version = version,
+                storageDriver(storage), name, .compressible = compressible, .offset = offset, .limit = limit,
                 .versionId = versionId),
             .retry = storageFeature(storage, storageFeatureReadRetry),
             .pub =
@@ -261,6 +261,10 @@ storageReadNew(
             storageIoReadInterfaceCopy.fd = NULL;
 
         this->pub.io = ioReadNew(this, storageIoReadInterfaceCopy);
+
+        // Set filter group when interface function exists
+        if (storageReadDriverInterface(this)->filterGroup != NULL)
+            storageReadDriverInterface(this)->filterGroup(this->driver, ioReadFilterGroup(storageReadIo(this)));
     }
     OBJ_NEW_END();
 

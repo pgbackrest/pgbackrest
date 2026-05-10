@@ -35,7 +35,7 @@ typedef struct HrnStorageWriteTest
 
 typedef struct HrnStorageReadTest
 {
-    const IoReadInterface *interface;                               // Interface
+    const StorageReadInterface *interface;                          // Interface
     void *driver;                                                   // Read driver
 } HrnStorageReadTest;
 
@@ -119,10 +119,10 @@ hrnStorageTestVersionFind(const Storage *const storage, const String *const file
 /***********************************************************************************************************************************
 Test storage read driver
 ***********************************************************************************************************************************/
-FN_INLINE_ALWAYS const IoReadInterface *
+FN_INLINE_ALWAYS const StorageReadInterface *
 hrnStorageReadDriverInterface(const HrnStorageReadTest *const this)
 {
-    return *(const IoReadInterface *const *)this->driver;
+    return *(const StorageReadInterface *const *)this->driver;
 }
 
 static bool
@@ -198,7 +198,7 @@ hrnStorageReadTestFd(const THIS_VOID)
     FUNCTION_TEST_RETURN(INT, hrnStorageReadDriverInterface(this)->fd(this->driver));
 }
 
-static const IoReadInterface hrnStorageReadTestInterface =
+static const StorageReadInterface hrnStorageReadTestInterface =
 {
     .close = hrnStorageReadTestClose,
     .eof = hrnStorageReadTestEof,
@@ -207,7 +207,7 @@ static const IoReadInterface hrnStorageReadTestInterface =
     .read = hrnStorageReadTest,
 };
 
-static void *
+static HrnStorageReadTest *
 hrnStorageReadTestNew(
     StoragePosix *const storage, const String *name, const uint64_t offset, const Variant *const limit,
     const String *const versionId)
@@ -494,7 +494,6 @@ hrnStorageTestNewRead(THIS_VOID, const String *file, const StorageInterfaceNewRe
         FUNCTION_HARNESS_PARAM(STRING, file);
         FUNCTION_HARNESS_PARAM(UINT64, param.offset);
         FUNCTION_HARNESS_PARAM(VARIANT, param.limit);
-        FUNCTION_HARNESS_PARAM(BOOL, param.version);
         FUNCTION_HARNESS_PARAM(STRING, param.versionId);
     FUNCTION_HARNESS_END();
 
@@ -502,8 +501,9 @@ hrnStorageTestNewRead(THIS_VOID, const String *file, const StorageInterfaceNewRe
     ASSERT(file != NULL);
     hrnStorageTestSecretCheck(file);
 
-    FUNCTION_HARNESS_RETURN_P(
-        VOID, hrnStorageReadTestNew(storageDriver(this->storagePosix), file, param.offset, param.limit, param.versionId));
+    FUNCTION_HARNESS_RETURN(
+        STORAGE_READ_TEST,
+        hrnStorageReadTestNew(storageDriver(this->storagePosix), file, param.offset, param.limit, param.versionId));
 }
 
 static StorageWrite *

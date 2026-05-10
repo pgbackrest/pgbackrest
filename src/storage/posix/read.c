@@ -16,9 +16,9 @@ Posix Storage Read
 /***********************************************************************************************************************************
 Object types
 ***********************************************************************************************************************************/
-typedef struct StorageReadPosix
+struct StorageReadPosix
 {
-    const IoReadInterface *interface;                               // Interface
+    const StorageReadInterface *interface;                          // Interface
     StoragePosix *storage;                                          // Storage that created this object
     const String *name;                                             // File name
     uint64_t offset;                                                // Read offset
@@ -27,7 +27,7 @@ typedef struct StorageReadPosix
     int fd;                                                         // File descriptor
     uint64_t current;                                               // Current bytes read from file
     bool eof;
-} StorageReadPosix;
+};
 
 /***********************************************************************************************************************************
 Close file descriptor
@@ -199,7 +199,7 @@ storageReadPosixFd(const THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-static const IoReadInterface storageReadPosixInterface =
+static const StorageReadInterface storageReadPosixInterface =
 {
     .close = storageReadPosixClose,
     .eof = storageReadPosixEof,
