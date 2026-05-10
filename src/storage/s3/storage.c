@@ -1224,7 +1224,7 @@ storageS3Remove(THIS_VOID, const String *const file, const StorageInterfaceRemov
 /**********************************************************************************************************************************/
 static const StorageInterface storageInterfaceS3 =
 {
-    .feature = 1 << storageFeatureVersioning,
+    .feature = 1 << storageFeatureVersioning | 1 << storageFeatureReadRetry,
 
     .info = storageS3Info,
     .list = storageS3List,

@@ -261,15 +261,14 @@ storageRemoteList(THIS_VOID, const String *const path, const StorageInfoLevel le
 }
 
 /**********************************************************************************************************************************/
-static StorageRead *
-storageRemoteNewRead(THIS_VOID, const String *const file, const bool ignoreMissing, const StorageInterfaceNewReadParam param)
+static void *
+storageRemoteNewRead(THIS_VOID, const String *const file, const StorageInterfaceNewReadParam param)
 {
     THIS(StorageRemote);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, param.compressible);
         FUNCTION_LOG_PARAM(UINT64, param.offset);
         FUNCTION_LOG_PARAM(VARIANT, param.limit);
@@ -283,7 +282,7 @@ storageRemoteNewRead(THIS_VOID, const String *const file, const bool ignoreMissi
     FUNCTION_LOG_RETURN(
         STORAGE_READ,
         storageReadRemoteNew(
-            this, this->client, file, ignoreMissing, this->compressLevel > 0 ? param.compressible : false, this->compressLevel,
+            this, this->client, file, this->compressLevel > 0 ? param.compressible : false, this->compressLevel,
             param.offset, param.limit, param.version, param.versionId));
 }
 

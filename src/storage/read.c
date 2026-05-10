@@ -16,7 +16,6 @@ struct StorageRead
 {
     StorageReadPub pub;                                             // Publicly accessible variables
     void *driver;                                                   // Driver
-    IoReadInterface ioInterface;                                    // Driver Io interface
     uint64_t bytesRead;                                             // Bytes that have been successfully read
     bool retry;                                                     // Are read retries allowed?
 };
@@ -32,10 +31,10 @@ Macros for function logging
 /***********************************************************************************************************************************
 Get driver interface
 ***********************************************************************************************************************************/
-FN_INLINE_ALWAYS StorageReadInterface *
-storageReadDriverInterface(StorageRead *const this)
+FN_INLINE_ALWAYS const IoReadInterface *
+storageReadDriverInterface(const StorageRead *const this)
 {
-    return (StorageReadInterface *)this->driver;
+    return *(IoReadInterface **)this->driver;
 }
 
 /***********************************************************************************************************************************
@@ -52,10 +51,13 @@ storageReadOpen(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    const bool result = this->ioInterface.open(this->driver);
+    const bool result = storageReadDriverInterface(this)->open(this->driver);
+
+    if (!result && !this->pub.ignoreMissing)
+        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->pub.name));
 
     // Now that the file is open disable ignore missing. On retry the file must not be missing so we want a hard error.
-    storageReadDriverInterface(this)->ignoreMissing = false;
+    this->pub.ignoreMissing = false;
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
@@ -90,7 +92,7 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
         {
             TRY_BEGIN()
             {
-                this->ioInterface.read(this->driver, buffer, block);
+                storageReadDriverInterface(this)->read(this->driver, buffer, block);
 
                 // Account for bytes that have been read
                 result += bufUsed(buffer) - bufUsedBegin;
@@ -106,28 +108,28 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
                 if (try > 1)
                 {
                     // Close the file
-                    this->ioInterface.close(this->driver);
+                    storageReadDriverInterface(this)->close(this->driver);
 
                     // Ignore partial reads and restart from the last successful read
                     bufUsedSet(buffer, bufUsedBegin);
 
                     // Update offset and limit (when present) based on how many bytes have been successfully read
-                    storageReadDriverInterface(this)->offset = storageReadInterface(this)->offset + this->bytesRead;
+                    // this->pub.offset += this->bytesRead;
 
-                    if (storageReadInterface(this)->limit != NULL)
-                    {
-                        varFree(storageReadDriverInterface(this)->limit);
+                    // if (this->limit != NULL)
+                    // {
+                    //     varFree(this->limit);
 
-                        MEM_CONTEXT_OBJ_BEGIN(this->driver)
-                        {
-                            storageReadDriverInterface(this)->limit = varNewUInt64(
-                                varUInt64(storageReadInterface(this)->limit) - this->bytesRead);
-                        }
-                        MEM_CONTEXT_OBJ_END();
-                    }
+                    //     MEM_CONTEXT_OBJ_BEGIN(this->driver)
+                    //     {
+                    //         this->limit = varNewUInt64(varUInt64(this->limit) - this->bytesRead);
+                    //     }
+                    //     MEM_CONTEXT_OBJ_END();
+                    // }
 
                     // Open file with new offset/limit
-                    this->ioInterface.open(this->driver);
+                    THROW(AssertError, "!!!NOT YET IMPLEMENTED");
+                    // storageReadDriverInterface(this)->open(this->driver);
                 }
                 else
                     RETHROW();
@@ -156,7 +158,7 @@ storageReadClose(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    this->ioInterface.close(this->driver);
+    storageReadDriverInterface(this)->close(this->driver);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -175,7 +177,7 @@ storageReadEof(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, this->ioInterface.eof(this->driver));
+    FUNCTION_TEST_RETURN(BOOL, storageReadDriverInterface(this)->eof(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -192,7 +194,7 @@ storageReadFd(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(INT, this->ioInterface.fd(this->driver));
+    FUNCTION_TEST_RETURN(INT, storageReadDriverInterface(this)->fd(this->driver));
 }
 
 /**********************************************************************************************************************************/
@@ -207,71 +209,60 @@ static const IoReadInterface storageIoReadInterface =
 
 FN_EXTERN StorageRead *
 storageReadNew(
-    void *const driver, const StringId type, const String *const name, const bool ignoreMissing, const uint64_t offset,
-    const Variant *const limit, const IoReadInterface *const ioInterface, const StorageReadNewParam param)
+    const Storage *const storage, const String *const name, const bool ignoreMissing, const bool compressible,
+    const uint64_t offset, const Variant *const limit, const bool version, const String *const versionId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM_P(VOID, driver);
-        FUNCTION_LOG_PARAM(STRING_ID, type);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_LOG_PARAM(BOOL, compressible);
         FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
-        FUNCTION_LOG_PARAM_P(VOID, ioInterface);
-        FUNCTION_LOG_PARAM(BOOL, param.retry);
-        FUNCTION_LOG_PARAM(BOOL, param.version);
-        FUNCTION_LOG_PARAM(STRING, param.versionId);
+        FUNCTION_LOG_PARAM(BOOL, version);
+        FUNCTION_LOG_PARAM(STRING, versionId);
     FUNCTION_LOG_END();
 
     FUNCTION_AUDIT_HELPER();
 
-    ASSERT(driver != NULL);
-    ASSERT(type != 0);
+    ASSERT(storage != NULL);
     ASSERT(name != NULL);
-    ASSERT(ioInterface != NULL);
-    ASSERT(ioInterface->eof != NULL);
-    ASSERT(ioInterface->close != NULL);
-    ASSERT(ioInterface->open != NULL);
-    ASSERT(ioInterface->read != NULL);
-
-    // Remove fd method if it does not exist in the driver
-    IoReadInterface storageIoReadInterfaceCopy = storageIoReadInterface;
-
-    if (ioInterface->fd == NULL)
-        storageIoReadInterfaceCopy.fd = NULL;
 
     OBJ_NEW_BEGIN(StorageRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
         *this = (StorageRead)
         {
-            .driver = objMove(driver, memContextCurrent()),
-            .ioInterface = *ioInterface,
-            .retry = param.retry,
+            .driver = storageInterfaceNewReadP(
+                storageDriver(storage), name, .compressible = compressible, .offset = offset, .limit = limit, .version = version,
+                .versionId = versionId),
+            .retry = storageFeature(storage, storageFeatureReadRetry),
             .pub =
             {
-                .interface =
-                {
-                    .name = strDup(name),
-                    .ignoreMissing = ignoreMissing,
-                    .offset = offset,
-                    .limit = varDup(limit),
-                    .version = param.version,
-                    .versionId = strDup(param.versionId),
-                },
-                .type = type,
-                .io = ioReadNew(this, storageIoReadInterfaceCopy),
+                .storage = storage,
+                .type = storageType(storage), // !!!
+                .name = strDup(name),
+                .ignoreMissing = ignoreMissing,
+                .offset = offset,
+                .limit = varDup(limit),
+                .version = version,
+                .versionId = strDup(versionId),
             },
         };
+
+        ASSERT(storageReadDriverInterface(this)->eof != NULL);
+        ASSERT(storageReadDriverInterface(this)->close != NULL);
+        ASSERT(storageReadDriverInterface(this)->open != NULL);
+        ASSERT(storageReadDriverInterface(this)->read != NULL);
+
+        // Remove fd method if it does not exist in the driver
+        IoReadInterface storageIoReadInterfaceCopy = storageIoReadInterface;
+
+        if (storageReadDriverInterface(this)->fd == NULL)
+            storageIoReadInterfaceCopy.fd = NULL;
+
+        this->pub.io = ioReadNew(this, storageIoReadInterfaceCopy);
     }
     OBJ_NEW_END();
-
-    // Copy the interface into the driver and duplicate variables that must be local to the driver
-    MEM_CONTEXT_OBJ_BEGIN(this->driver)
-    {
-        *(storageReadDriverInterface(this)) = this->pub.interface;
-        storageReadDriverInterface(this)->limit = varDup(storageReadInterface(this)->limit);
-    }
-    MEM_CONTEXT_OBJ_END();
 
     FUNCTION_LOG_RETURN(STORAGE_READ, this);
 }

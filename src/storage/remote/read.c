@@ -22,9 +22,13 @@ Object type
 ***********************************************************************************************************************************/
 typedef struct StorageReadRemote
 {
-    StorageReadInterface interface;                                 // Interface
+    const IoReadInterface *interface;                               // Interface
     StorageRemote *storage;                                         // Storage that created this object
     StorageRead *read;                                              // Storage read interface
+    const String *name;                                             // File name
+    uint64_t offset;                                                // Read offset
+    const Variant *limit;                                           // Read limit (NULL for no limit)
+    const String *versionId;                                        // Version id (NULL for most recent)
 
     ProtocolClient *client;                                         // Protocol client for requests
     ProtocolClientSession *session;                                 // Protocol session for requests
@@ -203,17 +207,17 @@ storageReadRemoteOpen(THIS_VOID)
 
         PackWrite *const param = protocolPackNew();
 
-        pckWriteStrP(param, this->interface.name);
-        pckWriteBoolP(param, this->interface.ignoreMissing);
-        pckWriteU64P(param, this->interface.offset);
+        pckWriteStrP(param, this->name);
+        // pckWriteBoolP(param, this->interface.ignoreMissing); !!!
+        pckWriteU64P(param, this->offset);
 
-        if (this->interface.limit == NULL)
+        if (this->limit == NULL)
             pckWriteNullP(param);
         else
-            pckWriteU64P(param, varUInt64(this->interface.limit));
+            pckWriteU64P(param, varUInt64(this->limit));
 
-        pckWriteBoolP(param, this->interface.version);
-        pckWriteStrP(param, this->interface.versionId);
+        // pckWriteBoolP(param, this->version); !!!
+        pckWriteStrP(param, this->versionId);
         pckWritePackP(param, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
 
         // If the file exists
@@ -267,17 +271,16 @@ static const IoReadInterface storageReadRemoteInterface =
     .read = storageReadRemote,
 };
 
-FN_EXTERN StorageRead *
+FN_EXTERN void *
 storageReadRemoteNew(
-    StorageRemote *const storage, ProtocolClient *const client, const String *const name, const bool ignoreMissing,
-    const bool compressible, const unsigned int compressLevel, const uint64_t offset, const Variant *const limit,
-    const bool version, const String *const versionId)
+    StorageRemote *const storage, ProtocolClient *const client, const String *const name, const bool compressible,
+    const unsigned int compressLevel, const uint64_t offset, const Variant *const limit, const bool version,
+    const String *const versionId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, storage);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, client);
         FUNCTION_LOG_PARAM(STRING, name);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, compressible);
         FUNCTION_LOG_PARAM(UINT, compressLevel);
         FUNCTION_LOG_PARAM(UINT64, offset);
@@ -294,19 +297,24 @@ storageReadRemoteNew(
     {
         *this = (StorageReadRemote)
         {
+            .interface = &storageReadRemoteInterface,
             .storage = storage,
             .client = client,
             .session = protocolClientSessionNewP(client, PROTOCOL_COMMAND_STORAGE_READ, .async = true),
+            .name = strDup(name),
             .compressible = compressible,
             .compressLevel = compressLevel,
+            .offset = offset,
+            .limit = varDup(limit),
+            .versionId = strDup(versionId),
         };
     }
     OBJ_NEW_END();
 
-    this->read = storageReadNewP(
-        OBJ_NAME(this, StorageRead::StorageReadRemote), STORAGE_REMOTE_TYPE, name, ignoreMissing, offset, limit,
-        &storageReadRemoteInterface, .version = version, .versionId = versionId);
+    // this->read = storageReadNewP(
+    //     OBJ_NAME(this, StorageRead::StorageReadRemote), STORAGE_REMOTE_TYPE, name, ignoreMissing, offset, limit,
+    //     &storageReadRemoteInterface, .version = version, .versionId = versionId);
 
-    ASSERT(this != NULL);
-    FUNCTION_LOG_RETURN(STORAGE_READ, this->read);
+    // ASSERT(this != NULL);
+    FUNCTION_LOG_RETURN_P(VOID, this);
 }

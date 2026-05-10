@@ -1173,7 +1173,7 @@ storageGcsRemove(THIS_VOID, const String *const file, const StorageInterfaceRemo
 /**********************************************************************************************************************************/
 static const StorageInterface storageInterfaceGcs =
 {
-    .feature = 1 << storageFeatureVersioning,
+    .feature = 1 << storageFeatureVersioning | 1 << storageFeatureReadRetry,
 
     .info = storageGcsInfo,
     .list = storageGcsList,

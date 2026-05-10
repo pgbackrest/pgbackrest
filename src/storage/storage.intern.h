@@ -105,6 +105,19 @@ typedef void StorageInterfaceLinkCreate(
         (StorageInterfaceLinkCreateParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
+// Get information used to initialize a read
+typedef struct StorageInterfaceReadInitResult
+{
+    bool retry;                                                     // Should reads be retried?
+    IoReadInterface interface;                                      // Storage driver read interface
+} StorageInterfaceReadInitResult;
+
+typedef StorageInterfaceReadInitResult StorageInterfaceReadInit(void *thisVoid);
+
+#define storageInterfaceReadInitP(thisVoid)                                                                                        \
+    STORAGE_COMMON_INTERFACE(thisVoid).readInit(thisVoid)
+
+// ---------------------------------------------------------------------------------------------------------------------------------
 // Create a file read object. The file should not be opened immediately -- open() will be called on the IoRead interface when the
 // file needs to be opened.
 typedef struct StorageInterfaceNewReadParam
@@ -127,12 +140,10 @@ typedef struct StorageInterfaceNewReadParam
     const String *versionId;                                        // Id when targeting a version (NULL if version is missing)
 } StorageInterfaceNewReadParam;
 
-typedef StorageRead *StorageInterfaceNewRead(
-    void *thisVoid, const String *file, bool ignoreMissing, StorageInterfaceNewReadParam param);
+typedef void *StorageInterfaceNewRead(void *thisVoid, const String *file, StorageInterfaceNewReadParam param);
 
-#define storageInterfaceNewReadP(thisVoid, file, ignoreMissing, ...)                                                               \
-    STORAGE_COMMON_INTERFACE(thisVoid).newRead(                                                                                    \
-        thisVoid, file, ignoreMissing, (StorageInterfaceNewReadParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define storageInterfaceNewReadP(thisVoid, file, ...)                                                                              \
+    STORAGE_COMMON_INTERFACE(thisVoid).newRead(thisVoid, file, (StorageInterfaceNewReadParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Create a file write object. The file should not be opened immediately -- open() will be called on the IoWrite interface when the

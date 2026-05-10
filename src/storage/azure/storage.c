@@ -834,7 +834,7 @@ storageAzureRemove(THIS_VOID, const String *const file, const StorageInterfaceRe
 /**********************************************************************************************************************************/
 static const StorageInterface storageInterfaceAzure =
 {
-    .feature = 1 << storageFeatureVersioning,
+    .feature = 1 << storageFeatureVersioning | 1 << storageFeatureReadRetry,
 
     .info = storageAzureInfo,
     .list = storageAzureList,

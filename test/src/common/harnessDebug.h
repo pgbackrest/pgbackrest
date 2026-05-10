@@ -52,6 +52,9 @@ C Debug Harness
     }                                                                                                                              \
     while (0)
 
+#define FUNCTION_HARNESS_RETURN_P(typeMacroPrefix, ...)                                                                            \
+    FUNCTION_HARNESS_RETURN(typeMacroPrefix, __VA_ARGS__)
+
 #define FUNCTION_HARNESS_RETURN_STRUCT(...)                                                                                        \
     do                                                                                                                             \
     {                                                                                                                              \
