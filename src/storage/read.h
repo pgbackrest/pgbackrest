@@ -28,7 +28,6 @@ Getters/Setters
 ***********************************************************************************************************************************/
 typedef struct StorageReadPub
 {
-    const Storage *storage;                                         // Storage
     StringId type;                                                  // Storage type
     const String *name;                                             // File name
     uint64_t offset;                                                // Where to start reading in the file
