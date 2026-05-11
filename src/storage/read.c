@@ -31,15 +31,6 @@ Macros for function logging
     objNameToLog(&value, "StorageReadInterface", buffer, bufferSize)
 
 /***********************************************************************************************************************************
-Get driver interface
-***********************************************************************************************************************************/
-FN_INLINE_ALWAYS const StorageReadInterface *
-storageReadDriverInterface(const StorageRead *const this)
-{
-    return *(StorageReadInterface **)this->driver;
-}
-
-/***********************************************************************************************************************************
 Open the file
 ***********************************************************************************************************************************/
 static bool
@@ -55,14 +46,15 @@ storageReadOpen(THIS_VOID)
 
     bool result = false;
 
+    // Open if not versioned or if versionId is not null
     if (!this->pub.version || this->pub.versionId != NULL)
     {
-        result = storageReadDriverInterface(this)->open(this->driver);
+        result = storageReadDriverInterface(this->driver)->open(this->driver);
 
         if (!result && !this->pub.ignoreMissing)
             THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->pub.name));
 
-        // Now that the file is open disable ignore missing. On retry the file must not be missing so we want a hard error.
+        // On retry the file must not be missing so disable ignore missing to force an error
         this->pub.ignoreMissing = false;
     }
 
@@ -99,7 +91,7 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
         {
             TRY_BEGIN()
             {
-                storageReadDriverInterface(this)->read(this->driver, buffer, block);
+                storageReadDriverInterface(this->driver)->read(this->driver, buffer, block);
 
                 // Account for bytes that have been read
                 result += bufUsed(buffer) - bufUsedBegin;
@@ -115,7 +107,7 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
                 if (try > 1)
                 {
                     // Close the file
-                    storageReadDriverInterface(this)->close(this->driver);
+                    storageReadDriverInterface(this->driver)->close(this->driver);
 
                     // Ignore partial reads and restart from the last successful read
                     bufUsedSet(buffer, bufUsedBegin);
@@ -162,7 +154,7 @@ storageReadClose(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    storageReadDriverInterface(this)->close(this->driver);
+    storageReadDriverInterface(this->driver)->close(this->driver);
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -181,7 +173,7 @@ storageReadEof(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, storageReadDriverInterface(this)->eof(this->driver));
+    FUNCTION_TEST_RETURN(BOOL, storageReadDriverInterface(this->driver)->eof(this->driver));
 }
 
 /***********************************************************************************************************************************
@@ -198,7 +190,7 @@ storageReadFd(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(INT, storageReadDriverInterface(this)->fd(this->driver));
+    FUNCTION_TEST_RETURN(INT, storageReadDriverInterface(this->driver)->fd(this->driver));
 }
 
 /**********************************************************************************************************************************/
@@ -254,22 +246,22 @@ storageReadNew(
             },
         };
 
-        ASSERT(storageReadDriverInterface(this)->eof != NULL);
-        ASSERT(storageReadDriverInterface(this)->close != NULL);
-        ASSERT(storageReadDriverInterface(this)->open != NULL);
-        ASSERT(storageReadDriverInterface(this)->read != NULL);
+        ASSERT(storageReadDriverInterface(this->driver)->eof != NULL);
+        ASSERT(storageReadDriverInterface(this->driver)->close != NULL);
+        ASSERT(storageReadDriverInterface(this->driver)->open != NULL);
+        ASSERT(storageReadDriverInterface(this->driver)->read != NULL);
 
         // Remove fd method if it does not exist in the driver
         IoReadInterface storageIoReadInterfaceCopy = storageIoReadInterface;
 
-        if (storageReadDriverInterface(this)->fd == NULL)
+        if (storageReadDriverInterface(this->driver)->fd == NULL)
             storageIoReadInterfaceCopy.fd = NULL;
 
         this->pub.io = ioReadNew(this, storageIoReadInterfaceCopy);
 
         // Set filter group when interface function exists
-        if (storageReadDriverInterface(this)->filterGroup != NULL)
-            storageReadDriverInterface(this)->filterGroup(this->driver, ioReadFilterGroup(storageReadIo(this)));
+        if (storageReadDriverInterface(this->driver)->filterGroup != NULL)
+            storageReadDriverInterface(this->driver)->filterGroup(this->driver, ioReadFilterGroup(storageReadIo(this)));
     }
     OBJ_NEW_END();
 

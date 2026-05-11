@@ -18,7 +18,7 @@ Object type
 #define STORAGE_READ_S3_TYPE                                        StorageReadS3
 #define STORAGE_READ_S3_PREFIX                                      storageReadS3
 
-typedef struct StorageReadS3
+struct StorageReadS3
 {
     const StorageReadInterface *interface;                          // Interface
     StorageS3 *storage;                                             // Storage that created this object
@@ -28,7 +28,7 @@ typedef struct StorageReadS3
     const String *versionId;                                        // Version id (NULL for most recent)
 
     HttpResponse *httpResponse;                                     // HTTP response
-} StorageReadS3;
+};
 
 /***********************************************************************************************************************************
 Open the file
@@ -72,8 +72,7 @@ storageReadS3(THIS_VOID, Buffer *const buffer, const bool block)
         FUNCTION_LOG_PARAM(BOOL, block);
     FUNCTION_LOG_END();
 
-    ASSERT(this != NULL);
-    ASSERT(this->httpResponse != NULL);
+    ASSERT(this != NULL && this->httpResponse != NULL);
     ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
     ASSERT(buffer != NULL && !bufFull(buffer));
 
@@ -128,7 +127,6 @@ static const StorageReadInterface storageReadS3Interface =
     .read = storageReadS3,
 };
 
-/**********************************************************************************************************************************/
 FN_EXTERN StorageReadS3 *
 storageReadS3New(
     StorageS3 *const storage, const String *const name, const uint64_t offset, const Variant *const limit,

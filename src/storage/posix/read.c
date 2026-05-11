@@ -71,7 +71,7 @@ storageReadPosixOpen(THIS_VOID)
     if (this->fd == -1)
     {
         if (errno != ENOENT)                                                                                        // {vm_covered}
-            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_READ_OPEN, strZ(this->name));
+            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_READ_OPEN, strZ(this->name));                          // {vm_covered}
     }
     // Else success
     else

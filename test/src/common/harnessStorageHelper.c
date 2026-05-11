@@ -119,12 +119,6 @@ hrnStorageTestVersionFind(const Storage *const storage, const String *const file
 /***********************************************************************************************************************************
 Test storage read driver
 ***********************************************************************************************************************************/
-FN_INLINE_ALWAYS const StorageReadInterface *
-hrnStorageReadDriverInterface(const HrnStorageReadTest *const this)
-{
-    return *(const StorageReadInterface *const *)this->driver;
-}
-
 static bool
 hrnStorageReadTestOpen(THIS_VOID)
 {
@@ -136,7 +130,7 @@ hrnStorageReadTestOpen(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_HARNESS_RETURN(BOOL, hrnStorageReadDriverInterface(this)->open(this->driver));
+    FUNCTION_HARNESS_RETURN(BOOL, storageReadDriverInterface(this->driver)->open(this->driver));
 }
 
 static size_t
@@ -153,7 +147,7 @@ hrnStorageReadTest(THIS_VOID, Buffer *const buffer, const bool block)
     ASSERT(this != NULL);
     ASSERT(buffer != NULL && !bufFull(buffer));
 
-    FUNCTION_HARNESS_RETURN(SIZE, hrnStorageReadDriverInterface(this)->read(this->driver, buffer, block));
+    FUNCTION_HARNESS_RETURN(SIZE, storageReadDriverInterface(this->driver)->read(this->driver, buffer, block));
 }
 
 static void
@@ -165,7 +159,7 @@ hrnStorageReadTestClose(THIS_VOID)
         FUNCTION_HARNESS_PARAM(HRN_STORAGE_READ_TEST, this);
     FUNCTION_HARNESS_END();
 
-    hrnStorageReadDriverInterface(this)->close(this->driver);
+    storageReadDriverInterface(this->driver)->close(this->driver);
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
@@ -181,7 +175,7 @@ hrnStorageReadTestEof(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, hrnStorageReadDriverInterface(this)->eof(this->driver));
+    FUNCTION_TEST_RETURN(BOOL, storageReadDriverInterface(this->driver)->eof(this->driver));
 }
 
 static int
@@ -195,7 +189,7 @@ hrnStorageReadTestFd(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(INT, hrnStorageReadDriverInterface(this)->fd(this->driver));
+    FUNCTION_TEST_RETURN(INT, storageReadDriverInterface(this->driver)->fd(this->driver));
 }
 
 static const StorageReadInterface hrnStorageReadTestInterface =
