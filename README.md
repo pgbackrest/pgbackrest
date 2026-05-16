@@ -115,7 +115,3 @@ pgBackRest would not exist without sponsors. Writing new features, fixing bugs, 
 Current sponsors: [Supabase](https://supabase.com).
 
 Past sponsors: [Crunchy Data](https://crunchydata.com), [Resonate](https://resonate.com).
-
-## Recognition
-
-[Armchair](https://thenounproject.com/icon/armchair-129971) graphic by [Alexander Skowalsky](https://thenounproject.com/sandorsz).
