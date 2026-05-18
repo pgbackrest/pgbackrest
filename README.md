@@ -6,13 +6,25 @@ pgBackRest is a reliable backup and restore solution for PostgreSQL that seamles
 
 pgBackRest [v2.58.0](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.58.0) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
 
-Please give us a star on [GitHub](https://github.com/pgbackrest/pgbackrest) if you like pgBackRest! Consider a [sponsorship](https://github.com/sponsors/dwsteele) if you use pgBackRest in your enterprise.
+Please give us a star on [GitHub](https://github.com/pgbackrest/pgbackrest) if you like pgBackRest!
 
 ## News
 
-**May 7, 2026** - [Maintenance Update](http://www.pgbackrest.org/news.html)
+**May 18, 2026** - [pgBackRest Will Continue!](http://www.pgbackrest.org/news.html#will-continue)
 
-**April 27, 2026** - [pgBackRest Is No Longer Being Maintained](http://www.pgbackrest.org/news.html)
+**May 7, 2026** - [Maintenance Update](http://www.pgbackrest.org/news.html#maintenance-update)
+
+**April 27, 2026** - [pgBackRest Is No Longer Being Maintained](http://www.pgbackrest.org/news.html#no-longer-maintained)
+
+## Sponsors
+
+pgBackRest would not exist without sponsorship. Writing new features, fixing bugs, reviewing contributions, answering questions from the community, and maintenance all take a considerable amount of time. Please consider a [sponsorship](https://github.com/sponsors/dwsteele) if you use pgBackRest in your enterprise.
+
+Our sponsors: [AWS](https://aws.amazon.com), [Supabase](https://supabase.com), [pgEdge](https://pgedge.com), [Tiger Data](https://tigerdata.com), [Percona](https://percona.com), [Eon](https://eon.io).
+
+We are grateful to our sponsors for investing in open-source infrastructure that benefits the entire PostgreSQL community.
+
+Past sponsors: [Crunchy Data](https://crunchydata.com), [Resonate](https://resonate.com).
 
 ## Features
 
@@ -112,12 +124,6 @@ Contributions to pgBackRest are always welcome! Please see our [Contributing Gui
 
 pgBackRest is completely free and open source under the [MIT](https://github.com/pgbackrest/pgbackrest/blob/main/LICENSE) license. You may use it for personal or commercial purposes without any restrictions whatsoever. Bug reports are taken very seriously and will be addressed as quickly as possible. Please report bugs [here](https://github.com/pgbackrest/pgbackrest/issues).
 
-Creating a robust disaster recovery policy with proper replication and backup strategies can be a very complex and daunting task. You may find that you need help during the architecture phase and ongoing support to ensure that your enterprise continues running smoothly. There are a variety of PostgreSQL support companies that can provide this service.
+Creating a robust disaster recovery policy with proper replication and backup strategies can be a very complex and daunting task. You may find that you need help during the architecture phase and ongoing support to ensure that your enterprise continues running smoothly.
 
-## Sponsorship
-
-pgBackRest would not exist without sponsors. Writing new features, fixing bugs, reviewing contributions, answering questions from the community, and maintenance all take a considerable amount of time. Please consider a [sponsorship](https://github.com/sponsors/dwsteele) if you use pgBackRest in your enterprise.
-
-Current sponsors: [Supabase](https://supabase.com).
-
-Past sponsors: [Crunchy Data](https://crunchydata.com), [Resonate](https://resonate.com).
+Our [sponsors](#sponsors) offer products and services that include pgBackRest support and can help with your disaster recovery needs.

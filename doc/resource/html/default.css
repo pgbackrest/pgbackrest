@@ -565,28 +565,39 @@ Sponsor
 *******************************************************************************/
 .sponsor-list
 {
-    overflow: hidden;
+    display: grid;
+    grid-template-columns: repeat(3, max-content);
+    justify-content: center;
+    justify-items: center;
+    align-items: center;
+    gap: .75em 2.5em;
+    margin-top: 1.5em;
     margin-bottom: 1.5em;
-    margin-right: 1.5em;
 }
 
 .sponsor
 {
-    float:left;
     text-align: center;
-    margin-top: 1.5em;
-    margin-left: 1.5em;
 }
 
-.sponsor-img
+.sponsor-img-dark
 {
-    width: 75px;
+    display: none;
 }
 
-.sponsor-title
+@media (prefers-color-scheme: dark)
 {
-    white-space: nowrap;
+    .sponsor-img-light
+    {
+        display: none;
+    }
+
+    .sponsor-img-dark
+    {
+        display: inline;
+    }
 }
+
 
 /*******************************************************************************
 Admonition

@@ -4,6 +4,33 @@
     <description>News</description>
 
     <!-- ======================================================================================================================= -->
+    <section id="will-continue">
+        <title><backrest/> Will Continue!</title>
+
+        <p><b>May 18, 2026</b></p>
+
+        <p>I am pleased to announce that <backrest/> will continue! Over the last few weeks, a coalition of sponsors has come together to fund ongoing development. Their support means the project is no longer reliant on a single sponsor, giving <backrest/> the stability it needs for the long term.</p>
+
+        <p>I'd like to thank each of our sponsors:</p>
+
+        <p><link url="https://aws.amazon.com">Amazon Web Services</link> provides on-demand cloud computing resources to individuals, companies, and governments. Access computing power, storage, databases, machine learning, and over 200 services, paying only for what you use. Built to grow with you, investing in the communities we share.</p>
+
+        <p><link url="https://supabase.com">Supabase</link>, a complete backend platform built on PostgreSQL, enables developers to build and scale applications quickly without managing infrastructure. It includes a Postgres database, user authentication, real-time subscriptions, file storage, edge functions, and serverless functions, all backed by an active open-source community.</p>
+
+        <p><link url="https://pgedge.com">pgEdge</link> is an enterprise-class open source Postgres platform for AI, high availability and more, with Agentic AI native tooling and DBA workbench, monitoring and incident response, flexible deployment, and zero downtime maintenance. It scales from a single node to active-active multi-master within the cloud, on-premises, or air-gapped environments.</p>
+
+        <p><link url="https://tigerdata.com">Tiger Data</link>, the creators of TimescaleDB, develops the open-source time-series database built on PostgreSQL and operates Tiger Cloud, a managed platform for time-series, analytics, and AI workloads. Both self-managed and cloud options enable organizations to capture, store, and analyze time-series data at scale, from edge to centralized cloud deployments.</p>
+
+        <p><link url="https://percona.com">Percona</link> is an open source database software, support, and services company focused on helping organizations maintain full control over their data infrastructure. They help businesses run MySQL, PostgreSQL, MongoDB, Valkey, and Redis securely and efficiently through freely available open source software, 24/7 expert support, and hands-on database expertise.</p>
+
+        <p><link url="https://eon.io">Eon.io</link> is an intelligent cloud infrastructure for backup, recovery, and data management, helps teams store and access backups more efficiently, making data accessible for analytics and AI workflows. It offers fast, granular recovery and significantly lower storage costs for Postgres and data-intensive workloads across all clouds, including recovery from accidental data loss and AI agent regressions.</p>
+
+        <p>These organizations rely on <backrest/> to provide reliable disaster recovery for their products and customers. Their investment reflects the critical role that <backrest/> plays in the PostgreSQL ecosystem, and their collective support ensures the project's long-term sustainability.</p>
+
+        <p>I'm looking forward to getting back to work. There are features and optimizations in the pipeline that I'm excited to share in upcoming releases. Thank you to our sponsors for making this possible, and thank you to the community for your patience and support during this transition.</p>
+    </section>
+
+    <!-- ======================================================================================================================= -->
     <section id="maintenance-update">
         <title>Maintenance Update</title>
 
