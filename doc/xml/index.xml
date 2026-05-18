@@ -34,6 +34,14 @@
     </section>
 
     <!-- ======================================================================================================================= -->
+    <section id="news">
+        <title>News</title>
+
+        <p><b>May 7, 2026</b> - <link page="news" section="/maintenance-update">Maintenance Update</link></p>
+        <p><b>April 27, 2026</b> - <link page="news" section="/no-longer-maintained">{[project]} Is No Longer Being Maintained</link></p>
+    </section>
+
+    <!-- ======================================================================================================================= -->
     <section id="features">
         <title>Features</title>
 

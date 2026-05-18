@@ -8,6 +8,12 @@ pgBackRest [v2.58.0](https://github.com/pgbackrest/pgbackrest/releases/tag/relea
 
 Please give us a star on [GitHub](https://github.com/pgbackrest/pgbackrest) if you like pgBackRest! Consider a [sponsorship](https://github.com/sponsors/dwsteele) if you use pgBackRest in your enterprise.
 
+## News
+
+**May 7, 2026** - [Maintenance Update](http://www.pgbackrest.org/news.html)
+
+**April 27, 2026** - [pgBackRest Is No Longer Being Maintained](http://www.pgbackrest.org/news.html)
+
 ## Features
 
 ### Parallel Backup & Restore
