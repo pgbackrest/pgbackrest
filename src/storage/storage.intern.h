@@ -51,6 +51,7 @@ Error messages
 #define STORAGE_ERROR_WRITE_CLOSE                                   "unable to close file '%s' after write"
 #define STORAGE_ERROR_WRITE_OPEN                                    "unable to open file '%s' for write"
 #define STORAGE_ERROR_WRITE_MISSING                                 "unable to open file '%s' for write in missing path"
+#define STORAGE_ERROR_WRITE_SEEK                                    "unable to seek to %" PRIu64 " in file '%s'"
 #define STORAGE_ERROR_WRITE_SYNC                                    "unable to sync file '%s' after write"
 
 /***********************************************************************************************************************************

@@ -6,7 +6,25 @@ pgBackRest is a reliable backup and restore solution for PostgreSQL that seamles
 
 pgBackRest [v2.58.0](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.58.0) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
 
-Please give us a star on [GitHub](https://github.com/pgbackrest/pgbackrest) if you like pgBackRest! Consider a [sponsorship](https://github.com/sponsors/dwsteele) if you use pgBackRest in your enterprise.
+Please give us a star on [GitHub](https://github.com/pgbackrest/pgbackrest) if you like pgBackRest!
+
+## News
+
+**May 18, 2026** - [pgBackRest Will Continue!](http://www.pgbackrest.org/news.html#will-continue)
+
+**May 7, 2026** - [Maintenance Update](http://www.pgbackrest.org/news.html#maintenance-update)
+
+**April 27, 2026** - [pgBackRest Is No Longer Being Maintained](http://www.pgbackrest.org/news.html#no-longer-maintained)
+
+## Sponsors
+
+pgBackRest would not exist without sponsorship. Writing new features, fixing bugs, reviewing contributions, answering questions from the community, and maintenance all take a considerable amount of time. Please consider a [sponsorship](https://github.com/sponsors/dwsteele) if you use pgBackRest in your enterprise.
+
+Our sponsors: [AWS](https://aws.amazon.com), [Supabase](https://supabase.com), [pgEdge](https://pgedge.com), [Tiger Data](https://tigerdata.com), [Percona](https://percona.com), [Eon](https://eon.io).
+
+We are grateful to our sponsors for investing in open-source infrastructure that benefits the entire PostgreSQL community.
+
+Past sponsors: [Crunchy Data](https://crunchydata.com), [Resonate](https://resonate.com).
 
 ## Features
 
@@ -28,7 +46,7 @@ Full, differential, and incremental backups are supported. pgBackRest is not sus
 
 ### Backup Rotation & Archive Expiration
 
-Retention polices can be set for full and differential backups to create coverage for any time frame. The WAL archive can be maintained for all backups or strictly for the most recent backups. In the latter case WAL required to make older backups consistent will be maintained in the archive.
+Retention policies can be set for full and differential backups to create coverage for any time frame. The WAL archive can be maintained for all backups or strictly for the most recent backups. In the latter case WAL required to make older backups consistent will be maintained in the archive.
 
 ### Backup Integrity
 
@@ -98,20 +116,14 @@ pgBackRest strives to be easy to configure and operate:
 
 - [Configuration reference](http://www.pgbackrest.org/configuration.html) for creating pgBackRest configurations.
 
-Documentation for v1 can be found [here](http://www.pgbackrest.org/1). No further releases are planned for v1 because v2 is backward-compatible with v1 options and repositories.
-
 ## Contributions
 
 Contributions to pgBackRest are always welcome! Please see our [Contributing Guidelines](https://github.com/pgbackrest/pgbackrest/blob/main/CONTRIBUTING.md) for details on how to contribute features, improvements or issues.
 
 ## Support
 
-pgBackRest is completely free and open source under the [MIT](https://github.com/pgbackrest/pgbackrest/blob/main/LICENSE) license. You may use it for personal or commercial purposes without any restrictions whatsoever. Bug reports are taken very seriously and will be addressed as quickly as possible. Please report bugs [here]({[github-url-base}]/issues).
+pgBackRest is completely free and open source under the [MIT](https://github.com/pgbackrest/pgbackrest/blob/main/LICENSE) license. You may use it for personal or commercial purposes without any restrictions whatsoever. Bug reports are taken very seriously and will be addressed as quickly as possible. Please report bugs [here](https://github.com/pgbackrest/pgbackrest/issues).
 
-Creating a robust disaster recovery policy with proper replication and backup strategies can be a very complex and daunting task. You may find that you need help during the architecture phase and ongoing support to ensure that your enterprise continues running smoothly. There are a variety of PostgreSQL support companies that can provide this service.
+Creating a robust disaster recovery policy with proper replication and backup strategies can be a very complex and daunting task. You may find that you need help during the architecture phase and ongoing support to ensure that your enterprise continues running smoothly.
 
-## Recognition
-
-[Crunchy Data](http://www.crunchydata.com) and [Resonate](http://www.resonate.com) have both generously supported the development of pgBackRest.
-
-[Armchair](https://thenounproject.com/icon/armchair-129971) graphic by [Alexander Skowalsky](https://thenounproject.com/sandorsz).
+Our [sponsors](#sponsors) offer products and services that include pgBackRest support and can help with your disaster recovery needs.

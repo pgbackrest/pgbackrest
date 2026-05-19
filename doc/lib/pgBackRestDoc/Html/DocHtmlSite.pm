@@ -47,6 +47,7 @@ sub new
         $self->{strCssFile},
         $self->{strFaviconFile},
         $self->{strProjectLogoFile},
+        $self->{strSponsorPath},
         $self->{bExe}
     ) =
         logDebugParam
@@ -58,6 +59,7 @@ sub new
             {name => 'strCssFile'},
             {name => 'strFaviconFile', required => false},
             {name => 'strProjectLogoFile', required => false},
+            {name => 'strSponsorPath'},
             {name => 'bExe'}
         );
 
@@ -109,6 +111,21 @@ sub process
             my $strProjectLogoFileDestination = "$self->{strHtmlPath}/" . $self->{oManifest}->variableGet('project-logo');
             copy($self->{strProjectLogoFile}, $strProjectLogoFileDestination)
                 or confess &log(ERROR, "unable to copy $self->{strProjectLogoFile} to ${strProjectLogoFileDestination}");
+        }
+
+        # Copy sponsor logos
+        my $strSponsorDestinationPath = "$self->{strHtmlPath}/sponsor";
+        my @strySponsorList = $self->{oManifest}->storage()->list($self->{strSponsorPath});
+
+        $self->{oManifest}->storage()->pathCreate($strSponsorDestinationPath, {bIgnoreExists => true});
+
+        foreach my $strSponsor (@strySponsorList)
+        {
+            next if $strSponsor eq '.';
+
+            copy("$self->{strSponsorPath}/${strSponsor}", "${strSponsorDestinationPath}/${strSponsor}")
+                or confess &log(
+                    ERROR, "unable to copy $self->{strSponsorPath}/${strSponsor} to ${strSponsorDestinationPath}/${strSponsor}");
         }
     }
 

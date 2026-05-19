@@ -499,6 +499,30 @@ sub sectionProcess
                 $oList->addNew(HTML_LI, 'list-unordered', {strContent => $self->processText($oListItem->textGet())});
             }
         }
+        # Add a sponsor list
+        elsif ($oChild->nameGet() eq 'sponsor-list')
+        {
+            my $oSponsorList = $oSectionBodyElement->addNew(HTML_DIV, "sponsor-list");
+
+            foreach my $oSponsor ($oChild->nodeList())
+            {
+                my $oSponsorLink = $oSponsorList->addNew(
+                    HTML_DIV, "sponsor")->addNew(HTML_A, undef, {strRef => $oSponsor->paramGet('url')});
+                my $strWidth = $oSponsor->paramGet('width');
+                my $strImg = $oSponsor->paramGet('img');
+                my $strImgDark = $oSponsor->paramGet('img-dark', false);
+                $strImgDark = $strImg if !defined($strImgDark) || $strImgDark eq '';
+
+                $oSponsorLink->addNew(
+                    HTML_IMG, "sponsor-img sponsor-img-light",
+                    {strExtra => 'src="sponsor/' . $strImg . '" alt="' .
+                                 $oSponsor->valueGet() . '" width="' . $strWidth . '"'});
+                $oSponsorLink->addNew(
+                    HTML_IMG, "sponsor-img sponsor-img-dark",
+                    {strExtra => 'src="sponsor/' . $strImgDark . '" alt="' .
+                                 $oSponsor->valueGet() . '" width="' . $strWidth . '"'});
+            }
+        }
         # Add a subtitle
         elsif ($oChild->nameGet() eq 'subtitle')
         {

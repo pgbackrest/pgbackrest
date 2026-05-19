@@ -42,7 +42,7 @@ testRun(void)
             "backup-label=null\n"                                                                                                  \
             "backup-reference=\"\"\n"                                                                                              \
             "backup-timestamp-copy-start=0\n"                                                                                      \
-            "backup-timestamp-start=0\n"                                                                                           \
+            "backup-timestamp-start=1565282120\n"                                                                                  \
             "backup-timestamp-stop=0\n"                                                                                            \
             "backup-type=\"full\"\n"
 
@@ -51,7 +51,7 @@ testRun(void)
             "backup-label=\"20190818-084502F\"\n"                                                                                  \
             "backup-reference=\"20190818-084502F\"\n"                                                                              \
             "backup-timestamp-copy-start=0\n"                                                                                      \
-            "backup-timestamp-start=0\n"                                                                                           \
+            "backup-timestamp-start=1565282120\n"                                                                                  \
             "backup-timestamp-stop=0\n"                                                                                            \
             "backup-type=\"full\"\n"
 
@@ -288,8 +288,8 @@ testRun(void)
         // Test tablespace error
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_96, hrnPgCatalogVersion(PG_VERSION_96), 0, false, false, false, false, NULL, exclusionList,
-                pckWriteResult(tablespaceList)),
+                storagePg, PG_VERSION_96, hrnPgCatalogVersion(PG_VERSION_96), 1565282120, false, false, false, false, NULL,
+                exclusionList, pckWriteResult(tablespaceList)),
             AssertError,
             "tablespace with oid 1 not found in tablespace map\n"
             "HINT: was a tablespace created or dropped during the backup?");
@@ -313,7 +313,7 @@ testRun(void)
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_96, hrnPgCatalogVersion(PG_VERSION_96), 0, false, false, false, false, NULL, NULL,
+                storagePg, PG_VERSION_96, hrnPgCatalogVersion(PG_VERSION_96), 1565282120, false, false, false, false, NULL, NULL,
                 pckWriteResult(tablespaceList)),
             "build manifest");
         TEST_RESULT_VOID(manifestBackupLabelSet(manifest, STRDEF("20190818-084502F")), "backup label set");
@@ -410,7 +410,8 @@ testRun(void)
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_96, hrnPgCatalogVersion(PG_VERSION_96), 0, true, false, false, false, NULL, NULL, NULL),
+                storagePg, PG_VERSION_96, hrnPgCatalogVersion(PG_VERSION_96), 1565282120, true, false, false, false, NULL, NULL,
+                NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -483,7 +484,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_96, hrnPgCatalogVersion(PG_VERSION_96), 0, false, false, false, false, NULL, NULL, NULL),
+                storagePg, PG_VERSION_96, hrnPgCatalogVersion(PG_VERSION_96), 1, false, false, false, false, NULL, NULL, NULL),
             LinkDestinationError,
             "link 'pg_xlog/wal' (" TEST_PATH "/wal) destination is the same directory as link 'pg_xlog' (" TEST_PATH "/wal)");
 
@@ -539,7 +540,8 @@ testRun(void)
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_96, hrnPgCatalogVersion(PG_VERSION_96), 0, false, true, false, false, NULL, NULL, NULL),
+                storagePg, PG_VERSION_96, hrnPgCatalogVersion(PG_VERSION_96), 1565282120, false, true, false, false, NULL, NULL,
+                NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -633,7 +635,8 @@ testRun(void)
         // Tablespace link errors when correct version not found
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), 0, false, false, false, false, NULL, NULL, NULL),
+                storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), 1565282120, false, false, false, false, NULL, NULL,
+                NULL),
             FileOpenError, "unable to get info for missing path/file '" TEST_PATH "/pg/pg_tblspc/1/PG_12_201909212'");
 
         // Remove the link inside pg/pg_tblspc
@@ -652,7 +655,8 @@ testRun(void)
         TEST_ASSIGN(
             manifest,
             manifestNewBuild(
-                storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), 0, true, false, true, false, NULL, NULL, NULL),
+                storagePg, PG_VERSION_12, hrnPgCatalogVersion(PG_VERSION_12), 1565282120, true, false, true, false, NULL, NULL,
+                NULL),
             "build manifest");
 
         contentSave = bufNew(0);
@@ -666,7 +670,7 @@ testRun(void)
                     "backup-label=null\n"
                     "backup-reference=\"\"\n"
                     "backup-timestamp-copy-start=0\n"
-                    "backup-timestamp-start=0\n"
+                    "backup-timestamp-start=1565282120\n"
                     "backup-timestamp-stop=0\n"
                     "backup-type=\"full\"\n"
                     TEST_MANIFEST_DB_12
@@ -851,7 +855,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_14, hrnPgCatalogVersion(PG_VERSION_14), 0, false, false, false, false, NULL, NULL, NULL),
+                storagePg, PG_VERSION_14, hrnPgCatalogVersion(PG_VERSION_14), 1, false, false, false, false, NULL, NULL, NULL),
             LinkDestinationError, "link 'link' destination '" TEST_PATH "/pg/base' is in PGDATA");
 
         THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/link") == -1, FileRemoveError, "unable to remove symlink");
@@ -863,7 +867,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_15, hrnPgCatalogVersion(PG_VERSION_15), 0, false, false, false, false, NULL, NULL, NULL),
+                storagePg, PG_VERSION_15, hrnPgCatalogVersion(PG_VERSION_15), 1, false, false, false, false, NULL, NULL, NULL),
             LinkExpectedError, "'pg_data/pg_tblspc/somedir' is not a symlink - pg_tblspc should contain only symlinks");
 
         HRN_STORAGE_PATH_REMOVE(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somedir");
@@ -875,7 +879,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_16, hrnPgCatalogVersion(PG_VERSION_16), 0, false, false, false, false, NULL, NULL, NULL),
+                storagePg, PG_VERSION_16, hrnPgCatalogVersion(PG_VERSION_16), 1, false, false, false, false, NULL, NULL, NULL),
             LinkExpectedError, "'pg_data/pg_tblspc/somefile' is not a symlink - pg_tblspc should contain only symlinks");
 
         TEST_STORAGE_EXISTS(storagePgWrite, MANIFEST_TARGET_PGTBLSPC "/somefile", .remove = true);
@@ -887,7 +891,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_17, hrnPgCatalogVersion(PG_VERSION_17), 0, false, true, false, false, NULL, NULL, NULL),
+                storagePg, PG_VERSION_17, hrnPgCatalogVersion(PG_VERSION_17), 1, false, true, false, false, NULL, NULL, NULL),
             FileOpenError, "unable to get info for missing path/file '" TEST_PATH "/pg/link-to-link'");
 
         THROW_ON_SYS_ERROR(unlink(TEST_PATH "/pg/link-to-link") == -1, FileRemoveError, "unable to remove symlink");
@@ -903,7 +907,7 @@ testRun(void)
 
         TEST_ERROR(
             manifestNewBuild(
-                storagePg, PG_VERSION_18, hrnPgCatalogVersion(PG_VERSION_18), 0, false, false, false, false, NULL, NULL, NULL),
+                storagePg, PG_VERSION_18, hrnPgCatalogVersion(PG_VERSION_18), 1, false, false, false, false, NULL, NULL, NULL),
             LinkDestinationError, "link '" TEST_PATH "/pg/linktolink' cannot reference another link '" TEST_PATH "/linktest'");
 
         #undef TEST_MANIFEST_HEADER
@@ -932,6 +936,7 @@ testRun(void)
         OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
+            manifest->pub.data.backupTimestampStart = 1;
             manifest->pub.data.backupOptionOnline = true;
         }
         OBJ_NEW_END();
@@ -946,6 +951,7 @@ testRun(void)
 
         manifest->pub.data.backupOptionOnline = false;
 
+        HRN_MANIFEST_PATH_ADD(manifest, .name = MANIFEST_TARGET_PGDATA, .group = "test", .user = "test");
         HRN_MANIFEST_FILE_ADD(manifest, .name = MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION, .size = 4, .timestamp = 1482182860);
 
         TEST_RESULT_VOID(manifestBuildValidate(manifest, false, 1482182860, false), "validate manifest");
@@ -976,7 +982,7 @@ testRun(void)
 
         #define TEST_MANIFEST_HEADER_MID                                                                                           \
             "backup-timestamp-copy-start=0\n"                                                                                      \
-            "backup-timestamp-start=0\n"                                                                                           \
+            "backup-timestamp-start=1482182860\n"                                                                                  \
             "backup-timestamp-stop=0\n"                                                                                            \
             "backup-type=\"incr\"\n"                                                                                               \
             "\n"                                                                                                                   \
@@ -1020,6 +1026,7 @@ testRun(void)
         {
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
+            manifest->pub.data.backupTimestampStart = 1482182860;
             manifest->pub.data.pgVersion = PG_VERSION_96;
             manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_96);
             manifest->pub.data.backupOptionDelta = BOOL_FALSE_VAR;
@@ -1050,10 +1057,12 @@ testRun(void)
         {
             manifestPrior = manifestNewInternal();
             manifestPrior->pub.data.backupLabel = strNewZ("20190101-010101F");
+            manifestPrior->pub.data.backupTimestampStart = 1482182860;
             strLstAdd(manifestPrior->pub.referenceList, manifestPrior->pub.data.backupLabel);
             manifestPrior->pub.data.bundle = true;
             manifestPrior->pub.data.bundleRaw = true;
 
+            HRN_MANIFEST_PATH_ADD(manifestPrior, .name = MANIFEST_TARGET_PGDATA, .group = "test", .user = "test");
             HRN_MANIFEST_FILE_ADD(
                 manifestPrior, .name = MANIFEST_TARGET_PGDATA "/FILE3", .size = 0, .sizeRepo = 0, .timestamp = 1482182860,
                 .checksumSha1 = "da39a3ee5e6b4b0d3255bfef95601890afd80709");

@@ -336,18 +336,12 @@ restoreFile(
                             while (deltaWrite != NULL)
                             {
                                 // Seek to the block offset. It is possible we are already at the correct position but it is easier
-                                // and safer to let lseek() figure this out.
-                                THROW_ON_SYS_ERROR_FMT(
-                                    lseek(ioWriteFd(storageWriteIo(pgFileWrite)), (off_t)deltaWrite->offset, SEEK_SET) == -1,
-                                    FileOpenError, STORAGE_ERROR_READ_SEEK, deltaWrite->offset,
-                                    strZ(storagePathP(storagePg(), file->name)));
+                                // and safer to let ioWriteSeek() figure it out.
+                                ioWriteSeek(storageWriteIo(pgFileWrite), deltaWrite->offset);
 
                                 // Write block
                                 ioWrite(storageWriteIo(pgFileWrite), deltaWrite->block);
                                 fileResult->blockIncrDeltaSize += bufUsed(deltaWrite->block);
-
-                                // Flush writes since we may seek to a new location for the next block
-                                ioWriteFlush(storageWriteIo(pgFileWrite));
 
                                 deltaWrite = blockDeltaNext(blockDelta, read, storageReadIo(superBlockRead));
                             }

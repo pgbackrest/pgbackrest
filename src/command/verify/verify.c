@@ -1668,6 +1668,17 @@ verifyProcess(const bool verboseText)
             {
                 jobData.backupList = strLstSort(
                     storageListP(storage, STORAGE_REPO_BACKUP_STR, .expression = backupRegExpStr), sortOrderAsc);
+
+                // Warn if backups in the repository are not described in backup.info. Do not add them for processing since it is
+                // possible for backups to exist in the repository but not in backup.info if an error occurs while backups are being
+                // expired.
+                for (unsigned int repoIdx = 0; repoIdx < strLstSize(jobData.backupList); repoIdx++)
+                {
+                    const String *const label = strLstGet(jobData.backupList, repoIdx);
+
+                    if (!infoBackupLabelExists(backupInfo, label))
+                        LOG_WARN_FMT("backup '%s' found in the repository but not in " INFO_BACKUP_FILE, strZ(label));
+                }
             }
 
             if (!backupLabelInvalid && backupLabel != NULL && strLstEmpty(jobData.backupList))
@@ -1691,6 +1702,25 @@ verifyProcess(const bool verboseText)
             // Check for block map dependencies if --set option is specified
             if (!backupLabelInvalid && backupLabel != NULL)
                 verifyBackupSet(&jobData, backupLabel);
+
+            // Check if backup.info contains backups not found in the repository and add them for processing
+            if (backupLabel == NULL)
+            {
+                const StringList *const infoBackupLabelList = infoBackupDataLabelList(backupInfo, NULL);
+
+                for (unsigned int infoIdx = 0; infoIdx < strLstSize(infoBackupLabelList); infoIdx++)
+                {
+                    const String *const infoLabel = strLstGet(infoBackupLabelList, infoIdx);
+
+                    if (strLstFindIdxP(jobData.backupList, infoLabel) == LIST_NOT_FOUND)
+                    {
+                        LOG_WARN_FMT("backup '%s' found in " INFO_BACKUP_FILE " but not in the repository", strZ(infoLabel));
+                        strLstAdd(jobData.backupList, infoLabel);
+                    }
+                }
+
+                jobData.backupList = strLstSort(jobData.backupList, sortOrderAsc);
+            }
 
             // Only begin processing if there are some archives or backups in the repo
             if (!backupLabelInvalid && (!strLstEmpty(jobData.archiveIdList) || !strLstEmpty(jobData.backupList)))

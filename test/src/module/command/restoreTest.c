@@ -121,6 +121,7 @@ testManifestMinimal(const String *label, unsigned int pgVersion, const String *p
         result->pub.info = infoNew(NULL);
 
         result->pub.data.backupLabel = strDup(label);
+        result->pub.data.backupTimestampStart = 1;
         result->pub.data.pgVersion = pgVersion;
 
         if (strEndsWithZ(label, "I"))
@@ -1115,6 +1116,8 @@ testRun(void)
 #ifdef TEST_CONTAINER_REQUIRED
         TEST_TITLE("owner is root and ownership of pg_data is bad");
 
+        manifest = testManifestMinimal(STRDEF("20161219-212741F_20161219-21275D"), PG_VERSION_96, pgPath);
+
         manifestPathAdd(manifest, &path);
         manifestFileAdd(manifest, &file);
 
@@ -1363,6 +1366,7 @@ testRun(void)
             manifest = manifestNewInternal();
             manifest->pub.data.pgVersion = PG_VERSION_18;
             manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_18);
+            manifest->pub.data.backupTimestampStart = 1;
 
             HRN_MANIFEST_TARGET_ADD(manifest, .name = MANIFEST_TARGET_PGDATA, .path = "/pg");
             HRN_MANIFEST_FILE_ADD(manifest, .name = MANIFEST_TARGET_PGDATA "/" PG_FILE_PGVERSION);
@@ -1503,7 +1507,6 @@ testRun(void)
             HRN_MANIFEST_TARGET_ADD(
                 manifest, .name = MANIFEST_TARGET_PGTBLSPC "/16387", .tablespaceId = 16387, .tablespaceName = "ts1",
                 .path = "/ts1");
-            HRN_MANIFEST_FILE_ADD(manifest, .name = MANIFEST_TARGET_PGDATA "/" PG_PATH_BASE "/32768/" PG_FILE_PGVERSION);
         }
         MEM_CONTEXT_END();
 
@@ -2182,6 +2185,7 @@ testRun(void)
         OBJ_NEW_BASE_BEGIN(Manifest, .childQty = MEM_CONTEXT_QTY_MAX)
         {
             manifest = manifestNewInternal();
+            manifest->pub.data.backupTimestampStart = 1;
 
             HRN_MANIFEST_TARGET_ADD(manifest, .name = MANIFEST_TARGET_PGDATA, .path = "pg_data");
             HRN_MANIFEST_FILE_ADD(manifest, .name = "pg_data/test");
@@ -2651,6 +2655,7 @@ testRun(void)
             manifest = manifestNewInternal();
             manifest->pub.info = infoNew(NULL);
             manifest->pub.data.backupLabel = strNewZ(TEST_LABEL);
+            manifest->pub.data.backupTimestampStart = 1482182860;
             manifest->pub.data.pgVersion = PG_VERSION_10;
             manifest->pub.data.pgCatalogVersion = hrnPgCatalogVersion(PG_VERSION_10);
             manifest->pub.data.backupType = backupTypeIncr;
@@ -3142,7 +3147,7 @@ testRun(void)
 
         // Update the manifest with online = true to test recovery start time logging
         manifest->pub.data.backupOptionOnline = true;
-        manifest->pub.data.backupTimestampStart = 1482182958;
+        manifest->pub.data.backupTimestampStart = 1482182860;
 
         hrnLogReplaceAdd("[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}", NULL, "TIME", false);
 

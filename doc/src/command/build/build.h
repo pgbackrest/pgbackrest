@@ -4,11 +4,11 @@ Build Documentation
 #ifndef DOC_COMMAND_BUILD_H
 #define DOC_COMMAND_BUILD_H
 
-#include "common/type/string.h"
+#include "common/type/keyValue.h"
 
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
-void cmdBuild(const String *pathRepo);
+void cmdBuild(const String *pathRepo, const KeyValue *varKv);
 
 #endif

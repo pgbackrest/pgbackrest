@@ -20,6 +20,9 @@ typedef struct IoWriteInterface
     // Optionally error when write is not ready.
     bool (*ready)(void *driver, bool error);
 
+    // Seek to specified position relative to beginning of write
+    void (*seek)(void *driver, uint64_t position);
+
     void (*write)(void *driver, const Buffer *buffer);
 } IoWriteInterface;
 

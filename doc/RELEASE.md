@@ -35,6 +35,10 @@ to:
 pgbackrest/test/test.pl --code-count
 ```
 
+## Update sponsors
+
+Add new sponsors and move to past sponsors when sponsorship has lapsed.
+
 ## Build release documentation
 ```
 pgbackrest/doc/release.pl --build

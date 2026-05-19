@@ -81,15 +81,6 @@ my $iLogProcessSize = 2;
 my $bLogFileExists;
 my $bLogFileFirst;
 
-# Allow log to be globally enabled or disabled with logEnable() and logDisable()
-my $bLogDisable = 0;
-
-# Allow errors to be logged as warnings
-my $bLogWarnOnError = 0;
-
-# Store the last logged error
-my $oErrorLast;
-
 ####################################################################################################################################
 # logFileSet - set the file messages will be logged to
 ####################################################################################################################################
@@ -198,46 +189,6 @@ sub logLevelSet
 }
 
 push @EXPORT, qw(logLevelSet);
-
-####################################################################################################################################
-# logDisable
-####################################################################################################################################
-sub logDisable
-{
-    $bLogDisable++;
-}
-
-push @EXPORT, qw(logDisable);
-
-####################################################################################################################################
-# logEnable
-####################################################################################################################################
-sub logEnable
-{
-    $bLogDisable--;
-}
-
-push @EXPORT, qw(logEnable);
-
-####################################################################################################################################
-# logWarnOnErrorDisable
-####################################################################################################################################
-sub logWarnOnErrorDisable
-{
-    $bLogWarnOnError--;
-}
-
-push @EXPORT, qw(logWarnOnErrorDisable);
-
-####################################################################################################################################
-# logWarnOnErrorEnable - when an error is thrown, log it as a warning instead
-####################################################################################################################################
-sub logWarnOnErrorEnable
-{
-    $bLogWarnOnError++;
-}
-
-push @EXPORT, qw(logWarnOnErrorEnable);
 
 ####################################################################################################################################
 # logDebugParam
@@ -495,7 +446,6 @@ sub logDebugBuild
     return $rResult;
 }
 
-push @EXPORT, qw(logDebugBuild);
 
 ####################################################################################################################################
 # logDebugOut
@@ -556,18 +506,6 @@ sub logDebugOut
         &log($strLevel, "${strFunction}${strType}" . (defined($strMessage) ? ": $strMessage" : ''));
     }
 }
-
-####################################################################################################################################
-# logException
-####################################################################################################################################
-sub logException
-{
-    my $oException = shift;
-
-    return &log($oException->level(), $oException->message(), $oException->code(), undef, undef, undef, $oException->extra());
-}
-
-push @EXPORT, qw(logException);
 
 ####################################################################################################################################
 # logErrorResult
@@ -666,93 +604,75 @@ sub log
     # Format the message text
     my ($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst) = localtime(time);
 
-    # If logging warnings as errors then change the display level and rank. These will be used to determine if the message will be
-    # displayed or not.
-    my $strDisplayLevel = ($bLogWarnOnError && $strLevel eq ERROR ? WARN : $strLevel);
-    my $iLogDisplayLevelRank = ($bLogWarnOnError && $strLevel eq ERROR ? $oLogLevelRank{$strDisplayLevel}{rank} : $iLogLevelRank);
-
     $strMessageFormat =
         ($bLogTimestamp ? timestampFormat() . sprintf('.%03d ', (gettimeofday() - int(gettimeofday())) * 1000) : '') .
         sprintf('P%0*d', $iLogProcessSize, defined($iProcessId) ? $iProcessId : 0) .
-        (' ' x (7 - length($strDisplayLevel))) . "${strDisplayLevel}: ${strMessageFormat}\n";
+        (' ' x (7 - length($strLevel))) . "${strLevel}: ${strMessageFormat}\n";
 
-    # Skip output if disabled
-    if (!$bLogDisable)
+    # Output to stderr if configured log level setting rank is greater than the display level rank.
+    if (!$rExtra->{bLogConsole} && $iLogLevelRank <= $oLogLevelRank{$strLogLevelStdErr}{rank})
     {
-        # Output to stderr if configured log level setting rank is greater than the display level rank.
-        if (!$rExtra->{bLogConsole} && $iLogDisplayLevelRank <= $oLogLevelRank{$strLogLevelStdErr}{rank})
+        if ($strLogLevelStdErr ne PROTOCOL)
         {
-            if ($strLogLevelStdErr ne PROTOCOL)
-            {
-                syswrite(*STDERR, $strDisplayLevel . (defined($iCode) ? sprintf(' [%03d]: ', $iCode) : '') . ': ');
-            }
-
-            syswrite(*STDERR, "${strMessage}\n");
-            $rExtra->{bLogConsole} = true;
+            syswrite(*STDERR, $strLevel . (defined($iCode) ? sprintf(' [%03d]: ', $iCode) : '') . ': ');
         }
-        # Else output to stdout if configured log level setting rank is greater than the display level rank
-        elsif (!$rExtra->{bLogConsole} && $iLogDisplayLevelRank <= $oLogLevelRank{$strLogLevelConsole}{rank})
+
+        syswrite(*STDERR, "${strMessage}\n");
+        $rExtra->{bLogConsole} = true;
+    }
+    # Else output to stdout if configured log level setting rank is greater than the display level rank
+    elsif (!$rExtra->{bLogConsole} && $iLogLevelRank <= $oLogLevelRank{$strLogLevelConsole}{rank})
+    {
+        if (!$bSuppressLog)
+        {
+            syswrite(*STDOUT, $strMessageFormat);
+        }
+
+        $rExtra->{bLogConsole} = true;
+    }
+
+    # Output to file if configured log level setting rank is greater than the display level rank or test flag is set.
+    if (!$rExtra->{bLogLogFile} && $iLogLevelRank <= $oLogLevelRank{$strLogLevelFile}{rank})
+    {
+        if (defined($hLogFile) || (defined($strLogLevelFile) && $strLogLevelFile ne OFF))
         {
             if (!$bSuppressLog)
             {
-                syswrite(*STDOUT, $strMessageFormat);
-
-                # This is here for debugging purposes - it's not clear how best to make it into a switch
-                # if ($strLevel eq ASSERT || $strLevel eq ERROR)
-                # {
-                #     my $strStackTrace = longmess() . "\n";
-                #     $strStackTrace =~ s/\n/\n                                   /g;
-                #     syswrite(*STDOUT, $strStackTrace);
-                # }
-            }
-
-            $rExtra->{bLogConsole} = true;
-        }
-
-        # Output to file if configured log level setting rank is greater than the display level rank or test flag is set.
-        if (!$rExtra->{bLogLogFile} && $iLogDisplayLevelRank <= $oLogLevelRank{$strLogLevelFile}{rank})
-        {
-            if (defined($hLogFile) || (defined($strLogLevelFile) && $strLogLevelFile ne OFF))
-            {
-                if (!$bSuppressLog)
+                if (defined($hLogFile))
                 {
+                    logBanner();
+                    syswrite($hLogFile, $strMessageFormat);
+                }
+                else
+                {
+                    $strLogFileCache .= $strMessageFormat;
+                }
+
+                if ($strLevel eq ASSERT ||
+                    ($strLevel eq ERROR && ($strLogLevelFile eq DEBUG || $strLogLevelFile eq TRACE)))
+                {
+                    my $strStackTrace = longmess() . "\n";
+                    $strStackTrace =~ s/\n/\n                                   /g;
+
                     if (defined($hLogFile))
                     {
-                        logBanner();
-                        syswrite($hLogFile, $strMessageFormat);
+                        syswrite($hLogFile, $strStackTrace);
                     }
                     else
                     {
-                        $strLogFileCache .= $strMessageFormat;
-                    }
-
-                    if ($strDisplayLevel eq ASSERT ||
-                        ($strDisplayLevel eq ERROR && ($strLogLevelFile eq DEBUG || $strLogLevelFile eq TRACE)))
-                    {
-                        my $strStackTrace = longmess() . "\n";
-                        $strStackTrace =~ s/\n/\n                                   /g;
-
-                        if (defined($hLogFile))
-                        {
-                            syswrite($hLogFile, $strStackTrace);
-                        }
-                        else
-                        {
-                            $strLogFileCache .= $strStackTrace;
-                        }
+                        $strLogFileCache .= $strStackTrace;
                     }
                 }
             }
-
-            $rExtra->{bLogFile} = true;
         }
+
+        $rExtra->{bLogFile} = true;
     }
 
     # Return a typed exception if code is defined
     if (defined($iCode))
     {
-        $oErrorLast = new pgBackRestDoc::Common::Exception($strLevel, $iCode, $strMessage, longmess(), $rExtra);
-        return $oErrorLast;
+        return new pgBackRestDoc::Common::Exception($strLevel, $iCode, $strMessage, longmess(), $rExtra);
     }
 
     # Return the message so it can be used in a confess
@@ -760,16 +680,6 @@ sub log
 }
 
 push @EXPORT, qw(log);
-
-####################################################################################################################################
-# logErrorLast - get the last logged error
-####################################################################################################################################
-sub logErrorLast
-{
-    return $oErrorLast;
-}
-
-push @EXPORT, qw(logErrorLast);
 
 ####################################################################################################################################
 # logLevel - get the current log levels
@@ -780,25 +690,5 @@ sub logLevel
 }
 
 push @EXPORT, qw(logLevel);
-
-####################################################################################################################################
-# logFileCacheClear - Clear the log file cache
-####################################################################################################################################
-sub logFileCacheClear
-{
-    undef($strLogFileCache);
-}
-
-push @EXPORT, qw(logFileCacheClear);
-
-####################################################################################################################################
-# logFileCache - Get the log file cache
-####################################################################################################################################
-sub logFileCache
-{
-    return $strLogFileCache;
-}
-
-push @EXPORT, qw(logFileCache);
 
 1;

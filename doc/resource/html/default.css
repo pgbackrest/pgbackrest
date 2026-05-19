@@ -380,9 +380,7 @@ Table Elements
     color: #27689d;
 }
 
-.table-header-row
-{
-}
+/*.table-header-row*/
 
 .table-header-left,
 .table-header-center,
@@ -412,9 +410,7 @@ Table Elements
     width: 100%;
 }
 
-.table-row
-{
-}
+/*.table-row*/
 
 .table-data-left,
 .table-data-center,
@@ -563,6 +559,45 @@ li.list-unordered
 {
     margin-top: .5em;
 }
+
+/*******************************************************************************
+Sponsor
+*******************************************************************************/
+.sponsor-list
+{
+    display: grid;
+    grid-template-columns: repeat(3, max-content);
+    justify-content: center;
+    justify-items: center;
+    align-items: center;
+    gap: .75em 2.5em;
+    margin-top: 1.5em;
+    margin-bottom: 1.5em;
+}
+
+.sponsor
+{
+    text-align: center;
+}
+
+.sponsor-img-dark
+{
+    display: none;
+}
+
+@media (prefers-color-scheme: dark)
+{
+    .sponsor-img-light
+    {
+        display: none;
+    }
+
+    .sponsor-img-dark
+    {
+        display: inline;
+    }
+}
+
 
 /*******************************************************************************
 Admonition
