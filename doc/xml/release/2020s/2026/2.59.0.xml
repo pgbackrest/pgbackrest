@@ -2,6 +2,19 @@
     <release-core-list>
         <release-improvement-list>
             <release-item>
+                <github-issue id="2736"/>
+                <github-pull-request id="2740"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="will.morland"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add per-repo backup progress to <cmd>info</cmd> command output.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2723"/>
                 <github-pull-request id="2752"/>
 
@@ -35,6 +48,17 @@
                 </release-item-contributor-list>
 
                 <p>Suppress <id>unused parameter</id> errors in <proper>meson</proper> compiler probes.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2738"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="mohammad.ali.nazir.kosar"/>
+                </release-item-contributor-list>
+
+                <p><proper>C11</proper> is now the minimum C standard.</p>
             </release-item>
         </release-improvement-list>
 

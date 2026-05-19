@@ -17,6 +17,73 @@ testRun(void)
     const Storage *const storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
+    if (testBegin("eval()"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("negation");
+
+        TEST_RESULT_BOOL(eval(STRDEF("!('y' eq 'y')")), false, "negate true");
+        TEST_RESULT_BOOL(eval(STRDEF("!('y' eq 'n')")), true, "negate false");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("string comparison with eq/ne");
+
+        TEST_RESULT_BOOL(eval(STRDEF("'none' eq 'none'")), true, "eq equal");
+        TEST_RESULT_BOOL(eval(STRDEF("'none' eq 'other'")), false, "eq unequal");
+        TEST_RESULT_BOOL(eval(STRDEF("'none' ne 'other'")), true, "ne unequal");
+        TEST_RESULT_BOOL(eval(STRDEF("'none' ne 'none'")), false, "ne equal");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("numeric comparison");
+
+        TEST_RESULT_BOOL(eval(STRDEF("18 > 12")), true, "18 > 12");
+        TEST_RESULT_BOOL(eval(STRDEF("12 > 12")), false, "12 > 12");
+        TEST_RESULT_BOOL(eval(STRDEF("12 >= 12")), true, "12 >= 12");
+        TEST_RESULT_BOOL(eval(STRDEF("11 >= 12")), false, "11 >= 12");
+        TEST_RESULT_BOOL(eval(STRDEF("10 < 12")), true, "10 < 12");
+        TEST_RESULT_BOOL(eval(STRDEF("12 < 12")), false, "12 < 12");
+        TEST_RESULT_BOOL(eval(STRDEF("12 <= 12")), true, "12 <= 12");
+        TEST_RESULT_BOOL(eval(STRDEF("13 <= 12")), false, "13 <= 12");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("logical AND");
+
+        TEST_RESULT_BOOL(eval(STRDEF("'y' eq 'y' && 'n' eq 'n'")), true, "AND both true");
+        TEST_RESULT_BOOL(eval(STRDEF("'y' eq 'y' && 'y' eq 'n'")), false, "AND right false");
+        TEST_RESULT_BOOL(eval(STRDEF("'y' eq 'n' && 'y' eq 'y'")), false, "AND left false");
+        TEST_RESULT_BOOL(eval(STRDEF("'y' eq 'y' && 18 > 12")), true, "AND with numeric");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("logical OR");
+
+        TEST_RESULT_BOOL(eval(STRDEF("'y' eq 'y' || 'y' eq 'y'")), true, "OR both true");
+        TEST_RESULT_BOOL(eval(STRDEF("'y' eq 'y' || 'y' eq 'n'")), true, "OR left true");
+        TEST_RESULT_BOOL(eval(STRDEF("'y' eq 'n' || 'y' eq 'y'")), true, "OR right true");
+        TEST_RESULT_BOOL(eval(STRDEF("'y' eq 'n' || 'y' eq 'n'")), false, "OR both false");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("parentheses");
+
+        TEST_RESULT_BOOL(eval(STRDEF("(('y' eq 'y' || 'y' eq 'n') && 'y' eq 'n')")), false, "parens false");
+        TEST_RESULT_BOOL(eval(STRDEF("('y' eq 'y')")), true, "parens true");
+        TEST_RESULT_BOOL(eval(STRDEF("('y' eq 'y' || 'n' eq 'y')")), true, "parens with OR");
+        TEST_RESULT_BOOL(eval(STRDEF("!('n' eq 'y' || 'n' eq 'y')")), true, "negated parens with OR");
+        TEST_RESULT_BOOL(
+            eval(STRDEF("'y' eq 'y' && ('n' eq 'y' || 'y' eq 'y')")), true, "AND with parens OR");
+        TEST_RESULT_BOOL(
+            eval(STRDEF("'y' eq 'n' || ('y' eq 'y' && 18 > 12)")), true, "OR with parens AND");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid expression");
+
+        TEST_ERROR(eval(STRDEF("true")), FormatError, "unable to evaluate 'true'");
+        TEST_ERROR(
+            eval(STRDEF("none eq 'none'")), FormatError,
+            "expected quoted string on left side of 'eq': 'none eq 'none''");
+        TEST_ERROR(eval(STRDEF("('y' eq 'y'")), FormatError, "unmatched parenthesis in '('y' eq 'y''");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cmdBuild()"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
@@ -46,19 +113,6 @@ testRun(void)
             "<!DOCTYPE doc SYSTEM \"doc.dtd\">\n"
             "<doc title=\"{[project]}\" subtitle=\"Reliable {[postgres]} Backup &amp; Restore\" toc=\"n\">\n"
             "<description>{[project]} is a reliable backup and restore solution for {[postgres]}...</description>\n"
-            "</doc>\n");
-
-        HRN_STORAGE_PUT_Z(
-            storageTest, "doc/xml/user-guide.xml",
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-            "<!DOCTYPE doc SYSTEM \"doc.dtd\">\n"
-            "<doc title=\"{[project]} User Guide\" subtitle=\"{[user-guide-subtitle]}\" cmd-line-len=\"85\">\n"
-            "<description>The {[project]} User Guide demonstrates how...</description>\n"
-            "<section id=\"introduction\">\n"
-            "    <title>Introduction</title>\n"
-            "    <cmd-description key=\"check\"/>\n"
-            "    <option-description key=\"config\"/>\n"
-            "</section>\n"
             "</doc>\n");
 
         HRN_STORAGE_PUT_Z(
@@ -293,12 +347,114 @@ testRun(void)
             "    </operation>\n"
             "</doc>\n");
 
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("build documentation");
+        HRN_STORAGE_PUT_Z(
+            storageTest, "doc/xml/user-guide.xml",
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            "<!DOCTYPE doc SYSTEM \"doc.dtd\">\n"
+            "<doc title=\"{[project]} User Guide\" subtitle=\"{[user-guide-subtitle]}\" cmd-line-len=\"85\">\n"
+            "<description>The {[project]} User Guide demonstrates how...</description>\n"
+            "\n"
+            "<variable-list>\n"
+            "    <variable key=\"os-type\">debian</variable>\n"
+            "    <variable key=\"os-type-is-debian\">'{[os-type]}' eq 'debian'</variable>\n"
+            "    <variable key=\"os-type-is-rhel\">'{[os-type]}' eq 'rhel'</variable>\n"
+            "</variable-list>\n"
+            "\n"
+            "<block-define if=\"{[os-type-is-debian]}\" id=\"install\">\n"
+            "    <execute-list host=\"{[install-host]}\">\n"
+            "        <title>Debian Install</title>\n"
+            "        <execute user=\"root\">\n"
+            "            <exe-cmd>mkdir -p {[install-path]}</exe-cmd>\n"
+            "        </execute>\n"
+            "    </execute-list>\n"
+            "</block-define>"
+            "\n"
+            "<block-define if=\"{[os-type-is-rhel]}\" id=\"install\">\n"
+            "    <p>RHEL Install</p>"
+            "</block-define>"
+            "\n"
+            "<section id=\"introduction\">\n"
+            "    <title>Introduction</title>\n"
+            "    <cmd-description key=\"check\"/>\n"
+            "    <option-description key=\"config\"/>\n"
+            "\n"
+            "    <block id=\"install\">\n"
+            "        <block-variable-replace key=\"install-host\">{[host-pg1]}</block-variable-replace>\n"
+            "        <block-variable-replace key=\"install-path\">/path/to/install</block-variable-replace>\n"
+            "    </block>\n"
+            "</section>\n"
+            "</doc>\n");
 
-        TEST_RESULT_VOID(cmdBuild(TEST_PATH_STR), "write files");
-        TEST_STORAGE_EXISTS(storageTest, "doc/output/xml/configuration.xml");
-        TEST_STORAGE_EXISTS(storageTest, "doc/output/xml/command.xml");
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("build documentation with user vars");
+
+        KeyValue *kvVar = kvNew();
+        kvAdd(kvVar, VARSTRDEF("os-type"), VARSTRDEF("rhel"));
+
+        TEST_RESULT_VOID(cmdBuild(TEST_PATH_STR, kvVar), "write files");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("user-guide.xml");
+
+        TEST_STORAGE_GET(
+            storageTest,
+            "doc/output/xml/user-guide.xml",
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            "<!DOCTYPE doc SYSTEM \"doc.dtd\">\n"
+            "<doc title=\"{[project]} User Guide\" subtitle=\"{[user-guide-subtitle]}\" cmd-line-len=\"85\">\n"
+            "<description>The {[project]} User Guide demonstrates how...</description>\n"
+            "\n"
+            "<variable-list>\n"
+            "    <variable key=\"os-type\">debian</variable>\n"
+            "    <variable key=\"os-type-is-debian\">'{[os-type]}' eq 'debian'</variable>\n"
+            "    <variable key=\"os-type-is-rhel\">'{[os-type]}' eq 'rhel'</variable>\n"
+            "</variable-list>\n"
+            "\n\n\n"
+            "<section id=\"introduction\">\n"
+            "    <title>Introduction</title>\n"
+            "    <p>Check command description.</p>\n"
+            "    <p>config option description.</p>\n"
+            "\n    \n"
+            "    <p>RHEL Install</p>\n"
+            "</section>\n"
+            "</doc>\n");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("build documentation without user vars");
+
+        TEST_RESULT_VOID(cmdBuild(TEST_PATH_STR, NULL), "write files");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("user-guide.xml");
+
+        TEST_STORAGE_GET(
+            storageTest,
+            "doc/output/xml/user-guide.xml",
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            "<!DOCTYPE doc SYSTEM \"doc.dtd\">\n"
+            "<doc title=\"{[project]} User Guide\" subtitle=\"{[user-guide-subtitle]}\" cmd-line-len=\"85\">\n"
+            "<description>The {[project]} User Guide demonstrates how...</description>\n"
+            "\n"
+            "<variable-list>\n"
+            "    <variable key=\"os-type\">debian</variable>\n"
+            "    <variable key=\"os-type-is-debian\">'{[os-type]}' eq 'debian'</variable>\n"
+            "    <variable key=\"os-type-is-rhel\">'{[os-type]}' eq 'rhel'</variable>\n"
+            "</variable-list>\n"
+            "\n\n\n"
+            "<section id=\"introduction\">\n"
+            "    <title>Introduction</title>\n"
+            "    <p>Check command description.</p>\n"
+            "    <p>config option description.</p>\n"
+            "\n    \n"
+            "    <execute-list host=\"{[host-pg1]}\">\n"
+            "        <title>Debian Install</title>\n"
+            "        <execute user=\"root\">\n"
+            "            <exe-cmd>mkdir -p /path/to/install</exe-cmd>\n"
+            "        </execute>\n"
+            "    </execute-list>\n"
+            "\n"
+            "</section>\n"
+            "</doc>\n");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("configuration.xml");
@@ -443,23 +599,6 @@ testRun(void)
                     "</section>"
                 "</section>"
             // {uncrustify_on}
-            "</doc>\n");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("command.xml");
-
-        TEST_STORAGE_GET(
-            storageTest,
-            "doc/output/xml/user-guide.xml",
-            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-            "<!DOCTYPE doc SYSTEM \"doc.dtd\">\n"
-            "<doc title=\"{[project]} User Guide\" subtitle=\"{[user-guide-subtitle]}\" cmd-line-len=\"85\">\n"
-            "<description>The {[project]} User Guide demonstrates how...</description>\n"
-            "<section id=\"introduction\">\n"
-            "    <title>Introduction</title>\n"
-            "    <p>Check command description.</p>\n"
-            "    <p>config option description.</p>\n"
-            "</section>\n"
             "</doc>\n");
 
         // -------------------------------------------------------------------------------------------------------------------------

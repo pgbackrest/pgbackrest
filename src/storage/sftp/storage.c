@@ -453,7 +453,7 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN FN_NO_RETURN void
+FN_EXTERN noreturn void
 storageSftpEvalLibSsh2Error(
     const int ssh2Errno, const uint64_t sftpErrno, const ErrorType *const errorType, const String *const message,
     const String *const hint)
