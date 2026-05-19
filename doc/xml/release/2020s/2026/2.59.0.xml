@@ -40,6 +40,18 @@
             </release-item>
 
             <release-item>
+                <github-issue id="2757"/>
+                <github-pull-request id="2760"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="andrew.jackson"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add <proper>systemd</proper> notify integration.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2724"/>
 
                 <release-item-contributor-list>
