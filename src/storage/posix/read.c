@@ -89,6 +89,9 @@ storageReadPosixOpen(THIS_VOID)
         // Set free callback to ensure the file descriptor is freed
         memContextCallbackSet(objMemContext(this), storageReadPosixFreeResource, this);
 
+        // advise we don't need to keep on cache
+        posix_fadvise(this->fd, 0, 0, POSIX_FADV_DONTNEED);
+        
         // Seek to offset
         if (this->interface.offset != 0)
         {
