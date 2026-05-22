@@ -149,7 +149,7 @@ expireAdhocBackup(InfoBackup *const infoBackup, const String *const backupLabel,
                 cfgOptionGroupName(cfgOptGrpRepo, repoIdx), strZ(latestBackup),
                 cfgOptionIdxName(cfgOptRepoRetentionArchive, repoIdx), cfgOptionIdxName(cfgOptRepoRetentionArchiveType, repoIdx));
 
-            // Adhoc expire is never performed through backup command so only check to determine if dry-run has been set or not
+
             if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
                 backupLinkLatest(infoBackupData(infoBackup, infoBackupDataTotal(infoBackup) - 1).backupLabel, repoIdx);
         }
