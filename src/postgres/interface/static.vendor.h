@@ -90,7 +90,7 @@ typedef uint16 LocationIndex;
 // ---------------------------------------------------------------------------------------------------------------------------------
 /*
  * For historical reasons, the 64-bit LSN value is stored as two 32-bit
- * values.
+ * values. !!! NEED TO FIX THIS
  */
 typedef struct
 {
@@ -102,7 +102,7 @@ typedef struct
 // ---------------------------------------------------------------------------------------------------------------------------------
 /*
  * As of Release 9.3, the checksum version must also be considered when
- * handling pages.
+ * handling pages. !!! MIGHT NEED MORE HERE
  */
 #define PG_DATA_CHECKSUM_VERSION	1
 

@@ -15,3 +15,5 @@ version:
   - 16
   - 17
   - 18
+  - 19:
+      release: false
