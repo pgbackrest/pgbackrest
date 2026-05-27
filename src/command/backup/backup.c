@@ -1695,6 +1695,8 @@ typedef struct BackupJobData
     uint64_t bundleSize;                                            // Target bundle size
     uint64_t bundleLimit;                                           // Limit on files to bundle
     uint64_t bundleId;                                              // Bundle id
+    time_t bundleStableMtime;                                       // Files with timestamp < this are "old" and skip the mtime sort
+                                                                    // (0 = partition disabled, sort everything)
     const bool blockIncr;                                           // Block incremental?
     size_t blockIncrSizeSuper;                                      // Super block size
 
@@ -1937,10 +1939,22 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
         const unsigned int queueOffset = jobData->backupStandby ? 1 : 0;
         const unsigned int queueCount = strLstSize(targetList) + queueOffset;
 
+        // When bundling is enabled and a non-zero stable-age threshold is configured, the mtime sort is skipped for files older
+        // than the threshold. A parallel oldList[] collects those "stable" small files in insertion (directory) order; they are
+        // appended after the sorted recent+big files before binning. With partition disabled, oldList stays NULL and all files
+        // flow through sortList as in the upstream behavior.
+        const bool partitionByMtime = jobData->bundle && jobData->bundleStableMtime > 0;
+
         List **const sortList = memNew(queueCount * sizeof(List *));
+        List **const oldList = partitionByMtime ? memNew(queueCount * sizeof(List *)) : NULL;
 
         for (unsigned int queueIdx = 0; queueIdx < queueCount; queueIdx++)
+        {
             sortList[queueIdx] = lstNewP(sizeof(BackupQueueItem), .comparator = backupProcessQueueComparator);
+
+            if (partitionByMtime)
+                oldList[queueIdx] = lstNewP(sizeof(BackupQueueItem));
+        }
 
         // Now put all files into the sort lists
         uint64_t fileTotal = 0;
@@ -1977,15 +1991,21 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
                 .filePack = filePack,
             };
 
-            // Files that must be copied from the primary are always put in queue 0 when backup from standby
+            // Determine which list this file goes into. Old small files skip the timestamp sort; everything else (big files and
+            // recent small files) goes into the sorted list and is ordered by the standard comparator.
+            const bool isStableSmall =
+                partitionByMtime && file.size <= jobData->bundleLimit && file.timestamp < jobData->bundleStableMtime;
+
+            // Find the destination queue index. Files that must be copied from the primary are always put in queue 0 when
+            // backup from standby; everything else is matched to a target by path prefix.
+            unsigned int destQueueIdx;
+
             if (jobData->backupStandby && backupProcessFilePrimary(jobData->standbyExp, file.name))
             {
-                lstAdd(sortList[0], &item);
+                destQueueIdx = 0;
             }
-            // Else find the correct queue by matching the file to a target
             else
             {
-                // Find the target that contains this file
                 unsigned int targetIdx = 0;
 
                 do
@@ -1999,9 +2019,10 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
                 }
                 while (1);
 
-                // Add file to queue
-                lstAdd(sortList[targetIdx + queueOffset], &item);
+                destQueueIdx = targetIdx + queueOffset;
             }
+
+            lstAdd(isStableSmall ? oldList[destQueueIdx] : sortList[destQueueIdx], &item);
 
             // Add size to total
             result += file.sizeOriginal;
@@ -2025,7 +2046,8 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
             THROW(FileMissingError, "no files have changed since the last backup - this seems unlikely");
 
         // Sort each per-target queue and immediately bin it into a descriptor list. Bundle ids are assigned monotonically across
-        // queues via jobData->bundleId so the wire format stays unique.
+        // queues via jobData->bundleId so the wire format stays unique. If partitionByMtime is on, the stable-age "old" files
+        // are appended after the sorted ones so the binner walks [big size-desc, recent mtime-desc, old insertion-order].
         backupProcessQueueComparatorBundle = jobData->bundle;
         backupProcessQueueComparatorBundleLimit = jobData->bundleLimit;
 
@@ -2034,6 +2056,14 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
             for (unsigned int queueIdx = 0; queueIdx < queueCount; queueIdx++)
             {
                 lstSort(sortList[queueIdx], sortOrderAsc);
+
+                if (partitionByMtime)
+                {
+                    const unsigned int oldSize = lstSize(oldList[queueIdx]);
+
+                    for (unsigned int oldIdx = 0; oldIdx < oldSize; oldIdx++)
+                        lstAdd(sortList[queueIdx], lstGet(oldList[queueIdx], oldIdx));
+                }
 
                 List *const descriptorList = backupProcessQueueBin(sortList[queueIdx], jobData, lstMemContext(jobData->queueList));
                 lstAdd(jobData->queueList, &descriptorList);
@@ -2279,6 +2309,13 @@ backupProcess(const BackupData *const backupData, Manifest *const manifest, cons
         {
             jobData.bundleSize = cfgOptionUInt64(cfgOptRepoBundleSize);
             jobData.bundleLimit = cfgOptionUInt64(cfgOptRepoBundleLimit);
+
+            // Convert the configured stable-age (days) into an absolute mtime threshold. Files with timestamp < threshold are
+            // treated as "stable" and skip the timestamp sort. 0 disables the partition.
+            const unsigned int bundleStableAgeDays = cfgOptionUInt(cfgOptRepoBundleStableAge);
+
+            jobData.bundleStableMtime =
+                bundleStableAgeDays == 0 ? 0 : time(NULL) - (time_t)bundleStableAgeDays * 24 * 60 * 60;
         }
 
         if (jobData.blockIncr)

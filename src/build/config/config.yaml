@@ -1872,6 +1872,21 @@ option:
     default: 2MiB
     allow-range: [8KiB, 1PiB]
 
+  repo-bundle-stable-age:
+    section: global
+    group: repo
+    type: integer
+    default: 0
+    allow-range: [0, 1825]
+    command:
+      backup: {}
+    command-role:
+      main: {}
+    depend:
+      option: repo-bundle
+      list:
+        - true
+
   repo-block:
     section: global
     group: repo
