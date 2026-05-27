@@ -29,6 +29,41 @@ static struct
 #endif // HAVE_LIBSSH2
 } userLocalData;
 
+/***********************************************************************************************************************************
+Per-process uid->name and gid->name caches.
+
+userNameFromId() / groupNameFromId() are called once per file by the manifest builder. On systems where NSS routes uid lookups to a
+remote name service (sssd, systemd-userdbd, LDAP via nss-pam-ldapd, etc.), every call costs a Unix-socket round-trip plus its own
+audit-and-syscall overhead. Profiling shows this can dominate the manifest-build phase for clusters with millions of files even
+though the data files almost always share a single owner (typically "postgres").
+
+The cache is a small fixed-size array because the working set of unique ids on a PG host is tiny (usually 1-3). Linear scan is
+faster than a hash table at this size and avoids any allocation in the hot path. Cached String * lives in memContextTop() so it
+survives every caller's context.
+
+Cache misses past USER_NAME_CACHE_SIZE fall through to an uncached NSS lookup (correct but slow); in practice we never exceed the
+table for a backup of a normally-configured cluster.
+***********************************************************************************************************************************/
+#define USER_NAME_CACHE_SIZE                                        16
+
+typedef struct UserNameCacheEntry
+{
+    uid_t id;                                                       // The uid that was looked up
+    const String *name;                                             // NSS result owned in memContextTop(), NULL if unresolvable
+} UserNameCacheEntry;
+
+typedef struct GroupNameCacheEntry
+{
+    gid_t id;
+    const String *name;
+} GroupNameCacheEntry;
+
+static UserNameCacheEntry userNameCache[USER_NAME_CACHE_SIZE];
+static unsigned int userNameCacheCount = 0;
+
+static GroupNameCacheEntry groupNameCache[USER_NAME_CACHE_SIZE];
+static unsigned int groupNameCacheCount = 0;
+
 /**********************************************************************************************************************************/
 static void
 userInitInternal(void)
@@ -112,12 +147,33 @@ groupNameFromId(const gid_t groupId)
         FUNCTION_TEST_PARAM(UINT, groupId);
     FUNCTION_TEST_END();
 
+    // Cache lookup. Small fixed table -- linear scan is fastest at this size.
+    for (unsigned int idx = 0; idx < groupNameCacheCount; idx++)
+    {
+        if (groupNameCache[idx].id == groupId)
+            FUNCTION_TEST_RETURN(STRING, groupNameCache[idx].name == NULL ? NULL : strDup(groupNameCache[idx].name));
+    }
+
+    // Cache miss -- do the actual NSS lookup
     const struct group *const groupData = getgrgid(groupId);
+    String *const result = groupData != NULL ? strNewZ(groupData->gr_name) : NULL;
 
-    if (groupData != NULL)
-        FUNCTION_TEST_RETURN(STRING, strNewZ(groupData->gr_name));
+    // Record the answer (including the negative case) so we never look this id up again. Past USER_NAME_CACHE_SIZE we just fall
+    // back to per-call NSS, which is correct -- only slower for the unusual case of many distinct owners.
+    if (groupNameCacheCount < USER_NAME_CACHE_SIZE)
+    {
+        groupNameCache[groupNameCacheCount].id = groupId;
 
-    FUNCTION_TEST_RETURN(STRING, NULL);
+        MEM_CONTEXT_BEGIN(memContextTop())
+        {
+            groupNameCache[groupNameCacheCount].name = result == NULL ? NULL : strDup(result);
+        }
+        MEM_CONTEXT_END();
+
+        groupNameCacheCount++;
+    }
+
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
@@ -192,12 +248,30 @@ userNameFromId(const uid_t userId)
         FUNCTION_TEST_PARAM(UINT, userId);
     FUNCTION_TEST_END();
 
+    // Cache lookup. Mirrors groupNameFromId above.
+    for (unsigned int idx = 0; idx < userNameCacheCount; idx++)
+    {
+        if (userNameCache[idx].id == userId)
+            FUNCTION_TEST_RETURN(STRING, userNameCache[idx].name == NULL ? NULL : strDup(userNameCache[idx].name));
+    }
+
     const struct passwd *const userData = getpwuid(userId);
+    String *const result = userData != NULL ? strNewZ(userData->pw_name) : NULL;
 
-    if (userData != NULL)
-        FUNCTION_TEST_RETURN(STRING, strNewZ(userData->pw_name));
+    if (userNameCacheCount < USER_NAME_CACHE_SIZE)
+    {
+        userNameCache[userNameCacheCount].id = userId;
 
-    FUNCTION_TEST_RETURN(STRING, NULL);
+        MEM_CONTEXT_BEGIN(memContextTop())
+        {
+            userNameCache[userNameCacheCount].name = result == NULL ? NULL : strDup(result);
+        }
+        MEM_CONTEXT_END();
+
+        userNameCacheCount++;
+    }
+
+    FUNCTION_TEST_RETURN(STRING, result);
 }
 
 /**********************************************************************************************************************************/
