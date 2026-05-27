@@ -491,6 +491,30 @@ manifestFileUpdate(Manifest *const this, const ManifestFile *const file)
     FUNCTION_TEST_RETURN_VOID();
 }
 
+FN_EXTERN void
+manifestFileUpdateByIdx(Manifest *const this, const unsigned int fileIdx, const ManifestFile *const file)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(MANIFEST, this);
+        FUNCTION_TEST_PARAM(UINT, fileIdx);
+        FUNCTION_TEST_PARAM(MANIFEST_FILE, file);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+    ASSERT(file != NULL);
+    ASSERT(fileIdx < lstSize(this->pub.fileList));
+    ASSERT(
+        (!file->checksumPage && !file->checksumPageError && file->checksumPageErrorList == NULL) ||
+        (file->checksumPage && !file->checksumPageError && file->checksumPageErrorList == NULL) ||
+        (file->checksumPage && file->checksumPageError));
+    ASSERT(file->size != 0 || (file->bundleId == 0 && file->bundleOffset == 0));
+
+    // The slot for entry fileIdx in fileList holds a ManifestFilePack *
+    manifestFilePackUpdate(this, lstGet(this->pub.fileList, fileIdx), file);
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
 /***********************************************************************************************************************************
 Link functions
 ***********************************************************************************************************************************/

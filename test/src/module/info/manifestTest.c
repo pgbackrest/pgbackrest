@@ -1855,6 +1855,38 @@ testRun(void)
             "pg_data/special-@#!$^&*()_+~`{}[]\\:;", "find special file");
         TEST_RESULT_BOOL(manifestFileExists(manifest, STRDEF("bogus")), false, "manifest file does not exist");
 
+        // manifestFilePackFindDefault returns NULL for missing files and the pack pointer for existing files
+        TEST_RESULT_PTR(manifestFilePackFindDefault(manifest, STRDEF("bogus")), NULL, "find-default missing returns NULL");
+        TEST_RESULT_PTR_NE(
+            manifestFilePackFindDefault(manifest, STRDEF("pg_data/PG_VERSION")), NULL, "find-default existing returns pack");
+
+        // manifestFileUpdateByIdx updates by index without a by-name search. Pick a known file, find its index by iterating
+        // (the test manifest is small so this is fine), update it via the new function, and verify the update took.
+        // Each call to manifestFileUpdate*() rebuilds the underlying pack and frees the old one, so unpacked ManifestFile structs
+        // become stale immediately after; re-fetch via manifestFileFind() before the restore update.
+        {
+            unsigned int testFileIdx = 0;
+
+            for (testFileIdx = 0; testFileIdx < manifestFileTotal(manifest); testFileIdx++)
+            {
+                if (strEqZ(manifestFileNameGet(manifest, testFileIdx), "pg_data/PG_VERSION"))
+                    break;
+            }
+
+            ManifestFile testFile = manifestFile(manifest, testFileIdx);
+            const uint64_t originalSize = testFile.size;
+            testFile.size = 4242;
+
+            TEST_RESULT_VOID(manifestFileUpdateByIdx(manifest, testFileIdx, &testFile), "update file by index");
+            TEST_RESULT_UINT(manifestFileFind(manifest, STRDEF("pg_data/PG_VERSION")).size, 4242, "verify update took");
+
+            // Restore so subsequent tests see the original value. Re-fetch the file because the prior update freed the pack the
+            // earlier testFile struct's pointers referenced.
+            ManifestFile testFileRestore = manifestFileFind(manifest, STRDEF("pg_data/PG_VERSION"));
+            testFileRestore.size = originalSize;
+            manifestFileUpdateByIdx(manifest, testFileIdx, &testFileRestore);
+        }
+
         // Munge the sha1 checksum to be blank
         ManifestFilePack **const fileMungePack = manifestFilePackFindInternal(manifest, STRDEF("pg_data/postgresql.conf"));
         ManifestFile fileMunge = manifestFileUnpack(manifest, *fileMungePack);
