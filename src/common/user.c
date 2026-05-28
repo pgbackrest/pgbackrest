@@ -146,10 +146,10 @@ groupNameFromId(const gid_t groupId)
     FUNCTION_TEST_END();
 
     // Cache lookup on a small fixed-size table -- linear scan is fastest at this size
-    for (unsigned int userIdx = 0; userIdx < userLocalData.groupNameCacheTotal; userIdx++)
+    for (unsigned int groupIdx = 0; groupIdx < userLocalData.groupNameCacheTotal; groupIdx++)
     {
-        if (userLocalData.groupNameCache[userIdx].id == groupId)
-            FUNCTION_TEST_RETURN(STRING, strDup(userLocalData.groupNameCache[userIdx].name));
+        if (userLocalData.groupNameCache[groupIdx].id == groupId)
+            FUNCTION_TEST_RETURN(STRING, strDup(userLocalData.groupNameCache[groupIdx].name));
     }
 
     // Cache miss -- do the actual lookup
@@ -249,10 +249,10 @@ userNameFromId(const uid_t userId)
     FUNCTION_TEST_END();
 
     // Cache lookup on a small fixed-size table -- linear scan is fastest at this size
-    for (unsigned int groupIdx = 0; groupIdx < userLocalData.userNameCacheTotal; groupIdx++)
+    for (unsigned int userIdx = 0; userIdx < userLocalData.userNameCacheTotal; userIdx++)
     {
-        if (userLocalData.userNameCache[groupIdx].id == userId)
-            FUNCTION_TEST_RETURN(STRING, strDup(userLocalData.userNameCache[groupIdx].name));
+        if (userLocalData.userNameCache[userIdx].id == userId)
+            FUNCTION_TEST_RETURN(STRING, strDup(userLocalData.userNameCache[userIdx].name));
     }
 
     // Cache miss -- do the actual lookup
