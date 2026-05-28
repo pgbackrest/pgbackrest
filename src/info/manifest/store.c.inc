@@ -407,6 +407,11 @@ manifestFilePackUpdate(Manifest *const this, ManifestFilePack **const filePack, 
     ASSERT(this != NULL);
     ASSERT(filePack != NULL);
     ASSERT(file != NULL);
+    ASSERT(
+        (!file->checksumPage && !file->checksumPageError && file->checksumPageErrorList == NULL) ||
+        (file->checksumPage && !file->checksumPageError && file->checksumPageErrorList == NULL) ||
+        (file->checksumPage && file->checksumPageError));
+    ASSERT(file->size != 0 || (file->bundleId == 0 && file->bundleOffset == 0));
 
     MEM_CONTEXT_BEGIN(lstMemContext(this->pub.fileList))
     {
@@ -479,11 +484,6 @@ manifestFileUpdate(Manifest *const this, const ManifestFile *const file)
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
-    ASSERT(
-        (!file->checksumPage && !file->checksumPageError && file->checksumPageErrorList == NULL) ||
-        (file->checksumPage && !file->checksumPageError && file->checksumPageErrorList == NULL) ||
-        (file->checksumPage && file->checksumPageError));
-    ASSERT(file->size != 0 || (file->bundleId == 0 && file->bundleOffset == 0));
 
     ManifestFilePack **const filePack = manifestFilePackFindInternal(this, file->name);
     manifestFilePackUpdate(this, filePack, file);
@@ -491,7 +491,9 @@ manifestFileUpdate(Manifest *const this, const ManifestFile *const file)
     FUNCTION_TEST_RETURN_VOID();
 }
 
-FN_EXTERN void
+// Update a file by index. Equivalent to manifestFileUpdate() but skips the by-name binary search since the caller already knows
+// the file's position in the list. Used by hot loops that iterate the file list (e.g. manifestBuildIncr).
+static void
 manifestFileUpdateByIdx(Manifest *const this, const unsigned int fileIdx, const ManifestFile *const file)
 {
     FUNCTION_TEST_BEGIN();
@@ -503,13 +505,7 @@ manifestFileUpdateByIdx(Manifest *const this, const unsigned int fileIdx, const 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
     ASSERT(fileIdx < lstSize(this->pub.fileList));
-    ASSERT(
-        (!file->checksumPage && !file->checksumPageError && file->checksumPageErrorList == NULL) ||
-        (file->checksumPage && !file->checksumPageError && file->checksumPageErrorList == NULL) ||
-        (file->checksumPage && file->checksumPageError));
-    ASSERT(file->size != 0 || (file->bundleId == 0 && file->bundleOffset == 0));
 
-    // The slot for entry fileIdx in fileList holds a ManifestFilePack *
     manifestFilePackUpdate(this, lstGet(this->pub.fileList, fileIdx), file);
 
     FUNCTION_TEST_RETURN_VOID();

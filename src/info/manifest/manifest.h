@@ -397,10 +397,6 @@ manifestFileTotal(const Manifest *const this)
 // Update a file with new data
 FN_EXTERN void manifestFileUpdate(Manifest *const this, const ManifestFile *file);
 
-// Update a file by index. Equivalent to manifestFileUpdate() but skips the by-name binary search since the caller already knows
-// the file's position in the list. Used by hot loops that iterate the file list (e.g. manifestBuildIncr).
-FN_EXTERN void manifestFileUpdateByIdx(Manifest *const this, unsigned int fileIdx, const ManifestFile *file);
-
 /***********************************************************************************************************************************
 Link functions and getters/setters
 ***********************************************************************************************************************************/

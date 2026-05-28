@@ -486,7 +486,7 @@ manifestBuildIncr(
 
             // Check if a prior file exists for files that will be copied (i.e. not zero-length files when bundling). If a prior
             // file does exist it may be possible to reference it instead of copying the file. Use the "find or NULL" variant so we
-            // do one binary search instead of the manifestFileExists+manifestFileFind pair (which would do two).
+            // do one binary search instead of the manifestFileExists()/manifestFileFind() pair, which would do two.
             const ManifestFilePack *const filePackPrior =
                 file.copy ? manifestFilePackFindDefault(manifestPrior, file.name) : NULL;
 
@@ -557,7 +557,7 @@ manifestBuildIncr(
                         (file.blockIncrSize > 0 && file.blockIncrChecksumSize > 0 && file.blockIncrMapSize > 0));
                 }
 
-                // Update by index -- we already have it from the enclosing loop. Avoids manifestFileUpdate's by-name search.
+                // Update by index since we already have it from the enclosing loop. Avoids by-name search of manifestFileUpdate().
                 manifestFileUpdateByIdx(this, fileIdx, &file);
             }
         }
