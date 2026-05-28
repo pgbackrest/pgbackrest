@@ -36,7 +36,11 @@ testRun(void)
 
         // Positive cache-hit path -- the current uid/gid was already cached by userInit() above so this exercises the cache-hit
         // branch in userNameFromId() / groupNameFromId().
+        TEST_RESULT_INT(userLocalData.userNameCache[0].id, userId(), "user id is cached");
+        TEST_RESULT_STR(userLocalData.userNameCache[0].name, userName(), "user name is cached");
         TEST_RESULT_STR(userNameFromId(userId()), userName(), "user name from id (cache hit, repeated)");
+        TEST_RESULT_INT(userLocalData.groupNameCache[0].id, groupId(), "group id is cached");
+        TEST_RESULT_STR(userLocalData.groupNameCache[0].name, groupName(), "group name is cached");
         TEST_RESULT_STR(groupNameFromId(groupId()), groupName(), "group name from id (cache hit, repeated)");
 
         // Negative cache-hit path -- the invalid id was cached as NULL by the earlier negative test; repeating it now exercises
