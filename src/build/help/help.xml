@@ -1114,6 +1114,16 @@
                         <example>n</example>
                     </config-key>
 
+                    <config-key id="repo-s3-service" name="S3 Repository Service">
+                        <summary>S3 signing service.</summary>
+
+                        <text>
+                            <p>The S3 signing service used in SigV4 authentication. Defaults to <id>s3</id> for standard S3 endpoints. Set to <id>s3-outposts</id> when using an S3 Outposts endpoint.</p>
+                        </text>
+
+                        <example>s3-outposts</example>
+                    </config-key>
+
                     <config-key id="repo-s3-uri-style" name="S3 Repository URI Style">
                         <summary>S3 URI Style.</summary>
 
