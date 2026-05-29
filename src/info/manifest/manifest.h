@@ -365,9 +365,8 @@ FN_INLINE_ALWAYS const ManifestFilePack *
 manifestFilePackFindDefault(const Manifest *const this, const String *const name)
 {
     ASSERT_INLINE(name != NULL);
-
-    const ManifestFilePack *const *const slot = lstFindDefault(THIS_PUB(Manifest)->fileList, &name, NULL);
-    return slot == NULL ? NULL : *slot;
+    const ManifestFilePack *const *const filePack = lstFindDefault(THIS_PUB(Manifest)->fileList, &name, NULL);
+    return filePack == NULL ? NULL : *filePack;
 }
 
 // Find file by name
