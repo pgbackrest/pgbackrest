@@ -1717,8 +1717,27 @@ backupProcessFilePrimary(RegExp *const standbyExp, const String *const name)
         BOOL, strEqZ(name, MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL) || !regExpMatch(standbyExp, name));
 }
 
-// Comparator to order ManifestFile objects by size, date, and name
-static const Manifest *backupProcessQueueComparatorManifest = NULL;
+// Per-file queue item carrying the keys needed for sorting and binning so the comparator (called O(N log N) times) does not have
+// to call manifestFileUnpack(), which deserializes the pack header. Each item also remembers its source file pack so the dispatcher
+// can still produce the full job param from it.
+typedef struct BackupQueueItem
+{
+    uint64_t size;                                                  // file.size (sort key, bundle accumulator)
+    time_t timestamp;                                               // file.timestamp (sort key for small files when bundling)
+    const String *name;                                             // file.name (tie-break + dispatch)
+    const ManifestFilePack *filePack;                               // Source pack, unpacked once at dispatch time
+} BackupQueueItem;
+
+// One dispatchable unit produced by the pre-bin pass. For a non-bundle job (bundleId == 0) the descriptor holds exactly one file
+// pack; for a bundle it holds the full set of file packs that share a bundleId, in dispatch order. Built once during
+// backupProcessQueue so the dispatcher does no fit-checking or bundle-id bookkeeping.
+typedef struct BackupJobDescriptor
+{
+    uint64_t bundleId;                                              // 0 = standalone (one-file job), >0 = bundled
+    List *fileList;                                                 // List of const ManifestFilePack * (>=1 entry)
+} BackupJobDescriptor;
+
+// Comparator over BackupQueueItem. Reads scalars directly -- no manifestFileUnpack() in the hot path.
 static bool backupProcessQueueComparatorBundle;
 static uint64_t backupProcessQueueComparatorBundleLimit;
 
@@ -1733,31 +1752,142 @@ backupProcessQueueComparator(const void *const item1, const void *const item2)
     ASSERT(item1 != NULL);
     ASSERT(item2 != NULL);
 
-    // Unpack files
-    const ManifestFile file1 = manifestFileUnpack(backupProcessQueueComparatorManifest, *(const ManifestFilePack *const *)item1);
-    const ManifestFile file2 = manifestFileUnpack(backupProcessQueueComparatorManifest, *(const ManifestFilePack *const *)item2);
+    const BackupQueueItem *const a = item1;
+    const BackupQueueItem *const b = item2;
 
     // If the size differs then that's enough to determine order
-    if (!backupProcessQueueComparatorBundle || file1.size > backupProcessQueueComparatorBundleLimit ||
-        file2.size > backupProcessQueueComparatorBundleLimit)
+    if (!backupProcessQueueComparatorBundle || a->size > backupProcessQueueComparatorBundleLimit ||
+        b->size > backupProcessQueueComparatorBundleLimit)
     {
-        if (file1.size < file2.size)
+        if (a->size < b->size)
             FUNCTION_TEST_RETURN(INT, 1);
-        else if (file1.size > file2.size)
+        else if (a->size > b->size)
             FUNCTION_TEST_RETURN(INT, -1);
     }
 
     // If bundling order by time desc so that older files are bundled with older files and newer with newer
     if (backupProcessQueueComparatorBundle)
     {
-        if (file1.timestamp > file2.timestamp)
+        if (a->timestamp > b->timestamp)
             FUNCTION_TEST_RETURN(INT, 1);
-        else if (file1.timestamp < file2.timestamp)
+        else if (a->timestamp < b->timestamp)
             FUNCTION_TEST_RETURN(INT, -1);
     }
 
     // If size/time is the same then use name to generate a deterministic ordering (names must be unique)
-    FUNCTION_TEST_RETURN(INT, strCmp(file2.name, file1.name));
+    FUNCTION_TEST_RETURN(INT, strCmp(b->name, a->name));
+}
+
+// Walk a sorted per-target queue of BackupQueueItem and produce a list of BackupJobDescriptor (one entry per dispatchable job).
+// Mirrors the prior in-dispatcher behavior: files larger than bundleLimit become standalone single-file jobs; smaller files are
+// greedily packed into bundles up to bundleSize, with a forward-skip pass within each bundle so a later (smaller) file can fill
+// remaining capacity if the next candidate would overflow.
+//
+// The descriptor list inherits the input list's order for standalone files and for the first file of each bundle, so the
+// dispatcher's queue rotation behavior is unchanged.
+static List *
+backupProcessQueueBin(const List *const sortedQueue, BackupJobData *const jobData, MemContext *const memContext)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(LIST, sortedQueue);
+        FUNCTION_TEST_PARAM_P(VOID, jobData);
+        FUNCTION_TEST_PARAM(MEM_CONTEXT, memContext);
+    FUNCTION_TEST_END();
+
+    ASSERT(sortedQueue != NULL);
+    ASSERT(jobData != NULL);
+    ASSERT(memContext != NULL);
+
+    List *result;
+
+    MEM_CONTEXT_BEGIN(memContext)
+    {
+        result = lstNewP(sizeof(BackupJobDescriptor));
+    }
+    MEM_CONTEXT_END();
+
+    const unsigned int queueSize = lstSize(sortedQueue);
+    bool *const taken = memNew(queueSize * sizeof(bool));
+    memset(taken, 0, queueSize * sizeof(bool));
+
+    unsigned int unbinnedStart = 0;
+    unsigned int unbinnedCount = queueSize;
+
+    while (unbinnedCount > 0)
+    {
+        // Advance unbinnedStart over already-taken entries
+        while (unbinnedStart < queueSize && taken[unbinnedStart])
+            unbinnedStart++;
+
+        ASSERT(unbinnedStart < queueSize);
+
+        const BackupQueueItem *const headItem = lstGet(sortedQueue, unbinnedStart);
+
+        // Decide whether this first file is standalone or bundled
+        const bool bundled = jobData->bundle && headItem->size <= jobData->bundleLimit;
+
+        BackupJobDescriptor descriptor = {.bundleId = 0};
+
+        MEM_CONTEXT_BEGIN(lstMemContext(result))
+        {
+            descriptor.fileList = lstNewP(sizeof(const ManifestFilePack *));
+        }
+        MEM_CONTEXT_END();
+
+        if (bundled)
+            descriptor.bundleId = jobData->bundleId++;
+
+        // Always take the head file
+        lstAdd(descriptor.fileList, &headItem->filePack);
+        uint64_t bundleSize = headItem->size;
+        taken[unbinnedStart] = true;
+        unbinnedCount--;
+
+        // For bundled jobs, keep packing in forward order with forward-skip on overflow until capacity is reached or no more
+        // small-enough files remain. Standalone descriptors carry exactly one file.
+        if (bundled)
+        {
+            unsigned int scanIdx = unbinnedStart + 1;
+
+            while (bundleSize < jobData->bundleSize && scanIdx < queueSize)
+            {
+                if (taken[scanIdx])
+                {
+                    scanIdx++;
+                    continue;
+                }
+
+                const BackupQueueItem *const item = lstGet(sortedQueue, scanIdx);
+
+                // Skip files that no longer qualify for bundling (size grew past the limit -- shouldn't happen since the sort puts
+                // those at the front and the head already passed the test, but be defensive)
+                if (item->size > jobData->bundleLimit)
+                {
+                    scanIdx++;
+                    continue;
+                }
+
+                // Forward-skip if this file would overflow the bundle -- a later (smaller) file may still fit
+                if (bundleSize + item->size >= jobData->bundleSize)
+                {
+                    scanIdx++;
+                    continue;
+                }
+
+                lstAdd(descriptor.fileList, &item->filePack);
+                bundleSize += item->size;
+                taken[scanIdx] = true;
+                unbinnedCount--;
+                scanIdx++;
+            }
+        }
+
+        lstAdd(result, &descriptor);
+    }
+
+    memFree(taken);
+
+    FUNCTION_TEST_RETURN(LIST, result);
 }
 
 // Helper to generate the backup queues
@@ -1776,10 +1906,19 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
 
     uint64_t result = 0;
 
+    // The descriptor list (final shape consumed by the dispatcher) is allocated in the caller's context so it survives the temp
+    // block below. Sort lists (BackupQueueItem) live inside the temp block and are discarded once their bundles are produced.
+    MemContext *const queueListMemContext = memContextCurrent();
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Create list of process queues (use void * instead of List * to avoid Coverity false positive)
-        jobData->queueList = lstNewP(sizeof(void *));
+        // Create list of process queues. Each entry holds a List of BackupJobDescriptor produced by backupProcessQueueBin() after
+        // sorting. (use void * instead of List * to avoid Coverity false positive)
+        MEM_CONTEXT_BEGIN(queueListMemContext)
+        {
+            jobData->queueList = lstNewP(sizeof(void *));
+        }
+        MEM_CONTEXT_END();
 
         // Generate the list of targets
         StringList *const targetList = strLstNew();
@@ -1793,20 +1932,17 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
                 strLstAddFmt(targetList, "%s/", strZ(target->name));
         }
 
-        // Generate the processing queues (there is always at least one)
+        // Generate one sort list (BackupQueueItem) per target. There is always at least one. These are temp-scoped -- only the
+        // post-bin descriptor lists are kept around.
         const unsigned int queueOffset = jobData->backupStandby ? 1 : 0;
+        const unsigned int queueCount = strLstSize(targetList) + queueOffset;
 
-        MEM_CONTEXT_BEGIN(lstMemContext(jobData->queueList))
-        {
-            for (unsigned int queueIdx = 0; queueIdx < strLstSize(targetList) + queueOffset; queueIdx++)
-            {
-                List *const queue = lstNewP(sizeof(ManifestFile *), .comparator = backupProcessQueueComparator);
-                lstAdd(jobData->queueList, &queue);
-            }
-        }
-        MEM_CONTEXT_END();
+        List **const sortList = memNew(queueCount * sizeof(List *));
 
-        // Now put all files into the processing queues
+        for (unsigned int queueIdx = 0; queueIdx < queueCount; queueIdx++)
+            sortList[queueIdx] = lstNewP(sizeof(BackupQueueItem), .comparator = backupProcessQueueComparator);
+
+        // Now put all files into the sort lists
         uint64_t fileTotal = 0;
         bool pgControlFound = false;
 
@@ -1832,10 +1968,19 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
             if (strEq(file.name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)))
                 pgControlFound = true;
 
+            // Cache the keys needed for sorting/binning so the comparator does not unpack the manifest pack on every compare
+            const BackupQueueItem item =
+            {
+                .size = file.size,
+                .timestamp = file.timestamp,
+                .name = file.name,
+                .filePack = filePack,
+            };
+
             // Files that must be copied from the primary are always put in queue 0 when backup from standby
             if (jobData->backupStandby && backupProcessFilePrimary(jobData->standbyExp, file.name))
             {
-                lstAdd(*(List **)lstGet(jobData->queueList, 0), &filePack);
+                lstAdd(sortList[0], &item);
             }
             // Else find the correct queue by matching the file to a target
             else
@@ -1855,7 +2000,7 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
                 while (1);
 
                 // Add file to queue
-                lstAdd(*(List **)lstGet(jobData->queueList, targetIdx + queueOffset), &filePack);
+                lstAdd(sortList[targetIdx + queueOffset], &item);
             }
 
             // Add size to total
@@ -1879,16 +2024,22 @@ backupProcessQueue(const BackupData *const backupData, Manifest *const manifest,
         if (fileTotal == 0)
             THROW(FileMissingError, "no files have changed since the last backup - this seems unlikely");
 
-        // Sort the queues
-        backupProcessQueueComparatorManifest = manifest;
+        // Sort each per-target queue and immediately bin it into a descriptor list. Bundle ids are assigned monotonically across
+        // queues via jobData->bundleId so the wire format stays unique.
         backupProcessQueueComparatorBundle = jobData->bundle;
         backupProcessQueueComparatorBundleLimit = jobData->bundleLimit;
 
-        for (unsigned int queueIdx = 0; queueIdx < lstSize(jobData->queueList); queueIdx++)
-            lstSort(*(List **)lstGet(jobData->queueList, queueIdx), sortOrderAsc);
+        MEM_CONTEXT_BEGIN(lstMemContext(jobData->queueList))
+        {
+            for (unsigned int queueIdx = 0; queueIdx < queueCount; queueIdx++)
+            {
+                lstSort(sortList[queueIdx], sortOrderAsc);
 
-        // Move process queues to prior context
-        lstMove(jobData->queueList, memContextPrior());
+                List *const descriptorList = backupProcessQueueBin(sortList[queueIdx], jobData, lstMemContext(jobData->queueList));
+                lstAdd(jobData->queueList, &descriptorList);
+            }
+        }
+        MEM_CONTEXT_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1950,120 +2101,118 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
         do
         {
             List *const queue = *(List **)lstGet(jobData->queueList, (unsigned int)queueIdx + queueOffset);
-            unsigned int fileIdx = 0;
-            bool bundle = jobData->bundle;
-            const String *fileName = NULL;
 
-            while (fileIdx < lstSize(queue))
+            if (lstSize(queue) > 0)
             {
-                const ManifestFile file = manifestFileUnpack(jobData->manifest, *(ManifestFilePack **)lstGet(queue, fileIdx));
+                // Pop the next pre-built descriptor. backupProcessQueueBin() already decided what each job contains.
+                const BackupJobDescriptor *const descriptor = lstGet(queue, 0);
+                const bool bundle = descriptor->bundleId != 0;
+                const String *fileName = NULL;
 
-                // Continue if the next file would make the bundle too large. There may be a smaller one that will fit.
-                if (fileTotal > 0 && fileSize + file.size >= jobData->bundleSize)
+                ASSERT(lstSize(descriptor->fileList) > 0);
+                ASSERT(bundle || lstSize(descriptor->fileList) == 1);
+
+                param = protocolPackNew();
+
+                // Write the per-job header from the first file
+                const ManifestFile firstFile = manifestFileUnpack(
+                    jobData->manifest, *(const ManifestFilePack *const *)lstGet(descriptor->fileList, 0));
+                const bool blockIncrFirst = jobData->blockIncr && firstFile.blockIncrSize > 0;
+
+                if (bundle)
                 {
-                    fileIdx++;
-                    continue;
-                }
-
-                // Is this file a block incremental?
-                const bool blockIncr = jobData->blockIncr && file.blockIncrSize > 0;
-
-                // Add common parameters before first file
-                if (param == NULL)
-                {
-                    param = protocolPackNew();
-
-                    if (bundle && file.size <= jobData->bundleLimit)
-                    {
-                        pckWriteStrP(param, backupFileRepoPathP(jobData->backupLabel, .bundleId = jobData->bundleId));
-                        pckWriteU64P(param, jobData->bundleId);
-                        pckWriteBoolP(param, manifestData(jobData->manifest)->bundleRaw);
-                    }
-                    else
-                    {
-                        CHECK(AssertError, fileTotal == 0, "cannot bundle file");
-
-                        pckWriteStrP(
-                            param,
-                            backupFileRepoPathP(
-                                jobData->backupLabel, .manifestName = file.name, .compressType = jobData->compressType,
-                                .blockIncr = blockIncr));
-                        pckWriteU64P(param, 0);
-
-                        fileName = file.name;
-                        bundle = false;
-                    }
-
-                    // Provide the backup reference
-                    pckWriteU64P(param, strLstSize(manifestReferenceList(jobData->manifest)) - 1);
-
-                    pckWriteU32P(param, jobData->compressType);
-                    pckWriteI32P(param, jobData->compressLevel);
-                    pckWriteU64P(param, jobData->cipherSubPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc);
-                    pckWriteStrP(param, jobData->cipherSubPass);
-                    pckWriteU32P(param, jobData->pageSize);
-                    pckWriteStrP(param, cfgOptionStrNull(cfgOptPgVersionForce));
-                }
-
-                pckWriteStrP(param, manifestPathPg(file.name));
-                pckWriteBoolP(param, file.delta);
-                pckWriteBoolP(param, !strEq(file.name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
-                pckWriteU64P(param, file.size);
-                pckWriteU64P(param, file.sizeOriginal);
-                pckWriteBoolP(param, !backupProcessFilePrimary(jobData->standbyExp, file.name));
-                pckWriteBinP(param, file.checksumSha1 != NULL ? BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE) : NULL);
-                pckWriteBoolP(param, file.checksumPage);
-                pckWriteBoolP(param, cfgOptionBool(cfgOptPageHeaderCheck));
-
-                // If block incremental then provide the location of the prior map when available
-                if (blockIncr)
-                {
-                    pckWriteU64P(param, file.blockIncrSize);
-                    pckWriteU64P(param, file.blockIncrChecksumSize);
-                    pckWriteU64P(param, jobData->blockIncrSizeSuper);
-
-                    if (file.blockIncrMapSize != 0 && !file.resume)
-                    {
-                        pckWriteStrP(
-                            param,
-                            backupFileRepoPathP(
-                                file.reference, .manifestName = file.name, .bundleId = file.bundleId, .blockIncr = true));
-                        pckWriteU64P(param, file.bundleOffset + file.sizeRepo - file.blockIncrMapSize);
-                        pckWriteU64P(param, file.blockIncrMapSize);
-                    }
-                    else
-                        pckWriteNullP(param);
+                    pckWriteStrP(param, backupFileRepoPathP(jobData->backupLabel, .bundleId = descriptor->bundleId));
+                    pckWriteU64P(param, descriptor->bundleId);
+                    pckWriteBoolP(param, manifestData(jobData->manifest)->bundleRaw);
                 }
                 else
+                {
+                    pckWriteStrP(
+                        param,
+                        backupFileRepoPathP(
+                            jobData->backupLabel, .manifestName = firstFile.name, .compressType = jobData->compressType,
+                            .blockIncr = blockIncrFirst));
                     pckWriteU64P(param, 0);
 
-                pckWriteStrP(param, file.name);
-                pckWriteBinP(param, file.checksumRepoSha1 != NULL ? BUF(file.checksumRepoSha1, HASH_TYPE_SHA1_SIZE) : NULL);
-                pckWriteU64P(param, file.sizeRepo);
-                pckWriteBoolP(param, file.resume);
-                pckWriteBoolP(param, file.reference != NULL);
+                    fileName = firstFile.name;
+                }
 
-                fileTotal++;
-                fileSize += file.sizeOriginal;
+                // Provide the backup reference
+                pckWriteU64P(param, strLstSize(manifestReferenceList(jobData->manifest)) - 1);
 
-                // Remove job from the queue
-                lstRemoveIdx(queue, fileIdx);
+                pckWriteU32P(param, jobData->compressType);
+                pckWriteI32P(param, jobData->compressLevel);
+                pckWriteU64P(param, jobData->cipherSubPass == NULL ? cipherTypeNone : cipherTypeAes256Cbc);
+                pckWriteStrP(param, jobData->cipherSubPass);
+                pckWriteU32P(param, jobData->pageSize);
+                pckWriteStrP(param, cfgOptionStrNull(cfgOptPgVersionForce));
 
-                // Break if not bundling or bundle size has been reached
-                if (!bundle || fileSize >= jobData->bundleSize)
-                    break;
-            }
+                // Per-file params. The first file's unpack is reused; subsequent files are unpacked once each.
+                for (unsigned int fileIdx = 0; fileIdx < lstSize(descriptor->fileList); fileIdx++)
+                {
+                    const ManifestFile file =
+                        fileIdx == 0
+                            ? firstFile
+                            : manifestFileUnpack(
+                                jobData->manifest, *(const ManifestFilePack *const *)lstGet(descriptor->fileList, fileIdx));
 
-            if (fileTotal > 0)
-            {
-                // Assign job to result
+                    const bool blockIncr = jobData->blockIncr && file.blockIncrSize > 0;
+
+                    pckWriteStrP(param, manifestPathPg(file.name));
+                    pckWriteBoolP(param, file.delta);
+                    pckWriteBoolP(
+                        param, !strEq(file.name, STRDEF(MANIFEST_TARGET_PGDATA "/" PG_PATH_GLOBAL "/" PG_FILE_PGCONTROL)));
+                    pckWriteU64P(param, file.size);
+                    pckWriteU64P(param, file.sizeOriginal);
+                    pckWriteBoolP(param, !backupProcessFilePrimary(jobData->standbyExp, file.name));
+                    pckWriteBinP(param, file.checksumSha1 != NULL ? BUF(file.checksumSha1, HASH_TYPE_SHA1_SIZE) : NULL);
+                    pckWriteBoolP(param, file.checksumPage);
+                    pckWriteBoolP(param, cfgOptionBool(cfgOptPageHeaderCheck));
+
+                    // If block incremental then provide the location of the prior map when available
+                    if (blockIncr)
+                    {
+                        pckWriteU64P(param, file.blockIncrSize);
+                        pckWriteU64P(param, file.blockIncrChecksumSize);
+                        pckWriteU64P(param, jobData->blockIncrSizeSuper);
+
+                        if (file.blockIncrMapSize != 0 && !file.resume)
+                        {
+                            pckWriteStrP(
+                                param,
+                                backupFileRepoPathP(
+                                    file.reference, .manifestName = file.name, .bundleId = file.bundleId, .blockIncr = true));
+                            pckWriteU64P(param, file.bundleOffset + file.sizeRepo - file.blockIncrMapSize);
+                            pckWriteU64P(param, file.blockIncrMapSize);
+                        }
+                        else
+                            pckWriteNullP(param);
+                    }
+                    else
+                        pckWriteU64P(param, 0);
+
+                    pckWriteStrP(param, file.name);
+                    pckWriteBinP(param, file.checksumRepoSha1 != NULL ? BUF(file.checksumRepoSha1, HASH_TYPE_SHA1_SIZE) : NULL);
+                    pckWriteU64P(param, file.sizeRepo);
+                    pckWriteBoolP(param, file.resume);
+                    pckWriteBoolP(param, file.reference != NULL);
+
+                    fileTotal++;
+                    fileSize += file.sizeOriginal;
+                }
+
+                // Pop the descriptor now that we have built the job from it
+                lstRemoveIdx(queue, 0);
+
+                // Track the highest bundle id we've actually dispatched so jobData->bundleId still advances monotonically for any
+                // future allocator that reads it (no current caller does, but the contract is preserved).
+                if (bundle && descriptor->bundleId >= jobData->bundleId)
+                    jobData->bundleId = descriptor->bundleId + 1;
+
                 MEM_CONTEXT_PRIOR_BEGIN()
                 {
                     result = protocolParallelJobNew(
-                        bundle ? VARUINT64(jobData->bundleId) : VARSTR(fileName), PROTOCOL_COMMAND_BACKUP_FILE, param);
-
-                    if (bundle)
-                        jobData->bundleId++;
+                        bundle ? VARUINT64(descriptor->bundleId) : VARSTR(fileName), PROTOCOL_COMMAND_BACKUP_FILE, param);
                 }
                 MEM_CONTEXT_PRIOR_END();
 
