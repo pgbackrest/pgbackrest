@@ -699,6 +699,20 @@
                         <example>10MiB</example>
                     </config-key>
 
+                    <config-key id="repo-bundle-stable-age" name="Repository Bundle Stable Age">
+                        <summary>Age in days above which files are considered stable for bundling.</summary>
+
+                        <text>
+                            <p>When sorting files for bundle assignment, files whose modification time is at least this many days in the past are treated as stable and are not sorted by timestamp. They are still placed in bundles, but in the order they were discovered during the manifest walk (which is directory order). Files newer than this threshold are still sorted by timestamp descending so that "recent" files cluster together in the same bundles -- preserving the restore-time read locality benefit of the original sort.</p>
+
+                            <p>This optimization is significant when the cluster has millions of small files of which most are old/stable and only a small fraction were recently modified. Sorting then runs only over the recent fraction instead of the whole manifest.</p>
+
+                            <p>The default is <setting>0</setting>, which disables the partition: all files are sorted by timestamp as in the original behavior. Set to a positive value, e.g. <setting>90</setting>, to enable the partition for files whose modification time is older than that many days.</p>
+                        </text>
+
+                        <example>90</example>
+                    </config-key>
+
                     <config-key id="repo-gcs-bucket" name="GCS Repository Bucket">
                         <summary>GCS repository bucket.</summary>
 
