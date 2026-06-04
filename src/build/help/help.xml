@@ -1024,6 +1024,7 @@
                                 <list-item><id>shared</id> - Shared keys</list-item>
                                 <list-item><id>auto</id> - Automatically retrieve temporary credentials</list-item>
                                 <list-item><id>web-id</id> - Automatically retrieve web identity credentials</list-item>
+                                <list-item><id>pod-id</id> - Automatically retrieve EKS pod identity credentials</list-item>
                                 <list-item><id>process</id> - Retrieve credentials by executing a process</list-item>
                             </list>
                         </text>
