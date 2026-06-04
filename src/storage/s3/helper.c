@@ -106,10 +106,8 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
         }
 
         // If process credential authentication then get the command from config
-        const StringList *credCmd = NULL;
-
-        if (keyType == storageS3KeyTypeProcess)
-            credCmd = strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoS3ProcessCmd, repoIdx));
+        const StringList *const credCmd =
+            keyType == storageS3KeyTypeProcess ? strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoS3ProcessCmd, repoIdx)) : NULL;
 
         MEM_CONTEXT_PRIOR_BEGIN()
         {

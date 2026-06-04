@@ -510,7 +510,7 @@ storageS3AuthProcess(StorageS3 *const this)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Execute the credential process and parse JSON output
-        const String *const output = execOneList(this->credCmd);
+        const String *const output = execOne(this->credCmd);
         const KeyValue *const kvResponse = varKv(jsonToVar(output));
 
         // Copy credentials

@@ -403,7 +403,7 @@ execOpen(Exec *const this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-execOneList(const StringList *const list)
+execOne(const StringList *const list)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING_LIST, list);
