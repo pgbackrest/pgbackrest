@@ -144,7 +144,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            192
+#define CFG_OPTION_TOTAL                                            193
 
 /***********************************************************************************************************************************
 Option value constants
@@ -344,6 +344,9 @@ Option value constants
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_POD_ID                           3
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_POD_ID_STRID                     STRID5S("pod-id", 3, 0x89d91f08)
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_POD_ID_Z                         "pod-id"
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_PROCESS                          4
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_PROCESS_STRID                    STRID5S("process", 4, 0x4e651be50a)
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_PROCESS_Z                        "process"
 
 #define CFGOPTVAL_REPO_S3_URI_STYLE_HOST                            0
 #define CFGOPTVAL_REPO_S3_URI_STYLE_HOST_STRID                      STRID5S("host", 0, 0xa4de82)
@@ -613,6 +616,7 @@ typedef enum
     cfgOptRepoS3KeySecret,
     cfgOptRepoS3KeyType,
     cfgOptRepoS3KmsKeyId,
+    cfgOptRepoS3ProcessCmd,
     cfgOptRepoS3Region,
     cfgOptRepoS3RequesterPays,
     cfgOptRepoS3Role,
