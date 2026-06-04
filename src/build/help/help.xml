@@ -1024,6 +1024,7 @@
                                 <list-item><id>shared</id> - Shared keys</list-item>
                                 <list-item><id>auto</id> - Automatically retrieve temporary credentials</list-item>
                                 <list-item><id>web-id</id> - Automatically retrieve web identity credentials</list-item>
+                                <list-item><id>process</id> - Retrieve credentials by executing a process</list-item>
                             </list>
                         </text>
 
@@ -1072,6 +1073,20 @@
                         </text>
 
                         <example>s3.amazonaws.com</example>
+                    </config-key>
+
+                    <config-key id="repo-s3-process-cmd" name="S3 Authentication Process Command">
+                        <summary>S3 authentication process command.</summary>
+
+                        <text>
+                            <p>Command (and optional arguments) to execute for retrieving temporary S3 credentials. The first list entry is the command and the remaining entries are passed as parameters.</p>
+
+                            <p>The process must output JSON containing <id>AccessKeyId</id>, <id>SecretAccessKey</id>, <id>SessionToken</id>, and <id>Expiration</id> fields. Credentials will be automatically refreshed before the expiration time.</p>
+                        </text>
+
+                        <example>/usr/local/bin/get-credentials</example>
+                        <example>--role</example>
+                        <example>my-role</example>
                     </config-key>
 
                     <config-key id="repo-s3-role" name="S3 Repository Role">

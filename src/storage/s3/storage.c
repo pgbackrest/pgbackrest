@@ -495,7 +495,8 @@ storageS3AuthPodId(StorageS3 *const this, const HttpHeader *const header)
 /***********************************************************************************************************************************
 Get credentials from a process credential provider
 
-The process is executed and the JSON output is parsed for AccessKeyId, SecretAccessKey, SessionToken, and Expiration.
+The process is executed and the JSON output is parsed for AccessKeyId, SecretAccessKey, SessionToken, and Expiration. Based on the
+"process credential provider" documentation at https://docs.aws.amazon.com/sdkref/latest/guide/feature-process-credentials.html
 ***********************************************************************************************************************************/
 VARIANT_STRDEF_STATIC(S3_JSON_TAG_SESSION_TOKEN_VAR,                "SessionToken");
 
