@@ -52,9 +52,29 @@ typedef uint32 TransactionId;
 #define FLEXIBLE_ARRAY_MEMBER	/* empty */
 
 /***********************************************************************************************************************************
+Types from src/include/storage/checksum.h
+***********************************************************************************************************************************/
+// ChecksumStateType enum
+// ---------------------------------------------------------------------------------------------------------------------------------
+/*
+ * Checksum state 0 is used for when data checksums are disabled (OFF).
+ * PG_DATA_CHECKSUM_INPROGRESS_{ON|OFF} defines that data checksums are either
+ * currently being enabled or disabled, and PG_DATA_CHECKSUM_VERSION defines
+ * that data checksums are enabled.  The ChecksumStateType is stored in
+ * pg_control so changing requires a catversion bump, and the values cannot
+ * be reordered.  New states must be added at the end.
+ */
+typedef enum ChecksumStateType
+{
+	PG_DATA_CHECKSUM_OFF = 0,
+	PG_DATA_CHECKSUM_VERSION = 1,
+	PG_DATA_CHECKSUM_INPROGRESS_OFF = 2,
+	PG_DATA_CHECKSUM_INPROGRESS_ON = 3,
+} ChecksumStateType;
+
+/***********************************************************************************************************************************
 Types from src/include/storage/itemid.h
 ***********************************************************************************************************************************/
-
 // ItemIdData type
 // ---------------------------------------------------------------------------------------------------------------------------------
 /*
@@ -85,26 +105,6 @@ Types from src/include/storage/bufpage.h
  * ItemIdData.lp_off and ItemIdData.lp_len to 15 bits (see itemid.h).
  */
 typedef uint16 LocationIndex;
-
-// PageXLogRecPtr type
-// ---------------------------------------------------------------------------------------------------------------------------------
-/*
- * For historical reasons, the 64-bit LSN value is stored as two 32-bit
- * values. !!! NEED TO FIX THIS
- */
-typedef struct
-{
-	uint32		xlogid;			/* high bits */
-	uint32		xrecoff;		/* low bits */
-} PageXLogRecPtr;
-
-// PG_DATA_CHECKSUM_VERSION define
-// ---------------------------------------------------------------------------------------------------------------------------------
-/*
- * As of Release 9.3, the checksum version must also be considered when
- * handling pages. !!! MIGHT NEED MORE HERE
- */
-#define PG_DATA_CHECKSUM_VERSION	1
 
 // PageHeaderData type
 // ---------------------------------------------------------------------------------------------------------------------------------
@@ -156,7 +156,8 @@ typedef struct
 typedef struct PageHeaderData
 {
 	/* XXX LSN is member of *any* block, not only page-organized ones */
-	PageXLogRecPtr pd_lsn;		/* LSN: next byte after last byte of xlog
+    /* pd_lsn is unusable since the format varies by version */
+	uint64_t pd_lsn_unusable;	/* LSN: next byte after last byte of xlog
 								 * record for last change to this page */
 	uint16		pd_checksum;	/* checksum */
 	uint16		pd_flags;		/* flag bits, see below */
