@@ -10,6 +10,6 @@ Harness for PostgreSQL Interface (see PG_VERSION for version)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmissing-prototypes"
 
-HRN_PG_INTERFACE(180);
+HRN_PG_INTERFACE(190);
 
 #pragma GCC diagnostic pop
