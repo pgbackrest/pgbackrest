@@ -324,8 +324,7 @@ pgControlFromBuffer(const Buffer *const controlFile, const String *const pgVersi
         (result.version > PG_VERSION_18 && result.pageChecksumVersion > PG_DATA_CHECKSUM_INPROGRESS_ON))
     {
         THROW_FMT(
-            FormatError, "page checksum version is %u but only <= %d is valid",
-            result.pageChecksumVersion,
+            FormatError, "page checksum version is %u but only <= %d is valid", result.pageChecksumVersion,
             result.version <= PG_VERSION_18 ? PG_DATA_CHECKSUM_VERSION : PG_DATA_CHECKSUM_INPROGRESS_ON);
     }
 
