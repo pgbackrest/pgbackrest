@@ -35,6 +35,10 @@ typedef uint16_t uint16;
 // ---------------------------------------------------------------------------------------------------------------------------------
 typedef uint32_t uint32;
 
+// uint64 type
+// ---------------------------------------------------------------------------------------------------------------------------------
+typedef uint64_t uint64;
+
 // TransactionId type
 // ---------------------------------------------------------------------------------------------------------------------------------
 typedef uint32 TransactionId;
@@ -106,6 +110,21 @@ Types from src/include/storage/bufpage.h
  */
 typedef uint16 LocationIndex;
 
+// PageXLogRecPtr type
+// ---------------------------------------------------------------------------------------------------------------------------------
+/*
+ * Store the LSN as a single 64-bit value, to allow atomic loads/stores.
+ *
+ * For historical reasons, the storage of 64-bit LSN values depends on CPU
+ * endianness; PageXLogRecPtr used to be a struct consisting of two 32-bit
+ * values.  When reading (and writing) the pd_lsn field from page headers, the
+ * caller must convert from (and convert to) the platform's native endianness.
+ */
+typedef struct
+{
+	uint64		lsn;
+} PageXLogRecPtr;
+
 // PageHeaderData type
 // ---------------------------------------------------------------------------------------------------------------------------------
 /*
@@ -156,8 +175,7 @@ typedef uint16 LocationIndex;
 typedef struct PageHeaderData
 {
 	/* XXX LSN is member of *any* block, not only page-organized ones */
-    /* pd_lsn is unusable since the format varies by version */
-	uint64_t pd_lsn_unusable;	/* LSN: next byte after last byte of xlog
+	PageXLogRecPtr pd_lsn;		/* LSN: next byte after last byte of xlog
 								 * record for last change to this page */
 	uint16		pd_checksum;	/* checksum */
 	uint16		pd_flags;		/* flag bits, see below */
