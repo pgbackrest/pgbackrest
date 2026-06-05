@@ -2,6 +2,17 @@
     <release-core-list>
         <release-improvement-list>
             <release-item>
+                <github-pull-request id="2773"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="gunnar.lindholm"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add user/group caching for faster manifest build.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2736"/>
                 <github-pull-request id="2740"/>
 
