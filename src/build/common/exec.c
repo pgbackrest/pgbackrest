@@ -9,7 +9,7 @@ Execute Process Extensions
 
 /**********************************************************************************************************************************/
 static String *
-execProcess(Exec *const this, const ExecOneParam param)
+execProcess(Exec *const this, const ExecOneExpectParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(EXEC, this);
@@ -50,7 +50,7 @@ execProcess(Exec *const this, const ExecOneParam param)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-execOne(const String *const command, const ExecOneParam param)
+execOneExpect(const String *const command, const ExecOneExpectParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, command);

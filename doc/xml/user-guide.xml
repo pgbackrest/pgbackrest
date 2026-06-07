@@ -465,7 +465,7 @@
                     echo 'StartLimitIntervalSec=0' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo '' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo '[Service]' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
-                    echo 'Type=simple' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
+                    echo 'Type=notify' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo 'Restart=always' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo 'RestartSec=1' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
                     echo 'User={[setup-tls-user]}' | tee -a /etc/systemd/system/pgbackrest.service &amp;&amp;
@@ -1011,6 +1011,7 @@
                 <exe-cmd>
                     apt-get install python3-distutils meson gcc libpq-dev libssl-dev libxml2-dev
                     pkg-config liblz4-dev libzstd-dev libbz2-dev libz-dev libyaml-dev libssh2-1-dev
+                    libsystemd-dev
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
@@ -1019,6 +1020,7 @@
                 <exe-cmd>
                     yum install meson gcc postgresql{[pg-version]}-devel openssl-devel
                     libxml2-devel lz4-devel libzstd-devel bzip2-devel libyaml-devel libssh2-devel
+                    systemd-devel
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>

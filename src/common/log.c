@@ -485,7 +485,7 @@ logSignal(const LogLevel logLevel, const char *const signalName)
     FUNCTION_TEST_END();
 
     ASSERT(signalName != NULL);
-    STATIC_ASSERT_STMT(LOG_BUFFER_SIZE >= sizeof(LOG_SIGNAL_MESSAGE_PRE), "invalid log buffer size");
+    static_assert(LOG_BUFFER_SIZE >= sizeof(LOG_SIGNAL_MESSAGE_PRE), "invalid log buffer size");
 
     // Initialize log buffer and data with static signal message
     memcpy(logBuffer, LOG_SIGNAL_MESSAGE_PRE, sizeof(LOG_SIGNAL_MESSAGE_PRE) - 1);

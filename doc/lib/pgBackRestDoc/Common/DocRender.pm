@@ -640,7 +640,8 @@ sub processTag
                 # If the page wasn't rendered then point at the website
                 if (!defined($self->{oManifest}->renderOutGet($strType, $strPage, true)))
                 {
-                    $strUrl = '{[backrest-url-base]}/' . $oTag->paramGet('page') . '.html';
+                    $strUrl = '{[backrest-url-base]}/' . $oTag->paramGet('page') . '.html' .
+                        (defined($strSection) ? '#' . substr($strSection, 1) : '');
                 }
                 # Else point locally
                 else

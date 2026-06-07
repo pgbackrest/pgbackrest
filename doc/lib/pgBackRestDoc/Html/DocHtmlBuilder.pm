@@ -257,7 +257,7 @@ sub htmlGet
 
         if (defined($self->{strFavicon}))
         {
-            $strHtml .= $self->indent(1) . "<link rel=\"icon\" href=\"$self->{strFavicon}\" type=\"image/png\"></link>\n";
+            $strHtml .= $self->indent(1) . "<link rel=\"icon\" href=\"$self->{strFavicon}\" type=\"image/svg+xml\"></link>\n";
         }
 
         if (defined($self->{strLogo}))
