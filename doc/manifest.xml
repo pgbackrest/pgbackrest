@@ -17,7 +17,7 @@
         <variable key="postgres">PostgreSQL</variable>
         <variable key="dash">-</variable>
         <variable key="project-logo">logo.png</variable>
-        <variable key="project-favicon">favicon.png</variable>
+        <variable key="project-favicon">logo.svg</variable>
 
         <!-- Is this a development or debug build of the docs? -->
         <variable key="dev">n</variable>
@@ -74,6 +74,7 @@
         <source key="configuration" file="output/xml/configuration.xml"/>
         <source key="help" type="custom" file="../src/build/help/help.xml"/>
         <source key="release" type="custom"/>
+        <source key="news"/>
         <source key="faq"/>
         <source key="metric"/>
         <source key="coding"/>
@@ -89,6 +90,7 @@
             <render-source key="release" menu="Releases"/>
             <render-source key="configuration" source="configuration" menu="Configuration"/>
             <render-source key="command" source="command" menu="Commands"/>
+            <render-source key="news" menu="News"/>
             <render-source key="faq" menu="FAQ"/>
             <render-source key="metric" menu="Metrics"/>
         </render>

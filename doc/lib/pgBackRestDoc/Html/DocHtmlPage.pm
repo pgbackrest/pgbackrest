@@ -508,10 +508,19 @@ sub sectionProcess
             {
                 my $oSponsorLink = $oSponsorList->addNew(
                     HTML_DIV, "sponsor")->addNew(HTML_A, undef, {strRef => $oSponsor->paramGet('url')});
+                my $strWidth = $oSponsor->paramGet('width');
+                my $strImg = $oSponsor->paramGet('img');
+                my $strImgDark = $oSponsor->paramGet('img-dark', false);
+                $strImgDark = $strImg if !defined($strImgDark) || $strImgDark eq '';
+
                 $oSponsorLink->addNew(
-                    HTML_IMG, "sponsor-img",
-                    {strExtra => 'src="sponsor/' . $oSponsor->paramGet('img') . '" alt="' . $oSponsor->valueGet() . '"'});
-                $oSponsorLink->addNew(HTML_DIV, "sponsor-title", {strContent => $oSponsor->valueGet()});
+                    HTML_IMG, "sponsor-img sponsor-img-light",
+                    {strExtra => 'src="sponsor/' . $strImg . '" alt="' .
+                                 $oSponsor->valueGet() . '" width="' . $strWidth . '"'});
+                $oSponsorLink->addNew(
+                    HTML_IMG, "sponsor-img sponsor-img-dark",
+                    {strExtra => 'src="sponsor/' . $strImgDark . '" alt="' .
+                                 $oSponsor->valueGet() . '" width="' . $strWidth . '"'});
             }
         }
         # Add a subtitle
