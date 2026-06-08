@@ -16,28 +16,48 @@ Remote Storage File write
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct StorageWriteRemote
+struct StorageWriteRemote
 {
-    StorageWriteInterface interface;                                // Interface
+    const StorageWriteInterface *interface;                          // Interface
     StorageRemote *storage;                                         // Storage that created this object
-    StorageWrite *write;                                            // Storage write interface
     ProtocolClient *client;                                         // Protocol client to make requests with
     ProtocolClientSession *session;                                 // Protocol session for requests
+    IoFilterGroup *filterGroup;                                     // Filter group
+    const String *name;                                             // File name
+    mode_t modeFile;                                                // File mode
+    mode_t modePath;                                                // Path mode
+    const String *user;                                             // User name
+    const String *group;                                            // Group name
+    time_t timeModified;                                            // Time modified
+    bool createPath;                                                // Create path
+    bool syncFile;                                                  // Sync file
+    bool syncPath;                                                  // Sync path
+    bool atomic;                                                    // Atomic write
     bool compressible;                                              // Is this file compressible?
     unsigned int compressLevel;                                     // Level to use for compression
 
 #ifdef DEBUG
     uint64_t protocolWriteBytes;                                    // How many bytes were written to the protocol layer?
 #endif
-} StorageWriteRemote;
+};
 
 /***********************************************************************************************************************************
-Macros for function logging
+Set filter group
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_STORAGE_WRITE_REMOTE_TYPE                                                                                     \
-    StorageWriteRemote *
-#define FUNCTION_LOG_STORAGE_WRITE_REMOTE_FORMAT(value, buffer, bufferSize)                                                        \
-    objNameToLog(value, "StorageWriteRemote", buffer, bufferSize)
+static void
+storageWriteRemoteFilterGroup(THIS_VOID, IoFilterGroup *const filterGroup)
+{
+    THIS(StorageWriteRemote);
+
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_WRITE_REMOTE, this);
+        FUNCTION_TEST_PARAM(IO_FILTER_GROUP, filterGroup);
+    FUNCTION_TEST_END();
+
+    this->filterGroup = filterGroup;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
 Open the file
@@ -59,33 +79,33 @@ storageWriteRemoteOpen(THIS_VOID)
         if (this->compressible)
         {
             ioFilterGroupInsert(
-                ioWriteFilterGroup(storageWriteIo(this->write)), 0, decompressFilterP(compressTypeLz4, .raw = true));
+                this->filterGroup, 0, decompressFilterP(compressTypeLz4, .raw = true));
         }
 
         PackWrite *const param = protocolPackNew();
 
-        pckWriteStrP(param, this->interface.name);
-        pckWriteModeP(param, this->interface.modeFile);
-        pckWriteModeP(param, this->interface.modePath);
-        pckWriteStrP(param, this->interface.user);
-        pckWriteStrP(param, this->interface.group);
-        pckWriteTimeP(param, this->interface.timeModified);
-        pckWriteBoolP(param, this->interface.createPath);
-        pckWriteBoolP(param, this->interface.syncFile);
-        pckWriteBoolP(param, this->interface.syncPath);
-        pckWriteBoolP(param, this->interface.atomic);
-        pckWritePackP(param, ioFilterGroupParamAll(ioWriteFilterGroup(storageWriteIo(this->write))));
+        pckWriteStrP(param, this->name);
+        pckWriteModeP(param, this->modeFile);
+        pckWriteModeP(param, this->modePath);
+        pckWriteStrP(param, this->user);
+        pckWriteStrP(param, this->group);
+        pckWriteTimeP(param, this->timeModified);
+        pckWriteBoolP(param, this->createPath);
+        pckWriteBoolP(param, this->syncFile);
+        pckWriteBoolP(param, this->syncPath);
+        pckWriteBoolP(param, this->atomic);
+        pckWritePackP(param, ioFilterGroupParamAll(this->filterGroup));
 
         protocolClientSessionOpenP(this->session, .param = param);
 
         // Clear filters since they will be run on the remote side
-        ioFilterGroupClear(ioWriteFilterGroup(storageWriteIo(this->write)));
+        ioFilterGroupClear(this->filterGroup);
 
         // If the file is compressible add compression filter locally
         if (this->compressible)
         {
             ioFilterGroupAdd(
-                ioWriteFilterGroup(storageWriteIo(this->write)),
+                this->filterGroup,
                 compressFilterP(compressTypeLz4, (int)this->compressLevel, .raw = true));
         }
     }
@@ -152,7 +172,7 @@ storageWriteRemoteClose(THIS_VOID)
                 protocolClientSessionResponse(this->session);
 
             ioFilterGroupResultAllSet(
-                ioWriteFilterGroup(storageWriteIo(this->write)), pckReadPackP(protocolClientSessionClose(this->session)));
+                this->filterGroup, pckReadPackP(protocolClientSessionClose(this->session)));
         }
         MEM_CONTEXT_TEMP_END();
 
@@ -163,14 +183,15 @@ storageWriteRemoteClose(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-static const IoWriteInterface storageWriteRemoteInterface =
+static const StorageWriteInterface storageWriteRemoteInterface =
 {
     .close = storageWriteRemoteClose,
+    .filterGroup = storageWriteRemoteFilterGroup,
     .open = storageWriteRemoteOpen,
     .write = storageWriteRemote,
 };
 
-FN_EXTERN StorageWrite *
+FN_EXTERN StorageWriteRemote *
 storageWriteRemoteNew(
     StorageRemote *const storage, ProtocolClient *const client, const String *const name, const mode_t modeFile,
     const mode_t modePath, const String *const user, const String *const group, const time_t timeModified, const bool createPath,
@@ -202,20 +223,25 @@ storageWriteRemoteNew(
     {
         *this = (StorageWriteRemote)
         {
+            .interface = &storageWriteRemoteInterface,
             .storage = storage,
             .client = client,
             .session = protocolClientSessionNewP(client, PROTOCOL_COMMAND_STORAGE_WRITE, .async = true),
+            .name = strDup(name),
+            .modeFile = modeFile,
+            .modePath = modePath,
+            .user = strDup(user),
+            .group = strDup(group),
+            .timeModified = timeModified,
+            .createPath = createPath,
+            .syncFile = syncFile,
+            .syncPath = syncPath,
+            .atomic = atomic,
             .compressible = compressible,
             .compressLevel = compressLevel,
         };
-
-        this->write = storageWriteNewP(
-            OBJ_NAME(this, StorageWrite::StorageWriteRemote), STORAGE_REMOTE_TYPE, name, createPath, atomic, true, syncPath,
-            syncFile, &storageWriteRemoteInterface, .user = user, .group = group, .modePath = modePath, .modeFile = modeFile,
-            .timeModified = timeModified);
     }
     OBJ_NEW_END();
 
-    ASSERT(this != NULL);
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, this->write);
+    FUNCTION_LOG_RETURN(STORAGE_WRITE_REMOTE, this);
 }

@@ -1013,7 +1013,7 @@ storageS3NewRead(THIS_VOID, const String *const file, const StorageInterfaceNewR
 }
 
 /**********************************************************************************************************************************/
-static StorageWrite *
+static void *
 storageS3NewWrite(THIS_VOID, const String *const file, const StorageInterfaceNewWriteParam param)
 {
     THIS(StorageS3);
@@ -1032,7 +1032,7 @@ storageS3NewWrite(THIS_VOID, const String *const file, const StorageInterfaceNew
     ASSERT(param.group == NULL);
     ASSERT(param.timeModified == 0);
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteS3New(this, file, this->partSize));
+    FUNCTION_LOG_RETURN(STORAGE_WRITE_S3, storageWriteS3New(this, file, this->partSize));
 }
 
 /**********************************************************************************************************************************/

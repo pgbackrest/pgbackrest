@@ -654,7 +654,7 @@ testRun(void)
                 TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
                 TEST_RESULT_BOOL(storageWriteTruncate(write), true, "file will be truncated");
 
-                TEST_RESULT_VOID(storageWriteAzureClose(ioWriteDriver(storageWriteIo(write))), "close file again");
+                TEST_RESULT_VOID(storageWriteAzureClose(write->driver), "close file again");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write zero-length file");
@@ -1329,15 +1329,11 @@ testRun(void)
                 ioWriteOpen(storageWriteIo(write));
                 ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
 
-                TEST_RESULT_VOID(
-                    bufResize(((StorageWriteAzure *)ioWriteDriver(storageWriteIo(write)))->blockBuffer, 17),
-                    "resize part buffer to 17");
+                TEST_RESULT_VOID(bufResize(((StorageWriteAzure *)write->driver)->blockBuffer, 17), "resize part buffer to 17");
 
                 ioWrite(storageWriteIo(write), BUFSTRDEF("90"));
 
-                TEST_RESULT_UINT(
-                    ((StorageWriteAzure *)ioWriteDriver(storageWriteIo(write)))->blockSize, 16,
-                    "part buffer reset to 16 (default)");
+                TEST_RESULT_UINT(((StorageWriteAzure *)write->driver)->blockSize, 16, "part buffer reset to 16 (default)");
 
                 ioWriteClose(storageWriteIo(write));
                 ioBufferSizeSet(ioBufferSizeDefault);

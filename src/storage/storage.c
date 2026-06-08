@@ -566,12 +566,11 @@ storageNewWrite(const Storage *const this, const String *const fileExp, const St
     MEM_CONTEXT_TEMP_BEGIN()
     {
         result = storageWriteMove(
-            storageInterfaceNewWriteP(
-                storageDriver(this), storagePathP(this, fileExp), .modeFile = param.modeFile != 0 ? param.modeFile : this->modeFile,
-                .modePath = param.modePath != 0 ? param.modePath : this->modePath, .user = param.user, .group = param.group,
-                .timeModified = param.timeModified, .createPath = !param.noCreatePath, .syncFile = !param.noSyncFile,
-                .syncPath = !param.noSyncPath, .atomic = !param.noAtomic, .truncate = !param.noTruncate,
-                .compressible = param.compressible),
+            storageWriteNew(
+                this, storagePathP(this, fileExp), param.modeFile != 0 ? param.modeFile : this->modeFile,
+                param.modePath != 0 ? param.modePath : this->modePath, param.user, param.group, param.timeModified,
+                !param.noCreatePath, !param.noSyncFile, !param.noSyncPath, !param.noAtomic, !param.noTruncate,
+                param.compressible),
             memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();

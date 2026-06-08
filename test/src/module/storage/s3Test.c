@@ -891,7 +891,7 @@ testRun(void)
                 TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
                 TEST_RESULT_BOOL(storageWriteTruncate(write), true, "file will be truncated");
 
-                TEST_RESULT_VOID(storageWriteS3Close(ioWriteDriver(storageWriteIo(write))), "close file again");
+                TEST_RESULT_VOID(storageWriteS3Close(write->driver), "close file again");
 
                 // Check that temp credentials were changed
                 TEST_RESULT_STR_Z(driver->accessKey, "xx", "check access key");
@@ -1844,14 +1844,11 @@ testRun(void)
                 ioWriteOpen(storageWriteIo(write));
                 ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
 
-                TEST_RESULT_VOID(
-                    bufResize(((StorageWriteS3 *)ioWriteDriver(storageWriteIo(write)))->partBuffer, 17),
-                    "resize part buffer to 17");
+                TEST_RESULT_VOID(bufResize(((StorageWriteS3 *)write->driver)->partBuffer, 17), "resize part buffer to 17");
 
                 ioWrite(storageWriteIo(write), BUFSTRDEF("90"));
 
-                TEST_RESULT_UINT(
-                    ((StorageWriteS3 *)ioWriteDriver(storageWriteIo(write)))->partSize, 16, "part buffer reset to 16 (default)");
+                TEST_RESULT_UINT(((StorageWriteS3 *)write->driver)->partSize, 16, "part buffer reset to 16 (default)");
 
                 ioWriteClose(storageWriteIo(write));
                 ioBufferSizeSet(ioBufferSizeDefault);

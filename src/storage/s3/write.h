@@ -8,8 +8,21 @@ S3 Storage File Write
 #include "storage/write.h"
 
 /***********************************************************************************************************************************
+Object type
+***********************************************************************************************************************************/
+typedef struct StorageWriteS3 StorageWriteS3;
+
+/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN StorageWrite *storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize);
+FN_EXTERN StorageWriteS3 *storageWriteS3New(StorageS3 *storage, const String *name, size_t partSize);
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_LOG_STORAGE_WRITE_S3_TYPE                                                                                         \
+    StorageWriteS3 *
+#define FUNCTION_LOG_STORAGE_WRITE_S3_FORMAT(value, buffer, bufferSize)                                                            \
+    objNameToLog(value, "StorageWriteS3", buffer, bufferSize)
 
 #endif

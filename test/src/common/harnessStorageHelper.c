@@ -28,9 +28,9 @@ typedef struct HrnStorageTest
 
 typedef struct HrnStorageWriteTest
 {
-    StorageWriteInterface interface;                                // Interface
-    IoWrite *base;                                                  // Posix IO for base file
-    IoWrite *version;                                               // Posix IO for version file
+    const StorageWriteInterface *interface;                          // Interface
+    void *base;                                                     // Posix driver for base file
+    void *version;                                                  // Posix driver for version file
 } HrnStorageWriteTest;
 
 typedef struct HrnStorageReadTest
@@ -247,8 +247,8 @@ hrnStorageWriteTestOpen(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    ioWriteInterface(this->base)->open(ioWriteDriver(this->base));
-    ioWriteInterface(this->version)->open(ioWriteDriver(this->version));
+    storageWriteDriverInterface(this->base)->open(this->base);
+    storageWriteDriverInterface(this->version)->open(this->version);
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
@@ -266,8 +266,8 @@ hrnStorageWriteTest(THIS_VOID, const Buffer *const buffer)
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
 
-    ioWriteInterface(this->base)->write(ioWriteDriver(this->base), buffer);
-    ioWriteInterface(this->version)->write(ioWriteDriver(this->version), buffer);
+    storageWriteDriverInterface(this->base)->write(this->base, buffer);
+    storageWriteDriverInterface(this->version)->write(this->version, buffer);
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
@@ -283,8 +283,8 @@ hrnStorageWriteTestClose(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    ioWriteInterface(this->base)->close(ioWriteDriver(this->base));
-    ioWriteInterface(this->version)->close(ioWriteDriver(this->version));
+    storageWriteDriverInterface(this->base)->close(this->base);
+    storageWriteDriverInterface(this->version)->close(this->version);
 
     FUNCTION_HARNESS_RETURN_VOID();
 }
@@ -300,10 +300,10 @@ hrnStorageWriteTestFd(const THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_HARNESS_RETURN(INT, ioWriteInterface(this->base)->fd(ioWriteDriver(this->base)));
+    FUNCTION_HARNESS_RETURN(INT, storageWriteDriverInterface(this->base)->fd(this->base));
 }
 
-static const IoWriteInterface hrnStorageWriteTestInterface =
+static const StorageWriteInterface hrnStorageWriteTestInterface =
 {
     .close = hrnStorageWriteTestClose,
     .fd = hrnStorageWriteTestFd,
@@ -311,7 +311,7 @@ static const IoWriteInterface hrnStorageWriteTestInterface =
     .write = hrnStorageWriteTest,
 };
 
-static StorageWrite *
+static HrnStorageWriteTest *
 hrnStorageWriteTestNew(
     Storage *const storagePosix, const String *const name, const mode_t modeFile, const mode_t modePath,
     const String *const user, const String *const group, time_t timeModified, const bool createPath, const bool syncFile,
@@ -347,23 +347,18 @@ hrnStorageWriteTestNew(
 
         *this = (HrnStorageWriteTest)
         {
-            .base = storageWriteIo(
-                storageWritePosixNew(
-                    storageDriver(storagePosix), name, modeFile, modePath, user, group, timeModified, createPath, false, false,
-                    false, truncate)),
-            .version = storageWriteIo(
-                storageWritePosixNew(
-                    storageDriver(storagePosix), hrnStorageTestVersionFind(storagePosix, name), modeFile, modePath, user, group,
-                    timeModified, createPath, false, false, false, truncate)),
+            .interface = &hrnStorageWriteTestInterface,
+            .base = storageWritePosixNew(
+                storageDriver(storagePosix), name, modeFile, modePath, user, group, timeModified, createPath, false, false,
+                false, truncate),
+            .version = storageWritePosixNew(
+                storageDriver(storagePosix), hrnStorageTestVersionFind(storagePosix, name), modeFile, modePath, user, group,
+                timeModified, createPath, false, false, false, truncate),
         };
     }
     OBJ_NEW_END();
 
-    FUNCTION_HARNESS_RETURN(
-        STORAGE_WRITE,
-        storageWriteNewP(
-            this, STORAGE_TEST_TYPE, name, createPath, false, truncate, false, false, &hrnStorageWriteTestInterface,
-            .user = user, .group = group, .modePath = modePath, .modeFile = modeFile, .timeModified = timeModified));
+    FUNCTION_HARNESS_RETURN(HRN_STORAGE_WRITE_TEST, this);
 }
 
 /***********************************************************************************************************************************
@@ -501,7 +496,7 @@ hrnStorageTestNewRead(THIS_VOID, const String *file, const StorageInterfaceNewRe
         hrnStorageReadTestNew(storageDriver(this->storagePosix), file, param.offset, param.limit, param.versionId));
 }
 
-static StorageWrite *
+static void *
 hrnStorageTestNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNewWriteParam param)
 {
     THIS(HrnStorageTest);
@@ -526,7 +521,7 @@ hrnStorageTestNewWrite(THIS_VOID, const String *const file, const StorageInterfa
     hrnStorageTestSecretCheck(file);
 
     FUNCTION_HARNESS_RETURN(
-        STORAGE_WRITE,
+        HRN_STORAGE_WRITE_TEST,
         hrnStorageWriteTestNew(
             this->storagePosix, file, param.modeFile, param.modePath, param.user, param.group, param.timeModified,
             param.createPath, param.syncFile, param.syncPath, param.atomic, param.truncate));
@@ -656,7 +651,8 @@ hrnStorageTestNew(
 
     static const StorageInterface hrnStorageInterfaceTest =
     {
-        .feature = 1 << storageFeaturePath | 1 << storageFeatureInfoDetail | 1 << storageFeatureVersioning,
+        .feature =
+            1 << storageFeaturePath | 1 << storageFeaturePathSync | 1 << storageFeatureInfoDetail | 1 << storageFeatureVersioning,
 
         .info = hrnStorageTestInfo,
         .list = hrnStorageTestList,

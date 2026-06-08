@@ -706,7 +706,7 @@ storageAzureNewRead(THIS_VOID, const String *const file, const StorageInterfaceN
 }
 
 /**********************************************************************************************************************************/
-static StorageWrite *
+static void *
 storageAzureNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNewWriteParam param)
 {
     THIS(StorageAzure);
@@ -725,7 +725,7 @@ storageAzureNewWrite(THIS_VOID, const String *const file, const StorageInterface
     ASSERT(param.group == NULL);
     ASSERT(param.timeModified == 0);
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteAzureNew(this, file, this->fileId++, this->blockSize));
+    FUNCTION_LOG_RETURN(STORAGE_WRITE_AZURE, storageWriteAzureNew(this, file, this->fileId++, this->blockSize));
 }
 
 /**********************************************************************************************************************************/

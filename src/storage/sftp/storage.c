@@ -935,7 +935,7 @@ storageSftpNewRead(THIS_VOID, const String *const file, const StorageInterfaceNe
 }
 
 /**********************************************************************************************************************************/
-static StorageWrite *
+static void *
 storageSftpNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNewWriteParam param)
 {
     THIS(StorageSftp);
@@ -964,7 +964,7 @@ storageSftpNewWrite(THIS_VOID, const String *const file, const StorageInterfaceN
     ASSERT(param.timeModified == 0);
 
     FUNCTION_LOG_RETURN(
-        STORAGE_WRITE,
+        STORAGE_WRITE_SFTP,
         storageWriteSftpNew(
             this, file, this->session, this->sftpSession, this->sftpHandle, param.modeFile, param.modePath, param.user, param.group,
             param.timeModified, param.createPath, param.syncFile, param.atomic, param.truncate));

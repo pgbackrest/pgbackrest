@@ -29,9 +29,10 @@ STRING_STATIC(GCS_QUERY_FIELDS_VALUE_STR,                           GCS_JSON_MD5
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct StorageWriteGcs
+struct StorageWriteGcs
 {
-    StorageWriteInterface interface;                                // Interface
+    const StorageWriteInterface *interface;                         // Interface
+    const String *name;                                             // File name
     StorageGcs *storage;                                            // Storage that created this object
 
     HttpRequest *request;                                           // Async chunk upload request
@@ -42,15 +43,7 @@ typedef struct StorageWriteGcs
     const String *uploadId;                                         // Id for resumable upload
     uint64_t uploadTotal;                                           // Total bytes uploaded
     IoFilter *md5hash;                                              // MD5 hash of file
-} StorageWriteGcs;
-
-/***********************************************************************************************************************************
-Macros for function logging
-***********************************************************************************************************************************/
-#define FUNCTION_LOG_STORAGE_WRITE_GCS_TYPE                                                                                        \
-    StorageWriteGcs *
-#define FUNCTION_LOG_STORAGE_WRITE_GCS_FORMAT(value, buffer, bufferSize)                                                           \
-    objNameToLog(value, "StorageWriteGcs", buffer, bufferSize)
+};
 
 /***********************************************************************************************************************************
 Verify upload
@@ -78,7 +71,7 @@ storageWriteGcsVerify(StorageWriteGcs *const this, HttpResponse *const response)
         {
             THROW_FMT(
                 FormatError, "expected md5 '%s' for '%s' but actual is '%s'", strZ(strNewEncode(encodingHex, md5expected)),
-                strZ(this->interface.name), strZ(strNewEncode(encodingHex, md5actual)));
+                strZ(this->name), strZ(strNewEncode(encodingHex, md5actual)));
         }
 
         // Check the size when available
@@ -91,7 +84,7 @@ storageWriteGcsVerify(StorageWriteGcs *const this, HttpResponse *const response)
             if (size != this->uploadTotal)
             {
                 THROW_FMT(
-                    FormatError, "expected size %" PRIu64 " for '%s' but actual is %" PRIu64, size, strZ(this->interface.name),
+                    FormatError, "expected size %" PRIu64 " for '%s' but actual is %" PRIu64, size, strZ(this->name),
                     this->uploadTotal);
             }
         }
@@ -149,7 +142,7 @@ storageWriteGcsBlockAsync(StorageWriteGcs *const this, const bool done)
 
         // Build query
         HttpQuery *const query = httpQueryNewP();
-        httpQueryAdd(query, GCS_QUERY_NAME_STR, strSub(this->interface.name, 1));
+        httpQueryAdd(query, GCS_QUERY_NAME_STR, strSub(this->name, 1));
         httpQueryAdd(query, GCS_QUERY_UPLOAD_TYPE_STR, GCS_QUERY_RESUMABLE_STR);
 
         // Get the upload id
@@ -285,7 +278,7 @@ storageWriteGcsClose(THIS_VOID)
 
                 // Upload file
                 HttpQuery *query = httpQueryNewP();
-                httpQueryAdd(query, GCS_QUERY_NAME_STR, strSub(this->interface.name, 1));
+                httpQueryAdd(query, GCS_QUERY_NAME_STR, strSub(this->name, 1));
                 httpQueryAdd(query, GCS_QUERY_UPLOAD_TYPE_STR, GCS_QUERY_MEDIA_STR);
                 httpQueryAdd(query, GCS_QUERY_FIELDS_STR, GCS_QUERY_FIELDS_VALUE_STR);
 
@@ -307,13 +300,13 @@ storageWriteGcsClose(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-static const IoWriteInterface storageWriteGcsInterface =
+static const StorageWriteInterface storageWriteGcsInterface =
 {
     .close = storageWriteGcsClose,
     .write = storageWriteGcs,
 };
 
-FN_EXTERN StorageWrite *
+FN_EXTERN StorageWriteGcs *
 storageWriteGcsNew(StorageGcs *const storage, const String *const name, const size_t chunkSize, const bool tag)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -330,6 +323,8 @@ storageWriteGcsNew(StorageGcs *const storage, const String *const name, const si
     {
         *this = (StorageWriteGcs)
         {
+            .interface = &storageWriteGcsInterface,
+            .name = strDup(name),
             .storage = storage,
             .chunkSize = chunkSize,
             .chunkBuffer = bufNew(0),
@@ -339,6 +334,5 @@ storageWriteGcsNew(StorageGcs *const storage, const String *const name, const si
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(
-        STORAGE_WRITE, storageWriteNewP(this, STORAGE_GCS_TYPE, name, true, true, true, true, true, &storageWriteGcsInterface));
+    FUNCTION_LOG_RETURN(STORAGE_WRITE_GCS, this);
 }

@@ -286,7 +286,7 @@ storageRemoteNewRead(THIS_VOID, const String *const file, const StorageInterface
 }
 
 /**********************************************************************************************************************************/
-static StorageWrite *
+static void *
 storageRemoteNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNewWriteParam param)
 {
     THIS(StorageRemote);
@@ -311,7 +311,7 @@ storageRemoteNewWrite(THIS_VOID, const String *const file, const StorageInterfac
     ASSERT(param.truncate);
 
     FUNCTION_LOG_RETURN(
-        STORAGE_WRITE,
+        STORAGE_WRITE_REMOTE,
         storageWriteRemoteNew(
             this, this->client, file, param.modeFile, param.modePath, param.user, param.group, param.timeModified, param.createPath,
             param.syncFile, param.syncPath, param.atomic, this->compressLevel > 0 ? param.compressible : false,

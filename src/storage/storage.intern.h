@@ -166,7 +166,7 @@ typedef struct StorageInterfaceNewWriteParam
     bool compressible;
 } StorageInterfaceNewWriteParam;
 
-typedef StorageWrite *StorageInterfaceNewWrite(void *thisVoid, const String *file, StorageInterfaceNewWriteParam param);
+typedef void *StorageInterfaceNewWrite(void *thisVoid, const String *file, StorageInterfaceNewWriteParam param);
 
 #define storageInterfaceNewWriteP(thisVoid, file, ...)                                                                             \
     STORAGE_COMMON_INTERFACE(thisVoid).newWrite(thisVoid, file, (StorageInterfaceNewWriteParam){VAR_PARAM_INIT, __VA_ARGS__})

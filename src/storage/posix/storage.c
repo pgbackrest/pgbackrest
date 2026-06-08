@@ -362,7 +362,7 @@ storagePosixNewRead(THIS_VOID, const String *const file, const StorageInterfaceN
 }
 
 /**********************************************************************************************************************************/
-static StorageWrite *
+static void *
 storagePosixNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNewWriteParam param)
 {
     THIS(StoragePosix);
@@ -386,7 +386,7 @@ storagePosixNewWrite(THIS_VOID, const String *const file, const StorageInterface
     ASSERT(file != NULL);
 
     FUNCTION_LOG_RETURN(
-        STORAGE_WRITE,
+        STORAGE_WRITE_POSIX,
         storageWritePosixNew(
             this, file, param.modeFile, param.modePath, param.user, param.group, param.timeModified, param.createPath,
             param.syncFile, this->interface.pathSync != NULL ? param.syncPath : false, param.atomic, param.truncate));

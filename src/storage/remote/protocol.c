@@ -14,6 +14,7 @@ Remote Storage Protocol Handler
 #include "storage/helper.h"
 #include "storage/remote/protocol.h"
 #include "storage/storage.intern.h"
+#include "storage/write.intern.h"
 
 /***********************************************************************************************************************************
 Local variables
@@ -508,10 +509,9 @@ storageRemoteWriteOpenProtocol(PackRead *const param)
         const bool atomic = pckReadBoolP(param);
         const Pack *const filter = pckReadPackP(param);
 
-        StorageWrite *const fileWrite = storageInterfaceNewWriteP(
-            storageRemoteProtocolLocal.driver, file, .modeFile = modeFile, .modePath = modePath, .user = user, .group = group,
-            .timeModified = timeModified, .createPath = createPath, .syncFile = syncFile, .syncPath = syncPath, .atomic = atomic,
-            .truncate = true);
+        StorageWrite *const fileWrite = storageWriteNew(
+            storageRemoteProtocolLocal.storage, file, modeFile, modePath, user, group, timeModified, createPath, syncFile,
+            syncPath, atomic, true, false);
 
         // Set filter group based on passed filters
         storageRemoteFilterGroup(ioWriteFilterGroup(storageWriteIo(fileWrite)), filter);

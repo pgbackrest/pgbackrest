@@ -942,7 +942,7 @@ storageGcsNewRead(THIS_VOID, const String *const file, const StorageInterfaceNew
 }
 
 /**********************************************************************************************************************************/
-static StorageWrite *
+static void *
 storageGcsNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNewWriteParam param)
 {
     THIS(StorageGcs);
@@ -961,7 +961,7 @@ storageGcsNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNe
     ASSERT(param.group == NULL);
     ASSERT(param.timeModified == 0);
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteGcsNew(this, file, this->chunkSize, this->tag != NULL));
+    FUNCTION_LOG_RETURN(STORAGE_WRITE_GCS, storageWriteGcsNew(this, file, this->chunkSize, this->tag != NULL));
 }
 
 /**********************************************************************************************************************************/
