@@ -64,9 +64,9 @@ storageReadSftpOpen(THIS_VOID, const bool ignoreMissing)
                     THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->name));
             }
             else
-        {
-            storageSftpEvalLibSsh2Error(
-                rc, libssh2_sftp_last_error(this->sftpSession), &FileOpenError,
+            {
+                storageSftpEvalLibSsh2Error(
+                    rc, libssh2_sftp_last_error(this->sftpSession), &FileOpenError,
                     strNewFmt(STORAGE_ERROR_READ_OPEN, strZ(this->name)), NULL);
             }
         }

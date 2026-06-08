@@ -105,19 +105,6 @@ typedef void StorageInterfaceLinkCreate(
         (StorageInterfaceLinkCreateParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
-// Get information used to initialize a read
-typedef struct StorageInterfaceReadInitResult
-{
-    bool retry;                                                     // Should reads be retried?
-    IoReadInterface interface;                                      // Storage driver read interface
-} StorageInterfaceReadInitResult;
-
-typedef StorageInterfaceReadInitResult StorageInterfaceReadInit(void *thisVoid);
-
-#define storageInterfaceReadInitP(thisVoid)                                                                                        \
-    STORAGE_COMMON_INTERFACE(thisVoid).readInit(thisVoid)
-
-// ---------------------------------------------------------------------------------------------------------------------------------
 // Create a file read object. The file should not be opened immediately -- open() will be called on the IoRead interface when the
 // file needs to be opened.
 typedef struct StorageInterfaceNewReadParam

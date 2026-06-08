@@ -230,7 +230,7 @@ hrnStorageReadTestNew(
     }
     OBJ_NEW_END();
 
-    FUNCTION_HARNESS_RETURN(STORAGE_READ_TEST, this);
+    FUNCTION_HARNESS_RETURN(HRN_STORAGE_READ_TEST, this);
 }
 
 /***********************************************************************************************************************************
@@ -497,7 +497,7 @@ hrnStorageTestNewRead(THIS_VOID, const String *file, const StorageInterfaceNewRe
     hrnStorageTestSecretCheck(file);
 
     FUNCTION_HARNESS_RETURN(
-        STORAGE_READ_TEST,
+        HRN_STORAGE_READ_TEST,
         hrnStorageReadTestNew(storageDriver(this->storagePosix), file, param.offset, param.limit, param.versionId));
 }
 
