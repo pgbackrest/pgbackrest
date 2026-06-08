@@ -99,7 +99,7 @@ storageWritePosixOpen(THIS_VOID)
     this->fd = open(strZ(this->nameTmp), flags, this->modeFile);
 
     // Attempt to create the path if it is missing
-    if (this->fd == -1 && errno == ENOENT && this->createPath)                                                     // {vm_covered}
+    if (this->fd == -1 && errno == ENOENT && this->createPath)                                                      // {vm_covered}
     {
         // Create the path
         storageInterfacePathCreateP(this->storage, this->path, false, false, this->modePath);
@@ -114,7 +114,7 @@ storageWritePosixOpen(THIS_VOID)
         if (errno == ENOENT)                                                                                        // {vm_covered}
             THROW_FMT(FileMissingError, STORAGE_ERROR_WRITE_MISSING, strZ(this->name));
         else
-            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(this->name));                        // {vm_covered}
+            THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_WRITE_OPEN, strZ(this->name));                         // {vm_covered}
     }
 
     // Set free callback to ensure the file descriptor is freed

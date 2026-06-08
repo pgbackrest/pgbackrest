@@ -28,7 +28,7 @@ typedef struct HrnStorageTest
 
 typedef struct HrnStorageWriteTest
 {
-    const StorageWriteInterface *interface;                          // Interface
+    const StorageWriteInterface *interface;                         // Interface
     void *base;                                                     // Posix driver for base file
     void *version;                                                  // Posix driver for version file
 } HrnStorageWriteTest;

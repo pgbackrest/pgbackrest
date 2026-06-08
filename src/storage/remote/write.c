@@ -18,7 +18,7 @@ Object type
 ***********************************************************************************************************************************/
 struct StorageWriteRemote
 {
-    const StorageWriteInterface *interface;                          // Interface
+    const StorageWriteInterface *interface;                         // Interface
     StorageRemote *storage;                                         // Storage that created this object
     ProtocolClient *client;                                         // Protocol client to make requests with
     ProtocolClientSession *session;                                 // Protocol session for requests
