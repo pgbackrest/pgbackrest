@@ -55,16 +55,17 @@ storageReadS3Open(THIS_VOID, const bool ignoreMissing)
             .header = httpHeaderPutRange(httpHeaderNew(NULL), this->offset, this->limit),
             .query = this->versionId != NULL ? httpQueryPut(httpQueryNewP(), STRDEF("versionId"), this->versionId) : NULL,
             .allowMissing = true, .contentIo = true, .sseC = true);
+
+        // If file exists
+        if (httpResponseCodeOk(this->httpResponse))
+        {
+            result = true;
+        }
+        // Else error unless ignore missing
+        else if (!ignoreMissing)
+            THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->name));
     }
     MEM_CONTEXT_OBJ_END();
-
-    if (httpResponseCodeOk(this->httpResponse))
-    {
-        result = true;
-    }
-    // Else error unless ignore missing
-    else if (!ignoreMissing)
-        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->name));
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }

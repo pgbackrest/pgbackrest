@@ -105,16 +105,15 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
                     bufUsedSet(buffer, bufUsedBegin);
 
                     // Driver with new offset/limit
-                    const Variant *const limit =
-                        this->pub.limit != NULL ? varNewUInt64(varUInt64(this->pub.limit) - this->bytesRead) : NULL;
-
                     MEM_CONTEXT_OBJ_BEGIN(this)
                     {
                         objFree(this->driver);
 
                         this->driver = storageInterfaceNewReadP(
                             storageDriver(this->storage), this->pub.name, .compressible = this->compressible,
-                            .offset = this->pub.offset + this->bytesRead, .limit = limit, .versionId = this->pub.versionId);
+                            .offset = this->pub.offset + this->bytesRead,
+                            .limit = this->pub.limit != NULL ? varNewUInt64(varUInt64(this->pub.limit) - this->bytesRead) : NULL,
+                            .versionId = this->pub.versionId);
                         storageReadDriverInterface(this->driver)->open(this->driver, false);
                     }
                     MEM_CONTEXT_OBJ_END();

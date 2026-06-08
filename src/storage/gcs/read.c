@@ -58,18 +58,19 @@ storageReadGcsOpen(THIS_VOID, const bool ignoreMissing)
 
         this->httpResponse = storageGcsRequestP(
             this->storage, HTTP_VERB_GET_STR, .object = this->name,
-            .header = httpHeaderPutRange(httpHeaderNew(NULL), this->offset, this->limit),
-            .allowMissing = true, .contentIo = true, .query = query);
+            .header = httpHeaderPutRange(httpHeaderNew(NULL), this->offset, this->limit), .allowMissing = true, .contentIo = true,
+            .query = query);
+
+        // If file exists
+        if (httpResponseCodeOk(this->httpResponse))
+        {
+            result = true;
+        }
+        // Else error unless ignore missing
+        else if (!ignoreMissing)
+            THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->name));
     }
     MEM_CONTEXT_OBJ_END();
-
-    if (httpResponseCodeOk(this->httpResponse))
-    {
-        result = true;
-    }
-    // Else error unless ignore missing
-    else if (!ignoreMissing)
-        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->name));
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
