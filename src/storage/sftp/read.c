@@ -34,12 +34,13 @@ struct StorageReadSftp
 Open the file
 ***********************************************************************************************************************************/
 static bool
-storageReadSftpOpen(THIS_VOID)
+storageReadSftpOpen(THIS_VOID, const bool ignoreMissing)
 {
     THIS(StorageReadSftp);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_READ_SFTP, this);
+        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -55,12 +56,19 @@ storageReadSftpOpen(THIS_VOID)
     {
         const int rc = libssh2_session_last_errno(this->session);
 
-        if ((rc == LIBSSH2_ERROR_SFTP_PROTOCOL || rc == LIBSSH2_ERROR_EAGAIN) &&
-            libssh2_sftp_last_error(this->sftpSession) != LIBSSH2_FX_NO_SUCH_FILE)
+        if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL || rc == LIBSSH2_ERROR_EAGAIN)
+        {
+            if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE)
+            {
+                if (!ignoreMissing)
+                    THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->name));
+            }
+            else
         {
             storageSftpEvalLibSsh2Error(
                 rc, libssh2_sftp_last_error(this->sftpSession), &FileOpenError,
-                strNewFmt(STORAGE_ERROR_READ_OPEN, strZ(this->name)), NULL);
+                    strNewFmt(STORAGE_ERROR_READ_OPEN, strZ(this->name)), NULL);
+            }
         }
     }
     // Else success

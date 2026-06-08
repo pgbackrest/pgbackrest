@@ -34,16 +34,19 @@ struct StorageReadAzure
 Open the file
 ***********************************************************************************************************************************/
 static bool
-storageReadAzureOpen(THIS_VOID)
+storageReadAzureOpen(THIS_VOID, const bool ignoreMissing)
 {
     THIS(StorageReadAzure);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_READ_AZURE, this);
+        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(this->httpResponse == NULL);
+
+    bool result = false;
 
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
@@ -55,7 +58,15 @@ storageReadAzureOpen(THIS_VOID)
     }
     MEM_CONTEXT_OBJ_END();
 
-    FUNCTION_LOG_RETURN(BOOL, httpResponseCodeOk(this->httpResponse));
+    if (httpResponseCodeOk(this->httpResponse))
+    {
+        result = true;
+    }
+    // Else error unless ignore missing
+    else if (!ignoreMissing)
+        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->name));
+
+    FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 /***********************************************************************************************************************************

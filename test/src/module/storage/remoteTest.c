@@ -266,7 +266,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             strZ(strNewBuf(storageGetP(storageNewReadP(storagePgWrite, STRDEF("test.txt"))))), FileMissingError,
-            STORAGE_ERROR_READ_MISSING, TEST_PATH "/pg256/test.txt");
+            "raised from remote-0 shim protocol: " STORAGE_ERROR_READ_MISSING, TEST_PATH "/pg256/test.txt");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("raw read file without compression");

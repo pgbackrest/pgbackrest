@@ -424,6 +424,7 @@ storageRemoteReadOpenProtocol(PackRead *const param)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         const String *file = pckReadStrP(param);
+        const bool ignoreMissing = pckReadBoolP(param);
         const uint64_t offset = pckReadU64P(param);
         const Variant *const limit = pckReadNullP(param) ? NULL : VARUINT64(pckReadU64P(param));
         const String *const versionId = pckReadStrP(param);
@@ -431,7 +432,7 @@ storageRemoteReadOpenProtocol(PackRead *const param)
 
         // Create the read object
         StorageRead *const fileRead = storageReadNew(
-            storageRemoteProtocolLocal.storage, file, true, false, offset, limit, versionId != NULL, versionId);
+            storageRemoteProtocolLocal.storage, file, ignoreMissing, false, offset, limit, versionId != NULL, versionId);
 
         // Set filter group based on passed filters
         storageRemoteFilterGroup(ioReadFilterGroup(storageReadIo(fileRead)), filter);
