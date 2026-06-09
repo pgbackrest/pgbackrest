@@ -113,6 +113,39 @@ storageReadMultiOpen(THIS_VOID)
 
     storageReadMultiQueue(this, false);
 
+    // !!! DEBUG RANGES
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        LOG_DEBUG_FMT("!!!MULTI SIZE %u", lstSize(this->requestList));
+
+        for (unsigned int requestIdx = 0; requestIdx < lstSize(this->requestList); requestIdx++)
+        {
+            StorageReadMultiRequest *request = lstGet(this->requestList, requestIdx);
+            LOG_DEBUG_FMT(
+                "!!!  REQUEST %s OFFSET %" PRIu64 " LIMIT %" PRIu64 ", RANGE SIZE %u", strZ(request->fileExp), request->offset,
+                request->limit, request->rangeList != NULL ? lstSize(request->rangeList) : 0);
+
+            if (request->rangeList != NULL)
+            {
+                for (unsigned int rangeIdx = 0; rangeIdx < lstSize(request->rangeList); rangeIdx++)
+                {
+                    StorageReadMultiRange *range = lstGet(request->rangeList, rangeIdx);
+                    String *gap = strNew();
+
+                    if (rangeIdx != 0)
+                    {
+                        StorageReadMultiRange *rangePrior = lstGet(request->rangeList, rangeIdx - 1);
+                        strCatFmt(gap, " (gap %" PRIu64 ")", range->offset - (rangePrior->offset + rangePrior->limit));
+                    }
+
+                    LOG_DEBUG_FMT(
+                        "!!!    RANGE OFFSET %" PRIu64 " LIMIT %" PRIu64 "%s", range->offset, range->limit, strZ(gap));
+                }
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
     FUNCTION_LOG_RETURN(BOOL, true);
 }
 
