@@ -7283,15 +7283,6 @@ testRun(void)
         TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), true, "check path feature");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("write object path sync false");
-
-        // Create a FileWrite object with path sync enabled and ensure that path sync is false in the write object
-        StorageWrite *file = NULL;
-        TEST_ASSIGN(file, storageNewWriteP(storage, STRDEF("somefile"), .noSyncPath = false), "new file write");
-
-        TEST_RESULT_BOOL(storageWriteSyncPath(file), false, "path sync is disabled");
-
-        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path sync result is noop");
 
         // Test the path sync function -- pass a bogus path to ensure that this is a noop

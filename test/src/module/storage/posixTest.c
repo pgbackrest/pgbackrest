@@ -1732,7 +1732,8 @@ testRun(void)
         StorageWrite *file = NULL;
         TEST_ASSIGN(file, storageNewWriteP(storage, STRDEF("somefile"), .noSyncPath = false), "new file write");
 
-        TEST_RESULT_BOOL(storageWriteSyncPath(file), false, "path sync is disabled");
+        TEST_RESULT_BOOL(
+            ((StorageWritePosix *)ioWriteDriver(storageWriteIo(file)))->interface.syncPath, false, "path sync is disabled");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path sync result is noop");
