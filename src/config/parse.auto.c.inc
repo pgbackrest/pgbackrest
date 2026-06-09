@@ -8189,7 +8189,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_NAME("repo-s3-service"),                                                            // opt/repo-s3-service
         PARSE_RULE_OPTION_TYPE(String),                                                                       // opt/repo-s3-service
         PARSE_RULE_OPTION_RESET(true),                                                                        // opt/repo-s3-service
-        PARSE_RULE_OPTION_REQUIRED(true),                                                                     // opt/repo-s3-service
+        PARSE_RULE_OPTION_REQUIRED(false),                                                                    // opt/repo-s3-service
         PARSE_RULE_OPTION_SECTION(Global),                                                                    // opt/repo-s3-service
         PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                     // opt/repo-s3-service
                                                                                                               // opt/repo-s3-service

@@ -1276,6 +1276,7 @@ storageS3New(
     ASSERT(bucket != NULL);
     ASSERT(endPoint != NULL);
     ASSERT(region != NULL);
+    ASSERT(service != NULL);
     ASSERT(partSize != 0);
 
     OBJ_NEW_BEGIN(StorageS3, .childQty = MEM_CONTEXT_QTY_MAX)

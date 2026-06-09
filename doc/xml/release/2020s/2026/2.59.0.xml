@@ -2,7 +2,7 @@
     <release-core-list>
         <release-feature-list>
             <release-item>
-                <github-pull-request id="2773"/>
+                <github-pull-request id="2762"/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="shiva.kumar.ambigi"/>

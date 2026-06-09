@@ -2386,6 +2386,7 @@ option:
   repo-s3-service:
     inherit: repo-s3-bucket
     default: s3
+    required: false
 
   repo-s3-uri-style:
     section: global
