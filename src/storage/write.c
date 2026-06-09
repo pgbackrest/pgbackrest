@@ -14,78 +14,188 @@ Object type
 struct StorageWrite
 {
     StorageWritePub pub;                                            // Publicly accessible variables
+    void *driver;                                                   // Driver
 };
 
 /***********************************************************************************************************************************
-Macros for function logging
+Open the file
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_STORAGE_WRITE_INTERFACE_TYPE                                                                                  \
-    StorageWriteInterface
-#define FUNCTION_LOG_STORAGE_WRITE_INTERFACE_FORMAT(value, buffer, bufferSize)                                                     \
-    objNameToLog(&value, "StorageWriteInterface", buffer, bufferSize)
+static void
+storageWriteOpen(THIS_VOID)
+{
+    THIS(StorageWrite);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    storageWriteDriverInterface(this->driver)->open(this->driver);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
 
 /***********************************************************************************************************************************
-This object expects its context to be created in advance. This is so the calling function can add whatever data it wants without
-required multiple functions and contexts to make it safe.
+Write to a file
 ***********************************************************************************************************************************/
+static void
+storageWrite(THIS_VOID, const Buffer *const buffer)
+{
+    THIS(StorageWrite);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    storageWriteDriverInterface(this->driver)->write(this->driver, buffer);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Close the file
+***********************************************************************************************************************************/
+static void
+storageWriteClose(THIS_VOID)
+{
+    THIS(StorageWrite);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    storageWriteDriverInterface(this->driver)->close(this->driver);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Get file descriptor
+***********************************************************************************************************************************/
+static int
+storageWriteFd(const THIS_VOID)
+{
+    THIS(const StorageWrite);
+
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_WRITE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(INT, storageWriteDriverInterface(this->driver)->fd(this->driver));
+}
+
+/***********************************************************************************************************************************
+Seek in file
+***********************************************************************************************************************************/
+static void
+storageWriteSeek(THIS_VOID, const uint64_t position)
+{
+    THIS(StorageWrite);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE, this);
+        FUNCTION_LOG_PARAM(UINT64, position);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    storageWriteDriverInterface(this->driver)->seek(this->driver, position);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+static const IoWriteInterface storageIoWriteInterface =
+{
+    .close = storageWriteClose,
+    .fd = storageWriteFd,
+    .open = storageWriteOpen,
+    .seek = storageWriteSeek,
+    .write = storageWrite,
+};
+
 FN_EXTERN StorageWrite *
 storageWriteNew(
-    void *const driver, const StringId type, const String *const name, const bool createPath, const bool atomic,
-    const bool truncate, const bool syncPath, const bool syncFile, const IoWriteInterface *const ioInterface,
-    const StorageWriteNewParam param)
+    const Storage *const storage, const String *const name, const mode_t modeFile, const mode_t modePath, const String *const user,
+    const String *const group, const time_t timeModified, const bool createPath, const bool syncFile, const bool syncPath,
+    const bool atomic, const bool truncate, const bool compressible)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM_P(VOID, driver);
-        FUNCTION_LOG_PARAM(STRING_ID, type);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, name);
+        FUNCTION_LOG_PARAM(MODE, modeFile);
+        FUNCTION_LOG_PARAM(MODE, modePath);
+        FUNCTION_LOG_PARAM(STRING, user);
+        FUNCTION_LOG_PARAM(STRING, group);
+        FUNCTION_LOG_PARAM(TIME, timeModified);
         FUNCTION_LOG_PARAM(BOOL, createPath);
+        FUNCTION_LOG_PARAM(BOOL, syncFile);
+        FUNCTION_LOG_PARAM(BOOL, syncPath);
         FUNCTION_LOG_PARAM(BOOL, atomic);
         FUNCTION_LOG_PARAM(BOOL, truncate);
-        FUNCTION_LOG_PARAM(BOOL, syncPath);
-        FUNCTION_LOG_PARAM(BOOL, syncFile);
-        FUNCTION_LOG_PARAM_P(IO_WRITE_INTERFACE, ioInterface);
-        FUNCTION_LOG_PARAM(STRING, param.user);
-        FUNCTION_LOG_PARAM(STRING, param.group);
-        FUNCTION_LOG_PARAM(UINT, param.modePath);
-        FUNCTION_LOG_PARAM(UINT, param.modeFile);
-        FUNCTION_LOG_PARAM(TIME, param.timeModified);
+        FUNCTION_LOG_PARAM(BOOL, compressible);
     FUNCTION_LOG_END();
 
     FUNCTION_AUDIT_HELPER();
 
-    ASSERT(driver != NULL);
+    ASSERT(storage != NULL);
     ASSERT(name != NULL);
-    ASSERT(ioInterface != NULL);
-    ASSERT(ioInterface->close != NULL);
-    ASSERT(ioInterface->write != NULL);
 
     OBJ_NEW_BEGIN(StorageWrite, .childQty = MEM_CONTEXT_QTY_MAX)
     {
-        // Initialize the interface
-        *((StorageWriteInterface *)driver) = (StorageWriteInterface)
-        {
-            .name = strDup(name),
-            .createPath = createPath,
-            .atomic = atomic,
-            .truncate = truncate,
-            .syncPath = syncPath,
-            .syncFile = syncFile,
-            .user = strDup(param.user),
-            .group = strDup(param.group),
-            .modePath = param.modePath,
-            .modeFile = param.modeFile,
-            .timeModified = param.timeModified,
-        };
-
         *this = (StorageWrite)
         {
+            .driver = storageInterfaceNewWriteP(
+                storageDriver(storage), name, .modeFile = modeFile, .modePath = modePath, .user = user, .group = group,
+                .timeModified = timeModified, .createPath = createPath, .syncFile = syncFile, .syncPath = syncPath,
+                .atomic = atomic, .truncate = truncate, .compressible = compressible),
             .pub =
             {
-                .interface = driver,
-                .io = ioWriteNew(driver, *ioInterface),
-                .type = type,
+                .type = storageType(storage),
+                .name = strDup(name),
+                .createPath = createPath,
+                .atomic = atomic,
+                .truncate = truncate,
+                .syncPath = syncPath,
+                .syncFile = syncFile,
+                .user = strDup(user),
+                .group = strDup(group),
+                .modePath = modePath,
+                .modeFile = modeFile,
+                .timeModified = timeModified,
             },
         };
+
+        ASSERT(storageWriteDriverInterface(this->driver)->close != NULL);
+        ASSERT(storageWriteDriverInterface(this->driver)->write != NULL);
+
+        // Remove fd method if it does not exist in the driver
+        IoWriteInterface storageIoWriteInterfaceCopy = storageIoWriteInterface;
+
+        if (storageWriteDriverInterface(this->driver)->fd == NULL)
+            storageIoWriteInterfaceCopy.fd = NULL;
+
+        // Remove open method if it does not exist in the driver (cloud drivers don't have open)
+        if (storageWriteDriverInterface(this->driver)->open == NULL)
+            storageIoWriteInterfaceCopy.open = NULL;
+
+        // Remove seek method if it does not exist in the driver
+        if (storageWriteDriverInterface(this->driver)->seek == NULL)
+            storageIoWriteInterfaceCopy.seek = NULL;
+
+        this->pub.io = ioWriteNew(this, storageIoWriteInterfaceCopy);
+
+        // Set filter group when interface function exists
+        if (storageWriteDriverInterface(this->driver)->filterGroup != NULL)
+            storageWriteDriverInterface(this->driver)->filterGroup(this->driver, ioWriteFilterGroup(storageWriteIo(this)));
     }
     OBJ_NEW_END();
 

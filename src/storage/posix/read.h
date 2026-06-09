@@ -8,9 +8,21 @@ Posix Storage Read
 #include "storage/read.h"
 
 /***********************************************************************************************************************************
+Object type
+***********************************************************************************************************************************/
+typedef struct StorageReadPosix StorageReadPosix;
+
+/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN StorageRead *storageReadPosixNew(
-    StoragePosix *storage, const String *name, bool ignoreMissing, uint64_t offset, const Variant *limit);
+FN_EXTERN StorageReadPosix *storageReadPosixNew(StoragePosix *storage, const String *name, uint64_t offset, const Variant *limit);
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_LOG_STORAGE_READ_POSIX_TYPE                                                                                       \
+    StorageReadPosix *
+#define FUNCTION_LOG_STORAGE_READ_POSIX_FORMAT(value, buffer, bufferSize)                                                          \
+    objNameToLog(value, "StorageReadPosix", buffer, bufferSize)
 
 #endif

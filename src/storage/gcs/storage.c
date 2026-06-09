@@ -922,30 +922,27 @@ storageGcsList(THIS_VOID, const String *const path, const StorageInfoLevel level
 }
 
 /**********************************************************************************************************************************/
-static StorageRead *
-storageGcsNewRead(THIS_VOID, const String *const file, const bool ignoreMissing, const StorageInterfaceNewReadParam param)
+static void *
+storageGcsNewRead(THIS_VOID, const String *const file, const StorageInterfaceNewReadParam param)
 {
     THIS(StorageGcs);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_GCS, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(UINT64, param.offset);
         FUNCTION_LOG_PARAM(VARIANT, param.limit);
-        FUNCTION_LOG_PARAM(BOOL, param.version);
         FUNCTION_LOG_PARAM(STRING, param.versionId);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    FUNCTION_LOG_RETURN(
-        STORAGE_READ, storageReadGcsNew(this, file, ignoreMissing, param.offset, param.limit, param.version, param.versionId));
+    FUNCTION_LOG_RETURN(STORAGE_READ_GCS, storageReadGcsNew(this, file, param.offset, param.limit, param.versionId));
 }
 
 /**********************************************************************************************************************************/
-static StorageWrite *
+static void *
 storageGcsNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNewWriteParam param)
 {
     THIS(StorageGcs);
@@ -964,7 +961,7 @@ storageGcsNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNe
     ASSERT(param.group == NULL);
     ASSERT(param.timeModified == 0);
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteGcsNew(this, file, this->chunkSize, this->tag != NULL));
+    FUNCTION_LOG_RETURN(STORAGE_WRITE_GCS, storageWriteGcsNew(this, file, this->chunkSize, this->tag != NULL));
 }
 
 /**********************************************************************************************************************************/
@@ -1173,7 +1170,7 @@ storageGcsRemove(THIS_VOID, const String *const file, const StorageInterfaceRemo
 /**********************************************************************************************************************************/
 static const StorageInterface storageInterfaceGcs =
 {
-    .feature = 1 << storageFeatureVersioning,
+    .feature = 1 << storageFeatureVersioning | 1 << storageFeatureReadRetry,
 
     .info = storageGcsInfo,
     .list = storageGcsList,

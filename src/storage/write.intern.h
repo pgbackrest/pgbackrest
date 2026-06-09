@@ -5,6 +5,7 @@ Storage Write Interface Internal
 #define STORAGE_WRITE_INTERN_H
 
 #include "common/io/write.h"
+#include "storage/storage.h"
 #include "version.h"
 
 /***********************************************************************************************************************************
@@ -13,57 +14,32 @@ Temporary file extension
 #define STORAGE_FILE_TEMP_EXT                                       PROJECT_BIN ".tmp"
 
 /***********************************************************************************************************************************
-Constructors
+Interface
 ***********************************************************************************************************************************/
 typedef struct StorageWriteInterface
 {
-    const String *name;                                             // File name
-    bool createPath;                                                // Will the path be created if required?
-    bool atomic;                                                    // Are writes atomic?
-    bool truncate;                                                  // Truncate file if it exists
-    bool syncPath;                                                  // Will path be synced?
-    bool syncFile;                                                  // Will file be synced?
-    const String *user;                                             // Set user ownership
-    const String *group;                                            // Set group ownership
-    mode_t modePath;                                                // Path mode
-    mode_t modeFile;                                                // File mode
-    time_t timeModified;                                            // Set modification time
+    void (*filterGroup)(void *driver, IoFilterGroup *filterGroup);  // Set filter group (optional)
+    void (*open)(void *driver);                                     // Open write
+    void (*write)(void *driver, const Buffer *buffer);              // Write bytes
+    void (*seek)(void *driver, uint64_t position);                  // Seek (optional)
+    int (*fd)(const void *driver);                                  // Write file descriptor (optional)
+    void (*close)(void *driver);                                    // Close write
 } StorageWriteInterface;
 
-typedef struct StorageWriteNewParam
-{
-    VAR_PARAM_HEADER;
-    const String *user;                                             // Set user ownership
-    const String *group;                                            // Set group ownership
-    mode_t modePath;                                                // Path mode
-    mode_t modeFile;                                                // File mode
-    time_t timeModified;                                            // Set modification time
-} StorageWriteNewParam;
-
-#define storageWriteNewP(driver, type, name, createPath, atomic, truncate, syncPath, syncFile, ioInterface, ...)                   \
-    storageWriteNew(                                                                                                               \
-        driver, type, name, createPath, atomic, truncate, syncPath, syncFile, ioInterface,                                         \
-        (StorageWriteNewParam){VAR_PARAM_INIT, __VA_ARGS__})
-
+/***********************************************************************************************************************************
+Constructors
+***********************************************************************************************************************************/
 FN_EXTERN StorageWrite *storageWriteNew(
-    void *driver, StringId type, const String *name, bool createPath, bool atomic, bool truncate, bool syncPath, bool syncFile,
-    const IoWriteInterface *ioInterface, StorageWriteNewParam param);
+    const Storage *storage, const String *name, mode_t modeFile, mode_t modePath, const String *user, const String *group,
+    time_t timeModified, bool createPath, bool syncFile, bool syncPath, bool atomic, bool truncate, bool compressible);
 
 /***********************************************************************************************************************************
-Getters/Setters
+Getters
 ***********************************************************************************************************************************/
-typedef struct StorageWritePub
-{
-    const StorageWriteInterface *interface;                         // File data (name, driver type, etc.)
-    IoWrite *io;                                                    // Write interface
-    StringId type;                                                  // Storage type
-} StorageWritePub;
-
-// Write interface
 FN_INLINE_ALWAYS const StorageWriteInterface *
-storageWriteInterface(const StorageWrite *const this)
+storageWriteDriverInterface(const void *const driver)
 {
-    return THIS_PUB(StorageWrite)->interface;
+    return *(const StorageWriteInterface *const *)driver;
 }
 
 #endif

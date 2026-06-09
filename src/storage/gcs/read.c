@@ -19,31 +19,29 @@ STRING_STATIC(GCS_QUERY_ALT_STR,                                    "alt");
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct StorageReadGcs
+struct StorageReadGcs
 {
-    StorageReadInterface interface;                                 // Interface
+    const StorageReadInterface *interface;                          // Interface
     StorageGcs *storage;                                            // Storage that created this object
+
+    const String *name;                                             // File name
+    uint64_t offset;                                                // Read offset
+    const Variant *limit;                                           // Read limit (NULL for no limit)
+    const String *versionId;                                        // Version id (NULL for most recent)
 
     HttpRequest *httpRequest;                                       // HTTP request
     HttpResponse *httpResponse;                                     // HTTP response
-} StorageReadGcs;
-
-/***********************************************************************************************************************************
-Macros for function logging
-***********************************************************************************************************************************/
-#define FUNCTION_LOG_STORAGE_READ_GCS_TYPE                                                                                         \
-    StorageReadGcs *
-#define FUNCTION_LOG_STORAGE_READ_GCS_FORMAT(value, buffer, bufferSize)                                                            \
-    objNameToLog(value, "StorageReadGcs", buffer, bufferSize)
+};
 
 /***********************************************************************************************************************************
 Open the file
 ***********************************************************************************************************************************/
 static bool
-storageReadGcsOpenAsync(StorageReadGcs *const this)
+storageReadGcsOpenAsync(StorageReadGcs *const this, const bool ignoreMissing)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_READ_GCS, this);
+        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
     FUNCTION_LOG_END();
 
     bool result = false;
@@ -64,19 +62,20 @@ storageReadGcsOpenAsync(StorageReadGcs *const this)
         result = true;
     }
     // Else error unless ignore missing
-    else if (!this->interface.ignoreMissing)
-        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
+    else if (!ignoreMissing)
+        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->name));
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
 
 static bool
-storageReadGcsOpen(THIS_VOID)
+storageReadGcsOpen(THIS_VOID, const bool ignoreMissing)
 {
     THIS(StorageReadGcs);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_READ_GCS, this);
+        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -84,33 +83,27 @@ storageReadGcsOpen(THIS_VOID)
 
     bool result = false;
 
-    // Read if not versioned or if versionId is not null
-    if (!this->interface.version || this->interface.versionId != NULL)
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
-        // Request the file
-        MEM_CONTEXT_OBJ_BEGIN(this)
-        {
-            HttpQuery *const query = httpQueryAdd(httpQueryNewP(), GCS_QUERY_ALT_STR, GCS_QUERY_MEDIA_STR);
+        HttpQuery *const query = httpQueryAdd(httpQueryNewP(), GCS_QUERY_ALT_STR, GCS_QUERY_MEDIA_STR);
 
-            if (this->interface.versionId)
-                httpQueryAdd(query, varStr(GCS_JSON_GENERATION_VAR), this->interface.versionId);
+        if (this->versionId != NULL)
+            httpQueryAdd(query, varStr(GCS_JSON_GENERATION_VAR), this->versionId);
 
-            this->httpRequest = storageGcsRequestAsyncP(
-                this->storage, HTTP_VERB_GET_STR, .object = this->interface.name,
-                .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
-                .query = query);
-        }
-        MEM_CONTEXT_OBJ_END();
-
-        // Wait for response when file missing needs to be reported
-        if (this->interface.ignoreMissing)
-        {
-            result = storageReadGcsOpenAsync(this);
-        }
-        // Else assume that the file exists for now (it will be checked during read)
-        else
-            result = true;
+        this->httpRequest = storageGcsRequestAsyncP(
+            this->storage, HTTP_VERB_GET_STR, .object = this->name,
+            .header = httpHeaderPutRange(httpHeaderNew(NULL), this->offset, this->limit), .query = query);
     }
+    MEM_CONTEXT_OBJ_END();
+
+    // Wait for response when file missing needs to be reported
+    if (ignoreMissing)
+    {
+        result = storageReadGcsOpenAsync(this, true);
+    }
+    // Else assume that the file exists for now (it will be checked during read)
+    else
+        result = true;
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
@@ -134,7 +127,7 @@ storageReadGcs(THIS_VOID, Buffer *const buffer, const bool block)
 
     // Complete the open if it was async
     if (this->httpResponse == NULL)
-        storageReadGcsOpenAsync(this);
+        storageReadGcsOpenAsync(this, false);
 
     ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
 
@@ -187,7 +180,7 @@ storageReadGcsClose(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-static const IoReadInterface storageReadGcsInterface =
+static const StorageReadInterface storageReadGcsInterface =
 {
     .close = storageReadGcsClose,
     .eof = storageReadGcsEof,
@@ -195,18 +188,16 @@ static const IoReadInterface storageReadGcsInterface =
     .read = storageReadGcs,
 };
 
-FN_EXTERN StorageRead *
+FN_EXTERN StorageReadGcs *
 storageReadGcsNew(
-    StorageGcs *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset,
-    const Variant *const limit, const bool version, const String *const versionId)
+    StorageGcs *const storage, const String *const name, const uint64_t offset, const Variant *const limit,
+    const String *const versionId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_GCS, storage);
         FUNCTION_LOG_PARAM(STRING, name);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
-        FUNCTION_LOG_PARAM(BOOL, version);
         FUNCTION_LOG_PARAM(STRING, versionId);
     FUNCTION_LOG_END();
 
@@ -217,14 +208,15 @@ storageReadGcsNew(
     {
         *this = (StorageReadGcs)
         {
+            .interface = &storageReadGcsInterface,
             .storage = storage,
+            .name = strDup(name),
+            .offset = offset,
+            .limit = varDup(limit),
+            .versionId = strDup(versionId),
         };
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(
-        STORAGE_READ,
-        storageReadNewP(
-            this, STORAGE_GCS_TYPE, name, ignoreMissing, offset, limit, &storageReadGcsInterface, .version = version,
-            .versionId = versionId, .retry = true));
+    FUNCTION_LOG_RETURN(STORAGE_READ_GCS, this);
 }

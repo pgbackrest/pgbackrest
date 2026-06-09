@@ -61,6 +61,9 @@ typedef enum
 
     // Does the storage support versioning?
     storageFeatureVersioning,
+
+    // Can reads be retried?
+    storageFeatureReadRetry,
 } StorageFeature;
 
 /***********************************************************************************************************************************
