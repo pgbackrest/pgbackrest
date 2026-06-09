@@ -1303,7 +1303,7 @@
                         <summary>Repository storage read over.</summary>
 
                         <text>
-                            <p>Bundles may require data that is not needed during restore, for example files that already exist. This option skips over unneeded data without starting a new read request on object stores. This is generally faster since the latency on new read requests is higher than continuing a read already in progress. It is also less expensive for most storage classes.</p>
+                            <p>Bundles may contain data that is not needed during restore, for example files that already exist. This option skips over unneeded data without starting a new read request on object stores. This is generally faster since the latency on new read requests is higher than continuing a read already in progress. It is also less expensive for most storage classes.</p>
                         </text>
 
                         <example>128KiB</example>
