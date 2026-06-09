@@ -5466,7 +5466,7 @@ testRun(void)
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
 
         // Make sftpHandle NULL
-        ((StorageWriteSftp *)ioWriteDriver(storageWriteIo(file)))->sftpHandle = NULL;
+        ((StorageWriteSftp *)file->driver)->sftpHandle = NULL;
 
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
 

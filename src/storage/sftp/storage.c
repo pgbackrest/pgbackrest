@@ -913,32 +913,29 @@ storageSftpRemove(THIS_VOID, const String *const file, const StorageInterfaceRem
 }
 
 /**********************************************************************************************************************************/
-static StorageRead *
-storageSftpNewRead(THIS_VOID, const String *const file, const bool ignoreMissing, const StorageInterfaceNewReadParam param)
+static void *
+storageSftpNewRead(THIS_VOID, const String *const file, const StorageInterfaceNewReadParam param)
 {
     THIS(StorageSftp);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(UINT64, param.offset);
         FUNCTION_LOG_PARAM(VARIANT, param.limit);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
-    ASSERT(!param.version);
     ASSERT(param.versionId == NULL);
 
     FUNCTION_LOG_RETURN(
-        STORAGE_READ,
-        storageReadSftpNew(
-            this, file, ignoreMissing, this->session, this->sftpSession, this->sftpHandle, param.offset, param.limit));
+        STORAGE_READ_SFTP,
+        storageReadSftpNew(this, file, this->session, this->sftpSession, this->sftpHandle, param.offset, param.limit));
 }
 
 /**********************************************************************************************************************************/
-static StorageWrite *
+static void *
 storageSftpNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNewWriteParam param)
 {
     THIS(StorageSftp);
@@ -967,7 +964,7 @@ storageSftpNewWrite(THIS_VOID, const String *const file, const StorageInterfaceN
     ASSERT(param.timeModified == 0);
 
     FUNCTION_LOG_RETURN(
-        STORAGE_WRITE,
+        STORAGE_WRITE_SFTP,
         storageWriteSftpNew(
             this, file, this->session, this->sftpSession, this->sftpHandle, param.modeFile, param.modePath, param.user, param.group,
             param.timeModified, param.createPath, param.syncFile, param.atomic, param.truncate));

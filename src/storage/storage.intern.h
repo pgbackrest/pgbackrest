@@ -120,19 +120,14 @@ typedef struct StorageInterfaceNewReadParam
     // Limit bytes read from the file. NULL for no limit.
     const Variant *limit;
 
-    // Target a specific file version. This requires a boolean as well as the versionId because file missing is indicated when the
-    // file is opened rather than when it is created. So if version = true and versionId = NULL then the file will be reported as
-    // missing on open.
-    bool version;                                                   // Target a file version
-    const String *versionId;                                        // Id when targeting a version (NULL if version is missing)
+    // Target a specific file version (NULL for current version)
+    const String *versionId;
 } StorageInterfaceNewReadParam;
 
-typedef StorageRead *StorageInterfaceNewRead(
-    void *thisVoid, const String *file, bool ignoreMissing, StorageInterfaceNewReadParam param);
+typedef void *StorageInterfaceNewRead(void *thisVoid, const String *file, StorageInterfaceNewReadParam param);
 
-#define storageInterfaceNewReadP(thisVoid, file, ignoreMissing, ...)                                                               \
-    STORAGE_COMMON_INTERFACE(thisVoid).newRead(                                                                                    \
-        thisVoid, file, ignoreMissing, (StorageInterfaceNewReadParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define storageInterfaceNewReadP(thisVoid, file, ...)                                                                              \
+    STORAGE_COMMON_INTERFACE(thisVoid).newRead(thisVoid, file, (StorageInterfaceNewReadParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Create a file write object. The file should not be opened immediately -- open() will be called on the IoWrite interface when the
@@ -171,7 +166,7 @@ typedef struct StorageInterfaceNewWriteParam
     bool compressible;
 } StorageInterfaceNewWriteParam;
 
-typedef StorageWrite *StorageInterfaceNewWrite(void *thisVoid, const String *file, StorageInterfaceNewWriteParam param);
+typedef void *StorageInterfaceNewWrite(void *thisVoid, const String *file, StorageInterfaceNewWriteParam param);
 
 #define storageInterfaceNewWriteP(thisVoid, file, ...)                                                                             \
     STORAGE_COMMON_INTERFACE(thisVoid).newWrite(thisVoid, file, (StorageInterfaceNewWriteParam){VAR_PARAM_INIT, __VA_ARGS__})
