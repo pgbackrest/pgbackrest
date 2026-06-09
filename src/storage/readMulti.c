@@ -369,7 +369,6 @@ storageReadMultiNew(const Storage *const storage, const unsigned int prefetch, c
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
-    ASSERT(prefetch != 0);
 
     OBJ_NEW_BEGIN(StorageReadMulti, .childQty = MEM_CONTEXT_QTY_MAX)
     {
