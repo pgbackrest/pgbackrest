@@ -17,12 +17,10 @@ jobs:
   action:
     runs-on: ubuntu-latest
     steps:
-      - uses: dessant/lock-threads@v4
+      - uses: dessant/lock-threads@v6
         with:
+          process-only: 'issues'
           issue-inactive-days: '90'
           issue-comment: ''
           issue-lock-reason: ''
-          pr-inactive-days: '90'
-          pr-comment: ''
-          pr-lock-reason: ''
           log-output: true

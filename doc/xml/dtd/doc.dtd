@@ -144,7 +144,9 @@
 
 <!ELEMENT sponsor (#PCDATA)>
     <!ATTLIST sponsor img CDATA #REQUIRED>
+    <!ATTLIST sponsor img-dark CDATA "">
     <!ATTLIST sponsor url CDATA #REQUIRED>
+    <!ATTLIST sponsor width CDATA #REQUIRED>
 
 <!ELEMENT contributor-list (contributor+)>
 

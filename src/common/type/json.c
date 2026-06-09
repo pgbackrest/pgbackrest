@@ -383,7 +383,7 @@ typedef struct JsonReadNumberResult
     {
         int64_t i64;
         uint64_t u64;
-    } value;
+    };
 } JsonReadNumberResult;
 
 static JsonReadNumberResult
@@ -418,12 +418,12 @@ jsonReadNumber(JsonRead *const this)
     {
         FUNCTION_TEST_RETURN_TYPE(
             JsonReadNumberResult,
-            (JsonReadNumberResult){.type = jsonNumberTypeI64, .value = {.i64 = cvtZSubNToInt64(this->json - size, 0, size)}});
+            (JsonReadNumberResult){.type = jsonNumberTypeI64, .i64 = cvtZSubNToInt64(this->json - size, 0, size)});
     }
 
     FUNCTION_TEST_RETURN_TYPE(
         JsonReadNumberResult,
-        (JsonReadNumberResult){.type = jsonNumberTypeU64, .value = {.u64 = cvtZSubNToUInt64(this->json - size, 0, size)}});
+        (JsonReadNumberResult){.type = jsonNumberTypeU64, .u64 = cvtZSubNToUInt64(this->json - size, 0, size)});
 }
 
 /**********************************************************************************************************************************/
@@ -502,16 +502,16 @@ jsonReadInt(JsonRead *const this)
 
     if (number.type == jsonNumberTypeU64)
     {
-        if (number.value.u64 > INT_MAX)
-            THROW_FMT(JsonFormatError, "%" PRIu64 " is out of range for int", number.value.u64);
+        if (number.u64 > INT_MAX)
+            THROW_FMT(JsonFormatError, "%" PRIu64 " is out of range for int", number.u64);
 
-        FUNCTION_TEST_RETURN(INT, (int)number.value.u64);
+        FUNCTION_TEST_RETURN(INT, (int)number.u64);
     }
 
-    if (number.value.i64 < INT_MIN)
-        THROW_FMT(JsonFormatError, "%" PRId64 " is out of range for int", number.value.i64);
+    if (number.i64 < INT_MIN)
+        THROW_FMT(JsonFormatError, "%" PRId64 " is out of range for int", number.i64);
 
-    FUNCTION_TEST_RETURN(INT, (int)number.value.i64);
+    FUNCTION_TEST_RETURN(INT, (int)number.i64);
 }
 
 /**********************************************************************************************************************************/
@@ -529,12 +529,12 @@ jsonReadInt64(JsonRead *const this)
     JsonReadNumberResult number = jsonReadNumber(this);
 
     if (number.type == jsonNumberTypeI64)
-        FUNCTION_TEST_RETURN(INT64, number.value.i64);
+        FUNCTION_TEST_RETURN(INT64, number.i64);
 
-    if (number.value.u64 > INT64_MAX)
-        THROW_FMT(JsonFormatError, "%" PRIu64 " is out of range for int64", number.value.u64);
+    if (number.u64 > INT64_MAX)
+        THROW_FMT(JsonFormatError, "%" PRIu64 " is out of range for int64", number.u64);
 
-    FUNCTION_TEST_RETURN(INT64, (int64_t)number.value.u64);
+    FUNCTION_TEST_RETURN(INT64, (int64_t)number.u64);
 }
 
 /**********************************************************************************************************************************/
@@ -1117,12 +1117,12 @@ jsonReadUInt(JsonRead *const this)
     JsonReadNumberResult number = jsonReadNumber(this);
 
     if (number.type == jsonNumberTypeI64)
-        THROW_FMT(JsonFormatError, "%" PRId64 " is out of range for uint", number.value.i64);
+        THROW_FMT(JsonFormatError, "%" PRId64 " is out of range for uint", number.i64);
 
-    if (number.value.u64 > UINT_MAX)
-        THROW_FMT(JsonFormatError, "%" PRIu64 " is out of range for uint", number.value.u64);
+    if (number.u64 > UINT_MAX)
+        THROW_FMT(JsonFormatError, "%" PRIu64 " is out of range for uint", number.u64);
 
-    FUNCTION_TEST_RETURN(UINT, (unsigned int)number.value.u64);
+    FUNCTION_TEST_RETURN(UINT, (unsigned int)number.u64);
 }
 
 /**********************************************************************************************************************************/
@@ -1140,9 +1140,9 @@ jsonReadUInt64(JsonRead *const this)
     JsonReadNumberResult number = jsonReadNumber(this);
 
     if (number.type == jsonNumberTypeI64)
-        THROW_FMT(JsonFormatError, "%" PRId64 " is out of range for uint64", number.value.i64);
+        THROW_FMT(JsonFormatError, "%" PRId64 " is out of range for uint64", number.i64);
 
-    FUNCTION_TEST_RETURN(UINT64, number.value.u64);
+    FUNCTION_TEST_RETURN(UINT64, number.u64);
 }
 
 /**********************************************************************************************************************************/
@@ -1171,9 +1171,9 @@ jsonReadVarRecurse(JsonRead *const this)
             JsonReadNumberResult number = jsonReadNumber(this);
 
             if (number.type == jsonNumberTypeU64)
-                FUNCTION_TEST_RETURN(VARIANT, varNewUInt64(number.value.u64));
+                FUNCTION_TEST_RETURN(VARIANT, varNewUInt64(number.u64));
 
-            FUNCTION_TEST_RETURN(VARIANT, varNewInt64(number.value.i64));
+            FUNCTION_TEST_RETURN(VARIANT, varNewInt64(number.i64));
         }
 
         case jsonTypeString:

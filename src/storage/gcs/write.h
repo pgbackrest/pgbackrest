@@ -8,8 +8,21 @@ GCS Storage File Write
 #include "storage/write.h"
 
 /***********************************************************************************************************************************
+Object type
+***********************************************************************************************************************************/
+typedef struct StorageWriteGcs StorageWriteGcs;
+
+/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN StorageWrite *storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize, bool tag);
+FN_EXTERN StorageWriteGcs *storageWriteGcsNew(StorageGcs *storage, const String *name, size_t chunkSize, bool tag);
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_LOG_STORAGE_WRITE_GCS_TYPE                                                                                        \
+    StorageWriteGcs *
+#define FUNCTION_LOG_STORAGE_WRITE_GCS_FORMAT(value, buffer, bufferSize)                                                           \
+    objNameToLog(value, "StorageWriteGcs", buffer, bufferSize)
 
 #endif

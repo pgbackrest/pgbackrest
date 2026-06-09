@@ -170,7 +170,7 @@ testRun(void)
         strReplace(testC, STRDEF("{[C_TEST_ARCHITECTURE]}"), STRDEF(TEST_ARCHITECTURE));
 
         const String *const architecture =
-            strEqZ(strTrim(execOneP(STRDEF("uname -m"))), TEST_ARCHITECTURE) ? NULL : strNewZ(TEST_ARCHITECTURE);
+            strEqZ(strTrim(execOneExpectP(STRDEF("uname -m"))), TEST_ARCHITECTURE) ? NULL : strNewZ(TEST_ARCHITECTURE);
 
         // Test definition
         // -------------------------------------------------------------------------------------------------------------------------

@@ -574,7 +574,7 @@ memContextNew(
     // worth the cost of checking since memory allocations are aligned so the extra bytes would be wasted anyway.
     size_t allocExtra = param.allocExtra;
 
-    if (allocExtra % ALIGN_OF(void *) != 0)
+    if (allocExtra % alignof(void *) != 0)
         allocExtra += ALIGN_OFFSET(void *, allocExtra);
 
     // Create the new context
