@@ -124,9 +124,9 @@ static const IoWriteInterface storageIoWriteInterface =
 
 FN_EXTERN StorageWrite *
 storageWriteNew(
-    const Storage *const storage, const String *const name, const mode_t modeFile, const mode_t modePath,
-    const String *const user, const String *const group, const time_t timeModified, const bool createPath,
-    const bool syncFile, const bool syncPath, const bool atomic, const bool truncate, const bool compressible)
+    const Storage *const storage, const String *const name, const mode_t modeFile, const mode_t modePath, const String *const user,
+    const String *const group, const time_t timeModified, const bool createPath, const bool syncFile, const bool syncPath,
+    const bool atomic, const bool truncate, const bool compressible)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE, storage);

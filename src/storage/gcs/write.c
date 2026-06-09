@@ -32,8 +32,8 @@ Object type
 struct StorageWriteGcs
 {
     const StorageWriteInterface *interface;                         // Interface
-    const String *name;                                             // File name
     StorageGcs *storage;                                            // Storage that created this object
+    const String *name;                                             // File name
 
     HttpRequest *request;                                           // Async chunk upload request
     size_t chunkSize;                                               // Size of chunks for resumable upload
@@ -324,8 +324,8 @@ storageWriteGcsNew(StorageGcs *const storage, const String *const name, const si
         *this = (StorageWriteGcs)
         {
             .interface = &storageWriteGcsInterface,
-            .name = strDup(name),
             .storage = storage,
+            .name = strDup(name),
             .chunkSize = chunkSize,
             .chunkBuffer = bufNew(0),
             .md5hash = cryptoHashNew(hashTypeMd5),

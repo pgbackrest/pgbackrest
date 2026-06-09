@@ -18,6 +18,7 @@ struct StorageReadSftp
 {
     const StorageReadInterface *interface;                          // Interface
     StorageSftp *storage;                                           // Storage that created this object
+
     const String *name;                                             // File name
     uint64_t offset;                                                // Read offset
     const Variant *limit;                                           // Read limit (NULL for no limit)

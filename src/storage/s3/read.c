@@ -22,6 +22,7 @@ struct StorageReadS3
 {
     const StorageReadInterface *interface;                          // Interface
     StorageS3 *storage;                                             // Storage that created this object
+
     const String *name;                                             // File name
     uint64_t offset;                                                // Read offset
     const Variant *limit;                                           // Read limit (NULL for no limit)

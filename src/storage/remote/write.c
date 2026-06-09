@@ -23,6 +23,7 @@ struct StorageWriteRemote
     ProtocolClient *client;                                         // Protocol client to make requests with
     ProtocolClientSession *session;                                 // Protocol session for requests
     IoFilterGroup *filterGroup;                                     // Filter group
+
     const String *name;                                             // File name
     mode_t modeFile;                                                // File mode
     mode_t modePath;                                                // Path mode

@@ -38,8 +38,8 @@ Object type
 struct StorageWriteS3
 {
     const StorageWriteInterface *interface;                         // Interface
-    const String *name;                                             // File name
     StorageS3 *storage;                                             // Storage that created this object
+    const String *name;                                             // File name
 
     HttpRequest *request;                                           // Async request
     size_t partSize;
@@ -271,8 +271,8 @@ storageWriteS3New(StorageS3 *const storage, const String *const name, const size
         *this = (StorageWriteS3)
         {
             .interface = &storageWriteS3Interface,
-            .name = strDup(name),
             .storage = storage,
+            .name = strDup(name),
             .partSize = partSize,
             .partBuffer = bufNew(0),
         };

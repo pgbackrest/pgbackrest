@@ -25,6 +25,7 @@ struct StorageReadRemote
     const StorageReadInterface *interface;                          // Interface
     StorageRemote *storage;                                         // Storage that created this object
     IoFilterGroup *filterGroup;                                     // Filter group
+
     const String *name;                                             // File name
     uint64_t offset;                                                // Read offset
     const Variant *limit;                                           // Read limit (NULL for no limit)

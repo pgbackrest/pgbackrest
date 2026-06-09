@@ -22,6 +22,8 @@ Object type
 struct StorageWritePosix
 {
     const StorageWriteInterface *interface;                          // Interface
+    StoragePosix *storage;                                           // Storage that created this object
+
     const String *name;                                              // File name
     mode_t modeFile;                                                 // File mode
     mode_t modePath;                                                 // Path mode
@@ -33,7 +35,6 @@ struct StorageWritePosix
     const String *user;                                              // User owner
     const String *group;                                             // Group owner
     time_t timeModified;                                             // Modified time
-    StoragePosix *storage;                                           // Storage that created this object
 
     const String *nameTmp;
     const String *path;
@@ -312,6 +313,7 @@ storageWritePosixNew(
         *this = (StorageWritePosix)
         {
             .interface = &storageWritePosixInterface,
+            .storage = storage,
             .name = strDup(name),
             .modeFile = modeFile,
             .modePath = modePath,
@@ -323,7 +325,6 @@ storageWritePosixNew(
             .user = strDup(user),
             .group = strDup(group),
             .timeModified = timeModified,
-            .storage = storage,
             .nameTmp = atomic ? strNewFmt("%s." STORAGE_FILE_TEMP_EXT, strZ(name)) : strDup(name),
             .path = strPath(name),
             .fd = -1,

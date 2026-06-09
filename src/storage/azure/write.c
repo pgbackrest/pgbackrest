@@ -44,8 +44,8 @@ Object type
 struct StorageWriteAzure
 {
     const StorageWriteInterface *interface;                         // Interface
-    const String *name;                                             // File name
     StorageAzure *storage;                                          // Storage that created this object
+    const String *name;                                             // File name
 
     HttpRequest *request;                                           // Async block upload request
     uint64_t fileId;                                                // Id to used to make file block identifiers unique
@@ -265,8 +265,8 @@ storageWriteAzureNew(StorageAzure *const storage, const String *const name, cons
         *this = (StorageWriteAzure)
         {
             .interface = &storageWriteAzureInterface,
-            .name = strDup(name),
             .storage = storage,
+            .name = strDup(name),
             .fileId = fileId,
             .blockSize = blockSize,
             .blockBuffer = bufNew(0),
