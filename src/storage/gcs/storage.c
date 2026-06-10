@@ -1185,8 +1185,8 @@ storageGcsNew(
     const String *const path, const bool write, const time_t targetTime, StoragePathExpressionCallback pathExpressionFunction,
     const String *const bucket, const StorageGcsKeyType keyType, const String *const key, const size_t chunkSize,
     const KeyValue *const tag, const String *const endpoint, const TimeMSec timeout, const bool verifyPeer,
-    const String *const caFile, const String *const caPath, const String *const userProject,
-    const unsigned int prefetch, const uint64_t readOver)
+    const String *const caFile, const String *const caPath, const String *const userProject, const unsigned int prefetch,
+    const uint64_t readOver)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
