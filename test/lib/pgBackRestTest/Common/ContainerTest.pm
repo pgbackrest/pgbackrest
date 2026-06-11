@@ -147,7 +147,7 @@ sub groupCreate
     }
     elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_ALPINE)
     {
-        return "addgroup -g${iId} ${strName}";
+        return "getent group ${strName} >/dev/null || addgroup -g${iId} ${strName}";
     }
 }
 
@@ -616,7 +616,7 @@ sub containerBuild
             # only thing running in the container.
             $strScript .= sectionHeader() .
                 "# Rename conflicting group\n" .
-                '    sed -i s/.*\:x\:' . TEST_GROUP_ID . '\:$/' . TEST_GROUP . '\:x\:' . TEST_GROUP_ID . "\:/ /etc/group";
+                "    sed -i 's/^[^:]*:x:" . TEST_GROUP_ID . ":.*/" . TEST_GROUP . ":x:" . TEST_GROUP_ID . ":/' /etc/group";
 
             $strScript .= sectionHeader() .
                 "# Create test user\n" .
