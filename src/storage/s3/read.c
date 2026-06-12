@@ -35,20 +35,18 @@ struct StorageReadS3
 Open the file
 ***********************************************************************************************************************************/
 static bool
-storageReadS3Open(THIS_VOID, const bool ignoreMissing)
+storageReadS3Open(THIS_VOID)
 {
     THIS(StorageReadS3);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_READ_S3, this);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(this->httpResponse == NULL);
 
-    bool result = false;
-
+    // Request the file
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->httpResponse = storageS3RequestP(
@@ -56,19 +54,10 @@ storageReadS3Open(THIS_VOID, const bool ignoreMissing)
             .header = httpHeaderPutRange(httpHeaderNew(NULL), this->offset, this->limit),
             .query = this->versionId != NULL ? httpQueryPut(httpQueryNewP(), STRDEF("versionId"), this->versionId) : NULL,
             .allowMissing = true, .contentIo = true, .sseC = true);
-
-        // If file exists
-        if (httpResponseCodeOk(this->httpResponse))
-        {
-            result = true;
-        }
-        // Else error unless ignore missing
-        else if (!ignoreMissing)
-            THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->name));
     }
     MEM_CONTEXT_OBJ_END();
 
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, httpResponseCodeOk(this->httpResponse));
 }
 
 /***********************************************************************************************************************************

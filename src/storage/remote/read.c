@@ -194,13 +194,12 @@ storageReadRemoteFilterGroup(THIS_VOID, IoFilterGroup *const filterGroup)
 Open the file
 ***********************************************************************************************************************************/
 static bool
-storageReadRemoteOpen(THIS_VOID, const bool ignoreMissing)
+storageReadRemoteOpen(THIS_VOID)
 {
     THIS(StorageReadRemote);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_READ_REMOTE, this);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -216,7 +215,6 @@ storageReadRemoteOpen(THIS_VOID, const bool ignoreMissing)
         PackWrite *const param = protocolPackNew();
 
         pckWriteStrP(param, this->name);
-        pckWriteBoolP(param, ignoreMissing);
         pckWriteU64P(param, this->offset);
 
         if (this->limit == NULL)

@@ -425,15 +425,14 @@ storageRemoteReadOpenProtocol(PackRead *const param)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         const String *file = pckReadStrP(param);
-        const bool ignoreMissing = pckReadBoolP(param);
         const uint64_t offset = pckReadU64P(param);
         const Variant *const limit = pckReadNullP(param) ? NULL : VARUINT64(pckReadU64P(param));
         const String *const versionId = pckReadStrP(param);
         const Pack *const filter = pckReadPackP(param);
 
-        // Create the read object
+        // Create the read object ignoring missing since the client decides whether a missing file is an error
         StorageRead *const fileRead = storageReadNew(
-            storageRemoteProtocolLocal.storage, file, ignoreMissing, false, offset, limit, versionId != NULL, versionId);
+            storageRemoteProtocolLocal.storage, file, true, false, offset, limit, versionId != NULL, versionId);
 
         // Set filter group based on passed filters
         storageRemoteFilterGroup(ioReadFilterGroup(storageReadIo(fileRead)), filter);

@@ -48,7 +48,11 @@ storageReadOpen(THIS_VOID)
 
     // Open if not versioned or if versionId is not null
     if (!this->pub.version || this->pub.versionId != NULL)
-        result = storageReadDriverInterface(this->driver)->open(this->driver, this->pub.ignoreMissing);
+        result = storageReadDriverInterface(this->driver)->open(this->driver);
+
+    // Error when the file is missing and missing files are not ignored
+    if (!result && !this->pub.ignoreMissing)
+        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(storageReadName(this)));
 
     FUNCTION_LOG_RETURN(BOOL, result);
 }
@@ -114,7 +118,10 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
                             .offset = this->pub.offset + this->bytesRead,
                             .limit = this->pub.limit != NULL ? varNewUInt64(varUInt64(this->pub.limit) - this->bytesRead) : NULL,
                             .versionId = this->pub.versionId);
-                        storageReadDriverInterface(this->driver)->open(this->driver, false);
+
+                        // Error when the file is missing since it must have existed when the read began
+                        if (!storageReadDriverInterface(this->driver)->open(this->driver))
+                            THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(storageReadName(this)));
                     }
                     MEM_CONTEXT_OBJ_END();
                 }

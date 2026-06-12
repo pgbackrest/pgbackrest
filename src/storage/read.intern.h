@@ -13,7 +13,7 @@ Interface
 typedef struct StorageReadInterface
 {
     void (*filterGroup)(void *driver, IoFilterGroup *filterGroup);  // Set filter group (optional)
-    bool (*open)(void *driver, bool ignoreMissing);                 // Open read
+    bool (*open)(void *driver);                                     // Open read
     size_t (*read)(void *driver, Buffer *buffer, bool block);       // Read bytes
     bool (*eof)(void *driver);                                      // Is read eof?
     int (*fd)(const void *driver);                                  // Read file descriptor (optional)

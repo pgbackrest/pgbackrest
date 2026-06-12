@@ -35,13 +35,12 @@ struct StorageReadSftp
 Open the file
 ***********************************************************************************************************************************/
 static bool
-storageReadSftpOpen(THIS_VOID, const bool ignoreMissing)
+storageReadSftpOpen(THIS_VOID)
 {
     THIS(StorageReadSftp);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_READ_SFTP, this);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -57,14 +56,10 @@ storageReadSftpOpen(THIS_VOID, const bool ignoreMissing)
     {
         const int rc = libssh2_session_last_errno(this->session);
 
+        // Handle errors except missing, which is reported to the caller via the result
         if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL || rc == LIBSSH2_ERROR_EAGAIN)
         {
-            if (libssh2_sftp_last_error(this->sftpSession) == LIBSSH2_FX_NO_SUCH_FILE)
-            {
-                if (!ignoreMissing)
-                    THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->name));
-            }
-            else
+            if (libssh2_sftp_last_error(this->sftpSession) != LIBSSH2_FX_NO_SUCH_FILE)
             {
                 storageSftpEvalLibSsh2Error(
                     rc, libssh2_sftp_last_error(this->sftpSession), &FileOpenError,

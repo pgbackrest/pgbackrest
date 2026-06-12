@@ -120,18 +120,17 @@ hrnStorageTestVersionFind(const Storage *const storage, const String *const file
 Test storage read driver
 ***********************************************************************************************************************************/
 static bool
-hrnStorageReadTestOpen(THIS_VOID, const bool ignoreMissing)
+hrnStorageReadTestOpen(THIS_VOID)
 {
     THIS(HrnStorageReadTest);
 
     FUNCTION_HARNESS_BEGIN();
         FUNCTION_HARNESS_PARAM(HRN_STORAGE_READ_TEST, this);
-        FUNCTION_HARNESS_PARAM(BOOL, ignoreMissing);
     FUNCTION_HARNESS_END();
 
     ASSERT(this != NULL);
 
-    FUNCTION_HARNESS_RETURN(BOOL, storageReadDriverInterface(this->driver)->open(this->driver, ignoreMissing));
+    FUNCTION_HARNESS_RETURN(BOOL, storageReadDriverInterface(this->driver)->open(this->driver));
 }
 
 static size_t

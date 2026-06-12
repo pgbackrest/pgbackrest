@@ -4633,7 +4633,7 @@ testRun(void)
         TEST_ERROR_FMT(ioReadOpen(storageReadIo(file)), FileOpenError, STORAGE_ERROR_READ_OPEN ": libssh2 error [-37]", strZ(fileName));
 
         // Missing not sftp, not EAGAIN
-        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), false, "not sftp, not EAGAIN");
+        TEST_ERROR_FMT(ioReadOpen(storageReadIo(file)), FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read success");

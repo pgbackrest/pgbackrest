@@ -688,6 +688,26 @@ testRun(void)
                 TEST_RESULT_BOOL(errorCaught, true, "check error was caught");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file missing during retry");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt");
+                testResponseP(service, .content = "12345678911234567892", .contentSize = VARUINT(30));
+
+                hrnServerScriptClose(service);
+                hrnServerScriptAccept(service);
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "20-");
+                testResponseP(service, .code = 404);
+
+                ioBufferSizeSet(20);
+
+                TEST_ERROR(
+                    storageGetP(storageNewReadP(s3, STRDEF("file.txt"))), FileMissingError,
+                    "unable to open missing file '/file.txt' for read");
+
+                ioBufferSizeSet(ioBufferSizeDefault);
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get zero-length file");
 
                 testRequestP(service, s3, HTTP_VERB_GET, "/file0.txt");

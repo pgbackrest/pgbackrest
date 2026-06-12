@@ -36,20 +36,18 @@ struct StorageReadGcs
 Open the file
 ***********************************************************************************************************************************/
 static bool
-storageReadGcsOpen(THIS_VOID, const bool ignoreMissing)
+storageReadGcsOpen(THIS_VOID)
 {
     THIS(StorageReadGcs);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_READ_GCS, this);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(this->httpResponse == NULL);
 
-    bool result = false;
-
+    // Request the file
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
         HttpQuery *const query = httpQueryAdd(httpQueryNewP(), GCS_QUERY_ALT_STR, GCS_QUERY_MEDIA_STR);
@@ -61,19 +59,10 @@ storageReadGcsOpen(THIS_VOID, const bool ignoreMissing)
             this->storage, HTTP_VERB_GET_STR, .object = this->name,
             .header = httpHeaderPutRange(httpHeaderNew(NULL), this->offset, this->limit), .allowMissing = true, .contentIo = true,
             .query = query);
-
-        // If file exists
-        if (httpResponseCodeOk(this->httpResponse))
-        {
-            result = true;
-        }
-        // Else error unless ignore missing
-        else if (!ignoreMissing)
-            THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->name));
     }
     MEM_CONTEXT_OBJ_END();
 
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, httpResponseCodeOk(this->httpResponse));
 }
 
 /***********************************************************************************************************************************
