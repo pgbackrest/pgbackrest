@@ -1,6 +1,31 @@
 <release date="XXXX-XX-XX" version="2.59.0dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <release-feature-list>
+            <release-item>
+                <github-pull-request id="2762"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="shiva.kumar.ambigi"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="roberto.mello"/>
+                </release-item-contributor-list>
+
+                <p>Add support for <proper>S3 Outposts</proper>.</p>
+            </release-item>
+        </release-feature-list>
+
         <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2773"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="gunnar.lindholm"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add user/group caching for faster manifest build.</p>
+            </release-item>
+
             <release-item>
                 <github-issue id="2736"/>
                 <github-pull-request id="2740"/>

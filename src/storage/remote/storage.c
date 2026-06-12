@@ -261,19 +261,17 @@ storageRemoteList(THIS_VOID, const String *const path, const StorageInfoLevel le
 }
 
 /**********************************************************************************************************************************/
-static StorageRead *
-storageRemoteNewRead(THIS_VOID, const String *const file, const bool ignoreMissing, const StorageInterfaceNewReadParam param)
+static void *
+storageRemoteNewRead(THIS_VOID, const String *const file, const StorageInterfaceNewReadParam param)
 {
     THIS(StorageRemote);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, param.compressible);
         FUNCTION_LOG_PARAM(UINT64, param.offset);
         FUNCTION_LOG_PARAM(VARIANT, param.limit);
-        FUNCTION_LOG_PARAM(BOOL, param.version);
         FUNCTION_LOG_PARAM(STRING, param.versionId);
     FUNCTION_LOG_END();
 
@@ -281,14 +279,14 @@ storageRemoteNewRead(THIS_VOID, const String *const file, const bool ignoreMissi
     ASSERT(file != NULL);
 
     FUNCTION_LOG_RETURN(
-        STORAGE_READ,
+        STORAGE_READ_REMOTE,
         storageReadRemoteNew(
-            this, this->client, file, ignoreMissing, this->compressLevel > 0 ? param.compressible : false, this->compressLevel,
-            param.offset, param.limit, param.version, param.versionId));
+            this, this->client, file, this->compressLevel > 0 ? param.compressible : false, this->compressLevel,
+            param.offset, param.limit, param.versionId));
 }
 
 /**********************************************************************************************************************************/
-static StorageWrite *
+static void *
 storageRemoteNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNewWriteParam param)
 {
     THIS(StorageRemote);
@@ -313,7 +311,7 @@ storageRemoteNewWrite(THIS_VOID, const String *const file, const StorageInterfac
     ASSERT(param.truncate);
 
     FUNCTION_LOG_RETURN(
-        STORAGE_WRITE,
+        STORAGE_WRITE_REMOTE,
         storageWriteRemoteNew(
             this, this->client, file, param.modeFile, param.modePath, param.user, param.group, param.timeModified, param.createPath,
             param.syncFile, param.syncPath, param.atomic, this->compressLevel > 0 ? param.compressible : false,

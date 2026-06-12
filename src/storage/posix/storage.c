@@ -342,29 +342,27 @@ storagePosixMove(THIS_VOID, StorageRead *const source, StorageWrite *const desti
 }
 
 /**********************************************************************************************************************************/
-static StorageRead *
-storagePosixNewRead(THIS_VOID, const String *const file, const bool ignoreMissing, const StorageInterfaceNewReadParam param)
+static void *
+storagePosixNewRead(THIS_VOID, const String *const file, const StorageInterfaceNewReadParam param)
 {
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(UINT64, param.offset);
         FUNCTION_LOG_PARAM(VARIANT, param.limit);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
-    ASSERT(!param.version);
     ASSERT(param.versionId == NULL);
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadPosixNew(this, file, ignoreMissing, param.offset, param.limit));
+    FUNCTION_LOG_RETURN(STORAGE_READ_POSIX, storageReadPosixNew(this, file, param.offset, param.limit));
 }
 
 /**********************************************************************************************************************************/
-static StorageWrite *
+static void *
 storagePosixNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNewWriteParam param)
 {
     THIS(StoragePosix);
@@ -388,7 +386,7 @@ storagePosixNewWrite(THIS_VOID, const String *const file, const StorageInterface
     ASSERT(file != NULL);
 
     FUNCTION_LOG_RETURN(
-        STORAGE_WRITE,
+        STORAGE_WRITE_POSIX,
         storageWritePosixNew(
             this, file, param.modeFile, param.modePath, param.user, param.group, param.timeModified, param.createPath,
             param.syncFile, this->interface.pathSync != NULL ? param.syncPath : false, param.atomic, param.truncate));

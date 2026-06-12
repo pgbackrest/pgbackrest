@@ -157,7 +157,7 @@ hrnHostNew(const StringId id, const String *const container, const String *const
             lstAdd(hrnHostLocal.hostList, &this);
 
             // Remove prior container with same name if it exists
-            execOneP(strNewFmt("docker rm -f %s", strZ(hrnHostContainer(this))));
+            execOneExpectP(strNewFmt("docker rm -f %s", strZ(hrnHostContainer(this))));
 
             // Run container
             String *const command = strCatFmt(
@@ -183,11 +183,11 @@ hrnHostNew(const StringId id, const String *const container, const String *const
             if (param.param != NULL)
                 strCatFmt(command, " %s", strZ(param.param));
 
-            execOneP(command);
+            execOneExpectP(command);
 
             // Get IP address
             const String *const ip = strTrim(
-                execOneP(
+                execOneExpectP(
                     strNewFmt(
                         "docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' %s",
                         strZ(hrnHostContainer(this)))));
@@ -253,7 +253,7 @@ hrnHostExec(HrnHost *const this, const String *const command, const HrnHostExecP
     {
         strCat(
             result,
-            execOneP(
+            execOneExpectP(
                 command,
                 .shell = strNewFmt(
                     "docker exec -u %s %s sh -c", param.user == NULL ? strZ(hrnHostUser(this)) : strZ(param.user),
@@ -786,9 +786,10 @@ hrnHostConfig(HrnHost *const this)
 
                         this->pub.repo1Storage = storageS3New(
                             hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_S3_BUCKET), STRDEF(HRN_HOST_S3_ENDPOINT),
-                            STR(HRN_HOST_S3_REGION), storageS3KeyTypeShared, storageS3UriStyleHost, STRDEF(HRN_HOST_S3_ACCESS_KEY),
-                            STRDEF(HRN_HOST_S3_ACCESS_SECRET_KEY), NULL, NULL, NULL, NULL, NULL, NULL, 5 * 1024 * 1024, NULL,
-                            hrnHostIp(s3), 443, ioTimeoutMs(), httpProtocolTypeHttps, false, NULL, NULL, NULL);
+                            STR(HRN_HOST_S3_REGION), STRDEF("s3"), storageS3KeyTypeShared, storageS3UriStyleHost,
+                            STRDEF(HRN_HOST_S3_ACCESS_KEY), STRDEF(HRN_HOST_S3_ACCESS_SECRET_KEY), NULL, NULL, NULL, NULL, NULL,
+                            NULL, 5 * 1024 * 1024, NULL, hrnHostIp(s3), 443, ioTimeoutMs(), httpProtocolTypeHttps, false, NULL,
+                            NULL, NULL);
                     }
                     MEM_CONTEXT_OBJ_END();
 

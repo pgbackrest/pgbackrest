@@ -31,15 +31,15 @@ cmdTestPathCreate(const Storage *const storage, const String *const path)
 
     TRY_BEGIN()
     {
-        execOneP(rmCommand);
+        execOneExpectP(rmCommand);
     }
     CATCH_ANY()
     {
         // Reset permissions
-        execOneP(strNewFmt("chmod -R 777 '%s'", strZ(storagePathP(storage, path))));
+        execOneExpectP(strNewFmt("chmod -R 777 '%s'", strZ(storagePathP(storage, path))));
 
         // Try to remove again
-        execOneP(rmCommand);
+        execOneExpectP(rmCommand);
     }
     TRY_END();
 
@@ -115,7 +115,7 @@ cmdTest(
 
         // Get test architecture
         if (architecture == NULL)
-            architecture = cmdTestVmArchFix(strTrim(execOneP(STRDEF("uname -m"))));
+            architecture = cmdTestVmArchFix(strTrim(execOneExpectP(STRDEF("uname -m"))));
 
         // Build test
         bool buildRetry = false;
@@ -150,7 +150,7 @@ cmdTest(
                 {
                     LOG_DETAIL("meson setup");
 
-                    execOneP(
+                    execOneExpectP(
                         strNewFmt(
                             "meson setup -Dwerror=true -Dfatal-errors=true %s '%s' '%s'", strZ(mesonSetup), strZ(pathUnitBuild),
                             strZ(pathUnit)));
@@ -160,7 +160,7 @@ cmdTest(
                 {
                     LOG_DETAIL("meson configure");
 
-                    execOneP(strNewFmt("meson configure %s '%s'", strZ(mesonSetup), strZ(pathUnitBuild)));
+                    execOneExpectP(strNewFmt("meson configure %s '%s'", strZ(mesonSetup), strZ(pathUnitBuild)));
                 }
 
                 // Remove old coverage data. Note that coverage can be in different paths depending on the meson version.
@@ -181,7 +181,7 @@ cmdTest(
                 storageRemoveP(storageUnitBuild, STRDEF("gmon.out"));
 
                 // Ninja build
-                execOneP(strNewFmt("ninja -C '%s'", strZ(pathUnitBuild)));
+                execOneExpectP(strNewFmt("ninja -C '%s'", strZ(pathUnitBuild)));
                 buildRetry = false;
             }
             CATCH_ANY()

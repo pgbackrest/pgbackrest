@@ -18,21 +18,18 @@ STRING_STATIC(AZURE_QUERY_VERSION_ID_STR,                           "versionid")
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct StorageReadAzure
+struct StorageReadAzure
 {
-    StorageReadInterface interface;                                 // Interface
+    const StorageReadInterface *interface;                          // Interface
     StorageAzure *storage;                                          // Storage that created this object
 
-    HttpResponse *httpResponse;                                     // HTTP response
-} StorageReadAzure;
+    const String *name;                                             // File name
+    uint64_t offset;                                                // Read offset
+    const Variant *limit;                                           // Read limit (NULL for no limit)
+    const String *versionId;                                        // Version id (NULL for most recent)
 
-/***********************************************************************************************************************************
-Macros for function logging
-***********************************************************************************************************************************/
-#define FUNCTION_LOG_STORAGE_READ_AZURE_TYPE                                                                                       \
-    StorageReadAzure *
-#define FUNCTION_LOG_STORAGE_READ_AZURE_FORMAT(value, buffer, bufferSize)                                                          \
-    objNameToLog(value, "StorageReadAzure", buffer, bufferSize)
+    HttpResponse *httpResponse;                                     // HTTP response
+};
 
 /***********************************************************************************************************************************
 Open the file
@@ -49,34 +46,17 @@ storageReadAzureOpen(THIS_VOID)
     ASSERT(this != NULL);
     ASSERT(this->httpResponse == NULL);
 
-    bool result = false;
-
-    // Read if not versioned or if versionId is not null
-    if (!this->interface.version || this->interface.versionId != NULL)
+    // Request the file
+    MEM_CONTEXT_OBJ_BEGIN(this)
     {
-        // Request the file
-        MEM_CONTEXT_OBJ_BEGIN(this)
-        {
-            this->httpResponse = storageAzureRequestP(
-                this->storage, HTTP_VERB_GET_STR, .path = this->interface.name,
-                .query =
-                    this->interface.version ?
-                        httpQueryPut(httpQueryNewP(), AZURE_QUERY_VERSION_ID_STR, this->interface.versionId) : NULL,
-                .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
-                .allowMissing = true, .contentIo = true);
-        }
-        MEM_CONTEXT_OBJ_END();
-
-        if (httpResponseCodeOk(this->httpResponse))
-        {
-            result = true;
-        }
-        // Else error unless ignore missing
-        else if (!this->interface.ignoreMissing)
-            THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
+        this->httpResponse = storageAzureRequestP(
+            this->storage, HTTP_VERB_GET_STR, .path = this->name,
+            .query = this->versionId != NULL ? httpQueryPut(httpQueryNewP(), AZURE_QUERY_VERSION_ID_STR, this->versionId) : NULL,
+            .header = httpHeaderPutRange(httpHeaderNew(NULL), this->offset, this->limit), .allowMissing = true, .contentIo = true);
     }
+    MEM_CONTEXT_OBJ_END();
 
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, httpResponseCodeOk(this->httpResponse));
 }
 
 /***********************************************************************************************************************************
@@ -140,7 +120,7 @@ storageReadAzureClose(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-static const IoReadInterface storageReadAzureInterface =
+static const StorageReadInterface storageReadAzureInterface =
 {
     .close = storageReadAzureClose,
     .eof = storageReadAzureEof,
@@ -148,18 +128,16 @@ static const IoReadInterface storageReadAzureInterface =
     .read = storageReadAzure,
 };
 
-FN_EXTERN StorageRead *
+FN_EXTERN StorageReadAzure *
 storageReadAzureNew(
-    StorageAzure *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset,
-    const Variant *const limit, const bool version, const String *const versionId)
+    StorageAzure *const storage, const String *const name, const uint64_t offset, const Variant *const limit,
+    const String *const versionId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, storage);
         FUNCTION_LOG_PARAM(STRING, name);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
-        FUNCTION_LOG_PARAM(BOOL, version);
         FUNCTION_LOG_PARAM(STRING, versionId);
     FUNCTION_LOG_END();
 
@@ -170,14 +148,15 @@ storageReadAzureNew(
     {
         *this = (StorageReadAzure)
         {
+            .interface = &storageReadAzureInterface,
             .storage = storage,
+            .name = strDup(name),
+            .offset = offset,
+            .limit = varDup(limit),
+            .versionId = strDup(versionId),
         };
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(
-        STORAGE_READ,
-        storageReadNewP(
-            this, STORAGE_AZURE_TYPE, name, ignoreMissing, offset, limit, &storageReadAzureInterface, .version = version,
-            .versionId = versionId, .retry = true));
+    FUNCTION_LOG_RETURN(STORAGE_READ_AZURE, this);
 }

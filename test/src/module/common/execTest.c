@@ -111,24 +111,24 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("execOne()"))
+    if (testBegin("execOneExpectP()"))
     {
         Exec *exec = NULL;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("exec without output");
 
-        TEST_RESULT_STR_Z(execOneP(STRDEF("ls " TEST_PATH)), "", "exec ls");
+        TEST_RESULT_STR_Z(execOneExpectP(STRDEF("ls " TEST_PATH)), "", "exec ls");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("touch file");
 
-        TEST_RESULT_STR_Z(execOneP(STRDEF("touch " TEST_PATH "/file")), "", "exec touch");
+        TEST_RESULT_STR_Z(execOneExpectP(STRDEF("touch " TEST_PATH "/file")), "", "exec touch");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("exec with custom shell and output");
 
-        TEST_RESULT_STR_Z(execOneP(STRDEF("ls " TEST_PATH), .shell = STRDEF("sh -c")), "file\n", "exec ls");
+        TEST_RESULT_STR_Z(execOneExpectP(STRDEF("ls " TEST_PATH), .shell = STRDEF("sh -c")), "file\n", "exec ls");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("exec exits from signal");
@@ -137,14 +137,14 @@ testRun(void)
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
         kill(exec->processId, SIGKILL);
 
-        TEST_ERROR(execProcess(exec, (ExecOneParam){0}), ExecuteError, "cat terminated unexpectedly on signal 9");
+        TEST_ERROR(execProcess(exec, (ExecOneExpectParam){0}), ExecuteError, "cat terminated unexpectedly on signal 9");
         TEST_RESULT_VOID(execFree(exec), "free exec");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("exec exits with error");
 
         TEST_ERROR_MULTI(
-            execOneP(STRDEF("cat missing.txt")), UnknownError,
+            execOneExpectP(STRDEF("cat missing.txt")), UnknownError,
             // glibc
             "cat missing.txt terminated unexpectedly [1]: cat: missing.txt: No such file or directory",
             // musl libc
@@ -156,7 +156,7 @@ testRun(void)
         TRY_BEGIN()
         {
             TEST_RESULT_STR_Z(
-                execOneP(STRDEF("cat missing.txt"), .resultExpect = 1), "cat: missing.txt: No such file or directory\n",
+                execOneExpectP(STRDEF("cat missing.txt"), .resultExpect = 1), "cat: missing.txt: No such file or directory\n",
                 "ignore error");
         }
         CATCH_ANY()
@@ -164,7 +164,7 @@ testRun(void)
             hrnTestResultEnd();
 
             TEST_RESULT_STR_Z(
-                execOneP(STRDEF("cat missing.txt"), .resultExpect = 1),
+                execOneExpectP(STRDEF("cat missing.txt"), .resultExpect = 1),
                 "cat: can't open 'missing.txt': No such file or directory\n", "ignore error");
         }
         TRY_END();
