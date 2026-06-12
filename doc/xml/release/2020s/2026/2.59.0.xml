@@ -113,4 +113,19 @@
             </release-item>
         </release-development-list>
     </release-core-list>
+
+    <release-test-list>
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2784"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="artur.zakirov"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix Alpine group conflicts in CI containers.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-test-list>
 </release>
