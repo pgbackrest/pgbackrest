@@ -258,6 +258,7 @@ src_pgbackrest = [
     'storage/gcs/write.c',
     'storage/helper.c',
     'storage/remote/read.c',
+    'storage/remote/readMulti.c',
     'storage/remote/protocol.c',
     'storage/remote/storage.c',
     'storage/remote/write.c',

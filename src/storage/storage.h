@@ -302,6 +302,9 @@ storageType(const Storage *const this)
     return THIS_PUB(Storage)->type;
 }
 
+// Target reads by time (0 when not time-targeted)
+FN_EXTERN time_t storageTargetTime(const Storage *this);
+
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/

@@ -672,9 +672,7 @@ testRun(void)
 
                 ioBufferSizeSet(20);
 
-                TEST_ASSIGN(readMulti, storageNewReadMultiP(s3), "new read multi");
-                readMulti->queueMax = 1;
-                readMulti->readOver = 2;
+                TEST_ASSIGN(readMulti, storageReadMultiNew(s3, 0, 2), "new read multi");
                 TEST_RESULT_VOID(
                     storageReadMultiAddP(readMulti, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(20)), "add read");
                 TEST_RESULT_VOID(
@@ -740,6 +738,26 @@ testRun(void)
                 TRY_END();
 
                 TEST_RESULT_BOOL(errorCaught, true, "check error was caught");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file missing during retry");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt");
+                testResponseP(service, .content = "12345678911234567892", .contentSize = VARUINT(30));
+
+                hrnServerScriptClose(service);
+                hrnServerScriptAccept(service);
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "20-");
+                testResponseP(service, .code = 404);
+
+                ioBufferSizeSet(20);
+
+                TEST_ERROR(
+                    storageGetP(storageNewReadP(s3, STRDEF("file.txt"))), FileMissingError,
+                    "unable to open missing file '/file.txt' for read");
+
+                ioBufferSizeSet(ioBufferSizeDefault);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get zero-length file");

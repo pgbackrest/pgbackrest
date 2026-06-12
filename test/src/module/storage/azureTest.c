@@ -574,9 +574,7 @@ testRun(void)
 
                 ioBufferSizeSet(20);
 
-                TEST_ASSIGN(readMulti, storageNewReadMultiP(storage), "new read multi");
-                readMulti->queueMax = 1;
-                readMulti->readOver = 2;
+                TEST_ASSIGN(readMulti, storageReadMultiNew(storage, 0, 2), "new read multi");
                 TEST_RESULT_VOID(
                     storageReadMultiAddP(readMulti, STRDEF("file.txt"), .offset = 1, .limit = VARUINT64(20)), "add read");
                 TEST_RESULT_VOID(

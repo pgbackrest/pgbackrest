@@ -8,6 +8,7 @@ Storage Read Multi
 #include "common/io/limitRead.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "storage/read.intern.h"
 #include "storage/readMulti.h"
 
 /***********************************************************************************************************************************
@@ -17,22 +18,41 @@ struct StorageReadMulti
 {
     StorageReadMultiPub pub;                                        // Publicly accessible variables
     const Storage *storage;                                         // Storage
+    void *driver;                                                   // Driver
+};
+
+/***********************************************************************************************************************************
+Default driver that queues reads directly on the storage
+***********************************************************************************************************************************/
+typedef struct StorageReadMultiDefault
+{
+    const StorageReadMultiInterface *interface;                     // Driver interface (must be first member)
+    const Storage *storage;                                         // Storage
     List *requestList;                                              // List of read requests
     List *queue;                                                    // Queue of reads
     uint64_t readOver;                                              // Bytes to read over rather than open file with new offset
     unsigned int queueMax;                                          // Max size of read queue
     bool eof;                                                       // End-of-file indicator
-};
+} StorageReadMultiDefault;
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_LOG_STORAGE_READ_MULTI_DEFAULT_TYPE                                                                               \
+    StorageReadMultiDefault *
+#define FUNCTION_LOG_STORAGE_READ_MULTI_DEFAULT_FORMAT(value, buffer, bufferSize)                                                  \
+    objNameToLog(value, "StorageReadMultiDefault", buffer, bufferSize)
 
 /***********************************************************************************************************************************
 Structure to store read requests
 ***********************************************************************************************************************************/
 typedef struct StorageReadMultiRequest
 {
-    const String *fileExp;
+    const String *file;
     bool compressible;                                              // Is the file compressible?
     uint64_t offset;                                                // Where to start reading in the file
     uint64_t limit;                                                 // Limit bytes to read from the file
+    const String *versionId;                                        // Version to read (NULL for current version)
     List *rangeList;                                                // Ranges for read over
     uint64_t rangeRead;                                             // Bytes read in the current range
 } StorageReadMultiRequest;
@@ -55,10 +75,10 @@ Constant to indicate that there is no limit
 Manage the read queue
 ***********************************************************************************************************************************/
 static void
-storageReadMultiQueue(StorageReadMulti *const this, const bool prelim)
+storageReadMultiDefaultQueue(StorageReadMultiDefault *const this, const bool prelim)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_READ_MULTI, this);
+        FUNCTION_LOG_PARAM(STORAGE_READ_MULTI_DEFAULT, this);
         FUNCTION_LOG_PARAM(BOOL, prelim);
     FUNCTION_LOG_END();
 
@@ -73,12 +93,13 @@ storageReadMultiQueue(StorageReadMulti *const this, const bool prelim)
         {
             const StorageReadMultiRequest *const request = lstGet(this->requestList, requestIdx);
 
-            // Open the read request
+            // Open the read request. The version id, when needed, was already resolved when the request was added.
             MEM_CONTEXT_OBJ_BEGIN(this->queue)
             {
-                StorageRead *const read = storageNewReadP(
-                    this->storage, request->fileExp, .compressible = request->compressible, .offset = request->offset,
-                    .limit = request->limit != STORAGE_READ_MULTI_NO_LIMIT ? VARUINT64(request->limit) : NULL);
+                StorageRead *const read = storageReadNew(
+                    this->storage, request->file, false, request->compressible, request->offset,
+                    request->limit != STORAGE_READ_MULTI_NO_LIMIT ? VARUINT64(request->limit) : NULL,
+                    request->versionId != NULL, request->versionId);
                 ioReadOpen(storageReadIo(read));
 
                 lstAdd(this->queue, &read);
@@ -99,20 +120,20 @@ storageReadMultiQueue(StorageReadMulti *const this, const bool prelim)
 }
 
 /***********************************************************************************************************************************
-Open the file
+Open read
 ***********************************************************************************************************************************/
 static bool
-storageReadMultiOpen(THIS_VOID)
+storageReadMultiDefaultOpen(THIS_VOID)
 {
-    THIS(StorageReadMulti);
+    THIS(StorageReadMultiDefault);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_READ_MULTI, this);
+        FUNCTION_LOG_PARAM(STORAGE_READ_MULTI_DEFAULT, this);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
 
-    storageReadMultiQueue(this, false);
+    storageReadMultiDefaultQueue(this, false);
 
     FUNCTION_LOG_RETURN(BOOL, true);
 }
@@ -121,12 +142,12 @@ storageReadMultiOpen(THIS_VOID)
 Read from multiple files as if they were one file, skipping unused bytes
 ***********************************************************************************************************************************/
 static size_t
-storageReadMulti(THIS_VOID, Buffer *const buffer, const bool block)
+storageReadMultiDefault(THIS_VOID, Buffer *const buffer, const bool block)
 {
-    THIS(StorageReadMulti);
+    THIS(StorageReadMultiDefault);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_READ_MULTI, this);
+        FUNCTION_LOG_PARAM(STORAGE_READ_MULTI_DEFAULT, this);
         FUNCTION_LOG_PARAM(BUFFER, buffer);
         FUNCTION_LOG_PARAM(BOOL, block);
     FUNCTION_LOG_END();
@@ -189,7 +210,7 @@ storageReadMulti(THIS_VOID, Buffer *const buffer, const bool block)
             lstRemoveIdx(this->requestList, 0);
             lstRemoveIdx(this->queue, 0);
 
-            storageReadMultiQueue(this, false);
+            storageReadMultiDefaultQueue(this, false);
         }
     }
     MEM_CONTEXT_TEMP_END();
@@ -201,12 +222,12 @@ storageReadMulti(THIS_VOID, Buffer *const buffer, const bool block)
 Close queued files
 ***********************************************************************************************************************************/
 static void
-storageReadMultiClose(THIS_VOID)
+storageReadMultiDefaultClose(THIS_VOID)
 {
-    THIS(StorageReadMulti);
+    THIS(StorageReadMultiDefault);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_READ_MULTI, this);
+        FUNCTION_LOG_PARAM(STORAGE_READ_MULTI_DEFAULT, this);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -221,12 +242,12 @@ storageReadMultiClose(THIS_VOID)
 Has read reached EOF?
 ***********************************************************************************************************************************/
 static bool
-storageReadMultiEof(THIS_VOID)
+storageReadMultiDefaultEof(THIS_VOID)
 {
-    THIS(StorageReadMulti);
+    THIS(StorageReadMultiDefault);
 
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STORAGE_READ_MULTI, this);
+        FUNCTION_TEST_PARAM(STORAGE_READ_MULTI_DEFAULT, this);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -234,22 +255,30 @@ storageReadMultiEof(THIS_VOID)
     FUNCTION_TEST_RETURN(BOOL, this->eof);
 }
 
-/**********************************************************************************************************************************/
-FN_EXTERN void
-storageReadMultiAdd(StorageReadMulti *const this, const String *const fileExp, const StorageReadMultiAddParam param)
+/***********************************************************************************************************************************
+Add a file to the read
+***********************************************************************************************************************************/
+static void
+storageReadMultiDefaultAdd(THIS_VOID, const String *const file, const StorageReadMultiAddParam param)
 {
+    THIS(StorageReadMultiDefault);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_READ_MULTI, this);
-        FUNCTION_LOG_PARAM(STRING, fileExp);
-        FUNCTION_LOG_PARAM(UINT64, param.compressible);
+        FUNCTION_LOG_PARAM(STORAGE_READ_MULTI_DEFAULT, this);
+        FUNCTION_LOG_PARAM(STRING, file);
+        FUNCTION_LOG_PARAM(BOOL, param.compressible);
         FUNCTION_LOG_PARAM(UINT64, param.offset);
         FUNCTION_LOG_PARAM(VARIANT, param.limit);
+        FUNCTION_LOG_PARAM(STRING, param.versionId);
     FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(file != NULL);
 
     // Check if new request can be combined with prior request
     StorageReadMultiRequest *const requestPrior = lstEmpty(this->requestList) ? NULL : lstGetLast(this->requestList);
 
-    if (requestPrior != NULL && strEq(requestPrior->fileExp, fileExp))
+    if (requestPrior != NULL && strEq(requestPrior->file, file))
     {
         CHECK(AssertError, requestPrior->limit != STORAGE_READ_MULTI_NO_LIMIT, "cannot add request after request with no limit");
         CHECK(AssertError, param.limit != NULL, "request with no limit must be first");
@@ -303,10 +332,11 @@ storageReadMultiAdd(StorageReadMulti *const this, const String *const fileExp, c
     {
         const StorageReadMultiRequest request =
         {
-            .fileExp = requestPrior != NULL && strEq(requestPrior->fileExp, fileExp) ? requestPrior->fileExp : strDup(fileExp),
+            .file = requestPrior != NULL && strEq(requestPrior->file, file) ? requestPrior->file : strDup(file),
             .compressible = param.compressible,
             .offset = param.offset,
             .limit = param.limit == NULL ? STORAGE_READ_MULTI_NO_LIMIT : varUInt64(param.limit),
+            .versionId = strDup(param.versionId),
         };
 
         lstAdd(this->requestList, &request);
@@ -314,7 +344,157 @@ storageReadMultiAdd(StorageReadMulti *const this, const String *const fileExp, c
     MEM_CONTEXT_OBJ_END();
 
     // Update queue
-    storageReadMultiQueue(this, true);
+    storageReadMultiDefaultQueue(this, true);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+New multi-file read
+***********************************************************************************************************************************/
+static const StorageReadMultiInterface storageReadMultiDefaultInterface =
+{
+    .add = storageReadMultiDefaultAdd,
+    .close = storageReadMultiDefaultClose,
+    .eof = storageReadMultiDefaultEof,
+    .open = storageReadMultiDefaultOpen,
+    .read = storageReadMultiDefault,
+};
+
+static void *
+storageReadMultiDefaultNew(const Storage *const storage, const unsigned int prefetch, const uint64_t readOver)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE, storage);
+        FUNCTION_LOG_PARAM(UINT, prefetch);
+        FUNCTION_LOG_PARAM(UINT64, readOver);
+    FUNCTION_LOG_END();
+
+    ASSERT(storage != NULL);
+
+    OBJ_NEW_BEGIN(StorageReadMultiDefault, .childQty = MEM_CONTEXT_QTY_MAX)
+    {
+        *this = (StorageReadMultiDefault)
+        {
+            .interface = &storageReadMultiDefaultInterface,
+            .storage = storage,
+            .requestList = lstNewP(sizeof(StorageReadMultiRequest), .comparator = lstComparatorStr),
+            .queue = lstNewP(sizeof(StorageRead *)),
+            .queueMax = prefetch + 1,
+            .readOver = readOver,
+        };
+    }
+    OBJ_NEW_END();
+
+    FUNCTION_LOG_RETURN(STORAGE_READ_MULTI_DEFAULT, this);
+}
+
+/***********************************************************************************************************************************
+Open read interface
+***********************************************************************************************************************************/
+static bool
+storageReadMultiOpen(THIS_VOID)
+{
+    THIS(StorageReadMulti);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_MULTI, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_LOG_RETURN(BOOL, storageReadMultiDriverInterface(this->driver)->open(this->driver));
+}
+
+/***********************************************************************************************************************************
+Read interface
+***********************************************************************************************************************************/
+static size_t
+storageReadMulti(THIS_VOID, Buffer *const buffer, const bool block)
+{
+    THIS(StorageReadMulti);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_MULTI, this);
+        FUNCTION_LOG_PARAM(BUFFER, buffer);
+        FUNCTION_LOG_PARAM(BOOL, block);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(buffer != NULL);
+
+    FUNCTION_LOG_RETURN(SIZE, storageReadMultiDriverInterface(this->driver)->read(this->driver, buffer, block));
+}
+
+/***********************************************************************************************************************************
+Close interface
+***********************************************************************************************************************************/
+static void
+storageReadMultiClose(THIS_VOID)
+{
+    THIS(StorageReadMulti);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_MULTI, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    storageReadMultiDriverInterface(this->driver)->close(this->driver);
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Eof interface
+***********************************************************************************************************************************/
+static bool
+storageReadMultiEof(THIS_VOID)
+{
+    THIS(StorageReadMulti);
+
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_READ_MULTI, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(BOOL, storageReadMultiDriverInterface(this->driver)->eof(this->driver));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN void
+storageReadMultiAdd(StorageReadMulti *const this, const String *const fileExp, StorageReadMultiAddParam param)
+{
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_MULTI, this);
+        FUNCTION_LOG_PARAM(STRING, fileExp);
+        FUNCTION_LOG_PARAM(BOOL, param.compressible);
+        FUNCTION_LOG_PARAM(UINT64, param.offset);
+        FUNCTION_LOG_PARAM(VARIANT, param.limit);
+        FUNCTION_LOG_PARAM(STRING, param.versionId);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(fileExp != NULL);
+    ASSERT(param.limit == NULL || varType(param.limit) == varTypeUInt64);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const String *const path = storagePathP(this->storage, fileExp);
+
+        // If targeting by time and the version has not already been resolved then look up the version id
+        if (param.versionId == NULL && storageTargetTime(this->storage) != 0)
+        {
+            param.versionId = storageInfoP(this->storage, fileExp, .ignoreMissing = true).versionId;
+
+            if (param.versionId == NULL)
+                THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(path));
+        }
+
+        storageReadMultiDriverInterface(this->driver)->add(this->driver, path, param);
+    }
+    MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
 }
@@ -344,15 +524,26 @@ storageReadMultiNew(const Storage *const storage, const unsigned int prefetch, c
         *this = (StorageReadMulti)
         {
             .storage = storage,
-            .requestList = lstNewP(sizeof(StorageReadMultiRequest), .comparator = lstComparatorStr),
-            .queue = lstNewP(sizeof(StorageRead *)),
-            .queueMax = prefetch + 1,
-            .readOver = readOver,
-            .pub =
-            {
-                .io = ioReadNew(this, storageIoReadMultiInterface),
-            },
+            .driver =
+                storageInterface(storage).newReadMulti != NULL ?
+                    storageInterface(storage).newReadMulti(storageDriver(storage)) :
+                    storageReadMultiDefaultNew(storage, prefetch, readOver),
         };
+
+        ASSERT(storageReadMultiDriverInterface(this->driver)->add != NULL);
+        ASSERT(storageReadMultiDriverInterface(this->driver)->close != NULL);
+        ASSERT(storageReadMultiDriverInterface(this->driver)->eof != NULL);
+        ASSERT(storageReadMultiDriverInterface(this->driver)->open != NULL);
+        ASSERT(storageReadMultiDriverInterface(this->driver)->read != NULL);
+
+        this->pub.io = ioReadNew(this, storageIoReadMultiInterface);
+
+        // Set filter group when interface function exists
+        if (storageReadMultiDriverInterface(this->driver)->filterGroup != NULL)
+        {
+            storageReadMultiDriverInterface(this->driver)->filterGroup(
+                this->driver, ioReadFilterGroup(storageReadMultiIo(this)));
+        }
     }
     OBJ_NEW_END();
 
@@ -365,5 +556,5 @@ storageReadMultiToLog(const StorageReadMulti *const this, StringStatic *const de
 {
     strStcCat(debugLog, "{storage: ");
     storageToLog(this->storage, debugLog);
-    strStcFmt(debugLog, ", size: %u}", lstSize(this->requestList));
+    strStcCatChr(debugLog, '}');
 }

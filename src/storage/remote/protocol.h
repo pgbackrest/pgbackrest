@@ -20,6 +20,8 @@ FN_EXTERN ProtocolServerResult *storageRemotePathRemoveProtocol(PackRead *param)
 FN_EXTERN ProtocolServerResult *storageRemotePathSyncProtocol(PackRead *param);
 FN_EXTERN ProtocolServerResult *storageRemoteReadOpenProtocol(PackRead *param);
 FN_EXTERN ProtocolServerResult *storageRemoteReadProtocol(PackRead *param, void *fileRead);
+FN_EXTERN ProtocolServerResult *storageRemoteReadMultiOpenProtocol(PackRead *param);
+FN_EXTERN ProtocolServerResult *storageRemoteReadMultiProtocol(PackRead *param, void *fileRead);
 FN_EXTERN ProtocolServerResult *storageRemoteRemoveProtocol(PackRead *param);
 FN_EXTERN ProtocolServerResult *storageRemoteWriteOpenProtocol(PackRead *param);
 FN_EXTERN ProtocolServerResult *storageRemoteWriteProtocol(PackRead *param, void *fileWrite);
@@ -36,6 +38,7 @@ Protocol commands for ProtocolServerHandler arrays passed to protocolServerProce
 #define PROTOCOL_COMMAND_STORAGE_PATH_REMOVE                        STRID5("s-pr", 0x943730)
 #define PROTOCOL_COMMAND_STORAGE_PATH_SYNC                          STRID5("s-ps", 0x9c3730)
 #define PROTOCOL_COMMAND_STORAGE_READ                               STRID5("s-rd", 0x24b730)
+#define PROTOCOL_COMMAND_STORAGE_READ_MULTI                         STRID5("s-rdm", 0xd24b730)
 #define PROTOCOL_COMMAND_STORAGE_REMOVE                             STRID5("s-r", 0x4b730)
 #define PROTOCOL_COMMAND_STORAGE_WRITE                              STRID5("s-wr", 0x95f730)
 
@@ -48,6 +51,8 @@ Protocol commands for ProtocolServerHandler arrays passed to protocolServerProce
     {.command = PROTOCOL_COMMAND_STORAGE_PATH_REMOVE, .process = storageRemotePathRemoveProtocol},                                 \
     {.command = PROTOCOL_COMMAND_STORAGE_PATH_SYNC, .process = storageRemotePathSyncProtocol},                                     \
     {.command = PROTOCOL_COMMAND_STORAGE_READ, .open = storageRemoteReadOpenProtocol, .processSession = storageRemoteReadProtocol},\
+    {.command = PROTOCOL_COMMAND_STORAGE_READ_MULTI, .open = storageRemoteReadMultiOpenProtocol,                                   \
+        .processSession = storageRemoteReadMultiProtocol},                                                                         \
     {.command = PROTOCOL_COMMAND_STORAGE_REMOVE, .process = storageRemoteRemoveProtocol},                                          \
     {.command = PROTOCOL_COMMAND_STORAGE_WRITE, .open = storageRemoteWriteOpenProtocol,                                            \
         .processSession = storageRemoteWriteProtocol, .close = storageRemoteWriteCloseProtocol},

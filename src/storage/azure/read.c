@@ -36,14 +36,16 @@ struct StorageReadAzure
 Open the file
 ***********************************************************************************************************************************/
 static bool
-storageReadAzureOpenAsync(StorageReadAzure *const this, const bool ignoreMissing)
+storageReadAzureOpenAsync(THIS_VOID)
 {
+    THIS(StorageReadAzure);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_READ_AZURE, this);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
     FUNCTION_LOG_END();
 
-    bool result = false;
+    ASSERT(this != NULL);
+    ASSERT(this->httpRequest != NULL);
 
     // Wait for response
     MEM_CONTEXT_OBJ_BEGIN(this)
@@ -55,33 +57,22 @@ storageReadAzureOpenAsync(StorageReadAzure *const this, const bool ignoreMissing
     }
     MEM_CONTEXT_OBJ_END();
 
-    // If file exists
-    if (httpResponseCodeOk(this->httpResponse))
-    {
-        result = true;
-    }
-    // Else error unless ignore missing
-    else if (!ignoreMissing)
-        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->name));
-
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, httpResponseCodeOk(this->httpResponse));
 }
 
 static bool
-storageReadAzureOpen(THIS_VOID, const bool ignoreMissing)
+storageReadAzureOpen(THIS_VOID)
 {
     THIS(StorageReadAzure);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_READ_AZURE, this);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(this->httpResponse == NULL);
 
-    bool result = false;
-
+    // Request the file
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->httpRequest = storageAzureRequestAsyncP(
@@ -91,16 +82,7 @@ storageReadAzureOpen(THIS_VOID, const bool ignoreMissing)
     }
     MEM_CONTEXT_OBJ_END();
 
-    // Wait for response when file missing needs to be reported
-    if (ignoreMissing)
-    {
-        result = storageReadAzureOpenAsync(this, true);
-    }
-    // Else assume that the file exists for now (it will be checked during read)
-    else
-        result = true;
-
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, true);
 }
 
 /***********************************************************************************************************************************
@@ -118,12 +100,8 @@ storageReadAzure(THIS_VOID, Buffer *const buffer, const bool block)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->httpResponse != NULL);
     ASSERT(buffer != NULL && !bufFull(buffer));
-
-    // Complete the open if it was async
-    if (this->httpResponse == NULL)
-        storageReadAzureOpenAsync(this, false);
-
     ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
 
     FUNCTION_LOG_RETURN(SIZE, ioRead(httpResponseIoRead(this->httpResponse), buffer));
@@ -142,11 +120,7 @@ storageReadAzureEof(THIS_VOID)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-
-    // In async mode we may not have a response yet so return false
-    if (this->httpResponse == NULL)
-        FUNCTION_TEST_RETURN(BOOL, false);
-
+    ASSERT(this->httpResponse != NULL);
     ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
 
     FUNCTION_TEST_RETURN(BOOL, ioReadEof(httpResponseIoRead(this->httpResponse)));
@@ -180,6 +154,7 @@ static const StorageReadInterface storageReadAzureInterface =
     .close = storageReadAzureClose,
     .eof = storageReadAzureEof,
     .open = storageReadAzureOpen,
+    .openAsync = storageReadAzureOpenAsync,
     .read = storageReadAzure,
 };
 

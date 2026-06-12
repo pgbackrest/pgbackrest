@@ -10,6 +10,7 @@ Remote Storage
 #include "common/type/pack.h"
 #include "storage/remote/protocol.h"
 #include "storage/remote/read.h"
+#include "storage/remote/readMulti.h"
 #include "storage/remote/write.h"
 
 /***********************************************************************************************************************************
@@ -287,6 +288,21 @@ storageRemoteNewRead(THIS_VOID, const String *const file, const StorageInterface
 
 /**********************************************************************************************************************************/
 static void *
+storageRemoteNewReadMulti(THIS_VOID)
+{
+    THIS(StorageRemote);
+
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_REMOTE, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_LOG_RETURN(STORAGE_READ_MULTI_REMOTE, storageReadMultiRemoteNew(this, this->client, this->compressLevel));
+}
+
+/**********************************************************************************************************************************/
+static void *
 storageRemoteNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNewWriteParam param)
 {
     THIS(StorageRemote);
@@ -450,6 +466,7 @@ static const StorageInterface storageInterfaceRemote =
     .linkCreate = storageRemoteLinkCreate,
     .list = storageRemoteList,
     .newRead = storageRemoteNewRead,
+    .newReadMulti = storageRemoteNewReadMulti,
     .newWrite = storageRemoteNewWrite,
     .pathCreate = storageRemotePathCreate,
     .pathRemove = storageRemotePathRemove,

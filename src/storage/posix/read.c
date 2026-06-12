@@ -54,13 +54,12 @@ storageReadPosixFreeResource(THIS_VOID)
 Open the file
 ***********************************************************************************************************************************/
 static bool
-storageReadPosixOpen(THIS_VOID, const bool ignoreMissing)
+storageReadPosixOpen(THIS_VOID)
 {
     THIS(StorageReadPosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_READ_POSIX, this);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -69,15 +68,10 @@ storageReadPosixOpen(THIS_VOID, const bool ignoreMissing)
     // Open the file
     this->fd = open(strZ(this->name), O_RDONLY, 0);
 
-    // Handle errors
+    // Handle errors except missing, which is reported to the caller via the result
     if (this->fd == -1)
     {
-        if (errno == ENOENT)                                                                                        // {vm_covered}
-        {
-            if (!ignoreMissing)
-                THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->name));
-        }
-        else
+        if (errno != ENOENT)                                                                                        // {vm_covered}
             THROW_SYS_ERROR_FMT(FileOpenError, STORAGE_ERROR_READ_OPEN, strZ(this->name));                          // {vm_covered}
     }
     // Else success

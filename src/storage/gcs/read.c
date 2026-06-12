@@ -37,14 +37,16 @@ struct StorageReadGcs
 Open the file
 ***********************************************************************************************************************************/
 static bool
-storageReadGcsOpenAsync(StorageReadGcs *const this, const bool ignoreMissing)
+storageReadGcsOpenAsync(THIS_VOID)
 {
+    THIS(StorageReadGcs);
+
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_READ_GCS, this);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
     FUNCTION_LOG_END();
 
-    bool result = false;
+    ASSERT(this != NULL);
+    ASSERT(this->httpRequest != NULL);
 
     // Wait for response
     MEM_CONTEXT_OBJ_BEGIN(this)
@@ -56,33 +58,22 @@ storageReadGcsOpenAsync(StorageReadGcs *const this, const bool ignoreMissing)
     }
     MEM_CONTEXT_OBJ_END();
 
-    // If file exists
-    if (httpResponseCodeOk(this->httpResponse))
-    {
-        result = true;
-    }
-    // Else error unless ignore missing
-    else if (!ignoreMissing)
-        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->name));
-
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, httpResponseCodeOk(this->httpResponse));
 }
 
 static bool
-storageReadGcsOpen(THIS_VOID, const bool ignoreMissing)
+storageReadGcsOpen(THIS_VOID)
 {
     THIS(StorageReadGcs);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_READ_GCS, this);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(this->httpResponse == NULL);
 
-    bool result = false;
-
+    // Request the file
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
         HttpQuery *const query = httpQueryAdd(httpQueryNewP(), GCS_QUERY_ALT_STR, GCS_QUERY_MEDIA_STR);
@@ -96,16 +87,7 @@ storageReadGcsOpen(THIS_VOID, const bool ignoreMissing)
     }
     MEM_CONTEXT_OBJ_END();
 
-    // Wait for response when file missing needs to be reported
-    if (ignoreMissing)
-    {
-        result = storageReadGcsOpenAsync(this, true);
-    }
-    // Else assume that the file exists for now (it will be checked during read)
-    else
-        result = true;
-
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, true);
 }
 
 /***********************************************************************************************************************************
@@ -123,12 +105,8 @@ storageReadGcs(THIS_VOID, Buffer *const buffer, const bool block)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
+    ASSERT(this->httpResponse != NULL);
     ASSERT(buffer != NULL && !bufFull(buffer));
-
-    // Complete the open if it was async
-    if (this->httpResponse == NULL)
-        storageReadGcsOpenAsync(this, false);
-
     ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
 
     FUNCTION_LOG_RETURN(SIZE, ioRead(httpResponseIoRead(this->httpResponse), buffer));
@@ -147,11 +125,7 @@ storageReadGcsEof(THIS_VOID)
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
-
-    // In async mode we may not have a response yet so return false
-    if (this->httpResponse == NULL)
-        FUNCTION_TEST_RETURN(BOOL, false);
-
+    ASSERT(this->httpResponse != NULL);
     ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
 
     FUNCTION_TEST_RETURN(BOOL, ioReadEof(httpResponseIoRead(this->httpResponse)));
@@ -185,6 +159,7 @@ static const StorageReadInterface storageReadGcsInterface =
     .close = storageReadGcsClose,
     .eof = storageReadGcsEof,
     .open = storageReadGcsOpen,
+    .openAsync = storageReadGcsOpenAsync,
     .read = storageReadGcs,
 };
 

@@ -477,6 +477,7 @@ unit:
           - protocol/server
           - storage/helper
           - storage/remote/read
+          - storage/remote/readMulti
           - storage/remote/protocol
           - storage/remote/storage
           - storage/remote/write
@@ -570,14 +571,16 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote
-        total: 11
+        total: 12
 
         coverage:
           - storage/remote/read
+          - storage/remote/readMulti
           - storage/remote/protocol
           - storage/remote/storage
           - storage/remote/write
           - storage/helper
+          - storage/readMulti
           - storage/storage
 
         include:

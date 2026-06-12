@@ -838,6 +838,19 @@ storageRemove(const Storage *const this, const String *const fileExp, const Stor
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN time_t
+storageTargetTime(const Storage *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(TIME, this->targetTime);
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN void
 storageToLog(const Storage *const this, StringStatic *const debugLog)
 {
