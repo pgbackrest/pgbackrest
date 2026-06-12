@@ -69,8 +69,8 @@ use constant VM_NONE                                                => 'none';
 
 use constant VM_A321                                                 => 'a321';
     push @EXPORT, qw(VM_A321);
-use constant VM_D11                                                 => 'd11';
-    push @EXPORT, qw(VM_D11);
+use constant VM_D12                                                 => 'd12';
+    push @EXPORT, qw(VM_D12);
 use constant VM_RH8                                                 => 'rh8';
     push @EXPORT, qw(VM_RH8);
 use constant VM_F43                                                 => 'f43';
@@ -79,7 +79,7 @@ use constant VM_U22                                                 => 'u22';
     push @EXPORT, qw(VM_U22);
 
 # List of default test VMs
-use constant VM_LIST                                                => (VM_D11, VM_RH8, VM_U22);
+use constant VM_LIST                                                => (VM_D12, VM_RH8, VM_U22);
     push @EXPORT, qw(VM_LIST);
 
 my $oyVm =
@@ -121,22 +121,22 @@ my $oyVm =
         ],
     },
 
-    # Debian 11
-    &VM_D11 =>
+    # Debian 12
+    &VM_D12 =>
     {
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_IMAGE => 'debian:11',
+        &VM_IMAGE => 'debian:12',
         &VMDEF_PG_REPO => false,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
         &VM_DB =>
         [
-            PG_VERSION_13,
+            PG_VERSION_15,
         ],
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_13,
+            PG_VERSION_15,
         ],
     },
 
@@ -158,7 +158,6 @@ my $oyVm =
         &VM_DB_TEST =>
         [
             PG_VERSION_14,
-            PG_VERSION_15,
             PG_VERSION_16,
             PG_VERSION_17,
         ],
@@ -215,6 +214,7 @@ my $oyVm =
             PG_VERSION_10,
             PG_VERSION_11,
             PG_VERSION_12,
+            PG_VERSION_13,
             PG_VERSION_18,
         ],
     },
