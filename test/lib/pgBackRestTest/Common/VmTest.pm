@@ -79,7 +79,7 @@ use constant VM_U22                                                 => 'u22';
     push @EXPORT, qw(VM_U22);
 
 # List of default test VMs
-use constant VM_LIST                                                => (VM_D12, VM_RH8, VM_U22);
+use constant VM_LIST                                                => (VM_D12, VM_RH8, VM_U22, VM_A321);
     push @EXPORT, qw(VM_LIST);
 
 my $oyVm =
@@ -108,16 +108,18 @@ my $oyVm =
         &VM_OS_BASE => VM_OS_BASE_ALPINE,
         &VM_IMAGE => 'alpine:3.21',
         &VMDEF_PG_REPO => false,
-        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
+        &VMDEF_PGSQL_BIN => '/usr/libexec/postgresql{[version]}',
 
         &VM_DB =>
         [
+            PG_VERSION_15,
+            PG_VERSION_16,
             PG_VERSION_17,
         ],
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_17,
+            PG_VERSION_16,
         ],
     },
 
@@ -158,7 +160,6 @@ my $oyVm =
         &VM_DB_TEST =>
         [
             PG_VERSION_14,
-            PG_VERSION_16,
             PG_VERSION_17,
         ],
     },

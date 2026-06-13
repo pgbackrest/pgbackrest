@@ -937,17 +937,32 @@ hrnHostPgBinPath(HrnHost *const this)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            const String *pgPath = strNewFmt("/usr/lib/postgresql/%s/bin", strZ(pgVersionToStr(hrnHostPgVersion())));
+            const String *pgPath = NULL;
+            const char *const version = strZ(pgVersionToStr(hrnHostPgVersion()));
 
-            TRY_BEGIN()
+            const String *const pgPathList[] =
             {
-                hrnHostExecP(this, strNewFmt("ls %s/initdb", strZ(pgPath)));
-            }
-            CATCH_ANY()
+                strNewFmt("/usr/lib/postgresql/%s/bin", version),   // Debian
+                strNewFmt("/usr/pgsql-%s/bin", version),            // RHEL
+                strNewFmt("/usr/libexec/postgresql%s", version),    // Alpine
+            };
+
+            for (unsigned int pgPathIdx = 0; pgPath == NULL && pgPathIdx < LENGTH_OF(pgPathList); pgPathIdx++)
             {
-                pgPath = strNewFmt("/usr/pgsql-%s/bin", strZ(pgVersionToStr(hrnHostPgVersion())));
+                TRY_BEGIN()
+                {
+                    hrnHostExecP(this, strNewFmt("ls %s/initdb", strZ(pgPathList[pgPathIdx])));
+                    pgPath = pgPathList[pgPathIdx];
+                }
+                CATCH_ANY()
+                {
+                    // Try the next path
+                }
+                TRY_END();
             }
-            TRY_END();
+
+            if (pgPath == NULL)
+                THROW_FMT(AssertError, "unable to find bin path for PostgreSQL %s", version);
 
             MEM_CONTEXT_OBJ_BEGIN(this)
             {
