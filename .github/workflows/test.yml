@@ -50,8 +50,11 @@ jobs:
           # All unit tests on the newest gcc available
           - param: test --vm=f44 --param=c-only --param=no-valgrind --param=no-coverage --param=no-performance
 
-          # All unit and integration tests on musl libc
+          # All unit and integration tests on musl libc (oldest Alpine)
           - param: test --vm=a321 --param=no-coverage --param=no-performance
+
+          # All unit and integration tests on musl libc (newest Alpine)
+          - param: test --vm=a324 --param=no-coverage --param=no-performance
 
           # RHEL documentation
           - param: doc --vm=rh8

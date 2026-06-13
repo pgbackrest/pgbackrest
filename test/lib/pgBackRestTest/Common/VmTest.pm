@@ -69,6 +69,8 @@ use constant VM_NONE                                                => 'none';
 
 use constant VM_A321                                                 => 'a321';
     push @EXPORT, qw(VM_A321);
+use constant VM_A324                                                 => 'a324';
+    push @EXPORT, qw(VM_A324);
 use constant VM_D12                                                 => 'd12';
     push @EXPORT, qw(VM_D12);
 use constant VM_RH8                                                 => 'rh8';
@@ -79,7 +81,7 @@ use constant VM_U22                                                 => 'u22';
     push @EXPORT, qw(VM_U22);
 
 # List of default test VMs
-use constant VM_LIST                                                => (VM_D12, VM_RH8, VM_U22, VM_A321);
+use constant VM_LIST                                                => (VM_D12, VM_RH8, VM_U22, VM_A321, VM_A324);
     push @EXPORT, qw(VM_LIST);
 
 my $oyVm =
@@ -123,6 +125,27 @@ my $oyVm =
         ],
     },
 
+    # Alpine 3.24
+    &VM_A324 =>
+    {
+        &VM_OS_BASE => VM_OS_BASE_ALPINE,
+        &VM_IMAGE => 'alpine:3.24',
+        &VMDEF_PG_REPO => false,
+        &VMDEF_PGSQL_BIN => '/usr/libexec/postgresql{[version]}',
+
+        &VM_DB =>
+        [
+            PG_VERSION_16,
+            PG_VERSION_17,
+            PG_VERSION_18,
+        ],
+
+        &VM_DB_TEST =>
+        [
+            PG_VERSION_17,
+        ],
+    },
+
     # Debian 12
     &VM_D12 =>
     {
@@ -160,7 +183,6 @@ my $oyVm =
         &VM_DB_TEST =>
         [
             PG_VERSION_14,
-            PG_VERSION_17,
         ],
     },
 
