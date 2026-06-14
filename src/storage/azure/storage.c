@@ -312,10 +312,7 @@ storageAzureRequestAsync(StorageAzure *const this, const String *const verb, Sto
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Prepend path prefix
-        param.path =
-            param.path == NULL ?
-                this->pathPrefix :
-                strNewFmt("%s%s", strZ(this->pathPrefix), strZ(param.path));
+        param.path = param.path == NULL ? this->pathPrefix : strNewFmt("%s%s", strZ(this->pathPrefix), strZ(param.path));
 
         // Create header list
         HttpHeader *requestHeader =
@@ -809,7 +806,6 @@ storageAzurePathRemoveInternal(StorageAzurePathRemoveData *const data)
         MEM_CONTEXT_TEMP_BEGIN()
         {
             HttpResponse *const response = storageAzureResponseP(data->request);
-
             HttpResponseMulti *const responseMulti = httpResponseMultiNew(
                 httpResponseContent(response), httpHeaderGet(httpResponseHeader(response), HTTP_HEADER_CONTENT_TYPE_STR));
 

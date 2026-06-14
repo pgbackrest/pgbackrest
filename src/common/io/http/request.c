@@ -95,7 +95,7 @@ httpRequestFmt(
             strCatZ(result, HTTP_HEADER_USER_AGENT ":" PROJECT_NAME "/" PROJECT_VERSION "\r\n");
 
         // Add headers. A space after the colon is used for multipart sub-requests since Azure's batch parser requires the canonical
-        // "Name: value" form, but is omitted for requests sent on the wire to preserve existing behavior.
+        // "Name: value" form, but is omitted for normal requests to preserve existing behavior.
         StringList *const headerList = httpHeaderList(header);
 
         for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
