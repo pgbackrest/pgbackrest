@@ -157,7 +157,16 @@ testRun(void)
         HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_11, .pageChecksumVersion = 2);
 
         TEST_ERROR(
-            pgControlFromFile(storageTest, NULL), FormatError, "page checksum version is 2 but only 0 and 1 are valid");
+            pgControlFromFile(storageTest, NULL), FormatError, "page checksum version is 2 but must be <= 1");
+
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_19, .pageChecksumVersion = 4);
+
+        TEST_ERROR(
+            pgControlFromFile(storageTest, NULL), FormatError, "page checksum version is 4 but must be <= 3");
+
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_19, .pageChecksumVersion = 3);
+
+        TEST_RESULT_UINT(pgControlFromFile(storageTest, NULL).pageChecksumVersion, 0, "incomplete checksums cleared");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check all valid page sizes");
@@ -224,13 +233,13 @@ testRun(void)
         TEST_RESULT_UINT(info.pageSize, pgPageSize16, "check page size");
 
         HRN_PG_CONTROL_PUT(
-            storageTest, PG_VERSION_18, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_18),
+            storageTest, PG_VERSION_19, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_19),
             .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .pageSize = pgPageSize32);
 
         TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "check system id");
-        TEST_RESULT_UINT(info.version, PG_VERSION_18, "check version");
-        TEST_RESULT_UINT(info.catalogVersion, 202506291, "check catalog version");
+        TEST_RESULT_UINT(info.version, PG_VERSION_19, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 202605131, "check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
         TEST_RESULT_UINT(info.pageSize, pgPageSize32, "check page size");

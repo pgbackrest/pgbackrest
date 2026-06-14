@@ -35,6 +35,10 @@ typedef uint16_t uint16;
 // ---------------------------------------------------------------------------------------------------------------------------------
 typedef uint32_t uint32;
 
+// uint64 type
+// ---------------------------------------------------------------------------------------------------------------------------------
+typedef uint64_t uint64;
+
 // TransactionId type
 // ---------------------------------------------------------------------------------------------------------------------------------
 typedef uint32 TransactionId;
@@ -50,6 +54,28 @@ typedef uint32 TransactionId;
  * work with MSVC and with C++ compilers.
  */
 #define FLEXIBLE_ARRAY_MEMBER	/* empty */
+
+/***********************************************************************************************************************************
+Types from src/include/storage/checksum.h
+***********************************************************************************************************************************/
+
+// ChecksumStateType enum
+// ---------------------------------------------------------------------------------------------------------------------------------
+/*
+ * Checksum state 0 is used for when data checksums are disabled (OFF).
+ * PG_DATA_CHECKSUM_INPROGRESS_{ON|OFF} defines that data checksums are either
+ * currently being enabled or disabled, and PG_DATA_CHECKSUM_VERSION defines
+ * that data checksums are enabled.  The ChecksumStateType is stored in
+ * pg_control so changing requires a catversion bump, and the values cannot
+ * be reordered.  New states must be added at the end.
+ */
+typedef enum ChecksumStateType
+{
+	PG_DATA_CHECKSUM_OFF = 0,
+	PG_DATA_CHECKSUM_VERSION = 1,
+	PG_DATA_CHECKSUM_INPROGRESS_OFF = 2,
+	PG_DATA_CHECKSUM_INPROGRESS_ON = 3,
+} ChecksumStateType;
 
 /***********************************************************************************************************************************
 Types from src/include/storage/itemid.h
@@ -89,22 +115,17 @@ typedef uint16 LocationIndex;
 // PageXLogRecPtr type
 // ---------------------------------------------------------------------------------------------------------------------------------
 /*
- * For historical reasons, the 64-bit LSN value is stored as two 32-bit
- * values.
+ * Store the LSN as a single 64-bit value, to allow atomic loads/stores.
+ *
+ * For historical reasons, the storage of 64-bit LSN values depends on CPU
+ * endianness; PageXLogRecPtr used to be a struct consisting of two 32-bit
+ * values.  When reading (and writing) the pd_lsn field from page headers, the
+ * caller must convert from (and convert to) the platform's native endianness.
  */
 typedef struct
 {
-	uint32		xlogid;			/* high bits */
-	uint32		xrecoff;		/* low bits */
+	uint64		lsn;
 } PageXLogRecPtr;
-
-// PG_DATA_CHECKSUM_VERSION define
-// ---------------------------------------------------------------------------------------------------------------------------------
-/*
- * As of Release 9.3, the checksum version must also be considered when
- * handling pages.
- */
-#define PG_DATA_CHECKSUM_VERSION	1
 
 // PageHeaderData type
 // ---------------------------------------------------------------------------------------------------------------------------------

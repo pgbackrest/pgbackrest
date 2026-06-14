@@ -320,12 +320,17 @@ pgControlFromBuffer(const Buffer *const controlFile, const String *const pgVersi
     pgPageSizeCheck(result.pageSize);
 
     // Check the checksum version
-    if (result.pageChecksumVersion != 0 && result.pageChecksumVersion != PG_DATA_CHECKSUM_VERSION)
+    if ((result.version <= PG_VERSION_18 && result.pageChecksumVersion > PG_DATA_CHECKSUM_VERSION) ||
+        (result.version > PG_VERSION_18 && result.pageChecksumVersion > PG_DATA_CHECKSUM_INPROGRESS_ON))
     {
         THROW_FMT(
-            FormatError, "page checksum version is %u but only 0 and " STRINGIFY(PG_DATA_CHECKSUM_VERSION) " are valid",
-            result.pageChecksumVersion);
+            FormatError, "page checksum version is %u but must be <= %d", result.pageChecksumVersion,
+            result.version <= PG_VERSION_18 ? PG_DATA_CHECKSUM_VERSION : PG_DATA_CHECKSUM_INPROGRESS_ON);
     }
+
+    // Clear checksum version values that represent clusters with incomplete checksums
+    if (result.version > PG_VERSION_18 && result.pageChecksumVersion > PG_DATA_CHECKSUM_VERSION)
+        result.pageChecksumVersion = 0;
 
     FUNCTION_LOG_RETURN(PG_CONTROL, result);
 }
