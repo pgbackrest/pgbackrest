@@ -152,7 +152,7 @@ httpResponseRead(THIS_VOID, Buffer *const buffer, const bool block)
 
                         this->contentRemaining = cvtZToUInt64Base(strZ(chunkHeader), 16);
 
-                        // If content remaining is still zero then eof
+                        // A zero-size chunk terminates the response
                         if (this->contentRemaining == 0)
                         {
                             // Consume chunk trailers and the blank line that terminates them.

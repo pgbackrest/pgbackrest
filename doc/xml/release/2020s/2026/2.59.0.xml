@@ -2,6 +2,17 @@
     <release-core-list>
         <release-feature-list>
             <release-item>
+                <github-pull-request id="2779"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p><proper>PostgreSQL 19beta1</proper> support.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2762"/>
 
                 <release-item-contributor-list>
