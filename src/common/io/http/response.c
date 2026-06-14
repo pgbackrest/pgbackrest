@@ -145,7 +145,7 @@ httpResponseRead(THIS_VOID, Buffer *const buffer, const bool block)
                         // Read length of next chunk
                         this->contentRemaining = cvtZToUInt64Base(strZ(strTrim(ioReadLine(rawRead))), 16);
 
-                        // If content remaining is still zero then eof
+                        // A zero-size chunk terminates the response
                         if (this->contentRemaining == 0)
                             this->contentEof = true;
                     }

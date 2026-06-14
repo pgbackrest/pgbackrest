@@ -147,7 +147,7 @@ sub groupCreate
     }
     elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_ALPINE)
     {
-        return "addgroup -g${iId} ${strName}";
+        return "getent group ${strName} >/dev/null || addgroup -g${iId} ${strName}";
     }
 }
 
@@ -472,11 +472,11 @@ sub containerBuild
                             "pgdg-redhat-repo-latest.noarch.rpm && \\\n" .
                         "    dnf -qy module disable postgresql && \\\n";
                 }
-                elsif ($strOS eq VM_F43)
+                elsif ($strOS eq VM_F44)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-43-" . hostArch() . "/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-44-" . hostArch() . "/" .
                             "pgdg-fedora-repo-latest.noarch.rpm && \\\n" .
                         "    yum -y install libcurl-devel && \\\n"
                 }
@@ -606,7 +606,7 @@ sub containerBuild
                 "    echo '***********************************************' >> /etc/issue.net && \\\n" .
                 "    echo 'Banner /etc/issue.net'                           >> /etc/ssh/sshd_config";
 
-            if ($strOS eq VM_U22)
+            if ($strOS eq VM_U22 || $strOS eq VM_A321)
             {
                 $strScript .= sectionHeader() .
                     "    echo '# Add PubkeyAcceptedAlgorithms (required for SFTP)'              >> /etc/ssh/sshd_config && \\\n" .
@@ -618,7 +618,7 @@ sub containerBuild
             # only thing running in the container.
             $strScript .= sectionHeader() .
                 "# Rename conflicting group\n" .
-                '    sed -i s/.*\:x\:' . TEST_GROUP_ID . '\:$/' . TEST_GROUP . '\:x\:' . TEST_GROUP_ID . "\:/ /etc/group";
+                "    sed -i 's/^[^:]*:x:" . TEST_GROUP_ID . ":.*/" . TEST_GROUP . ":x:" . TEST_GROUP_ID . ":/' /etc/group";
 
             $strScript .= sectionHeader() .
                 "# Create test user\n" .

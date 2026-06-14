@@ -4633,7 +4633,7 @@ testRun(void)
         TEST_ERROR_FMT(ioReadOpen(storageReadIo(file)), FileOpenError, STORAGE_ERROR_READ_OPEN ": libssh2 error [-37]", strZ(fileName));
 
         // Missing not sftp, not EAGAIN
-        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), false, "not sftp, not EAGAIN");
+        TEST_ERROR_FMT(ioReadOpen(storageReadIo(file)), FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read success");
@@ -5466,7 +5466,7 @@ testRun(void)
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
 
         // Make sftpHandle NULL
-        ((StorageWriteSftp *)ioWriteDriver(storageWriteIo(file)))->sftpHandle = NULL;
+        ((StorageWriteSftp *)file->driver)->sftpHandle = NULL;
 
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
 
@@ -7281,15 +7281,6 @@ testRun(void)
         TEST_ASSIGN(storage, storageRepoGet(0, true), "get sftp repo storage");
         TEST_RESULT_UINT(storageType(storage), STORAGE_SFTP_TYPE, "check storage type");
         TEST_RESULT_BOOL(storageFeature(storage, storageFeaturePath), true, "check path feature");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("write object path sync false");
-
-        // Create a FileWrite object with path sync enabled and ensure that path sync is false in the write object
-        StorageWrite *file = NULL;
-        TEST_ASSIGN(file, storageNewWriteP(storage, STRDEF("somefile"), .noSyncPath = false), "new file write");
-
-        TEST_RESULT_BOOL(storageWriteSyncPath(file), false, "path sync is disabled");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path sync result is noop");

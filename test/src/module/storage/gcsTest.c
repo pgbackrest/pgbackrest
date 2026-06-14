@@ -605,7 +605,7 @@ testRun(void)
                 TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
                 TEST_RESULT_BOOL(storageWriteTruncate(write), true, "file will be truncated");
 
-                TEST_RESULT_VOID(storageWriteGcsClose(ioWriteDriver(storageWriteIo(write))), "close file again");
+                TEST_RESULT_VOID(storageWriteGcsClose(write->driver), "close file again");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("write zero-length file");
@@ -1410,14 +1410,11 @@ testRun(void)
                 ioWriteOpen(storageWriteIo(write));
                 ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
 
-                TEST_RESULT_VOID(
-                    bufResize(((StorageWriteGcs *)ioWriteDriver(storageWriteIo(write)))->chunkBuffer, 17),
-                    "resize part buffer to 17");
+                TEST_RESULT_VOID(bufResize(((StorageWriteGcs *)write->driver)->chunkBuffer, 17), "resize part buffer to 17");
 
                 ioWrite(storageWriteIo(write), BUFSTRDEF("90"));
 
-                TEST_RESULT_UINT(
-                    ((StorageWriteGcs *)ioWriteDriver(storageWriteIo(write)))->chunkSize, 16, "part buffer reset to 16 (default)");
+                TEST_RESULT_UINT(((StorageWriteGcs *)write->driver)->chunkSize, 16, "part buffer reset to 16 (default)");
 
                 ioWriteClose(storageWriteIo(write));
                 ioBufferSizeSet(ioBufferSizeDefault);

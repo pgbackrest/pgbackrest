@@ -266,7 +266,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             strZ(strNewBuf(storageGetP(storageNewReadP(storagePgWrite, STRDEF("test.txt"))))), FileMissingError,
-            "raised from remote-0 shim protocol: " STORAGE_ERROR_READ_MISSING, TEST_PATH "/pg256/test.txt");
+            STORAGE_ERROR_READ_MISSING, TEST_PATH "/pg256/test.txt");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("raw read file without compression");
@@ -451,9 +451,9 @@ testRun(void)
 
         TEST_RESULT_VOID(storagePutP(write, contentBuf), "write file");
         TEST_RESULT_UINT(
-            ((StorageWriteRemote *)ioWriteDriver(storageWriteIo(write)))->protocolWriteBytes, bufSize(contentBuf),
+            ((StorageWriteRemote *)write->driver)->protocolWriteBytes, bufSize(contentBuf),
             "check write size");
-        TEST_RESULT_VOID(storageWriteRemoteClose(ioWriteDriver(storageWriteIo(write))), "close file again");
+        TEST_RESULT_VOID(storageWriteRemoteClose(write->driver), "close file again");
         TEST_RESULT_VOID(storageWriteFree(write), "free file");
 
         // Make sure the file was written correctly
@@ -509,7 +509,7 @@ testRun(void)
             write, storageNewWriteP(storageRepoWrite, STRDEF("test2.txt"), .compressible = true), "new write file (compress)");
         TEST_RESULT_VOID(storagePutP(write, contentBuf), "write file");
         TEST_RESULT_BOOL(
-            ((StorageWriteRemote *)ioWriteDriver(storageWriteIo(write)))->protocolWriteBytes < bufSize(contentBuf), true,
+            ((StorageWriteRemote *)write->driver)->protocolWriteBytes < bufSize(contentBuf), true,
             "check compressed write size");
     }
 

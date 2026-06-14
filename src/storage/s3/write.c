@@ -35,25 +35,18 @@ STRING_STATIC(S3_XML_TAG_PART_NUMBER_STR,                           "PartNumber"
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct StorageWriteS3
+struct StorageWriteS3
 {
-    StorageWriteInterface interface;                                // Interface
+    const StorageWriteInterface *interface;                         // Interface
     StorageS3 *storage;                                             // Storage that created this object
+    const String *name;                                             // File name
 
     HttpRequest *request;                                           // Async request
     size_t partSize;
     Buffer *partBuffer;
     const String *uploadId;
     StringList *uploadPartList;
-} StorageWriteS3;
-
-/***********************************************************************************************************************************
-Macros for function logging
-***********************************************************************************************************************************/
-#define FUNCTION_LOG_STORAGE_WRITE_S3_TYPE                                                                                         \
-    StorageWriteS3 *
-#define FUNCTION_LOG_STORAGE_WRITE_S3_FORMAT(value, buffer, bufferSize)                                                            \
-    objNameToLog(value, "StorageWriteS3", buffer, bufferSize)
+};
 
 /***********************************************************************************************************************************
 Flush bytes to upload part
@@ -107,7 +100,7 @@ storageWriteS3PartAsync(StorageWriteS3 *const this)
                 xmlDocumentNewBuf(
                     httpResponseContent(
                         storageS3RequestP(
-                            this->storage, HTTP_VERB_POST_STR, this->interface.name,
+                            this->storage, HTTP_VERB_POST_STR, this->name,
                             .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOADS_STR, EMPTY_STR), .sseKms = true,
                             .sseC = true, .tag = true))));
 
@@ -128,7 +121,7 @@ storageWriteS3PartAsync(StorageWriteS3 *const this)
         MEM_CONTEXT_OBJ_BEGIN(this)
         {
             this->request = storageS3RequestAsyncP(
-                this->storage, HTTP_VERB_PUT_STR, this->interface.name, .query = query, .content = this->partBuffer, .sseC = true);
+                this->storage, HTTP_VERB_PUT_STR, this->name, .query = query, .content = this->partBuffer, .sseC = true);
         }
         MEM_CONTEXT_OBJ_END();
     }
@@ -225,7 +218,7 @@ storageWriteS3Close(THIS_VOID)
 
                 // Finalize the multi-part upload
                 HttpRequest *const request = storageS3RequestAsyncP(
-                    this->storage, HTTP_VERB_POST_STR, this->interface.name,
+                    this->storage, HTTP_VERB_POST_STR, this->name,
                     .query = httpQueryAdd(httpQueryNewP(), S3_QUERY_UPLOAD_ID_STR, this->uploadId),
                     .content = xmlDocumentBuf(partList));
                 HttpResponse *const response = storageS3ResponseP(request);
@@ -241,7 +234,7 @@ storageWriteS3Close(THIS_VOID)
             else
             {
                 storageS3RequestP(
-                    this->storage, HTTP_VERB_PUT_STR, this->interface.name, .content = this->partBuffer, .sseKms = true,
+                    this->storage, HTTP_VERB_PUT_STR, this->name, .content = this->partBuffer, .sseKms = true,
                     .sseC = true, .tag = true);
             }
 
@@ -255,13 +248,13 @@ storageWriteS3Close(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-static const IoWriteInterface storageWriteS3Interface =
+static const StorageWriteInterface storageWriteS3Interface =
 {
     .close = storageWriteS3Close,
     .write = storageWriteS3,
 };
 
-FN_EXTERN StorageWrite *
+FN_EXTERN StorageWriteS3 *
 storageWriteS3New(StorageS3 *const storage, const String *const name, const size_t partSize)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -277,13 +270,14 @@ storageWriteS3New(StorageS3 *const storage, const String *const name, const size
     {
         *this = (StorageWriteS3)
         {
+            .interface = &storageWriteS3Interface,
             .storage = storage,
+            .name = strDup(name),
             .partSize = partSize,
             .partBuffer = bufNew(0),
         };
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(
-        STORAGE_WRITE, storageWriteNewP(this, STORAGE_S3_TYPE, name, true, true, true, true, true, &storageWriteS3Interface));
+    FUNCTION_LOG_RETURN(STORAGE_WRITE_S3, this);
 }

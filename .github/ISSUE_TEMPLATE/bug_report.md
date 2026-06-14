@@ -1,4 +1,7 @@
-Please provide the following information when submitting an issue (feature requests or general comments can skip this):
+---
+name: Bug Report
+about: Report a bug in pgBackRest (feature requests or general comments can skip this template)
+---
 
 1. pgBackRest version:
 
@@ -14,4 +17,4 @@ Please provide the following information when submitting an issue (feature reque
     - errors in the postgresql log file before or during the time you experienced the issue
     - log file in `/var/log/pgbackrest` for the commands run (e.g. `/var/log/pgbackrest/mystanza_backup.log`)
 
-7. Describe the issue:
+6. Describe the issue:

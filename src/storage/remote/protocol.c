@@ -14,6 +14,7 @@ Remote Storage Protocol Handler
 #include "storage/helper.h"
 #include "storage/remote/protocol.h"
 #include "storage/storage.intern.h"
+#include "storage/write.intern.h"
 
 /***********************************************************************************************************************************
 Local variables
@@ -21,6 +22,7 @@ Local variables
 static struct
 {
     MemContext *memContext;                                         // Mem context
+    const Storage *storage;                                         // Storage
     void *driver;                                                   // Storage driver used for requests
 
     const List *filterHandler;                                      // Filter handler list
@@ -150,6 +152,7 @@ storageRemoteFeatureProtocol(PackRead *const param)
                 MEM_CONTEXT_NEW_BEGIN(StorageRemoteProtocol, .childQty = MEM_CONTEXT_QTY_MAX)
                 {
                     storageRemoteProtocolLocal.memContext = memContextCurrent();
+                    storageRemoteProtocolLocal.storage = storage;
                     storageRemoteProtocolLocal.driver = storageDriver(storage);
                 }
                 MEM_CONTEXT_NEW_END();
@@ -422,17 +425,14 @@ storageRemoteReadOpenProtocol(PackRead *const param)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         const String *file = pckReadStrP(param);
-        const bool ignoreMissing = pckReadBoolP(param);
         const uint64_t offset = pckReadU64P(param);
         const Variant *const limit = pckReadNullP(param) ? NULL : VARUINT64(pckReadU64P(param));
-        const bool version = pckReadBoolP(param);
         const String *const versionId = pckReadStrP(param);
         const Pack *const filter = pckReadPackP(param);
 
-        // Create the read object
-        StorageRead *const fileRead = storageInterfaceNewReadP(
-            storageRemoteProtocolLocal.driver, file, ignoreMissing, .offset = offset, .limit = limit, .version = version,
-            .versionId = versionId);
+        // Create the read object ignoring missing since the client decides whether a missing file is an error
+        StorageRead *const fileRead = storageReadNew(
+            storageRemoteProtocolLocal.storage, file, true, false, offset, limit, versionId != NULL, versionId);
 
         // Set filter group based on passed filters
         storageRemoteFilterGroup(ioReadFilterGroup(storageReadIo(fileRead)), filter);
@@ -508,10 +508,9 @@ storageRemoteWriteOpenProtocol(PackRead *const param)
         const bool atomic = pckReadBoolP(param);
         const Pack *const filter = pckReadPackP(param);
 
-        StorageWrite *const fileWrite = storageInterfaceNewWriteP(
-            storageRemoteProtocolLocal.driver, file, .modeFile = modeFile, .modePath = modePath, .user = user, .group = group,
-            .timeModified = timeModified, .createPath = createPath, .syncFile = syncFile, .syncPath = syncPath, .atomic = atomic,
-            .truncate = true);
+        StorageWrite *const fileWrite = storageWriteNew(
+            storageRemoteProtocolLocal.storage, file, modeFile, modePath, user, group, timeModified, createPath, syncFile,
+            syncPath, atomic, true, false);
 
         // Set filter group based on passed filters
         storageRemoteFilterGroup(ioWriteFilterGroup(storageWriteIo(fileWrite)), filter);

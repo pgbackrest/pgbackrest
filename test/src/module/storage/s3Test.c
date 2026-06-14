@@ -467,6 +467,65 @@ testRun(void)
             ",SignedHeaders=host;x-amz-content-sha256;x-amz-date;x-amz-security-token"
             ",Signature=85278841678ccbc0f137759265030d7b5e237868dd36eea658426b18344d1685",
             "check authorization header");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("repo-s3-service=s3-outposts uses s3-outposts signing service");
+
+        hrnCfgEnvRemoveRaw(cfgOptRepoS3Token);
+
+        argList = strLstDup(commonArgWithoutEndpointList);
+        hrnCfgArgRawZ(argList, cfgOptRepoS3Endpoint, "s3-outposts.us-east-1.amazonaws.com");
+        hrnCfgArgRawZ(argList, cfgOptRepoS3Service, "s3-outposts");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
+
+        TEST_RESULT_STR_Z(driver->signingService, "s3-outposts", "check signing service is s3-outposts");
+        TEST_RESULT_STR(
+            driver->bucketEndpoint, STRDEF("bucket.s3-outposts.us-east-1.amazonaws.com"), "check outposts bucket endpoint");
+
+        header = httpHeaderNew(NULL);
+        query = httpQueryNewP();
+        httpQueryAdd(query, STRDEF("list-type"), STRDEF("2"));
+
+        TEST_RESULT_VOID(
+            storageS3Auth(
+                driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20170606T121212Z"), header, STRDEF(HASH_TYPE_SHA256_ZERO)),
+            "generate authorization");
+        TEST_RESULT_STR_Z(
+            httpHeaderGet(header, STRDEF("authorization")),
+            "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20170606/us-east-1/s3-outposts/aws4_request"
+            ",SignedHeaders=host;x-amz-content-sha256;x-amz-date"
+            ",Signature=f1845d56d10e6fea0702f4dc45ab7431da492e12eb81c5abc9eb72e3a01aadf6",
+            "check s3-outposts authorization header");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("repo-s3-service=s3-outposts signing key regeneration on date change");
+
+        const Buffer *outpostsSigningKey = driver->signingKey;
+
+        TEST_RESULT_VOID(
+            storageS3Auth(
+                driver, STRDEF("GET"), STRDEF("/"), query, STRDEF("20180814T080808Z"), header, STRDEF(HASH_TYPE_SHA256_ZERO)),
+            "generate authorization");
+        TEST_RESULT_STR_Z(
+            httpHeaderGet(header, STRDEF("authorization")),
+            "AWS4-HMAC-SHA256 Credential=AKIAIOSFODNN7EXAMPLE/20180814/us-east-1/s3-outposts/aws4_request"
+            ",SignedHeaders=host;x-amz-content-sha256;x-amz-date"
+            ",Signature=fa2ae79d909f6b5b5b0fc82f5a5c4441c26e893fbd953725d479fcec5c883ded",
+            "check s3-outposts authorization header after date change");
+        TEST_RESULT_BOOL(driver->signingKey != outpostsSigningKey, true, "check signing key was regenerated");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("default repo-s3-service uses s3 signing service");
+
+        argList = strLstDup(commonArgWithoutEndpointList);
+        hrnCfgArgRaw(argList, cfgOptRepoS3Endpoint, endPoint);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        driver = (StorageS3 *)storageDriver(storageRepoGet(0, false));
+
+        TEST_RESULT_STR_Z(driver->signingService, "s3", "check signing service is s3 for default repo-s3-service");
     }
 
     // *****************************************************************************************************************************
@@ -627,6 +686,26 @@ testRun(void)
                 TRY_END();
 
                 TEST_RESULT_BOOL(errorCaught, true, "check error was caught");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("get file missing during retry");
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt");
+                testResponseP(service, .content = "12345678911234567892", .contentSize = VARUINT(30));
+
+                hrnServerScriptClose(service);
+                hrnServerScriptAccept(service);
+
+                testRequestP(service, s3, HTTP_VERB_GET, "/file.txt", .range = "20-");
+                testResponseP(service, .code = 404);
+
+                ioBufferSizeSet(20);
+
+                TEST_ERROR(
+                    storageGetP(storageNewReadP(s3, STRDEF("file.txt"))), FileMissingError,
+                    "unable to open missing file '/file.txt' for read");
+
+                ioBufferSizeSet(ioBufferSizeDefault);
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("get zero-length file");
@@ -891,7 +970,7 @@ testRun(void)
                 TEST_RESULT_BOOL(storageWriteSyncPath(write), true, "path is synced");
                 TEST_RESULT_BOOL(storageWriteTruncate(write), true, "file will be truncated");
 
-                TEST_RESULT_VOID(storageWriteS3Close(ioWriteDriver(storageWriteIo(write))), "close file again");
+                TEST_RESULT_VOID(storageWriteS3Close(write->driver), "close file again");
 
                 // Check that temp credentials were changed
                 TEST_RESULT_STR_Z(driver->accessKey, "xx", "check access key");
@@ -1844,14 +1923,11 @@ testRun(void)
                 ioWriteOpen(storageWriteIo(write));
                 ioWrite(storageWriteIo(write), BUFSTRDEF("123456789012345678"));
 
-                TEST_RESULT_VOID(
-                    bufResize(((StorageWriteS3 *)ioWriteDriver(storageWriteIo(write)))->partBuffer, 17),
-                    "resize part buffer to 17");
+                TEST_RESULT_VOID(bufResize(((StorageWriteS3 *)write->driver)->partBuffer, 17), "resize part buffer to 17");
 
                 ioWrite(storageWriteIo(write), BUFSTRDEF("90"));
 
-                TEST_RESULT_UINT(
-                    ((StorageWriteS3 *)ioWriteDriver(storageWriteIo(write)))->partSize, 16, "part buffer reset to 16 (default)");
+                TEST_RESULT_UINT(((StorageWriteS3 *)write->driver)->partSize, 16, "part buffer reset to 16 (default)");
 
                 ioWriteClose(storageWriteIo(write));
                 ioBufferSizeSet(ioBufferSizeDefault);
