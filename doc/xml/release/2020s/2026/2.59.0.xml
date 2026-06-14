@@ -64,6 +64,17 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2785"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="shubham"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Harden HTTP chunked response parsing.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2732"/>
 
                 <release-item-contributor-list>

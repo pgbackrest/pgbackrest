@@ -37,6 +37,7 @@ struct HttpResponse
     HttpResponsePub pub;                                            // Publicly accessible variables
     HttpSession *session;                                           // HTTP session
     bool contentChunked;                                            // Is the response content chunked?
+    bool contentSizeSet;                                            // Was content size specified?
     uint64_t contentSize;                                           // Content size (ignored for chunked)
     uint64_t contentRemaining;                                      // Content remaining (per chunk if chunked)
     bool closeOnContentEof;                                         // Will server close after content is sent?
@@ -143,11 +144,22 @@ httpResponseRead(THIS_VOID, Buffer *const buffer, const bool block)
                     if (this->contentChunked && this->contentRemaining == 0)
                     {
                         // Read length of next chunk
-                        this->contentRemaining = cvtZToUInt64Base(strZ(strTrim(ioReadLine(rawRead))), 16);
+                        const String *chunkHeader = strTrim(ioReadLine(rawRead));
+                        const int chunkExtPos = strChr(chunkHeader, ';');
+
+                        if (chunkExtPos != -1)
+                            chunkHeader = strTrim(strSubN(chunkHeader, 0, (size_t)chunkExtPos));
+
+                        this->contentRemaining = cvtZToUInt64Base(strZ(chunkHeader), 16);
 
                         // A zero-size chunk terminates the response
                         if (this->contentRemaining == 0)
+                        {
+                            // Consume chunk trailers and the blank line that terminates them.
+                            while (strSize(strTrim(ioReadLine(rawRead))) != 0);
+
                             this->contentEof = true;
+                        }
                     }
 
                     // Read if there is content remaining
@@ -175,7 +187,7 @@ httpResponseRead(THIS_VOID, Buffer *const buffer, const bool block)
                     {
                         // If chunked then consume the blank line that follows every chunk. There might be more chunk data so loop
                         // back around to check.
-                        if (this->contentChunked)
+                        if (this->contentChunked && !this->contentEof)
                         {
                             ioReadLine(rawRead);
                         }
@@ -306,7 +318,7 @@ httpResponseHeaderRead(HttpResponse *const this, IoRead *const read)
             if (strEq(headerKey, HTTP_HEADER_TRANSFER_ENCODING_STR))
             {
                 // Error if transfer encoding is not chunked
-                if (!strEq(headerValue, HTTP_VALUE_TRANSFER_ENCODING_CHUNKED_STR))
+                if (!strEq(strLower(headerValue), HTTP_VALUE_TRANSFER_ENCODING_CHUNKED_STR))
                 {
                     THROW_FMT(
                         FormatError, "only '%s' is supported for '%s' header", HTTP_VALUE_TRANSFER_ENCODING_CHUNKED,
@@ -319,6 +331,7 @@ httpResponseHeaderRead(HttpResponse *const this, IoRead *const read)
             // Read content size
             if (strEq(headerKey, HTTP_HEADER_CONTENT_LENGTH_STR))
             {
+                this->contentSizeSet = true;
                 this->contentSize = cvtZToUInt64(strZ(headerValue));
                 this->contentRemaining = this->contentSize;
             }
@@ -334,7 +347,7 @@ httpResponseHeaderRead(HttpResponse *const this, IoRead *const read)
         while (1);
 
         // Error if transfer encoding and content length are both set
-        if (this->contentChunked && this->contentSize > 0)
+        if (this->contentChunked && this->contentSizeSet)
         {
             THROW_FMT(
                 FormatError, "'%s' and '%s' headers are both set", HTTP_HEADER_TRANSFER_ENCODING,
