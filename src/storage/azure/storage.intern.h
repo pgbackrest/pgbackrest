@@ -44,7 +44,6 @@ typedef struct StorageAzureRequestAsyncParam
     const Buffer *content;                                          // Request content
     const List *contentList;                                        // Request content part list
     bool tag;                                                       // Add tags when available?
-    bool noContainer;                                               // Do not include container in path
 } StorageAzureRequestAsyncParam;
 
 #define storageAzureRequestAsyncP(this, verb, ...)                                                                                 \
@@ -76,7 +75,6 @@ typedef struct StorageAzureRequestParam
     bool allowMissing;                                              // Allow missing files (caller can check response code)
     bool contentIo;                                                 // Is IoRead interface required to read content?
     bool tag;                                                       // Add tags when available?
-    bool noContainer;                                               // Do not include container in path
 } StorageAzureRequestParam;
 
 #define storageAzureRequestP(this, verb, ...)                                                                                      \

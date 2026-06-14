@@ -977,29 +977,29 @@ testRun(void)
                 testRequestP(
                     service, HTTP_VERB_POST, .path = "/batch/storage/v1", .multiPart = true,
                     .content =
-                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
-                        "content-type:application/http\r\n"
-                        "content-transfer-encoding:binary\r\n"
-                        "content-id:0\r\n"
+                        "--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "Content-Type: application/http\r\n"
+                        "Content-Transfer-Encoding: binary\r\n"
+                        "Content-ID: 0\r\n"
                         "\r\n"
                         "DELETE /storage/v1/b/bucket/o/path%2Fto%2Ftest1.txt HTTP/1.1\r\n"
-                        "content-length:0\r\n"
+                        "content-length: 0\r\n"
                         "\r\n"
                         "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
-                        "content-type:application/http\r\n"
-                        "content-transfer-encoding:binary\r\n"
-                        "content-id:1\r\n"
+                        "Content-Type: application/http\r\n"
+                        "Content-Transfer-Encoding: binary\r\n"
+                        "Content-ID: 1\r\n"
                         "\r\n"
                         "DELETE /storage/v1/b/bucket/o/path1%2Fxxx.zzz HTTP/1.1\r\n"
-                        "content-length:0\r\n"
+                        "content-length: 0\r\n"
                         "\r\n"
                         "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
-                        "content-type:application/http\r\n"
-                        "content-transfer-encoding:binary\r\n"
-                        "content-id:2\r\n"
+                        "Content-Type: application/http\r\n"
+                        "Content-Transfer-Encoding: binary\r\n"
+                        "Content-ID: 2\r\n"
                         "\r\n"
                         "DELETE /storage/v1/b/bucket/o/path2%2Ffile2 HTTP/1.1\r\n"
-                        "content-length:0\r\n"
+                        "content-length: 0\r\n"
                         "\r\n"
                         "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
                 testResponseP(
@@ -1053,13 +1053,13 @@ testRun(void)
                 testRequestP(
                     service, HTTP_VERB_POST, .path = "/batch/storage/v1", .multiPart = true,
                     .content =
-                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
-                        "content-type:application/http\r\n"
-                        "content-transfer-encoding:binary\r\n"
-                        "content-id:0\r\n"
+                        "--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "Content-Type: application/http\r\n"
+                        "Content-Transfer-Encoding: binary\r\n"
+                        "Content-ID: 0\r\n"
                         "\r\n"
                         "DELETE /storage/v1/b/bucket/o/path%2Ftest1.txt HTTP/1.1\r\n"
-                        "content-length:0\r\n"
+                        "content-length: 0\r\n"
                         "\r\n"
                         "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
                 testResponseP(
@@ -1075,13 +1075,13 @@ testRun(void)
                 testRequestP(
                     service, HTTP_VERB_POST, .path = "/batch/storage/v1", .multiPart = true,
                     .content =
-                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
-                        "content-type:application/http\r\n"
-                        "content-transfer-encoding:binary\r\n"
-                        "content-id:0\r\n"
+                        "--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "Content-Type: application/http\r\n"
+                        "Content-Transfer-Encoding: binary\r\n"
+                        "Content-ID: 0\r\n"
                         "\r\n"
                         "DELETE /storage/v1/b/bucket/o/path%2Fpath1%2Fxxx.zzz HTTP/1.1\r\n"
-                        "content-length:0\r\n"
+                        "content-length: 0\r\n"
                         "\r\n"
                         "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
                 testResponseP(

@@ -920,17 +920,17 @@ testRun(void)
                     "GET / HTTP/1.1\r\n" TEST_USER_AGENT
                     "content-type:multipart/mixed; boundary=QKX4EYg4LARJ\r\n"
                     "hdr1:1\r\n\r\n"
-                    "\r\n--QKX4EYg4LARJ\r\n"
-                    "content-type:application/http\r\n"
-                    "content-transfer-encoding:binary\r\n"
-                    "content-id:0\r\n\r\n"
+                    "--QKX4EYg4LARJ\r\n"
+                    "Content-Type: application/http\r\n"
+                    "Content-Transfer-Encoding: binary\r\n"
+                    "Content-ID: 0\r\n\r\n"
                     "GET / HTTP/1.1\r\n\r\n"
                     "\r\n--QKX4EYg4LARJ\r\n"
-                    "content-type:application/http\r\n"
-                    "content-transfer-encoding:binary\r\n"
-                    "content-id:1\r\n\r\n"
+                    "Content-Type: application/http\r\n"
+                    "Content-Transfer-Encoding: binary\r\n"
+                    "Content-ID: 1\r\n\r\n"
                     "POST /ack HTTP/1.1\r\n"
-                    "content-length:3\r\n\r\n"
+                    "content-length: 3\r\n\r\n"
                     HTTP_MULTIPART_BOUNDARY_INIT
                     "\r\n--QKX4EYg4LARJ--\r\n");
                 hrnServerScriptReplyZ(
@@ -940,7 +940,8 @@ testRun(void)
                     "--XXX\r\n"
                     "content-type:application/http\r\n"
                     "content-id:0\r\n\r\n"
-                    "HTTP/1.1 200 OK\r\n\r\n"
+                    // Headers terminated by the boundary rather than a blank line (as Azure does for empty-body parts)
+                    "HTTP/1.1 200 OK\r\n"
                     "\r\n--XXX\r\n"
                     "content-type:application/http\r\n"
                     "content-id:1\r\n"

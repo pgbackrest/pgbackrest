@@ -106,7 +106,6 @@ struct StorageAzure
     unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
     const String *tag;                                              // Tags to be applied to objects
     const String *pathPrefix;                                       // Account/container prefix
-    const String *accountPrefix;                                    // Account prefix (without container)
 
     uint64_t fileId;                                                // Id to used to make file block identifiers unique
 
@@ -195,8 +194,8 @@ storageAzureAuth(
             }
 
             // Generate string to sign
-            const String *contentLength = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR);
-            const String *contentMd5 = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_MD5_STR);
+            const String *const contentLength = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR);
+            const String *const contentMd5 = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_MD5_STR);
             const String *const contentType = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_TYPE_STR);
             const String *const range = httpHeaderGet(httpHeader, HTTP_HEADER_RANGE_STR);
 
@@ -303,7 +302,6 @@ storageAzureRequestAsync(StorageAzure *const this, const String *const verb, Sto
         FUNCTION_LOG_PARAM(BUFFER, param.content);
         FUNCTION_LOG_PARAM(LIST, param.contentList);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
-        FUNCTION_LOG_PARAM(BOOL, param.noContainer);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
@@ -316,7 +314,7 @@ storageAzureRequestAsync(StorageAzure *const this, const String *const verb, Sto
         // Prepend path prefix
         param.path =
             param.path == NULL ?
-                (param.noContainer ? this->accountPrefix : this->pathPrefix) :
+                this->pathPrefix :
                 strNewFmt("%s%s", strZ(this->pathPrefix), strZ(param.path));
 
         // Create header list
@@ -437,12 +435,11 @@ storageAzureRequest(StorageAzure *const this, const String *const verb, const St
         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
         FUNCTION_LOG_PARAM(BOOL, param.contentIo);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
-        FUNCTION_LOG_PARAM(BOOL, param.noContainer);
     FUNCTION_LOG_END();
 
     HttpRequest *const request = storageAzureRequestAsyncP(
         this, verb, .path = param.path, .header = param.header, .query = param.query, .content = param.content,
-        .contentList = param.contentList, .tag = param.tag, .noContainer = param.noContainer);
+        .contentList = param.contentList, .tag = param.tag);
     HttpResponse *const result = storageAzureResponseP(request, .allowMissing = param.allowMissing, .contentIo = param.contentIo);
 
     httpRequestFree(request);
@@ -816,7 +813,10 @@ storageAzurePathRemoveInternal(StorageAzurePathRemoveData *const data)
             HttpResponseMulti *const responseMulti = httpResponseMultiNew(
                 httpResponseContent(response), httpHeaderGet(httpResponseHeader(response), HTTP_HEADER_CONTENT_TYPE_STR));
 
-            // Loop through all response parts
+            // Loop through all response parts. Parts are mapped to the original request by ordinal position since the service
+            // returns one response part per sub-request in request order. The echoed content-id is intentionally not used because
+            // Azure omits it on some error responses, which would otherwise make a failed part impossible to retry.
+            unsigned int partIdx = 0;
             HttpResponse *responsePart = httpResponseMultiNext(responseMulti);
             CHECK(FormatError, responsePart != NULL, "at least one response part is required");
 
@@ -825,26 +825,21 @@ storageAzurePathRemoveInternal(StorageAzurePathRemoveData *const data)
                 // If not OK and not missing then retry
                 if (!httpResponseCodeOk(responsePart) && httpResponseCode(responsePart) != HTTP_RESPONSE_CODE_NOT_FOUND)
                 {
-                    // Extract and check content-id header
-                    const String *const contentId = httpHeaderGet(httpResponseHeader(responsePart), HTTP_HEADER_CONTENT_ID_STR);
-                    CHECK(FormatError, contentId != NULL, HTTP_HEADER_CONTENT_ID " header is not present");
-
-                    // Use content-id to get content
-                    const unsigned int contentIdx = cvtZToUInt(strZ(contentId));
+                    // Get the original request for this part by position
                     CHECK_FMT(
-                        FormatError, contentIdx < lstSize(data->requestContentList), "content-id header '%s' is out of range",
-                        strZ(contentId));
-                    const StorageAzureRequestPart *const content = lstGet(data->requestContentList, contentIdx);
+                        FormatError, partIdx < lstSize(data->requestContentList), "response part %u is out of range", partIdx);
+                    const StorageAzureRequestPart *const content = lstGet(data->requestContentList, partIdx);
 
                     // Retry remove
                     statInc(AZURE_STAT_REMOVE_BATCH_RETRY_STR);
-                    storageAzureRequestP(data->this, content->verb, .path = content->path, .allowMissing = true);
+                    httpResponseFree(storageAzureRequestP(data->this, content->verb, .path = content->path, .allowMissing = true));
                 }
                 else
                     statInc(AZURE_STAT_REMOVE_BATCH_PART_STR);
 
                 httpResponseFree(responsePart);
                 responsePart = httpResponseMultiNext(responseMulti);
+                partIdx++;
             }
             while (responsePart != NULL);
         }
@@ -1051,7 +1046,6 @@ storageAzureNew(
             .pathPrefix =
                 uriStyle == storageAzureUriStyleHost ?
                     strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
-            .accountPrefix = uriStyle == storageAzureUriStyleHost ? strNewZ("/") : strNewFmt("/%s", strZ(account)),
             .deleteMax = STORAGE_AZURE_DELETE_MAX,
             .keyType = keyType,
         };
