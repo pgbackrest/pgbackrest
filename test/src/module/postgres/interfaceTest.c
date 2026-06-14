@@ -157,12 +157,12 @@ testRun(void)
         HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_11, .pageChecksumVersion = 2);
 
         TEST_ERROR(
-            pgControlFromFile(storageTest, NULL), FormatError, "page checksum version is 2 but only <= 1 is valid");
+            pgControlFromFile(storageTest, NULL), FormatError, "page checksum version is 2 but must be <= 1");
 
         HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_19, .pageChecksumVersion = 4);
 
         TEST_ERROR(
-            pgControlFromFile(storageTest, NULL), FormatError, "page checksum version is 4 but only <= 3 is valid");
+            pgControlFromFile(storageTest, NULL), FormatError, "page checksum version is 4 but must be <= 3");
 
         HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_19, .pageChecksumVersion = 3);
 
