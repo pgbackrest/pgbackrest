@@ -1,9 +1,7 @@
 /***********************************************************************************************************************************
 LZ4 Common
 ***********************************************************************************************************************************/
-#include "build.auto.h"
-
-#ifdef HAVE_LIBLZ4
+#include <build.h>
 
 #include <lz4frame.h>
 
@@ -23,5 +21,3 @@ lz4Error(const LZ4F_errorCode_t error)
 
     FUNCTION_TEST_RETURN_TYPE(LZ4F_errorCode_t, error);
 }
-
-#endif // HAVE_LIBLZ4

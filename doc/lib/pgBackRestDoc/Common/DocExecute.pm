@@ -24,13 +24,19 @@ use pgBackRestDoc::Common::HostGroup;
 use pgBackRestDoc::Common::Ini;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
-use pgBackRestDoc::Custom::DocConfigData;
 use pgBackRestDoc::ProjectInfo;
 
 ####################################################################################################################################
 # User that's building the docs
 ####################################################################################################################################
 use constant DOC_USER                                              => getpwuid($UID) eq 'root' ? 'ubuntu' : getpwuid($UID) . '';
+
+####################################################################################################################################
+# Option constants
+####################################################################################################################################
+use constant CFGDEF_SECTION_GLOBAL                                  => 'global';
+use constant CFGOPT_LOG_LEVEL_STDERR                                => 'log-level-stderr';
+use constant CFGOPT_LOG_TIMESTAMP                                   => 'log-timestamp';
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -526,8 +532,7 @@ sub backrestConfig
                 else
                 {
                     # If this option is a hash and the value is already set then append to the array
-                    if (defined(cfgDefine()->{$strKey}) &&
-                        cfgDefine()->{$strKey}{&CFGDEF_TYPE} eq CFGDEF_TYPE_HASH &&
+                    if ($oOption->paramTest('multi', 'y') &&
                         defined(${$self->{config}}{$strHostName}{$$hCacheKey{file}}{$strSection}{$strKey}))
                     {
                         my @oValue = ();
@@ -557,10 +562,10 @@ sub backrestConfig
                 }
             }
 
-            my $strLocalFile = '/home/' . DOC_USER . '/data/pgbackrest.conf';
+            my $strLocalFile = abs_path(dirname($0)) . '/output/pgbackrest.conf';
 
             # Save the ini file
-            $self->{oManifest}->storage()->put($strLocalFile, iniRender($self->{config}{$strHostName}{$$hCacheKey{file}}, true));
+            $self->{oManifest}->storage()->put($strLocalFile, iniRender($self->{config}{$strHostName}{$$hCacheKey{file}}));
 
             $oHost->copyTo(
                 $strLocalFile, $$hCacheKey{file},
@@ -577,7 +582,7 @@ sub backrestConfig
                 delete($$oConfigClean{&CFGDEF_SECTION_GLOBAL});
             }
 
-            $self->{oManifest}->storage()->put("${strLocalFile}.clean", iniRender($oConfigClean, true));
+            $self->{oManifest}->storage()->put("${strLocalFile}.clean", iniRender($oConfigClean));
 
             # Push config file into the cache
             $strConfig = ${$self->{oManifest}->storage()->get("${strLocalFile}.clean")};
@@ -655,7 +660,7 @@ sub postgresConfig
                 confess &log(ERROR, "cannot configure postgres on host ${strHostName} because the host does not exist");
             }
 
-            my $strLocalFile = '/home/' . DOC_USER . '/data/postgresql.conf';
+            my $strLocalFile = abs_path(dirname($0)) . '/output/postgresql.conf';
             $oHost->copyFrom($$hCacheKey{file}, $strLocalFile);
 
             if (!defined(${$self->{'pg-config'}}{$strHostName}{$$hCacheKey{file}}{base}) && $self->{bExe})
@@ -933,7 +938,7 @@ sub cachePush
 }
 
 ####################################################################################################################################
-# sectionChildProcesss
+# sectionChildProcess
 ####################################################################################################################################
 sub sectionChildProcess
 {

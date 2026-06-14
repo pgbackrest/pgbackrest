@@ -1,15 +1,28 @@
-# Suppress issues in libssh2 on Ubuntu 20.04
 {
-    libssh2_ubuntu_20_04
-    Memcheck:Addr1
+    libgcc_unwind_uninit_cond
+    Memcheck:Cond
     ...
-    obj:/usr/lib/x86_64-linux-gnu/libssh2.so.1.0.1
-    ...
+    fun:_Unwind_Backtrace
+    fun:backtrace_full
 }
 {
-    libssh2_ubuntu_20_04
+    libgcc_unwind_uninit_value
+    Memcheck:Value8
+    ...
+    fun:_Unwind_Backtrace
+    fun:backtrace_full
+}
+{
+    libssh2_session_handshake
     Memcheck:Leak
+    match-leak-kinds: possible
     ...
-    obj:/usr/lib/x86_64-linux-gnu/libssh2.so.1.0.1
+    fun:libssh2_session_handshake
+}
+{
+    libssh2_session_init_ex
+    Memcheck:Leak
+    match-leak-kinds: possible
     ...
+    fun:libssh2_session_init_ex
 }

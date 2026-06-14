@@ -8,9 +8,22 @@ S3 Storage Read
 #include "storage/s3/storage.intern.h"
 
 /***********************************************************************************************************************************
+Object type
+***********************************************************************************************************************************/
+typedef struct StorageReadS3 StorageReadS3;
+
+/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN StorageRead *storageReadS3New(
-    StorageS3 *storage, const String *name, bool ignoreMissing, uint64_t offset, const Variant *limit);
+FN_EXTERN StorageReadS3 *storageReadS3New(
+    StorageS3 *storage, const String *name, uint64_t offset, const Variant *limit, const String *versionId);
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_LOG_STORAGE_READ_S3_TYPE                                                                                          \
+    StorageReadS3 *
+#define FUNCTION_LOG_STORAGE_READ_S3_FORMAT(value, buffer, bufferSize)                                                             \
+    objNameToLog(value, "StorageReadS3", buffer, bufferSize)
 
 #endif

@@ -20,13 +20,13 @@ typedef enum
 Functions
 ***********************************************************************************************************************************/
 // Encode binary data to a printable string
-FN_EXTERN void encodeToStr(EncodingType type, const unsigned char *source, size_t sourceSize, char *destination);
+FN_EXTERN void encodeToStr(EncodingType type, const uint8_t *source, size_t sourceSize, char *destination);
 
 // Size of the string returned by encodeToStr()
 FN_EXTERN size_t encodeToStrSize(EncodingType type, size_t sourceSize);
 
 // Decode a string to binary data
-FN_EXTERN void decodeToBin(EncodingType type, const char *source, unsigned char *destination);
+FN_EXTERN void decodeToBin(EncodingType type, const char *source, uint8_t *destination);
 
 // Size of the binary data returned by decodeToBin()
 FN_EXTERN size_t decodeToBinSize(EncodingType type, const char *source);

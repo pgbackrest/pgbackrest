@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Manifest Command
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <unistd.h>
 
@@ -15,7 +15,7 @@ Manifest Command
 #include "common/log.h"
 #include "common/type/json.h"
 #include "config/config.h"
-#include "info/manifest.h"
+#include "info/manifest/manifest.h"
 #include "storage/helper.h"
 
 /***********************************************************************************************************************************
@@ -50,10 +50,10 @@ typedef struct ManifestBlockDeltaBlock
 {
     uint64_t no;                                                    // Block number in the super block
     uint64_t offset;                                                // Offset into original file
-    unsigned char checksum[XX_HASH_SIZE_MAX];                       // Checksum of the block
+    uint8_t checksum[XX_HASH_SIZE_MAX];                             // Checksum of the block
 } ManifestBlockDeltaBlock;
 
-FN_EXTERN List *
+static List *
 cmdManifestBlockDelta(
     const BlockMap *const blockMap, const size_t blockSize, const size_t checksumSize, const Buffer *const blockChecksum)
 {
@@ -451,13 +451,13 @@ cmdManifestRender(void)
 
         // Manifest info
         const ManifestData *const data = manifestData(manifest);
-        const bool json = cfgOptionStrId(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON;
+        const bool json = cfgOptionSeq(cfgOptOutput) == CFGOPTVAL_OUTPUT_JSON;
 
         if (json)
         {
             strCatFmt(result, "{\"label\":\"%s\"", strZ(data->backupLabel));
             strCatFmt(result, ",\"reference\":[%s]", strZ(strLstJoinQuote(manifestReferenceList(manifest), ",", "\"")));
-            strCatFmt(result, ",\"type\":\"%s\"", strZ(strIdToStr(data->backupType)));
+            strCatFmt(result, ",\"type\":\"%s\"", zNewStrId(data->backupType));
             strCatFmt(
                 result, ",\"time\":{\"start\":%" PRId64 ",\"copy\":%" PRId64 ",\"stop\":%" PRId64 "}",
                 (int64_t)data->backupTimestampStart, (int64_t)data->backupTimestampCopyStart, (int64_t)data->backupTimestampStop);
@@ -469,7 +469,7 @@ cmdManifestRender(void)
         {
             strCatFmt(result, "label: %s\n", strZ(data->backupLabel));
             strCatFmt(result, "reference: %s\n", strZ(strLstJoin(manifestReferenceList(manifest), ", ")));
-            strCatFmt(result, "type: %s\n", strZ(strIdToStr(data->backupType)));
+            strCatFmt(result, "type: %s\n", zNewStrId(data->backupType));
 
             int64_t duration = (int64_t)(data->backupTimestampStop - data->backupTimestampStart);
 

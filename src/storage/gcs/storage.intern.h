@@ -33,6 +33,8 @@ STRING_DECLARE(GCS_QUERY_UPLOAD_ID_STR);
 /***********************************************************************************************************************************
 JSON tokens
 ***********************************************************************************************************************************/
+#define GCS_JSON_GENERATION                                         "generation"
+VARIANT_DECLARE(GCS_JSON_GENERATION_VAR);
 #define GCS_JSON_MD5_HASH                                           "md5Hash"
 VARIANT_DECLARE(GCS_JSON_MD5_HASH_VAR);
 #define GCS_JSON_NAME                                               "name"

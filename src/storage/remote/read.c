@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Remote Storage Read
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -20,11 +20,16 @@ Remote Storage Read
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct StorageReadRemote
+struct StorageReadRemote
 {
-    StorageReadInterface interface;                                 // Interface
+    const StorageReadInterface *interface;                          // Interface
     StorageRemote *storage;                                         // Storage that created this object
-    StorageRead *read;                                              // Storage read interface
+    IoFilterGroup *filterGroup;                                     // Filter group
+
+    const String *name;                                             // File name
+    uint64_t offset;                                                // Read offset
+    const Variant *limit;                                           // Read limit (NULL for no limit)
+    const String *versionId;                                        // Version id (NULL for most recent)
 
     ProtocolClient *client;                                         // Protocol client for requests
     ProtocolClientSession *session;                                 // Protocol session for requests
@@ -32,19 +37,13 @@ typedef struct StorageReadRemote
     Buffer *block;                                                  // Block currently being read
     bool eof;                                                       // Has the file reached eof?
     bool eofFound;                                                  // Eof found but a block is remaining to be read
+    bool compressible;                                              // Is this file compressible?
+    unsigned int compressLevel;                                     // Level to use for compression
 
 #ifdef DEBUG
     uint64_t protocolReadBytes;                                     // How many bytes were read from the protocol layer?
 #endif
-} StorageReadRemote;
-
-/***********************************************************************************************************************************
-Macros for function logging
-***********************************************************************************************************************************/
-#define FUNCTION_LOG_STORAGE_READ_REMOTE_TYPE                                                                                      \
-    StorageReadRemote *
-#define FUNCTION_LOG_STORAGE_READ_REMOTE_FORMAT(value, buffer, bufferSize)                                                         \
-    objNameToLog(value, "StorageReadRemote", buffer, bufferSize)
+};
 
 /***********************************************************************************************************************************
 Read from a file
@@ -76,7 +75,7 @@ storageReadRemoteInternal(StorageReadRemote *const this, PackRead *const packRea
     // If eof then get results
     if (protocolClientSessionClosed(this->session))
     {
-        ioFilterGroupResultAllSet(ioReadFilterGroup(storageReadIo(this->read)), pckReadPackP(packRead));
+        ioFilterGroupResultAllSet(this->filterGroup, pckReadPackP(packRead));
 
         this->eofFound = true;
 
@@ -174,6 +173,24 @@ storageReadRemoteEof(THIS_VOID)
 }
 
 /***********************************************************************************************************************************
+Set filter group
+***********************************************************************************************************************************/
+static void
+storageReadRemoteFilterGroup(THIS_VOID, IoFilterGroup *const filterGroup)
+{
+    THIS(StorageReadRemote);
+
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_READ_REMOTE, this);
+        FUNCTION_TEST_PARAM(IO_FILTER_GROUP, filterGroup);
+    FUNCTION_TEST_END();
+
+    this->filterGroup = filterGroup;
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Open the file
 ***********************************************************************************************************************************/
 static bool
@@ -192,25 +209,21 @@ storageReadRemoteOpen(THIS_VOID)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If the file is compressible add compression filter on the remote
-        if (this->interface.compressible)
-        {
-            ioFilterGroupAdd(
-                ioReadFilterGroup(storageReadIo(this->read)),
-                compressFilterP(compressTypeGz, (int)this->interface.compressLevel, .raw = true));
-        }
+        if (this->compressible)
+            ioFilterGroupAdd(this->filterGroup, compressFilterP(compressTypeLz4, (int)this->compressLevel, .raw = true));
 
         PackWrite *const param = protocolPackNew();
 
-        pckWriteStrP(param, this->interface.name);
-        pckWriteBoolP(param, this->interface.ignoreMissing);
-        pckWriteU64P(param, this->interface.offset);
+        pckWriteStrP(param, this->name);
+        pckWriteU64P(param, this->offset);
 
-        if (this->interface.limit == NULL)
+        if (this->limit == NULL)
             pckWriteNullP(param);
         else
-            pckWriteU64P(param, varUInt64(this->interface.limit));
+            pckWriteU64P(param, varUInt64(this->limit));
 
-        pckWritePackP(param, ioFilterGroupParamAll(ioReadFilterGroup(storageReadIo(this->read))));
+        pckWriteStrP(param, this->versionId);
+        pckWritePackP(param, ioFilterGroupParamAll(this->filterGroup));
 
         // If the file exists
         PackRead *const packRead = protocolClientSessionOpenP(this->session, .param = param);
@@ -219,11 +232,11 @@ storageReadRemoteOpen(THIS_VOID)
         if (result)
         {
             // Clear filters since they will be run on the remote side
-            ioFilterGroupClear(ioReadFilterGroup(storageReadIo(this->read)));
+            ioFilterGroupClear(this->filterGroup);
 
             // If the file is compressible add decompression filter locally
-            if (this->interface.compressible)
-                ioFilterGroupAdd(ioReadFilterGroup(storageReadIo(this->read)), decompressFilterP(compressTypeGz, .raw = true));
+            if (this->compressible)
+                ioFilterGroupAdd(this->filterGroup, decompressFilterP(compressTypeLz4, .raw = true));
 
             // Read the first block or eof
             storageReadRemoteInternal(this, packRead);
@@ -255,20 +268,29 @@ storageReadRemoteClose(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN StorageRead *
+static const StorageReadInterface storageReadRemoteInterface =
+{
+    .close = storageReadRemoteClose,
+    .eof = storageReadRemoteEof,
+    .filterGroup = storageReadRemoteFilterGroup,
+    .open = storageReadRemoteOpen,
+    .read = storageReadRemote,
+};
+
+FN_EXTERN StorageReadRemote *
 storageReadRemoteNew(
-    StorageRemote *const storage, ProtocolClient *const client, const String *const name, const bool ignoreMissing,
-    const bool compressible, const unsigned int compressLevel, const uint64_t offset, const Variant *const limit)
+    StorageRemote *const storage, ProtocolClient *const client, const String *const name, const bool compressible,
+    const unsigned int compressLevel, const uint64_t offset, const Variant *const limit, const String *const versionId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_REMOTE, storage);
         FUNCTION_LOG_PARAM(PROTOCOL_CLIENT, client);
         FUNCTION_LOG_PARAM(STRING, name);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(BOOL, compressible);
         FUNCTION_LOG_PARAM(UINT, compressLevel);
         FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
+        FUNCTION_LOG_PARAM(STRING, versionId);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -279,34 +301,19 @@ storageReadRemoteNew(
     {
         *this = (StorageReadRemote)
         {
+            .interface = &storageReadRemoteInterface,
             .storage = storage,
             .client = client,
             .session = protocolClientSessionNewP(client, PROTOCOL_COMMAND_STORAGE_READ, .async = true),
-
-            .interface = (StorageReadInterface)
-            {
-                .type = STORAGE_REMOTE_TYPE,
-                .name = strDup(name),
-                .compressible = compressible,
-                .compressLevel = compressLevel,
-                .ignoreMissing = ignoreMissing,
-                .offset = offset,
-                .limit = varDup(limit),
-
-                .ioInterface = (IoReadInterface)
-                {
-                    .close = storageReadRemoteClose,
-                    .eof = storageReadRemoteEof,
-                    .open = storageReadRemoteOpen,
-                    .read = storageReadRemote,
-                },
-            },
+            .name = strDup(name),
+            .compressible = compressible,
+            .compressLevel = compressLevel,
+            .offset = offset,
+            .limit = varDup(limit),
+            .versionId = strDup(versionId),
         };
-
-        this->read = storageReadNew(OBJ_NAME(this, StorageRead::StorageReadRemote), &this->interface);
     }
     OBJ_NEW_END();
 
-    ASSERT(this != NULL);
-    FUNCTION_LOG_RETURN(STORAGE_READ, this->read);
+    FUNCTION_LOG_RETURN(STORAGE_READ_REMOTE, this);
 }

@@ -65,6 +65,6 @@ typedef struct StorageRemoteFilterHandler
     StorageRemoteFilterHandlerNoParam handlerNoParam;               // Handler with no parameters
 } StorageRemoteFilterHandler;
 
-FN_EXTERN void storageRemoteFilterHandlerSet(const StorageRemoteFilterHandler *filterHandler, unsigned int filterHandlerSize);
+FN_EXTERN void storageRemoteFilterHandlerSet(const List *filterHandler);
 
 #endif

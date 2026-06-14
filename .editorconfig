@@ -10,7 +10,3 @@ insert_final_newline = true
 
 [*.{yaml,yml}]
 indent_size = 2
-
-[Makefile.in]
-indent_style = tab
-indent_size = 4

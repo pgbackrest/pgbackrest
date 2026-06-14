@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Archive Push Command
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <string.h>
 #include <unistd.h>
@@ -9,6 +9,7 @@ Archive Push Command
 #include "command/archive/common.h"
 #include "command/archive/push/file.h"
 #include "command/archive/push/protocol.h"
+#include "command/archive/push/push.h"
 #include "command/command.h"
 #include "command/control/common.h"
 #include "command/lock.h"
@@ -361,7 +362,7 @@ cmdArchivePush(void)
 
                     // Generate command options
                     StringList *const commandExec = cfgExecParam(cfgCmdArchivePush, cfgCmdRoleAsync, optionReplace, true, false);
-                    strLstInsert(commandExec, 0, cfgExe());
+                    strLstInsert(commandExec, 0, cfgBin());
                     strLstAdd(commandExec, strPath(walFile));
 
                     // Clear errors for the current archive file
@@ -371,7 +372,7 @@ cmdArchivePush(void)
                     cmdLockReleaseP();
 
                     // Execute the async process
-                    archiveAsyncExec(archiveModePush, commandExec);
+                    cmdAsyncExec(CFGCMD_ARCHIVE_PUSH, commandExec);
 
                     // Mark the async process as forked so it doesn't get forked again. A single run of the async process should be
                     // enough to do the job, running it again won't help anything.

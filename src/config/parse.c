@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Command and Option Parse
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -36,15 +36,19 @@ typedef enum
 } ConfigSection;
 
 /***********************************************************************************************************************************
+Default type enum
+***********************************************************************************************************************************/
+typedef enum
+{
+    cfgDefaultTypeStatic,                                           // A stored static string
+    cfgDefaultTypeDynamic,                                          // Determined at runtime
+} ConfigDefaultType;
+
+/***********************************************************************************************************************************
 Standard config file name and old default path and name
 ***********************************************************************************************************************************/
 #define PGBACKREST_CONFIG_ORIG_PATH_FILE                            "/etc/" PROJECT_CONFIG_FILE
 STRING_STATIC(PGBACKREST_CONFIG_ORIG_PATH_FILE_STR,                 PGBACKREST_CONFIG_ORIG_PATH_FILE);
-
-/***********************************************************************************************************************************
-In some environments this will not be externed
-***********************************************************************************************************************************/
-extern char **environ;
 
 /***********************************************************************************************************************************
 Mem context and local variables
@@ -64,7 +68,7 @@ typedef struct ParseRuleCommand
     unsigned int commandRoleValid : CFG_COMMAND_ROLE_TOTAL;         // Valid for the command role?
     bool lockRequired : 1;                                          // Is an immediate lock required?
     bool lockRemoteRequired : 1;                                    // Is a lock required on the remote?
-    unsigned int lockType : 2;                                      // Lock type required
+    unsigned int lockType : 3;                                      // Lock type required
     bool logFile : 1;                                               // Will the command log to a file?
     unsigned int logLevelDefault : 4;                               // Default log level
     bool parameterAllowed : 1;                                      // Command-line parameters are allowed
@@ -82,6 +86,8 @@ typedef struct ParseRuleCommand
 
 #define PARSE_RULE_COMMAND_ROLE(commandRoleParam)                                                                                  \
     | (1 << cfgCmdRole##commandRoleParam)
+
+#define PARSE_RULE_COMMAND_INTERNAL(internalParam)
 
 #define PARSE_RULE_COMMAND_LOCK_REQUIRED(lockRequiredParam)                                                                        \
     .lockRequired = lockRequiredParam
@@ -123,11 +129,13 @@ typedef struct ParseRuleOption
 {
     const char *name;                                               // Name
     unsigned int type : 4;                                          // e.g. string, int, boolean
+    unsigned int defaultType : 1;                                   // e.g. static, dynamic
     bool boolLike : 1;                                              // Option accepts y/n and can be treated as bool?
     bool beta : 1;                                                  // Is the option a beta feature?
     bool negate : 1;                                                // Can the option be negated on the command line?
     bool reset : 1;                                                 // Can the option be reset on the command line?
     bool required : 1;                                              // Is the option required?
+    bool sequence : 1;                                              // StringId contains sequence?
     unsigned int section : 2;                                       // e.g. global, stanza, cmd-line
     bool secure : 1;                                                // Needs to be redacted in logs and cmd-line?
     bool multi : 1;                                                 // Can be specified multiple times?
@@ -137,7 +145,7 @@ typedef struct ParseRuleOption
     unsigned int packSize : 7;                                      // Size of optional data in pack format
     uint32_t commandRoleValid[CFG_COMMAND_ROLE_TOTAL];              // Valid for the command role?
 
-    const unsigned char *pack;                                      // Optional data in pack format
+    const uint8_t *pack;                                            // Optional data in pack format
 } ParseRuleOption;
 
 // Define additional types of data that can be associated with an option. Because these types are rare they are not given dedicated
@@ -146,6 +154,7 @@ typedef struct ParseRuleOption
 typedef enum
 {
     parseRuleOptionalTypeValid = 1,
+    parseRuleOptionalTypeSequence,
     parseRuleOptionalTypeAllowRange,
     parseRuleOptionalTypeAllowList,
     parseRuleOptionalTypeDefault,
@@ -168,6 +177,12 @@ typedef enum
 #define PARSE_RULE_OPTION_TYPE(typeParam)                                                                                          \
     .type = cfgOptType##typeParam
 
+#define PARSE_RULE_OPTION_INTERNAL(typeParam)
+#define PARSE_RULE_OPTION_COMMAND_INTERNAL_LIST(...)
+
+#define PARSE_RULE_OPTION_DEFAULT_TYPE(defaultTypeParam)                                                                           \
+    .defaultType = cfgDefaultType##defaultTypeParam
+
 #define PARSE_RULE_OPTION_BOOL_LIKE(boolLikeParam)                                                                                 \
     .boolLike = boolLikeParam
 
@@ -188,6 +203,9 @@ typedef enum
 
 #define PARSE_RULE_OPTION_SECURE(secureParam)                                                                                      \
     .secure = secureParam
+
+#define PARSE_RULE_OPTION_SEQUENCE(sequenceParam)                                                                                  \
+    .sequence = sequenceParam
 
 #define PARSE_RULE_OPTION_MULTI(typeMulti)                                                                                         \
     .multi = typeMulti
@@ -213,7 +231,7 @@ typedef enum
 #define PARSE_RULE_OPTION_COMMAND(commandParam)                                                                                    \
     | (1 << cfgCmd##commandParam)
 
-#define PARSE_RULE_STRPUB(value)                                    {.buffer = (char *)value, .size = sizeof(value) - 1}
+#define PARSE_RULE_STRPUB(value)                                    {.buffer = (const char *)value, .size = sizeof(value) - 1}
 
 // Macros used to define optional parse rules in pack format
 #define PARSE_RULE_VARINT_01(value)                                                                                                \
@@ -228,15 +246,17 @@ typedef enum
 
 #define PARSE_RULE_PACK(...)                                        __VA_ARGS__ 0x00
 #define PARSE_RULE_PACK_SIZE(...)                                                                                                  \
-    0xf0, 0x02, sizeof((const unsigned char []){PARSE_RULE_PACK(__VA_ARGS__)}),                                                    \
+    0xf0, 0x02, sizeof((const uint8_t []){PARSE_RULE_PACK(__VA_ARGS__)}),                                                          \
     PARSE_RULE_PACK(__VA_ARGS__)
 
 #define PARSE_RULE_VAL_BOOL_TRUE                                    PARSE_RULE_BOOL_TRUE
 #define PARSE_RULE_VAL_BOOL_FALSE                                   PARSE_RULE_BOOL_FALSE
+#define PARSE_RULE_VAL_STR_IDX(valueIdx)                            ((const String *)&parseRuleValueStr[valueIdx])
+#define PARSE_RULE_VAL_SEQ(value)                                   PARSE_RULE_U32_1(value)
 
 #define PARSE_RULE_OPTIONAL(...)                                                                                                   \
-    .packSize = sizeof((const unsigned char []){PARSE_RULE_PACK(__VA_ARGS__)}),                                                    \
-    .pack = (const unsigned char []){PARSE_RULE_PACK(__VA_ARGS__)}
+    .packSize = sizeof((const uint8_t []){PARSE_RULE_PACK(__VA_ARGS__)}),                                                          \
+    .pack = (const uint8_t []){PARSE_RULE_PACK(__VA_ARGS__)}
 #define PARSE_RULE_OPTIONAL_GROUP(...)                              PARSE_RULE_PACK_SIZE(__VA_ARGS__)
 
 #define PARSE_RULE_FILTER_CMD(...)                                                                                                 \
@@ -244,15 +264,22 @@ typedef enum
 
 #define PARSE_RULE_OPTIONAL_DEPEND(...)                                                                                            \
     PARSE_RULE_U32_1(parseRuleOptionalTypeValid), PARSE_RULE_PACK_SIZE(__VA_ARGS__)
-#define PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(value)                   value
+#define PARSE_RULE_OPTIONAL_SEQUENCE(...)                                                                                          \
+    PARSE_RULE_U32_1(parseRuleOptionalTypeSequence)
+#define PARSE_RULE_OPTIONAL_NO_SEQUENCE(...)                        PARSE_RULE_OPTIONAL_SEQUENCE(__VA_ARGS__)
+#define PARSE_RULE_OPTIONAL_DEPEND_DEFAULT(value)                   PARSE_RULE_BOOL_TRUE, value
 #define PARSE_RULE_OPTIONAL_ALLOW_LIST(...)                                                                                        \
     PARSE_RULE_U32_1(parseRuleOptionalTypeAllowList), PARSE_RULE_PACK_SIZE(__VA_ARGS__)
 #define PARSE_RULE_OPTIONAL_ALLOW_RANGE(...)                                                                                       \
     PARSE_RULE_U32_1(parseRuleOptionalTypeAllowRange), PARSE_RULE_PACK_SIZE(__VA_ARGS__)
+#define PARSE_RULE_OPTIONAL_ALLOW_RANGE_MAP(...)                                                                                   \
+    0x10, __VA_ARGS__ 0x00
 #define PARSE_RULE_OPTIONAL_DEFAULT(...)                                                                                           \
     PARSE_RULE_U32_1(parseRuleOptionalTypeDefault), PARSE_RULE_PACK_SIZE(__VA_ARGS__)
+#define PARSE_RULE_OPTIONAL_DEFAULT_MAP(...)                                                                                       \
+    0x10, __VA_ARGS__ 0x00
 #define PARSE_RULE_OPTIONAL_REQUIRED(...)                                                                                          \
-    PARSE_RULE_U32_1(parseRuleOptionalTypeRequired), PARSE_RULE_PACK_SIZE(__VA_ARGS__)
+    PARSE_RULE_U32_1(parseRuleOptionalTypeRequired)
 #define PARSE_RULE_OPTIONAL_NOT_REQUIRED(...)                       PARSE_RULE_OPTIONAL_REQUIRED(__VA_ARGS__)
 
 /***********************************************************************************************************************************
@@ -595,7 +622,7 @@ cfgParseOption(const String *const optionCandidate, const CfgParseOptionParam pa
         if (dashPtr == optionName)
             THROW_FMT(OptionInvalidError, "option '%s' cannot begin with a dash", strZ(optionCandidate));
 
-        // Check if the first dash is preceeded by a numeric key and keep a tally of the key
+        // Check if the first dash is preceded by a numeric key and keep a tally of the key
         char *numberPtr = dashPtr;
         unsigned int multiplier = 1;
 
@@ -619,11 +646,12 @@ cfgParseOption(const String *const optionCandidate, const CfgParseOptionParam pa
             optionNameSize -= (size_t)(dashPtr - numberPtr);
             memmove(numberPtr, dashPtr, optionNameSize + 1);
 
-            // Check that the index does not exceed the maximum
-            if (result.keyIdx > CFG_OPTION_KEY_MAX)
+            // Check that the index is within bounds
+            if (result.keyIdx < 1 || result.keyIdx > CFG_OPTION_KEY_MAX)
             {
                 THROW_FMT(
-                    OptionInvalidError, "option '%s' key exceeds maximum of " STRINGIFY(CFG_OPTION_KEY_MAX), strZ(optionCandidate));
+                    OptionInvalidError, "option '%s' key must be between 1 and " STRINGIFY(CFG_OPTION_KEY_MAX),
+                    strZ(optionCandidate));
             }
 
             // Subtract one to represent a key index
@@ -837,20 +865,12 @@ cfgParseOptionValueStr(const ConfigOptionType type, unsigned int valueIdx)
             valueIdx = parseRuleValueTimeStrMap[valueIdx];
             break;
 
-        case cfgOptTypePath:
-        case cfgOptTypeString:
-            break;
-
         default:
-        {
-            ASSERT(type == cfgOptTypeStringId);
-
-            valueIdx = parseRuleValueStrIdStrMap[valueIdx];
+            ASSERT(type == cfgOptTypePath || type == cfgOptTypeString || type == cfgOptTypeStringId);
             break;
-        }
     }
 
-    FUNCTION_TEST_RETURN_CONST(STRING, (const String *)&parseRuleValueStr[valueIdx]);
+    FUNCTION_TEST_RETURN_CONST(STRING, PARSE_RULE_VAL_STR_IDX(valueIdx));
 }
 
 /***********************************************************************************************************************************
@@ -881,6 +901,62 @@ cfgParseOptionValue(const ConfigOptionType type, unsigned int valueIdx)
 }
 
 /***********************************************************************************************************************************
+Get default value from pack
+***********************************************************************************************************************************/
+static void
+cfgParseOptionValuePack(
+    PackRead *const ruleData, const ConfigOptionType type, ConfigOptionValueType *value, const String **raw)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(PACK_READ, ruleData);
+        FUNCTION_TEST_PARAM(ENUM, type);
+        FUNCTION_TEST_PARAM_P(VOID, value);
+        FUNCTION_TEST_PARAM_PP(VOID, raw);
+    FUNCTION_TEST_END();
+
+    switch (pckReadType(ruleData))
+    {
+        case pckTypeBool:
+        {
+            value->boolean = pckReadBoolP(ruleData);
+
+            if (raw != NULL)
+                *raw = value->boolean ? Y_STR : N_STR;
+
+            break;
+        }
+
+        default:
+        {
+            const unsigned int valueIdx = pckReadU32P(ruleData);
+
+            switch (type)
+            {
+                case cfgOptTypeInteger:
+                case cfgOptTypeSize:
+                case cfgOptTypeTime:
+                    value->integer = cfgParseOptionValue(type, valueIdx);
+                    break;
+
+                case cfgOptTypePath:
+                case cfgOptTypeString:
+                    value->string = PARSE_RULE_VAL_STR_IDX(valueIdx);
+                    break;
+
+                default:
+                    ASSERT(type == cfgOptTypeStringId);
+                    break;
+            }
+
+            if (raw != NULL)
+                *raw = cfgParseOptionValueStr(type, valueIdx);
+        }
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Find an optional rule
 ***********************************************************************************************************************************/
 typedef struct CfgParseOptionalRuleState
@@ -890,22 +966,29 @@ typedef struct CfgParseOptionalRuleState
     bool done;
 
     // Valid
-    const unsigned char *valid;
+    const uint8_t *valid;
     size_t validSize;
+    unsigned int matchValue;
+
+    // Sequence
+    bool sequence;
 
     // Allow range
     int64_t allowRangeMin;
     int64_t allowRangeMax;
     unsigned int allowRangeMinIdx;
     unsigned int allowRangeMaxIdx;
+    bool allowRangeMatch;
 
     // Allow list
-    const unsigned char *allowList;
+    const uint8_t *allowList;
     size_t allowListSize;
 
     // Default
+    const String *const defaultDynamicBin;                          // Binary for dynamic default
     const String *defaultRaw;
     ConfigOptionValueType defaultValue;
+    uint8_t defaultSequence;                                        // Sequence for the default
 
     // Required
     bool required;
@@ -930,6 +1013,7 @@ cfgParseOptionalRule(
     ASSERT(optionId < CFG_OPTION_TOTAL);
 
     bool result = false;
+    bool match = false;
 
     // Check for optional rules
     const ParseRuleOption *const ruleOption = &parseRuleOption[optionId];
@@ -943,7 +1027,7 @@ cfgParseOptionalRule(
             {
                 PackRead *const groupList = pckReadNewC(ruleOption->pack, ruleOption->packSize);
 
-                // Seach for a matching group
+                // Search for a matching group
                 do
                 {
                     // Get the group pack
@@ -1028,8 +1112,9 @@ cfgParseOptionalRule(
             // If this is the requested optional rule
             if (optionalRules->typeNext == optionalRuleType)
             {
-                // Optional rule was found
+                // Optional rule was found and dependency was matched
                 result = true;
+                match = true;
 
                 // Process optional rule
                 switch (optionalRuleType)
@@ -1044,6 +1129,10 @@ cfgParseOptionalRule(
                         pckReadConsume(optionalRules->pack);
                         break;
                     }
+
+                    case parseRuleOptionalTypeSequence:
+                        optionalRules->sequence = !ruleOption->sequence;
+                        break;
 
                     case parseRuleOptionalTypeAllowList:
                     {
@@ -1060,8 +1149,33 @@ cfgParseOptionalRule(
                     {
                         PackRead *const ruleData = pckReadPackReadConstP(optionalRules->pack);
 
-                        optionalRules->allowRangeMinIdx = pckReadU32P(ruleData);
-                        optionalRules->allowRangeMaxIdx = pckReadU32P(ruleData);
+                        pckReadNext(ruleData);
+
+                        if (pckReadType(ruleData) == pckTypeArray)
+                        {
+                            pckReadArrayBeginP(ruleData);
+
+                            while (!pckReadNullP(ruleData))         // {uncovered_branch - no options with partial allow range maps}
+                            {
+                                const unsigned int map = pckReadU32P(ruleData);
+                                optionalRules->allowRangeMinIdx = pckReadU32P(ruleData);
+                                optionalRules->allowRangeMaxIdx = pckReadU32P(ruleData);
+
+                                if (map == optionalRules->matchValue)
+                                {
+                                    optionalRules->allowRangeMatch = true;
+                                    break;
+                                }
+                            }
+
+                            match = optionalRules->allowRangeMatch;
+                        }
+                        else
+                        {
+                            optionalRules->allowRangeMinIdx = pckReadU32P(ruleData);
+                            optionalRules->allowRangeMaxIdx = pckReadU32P(ruleData);
+                        }
+
                         optionalRules->allowRangeMin = cfgParseOptionValue(ruleOption->type, optionalRules->allowRangeMinIdx);
                         optionalRules->allowRangeMax = cfgParseOptionValue(ruleOption->type, optionalRules->allowRangeMaxIdx);
 
@@ -1071,38 +1185,52 @@ cfgParseOptionalRule(
                     case parseRuleOptionalTypeDefault:
                     {
                         PackRead *const ruleData = pckReadPackReadConstP(optionalRules->pack);
-                        pckReadNext(ruleData);
 
-                        switch (pckReadType(ruleData))
+                        if (ruleOption->defaultType == cfgDefaultTypeDynamic)
                         {
-                            case pckTypeBool:
-                                optionalRules->defaultValue.boolean = pckReadBoolP(ruleData);
-                                optionalRules->defaultRaw = optionalRules->defaultValue.boolean ? Y_STR : N_STR;
-                                break;
+                            ASSERT(ruleOption->type == cfgOptTypeString);
+                            ASSERT(!ruleOption->sequence);
 
-                            default:
+                            // No need to check the value until there is more than one
+                            pckReadU32P(ruleData);
+
+                            optionalRules->defaultValue.string = optionalRules->defaultDynamicBin;
+                            optionalRules->defaultRaw = optionalRules->defaultDynamicBin;
+                        }
+                        else
+                        {
+                            ASSERT(ruleOption->defaultType == cfgDefaultTypeStatic);
+
+                            pckReadNext(ruleData);
+
+                            if (pckReadType(ruleData) == pckTypeArray)
                             {
-                                const unsigned int valueIdx = pckReadU32P(ruleData);
+                                ASSERT(!ruleOption->sequence);
 
-                                switch (ruleOption->type)
+                                pckReadArrayBeginP(ruleData);
+                                match = false;
+
+                                while (!pckReadNullP(ruleData))
                                 {
-                                    case cfgOptTypeInteger:
-                                    case cfgOptTypeSize:
-                                    case cfgOptTypeTime:
-                                        optionalRules->defaultValue.integer = cfgParseOptionValue(ruleOption->type, valueIdx);
-                                        break;
+                                    const unsigned int map = pckReadU32P(ruleData);
 
-                                    case cfgOptTypePath:
-                                    case cfgOptTypeString:
-                                        optionalRules->defaultValue.string = cfgParseOptionValueStr(ruleOption->type, valueIdx);
-                                        break;
+                                    cfgParseOptionValuePack(
+                                        ruleData, ruleOption->type, &optionalRules->defaultValue, &optionalRules->defaultRaw);
 
-                                    case cfgOptTypeStringId:
-                                        optionalRules->defaultValue.stringId = parseRuleValueStrId[valueIdx];
+                                    if (map == optionalRules->matchValue)
+                                    {
+                                        match = true;
                                         break;
+                                    }
                                 }
+                            }
+                            else
+                            {
+                                cfgParseOptionValuePack(
+                                    ruleData, ruleOption->type, &optionalRules->defaultValue, &optionalRules->defaultRaw);
 
-                                optionalRules->defaultRaw = cfgParseOptionValueStr(ruleOption->type, valueIdx);
+                                if (optionalRules->sequence)
+                                    optionalRules->defaultSequence = (uint8_t)pckReadU32P(ruleData);
                             }
                         }
 
@@ -1134,7 +1262,7 @@ cfgParseOptionalRule(
         while (!result);
     }
 
-    FUNCTION_TEST_RETURN(BOOL, result);
+    FUNCTION_TEST_RETURN(BOOL, result && match);
 }
 
 /***********************************************************************************************************************************
@@ -1142,16 +1270,20 @@ Resolve an option dependency
 ***********************************************************************************************************************************/
 typedef struct CfgParseOptionalFilterDependResult
 {
-    bool valid;
-    bool defaultExists;
-    bool defaultValue;
+    bool valid;                                                     // Is the dependency valid?
+    bool defaultExists;                                             // Is there a default of the dependency is not valid?
+    ConfigOption dependId;                                          // Option id for the dependency
+    ConfigOptionValueType defaultValue;                             // Default value if dependency is not valid
+    unsigned int matchValue;                                        // Match value if the dependency is valid
 } CfgParseOptionalFilterDependResult;
 
 static CfgParseOptionalFilterDependResult
-cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config, const unsigned int optionListIdx)
+cfgParseOptionalFilterDepend(
+    PackRead *const filter, const ConfigOptionType optionType, const Config *const config, const unsigned int optionListIdx)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(PACK_READ, filter);
+        FUNCTION_TEST_PARAM(ENUM, optionType);
         FUNCTION_TEST_PARAM_P(VOID, config);
         FUNCTION_TEST_PARAM(UINT, optionListIdx);
     FUNCTION_TEST_END();
@@ -1163,15 +1295,19 @@ cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config,
 
     if (pckReadType(filter) == pckTypeBool)
     {
+        pckReadBoolP(filter);
+        pckReadNext(filter);
+
         result.defaultExists = true;
-        result.defaultValue = pckReadBoolP(filter);
+
+        cfgParseOptionValuePack(filter, optionType, &result.defaultValue, NULL);
     }
 
     // Get the depend option value
-    const ConfigOption dependId = (ConfigOption)pckReadU32P(filter);
-    ASSERT(config->option[dependId].index != NULL);
+    result.dependId = (ConfigOption)pckReadU32P(filter);
+    ASSERT(config->option[result.dependId].index != NULL);
     const ConfigOptionValue *const dependValue =
-        &config->option[dependId].index[parseRuleOption[dependId].group ? optionListIdx : 0];
+        &config->option[result.dependId].index[parseRuleOption[result.dependId].group ? optionListIdx : 0];
 
     // Is the dependency resolved?
     if (dependValue->set)
@@ -1181,7 +1317,7 @@ cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config,
         {
             do
             {
-                switch (cfgParseOptionDataType(dependId))
+                switch (cfgParseOptionDataType(result.dependId))
                 {
                     case cfgOptDataTypeBoolean:
                         result.valid = pckReadBoolP(filter) == dependValue->value.boolean;
@@ -1189,13 +1325,18 @@ cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config,
 
                     default:
                     {
-                        ASSERT(cfgParseOptionDataType(dependId) == cfgOptDataTypeStringId);
+                        ASSERT(cfgParseOptionDataType(result.dependId) == cfgOptDataTypeStringId);
+                        result.matchValue = pckReadU32P(filter);
 
-                        if (parseRuleValueStrId[pckReadU32P(filter)] == dependValue->value.stringId)
+                        if (strEq(PARSE_RULE_VAL_STR_IDX(result.matchValue), dependValue->display))
                             result.valid = true;
+
                         break;
                     }
                 }
+
+                if (result.valid)
+                    break;
             }
             while (pckReadNext(filter));
         }
@@ -1204,32 +1345,6 @@ cfgParseOptionalFilterDepend(PackRead *const filter, const Config *const config,
     }
 
     FUNCTION_TEST_RETURN_TYPE(CfgParseOptionalFilterDependResult, result);
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN const String *
-cfgParseOptionDefault(const ConfigCommand commandId, const ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandId < CFG_COMMAND_TOTAL);
-    ASSERT(optionId < CFG_OPTION_TOTAL);
-
-    const String *result = NULL;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        CfgParseOptionalRuleState optionalRules = {0};
-
-        if (cfgParseOptionalRule(&optionalRules, parseRuleOptionalTypeDefault, commandId, optionId))
-            result = optionalRules.defaultRaw;
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_TEST_RETURN_CONST(STRING, result);
 }
 
 /**********************************************************************************************************************************/
@@ -1271,39 +1386,6 @@ cfgParseOptionKeyIdxName(const ConfigOption optionId, const unsigned int keyIdx)
 
     // Else return the stored name
     FUNCTION_TEST_RETURN_CONST(STRINGZ, ruleOption->name);
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN bool
-cfgParseOptionRequired(const ConfigCommand commandId, const ConfigOption optionId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, commandId);
-        FUNCTION_TEST_PARAM(ENUM, optionId);
-    FUNCTION_TEST_END();
-
-    ASSERT(commandId < CFG_COMMAND_TOTAL);
-    ASSERT(optionId < CFG_OPTION_TOTAL);
-
-    bool found = false;
-    bool result = false;
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        CfgParseOptionalRuleState optionalRules = {0};
-
-        if (cfgParseOptionalRule(&optionalRules, parseRuleOptionalTypeRequired, commandId, optionId))
-        {
-            found = true;
-            result = optionalRules.required;
-        }
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    if (found)
-        FUNCTION_TEST_RETURN(BOOL, result);
-
-    FUNCTION_TEST_RETURN(BOOL, parseRuleOption[optionId].required);
 }
 
 /**********************************************************************************************************************************/
@@ -1551,7 +1633,7 @@ logic to this critical path code.
 // Helper to check that option values are valid for conditional builds. This is a bit tricky since the distros used for unit testing
 // have all possible features enabled, so this is split out to allow it to be tested independently. The loop variable is
 // intentionally integrated into this function to make it obvious if it is omitted from the caller.
-FN_EXTERN bool
+static bool
 cfgParseOptionValueCondition(
     bool more, PackRead *const allowList, const bool allowListFound, const unsigned int optionId, const unsigned int optionKeyIdx,
     const String *const valueAllow)
@@ -1626,7 +1708,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
             {
                 .memContext = MEM_CONTEXT_NEW(),
                 .command = cfgCmdHelp,
-                .exe = strNewZ(argList[0]),
+                .bin = strNewZ(argList[0]),
             };
         }
         OBJ_NEW_END();
@@ -1893,84 +1975,92 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
         if (!param.noResetLogLevel && config->commandRole == cfgCmdRoleMain)
             logInit(logLevelWarn, logLevelOff, logLevelOff, false, 0, 1, false);
 
+        // Determine whether any options should be loaded from the environment or config files. The help and version commands do
+        // not use any non command-line options so they can skip this step. This prevents basic help or version from failing if,
+        // e.g. the process does not have access to load the config file or there is an invalid option in the environment.
+        const bool optionLoad = config->command != cfgCmdHelp && config->command != cfgCmdVersion;
+
         // Phase 2: parse environment variables
         // -------------------------------------------------------------------------------------------------------------------------
-        unsigned int environIdx = 0;
-
-        // Loop through all environment variables and look for our env vars by matching the prefix
-        while (environ[environIdx] != NULL)
+        if (optionLoad)
         {
-            const char *keyValue = environ[environIdx];
-            environIdx++;
+            unsigned int environIdx = 0;
 
-            if (strstr(keyValue, PGBACKREST_ENV) == keyValue)
+            // Loop through all environment variables and look for our env vars by matching the prefix
+            while (environ[environIdx] != NULL)
             {
-                // Find the first = char
-                const char *const equalPtr = strchr(keyValue, '=');
-                ASSERT(equalPtr != NULL);
+                const char *keyValue = environ[environIdx];
+                environIdx++;
 
-                // Get key and value
-                const String *const key = strReplaceChr(
-                    strLower(strNewZN(keyValue + PGBACKREST_ENV_SIZE, (size_t)(equalPtr - (keyValue + PGBACKREST_ENV_SIZE)))),
-                    '_', '-');
-                const String *const value = STR(equalPtr + 1);
-
-                // Find the option
-                CfgParseOptionResult option = cfgParseOptionP(key);
-
-                // Warn if the option not found
-                if (!option.found)
+                if (strstr(keyValue, PGBACKREST_ENV) == keyValue)
                 {
-                    LOG_WARN_FMT("environment contains invalid option '%s'", strZ(key));
-                    continue;
-                }
-                // Warn if negate option found in env
-                else if (option.negate)
-                {
-                    LOG_WARN_FMT("environment contains invalid negate option '%s'", strZ(key));
-                    continue;
-                }
-                // Warn if reset option found in env
-                else if (option.reset)
-                {
-                    LOG_WARN_FMT("environment contains invalid reset option '%s'", strZ(key));
-                    continue;
-                }
+                    // Find the first = char
+                    const char *const equalPtr = strchr(keyValue, '=');
+                    ASSERT(equalPtr != NULL);
 
-                // Continue if the option is not valid for this command
-                if (!cfgParseOptionValid(config->command, config->commandRole, option.id))
-                    continue;
+                    // Get key and value
+                    const String *const key = strReplaceChr(
+                        strLower(strNewZN(keyValue + PGBACKREST_ENV_SIZE, (size_t)(equalPtr - (keyValue + PGBACKREST_ENV_SIZE)))),
+                        '_', '-');
+                    const String *const value = STR(equalPtr + 1);
 
-                if (strSize(value) == 0)
-                    THROW_FMT(OptionInvalidValueError, "environment variable '%s' must have a value", strZ(key));
+                    // Find the option
+                    CfgParseOptionResult option = cfgParseOptionP(key);
 
-                // Continue if the option has already been specified on the command line
-                ParseOptionValue *optionValue = parseOptionIdxValue(parseOptionList, option.id, option.keyIdx);
+                    // Warn if the option not found
+                    if (!option.found)
+                    {
+                        LOG_WARN_FMT("environment contains invalid option '%s'", strZ(key));
+                        continue;
+                    }
+                    // Warn if negate option found in env
+                    else if (option.negate)
+                    {
+                        LOG_WARN_FMT("environment contains invalid negate option '%s'", strZ(key));
+                        continue;
+                    }
+                    // Warn if reset option found in env
+                    else if (option.reset)
+                    {
+                        LOG_WARN_FMT("environment contains invalid reset option '%s'", strZ(key));
+                        continue;
+                    }
 
-                if (optionValue->found)
-                    continue;
+                    // Continue if the option is not valid for this command
+                    if (!cfgParseOptionValid(config->command, config->commandRole, option.id))
+                        continue;
 
-                optionValue->found = true;
-                optionValue->source = cfgSourceConfig;
+                    if (strSize(value) == 0)
+                        THROW_FMT(OptionInvalidValueError, "environment variable '%s' must have a value", strZ(key));
 
-                // Convert boolean to string
-                if (cfgParseOptionType(option.id) == cfgOptTypeBoolean)
-                {
-                    if (strEqZ(value, "n"))
-                        optionValue->negate = true;
-                    else if (!strEqZ(value, "y"))
-                        THROW_FMT(OptionInvalidValueError, "environment boolean option '%s' must be 'y' or 'n'", strZ(key));
-                }
-                // Else split list/hash into separate values
-                else if (option.multi)
-                {
-                    optionValue->valueList = strLstNewSplitZ(value, ":");
-                }
-                // Else add the string value
-                else
-                {
-                    optionValue->valueList = strLstNew();
-                    strLstAdd(optionValue->valueList, value);
+                    // Continue if the option has already been specified on the command line
+                    ParseOptionValue *optionValue = parseOptionIdxValue(parseOptionList, option.id, option.keyIdx);
+
+                    if (optionValue->found)
+                        continue;
+
+                    optionValue->found = true;
+                    optionValue->source = cfgSourceConfig;
+
+                    // Convert boolean to string
+                    if (cfgParseOptionType(option.id) == cfgOptTypeBoolean)
+                    {
+                        if (strEqZ(value, "n"))
+                            optionValue->negate = true;
+                        else if (!strEqZ(value, "y"))
+                            THROW_FMT(OptionInvalidValueError, "environment boolean option '%s' must be 'y' or 'n'", strZ(key));
+                    }
+                    // Else split list/hash into separate values
+                    else if (option.multi)
+                    {
+                        optionValue->valueList = strLstNewSplitZ(value, ":");
+                    }
+                    // Else add the string value
+                    else
+                    {
+                        optionValue->valueList = strLstNew();
+                        strLstAdd(optionValue->valueList, value);
+                    }
                 }
             }
         }
@@ -1978,12 +2068,12 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
         // Phase 3: parse config file unless --no-config passed
         // -------------------------------------------------------------------------------------------------------------------------
         // Load the configuration file(s)
-        if (!param.noConfigLoad)
+        if (!param.noConfigLoad && optionLoad)
         {
             const String *const configString = cfgFileLoad(
                 storage, parseOptionList,
-                (const String *)&parseRuleValueStr[parseRuleValStrCFGOPTDEF_CONFIG_PATH_SP_QT_FS_QT_SP_PROJECT_CONFIG_FILE],
-                (const String *)&parseRuleValueStr[parseRuleValStrCFGOPTDEF_CONFIG_PATH_SP_QT_FS_QT_SP_PROJECT_CONFIG_INCLUDE_PATH],
+                PARSE_RULE_VAL_STR_IDX(parseRuleValStrCFGOPTDEF_CONFIG_PATH_SP_QT_FS_QT_SP_PROJECT_CONFIG_FILE),
+                PARSE_RULE_VAL_STR_IDX(parseRuleValStrCFGOPTDEF_CONFIG_PATH_SP_QT_FS_QT_SP_PROJECT_CONFIG_INCLUDE_PATH),
                 PGBACKREST_CONFIG_ORIG_PATH_FILE_STR);
 
             iniFree(configParseLocal.ini);
@@ -2162,6 +2252,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
             if (cfgParseOptionValid(config->command, config->commandRole, optionId))
             {
                 config->option[optionId].valid = true;
+                config->option[optionId].sequence = ruleOption->sequence;
                 config->option[optionId].dataType = cfgParseOptionDataType(optionId);
                 config->option[optionId].group = ruleOption->group;
                 config->option[optionId].groupId = ruleOption->groupId;
@@ -2309,13 +2400,16 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 *configOptionValue = (ConfigOptionValue){.negate = parseOptionValue->negate, .reset = parseOptionValue->reset};
 
                 // Is the option valid?
-                CfgParseOptionalRuleState optionalRules = {0};
+                CfgParseOptionalRuleState optionalRules = {.defaultDynamicBin = config->bin};
                 CfgParseOptionalFilterDependResult dependResult = {.valid = true};
+                const char *dependOptionName = NULL;
 
                 if (cfgParseOptionalRule(&optionalRules, parseRuleOptionalTypeValid, config->command, optionId))
                 {
                     PackRead *const filter = pckReadNewC(optionalRules.valid, optionalRules.validSize);
-                    dependResult = cfgParseOptionalFilterDepend(filter, config, optionListIdx);
+                    dependResult = cfgParseOptionalFilterDepend(filter, optionType, config, optionListIdx);
+                    dependOptionName = cfgParseOptionKeyIdxName(
+                        dependResult.dependId, parseRuleOption[dependResult.dependId].group ? optionKeyIdx : 0);
 
                     // If depend not resolved and option value is set on the command-line then error. It is OK to have unresolved
                     // options in the config file because they may be there for another command. For instance, spool-path is only
@@ -2329,12 +2423,13 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                         pckReadNext(filter);
 
                         if (pckReadType(filter) == pckTypeBool)
+                        {
                             pckReadBoolP(filter);
+                            pckReadConsume(filter);
+                        }
 
                         // Get depend option id and name
                         const ConfigOption dependId = pckReadU32P(filter);
-                        const String *dependOptionName = STR(
-                            cfgParseOptionKeyIdxName(dependId, parseRuleOption[dependId].group ? optionKeyIdx : 0));
 
                         // If depend value is not set
                         ASSERT(config->option[dependId].index != NULL);
@@ -2343,7 +2438,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                         {
                             THROW_FMT(
                                 OptionInvalidError, "option '%s' not valid without option '%s'",
-                                cfgParseOptionKeyIdxName(optionId, optionKeyIdx), strZ(dependOptionName));
+                                cfgParseOptionKeyIdxName(optionId, optionKeyIdx), dependOptionName);
                         }
 
                         // Build type dependent error data
@@ -2354,7 +2449,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                             case cfgOptTypeBoolean:
                             {
                                 if (!pckReadBoolP(filter))
-                                    dependOptionName = strNewFmt("no-%s", strZ(dependOptionName));
+                                    dependOptionName = zNewFmt("no-%s", dependOptionName);
 
                                 break;
                             }
@@ -2384,11 +2479,20 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
 
                         THROW_FMT(
                             OptionInvalidError, "option '%s' not valid without option '%s'%s",
-                            cfgParseOptionKeyIdxName(optionId, optionKeyIdx), strZ(dependOptionName), strZ(errorValue));
+                            cfgParseOptionKeyIdxName(optionId, optionKeyIdx), dependOptionName, strZ(errorValue));
                     }
+
+                    // Store the match value in case we need it to find the default, range, etc.
+                    optionalRules.matchValue = dependResult.matchValue;
 
                     pckReadFree(filter);
                 }
+
+                // Does the command override sequence?
+                if (cfgParseOptionalRule(&optionalRules, parseRuleOptionalTypeSequence, config->command, optionId))
+                    config->option[optionId].sequence = optionalRules.sequence;
+                else
+                    optionalRules.sequence = config->option[optionId].sequence;
 
                 if (dependResult.valid)
                 {
@@ -2428,7 +2532,21 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                                         cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
                                 }
 
-                                kvPut(value, VARSTR(strNewZN(pair, (size_t)(equal - pair))), VARSTRZ(equal + 1));
+                                // Warn if a value will be overwritten
+                                const Variant *const key = VARSTR(strNewZN(pair, (size_t)(equal - pair)));
+                                const String *const old = varStr(kvGet(value, key));
+                                const Variant *const new = VARSTRZ(equal + 1);
+
+                                if (old != NULL)
+                                {
+                                    LOG_WARN_FMT(
+                                        "key '%s' value '%s' is overwritten with '%s' for '%s' option",
+                                        strZ(varStr(key)), strZ(old), strZ(varStr(new)),
+                                        cfgParseOptionKeyIdxName(optionId, optionKeyIdx));
+                                }
+
+                                // Put the value (overwriting if the key already exists)
+                                kvPut(value, key, new);
                             }
 
                             configOptionValue->value.keyValue = value;
@@ -2493,20 +2611,20 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                                 {
                                     THROW_FMT(
                                         OptionInvalidValueError,
-                                        "'%s' is out of range for '%s' option\n"
+                                        "'%s' is out of range for '%s' option%s\n"
                                         "HINT: allowed range is %s to %s inclusive",
                                         strZ(value), cfgParseOptionKeyIdxName(optionId, optionKeyIdx),
+                                        optionalRules.allowRangeMatch ?
+                                            zNewFmt(
+                                                " when '%s' option = '%s'", dependOptionName,
+                                                strZ(PARSE_RULE_VAL_STR_IDX(optionalRules.matchValue))) :
+                                            "",
                                         strZ(cfgParseOptionValueStr(optionType, optionalRules.allowRangeMinIdx)),
                                         strZ(cfgParseOptionValueStr(optionType, optionalRules.allowRangeMaxIdx)));
                                 }
                             }
-                            // Else if StringId
-                            else if (optionType == cfgOptTypeStringId)
-                            {
-                                configOptionValue->value.stringId = strIdFromZN(strZ(valueAllow), strSize(valueAllow), false);
-                            }
                             // Else if string make sure it is valid
-                            else
+                            else if (optionType != cfgOptTypeStringId)
                             {
                                 ASSERT(optionType == cfgOptTypePath || optionType == cfgOptTypeString);
 
@@ -2560,6 +2678,7 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                             {
                                 PackRead *const allowList = pckReadNewC(optionalRules.allowList, optionalRules.allowListSize);
                                 bool allowListFound = false;
+                                unsigned int sequence = 0;
 
                                 pckReadNext(allowList);
 
@@ -2571,8 +2690,18 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                                     switch (ruleOption->type)
                                     {
                                         case cfgOptTypeStringId:
-                                            allowListFound = parseRuleValueStrId[valueIdx] == configOptionValue->value.stringId;
+                                        {
+                                            if (strEq(PARSE_RULE_VAL_STR_IDX(valueIdx), configOptionValue->display))
+                                            {
+                                                allowListFound = true;
+
+                                                if (optionalRules.sequence)
+                                                    configOptionValue->sequence = (uint8_t)sequence;
+                                            }
+
+                                            sequence++;
                                             break;
+                                        }
 
                                         default:
                                             allowListFound =
@@ -2622,31 +2751,30 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                     {
                         configOptionValue->source = parseOptionValue->source;
                     }
-                    // Else try to set a default
-                    else
+
+                    if ((!configOptionValue->set && !parseOptionValue->negate) || config->help)
                     {
-                        bool found = false;
-
-                        MEM_CONTEXT_BEGIN(config->memContext)
-                        {
-                            found = cfgParseOptionalRule(&optionalRules, parseRuleOptionalTypeDefault, config->command, optionId);
-                        }
-                        MEM_CONTEXT_END();
-
                         // If the option has a default
-                        if (found)
+                        if (cfgParseOptionalRule(&optionalRules, parseRuleOptionalTypeDefault, config->command, optionId))
                         {
-                            configOptionValue->set = true;
-                            configOptionValue->value = optionalRules.defaultValue;
+                            if (!configOptionValue->set)
+                            {
+                                configOptionValue->set = true;
+                                configOptionValue->value = optionalRules.defaultValue;
+                                configOptionValue->sequence = optionalRules.defaultSequence;
+                                configOptionValue->display = optionalRules.defaultRaw;
+                            }
+
+                            configOptionValue->defaultValue = optionalRules.defaultRaw;
                         }
                         // Else error if option is required and help was not requested
-                        else
+                        else if (!config->help)
                         {
                             const bool required =
                                 cfgParseOptionalRule(&optionalRules, parseRuleOptionalTypeRequired, config->command, optionId) ?
                                     optionalRules.required : ruleOption->required;
 
-                            if (required && !config->help)
+                            if (required)
                             {
                                 THROW_FMT(
                                     OptionRequiredError, "%s command requires option: %s%s",
@@ -2663,8 +2791,14 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                 // Else apply the default for the unresolved dependency, if it exists
                 else if (dependResult.defaultExists)
                 {
-                    configOptionValue->set = true;
-                    configOptionValue->value.boolean = dependResult.defaultValue;
+                    // Fully reinitialize since it might have been left partially set if dependency was not resolved
+                    *configOptionValue = (ConfigOptionValue)
+                    {
+                        .set = true,
+                        .value = dependResult.defaultValue,
+                        .defaultValue = optionalRules.defaultRaw,
+                        .display = optionalRules.defaultRaw,
+                    };
                 }
 
                 pckReadFree(optionalRules.pack);

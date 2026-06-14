@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Storage Test Harness
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -60,7 +60,7 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
     // Add compression extension if one exists
     compressExtCat(fileFull, param.compressType);
 
-    // Declare an information filter for displaying paramaters to the output
+    // Declare an information filter for displaying parameters to the output
     String *const filter = strNew();
 
     StorageRead *read = storageNewReadP(storage, fileFull, .ignoreMissing = param.nullOnMissing);
@@ -75,7 +75,7 @@ testStorageGet(const Storage *const storage, const char *const file, const char 
 
         ioFilterGroupAdd(filterGroup, cipherBlockNewP(cipherModeDecrypt, param.cipherType, BUFSTRZ(param.cipherPass)));
 
-        strCatFmt(filter, "enc[%s,%s] ", strZ(strIdToStr(param.cipherType)), param.cipherPass);
+        strCatFmt(filter, "enc[%s,%s] ", zNewStrId(param.cipherType), param.cipherPass);
     }
 
     // Add decompress filter
@@ -111,7 +111,7 @@ testStorageExists(const Storage *const storage, const char *const file, const Te
     printf("file exists '%s'", strZ(fileFull));
     hrnTestResultComment(param.comment);
 
-    hrnTestResultBool(storageExistsP(storage, fileFull), true);
+    hrnTestResultBool(storageExistsP(storage, fileFull, .timeout = param.timeout), true);
 
     if (param.remove)
         storageRemoveP(storage, fileFull, .errorOnMissing = true);
@@ -229,7 +229,12 @@ hrnStorageList(const Storage *const storage, const char *const path, const char 
             strCatZ(item, " {");
 
             if (info.type == storageTypeFile)
+            {
                 strCatFmt(item, "s=%" PRIu64 ", t=%" PRId64, info.size, (int64_t)info.timeModified);
+
+                if (info.versionId != NULL)
+                    strCatFmt(item, ", v=%s", strZ(info.versionId));
+            }
             else if (info.type == storageTypeLink)
             {
                 const StorageInfo infoLink = storageInfoP(
@@ -368,7 +373,7 @@ hrnStoragePut(
     StorageWrite *destination = storageNewWriteP(storage, fileStr, .modeFile = param.modeFile, .timeModified = param.timeModified);
     IoFilterGroup *filterGroup = ioWriteFilterGroup(storageWriteIo(destination));
 
-    // Declare an information filter for displaying paramaters to the output
+    // Declare an information filter for displaying parameters to the output
     String *const filter = strNew();
 
     // Add mode to output information filter

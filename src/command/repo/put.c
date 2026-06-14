@@ -1,11 +1,12 @@
 /***********************************************************************************************************************************
 Repository Put Command
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <unistd.h>
 
 #include "command/repo/common.h"
+#include "command/repo/put.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/io/fdRead.h"

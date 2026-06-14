@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Protocol Server
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <string.h>
 
@@ -192,20 +192,17 @@ protocolServerRequest(ProtocolServer *const this)
 
 /**********************************************************************************************************************************/
 FN_EXTERN void
-protocolServerProcess(
-    ProtocolServer *const this, const VariantList *const retryInterval, const ProtocolServerHandler *const handlerList,
-    const unsigned int handlerListSize)
+protocolServerProcess(ProtocolServer *const this, const VariantList *const retryInterval, const List *const handlerList)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PROTOCOL_SERVER, this);
         FUNCTION_LOG_PARAM(VARIANT_LIST, retryInterval);
-        FUNCTION_LOG_PARAM_P(VOID, handlerList);
-        FUNCTION_LOG_PARAM(UINT, handlerListSize);
+        FUNCTION_LOG_PARAM(LIST, handlerList);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(handlerList != NULL);
-    ASSERT(handlerListSize > 0);
+    ASSERT(!lstEmpty(handlerList));
 
     // Loop until exit request is received
     bool exit = false;
@@ -222,11 +219,13 @@ protocolServerProcess(
                 // Find the handler
                 const ProtocolServerHandler *handler = NULL;
 
-                for (unsigned int handlerIdx = 0; handlerIdx < handlerListSize; handlerIdx++)
+                for (unsigned int handlerIdx = 0; handlerIdx < lstSize(handlerList); handlerIdx++)
                 {
-                    if (request.id == handlerList[handlerIdx].command)
+                    const ProtocolServerHandler *const handlerMatch = lstGet(handlerList, handlerIdx);
+
+                    if (request.id == handlerMatch->command)
                     {
-                        handler = &handlerList[handlerIdx];
+                        handler = handlerMatch;
                         break;
                     }
                 }
@@ -310,8 +309,7 @@ protocolServerProcess(
                                             {
                                                 THROW_FMT(
                                                     ProtocolError, "unable to find session id %" PRIu64 " for request %s:%s",
-                                                    this->sessionId, strZ(strIdToStr(request.id)),
-                                                    strZ(strIdToStr(request.type)));
+                                                    this->sessionId, zNewStrId(request.id), zNewStrId(request.type));
                                             }
                                         }
 
@@ -329,7 +327,7 @@ protocolServerProcess(
                                                     ASSERT(handler->process == NULL);
                                                     CHECK_FMT(
                                                         ProtocolError, this->sessionId != 0, "no session id for request %s:%s",
-                                                        strZ(strIdToStr(request.id)), strZ(strIdToStr(request.type)));
+                                                        zNewStrId(request.id), zNewStrId(request.type));
 
                                                     processResult = handler->processSession(pckReadNew(request.param), sessionData);
                                                 }
@@ -396,7 +394,7 @@ protocolServerProcess(
                                             {
                                                 CHECK_FMT(
                                                     ProtocolError, request.type == protocolCommandTypeCancel,
-                                                    "unknown request type '%s'", strZ(strIdToStr(request.type)));
+                                                    "unknown request type '%s'", zNewStrId(request.type));
 
                                                 // Send NULL data
                                                 protocolServerResponseP(this, .close = true);
@@ -474,7 +472,7 @@ protocolServerProcess(
 
                         default:
                             THROW_FMT(
-                                ProtocolError, "invalid request '%s' (0x%" PRIx64 ")", strZ(strIdToStr(request.id)), request.id);
+                                ProtocolError, "invalid request '%s' (0x%" PRIx64 ")", zNewStrId(request.id), request.id);
                     }
                 }
 

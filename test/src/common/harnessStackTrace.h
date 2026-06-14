@@ -1,6 +1,8 @@
 /***********************************************************************************************************************************
 Harness for Stack Trace Testing
 ***********************************************************************************************************************************/
+#ifndef TEST_COMMON_HARNESS_STACKTRACE_H
+#define TEST_COMMON_HARNESS_STACKTRACE_H
 
 /***********************************************************************************************************************************
 Functions
@@ -9,4 +11,6 @@ Functions
 #ifdef HAVE_LIBBACKTRACE
 void hrnStackTraceBackShimInstall(void);
 void hrnStackTraceBackShimUninstall(void);
+#endif
+
 #endif

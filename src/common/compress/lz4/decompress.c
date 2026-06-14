@@ -1,13 +1,12 @@
 /***********************************************************************************************************************************
 LZ4 Decompress
 ***********************************************************************************************************************************/
-#include "build.auto.h"
-
-#ifdef HAVE_LIBLZ4
+#include <build.h>
 
 #include <lz4frame.h>
 #include <stdio.h>
 
+#include "common/compress/common.h"
 #include "common/compress/lz4/common.h"
 #include "common/compress/lz4/decompress.h"
 #include "common/debug.h"
@@ -178,8 +177,6 @@ lz4DecompressNew(const bool raw)
     FUNCTION_LOG_RETURN(
         IO_FILTER,
         ioFilterNewP(
-            LZ4_DECOMPRESS_FILTER_TYPE, this, NULL, .done = lz4DecompressDone, .inOut = lz4DecompressProcess,
+            LZ4_DECOMPRESS_FILTER_TYPE, this, decompressParamList(raw), .done = lz4DecompressDone, .inOut = lz4DecompressProcess,
             .inputSame = lz4DecompressInputSame));
 }
-
-#endif // HAVE_LIBLZ4

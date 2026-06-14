@@ -96,7 +96,7 @@ testRun(void)
         TEST_RESULT_VOID(pckWriteBoolP(packWrite, false), "write default false");
         TEST_RESULT_VOID(pckWriteArrayEndP(packWrite), "write array end");
 
-        const unsigned char bin[] = {0x05, 0x04, 0x03, 0x02, 0x01, 0x00};
+        const uint8_t bin[] = {0x05, 0x04, 0x03, 0x02, 0x01, 0x00};
         TEST_RESULT_VOID(pckWriteBinP(packWrite, BUF(bin, sizeof(bin))), "write bin");
         TEST_RESULT_VOID(pckWriteBinP(packWrite, NULL), "write bin NULL default");
         TEST_RESULT_VOID(pckWriteBinP(packWrite, bufNew(0)), "write bin zero length");

@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Azure Storage Read
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "common/debug.h"
 #include "common/io/http/client.h"
@@ -11,23 +11,25 @@ Azure Storage Read
 #include "storage/read.h"
 
 /***********************************************************************************************************************************
-Object type
+Azure query tokens
 ***********************************************************************************************************************************/
-typedef struct StorageReadAzure
-{
-    StorageReadInterface interface;                                 // Interface
-    StorageAzure *storage;                                          // Storage that created this object
-
-    HttpResponse *httpResponse;                                     // HTTP response
-} StorageReadAzure;
+STRING_STATIC(AZURE_QUERY_VERSION_ID_STR,                           "versionid");
 
 /***********************************************************************************************************************************
-Macros for function logging
+Object type
 ***********************************************************************************************************************************/
-#define FUNCTION_LOG_STORAGE_READ_AZURE_TYPE                                                                                       \
-    StorageReadAzure *
-#define FUNCTION_LOG_STORAGE_READ_AZURE_FORMAT(value, buffer, bufferSize)                                                          \
-    objNameToLog(value, "StorageReadAzure", buffer, bufferSize)
+struct StorageReadAzure
+{
+    const StorageReadInterface *interface;                          // Interface
+    StorageAzure *storage;                                          // Storage that created this object
+
+    const String *name;                                             // File name
+    uint64_t offset;                                                // Read offset
+    const Variant *limit;                                           // Read limit (NULL for no limit)
+    const String *versionId;                                        // Version id (NULL for most recent)
+
+    HttpResponse *httpResponse;                                     // HTTP response
+};
 
 /***********************************************************************************************************************************
 Open the file
@@ -44,27 +46,17 @@ storageReadAzureOpen(THIS_VOID)
     ASSERT(this != NULL);
     ASSERT(this->httpResponse == NULL);
 
-    bool result = false;
-
     // Request the file
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->httpResponse = storageAzureRequestP(
-            this->storage, HTTP_VERB_GET_STR, .path = this->interface.name,
-            .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
-            .allowMissing = true, .contentIo = true);
+            this->storage, HTTP_VERB_GET_STR, .path = this->name,
+            .query = this->versionId != NULL ? httpQueryPut(httpQueryNewP(), AZURE_QUERY_VERSION_ID_STR, this->versionId) : NULL,
+            .header = httpHeaderPutRange(httpHeaderNew(NULL), this->offset, this->limit), .allowMissing = true, .contentIo = true);
     }
     MEM_CONTEXT_OBJ_END();
 
-    if (httpResponseCodeOk(this->httpResponse))
-    {
-        result = true;
-    }
-    // Else error unless ignore missing
-    else if (!this->interface.ignoreMissing)
-        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
-
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, httpResponseCodeOk(this->httpResponse));
 }
 
 /***********************************************************************************************************************************
@@ -106,18 +98,47 @@ storageReadAzureEof(THIS_VOID)
     FUNCTION_TEST_RETURN(BOOL, ioReadEof(httpResponseIoRead(this->httpResponse)));
 }
 
+/***********************************************************************************************************************************
+Close the file
+***********************************************************************************************************************************/
+static void
+storageReadAzureClose(THIS_VOID)
+{
+    THIS(StorageReadAzure);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_AZURE, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->httpResponse != NULL);
+
+    httpResponseFree(this->httpResponse);
+    this->httpResponse = NULL;
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
-FN_EXTERN StorageRead *
+static const StorageReadInterface storageReadAzureInterface =
+{
+    .close = storageReadAzureClose,
+    .eof = storageReadAzureEof,
+    .open = storageReadAzureOpen,
+    .read = storageReadAzure,
+};
+
+FN_EXTERN StorageReadAzure *
 storageReadAzureNew(
-    StorageAzure *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset,
-    const Variant *const limit)
+    StorageAzure *const storage, const String *const name, const uint64_t offset, const Variant *const limit,
+    const String *const versionId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_AZURE, storage);
         FUNCTION_LOG_PARAM(STRING, name);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
+        FUNCTION_LOG_PARAM(STRING, versionId);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -127,26 +148,15 @@ storageReadAzureNew(
     {
         *this = (StorageReadAzure)
         {
+            .interface = &storageReadAzureInterface,
             .storage = storage,
-
-            .interface = (StorageReadInterface)
-            {
-                .type = STORAGE_AZURE_TYPE,
-                .name = strDup(name),
-                .ignoreMissing = ignoreMissing,
-                .offset = offset,
-                .limit = varDup(limit),
-
-                .ioInterface = (IoReadInterface)
-                {
-                    .eof = storageReadAzureEof,
-                    .open = storageReadAzureOpen,
-                    .read = storageReadAzure,
-                },
-            },
+            .name = strDup(name),
+            .offset = offset,
+            .limit = varDup(limit),
+            .versionId = strDup(versionId),
         };
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface));
+    FUNCTION_LOG_RETURN(STORAGE_READ_AZURE, this);
 }

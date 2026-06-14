@@ -102,31 +102,33 @@ testRun(void)
 
         TEST_ERROR(ioReadLine(execIoRead(exec)), FileReadError, "unable to read from sleep read: [9] Bad file descriptor");
         ioWriteStrLine(execIoWrite(exec), strNew());
-        TEST_ERROR(ioWriteFlush(execIoWrite(exec)), FileWriteError, "unable to write to sleep write: [9] Bad file descriptor");
+        TEST_ERROR(
+            ioWriteFlush(execIoWrite(exec)), FileWriteError,
+            "unable to finish write to sleep write (wrote 0/1 bytes): [9] Bad file descriptor");
 
         sleepMSec(500);
         TEST_RESULT_VOID(execFree(exec), "sleep exited as expected");
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("execOne()"))
+    if (testBegin("execOneExpectP()"))
     {
         Exec *exec = NULL;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("exec without output");
 
-        TEST_RESULT_STR_Z(execOneP(STRDEF("ls " TEST_PATH)), "", "exec ls");
+        TEST_RESULT_STR_Z(execOneExpectP(STRDEF("ls " TEST_PATH)), "", "exec ls");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("touch file");
 
-        TEST_RESULT_STR_Z(execOneP(STRDEF("touch " TEST_PATH "/file")), "", "exec touch");
+        TEST_RESULT_STR_Z(execOneExpectP(STRDEF("touch " TEST_PATH "/file")), "", "exec touch");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("exec with custom shell and output");
 
-        TEST_RESULT_STR_Z(execOneP(STRDEF("ls " TEST_PATH), .shell = STRDEF("sh -c")), "file\n", "exec ls");
+        TEST_RESULT_STR_Z(execOneExpectP(STRDEF("ls " TEST_PATH), .shell = STRDEF("sh -c")), "file\n", "exec ls");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("exec exits from signal");
@@ -135,22 +137,37 @@ testRun(void)
         TEST_RESULT_VOID(execOpen(exec), "open cat exec");
         kill(exec->processId, SIGKILL);
 
-        TEST_ERROR(execProcess(exec, (ExecOneParam){0}), ExecuteError, "cat terminated unexpectedly on signal 9");
+        TEST_ERROR(execProcess(exec, (ExecOneExpectParam){0}), ExecuteError, "cat terminated unexpectedly on signal 9");
         TEST_RESULT_VOID(execFree(exec), "free exec");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("exec exits with error");
 
-        TEST_ERROR(
-            execOneP(STRDEF("cat missing.txt")), UnknownError,
-            "cat missing.txt terminated unexpectedly [1]: cat: missing.txt: No such file or directory");
+        TEST_ERROR_MULTI(
+            execOneExpectP(STRDEF("cat missing.txt")), UnknownError,
+            // glibc
+            "cat missing.txt terminated unexpectedly [1]: cat: missing.txt: No such file or directory",
+            // musl libc
+            "cat missing.txt terminated unexpectedly [1]: cat: can't open 'missing.txt': No such file or directory");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("exec ignores error");
 
-        TEST_RESULT_STR_Z(
-            execOneP(STRDEF("cat missing.txt"), .resultExpect = 1), "cat: missing.txt: No such file or directory\n",
-            "ignore error");
+        TRY_BEGIN()
+        {
+            TEST_RESULT_STR_Z(
+                execOneExpectP(STRDEF("cat missing.txt"), .resultExpect = 1), "cat: missing.txt: No such file or directory\n",
+                "ignore error");
+        }
+        CATCH_ANY()
+        {
+            hrnTestResultEnd();
+
+            TEST_RESULT_STR_Z(
+                execOneExpectP(STRDEF("cat missing.txt"), .resultExpect = 1),
+                "cat: can't open 'missing.txt': No such file or directory\n", "ignore error");
+        }
+        TRY_END();
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

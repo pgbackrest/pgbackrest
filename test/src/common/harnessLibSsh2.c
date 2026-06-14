@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 libssh2 Test Harness
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #ifdef HAVE_LIBSSH2
 
@@ -23,14 +23,14 @@ libssh2 shim error prefix
 /***********************************************************************************************************************************
 Script that defines how shim functions operate
 ***********************************************************************************************************************************/
-HrnLibSsh2 hrnLibSsh2Script[1024];
-bool hrnLibSsh2ScriptDone = true;
-unsigned int hrnLibSsh2ScriptIdx;
+static HrnLibSsh2 hrnLibSsh2Script[1024];
+static bool hrnLibSsh2ScriptDone = true;
+static unsigned int hrnLibSsh2ScriptIdx;
 
 // If there is a script failure change the behavior of cleanup functions to return immediately so the real error will be reported
 // rather than a bogus scripting error during cleanup
-bool hrnLibSsh2ScriptFail;
-char hrnLibSsh2ScriptError[4096];
+static bool hrnLibSsh2ScriptFail;
+static char hrnLibSsh2ScriptError[4096];
 
 /***********************************************************************************************************************************
 Set libssh2 script
@@ -383,7 +383,12 @@ libssh2_session_last_error(LIBSSH2_SESSION *session, char **errmsg, int *errmsg_
 
     if (hrnLibSsh2->errMsg != NULL)
     {
-        *errmsg = hrnLibSsh2->errMsg;
+        // Const error messages are used for testing but the function requires them to be returned non-const. This should be safe
+        // because the value is never modified by the calling function. If that changes, there will be a segfault during testing.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
+        *errmsg = UNCONSTIFY(char *, hrnLibSsh2->errMsg);
+#pragma GCC diagnostic pop
         *errmsg_len = (int)(strlen(hrnLibSsh2->errMsg) + 1);
     }
     else

@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Harness for Loading Test Configurations
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "common/assert.h"
 #include "common/type/convert.h"
@@ -41,7 +41,7 @@ hrnPackReadToStr(PackRead *read)
         PackType type = pckReadType(read);
         unsigned int id = pckReadId(read);
 
-        strCatFmt(result, "%u:%s:", id, strZ(strIdToStr(type)));
+        strCatFmt(result, "%u:%s:", id, zNewStrId(type));
 
         switch (type)
         {
@@ -88,7 +88,7 @@ hrnPackReadToStr(PackRead *read)
                 break;
 
             case pckTypeStrId:
-                strCatFmt(result, "%s", strZ(strIdToStr(pckReadStrIdP(read, .id = id))));
+                strCatFmt(result, "%s", zNewStrId(pckReadStrIdP(read, .id = id)));
                 break;
 
             case pckTypeTime:

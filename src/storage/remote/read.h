@@ -9,10 +9,23 @@ Remote Storage Read
 #include "storage/remote/storage.intern.h"
 
 /***********************************************************************************************************************************
+Object type
+***********************************************************************************************************************************/
+typedef struct StorageReadRemote StorageReadRemote;
+
+/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN StorageRead *storageReadRemoteNew(
-    StorageRemote *storage, ProtocolClient *client, const String *name, bool ignoreMissing, bool compressible,
-    unsigned int compressLevel, uint64_t offset, const Variant *limit);
+FN_EXTERN StorageReadRemote *storageReadRemoteNew(
+    StorageRemote *storage, ProtocolClient *client, const String *name, bool compressible, unsigned int compressLevel,
+    uint64_t offset, const Variant *limit, const String *versionId);
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_LOG_STORAGE_READ_REMOTE_TYPE                                                                                      \
+    StorageReadRemote *
+#define FUNCTION_LOG_STORAGE_READ_REMOTE_FORMAT(value, buffer, bufferSize)                                                         \
+    objNameToLog(value, "StorageReadRemote", buffer, bufferSize)
 
 #endif

@@ -21,7 +21,7 @@ Constructors
 TestBuild *testBldNew(
     const String *pathRepo, const String *pathTest, const String *const vm, const String *const vmInt, unsigned int vmId,
     const String *pgVersion, const TestDefModule *module, unsigned int test, uint64_t scale, LogLevel logLevel, bool logTime,
-    const String *timeZone, bool coverage, bool profile, bool optimize, bool backTrace);
+    const String *timeZone, const String *architecture, bool coverage, bool profile, bool optimize, bool backTrace);
 
 /***********************************************************************************************************************************
 Getters/Setters
@@ -42,6 +42,7 @@ typedef struct TestBuildPub
     bool logTime;                                                   // Log times/timestamps
     uint64_t scale;                                                 // Scale performance test
     const String *timeZone;                                         // Test in timezone
+    const String *architecture;                                     // Test architecture
     bool coverage;                                                  // Generate coverage?
     bool profile;                                                   // Generate profile report?
     bool optimize;                                                  // Optimize code?
@@ -138,6 +139,13 @@ FN_INLINE_ALWAYS const String *
 testBldTimeZone(const TestBuild *const this)
 {
     return THIS_PUB(TestBuild)->timeZone;
+}
+
+// Test architecture
+FN_INLINE_ALWAYS const String *
+testBldArchitecture(const TestBuild *const this)
+{
+    return THIS_PUB(TestBuild)->architecture;
 }
 
 // Generate coverage?

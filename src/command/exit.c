@@ -1,8 +1,9 @@
 /***********************************************************************************************************************************
 Exit Routines
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -14,6 +15,12 @@ Exit Routines
 #include "config/config.intern.h"
 #include "protocol/helper.h"
 #include "version.h"
+
+/***********************************************************************************************************************************
+Indicates that exit() is in progress so a signal cannot call exit() recursively, which is undefined behavior and crashes on musl
+libc >= 1.2.6
+***********************************************************************************************************************************/
+static volatile sig_atomic_t exitInProgress = false;
 
 /***********************************************************************************************************************************
 Return signal names
@@ -30,15 +37,15 @@ exitSignalName(const SignalType signalType)
     switch (signalType)
     {
         case signalTypeHup:
-            name = "HUP";
+            name = "SIGHUP";
             break;
 
         case signalTypeInt:
-            name = "INT";
+            name = "SIGINT";
             break;
 
         case signalTypeTerm:
-            name = "TERM";
+            name = "SIGTERM";
             break;
 
         case signalTypeNone:
@@ -54,13 +61,21 @@ Catch signals
 static void
 exitOnSignal(const int signalType)
 {
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(INT, signalType);
-    FUNCTION_LOG_END();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(INT, signalType);
+    FUNCTION_TEST_END();
 
-    exit(exitSafe(errorTypeCode(&TermError), false, (SignalType)signalType));
+    // Ignore the signal when exit() is already in progress and allow it to complete
+    if (!exitInProgress)
+    {
+        exitInProgress = true;
 
-    FUNCTION_LOG_RETURN_VOID();
+        logSignal(
+            cfgLogLevelDefault(), signalType == signalTypeNone ? "from child process" : exitSignalName((SignalType)signalType));
+        exit(errorTypeCode(&TermError));
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -68,6 +83,9 @@ FN_EXTERN void
 exitInit(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
+
+    // Reset exit in progress in case this process was forked by a process that was exiting
+    exitInProgress = false;
 
     signal(SIGHUP, exitOnSignal);
     signal(SIGINT, exitOnSignal);
@@ -142,24 +160,8 @@ exitSafe(int result, const bool error, const SignalType signalType)
     {
         String *errorMessage = NULL;
 
-        if (result != 0)
-        {
-            // On process terminate
-            if (result == errorTypeCode(&TermError))
-            {
-                errorMessage = strCatZ(strNew(), "terminated on signal ");
-
-                // Terminate from a child
-                if (signalType == signalTypeNone)
-                    strCatZ(errorMessage, "from child process");
-                // Else terminated directly
-                else
-                    strCatFmt(errorMessage, "[SIG%s]", exitSignalName(signalType));
-            }
-            // Standard error exit message
-            else if (error)
-                errorMessage = strNewFmt("aborted with exception [%03d]", result);
-        }
+        if (result != 0 && error)
+            errorMessage = strNewFmt("aborted with exception [%03d]", result);
 
         cmdEnd(result, errorMessage);
         strFree(errorMessage);
@@ -171,6 +173,9 @@ exitSafe(int result, const bool error, const SignalType signalType)
         cmdLockReleaseP(.returnOnNoLock = true);
     }
     TRY_END();
+
+    // Set exit in progress so a signal arriving while exit() runs will not call exit() recursively
+    exitInProgress = true;
 
     // Return result - caller should immediate pass this result to exit()
     FUNCTION_LOG_RETURN(INT, result);

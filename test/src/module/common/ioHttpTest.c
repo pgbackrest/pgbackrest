@@ -280,6 +280,49 @@ testRun(void)
         TEST_RESULT_Z(logBuf, "{https://test.com:443/}", "check log");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("URL with http:// + defaultType=https uses detected http");
+
+        TEST_ASSIGN(
+            url, httpUrlNewParseP(STRDEF("http://test.com"), .type = httpProtocolTypeAny, .defaultType = httpProtocolTypeHttps),
+            "new");
+        TEST_RESULT_STR_Z(httpUrl(url), "http://test.com", "check url");
+        TEST_RESULT_STR_Z(httpUrlHost(url), "test.com", "check host");
+        TEST_RESULT_UINT(httpUrlPort(url), 80, "check port");
+        TEST_RESULT_UINT(httpUrlProtocolType(url), httpProtocolTypeHttp, "check protocol is http (detected)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("URL with https:// + defaultType=http uses detected https");
+
+        TEST_ASSIGN(
+            url, httpUrlNewParseP(STRDEF("https://test.com"), .type = httpProtocolTypeAny, .defaultType = httpProtocolTypeHttp),
+            "new");
+        TEST_RESULT_STR_Z(httpUrl(url), "https://test.com", "check url");
+        TEST_RESULT_STR_Z(httpUrlHost(url), "test.com", "check host");
+        TEST_RESULT_UINT(httpUrlPort(url), 443, "check port");
+        TEST_RESULT_UINT(httpUrlProtocolType(url), httpProtocolTypeHttps, "check protocol is https (detected)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("URL with no protocol + defaultType=https uses default https");
+
+        TEST_ASSIGN(
+            url, httpUrlNewParseP(STRDEF("test.com:4443"), .type = httpProtocolTypeAny, .defaultType = httpProtocolTypeHttps),
+            "new");
+        TEST_RESULT_STR_Z(httpUrl(url), "test.com:4443", "check url");
+        TEST_RESULT_STR_Z(httpUrlHost(url), "test.com", "check host");
+        TEST_RESULT_UINT(httpUrlPort(url), 4443, "check port");
+        TEST_RESULT_UINT(httpUrlProtocolType(url), httpProtocolTypeHttps, "check protocol is https (default)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("URL with no protocol + defaultType=http uses default http");
+
+        TEST_ASSIGN(
+            url, httpUrlNewParseP(STRDEF("test.com"), .type = httpProtocolTypeAny, .defaultType = httpProtocolTypeHttp), "new");
+        TEST_RESULT_STR_Z(httpUrl(url), "test.com", "check url");
+        TEST_RESULT_STR_Z(httpUrlHost(url), "test.com", "check host");
+        TEST_RESULT_UINT(httpUrlPort(url), 80, "check port");
+        TEST_RESULT_UINT(httpUrlProtocolType(url), httpProtocolTypeHttp, "check protocol is http (default)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("IPv6");
 
         TEST_ASSIGN(url, httpUrlNewParseP(STRDEF("http://[2001:db8::ff00:42:8329]:81"), .type = httpProtocolTypeHttp), "new");
@@ -333,7 +376,6 @@ testRun(void)
         TEST_ERROR_FMT(
             httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), HostConnectError,
             "unable to connect to 'localhost:34342 (127.0.0.1)': [111] Connection refused\n"
-            "[RETRY DETAIL OMITTED]\n"
             "[RETRY DETAIL OMITTED]");
 
         HRN_FORK_BEGIN()
@@ -616,12 +658,24 @@ testRun(void)
                 TEST_RESULT_Z(logBuf, "{connection: 'close'}", "check response headers");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("error with content (with a few slow down errors)");
+                TEST_TITLE("error with content (with a few errors to be retried)");
 
                 hrnServerScriptAccept(http);
 
                 hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 503 Slow Down\r\ncontent-length:3\r\nConnection:close\r\n\r\n123");
+
+                hrnServerScriptClose(http);
+                hrnServerScriptAccept(http);
+
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
+                hrnServerScriptReplyZ(http, "HTTP/1.1 408 Request Timeout\r\ncontent-length:0\r\nConnection:close\r\n\r\n");
+
+                hrnServerScriptClose(http);
+                hrnServerScriptAccept(http);
+
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
+                hrnServerScriptReplyZ(http, "HTTP/1.1 429 Too Many Requests\r\ncontent-length:0\r\nConnection:close\r\n\r\n");
 
                 hrnServerScriptClose(http);
                 hrnServerScriptAccept(http);

@@ -1,0 +1,35 @@
+<release date="2024-12-16" version="2.54.1" title="Bug Fix">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="2476"/>
+                <github-pull-request id="2477"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="bradford.boyle"/>
+                    <release-item-ideator id="l00ptr"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix issue with <cmd>version</cmd>/<cmd>help</cmd> commands attempting to load <file>pgbackrest.conf</file>.</p>
+            </release-item>
+        </release-bug-list>
+    </release-core-list>
+
+    <release-test-list>
+        <release-improvement-list>
+            <release-item>
+                <github-issue id="2463"/>
+                <github-pull-request id="2481"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="viktor.kurilko"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Stabilize async archiving in integration tests.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-test-list>
+</release>

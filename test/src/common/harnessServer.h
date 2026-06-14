@@ -58,6 +58,7 @@ typedef struct HrnServerRunParam
     const String *certificate;                                      // TLS certificate when protocol = hrnServerProtocolTls
     const String *key;                                              // TLS key when protocol = hrnServerProtocolTls
     const String *address;                                          // Use address other than 127.0.0.1
+    unsigned int tlsErrorTotal;                                     // Total TLS errors to cause before success
 } HrnServerRunParam;
 
 #define hrnServerRunP(read, protocol, port, ...)                                                                                         \

@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Storage Helper
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <string.h>
 
@@ -100,7 +100,9 @@ storageHelperInit(const StorageHelper *const helperList)
 FN_EXTERN void
 storageHelperDryRunInit(const bool dryRun)
 {
-    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BOOL, dryRun);
+    FUNCTION_TEST_END();
 
     storageHelper.dryRunInit = true;
     storageHelper.dryRun = dryRun;
@@ -114,7 +116,9 @@ Initialize the stanza and error if it changes
 static void
 storageHelperStanzaInit(const bool stanzaRequired)
 {
-    FUNCTION_TEST_VOID();
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(BOOL, stanzaRequired);
+    FUNCTION_TEST_END();
 
     // If the stanza is NULL and the storage has not already been initialized then initialize the stanza
     if (!storageHelper.stanzaInit)
@@ -189,8 +193,8 @@ storagePgGet(const unsigned int pgIdx, const bool write)
     if (!pgIsLocal(pgIdx))
     {
         result = storageRemoteNew(
-            STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, NULL,
-            protocolRemoteGet(protocolStorageTypePg, pgIdx), cfgOptionUInt(cfgOptCompressLevelNetwork));
+            STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, 0, NULL,
+            protocolRemoteGet(protocolStorageTypePg, pgIdx, true), cfgOptionUInt(cfgOptCompressLevelNetwork));
     }
     // Use Posix storage
     else
@@ -360,8 +364,8 @@ storageRepoGet(const unsigned int repoIdx, const bool write)
     if (!repoIsLocal(repoIdx))
     {
         result = storageRemoteNew(
-            STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoPathExpression,
-            protocolRemoteGet(protocolStorageTypeRepo, repoIdx), cfgOptionUInt(cfgOptCompressLevelNetwork));
+            STORAGE_MODE_FILE_DEFAULT, STORAGE_MODE_PATH_DEFAULT, write, storageRepoTargetTime(), storageRepoPathExpression,
+            protocolRemoteGet(protocolStorageTypeRepo, repoIdx, true), cfgOptionUInt(cfgOptCompressLevelNetwork));
     }
     // Use local storage
     else
@@ -381,13 +385,14 @@ storageRepoGet(const unsigned int repoIdx, const bool write)
             }
         }
 
-        // If no helper was found it try Posix
+        // If no helper was found then try Posix
         if (result == NULL)
         {
             CHECK(AssertError, type == STORAGE_POSIX_TYPE, "invalid storage type");
 
             result = storagePosixNewP(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), .write = write, .pathExpressionFunction = storageRepoPathExpression);
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), .write = write, .pathExpressionFunction = storageRepoPathExpression,
+                .noSymLink = cfgOptionValid(cfgOptRepoSymlink) ? !cfgOptionIdxBool(cfgOptRepoSymlink, repoIdx) : true);
         }
     }
 
@@ -475,6 +480,15 @@ storageRepoWrite(void)
 {
     FUNCTION_TEST_VOID();
     FUNCTION_TEST_RETURN_CONST(STORAGE, storageRepoIdxWrite(cfgOptionGroupIdxDefault(cfgOptGrpRepo)));
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN time_t
+storageRepoTargetTime(void)
+{
+    FUNCTION_TEST_VOID();
+
+    FUNCTION_TEST_RETURN(TIME, cfgOptionTest(cfgOptRepoTargetTime) ? cvtZToTime(strZ(cfgOptionStr(cfgOptRepoTargetTime))) : 0);
 }
 
 /***********************************************************************************************************************************

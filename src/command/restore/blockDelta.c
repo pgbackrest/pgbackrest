@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Block Restore
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "command/backup/blockIncr.h"
 #include "command/restore/blockDelta.h"
@@ -24,7 +24,7 @@ typedef struct BlockDeltaBlock
 {
     uint64_t no;                                                    // Block number in the super block
     uint64_t offset;                                                // Offset into original file
-    unsigned char checksum[XX_HASH_SIZE_MAX];                       // Checksum of the block
+    uint8_t checksum[XX_HASH_SIZE_MAX];                             // Checksum of the block
 } BlockDeltaBlock;
 
 struct BlockDelta

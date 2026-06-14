@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 GCS Storage File Write
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "common/crypto/hash.h"
 #include "common/debug.h"
@@ -14,6 +14,12 @@ GCS Storage File Write
 #include "storage/write.h"
 
 /***********************************************************************************************************************************
+Chunk defaults based on limits at https://cloud.google.com/storage/quotas#requests
+***********************************************************************************************************************************/
+#define STORAGE_GCS_SPLIT_DEFAULT                                   257
+#define STORAGE_GCS_SPLIT_MAX                                       9505
+
+/***********************************************************************************************************************************
 GCS query tokens
 ***********************************************************************************************************************************/
 STRING_STATIC(GCS_QUERY_UPLOAD_TYPE_STR,                            "uploadType");
@@ -23,53 +29,21 @@ STRING_STATIC(GCS_QUERY_FIELDS_VALUE_STR,                           GCS_JSON_MD5
 /***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
-typedef struct StorageWriteGcs
+struct StorageWriteGcs
 {
-    StorageWriteInterface interface;                                // Interface
+    const StorageWriteInterface *interface;                         // Interface
     StorageGcs *storage;                                            // Storage that created this object
+    const String *name;                                             // File name
 
     HttpRequest *request;                                           // Async chunk upload request
     size_t chunkSize;                                               // Size of chunks for resumable upload
+    unsigned int chunkTotal;                                        // Total chunks uploaded
     bool tag;                                                       // Are tags available?
     Buffer *chunkBuffer;                                            // Block buffer (stores data until chunkSize is reached)
     const String *uploadId;                                         // Id for resumable upload
     uint64_t uploadTotal;                                           // Total bytes uploaded
     IoFilter *md5hash;                                              // MD5 hash of file
-} StorageWriteGcs;
-
-/***********************************************************************************************************************************
-Macros for function logging
-***********************************************************************************************************************************/
-#define FUNCTION_LOG_STORAGE_WRITE_GCS_TYPE                                                                                        \
-    StorageWriteGcs *
-#define FUNCTION_LOG_STORAGE_WRITE_GCS_FORMAT(value, buffer, bufferSize)                                                           \
-    objNameToLog(value, "StorageWriteGcs", buffer, bufferSize)
-
-/***********************************************************************************************************************************
-Open the file
-***********************************************************************************************************************************/
-static void
-storageWriteGcsOpen(THIS_VOID)
-{
-    THIS(StorageWriteGcs);
-
-    FUNCTION_LOG_BEGIN(logLevelTrace);
-        FUNCTION_LOG_PARAM(STORAGE_WRITE_GCS, this);
-    FUNCTION_LOG_END();
-
-    ASSERT(this != NULL);
-    ASSERT(this->chunkBuffer == NULL);
-
-    // Allocate the chunk buffer
-    MEM_CONTEXT_OBJ_BEGIN(this)
-    {
-        this->chunkBuffer = bufNew(this->chunkSize);
-        this->md5hash = cryptoHashNew(hashTypeMd5);
-    }
-    MEM_CONTEXT_OBJ_END();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
+};
 
 /***********************************************************************************************************************************
 Verify upload
@@ -97,7 +71,7 @@ storageWriteGcsVerify(StorageWriteGcs *const this, HttpResponse *const response)
         {
             THROW_FMT(
                 FormatError, "expected md5 '%s' for '%s' but actual is '%s'", strZ(strNewEncode(encodingHex, md5expected)),
-                strZ(this->interface.name), strZ(strNewEncode(encodingHex, md5actual)));
+                strZ(this->name), strZ(strNewEncode(encodingHex, md5actual)));
         }
 
         // Check the size when available
@@ -110,7 +84,7 @@ storageWriteGcsVerify(StorageWriteGcs *const this, HttpResponse *const response)
             if (size != this->uploadTotal)
             {
                 THROW_FMT(
-                    FormatError, "expected size %" PRIu64 " for '%s' but actual is %" PRIu64, size, strZ(this->interface.name),
+                    FormatError, "expected size %" PRIu64 " for '%s' but actual is %" PRIu64, size, strZ(this->name),
                     this->uploadTotal);
             }
         }
@@ -168,7 +142,7 @@ storageWriteGcsBlockAsync(StorageWriteGcs *const this, const bool done)
 
         // Build query
         HttpQuery *const query = httpQueryNewP();
-        httpQueryAdd(query, GCS_QUERY_NAME_STR, strSub(this->interface.name, 1));
+        httpQueryAdd(query, GCS_QUERY_NAME_STR, strSub(this->name, 1));
         httpQueryAdd(query, GCS_QUERY_UPLOAD_TYPE_STR, GCS_QUERY_RESUMABLE_STR);
 
         // Get the upload id
@@ -236,11 +210,13 @@ storageWriteGcs(THIS_VOID, const Buffer *const buffer)
 
     ASSERT(this != NULL);
     ASSERT(buffer != NULL);
-    ASSERT(this->chunkBuffer != NULL);
 
-    size_t bytesTotal = 0;
+    // Resize chunk buffer
+    storageWriteChunkBufferResize(buffer, this->chunkBuffer, this->chunkSize);
 
     // Continue until the write buffer has been exhausted
+    size_t bytesTotal = 0;
+
     do
     {
         // Copy as many bytes as possible into the chunk buffer
@@ -253,10 +229,13 @@ storageWriteGcs(THIS_VOID, const Buffer *const buffer)
 
         // If the chunk buffer is full then write it. It is possible that this is the last chunk and it would be better to wait, but
         // the chances of that are quite small so in general it is better to write now so there is less to write later.
-        if (bufRemains(this->chunkBuffer) == 0)
+        if (bufUsed(this->chunkBuffer) == this->chunkSize)
         {
             storageWriteGcsBlockAsync(this, false);
             bufUsedZero(this->chunkBuffer);
+
+            this->chunkSize =
+                storageWriteChunkSize(this->chunkSize, STORAGE_GCS_SPLIT_DEFAULT, STORAGE_GCS_SPLIT_MAX, ++this->chunkTotal);
         }
     }
     while (bytesTotal != bufUsed(buffer));
@@ -299,7 +278,7 @@ storageWriteGcsClose(THIS_VOID)
 
                 // Upload file
                 HttpQuery *query = httpQueryNewP();
-                httpQueryAdd(query, GCS_QUERY_NAME_STR, strSub(this->interface.name, 1));
+                httpQueryAdd(query, GCS_QUERY_NAME_STR, strSub(this->name, 1));
                 httpQueryAdd(query, GCS_QUERY_UPLOAD_TYPE_STR, GCS_QUERY_MEDIA_STR);
                 httpQueryAdd(query, GCS_QUERY_FIELDS_STR, GCS_QUERY_FIELDS_VALUE_STR);
 
@@ -321,7 +300,13 @@ storageWriteGcsClose(THIS_VOID)
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN StorageWrite *
+static const StorageWriteInterface storageWriteGcsInterface =
+{
+    .close = storageWriteGcsClose,
+    .write = storageWriteGcs,
+};
+
+FN_EXTERN StorageWriteGcs *
 storageWriteGcsNew(StorageGcs *const storage, const String *const name, const size_t chunkSize, const bool tag)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -338,30 +323,16 @@ storageWriteGcsNew(StorageGcs *const storage, const String *const name, const si
     {
         *this = (StorageWriteGcs)
         {
+            .interface = &storageWriteGcsInterface,
             .storage = storage,
+            .name = strDup(name),
             .chunkSize = chunkSize,
+            .chunkBuffer = bufNew(0),
+            .md5hash = cryptoHashNew(hashTypeMd5),
             .tag = tag,
-
-            .interface = (StorageWriteInterface)
-            {
-                .type = STORAGE_GCS_TYPE,
-                .name = strDup(name),
-                .atomic = true,
-                .createPath = true,
-                .syncFile = true,
-                .syncPath = true,
-                .truncate = true,
-
-                .ioInterface = (IoWriteInterface)
-                {
-                    .close = storageWriteGcsClose,
-                    .open = storageWriteGcsOpen,
-                    .write = storageWriteGcs,
-                },
-            },
         };
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteNew(this, &this->interface));
+    FUNCTION_LOG_RETURN(STORAGE_WRITE_GCS, this);
 }

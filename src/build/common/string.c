@@ -4,6 +4,8 @@ String Handler Extensions
 // Include core module
 #include "common/type/string.c"
 
+#include "build/common/string.h"
+
 /**********************************************************************************************************************************/
 String *
 strUpper(String *const this)
@@ -21,7 +23,7 @@ strUpper(String *const this)
 }
 
 /**********************************************************************************************************************************/
-String *
+unsigned int
 strReplace(String *const this, const String *const replace, const String *const with)
 {
     FUNCTION_TEST_BEGIN();
@@ -30,6 +32,8 @@ strReplace(String *const this, const String *const replace, const String *const 
         FUNCTION_TEST_PARAM(STRING, with);
     FUNCTION_TEST_END();
 
+    unsigned int result = 0;
+
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // Does replace exist?
@@ -37,6 +41,8 @@ strReplace(String *const this, const String *const replace, const String *const 
 
         while (found != NULL)
         {
+            result++;
+
             // Offset into string
             const size_t offset = (size_t)(found - this->pub.buffer);
 
@@ -60,5 +66,5 @@ strReplace(String *const this, const String *const replace, const String *const 
     }
     MEM_CONTEXT_TEMP_END();
 
-    FUNCTION_TEST_RETURN(STRING, this);
+    FUNCTION_TEST_RETURN(UINT, result);
 }

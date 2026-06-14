@@ -26,11 +26,23 @@ storageReadMove(StorageRead *const this, MemContext *const parentNew)
 /***********************************************************************************************************************************
 Getters/Setters
 ***********************************************************************************************************************************/
+typedef struct StorageReadPub
+{
+    StringId type;                                                  // Storage type
+    const String *name;                                             // File name
+    uint64_t offset;                                                // Where to start reading in the file
+    Variant *limit;                                                 // Limit how many bytes are read (NULL for no limit)
+    bool ignoreMissing;                                             // Ignore missing file?
+    bool version;                                                   // Read version
+    const String *versionId;                                        // File version to read
+    IoRead *io;                                                     // Read interface
+} StorageReadPub;
+
 // Should a missing file be ignored?
 FN_INLINE_ALWAYS bool
 storageReadIgnoreMissing(const StorageRead *const this)
 {
-    return storageReadInterface(this)->ignoreMissing;
+    return THIS_PUB(StorageRead)->ignoreMissing;
 }
 
 // Read interface
@@ -44,28 +56,28 @@ storageReadIo(const StorageRead *const this)
 FN_INLINE_ALWAYS const Variant *
 storageReadLimit(const StorageRead *const this)
 {
-    return storageReadInterface(this)->limit;
+    return THIS_PUB(StorageRead)->limit;
 }
 
 // File name
 FN_INLINE_ALWAYS const String *
 storageReadName(const StorageRead *const this)
 {
-    return storageReadInterface(this)->name;
+    return THIS_PUB(StorageRead)->name;
 }
 
 // Is there a read limit? NULL for no limit.
 FN_INLINE_ALWAYS uint64_t
 storageReadOffset(const StorageRead *const this)
 {
-    return storageReadInterface(this)->offset;
+    return THIS_PUB(StorageRead)->offset;
 }
 
 // Get file type
 FN_INLINE_ALWAYS StringId
 storageReadType(const StorageRead *const this)
 {
-    return storageReadInterface(this)->type;
+    return THIS_PUB(StorageRead)->type;
 }
 
 /***********************************************************************************************************************************

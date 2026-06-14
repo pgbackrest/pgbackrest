@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Configuration Load
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <unistd.h>
 
@@ -10,6 +10,7 @@ Configuration Load
 #include "common/io/io.h"
 #include "common/log.h"
 #include "config/config.intern.h"
+#include "config/load.h"
 #include "storage/posix/storage.h"
 
 /***********************************************************************************************************************************
@@ -25,7 +26,7 @@ cfgLoadLogSetting(void)
     bool logTimestamp = true;
 
     if (cfgOptionValid(cfgOptLogLevel))
-        logLevelConsole = logLevelEnum(cfgOptionStrId(cfgOptLogLevel));
+        logLevelConsole = logLevelEnum(cfgOptionSeq(cfgOptLogLevel));
 
     if (cfgOptionValid(cfgOptLogTimestamp))
         logTimestamp = cfgOptionBool(cfgOptLogTimestamp);

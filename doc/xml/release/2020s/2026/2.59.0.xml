@@ -1,0 +1,131 @@
+<release date="XXXX-XX-XX" version="2.59.0dev" title="UNDER DEVELOPMENT">
+    <release-core-list>
+        <release-feature-list>
+            <release-item>
+                <github-pull-request id="2762"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="shiva.kumar.ambigi"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="roberto.mello"/>
+                </release-item-contributor-list>
+
+                <p>Add support for <proper>S3 Outposts</proper>.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2773"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="gunnar.lindholm"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add user/group caching for faster manifest build.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2736"/>
+                <github-pull-request id="2740"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="will.morland"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add per-repo backup progress to <cmd>info</cmd> command output.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2723"/>
+                <github-pull-request id="2752"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="denis.garsh"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Add <file>backup.info</file> checks to <cmd>verify</cmd> command.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2732"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Improve seek performance during block incremental delta restore.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2757"/>
+                <github-pull-request id="2760"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="andrew.jackson"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add <proper>systemd</proper> notify integration.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2724"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="jorg.plate"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Suppress <id>unused parameter</id> errors in <proper>meson</proper> compiler probes.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2738"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="mohammad.ali.nazir.kosar"/>
+                </release-item-contributor-list>
+
+                <p><proper>C11</proper> is now the minimum C standard.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-issue id="2731"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Refactor restore module into included modules.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-test-list>
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2784"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="artur.zakirov"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix Alpine group conflicts in CI containers.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-test-list>
+</release>

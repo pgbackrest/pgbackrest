@@ -188,7 +188,7 @@ testRun(void)
         TEST_RESULT_Z(logBuf, "{host: {\"" TEST_ADDR_LOOP_HOST "\"}, port: 443, list: [::1, 127.0.0.1]}", "check log");
 
         // Munge address so it is invalid
-        ((AddressInfoItem *)lstGet(addrInfo->pub.list, 0))->info->ai_addr = NULL;
+        ((AddressInfoItem *)lstGet(addrInfo->pub.list, 0))->info->ai_addr->sa_family = UINT16_MAX;
         TEST_RESULT_STR_Z(addrInfoToStr(addrInfoGet(addrInfo, 0)->info), "invalid", "check invalid");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -272,12 +272,6 @@ testRun(void)
 
         TEST_RESULT_VOID(addrInfoFree(addrInfo), "free");
 #endif
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("addrInfoToStr (invalid)");
-
-        struct addrinfo addrInfoInvalid = {0};
-
-        TEST_RESULT_STR_Z(addrInfoToStr(&addrInfoInvalid), "invalid", "check invalid");
     }
 
     // *****************************************************************************************************************************
@@ -565,6 +559,41 @@ testRun(void)
             HRN_FORK_PARENT_END();
         }
         HRN_FORK_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("sckServerNew() retries bind()");
+
+        HRN_FORK_BEGIN(.timeout = 5000)
+        {
+            const unsigned int testPort = hrnServerPortNext();
+
+            HRN_FORK_CHILD_BEGIN(.prefix = "server")
+            {
+                // Bind port and notify parent
+                IoServer *server = sckServerNew(STRDEF("127.0.0.1"), testPort, 5000);
+                HRN_FORK_CHILD_NOTIFY_PUT();
+
+                // Sleep 1000ms then close port
+                sleepMSec(1000);
+                objFree(server);
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN(.prefix = "client")
+            {
+                // Wait for parent to bind port before attempting to bind
+                HRN_FORK_PARENT_NOTIFY_GET(0);
+                TEST_ERROR_MULTI(
+                    sckServerNew(STRDEF("127.0.0.1"), testPort, 100), FileOpenError,
+                    // Not musl libc
+                    "unable to bind socket: [98] Address already in use",
+                    // Musl libc
+                    "unable to bind socket: [98] Address in use");
+                TEST_RESULT_VOID(sckServerNew(STRDEF("127.0.0.1"), testPort, 5000), "bind succeeds with enough retries");
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
     }
 
     // Additional coverage not provided by testing with actual certificates
@@ -603,8 +632,14 @@ testRun(void)
         TEST_ASSIGN(
             client, tlsClientNewP(sckClientNew(STRDEF("99.99.99.99.99"), 7777, 0, 0), STRDEF("X"), 100, 0, true), "new client");
         TEST_RESULT_STR_Z(ioClientName(client), "99.99.99.99.99:7777", " check name");
-        TEST_ERROR(
-            ioClientOpen(client), HostConnectError, "unable to get address for '99.99.99.99.99': [-2] Name or service not known");
+        TEST_ERROR_MULTI(
+            ioClientOpen(client), HostConnectError,
+            // Not musl libc
+            "unable to get address for '99.99.99.99.99': [-2] Name or service not known",
+            // Musl libc
+            "unable to get address for '99.99.99.99.99': [-2] Name does not resolve",
+            // WSL
+            "unable to get address for '99.99.99.99.99': [-3] Temporary failure in name resolution");
 
         // Set TLS client timeout higher than socket timeout to ensure that TLS retries are covered
         TEST_ASSIGN(
@@ -884,6 +919,61 @@ testRun(void)
         }
         HRN_FORK_END();
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("fail on mismatch between allowed TLS cipher suites");
+
+        HRN_FORK_BEGIN()
+        {
+            const unsigned int testPort = hrnServerPortNext();
+
+            HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
+            {
+                TEST_RESULT_VOID(tlsInit(STRDEF("eNULL"), STRDEF("TLS_AES_256_GCM_SHA384")), "disallow TLS 1.2");
+
+                // Start server to test various certificate errors
+                TEST_ERROR_MULTI(
+                    hrnServerRunP(
+                        HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort, .certificate = STRDEF(HRN_SERVER_CERT),
+                        .key = STRDEF(HRN_SERVER_KEY), .address = STRDEF("::1")),
+                    ServiceError,
+                    // TLS >= 3
+                    "TLS error [1:167772353] no shared cipher",
+                    // TLS < 3
+                    "TLS error [1:337678529] no shared cipher");
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN(.prefix = "test client", .timeout = 1000)
+            {
+                IoWrite *const tls = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("cipher suite mismatch");
+
+                hrnServerScriptAccept(tls);
+                hrnServerScriptClose(tls);
+
+                TEST_RESULT_VOID(tlsInit(STRDEF("COMPLEMENTOFALL"), STRDEF("TLS_AES_128_GCM_SHA256")), "disallow TLS 1.3");
+
+                TEST_ERROR_MULTI(
+                    ioClientOpen(
+                        tlsClientNewP(
+                            sckClientNew(STRDEF("::1"), testPort, 5000, 5000), STRDEF("::1"), 0, 0, true,
+                            .caFile = STRDEF(HRN_SERVER_CA))),
+                    ServiceError,
+                    // TLS >= 3
+                    "TLS error [1:167773200] sslv3 alert handshake failure",
+                    // TLS < 3
+                    "TLS error [1:336151568] sslv3 alert handshake failure",
+                    // TLS >= 3 Fedora/Alpine
+                    "TLS error [1:167773200] ssl/tls alert handshake failure");
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+
+        TEST_RESULT_VOID(tlsInit(NULL, NULL), "init null tls ciphers");
+
         // Server on IPv6
         // -------------------------------------------------------------------------------------------------------------------------
         HRN_FORK_BEGIN()
@@ -1080,7 +1170,8 @@ testRun(void)
 
             HRN_FORK_CHILD_BEGIN(.prefix = "test server", .timeout = 5000)
             {
-                TEST_RESULT_VOID(hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort), "tls server");
+                TEST_RESULT_VOID(
+                    hrnServerRunP(HRN_FORK_CHILD_READ(), hrnServerProtocolTls, testPort, .tlsErrorTotal = 2), "tls server");
             }
             HRN_FORK_CHILD_END();
 
@@ -1089,6 +1180,9 @@ testRun(void)
                 IoWrite *tls = hrnServerScriptBegin(HRN_FORK_PARENT_WRITE(0));
                 ioBufferSizeSet(12);
 
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("connect failure");
+
                 TEST_ASSIGN(
                     client,
                     tlsClientNewP(
@@ -1096,6 +1190,22 @@ testRun(void)
                     "new client");
 
                 hrnServerScriptAccept(tls);
+
+                TEST_ERROR_MULTI(
+                    ioClientOpen(client), ServiceError,
+                    // TLS >= 3
+                    "TLS error [1:167772454] unexpected eof while reading",
+                    // TLS < 3 and Alpine
+                    "TLS error [5:0] no details available");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("connect success (with retry from prior accept)");
+
+                TEST_ASSIGN(
+                    client,
+                    tlsClientNewP(
+                        sckClientNew(hrnServerHost(), testPort, 5000, 5000), hrnServerHost(), 5000, 0, TEST_IN_CONTAINER),
+                    "new client");
 
                 TEST_ASSIGN(session, ioClientOpen(client), "open client");
                 TlsSession *tlsSession = (TlsSession *)session->pub.driver;
@@ -1112,7 +1222,7 @@ testRun(void)
                     buffer,
                     zNewFmt(
                         "{type: tls, driver: {ioClient: {type: socket, driver: {host: %s, port: %u, timeoutConnect: 5000"
-                        ", timeoutSession: 5000}}, timeoutConnect: 0, timeoutSession: 0, verifyPeer: %s}}",
+                        ", timeoutSession: 5000}}, timeoutConnect: 5000, timeoutSession: 0, verifyPeer: %s}}",
                         strZ(hrnServerHost()), testPort, cvtBoolToConstZ(TEST_IN_CONTAINER)),
                     "check log");
 

@@ -20,11 +20,6 @@
         <variable key="backrest-page-configuration">configuration</variable>
         <variable key="backrest-page-command">command</variable>
         <variable key="backrest-page-release">release</variable>
-
-        <variable key="crunchy-url-base">http://www.crunchydata.com</variable>
-        <variable key="crunchy-url-cbm">{[crunchy-url-base]}/crunchy-backup-manager</variable>
-
-        <variable key="resonate-url-base">http://www.resonate.com</variable>
     </variable-list>
 
     <!-- ======================================================================================================================= -->
@@ -35,7 +30,38 @@
 
         <p><backrest/> <link url="{[github-url-base]}/releases/tag/release/{[version-stable]}">v{[version-stable]}</link> is the current stable release. Release notes are on the <link page="{[backrest-page-release]}">Releases</link> page.</p>
 
-        <p>Please find us on <link url="{[github-url-base]}">GitHub</link> and give us a star if you like <backrest/>!</p>
+        <p>Please give us a star on <link url="{[github-url-base]}">GitHub</link> if you like <backrest/>!</p>
+    </section>
+
+    <!-- ======================================================================================================================= -->
+    <section id="news">
+        <title>News</title>
+
+        <p><b>May 18, 2026</b> - <link page="news" section="/will-continue">{[project]} Will Continue!</link></p>
+        <p><b>May 7, 2026</b> - <link page="news" section="/maintenance-update">Maintenance Update</link></p>
+        <p><b>April 27, 2026</b> - <link page="news" section="/no-longer-maintained">{[project]} Is No Longer Being Maintained</link></p>
+    </section>
+
+    <!-- ======================================================================================================================= -->
+    <section id="sponsors">
+        <title>Sponsors</title>
+
+        <p><backrest/> would not exist without sponsorship. Writing new features, fixing bugs, reviewing contributions, answering questions from the community, and maintenance all take a considerable amount of time. Please consider a <link url="{[github-url-root]}/sponsors/dwsteele">sponsorship</link> if you use <backrest/> in your enterprise.</p>
+
+        <p>Our sponsors:</p>
+
+        <sponsor-list>
+            <sponsor img="aws-light.svg" img-dark="aws-dark.svg" url="https://aws.amazon.com" width="80">AWS</sponsor>
+            <sponsor img="supabase-light.svg" img-dark="supabase-dark.svg" url="https://supabase.com" width="200">Supabase</sponsor>
+            <sponsor img="pgedge-light.svg" img-dark="pgedge-dark.svg" url="https://pgedge.com" width="155">pgEdge</sponsor>
+            <sponsor img="tigerdata-light.svg" img-dark="tigerdata-dark.svg" url="https://tigerdata.com" width="180">Tiger Data</sponsor>
+            <sponsor img="percona-light.svg" img-dark="percona-dark.svg" url="https://percona.com" width="185">Percona</sponsor>
+            <sponsor img="eon.svg" url="https://eon.io" width="90">Eon</sponsor>
+        </sponsor-list>
+
+        <p>We are grateful to our sponsors for investing in open-source infrastructure that benefits the entire <postgres/> community.</p>
+
+        <p>Past sponsors: <link url="https://crunchydata.com">Crunchy Data</link>, <link url="https://resonate.com">Resonate</link>.</p>
     </section>
 
     <!-- ======================================================================================================================= -->
@@ -74,7 +100,7 @@
         <section id="backup-rotation">
             <title>Backup Rotation &amp; Archive Expiration</title>
 
-            <p>Retention polices can be set for full and differential backups to create coverage for any time frame. The WAL archive can be maintained for all backups or strictly for the most recent backups. In the latter case WAL required to make older backups consistent will be maintained in the archive.</p>
+            <p>Retention policies can be set for full and differential backups to create coverage for any time frame. The WAL archive can be maintained for all backups or strictly for the most recent backups. In the latter case WAL required to make older backups consistent will be maintained in the archive.</p>
         </section>
 
         <!-- =================================================================================================================== -->
@@ -177,8 +203,6 @@
             <list-item><link page="{[backrest-page-command]}">Command reference</link> for command-line operations.</list-item>
             <list-item><link page="{[backrest-page-configuration]}">Configuration reference</link> for creating <backrest/> configurations.</list-item>
         </list>
-
-        <p>Documentation for <proper>v1</proper> can be found <link url="{[backrest-url-base]}/1">here</link>. No further releases are planned for <proper>v1</proper> because <proper>v2</proper> is backward-compatible with <proper>v1</proper> options and repositories.</p>
     </section>
 
     <!-- ======================================================================================================================= -->
@@ -192,23 +216,10 @@
     <section id="support">
         <title>Support</title>
 
-        <p><backrest/> is completely free and open source under the <link url="{[github-url-license]}">MIT</link> license. You may use it for personal or commercial purposes without any restrictions whatsoever. Bug reports are taken very seriously and will be addressed as quickly as possible.</p>
+        <p><backrest/> is completely free and open source under the <link url="{[github-url-license]}">MIT</link> license. You may use it for personal or commercial purposes without any restrictions whatsoever. Bug reports are taken very seriously and will be addressed as quickly as possible. Please report bugs <link url="{[github-url-base]}/issues">here</link>.</p>
 
         <p>Creating a robust disaster recovery policy with proper replication and backup strategies can be a very complex and daunting task. You may find that you need help during the architecture phase and ongoing support to ensure that your enterprise continues running smoothly.</p>
 
-        <p><link url="{[crunchy-url-base]}">Crunchy Data</link> provides packaged versions of <backrest/> for major operating systems and expert full life-cycle commercial support for <backrest/> and all things <postgres/>. <link url="{[crunchy-url-base]}">Crunchy Data</link> is committed to providing open source solutions with no vendor lock-in, ensuring that cross-compatibility with the community version of <backrest/> is always strictly maintained.</p>
-
-        <p>Please visit <link url="{[crunchy-url-base]}">Crunchy Data</link> for more information.</p>
-    </section>
-
-    <!-- ======================================================================================================================= -->
-    <section id="recognition">
-        <title>Recognition</title>
-
-        <p>Primary recognition goes to Stephen Frost for all his valuable advice and criticism during the development of <backrest/>.</p>
-
-        <p><link url="{[crunchy-url-base]}">Crunchy Data</link> has contributed significant time and resources to <backrest/> and continues to actively support development. <link url="{[resonate-url-base]}">Resonate</link> also contributed to the development of <backrest/> and allowed early (but well tested) versions to be installed as their primary <postgres/> backup solution.</p>
-
-        <p><link url="https://thenounproject.com/search/?q=lounge+chair&amp;i=129971">Armchair</link> graphic by <link url="https://thenounproject.com/sandorsz">Sandor Szabo</link>.</p>
+        <p>Our <link section="/sponsors">sponsors</link> offer products and services that include <backrest/> support and can help with your disaster recovery needs.</p>
     </section>
 </doc>

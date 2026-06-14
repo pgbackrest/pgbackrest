@@ -25,7 +25,7 @@ typedef enum
 #include "common/type/string.h"
 #include "common/type/stringList.h"
 #include "info/infoPg.h"
-#include "info/manifest.h"
+#include "info/manifest/manifest.h"
 #include "storage/storage.h"
 
 /***********************************************************************************************************************************

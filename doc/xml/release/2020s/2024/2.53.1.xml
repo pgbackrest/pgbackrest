@@ -1,0 +1,54 @@
+<release date="2024-08-19" version="2.53.1" title="PostgreSQL 17 Support">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="2407"/>
+                <github-pull-request id="2416"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="will.m"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix permissions when <cmd>restore</cmd> run as root user.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2420"/>
+                <github-pull-request id="2422"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="anton.glushakov"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Fix segfault on delayed connection errors.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2418"/>
+                <github-pull-request id="2421"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="anton.kurochkin"/>
+                    <release-item-contributor id="reid.thompson"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Skip local repository duplicate check for <proper>SFTP</proper>.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-improvement-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p><proper>PostgreSQL</proper> 17 support.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-core-list>
+</release>

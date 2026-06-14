@@ -7,6 +7,7 @@
         <operation-general>
             <option-list>
                 <option id="beta"><summary></summary><text><p></p></text></option>
+                <option id="cmd"><summary></summary><text><p></p></text></option>
                 <option id="config"><summary></summary><text><p></p></text></option>
                 <option id="config-path"><summary></summary><text><p></p></text></option>
                 <option id="config-include-path"><summary></summary><text><p></p></text></option>
@@ -131,6 +132,18 @@
                 <text>
                     <p>Build the specified documentation module.</p>
                 </text>
+
+                <option-list>
+                    <option id="var" name="Set variable">
+                        <summary>Set variable.</summary>
+
+                        <text>
+                            <p>This will override the variable as defined in the XML.</p>
+                        </text>
+
+                        <example>os-type=rhel</example>
+                    </option>
+                </option-list>
             </command>
 
             <command id="version">
@@ -139,6 +152,22 @@
                 <text>
                     <p>Displays installed <backrest/> version.</p>
                 </text>
+
+                <option-list>
+                    <option id="output" name="Output">
+                        <summary>Output type.</summary>
+
+                        <text>
+                            <p>The following output formats are supported:</p>
+                            <list>
+                                <list-item><id>text</id> - Display the installed <backrest/> version as text.</list-item>
+                                <list-item><id>num</id> - Display the installed <backrest/> version as an integer.</list-item>
+                            </list>
+                        </text>
+
+                        <example>num</example>
+                    </option>
+                </option-list>
             </command>
         </command-list>
     </operation>

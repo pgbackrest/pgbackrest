@@ -21,7 +21,7 @@ Test protocol server command handlers
 ***********************************************************************************************************************************/
 #define TEST_PROTOCOL_COMMAND_ASSERT                                STRID5("assert", 0x2922ce610)
 
-__attribute__((__noreturn__)) static ProtocolServerResult *
+static noreturn ProtocolServerResult *
 testCommandAssertProtocol(PackRead *const param)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -39,7 +39,7 @@ testCommandAssertProtocol(PackRead *const param)
 
 static unsigned int testCommandErrorProtocolTotal = 0;
 
-__attribute__((__noreturn__)) static ProtocolServerResult *
+static noreturn ProtocolServerResult *
 testCommandErrorProtocol(PackRead *const param)
 {
     FUNCTION_HARNESS_BEGIN();
@@ -252,11 +252,6 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .noStd = true);
 
         TEST_RESULT_BOOL(repoIsLocal(0), true, "repo is local");
-        TEST_RESULT_VOID(repoIsLocalVerify(), "local verified");
-        TEST_RESULT_VOID(repoIsLocalVerifyIdx(0), "local by index verified");
-        TEST_ERROR(
-            repoIsLocalVerifyIdx(cfgOptionGroupIdxTotal(cfgOptGrpRepo) - 1), HostInvalidError,
-            "archive-get command must be run on the repository host");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("single-repo - command invalid on remote");
@@ -268,7 +263,6 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .noStd = true);
 
         TEST_RESULT_BOOL(repoIsLocal(0), false, "repo is remote");
-        TEST_ERROR(repoIsLocalVerify(), HostInvalidError, "archive-get command must be run on the repository host");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("pg1 is local");
@@ -346,9 +340,11 @@ testRun(void)
 
         TEST_RESULT_VOID(protocolHelperClientFree(&protocolHelperClient), "free");
 
+        hrnLogReplaceAdd(" \\[10\\] No child process(es){0,1}", "process(es){0,1}", "processes", false);
+
         TEST_RESULT_LOG(
-            "P00   WARN: unable to write to invalid: [9] Bad file descriptor\n"
-            "P00   WARN: unable to wait on child process: [10] No child processes");
+            "P00   WARN: unable to finish write to invalid (wrote 0/12 bytes): [9] Bad file descriptor\n"
+            "P00   WARN: unable to wait on child process: [10] No child [processes]");
     }
 
     // *****************************************************************************************************************************
@@ -418,7 +414,6 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptStanza, "test1");
         hrnCfgArgRawBool(argList, cfgOptLogSubprocess, true);
         hrnCfgArgRawZ(argList, cfgOptPgPath, "/unused");            // Will be passed to remote (required)
-        hrnCfgArgRawZ(argList, cfgOptPgPort, "777");                // Not passed to remote (required but has default)
         hrnCfgArgRawZ(argList, cfgOptRepoHost, "repo-host");
         hrnCfgArgRawZ(argList, cfgOptRepoHostPort, "444");
         hrnCfgArgRawZ(argList, cfgOptRepoHostConfig, "/path/pgbackrest.conf");
@@ -566,7 +561,7 @@ testRun(void)
                 const ProtocolServerHandler commandHandler[] = {TEST_PROTOCOL_SERVER_HANDLER_LIST};
 
                 TEST_ERROR(
-                    protocolServerProcess(server, NULL, commandHandler, LENGTH_OF(commandHandler)), ProtocolError,
+                    protocolServerProcess(server, NULL, LSTDEF(commandHandler)), ProtocolError,
                     "invalid request 'BOGUS' (0x38eacd271)");
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -574,13 +569,13 @@ testRun(void)
 
                 // This does not run in a TEST* macro because tests are run by the command handlers
                 TEST_ERROR(
-                    protocolServerProcess(server, NULL, commandHandler, LENGTH_OF(commandHandler)), AssertError, "ERR_MESSAGE");
+                    protocolServerProcess(server, NULL, LSTDEF(commandHandler)), AssertError, "ERR_MESSAGE");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("server restart");
 
                 // This does not run in a TEST* macro because tests are run by the command handlers
-                protocolServerProcess(server, NULL, commandHandler, LENGTH_OF(commandHandler));
+                protocolServerProcess(server, NULL, LSTDEF(commandHandler));
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("server with retries");
@@ -594,7 +589,7 @@ testRun(void)
                     "new server");
 
                 // This does not run in a TEST* macro because tests are run by the command handlers
-                protocolServerProcess(server, retryList, commandHandler, LENGTH_OF(commandHandler));
+                protocolServerProcess(server, retryList, LSTDEF(commandHandler));
             }
             HRN_FORK_CHILD_END();
 
@@ -1272,12 +1267,7 @@ testRun(void)
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("call remote free before any remotes exist");
 
-        TEST_RESULT_VOID(protocolRemoteFree(1), "free remote (non exist)");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("free local that does not exist");
-
-        TEST_RESULT_VOID(protocolLocalFree(2), "free");
+        TEST_RESULT_VOID(protocolHelperFree(NULL), "free remote (non-existing)");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("call keep alive free before any remotes exist");
@@ -1299,10 +1289,26 @@ testRun(void)
 
         TEST_RESULT_VOID(protocolFree(), "free protocol objects before anything has been created");
 
-        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0), "get remote protocol");
-        TEST_RESULT_PTR(protocolRemoteGet(protocolStorageTypeRepo, 0), client, "get remote cached protocol");
-        TEST_RESULT_PTR(protocolHelper.clientRemote[0].client, client, "check position in cache");
+        TEST_RESULT_PTR(protocolRemoteGet(protocolStorageTypeRepo, 0, false), NULL, "get remote cached protocol (no create)");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0, true), "get remote protocol");
+        TEST_RESULT_PTR(protocolRemoteGet(protocolStorageTypeRepo, 0, true), client, "get remote cached protocol");
+
+        TEST_RESULT_PTR(protocolHelperClientGet(protocolClientLocal, protocolStorageTypePg, 0, 0), NULL, "cache miss");
+        TEST_RESULT_PTR(protocolHelperClientGet(protocolClientRemote, protocolStorageTypePg, 0, 0), NULL, "cache miss");
+        TEST_RESULT_PTR(protocolHelperClientGet(protocolClientRemote, protocolStorageTypeRepo, 0, 1), NULL, "cache miss");
+
+        // Add a fake local protocol to ensure noops are only sent to remotes
+        ProtocolHelperClient protocolHelperClientAdd =
+        {
+            .type = protocolClientLocal,
+            .storageType = protocolStorageTypePg,
+        };
+
+        lstInsert(protocolHelper.clientList, 0, &protocolHelperClientAdd);
+
         TEST_RESULT_VOID(protocolKeepAlive(), "keep alive");
+        lstRemoveIdx(protocolHelper.clientList, 0);
+
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects again");
 
@@ -1329,11 +1335,22 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleLocal);
 
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoCipherPass), "acbd", "check cipher pass before");
-        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0), "get remote protocol");
-        TEST_RESULT_PTR(protocolHelper.clientRemote[0].client, client, "check position in cache");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0, true), "get remote protocol");
         TEST_RESULT_STR_Z(cfgOptionStr(cfgOptRepoCipherPass), "acbd", "check cipher pass after");
 
-        TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
+        // Remove the client from the client list so it is not found
+        ProtocolHelperClient clientHelper = *(ProtocolHelperClient *)lstGet(protocolHelper.clientList, 0);
+        lstRemoveIdx(protocolHelper.clientList, 0);
+
+        TEST_RESULT_VOID(protocolHelperFree(client), "free missing remote protocol object");
+
+        // Add client back so it can be removed -- also add a fake client that will be skipped
+        lstAdd(protocolHelper.clientList, &(ProtocolHelperClient){0});
+        lstAdd(protocolHelper.clientList, &clientHelper);
+
+        TEST_RESULT_VOID(protocolHelperFree(client), "free remote protocol object");
+
+        lstRemoveIdx(protocolHelper.clientList, 0);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("start protocol with remote encryption settings");
@@ -1362,11 +1379,11 @@ testRun(void)
         HRN_CFG_LOAD(cfgCmdCheck, argList);
 
         TEST_RESULT_PTR(cfgOptionIdxStrNull(cfgOptRepoCipherPass, 0), NULL, "check repo1 cipher pass before");
-        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0), "get repo1 remote protocol");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypeRepo, 0, true), "get repo1 remote protocol");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoCipherPass, 0), "dcba", "check repo1 cipher pass after");
 
         TEST_RESULT_PTR(cfgOptionIdxStrNull(cfgOptRepoCipherPass, 1), NULL, "check repo2 cipher pass before");
-        TEST_RESULT_VOID(protocolRemoteGet(protocolStorageTypeRepo, 1), "get repo2 remote protocol");
+        TEST_RESULT_VOID(protocolRemoteGet(protocolStorageTypeRepo, 1, true), "get repo2 remote protocol");
         TEST_RESULT_STR_Z(cfgOptionIdxStr(cfgOptRepoCipherPass, 1), "xxxx", "check repo2 cipher pass after");
 
         TEST_RESULT_VOID(protocolFree(), "free remote protocol objects");
@@ -1383,7 +1400,7 @@ testRun(void)
         hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 1, TEST_PATH);
         HRN_CFG_LOAD(cfgCmdBackup, argList);
 
-        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypePg, 0), "get remote protocol");
+        TEST_ASSIGN(client, protocolRemoteGet(protocolStorageTypePg, 0, true), "get remote protocol");
 
         TEST_RESULT_VOID(protocolFree(), "free local and remote protocol objects");
 
@@ -1398,7 +1415,6 @@ testRun(void)
 
         TEST_ASSIGN(client, protocolLocalGet(protocolStorageTypeRepo, 0, 1), "get local protocol");
         TEST_RESULT_PTR(protocolLocalGet(protocolStorageTypeRepo, 0, 1), client, "get local cached protocol");
-        TEST_RESULT_PTR(protocolHelper.clientLocal[0].client, client, "check location in cache");
 
         TEST_RESULT_VOID(protocolFree(), "free local and remote protocol objects");
     }

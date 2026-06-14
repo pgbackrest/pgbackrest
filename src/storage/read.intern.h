@@ -5,40 +5,35 @@ Storage Read Interface Internal
 #define STORAGE_READ_INTERN_H
 
 #include "common/io/read.h"
+#include "storage/storage.h"
+
+/***********************************************************************************************************************************
+Interface
+***********************************************************************************************************************************/
+typedef struct StorageReadInterface
+{
+    void (*filterGroup)(void *driver, IoFilterGroup *filterGroup);  // Set filter group (optional)
+    bool (*open)(void *driver);                                     // Open read
+    size_t (*read)(void *driver, Buffer *buffer, bool block);       // Read bytes
+    bool (*eof)(void *driver);                                      // Is read eof?
+    int (*fd)(const void *driver);                                  // Read file descriptor (optional)
+    void (*close)(void *driver);                                    // Close read
+} StorageReadInterface;
 
 /***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-typedef struct StorageReadInterface
-{
-    StringId type;                                                  // Storage type
-    const String *name;
-    bool compressible;                                              // Is this file compressible?
-    unsigned int compressLevel;                                     // Level to use for compression
-    bool ignoreMissing;
-    uint64_t offset;                                                // Where to start reading in the file
-    const Variant *limit;                                           // Limit how many bytes are read (NULL for no limit)
-    bool version;                                                   // Read version
-    const String *versionId;                                        // File version to read
-    IoReadInterface ioInterface;
-} StorageReadInterface;
-
-FN_EXTERN StorageRead *storageReadNew(void *driver, const StorageReadInterface *interface);
+FN_EXTERN StorageRead *storageReadNew(
+    const Storage *storage, const String *name, bool ignoreMissing, bool compressible, uint64_t offset, const Variant *limit,
+    bool version, const String *versionId);
 
 /***********************************************************************************************************************************
-Getters/Setters
+Getters
 ***********************************************************************************************************************************/
-typedef struct StorageReadPub
-{
-    const StorageReadInterface *interface;                          // File data (name, driver type, etc.)
-    IoRead *io;                                                     // Read interface
-} StorageReadPub;
-
-// Read interface
 FN_INLINE_ALWAYS const StorageReadInterface *
-storageReadInterface(const StorageRead *const this)
+storageReadDriverInterface(const void *const driver)
 {
-    return THIS_PUB(StorageRead)->interface;
+    return *(const StorageReadInterface *const *)driver;
 }
 
 #endif

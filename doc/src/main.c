@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Main
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <stdio.h>
 
@@ -62,7 +62,7 @@ main(int argListSize, const char *argList[])
             // Build
             // -----------------------------------------------------------------------------------------------------------------
             case cfgCmdBuild:
-                cmdBuild(cfgOptionStr(cfgOptRepoPath));
+                cmdBuild(cfgOptionStr(cfgOptRepoPath), cfgOptionKvNull(cfgOptVar));
                 break;
 
             // Help/version

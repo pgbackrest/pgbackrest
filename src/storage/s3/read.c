@@ -1,7 +1,9 @@
 /***********************************************************************************************************************************
 S3 Storage Read
+
+Based on the documentation at https://cloud.google.com/storage/docs/json_api/v1/objects/get
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "common/debug.h"
 #include "common/io/http/client.h"
@@ -16,21 +18,18 @@ Object type
 #define STORAGE_READ_S3_TYPE                                        StorageReadS3
 #define STORAGE_READ_S3_PREFIX                                      storageReadS3
 
-typedef struct StorageReadS3
+struct StorageReadS3
 {
-    StorageReadInterface interface;                                 // Interface
+    const StorageReadInterface *interface;                          // Interface
     StorageS3 *storage;                                             // Storage that created this object
 
-    HttpResponse *httpResponse;                                     // HTTP response
-} StorageReadS3;
+    const String *name;                                             // File name
+    uint64_t offset;                                                // Read offset
+    const Variant *limit;                                           // Read limit (NULL for no limit)
+    const String *versionId;                                        // Version id (NULL for most recent)
 
-/***********************************************************************************************************************************
-Macros for function logging
-***********************************************************************************************************************************/
-#define FUNCTION_LOG_STORAGE_READ_S3_TYPE                                                                                          \
-    StorageReadS3 *
-#define FUNCTION_LOG_STORAGE_READ_S3_FORMAT(value, buffer, bufferSize)                                                             \
-    objNameToLog(value, "StorageReadS3", buffer, bufferSize)
+    HttpResponse *httpResponse;                                     // HTTP response
+};
 
 /***********************************************************************************************************************************
 Open the file
@@ -47,27 +46,18 @@ storageReadS3Open(THIS_VOID)
     ASSERT(this != NULL);
     ASSERT(this->httpResponse == NULL);
 
-    bool result = false;
-
     // Request the file
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
         this->httpResponse = storageS3RequestP(
-            this->storage, HTTP_VERB_GET_STR, this->interface.name,
-            .header = httpHeaderPutRange(httpHeaderNew(NULL), this->interface.offset, this->interface.limit),
+            this->storage, HTTP_VERB_GET_STR, this->name,
+            .header = httpHeaderPutRange(httpHeaderNew(NULL), this->offset, this->limit),
+            .query = this->versionId != NULL ? httpQueryPut(httpQueryNewP(), STRDEF("versionId"), this->versionId) : NULL,
             .allowMissing = true, .contentIo = true, .sseC = true);
     }
     MEM_CONTEXT_OBJ_END();
 
-    if (httpResponseCodeOk(this->httpResponse))
-    {
-        result = true;
-    }
-    // Else error unless ignore missing
-    else if (!this->interface.ignoreMissing)
-        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(this->interface.name));
-
-    FUNCTION_LOG_RETURN(BOOL, result);
+    FUNCTION_LOG_RETURN(BOOL, httpResponseCodeOk(this->httpResponse));
 }
 
 /***********************************************************************************************************************************
@@ -109,17 +99,47 @@ storageReadS3Eof(THIS_VOID)
     FUNCTION_TEST_RETURN(BOOL, ioReadEof(httpResponseIoRead(this->httpResponse)));
 }
 
+/***********************************************************************************************************************************
+Close the file
+***********************************************************************************************************************************/
+static void
+storageReadS3Close(THIS_VOID)
+{
+    THIS(StorageReadS3);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_S3, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->httpResponse != NULL);
+
+    httpResponseFree(this->httpResponse);
+    this->httpResponse = NULL;
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
 /**********************************************************************************************************************************/
-FN_EXTERN StorageRead *
+static const StorageReadInterface storageReadS3Interface =
+{
+    .close = storageReadS3Close,
+    .eof = storageReadS3Eof,
+    .open = storageReadS3Open,
+    .read = storageReadS3,
+};
+
+FN_EXTERN StorageReadS3 *
 storageReadS3New(
-    StorageS3 *const storage, const String *const name, const bool ignoreMissing, const uint64_t offset, const Variant *const limit)
+    StorageS3 *const storage, const String *const name, const uint64_t offset, const Variant *const limit,
+    const String *const versionId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_S3, storage);
         FUNCTION_LOG_PARAM(STRING, name);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
+        FUNCTION_LOG_PARAM(STRING, versionId);
     FUNCTION_LOG_END();
 
     ASSERT(storage != NULL);
@@ -130,26 +150,15 @@ storageReadS3New(
     {
         *this = (StorageReadS3)
         {
+            .interface = &storageReadS3Interface,
             .storage = storage,
-
-            .interface = (StorageReadInterface)
-            {
-                .type = STORAGE_S3_TYPE,
-                .name = strDup(name),
-                .ignoreMissing = ignoreMissing,
-                .offset = offset,
-                .limit = varDup(limit),
-
-                .ioInterface = (IoReadInterface)
-                {
-                    .eof = storageReadS3Eof,
-                    .open = storageReadS3Open,
-                    .read = storageReadS3,
-                },
-            },
+            .name = strDup(name),
+            .offset = offset,
+            .limit = varDup(limit),
+            .versionId = strDup(versionId),
         };
     }
     OBJ_NEW_END();
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadNew(this, &this->interface));
+    FUNCTION_LOG_RETURN(STORAGE_READ_S3, this);
 }

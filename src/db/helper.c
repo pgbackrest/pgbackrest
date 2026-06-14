@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Database Helper
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "common/debug.h"
 #include "config/config.h"
@@ -38,7 +38,7 @@ dbGetIdx(const unsigned int pgIdx)
                 NULL, storagePgIdx(pgIdx), applicationName);
         }
         else
-            result = dbNew(NULL, protocolRemoteGet(protocolStorageTypePg, pgIdx), storagePgIdx(pgIdx), applicationName);
+            result = dbNew(NULL, protocolRemoteGet(protocolStorageTypePg, pgIdx, true), storagePgIdx(pgIdx), applicationName);
 
         dbMove(result, memContextPrior());
     }

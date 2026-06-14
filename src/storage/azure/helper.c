@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Azure Storage Helper
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "common/debug.h"
 #include "common/io/http/url.h"
@@ -9,6 +9,7 @@ Azure Storage Helper
 #include "common/log.h"
 #include "config/config.h"
 #include "storage/azure/helper.h"
+#include "storage/helper.h"
 
 /**********************************************************************************************************************************/
 FN_EXTERN Storage *
@@ -28,11 +29,11 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
     {
         // Parse the endpoint url
         const HttpUrl *const url = httpUrlNewParseP(
-            cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx), .type = httpProtocolTypeHttps);
+            cfgOptionIdxStr(cfgOptRepoAzureEndpoint, repoIdx), .type = httpProtocolTypeAny, .defaultType = httpProtocolTypeHttps);
         const String *endpoint = httpUrlHost(url);
         unsigned int port = httpUrlPort(url);
-
-        StorageAzureUriStyle uriStyle = (StorageAzureUriStyle)cfgOptionIdxStrId(cfgOptRepoAzureUriStyle, repoIdx);
+        HttpProtocolType protocolType = httpUrlProtocolType(url);
+        StorageAzureUriStyle uriStyle = (StorageAzureUriStyle)cfgOptionIdxSeq(cfgOptRepoAzureUriStyle, repoIdx);
 
         // If the host is set then set it as the endpoint. The host option is used to set path-style URIs when working with Azurite.
         // This was ill-advised, so the uri-style option was added to allow the user to select the URI style used by the server.
@@ -40,18 +41,19 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
         if (cfgOptionIdxStrNull(cfgOptRepoStorageHost, repoIdx) != NULL)
         {
             const HttpUrl *const url = httpUrlNewParseP(
-                cfgOptionIdxStr(cfgOptRepoStorageHost, repoIdx), .type = httpProtocolTypeHttps);
+                cfgOptionIdxStr(cfgOptRepoStorageHost, repoIdx), .type = httpProtocolTypeAny, .defaultType = httpProtocolTypeHttps);
 
             endpoint = httpUrlHost(url);
             port = httpUrlPort(url);
+            protocolType = httpUrlProtocolType(url);
 
             if (cfgOptionIdxSource(cfgOptRepoAzureUriStyle, repoIdx) == cfgSourceDefault)
                 uriStyle = storageAzureUriStylePath;
         }
 
         // Ensure the key is valid base64 when key type is shared
-        const StorageAzureKeyType keyType = (StorageAzureKeyType)cfgOptionIdxStrId(cfgOptRepoAzureKeyType, repoIdx);
-        const String *const key = cfgOptionIdxStr(cfgOptRepoAzureKey, repoIdx);
+        const StorageAzureKeyType keyType = (StorageAzureKeyType)cfgOptionIdxSeq(cfgOptRepoAzureKeyType, repoIdx);
+        const String *const key = cfgOptionIdxStrNull(cfgOptRepoAzureKey, repoIdx);
 
         if (keyType == storageAzureKeyTypeShared)
         {
@@ -77,10 +79,10 @@ storageAzureHelper(const unsigned int repoIdx, const bool write, StoragePathExpr
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = storageAzureNew(
-                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, pathExpressionCallback,
+                cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoTargetTime(), pathExpressionCallback,
                 cfgOptionIdxStr(cfgOptRepoAzureContainer, repoIdx), cfgOptionIdxStr(cfgOptRepoAzureAccount, repoIdx), keyType, key,
                 (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx),
-                cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), endpoint, uriStyle, port, ioTimeoutMs(),
+                cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), endpoint, uriStyle, port, ioTimeoutMs(), protocolType,
                 cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx));
         }

@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Coverage Testing and Reporting
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "build/common/json.h"
 #include "common/debug.h"
@@ -816,14 +816,11 @@ testCvgSummaryValue(const unsigned int hit, const unsigned int total)
     // Else render value
     else
     {
-        strCatFmt(result, "%u/%u (", hit, total);
-
-        if (hit == total)
-            strCatZ(result, "100.0");
-        else
-            strCatFmt(result, "%.2f", (float)hit * 100 / (float)total);
-
-        strCatZ(result, "%)");
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            strCatFmt(result, "%u/%u (%s)", hit, total, strZ(strNewPct(hit, total)));
+        }
+        MEM_CONTEXT_TEMP_END();
     }
 
     FUNCTION_LOG_RETURN(STRING, result);
@@ -988,6 +985,8 @@ testCvgGenerate(
 
             if (strEndsWithZ(coverageName, ".vendor.c"))
                 coverageName = strNewFmt("%s.inc", strZ(coverageName));
+            else if (strEndsWithZ(coverageName, ".inc.c"))
+                coverageName = strNewFmt("%s.c.inc", strZ(strSubN(coverageName, 0, strSize(coverageName) - 6)));
 
             strLstAdd(coverageModList, coverageName);
         }
@@ -1024,19 +1023,34 @@ testCvgGenerate(
             "\\{\\+{0,1}(%s%s)[^_]", coverageSummary ? "uncoverable" : "uncover(ed|able)",
             strEqZ(vm, "none") ? "|vm_covered" : "");
         RegExp *const regExpLine = regExpNew(regExpLineStr);
+        RegExp *const regExpLog = regExpNew(STRDEF("\\s+FUNCTION_(LOG|TEST)_(VOID|BEGIN|END|PARAM(|_P|_PP))\\("));
+        RegExp *const regExpLogReturn = regExpNew(STRDEF("\\s+FUNCTION_(LOG|TEST)_RETURN_VOID\\("));
 
         for (unsigned int fileIdx = 0; fileIdx < lstSize(coverage->fileList); fileIdx++)
         {
             MEM_CONTEXT_TEMP_BEGIN()
             {
+                unsigned int lineIdx = 0;
                 const TestCoverageFile *const file = lstGet(coverage->fileList, fileIdx);
                 const StringList *const lineTextList = strLstNewSplitZ(
                     strNewBuf(storageGetP(storageNewReadP(storageTest, strNewFmt("repo/%s", strZ(file->name))))), "\n");
 
-                for (unsigned int lineIdx = 0; lineIdx < lstSize(file->lineList); lineIdx++)
+                while (lineIdx < lstSize(file->lineList))
                 {
                     ASSERT(lineIdx < strLstSize(lineTextList));
                     TestCoverageLine *const line = lstGet(file->lineList, lineIdx);
+
+                    // Remove covered lines for debug logging. These are not very interesting for coverage reporting.
+                    if (line->hit != 0)
+                    {
+                        if (regExpMatch(regExpLog, strLstGet(lineTextList, line->no - 1)) ||
+                            (regExpMatch(regExpLogReturn, strLstGet(lineTextList, line->no - 1)) &&
+                             strEqZ(strLstGet(lineTextList, line->no), "}")))
+                        {
+                            lstRemoveIdx(file->lineList, lineIdx);
+                            continue;
+                        }
+                    }
 
                     // If not covered then check for line coverage exceptions
                     if (line->hit == 0 && regExpMatch(regExpLine, strLstGet(lineTextList, line->no - 1)))
@@ -1049,6 +1063,8 @@ testCvgGenerate(
                         lstFree(line->branchList);
                         line->branchList = NULL;
                     }
+
+                    lineIdx++;
                 }
             }
             MEM_CONTEXT_TEMP_END();

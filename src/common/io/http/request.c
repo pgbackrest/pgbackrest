@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 HTTP Request
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "common/debug.h"
 #include "common/error/retry.h"
@@ -136,6 +136,21 @@ httpRequestProcess(HttpRequest *const this, const bool waitForResponse, const bo
 
         do
         {
+            // Create a session to process the request. This is done outside exception handling to avoid multiplying retries.
+            HttpSession *session = NULL;
+            bool send = true;
+
+            // If a session is saved then the request was already successfully sent
+            if (this->session != NULL)
+            {
+                session = httpSessionMove(this->session, memContextCurrent());
+                this->session = NULL;
+                send = false;
+            }
+            // Else the request has not been sent yet or this is a retry
+            else
+                session = httpClientOpen(this->client);
+
             // Assume there will be no retry
             retry = false;
 
@@ -143,19 +158,9 @@ httpRequestProcess(HttpRequest *const this, const bool waitForResponse, const bo
             {
                 MEM_CONTEXT_TEMP_BEGIN()
                 {
-                    HttpSession *session = NULL;
-
-                    // If a session is saved then the request was already successfully sent
-                    if (this->session != NULL)
+                    // Send the request
+                    if (send)
                     {
-                        session = httpSessionMove(this->session, memContextCurrent());
-                        this->session = NULL;
-                    }
-                    // Else the request has not been sent yet or this is a retry
-                    else
-                    {
-                        session = httpClientOpen(this->client);
-
                         // Write the request as a buffer so secrets do not show up in logs
                         ioWrite(
                             httpSessionIoWrite(session),
@@ -181,9 +186,7 @@ httpRequestProcess(HttpRequest *const this, const bool waitForResponse, const bo
                     {
                         result = httpResponseNew(session, httpRequestVerb(this), contentCache);
 
-                        // Retry when response code is 5xx. These errors generally represent a server error for a request that looks
-                        // valid. There are a few errors that might be permanently fatal but they are rare and it seems best not to
-                        // try and pick and choose errors in this class to retry.
+                        // Error on response codes that should be retried to engage the retry logic
                         if (httpResponseCodeRetry(result))
                             THROW_FMT(ServiceError, "[%u] %s", httpResponseCode(result), strZ(httpResponseReason(result)));
 
@@ -413,7 +416,7 @@ httpRequestMultiAdd(
                     THROW(AssertError, "unable to construct unique boundary");
 
                 bufCatC(
-                    this->boundaryRaw, (unsigned char *)HTTP_MULTIPART_BOUNDARY_EXTRA,
+                    this->boundaryRaw, (const uint8_t *)HTTP_MULTIPART_BOUNDARY_EXTRA,
                     bufUsed(this->boundaryRaw) - HTTP_MULTIPART_BOUNDARY_INIT_SIZE, HTTP_MULTIPART_BOUNDARY_NEXT);
             }
 

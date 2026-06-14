@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Backup Info Handler
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <inttypes.h>
 #include <stdarg.h>
@@ -19,7 +19,6 @@ Backup Info Handler
 #include "common/type/json.h"
 #include "common/type/list.h"
 #include "info/infoBackup.h"
-#include "info/manifest.h"
 #include "postgres/interface.h"
 #include "postgres/version.h"
 #include "storage/helper.h"
@@ -125,19 +124,21 @@ Create new object and load contents from a file
 #define INFO_BACKUP_KEY_OPT_ONLINE                                  "option-online"
 
 static void
-infoBackupLoadCallback(void *const data, const String *const section, const String *const key, const String *const value)
+infoBackupLoadCallback(void *const data, const String *const section, const String *const key, JsonRead *const json)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM_P(VOID, data);
         FUNCTION_TEST_PARAM(STRING, section);
         FUNCTION_TEST_PARAM(STRING, key);
-        FUNCTION_TEST_PARAM(STRING, value);
+        FUNCTION_TEST_PARAM(JSON_READ, json);
     FUNCTION_TEST_END();
+
+    FUNCTION_AUDIT_CALLBACK();
 
     ASSERT(data != NULL);
     ASSERT(section != NULL);
     ASSERT(key != NULL);
-    ASSERT(value != NULL);
+    ASSERT(json != NULL);
 
     InfoBackup *const infoBackup = (InfoBackup *)data;
 
@@ -146,7 +147,6 @@ infoBackupLoadCallback(void *const data, const String *const section, const Stri
     {
         MEM_CONTEXT_BEGIN(lstMemContext(infoBackup->pub.backup))
         {
-            JsonRead *const json = jsonReadNew(value);
             jsonReadObjectBegin(json);
 
             InfoBackupData info =

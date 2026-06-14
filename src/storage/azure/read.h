@@ -8,9 +8,22 @@ Azure Storage Read
 #include "storage/read.h"
 
 /***********************************************************************************************************************************
+Object type
+***********************************************************************************************************************************/
+typedef struct StorageReadAzure StorageReadAzure;
+
+/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN StorageRead *storageReadAzureNew(
-    StorageAzure *storage, const String *name, bool ignoreMissing, uint64_t offset, const Variant *limit);
+FN_EXTERN StorageReadAzure *storageReadAzureNew(
+    StorageAzure *storage, const String *name, uint64_t offset, const Variant *limit, const String *versionId);
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_LOG_STORAGE_READ_AZURE_TYPE                                                                                       \
+    StorageReadAzure *
+#define FUNCTION_LOG_STORAGE_READ_AZURE_FORMAT(value, buffer, bufferSize)                                                          \
+    objNameToLog(value, "StorageReadAzure", buffer, bufferSize)
 
 #endif

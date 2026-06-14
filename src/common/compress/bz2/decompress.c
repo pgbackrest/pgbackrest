@@ -1,13 +1,14 @@
 /***********************************************************************************************************************************
 BZ2 Decompress
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <bzlib.h>
 #include <stdio.h>
 
 #include "common/compress/bz2/common.h"
 #include "common/compress/bz2/decompress.h"
+#include "common/compress/common.h"
 #include "common/debug.h"
 #include "common/io/filter/filter.h"
 #include "common/log.h"
@@ -88,7 +89,10 @@ bz2DecompressProcess(THIS_VOID, const Buffer *const compressed, Buffer *const un
         this->stream.avail_in = (unsigned int)bufUsed(compressed);
 
         // bzip2 does not accept const input buffers
-        this->stream.next_in = (char *)UNCONSTIFY(unsigned char *, bufPtrConst(compressed));
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-qual"
+        this->stream.next_in = (char *)UNCONSTIFY(uint8_t *, bufPtrConst(compressed));
+#pragma GCC diagnostic pop
     }
 
     this->stream.avail_out = (unsigned int)bufRemains(uncompressed);
@@ -168,6 +172,6 @@ bz2DecompressNew(const bool raw)
     FUNCTION_LOG_RETURN(
         IO_FILTER,
         ioFilterNewP(
-            BZ2_DECOMPRESS_FILTER_TYPE, this, NULL, .done = bz2DecompressDone, .inOut = bz2DecompressProcess,
+            BZ2_DECOMPRESS_FILTER_TYPE, this, decompressParamList(raw), .done = bz2DecompressDone, .inOut = bz2DecompressProcess,
             .inputSame = bz2DecompressInputSame));
 }

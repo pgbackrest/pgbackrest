@@ -1,9 +1,10 @@
 /***********************************************************************************************************************************
 Stanza Commands Handler
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "command/check/common.h"
+#include "command/stanza/common.h"
 #include "common/debug.h"
 #include "common/log.h"
 #include "config/config.h"
@@ -18,14 +19,14 @@ FN_EXTERN String *
 cipherPassGen(const CipherType cipherType)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(ENUM, cipherType);
+        FUNCTION_TEST_PARAM(STRING_ID, cipherType);
     FUNCTION_TEST_END();
 
     String *result = NULL;
 
     if (cipherType != cipherTypeNone)
     {
-        unsigned char buffer[48]; // 48 is the amount of entropy needed to get a 64 base key
+        uint8_t buffer[48];                                         // 48 is the amount of entropy needed to get a 64 base key
         cryptoRandomBytes(buffer, sizeof(buffer));
 
         result = strNewEncode(encodingBase64, BUF(buffer, sizeof(buffer)));

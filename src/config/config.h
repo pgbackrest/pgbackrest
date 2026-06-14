@@ -48,6 +48,7 @@ typedef enum
 {
     lockTypeArchive,
     lockTypeBackup,
+    lockTypeRestore,
     lockTypeAll,
     lockTypeNone,
 } LockType;
@@ -192,6 +193,15 @@ cfgOptionStrId(const ConfigOption optionId)
     return cfgOptionIdxStrId(optionId, cfgOptionIdxDefault(optionId));
 }
 
+// Get config option sequence
+FN_EXTERN unsigned int cfgOptionIdxSeq(ConfigOption optionId, unsigned int optionIdx);
+
+FN_INLINE_ALWAYS unsigned int
+cfgOptionSeq(const ConfigOption optionId)
+{
+    return cfgOptionIdxSeq(optionId, cfgOptionIdxDefault(optionId));
+}
+
 // Get uint config option
 FN_EXTERN unsigned int cfgOptionIdxUInt(ConfigOption optionId, unsigned int optionIdx);
 
@@ -252,12 +262,8 @@ FN_EXTERN bool cfgCommandHelp(void);
 
 FN_EXTERN void cfgCommandSet(ConfigCommand commandId, ConfigCommandRole commandRoleId);
 
-// pgBackRest exe
-FN_EXTERN const String *cfgExe(void);
-
-// Set option default. Option defaults are generally not set in advance because the vast majority of them are never used. It is more
-// efficient to generate them when they are requested. Some defaults are (e.g. the exe path) are set at runtime.
-FN_EXTERN void cfgOptionDefaultSet(ConfigOption optionId, const Variant *defaultValue);
+// Path to current pgbackrest binary
+FN_EXTERN const String *cfgBin(void);
 
 // Was the option negated?
 FN_EXTERN bool cfgOptionIdxNegate(ConfigOption optionId, unsigned int optionIdx);

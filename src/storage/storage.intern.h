@@ -51,6 +51,7 @@ Error messages
 #define STORAGE_ERROR_WRITE_CLOSE                                   "unable to close file '%s' after write"
 #define STORAGE_ERROR_WRITE_OPEN                                    "unable to open file '%s' for write"
 #define STORAGE_ERROR_WRITE_MISSING                                 "unable to open file '%s' for write in missing path"
+#define STORAGE_ERROR_WRITE_SEEK                                    "unable to seek to %" PRIu64 " in file '%s'"
 #define STORAGE_ERROR_WRITE_SYNC                                    "unable to sync file '%s' after write"
 
 /***********************************************************************************************************************************
@@ -118,14 +119,15 @@ typedef struct StorageInterfaceNewReadParam
 
     // Limit bytes read from the file. NULL for no limit.
     const Variant *limit;
+
+    // Target a specific file version (NULL for current version)
+    const String *versionId;
 } StorageInterfaceNewReadParam;
 
-typedef StorageRead *StorageInterfaceNewRead(
-    void *thisVoid, const String *file, bool ignoreMissing, StorageInterfaceNewReadParam param);
+typedef void *StorageInterfaceNewRead(void *thisVoid, const String *file, StorageInterfaceNewReadParam param);
 
-#define storageInterfaceNewReadP(thisVoid, file, ignoreMissing, ...)                                                               \
-    STORAGE_COMMON_INTERFACE(thisVoid).newRead(                                                                                    \
-        thisVoid, file, ignoreMissing, (StorageInterfaceNewReadParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define storageInterfaceNewReadP(thisVoid, file, ...)                                                                              \
+    STORAGE_COMMON_INTERFACE(thisVoid).newRead(thisVoid, file, (StorageInterfaceNewReadParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Create a file write object. The file should not be opened immediately -- open() will be called on the IoWrite interface when the
@@ -164,7 +166,7 @@ typedef struct StorageInterfaceNewWriteParam
     bool compressible;
 } StorageInterfaceNewWriteParam;
 
-typedef StorageWrite *StorageInterfaceNewWrite(void *thisVoid, const String *file, StorageInterfaceNewWriteParam param);
+typedef void *StorageInterfaceNewWrite(void *thisVoid, const String *file, StorageInterfaceNewWriteParam param);
 
 #define storageInterfaceNewWriteP(thisVoid, file, ...)                                                                             \
     STORAGE_COMMON_INTERFACE(thisVoid).newWrite(thisVoid, file, (StorageInterfaceNewWriteParam){VAR_PARAM_INIT, __VA_ARGS__})
@@ -185,6 +187,9 @@ typedef struct StorageInterfaceListParam
     // using the prefix returned from regExpPrefix(). This may cause extra results to be sent to the callback but won't exclude
     // anything that matches the expression exactly.
     const String *expression;
+
+    // Target max version <= the specified time
+    time_t targetTime;
 } StorageInterfaceListParam;
 
 typedef StorageList *StorageInterfaceList(
@@ -303,10 +308,10 @@ typedef struct StorageInterface
 } StorageInterface;
 
 #define storageNewP(type, path, modeFile, modePath, write, pathExpressionFunction, driver, ...)                                    \
-    storageNew(type, path, modeFile, modePath, write, pathExpressionFunction, driver, (StorageInterface){__VA_ARGS__})
+    storageNew(type, path, modeFile, modePath, write, targetTime, pathExpressionFunction, driver, (StorageInterface){__VA_ARGS__})
 
 FN_EXTERN Storage *storageNew(
-    StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write,
+    StringId type, const String *path, mode_t modeFile, mode_t modePath, bool write, time_t targetTime,
     StoragePathExpressionCallback pathExpressionFunction, void *driver, StorageInterface interface);
 
 /***********************************************************************************************************************************

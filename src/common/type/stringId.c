@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Represent Short Strings as Integers
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "common/assert.h"
 #include "common/debug.h"
@@ -19,8 +19,14 @@ typedef enum
 /***********************************************************************************************************************************
 Constants used to extract information from the header
 ***********************************************************************************************************************************/
-#define STRING_ID_HEADER_SIZE                                       4
-#define STRING_ID_PREFIX                                            4
+#define STRING_ID_BIT                                               0x1     // Bit to indicate 5/6 bits
+#define STRING_ID_HEADER_SHIFT                                      4       // Shift for standard header
+// It is possible to store a max sequence of 69 if all bits are used in 6-bit encoding -- but this seems like overkill for now
+#define STRING_ID_SEQ_MAX                                           37      // Max sequence
+#define STRING_ID_SEQ_HIGH_MIN                                      6       // Sequence >= must be stored in high sequence bits
+#define STRING_ID_SEQ_HIGH_SHIFT                                    5       // Shift for high sequence bits
+#define STRING_ID_SEQ_LOW_MASK                                      0xE     // Mask for low sequence bits
+#define STRING_ID_SEQ_HIGH_MASK                                     0x1F0   // Mask for high sequence bits
 
 /**********************************************************************************************************************************/
 // Helper to do encoding for specified number of bits
@@ -65,12 +71,13 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
             };
             // {uncrustify_on}
 
+            // If size is greater than can be encoded then error
+            if (size > STRID5_MAX)
+                FUNCTION_TEST_RETURN(STRING_ID, 0);
+
             // Make sure the string is valid for this encoding
             for (size_t bufferIdx = 0; bufferIdx < size; bufferIdx++)
             {
-                if (bufferIdx == STRID5_MAX - 1)
-                    break;
-
                 if (map[(uint8_t)buffer[bufferIdx]] == 0)
                     FUNCTION_TEST_RETURN(STRING_ID, 0);
             }
@@ -78,50 +85,54 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
             // Set encoding in header
             uint64_t result = stringIdBit5;
 
-            // If size is greater than can be encoded then add prefix bit and adjust size
-            if (size >= STRID5_MAX)
-            {
-                result |= STRING_ID_PREFIX;
-                size = STRID5_MAX - 1;
-            }
-
             // Encode based on the number of characters that need to be encoded
             switch (size)
             {
                 case 12:
                     result |= (uint64_t)map[(uint8_t)buffer[11]] << 59;
+                    __attribute__((fallthrough));
 
                 case 11:
                     result |= (uint64_t)map[(uint8_t)buffer[10]] << 54;
+                    __attribute__((fallthrough));
 
                 case 10:
                     result |= (uint64_t)map[(uint8_t)buffer[9]] << 49;
+                    __attribute__((fallthrough));
 
                 case 9:
                     result |= (uint64_t)map[(uint8_t)buffer[8]] << 44;
+                    __attribute__((fallthrough));
 
                 case 8:
                     result |= (uint64_t)map[(uint8_t)buffer[7]] << 39;
+                    __attribute__((fallthrough));
 
                 case 7:
                     result |= (uint64_t)map[(uint8_t)buffer[6]] << 34;
+                    __attribute__((fallthrough));
 
                 case 6:
                     result |= (uint64_t)map[(uint8_t)buffer[5]] << 29;
+                    __attribute__((fallthrough));
 
                 case 5:
                     result |= (uint64_t)map[(uint8_t)buffer[4]] << 24;
+                    __attribute__((fallthrough));
 
                 case 4:
                     result |= (uint64_t)map[(uint8_t)buffer[3]] << 19;
+                    __attribute__((fallthrough));
 
                 case 3:
                     result |= (uint64_t)map[(uint8_t)buffer[2]] << 14;
+                    __attribute__((fallthrough));
 
                 case 2:
                     result |= (uint64_t)map[(uint8_t)buffer[1]] << 9;
+                    __attribute__((fallthrough));
 
-                case 1:
+                default:
                     result |= (uint64_t)map[(uint8_t)buffer[0]] << 4;
             }
 
@@ -156,12 +167,13 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
             };
             // {uncrustify_on}
 
+            // If size is greater than can be encoded then error
+            if (size > STRID6_MAX)
+                FUNCTION_TEST_RETURN(STRING_ID, 0);
+
             // Make sure the string is valid for this encoding
             for (size_t bufferIdx = 0; bufferIdx < size; bufferIdx++)
             {
-                if (bufferIdx == STRID6_MAX - 1)
-                    break;
-
                 if (map[(uint8_t)buffer[bufferIdx]] == 0)
                     FUNCTION_TEST_RETURN(STRING_ID, 0);
             }
@@ -169,44 +181,46 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
             // Set encoding in header
             uint64_t result = stringIdBit6;
 
-            // If size is greater than can be encoded then add prefix bit and adjust size
-            if (size >= STRID6_MAX)
-            {
-                result |= STRING_ID_PREFIX;
-                size = STRID6_MAX - 1;
-            }
-
             // Encode based on the number of characters that need to be encoded
             switch (size)
             {
                 case 10:
                     result |= (uint64_t)map[(uint8_t)buffer[9]] << 58;
+                    __attribute__((fallthrough));
 
                 case 9:
                     result |= (uint64_t)map[(uint8_t)buffer[8]] << 52;
+                    __attribute__((fallthrough));
 
                 case 8:
                     result |= (uint64_t)map[(uint8_t)buffer[7]] << 46;
+                    __attribute__((fallthrough));
 
                 case 7:
                     result |= (uint64_t)map[(uint8_t)buffer[6]] << 40;
+                    __attribute__((fallthrough));
 
                 case 6:
                     result |= (uint64_t)map[(uint8_t)buffer[5]] << 34;
+                    __attribute__((fallthrough));
 
                 case 5:
                     result |= (uint64_t)map[(uint8_t)buffer[4]] << 28;
+                    __attribute__((fallthrough));
 
                 case 4:
                     result |= (uint64_t)map[(uint8_t)buffer[3]] << 22;
+                    __attribute__((fallthrough));
 
                 case 3:
                     result |= (uint64_t)map[(uint8_t)buffer[2]] << 16;
+                    __attribute__((fallthrough));
 
                 case 2:
                     result |= (uint64_t)map[(uint8_t)buffer[1]] << 10;
+                    __attribute__((fallthrough));
 
-                case 1:
+                default:
                     result |= (uint64_t)map[(uint8_t)buffer[0]] << 4;
             }
 
@@ -216,12 +230,12 @@ strIdBitFromZN(const StringIdBit bit, const char *const buffer, size_t size)
 }
 
 FN_EXTERN StringId
-strIdFromZN(const char *const buffer, const size_t size, const bool error)
+strIdFromZN(const char *const buffer, const size_t size, const unsigned int sequence)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(VOID, buffer);
         FUNCTION_TEST_PARAM(SIZE, size);
-        FUNCTION_TEST_PARAM(BOOL, error);
+        FUNCTION_TEST_PARAM(UINT, sequence);
     FUNCTION_TEST_END();
 
     StringId result = strIdBitFromZN(stringIdBit5, buffer, size);
@@ -232,8 +246,32 @@ strIdFromZN(const char *const buffer, const size_t size, const bool error)
         result = strIdBitFromZN(stringIdBit6, buffer, size);
 
         // Error when 6-bit encoding also fails
-        if (result == 0 && error)
+        if (result == 0)
             THROW_FMT(FormatError, "'%s' contains invalid characters", buffer);
+    }
+
+    // Add sequence when specified
+    if (sequence != STRING_ID_SEQ_NONE)
+    {
+        // If sequence can fit in header
+        if (sequence < STRING_ID_SEQ_HIGH_MIN)
+        {
+            result |= (sequence + 1) << STRING_ID_BIT;
+        }
+        // Else sequence must be stored in high bits
+        else
+        {
+            const StringIdBit bit = (StringIdBit)(result & STRING_ID_BIT);
+            ASSERT(size < (bit ? STRID6_MAX : STRID5_MAX));
+            ASSERT(sequence <= STRING_ID_SEQ_MAX);
+
+            // Shift to remove the bit marker (will be added back later) and make space for high sequence
+            result >>= STRING_ID_BIT;
+            result <<= STRING_ID_SEQ_HIGH_SHIFT + STRING_ID_BIT;
+
+            // Add the sequence
+            result |= (sequence - STRING_ID_SEQ_HIGH_MIN) << STRING_ID_HEADER_SHIFT | STRING_ID_SEQ_LOW_MASK | bit;
+        }
     }
 
     FUNCTION_TEST_RETURN(STRING_ID, result);
@@ -251,14 +289,14 @@ strIdToZN(StringId strId, char *const buffer)
     ASSERT(strId != 0);
     ASSERT(buffer != NULL);
 
-    // Is the StringId a prefix of a longer string?
-    bool prefix = strId & STRING_ID_PREFIX;
-
     // Extract bits used to encode the characters
-    StringIdBit bit = (StringIdBit)(strId & STRING_ID_BIT_MASK);
+    StringIdBit bit = (StringIdBit)(strId & STRING_ID_BIT);
 
     // Remove header to get the encoded characters
-    strId >>= STRING_ID_HEADER_SIZE;
+    if ((strId & STRING_ID_SEQ_LOW_MASK) == STRING_ID_SEQ_LOW_MASK)
+        strId >>= STRING_ID_SEQ_HIGH_SHIFT + STRING_ID_HEADER_SHIFT;
+    else
+        strId >>= STRING_ID_HEADER_SHIFT;
 
     // Decoding type
     switch (bit)
@@ -267,7 +305,7 @@ strIdToZN(StringId strId, char *const buffer)
         case stringIdBit5:
         {
             // Map to convert encoding to characters
-            static const char map[32] = "!abcdefghijklmnopqrstuvwxyz-256!";
+            VR_NON_STRING static const char map[32] = "!abcdefghijklmnopqrstuvwxyz-256!";
 
             // Macro to decode all but the last character
             #define STR5ID_TO_ZN_IDX(idx)                                                                                          \
@@ -294,13 +332,6 @@ strIdToZN(StringId strId, char *const buffer)
             buffer[11] = map[strId & 0x1F];
             ASSERT(strId >> 5 == 0);
 
-            // If prefix flag is set then append +
-            if (prefix)
-            {
-                buffer[12] = '+';
-                FUNCTION_TEST_RETURN(SIZE, 13);
-            }
-
             FUNCTION_TEST_RETURN(SIZE, 12);
         }
 
@@ -310,7 +341,7 @@ strIdToZN(StringId strId, char *const buffer)
             ASSERT(bit == stringIdBit6);
 
             // Map to convert encoding to characters
-            static const char map[64] = "!abcdefghijklmnopqrstuvwxyz-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            VR_NON_STRING static const char map[64] = "!abcdefghijklmnopqrstuvwxyz-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
             // Macro to decode all but the last character
             #define STR6ID_TO_ZN_IDX(idx)                                                                                          \
@@ -335,30 +366,9 @@ strIdToZN(StringId strId, char *const buffer)
             buffer[9] = map[strId & 0x3F];
             ASSERT(strId >> 6 == 0);
 
-            // If prefix flag is set then append +
-            if (prefix)
-            {
-                buffer[10] = '+';
-                FUNCTION_TEST_RETURN(SIZE, 11);
-            }
-
             FUNCTION_TEST_RETURN(SIZE, 10);
         }
     }
-}
-
-/**********************************************************************************************************************************/
-FN_EXTERN String *
-strIdToStr(const StringId strId)
-{
-    FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM(STRING_ID, strId);
-    FUNCTION_TEST_END();
-
-    char buffer[STRID_MAX + 1];
-    buffer[strIdToZN(strId, buffer)] = '\0';
-
-    FUNCTION_TEST_RETURN(STRING, strNewZ(buffer));
 }
 
 /**********************************************************************************************************************************/
@@ -374,6 +384,25 @@ strIdToZ(const StringId strId, char *const buffer)
     buffer[size] = '\0';
 
     FUNCTION_TEST_RETURN(SIZE, size);
+}
+
+FN_EXTERN unsigned int
+strIdSeq(const StringId strId)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STRING_ID, strId);
+    FUNCTION_TEST_END();
+
+    const unsigned int sequence = (unsigned int)strId & STRING_ID_SEQ_LOW_MASK;
+
+    if (sequence != STRING_ID_SEQ_LOW_MASK)
+    {
+        ASSERT(sequence != 0);
+        FUNCTION_TEST_RETURN(UINT, (sequence >> STRING_ID_BIT) - 1);
+    }
+
+    FUNCTION_TEST_RETURN(
+        UINT, (((unsigned int)strId & STRING_ID_SEQ_HIGH_MASK) >> STRING_ID_HEADER_SHIFT) + STRING_ID_SEQ_HIGH_MIN);
 }
 
 /**********************************************************************************************************************************/

@@ -58,6 +58,7 @@ typedef struct StorageInfo
     // Set when info type >= storageInfoLevelBasic (undefined at lower levels)
     uint64_t size;                                                  // Size (path/link is 0)
     time_t timeModified;                                            // Time file was last modified
+    const String *versionId;                                        // Version id when versioning enabled
 
     // Set when info type >= storageInfoLevelDetail (undefined at lower levels)
     mode_t mode;                                                    // Mode of path/file/link

@@ -51,11 +51,11 @@ testRun(void)
         HRN_INFO_PUT(
             storageRepoWrite(), STORAGE_REPO_BACKUP "/" INFO_BACKUP_FILE,
             "[db]\n"
-            "db-catalog-version=201510051\n"
-            "db-control-version=942\n"
+            "db-catalog-version=202506291\n"
+            "db-control-version=1800\n"
             "db-id=1\n"
             "db-system-id=6626363367545678089\n"
-            "db-version=\"9.5\"\n"
+            "db-version=\"18\"\n"
             "\n"
             "[backup:current]\n"
             "20201116-200000F={\"backrest-format\":5,\"backrest-version\":\"2.30\","
@@ -68,8 +68,8 @@ testRun(void)
             "\"option-online\":true}\n"
             "\n"
             "[db:history]\n"
-            "1={\"db-catalog-version\":201510051,\"db-control-version\":942,\"db-system-id\":6626363367545678089"
-            ",\"db-version\":\"9.5\"}\n",
+            "1={\"db-catalog-version\":202506291,\"db-control-version\":1800,\"db-system-id\":6626363367545678089"
+            ",\"db-version\":\"18\"}\n",
             .comment = "write backup info - stanza1, repo1");
 
         // Add backup manifest
@@ -84,11 +84,11 @@ testRun(void)
             "backup-type=\"full\"\n"                                                                                               \
             "\n"                                                                                                                   \
             "[backup:db]\n"                                                                                                        \
-            "db-catalog-version=201510051\n"                                                                                       \
-            "db-control-version=942\n"                                                                                             \
+            "db-catalog-version=202506291\n"                                                                                       \
+            "db-control-version=1800\n"                                                                                            \
             "db-id=1\n"                                                                                                            \
             "db-system-id=6626363367545678089\n"                                                                                   \
-            "db-version=\"9.5\"\n"                                                                                                 \
+            "db-version=\"18\"\n"                                                                                                  \
             "\n"                                                                                                                   \
             "[backup:option]\n"                                                                                                    \
             "option-archive-check=true\n"                                                                                          \

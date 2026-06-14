@@ -15,6 +15,7 @@ Test Remote Storage
 #include "common/harnessPack.h"
 #include "common/harnessProtocol.h"
 #include "common/harnessStorage.h"
+#include "common/harnessTime.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -31,7 +32,7 @@ testRun(void)
         PROTOCOL_SERVER_HANDLER_STORAGE_REMOTE_LIST
     };
 
-    hrnProtocolRemoteShimInstall(testRemoteHandlerList, LENGTH_OF(testRemoteHandlerList));
+    hrnProtocolRemoteShimInstall(LSTDEF(testRemoteHandlerList));
 
     // Set filter handlers
     static const StorageRemoteFilterHandler storageRemoteFilterHandlerList[] =
@@ -42,7 +43,7 @@ testRun(void)
         {.type = SIZE_FILTER_TYPE, .handlerNoParam = ioSizeNew},
     };
 
-    storageRemoteFilterHandlerSet(storageRemoteFilterHandlerList, LENGTH_OF(storageRemoteFilterHandlerList));
+    storageRemoteFilterHandlerSet(LSTDEF(storageRemoteFilterHandlerList));
 
     // Test storage
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
@@ -65,6 +66,8 @@ testRun(void)
     const Storage *const storagePgWrite = storagePgGet(1, true);
 
     // Load configuration and get repo remote storage
+    hrnStorageHelperRepoShimSet(true);
+
     argList = strLstNew();
     hrnCfgArgRawZ(argList, cfgOptStanza, "db");
     hrnCfgArgRawZ(argList, cfgOptProtocolTimeout, "20");
@@ -77,7 +80,7 @@ testRun(void)
     HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .role = cfgCmdRoleLocal);
 
     const Storage *const storageRepoWrite = storageRepoGet(0, true);
-    const Storage *const storageRepo = storageRepoGet(0, false);
+    Storage *const storageRepo = storageRepoGet(0, false);
 
     // Create a file larger than the remote buffer size
     Buffer *contentBuf = bufNew(ioBufferSize() * 2);
@@ -263,7 +266,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             strZ(strNewBuf(storageGetP(storageNewReadP(storagePgWrite, STRDEF("test.txt"))))), FileMissingError,
-            "raised from remote-0 shim protocol: " STORAGE_ERROR_READ_MISSING, TEST_PATH "/pg256/test.txt");
+            STORAGE_ERROR_READ_MISSING, TEST_PATH "/pg256/test.txt");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("raw read file without compression");
@@ -278,9 +281,7 @@ testRun(void)
         StorageRead *fileReadRaw;
         TEST_ASSIGN(fileReadRaw, storageNewReadP(storageRepo, STRDEF("test.txt")), "new file");
         TEST_RESULT_BOOL(ioReadOpen(storageReadIo(fileReadRaw)), true, "open read");
-        TEST_ASSIGN(
-            size, storageReadRemote(ioReadDriver(storageReadIo(fileReadRaw)), buffer, true),
-            "read file and save returned size");
+        TEST_ASSIGN(size, storageReadRemote(fileReadRaw->driver, buffer, true), "read file and save returned size");
         TEST_RESULT_UINT(size, bufUsed(buffer), "check returned size");
         TEST_RESULT_UINT(size, bufUsed(contentBuf), "returned size should be the same as the file size");
         TEST_RESULT_VOID(ioReadClose(storageReadIo(fileReadRaw)), "close");
@@ -298,8 +299,8 @@ testRun(void)
         TEST_RESULT_BOOL(bufEq(storageGetP(fileRead), contentBuf), true, "get file");
         TEST_RESULT_BOOL(storageReadIgnoreMissing(fileRead), false, "check ignore missing");
         TEST_RESULT_STR_Z(storageReadName(fileRead), TEST_PATH "/repo128/test.txt", "check name");
-        TEST_RESULT_UINT(storageReadRemote(ioReadDriver(storageReadIo(fileRead)), bufNew(32), false), 0, "nothing more to read");
-        TEST_RESULT_UINT(((StorageReadRemote *)ioReadDriver(storageReadIo(fileRead)))->protocolReadBytes, bufSize(contentBuf), "check read size");
+        TEST_RESULT_UINT(storageReadRemote(fileRead->driver, bufNew(32), false), 0, "nothing more to read");
+        TEST_RESULT_UINT(((StorageReadRemote *)fileRead->driver)->protocolReadBytes, bufSize(contentBuf), "check read size");
 
         // Enable protocol compression in the storage object
         ((StorageRemote *)storageDriver(storageRepo))->compressLevel = 3;
@@ -309,7 +310,7 @@ testRun(void)
 
         TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF("test.txt"), .limit = VARUINT64(11)), "get file");
         TEST_RESULT_STR_Z(strNewBuf(storageGetP(fileRead)), "BABABABABAB", "check contents");
-        TEST_RESULT_UINT(((StorageReadRemote *)ioReadDriver(storageReadIo(fileRead)))->protocolReadBytes, 11, "check read size");
+        TEST_RESULT_UINT(((StorageReadRemote *)fileRead->driver)->protocolReadBytes, 11, "check read size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read partial file then close");
@@ -361,8 +362,7 @@ testRun(void)
         TEST_RESULT_BOOL(bufEq(storageGetP(fileRead), contentBuf), true, "check contents");
         // We don't know how much protocol compression there will be exactly, but make sure this is some
         TEST_RESULT_BOOL(
-            ((StorageReadRemote *)ioReadDriver(storageReadIo(fileRead)))->protocolReadBytes < bufSize(contentBuf), true,
-            "check compressed read size");
+            ((StorageReadRemote *)fileRead->driver)->protocolReadBytes < bufSize(contentBuf), true, "check compressed read size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file missing");
@@ -451,9 +451,9 @@ testRun(void)
 
         TEST_RESULT_VOID(storagePutP(write, contentBuf), "write file");
         TEST_RESULT_UINT(
-            ((StorageWriteRemote *)ioWriteDriver(storageWriteIo(write)))->protocolWriteBytes, bufSize(contentBuf),
+            ((StorageWriteRemote *)write->driver)->protocolWriteBytes, bufSize(contentBuf),
             "check write size");
-        TEST_RESULT_VOID(storageWriteRemoteClose(ioWriteDriver(storageWriteIo(write))), "close file again");
+        TEST_RESULT_VOID(storageWriteRemoteClose(write->driver), "close file again");
         TEST_RESULT_VOID(storageWriteFree(write), "free file");
 
         // Make sure the file was written correctly
@@ -509,7 +509,7 @@ testRun(void)
             write, storageNewWriteP(storageRepoWrite, STRDEF("test2.txt"), .compressible = true), "new write file (compress)");
         TEST_RESULT_VOID(storagePutP(write, contentBuf), "write file");
         TEST_RESULT_BOOL(
-            ((StorageWriteRemote *)ioWriteDriver(storageWriteIo(write)))->protocolWriteBytes < bufSize(contentBuf), true,
+            ((StorageWriteRemote *)write->driver)->protocolWriteBytes < bufSize(contentBuf), true,
             "check compressed write size");
     }
 
@@ -746,11 +746,42 @@ testRun(void)
             " '" TEST_PATH "/pg256/20181119-152138F': [1] Operation not permitted");
     }
 
+    // *****************************************************************************************************************************
+    if (testBegin("Versioning"))
+    {
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageRepoWrite, STRDEF("test1"), .timeModified = 1724734625), BUFSTRDEF("test1")),
+            "write test file");
+        TEST_RESULT_VOID(
+            storagePutP(storageNewWriteP(storageRepoWrite, STRDEF("test1"), .timeModified = 1724734626), BUFSTRDEF("test1a")),
+            "write test again");
+
+        storageRepo->targetTime = 1724734626;
+        storageRepo->cacheList = lstNewP(sizeof(StorageListCache), .comparator = lstComparatorStr);
+
+        TEST_STORAGE_LIST(
+            storageRepo, NULL,
+            "test1 {s=6, t=1724734626, v=v0002}\n",
+            .level = storageInfoLevelBasic);
+        TEST_STORAGE_GET(storageRepo, "test1", "test1a");
+        TEST_RESULT_INT(storageInfoP(storageRepo, STRDEF("test1")).timeModified, 1724734626, "check time");
+
+        storageRepo->targetTime = 1724734625;
+        storageRepo->cacheList = lstNewP(sizeof(StorageListCache), .comparator = lstComparatorStr);
+
+        TEST_STORAGE_LIST(
+            storageRepo, NULL,
+            "test1 {s=5, t=1724734625, v=v0001}\n",
+            .level = storageInfoLevelBasic);
+        TEST_STORAGE_GET(storageRepo, "test1", "test1");
+        TEST_RESULT_INT(storageInfoP(storageRepo, STRDEF("test1")).timeModified, 1724734625, "check time");
+    }
+
     // When clients are freed by protocolClientFree() they do not wait for a response. We need to wait for a response here to be
     // sure coverage data has been written by the remote. We also need to make sure that the mem context callback is cleared so that
     // protocolClientFreeResource() will not be called and send another exit. protocolFree() is still required to free the client
     // objects.
-    ProtocolClient *client = protocolRemoteGet(protocolStorageTypeRepo, 0);
+    ProtocolClient *client = protocolRemoteGet(protocolStorageTypeRepo, 0, true);
 
     memContextCallbackClear(objMemContext(client));
 
@@ -759,7 +790,7 @@ testRun(void)
 
     protocolClientRequestP(client, PROTOCOL_COMMAND_EXIT);
 
-    client = protocolRemoteGet(protocolStorageTypePg, 1);
+    client = protocolRemoteGet(protocolStorageTypePg, 1, true);
 
     for (unsigned int sessionIdx = 0; sessionIdx < lstSize(client->sessionList); sessionIdx++)
         memContextCallbackClear(objMemContext(*(ProtocolClientSession **)lstGet(client->sessionList, sessionIdx)));

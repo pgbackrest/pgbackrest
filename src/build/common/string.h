@@ -12,7 +12,7 @@ Functions
 // Upper-case entire string
 String *strUpper(String *this);
 
-// Replace a substring with another string
-String *strReplace(String *this, const String *replace, const String *with);
+// Replace a substring with another string. Returns the number of replacements made.
+unsigned int strReplace(String *this, const String *replace, const String *with);
 
 #endif

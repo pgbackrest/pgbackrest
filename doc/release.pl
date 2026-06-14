@@ -30,15 +30,12 @@ use pgBackRestTest::Common::StoragePosix;
 use pgBackRestTest::Common::VmTest;
 
 use pgBackRestDoc::Common::Doc;
-use pgBackRestDoc::Common::DocConfig;
 use pgBackRestDoc::Common::DocManifest;
-use pgBackRestDoc::Common::DocRender;
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Log;
 use pgBackRestDoc::Common::String;
 use pgBackRestDoc::Custom::DocCustomRelease;
 use pgBackRestDoc::Html::DocHtmlSite;
-use pgBackRestDoc::Latex::DocLatex;
 use pgBackRestDoc::Markdown::DocMarkdown;
 use pgBackRestDoc::ProjectInfo;
 
@@ -209,7 +206,7 @@ eval
                     '        "subject": ' . trim((JSON::PP->new()->allow_nonref()->pretty())->encode($rhGitLog->{subject}));
 
                 # Skip the body if it is empty or a release (since we already have the release note content)
-                if ($rhGitLog->{subject} !~ /^v[0-9]{1,2}\.[0-9]{1,2}\: /g && defined($rhGitLog->{body}))
+                if ($rhGitLog->{subject} !~ /^v[0-9]{1,2}\.[0-9]{1,2}(\.[0-9]+){0,1}\: /g && defined($rhGitLog->{body}))
                 {
                     $strGitLog .=
                         ",\n" .
@@ -239,16 +236,11 @@ eval
         {
             &log(INFO, "Generate RHEL documentation");
 
-            executeTest("${strDocExe} --deploy --key-var=os-type=rhel --out=pdf", {bShowOutputAsync => true});
-
-            if (!defined($strVm))
-            {
-                executeTest("${strDocExe} --deploy --cache-only --key-var=os-type=rhel --out=pdf");
-            }
+            executeTest("${strDocExe} --deploy --key-var=os-type=rhel --out=html", {bShowOutputAsync => true});
         }
 
         # Generate deployment docs for Debian
-        if (!defined($strVm) || $strVm eq VM_U20)
+        if (!defined($strVm) || $strVm eq VM_U22)
         {
             &log(INFO, "Generate Debian/Ubuntu documentation");
 
@@ -290,7 +282,7 @@ eval
         &log(INFO, '...Deploy to repository');
         executeTest("rm -rf ${strDeployPath}/prior/${strVersion}");
         executeTest("mkdir ${strDeployPath}/prior/${strVersion}");
-        executeTest("cp ${strDocHtml}/* ${strDeployPath}/prior/${strVersion}");
+        executeTest("cp -r ${strDocHtml}/* ${strDeployPath}/prior/${strVersion}");
 
         # Generate docs for the main website
         if (!$bDev)
@@ -305,7 +297,7 @@ eval
             &log(INFO, '...Deploy to repository');
             executeTest("rm -rf ${strDeployPath}/dev");
             executeTest("find ${strDeployPath} -maxdepth 1 -type f -exec rm {} +");
-            executeTest("cp ${strDocHtml}/* ${strDeployPath}");
+            executeTest("cp -r ${strDocHtml}/* ${strDeployPath}");
             executeTest("cp ${strDocPath}/../README.md ${strDeployPath}");
             executeTest("cp ${strDocPath}/../LICENSE ${strDeployPath}");
         }

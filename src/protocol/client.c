@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Protocol Client
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "common/debug.h"
 #include "common/log.h"
@@ -70,8 +70,7 @@ protocolClientStateExpectIdle(const ProtocolClient *const this)
     if (this->state != protocolClientStateIdle)
     {
         THROW_FMT(
-            ProtocolError, "client state is '%s' but expected '%s'", strZ(strIdToStr(this->state)),
-            strZ(strIdToStr(protocolClientStateIdle)));
+            ProtocolError, "client state is '%s' but expected '%s'", zNewStrId(this->state), zNewStrId(protocolClientStateIdle));
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -102,7 +101,7 @@ protocolClientSessionFindIdx(const ProtocolClient *const this, const uint64_t se
 }
 
 /**********************************************************************************************************************************/
-FN_EXTERN void
+static void
 protocolClientRequestInternal(ProtocolClientSession *const this, const ProtocolCommandType type, PackWrite *const param)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
@@ -270,7 +269,7 @@ protocolClientResponseInternal(ProtocolClientSession *const this)
         protocolClientError(this->client, type, packRead);
         CHECK(FormatError, type == protocolMessageTypeResponse, "expected response message");
 
-        // Return result the the caller
+        // Return result to the caller
         result = objMove(packRead, memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
@@ -362,10 +361,10 @@ protocolClientNew(const String *const name, const String *const service, IoRead 
             for (unsigned int expectedIdx = 0; expectedIdx < LENGTH_OF(expected); expectedIdx++)
             {
                 if (!jsonReadKeyExpectStrId(greeting, expected[expectedIdx].key))
-                    THROW_FMT(ProtocolError, "unable to find greeting key '%s'", strZ(strIdToStr(expected[expectedIdx].key)));
+                    THROW_FMT(ProtocolError, "unable to find greeting key '%s'", zNewStrId(expected[expectedIdx].key));
 
                 if (jsonReadTypeNext(greeting) != jsonTypeString)
-                    THROW_FMT(ProtocolError, "greeting key '%s' must be string type", strZ(strIdToStr(expected[expectedIdx].key)));
+                    THROW_FMT(ProtocolError, "greeting key '%s' must be string type", zNewStrId(expected[expectedIdx].key));
 
                 const String *const actualValue = jsonReadStr(greeting);
 
@@ -375,7 +374,7 @@ protocolClientNew(const String *const name, const String *const service, IoRead 
                         ProtocolError,
                         "expected value '%s' for greeting key '%s' but got '%s'\n"
                         "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?",
-                        expected[expectedIdx].value, strZ(strIdToStr(expected[expectedIdx].key)), strZ(actualValue));
+                        expected[expectedIdx].value, zNewStrId(expected[expectedIdx].key), strZ(actualValue));
                 }
             }
 

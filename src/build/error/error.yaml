@@ -102,7 +102,7 @@ clock: 106
 # This error should not be thrown directly -- it serves as a parent for the C errors
 runtime: 122
 
-# Used when an error is not caught. This should not happen.
+# Used when an error is not caught. This should be rare but may happen when resources (such as disk space) are scarce.
 unhandled: 124
 
 # Used when a specific error is not provided, generally by an executed process. This should be rare.

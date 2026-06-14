@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Remote Storage Protocol Handler
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "common/compress/helper.h"
 #include "common/debug.h"
@@ -14,6 +14,7 @@ Remote Storage Protocol Handler
 #include "storage/helper.h"
 #include "storage/remote/protocol.h"
 #include "storage/storage.intern.h"
+#include "storage/write.intern.h"
 
 /***********************************************************************************************************************************
 Local variables
@@ -21,28 +22,26 @@ Local variables
 static struct
 {
     MemContext *memContext;                                         // Mem context
+    const Storage *storage;                                         // Storage
     void *driver;                                                   // Storage driver used for requests
 
-    const StorageRemoteFilterHandler *filterHandler;                // Filter handler list
-    unsigned int filterHandlerSize;                                 // Filter handler list size
+    const List *filterHandler;                                      // Filter handler list
 } storageRemoteProtocolLocal;
 
 /***********************************************************************************************************************************
 Set filter handlers
 ***********************************************************************************************************************************/
 FN_EXTERN void
-storageRemoteFilterHandlerSet(const StorageRemoteFilterHandler *const filterHandler, const unsigned int filterHandlerSize)
+storageRemoteFilterHandlerSet(const List *const filterHandler)
 {
     FUNCTION_TEST_BEGIN();
-        FUNCTION_TEST_PARAM_P(VOID, filterHandler);
-        FUNCTION_TEST_PARAM(UINT, filterHandlerSize);
+        FUNCTION_TEST_PARAM(VOID, filterHandler);
     FUNCTION_TEST_END();
 
     ASSERT(filterHandler != NULL);
-    ASSERT(filterHandlerSize > 0);
+    ASSERT(!lstEmpty(filterHandler));
 
     storageRemoteProtocolLocal.filterHandler = filterHandler;
-    storageRemoteProtocolLocal.filterHandlerSize = filterHandlerSize;
 
     FUNCTION_TEST_RETURN_VOID();
 }
@@ -85,26 +84,28 @@ storageRemoteFilterGroup(IoFilterGroup *const filterGroup, const Pack *const fil
                 // Search for a filter handler
                 unsigned int filterIdx = 0;
 
-                for (; filterIdx < storageRemoteProtocolLocal.filterHandlerSize; filterIdx++)
+                for (; filterIdx < lstSize(storageRemoteProtocolLocal.filterHandler); filterIdx++)
                 {
+                    const StorageRemoteFilterHandler *const filterHandler = lstGet(
+                        storageRemoteProtocolLocal.filterHandler, filterIdx);
+
                     // If a match create the filter
-                    if (storageRemoteProtocolLocal.filterHandler[filterIdx].type == filterKey)
+                    if (filterHandler->type == filterKey)
                     {
                         // Create a filter with parameters
-                        if (storageRemoteProtocolLocal.filterHandler[filterIdx].handlerParam != NULL)
+                        if (filterHandler->handlerParam != NULL)
                         {
                             ASSERT(filterParam != NULL);
 
-                            ioFilterGroupAdd(
-                                filterGroup, storageRemoteProtocolLocal.filterHandler[filterIdx].handlerParam(filterParam));
+                            ioFilterGroupAdd(filterGroup, filterHandler->handlerParam(filterParam));
                         }
                         // Else create a filter without parameters
                         else
                         {
-                            ASSERT(storageRemoteProtocolLocal.filterHandler[filterIdx].handlerNoParam != NULL);
+                            ASSERT(filterHandler->handlerNoParam != NULL);
                             ASSERT(filterParam == NULL);
 
-                            ioFilterGroupAdd(filterGroup, storageRemoteProtocolLocal.filterHandler[filterIdx].handlerNoParam());
+                            ioFilterGroupAdd(filterGroup, filterHandler->handlerNoParam());
                         }
 
                         // Break on filter match
@@ -113,8 +114,8 @@ storageRemoteFilterGroup(IoFilterGroup *const filterGroup, const Pack *const fil
                 }
 
                 // Error when the filter was not found
-                if (filterIdx == storageRemoteProtocolLocal.filterHandlerSize)
-                    THROW_FMT(AssertError, "unable to add filter '%s'", strZ(strIdToStr(filterKey)));
+                if (filterIdx == lstSize(storageRemoteProtocolLocal.filterHandler))
+                    THROW_FMT(AssertError, "unable to add filter '%s'", zNewStrId(filterKey));
             }
         }
     }
@@ -151,6 +152,7 @@ storageRemoteFeatureProtocol(PackRead *const param)
                 MEM_CONTEXT_NEW_BEGIN(StorageRemoteProtocol, .childQty = MEM_CONTEXT_QTY_MAX)
                 {
                     storageRemoteProtocolLocal.memContext = memContextCurrent();
+                    storageRemoteProtocolLocal.storage = storage;
                     storageRemoteProtocolLocal.driver = storageDriver(storage);
                 }
                 MEM_CONTEXT_NEW_END();
@@ -170,7 +172,7 @@ storageRemoteFeatureProtocol(PackRead *const param)
 }
 
 /**********************************************************************************************************************************/
-typedef struct StorageRemoteInfoProcotolWriteData
+typedef struct StorageRemoteInfoProtocolWriteData
 {
     time_t timeModifiedLast;                                        // timeModified from last call
     mode_t modeLast;                                                // mode from last call
@@ -207,6 +209,9 @@ storageRemoteInfoProtocolPut(
     // Write size for files
     if (info->type == storageTypeFile)
         pckWriteU64P(write, info->size);
+
+    // Write version
+    pckWriteStrP(write, info->versionId);
 
     // Write fields needed for detail level
     if (info->level >= storageInfoLevelDetail)
@@ -336,8 +341,10 @@ storageRemoteListProtocol(PackRead *const param)
     {
         const String *const path = pckReadStrP(param);
         const StorageInfoLevel level = (StorageInfoLevel)pckReadU32P(param);
+        const time_t targetTime = pckReadTimeP(param);
+
         StorageRemoteInfoProtocolWriteData writeData = {0};
-        StorageList *const list = storageInterfaceListP(storageRemoteProtocolLocal.driver, path, level);
+        StorageList *const list = storageInterfaceListP(storageRemoteProtocolLocal.driver, path, level, .targetTime = targetTime);
         PackWrite *const data = protocolServerResultData(result);
 
         // Indicate whether or not the path was found
@@ -418,14 +425,14 @@ storageRemoteReadOpenProtocol(PackRead *const param)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         const String *file = pckReadStrP(param);
-        const bool ignoreMissing = pckReadBoolP(param);
         const uint64_t offset = pckReadU64P(param);
         const Variant *const limit = pckReadNullP(param) ? NULL : VARUINT64(pckReadU64P(param));
+        const String *const versionId = pckReadStrP(param);
         const Pack *const filter = pckReadPackP(param);
 
-        // Create the read object
-        StorageRead *const fileRead = storageInterfaceNewReadP(
-            storageRemoteProtocolLocal.driver, file, ignoreMissing, .offset = offset, .limit = limit);
+        // Create the read object ignoring missing since the client decides whether a missing file is an error
+        StorageRead *const fileRead = storageReadNew(
+            storageRemoteProtocolLocal.storage, file, true, false, offset, limit, versionId != NULL, versionId);
 
         // Set filter group based on passed filters
         storageRemoteFilterGroup(ioReadFilterGroup(storageReadIo(fileRead)), filter);
@@ -501,10 +508,9 @@ storageRemoteWriteOpenProtocol(PackRead *const param)
         const bool atomic = pckReadBoolP(param);
         const Pack *const filter = pckReadPackP(param);
 
-        StorageWrite *const fileWrite = storageInterfaceNewWriteP(
-            storageRemoteProtocolLocal.driver, file, .modeFile = modeFile, .modePath = modePath, .user = user, .group = group,
-            .timeModified = timeModified, .createPath = createPath, .syncFile = syncFile, .syncPath = syncPath, .atomic = atomic,
-            .truncate = true);
+        StorageWrite *const fileWrite = storageWriteNew(
+            storageRemoteProtocolLocal.storage, file, modeFile, modePath, user, group, timeModified, createPath, syncFile,
+            syncPath, atomic, true, false);
 
         // Set filter group based on passed filters
         storageRemoteFilterGroup(ioWriteFilterGroup(storageWriteIo(fileWrite)), filter);
@@ -525,7 +531,7 @@ storageRemoteWriteProtocol(PackRead *const param, void *const fileWrite)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(PACK_READ, param);
-        FUNCTION_LOG_PARAM(STORAGE_READ, fileWrite);
+        FUNCTION_LOG_PARAM(STORAGE_WRITE, fileWrite);
     FUNCTION_LOG_END();
 
     ASSERT(param != NULL);

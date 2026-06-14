@@ -27,7 +27,7 @@ The block map is stored as a flag and a series of reference, super block, and bl
 
 References, super blocks, and blocks are encoded with a bit that indicates when the last one has been reached.
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include "command/backup/blockMap.h"
 #include "common/debug.h"
@@ -76,8 +76,8 @@ lstComparatorBlockMapReference(const void *const blockMapRef1, const void *const
     ASSERT(blockMapRef1 != NULL);
     ASSERT(blockMapRef2 != NULL);
 
-    const unsigned int reference1 = ((BlockMapReference *)blockMapRef1)->reference;
-    const unsigned int reference2 = ((BlockMapReference *)blockMapRef2)->reference;
+    const unsigned int reference1 = ((const BlockMapReference *)blockMapRef1)->reference;
+    const unsigned int reference2 = ((const BlockMapReference *)blockMapRef2)->reference;
 
     FUNCTION_TEST_RETURN(INT, LST_COMPARATOR_CMP(reference1, reference2));
 }
@@ -485,7 +485,7 @@ blockMapWrite(const BlockMap *const this, IoWrite *const output, const size_t bl
             {
                 ASSERT(
                     superBlock == blockMapGet(this, blockIdx) ||
-                    blockMapGet(this, blockIdx)->block == blockMapGet(this, blockIdx - 1)->block + 1);
+                    (blockIdx > 0 && (blockMapGet(this, blockIdx)->block == blockMapGet(this, blockIdx - 1)->block + 1)));
 
                 ioWrite(output, BUF(blockMapGet(this, blockIdx)->checksum, checksumSize));
             }

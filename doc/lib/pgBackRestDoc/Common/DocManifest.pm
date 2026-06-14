@@ -27,7 +27,6 @@ use constant FILE_MANIFEST                                          => 'manifest
 use constant RENDER                                                 => 'render';
 use constant RENDER_COMPACT                                         => 'compact';
     push @EXPORT, qw(RENDER_COMPACT);
-use constant RENDER_FILE                                            => 'file';
 use constant RENDER_MENU                                            => 'menu';
     push @EXPORT, qw(RENDER_MENU);
 use constant RENDER_PRETTY                                          => 'pretty';
@@ -38,8 +37,6 @@ use constant RENDER_TYPE_HTML                                       => 'html';
     push @EXPORT, qw(RENDER_TYPE_HTML);
 use constant RENDER_TYPE_MARKDOWN                                   => 'markdown';
     push @EXPORT, qw(RENDER_TYPE_MARKDOWN);
-use constant RENDER_TYPE_PDF                                        => 'pdf';
-    push @EXPORT, qw(RENDER_TYPE_PDF);
 
 ####################################################################################################################################
 # CONSTRUCTOR
@@ -152,7 +149,6 @@ sub new
         }
 
         # Get the file param
-        $${oRenderHash}{file} = $oRender->paramGet(RENDER_FILE, false);
         $${oRenderHash}{&RENDER_COMPACT} = $oRender->paramGet(RENDER_COMPACT, false, 'n') eq 'y' ? true : false;
         $${oRenderHash}{&RENDER_PRETTY} = $oRender->paramGet(RENDER_PRETTY, false, 'n') eq 'y' ? true : false;
         $${oRenderHash}{&RENDER_MENU} = false;
@@ -160,15 +156,8 @@ sub new
         logDebugMisc
         (
             $strOperation, '    load render',
-            {name => 'strType', value => $strType},
-            {name => 'strFile', value => $${oRenderHash}{file}}
+            {name => 'strType', value => $strType}
         );
-
-        # Error if file is set and render type is not pdf
-        if (defined($${oRenderHash}{file}) && $strType ne RENDER_TYPE_PDF)
-        {
-            confess &log(ERROR, 'only the pdf render type can have file set')
-        }
 
         # Iterate the render sources
         foreach my $oRenderOut ($oRender->nodeList('render-source'))
@@ -376,14 +365,6 @@ sub variableReplace
         my $strValue = defined($self->{oVariable}{$strName}) ? $self->{oVariable}{$strName} : '';
 
         $strBuffer =~ s/\{\[$strName\]\}/$strValue/g;
-    }
-
-    if (defined($strType) && $strType eq 'latex')
-    {
-        $strBuffer =~ s/\\\_/\_/g;
-        $strBuffer =~ s/\_/\\\_/g;
-        $strBuffer =~ s/\\\#/\#/g;
-        $strBuffer =~ s/\#/\\\#/g;
     }
 
     return $strBuffer;

@@ -1,0 +1,109 @@
+<release date="2025-07-21" version="2.56.0" title="Progress Info Improvements">
+    <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="2645"/>
+                <github-pull-request id="2646"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="anup.gupta"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix issue with adhoc expiration when no backups in a repository.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <github-issue id="2546"/>
+                <github-pull-request id="2652"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="denis.garsh"/>
+                    <release-item-contributor id="maxim.michkov"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add restore progress to <cmd>info</cmd> command output.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2550"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="denis.garsh"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add progress-only detail level for <cmd>info</cmd> command output.</p>
+            </release-item>
+        </release-feature-list>
+
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2642"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Retry failed reads on object stores.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2625"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                    <release-item-reviewer id="chris.bandy"/>
+                </release-item-contributor-list>
+
+                <p>Fix defaults in command-line help.</p>
+            </release-item>
+        </release-improvement-list>
+
+        <release-development-list>
+            <release-item>
+                <github-pull-request id="2636"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="david.christensen"/>
+                </release-item-contributor-list>
+
+                <p>Improve the predictability of floating point numbers formatted as strings.</p>
+            </release-item>
+        </release-development-list>
+    </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2638"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="anton.kurochkin"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Describe discrete option values in a list where appropriate.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2633"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="anton.kurochkin"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix <quote>less than</quote> in help output for <setting>archive-mode</setting> option.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
+</release>

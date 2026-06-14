@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 HTTP Common
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <string.h>
 
@@ -136,7 +136,7 @@ httpUriEncode(const String *const uri, const bool path)
             }
             // All other characters are hex-encoded
             else
-                strCatFmt(result, "%%%02X", (unsigned char)uriChar);
+                strCatFmt(result, "%%%02X", (uint8_t)uriChar);
         }
     }
 

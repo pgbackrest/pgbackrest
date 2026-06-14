@@ -17,6 +17,73 @@ testRun(void)
     const Storage *const storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
     // *****************************************************************************************************************************
+    if (testBegin("eval()"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("negation");
+
+        TEST_RESULT_BOOL(eval(STRDEF("!('y' eq 'y')")), false, "negate true");
+        TEST_RESULT_BOOL(eval(STRDEF("!('y' eq 'n')")), true, "negate false");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("string comparison with eq/ne");
+
+        TEST_RESULT_BOOL(eval(STRDEF("'none' eq 'none'")), true, "eq equal");
+        TEST_RESULT_BOOL(eval(STRDEF("'none' eq 'other'")), false, "eq unequal");
+        TEST_RESULT_BOOL(eval(STRDEF("'none' ne 'other'")), true, "ne unequal");
+        TEST_RESULT_BOOL(eval(STRDEF("'none' ne 'none'")), false, "ne equal");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("numeric comparison");
+
+        TEST_RESULT_BOOL(eval(STRDEF("18 > 12")), true, "18 > 12");
+        TEST_RESULT_BOOL(eval(STRDEF("12 > 12")), false, "12 > 12");
+        TEST_RESULT_BOOL(eval(STRDEF("12 >= 12")), true, "12 >= 12");
+        TEST_RESULT_BOOL(eval(STRDEF("11 >= 12")), false, "11 >= 12");
+        TEST_RESULT_BOOL(eval(STRDEF("10 < 12")), true, "10 < 12");
+        TEST_RESULT_BOOL(eval(STRDEF("12 < 12")), false, "12 < 12");
+        TEST_RESULT_BOOL(eval(STRDEF("12 <= 12")), true, "12 <= 12");
+        TEST_RESULT_BOOL(eval(STRDEF("13 <= 12")), false, "13 <= 12");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("logical AND");
+
+        TEST_RESULT_BOOL(eval(STRDEF("'y' eq 'y' && 'n' eq 'n'")), true, "AND both true");
+        TEST_RESULT_BOOL(eval(STRDEF("'y' eq 'y' && 'y' eq 'n'")), false, "AND right false");
+        TEST_RESULT_BOOL(eval(STRDEF("'y' eq 'n' && 'y' eq 'y'")), false, "AND left false");
+        TEST_RESULT_BOOL(eval(STRDEF("'y' eq 'y' && 18 > 12")), true, "AND with numeric");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("logical OR");
+
+        TEST_RESULT_BOOL(eval(STRDEF("'y' eq 'y' || 'y' eq 'y'")), true, "OR both true");
+        TEST_RESULT_BOOL(eval(STRDEF("'y' eq 'y' || 'y' eq 'n'")), true, "OR left true");
+        TEST_RESULT_BOOL(eval(STRDEF("'y' eq 'n' || 'y' eq 'y'")), true, "OR right true");
+        TEST_RESULT_BOOL(eval(STRDEF("'y' eq 'n' || 'y' eq 'n'")), false, "OR both false");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("parentheses");
+
+        TEST_RESULT_BOOL(eval(STRDEF("(('y' eq 'y' || 'y' eq 'n') && 'y' eq 'n')")), false, "parens false");
+        TEST_RESULT_BOOL(eval(STRDEF("('y' eq 'y')")), true, "parens true");
+        TEST_RESULT_BOOL(eval(STRDEF("('y' eq 'y' || 'n' eq 'y')")), true, "parens with OR");
+        TEST_RESULT_BOOL(eval(STRDEF("!('n' eq 'y' || 'n' eq 'y')")), true, "negated parens with OR");
+        TEST_RESULT_BOOL(
+            eval(STRDEF("'y' eq 'y' && ('n' eq 'y' || 'y' eq 'y')")), true, "AND with parens OR");
+        TEST_RESULT_BOOL(
+            eval(STRDEF("'y' eq 'n' || ('y' eq 'y' && 18 > 12)")), true, "OR with parens AND");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on invalid expression");
+
+        TEST_ERROR(eval(STRDEF("true")), FormatError, "unable to evaluate 'true'");
+        TEST_ERROR(
+            eval(STRDEF("none eq 'none'")), FormatError,
+            "expected quoted string on left side of 'eq': 'none eq 'none''");
+        TEST_ERROR(eval(STRDEF("('y' eq 'y'")), FormatError, "unmatched parenthesis in '('y' eq 'y''");
+    }
+
+    // *****************************************************************************************************************************
     if (testBegin("cmdBuild()"))
     {
         // -------------------------------------------------------------------------------------------------------------------------
@@ -77,6 +144,22 @@ testRun(void)
             "    default: 1024\n"
             "    allow-list: [512, 1024, 2048, 4096]\n"
             "\n"
+            "  buffer-size-range:\n"
+            "    section: global\n"
+            "    type: integer\n"
+            "    default: 1024\n"
+            "    allow-range: [512, 1024]\n"
+            "    command:\n"
+            "      backup: {}\n"
+            "\n"
+            "  cmd:\n"
+            "    section: global\n"
+            "    type: string\n"
+            "    default-type: dynamic\n"
+            "    default: bin\n"
+            "    command:\n"
+            "      backup: {}\n"
+            "\n"
             "  internal:\n"
             "    section: global\n"
             "    internal: true\n"
@@ -89,11 +172,34 @@ testRun(void)
             "    secure: true\n"
             "    default: false\n"
             "\n"
+            "  compress-type:\n"
+            "    section: global\n"
+            "    type: string-id\n"
+            "    default: gz\n"
+            "    allow-list:\n"
+            "      - none\n"
+            "      - bz2\n"
+            "      - gz\n"
+            "    command:\n"
+            "      backup: {}\n"
+            "    command-role: {}\n"
+            "\n"
             "  repo-compress-level:\n"
             "    group: repo\n"
             "    type: integer\n"
             "    default: 9\n"
-            "    allow-range: [0, 9]\n"
+            "    default:\n"
+            "      - bz2: 9\n"
+            "      - gz: 6\n"
+            "    allow-range:\n"
+            "      - bz2: [1, 9]\n"
+            "      - gz: [-1, 9]\n"
+            "    depend:\n"
+            "      option: compress-type\n"
+            "      default: 0\n"
+            "      list:\n"
+            "        - bz2\n"
+            "        - gz\n"
             "    command:\n"
             "      backup: {}\n"
             "    deprecate:\n"
@@ -151,6 +257,11 @@ testRun(void)
             "                       <example>256KiB</example>\n"
             "                   </config-key>\n"
             "\n"
+            "                   <config-key id=\"compress-type\" name=\"Compress Type\">\n"
+            "                       <summary>Compress type option command backup summary.</summary>\n"
+            "                       <text><p>Compress type option command backup description.</p></text>\n"
+            "                   </config-key>\n"
+            "\n"
             "                   <config-key id=\"internal\" name=\"Internal\">\n"
             "                       <summary>Internal option summary.</summary>\n"
             "                       <text><p>Internal option description</p></text>\n"
@@ -189,6 +300,18 @@ testRun(void)
             "               <text><p>Backup command description.</p></text>\n"
             "\n"
             "               <option-list>\n"
+            "                   <option id=\"buffer-size-range\" name=\"Buffer Size Range\">\n"
+            "                       <summary>Buffer size range option summary.</summary>\n"
+            "                       <text><p>Buffer size range option description.</p></text>\n"
+            "                       <example>512KiB</example>\n"
+            "                   </option>\n"
+            "\n"
+            "                   <option id=\"cmd\" name=\"Cmd\">\n"
+            "                       <summary>Cmd option command backup summary.</summary>\n"
+            "                       <text><p>Cmd option command backup description.</p></text>\n"
+            "                       <example>pgbackrest</example>"
+            "                   </option>\n"
+            "\n"
             "                   <option id=\"force\" name=\"Force Backup\">\n"
             "                       <summary>Force option command backup summary.</summary>\n"
             "                       <text><p>Force option command backup description.</p></text>\n"
@@ -224,12 +347,114 @@ testRun(void)
             "    </operation>\n"
             "</doc>\n");
 
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("build documentation");
+        HRN_STORAGE_PUT_Z(
+            storageTest, "doc/xml/user-guide.xml",
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            "<!DOCTYPE doc SYSTEM \"doc.dtd\">\n"
+            "<doc title=\"{[project]} User Guide\" subtitle=\"{[user-guide-subtitle]}\" cmd-line-len=\"85\">\n"
+            "<description>The {[project]} User Guide demonstrates how...</description>\n"
+            "\n"
+            "<variable-list>\n"
+            "    <variable key=\"os-type\">debian</variable>\n"
+            "    <variable key=\"os-type-is-debian\">'{[os-type]}' eq 'debian'</variable>\n"
+            "    <variable key=\"os-type-is-rhel\">'{[os-type]}' eq 'rhel'</variable>\n"
+            "</variable-list>\n"
+            "\n"
+            "<block-define if=\"{[os-type-is-debian]}\" id=\"install\">\n"
+            "    <execute-list host=\"{[install-host]}\">\n"
+            "        <title>Debian Install</title>\n"
+            "        <execute user=\"root\">\n"
+            "            <exe-cmd>mkdir -p {[install-path]}</exe-cmd>\n"
+            "        </execute>\n"
+            "    </execute-list>\n"
+            "</block-define>"
+            "\n"
+            "<block-define if=\"{[os-type-is-rhel]}\" id=\"install\">\n"
+            "    <p>RHEL Install</p>"
+            "</block-define>"
+            "\n"
+            "<section id=\"introduction\">\n"
+            "    <title>Introduction</title>\n"
+            "    <cmd-description key=\"check\"/>\n"
+            "    <option-description key=\"config\"/>\n"
+            "\n"
+            "    <block id=\"install\">\n"
+            "        <block-variable-replace key=\"install-host\">{[host-pg1]}</block-variable-replace>\n"
+            "        <block-variable-replace key=\"install-path\">/path/to/install</block-variable-replace>\n"
+            "    </block>\n"
+            "</section>\n"
+            "</doc>\n");
 
-        TEST_RESULT_VOID(cmdBuild(TEST_PATH_STR), "write files");
-        TEST_STORAGE_EXISTS(storageTest, "doc/output/xml/configuration.xml");
-        TEST_STORAGE_EXISTS(storageTest, "doc/output/xml/command.xml");
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("build documentation with user vars");
+
+        KeyValue *kvVar = kvNew();
+        kvAdd(kvVar, VARSTRDEF("os-type"), VARSTRDEF("rhel"));
+
+        TEST_RESULT_VOID(cmdBuild(TEST_PATH_STR, kvVar), "write files");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("user-guide.xml");
+
+        TEST_STORAGE_GET(
+            storageTest,
+            "doc/output/xml/user-guide.xml",
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            "<!DOCTYPE doc SYSTEM \"doc.dtd\">\n"
+            "<doc title=\"{[project]} User Guide\" subtitle=\"{[user-guide-subtitle]}\" cmd-line-len=\"85\">\n"
+            "<description>The {[project]} User Guide demonstrates how...</description>\n"
+            "\n"
+            "<variable-list>\n"
+            "    <variable key=\"os-type\">debian</variable>\n"
+            "    <variable key=\"os-type-is-debian\">'{[os-type]}' eq 'debian'</variable>\n"
+            "    <variable key=\"os-type-is-rhel\">'{[os-type]}' eq 'rhel'</variable>\n"
+            "</variable-list>\n"
+            "\n\n\n"
+            "<section id=\"introduction\">\n"
+            "    <title>Introduction</title>\n"
+            "    <p>Check command description.</p>\n"
+            "    <p>config option description.</p>\n"
+            "\n    \n"
+            "    <p>RHEL Install</p>\n"
+            "</section>\n"
+            "</doc>\n");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("build documentation without user vars");
+
+        TEST_RESULT_VOID(cmdBuild(TEST_PATH_STR, NULL), "write files");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("user-guide.xml");
+
+        TEST_STORAGE_GET(
+            storageTest,
+            "doc/output/xml/user-guide.xml",
+            "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+            "<!DOCTYPE doc SYSTEM \"doc.dtd\">\n"
+            "<doc title=\"{[project]} User Guide\" subtitle=\"{[user-guide-subtitle]}\" cmd-line-len=\"85\">\n"
+            "<description>The {[project]} User Guide demonstrates how...</description>\n"
+            "\n"
+            "<variable-list>\n"
+            "    <variable key=\"os-type\">debian</variable>\n"
+            "    <variable key=\"os-type-is-debian\">'{[os-type]}' eq 'debian'</variable>\n"
+            "    <variable key=\"os-type-is-rhel\">'{[os-type]}' eq 'rhel'</variable>\n"
+            "</variable-list>\n"
+            "\n\n\n"
+            "<section id=\"introduction\">\n"
+            "    <title>Introduction</title>\n"
+            "    <p>Check command description.</p>\n"
+            "    <p>config option description.</p>\n"
+            "\n    \n"
+            "    <execute-list host=\"{[host-pg1]}\">\n"
+            "        <title>Debian Install</title>\n"
+            "        <execute user=\"root\">\n"
+            "            <exe-cmd>mkdir -p /path/to/install</exe-cmd>\n"
+            "        </execute>\n"
+            "    </execute-list>\n"
+            "\n"
+            "</section>\n"
+            "</doc>\n");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("configuration.xml");
@@ -258,10 +483,11 @@ testRun(void)
                         "example: buffer-size=128KiB\n"
                         "example: buffer-size=256KiB</code-block>"
                     "</section>"
-                    "<section id=\"option-config\">"
-                        "<title>Config Option (<id>--config</id>)</title>"
-                        "<p>config option summary.</p>"
-                        "<p>config option description.</p>"
+                    "<section id=\"option-compress-type\">"
+                        "<title>Compress Type Option (<id>--compress-type</id>)</title>"
+                        "<p>Compress type option command backup summary.</p>"
+                        "<p>Compress type option command backup description.</p>"
+                        "<code-block>default: gz</code-block>"
                     "</section>"
                     "<section id=\"option-secure\">"
                         "<title>Secure Option (<id>--secure</id>)</title>"
@@ -292,6 +518,21 @@ testRun(void)
                     "<p>Backup command description.</p>"
                     "<section id=\"category-command\" toc=\"n\">"
                         "<title>Command Options</title>"
+                        "<section id=\"option-buffer-size-range\">"
+                            "<title>Buffer Size Range Option (<id>--buffer-size-range</id>)</title>"
+                            "<p>Buffer size range option summary.</p>"
+                            "<p>Buffer size range option description.</p>"
+                            "<code-block>default: 1024\n"
+                            "allowed: [512, 1024]\n"
+                            "example: --buffer-size-range=512KiB</code-block>"
+                            "</section>"
+                            "<section id=\"option-cmd\">"
+                            "<title>Cmd Option (<id>--cmd</id>)</title>"
+                            "<p>Cmd option command backup summary.</p>"
+                            "<p>Cmd option command backup description.</p>"
+                            "<code-block>default: [path of executed pgbackrest binary]\n"
+                            "example: --cmd=pgbackrest</code-block>"
+                        "</section>"
                         "<section id=\"option-force\">"
                             "<title>Force Backup Option (<id>--force</id>)</title>"
                             "<p>Force option command backup summary.</p>"
@@ -304,8 +545,14 @@ testRun(void)
                             "<title>Repo Compress Level Backup Option (<id>--repo-compress-level</id>)</title>"
                             "<p>Repo compress level option command backup summary.</p>"
                             "<p>Repo compress level option command backup description.</p>"
-                            "<code-block>default: 9\n"
-                            "allowed: 0-9\n"
+                            "<code-block>default (depending on compress-type):\n"
+                            "    bz2 - 9\n"
+                            "    gz - 6\n"
+                            "\n"
+                            "allow range (depending on compress-type):\n"
+                            "    bz2 - [1, 9]\n"
+                            "    gz - [-1, 9]\n"
+                            "\n"
                             "example: --repo1-compress-level=4</code-block>"
                         "</section>"
                     "</section>"
@@ -375,11 +622,14 @@ testRun(void)
             "\n"
             "OPTIONS\n"
             "  Backup Options:\n"
+            "    --buffer-size-range    Buffer size range option summary.\n"
+            "    --cmd                  Cmd option command backup summary.\n"
             "    --force                Force option command backup summary.\n"
             "    --repo-compress-level  Repo compress level option command backup summary.\n"
             "\n"
             "  General Options:\n"
             "    --buffer-size          Buffer size option summary.\n"
+            "    --compress-type        Compress type option command backup summary.\n"
             "    --config               config option summary.\n"
             "    --secure               Secure option summary.\n"
             "\n"

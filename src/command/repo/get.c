@@ -1,11 +1,12 @@
 /***********************************************************************************************************************************
 Repository Get Command
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <unistd.h>
 
 #include "command/repo/common.h"
+#include "command/repo/get.h"
 #include "common/crypto/cipherBlock.h"
 #include "common/debug.h"
 #include "common/io/fdWrite.h"

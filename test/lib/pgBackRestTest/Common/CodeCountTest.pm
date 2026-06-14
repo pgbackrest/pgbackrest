@@ -52,7 +52,7 @@ sub codeCountScan
                  $strFile =~ '^doc/output/' ||
                  $strFile =~ '^doc/resource/fake\-cert' ||
                  $strFile =~ '\.png$' ||
-                 $strFile =~ '\.eps$' ||
+                 $strFile =~ '\.svg$' ||
                  $strFile =~ '\.cache$' ||
                  $strFile =~ '^doc/site/' ||
                  $strFile =~ '^src/build/autom4te.cache/' ||
@@ -79,8 +79,8 @@ sub codeCountScan
         {
             $strClass = 'doc/core';
         }
-        elsif ($strFile =~ '^build/' || $strFile eq 'src/Makefile.in' || $strFile eq 'src/configure' ||
-               $strFile =~ '^src/build/' || $strFile =~ 'meson\.build$' || $strFile =~ 'meson_options\.txt$')
+        elsif ($strFile =~ '^build/' || $strFile =~ '^src/build/' || $strFile =~ 'meson\.build$' ||
+               $strFile =~ 'meson_options\.txt$')
         {
             $strClass = 'build';
         }
@@ -134,11 +134,6 @@ sub codeCountScan
             $strType = 'yaml';
             $strForceLang = 'YAML';
         }
-        elsif ($strFile =~ 'Makefile\.in$' || $strFile =~ '^src\/configure' || $strFile =~ '^src\/build\/')
-        {
-            $strType = 'make';
-            $strForceLang = 'make';
-        }
         elsif ($strFile =~ 'meson\.build$' || $strFile =~ 'meson_options\.txt$')
         {
             $strType = 'meson';
@@ -158,11 +153,6 @@ sub codeCountScan
         {
             $strType = 'dtd';
             $strForceLang = 'DTD';
-        }
-        elsif ($strFile =~ '\.tex$')
-        {
-            $strType = 'latex';
-            $strForceLang = 'Latex';
         }
         else
         {

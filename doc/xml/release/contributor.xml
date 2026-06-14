@@ -40,6 +40,16 @@
     <contributor-id type="github">ahmed112212</contributor-id>
 </contributor>
 
+<contributor id="albert.chae">
+    <contributor-name-display>Albert Chae</contributor-name-display>
+    <contributor-id type="github">albertchae</contributor-id>
+</contributor>
+
+<contributor id="aleksander.lukasz">
+    <contributor-name-display>Aleksander &amp;Lstrok;ukasz</contributor-name-display>
+    <contributor-id type="github">aflukasz</contributor-id>
+</contributor>
+
 <contributor id="aleksandr.rogozin">
     <contributor-name-display>Aleksandr Rogozin</contributor-name-display>
     <contributor-id type="github">arogozin</contributor-id>
@@ -70,6 +80,11 @@
     <contributor-id type="github">anarazel</contributor-id>
 </contributor>
 
+<contributor id="andrew.jackson">
+    <contributor-name-display>Andrew Jackson</contributor-name-display>
+    <contributor-id type="github">AndrewJackson2020</contributor-id>
+</contributor>
+
 <contributor id="andrew.lecuyer">
     <contributor-name-display>Andrew L'Ecuyer</contributor-name-display>
     <contributor-id type="github">andrewlecuyer</contributor-id>
@@ -85,6 +100,16 @@
     <contributor-id type="github">andr-sokolov</contributor-id>
 </contributor>
 
+<contributor id="antoine.beaupre">
+    <contributor-name-display>Antoine Beaupr&amp;eacute;</contributor-name-display>
+    <contributor-id type="github">anarcat</contributor-id>
+</contributor>
+
+<contributor id="antoine.millet">
+    <contributor-name-display>Antoine Millet</contributor-name-display>
+    <contributor-id type="github">NaPs</contributor-id>
+</contributor>
+
 <contributor id="anton.glushakov">
     <contributor-name-display>Anton Glushakov</contributor-name-display>
     <contributor-id type="github">glushakov</contributor-id>
@@ -95,9 +120,19 @@
     <contributor-id type="github">woblerr</contributor-id>
 </contributor>
 
+<contributor id="anup.gupta">
+    <contributor-name-display>Anup Gupta</contributor-name-display>
+    <contributor-id type="github">anupg19</contributor-id>
+</contributor>
+
 <contributor id="argdenis">
     <contributor-name-display>argdenis</contributor-name-display>
     <contributor-id type="github">argdenis</contributor-id>
+</contributor>
+
+<contributor id="artur.zakirov">
+    <contributor-name-display>Artur Zakirov</contributor-name-display>
+    <contributor-id type="github">za-arthur</contributor-id>
 </contributor>
 
 <contributor id="asjonos">
@@ -299,6 +334,11 @@
     <contributor-id type="github">youattd</contributor-id>
 </contributor>
 
+<contributor id="denis.garsh">
+    <contributor-name-display>Denis Garsh</contributor-name-display>
+    <contributor-id type="github">hilltracer</contributor-id>
+</contributor>
+
 <contributor id="devrim.gunduz">
     <contributor-name-display>Devrim G&amp;uuml;nd&amp;uuml;z</contributor-name-display>
     <contributor-id type="github">devrimgunduz</contributor-id>
@@ -368,6 +408,11 @@
     <contributor-id type="github">fmbiete</contributor-id>
 </contributor>
 
+<contributor id="frank.brendel">
+    <contributor-name-display>Frank Brendel</contributor-name-display>
+    <contributor-id type="github">fbrendel</contributor-id>
+</contributor>
+
 <contributor id="floris.van.nee">
     <contributor-name-display>Floris van Nee</contributor-name-display>
     <contributor-id type="github">fvannee</contributor-id>
@@ -398,6 +443,11 @@
     <contributor-id type="github">gmustdie</contributor-id>
 </contributor>
 
+<contributor id="greg.clough">
+    <contributor-name-display>Greg Clough</contributor-name-display>
+    <contributor-id type="github">gclough</contributor-id>
+</contributor>
+
 <contributor id="greg.sabino.mullane">
     <contributor-name-display>Greg Sabino Mullane</contributor-name-display>
     <contributor-id type="github">turnstep</contributor-id>
@@ -406,6 +456,21 @@
 <contributor id="greg.smith">
     <contributor-name-display>Greg Smith</contributor-name-display>
     <contributor-id type="github">gregscds</contributor-id>
+</contributor>
+
+<contributor id="gunnar.bluth">
+    <contributor-name-display>Gunnar "Nick" Bluth</contributor-name-display>
+    <contributor-id type="github">bluthg</contributor-id>
+</contributor>
+
+<contributor id="gunnar.lindholm">
+    <contributor-name-display>Gunnar Lindholm</contributor-name-display>
+    <contributor-id type="github">GLFNSE</contributor-id>
+</contributor>
+
+<contributor id="gurucubano">
+    <contributor-name-display>Matthias</contributor-name-display>
+    <contributor-id type="github">gurucubano</contributor-id>
 </contributor>
 
 <contributor id="guruguruguru">
@@ -477,6 +542,11 @@
     <contributor-id type="github">jamessewell</contributor-id>
 </contributor>
 
+<contributor id="jamie.nguyen">
+    <contributor-name-display>Jamie Nguyen</contributor-name-display>
+    <contributor-id type="github">jamielinux</contributor-id>
+</contributor>
+
 <contributor id="jan.wieck">
     <contributor-name-display>Jan Wieck</contributor-name-display>
     <contributor-id type="github">wieck</contributor-id>
@@ -532,6 +602,11 @@
     <contributor-id type="github">Underhunden</contributor-id>
 </contributor>
 
+<contributor id="joakim.hindersson">
+    <contributor-name-display>Joakim Hindersson</contributor-name-display>
+    <contributor-id type="github">jhindersson</contributor-id>
+</contributor>
+
 <contributor id="joe.ayers">
     <contributor-name-display>Joe Ayers</contributor-name-display>
 </contributor>
@@ -550,9 +625,19 @@
     <contributor-id type="github">precision-software</contributor-id>
 </contributor>
 
+<contributor id="john.naylor">
+    <contributor-name-display>John Naylor</contributor-name-display>
+    <contributor-id type="github">j-naylor</contributor-id>
+</contributor>
+
 <contributor id="jordan.english">
     <contributor-name-display>Jordan English</contributor-name-display>
     <contributor-id type="github">jordanenglish</contributor-id>
+</contributor>
+
+<contributor id="jorg.plate">
+    <contributor-name-display>J&amp;ouml;rg Plate</contributor-name-display>
+    <contributor-id type="github">Patterner</contributor-id>
 </contributor>
 
 <contributor id="julian.zhang">
@@ -578,6 +663,11 @@
 <contributor id="huseyin.sonmez">
     <contributor-name-display>H&amp;ouml;seyin S&amp;ouml;nmez</contributor-name-display>
     <contributor-id type="github">huseynsnmz</contributor-id>
+</contributor>
+
+<contributor id="hyunkyu.han">
+    <contributor-name-display>hyunkyu han</contributor-name-display>
+    <contributor-id type="github">hancci</contributor-id>
 </contributor>
 
 <contributor id="jeanette.bromage">
@@ -613,6 +703,11 @@
 <contributor id="kyle.nevins">
     <contributor-name-display>Kyle Nevins</contributor-name-display>
     <contributor-id type="github">kyle-nevins</contributor-id>
+</contributor>
+
+<contributor id="l00ptr">
+    <contributor-name-display>Julian</contributor-name-display>
+    <contributor-id type="github">l00ptr</contributor-id>
 </contributor>
 
 <contributor id="laetitia">
@@ -715,6 +810,11 @@
     <contributor-id type="github">mnullmei</contributor-id>
 </contributor>
 
+<contributor id="martin.marques">
+    <contributor-name-display>Mart&amp;iacute;n Marqu&amp;eacute;s</contributor-name-display>
+    <contributor-id type="github">martinmarques</contributor-id>
+</contributor>
+
 <contributor id="matt.bunter">
     <contributor-name-display>Matt Bunter</contributor-name-display>
     <contributor-id type="github">mattbunter</contributor-id>
@@ -723,6 +823,16 @@
 <contributor id="matt.kunkel">
     <contributor-name-display>Matt Kunkel</contributor-name-display>
     <contributor-id type="github">mtkunkel</contributor-id>
+</contributor>
+
+<contributor id="matthew.mols">
+    <contributor-name-display>Matthew Mols</contributor-name-display>
+    <contributor-id type="github">mmols</contributor-id>
+</contributor>
+
+<contributor id="maxim.michkov">
+    <contributor-name-display>Maxim Michkov</contributor-name-display>
+    <contributor-id type="github">silent-observer</contributor-id>
 </contributor>
 
 <contributor id="mibiio">
@@ -780,6 +890,16 @@
     <contributor-id type="github">melrifa1</contributor-id>
 </contributor>
 
+<contributor id="mohammad.ali.nazir.kosar">
+    <contributor-name-display>Mohammad Ali Nazir Kosar</contributor-name-display>
+    <contributor-id type="github">AliNazirKosar</contributor-id>
+</contributor>
+
+<contributor id="moiz.ibrar">
+    <contributor-name-display>Moiz Ibrar</contributor-name-display>
+    <contributor-id type="github">moizpgedge</contributor-id>
+</contributor>
+
 <contributor id="navid.golpayegani">
     <contributor-name-display>Navid Golpayegani</contributor-name-display>
     <contributor-id type="github">golpa</contributor-id>
@@ -825,6 +945,11 @@
     <contributor-id type="github">hitech73</contributor-id>
 </contributor>
 
+<contributor id="paul.bierly">
+    <contributor-name-display>Paul Bierly</contributor-name-display>
+    <contributor-id type="github">ubergoober</contributor-id>
+</contributor>
+
 <contributor id="pavel.suderevsky">
     <contributor-name-display>Pavel Suderevsky</contributor-name-display>
     <contributor-id type="github">psuderevsky</contributor-id>
@@ -833,6 +958,11 @@
 <contributor id="philip.hurst">
     <contributor-name-display>Philip Hurst</contributor-name-display>
     <contributor-id type="github">philrhurst</contributor-id>
+</contributor>
+
+<contributor id="pierre.bouteloup">
+    <contributor-name-display>Pierre BOUTELOUP</contributor-name-display>
+    <contributor-id type="github">wolrajhti</contributor-id>
 </contributor>
 
 <contributor id="pierre.ducroquet">
@@ -885,9 +1015,19 @@
     <contributor-id type="github">rob-donovan</contributor-id>
 </contributor>
 
+<contributor id="roberto.mello">
+    <contributor-name-display>Roberto Mello</contributor-name-display>
+    <contributor-id type="github">roberto-mello</contributor-id>
+</contributor>
+
 <contributor id="rohit.raveendran">
     <contributor-name-display>Rohit Raveendran</contributor-name-display>
     <contributor-id type="github">rohitrav33ndran</contributor-id>
+</contributor>
+
+<contributor id="ron.johnson">
+    <contributor-name-display>Ron Johnson</contributor-name-display>
+    <contributor-id type="github">RonJohn2</contributor-id>
 </contributor>
 
 <contributor id="ronan.dunklau">
@@ -950,6 +1090,11 @@
     <contributor-id type="github">sethdaniel</contributor-id>
 </contributor>
 
+<contributor id="shiva.kumar.ambigi">
+    <contributor-name-display>Shiva Kumar Ambigi</contributor-name-display>
+    <contributor-id type="github">ShivakumarAmbigiTR</contributor-id>
+</contributor>
+
 <contributor id="slava.moudry">
     <contributor-name-display>Slava Moudry</contributor-name-display>
     <contributor-id type="github">slava-pagerduty</contributor-id>
@@ -975,6 +1120,10 @@
     <contributor-id type="github">sfrost</contributor-id>
 </contributor>
 
+<contributor id="susantha.bathige">
+    <contributor-name-display>Susantha Bathige</contributor-name-display>
+</contributor>
+
 <contributor id="t.anastacio">
     <contributor-name-display>T.Anastacio</contributor-name-display>
     <contributor-id type="github">Tiago-Anastacio</contributor-id>
@@ -983,6 +1132,16 @@
 <contributor id="tanel.suurhans">
     <contributor-name-display>Tanel Suurhans</contributor-name-display>
     <contributor-id type="github">tanelsuurhans</contributor-id>
+</contributor>
+
+<contributor id="terry.macandrew">
+    <contributor-name-display>Terry MacAndrew</contributor-name-display>
+    <contributor-id type="github">terrymac58</contributor-id>
+</contributor>
+
+<contributor id="thibault.vincent">
+    <contributor-name-display>Thibault Vincent</contributor-name-display>
+    <contributor-id type="github">npdgm</contributor-id>
 </contributor>
 
 <contributor id="tim.garton">
@@ -1102,14 +1261,29 @@
     <contributor-name-display>Will M</contributor-name-display>
 </contributor>
 
+<contributor id="will.morland">
+    <contributor-name-display>Will Morland</contributor-name-display>
+    <contributor-id type="github">wjmorland</contributor-id>
+</contributor>
+
 <contributor id="william.cox">
     <contributor-name-display>William Cox</contributor-name-display>
     <contributor-id type="github">mydimension</contributor-id>
 </contributor>
 
+<contributor id="wolfgang.walther">
+    <contributor-name-display>Wolfgang Walther</contributor-name-display>
+    <contributor-id type="github">wolfgangwalther</contributor-id>
+</contributor>
+
 <contributor id="wu.ning">
     <contributor-name-display>Wu Ning</contributor-name-display>
     <contributor-id type="github">50wu</contributor-id>
+</contributor>
+
+<contributor id="yegor.zhmak">
+    <contributor-name-display>Yegor Zhmak</contributor-name-display>
+    <contributor-id type="github">YegorZ</contributor-id>
 </contributor>
 
 <contributor id="yogesh.sharma">
@@ -1125,4 +1299,9 @@
 <contributor id="yummyliu">
     <contributor-name-display>yummyliu</contributor-name-display>
     <contributor-id type="github">yummyliu</contributor-id>
+</contributor>
+
+<contributor id="zsolt.parragi">
+    <contributor-name-display>Zsolt Parragi</contributor-name-display>
+    <contributor-id type="github">dutow</contributor-id>
 </contributor>

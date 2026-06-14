@@ -166,7 +166,7 @@ Read Constructors
 ***********************************************************************************************************************************/
 // Note that the pack is not moved into the PackRead mem context and must be moved explicitly if the PackRead object is moved.
 FN_EXTERN PackRead *pckReadNew(const Pack *pack);
-FN_EXTERN PackRead *pckReadNewC(const unsigned char *const buffer, size_t size);
+FN_EXTERN PackRead *pckReadNewC(const uint8_t *const buffer, size_t size);
 
 FN_EXTERN PackRead *pckReadNewIo(IoRead *read);
 
@@ -185,7 +185,7 @@ FN_EXTERN bool pckReadNext(PackRead *this);
 
 // Current field buffer for fields that have a size, e.g. bin. Can only be used when the pack was created with pckReadNew(). Note
 // that this pointer is tied to the buffer the pack was created with so be careful not to free it too soon.
-FN_EXTERN const unsigned char *pckReadBufPtr(PackRead *this);
+FN_EXTERN const uint8_t *pckReadBufPtr(PackRead *this);
 
 // Consume the next field regardless of type.
 FN_EXTERN void pckReadConsume(PackRead *this);

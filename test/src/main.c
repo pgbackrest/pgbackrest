@@ -1,7 +1,7 @@
 /***********************************************************************************************************************************
 Main
 ***********************************************************************************************************************************/
-#include "build.auto.h"
+#include <build.h>
 
 #include <stdio.h>
 
@@ -71,9 +71,9 @@ main(int argListSize, const char *argList[])
                         cfgOptionStr(cfgOptRepoPath), cfgOptionStr(cfgOptTestPath), cfgOptionStr(cfgOptVm),
                         cfgOptionUInt(cfgOptVmId), cfgOptionStr(cfgOptPgVersion), strLstGet(cfgCommandParam(), 0),
                         cfgOptionTest(cfgOptTest) ? cfgOptionUInt(cfgOptTest) : 0, cfgOptionUInt64(cfgOptScale),
-                        logLevelEnum(cfgOptionStrId(cfgOptLogLevelTest)), cfgOptionBool(cfgOptLogTimestamp),
-                        cfgOptionStrNull(cfgOptTz), cfgOptionBool(cfgOptCoverage), cfgOptionBool(cfgOptProfile),
-                        cfgOptionBool(cfgOptOptimize), cfgOptionBool(cfgOptBackTrace));
+                        logLevelEnum(cfgOptionSeq(cfgOptLogLevelTest)), cfgOptionBool(cfgOptLogTimestamp),
+                        cfgOptionStrNull(cfgOptTz), cfgOptionStrNull(cfgOptVmArch), cfgOptionBool(cfgOptCoverage),
+                        cfgOptionBool(cfgOptProfile), cfgOptionBool(cfgOptOptimize), cfgOptionBool(cfgOptBackTrace));
                 }
                 // Top-level test
                 else
