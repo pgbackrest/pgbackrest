@@ -156,12 +156,7 @@ httpResponseRead(THIS_VOID, Buffer *const buffer, const bool block)
                         if (this->contentRemaining == 0)
                         {
                             // Consume chunk trailers and the blank line that terminates them.
-                            do
-                            {
-                                if (strSize(strTrim(ioReadLine(rawRead))) == 0)
-                                    break;
-                            }
-                            while (true);
+                            while (strSize(strTrim(ioReadLine(rawRead))) != 0);
 
                             this->contentEof = true;
                         }
