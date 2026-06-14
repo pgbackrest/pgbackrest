@@ -37,7 +37,7 @@ struct HttpResponse
     HttpResponsePub pub;                                            // Publicly accessible variables
     HttpSession *session;                                           // HTTP session
     bool contentChunked;                                            // Is the response content chunked?
-    bool contentSizeSet;                                            // Was the content size specified?
+    bool contentSizeSet;                                            // Was content size specified?
     uint64_t contentSize;                                           // Content size (ignored for chunked)
     uint64_t contentRemaining;                                      // Content remaining (per chunk if chunked)
     bool closeOnContentEof;                                         // Will server close after content is sent?
@@ -144,7 +144,7 @@ httpResponseRead(THIS_VOID, Buffer *const buffer, const bool block)
                     if (this->contentChunked && this->contentRemaining == 0)
                     {
                         // Read length of next chunk
-                        String *chunkHeader = strTrim(ioReadLine(rawRead));
+                        const String *chunkHeader = strTrim(ioReadLine(rawRead));
                         const int chunkExtPos = strChr(chunkHeader, ';');
 
                         if (chunkExtPos != -1)
