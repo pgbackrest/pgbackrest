@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test HTTP
 ***********************************************************************************************************************************/
+#include <errno.h>
 #include <unistd.h>
 
 #include "common/io/fdRead.h"
@@ -375,7 +376,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), HostConnectError,
-            "unable to connect to 'localhost:34342 (127.0.0.1)': [111] Connection refused\n"
+            "unable to connect to 'localhost:34342 (127.0.0.1)': [" STRINGIFY(ECONNREFUSED) "] Connection refused\n"
             "[RETRY DETAIL OMITTED]");
 
         HRN_FORK_BEGIN()
@@ -521,6 +522,17 @@ testRun(void)
 
                 hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\ntransfer-encoding:chunked\r\ncontent-length:777\r\n\r\n");
+
+                hrnServerScriptClose(http);
+
+                TEST_ERROR(
+                    httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), FormatError,
+                    "'transfer-encoding' and 'content-length' headers are both set");
+
+                hrnServerScriptAccept(http);
+
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
+                hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\ntransfer-encoding:chunked\r\ncontent-length:0\r\n\r\n");
 
                 hrnServerScriptClose(http);
 
@@ -907,6 +919,35 @@ testRun(void)
 
                 TEST_RESULT_VOID(ioRead(httpResponseIoRead(response), buffer), "read response");
                 TEST_RESULT_STR_Z(strNewBuf(buffer), "", "check response");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("request with chunked content extensions and trailers");
+
+                hrnServerScriptAccept(http);
+
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
+                hrnServerScriptReplyZ(
+                    http,
+                    "HTTP/1.1 200 OK\r\nTransfer-Encoding:Chunked\r\n\r\n"
+                    "5;foo=bar\r\nhello\r\n"
+                    "0\r\nx-trailer: y\r\n\r\n");
+
+                TEST_ASSIGN(response, httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), "request");
+                TEST_RESULT_VOID(
+                    FUNCTION_LOG_OBJECT_FORMAT(httpResponseHeader(response), httpHeaderToLog, logBuf, sizeof(logBuf)),
+                    "httpHeaderToLog");
+                TEST_RESULT_Z(logBuf, "{transfer-encoding: 'chunked'}", "check response headers");
+
+                buffer = bufNew(6);
+
+                TEST_RESULT_VOID(ioRead(httpResponseIoRead(response), buffer), "read response");
+                TEST_RESULT_STR_Z(strNewBuf(buffer), "hello", "check response");
+
+                hrnServerScriptExpectZ(http, "GET /reuse HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
+                hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\ncontent-length:2\r\n\r\nOK");
+
+                TEST_ASSIGN(response, httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/reuse")), true), "request");
+                TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(response)), "OK", "check response");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("request with multipart request and response");
