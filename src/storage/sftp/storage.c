@@ -1409,7 +1409,7 @@ storageSftpOpen(StorageSftp *const this)
             }
 
             // Get the list of known host files to search
-            StringList *const knownHostsPathList = storageSftpKnownHostsFilesList(this->knownHosts);
+            const StringList *const knownHostsPathList = storageSftpKnownHostsFilesList(this->knownHosts);
 
             // Loop through the list of known host files
             for (unsigned int listIdx = 0; listIdx < strLstSize(knownHostsPathList); listIdx++)
@@ -1433,10 +1433,6 @@ storageSftpOpen(StorageSftp *const this)
                 else
                     LOG_DETAIL_FMT("libssh2 read '%s' succeeded", currentKnownHostFile);
             }
-
-            // Free the known host file list (the entries have been read into knownHostsList) so it does not leak into the calling
-            // context when the connection is reopened from within an audited operation
-            strLstFree(knownHostsPathList);
 
             // Get the remote host key
             size_t hostKeyLen;
