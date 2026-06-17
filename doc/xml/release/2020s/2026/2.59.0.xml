@@ -1,5 +1,16 @@
 <release date="XXXX-XX-XX" version="2.59.0dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="christophe.pettus"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix potential buffer overrun in error module.</p>
+            </release-item>
+        </release-bug-list>
+
         <release-feature-list>
             <release-item>
                 <github-pull-request id="2779"/>
