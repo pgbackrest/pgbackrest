@@ -23,6 +23,10 @@ FN_EXTERN void storageSftpEvalLibSsh2Error(
 // Check which direction we are currently blocking on (reading, writing, or both) and wait for the fd to be ready accordingly
 FN_EXTERN bool storageSftpWaitFd(StorageSftp *this, int64_t rc);
 
+// Current libssh2 session/sftp session, used by the read/write objects
+FN_EXTERN LIBSSH2_SESSION *storageSftpSession(StorageSftp *this);
+FN_EXTERN LIBSSH2_SFTP *storageSftpSessionSftp(StorageSftp *this);
+
 /***********************************************************************************************************************************
 Macros for function logging
 ***********************************************************************************************************************************/
