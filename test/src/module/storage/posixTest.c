@@ -701,7 +701,7 @@ testRun(void)
         destinationFile = STRDEF(TEST_PATH "/source.txt");
         destination = storageNewWriteP(storageTest, destinationFile, .noSyncPath = true);
 
-        TEST_RESULT_VOID(storageMoveP(storageTest, source, destination), "move file to another filesystem without path sync");
+        TEST_RESULT_VOID(storageMoveP(storageTmp, source, destination), "move file to another filesystem without path sync");
         TEST_RESULT_BOOL(storageExistsP(storageTmp, sourceFile), false, "check source file not exists");
         TEST_RESULT_BOOL(storageExistsP(storageTest, destinationFile), true, "check destination file exists");
 
