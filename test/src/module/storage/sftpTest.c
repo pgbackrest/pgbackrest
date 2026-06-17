@@ -1985,6 +1985,40 @@ testRun(void)
             STORAGE_ERROR_LIST_INFO ": libssh2 error [-31]: sftp error [3] permission denied", strZ(pathNoPerm));
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("list open reconnects after the connection is lost");
+
+        HRN_LIBSSH2_SCRIPT_SET(
+            // Opening the directory fails because the server dropped the idle connection
+            HRN_LIBSSH2_OPENDIR(TEST_PATH, .resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_RECV),
+            // The session is reopened and the open is retried successfully
+            HRNLIBSSH2_MACRO_RECONNECT(),
+            HRN_LIBSSH2_OPENDIR(TEST_PATH),
+            HRN_LIBSSH2_READDIR(""),
+            HRN_LIBSSH2_CLOSE());
+
+        TEST_RESULT_UINT(
+            strLstSize(storageListP(storageTest, STRDEF(TEST_PATH))), 0, "list empty directory after reconnect");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("list open errors when the open fails again after reconnect (only one retry)");
+
+        HRN_LIBSSH2_SCRIPT_SET(
+            // Opening the directory fails because the server dropped the idle connection
+            HRN_LIBSSH2_OPENDIR(TEST_PATH, .resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_RECV),
+            // The session is reopened but the retried open fails and is not retried again
+            HRNLIBSSH2_MACRO_RECONNECT(),
+            HRN_LIBSSH2_OPENDIR(TEST_PATH, .resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_RECV),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_RECV),
+            HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_FAILURE));
+
+        TEST_ERROR_FMT(
+            storageListP(storageTest, STRDEF(TEST_PATH)), PathOpenError,
+            STORAGE_ERROR_LIST_INFO ": libssh2 error [-43]", TEST_PATH);
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("list - path with files");
 
         ioBufferSizeSet(65536);
@@ -2617,6 +2651,53 @@ testRun(void)
             "unable to read '" TEST_PATH "/readtest.txt': libssh2 error [-29]");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read open reconnects after the connection is lost");
+
+        HRN_LIBSSH2_SCRIPT_SET(
+            // First open fails because the server dropped the idle connection
+            HRN_LIBSSH2_OPEN_READ(TEST_PATH "/readtest.txt", .resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_RECV),
+            // The session is reopened and the open is retried successfully. The broken session free returns EAGAIN once before
+            // succeeding to exercise the wait-for-fd loop in storageSftpConnFree().
+            HRN_LIBSSH2_SESSION_FREE(.resultInt = LIBSSH2_ERROR_EAGAIN),
+            HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING),
+            HRN_LIBSSH2_SESSION_FREE(),
+            HRN_LIBSSH2_SESSION_INIT(),
+            HRN_LIBSSH2_HANDSHAKE(),
+            HRN_LIBSSH2_KNOWNHOST_INIT(),
+            HRN_LIBSSH2_KNOWNHOST_READFILE(KNOWNHOSTS_FILE_CSTR, .resultInt = 5),
+            HRN_LIBSSH2_HOSTKEY(),
+            HRN_LIBSSH2_KNOWNHOST_CHECK(LIBSSH2_KNOWNHOST_CHECK_MATCH),
+            HRN_LIBSSH2_USERAUTH(),
+            HRN_LIBSSH2_SFTP_INIT(),
+            HRN_LIBSSH2_OPEN_READ(TEST_PATH "/readtest.txt"),
+            HRN_LIBSSH2_CLOSE());
+
+        TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadIo(file)), true, "open file after reconnect");
+        TEST_RESULT_VOID(ioReadClose(storageReadIo(file)), "close file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read open errors when the open fails again after reconnect (only one retry)");
+
+        HRN_LIBSSH2_SCRIPT_SET(
+            // First open fails because the server dropped the idle connection
+            HRN_LIBSSH2_OPEN_READ(TEST_PATH "/readtest.txt", .resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_RECV),
+            // The session is reopened but the retried open fails and is not retried again
+            HRNLIBSSH2_MACRO_RECONNECT(),
+            HRN_LIBSSH2_OPEN_READ(TEST_PATH "/readtest.txt", .resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SFTP_PROTOCOL),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SFTP_PROTOCOL),
+            HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_PERMISSION_DENIED),
+            HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_PERMISSION_DENIED));
+
+        TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file");
+        TEST_ERROR_FMT(
+            ioReadOpen(storageReadIo(file)), FileOpenError,
+            STORAGE_ERROR_READ_OPEN ": libssh2 error [-31]: sftp error [3] permission denied", strZ(fileName));
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("incremental load, storageReadSftp(), storageReadSftpEof()");
 
         fileName = STRDEF(TEST_PATH "/test.file");
@@ -2769,6 +2850,47 @@ testRun(void)
         TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file");
         TEST_RESULT_INT(ioWriteFd(storageWriteIo(file)), -1, "check write fd");
         TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write open reconnects after the connection is lost");
+
+        HRN_LIBSSH2_SCRIPT_SET(
+            // First open fails because the server dropped the idle connection
+            HRN_LIBSSH2_OPEN_WRITE(TEST_PATH "/sub1/testfile.pgbackrest.tmp", .resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_RECV),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_RECV),
+            // The session is reopened and the open is retried successfully
+            HRNLIBSSH2_MACRO_RECONNECT(),
+            HRN_LIBSSH2_OPEN_WRITE(TEST_PATH "/sub1/testfile.pgbackrest.tmp"),
+            HRN_LIBSSH2_FSYNC(),
+            HRN_LIBSSH2_CLOSE(),
+            HRN_LIBSSH2_RENAME(TEST_PATH "/sub1/testfile.pgbackrest.tmp", TEST_PATH "/sub1/testfile"));
+
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file");
+        TEST_RESULT_VOID(ioWriteOpen(storageWriteIo(file)), "open file after reconnect");
+        TEST_RESULT_VOID(ioWriteClose(storageWriteIo(file)), "close file");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("write open errors when the open fails again after reconnect (only one retry)");
+
+        HRN_LIBSSH2_SCRIPT_SET(
+            // First open fails because the server dropped the idle connection
+            HRN_LIBSSH2_OPEN_WRITE(TEST_PATH "/sub1/testfile.pgbackrest.tmp", .resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_RECV),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_RECV),
+            // The session is reopened but the retried open fails and is not retried again
+            HRNLIBSSH2_MACRO_RECONNECT(),
+            HRN_LIBSSH2_OPEN_WRITE(TEST_PATH "/sub1/testfile.pgbackrest.tmp", .resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SFTP_PROTOCOL),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SFTP_PROTOCOL),
+            HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_PERMISSION_DENIED),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SFTP_PROTOCOL),
+            HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_PERMISSION_DENIED));
+
+        TEST_ASSIGN(file, storageNewWriteP(storageTest, fileName), "new write file");
+        TEST_ERROR_FMT(
+            ioWriteOpen(storageWriteIo(file)), FileOpenError,
+            STORAGE_ERROR_WRITE_OPEN ": libssh2 error [-31]: sftp error [3] permission denied", strZ(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storageWriteSftpClose timeout on fsync");
@@ -3914,6 +4036,25 @@ testRun(void)
         TEST_ASSIGN(storageTest, storageSftpHelper(0, true, NULL), "new storage");
         TEST_ASSIGN(storageSftp, storageDriver(storageTest), "storage driver");
         TEST_ERROR_FMT(objFree(storageTest), ServiceError, "timeout freeing libssh2 session: libssh2 errno [-37]");
+#else
+        TEST_LOG(PROJECT_NAME " not built with sftp support");
+#endif // HAVE_LIBSSH2
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("storageSftpConnLost()"))
+    {
+#ifdef HAVE_LIBSSH2
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("classify connection-lost errors");
+
+        TEST_RESULT_BOOL(storageSftpConnLost(LIBSSH2_ERROR_SOCKET_RECV), true, "socket recv is connection lost");
+        TEST_RESULT_BOOL(storageSftpConnLost(LIBSSH2_ERROR_SOCKET_TIMEOUT), true, "socket timeout is connection lost");
+        TEST_RESULT_BOOL(storageSftpConnLost(LIBSSH2_ERROR_SOCKET_DISCONNECT), true, "socket disconnect is connection lost");
+        TEST_RESULT_BOOL(storageSftpConnLost(LIBSSH2_ERROR_BAD_USE), true, "bad use is connection lost");
+        TEST_RESULT_BOOL(storageSftpConnLost(LIBSSH2_ERROR_SOCKET_SEND), false, "socket send is not treated as connection lost");
+        TEST_RESULT_BOOL(storageSftpConnLost(LIBSSH2_ERROR_SFTP_PROTOCOL), false, "sftp protocol error is not connection lost");
+        TEST_RESULT_BOOL(storageSftpConnLost(LIBSSH2_ERROR_EAGAIN), false, "eagain is not connection lost");
 #else
         TEST_LOG(PROJECT_NAME " not built with sftp support");
 #endif // HAVE_LIBSSH2
