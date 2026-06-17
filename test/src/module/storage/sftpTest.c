@@ -2379,7 +2379,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError,
-            STORAGE_ERROR_PATH_REMOVE_FILE " libssh ssh [-7]", strZ(pathRemove2));
+            "unable to remove file '%s': libssh ssh [-7]", strZ(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - other than LIBSSH2_FX_FAILURE/LIBSSH2_FX_PERMISSION_DENIED");
@@ -2394,7 +2394,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError,
-            STORAGE_ERROR_PATH_REMOVE_FILE " libssh sftp [7] connection lost", strZ(pathRemove2));
+            "unable to remove file '%s': libssh sftp [7] connection lost", strZ(pathRemove2));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - unlink LIBSSH2_ERROR_EAGAIN timeout");
@@ -3655,8 +3655,9 @@ testRun(void)
             HRN_LIBSSH2_UNLINK("/missing", .resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL),
             HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_NO_SUCH_FILE));
 
-        TEST_ERROR(storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = true), FileRemoveError,
-                   "unable to remove '/missing': libssh2 error [-31]: sftp error [2] no such file");
+        TEST_ERROR(
+            storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = true), FileRemoveError,
+            "unable to remove file '/missing': libssh2 error [-31]: sftp error [2] no such file");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remove - file missing, sftp error other than LIBSSH2_FX_NO_SUCH_FILE");
@@ -3668,8 +3669,9 @@ testRun(void)
             HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_CONNECTION_LOST),
             HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_CONNECTION_LOST));
 
-        TEST_ERROR(storageRemoveP(storageTest, STRDEF("missing")), FileRemoveError,
-                   "unable to remove '/missing': libssh2 error [-31]: sftp error [7] connection lost");
+        TEST_ERROR(
+            storageRemoveP(storageTest, STRDEF("missing")), FileRemoveError,
+            "unable to remove file '/missing': libssh2 error [-31]: sftp error [7] connection lost");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remove - file missing, ssh error, .errorOnMissing = true");
@@ -3680,8 +3682,9 @@ testRun(void)
             HRN_LIBSSH2_UNLINK("/missing", .resultInt = LIBSSH2_ERROR_BAD_SOCKET),
             HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_ERROR_NONE));
 
-        TEST_ERROR(storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = true), FileRemoveError,
-                   "unable to remove '/missing': libssh2 error [-45]");
+        TEST_ERROR(
+            storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = true), FileRemoveError,
+            "unable to remove file '/missing': libssh2 error [-45]");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remove - file missing, timeout EAGAIN, .errorOnMissing = true");

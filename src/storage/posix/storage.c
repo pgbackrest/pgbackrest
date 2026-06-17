@@ -476,7 +476,7 @@ storagePosixPathRemove(THIS_VOID, const String *const path, const bool recurse, 
                             }
                             // Else error
                             else
-                                THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE, strZ(file));   // {vm_covered}
+                                THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_FILE_REMOVE, strZ(file));        // {vm_covered}
                         }
 
                         // Reset the memory context occasionally so we don't use too much memory or slow down processing
@@ -566,7 +566,7 @@ storagePosixRemove(THIS_VOID, const String *const file, const StorageInterfaceRe
     if (unlink(strZ(file)) == -1)
     {
         if (param.errorOnMissing || errno != ENOENT)                                                                // {vm_covered}
-            THROW_SYS_ERROR_FMT(FileRemoveError, "unable to remove '%s'", strZ(file));                              // {vm_covered}
+            THROW_SYS_ERROR_FMT(FileRemoveError, STORAGE_ERROR_FILE_REMOVE, strZ(file));                            // {vm_covered}
     }
 
     FUNCTION_LOG_RETURN_VOID();

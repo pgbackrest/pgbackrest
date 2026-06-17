@@ -828,7 +828,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             storagePathRemoveP(storageTest, pathRemove1, .recurse = true), PathRemoveError,
-            STORAGE_ERROR_PATH_REMOVE_FILE ": [13] Permission denied", strZ(fileRemove));
+            "unable to remove file '%s': [13] Permission denied", strZ(fileRemove));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("path remove - path with subpath and file removed");
@@ -1178,7 +1178,7 @@ testRun(void)
         TEST_RESULT_VOID(storageRemoveP(storageTest, STRDEF("missing")), "remove missing file");
         TEST_ERROR(
             storageRemoveP(storageTest, STRDEF("missing"), .errorOnMissing = true), FileRemoveError,
-            "unable to remove '" TEST_PATH "/missing': [2] No such file or directory");
+            "unable to remove file '" TEST_PATH "/missing': [2] No such file or directory");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("remove - file exists");
@@ -1193,7 +1193,7 @@ testRun(void)
         TEST_TITLE("remove - permission denied");
 
         TEST_ERROR_FMT(
-            storageRemoveP(storageTest, fileNoPerm), FileRemoveError, "unable to remove '%s': [13] Permission denied",
+            storageRemoveP(storageTest, fileNoPerm), FileRemoveError, "unable to remove file '%s': [13] Permission denied",
             strZ(fileNoPerm));
 #endif // TEST_CONTAINER_REQUIRED
     }
