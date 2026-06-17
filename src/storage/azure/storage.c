@@ -14,11 +14,17 @@ Azure Storage
 #include "common/io/tls/client.h"
 #include "common/log.h"
 #include "common/regExp.h"
+#include "common/stat.h"
 #include "common/type/json.h"
 #include "common/type/object.h"
 #include "common/type/xml.h"
 #include "storage/azure/read.h"
 #include "storage/azure/write.h"
+
+/***********************************************************************************************************************************
+Defaults
+***********************************************************************************************************************************/
+#define STORAGE_AZURE_DELETE_MAX                                    256
 
 /***********************************************************************************************************************************
 Azure http headers
@@ -31,6 +37,7 @@ STRING_STATIC(AZURE_HEADER_VERSION_VALUE_STR,                       "2024-08-04"
 Azure query tokens
 ***********************************************************************************************************************************/
 STRING_STATIC(AZURE_QUERY_MARKER_STR,                               "marker");
+STRING_STATIC(AZURE_QUERY_BATCH_STR,                                "batch");
 STRING_EXTERN(AZURE_QUERY_COMP_STR,                                 AZURE_QUERY_COMP);
 STRING_STATIC(AZURE_QUERY_DELIMITER_STR,                            "delimiter");
 STRING_STATIC(AZURE_QUERY_INCLUDE_STR,                              "include");
@@ -72,6 +79,14 @@ VARIANT_STRDEF_STATIC(AZURE_JSON_TAG_ACCESS_TOKEN_VAR,              "access_toke
 VARIANT_STRDEF_STATIC(AZURE_JSON_TAG_EXPIRES_IN_VAR,                "expires_in");
 
 /***********************************************************************************************************************************
+Statistics constants
+***********************************************************************************************************************************/
+STRING_STATIC(AZURE_STAT_REMOVE_STR,                                "azure.rm");
+STRING_STATIC(AZURE_STAT_REMOVE_BATCH_STR,                          "azure.rm.batch");
+STRING_STATIC(AZURE_STAT_REMOVE_BATCH_PART_STR,                     "azure.rm.batch.part");
+STRING_STATIC(AZURE_STAT_REMOVE_BATCH_RETRY_STR,                    "azure.rm.batch.retry");
+
+/***********************************************************************************************************************************
 Object type
 ***********************************************************************************************************************************/
 struct StorageAzure
@@ -88,6 +103,7 @@ struct StorageAzure
     const HttpQuery *sasKey;                                        // SAS key
     const String *host;                                             // Host name
     size_t blockSize;                                               // Block size for multi-block upload
+    unsigned int deleteMax;                                         // Maximum objects that can be deleted in one request
     const String *tag;                                              // Tags to be applied to objects
     const String *pathPrefix;                                       // Account/container prefix
 
@@ -108,7 +124,7 @@ Based on the documentation at https://docs.microsoft.com/en-us/rest/api/storages
 static void
 storageAzureAuth(
     StorageAzure *const this, const String *const verb, const String *const path, HttpQuery *const query,
-    const String *const dateTime, HttpHeader *const httpHeader)
+    const String *const dateTime, HttpHeader *const httpHeader, const bool subRequest)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STORAGE_AZURE, this);
@@ -117,6 +133,7 @@ storageAzureAuth(
         FUNCTION_TEST_PARAM(HTTP_QUERY, query);
         FUNCTION_TEST_PARAM(STRING, dateTime);
         FUNCTION_TEST_PARAM(KEY_VALUE, httpHeader);
+        FUNCTION_TEST_PARAM(BOOL, subRequest);
     FUNCTION_TEST_END();
 
     ASSERT(this != NULL);
@@ -128,15 +145,17 @@ storageAzureAuth(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Set required headers
-        httpHeaderPut(httpHeader, HTTP_HEADER_HOST_STR, this->host);
+        // Host header is required for all authentication types but must not be set on batch sub-requests
+        if (!subRequest)
+            httpHeaderPut(httpHeader, HTTP_HEADER_HOST_STR, this->host);
 
         // Date header is required for shared key authentication (for signing)
         if (this->keyType == storageAzureKeyTypeShared)
             httpHeaderPut(httpHeader, HTTP_HEADER_DATE_STR, dateTime);
 
-        // Set version header (required for shared key and auto auth types, not for SAS)
-        if (this->keyType != storageAzureKeyTypeSas)
+        // Set version header (required for shared key and auto auth types, not for SAS) but never on batch sub-requests,
+        // which inherit the version from the top-level batch request
+        if (this->keyType != storageAzureKeyTypeSas && !subRequest)
             httpHeaderPut(httpHeader, AZURE_HEADER_VERSION_STR, AZURE_HEADER_VERSION_VALUE_STR);
 
         // Shared key authentication
@@ -177,6 +196,7 @@ storageAzureAuth(
             // Generate string to sign
             const String *const contentLength = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_LENGTH_STR);
             const String *const contentMd5 = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_MD5_STR);
+            const String *const contentType = httpHeaderGet(httpHeader, HTTP_HEADER_CONTENT_TYPE_STR);
             const String *const range = httpHeaderGet(httpHeader, HTTP_HEADER_RANGE_STR);
 
             const String *const stringToSign = strNewFmt(
@@ -185,7 +205,7 @@ storageAzureAuth(
                 "\n"                                                    // content-language
                 "%s\n"                                                  // content-length
                 "%s\n"                                                  // content-md5
-                "\n"                                                    // content-type
+                "%s\n"                                                  // content-type
                 "%s\n"                                                  // date
                 "\n"                                                    // If-Modified-Since
                 "\n"                                                    // If-Match
@@ -196,8 +216,8 @@ storageAzureAuth(
                 "/%s%s"                                                 // Canonicalized account/path
                 "%s",                                                   // Canonicalized query
                 strZ(verb), strEq(contentLength, ZERO_STR) ? "" : strZ(contentLength), contentMd5 == NULL ? "" : strZ(contentMd5),
-                strZ(dateTime), range == NULL ? "" : strZ(range), strZ(headerCanonical), strZ(this->account), strZ(path),
-                strZ(queryCanonical));
+                contentType == NULL ? "" : strZ(contentType), strZ(dateTime), range == NULL ? "" : strZ(range),
+                strZ(headerCanonical), strZ(this->account), strZ(path), strZ(queryCanonical));
 
             // Generate authorization header
             httpHeaderPut(
@@ -280,6 +300,7 @@ storageAzureRequestAsync(StorageAzure *const this, const String *const verb, Sto
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
+        FUNCTION_LOG_PARAM(LIST, param.contentList);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
     FUNCTION_LOG_END();
 
@@ -293,21 +314,49 @@ storageAzureRequestAsync(StorageAzure *const this, const String *const verb, Sto
         // Prepend path prefix
         param.path = param.path == NULL ? this->pathPrefix : strNewFmt("%s%s", strZ(this->pathPrefix), strZ(param.path));
 
-        // Create header list and add content length
+        // Create header list
         HttpHeader *requestHeader =
             param.header == NULL ? httpHeaderNew(this->headerRedactList) : httpHeaderDup(param.header, this->headerRedactList);
+
+        // Set content or construct multipart content
+        const String *const date = httpDateFromTime(time(NULL));
+        const Buffer *content = param.content;
+
+        if (param.contentList != NULL)
+        {
+            ASSERT(param.content == NULL);
+            ASSERT(!lstEmpty(param.contentList));
+
+            HttpRequestMulti *const requestMulti = httpRequestMultiNew();
+
+            for (unsigned int contentIdx = 0; contentIdx < lstSize(param.contentList); contentIdx++)
+            {
+                const StorageAzureRequestPart *const requestPart = lstGet(param.contentList, contentIdx);
+                HttpHeader *const partHeader = httpHeaderNew(this->headerRedactList);
+                HttpQuery *const partQuery = this->sasKey != NULL ? httpQueryNewP(.redactList = this->queryRedactList) : NULL;
+                const String *const path = strNewFmt("%s%s", strZ(this->pathPrefix), strZ(requestPart->path));
+
+                httpHeaderAdd(partHeader, HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
+                storageAzureAuth(this, requestPart->verb, path, partQuery, date, partHeader, true);
+
+                httpRequestMultiAddP(
+                    requestMulti, strNewFmt("%u", contentIdx), requestPart->verb, path, .header = partHeader, .query = partQuery);
+            }
+
+            httpRequestMultiHeaderAdd(requestMulti, requestHeader);
+            content = httpRequestMultiContent(requestMulti);
+        }
 
         // Set content length
         httpHeaderAdd(
             requestHeader, HTTP_HEADER_CONTENT_LENGTH_STR,
-            param.content == NULL || bufEmpty(param.content) ? ZERO_STR : strNewFmt("%zu", bufUsed(param.content)));
+            content == NULL || bufEmpty(content) ? ZERO_STR : strNewFmt("%zu", bufUsed(content)));
 
         // Calculate content-md5 header if there is content
-        if (param.content != NULL)
+        if (content != NULL)
         {
             httpHeaderAdd(
-                requestHeader, HTTP_HEADER_CONTENT_MD5_STR,
-                strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, param.content)));
+                requestHeader, HTTP_HEADER_CONTENT_MD5_STR, strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, content)));
         }
 
         // Set tags when requested and available
@@ -324,13 +373,13 @@ storageAzureRequestAsync(StorageAzure *const this, const String *const verb, Sto
                 httpQueryDupP(param.query, .redactList = this->queryRedactList);
 
         // Generate authorization header
-        storageAzureAuth(this, verb, path, query, httpDateFromTime(time(NULL)), requestHeader);
+        storageAzureAuth(this, verb, path, query, date, requestHeader, false);
 
         // Send request
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = httpRequestNewP(
-                this->httpClient, verb, path, .query = query, .header = requestHeader, .content = param.content);
+                this->httpClient, verb, path, .query = query, .header = requestHeader, .content = content);
         }
         MEM_CONTEXT_END();
     }
@@ -379,13 +428,15 @@ storageAzureRequest(StorageAzure *const this, const String *const verb, const St
         FUNCTION_LOG_PARAM(HTTP_HEADER, param.header);
         FUNCTION_LOG_PARAM(HTTP_QUERY, param.query);
         FUNCTION_LOG_PARAM(BUFFER, param.content);
+        FUNCTION_LOG_PARAM(LIST, param.contentList);
         FUNCTION_LOG_PARAM(BOOL, param.allowMissing);
         FUNCTION_LOG_PARAM(BOOL, param.contentIo);
         FUNCTION_LOG_PARAM(BOOL, param.tag);
     FUNCTION_LOG_END();
 
     HttpRequest *const request = storageAzureRequestAsyncP(
-        this, verb, .path = param.path, .header = param.header, .query = param.query, .content = param.content, .tag = param.tag);
+        this, verb, .path = param.path, .header = param.header, .query = param.query, .content = param.content,
+        .contentList = param.contentList, .tag = param.tag);
     HttpResponse *const result = storageAzureResponseP(request, .allowMissing = param.allowMissing, .contentIo = param.contentIo);
 
     httpRequestFree(request);
@@ -734,8 +785,93 @@ typedef struct StorageAzurePathRemoveData
     StorageAzure *this;                                             // Storage object
     MemContext *memContext;                                         // Mem context to create requests in
     HttpRequest *request;                                           // Async remove request
+    List *requestContentList;                                       // Content list for async request
+    List *contentList;                                              // Content list currently being built
     const String *path;                                             // Root path of remove
 } StorageAzurePathRemoveData;
+
+static void
+storageAzurePathRemoveInternal(StorageAzurePathRemoveData *const data)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM_P(VOID, data);
+    FUNCTION_TEST_END();
+
+    ASSERT(data != NULL);
+    ASSERT(data->this != NULL);
+
+    // Get response for async request
+    if (data->request != NULL)
+    {
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            HttpResponse *const response = storageAzureResponseP(data->request);
+            HttpResponseMulti *const responseMulti = httpResponseMultiNew(
+                httpResponseContent(response), httpHeaderGet(httpResponseHeader(response), HTTP_HEADER_CONTENT_TYPE_STR));
+
+            // Loop through all response parts. Parts are mapped to the original request by ordinal position since the service
+            // returns one response part per sub-request in request order. The echoed content-id is intentionally not used because
+            // Azure omits it on some error responses, which would otherwise make a failed part impossible to retry.
+            unsigned int partIdx = 0;
+            HttpResponse *responsePart = httpResponseMultiNext(responseMulti);
+            CHECK(FormatError, responsePart != NULL, "at least one response part is required");
+
+            do
+            {
+                // If not OK and not missing then retry
+                if (!httpResponseCodeOk(responsePart) && httpResponseCode(responsePart) != HTTP_RESPONSE_CODE_NOT_FOUND)
+                {
+                    // Get the original request for this part by position
+                    CHECK_FMT(
+                        FormatError, partIdx < lstSize(data->requestContentList), "response part %u is out of range", partIdx);
+                    const StorageAzureRequestPart *const content = lstGet(data->requestContentList, partIdx);
+
+                    // Retry remove
+                    statInc(AZURE_STAT_REMOVE_BATCH_RETRY_STR);
+                    httpResponseFree(storageAzureRequestP(data->this, content->verb, .path = content->path, .allowMissing = true));
+                }
+                else
+                    statInc(AZURE_STAT_REMOVE_BATCH_PART_STR);
+
+                httpResponseFree(responsePart);
+                responsePart = httpResponseMultiNext(responseMulti);
+                partIdx++;
+            }
+            while (responsePart != NULL);
+        }
+        MEM_CONTEXT_TEMP_END();
+
+        // Free request
+        httpRequestFree(data->request);
+        data->request = NULL;
+
+        // Free content list
+        lstFree(data->requestContentList);
+    }
+
+    // Send new async request if there is more to remove
+    if (data->contentList != NULL)
+    {
+        statInc(AZURE_STAT_REMOVE_BATCH_STR);
+
+        MEM_CONTEXT_BEGIN(data->memContext)
+        {
+            data->request = storageAzureRequestAsyncP(
+                data->this, HTTP_VERB_POST_STR,
+                .query = httpQueryAdd(
+                    httpQueryAdd(httpQueryNewP(), AZURE_QUERY_COMP_STR, AZURE_QUERY_BATCH_STR),
+                    AZURE_QUERY_RESTYPE_STR, AZURE_QUERY_VALUE_CONTAINER_STR),
+                .contentList = data->contentList);
+        }
+        MEM_CONTEXT_END();
+
+        // Store the content list for use in error handling
+        data->requestContentList = data->contentList;
+        data->contentList = NULL;
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
+}
 
 static void
 storageAzurePathRemoveCallback(void *const callbackData, const StorageInfo *const info)
@@ -748,25 +884,34 @@ storageAzurePathRemoveCallback(void *const callbackData, const StorageInfo *cons
     ASSERT(callbackData != NULL);
     ASSERT(info != NULL);
 
-    StorageAzurePathRemoveData *const data = callbackData;
-
-    // Get response from prior async request
-    if (data->request != NULL)
-    {
-        httpResponseFree(storageAzureResponseP(data->request, .allowMissing = true));
-        httpRequestFree(data->request);
-        data->request = NULL;
-    }
-
     // Only delete files since paths don't really exist
     if (info->type == storageTypeFile)
     {
-        MEM_CONTEXT_BEGIN(data->memContext)
+        StorageAzurePathRemoveData *const data = callbackData;
+
+        if (data->contentList == NULL)
         {
-            data->request = storageAzureRequestAsyncP(
-                data->this, HTTP_VERB_DELETE_STR, strNewFmt("%s/%s", strZ(data->path), strZ(info->name)));
+            MEM_CONTEXT_BEGIN(data->memContext)
+            {
+                data->contentList = lstNewP(sizeof(StorageAzureRequestPart));
+            }
+            MEM_CONTEXT_END();
         }
-        MEM_CONTEXT_END();
+
+        MEM_CONTEXT_OBJ_BEGIN(data->contentList)
+        {
+            const StorageAzureRequestPart content =
+            {
+                .verb = HTTP_VERB_DELETE_STR,
+                .path = strNewFmt("%s/%s", strZ(data->path), strZ(info->name)),
+            };
+
+            lstAdd(data->contentList, &content);
+        }
+        MEM_CONTEXT_OBJ_END();
+
+        if (lstSize(data->contentList) == data->this->deleteMax)
+            storageAzurePathRemoveInternal(data);
     }
 
     FUNCTION_TEST_RETURN_VOID();
@@ -796,11 +941,18 @@ storageAzurePathRemove(THIS_VOID, const String *const path, const bool recurse, 
             .path = strEq(path, FSLASH_STR) ? EMPTY_STR : path,
         };
 
-        storageAzureListInternal(this, path, storageInfoLevelType, NULL, true, 0, storageAzurePathRemoveCallback, &data);
+        MEM_CONTEXT_TEMP_BEGIN()
+        {
+            storageAzureListInternal(this, path, storageInfoLevelType, NULL, true, 0, storageAzurePathRemoveCallback, &data);
 
-        // Check response on last async request
-        if (data.request != NULL)
-            storageAzureResponseP(data.request, .allowMissing = true);
+            // Call if there is more to be removed
+            if (data.contentList != NULL)
+                storageAzurePathRemoveInternal(&data);
+
+            // Check response on last async request
+            storageAzurePathRemoveInternal(&data);
+        }
+        MEM_CONTEXT_TEMP_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -823,6 +975,7 @@ storageAzureRemove(THIS_VOID, const String *const file, const StorageInterfaceRe
     ASSERT(file != NULL);
     ASSERT(!param.errorOnMissing);
 
+    statInc(AZURE_STAT_REMOVE_STR);
     httpResponseFree(storageAzureRequestP(this, HTTP_VERB_DELETE_STR, file, .allowMissing = true));
 
     FUNCTION_LOG_RETURN_VOID();
@@ -889,6 +1042,7 @@ storageAzureNew(
             .pathPrefix =
                 uriStyle == storageAzureUriStyleHost ?
                     strNewFmt("/%s", strZ(container)) : strNewFmt("/%s/%s", strZ(account), strZ(container)),
+            .deleteMax = STORAGE_AZURE_DELETE_MAX,
             .keyType = keyType,
         };
 

@@ -287,19 +287,21 @@ httpResponseStatusRead(HttpResponse *const this, IoRead *const read)
 Read response headers
 ***********************************************************************************************************************************/
 static void
-httpResponseHeaderRead(HttpResponse *const this, IoRead *const read)
+httpResponseHeaderRead(HttpResponse *const this, IoRead *const read, const bool allowEof)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_RESPONSE, this);
         FUNCTION_TEST_PARAM(IO_READ, read);
+        FUNCTION_TEST_PARAM(BOOL, allowEof);
     FUNCTION_TEST_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         do
         {
-            // Read the next header
-            String *const header = strTrim(ioReadLine(read));
+            // Read the next header. In a multipart part the headers may be terminated by the boundary rather than a blank line (the
+            // boundary's leading CRLF doubles as the terminator), so allow eof to end the header block in that case.
+            String *const header = strTrim(ioReadLineParam(read, allowEof));
 
             // If the header is empty then we have reached the end of the headers
             if (strSize(header) == 0)
@@ -400,7 +402,7 @@ httpResponseNew(HttpSession *const session, const String *const verb, const bool
     httpResponseStatusRead(this, httpSessionIoReadP(this->session));
 
     // Read headers
-    httpResponseHeaderRead(this, httpSessionIoReadP(this->session));
+    httpResponseHeaderRead(this, httpSessionIoReadP(this->session), false);
 
     // Was content returned in the response? HEAD will report content but not actually return any.
     this->contentExists =
@@ -553,7 +555,7 @@ httpResponseMultiNext(HttpResponseMulti *const this)
             IoRead *const responseIo = ioBufferReadNewOpen(response);
 
             // Read multipart headers
-            httpResponseHeaderRead(result, responseIo);
+            httpResponseHeaderRead(result, responseIo, true);
 
             CHECK(
                 FormatError,
@@ -563,8 +565,8 @@ httpResponseMultiNext(HttpResponseMulti *const this)
             // Read status
             httpResponseStatusRead(result, responseIo);
 
-            // Read headers
-            httpResponseHeaderRead(result, responseIo);
+            // Read headers (eof is allowed since the boundary, not a blank line, may terminate the embedded response headers)
+            httpResponseHeaderRead(result, responseIo, true);
 
             // Read content
             CHECK(FormatError, !result->contentChunked, "chunked encoding not supported in multipart");

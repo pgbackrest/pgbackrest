@@ -37,6 +37,7 @@ typedef struct TestRequestParam
     const char *blobType;
     const char *range;
     const char *tag;
+    bool multiPart;
 } TestRequestParam;
 
 #define testRequestP(write, verb, path, ...)                                                                                       \
@@ -45,7 +46,7 @@ typedef struct TestRequestParam
 static void
 testRequest(IoWrite *write, const char *verb, const char *path, TestRequestParam param)
 {
-    String *request = strCatFmt(strNew(), "%s /" TEST_ACCOUNT "/" TEST_CONTAINER, verb);
+    String *const request = strCatFmt(strNew(), "%s /" TEST_ACCOUNT "/" TEST_CONTAINER, verb);
 
     // When SAS spit out the query and merge in the SAS key
     if (driver->sasKey != NULL)
@@ -78,12 +79,23 @@ testRequest(IoWrite *write, const char *verb, const char *path, TestRequestParam
     // Add content-length
     strCatFmt(request, "content-length:%zu\r\n", param.content == NULL ? 0 : strlen(param.content));
 
-    // Add md5
+    // Add md5. When the content contains wildcards (a shared-key batch with non-deterministic embedded signatures) the md5 is also
+    // wildcarded since it cannot be computed from the wildcarded content.
     if (param.content != NULL)
     {
-        strCatFmt(
-            request, "content-md5:%s\r\n", strZ(strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, BUFSTRZ(param.content)))));
+        if (strchr(param.content, '?') != NULL)
+            strCatZ(request, "content-md5:????????????????????????\r\n");
+        else
+        {
+            strCatFmt(
+                request, "content-md5:%s\r\n",
+                strZ(strNewEncode(encodingBase64, cryptoHashOne(hashTypeMd5, BUFSTRZ(param.content)))));
+        }
     }
+
+    // Add multipart content-type
+    if (param.multiPart)
+        strCatZ(request, "content-type:multipart/mixed; boundary=" HTTP_MULTIPART_BOUNDARY_INIT "\r\n");
 
     // Add date
     if (driver->sharedKey != NULL)
@@ -127,6 +139,7 @@ typedef struct TestResponseParam
     unsigned int code;
     const char *header;
     const char *content;
+    bool multiPart;
     const Variant *contentSize;
 } TestResponseParam;
 
@@ -160,6 +173,10 @@ testResponse(IoWrite *write, TestResponseParam param)
     // Headers
     if (param.header != NULL)
         strCatFmt(response, "%s\r\n", param.header);
+
+    // Add multipart content-type
+    if (param.multiPart)
+        strCatZ(response, "content-type:multipart/mixed; boundary=" HTTP_MULTIPART_BOUNDARY_INIT "\r\n");
 
     // Content
     if (param.content != NULL)
@@ -413,7 +430,7 @@ testRun(void)
 
         header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
 
-        TEST_RESULT_VOID(storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path"), NULL, dateTime, header), "auth");
+        TEST_RESULT_VOID(storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path"), NULL, dateTime, header, false), "auth");
         TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(header, httpHeaderToLog, logBuf, sizeof(logBuf)), "httpHeaderToLog");
         TEST_RESULT_Z(
             logBuf,
@@ -429,7 +446,8 @@ testRun(void)
 
         HttpQuery *query = httpQueryAdd(httpQueryNewP(), STRDEF("a"), STRDEF("b"));
 
-        TEST_RESULT_VOID(storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path/file"), query, dateTime, header), "auth");
+        TEST_RESULT_VOID(
+            storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path/file"), query, dateTime, header, false), "auth");
         TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(header, httpHeaderToLog, logBuf, sizeof(logBuf)), "httpHeaderToLog");
         TEST_RESULT_Z(
             logBuf,
@@ -453,7 +471,8 @@ testRun(void)
         query = httpQueryAdd(httpQueryNewP(), STRDEF("a"), STRDEF("b"));
         header = httpHeaderAdd(httpHeaderNew(NULL), HTTP_HEADER_CONTENT_LENGTH_STR, STRDEF("66"));
 
-        TEST_RESULT_VOID(storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path/file"), query, dateTime, header), "auth");
+        TEST_RESULT_VOID(
+            storageAzureAuth(storage, HTTP_VERB_GET_STR, STRDEF("/path/file"), query, dateTime, header, false), "auth");
         TEST_RESULT_VOID(FUNCTION_LOG_OBJECT_FORMAT(header, httpHeaderToLog, logBuf, sizeof(logBuf)), "httpHeaderToLog");
         TEST_RESULT_Z(logBuf, "{content-length: '66', host: 'account.blob.core.usgovcloudapi.net'}", "check headers");
         TEST_RESULT_STR_Z(httpQueryRenderP(query), "a=b&sig=key", "check query");
@@ -702,6 +721,83 @@ testRun(void)
                 TEST_TITLE("info for / does not exist");
 
                 TEST_RESULT_BOOL(storageInfoP(storage, NULL, .ignoreMissing = true).exists, false, "info for /");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("remove files with shared key batched one per request");
+
+                // Force one delete per batch to exercise the deleteMax flush with shared-key signed sub-requests
+                driver->deleteMax = 1;
+
+                testRequestP(service, HTTP_VERB_GET, "?comp=list&prefix=path%2F&restype=container");
+                testResponseP(
+                    service,
+                    .content =
+                        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
+                        "<EnumerationResults>"
+                        "    <Blobs>"
+                        "        <Blob>"
+                        "            <Name>path/test1.txt</Name>"
+                        "            <Properties/>"
+                        "        </Blob>"
+                        "        <Blob>"
+                        "            <Name>path/test2.txt</Name>"
+                        "            <Properties/>"
+                        "        </Blob>"
+                        "    </Blobs>"
+                        "    <NextMarker/>"
+                        "</EnumerationResults>");
+
+                testRequestP(
+                    service, HTTP_VERB_POST, "?comp=batch&restype=container", .multiPart = true,
+                    .content =
+                        "--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "Content-Type: application/http\r\n"
+                        "Content-Transfer-Encoding: binary\r\n"
+                        "Content-ID: 0\r\n"
+                        "\r\n"
+                        "DELETE /account/container/path/test1.txt HTTP/1.1\r\n"
+                        "authorization: SharedKey account:????????????????????????????????????????????\r\n"
+                        "content-length: 0\r\n"
+                        "date: ???, ?? ??? ???? ??:??:?? GMT\r\n"
+                        "\r\n\r\n"
+                        "--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
+                testResponseP(
+                    service, .multiPart = true,
+                    .content =
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:0\r\n"
+                        "\r\n"
+                        "HTTP/1.1 202 Accepted\r\n\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
+
+                testRequestP(
+                    service, HTTP_VERB_POST, "?comp=batch&restype=container", .multiPart = true,
+                    .content =
+                        "--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "Content-Type: application/http\r\n"
+                        "Content-Transfer-Encoding: binary\r\n"
+                        "Content-ID: 0\r\n"
+                        "\r\n"
+                        "DELETE /account/container/path/test2.txt HTTP/1.1\r\n"
+                        "authorization: SharedKey account:????????????????????????????????????????????\r\n"
+                        "content-length: 0\r\n"
+                        "date: ???, ?? ??? ???? ??:??:?? GMT\r\n"
+                        "\r\n\r\n"
+                        "--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
+                testResponseP(
+                    service, .multiPart = true,
+                    .content =
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:0\r\n"
+                        "\r\n"
+                        "HTTP/1.1 202 Accepted\r\n\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
+
+                TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), "remove");
+
+                driver->deleteMax = STORAGE_AZURE_DELETE_MAX;
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("switch to managed identity");
@@ -1058,6 +1154,10 @@ testRun(void)
                         "            <Name>path1/xxx.zzz</Name>"
                         "            <Properties/>"
                         "        </Blob>"
+                        "        <Blob>"
+                        "            <Name>path2/file2</Name>"
+                        "            <Properties/>"
+                        "        </Blob>"
                         "        <BlobPrefix>"
                         "            <Name>not-deleted/</Name>"
                         "        </BlobPrefix>"
@@ -1065,10 +1165,55 @@ testRun(void)
                         "    <NextMarker/>"
                         "</EnumerationResults>");
 
-                testRequestP(service, HTTP_VERB_DELETE, "/test1.txt");
-                testResponseP(service);
+                testRequestP(
+                    service, HTTP_VERB_POST, "?comp=batch&restype=container", .multiPart = true,
+                    .content =
+                        "--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "Content-Type: application/http\r\n"
+                        "Content-Transfer-Encoding: binary\r\n"
+                        "Content-ID: 0\r\n"
+                        "\r\n"
+                        "DELETE /account/container/test1.txt?sig=key HTTP/1.1\r\n"
+                        "content-length: 0\r\n"
+                        "\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "Content-Type: application/http\r\n"
+                        "Content-Transfer-Encoding: binary\r\n"
+                        "Content-ID: 1\r\n"
+                        "\r\n"
+                        "DELETE /account/container/path1/xxx.zzz?sig=key HTTP/1.1\r\n"
+                        "content-length: 0\r\n"
+                        "\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "Content-Type: application/http\r\n"
+                        "Content-Transfer-Encoding: binary\r\n"
+                        "Content-ID: 2\r\n"
+                        "\r\n"
+                        "DELETE /account/container/path2/file2?sig=key HTTP/1.1\r\n"
+                        "content-length: 0\r\n"
+                        "\r\n\r\n"
+                        "--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
+                testResponseP(
+                    service, .multiPart = true,
+                    .content =
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:0\r\n"
+                        "\r\n"
+                        "HTTP/1.1 404 Missing\r\n\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:1\r\n"
+                        "\r\n"
+                        "HTTP/1.1 200 OK\r\n\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        // No content-id on the error part (as Azure omits it on some errors) to verify the retry maps by position
+                        "\r\n"
+                        "HTTP/1.1 300 Error\r\n\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
 
-                testRequestP(service, HTTP_VERB_DELETE, "/path1/xxx.zzz");
+                testRequestP(service, HTTP_VERB_DELETE, "/path2/file2");
                 testResponseP(service);
 
                 TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/"), .recurse = true), "remove");
@@ -1098,11 +1243,40 @@ testRun(void)
                         "    <NextMarker/>"
                         "</EnumerationResults>");
 
-                testRequestP(service, HTTP_VERB_DELETE, "/path/test1.txt");
-                testResponseP(service);
-
-                testRequestP(service, HTTP_VERB_DELETE, "/path/path1/xxx.zzz");
-                testResponseP(service);
+                testRequestP(
+                    service, HTTP_VERB_POST, "?comp=batch&restype=container", .multiPart = true,
+                    .content =
+                        "--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "Content-Type: application/http\r\n"
+                        "Content-Transfer-Encoding: binary\r\n"
+                        "Content-ID: 0\r\n"
+                        "\r\n"
+                        "DELETE /account/container/path/test1.txt?sig=key HTTP/1.1\r\n"
+                        "content-length: 0\r\n"
+                        "\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "Content-Type: application/http\r\n"
+                        "Content-Transfer-Encoding: binary\r\n"
+                        "Content-ID: 1\r\n"
+                        "\r\n"
+                        "DELETE /account/container/path/path1/xxx.zzz?sig=key HTTP/1.1\r\n"
+                        "content-length: 0\r\n"
+                        "\r\n\r\n"
+                        "--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
+                testResponseP(
+                    service, .multiPart = true,
+                    .content =
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:0\r\n"
+                        "\r\n"
+                        "HTTP/1.1 200 OK\r\n\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "\r\n"
+                        "content-type:application/http\r\n"
+                        "content-id:1\r\n"
+                        "\r\n"
+                        "HTTP/1.1 200 OK\r\n\r\n"
+                        "\r\n--" HTTP_MULTIPART_BOUNDARY_INIT "--\r\n");
 
                 TEST_RESULT_VOID(storagePathRemoveP(storage, STRDEF("/path"), .recurse = true), "remove");
 
