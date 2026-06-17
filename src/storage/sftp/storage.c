@@ -889,23 +889,11 @@ storageSftpRemove(THIS_VOID, const String *const file, const StorageInterfaceRem
         if (rc == LIBSSH2_ERROR_EAGAIN)
             THROW_FMT(FileRemoveError, "timeout removing '%s'", strZ(file));
 
-        if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
+        if (param.errorOnMissing || !storageSftpLibSsh2FxNoSuchFile(this, rc))
         {
-            if (param.errorOnMissing || !storageSftpLibSsh2FxNoSuchFile(this, rc))
-            {
-                storageSftpEvalLibSsh2Error(
-                    rc, libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,
-                    strNewFmt(STORAGE_ERROR_FILE_REMOVE, strZ(file)), NULL);
-            }
-        }
-        else
-        {
-            if (param.errorOnMissing)
-            {
-                storageSftpEvalLibSsh2Error(
-                    rc, libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,
-                    strNewFmt(STORAGE_ERROR_FILE_REMOVE, strZ(file)), NULL);
-            }
+            storageSftpEvalLibSsh2Error(
+                rc, libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,
+                strNewFmt(STORAGE_ERROR_FILE_REMOVE, strZ(file)), NULL);
         }
     }
 

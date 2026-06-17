@@ -3705,9 +3705,12 @@ testRun(void)
 
         HRN_LIBSSH2_SCRIPT_SET(
             HRN_LIBSSH2_UNLINK(TEST_PATH "/remove.txt", .resultInt = LIBSSH2_ERROR_SOCKET_SEND),
+            HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_ERROR_NONE),
             HRNLIBSSH2_MACRO_SHUTDOWN());
 
-        TEST_RESULT_VOID(storageRemoveP(storageTest, fileRemove1), "remove file");
+        TEST_ERROR(
+            storageRemoveP(storageTest, fileRemove1), FileRemoveError,
+            "unable to remove file '" TEST_PATH "/remove.txt': libssh2 error [-7]");
 
         storageHelperFree();
 #else
