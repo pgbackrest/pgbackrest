@@ -1739,6 +1739,13 @@ testRun(void)
 
         // Test the path sync function -- pass a bogus path to ensure that this is a noop
         TEST_RESULT_VOID(storagePathSyncP(storage, STRDEF(BOGUS_STR)), "path sync is a noop");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("remove file with errorOnMissing not supported");
+
+        TEST_ERROR(
+            storageRemoveP(storage, STRDEF(BOGUS_STR), .errorOnMissing = true), AssertError,
+            "assertion '!param.errorOnMissing || storageFeature(this, storageFeatureFileRemoveMissing)' failed");
     }
 
     // *****************************************************************************************************************************

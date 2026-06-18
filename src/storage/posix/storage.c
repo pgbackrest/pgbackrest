@@ -630,7 +630,7 @@ storagePosixNewInternal(
         {
             this->interface.feature |=
                 1 << storageFeatureHardLink | (unsigned int)symLink << storageFeatureSymLink | 1 << storageFeaturePathSync |
-                1 << storageFeatureInfoDetail;
+                1 << storageFeatureInfoDetail | 1 << storageFeatureFileRemoveMissing;
         }
     }
     OBJ_NEW_END();

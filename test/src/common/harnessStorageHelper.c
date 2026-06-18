@@ -651,7 +651,8 @@ hrnStorageTestNew(
     static const StorageInterface hrnStorageInterfaceTest =
     {
         .feature =
-            1 << storageFeaturePath | 1 << storageFeaturePathSync | 1 << storageFeatureInfoDetail | 1 << storageFeatureVersioning,
+            1 << storageFeaturePath | 1 << storageFeaturePathSync | 1 << storageFeatureInfoDetail | 1 << storageFeatureVersioning |
+            1 << storageFeatureFileRemoveMissing,
 
         .info = hrnStorageTestInfo,
         .list = hrnStorageTestList,
