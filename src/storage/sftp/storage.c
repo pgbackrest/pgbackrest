@@ -874,6 +874,7 @@ storageSftpRemove(THIS_VOID, const String *const file, const StorageInterfaceRem
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
+    ASSERT(!param.errorOnMissing);
 
     // Attempt to unlink the file
     int rc;
@@ -889,7 +890,7 @@ storageSftpRemove(THIS_VOID, const String *const file, const StorageInterfaceRem
         if (rc == LIBSSH2_ERROR_EAGAIN)
             THROW_FMT(FileRemoveError, "timeout removing '%s'", strZ(file));
 
-        if (param.errorOnMissing || !storageSftpLibSsh2FxNoSuchFile(this, rc))
+        if (!storageSftpLibSsh2FxNoSuchFile(this, rc))
         {
             storageSftpEvalLibSsh2Error(
                 rc, libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,
