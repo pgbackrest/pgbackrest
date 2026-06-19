@@ -1247,7 +1247,6 @@ storageSftpConnFree(StorageSftp *const this)
 
     this->session = NULL;
     this->sftpSession = NULL;
-    this->sftpHandle = NULL;
 
     // Free the socket session, which closes the file descriptor
     ioSessionFree(this->ioSession);
