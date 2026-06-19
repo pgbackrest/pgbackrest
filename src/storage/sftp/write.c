@@ -83,24 +83,14 @@ storageWriteSftpOpen(THIS_VOID)
         if (rc == LIBSSH2_ERROR_EAGAIN)
             THROW_FMT(FileOpenError, "timeout while opening file '%s'", strZ(this->name));
 
-        if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
-        {
-            uint64_t sftpErr = libssh2_sftp_last_error(storageSftpSessionSftp(this->storage));
+        const uint64_t sftpErr = libssh2_sftp_last_error(storageSftpSessionSftp(this->storage));
 
-            if (sftpErr == LIBSSH2_FX_NO_SUCH_FILE)
-                THROW_FMT(FileMissingError, STORAGE_ERROR_WRITE_MISSING, strZ(this->name));
-            else
-            {
-                storageSftpEvalLibSsh2Error(
-                    rc, sftpErr, &FileOpenError, strNewFmt(STORAGE_ERROR_WRITE_OPEN, strZ(this->name)), NULL);
-            }
+        if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL && sftpErr == LIBSSH2_FX_NO_SUCH_FILE)
+        {
+            THROW_FMT(FileMissingError, STORAGE_ERROR_WRITE_MISSING, strZ(this->name));
         }
         else
-        {
-            storageSftpEvalLibSsh2Error(
-                rc, libssh2_sftp_last_error(storageSftpSessionSftp(this->storage)), &FileOpenError,
-                strNewFmt(STORAGE_ERROR_WRITE_OPEN, strZ(this->name)), NULL);
-        }
+            storageSftpEvalLibSsh2Error(rc, sftpErr, &FileOpenError, strNewFmt(STORAGE_ERROR_WRITE_OPEN, strZ(this->name)), NULL);
     }
 
     FUNCTION_LOG_RETURN_VOID();

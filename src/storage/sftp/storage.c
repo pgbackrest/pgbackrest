@@ -874,6 +874,7 @@ storageSftpRemove(THIS_VOID, const String *const file, const StorageInterfaceRem
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
+    ASSERT(!param.errorOnMissing);
 
     // Attempt to unlink the file
     int rc;
@@ -889,23 +890,11 @@ storageSftpRemove(THIS_VOID, const String *const file, const StorageInterfaceRem
         if (rc == LIBSSH2_ERROR_EAGAIN)
             THROW_FMT(FileRemoveError, "timeout removing '%s'", strZ(file));
 
-        if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
+        if (!storageSftpLibSsh2FxNoSuchFile(this, rc))
         {
-            if (param.errorOnMissing || !storageSftpLibSsh2FxNoSuchFile(this, rc))
-            {
-                storageSftpEvalLibSsh2Error(
-                    rc, libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,
-                    strNewFmt("unable to remove '%s'", strZ(file)), NULL);
-            }
-        }
-        else
-        {
-            if (param.errorOnMissing)
-            {
-                storageSftpEvalLibSsh2Error(
-                    rc, libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,
-                    strNewFmt("unable to remove '%s'", strZ(file)), NULL);
-            }
+            storageSftpEvalLibSsh2Error(
+                rc, libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,
+                strNewFmt(STORAGE_ERROR_FILE_REMOVE, strZ(file)), NULL);
         }
     }
 
@@ -1114,12 +1103,12 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
                                 else
                                 {
                                     THROW_FMT(
-                                        PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE " libssh sftp [%" PRIu64 "] %s", strZ(file),
+                                        PathRemoveError, STORAGE_ERROR_FILE_REMOVE ": libssh sftp [%" PRIu64 "] %s", strZ(file),
                                         sftpErrno, libssh2SftpErrorMsg(sftpErrno));
                                 }
                             }
                             else
-                                THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE " libssh ssh [%d]", strZ(file), rc);
+                                THROW_FMT(PathRemoveError, STORAGE_ERROR_FILE_REMOVE ": libssh ssh [%d]", strZ(file), rc);
                         }
 
                         // Reset the memory context occasionally so we don't use too much memory or slow down processing

@@ -1205,12 +1205,11 @@ storageS3Remove(THIS_VOID, const String *const file, const StorageInterfaceRemov
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
+        (void)param;
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
-    ASSERT(!param.errorOnMissing);
 
     httpResponseFree(storageS3RequestP(this, HTTP_VERB_DELETE_STR, file));
 

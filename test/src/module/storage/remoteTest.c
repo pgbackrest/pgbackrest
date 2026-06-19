@@ -604,7 +604,8 @@ testRun(void)
 
         TEST_ERROR(
             storageRemoveP(storageRepoWrite, file, .errorOnMissing = true), FileRemoveError,
-            "raised from remote-0 shim protocol: unable to remove '" TEST_PATH "/repo128/file.txt': [2] No such file or directory");
+            "raised from remote-0 shim protocol: unable to remove file '" TEST_PATH "/repo128/file.txt':"
+            " [2] No such file or directory");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("ignore missing file");
