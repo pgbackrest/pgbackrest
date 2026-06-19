@@ -1188,285 +1188,6 @@ storageSftpSessionSftp(StorageSftp *const this)
     FUNCTION_TEST_RETURN_TYPE_P(LIBSSH2_SFTP, this->sftpSession);
 }
 
-/***********************************************************************************************************************************
-Open a socket session, perform the libssh2 handshake, host key verification, authentication, and init the sftp session
-***********************************************************************************************************************************/
-static void
-storageSftpOpen(
-    StorageSftp *const this, const String *const host, const unsigned int port, const String *const user,
-    const String *const keyPriv, const StringId hostKeyHashType, const String *const keyPub, const String *const keyPassphrase,
-    const StringId hostKeyCheckType, const String *const hostFingerprint, const StringList *const knownHosts)
-{
-    FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE_SFTP, this);
-        FUNCTION_LOG_PARAM(STRING, host);
-        FUNCTION_LOG_PARAM(UINT, port);
-        FUNCTION_LOG_PARAM(STRING, user);
-        FUNCTION_LOG_PARAM(STRING, keyPriv);
-        FUNCTION_LOG_PARAM(STRING_ID, hostKeyHashType);
-        FUNCTION_LOG_PARAM(STRING, keyPub);
-        FUNCTION_TEST_PARAM(STRING, keyPassphrase);
-        FUNCTION_LOG_PARAM(STRING_ID, hostKeyCheckType);
-        FUNCTION_LOG_PARAM(STRING, hostFingerprint);
-        FUNCTION_LOG_PARAM(STRING_LIST, knownHosts);
-    FUNCTION_LOG_END();
-
-    // The socket/sftp session created here persists in the object context (not the caller's) so the single-return-object audit
-    // does not apply.
-    FUNCTION_AUDIT_HELPER();
-
-    ASSERT(this != NULL);
-
-    this->ioSession = ioClientOpen(sckClientNew(host, port, this->timeout, this->timeout));
-
-    MEM_CONTEXT_TEMP_BEGIN()
-    {
-        this->session = libssh2_session_init();
-
-        if (this->session == NULL)
-            THROW_FMT(ServiceError, "unable to init libssh2 session");
-
-        // Set session to non-blocking
-        libssh2_session_set_blocking(this->session, 0);
-
-        // Perform handshake
-        int rc;
-
-        do
-        {
-            rc = libssh2_session_handshake(this->session, ioSessionFd(this->ioSession));
-        }
-        while (storageSftpWaitFd(this, rc));
-
-        if (rc == LIBSSH2_ERROR_EAGAIN)
-            THROW_FMT(ServiceError, "timeout during libssh2 handshake [%d]", rc);
-
-        if (rc != 0)
-        {
-            THROW_FMT(
-                ServiceError, "libssh2 handshake failed [%d]: %s", rc, strZ(storageSftpLibSsh2SessionLastError(this->session)));
-        }
-
-        int hashType = LIBSSH2_HOSTKEY_HASH_SHA1;
-        size_t hashSize = 0;
-
-        // Verify that the fingerprint[N] buffer declared below is large enough when adding a new hashType
-        switch (hostKeyHashType)
-        {
-            case hashTypeMd5:
-                hashType = LIBSSH2_HOSTKEY_HASH_MD5;
-                hashSize = HASH_TYPE_M5_SIZE;
-                break;
-
-            case hashTypeSha1:
-                hashType = LIBSSH2_HOSTKEY_HASH_SHA1;
-                hashSize = HASH_TYPE_SHA1_SIZE;
-                break;
-
-    #ifdef LIBSSH2_HOSTKEY_HASH_SHA256
-            case hashTypeSha256:
-                hashType = LIBSSH2_HOSTKEY_HASH_SHA256;
-                hashSize = HASH_TYPE_SHA256_SIZE;
-                break;
-    #endif // LIBSSH2_HOSTKEY_HASH_SHA256
-
-            default:
-                THROW_FMT(ServiceError, "requested ssh2 hostkey hash type (%s) not available", zNewStrId(hostKeyHashType));
-                break;
-        }
-
-        // Compare fingerprint if provided else check known hosts files for a match
-        if (hostKeyCheckType == SFTP_STRICT_HOSTKEY_CHECKING_FINGERPRINT)
-        {
-            const char *const binaryFingerprint = libssh2_hostkey_hash(this->session, hashType);
-
-            if (binaryFingerprint == NULL)
-            {
-                THROW_FMT(
-                    ServiceError, "libssh2 hostkey hash failed: libssh2 errno [%d]", libssh2_session_last_errno(this->session));
-            }
-
-            // 256 bytes is large enough to hold the hex representation of currently supported hash types. The hex encoded version
-            // requires twice as much space (hashSize * 2) as the raw version.
-            char fingerprint[256];
-
-            encodeToStr(encodingHex, (const uint8_t *)binaryFingerprint, hashSize, fingerprint);
-
-            if (strcmp(fingerprint, strZ(hostFingerprint)) != 0)
-            {
-                THROW_FMT(
-                    ServiceError, "host [%s] and configured fingerprint (repo-sftp-host-fingerprint) [%s] do not match",
-                    fingerprint, strZ(hostFingerprint));
-            }
-        }
-        else if (hostKeyCheckType != SFTP_STRICT_HOSTKEY_CHECKING_NONE)
-        {
-            // Init the known host collection
-            LIBSSH2_KNOWNHOSTS *const knownHostsList = libssh2_knownhost_init(this->session);
-
-            if (knownHostsList == NULL)
-            {
-                const int rc = libssh2_session_last_errno(this->session);
-
-                THROW_FMT(
-                    ServiceError,
-                    "failure during libssh2_knownhost_init: libssh2 errno [%d] %s", rc,
-                    strZ(storageSftpLibSsh2SessionLastError(this->session)));
-            }
-
-            // Get the list of known host files to search
-            const StringList *const knownHostsPathList = storageSftpKnownHostsFilesList(knownHosts);
-
-            // Loop through the list of known host files
-            for (unsigned int listIdx = 0; listIdx < strLstSize(knownHostsPathList); listIdx++)
-            {
-                const char *const currentKnownHostFile = strZNull(strLstGet(knownHostsPathList, listIdx));
-
-                // Read the known hosts file entries into the collection, log message for readfile status.
-                // libssh2_knownhost_readfile() returns the number of successfully loaded hosts or a negative value on error, an
-                // empty known hosts file will return 0.
-                if ((rc = libssh2_knownhost_readfile(knownHostsList, currentKnownHostFile, LIBSSH2_KNOWNHOST_FILE_OPENSSH)) <= 0)
-                {
-                    if (rc == 0)
-                        LOG_DETAIL_FMT("libssh2 '%s' file is empty", currentKnownHostFile);
-                    else
-                    {
-                        LOG_DETAIL_FMT(
-                            "libssh2 read '%s' failed: libssh2 errno [%d] %s", currentKnownHostFile, rc,
-                            strZ(storageSftpLibSsh2SessionLastError(this->session)));
-                    }
-                }
-                else
-                    LOG_DETAIL_FMT("libssh2 read '%s' succeeded", currentKnownHostFile);
-            }
-
-            // Get the remote host key
-            size_t hostKeyLen;
-            int hostKeyType;
-            const char *const hostKey = libssh2_session_hostkey(this->session, &hostKeyLen, &hostKeyType);
-
-            // Check for a match in known hosts files else throw an error if no host key was retrieved
-            if (hostKey != NULL)
-            {
-                rc = libssh2_knownhost_checkp(
-                    knownHostsList, strZ(host), (int)port, hostKey, hostKeyLen,
-                    LIBSSH2_KNOWNHOST_TYPE_PLAIN | LIBSSH2_KNOWNHOST_KEYENC_RAW, NULL);
-
-                // Handle check success/failure
-                if (rc == LIBSSH2_KNOWNHOST_CHECK_MATCH)
-                    LOG_DETAIL_FMT("known hosts match found for '%s'", strZ(host));
-                else
-                {
-                    // Handle failure to match in a similar manner as ssh_config StrictHostKeyChecking. If this flag is set to
-                    // "strict", never automatically add host keys to the ~/.ssh/known_hosts file, and refuse to connect to hosts
-                    // whose host key has changed. This option forces the user to manually add all new hosts. If this flag is set to
-                    // "accept-new" then automatically add new host keys to the user known hosts files, but do not permit
-                    // connections to hosts with changed host keys.
-                    switch (hostKeyCheckType)
-                    {
-                        case SFTP_STRICT_HOSTKEY_CHECKING_STRICT:
-                        {
-                            // Throw an error when set to strict and we have any result other than match
-                            libssh2_knownhost_free(knownHostsList);
-
-                            THROW_FMT(
-                                ServiceError, "known hosts failure: '%s' %s [%d]: check type [%s]", strZ(host),
-                                storageSftpKnownHostCheckpFailureMsg(rc), rc, zNewStrId(hostKeyCheckType));
-
-                            break;
-                        }
-
-                        default:
-                        {
-                            ASSERT(hostKeyCheckType == SFTP_STRICT_HOSTKEY_CHECKING_ACCEPT_NEW);
-
-                            // Throw an error when set to accept-new and match fails or mismatches else add the new host key to the
-                            // user's known_hosts file
-                            if (rc == LIBSSH2_KNOWNHOST_CHECK_MISMATCH || rc == LIBSSH2_KNOWNHOST_CHECK_FAILURE)
-                            {
-                                // Free the known hosts list
-                                libssh2_knownhost_free(knownHostsList);
-
-                                THROW_FMT(
-                                    ServiceError, "known hosts failure: '%s': %s [%d]: check type [%s]", strZ(host),
-                                    storageSftpKnownHostCheckpFailureMsg(rc), rc, zNewStrId(hostKeyCheckType));
-                            }
-                            else
-                                storageSftpUpdateKnownHostsFile(this, hostKeyType, host, hostKey, hostKeyLen);
-
-                            break;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                THROW_FMT(
-                    ServiceError,
-                    "libssh2_session_hostkey failed to get hostkey: libssh2 error [%d]", libssh2_session_last_errno(this->session));
-            }
-
-            // Free the known hosts list
-            libssh2_knownhost_free(knownHostsList);
-        }
-
-        // Perform public key authorization, expand leading tilde key file paths if needed
-        String *const privKeyPath =
-            regExpMatchOne(STRDEF("^ *~"), keyPriv) ? storageSftpExpandTildePath(keyPriv) : strDup(keyPriv);
-        String *const pubKeyPath =
-            keyPub != NULL && regExpMatchOne(STRDEF("^ *~"), keyPub) ?
-                storageSftpExpandTildePath(keyPub) : strDup(keyPub);
-
-        do
-        {
-            rc = libssh2_userauth_publickey_fromfile(
-                this->session, strZ(user), strZNull(pubKeyPath), strZ(privKeyPath), strZNull(keyPassphrase));
-        }
-        while (storageSftpWaitFd(this, rc));
-
-        strFree(privKeyPath);
-        strFree(pubKeyPath);
-
-        if (rc != 0)
-        {
-            if (rc == LIBSSH2_ERROR_EAGAIN)
-                THROW_FMT(ServiceError, "timeout during public key authentication");
-
-            storageSftpEvalLibSsh2Error(
-                rc, libssh2_sftp_last_error(this->sftpSession), &ServiceError,
-                STRDEF("public key authentication failed"),
-                STRDEF(
-                    "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
-                    " --repo-sftp-public-key-file to be provided\n"
-                    "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to"
-                    " generate the keypair\n"
-                    "HINT: check authorization log on the SFTP server"));
-        }
-
-        // Init the sftp session
-        do
-        {
-            this->sftpSession = libssh2_sftp_init(this->session);
-        }
-        while (this->sftpSession == NULL && storageSftpWaitFd(this, libssh2_session_last_errno(this->session)));
-
-        if (this->sftpSession == NULL)
-        {
-            if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN)
-                THROW_FMT(ServiceError, "timeout during init of libssh2_sftp session");
-            else
-            {
-                storageSftpEvalLibSsh2Error(
-                    rc, libssh2_sftp_last_error(this->sftpSession), &ServiceError,
-                    strNewFmt("unable to init libssh2_sftp session"), NULL);
-            }
-        }
-    }
-    MEM_CONTEXT_TEMP_END();
-
-    FUNCTION_LOG_RETURN_VOID();
-}
-
 /**********************************************************************************************************************************/
 static const StorageInterface storageInterfaceSftp =
 {
@@ -1480,7 +1201,6 @@ static const StorageInterface storageInterfaceSftp =
     .pathRemove = storageSftpPathRemove,
     .remove = storageSftpRemove,
 };
-
 
 FN_EXTERN Storage *
 storageSftpNew(
@@ -1528,10 +1248,246 @@ storageSftpNew(
         if (libssh2_init(0) != 0)
             THROW_FMT(ServiceError, "unable to init libssh2");
 
-        // Open the connection (socket, handshake, host key verification, authentication, sftp session)
-        storageSftpOpen(
-            this, host, port, user, keyPriv, hostKeyHashType, param.keyPub, param.keyPassphrase, param.hostKeyCheckType,
-            param.hostFingerprint, param.knownHosts);
+        this->ioSession = ioClientOpen(sckClientNew(host, port, timeout, timeout));
+        this->session = libssh2_session_init();
+
+        if (this->session == NULL)
+            THROW_FMT(ServiceError, "unable to init libssh2 session");
+
+        // Set session to non-blocking
+        libssh2_session_set_blocking(this->session, 0);
+
+        // Perform handshake
+        int rc;
+
+        do
+        {
+            rc = libssh2_session_handshake(this->session, ioSessionFd(this->ioSession));
+        }
+        while (storageSftpWaitFd(this, rc));
+
+        if (rc == LIBSSH2_ERROR_EAGAIN)
+            THROW_FMT(ServiceError, "timeout during libssh2 handshake [%d]", rc);
+
+        if (rc != 0)
+        {
+            THROW_FMT(
+                ServiceError, "libssh2 handshake failed [%d]: %s", rc, strZ(storageSftpLibSsh2SessionLastError(this->session)));
+        }
+
+        int hashType = LIBSSH2_HOSTKEY_HASH_SHA1;
+        size_t hashSize = 0;
+
+        // Verify that the fingerprint[N] buffer declared below is large enough when adding a new hashType
+        switch (hostKeyHashType)
+        {
+            case hashTypeMd5:
+                hashType = LIBSSH2_HOSTKEY_HASH_MD5;
+                hashSize = HASH_TYPE_M5_SIZE;
+                break;
+
+            case hashTypeSha1:
+                hashType = LIBSSH2_HOSTKEY_HASH_SHA1;
+                hashSize = HASH_TYPE_SHA1_SIZE;
+                break;
+
+#ifdef LIBSSH2_HOSTKEY_HASH_SHA256
+            case hashTypeSha256:
+                hashType = LIBSSH2_HOSTKEY_HASH_SHA256;
+                hashSize = HASH_TYPE_SHA256_SIZE;
+                break;
+#endif // LIBSSH2_HOSTKEY_HASH_SHA256
+
+            default:
+                THROW_FMT(ServiceError, "requested ssh2 hostkey hash type (%s) not available", zNewStrId(hostKeyHashType));
+                break;
+        }
+
+        // Compare fingerprint if provided else check known hosts files for a match
+        if (param.hostKeyCheckType == SFTP_STRICT_HOSTKEY_CHECKING_FINGERPRINT)
+        {
+            const char *const binaryFingerprint = libssh2_hostkey_hash(this->session, hashType);
+
+            if (binaryFingerprint == NULL)
+            {
+                THROW_FMT(
+                    ServiceError, "libssh2 hostkey hash failed: libssh2 errno [%d]", libssh2_session_last_errno(this->session));
+            }
+
+            // 256 bytes is large enough to hold the hex representation of currently supported hash types. The hex encoded version
+            // requires twice as much space (hashSize * 2) as the raw version.
+            char fingerprint[256];
+
+            encodeToStr(encodingHex, (const uint8_t *)binaryFingerprint, hashSize, fingerprint);
+
+            if (strcmp(fingerprint, strZ(param.hostFingerprint)) != 0)
+            {
+                THROW_FMT(
+                    ServiceError, "host [%s] and configured fingerprint (repo-sftp-host-fingerprint) [%s] do not match",
+                    fingerprint, strZ(param.hostFingerprint));
+            }
+        }
+        else if (param.hostKeyCheckType != SFTP_STRICT_HOSTKEY_CHECKING_NONE)
+        {
+            // Init the known host collection
+            LIBSSH2_KNOWNHOSTS *const knownHostsList = libssh2_knownhost_init(this->session);
+
+            if (knownHostsList == NULL)
+            {
+                const int rc = libssh2_session_last_errno(this->session);
+
+                THROW_FMT(
+                    ServiceError,
+                    "failure during libssh2_knownhost_init: libssh2 errno [%d] %s", rc,
+                    strZ(storageSftpLibSsh2SessionLastError(this->session)));
+            }
+
+            // Get the list of known host files to search
+            const StringList *const knownHostsPathList = storageSftpKnownHostsFilesList(param.knownHosts);
+
+            // Loop through the list of known host files
+            for (unsigned int listIdx = 0; listIdx < strLstSize(knownHostsPathList); listIdx++)
+            {
+                const char *const currentKnownHostFile = strZNull(strLstGet(knownHostsPathList, listIdx));
+
+                // Read the known hosts file entries into the collection, log message for readfile status.
+                // libssh2_knownhost_readfile() returns the number of successfully loaded hosts or a negative value on error, an
+                // empty known hosts file will return 0.
+                if ((rc = libssh2_knownhost_readfile(knownHostsList, currentKnownHostFile, LIBSSH2_KNOWNHOST_FILE_OPENSSH)) <= 0)
+                {
+                    if (rc == 0)
+                        LOG_DETAIL_FMT("libssh2 '%s' file is empty", currentKnownHostFile);
+                    else
+                    {
+                        LOG_DETAIL_FMT(
+                            "libssh2 read '%s' failed: libssh2 errno [%d] %s", currentKnownHostFile, rc,
+                            strZ(storageSftpLibSsh2SessionLastError(this->session)));
+                    }
+                }
+                else
+                    LOG_DETAIL_FMT("libssh2 read '%s' succeeded", currentKnownHostFile);
+            }
+
+            // Get the remote host key
+            size_t hostKeyLen;
+            int hostKeyType;
+            const char *const hostKey = libssh2_session_hostkey(this->session, &hostKeyLen, &hostKeyType);
+
+            // Check for a match in known hosts files else throw an error if no host key was retrieved
+            if (hostKey != NULL)
+            {
+                rc = libssh2_knownhost_checkp(
+                    knownHostsList, strZ(host), (int)port, hostKey, hostKeyLen,
+                    LIBSSH2_KNOWNHOST_TYPE_PLAIN | LIBSSH2_KNOWNHOST_KEYENC_RAW, NULL);
+
+                // Handle check success/failure
+                if (rc == LIBSSH2_KNOWNHOST_CHECK_MATCH)
+                    LOG_DETAIL_FMT("known hosts match found for '%s'", strZ(host));
+                else
+                {
+                    // Handle failure to match in a similar manner as ssh_config StrictHostKeyChecking. If this flag is set to
+                    // "strict", never automatically add host keys to the ~/.ssh/known_hosts file, and refuse to connect to hosts
+                    // whose host key has changed. This option forces the user to manually add all new hosts. If this flag is set to
+                    // "accept-new" then automatically add new host keys to the user known hosts files, but do not permit
+                    // connections to hosts with changed host keys.
+                    switch (param.hostKeyCheckType)
+                    {
+                        case SFTP_STRICT_HOSTKEY_CHECKING_STRICT:
+                        {
+                            // Throw an error when set to strict and we have any result other than match
+                            libssh2_knownhost_free(knownHostsList);
+
+                            THROW_FMT(
+                                ServiceError, "known hosts failure: '%s' %s [%d]: check type [%s]", strZ(host),
+                                storageSftpKnownHostCheckpFailureMsg(rc), rc, zNewStrId(param.hostKeyCheckType));
+
+                            break;
+                        }
+
+                        default:
+                        {
+                            ASSERT(param.hostKeyCheckType == SFTP_STRICT_HOSTKEY_CHECKING_ACCEPT_NEW);
+
+                            // Throw an error when set to accept-new and match fails or mismatches else add the new host key to the
+                            // user's known_hosts file
+                            if (rc == LIBSSH2_KNOWNHOST_CHECK_MISMATCH || rc == LIBSSH2_KNOWNHOST_CHECK_FAILURE)
+                            {
+                                // Free the known hosts list
+                                libssh2_knownhost_free(knownHostsList);
+
+                                THROW_FMT(
+                                    ServiceError, "known hosts failure: '%s': %s [%d]: check type [%s]", strZ(host),
+                                    storageSftpKnownHostCheckpFailureMsg(rc), rc, zNewStrId(param.hostKeyCheckType));
+                            }
+                            else
+                                storageSftpUpdateKnownHostsFile(this, hostKeyType, host, hostKey, hostKeyLen);
+
+                            break;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                THROW_FMT(
+                    ServiceError,
+                    "libssh2_session_hostkey failed to get hostkey: libssh2 error [%d]", libssh2_session_last_errno(this->session));
+            }
+
+            // Free the known hosts list
+            libssh2_knownhost_free(knownHostsList);
+        }
+
+        // Perform public key authorization, expand leading tilde key file paths if needed
+        String *const privKeyPath = regExpMatchOne(STRDEF("^ *~"), keyPriv) ? storageSftpExpandTildePath(keyPriv) : strDup(keyPriv);
+        String *const pubKeyPath =
+            param.keyPub != NULL && regExpMatchOne(STRDEF("^ *~"), param.keyPub) ?
+                storageSftpExpandTildePath(param.keyPub) : strDup(param.keyPub);
+
+        do
+        {
+            rc = libssh2_userauth_publickey_fromfile(
+                this->session, strZ(user), strZNull(pubKeyPath), strZ(privKeyPath), strZNull(param.keyPassphrase));
+        }
+        while (storageSftpWaitFd(this, rc));
+
+        strFree(privKeyPath);
+        strFree(pubKeyPath);
+
+        if (rc != 0)
+        {
+            if (rc == LIBSSH2_ERROR_EAGAIN)
+                THROW_FMT(ServiceError, "timeout during public key authentication");
+
+            storageSftpEvalLibSsh2Error(
+                rc, libssh2_sftp_last_error(this->sftpSession), &ServiceError,
+                STRDEF("public key authentication failed"),
+                STRDEF(
+                    "HINT: libssh2 compiled against non-openssl libraries requires --repo-sftp-private-key-file and"
+                    " --repo-sftp-public-key-file to be provided\n"
+                    "HINT: libssh2 versions before 1.9.0 expect a PEM format keypair, try ssh-keygen -m PEM -t rsa -P \"\" to"
+                    " generate the keypair\n"
+                    "HINT: check authorization log on the SFTP server"));
+        }
+
+        // Init the sftp session
+        do
+        {
+            this->sftpSession = libssh2_sftp_init(this->session);
+        }
+        while (this->sftpSession == NULL && storageSftpWaitFd(this, libssh2_session_last_errno(this->session)));
+
+        if (this->sftpSession == NULL)
+        {
+            if (libssh2_session_last_errno(this->session) == LIBSSH2_ERROR_EAGAIN)
+                THROW_FMT(ServiceError, "timeout during init of libssh2_sftp session");
+            else
+            {
+                storageSftpEvalLibSsh2Error(
+                    rc, libssh2_sftp_last_error(this->sftpSession), &ServiceError,
+                    strNewFmt("unable to init libssh2_sftp session"), NULL);
+            }
+        }
 
         // Ensure libssh2/libssh2_sftp resources freed
         memContextCallbackSet(objMemContext(this), storageSftpLibSsh2SessionFreeResource, this);
