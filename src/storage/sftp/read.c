@@ -55,16 +55,13 @@ storageReadSftpOpen(THIS_VOID)
     if (this->sftpHandle == NULL)
     {
         const int rc = libssh2_session_last_errno(this->session);
+        const uint64_t sftpErr = libssh2_sftp_last_error(this->sftpSession);
 
-        // Handle errors except missing, which is reported to the caller via the result
-        if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL || rc == LIBSSH2_ERROR_EAGAIN)
+        // Throw on any error except missing, which is reported to the caller via the result
+        if (rc != LIBSSH2_ERROR_SFTP_PROTOCOL || sftpErr != LIBSSH2_FX_NO_SUCH_FILE)
         {
-            if (libssh2_sftp_last_error(this->sftpSession) != LIBSSH2_FX_NO_SUCH_FILE)
-            {
-                storageSftpEvalLibSsh2Error(
-                    rc, libssh2_sftp_last_error(this->sftpSession), &FileOpenError,
-                    strNewFmt(STORAGE_ERROR_READ_OPEN, strZ(this->name)), NULL);
-            }
+            storageSftpEvalLibSsh2Error(
+                rc, sftpErr, &FileOpenError, strNewFmt(STORAGE_ERROR_READ_OPEN, strZ(this->name)), NULL);
         }
     }
     // Else success
