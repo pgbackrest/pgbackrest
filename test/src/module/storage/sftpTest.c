@@ -2526,21 +2526,47 @@ testRun(void)
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_EAGAIN),
             HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING_WRITING),
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_EAGAIN),
-            HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_OK),
-            HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_ERROR_NONE));
+            HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_OK));
 
         TEST_ERROR_FMT(
             ioReadOpen(storageReadIo(file)), FileOpenError, STORAGE_ERROR_READ_OPEN ": libssh2 error [-37]", strZ(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("read missing - not sftp, not EAGAIN");
+        TEST_TITLE("read open error - not sftp, not EAGAIN");
 
         HRN_LIBSSH2_SCRIPT_SET(
             HRN_LIBSSH2_OPEN_READ(TEST_PATH "/readtest.txt", .resultNull = true),
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_METHOD_NOT_SUPPORTED),
-            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_METHOD_NOT_SUPPORTED));
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_METHOD_NOT_SUPPORTED),
+            HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_OK));
 
-        TEST_ERROR_FMT(ioReadOpen(storageReadIo(file)), FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(fileName));
+        TEST_ERROR_FMT(
+            ioReadOpen(storageReadIo(file)), FileOpenError, STORAGE_ERROR_READ_OPEN ": libssh2 error [-33]", strZ(fileName));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read open error - socket error is not masked as missing");
+
+        HRN_LIBSSH2_SCRIPT_SET(
+            HRN_LIBSSH2_OPEN_READ(TEST_PATH "/readtest.txt", .resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_RECV),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_RECV),
+            HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_OK));
+
+        TEST_ERROR_FMT(
+            ioReadOpen(storageReadIo(file)), FileOpenError, STORAGE_ERROR_READ_OPEN ": libssh2 error [-43]", strZ(fileName));
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("read open error - sftp error other than no such file is not masked as missing");
+
+        HRN_LIBSSH2_SCRIPT_SET(
+            HRN_LIBSSH2_OPEN_READ(TEST_PATH "/readtest.txt", .resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SFTP_PROTOCOL),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SFTP_PROTOCOL),
+            HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_PERMISSION_DENIED));
+
+        TEST_ERROR_FMT(
+            ioReadOpen(storageReadIo(file)), FileOpenError,
+            STORAGE_ERROR_READ_OPEN ": libssh2 error [-31]: sftp error [3] permission denied", strZ(fileName));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read success");
