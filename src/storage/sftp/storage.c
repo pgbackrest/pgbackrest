@@ -896,8 +896,7 @@ storageSftpNewRead(THIS_VOID, const String *const file, const StorageInterfaceNe
     ASSERT(file != NULL);
     ASSERT(param.versionId == NULL);
 
-    FUNCTION_LOG_RETURN(
-        STORAGE_READ_SFTP, storageReadSftpNew(this, file, this->session, this->sftpSession, param.offset, param.limit));
+    FUNCTION_LOG_RETURN(STORAGE_READ_SFTP, storageReadSftpNew(this, file, param.offset, param.limit));
 }
 
 /**********************************************************************************************************************************/
@@ -932,8 +931,8 @@ storageSftpNewWrite(THIS_VOID, const String *const file, const StorageInterfaceN
     FUNCTION_LOG_RETURN(
         STORAGE_WRITE_SFTP,
         storageWriteSftpNew(
-            this, file, this->session, this->sftpSession, param.modeFile, param.modePath, param.user, param.group,
-            param.timeModified, param.createPath, param.syncFile, param.atomic, param.truncate));
+            this, file, param.modeFile, param.modePath, param.user, param.group, param.timeModified, param.createPath,
+            param.syncFile, param.atomic, param.truncate));
 }
 
 /**********************************************************************************************************************************/
@@ -1140,6 +1139,31 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN LIBSSH2_SESSION *
+storageSftpSession(StorageSftp *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_SFTP, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN_TYPE_P(LIBSSH2_SESSION, this->session);
+}
+
+FN_EXTERN LIBSSH2_SFTP *
+storageSftpSessionSftp(StorageSftp *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_SFTP, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN_TYPE_P(LIBSSH2_SFTP, this->sftpSession);
 }
 
 /**********************************************************************************************************************************/
