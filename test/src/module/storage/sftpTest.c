@@ -2006,7 +2006,7 @@ testRun(void)
         HRN_LIBSSH2_SCRIPT_SET(
             // Opening the directory fails because the server dropped the idle connection
             HRN_LIBSSH2_OPENDIR(TEST_PATH, .resultNull = true),
-            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_RECV),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_TIMEOUT),
             // The session is reopened but the retried open fails and is not retried again
             HRNLIBSSH2_MACRO_RECONNECT(),
             HRN_LIBSSH2_OPENDIR(TEST_PATH, .resultNull = true),
@@ -2656,7 +2656,7 @@ testRun(void)
         HRN_LIBSSH2_SCRIPT_SET(
             // First open fails because the server dropped the idle connection
             HRN_LIBSSH2_OPEN_READ(TEST_PATH "/readtest.txt", .resultNull = true),
-            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_RECV),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_BAD_USE),
             // The session is reopened and the open is retried successfully. The broken session free returns EAGAIN once before
             // succeeding to exercise the wait-for-fd loop in storageSftpConnFree().
             HRN_LIBSSH2_SESSION_FREE(.resultInt = LIBSSH2_ERROR_EAGAIN),
@@ -2857,8 +2857,8 @@ testRun(void)
         HRN_LIBSSH2_SCRIPT_SET(
             // First open fails because the server dropped the idle connection
             HRN_LIBSSH2_OPEN_WRITE(TEST_PATH "/sub1/testfile.pgbackrest.tmp", .resultNull = true),
-            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_RECV),
-            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_RECV),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_DISCONNECT),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_DISCONNECT),
             // The session is reopened and the open is retried successfully
             HRNLIBSSH2_MACRO_RECONNECT(),
             HRN_LIBSSH2_OPEN_WRITE(TEST_PATH "/sub1/testfile.pgbackrest.tmp"),
