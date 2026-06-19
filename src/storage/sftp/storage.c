@@ -558,8 +558,8 @@ storageSftpInfo(THIS_VOID, const String *const file, const StorageInfoLevel leve
 
     StorageInfo result = {.level = level};
 
-    // Stat the file to check if it exists. Note that this function is also called per entry while a directory listing handle is open
-    // (see storageSftpList()), so it must not reconnect on a lost connection -- doing so would free and invalidate the open
+    // Stat the file to check if it exists. Note that this function is also called per entry while a directory listing handle is
+    // open (see storageSftpList()), so it must not reconnect on a lost connection -- doing so would free and invalidate the open
     // directory handle. A lost connection here is reported as an error and recovered by reconnecting at a higher-level operation.
     LIBSSH2_SFTP_ATTRIBUTES attr;
     int rc;
