@@ -2547,6 +2547,10 @@ testRun(void)
         TEST_TITLE("read open error - socket error is not masked as missing");
 
         HRN_LIBSSH2_SCRIPT_SET(
+            // A socket error triggers a reconnect; when the retried open hits the same error it is thrown rather than masked
+            HRN_LIBSSH2_OPEN_READ(TEST_PATH "/readtest.txt", .resultNull = true),
+            HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_RECV),
+            HRNLIBSSH2_MACRO_RECONNECT(),
             HRN_LIBSSH2_OPEN_READ(TEST_PATH "/readtest.txt", .resultNull = true),
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_RECV),
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SOCKET_RECV),
@@ -2715,7 +2719,6 @@ testRun(void)
             HRN_LIBSSH2_OPEN_READ(TEST_PATH "/readtest.txt", .resultNull = true),
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SFTP_PROTOCOL),
             HRN_LIBSSH2_ERRNO(LIBSSH2_ERROR_SFTP_PROTOCOL),
-            HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_PERMISSION_DENIED),
             HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_PERMISSION_DENIED));
 
         TEST_ASSIGN(file, storageNewReadP(storageTest, fileName), "new read file");
