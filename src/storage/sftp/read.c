@@ -241,14 +241,13 @@ static const StorageReadInterface storageReadSftpInterface =
 
 FN_EXTERN StorageReadSftp *
 storageReadSftpNew(
-    StorageSftp *const storage, const String *const name, LIBSSH2_SESSION *const session,
-    LIBSSH2_SFTP *const sftpSession, LIBSSH2_SFTP_HANDLE *const sftpHandle, const uint64_t offset, const Variant *const limit)
+    StorageSftp *const storage, const String *const name, LIBSSH2_SESSION *const session, LIBSSH2_SFTP *const sftpSession,
+    const uint64_t offset, const Variant *const limit)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM_P(VOID, session);
         FUNCTION_LOG_PARAM_P(VOID, sftpSession);
-        FUNCTION_LOG_PARAM_P(VOID, sftpHandle);
         FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
     FUNCTION_LOG_END();
@@ -264,7 +263,6 @@ storageReadSftpNew(
             .name = strDup(name),
             .session = session,
             .sftpSession = sftpSession,
-            .sftpHandle = sftpHandle,
             .offset = offset,
             .limit = varDup(limit),
         };

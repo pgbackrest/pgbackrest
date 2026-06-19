@@ -34,7 +34,6 @@ struct StorageSftp
     IoSession *ioSession;                                           // IoSession (socket) connection to SFTP server
     LIBSSH2_SESSION *session;                                       // LibSsh2 session
     LIBSSH2_SFTP *sftpSession;                                      // LibSsh2 session sftp session
-    LIBSSH2_SFTP_HANDLE *sftpHandle;                                // LibSsh2 session sftp handle
     TimeMSec timeout;                                               // Session timeout
 };
 
@@ -372,27 +371,6 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
     ASSERT(this != NULL);
 
     int rc;
-
-    if (this->sftpHandle != NULL)
-    {
-        do
-        {
-            rc = libssh2_sftp_close(this->sftpHandle);
-        }
-        while (storageSftpWaitFd(this, rc));
-
-        if (rc != 0)
-        {
-            if (rc != LIBSSH2_ERROR_EAGAIN)
-                THROW_FMT(
-                    ServiceError, "failed to close sftpHandle: libssh2 errno [%d]%s", rc,
-                    rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                        strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
-            else
-                THROW_FMT(
-                    ServiceError, "timeout closing sftpHandle: libssh2 errno [%d]", rc);
-        }
-    }
 
     if (this->sftpSession != NULL)
     {
@@ -919,8 +897,7 @@ storageSftpNewRead(THIS_VOID, const String *const file, const StorageInterfaceNe
     ASSERT(param.versionId == NULL);
 
     FUNCTION_LOG_RETURN(
-        STORAGE_READ_SFTP,
-        storageReadSftpNew(this, file, this->session, this->sftpSession, this->sftpHandle, param.offset, param.limit));
+        STORAGE_READ_SFTP, storageReadSftpNew(this, file, this->session, this->sftpSession, param.offset, param.limit));
 }
 
 /**********************************************************************************************************************************/
@@ -955,7 +932,7 @@ storageSftpNewWrite(THIS_VOID, const String *const file, const StorageInterfaceN
     FUNCTION_LOG_RETURN(
         STORAGE_WRITE_SFTP,
         storageWriteSftpNew(
-            this, file, this->session, this->sftpSession, this->sftpHandle, param.modeFile, param.modePath, param.user, param.group,
+            this, file, this->session, this->sftpSession, param.modeFile, param.modePath, param.user, param.group,
             param.timeModified, param.createPath, param.syncFile, param.atomic, param.truncate));
 }
 

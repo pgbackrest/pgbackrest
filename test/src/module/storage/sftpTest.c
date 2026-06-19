@@ -3717,109 +3717,25 @@ testRun(void)
 
         HRN_LIBSSH2_SCRIPT_SET(
             HRNLIBSSH2_MACRO_STARTUP(),
-            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "\",1,1]"},
-            HRN_LIBSSH2_CLOSE(.resultInt = LIBSSH2_ERROR_EAGAIN),
-            HRN_LIBSSH2_BLOCK(),
-            HRN_LIBSSH2_CLOSE(),
             HRN_LIBSSH2_SHUTDOWN(.resultInt = LIBSSH2_ERROR_EAGAIN),
             HRN_LIBSSH2_BLOCK(),
-
             HRN_LIBSSH2_SHUTDOWN(),
             HRN_LIBSSH2_DISCONNECT(.resultInt = LIBSSH2_ERROR_EAGAIN),
             HRN_LIBSSH2_BLOCK(),
             HRN_LIBSSH2_DISCONNECT(),
             HRN_LIBSSH2_SESSION_FREE(.resultInt = LIBSSH2_ERROR_EAGAIN),
             HRN_LIBSSH2_BLOCK(),
-            HRN_LIBSSH2_SESSION_FREE(),
-            HRN_LIBSSH2_CLOSE(),
-            HRNLIBSSH2_MACRO_SHUTDOWN(),);
+            HRN_LIBSSH2_SESSION_FREE());
 
         Storage *storageTest = NULL;
-        StorageSftp *storageSftp = NULL;
 
         StringList *argList = strLstDup(argCommonList);
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH);
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList);
 
         TEST_ASSIGN(storageTest, storageSftpHelper(0, true, storageRepoPathExpression), "new storage");
-        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "storage driver");
-
-        // Populate sftpHandle, NULL sftpSession and session
-        storageSftp->sftpHandle = libssh2_sftp_open_ex(storageSftp->sftpSession, TEST_PATH, 25, 1, 0, 1);
-
-        TEST_RESULT_VOID(storageSftpLibSsh2SessionFreeResource(storageSftp), "freeResource not NULL sftpHandle");
 
         objFree(storageTest);
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storageSftpLibSsh2SessionFreeResource() sftpHandle, sftpSession, session all NULL");
-
-        HRN_LIBSSH2_SCRIPT_SET(HRNLIBSSH2_MACRO_STARTUP());
-
-        TEST_ASSIGN(storageTest, storageSftpHelper(0, true, NULL), "new storage");
-        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "storage driver");
-
-        // NULL out sftpSession and session
-        storageSftp->sftpSession = NULL;
-        storageSftp->session = NULL;
-
-        TEST_RESULT_VOID(objFree(storageTest), "free resource all NULL");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storageSftpLibSsh2SessionFreeResource() sftp close handle failure, sftpHandle not NULL, libssh2 error");
-
-        HRN_LIBSSH2_SCRIPT_SET(
-            HRNLIBSSH2_MACRO_STARTUP(),
-            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "\",1,1]"},
-            HRN_LIBSSH2_CLOSE(.resultInt = LIBSSH2_ERROR_SOCKET_SEND));
-
-        TEST_ASSIGN(storageTest, storageSftpHelper(0, true, NULL), "new storage");
-        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "storage driver");
-
-        // Populate sftpHandle, NULL out sftpSession and session
-        storageSftp->sftpHandle = libssh2_sftp_open_ex(storageSftp->sftpSession, TEST_PATH, 25, 1, 0, 1);
-        storageSftp->sftpSession = NULL;
-        storageSftp->session = NULL;
-
-        TEST_ERROR_FMT(objFree(storageTest), ServiceError, "failed to close sftpHandle: libssh2 errno [-7]");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storageSftpLibSsh2SessionFreeResource() sftp close handle failure, sftpHandle not NULL, EAGAIN");
-
-        HRN_LIBSSH2_SCRIPT_SET(
-            HRNLIBSSH2_MACRO_STARTUP(),
-            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "\",1,1]"},
-            HRN_LIBSSH2_CLOSE(.resultInt = LIBSSH2_ERROR_EAGAIN),
-            HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING_WRITING));
-
-        TEST_ASSIGN(storageTest, storageSftpHelper(0, true, NULL), "new storage");
-        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "storage driver");
-
-        // Populate sftpHandle, NULL out sftpSession and session
-        storageSftp->sftpHandle = libssh2_sftp_open_ex(storageSftp->sftpSession, TEST_PATH, 25, 1, 0, 1);
-        storageSftp->sftpSession = NULL;
-        storageSftp->session = NULL;
-
-        TEST_ERROR_FMT(objFree(storageTest), ServiceError, "timeout closing sftpHandle: libssh2 errno [-37]");
-
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("storageSftpLibSsh2SessionFreeResource() sftp close handle failure, sftpHandle not NULL, libssh2 sftp error");
-
-        HRN_LIBSSH2_SCRIPT_SET(
-            HRNLIBSSH2_MACRO_STARTUP(),
-            {.function = HRNLIBSSH2_SFTP_OPEN_EX, .param = "[\"" TEST_PATH "\",1,1]"},
-            HRN_LIBSSH2_CLOSE(.resultInt = LIBSSH2_ERROR_SFTP_PROTOCOL),
-            HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_CONNECTION_LOST));
-
-        TEST_ASSIGN(storageTest, storageSftpHelper(0, true, NULL), "new storage");
-        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "storage driver");
-
-        // Populate sftpHandle, NULL out sftpSession and session
-        storageSftp->sftpHandle = libssh2_sftp_open_ex(storageSftp->sftpSession, TEST_PATH, 25, 1, 0, 1);
-        storageSftp->sftpSession = NULL;
-        storageSftp->session = NULL;
-
-        TEST_ERROR_FMT(objFree(storageTest), ServiceError, "failed to close sftpHandle: libssh2 errno [-31]: sftp errno [7]");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storageSftpLibSsh2SessionFreeResource() sftp shutdown failure libssh2 error");
@@ -3829,8 +3745,24 @@ testRun(void)
             HRN_LIBSSH2_SHUTDOWN(.resultInt = LIBSSH2_ERROR_SOCKET_SEND));
 
         TEST_ASSIGN(storageTest, storageSftpHelper(0, true, NULL), "new storage");
-        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "storage driver");
         TEST_ERROR_FMT(objFree(storageTest), ServiceError, "failed to shutdown sftpSession: libssh2 errno [-7]");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("storageSftpLibSsh2SessionFreeResource() sftp close handle failure, sftpHandle not NULL, EAGAIN");
+
+        HRN_LIBSSH2_SCRIPT_SET(
+            HRNLIBSSH2_MACRO_STARTUP());
+
+        StorageSftp *storageSftp = NULL;
+
+        TEST_ASSIGN(storageTest, storageSftpHelper(0, true, NULL), "new storage");
+        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "storage driver");
+
+        // Populate sftpHandle, NULL out sftpSession and session
+        storageSftp->sftpSession = NULL;
+        storageSftp->session = NULL;
+
+        objFree(storageTest);
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("storageSftpLibSsh2SessionFreeResource() sftp shutdown failure libssh2 sftp error");
@@ -3842,7 +3774,6 @@ testRun(void)
             HRN_LIBSSH2_SFTP_ERROR(LIBSSH2_FX_CONNECTION_LOST));
 
         TEST_ASSIGN(storageTest, storageSftpHelper(0, true, NULL), "new storage");
-        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "storage driver");
         TEST_ERROR_FMT(
             objFree(storageTest), ServiceError,
             "failed to shutdown sftpSession: libssh2 errno [-31]: sftp errno [7] connection lost");
@@ -3856,7 +3787,6 @@ testRun(void)
             HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING_WRITING));
 
         TEST_ASSIGN(storageTest, storageSftpHelper(0, true, NULL), "new storage");
-        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "storage driver");
         TEST_ERROR_FMT(objFree(storageTest), ServiceError, "timeout shutting down sftpSession: libssh2 errno [-37]");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -3868,7 +3798,6 @@ testRun(void)
             HRN_LIBSSH2_DISCONNECT(.resultInt = LIBSSH2_ERROR_SOCKET_DISCONNECT));
 
         TEST_ASSIGN(storageTest, storageSftpHelper(0, true, NULL), "new storage");
-        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "storage driver");
         TEST_ERROR_FMT(objFree(storageTest), ServiceError, "failed to disconnect libssh2 session: libssh2 errno [-13]");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -3881,7 +3810,6 @@ testRun(void)
             HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING_WRITING));
 
         TEST_ASSIGN(storageTest, storageSftpHelper(0, true, NULL), "new storage");
-        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "storage driver");
         TEST_ERROR_FMT(objFree(storageTest), ServiceError, "timeout disconnecting libssh2 session: libssh2 errno [-37]");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -3894,7 +3822,6 @@ testRun(void)
             HRN_LIBSSH2_SESSION_FREE(.resultInt = LIBSSH2_ERROR_SOCKET_DISCONNECT));
 
         TEST_ASSIGN(storageTest, storageSftpHelper(0, true, NULL), "new storage");
-        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "storage driver");
         TEST_ERROR_FMT(objFree(storageTest), ServiceError, "failed to free libssh2 session: libssh2 errno [-13]");
 
         // -------------------------------------------------------------------------------------------------------------------------
@@ -3908,7 +3835,6 @@ testRun(void)
             HRN_LIBSSH2_BLOCK(.resultInt = SSH2_BLOCK_READING_WRITING));
 
         TEST_ASSIGN(storageTest, storageSftpHelper(0, true, NULL), "new storage");
-        TEST_ASSIGN(storageSftp, storageDriver(storageTest), "storage driver");
         TEST_ERROR_FMT(objFree(storageTest), ServiceError, "timeout freeing libssh2 session: libssh2 errno [-37]");
 #else
         TEST_LOG(PROJECT_NAME " not built with sftp support");
