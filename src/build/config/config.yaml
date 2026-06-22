@@ -2165,6 +2165,34 @@ option:
         - gcs
         - s3
 
+  repo-storage-prefetch:
+    section: global
+    group: repo
+    type: integer
+    default: 3
+    allow-range: [0, 1024]
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - azure
+        - gcs
+        - s3
+
+  repo-storage-read-over:
+    section: global
+    group: repo
+    type: size
+    default: 64KiB
+    allow-range: [0B, 1MiB]
+    command: repo-type
+    depend:
+      option: repo-type
+      list:
+        - azure
+        - gcs
+        - s3
+
   repo-storage-upload-chunk-size:
     section: global
     group: repo

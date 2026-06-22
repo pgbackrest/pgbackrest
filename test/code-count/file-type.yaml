@@ -2367,6 +2367,18 @@ src/storage/read.intern.h:
   class: core
   type: c/h
 
+src/storage/readMulti.c:
+  class: core
+  type: c
+
+src/storage/readMulti.h:
+  class: core
+  type: c/h
+
+src/storage/readMulti.intern.h:
+  class: core
+  type: c/h
+
 src/storage/remote/protocol.c:
   class: core
   type: c
@@ -2380,6 +2392,14 @@ src/storage/remote/read.c:
   type: c
 
 src/storage/remote/read.h:
+  class: core
+  type: c/h
+
+src/storage/remote/readMulti.c:
+  class: core
+  type: c
+
+src/storage/remote/readMulti.h:
   class: core
   type: c/h
 

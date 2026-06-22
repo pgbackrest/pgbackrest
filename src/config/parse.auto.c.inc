@@ -9677,6 +9677,190 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                  // opt/repo-storage-port
     ),                                                                                                      // opt/repo-storage-port
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                   // opt/repo-storage-prefetch
+    (                                                                                                   // opt/repo-storage-prefetch
+        PARSE_RULE_OPTION_NAME("repo-storage-prefetch"),                                                // opt/repo-storage-prefetch
+        PARSE_RULE_OPTION_TYPE(Integer),                                                                // opt/repo-storage-prefetch
+        PARSE_RULE_OPTION_RESET(true),                                                                  // opt/repo-storage-prefetch
+        PARSE_RULE_OPTION_REQUIRED(true),                                                               // opt/repo-storage-prefetch
+        PARSE_RULE_OPTION_SECTION(Global),                                                              // opt/repo-storage-prefetch
+        PARSE_RULE_OPTION_GROUP_ID(Repo),                                                               // opt/repo-storage-prefetch
+                                                                                                        // opt/repo-storage-prefetch
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                  // opt/repo-storage-prefetch
+        (                                                                                               // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                         // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                       // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                      // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                           // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(Check)                                                            // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                           // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(Info)                                                             // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                         // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                          // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                           // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                          // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                           // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                          // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                     // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                     // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                    // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                           // opt/repo-storage-prefetch
+        ),                                                                                              // opt/repo-storage-prefetch
+                                                                                                        // opt/repo-storage-prefetch
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                 // opt/repo-storage-prefetch
+        (                                                                                               // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                       // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                      // opt/repo-storage-prefetch
+        ),                                                                                              // opt/repo-storage-prefetch
+                                                                                                        // opt/repo-storage-prefetch
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                 // opt/repo-storage-prefetch
+        (                                                                                               // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                       // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                      // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                           // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                          // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                           // opt/repo-storage-prefetch
+        ),                                                                                              // opt/repo-storage-prefetch
+                                                                                                        // opt/repo-storage-prefetch
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                // opt/repo-storage-prefetch
+        (                                                                                               // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                         // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                       // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                      // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                           // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(Check)                                                            // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                           // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(Info)                                                             // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                         // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                          // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                           // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                          // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                           // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                          // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                     // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                     // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                    // opt/repo-storage-prefetch
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                           // opt/repo-storage-prefetch
+        ),                                                                                              // opt/repo-storage-prefetch
+                                                                                                        // opt/repo-storage-prefetch
+        PARSE_RULE_OPTIONAL                                                                             // opt/repo-storage-prefetch
+        (                                                                                               // opt/repo-storage-prefetch
+            PARSE_RULE_OPTIONAL_GROUP                                                                   // opt/repo-storage-prefetch
+            (                                                                                           // opt/repo-storage-prefetch
+                PARSE_RULE_OPTIONAL_DEPEND                                                              // opt/repo-storage-prefetch
+                (                                                                                       // opt/repo-storage-prefetch
+                    PARSE_RULE_VAL_OPT(RepoType),                                                       // opt/repo-storage-prefetch
+                    PARSE_RULE_VAL_STRID(azure),                                                        // opt/repo-storage-prefetch
+                    PARSE_RULE_VAL_STRID(gcs),                                                          // opt/repo-storage-prefetch
+                    PARSE_RULE_VAL_STRID(s3),                                                           // opt/repo-storage-prefetch
+                ),                                                                                      // opt/repo-storage-prefetch
+                                                                                                        // opt/repo-storage-prefetch
+                PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                         // opt/repo-storage-prefetch
+                (                                                                                       // opt/repo-storage-prefetch
+                    PARSE_RULE_VAL_INT(0),                                                              // opt/repo-storage-prefetch
+                    PARSE_RULE_VAL_INT(1024),                                                           // opt/repo-storage-prefetch
+                ),                                                                                      // opt/repo-storage-prefetch
+                                                                                                        // opt/repo-storage-prefetch
+                PARSE_RULE_OPTIONAL_DEFAULT                                                             // opt/repo-storage-prefetch
+                (                                                                                       // opt/repo-storage-prefetch
+                    PARSE_RULE_VAL_INT(3),                                                              // opt/repo-storage-prefetch
+                ),                                                                                      // opt/repo-storage-prefetch
+            ),                                                                                          // opt/repo-storage-prefetch
+        ),                                                                                              // opt/repo-storage-prefetch
+    ),                                                                                                  // opt/repo-storage-prefetch
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                  // opt/repo-storage-read-over
+    (                                                                                                  // opt/repo-storage-read-over
+        PARSE_RULE_OPTION_NAME("repo-storage-read-over"),                                              // opt/repo-storage-read-over
+        PARSE_RULE_OPTION_TYPE(Size),                                                                  // opt/repo-storage-read-over
+        PARSE_RULE_OPTION_RESET(true),                                                                 // opt/repo-storage-read-over
+        PARSE_RULE_OPTION_REQUIRED(true),                                                              // opt/repo-storage-read-over
+        PARSE_RULE_OPTION_SECTION(Global),                                                             // opt/repo-storage-read-over
+        PARSE_RULE_OPTION_GROUP_ID(Repo),                                                              // opt/repo-storage-read-over
+                                                                                                       // opt/repo-storage-read-over
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                 // opt/repo-storage-read-over
+        (                                                                                              // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                        // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                      // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                     // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                          // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(Check)                                                           // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                          // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(Info)                                                            // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                        // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                         // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                          // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                         // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                          // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                         // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                    // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                    // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                   // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                          // opt/repo-storage-read-over
+        ),                                                                                             // opt/repo-storage-read-over
+                                                                                                       // opt/repo-storage-read-over
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                // opt/repo-storage-read-over
+        (                                                                                              // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                      // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                     // opt/repo-storage-read-over
+        ),                                                                                             // opt/repo-storage-read-over
+                                                                                                       // opt/repo-storage-read-over
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                // opt/repo-storage-read-over
+        (                                                                                              // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                      // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                     // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                          // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                         // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                          // opt/repo-storage-read-over
+        ),                                                                                             // opt/repo-storage-read-over
+                                                                                                       // opt/repo-storage-read-over
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                               // opt/repo-storage-read-over
+        (                                                                                              // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                        // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                      // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                     // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                          // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(Check)                                                           // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                          // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(Info)                                                            // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                        // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                         // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                          // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                         // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                          // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                         // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                    // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                    // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                   // opt/repo-storage-read-over
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                          // opt/repo-storage-read-over
+        ),                                                                                             // opt/repo-storage-read-over
+                                                                                                       // opt/repo-storage-read-over
+        PARSE_RULE_OPTIONAL                                                                            // opt/repo-storage-read-over
+        (                                                                                              // opt/repo-storage-read-over
+            PARSE_RULE_OPTIONAL_GROUP                                                                  // opt/repo-storage-read-over
+            (                                                                                          // opt/repo-storage-read-over
+                PARSE_RULE_OPTIONAL_DEPEND                                                             // opt/repo-storage-read-over
+                (                                                                                      // opt/repo-storage-read-over
+                    PARSE_RULE_VAL_OPT(RepoType),                                                      // opt/repo-storage-read-over
+                    PARSE_RULE_VAL_STRID(azure),                                                       // opt/repo-storage-read-over
+                    PARSE_RULE_VAL_STRID(gcs),                                                         // opt/repo-storage-read-over
+                    PARSE_RULE_VAL_STRID(s3),                                                          // opt/repo-storage-read-over
+                ),                                                                                     // opt/repo-storage-read-over
+                                                                                                       // opt/repo-storage-read-over
+                PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                        // opt/repo-storage-read-over
+                (                                                                                      // opt/repo-storage-read-over
+                    PARSE_RULE_VAL_SIZE(0B),                                                           // opt/repo-storage-read-over
+                    PARSE_RULE_VAL_SIZE(1MiB),                                                         // opt/repo-storage-read-over
+                ),                                                                                     // opt/repo-storage-read-over
+                                                                                                       // opt/repo-storage-read-over
+                PARSE_RULE_OPTIONAL_DEFAULT                                                            // opt/repo-storage-read-over
+                (                                                                                      // opt/repo-storage-read-over
+                    PARSE_RULE_VAL_SIZE(64KiB),                                                        // opt/repo-storage-read-over
+                ),                                                                                     // opt/repo-storage-read-over
+            ),                                                                                         // opt/repo-storage-read-over
+        ),                                                                                             // opt/repo-storage-read-over
+    ),                                                                                                 // opt/repo-storage-read-over
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                        // opt/repo-storage-tag
     (                                                                                                        // opt/repo-storage-tag
         PARSE_RULE_OPTION_NAME("repo-storage-tag"),                                                          // opt/repo-storage-tag
@@ -11851,6 +12035,8 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoStorageCaPath,                                                                                    // opt-resolve-order
     cfgOptRepoStorageHost,                                                                                      // opt-resolve-order
     cfgOptRepoStoragePort,                                                                                      // opt-resolve-order
+    cfgOptRepoStoragePrefetch,                                                                                  // opt-resolve-order
+    cfgOptRepoStorageReadOver,                                                                                  // opt-resolve-order
     cfgOptRepoStorageTag,                                                                                       // opt-resolve-order
     cfgOptRepoStorageUploadChunkSize,                                                                           // opt-resolve-order
     cfgOptRepoStorageVerifyTls,                                                                                 // opt-resolve-order

@@ -28,12 +28,38 @@ struct StorageReadS3
     const Variant *limit;                                           // Read limit (NULL for no limit)
     const String *versionId;                                        // Version id (NULL for most recent)
 
+    HttpRequest *httpRequest;                                       // HTTP request
     HttpResponse *httpResponse;                                     // HTTP response
 };
 
 /***********************************************************************************************************************************
 Open the file
 ***********************************************************************************************************************************/
+static bool
+storageReadS3OpenAsync(THIS_VOID)
+{
+    THIS(StorageReadS3);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_S3, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->httpRequest != NULL);
+
+    // Wait for response
+    MEM_CONTEXT_OBJ_BEGIN(this)
+    {
+        this->httpResponse = storageS3ResponseP(this->httpRequest, .allowMissing = true, .contentIo = true);
+
+        httpRequestFree(this->httpRequest);
+        this->httpRequest = NULL;
+    }
+    MEM_CONTEXT_OBJ_END();
+
+    FUNCTION_LOG_RETURN(BOOL, httpResponseCodeOk(this->httpResponse));
+}
+
 static bool
 storageReadS3Open(THIS_VOID)
 {
@@ -49,15 +75,15 @@ storageReadS3Open(THIS_VOID)
     // Request the file
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
-        this->httpResponse = storageS3RequestP(
+        this->httpRequest = storageS3RequestAsyncP(
             this->storage, HTTP_VERB_GET_STR, this->name,
             .header = httpHeaderPutRange(httpHeaderNew(NULL), this->offset, this->limit),
             .query = this->versionId != NULL ? httpQueryPut(httpQueryNewP(), STRDEF("versionId"), this->versionId) : NULL,
-            .allowMissing = true, .contentIo = true, .sseC = true);
+            .sseC = true);
     }
     MEM_CONTEXT_OBJ_END();
 
-    FUNCTION_LOG_RETURN(BOOL, httpResponseCodeOk(this->httpResponse));
+    FUNCTION_LOG_RETURN(BOOL, true);
 }
 
 /***********************************************************************************************************************************
@@ -74,9 +100,10 @@ storageReadS3(THIS_VOID, Buffer *const buffer, const bool block)
         FUNCTION_LOG_PARAM(BOOL, block);
     FUNCTION_LOG_END();
 
-    ASSERT(this != NULL && this->httpResponse != NULL);
-    ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
+    ASSERT(this != NULL);
+    ASSERT(this->httpResponse != NULL);
     ASSERT(buffer != NULL && !bufFull(buffer));
+    ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
 
     FUNCTION_LOG_RETURN(SIZE, ioRead(httpResponseIoRead(this->httpResponse), buffer));
 }
@@ -93,7 +120,8 @@ storageReadS3Eof(THIS_VOID)
         FUNCTION_TEST_PARAM(STORAGE_READ_S3, this);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL && this->httpResponse != NULL);
+    ASSERT(this != NULL);
+    ASSERT(this->httpResponse != NULL);
     ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
 
     FUNCTION_TEST_RETURN(BOOL, ioReadEof(httpResponseIoRead(this->httpResponse)));
@@ -112,8 +140,9 @@ storageReadS3Close(THIS_VOID)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->httpResponse != NULL);
 
+    httpRequestFree(this->httpRequest);
+    this->httpRequest = NULL;
     httpResponseFree(this->httpResponse);
     this->httpResponse = NULL;
 
@@ -126,6 +155,7 @@ static const StorageReadInterface storageReadS3Interface =
     .close = storageReadS3Close,
     .eof = storageReadS3Eof,
     .open = storageReadS3Open,
+    .openAsync = storageReadS3OpenAsync,
     .read = storageReadS3,
 };
 

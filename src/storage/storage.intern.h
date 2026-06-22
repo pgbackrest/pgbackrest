@@ -131,6 +131,12 @@ typedef void *StorageInterfaceNewRead(void *thisVoid, const String *file, Storag
     STORAGE_COMMON_INTERFACE(thisVoid).newRead(thisVoid, file, (StorageInterfaceNewReadParam){VAR_PARAM_INIT, __VA_ARGS__})
 
 // ---------------------------------------------------------------------------------------------------------------------------------
+// Create a multi file read driver (optional). When implemented the driver handles all file reads, e.g. by forwarding them to a
+// remote where prefetch can be done more efficiently. When not implemented the default driver queues reads on the storage using the
+// prefetch and readOver values from the storage interface.
+typedef void *StorageInterfaceNewReadMulti(void *thisVoid);
+
+// ---------------------------------------------------------------------------------------------------------------------------------
 // Create a file write object. The file should not be opened immediately -- open() will be called on the IoWrite interface when the
 // file needs to be opened.
 typedef struct StorageInterfaceNewWriteParam
@@ -293,6 +299,12 @@ typedef struct StorageInterface
     // Features implemented by the storage driver
     uint64_t feature;
 
+    // Number of reads to prefetch
+    unsigned int prefetch;
+
+    // Bytes to read over rather than open file with new offset
+    uint64_t readOver;
+
     // Required functions
     StorageInterfaceInfo *info;
     StorageInterfaceList *list;
@@ -304,6 +316,7 @@ typedef struct StorageInterface
     // Optional functions
     StorageInterfaceLinkCreate *linkCreate;
     StorageInterfaceMove *move;
+    StorageInterfaceNewReadMulti *newReadMulti;
     StorageInterfacePathCreate *pathCreate;
     StorageInterfacePathSync *pathSync;
 } StorageInterface;

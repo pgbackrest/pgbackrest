@@ -31,6 +31,7 @@ typedef struct Storage Storage;
 #include "storage/info.h"
 #include "storage/iterator.h"
 #include "storage/read.h"
+#include "storage/readMulti.h"
 #include "storage/storage.intern.h"
 #include "storage/write.h"
 
@@ -172,6 +173,12 @@ typedef struct StorageNewReadParam
 
 FN_EXTERN StorageRead *storageNewRead(const Storage *this, const String *fileExp, StorageNewReadParam param);
 
+// Open multiple files for read
+#define storageNewReadMultiP(this)                                                                                                 \
+    storageNewReadMulti(this)
+
+FN_EXTERN StorageReadMulti *storageNewReadMulti(const Storage *this);
+
 // Open a file for writing
 typedef struct StorageNewWriteParam
 {
@@ -297,6 +304,9 @@ storageType(const Storage *const this)
 {
     return THIS_PUB(Storage)->type;
 }
+
+// Target reads by time (0 when not time-targeted)
+FN_EXTERN time_t storageTargetTime(const Storage *this);
 
 /***********************************************************************************************************************************
 Macros for function logging

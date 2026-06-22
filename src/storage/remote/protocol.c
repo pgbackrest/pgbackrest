@@ -371,22 +371,22 @@ storageRemoteListProtocol(PackRead *const param)
 
 /**********************************************************************************************************************************/
 static bool
-storageRemoteReadInternal(StorageRead *const fileRead, PackWrite *const packWrite)
+storageRemoteReadInternal(IoRead *const read, PackWrite *const packWrite)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
-        FUNCTION_LOG_PARAM(STORAGE_READ, fileRead);
+        FUNCTION_LOG_PARAM(IO_READ, read);
         FUNCTION_LOG_PARAM(PACK_WRITE, packWrite);
     FUNCTION_LOG_END();
 
-    ASSERT(fileRead != NULL);
+    ASSERT(read != NULL);
     ASSERT(packWrite != NULL);
 
     FUNCTION_AUDIT_HELPER();
 
-    // Read block and send to client
+    // Read chunk and send to client
     Buffer *const buffer = bufNew(ioBufferSize());
 
-    ioRead(storageReadIo(fileRead), buffer);
+    ioRead(read, buffer);
     pckWriteBoolP(packWrite, bufEmpty(buffer));
 
     if (!bufEmpty(buffer))
@@ -395,13 +395,13 @@ storageRemoteReadInternal(StorageRead *const fileRead, PackWrite *const packWrit
     // On eof
     bool result = true;
 
-    if (ioReadEof(storageReadIo(fileRead)))
+    if (ioReadEof(read))
     {
-        // Close file (needed to get filter results)
-        ioReadClose(storageReadIo(fileRead));
+        // Close read (needed to get filter results)
+        ioReadClose(read);
 
         // Write filter results
-        pckWritePackP(packWrite, ioFilterGroupResultAll(ioReadFilterGroup(storageReadIo(fileRead))));
+        pckWritePackP(packWrite, ioFilterGroupResultAll(ioReadFilterGroup(read)));
 
         // Let the server know to close the session
         result = false;
@@ -447,7 +447,7 @@ storageRemoteReadOpenProtocol(PackRead *const param)
         if (exists)
         {
             // If there is more to read then set session data
-            if (storageRemoteReadInternal(fileRead, data))
+            if (storageRemoteReadInternal(storageReadIo(fileRead), data))
                 protocolServerResultSessionDataSet(result, fileRead);
         }
     }
@@ -472,7 +472,73 @@ storageRemoteReadProtocol(PackRead *const param, void *const fileRead)
 
     ProtocolServerResult *const result = protocolServerResultNewP(.extra = ioBufferSize());
 
-    if (!storageRemoteReadInternal(fileRead, protocolServerResultData(result)))
+    if (!storageRemoteReadInternal(storageReadIo(fileRead), protocolServerResultData(result)))
+        protocolServerResultCloseSet(result);
+
+    FUNCTION_LOG_RETURN(PROTOCOL_SERVER_RESULT, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN ProtocolServerResult *
+storageRemoteReadMultiOpenProtocol(PackRead *const param)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
+    FUNCTION_LOG_END();
+
+    ASSERT(param != NULL);
+    ASSERT(storageRemoteProtocolLocal.driver != NULL);
+
+    ProtocolServerResult *const result = protocolServerResultNewP(.extra = ioBufferSize());
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Create the multi read and set filter group based on passed filters
+        StorageReadMulti *const fileRead = storageNewReadMultiP(storageRemoteProtocolLocal.storage);
+        storageRemoteFilterGroup(ioReadFilterGroup(storageReadMultiIo(fileRead)), pckReadPackP(param));
+
+        // Add requested files
+        while (!pckReadNullP(param))
+        {
+            const String *const file = pckReadStrP(param);
+            const bool compressible = pckReadBoolP(param);
+            const uint64_t offset = pckReadU64P(param);
+            const Variant *const limit = pckReadNullP(param) ? NULL : VARUINT64(pckReadU64P(param));
+            const String *const versionId = pckReadStrP(param);
+
+            storageReadMultiAddP(
+                fileRead, file, .compressible = compressible, .offset = offset, .limit = limit, .versionId = versionId);
+        }
+
+        // Open read
+        ioReadOpen(storageReadMultiIo(fileRead));
+
+        // If there is more to read then set session data
+        if (storageRemoteReadInternal(storageReadMultiIo(fileRead), protocolServerResultData(result)))
+            protocolServerResultSessionDataSet(result, fileRead);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(PROTOCOL_SERVER_RESULT, result);
+}
+
+FN_EXTERN ProtocolServerResult *
+storageRemoteReadMultiProtocol(PackRead *const param, void *const fileRead)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(PACK_READ, param);
+        FUNCTION_LOG_PARAM(STORAGE_READ_MULTI, fileRead);
+    FUNCTION_LOG_END();
+
+    FUNCTION_AUDIT_STRUCT();
+
+    ASSERT(param == NULL);
+    ASSERT(fileRead != NULL);
+    ASSERT(storageRemoteProtocolLocal.driver != NULL);
+
+    ProtocolServerResult *const result = protocolServerResultNewP(.extra = ioBufferSize());
+
+    if (!storageRemoteReadInternal(storageReadMultiIo(fileRead), protocolServerResultData(result)))
         protocolServerResultCloseSet(result);
 
     FUNCTION_LOG_RETURN(PROTOCOL_SERVER_RESULT, result);

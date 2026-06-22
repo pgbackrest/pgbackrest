@@ -537,6 +537,20 @@ storageNewRead(const Storage *const this, const String *const fileExp, const Sto
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN StorageReadMulti *
+storageNewReadMulti(const Storage *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_LOG_RETURN(
+        STORAGE_READ_MULTI, storageReadMultiNew(this, this->pub.interface.prefetch, this->pub.interface.readOver));
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN StorageWrite *
 storageNewWrite(const Storage *const this, const String *const fileExp, const StorageNewWriteParam param)
 {
@@ -822,6 +836,19 @@ storageRemove(const Storage *const this, const String *const fileExp, const Stor
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN time_t
+storageTargetTime(const Storage *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(TIME, this->targetTime);
 }
 
 /**********************************************************************************************************************************/

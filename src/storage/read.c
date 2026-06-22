@@ -20,6 +20,7 @@ struct StorageRead
     uint64_t bytesRead;                                             // Bytes that have been successfully read
     bool retry;                                                     // Are read retries allowed?
     bool compressible;                                              // Is the read compressible?
+    bool openAsync;                                                 // Async open that must be completed before first read
 };
 
 /***********************************************************************************************************************************
@@ -48,7 +49,20 @@ storageReadOpen(THIS_VOID)
 
     // Open if not versioned or if versionId is not null
     if (!this->pub.version || this->pub.versionId != NULL)
+    {
         result = storageReadDriverInterface(this->driver)->open(this->driver);
+
+        // If the open was async then it is not yet known if the file exists
+        if (result && storageReadDriverInterface(this->driver)->openAsync != NULL)
+        {
+            // If missing files are ignored then complete the open now to determine if the file exists. Otherwise defer completing
+            // the open until first read so multiple opens can be in flight at once.
+            if (this->pub.ignoreMissing)
+                result = storageReadDriverInterface(this->driver)->openAsync(this->driver);
+            else
+                this->openAsync = true;
+        }
+    }
 
     // Error when the file is missing and missing files are not ignored
     if (!result && !this->pub.ignoreMissing)
@@ -87,6 +101,15 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
         {
             TRY_BEGIN()
             {
+                // Complete async open before first read
+                if (this->openAsync)
+                {
+                    if (!storageReadDriverInterface(this->driver)->openAsync(this->driver))
+                        THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(storageReadName(this)));
+
+                    this->openAsync = false;
+                }
+
                 storageReadDriverInterface(this->driver)->read(this->driver, buffer, block);
 
                 // Account for bytes that have been read
@@ -99,8 +122,8 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
             CATCH_ANY()
             {
                 // If there is another try remaining then close the file and reopen it to the new position, taking into account any
-                // bytes that have already been read
-                if (try > 1)
+                // bytes that have already been read. Do not retry when the file is missing.
+                if (try > 1 && !errorInstanceOf(&FileMissingError))
                 {
                     // Close the file
                     storageReadDriverInterface(this->driver)->close(this->driver);
@@ -118,10 +141,10 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
                             .offset = this->pub.offset + this->bytesRead,
                             .limit = this->pub.limit != NULL ? varNewUInt64(varUInt64(this->pub.limit) - this->bytesRead) : NULL,
                             .versionId = this->pub.versionId);
+                        storageReadDriverInterface(this->driver)->open(this->driver);
 
-                        // Error when the file is missing since it must have existed when the read began
-                        if (!storageReadDriverInterface(this->driver)->open(this->driver))
-                            THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(storageReadName(this)));
+                        // Complete async open on the next try
+                        this->openAsync = storageReadDriverInterface(this->driver)->openAsync != NULL;
                     }
                     MEM_CONTEXT_OBJ_END();
                 }
@@ -171,7 +194,8 @@ storageReadEof(THIS_VOID)
 
     ASSERT(this != NULL);
 
-    FUNCTION_TEST_RETURN(BOOL, storageReadDriverInterface(this->driver)->eof(this->driver));
+    // Eof is not known until the async open has completed, so return false
+    FUNCTION_TEST_RETURN(BOOL, this->openAsync ? false : storageReadDriverInterface(this->driver)->eof(this->driver));
 }
 
 /***********************************************************************************************************************************
