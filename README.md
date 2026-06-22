@@ -20,7 +20,7 @@ Please give us a star on [GitHub](https://github.com/pgbackrest/pgbackrest) if y
 
 pgBackRest would not exist without sponsorship. Writing new features, fixing bugs, reviewing contributions, answering questions from the community, and maintenance all take a considerable amount of time. Please consider a [sponsorship](https://github.com/sponsors/dwsteele) if you use pgBackRest in your enterprise.
 
-Our sponsors: [AWS](https://aws.amazon.com), [Supabase](https://supabase.com), [pgEdge](https://pgedge.com), [Tiger Data](https://tigerdata.com), [Percona](https://percona.com), [Eon](https://eon.io).
+Our sponsors: [AWS](https://aws.amazon.com), [Supabase](https://supabase.com), [pgEdge](https://pgedge.com), [Tiger Data](https://tigerdata.com), [Percona](https://percona.com), [Eon](https://eon.io), [Xata](https://xata.io), [Dalibo](https://dalibo.com), [Data Egret](https://dataegret.com/).
 
 We are grateful to our sponsors for investing in open-source infrastructure that benefits the entire PostgreSQL community.
 
