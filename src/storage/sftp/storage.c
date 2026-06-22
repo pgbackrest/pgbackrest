@@ -755,7 +755,7 @@ storageSftpList(THIS_VOID, const String *const path, const StorageInfoLevel leve
     // Open the directory for read, retrying the open once if the connection was lost and reopened successfully
     LIBSSH2_SFTP_HANDLE *sftpHandle;
     unsigned int retry = 0;
-    int connErrno = 0;
+    int connErrno;
 
     do
     {
