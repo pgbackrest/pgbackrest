@@ -1,5 +1,53 @@
 <release date="XXXX-XX-XX" version="2.59.0dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="christophe.pettus"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix potential buffer overrun in error module.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <github-pull-request id="2779"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p><proper>PostgreSQL 19beta1</proper> support.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2786"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="crispy"/>
+                </release-item-contributor-list>
+
+                <p>Add batch delete for <proper>Azure</proper> storage.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2762"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="shiva.kumar.ambigi"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="roberto.mello"/>
+                </release-item-contributor-list>
+
+                <p>Add support for <proper>S3 Outposts</proper>.</p>
+            </release-item>
+        </release-feature-list>
+
         <release-improvement-list>
             <release-item>
                 <github-pull-request id="2773"/>
@@ -36,6 +84,17 @@
                 </release-item-contributor-list>
 
                 <p>Add <file>backup.info</file> checks to <cmd>verify</cmd> command.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2785"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="shubham"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Harden HTTP chunked response parsing.</p>
             </release-item>
 
             <release-item>
@@ -99,4 +158,19 @@
             </release-item>
         </release-development-list>
     </release-core-list>
+
+    <release-test-list>
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2784"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="artur.zakirov"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix Alpine group conflicts in CI containers.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-test-list>
 </release>

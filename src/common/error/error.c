@@ -387,8 +387,9 @@ errorInternalThrow(
     // If a stack trace was provided
     if (stackTrace != NULL)
     {
+        // strncpy() does not null-terminate when the source length >= size, so force termination on stackTraceBuffer
         strncpy(stackTraceBuffer, stackTrace, sizeof(stackTraceBuffer) - 1);
-        messageBuffer[sizeof(stackTraceBuffer) - 1] = '\0';
+        stackTraceBuffer[sizeof(stackTraceBuffer) - 1] = '\0';
     }
     // Else generate the stack trace for the error
     else if (

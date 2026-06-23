@@ -78,8 +78,6 @@ STRING_STATIC(S3_XML_TAG_VERSION_ID_STR,                            "VersionId")
 /***********************************************************************************************************************************
 AWS authentication v4 constants
 ***********************************************************************************************************************************/
-#define S3                                                          "s3"
-BUFFER_STRDEF_STATIC(S3_BUF,                                        S3);
 #define AWS4                                                        "AWS4"
 #define AWS4_REQUEST                                                "aws4_request"
 BUFFER_STRDEF_STATIC(AWS4_REQUEST_BUF,                              AWS4_REQUEST);
@@ -101,6 +99,7 @@ struct StorageS3
 
     const String *bucket;                                           // Bucket to store data in
     const String *region;                                           // e.g. us-east-1
+    const String *signingService;                                   // SigV4 signing service
     StorageS3KeyType keyType;                                       // Key type (e.g. storageS3KeyTypeShared)
     String *accessKey;                                              // Access key
     String *secretAccessKey;                                        // Secret access key
@@ -201,8 +200,8 @@ storageS3Auth(
 
         // Generate string to sign
         const String *const stringToSign = strNewFmt(
-            AWS4_HMAC_SHA256 "\n%s\n%s/%s/" S3 "/" AWS4_REQUEST "\n%s", strZ(dateTime), strZ(date), strZ(this->region),
-            strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha256, BUFSTR(canonicalRequest)))));
+            AWS4_HMAC_SHA256 "\n%s\n%s/%s/%s/" AWS4_REQUEST "\n%s", strZ(dateTime), strZ(date), strZ(this->region),
+            strZ(this->signingService), strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha256, BUFSTR(canonicalRequest)))));
 
         // Generate signing key. This key only needs to be regenerated every seven days but we'll do it once a day to keep the
         // logic simple. It's a relatively expensive operation so we'd rather not do it for every request.
@@ -212,7 +211,7 @@ storageS3Auth(
             const Buffer *const dateKey = cryptoHmacOne(
                 hashTypeSha256, BUFSTR(strNewFmt(AWS4 "%s", strZ(this->secretAccessKey))), BUFSTR(date));
             const Buffer *const regionKey = cryptoHmacOne(hashTypeSha256, dateKey, BUFSTR(this->region));
-            const Buffer *const serviceKey = cryptoHmacOne(hashTypeSha256, regionKey, S3_BUF);
+            const Buffer *const serviceKey = cryptoHmacOne(hashTypeSha256, regionKey, BUFSTR(this->signingService));
 
             // Switch to the object context so signing key and date are not lost
             MEM_CONTEXT_OBJ_BEGIN(this)
@@ -225,8 +224,8 @@ storageS3Auth(
 
         // Generate authorization header
         const String *const authorization = strNewFmt(
-            AWS4_HMAC_SHA256 " Credential=%s/%s/%s/" S3 "/" AWS4_REQUEST ",SignedHeaders=%s,Signature=%s",
-            strZ(this->accessKey), strZ(date), strZ(this->region), strZ(signedHeaders),
+            AWS4_HMAC_SHA256 " Credential=%s/%s/%s/%s/" AWS4_REQUEST ",SignedHeaders=%s,Signature=%s",
+            strZ(this->accessKey), strZ(date), strZ(this->region), strZ(this->signingService), strZ(signedHeaders),
             strZ(strNewEncode(encodingHex, cryptoHmacOne(hashTypeSha256, this->signingKey, BUFSTR(stringToSign)))));
 
         httpHeaderPut(httpHeader, HTTP_HEADER_AUTHORIZATION_STR, authorization);
@@ -1046,30 +1045,27 @@ storageS3List(THIS_VOID, const String *const path, const StorageInfoLevel level,
 }
 
 /**********************************************************************************************************************************/
-static StorageRead *
-storageS3NewRead(THIS_VOID, const String *const file, const bool ignoreMissing, const StorageInterfaceNewReadParam param)
+static void *
+storageS3NewRead(THIS_VOID, const String *const file, const StorageInterfaceNewReadParam param)
 {
     THIS(StorageS3);
 
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(UINT64, param.offset);
         FUNCTION_LOG_PARAM(VARIANT, param.limit);
-        FUNCTION_LOG_PARAM(BOOL, param.version);
         FUNCTION_LOG_PARAM(STRING, param.versionId);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
 
-    FUNCTION_LOG_RETURN(
-        STORAGE_READ, storageReadS3New(this, file, ignoreMissing, param.offset, param.limit, param.version, param.versionId));
+    FUNCTION_LOG_RETURN(STORAGE_READ_S3, storageReadS3New(this, file, param.offset, param.limit, param.versionId));
 }
 
 /**********************************************************************************************************************************/
-static StorageWrite *
+static void *
 storageS3NewWrite(THIS_VOID, const String *const file, const StorageInterfaceNewWriteParam param)
 {
     THIS(StorageS3);
@@ -1088,7 +1084,7 @@ storageS3NewWrite(THIS_VOID, const String *const file, const StorageInterfaceNew
     ASSERT(param.group == NULL);
     ASSERT(param.timeModified == 0);
 
-    FUNCTION_LOG_RETURN(STORAGE_WRITE, storageWriteS3New(this, file, this->partSize));
+    FUNCTION_LOG_RETURN(STORAGE_WRITE_S3, storageWriteS3New(this, file, this->partSize));
 }
 
 /**********************************************************************************************************************************/
@@ -1262,12 +1258,11 @@ storageS3Remove(THIS_VOID, const String *const file, const StorageInterfaceRemov
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
+        (void)param;
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
-    ASSERT(!param.errorOnMissing);
 
     httpResponseFree(storageS3RequestP(this, HTTP_VERB_DELETE_STR, file));
 
@@ -1277,7 +1272,7 @@ storageS3Remove(THIS_VOID, const String *const file, const StorageInterfaceRemov
 /**********************************************************************************************************************************/
 static const StorageInterface storageInterfaceS3 =
 {
-    .feature = 1 << storageFeatureVersioning,
+    .feature = 1 << storageFeatureVersioning | 1 << storageFeatureReadRetry,
 
     .info = storageS3Info,
     .list = storageS3List,
@@ -1290,13 +1285,13 @@ static const StorageInterface storageInterfaceS3 =
 FN_EXTERN Storage *
 storageS3New(
     const String *const path, const bool write, const time_t targetTime, StoragePathExpressionCallback pathExpressionFunction,
-    const String *const bucket, const String *const endPoint, const String *const region, const StorageS3KeyType keyType,
-    const StorageS3UriStyle uriStyle, const String *const accessKey, const String *const secretAccessKey,
-    const String *const securityToken, const String *const kmsKeyId, const String *sseCustomerKey, const String *const credRole,
-    const String *const tokenFile, const String *const credUrl, const StringList *const credCmd, const size_t partSize,
-    const KeyValue *const tag, const String *host, const unsigned int port, const TimeMSec timeout,
-    const HttpProtocolType protocolType, const bool verifyPeer, const String *const caFile, const String *const caPath,
-    const bool requesterPays)
+    const String *const bucket, const String *const endPoint, const String *const region, const String *const service,
+    const StorageS3KeyType keyType, const StorageS3UriStyle uriStyle, const String *const accessKey,
+    const String *const secretAccessKey, const String *const securityToken, const String *const kmsKeyId,
+    const String *sseCustomerKey, const String *const credRole, const String *const tokenFile, const String *const credUrl,
+    const StringList *const credCmd, const size_t partSize, const KeyValue *const tag, const String *host, const unsigned int port,
+    const TimeMSec timeout, const HttpProtocolType protocolType, const bool verifyPeer, const String *const caFile,
+    const String *const caPath, const bool requesterPays)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -1306,6 +1301,7 @@ storageS3New(
         FUNCTION_LOG_PARAM(STRING, bucket);
         FUNCTION_LOG_PARAM(STRING, endPoint);
         FUNCTION_LOG_PARAM(STRING, region);
+        FUNCTION_LOG_PARAM(STRING, service);
         FUNCTION_LOG_PARAM(ENUM, keyType);
         FUNCTION_LOG_PARAM(ENUM, uriStyle);
         FUNCTION_TEST_PARAM(STRING, accessKey);
@@ -1333,6 +1329,7 @@ storageS3New(
     ASSERT(bucket != NULL);
     ASSERT(endPoint != NULL);
     ASSERT(region != NULL);
+    ASSERT(service != NULL);
     ASSERT(partSize != 0);
 
     OBJ_NEW_BEGIN(StorageS3, .childQty = MEM_CONTEXT_QTY_MAX)
@@ -1342,6 +1339,7 @@ storageS3New(
             .interface = storageInterfaceS3,
             .bucket = strDup(bucket),
             .region = strDup(region),
+            .signingService = strDup(service),
             .keyType = keyType,
             .kmsKeyId = strDup(kmsKeyId),
             .requesterPays = requesterPays,

@@ -342,29 +342,27 @@ storagePosixMove(THIS_VOID, StorageRead *const source, StorageWrite *const desti
 }
 
 /**********************************************************************************************************************************/
-static StorageRead *
-storagePosixNewRead(THIS_VOID, const String *const file, const bool ignoreMissing, const StorageInterfaceNewReadParam param)
+static void *
+storagePosixNewRead(THIS_VOID, const String *const file, const StorageInterfaceNewReadParam param)
 {
     THIS(StoragePosix);
 
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE_POSIX, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
         FUNCTION_LOG_PARAM(UINT64, param.offset);
         FUNCTION_LOG_PARAM(VARIANT, param.limit);
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
-    ASSERT(!param.version);
     ASSERT(param.versionId == NULL);
 
-    FUNCTION_LOG_RETURN(STORAGE_READ, storageReadPosixNew(this, file, ignoreMissing, param.offset, param.limit));
+    FUNCTION_LOG_RETURN(STORAGE_READ_POSIX, storageReadPosixNew(this, file, param.offset, param.limit));
 }
 
 /**********************************************************************************************************************************/
-static StorageWrite *
+static void *
 storagePosixNewWrite(THIS_VOID, const String *const file, const StorageInterfaceNewWriteParam param)
 {
     THIS(StoragePosix);
@@ -388,7 +386,7 @@ storagePosixNewWrite(THIS_VOID, const String *const file, const StorageInterface
     ASSERT(file != NULL);
 
     FUNCTION_LOG_RETURN(
-        STORAGE_WRITE,
+        STORAGE_WRITE_POSIX,
         storageWritePosixNew(
             this, file, param.modeFile, param.modePath, param.user, param.group, param.timeModified, param.createPath,
             param.syncFile, this->interface.pathSync != NULL ? param.syncPath : false, param.atomic, param.truncate));
@@ -478,7 +476,7 @@ storagePosixPathRemove(THIS_VOID, const String *const path, const bool recurse, 
                             }
                             // Else error
                             else
-                                THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE, strZ(file));   // {vm_covered}
+                                THROW_SYS_ERROR_FMT(PathRemoveError, STORAGE_ERROR_FILE_REMOVE, strZ(file));        // {vm_covered}
                         }
 
                         // Reset the memory context occasionally so we don't use too much memory or slow down processing
@@ -568,7 +566,7 @@ storagePosixRemove(THIS_VOID, const String *const file, const StorageInterfaceRe
     if (unlink(strZ(file)) == -1)
     {
         if (param.errorOnMissing || errno != ENOENT)                                                                // {vm_covered}
-            THROW_SYS_ERROR_FMT(FileRemoveError, "unable to remove '%s'", strZ(file));                              // {vm_covered}
+            THROW_SYS_ERROR_FMT(FileRemoveError, STORAGE_ERROR_FILE_REMOVE, strZ(file));                            // {vm_covered}
     }
 
     FUNCTION_LOG_RETURN_VOID();
@@ -632,7 +630,7 @@ storagePosixNewInternal(
         {
             this->interface.feature |=
                 1 << storageFeatureHardLink | (unsigned int)symLink << storageFeatureSymLink | 1 << storageFeaturePathSync |
-                1 << storageFeatureInfoDetail;
+                1 << storageFeatureInfoDetail | 1 << storageFeatureFileRemoveMissing;
         }
     }
     OBJ_NEW_END();

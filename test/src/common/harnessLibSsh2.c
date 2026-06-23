@@ -11,6 +11,7 @@ libssh2 Test Harness
 #include "common/type/json.h"
 #include "common/type/string.h"
 #include "common/type/variantList.h"
+#include "common/user.h"
 
 #include "common/harnessLibSsh2.h"
 #include "common/harnessTest.h"
@@ -21,11 +22,18 @@ libssh2 shim error prefix
 #define LIBSSH2_ERROR_PREFIX                                        "LIBSSH2 SHIM ERROR"
 
 /***********************************************************************************************************************************
+Standard stat attribute flags reported when a scripted response omits .flags
+***********************************************************************************************************************************/
+#define HRN_LIBSSH2_ATTR_DEFAULT                                                                                                   \
+    (LIBSSH2_SFTP_ATTR_PERMISSIONS | LIBSSH2_SFTP_ATTR_ACMODTIME | LIBSSH2_SFTP_ATTR_UIDGID)
+
+/***********************************************************************************************************************************
 Script that defines how shim functions operate
 ***********************************************************************************************************************************/
 static HrnLibSsh2 hrnLibSsh2Script[1024];
 static bool hrnLibSsh2ScriptDone = true;
 static unsigned int hrnLibSsh2ScriptIdx;
+static unsigned int hrnLibSsh2ScriptSize;
 
 // If there is a script failure change the behavior of cleanup functions to return immediately so the real error will be reported
 // rather than a bogus scripting error during cleanup
@@ -36,24 +44,19 @@ static char hrnLibSsh2ScriptError[4096];
 Set libssh2 script
 ***********************************************************************************************************************************/
 void
-hrnLibSsh2ScriptSet(HrnLibSsh2 *hrnLibSsh2ScriptParam)
+hrnLibSsh2ScriptSet(const HrnLibSsh2 *const script, const unsigned int scriptSize)
 {
     if (!hrnLibSsh2ScriptDone)
         THROW(AssertError, "previous libssh2 script has not yet completed");
 
-    if (hrnLibSsh2ScriptParam[0].function == NULL)
+    if (scriptSize == 0)
         THROW(AssertError, "libssh2 script must have entries");
 
     // Copy records into local storage
-    unsigned int copyIdx = 0;
+    for (unsigned int copyIdx = 0; copyIdx < scriptSize; copyIdx++)
+        hrnLibSsh2Script[copyIdx] = script[copyIdx];
 
-    while (hrnLibSsh2ScriptParam[copyIdx].function != NULL)
-    {
-        hrnLibSsh2Script[copyIdx] = hrnLibSsh2ScriptParam[copyIdx];
-        copyIdx++;
-    }
-
-    hrnLibSsh2Script[copyIdx].function = NULL;
+    hrnLibSsh2ScriptSize = scriptSize;
     hrnLibSsh2ScriptDone = false;
     hrnLibSsh2ScriptIdx = 0;
 }
@@ -146,7 +149,7 @@ hrnLibSsh2ScriptRun(const char *const function, const VariantList *const param, 
 
     hrnLibSsh2ScriptIdx++;
 
-    if (hrnLibSsh2Script[hrnLibSsh2ScriptIdx].function == NULL)
+    if (hrnLibSsh2ScriptIdx >= hrnLibSsh2ScriptSize)
         hrnLibSsh2ScriptDone = true;
 
     strFree(paramStr);
@@ -333,10 +336,11 @@ libssh2_session_hostkey(LIBSSH2_SESSION *session, size_t *len, int *type)
 {
     HrnLibSsh2 *hrnLibSsh2 = hrnLibSsh2ScriptRun(HRNLIBSSH2_SESSION_HOSTKEY, NULL, (HrnLibSsh2 *)session);
 
-    *len = (size_t)hrnLibSsh2->len;
-    *type = (int)hrnLibSsh2->type;
+    // Default the host key length (20), type (RSA), and value (HOSTKEY) when omitted
+    *len = hrnLibSsh2->len == 0 ? 20 : (size_t)hrnLibSsh2->len;
+    *type = hrnLibSsh2->type == 0 ? LIBSSH2_HOSTKEY_TYPE_RSA : (int)hrnLibSsh2->type;
 
-    return hrnLibSsh2->resultNull ? NULL : (const char *)hrnLibSsh2->resultZ;
+    return hrnLibSsh2->resultNull ? NULL : (const char *)(hrnLibSsh2->resultZ != NULL ? hrnLibSsh2->resultZ : HOSTKEY);
 }
 
 /***********************************************************************************************************************************
@@ -557,27 +561,45 @@ libssh2_sftp_stat_ex(
     MEM_CONTEXT_TEMP_BEGIN()
     {
         hrnLibSsh2 = hrnLibSsh2ScriptRun(
-            HRNLIBSSH2_SFTP_STAT_EX,
-            varLstAdd(
-                varLstAdd(
-                    varLstNew(), varNewStrZ(path)),
-                varNewInt(stat_type)),
-            (HrnLibSsh2 *)sftp);
+            HRNLIBSSH2_SFTP_STAT_EX, varLstAdd(varLstNew(), varNewStrZ(path)), (HrnLibSsh2 *)sftp);
     }
     MEM_CONTEXT_TEMP_END();
+
+    // When the scripted response follows symlinks, verify the production code requested LIBSSH2_SFTP_STAT (otherwise stat_type is
+    // not checked, since it only affects the result for symlinks)
+    if (hrnLibSsh2->follow && stat_type != LIBSSH2_SFTP_STAT)
+        THROW_FMT(AssertError, "libssh2_sftp_stat_ex expected stat_type LIBSSH2_SFTP_STAT but got %d", stat_type);
 
     if (attrs == NULL)
         THROW(AssertError, "attrs is NULL");
 
-    attrs->flags = 0;
-    attrs->flags |= (unsigned long)hrnLibSsh2->flags;
+    // An omitted (0) attr defaults to a regular file with mode 0640
+    attrs->permissions =
+        hrnLibSsh2->attr == 0 ? (unsigned long)(LIBSSH2_SFTP_S_IFREG | 0640) : (unsigned long)hrnLibSsh2->attr;
 
-    attrs->permissions = 0;
-    attrs->permissions |= (unsigned long)hrnLibSsh2->attrPerms;
+    // Default the response flags: omitted (0) reports the standard attribute set, plus LIBSSH2_SFTP_ATTR_SIZE for a regular file
+    // (which reports a size); HRN_LIBSSH2_ATTR_EXISTENCE reports none (the path exists but provides no attributes)
+    uint64_t flags = hrnLibSsh2->flags;
+
+    if (flags == 0)
+    {
+        flags = HRN_LIBSSH2_ATTR_DEFAULT;
+
+        if (LIBSSH2_SFTP_S_ISREG(attrs->permissions))
+            flags |= LIBSSH2_SFTP_ATTR_SIZE;
+    }
+    else if (flags == HRN_LIBSSH2_ATTR_EXISTENCE)
+        flags = 0;
+
+    attrs->flags = (unsigned long)flags;
 
     attrs->mtime = (unsigned long)hrnLibSsh2->mtime;
-    attrs->uid = (unsigned long)hrnLibSsh2->uid;
-    attrs->gid = (unsigned long)hrnLibSsh2->gid;
+
+    // An omitted (0) uid/gid defaults to the test user/group; HRN_LIBSSH2_OWNER_ROOT selects root (0)
+    attrs->uid =
+        hrnLibSsh2->uid == HRN_LIBSSH2_OWNER_ROOT ? 0 : hrnLibSsh2->uid == 0 ? (unsigned long)userId() : (unsigned long)hrnLibSsh2->uid;
+    attrs->gid =
+        hrnLibSsh2->gid == HRN_LIBSSH2_OWNER_ROOT ? 0 : hrnLibSsh2->gid == 0 ? (unsigned long)groupId() : (unsigned long)hrnLibSsh2->gid;
     attrs->filesize = hrnLibSsh2->filesize;
 
     return hrnLibSsh2->resultInt;
@@ -626,15 +648,15 @@ libssh2_sftp_symlink_ex(
     {
         case LIBSSH2_SFTP_READLINK:
         case LIBSSH2_SFTP_REALPATH:
-            if (hrnLibSsh2->symlinkExTarget != NULL)
+            if (hrnLibSsh2->target != NULL)
             {
-                if (strSize(hrnLibSsh2->symlinkExTarget) < PATH_MAX)
-                    strncpy(target, strZ(hrnLibSsh2->symlinkExTarget), strSize(hrnLibSsh2->symlinkExTarget));
+                if (strSize(hrnLibSsh2->target) < PATH_MAX)
+                    strncpy(target, strZ(hrnLibSsh2->target), strSize(hrnLibSsh2->target));
                 else
-                    THROW_FMT(AssertError, "symlinkExTarget too large for target buffer");
+                    THROW_FMT(AssertError, "link target too large for buffer");
             }
 
-            rc = hrnLibSsh2->resultInt != 0 ? hrnLibSsh2->resultInt : (int)strSize(hrnLibSsh2->symlinkExTarget);
+            rc = hrnLibSsh2->resultInt != 0 ? hrnLibSsh2->resultInt : (int)strSize(hrnLibSsh2->target);
             break;
 
         default:
@@ -665,14 +687,20 @@ libssh2_sftp_open_ex(
             varLstAdd(
                 varLstAdd(
                     varLstAdd(
-                        varLstAdd(
-                            varLstNew(), varNewStrZ(filename)),
-                        varNewUInt64(flags)),
-                    varNewInt64(mode)),
+                        varLstNew(), varNewStrZ(filename)),
+                    varNewUInt64(flags)),
                 varNewInt(open_type)),
             (HrnLibSsh2 *)sftp);
     }
     MEM_CONTEXT_TEMP_END();
+
+    // Verify the open mode. It is not part of the scripted param so it can be defaulted: a write open with an omitted (0) mode
+    // expects 0640, while other opens expect mode 0.
+    long modeExpected =
+        hrnLibSsh2->mode != 0 ? (long)hrnLibSsh2->mode : ((flags & LIBSSH2_FXF_WRITE) != 0 ? 0640 : 0);
+
+    if (mode != modeExpected)
+        THROW_FMT(AssertError, "libssh2_sftp_open_ex expected mode %ld but got %ld", modeExpected, mode);
 
     return hrnLibSsh2->resultNull ? NULL : (LIBSSH2_SFTP_HANDLE *)hrnLibSsh2;
 }
@@ -697,9 +725,7 @@ libssh2_sftp_readdir_ex(
             varLstAdd(
                 varLstAdd(
                     varLstAdd(
-                        varLstAdd(
-                            varLstNew(), varNewStrZ(buffer)),
-                        varNewUInt64(buffer_maxlen)),
+                        varLstNew(), varNewUInt64(buffer_maxlen)),
                     varNewStrZ(longentry)),
                 varNewUInt64(longentry_maxlen)),
             (HrnLibSsh2 *)handle);
@@ -709,7 +735,10 @@ libssh2_sftp_readdir_ex(
     if (hrnLibSsh2->fileName != NULL)
         strncpy(buffer, strZ(hrnLibSsh2->fileName), buffer_maxlen);
 
-    return hrnLibSsh2->resultInt;
+    // libssh2_sftp_readdir_ex() returns the number of bytes in the entry name (0 at end of directory). Derive it from the scripted
+    // file name so tests need not specify it; a negative resultInt (e.g. EAGAIN) is returned as-is.
+    return hrnLibSsh2->resultInt < 0 ?
+               hrnLibSsh2->resultInt : hrnLibSsh2->fileName != NULL ? (int)strSize(hrnLibSsh2->fileName) : 0;
 }
 
 /***********************************************************************************************************************************
@@ -745,14 +774,15 @@ libssh2_sftp_mkdir_ex(LIBSSH2_SFTP *sftp, const char *path, unsigned int path_le
     MEM_CONTEXT_TEMP_BEGIN()
     {
         hrnLibSsh2 = hrnLibSsh2ScriptRun(
-            HRNLIBSSH2_SFTP_MKDIR_EX,
-            varLstAdd(
-                varLstAdd(
-                    varLstNew(), varNewStrZ(path)),
-                varNewInt64(mode)),
-            (HrnLibSsh2 *)sftp);
+            HRNLIBSSH2_SFTP_MKDIR_EX, varLstAdd(varLstNew(), varNewStrZ(path)), (HrnLibSsh2 *)sftp);
     }
     MEM_CONTEXT_TEMP_END();
+
+    // Verify the mode. It is not part of the scripted param so it can be defaulted: an omitted (0) mode expects 0750.
+    long modeExpected = hrnLibSsh2->mode != 0 ? (long)hrnLibSsh2->mode : 0750;
+
+    if (mode != modeExpected)
+        THROW_FMT(AssertError, "libssh2_sftp_mkdir_ex expected mode %ld but got %ld", modeExpected, mode);
 
     return hrnLibSsh2->resultInt;
 }
@@ -781,8 +811,9 @@ libssh2_sftp_read(LIBSSH2_SFTP_HANDLE *handle, char *buffer, size_t buffer_maxle
     if (hrnLibSsh2->readBuffer != NULL)
         strncpy(buffer, strZ(hrnLibSsh2->readBuffer), strSize(hrnLibSsh2->readBuffer));
 
-    // number of bytes populated
-    return hrnLibSsh2->resultInt;
+    // Return the number of bytes read, defaulting an omitted (0) result to the read buffer size (0 when there is no read buffer)
+    return hrnLibSsh2->resultInt != 0 ?
+               hrnLibSsh2->resultInt : (hrnLibSsh2->readBuffer != NULL ? (ssize_t)strSize(hrnLibSsh2->readBuffer) : 0);
 }
 
 /***********************************************************************************************************************************
@@ -908,8 +939,8 @@ libssh2_sftp_write(LIBSSH2_SFTP_HANDLE *handle, const char *buffer, size_t count
     }
     MEM_CONTEXT_TEMP_END();
 
-    // Return number of bytes written
-    return hrnLibSsh2->resultInt;
+    // Return the number of bytes written, defaulting an omitted (0) result to the full count
+    return hrnLibSsh2->resultInt != 0 ? hrnLibSsh2->resultInt : (ssize_t)count;
 }
 
 #endif // HAVE_LIBSSH2

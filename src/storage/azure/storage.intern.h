@@ -23,6 +23,15 @@ STRING_DECLARE(AZURE_QUERY_RESTYPE_STR);
 STRING_DECLARE(AZURE_QUERY_VALUE_CONTAINER_STR);
 
 /***********************************************************************************************************************************
+Multi-Part request data
+***********************************************************************************************************************************/
+typedef struct StorageAzureRequestPart
+{
+    const String *path;                                             // Request path
+    const String *verb;                                             // Verb (GET, PUT, etc)
+} StorageAzureRequestPart;
+
+/***********************************************************************************************************************************
 Perform an Azure Request
 ***********************************************************************************************************************************/
 // Perform async request
@@ -33,6 +42,7 @@ typedef struct StorageAzureRequestAsyncParam
     const HttpHeader *header;                                       // Request headers
     const HttpQuery *query;                                         // Query parameters
     const Buffer *content;                                          // Request content
+    const List *contentList;                                        // Request content part list
     bool tag;                                                       // Add tags when available?
 } StorageAzureRequestAsyncParam;
 
@@ -61,6 +71,7 @@ typedef struct StorageAzureRequestParam
     const HttpHeader *header;                                       // Request headers
     const HttpQuery *query;                                         // Query parameters
     const Buffer *content;                                          // Request content
+    const List *contentList;                                        // Request content part list
     bool allowMissing;                                              // Allow missing files (caller can check response code)
     bool contentIo;                                                 // Is IoRead interface required to read content?
     bool tag;                                                       // Add tags when available?
