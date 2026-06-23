@@ -1082,7 +1082,7 @@
                         <text>
                             <p>Command (and optional arguments) to execute for retrieving temporary S3 credentials. The first list entry is the command and the remaining entries are passed as parameters.</p>
 
-                            <p>The process must output JSON containing <id>AccessKeyId</id>, <id>SecretAccessKey</id>, <id>SessionToken</id>, and <id>Expiration</id> fields. Credentials will be automatically refreshed before the expiration time.</p>
+                            <p>The process must output JSON containing <id>AccessKeyId</id>, <id>SecretAccessKey</id>, <id>SessionToken</id>, and <id>Expiration</id> fields. Credentials will be automatically refreshed before the expiration time. See <link url="https://docs.aws.amazon.com/sdkref/latest/guide/feature-process-credentials.html#feature-process-credentials-output">Process Credential Provider</link> for format details.</p>
                         </text>
 
                         <example>/usr/local/bin/get-credentials</example>
