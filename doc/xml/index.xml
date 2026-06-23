@@ -57,6 +57,9 @@
             <sponsor img="tigerdata-light.svg" img-dark="tigerdata-dark.svg" url="https://tigerdata.com" width="180">Tiger Data</sponsor>
             <sponsor img="percona-light.svg" img-dark="percona-dark.svg" url="https://percona.com" width="185">Percona</sponsor>
             <sponsor img="eon.svg" url="https://eon.io" width="90">Eon</sponsor>
+            <sponsor img="xata-light.svg" img-dark="xata-dark.svg" url="https://xata.io" width="120">Xata</sponsor>
+            <sponsor img="dalibo.svg" url="https://dalibo.com" width="150">Dalibo</sponsor>
+            <sponsor img="dataegret-light.svg" img-dark="dataegret-dark.svg" url="https://dataegret.com/" width="165">Data Egret</sponsor>
         </sponsor-list>
 
         <p>We are grateful to our sponsors for investing in open-source infrastructure that benefits the entire <postgres/> community.</p>
