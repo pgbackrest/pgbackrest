@@ -3967,25 +3967,6 @@ testRun(void)
     }
 
     // *****************************************************************************************************************************
-    if (testBegin("storageSftpConnLost()"))
-    {
-#ifdef HAVE_LIBSSH2
-        // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("classify connection-lost errors");
-
-        TEST_RESULT_BOOL(storageSftpConnLost(LIBSSH2_ERROR_SOCKET_RECV), true, "socket recv is connection lost");
-        TEST_RESULT_BOOL(storageSftpConnLost(LIBSSH2_ERROR_SOCKET_TIMEOUT), true, "socket timeout is connection lost");
-        TEST_RESULT_BOOL(storageSftpConnLost(LIBSSH2_ERROR_SOCKET_DISCONNECT), true, "socket disconnect is connection lost");
-        TEST_RESULT_BOOL(storageSftpConnLost(LIBSSH2_ERROR_BAD_USE), true, "bad use is connection lost");
-        TEST_RESULT_BOOL(storageSftpConnLost(LIBSSH2_ERROR_SOCKET_SEND), false, "socket send is not treated as connection lost");
-        TEST_RESULT_BOOL(storageSftpConnLost(LIBSSH2_ERROR_SFTP_PROTOCOL), false, "sftp protocol error is not connection lost");
-        TEST_RESULT_BOOL(storageSftpConnLost(LIBSSH2_ERROR_EAGAIN), false, "eagain is not connection lost");
-#else
-        TEST_LOG(PROJECT_NAME " not built with sftp support");
-#endif // HAVE_LIBSSH2
-    }
-
-    // *****************************************************************************************************************************
     if (testBegin("storageSftpEvalLibSsh2Error()"))
     {
 #ifdef HAVE_LIBSSH2

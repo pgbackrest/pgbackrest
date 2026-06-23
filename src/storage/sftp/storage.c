@@ -1202,22 +1202,20 @@ storageSftpConnLost(const int rc)
         FUNCTION_TEST_PARAM(INT, rc);
     FUNCTION_TEST_END();
 
-    bool result = false;
-
     switch (rc)
     {
         case LIBSSH2_ERROR_SOCKET_RECV:
         case LIBSSH2_ERROR_SOCKET_TIMEOUT:
         case LIBSSH2_ERROR_SOCKET_DISCONNECT:
         case LIBSSH2_ERROR_BAD_USE:
-            result = true;
+            FUNCTION_TEST_RETURN(BOOL, true);
             break;
 
         default:
             break;
     }
 
-    FUNCTION_TEST_RETURN(BOOL, result);
+    FUNCTION_TEST_RETURN(BOOL, false);
 }
 
 /***********************************************************************************************************************************
