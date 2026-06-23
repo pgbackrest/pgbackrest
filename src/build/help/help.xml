@@ -679,7 +679,7 @@
                         <summary>Target size for file bundles.</summary>
 
                         <text>
-                            <p>Defines the total size of files that will be added to a single bundle. Most bundles will be smaller than this size but it is possible that some will be slightly larger, so do not set this option to the maximum size that your file system allows.</p>
+                            <p>Defines the target size for files that will be added to a single bundle. The uncompressed bundle size may be as large as <br-option>repo-bundle-size</br-option> + <br-option>repo-bundle-limit</br-option>, so do not set this option to the maximum size that your file system allows.</p>
 
                             <p>In general, it is not a good idea to set this option too high because retries will need to redo the entire bundle.</p>
                         </text>
