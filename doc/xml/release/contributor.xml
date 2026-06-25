@@ -95,6 +95,11 @@
     <contributor-id type="github">andrewlecuyer</contributor-id>
 </contributor>
 
+<contributor id="andrew.pogrebnoi">
+    <contributor-name-display>Andrew Pogrebnoi</contributor-name-display>
+    <contributor-id type="github">dAdAbird</contributor-id>
+</contributor>
+
 <contributor id="andrew.schwartz">
     <contributor-name-display>Andrew Schwartz</contributor-name-display>
     <contributor-id type="github">trinchan</contributor-id>
@@ -808,6 +813,11 @@
 <contributor id="marcelo.henrique.neppel">
     <contributor-name-display>Marcelo Henrique Neppel</contributor-name-display>
     <contributor-id type="github">marceloneppel</contributor-id>
+</contributor>
+
+<contributor id="marco.fontana">
+    <contributor-name-display>Marco Fontana</contributor-name-display>
+    <contributor-id type="github">marf</contributor-id>
 </contributor>
 
 <contributor id="marco.montagna">
