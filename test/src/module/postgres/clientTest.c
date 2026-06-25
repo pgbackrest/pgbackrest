@@ -343,7 +343,7 @@ testRun(void)
             pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultNone), DbQueryError,
             "unable to complete query '" TEST_QUERY "': " TEST_PQ_ERROR "\n"
             "HINT: this is usually caused by the connection to PostgreSQL being lost while the query was running.\n"
-            "HINT: check idle_session_timeout or idle_in_transaction_session_timeout for aggressive settings.\n"
+            "HINT: check idle_session_timeout and idle_in_transaction_session_timeout for aggressive settings.\n"
             "HINT: check the PostgreSQL log and network for a crash, restart, or timeout.");
 
         #undef TEST_PQ_ERROR
@@ -371,7 +371,7 @@ testRun(void)
             pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultNone), DbQueryError,
             "unable to complete query '" TEST_QUERY "'\n"
             "HINT: this is usually caused by the connection to PostgreSQL being lost while the query was running.\n"
-            "HINT: check idle_session_timeout or idle_in_transaction_session_timeout for aggressive settings.\n"
+            "HINT: check idle_session_timeout and idle_in_transaction_session_timeout for aggressive settings.\n"
             "HINT: check the PostgreSQL log and network for a crash, restart, or timeout.");
 
         #undef TEST_QUERY

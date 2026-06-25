@@ -361,7 +361,7 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
                     DbQueryError,
                     "unable to complete query '%s'%s%s\n"
                     "HINT: this is usually caused by the connection to PostgreSQL being lost while the query was running.\n"
-                    "HINT: check idle_session_timeout or idle_in_transaction_session_timeout for aggressive settings.\n"
+                    "HINT: check idle_session_timeout and idle_in_transaction_session_timeout for aggressive settings.\n"
                     "HINT: check the PostgreSQL log and network for a crash, restart, or timeout.",
                     strZ(query), strEmpty(error) ? "" : ": ", strZ(error));
             }
