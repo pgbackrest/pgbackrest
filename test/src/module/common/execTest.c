@@ -131,6 +131,11 @@ testRun(void)
         TEST_RESULT_STR_Z(execOneExpectP(STRDEF("ls " TEST_PATH), .shell = STRDEF("sh -c")), "file\n", "exec ls");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("exec with custom timeout");
+
+        TEST_RESULT_STR_Z(execOneExpectP(STRDEF("echo timeout"), .timeout = 60000), "timeout\n", "exec with timeout");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("exec exits from signal");
 
         TEST_ASSIGN(exec, execNew(STRDEF("cat"), NULL, STRDEF("cat"), 1000), "new cat exec");
