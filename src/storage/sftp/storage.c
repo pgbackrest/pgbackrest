@@ -1190,17 +1190,23 @@ storageSftpSessionSftp(StorageSftp *const this)
 }
 
 /***********************************************************************************************************************************
-Is the libssh2 error a sign that the connection to the server has been lost? Only socket-level errors are treated as connection
-loss. LIBSSH2_ERROR_SOCKET_SEND is intentionally excluded since a failed send is ambiguous (and is used throughout the unit tests
-as a generic fatal error) -- the definitive "the peer is gone" signal is a failed receive, which is what has been observed when a
-server drops an idle connection.
+Is the libssh2 error a sign that the connection to the server has been lost? Socket-level errors always mean the connection is gone.
+LIBSSH2_ERROR_SOCKET_SEND is intentionally excluded since a failed send is ambiguous (and is used throughout the unit tests as a
+generic fatal error) -- the definitive "the peer is gone" signal is a failed receive.
+
+An sftp protocol error is ambiguous in general (e.g. mkdir returns LIBSSH2_FX_FAILURE when a directory already exists) but on a file
+or directory open a generic failure or explicit connection-lost status means the session is no longer usable, so treat those as a
+lost connection. This is only called from the open retry paths, so the ambiguous mkdir/rename cases do not reach here.
 ***********************************************************************************************************************************/
 FN_EXTERN bool
-storageSftpConnLost(const int rc)
+storageSftpConnLost(StorageSftp *const this, const int rc)
 {
     FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_SFTP, this);
         FUNCTION_TEST_PARAM(INT, rc);
     FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
 
     switch (rc)
     {
@@ -1210,6 +1216,16 @@ storageSftpConnLost(const int rc)
         case LIBSSH2_ERROR_BAD_USE:
             FUNCTION_TEST_RETURN(BOOL, true);
             break;
+
+        case LIBSSH2_ERROR_SFTP_PROTOCOL:
+        {
+            const uint64_t sftpErr = libssh2_sftp_last_error(this->sftpSession);
+
+            FUNCTION_TEST_RETURN(
+                BOOL,
+                sftpErr == LIBSSH2_FX_FAILURE || sftpErr == LIBSSH2_FX_CONNECTION_LOST || sftpErr == LIBSSH2_FX_NO_CONNECTION);
+            break;
+        }
 
         default:
             break;
@@ -1553,7 +1569,7 @@ storageSftpReconnect(StorageSftp *const this, const int rc)
 
     ASSERT(this != NULL);
 
-    bool result = storageSftpConnLost(rc);
+    bool result = storageSftpConnLost(this, rc);
 
     if (result)
         storageSftpReopen(this);

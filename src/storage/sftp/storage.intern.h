@@ -31,7 +31,7 @@ FN_EXTERN void storageSftpEvalLibSsh2Error(
 FN_EXTERN bool storageSftpWaitFd(StorageSftp *this, int64_t rc);
 
 // Is the libssh2 error a sign that the connection to the server has been lost?
-FN_EXTERN bool storageSftpConnLost(int rc);
+FN_EXTERN bool storageSftpConnLost(StorageSftp *this, int rc);
 
 // If the error indicates the connection was lost then reopen the session so the operation can be retried. Returns true when the
 // session was reopened (the caller should retry the operation).
