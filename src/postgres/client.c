@@ -347,7 +347,24 @@ pgClientQuery(PgClient *const this, const String *const query, const PgClientQue
             // Free the result
             PQclear(pgResult);
 
-            CHECK(ServiceError, PQgetResult(this->connection) == NULL, "NULL result required to complete request");
+            // The command is only complete once a NULL result is returned. A non-NULL result here means an extra result was
+            // received, which almost always means the connection was lost while the query was running.
+            PGresult *const pgResultExtra = PQgetResult(this->connection);
+
+            if (pgResultExtra != NULL)
+            {
+                // Attempt to retrieve the error so the actual cause is reported
+                const String *const error = strTrim(strNewZ(PQresultErrorMessage(pgResultExtra)));
+                PQclear(pgResultExtra);
+
+                THROW_FMT(
+                    DbQueryError,
+                    "unable to complete query '%s'%s%s\n"
+                    "HINT: this is usually caused by the connection to PostgreSQL being lost while the query was running.\n"
+                    "HINT: check idle_session_timeout and idle_in_transaction_session_timeout for aggressive settings.\n"
+                    "HINT: check the PostgreSQL log and network for a crash, restart, or timeout.",
+                    strZ(query), strEmpty(error) ? "" : ": ", strZ(error));
+            }
         }
         TRY_END();
     }
