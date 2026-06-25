@@ -1550,7 +1550,7 @@ storageSftpReopen(StorageSftp *const this)
 
     ASSERT(this != NULL);
 
-    LOG_DETAIL_FMT("reconnect to lost sftp connection '%s:%u'", strZ(this->host), this->port);
+    LOG_DEBUG_FMT("reconnect to lost sftp connection '%s:%u'", strZ(this->host), this->port);
 
     storageSftpConnFree(this);
     storageSftpOpen(this);
