@@ -122,6 +122,17 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2794"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Bundle backup files in order rather than scanning for a better fit.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2789"/>
                 <github-pull-request id="2790"/>
 
