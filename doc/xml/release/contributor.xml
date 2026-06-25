@@ -80,6 +80,11 @@
     <contributor-id type="github">anarazel</contributor-id>
 </contributor>
 
+<contributor id="andrew.charlton">
+    <contributor-name-display>Andrew Charlton</contributor-name-display>
+    <contributor-id type="github">andrewcharlton</contributor-id>
+</contributor>
+
 <contributor id="andrew.jackson">
     <contributor-name-display>Andrew Jackson</contributor-name-display>
     <contributor-id type="github">AndrewJackson2020</contributor-id>
@@ -88,6 +93,11 @@
 <contributor id="andrew.lecuyer">
     <contributor-name-display>Andrew L'Ecuyer</contributor-name-display>
     <contributor-id type="github">andrewlecuyer</contributor-id>
+</contributor>
+
+<contributor id="andrew.pogrebnoi">
+    <contributor-name-display>Andrew Pogrebnoi</contributor-name-display>
+    <contributor-id type="github">dAdAbird</contributor-id>
 </contributor>
 
 <contributor id="andrew.schwartz">
@@ -803,6 +813,11 @@
 <contributor id="marcelo.henrique.neppel">
     <contributor-name-display>Marcelo Henrique Neppel</contributor-name-display>
     <contributor-id type="github">marceloneppel</contributor-id>
+</contributor>
+
+<contributor id="marco.fontana">
+    <contributor-name-display>Marco Fontana</contributor-name-display>
+    <contributor-id type="github">marf</contributor-id>
 </contributor>
 
 <contributor id="marco.montagna">
