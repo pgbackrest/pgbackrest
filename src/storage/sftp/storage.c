@@ -34,7 +34,6 @@ struct StorageSftp
     IoSession *ioSession;                                           // IoSession (socket) connection to SFTP server
     LIBSSH2_SESSION *session;                                       // LibSsh2 session
     LIBSSH2_SFTP *sftpSession;                                      // LibSsh2 session sftp session
-    LIBSSH2_SFTP_HANDLE *sftpHandle;                                // LibSsh2 session sftp handle
     TimeMSec timeout;                                               // Session timeout
 };
 
@@ -372,27 +371,6 @@ storageSftpLibSsh2SessionFreeResource(THIS_VOID)
     ASSERT(this != NULL);
 
     int rc;
-
-    if (this->sftpHandle != NULL)
-    {
-        do
-        {
-            rc = libssh2_sftp_close(this->sftpHandle);
-        }
-        while (storageSftpWaitFd(this, rc));
-
-        if (rc != 0)
-        {
-            if (rc != LIBSSH2_ERROR_EAGAIN)
-                THROW_FMT(
-                    ServiceError, "failed to close sftpHandle: libssh2 errno [%d]%s", rc,
-                    rc == LIBSSH2_ERROR_SFTP_PROTOCOL ?
-                        strZ(strNewFmt(": sftp errno [%lu]", libssh2_sftp_last_error(this->sftpSession))) : "");
-            else
-                THROW_FMT(
-                    ServiceError, "timeout closing sftpHandle: libssh2 errno [%d]", rc);
-        }
-    }
 
     if (this->sftpSession != NULL)
     {
@@ -874,6 +852,7 @@ storageSftpRemove(THIS_VOID, const String *const file, const StorageInterfaceRem
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
+    ASSERT(!param.errorOnMissing);
 
     // Attempt to unlink the file
     int rc;
@@ -889,23 +868,11 @@ storageSftpRemove(THIS_VOID, const String *const file, const StorageInterfaceRem
         if (rc == LIBSSH2_ERROR_EAGAIN)
             THROW_FMT(FileRemoveError, "timeout removing '%s'", strZ(file));
 
-        if (rc == LIBSSH2_ERROR_SFTP_PROTOCOL)
+        if (!storageSftpLibSsh2FxNoSuchFile(this, rc))
         {
-            if (param.errorOnMissing || !storageSftpLibSsh2FxNoSuchFile(this, rc))
-            {
-                storageSftpEvalLibSsh2Error(
-                    rc, libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,
-                    strNewFmt("unable to remove '%s'", strZ(file)), NULL);
-            }
-        }
-        else
-        {
-            if (param.errorOnMissing)
-            {
-                storageSftpEvalLibSsh2Error(
-                    rc, libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,
-                    strNewFmt("unable to remove '%s'", strZ(file)), NULL);
-            }
+            storageSftpEvalLibSsh2Error(
+                rc, libssh2_sftp_last_error(this->sftpSession), &FileRemoveError,
+                strNewFmt(STORAGE_ERROR_FILE_REMOVE, strZ(file)), NULL);
         }
     }
 
@@ -929,9 +896,7 @@ storageSftpNewRead(THIS_VOID, const String *const file, const StorageInterfaceNe
     ASSERT(file != NULL);
     ASSERT(param.versionId == NULL);
 
-    FUNCTION_LOG_RETURN(
-        STORAGE_READ_SFTP,
-        storageReadSftpNew(this, file, this->session, this->sftpSession, this->sftpHandle, param.offset, param.limit));
+    FUNCTION_LOG_RETURN(STORAGE_READ_SFTP, storageReadSftpNew(this, file, param.offset, param.limit));
 }
 
 /**********************************************************************************************************************************/
@@ -966,8 +931,8 @@ storageSftpNewWrite(THIS_VOID, const String *const file, const StorageInterfaceN
     FUNCTION_LOG_RETURN(
         STORAGE_WRITE_SFTP,
         storageWriteSftpNew(
-            this, file, this->session, this->sftpSession, this->sftpHandle, param.modeFile, param.modePath, param.user, param.group,
-            param.timeModified, param.createPath, param.syncFile, param.atomic, param.truncate));
+            this, file, param.modeFile, param.modePath, param.user, param.group, param.timeModified, param.createPath,
+            param.syncFile, param.atomic, param.truncate));
 }
 
 /**********************************************************************************************************************************/
@@ -1116,12 +1081,12 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
                                 else
                                 {
                                     THROW_FMT(
-                                        PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE " libssh sftp [%" PRIu64 "] %s", strZ(file),
+                                        PathRemoveError, STORAGE_ERROR_FILE_REMOVE ": libssh sftp [%" PRIu64 "] %s", strZ(file),
                                         sftpErrno, libssh2SftpErrorMsg(sftpErrno));
                                 }
                             }
                             else
-                                THROW_FMT(PathRemoveError, STORAGE_ERROR_PATH_REMOVE_FILE " libssh ssh [%d]", strZ(file), rc);
+                                THROW_FMT(PathRemoveError, STORAGE_ERROR_FILE_REMOVE ": libssh ssh [%d]", strZ(file), rc);
                         }
 
                         // Reset the memory context occasionally so we don't use too much memory or slow down processing
@@ -1174,6 +1139,31 @@ storageSftpPathRemove(THIS_VOID, const String *const path, const bool recurse, c
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN LIBSSH2_SESSION *
+storageSftpSession(StorageSftp *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_SFTP, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN_TYPE_P(LIBSSH2_SESSION, this->session);
+}
+
+FN_EXTERN LIBSSH2_SFTP *
+storageSftpSessionSftp(StorageSftp *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE_SFTP, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN_TYPE_P(LIBSSH2_SFTP, this->sftpSession);
 }
 
 /**********************************************************************************************************************************/

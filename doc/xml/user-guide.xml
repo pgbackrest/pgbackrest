@@ -147,7 +147,7 @@
         <variable key="gcs-key">/etc/pgbackrest/gcs-key.json</variable>
 
         <!-- S3 Settings -->
-        <variable key="s3-image">minio/minio</variable>             <!-- Minio docker image -->
+        <variable key="s3-image">quay.io/ceph/ceph:v19</variable>   <!-- Ceph docker image -->
         <variable key="s3-all">n</variable>                         <!-- Build all the documentation with S3? -->
         <variable key="s3-local">y</variable>
         <variable key="s3-bucket">demo-bucket</variable>
@@ -316,7 +316,7 @@
         RUN rm /etc/apt/apt.conf.d/70debconf &amp;&amp; \
             apt-get update &amp;&amp; \
             apt-get install -y --no-install-recommends sudo ssh curl vim gnupg lsb-release iputils-ping ca-certificates \
-                    tzdata locales libssh2-1-dev 2>&amp;1
+                    tzdata locales libssh2-1-dev awscli 2>&amp;1
 
         {[sudo-disable-core-dump]}
 
@@ -391,6 +391,10 @@
         RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc
         RUN dnf install -y https://packages.microsoft.com/config/rhel/8/packages-microsoft-prod.rpm
         RUN dnf install -y azure-cli
+
+        # Install AWS CLI
+        RUN dnf install -y python3-pip
+        RUN pip3 install awscli --upgrade
 
         # Install systemctl replacement that works without systemd running
         ENV SYSCTL_REP_VER=1.5.8066
@@ -782,14 +786,26 @@
             </execute>
         </execute-list>
 
-        <execute-list if="'{[s3-local]}' eq 'y' &amp;&amp; '{[s3-setup-create-bucket]}' eq 'y'" host="{[host-s3]}" show="n">
+        <execute-list if="'{[s3-local]}' eq 'y' &amp;&amp; '{[s3-setup-create-bucket]}' eq 'y'" host="{[host-pg1]}" show="n">
             <title>Create bucket</title>
 
             <execute user="root" user-force="y">
-                <exe-cmd>mc --insecure alias set s3 https://127.0.0.1 {[s3-key]} {[s3-key-secret]}</exe-cmd>
+                <exe-cmd>aws configure set aws_access_key_id {[s3-key]}</exe-cmd>
             </execute>
             <execute user="root" user-force="y">
-                <exe-cmd>mc --insecure mb --with-versioning s3/{[s3-bucket]}</exe-cmd>
+                <exe-cmd>aws configure set aws_secret_access_key {[s3-key-secret]}</exe-cmd>
+            </execute>
+            <execute user="root" user-force="y">
+                <exe-cmd>aws configure set region {[s3-region]}</exe-cmd>
+            </execute>
+            <execute if ="{[os-type-is-rhel]}" user="root" user-force="y">
+                <exe-cmd>aws configure set ca_bundle {[ca-cert-path]}/pgbackrest-ca.crt</exe-cmd>
+            </execute>
+            <execute user="root" user-force="y">
+                <exe-cmd>aws --endpoint-url https://{[s3-endpoint]} s3 mb s3://{[s3-bucket]}</exe-cmd>
+            </execute>
+            <execute user="root" user-force="y">
+                <exe-cmd>aws --endpoint-url https://{[s3-endpoint]} s3api put-bucket-versioning --bucket {[s3-bucket]} --versioning-configuration Status=Enabled</exe-cmd>
             </execute>
         </execute-list>
 
@@ -886,7 +902,7 @@
         <host-add if="'{[azure-local]}' eq 'y'" id="{[host-azure-id]}" name="{[host-azure]}" user="root" image="{[azure-image]}" os="{[os-type]}" option="-v {[fake-cert-path]}/azure-server.crt:/root/public.crt:ro -v {[fake-cert-path]}/azure-server.key:/root/private.key:ro -e AZURITE_ACCOUNTS='{[azure-account]}:{[azure-key]}'" param="azurite-blob --blobPort 443 --blobHost 0.0.0.0 --cert=/root/public.crt --key=/root/private.key --skipApiVersionCheck" update-hosts="n"/>
 
         <!-- Create S3 server first to allow it time to boot before being used -->
-        <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="{[s3-image]}" os="{[os-type]}" option="-v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443" update-hosts="n"/>
+        <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="{[s3-image]}" os="{[os-type]}" option="-v {[fake-cert-path]}/s3-server.crt:/root/s3-server.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/s3-server.key:ro -v {[host-repo-path]}/doc/resource/ceph/bootstrap.sh:/bootstrap.sh:ro -e RGW_DNS_NAME={[s3-endpoint]} -e S3_ACCESS_KEY={[s3-key]} -e S3_SECRET_KEY={[s3-key-secret]}" param="bash /bootstrap.sh" update-hosts="n"/>
 
         <!-- Create SFTP server first to allow it time to boot before being used -->
         <host-add id="{[host-sftp-id]}" name="{[host-sftp]}" user="{[host-sftp-user]}" image="{[host-sftp-image]}" os="{[os-type]}" mount="{[host-sftp-mount]}"/>
@@ -2619,19 +2635,26 @@
 
             <execute user="postgres" output="y">
                 <exe-cmd>{[project-exe]} --stanza={[postgres-cluster-demo]} --repo=3 info</exe-cmd>
-                <exe-highlight>missing stanza data</exe-highlight>
+                <exe-highlight>missing stanza path</exe-highlight>
             </execute>
         </execute-list>
 
         <p>However, since the storage is versioned, it is possible to look at the repository at a time before the stanza was deleted. Finding the target time can be tricky depending on the situation, but in this case the time when the stanza was deleted can be determined by checking when <file>backup.info</file> was deleted.</p>
 
-        <execute-list host="{[host-s3]}">
-            <title>Use <id>mc</id> to list versions of <file>backup.info</file> in the bucket</title>
+        <execute-list host="{[host-pg1]}">
+            <title>List versions of <file>backup.info</file> in the bucket</title>
 
             <execute user="root" user-force="y" output="y">
-                <exe-cmd>mc ls --versions s3/{[s3-bucket]}/{[s3-repo]}/backup/demo/backup.info</exe-cmd>
-                <exe-cmd-extra>--insecure</exe-cmd-extra>
-                <exe-highlight>backup\.info$</exe-highlight>
+                <exe-cmd>
+                    key={[s3-repo]}/backup/demo/backup.info;
+                    aws s3api list-object-versions --bucket {[s3-bucket]}
+                        --prefix $key --output table
+                        --query "sort_by([Versions[?Key=='$key'].{Action:'PUT',
+                        Modified:LastModified,Object:Key},
+                        DeleteMarkers[?Key=='$key'].{Action:'DELETE',
+                        Modified:LastModified,Object:Key}][],&amp;Modified)"
+                </exe-cmd>
+                <exe-cmd-extra>--endpoint-url https://{[s3-endpoint]}</exe-cmd-extra>
             </execute>
         </execute-list>
 

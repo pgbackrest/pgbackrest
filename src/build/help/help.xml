@@ -317,7 +317,7 @@
                         <summary>Use a neutral umask.</summary>
 
                         <text>
-                            <p>Sets the umask to 0000 so modes in the repository are created in a sensible way. The default directory mode is 0750 and default file mode is 0640. The lock and log directories set the directory and file mode to 0770 and 0660 respectively.</p>
+                            <p>Sets the umask to 0000 so modes in the repository are created in a sensible way. The default directory mode is 0750 and default file mode is 0640.</p>
 
                             <p>To use the executing user's umask instead specify <setting>neutral-umask=n</setting> in the config file or <setting>--no-neutral-umask</setting> on the command line.</p>
                         </text>
@@ -679,7 +679,7 @@
                         <summary>Target size for file bundles.</summary>
 
                         <text>
-                            <p>Defines the total size of files that will be added to a single bundle. Most bundles will be smaller than this size but it is possible that some will be slightly larger, so do not set this option to the maximum size that your file system allows.</p>
+                            <p>Defines the target size for files that will be added to a single bundle. The uncompressed bundle size may be as large as <br-option>repo-bundle-size</br-option> + <br-option>repo-bundle-limit</br-option>, so do not set this option to the maximum size that your file system allows.</p>
 
                             <p>In general, it is not a good idea to set this option too high because retries will need to redo the entire bundle.</p>
                         </text>
@@ -1025,6 +1025,7 @@
                                 <list-item><id>auto</id> - Automatically retrieve temporary credentials</list-item>
                                 <list-item><id>web-id</id> - Automatically retrieve web identity credentials</list-item>
                                 <list-item><id>pod-id</id> - Automatically retrieve EKS pod identity credentials</list-item>
+                                <list-item><id>process</id> - Retrieve credentials by executing a process</list-item>
                             </list>
                         </text>
 
@@ -1073,6 +1074,20 @@
                         </text>
 
                         <example>s3.amazonaws.com</example>
+                    </config-key>
+
+                    <config-key id="repo-s3-process-cmd" name="S3 Authentication Process Command">
+                        <summary>S3 authentication process command.</summary>
+
+                        <text>
+                            <p>Command (and optional arguments) to execute for retrieving temporary S3 credentials. The first list entry is the command and the remaining entries are passed as parameters.</p>
+
+                            <p>The process must output JSON containing <id>AccessKeyId</id>, <id>SecretAccessKey</id>, <id>SessionToken</id>, and <id>Expiration</id> fields. Credentials will be automatically refreshed before the expiration time. See <link url="https://docs.aws.amazon.com/sdkref/latest/guide/feature-process-credentials.html#feature-process-credentials-output">Process Credential Provider</link> for format details.</p>
+                        </text>
+
+                        <example>/usr/local/bin/get-credentials</example>
+                        <example>--role</example>
+                        <example>my-role</example>
                     </config-key>
 
                     <config-key id="repo-s3-role" name="S3 Repository Role">

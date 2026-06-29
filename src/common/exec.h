@@ -69,6 +69,13 @@ Functions
 FN_EXTERN void execOpen(Exec *this);
 
 /***********************************************************************************************************************************
+Helper Functions
+***********************************************************************************************************************************/
+// Execute a command with an explicit parameter list and return stdout output. The first item in the list is the command and the
+// remaining items are parameters.
+FN_EXTERN String *execOne(const StringList *list);
+
+/***********************************************************************************************************************************
 Destructor
 ***********************************************************************************************************************************/
 FN_INLINE_ALWAYS void

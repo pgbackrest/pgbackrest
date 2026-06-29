@@ -812,6 +812,7 @@ storageRemove(const Storage *const this, const String *const fileExp, const Stor
 
     ASSERT(this != NULL);
     ASSERT(this->write);
+    ASSERT(!param.errorOnMissing || storageFeature(this, storageFeatureFileRemoveMissing));
 
     MEM_CONTEXT_TEMP_BEGIN()
     {

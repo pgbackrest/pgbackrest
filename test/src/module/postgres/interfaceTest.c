@@ -57,8 +57,9 @@ testRun(void)
     {
         TEST_ERROR(
             pgControlVersion(70300), VersionNotSupportedError,
-            "invalid PostgreSQL version 70300\n"
-            "HINT: is this version of PostgreSQL supported?");
+            "invalid PostgreSQL version 7.3\n"
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_96), 960, "9.6 control version");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_11), 1100, "11 control version");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_17), 1700, "17 control version");
@@ -79,7 +80,8 @@ testRun(void)
         TEST_ERROR(
             pgControlFromFile(storageTest, NULL), VersionNotSupportedError,
             "unexpected control version = 1501 and catalog version = 202211111\n"
-            "HINT: is this version of PostgreSQL supported?");
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid CRC");
@@ -254,11 +256,13 @@ testRun(void)
         TEST_ERROR(
             pgControlFromFile(storageTest, NULL), VersionNotSupportedError,
             "unexpected control version = 1501 and catalog version = 202211111\n"
-            "HINT: is this version of PostgreSQL supported?");
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
         TEST_ERROR(
             pgControlFromFile(storageTest, STRDEF("99")), VersionNotSupportedError,
-            "invalid PostgreSQL version 990000\n"
-            "HINT: is this version of PostgreSQL supported?");
+            "invalid PostgreSQL version 99\n"
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
 
         TEST_ASSIGN(info, pgControlFromFile(storageTest, STRDEF(PG_VERSION_15_Z)), "get control info v90");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "check system id");
@@ -468,7 +472,8 @@ testRun(void)
         TEST_ERROR(
             pgWalFromBuffer(result, NULL), VersionNotSupportedError,
             "unexpected WAL magic 777\n"
-            "HINT: is this version of PostgreSQL supported?");
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid wal flag");
@@ -508,7 +513,8 @@ testRun(void)
         TEST_ERROR(
             pgWalFromBuffer(result, NULL), VersionNotSupportedError,
             "unexpected WAL magic 777\n"
-            "HINT: is this version of PostgreSQL supported?");
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
 
         TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest, STRDEF(PG_VERSION_15_Z)), "force wal info v15");
         TEST_RESULT_UINT(info.systemId, 0xFAFAFAFA, "check system id");

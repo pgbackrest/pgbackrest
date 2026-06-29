@@ -124,9 +124,10 @@ pgInterfaceVersion(const unsigned int pgVersion)
     {
         THROW_FMT(
             VersionNotSupportedError,
-            "invalid " PG_NAME " version %u\n"
-            "HINT: is this version of PostgreSQL supported?",
-            pgVersion);
+            "invalid " PG_NAME " version %s\n"
+            "HINT: is this version of " PG_NAME " supported?\n"
+            "HINT: is " PROJECT_NAME " up to date on all hosts?",
+            strZ(pgVersionToStr(pgVersion)));
     }
 
     FUNCTION_TEST_RETURN_TYPE_CONST_P(PgInterface, result);
@@ -299,7 +300,8 @@ pgControlFromBuffer(const Buffer *const controlFile, const String *const pgVersi
             THROW_FMT(
                 VersionNotSupportedError,
                 "unexpected control version = %u and catalog version = %u\n"
-                "HINT: is this version of PostgreSQL supported?",
+                "HINT: is this version of " PG_NAME " supported?\n"
+                "HINT: is " PROJECT_NAME " up to date on all hosts?",
                 controlCommon->controlVersion, controlCommon->catalogVersion);
         }
     }
@@ -510,7 +512,8 @@ pgWalFromBuffer(const Buffer *const walBuffer, const String *const pgVersionForc
             THROW_FMT(
                 VersionNotSupportedError,
                 "unexpected WAL magic %u\n"
-                "HINT: is this version of PostgreSQL supported?",
+                "HINT: is this version of " PG_NAME " supported?\n"
+                "HINT: is " PROJECT_NAME " up to date on all hosts?",
                 ((const PgWalCommon *)bufPtrConst(walBuffer))->magic);
         }
     }

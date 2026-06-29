@@ -15,6 +15,13 @@ Object type
 typedef struct StorageSftp StorageSftp;
 
 /***********************************************************************************************************************************
+Getters
+***********************************************************************************************************************************/
+// Current libssh2 session/sftp session, used by the read/write objects
+FN_EXTERN LIBSSH2_SESSION *storageSftpSession(StorageSftp *this);
+FN_EXTERN LIBSSH2_SFTP *storageSftpSessionSftp(StorageSftp *this);
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 FN_EXTERN void storageSftpEvalLibSsh2Error(

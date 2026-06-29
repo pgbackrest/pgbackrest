@@ -2326,6 +2326,7 @@ option:
       - auto
       - web-id
       - pod-id
+      - process
 
   repo-s3-key:
     section: global
@@ -2366,6 +2367,14 @@ option:
       option: repo-s3-key-type
       list:
         - auto
+
+  repo-s3-process-cmd:
+    inherit: repo-s3-bucket
+    type: list
+    depend:
+      option: repo-s3-key-type
+      list:
+        - process
 
   repo-s3-token:
     inherit: repo-s3-key

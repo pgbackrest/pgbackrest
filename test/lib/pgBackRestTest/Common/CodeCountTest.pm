@@ -54,6 +54,7 @@ sub codeCountScan
                  $strFile =~ '\.png$' ||
                  $strFile =~ '\.svg$' ||
                  $strFile =~ '\.cache$' ||
+                 $strFile =~ '\.sh$' ||
                  $strFile =~ '^doc/site/' ||
                  $strFile =~ '^src/build/autom4te.cache/' ||
                  $strFile eq 'test/Dockerfile' ||
