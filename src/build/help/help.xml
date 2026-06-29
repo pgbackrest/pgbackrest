@@ -317,7 +317,7 @@
                         <summary>Use a neutral umask.</summary>
 
                         <text>
-                            <p>Sets the umask to 0000 so modes in the repository are created in a sensible way. The default directory mode is 0750 and default file mode is 0640. The lock and log directories set the directory and file mode to 0770 and 0660 respectively.</p>
+                            <p>Sets the umask to 0000 so modes in the repository are created in a sensible way. The default directory mode is 0750 and default file mode is 0640.</p>
 
                             <p>To use the executing user's umask instead specify <setting>neutral-umask=n</setting> in the config file or <setting>--no-neutral-umask</setting> on the command line.</p>
                         </text>
