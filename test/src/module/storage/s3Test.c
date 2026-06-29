@@ -1157,6 +1157,21 @@ testRun(void)
 
                 TEST_RESULT_STR_Z(driver->credRole, TEST_SERVICE_ROLE, "check role");
                 TEST_RESULT_STR_Z(driver->tokenFile, TEST_SERVICE_TOKEN_FILE, "check token file");
+                TEST_RESULT_STR_Z(driver->credHost, "sts.amazonaws.com", "check default sts host");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("custom sts host");
+
+                argList = strLstDup(commonArgList);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
+                hrnCfgArgRawZ(argList, cfgOptRepoS3KeyType, "web-id");
+                hrnCfgArgRawZ(argList, cfgOptRepoS3StsHost, "sts.us-east-1.amazonaws.com");
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+                s3 = storageRepoGet(0, true);
+                driver = (StorageS3 *)storageDriver(s3);
+
+                TEST_RESULT_STR_Z(driver->credHost, "sts.us-east-1.amazonaws.com", "check custom sts host");
 
                 // Set partSize to a small value for testing
                 driver->partSize = 16;

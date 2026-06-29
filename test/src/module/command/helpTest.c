@@ -347,6 +347,7 @@ testRun(void)
             "  --repo-s3-role                      S3 repository role\n"
             "  --repo-s3-service                   S3 signing service\n"
             "  --repo-s3-sse-customer-key          S3 repository SSE customer key\n"
+            "  --repo-s3-sts-host                  S3 repository STS endpoint\n"
             "  --repo-s3-token                     S3 repository security token\n"
             "  --repo-s3-uri-style                 S3 URI Style\n"
             "  --repo-sftp-host                    SFTP repository host\n"

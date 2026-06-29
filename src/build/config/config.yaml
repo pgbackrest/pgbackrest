@@ -2388,6 +2388,10 @@ option:
     default: s3
     required: false
 
+  repo-s3-sts-host:
+    inherit: repo-s3-bucket
+    required: false
+
   repo-s3-uri-style:
     section: global
     group: repo
