@@ -1289,8 +1289,9 @@ storageS3New(
     const StorageS3KeyType keyType, const StorageS3UriStyle uriStyle, const String *const accessKey,
     const String *const secretAccessKey, const String *const securityToken, const String *const kmsKeyId,
     const String *sseCustomerKey, const String *const credRole, const String *const tokenFile, const String *const credUrl,
-    const StringList *const credCmd, const String *const stsHost, const size_t partSize, const KeyValue *const tag, const String *host, 
-    const unsigned int port, const TimeMSec timeout, const HttpProtocolType protocolType, const bool verifyPeer, const String *const caFile,
+    const StringList *const credCmd, const String *const stsHost, const size_t partSize, const KeyValue *const tag,
+    const String *host, const unsigned int port, const TimeMSec timeout, const HttpProtocolType protocolType,
+    const bool verifyPeer, const String *const caFile,
     const String *const caPath, const bool requesterPays)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);

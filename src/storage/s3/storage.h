@@ -40,8 +40,9 @@ FN_EXTERN Storage *storageS3New(
     const String *path, bool write, time_t targetTime, StoragePathExpressionCallback pathExpressionFunction, const String *bucket,
     const String *endPoint, const String *region, const String *service, StorageS3KeyType keyType, StorageS3UriStyle uriStyle,
     const String *accessKey, const String *secretAccessKey, const String *securityToken, const String *kmsKeyId,
-    const String *sseCustomerKey, const String *credRole, const String *tokenFile, const String *credUrl, const StringList *credCmd, 
-    const String *stsHost, size_t partSize, const KeyValue *tag, const String *host, unsigned int port, TimeMSec timeout, HttpProtocolType protocolType,
-    bool verifyPeer, const String *caFile, const String *caPath, bool requesterPays);
+    const String *sseCustomerKey, const String *credRole, const String *tokenFile, const String *credUrl,
+    const StringList *credCmd, const String *stsHost, size_t partSize, const KeyValue *tag, const String *host,
+    unsigned int port, TimeMSec timeout, HttpProtocolType protocolType, bool verifyPeer, const String *caFile,
+    const String *caPath, bool requesterPays);
 
 #endif
