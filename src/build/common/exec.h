@@ -18,6 +18,7 @@ typedef struct ExecOneExpectParam
     VAR_PARAM_HEADER;
     const String *shell;                                            // Shell command to use for exec (default is sh -c)
     int resultExpect;                                               // Expected result, if not 0
+    TimeMSec timeout;                                               // Command timeout (default is ioTimeoutMs())
 } ExecOneExpectParam;
 
 #define execOneExpectP(command, ...)                                                                                               \

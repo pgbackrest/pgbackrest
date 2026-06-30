@@ -2,12 +2,38 @@
     <release-core-list>
         <release-bug-list>
             <release-item>
+                <github-issue id="2622"/>
+                <github-pull-request id="2797"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="dima19017"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix <cmd>expire</cmd> removing a backup in progress on another host.</p>
+            </release-item>
+
+            <release-item>
                 <release-item-contributor-list>
                     <release-item-contributor id="christophe.pettus"/>
                     <release-item-reviewer id="david.steele"/>
                 </release-item-contributor-list>
 
                 <p>Fix potential buffer overrun in error module.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1768"/>
+                <github-pull-request id="2796"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="naveen"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix heap overflow when a pg option is set without pg1.</p>
             </release-item>
         </release-bug-list>
 
@@ -45,6 +71,18 @@
                 </release-item-contributor-list>
 
                 <p>Add support for <proper>S3 Outposts</proper>.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2778"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="andrew.charlton"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="andrew.charlton"/>
+                </release-item-contributor-list>
+
+                <p>Add <proper>S3</proper> process authentication.</p>
             </release-item>
         </release-feature-list>
 
@@ -107,6 +145,30 @@
                 </release-item-contributor-list>
 
                 <p>Improve seek performance during block incremental delta restore.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2794"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Bundle backup files in order rather than scanning for a better fit.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2789"/>
+                <github-pull-request id="2790"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="marco.fontana"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="andrew.pogrebnoi"/>
+                </release-item-contributor-list>
+
+                <p>Report the underlying error when a query fails to complete.</p>
             </release-item>
 
             <release-item>

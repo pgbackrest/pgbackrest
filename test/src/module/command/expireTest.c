@@ -444,6 +444,60 @@ testRun(void)
         TEST_TITLE("skip adhoc when no backups");
 
         TEST_RESULT_VOID(removeExpiredBackup(infoBackup, STRDEF("20181118-152100F"), 0), "expire");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("in-progress/resumable latest backup is not removed by non-adhoc expire");
+
+        // Start from a clean backup path so the listing reflects only this test
+        HRN_STORAGE_PATH_REMOVE(storageRepoWrite(), STORAGE_REPO_BACKUP, .recurse = true);
+
+        // backup.info with a single committed full backup. The in-progress backup below is not yet in backup.info, which is exactly
+        // the state seen by expire on one host while a backup is running on another host.
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE,
+            "[backup:current]\n"
+            "20181119-152138F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "\n"
+            "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6625592122879095702\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702"
+            ",\"db-version\":\"9.4\"}");
+
+        TEST_ASSIGN(
+            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL), "get backup.info");
+
+        // Committed backup (in backup.info) and an older orphan backup that is not in backup.info and has no manifest copy
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152138F/" BOGUS_STR, BOGUS_STR);
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152100F/" BOGUS_STR, BOGUS_STR);
+
+        // Latest backup on disk is in-progress/resumable: it has backup.manifest.copy but no backup.manifest and is not in
+        // backup.info, so it must not be removed
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152800F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT);
+
+        TEST_RESULT_VOID(removeExpiredBackup(infoBackup, NULL, 0), "expire with in-progress latest backup");
+
+        TEST_RESULT_LOG("P00   INFO: repo1: remove expired backup 20181119-152100F");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP,
+            "20181119-152138F/\n"
+            "20181119-152138F/BOGUS\n"
+            "20181119-152800F/\n"
+            "20181119-152800F/backup.manifest.copy\n"
+            "backup.info\n");
     }
 
     // *****************************************************************************************************************************

@@ -1886,7 +1886,8 @@ testRun(void)
         TEST_ERROR(
             verifyProcess(cfgOptionBool(cfgOptVerbose)), VersionNotSupportedError,
             "unexpected WAL magic 999\n"
-            "HINT: is this version of PostgreSQL supported?");
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
         TEST_RESULT_LOG(
             "P00 DETAIL: no backups exist in the repo");
 

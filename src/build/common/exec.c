@@ -73,7 +73,8 @@ execOneExpect(const String *const command, const ExecOneExpectParam param)
         strLstAddFmt(paramList, "%s 2>&1", strZ(command));
         strLstAddZ(paramList, "2>&1");
 
-        Exec *const exec = execNew(strLstGet(shellList, 0), paramList, command, ioTimeoutMs());
+        Exec *const exec = execNew(
+            strLstGet(shellList, 0), paramList, command, param.timeout != 0 ? param.timeout : ioTimeoutMs());
 
         execOpen(exec);
 

@@ -2305,8 +2305,12 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
             if (!config->optionGroup[groupId].valid)
                 continue;
 
-            // Allocate memory for the index to key index map
-            const unsigned int optionIdxTotal = config->optionGroup[groupId].indexTotal;
+            // Allocate memory for the index to key index map. The pg group always reserves index 0 for key 1 (see below) even when
+            // key 1 was not configured, so allocate an extra slot in that case to avoid writing past the end of the map.
+            unsigned int optionIdxTotal = config->optionGroup[groupId].indexTotal;
+
+            if (groupId == cfgOptGrpPg && optionIdxTotal > 0 && !groupIdxMap[groupId][0])
+                optionIdxTotal++;
 
             MEM_CONTEXT_BEGIN(config->memContext)
             {
@@ -2346,6 +2350,9 @@ cfgParse(const Storage *const storage, const unsigned int argListSize, const cha
                         optionIdxMax++;
                     }
                 }
+
+                // Update the index total to include the reserved pg index 0 when key 1 was not configured
+                config->optionGroup[groupId].indexTotal = optionIdxMax;
             }
         }
 

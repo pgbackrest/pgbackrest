@@ -120,7 +120,6 @@ execNew(const String *const command, const StringList *const param, const String
         FUNCTION_LOG_PARAM(TIME_MSEC, timeout);
     FUNCTION_LOG_END();
 
-    ASSERT(command != NULL);
     ASSERT(name != NULL);
     ASSERT(timeout > 0);
 
@@ -128,10 +127,6 @@ execNew(const String *const command, const StringList *const param, const String
     {
         *this = (Exec)
         {
-            .pub =
-            {
-                .command = strDup(command),
-            },
             .name = strDup(name),
             .timeout = timeout,
 
@@ -139,8 +134,18 @@ execNew(const String *const command, const StringList *const param, const String
             .param = param == NULL ? strLstNew() : strLstDup(param),
         };
 
-        // The first parameter must be the command
-        strLstInsert(this->param, 0, execCommand(this));
+        // If command is NULL then the first item in the param list is the command
+        if (command == NULL)
+        {
+            ASSERT(param != NULL && strLstSize(param) != 0);
+            this->pub.command = strLstGet(param, 0);
+        }
+        // Else copy command and insert it as the first parameter
+        else
+        {
+            this->pub.command = strDup(command);
+            strLstInsert(this->param, 0, execCommand(this));
+        }
     }
     OBJ_NEW_END();
 
@@ -394,4 +399,57 @@ execOpen(Exec *const this)
     memContextCallbackSet(objMemContext(this), execFreeResource, this);
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN String *
+execOne(const StringList *const list)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING_LIST, list);
+    FUNCTION_LOG_END();
+
+    ASSERT(list != NULL);
+    ASSERT(strLstSize(list) != 0);
+
+    String *result = NULL;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Exec command
+        Exec *const exec = execNew(NULL, list, strLstGet(list, 0), ioTimeoutMs());
+        execOpen(exec);
+
+        // Read all output from stdout
+        ioReadOpen(exec->ioReadFd);
+        String *const output = strNewBuf(ioReadBuf(exec->ioReadFd));
+
+        // Wait for the process to exit
+        int processStatus;
+
+        THROW_ON_SYS_ERROR(
+            waitpid(exec->processId, &processStatus, 0) == -1, ExecuteError, "unable to wait on child process");
+
+        // Clear the process id so we don't try to wait for this process on free
+        exec->processId = 0;
+
+        // Check exit status
+        if (WIFEXITED(processStatus))
+        {
+            if (WEXITSTATUS(processStatus) != 0)
+                execCheckStatusError(exec, processStatus, strTrim(output));
+        }
+        // Else if the process did not exit normally then it must have been a signal
+        else
+            execCheckSignalError(exec, processStatus);
+
+        MEM_CONTEXT_PRIOR_BEGIN()
+        {
+            result = strDup(strTrim(output));
+        }
+        MEM_CONTEXT_PRIOR_END();
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(STRING, result);
 }
