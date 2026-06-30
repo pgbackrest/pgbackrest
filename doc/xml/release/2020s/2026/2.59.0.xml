@@ -2,6 +2,19 @@
     <release-core-list>
         <release-bug-list>
             <release-item>
+                <github-issue id="2622"/>
+                <github-pull-request id="2797"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="dima19017"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix <cmd>expire</cmd> removing a backup in progress on another host.</p>
+            </release-item>
+
+            <release-item>
                 <release-item-contributor-list>
                     <release-item-contributor id="christophe.pettus"/>
                     <release-item-reviewer id="david.steele"/>
