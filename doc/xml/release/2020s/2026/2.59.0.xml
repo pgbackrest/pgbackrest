@@ -88,6 +88,21 @@
 
         <release-improvement-list>
             <release-item>
+                <github-issue id="2739"/>
+                <github-issue id="2772"/>
+                <github-pull-request id="2793"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="mustafa0x"/>
+                    <release-item-ideator id="tisserat"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Reconnect SFTP storage after the server drops an idle connection.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2773"/>
 
                 <release-item-contributor-list>
