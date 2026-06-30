@@ -9,6 +9,19 @@
 
                 <p>Fix potential buffer overrun in error module.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="1768"/>
+                <github-pull-request id="2796"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="naveen"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix heap overflow when a pg option is set without pg1.</p>
+            </release-item>
         </release-bug-list>
 
         <release-feature-list>
