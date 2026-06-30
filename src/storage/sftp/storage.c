@@ -1198,7 +1198,7 @@ An sftp protocol error is ambiguous in general (e.g. mkdir returns LIBSSH2_FX_FA
 or directory open a generic failure or explicit connection-lost status means the session is no longer usable, so treat those as a
 lost connection. This is only called from the open retry paths, so the ambiguous mkdir/rename cases do not reach here.
 ***********************************************************************************************************************************/
-FN_EXTERN bool
+static bool
 storageSftpConnLost(StorageSftp *const this, const int rc)
 {
     FUNCTION_TEST_BEGIN();
