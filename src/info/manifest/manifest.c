@@ -485,10 +485,14 @@ manifestBuildIncr(
             ManifestFile file = manifestFile(this, fileIdx);
 
             // Check if a prior file exists for files that will be copied (i.e. not zero-length files when bundling). If a prior
-            // file does exist it may be possible to reference it instead of copying the file.
-            if (file.copy && manifestFileExists(manifestPrior, file.name))
+            // file does exist it may be possible to reference it instead of copying the file. Use the "find or NULL" variant so we
+            // do one binary search instead of the manifestFileExists()/manifestFileFind() pair, which would do two.
+            const ManifestFilePack *const filePackPrior =
+                file.copy ? manifestFilePackFindDefault(manifestPrior, file.name) : NULL;
+
+            if (filePackPrior != NULL)
             {
-                const ManifestFile filePrior = manifestFileFind(manifestPrior, file.name);
+                const ManifestFile filePrior = manifestFileUnpack(manifestPrior, filePackPrior);
 
                 // If file size is equal to prior size then the file can be referenced instead of copied if it has not changed (this
                 // must be determined during the backup).
@@ -553,7 +557,8 @@ manifestBuildIncr(
                         (file.blockIncrSize > 0 && file.blockIncrChecksumSize > 0 && file.blockIncrMapSize > 0));
                 }
 
-                manifestFileUpdate(this, &file);
+                // Update by index since we already have it from the enclosing loop. Avoids by-name search of manifestFileUpdate().
+                manifestFileUpdateByIdx(this, fileIdx, &file);
             }
         }
     }
