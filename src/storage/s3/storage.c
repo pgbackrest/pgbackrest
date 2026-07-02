@@ -383,9 +383,6 @@ Automatically get credentials for an associated web identity service account
 
 Documentation is found at: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoleWithWebIdentity.html
 ***********************************************************************************************************************************/
-STRING_STATIC(S3_STS_HOST_STR,                                      "sts.amazonaws.com");
-#define S3_STS_PORT                                                 443
-
 static void
 storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
 {
@@ -1289,8 +1286,9 @@ storageS3New(
     const StorageS3KeyType keyType, const StorageS3UriStyle uriStyle, const String *const accessKey,
     const String *const secretAccessKey, const String *const securityToken, const String *const kmsKeyId,
     const String *sseCustomerKey, const String *const credRole, const String *const tokenFile, const String *const credUrl,
-    const StringList *const credCmd, const size_t partSize, const KeyValue *const tag, const String *host, const unsigned int port,
-    const TimeMSec timeout, const HttpProtocolType protocolType, const bool verifyPeer, const String *const caFile,
+    const StringList *const credCmd, const String *const stsHost, const size_t partSize, const KeyValue *const tag,
+    const String *host, const unsigned int port, const TimeMSec timeout, const HttpProtocolType protocolType,
+    const bool verifyPeer, const String *const caFile,
     const String *const caPath, const bool requesterPays)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
@@ -1304,6 +1302,7 @@ storageS3New(
         FUNCTION_LOG_PARAM(STRING, service);
         FUNCTION_LOG_PARAM(ENUM, keyType);
         FUNCTION_LOG_PARAM(ENUM, uriStyle);
+        FUNCTION_LOG_PARAM(STRING, stsHost);
         FUNCTION_TEST_PARAM(STRING, accessKey);
         FUNCTION_TEST_PARAM(STRING, secretAccessKey);
         FUNCTION_TEST_PARAM(STRING, securityToken);
@@ -1402,14 +1401,16 @@ storageS3New(
                 ASSERT(credRole != NULL);
                 ASSERT(tokenFile != NULL);
 
+                const HttpUrl *const stsHostUrl = httpUrlNewParseP(stsHost, .type = httpProtocolTypeHttps);
+
                 this->credRole = strDup(credRole);
                 this->tokenFile = strDup(tokenFile);
-                this->credHost = S3_STS_HOST_STR;
+                this->credHost = httpUrlHost(stsHostUrl);
                 this->credExpirationTime = time(NULL);
                 this->credHttpClient = httpClientNew(
                     tlsClientNewP(
-                        sckClientNew(this->credHost, S3_STS_PORT, timeout, timeout), this->credHost, timeout, timeout, true,
-                        .caFile = caFile, .caPath = caPath),
+                        sckClientNew(this->credHost, httpUrlPort(stsHostUrl), timeout, timeout), this->credHost, timeout, timeout,
+                        true, .caFile = caFile, .caPath = caPath),
                     timeout);
 
                 break;
