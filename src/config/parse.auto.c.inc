@@ -1050,6 +1050,19 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                       // opt/archive-copy
     ),                                                                                                           // opt/archive-copy
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                   // opt/archive-expire-before
+    (                                                                                                   // opt/archive-expire-before
+        PARSE_RULE_OPTION_NAME("archive-expire-before"),                                                // opt/archive-expire-before
+        PARSE_RULE_OPTION_TYPE(String),                                                                 // opt/archive-expire-before
+        PARSE_RULE_OPTION_REQUIRED(false),                                                              // opt/archive-expire-before
+        PARSE_RULE_OPTION_SECTION(CommandLine),                                                         // opt/archive-expire-before
+                                                                                                        // opt/archive-expire-before
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                  // opt/archive-expire-before
+        (                                                                                               // opt/archive-expire-before
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                           // opt/archive-expire-before
+        ),                                                                                              // opt/archive-expire-before
+    ),                                                                                                  // opt/archive-expire-before
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                   // opt/archive-get-queue-max
     (                                                                                                   // opt/archive-get-queue-max
         PARSE_RULE_OPTION_NAME("archive-get-queue-max"),                                                // opt/archive-get-queue-max
@@ -11771,6 +11784,7 @@ static const uint8_t optionResolveOrder[] =
     cfgOptStanza,                                                                                               // opt-resolve-order
     cfgOptAnnotation,                                                                                           // opt-resolve-order
     cfgOptArchiveAsync,                                                                                         // opt-resolve-order
+    cfgOptArchiveExpireBefore,                                                                                  // opt-resolve-order
     cfgOptArchiveGetQueueMax,                                                                                   // opt-resolve-order
     cfgOptArchiveHeaderCheck,                                                                                   // opt-resolve-order
     cfgOptArchiveMissingRetry,                                                                                  // opt-resolve-order
