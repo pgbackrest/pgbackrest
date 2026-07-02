@@ -44,7 +44,7 @@ Stop async processing after this many errors. The async process will be spawned 
 queue and drops WAL if it now exceeds queue-max. This prevents a failing repo from filling the WAL volume while retrying every ready
 segment and creating an error file for each one.
 ***********************************************************************************************************************************/
-#define ARCHIVE_PUSH_ERROR_MAX                                      3U
+#define ARCHIVE_PUSH_ERROR_MAX                                      3
 
 /***********************************************************************************************************************************
 Format the warning when a file is dropped
