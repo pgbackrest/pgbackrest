@@ -1159,17 +1159,34 @@ testRun(void)
                 TEST_RESULT_STR_Z(driver->tokenFile, TEST_SERVICE_TOKEN_FILE, "check token file");
                 TEST_RESULT_STR_Z(driver->credHost, "sts.amazonaws.com", "check default sts host");
 
-                // Use custom sts host
+                // Default sts host resolves to the default https port
+                char logBuf[STACK_TRACE_PARAM_MAX];
+
+                TEST_RESULT_VOID(
+                    FUNCTION_LOG_OBJECT_FORMAT(driver->credHttpClient, httpClientToLog, logBuf, sizeof(logBuf)),
+                    "credHttpClient toLog");
+                TEST_RESULT_BOOL(
+                    strstr(logBuf, "{host: sts.amazonaws.com, port: 443, ") != NULL, true, "check default sts host and port");
+
+                // Use custom sts host with an explicit port
                 argList = strLstDup(commonArgList);
                 hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
                 hrnCfgArgRawZ(argList, cfgOptRepoS3KeyType, "web-id");
-                hrnCfgArgRawZ(argList, cfgOptRepoS3StsHost, "sts.us-east-1.amazonaws.com");
+                hrnCfgArgRawZ(argList, cfgOptRepoS3StsHost, "sts.us-east-1.amazonaws.com:9443");
                 HRN_CFG_LOAD(cfgCmdArchivePush, argList);
 
                 s3 = storageRepoGet(0, true);
                 driver = (StorageS3 *)storageDriver(s3);
 
                 TEST_RESULT_STR_Z(driver->credHost, "sts.us-east-1.amazonaws.com", "check custom sts host");
+
+                // Custom sts host and port flow through to the credential client
+                TEST_RESULT_VOID(
+                    FUNCTION_LOG_OBJECT_FORMAT(driver->credHttpClient, httpClientToLog, logBuf, sizeof(logBuf)),
+                    "credHttpClient toLog");
+                TEST_RESULT_BOOL(
+                    strstr(logBuf, "{host: sts.us-east-1.amazonaws.com, port: 9443, ") != NULL, true,
+                    "check custom sts host and port");
 
                 // Set partSize to a small value for testing
                 driver->partSize = 16;

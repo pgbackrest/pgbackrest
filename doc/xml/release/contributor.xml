@@ -1135,6 +1135,11 @@
     <contributor-id type="github">bas3line</contributor-id>
 </contributor>
 
+<contributor id="simon-gratton">
+    <contributor-name-display>simon-gratton</contributor-name-display>
+    <contributor-id type="github">simon-gratton</contributor-id>
+</contributor>
+
 <contributor id="slava.moudry">
     <contributor-name-display>Slava Moudry</contributor-name-display>
     <contributor-id type="github">slava-pagerduty</contributor-id>

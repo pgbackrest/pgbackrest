@@ -8505,8 +8505,8 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             (                                                                                                // opt/repo-s3-sts-host
                 PARSE_RULE_OPTIONAL_DEPEND                                                                   // opt/repo-s3-sts-host
                 (                                                                                            // opt/repo-s3-sts-host
-                    PARSE_RULE_VAL_OPT(RepoType),                                                            // opt/repo-s3-sts-host
-                    PARSE_RULE_VAL_STRID(s3),                                                                // opt/repo-s3-sts-host
+                    PARSE_RULE_VAL_OPT(RepoS3KeyType),                                                       // opt/repo-s3-sts-host
+                    PARSE_RULE_VAL_STRID(web_DS_id),                                                         // opt/repo-s3-sts-host
                 ),                                                                                           // opt/repo-s3-sts-host
                                                                                                              // opt/repo-s3-sts-host
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                  // opt/repo-s3-sts-host
