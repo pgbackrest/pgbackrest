@@ -1004,6 +1004,47 @@ testRun(void)
             "000000010000000100000002.ok\n",
             .comment = "check status files");
 
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stop async processing after too many errors");
+
+        // Remove status and ready files to get a clean state
+        HRN_STORAGE_PATH_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT);
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog/archive_status", .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog/archive_status");
+
+        // Create ready files for segments that have no WAL so each one errors. There are more ready files than the error limit to
+        // prove that processing stops early and leaves the remaining WAL for the next run.
+        for (unsigned int walIdx = 4; walIdx <= 9; walIdx++)
+            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), zNewFmt("pg_xlog/archive_status/00000001000000010000000%u.ready", walIdx));
+
+        argListTemp = strLstDup(argList);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp, .role = cfgCmdRoleAsync);
+
+        TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
+        TEST_RESULT_LOG_FMT(
+            "P00   INFO: push 6 WAL file(s) to archive: 000000010000000100000004...000000010000000100000009\n"
+            "P01   WARN: could not push WAL file '000000010000000100000004' to the archive (will be retried): "
+            "[55] raised from local-1 shim protocol: " STORAGE_ERROR_READ_MISSING "\n"
+            "P01   WARN: could not push WAL file '000000010000000100000005' to the archive (will be retried): "
+            "[55] raised from local-1 shim protocol: " STORAGE_ERROR_READ_MISSING "\n"
+            "P01   WARN: could not push WAL file '000000010000000100000006' to the archive (will be retried): "
+            "[55] raised from local-1 shim protocol: " STORAGE_ERROR_READ_MISSING "\n"
+            "P01   WARN: could not push WAL file '000000010000000100000007' to the archive (will be retried): "
+            "[55] raised from local-1 shim protocol: " STORAGE_ERROR_READ_MISSING "\n"
+            "P00   WARN: stopped archive-push after 3 error(s), remaining WAL will be processed on the next run",
+            TEST_PATH "/pg/pg_xlog/000000010000000100000004", TEST_PATH "/pg/pg_xlog/000000010000000100000005",
+            TEST_PATH "/pg/pg_xlog/000000010000000100000006", TEST_PATH "/pg/pg_xlog/000000010000000100000007");
+
+        // Only the segments processed before stopping have status files; the rest are left for the next run
+        TEST_STORAGE_LIST(
+            storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT,
+            "000000010000000100000004.error\n"
+            "000000010000000100000005.error\n"
+            "000000010000000100000006.error\n"
+            "000000010000000100000007.error\n",
+            .comment = "check status files");
+
         // Uninstall local command handler shim
         hrnProtocolLocalShimUninstall();
     }

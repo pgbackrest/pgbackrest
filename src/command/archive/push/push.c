@@ -40,6 +40,13 @@ Ready file extension constants
 #define STATUS_EXT_READY_SIZE                                       (sizeof(STATUS_EXT_READY) - 1)
 
 /***********************************************************************************************************************************
+Stop async processing after this many errors. The async process will be spawned again by the next archive-push, which rechecks the
+queue and drops WAL if it now exceeds queue-max. This prevents a failing repo from filling the WAL volume while retrying every ready
+segment and creating an error file for each one.
+***********************************************************************************************************************************/
+#define ARCHIVE_PUSH_ERROR_MAX                                      3U
+
+/***********************************************************************************************************************************
 Format the warning when a file is dropped
 ***********************************************************************************************************************************/
 static String *
@@ -440,6 +447,7 @@ typedef struct ArchivePushAsyncData
     CompressType compressType;                                      // Type of compression for WAL segments
     int compressLevel;                                              // Compression level for wal files
     ArchivePushCheckResult archiveInfo;                             // Archive info
+    unsigned int errorTotal;                                        // Number of errored jobs so far
 } ArchivePushAsyncData;
 
 static ProtocolParallelJob *
@@ -457,10 +465,11 @@ archivePushAsyncCallback(void *const data, const unsigned int clientIdx)
         // No special logic based on the client, we'll just get the next job
         (void)clientIdx;
 
-        // Get a new job if there are any left
+        // Get a new job if there are any left. Stop getting new jobs once too many errors have occurred so the async process exits
+        // and lets the next run recheck the queue.
         ArchivePushAsyncData *const jobData = data;
 
-        if (jobData->walFileIdx < strLstSize(jobData->walFileList))
+        if (jobData->errorTotal < ARCHIVE_PUSH_ERROR_MAX && jobData->walFileIdx < strLstSize(jobData->walFileList))
         {
             const String *const walFile = strLstGet(jobData->walFileList, jobData->walFileIdx);
             jobData->walFileIdx++;
@@ -608,6 +617,8 @@ cmdArchivePushAsync(void)
                             // Else the job errored
                             else
                             {
+                                jobData.errorTotal++;
+
                                 LOG_WARN_PID_FMT(
                                     processId,
                                     "could not push WAL file '%s' to the archive (will be retried): [%d] %s", strZ(walFile),
@@ -627,6 +638,15 @@ cmdArchivePushAsync(void)
                     while (!protocolParallelDone(parallelExec));
                 }
                 MEM_CONTEXT_TEMP_END();
+
+                // If processing was stopped early because too many errors occurred then log a warning. The remaining WAL is left
+                // for the next run, which will recheck the queue and drop WAL if it now exceeds queue-max.
+                if (jobData.errorTotal >= ARCHIVE_PUSH_ERROR_MAX)
+                {
+                    LOG_WARN(
+                        "stopped archive-push after " STRINGIFY(ARCHIVE_PUSH_ERROR_MAX) " error(s), remaining WAL will be"
+                        " processed on the next run");
+                }
             }
         }
         // On any global error write a single error file to cover all unprocessed files
