@@ -43,13 +43,22 @@ storageReadSftpOpen(THIS_VOID)
 
     ASSERT(this != NULL);
 
+    // Retry the open once if the connection was lost (e.g. the server dropped an idle connection) and reopened successfully
+    unsigned int retry = 0;
+    int connErrno;
+
     do
     {
-        this->sftpHandle = libssh2_sftp_open_ex(
-            storageSftpSessionSftp(this->storage), strZ(this->name), (unsigned int)strSize(this->name), LIBSSH2_FXF_READ, 0,
-            LIBSSH2_SFTP_OPENFILE);
+        do
+        {
+            this->sftpHandle = libssh2_sftp_open_ex(
+                storageSftpSessionSftp(this->storage), strZ(this->name), (unsigned int)strSize(this->name), LIBSSH2_FXF_READ, 0,
+                LIBSSH2_SFTP_OPENFILE);
+        }
+        while (this->sftpHandle == NULL &&
+               storageSftpWaitFd(this->storage, (connErrno = libssh2_session_last_errno(storageSftpSession(this->storage)))));
     }
-    while (this->sftpHandle == NULL && storageSftpWaitFd(this->storage, libssh2_session_last_errno(storageSftpSession(this->storage))));
+    while (this->sftpHandle == NULL && retry++ == 0 && storageSftpReconnect(this->storage, connErrno));
 
     if (this->sftpHandle == NULL)
     {
