@@ -1159,9 +1159,7 @@ testRun(void)
                 TEST_RESULT_STR_Z(driver->tokenFile, TEST_SERVICE_TOKEN_FILE, "check token file");
                 TEST_RESULT_STR_Z(driver->credHost, "sts.amazonaws.com", "check default sts host");
 
-                // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("custom sts host");
-
+                // Use custom sts host
                 argList = strLstDup(commonArgList);
                 hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
                 hrnCfgArgRawZ(argList, cfgOptRepoS3KeyType, "web-id");

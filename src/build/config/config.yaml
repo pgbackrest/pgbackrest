@@ -2399,7 +2399,7 @@ option:
 
   repo-s3-sts-host:
     inherit: repo-s3-bucket
-    required: false
+    default: sts.amazonaws.com
 
   repo-s3-uri-style:
     section: global

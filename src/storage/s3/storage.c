@@ -383,9 +383,6 @@ Automatically get credentials for an associated web identity service account
 
 Documentation is found at: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoleWithWebIdentity.html
 ***********************************************************************************************************************************/
-STRING_STATIC(S3_STS_HOST_STR,                                      "sts.amazonaws.com");
-#define S3_STS_PORT                                                 443
-
 static void
 storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
 {
@@ -1332,6 +1329,7 @@ storageS3New(
     ASSERT(endPoint != NULL);
     ASSERT(region != NULL);
     ASSERT(service != NULL);
+    ASSERT(stsHost != NULL);
     ASSERT(partSize != 0);
 
     OBJ_NEW_BEGIN(StorageS3, .childQty = MEM_CONTEXT_QTY_MAX)
@@ -1404,14 +1402,16 @@ storageS3New(
                 ASSERT(credRole != NULL);
                 ASSERT(tokenFile != NULL);
 
+                const HttpUrl *const stsHostUrl = httpUrlNewParseP(stsHost, .type = httpProtocolTypeHttps);
+
                 this->credRole = strDup(credRole);
                 this->tokenFile = strDup(tokenFile);
-                this->credHost = stsHost != NULL ? stsHost : S3_STS_HOST_STR;
+                this->credHost = httpUrlHost(stsHostUrl);
                 this->credExpirationTime = time(NULL);
                 this->credHttpClient = httpClientNew(
                     tlsClientNewP(
-                        sckClientNew(this->credHost, S3_STS_PORT, timeout, timeout), this->credHost, timeout, timeout, true,
-                        .caFile = caFile, .caPath = caPath),
+                        sckClientNew(this->credHost, httpUrlPort(stsHostUrl), timeout, timeout), this->credHost, timeout, timeout,
+                        true, .caFile = caFile, .caPath = caPath),
                     timeout);
 
                 break;

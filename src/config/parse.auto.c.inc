@@ -131,6 +131,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("standby"),                                                                                         // val/str
     PARSE_RULE_STRPUB("storage.googleapis.com"),                                                                          // val/str
     PARSE_RULE_STRPUB("strict"),                                                                                          // val/str
+    PARSE_RULE_STRPUB("sts.amazonaws.com"),                                                                               // val/str
     PARSE_RULE_STRPUB("text"),                                                                                            // val/str
     PARSE_RULE_STRPUB("time"),                                                                                            // val/str
     PARSE_RULE_STRPUB("tls"),                                                                                             // val/str
@@ -267,6 +268,7 @@ typedef enum
     parseRuleValStrQT_standby_QT,                                                                                    // val/str/enum
     parseRuleValStrQT_storage_DT_googleapis_DT_com_QT,                                                               // val/str/enum
     parseRuleValStrQT_strict_QT,                                                                                     // val/str/enum
+    parseRuleValStrQT_sts_DT_amazonaws_DT_com_QT,                                                                    // val/str/enum
     parseRuleValStrQT_text_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_time_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_tls_QT,                                                                                        // val/str/enum
@@ -8436,7 +8438,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_NAME("repo-s3-sts-host"),                                                          // opt/repo-s3-sts-host
         PARSE_RULE_OPTION_TYPE(String),                                                                      // opt/repo-s3-sts-host
         PARSE_RULE_OPTION_RESET(true),                                                                       // opt/repo-s3-sts-host
-        PARSE_RULE_OPTION_REQUIRED(false),                                                                   // opt/repo-s3-sts-host
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                    // opt/repo-s3-sts-host
         PARSE_RULE_OPTION_SECTION(Global),                                                                   // opt/repo-s3-sts-host
         PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                    // opt/repo-s3-sts-host
                                                                                                              // opt/repo-s3-sts-host
@@ -8505,6 +8507,11 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                 (                                                                                            // opt/repo-s3-sts-host
                     PARSE_RULE_VAL_OPT(RepoType),                                                            // opt/repo-s3-sts-host
                     PARSE_RULE_VAL_STRID(s3),                                                                // opt/repo-s3-sts-host
+                ),                                                                                           // opt/repo-s3-sts-host
+                                                                                                             // opt/repo-s3-sts-host
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                  // opt/repo-s3-sts-host
+                (                                                                                            // opt/repo-s3-sts-host
+                    PARSE_RULE_VAL_STR(QT_sts_DT_amazonaws_DT_com_QT),                                       // opt/repo-s3-sts-host
                 ),                                                                                           // opt/repo-s3-sts-host
             ),                                                                                               // opt/repo-s3-sts-host
         ),                                                                                                   // opt/repo-s3-sts-host
