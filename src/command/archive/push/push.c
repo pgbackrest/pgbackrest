@@ -40,13 +40,6 @@ Ready file extension constants
 #define STATUS_EXT_READY_SIZE                                       (sizeof(STATUS_EXT_READY) - 1)
 
 /***********************************************************************************************************************************
-Stop async processing after this many errors. The async process will be spawned again by the next archive-push, which rechecks the
-queue and drops WAL if it now exceeds queue-max. This prevents a failing repo from filling the WAL volume while retrying every ready
-segment and creating an error file for each one.
-***********************************************************************************************************************************/
-#define ARCHIVE_PUSH_ERROR_MAX                                      3
-
-/***********************************************************************************************************************************
 Format the warning when a file is dropped
 ***********************************************************************************************************************************/
 static String *
@@ -447,7 +440,7 @@ typedef struct ArchivePushAsyncData
     CompressType compressType;                                      // Type of compression for WAL segments
     int compressLevel;                                              // Compression level for wal files
     ArchivePushCheckResult archiveInfo;                             // Archive info
-    unsigned int errorTotal;                                        // Number of errored jobs so far
+    bool errorFound;                                                // Has a job errored? If so, stop scheduling new jobs
 } ArchivePushAsyncData;
 
 static ProtocolParallelJob *
@@ -465,11 +458,12 @@ archivePushAsyncCallback(void *const data, const unsigned int clientIdx)
         // No special logic based on the client, we'll just get the next job
         (void)clientIdx;
 
-        // Get a new job if there are any left. Stop getting new jobs once too many errors have occurred so the async process exits
-        // and lets the next run recheck the queue.
+        // Get a new job if there are any left. Stop scheduling new jobs as soon as one errors so the async process exits and the
+        // next run rechecks the queue. Continuing past an error does not relieve disk pressure since PostgreSQL cannot recycle any
+        // WAL past the oldest unarchived segment, so the sooner the queue is rechecked the sooner WAL can be dropped if needed.
         ArchivePushAsyncData *const jobData = data;
 
-        if (jobData->errorTotal < ARCHIVE_PUSH_ERROR_MAX && jobData->walFileIdx < strLstSize(jobData->walFileList))
+        if (!jobData->errorFound && jobData->walFileIdx < strLstSize(jobData->walFileList))
         {
             const String *const walFile = strLstGet(jobData->walFileList, jobData->walFileIdx);
             jobData->walFileIdx++;
@@ -617,7 +611,7 @@ cmdArchivePushAsync(void)
                             // Else the job errored
                             else
                             {
-                                jobData.errorTotal++;
+                                jobData.errorFound = true;
 
                                 LOG_WARN_PID_FMT(
                                     processId,
@@ -639,14 +633,10 @@ cmdArchivePushAsync(void)
                 }
                 MEM_CONTEXT_TEMP_END();
 
-                // If processing was stopped early because too many errors occurred then log a warning. The remaining WAL is left
-                // for the next run, which will recheck the queue and drop WAL if it now exceeds queue-max.
-                if (jobData.errorTotal >= ARCHIVE_PUSH_ERROR_MAX)
-                {
-                    LOG_WARN(
-                        "stopped archive-push after " STRINGIFY(ARCHIVE_PUSH_ERROR_MAX) " error(s), remaining WAL will be"
-                        " processed on the next run");
-                }
+                // If processing was stopped early because a job errored then log a warning. The remaining WAL is left for the next
+                // run, which will recheck the queue and drop WAL if it now exceeds queue-max.
+                if (jobData.errorFound)
+                    LOG_WARN("stopped archive-push after an error, remaining WAL will be processed on the next run");
             }
         }
         // On any global error write a single error file to cover all unprocessed files
