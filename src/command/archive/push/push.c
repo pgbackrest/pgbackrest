@@ -548,8 +548,12 @@ cmdArchivePushAsync(void)
                 strLstSize(jobData.walFileList) == 1 ?
                     "" : zNewFmt("...%s", strZ(strLstGet(jobData.walFileList, strLstSize(jobData.walFileList) - 1))));
 
-            // Drop files if queue max has been exceeded
-            if (cfgOptionTest(cfgOptArchivePushQueueMax) && archivePushDrop(jobData.walPath, jobData.walFileList))
+            // Drop files if queue max has been exceeded. The queue is measured against the ready list (all WAL that PostgreSQL is
+            // waiting to archive) rather than the process list (WAL not yet pushed). If an earlier WAL file errors repeatedly then
+            // PostgreSQL keeps retrying it and never acknowledges the later files that look-ahead has already pushed, so those
+            // files drop out of the process list even though their WAL remains in pg_wal. Using the process list here would let the
+            // queue grow without bound in that case, exactly when dropping is most needed.
+            if (cfgOptionTest(cfgOptArchivePushQueueMax) && archivePushDrop(jobData.walPath, archivePushReadyList(jobData.walPath)))
             {
                 for (unsigned int walFileIdx = 0; walFileIdx < strLstSize(jobData.walFileList); walFileIdx++)
                 {
