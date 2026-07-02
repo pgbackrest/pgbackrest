@@ -275,6 +275,14 @@ optionGroup:
 option:
   # Command-line only options
   #---------------------------------------------------------------------------------------------------------------------------------
+  archive-expire-before:
+    type: string
+    required: false
+    command:
+      expire: {}
+    command-role:
+      main: {}
+
   config:
     type: string
     default-type: literal
