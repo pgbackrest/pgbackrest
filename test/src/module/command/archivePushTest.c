@@ -91,6 +91,20 @@ testRun(void)
         TEST_RESULT_BOOL(
             archivePushDrop(STRDEF("pg_wal"), archivePushProcessList(STRDEF(TEST_PATH "/db/pg_wal"))), true, "wal is dropped");
 
+        // The queue must be measured against the ready list rather than the process list. WAL 3 has already been pushed (ok file)
+        // but not yet acknowledged by PostgreSQL (ready file still present), so it is in the ready list but not the process list.
+        // Set queue max so the process list ({2, 5, 6} = 48MB) does not exceed it but the ready list ({2, 3, 5, 6} = 64MB) does.
+        argListDrop = strLstDup(argList);
+        hrnCfgArgRawFmt(argListDrop, cfgOptArchivePushQueueMax, "%zu", (size_t)16 * 1024 * 1024 * 3);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListDrop, .role = cfgCmdRoleAsync);
+
+        TEST_RESULT_BOOL(
+            archivePushDrop(STRDEF("pg_wal"), archivePushProcessList(STRDEF(TEST_PATH "/db/pg_wal"))), false,
+            "process list does not exceed queue max");
+        TEST_RESULT_BOOL(
+            archivePushDrop(STRDEF("pg_wal"), archivePushReadyList(STRDEF(TEST_PATH "/db/pg_wal"))), true,
+            "ready list exceeds queue max");
+
         // No WAL to be processed
         TEST_RESULT_BOOL(archivePushDrop(STRDEF("pg_wal"), strLstNew()), false, "no WAL to be processed");
     }
