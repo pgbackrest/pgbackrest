@@ -8,10 +8,22 @@ GCS Storage Read
 #include "storage/read.h"
 
 /***********************************************************************************************************************************
+Object type
+***********************************************************************************************************************************/
+typedef struct StorageReadGcs StorageReadGcs;
+
+/***********************************************************************************************************************************
 Constructors
 ***********************************************************************************************************************************/
-FN_EXTERN StorageRead *storageReadGcsNew(
-    StorageGcs *storage, const String *name, bool ignoreMissing, uint64_t offset, const Variant *limit, bool version,
-    const String *versionId);
+FN_EXTERN StorageReadGcs *storageReadGcsNew(
+    StorageGcs *storage, const String *name, uint64_t offset, const Variant *limit, const String *versionId);
+
+/***********************************************************************************************************************************
+Macros for function logging
+***********************************************************************************************************************************/
+#define FUNCTION_LOG_STORAGE_READ_GCS_TYPE                                                                                         \
+    StorageReadGcs *
+#define FUNCTION_LOG_STORAGE_READ_GCS_FORMAT(value, buffer, bufferSize)                                                            \
+    objNameToLog(value, "StorageReadGcs", buffer, bufferSize)
 
 #endif

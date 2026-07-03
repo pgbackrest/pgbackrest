@@ -855,7 +855,8 @@ testRun(void)
         TEST_ERROR(
             cmdArchiveGet(), VersionNotSupportedError,
             "unexpected control version = 1501 and catalog version = 202211111\n"
-            "HINT: is this version of PostgreSQL supported?");
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
 
         StringList *argListTemp = strLstDup(argList);
         hrnCfgArgRawZ(argListTemp, cfgOptPgVersionForce, "10");

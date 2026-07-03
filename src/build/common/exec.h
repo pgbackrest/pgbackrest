@@ -13,16 +13,17 @@ requirements of the build, test, and doc which prefer ease of use.
 Functions
 ***********************************************************************************************************************************/
 // Execute a command similar to system() while also capturing output. Note that stderr is redirected to stdout.
-typedef struct ExecOneParam
+typedef struct ExecOneExpectParam
 {
     VAR_PARAM_HEADER;
     const String *shell;                                            // Shell command to use for exec (default is sh -c)
     int resultExpect;                                               // Expected result, if not 0
-} ExecOneParam;
+    TimeMSec timeout;                                               // Command timeout (default is ioTimeoutMs())
+} ExecOneExpectParam;
 
-#define execOneP(command, ...)                                                                                                     \
-    execOne(command, (ExecOneParam){VAR_PARAM_INIT, __VA_ARGS__})
+#define execOneExpectP(command, ...)                                                                                               \
+    execOneExpect(command, (ExecOneExpectParam){VAR_PARAM_INIT, __VA_ARGS__})
 
-FN_EXTERN String *execOne(const String *command, ExecOneParam param);
+FN_EXTERN String *execOneExpect(const String *command, ExecOneExpectParam param);
 
 #endif

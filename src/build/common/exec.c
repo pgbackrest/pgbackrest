@@ -9,7 +9,7 @@ Execute Process Extensions
 
 /**********************************************************************************************************************************/
 static String *
-execProcess(Exec *const this, const ExecOneParam param)
+execProcess(Exec *const this, const ExecOneExpectParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(EXEC, this);
@@ -50,7 +50,7 @@ execProcess(Exec *const this, const ExecOneParam param)
 
 /**********************************************************************************************************************************/
 FN_EXTERN String *
-execOne(const String *const command, const ExecOneParam param)
+execOneExpect(const String *const command, const ExecOneExpectParam param)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, command);
@@ -73,7 +73,8 @@ execOne(const String *const command, const ExecOneParam param)
         strLstAddFmt(paramList, "%s 2>&1", strZ(command));
         strLstAddZ(paramList, "2>&1");
 
-        Exec *const exec = execNew(strLstGet(shellList, 0), paramList, command, ioTimeoutMs());
+        Exec *const exec = execNew(
+            strLstGet(shellList, 0), paramList, command, param.timeout != 0 ? param.timeout : ioTimeoutMs());
 
         execOpen(exec);
 

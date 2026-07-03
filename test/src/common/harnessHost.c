@@ -157,7 +157,7 @@ hrnHostNew(const StringId id, const String *const container, const String *const
             lstAdd(hrnHostLocal.hostList, &this);
 
             // Remove prior container with same name if it exists
-            execOneP(strNewFmt("docker rm -f %s", strZ(hrnHostContainer(this))));
+            execOneExpectP(strNewFmt("docker rm -f %s", strZ(hrnHostContainer(this))));
 
             // Run container
             String *const command = strCatFmt(
@@ -183,11 +183,12 @@ hrnHostNew(const StringId id, const String *const container, const String *const
             if (param.param != NULL)
                 strCatFmt(command, " %s", strZ(param.param));
 
-            execOneP(command);
+            // Allow extra time since the image may need to be pulled on first use (some object store images are large)
+            execOneExpectP(command, .timeout = 600000);
 
             // Get IP address
             const String *const ip = strTrim(
-                execOneP(
+                execOneExpectP(
                     strNewFmt(
                         "docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' %s",
                         strZ(hrnHostContainer(this)))));
@@ -253,7 +254,7 @@ hrnHostExec(HrnHost *const this, const String *const command, const HrnHostExecP
     {
         strCat(
             result,
-            execOneP(
+            execOneExpectP(
                 command,
                 .shell = strNewFmt(
                     "docker exec -u %s %s sh -c", param.user == NULL ? strZ(hrnHostUser(this)) : strZ(param.user),
@@ -786,9 +787,10 @@ hrnHostConfig(HrnHost *const this)
 
                         this->pub.repo1Storage = storageS3New(
                             hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_S3_BUCKET), STRDEF(HRN_HOST_S3_ENDPOINT),
-                            STR(HRN_HOST_S3_REGION), storageS3KeyTypeShared, storageS3UriStyleHost, STRDEF(HRN_HOST_S3_ACCESS_KEY),
-                            STRDEF(HRN_HOST_S3_ACCESS_SECRET_KEY), NULL, NULL, NULL, NULL, NULL, NULL, 5 * 1024 * 1024, NULL,
-                            hrnHostIp(s3), 443, ioTimeoutMs(), httpProtocolTypeHttps, false, NULL, NULL, NULL);
+                            STR(HRN_HOST_S3_REGION), STRDEF("s3"), storageS3KeyTypeShared, storageS3UriStyleHost,
+                            STRDEF(HRN_HOST_S3_ACCESS_KEY), STRDEF(HRN_HOST_S3_ACCESS_SECRET_KEY), NULL, NULL, NULL, NULL, NULL,
+                            NULL, NULL, 5 * 1024 * 1024, NULL, hrnHostIp(s3), 443, ioTimeoutMs(), httpProtocolTypeHttps, false,
+                            NULL, NULL, NULL);
                     }
                     MEM_CONTEXT_OBJ_END();
 
@@ -936,17 +938,32 @@ hrnHostPgBinPath(HrnHost *const this)
     {
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            const String *pgPath = strNewFmt("/usr/lib/postgresql/%s/bin", strZ(pgVersionToStr(hrnHostPgVersion())));
+            const String *pgPath = NULL;
+            const char *const version = strZ(pgVersionToStr(hrnHostPgVersion()));
 
-            TRY_BEGIN()
+            const String *const pgPathList[] =
             {
-                hrnHostExecP(this, strNewFmt("ls %s/initdb", strZ(pgPath)));
-            }
-            CATCH_ANY()
+                strNewFmt("/usr/lib/postgresql/%s/bin", version),   // Debian
+                strNewFmt("/usr/pgsql-%s/bin", version),            // RHEL
+                strNewFmt("/usr/libexec/postgresql%s", version),    // Alpine
+            };
+
+            for (unsigned int pgPathIdx = 0; pgPath == NULL && pgPathIdx < LENGTH_OF(pgPathList); pgPathIdx++)
             {
-                pgPath = strNewFmt("/usr/pgsql-%s/bin", strZ(pgVersionToStr(hrnHostPgVersion())));
+                TRY_BEGIN()
+                {
+                    hrnHostExecP(this, strNewFmt("ls %s/initdb", strZ(pgPathList[pgPathIdx])));
+                    pgPath = pgPathList[pgPathIdx];
+                }
+                CATCH_ANY()
+                {
+                    // Try the next path
+                }
+                TRY_END();
             }
-            TRY_END();
+
+            if (pgPath == NULL)
+                THROW_FMT(AssertError, "unable to find bin path for PostgreSQL %s", version);
 
             MEM_CONTEXT_OBJ_BEGIN(this)
             {
@@ -1288,17 +1305,16 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
                 case STORAGE_S3_TYPE:
                 {
                     String *const option = strNewFmt(
-                        "-v '%s/s3-server.crt:/root/.minio/certs/public.crt:ro'"
-                        " -v '%s/s3-server.key:/root/.minio/certs/private.key:ro' -e MINIO_REGION=" HRN_HOST_S3_REGION
-                        " -e MINIO_DOMAIN=" HRN_HOST_S3_ENDPOINT " -e MINIO_BROWSER=off"
-                        " -e MINIO_ACCESS_KEY=" HRN_HOST_S3_ACCESS_KEY " -e MINIO_SECRET_KEY=" HRN_HOST_S3_ACCESS_SECRET_KEY,
-                        fakeCertPath, fakeCertPath);
-                    String *const param = strNewZ("server /data --address :443");
+                        "-v '%s/s3-server.crt:/root/s3-server.crt:ro' -v '%s/s3-server.key:/root/s3-server.key:ro'"
+                        " -v '%s/doc/resource/ceph/bootstrap.sh:/bootstrap.sh:ro' -e RGW_DNS_NAME=" HRN_HOST_S3_ENDPOINT
+                        " -e S3_ACCESS_KEY=" HRN_HOST_S3_ACCESS_KEY " -e S3_SECRET_KEY=" HRN_HOST_S3_ACCESS_SECRET_KEY,
+                        fakeCertPath, fakeCertPath, hrnPathRepo());
+                    String *const param = strNewZ("bash /bootstrap.sh");
 
                     MEM_CONTEXT_PRIOR_BEGIN()
                     {
                         hrnHostNewP(
-                            HRN_HOST_S3, containerName, STRDEF("minio/minio"), .option = option, .param = param,
+                            HRN_HOST_S3, containerName, STRDEF("quay.io/ceph/ceph:v19"), .option = option, .param = param,
                             .noUpdateHosts = true);
                     }
                     MEM_CONTEXT_PRIOR_END();

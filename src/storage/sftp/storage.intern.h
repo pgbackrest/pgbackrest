@@ -15,6 +15,13 @@ Object type
 typedef struct StorageSftp StorageSftp;
 
 /***********************************************************************************************************************************
+Getters
+***********************************************************************************************************************************/
+// Current libssh2 session/sftp session, used by the read/write objects
+FN_EXTERN LIBSSH2_SESSION *storageSftpSession(StorageSftp *this);
+FN_EXTERN LIBSSH2_SFTP *storageSftpSessionSftp(StorageSftp *this);
+
+/***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
 FN_EXTERN void storageSftpEvalLibSsh2Error(
@@ -22,6 +29,10 @@ FN_EXTERN void storageSftpEvalLibSsh2Error(
 
 // Check which direction we are currently blocking on (reading, writing, or both) and wait for the fd to be ready accordingly
 FN_EXTERN bool storageSftpWaitFd(StorageSftp *this, int64_t rc);
+
+// If the error indicates the connection was lost then reopen the session so the operation can be retried. Returns true when the
+// session was reopened (the caller should retry the operation).
+FN_EXTERN bool storageSftpReconnect(StorageSftp *this, int rc);
 
 /***********************************************************************************************************************************
 Macros for function logging

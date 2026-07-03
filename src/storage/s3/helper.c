@@ -105,16 +105,20 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
             tokenFile = strNewZ(podIdTokenFileZ);
         }
 
+        // If process credential authentication then get the command from config
+        const StringList *const credCmd =
+            keyType == storageS3KeyTypeProcess ? strLstNewVarLst(cfgOptionIdxLst(cfgOptRepoS3ProcessCmd, repoIdx)) : NULL;
+
         MEM_CONTEXT_PRIOR_BEGIN()
         {
             result = storageS3New(
                 cfgOptionIdxStr(cfgOptRepoPath, repoIdx), write, storageRepoTargetTime(), pathExpressionCallback,
                 cfgOptionIdxStr(cfgOptRepoS3Bucket, repoIdx), endPoint,
-                cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx), keyType,
+                cfgOptionIdxStr(cfgOptRepoS3Region, repoIdx), cfgOptionIdxStr(cfgOptRepoS3Service, repoIdx), keyType,
                 (StorageS3UriStyle)cfgOptionIdxSeq(cfgOptRepoS3UriStyle, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoS3KmsKeyId, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3SseCustomerKey, repoIdx), role,
-                tokenFile, credUrl, (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx),
+                tokenFile, credUrl, credCmd, (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx),
                 cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), host, port, ioTimeoutMs(), protocolType,
                 cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx), cfgOptionIdxBool(cfgOptRepoS3RequesterPays, repoIdx));

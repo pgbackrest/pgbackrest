@@ -2079,6 +2079,30 @@ testRun(void)
         TEST_RESULT_INT(cfgOptionSource(cfgOptSpoolPath), cfgSourceDefault, "spool-path is source default");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("pg group with no key 1");
+
+        // The pg group always reserves index 0 for key 1 even when key 1 was not configured, so the index map must be sized to
+        // include the reserved index. Configure pg paths at keys other than 1 to exercise this path.
+        argList = strLstNew();
+        strLstAddZ(argList, TEST_BACKREST_EXE);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 2, "/path/to/db2");
+        hrnCfgArgKeyRawZ(argList, cfgOptPgPath, 3, "/path/to/db3");
+        strLstAddZ(argList, CFGCMD_ARCHIVE_PUSH);
+
+        TEST_RESULT_VOID(
+            cfgParseP(storageTest, strLstSize(argList), strLstPtr(argList), .noResetLogLevel = true),
+            "archive-push with pg2-path and pg3-path");
+
+        TEST_RESULT_UINT(cfgOptionGroupIdxTotal(cfgOptGrpPg), 2, "pg2 and pg3 are both retained");
+        TEST_RESULT_UINT(cfgOptionGroupIdxToKey(cfgOptGrpPg, 0), 2, "index 0 maps to pg2");
+        TEST_RESULT_UINT(cfgOptionGroupIdxToKey(cfgOptGrpPg, 1), 3, "index 1 maps to pg3");
+        TEST_RESULT_STR_Z(
+            cfgOptionIdxStr(cfgOptPgPath, cfgOptionKeyToIdx(cfgOptPgPath, 2)), "/path/to/db2", "pg2-path is set");
+        TEST_RESULT_STR_Z(
+            cfgOptionIdxStr(cfgOptPgPath, cfgOptionKeyToIdx(cfgOptPgPath, 3)), "/path/to/db3", "pg3-path is set");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid key/value");
 
         argList = strLstNew();

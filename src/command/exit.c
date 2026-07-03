@@ -3,6 +3,7 @@ Exit Routines
 ***********************************************************************************************************************************/
 #include <build.h>
 
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -14,6 +15,12 @@ Exit Routines
 #include "config/config.intern.h"
 #include "protocol/helper.h"
 #include "version.h"
+
+/***********************************************************************************************************************************
+Indicates that exit() is in progress so a signal cannot call exit() recursively, which is undefined behavior and crashes on musl
+libc >= 1.2.6
+***********************************************************************************************************************************/
+static volatile sig_atomic_t exitInProgress = false;
 
 /***********************************************************************************************************************************
 Return signal names
@@ -58,10 +65,17 @@ exitOnSignal(const int signalType)
         FUNCTION_TEST_PARAM(INT, signalType);
     FUNCTION_TEST_END();
 
-    logSignal(cfgLogLevelDefault(), signalType == signalTypeNone ? "from child process" : exitSignalName((SignalType)signalType));
-    exit(errorTypeCode(&TermError));
+    // Ignore the signal when exit() is already in progress and allow it to complete
+    if (!exitInProgress)
+    {
+        exitInProgress = true;
 
-    FUNCTION_TEST_NO_RETURN();
+        logSignal(
+            cfgLogLevelDefault(), signalType == signalTypeNone ? "from child process" : exitSignalName((SignalType)signalType));
+        exit(errorTypeCode(&TermError));
+    }
+
+    FUNCTION_TEST_RETURN_VOID();
 }
 
 /**********************************************************************************************************************************/
@@ -69,6 +83,9 @@ FN_EXTERN void
 exitInit(void)
 {
     FUNCTION_LOG_VOID(logLevelTrace);
+
+    // Reset exit in progress in case this process was forked by a process that was exiting
+    exitInProgress = false;
 
     signal(SIGHUP, exitOnSignal);
     signal(SIGINT, exitOnSignal);
@@ -156,6 +173,9 @@ exitSafe(int result, const bool error, const SignalType signalType)
         cmdLockReleaseP(.returnOnNoLock = true);
     }
     TRY_END();
+
+    // Set exit in progress so a signal arriving while exit() runs will not call exit() recursively
+    exitInProgress = true;
 
     // Return result - caller should immediate pass this result to exit()
     FUNCTION_LOG_RETURN(INT, result);

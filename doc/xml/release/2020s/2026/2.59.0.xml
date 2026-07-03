@@ -1,6 +1,120 @@
 <release date="XXXX-XX-XX" version="2.59.0dev" title="UNDER DEVELOPMENT">
     <release-core-list>
+        <release-bug-list>
+            <release-item>
+                <github-issue id="2622"/>
+                <github-pull-request id="2797"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="dima19017"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix <cmd>expire</cmd> removing a backup in progress on another host.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2629"/>
+                <github-pull-request id="2799"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="vut12"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix <setting>archive-push-queue-max</setting> not enforced when a WAL file errors.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="christophe.pettus"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix potential buffer overrun in error module.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1768"/>
+                <github-pull-request id="2796"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="naveen"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix heap overflow when a pg option is set without pg1.</p>
+            </release-item>
+        </release-bug-list>
+
+        <release-feature-list>
+            <release-item>
+                <github-pull-request id="2779"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p><proper>PostgreSQL 19beta1</proper> support.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2786"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="crispy"/>
+                </release-item-contributor-list>
+
+                <p>Add batch delete for <proper>Azure</proper> storage.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2762"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="shiva.kumar.ambigi"/>
+                    <release-item-reviewer id="david.steele"/>
+                    <release-item-reviewer id="roberto.mello"/>
+                </release-item-contributor-list>
+
+                <p>Add support for <proper>S3 Outposts</proper>.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2778"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="andrew.charlton"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="andrew.charlton"/>
+                </release-item-contributor-list>
+
+                <p>Add <proper>S3</proper> process authentication.</p>
+            </release-item>
+        </release-feature-list>
+
         <release-improvement-list>
+            <release-item>
+                <github-issue id="2739"/>
+                <github-issue id="2772"/>
+                <github-pull-request id="2793"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="mustafa0x"/>
+                    <release-item-ideator id="tisserat"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Reconnect SFTP storage after the server drops an idle connection.</p>
+            </release-item>
+
             <release-item>
                 <github-pull-request id="2773"/>
 
@@ -39,6 +153,30 @@
             </release-item>
 
             <release-item>
+                <github-issue id="1848"/>
+                <github-pull-request id="2802"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="sebastien.lardiere"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Exit async <cmd>archive-push</cmd> on first error.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2785"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="shubham"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Harden HTTP chunked response parsing.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2732"/>
 
                 <release-item-contributor-list>
@@ -48,6 +186,30 @@
                 </release-item-contributor-list>
 
                 <p>Improve seek performance during block incremental delta restore.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2794"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Bundle backup files in order rather than scanning for a better fit.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2789"/>
+                <github-pull-request id="2790"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="marco.fontana"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="andrew.pogrebnoi"/>
+                </release-item-contributor-list>
+
+                <p>Report the underlying error when a query fails to complete.</p>
             </release-item>
 
             <release-item>
@@ -99,4 +261,19 @@
             </release-item>
         </release-development-list>
     </release-core-list>
+
+    <release-test-list>
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2784"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="artur.zakirov"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix Alpine group conflicts in CI containers.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-test-list>
 </release>
