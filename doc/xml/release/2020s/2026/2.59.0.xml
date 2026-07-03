@@ -177,6 +177,17 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2774"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="gunnar.lindholm"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fewer binary searches when building manifest.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2732"/>
 
                 <release-item-contributor-list>
