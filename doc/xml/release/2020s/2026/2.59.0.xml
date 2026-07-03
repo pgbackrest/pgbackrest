@@ -153,6 +153,19 @@
             </release-item>
 
             <release-item>
+                <github-issue id="1848"/>
+                <github-pull-request id="2802"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="sebastien.lardiere"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Exit async <cmd>archive-push</cmd> on first error.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2785"/>
 
                 <release-item-contributor-list>
