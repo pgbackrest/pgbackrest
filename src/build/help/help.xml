@@ -1627,6 +1627,18 @@
                         <example>n</example>
                     </config-key>
 
+                    <config-key id="archive-push-batch-size" name="Archive Push Batch Size">
+                        <summary>Maximum amount of WAL to push per asynchronous run.</summary>
+
+                        <text>
+                            <p>In asynchronous mode the <cmd>archive-push</cmd> process pushes all the WAL segments that are ready in a single run. Since <br-option>archive-push-queue-max</br-option> is only checked at the start of each run, a run that processes a very large number of segments can let the queue grow well beyond the limit before it is rechecked.</p>
+
+                            <p>This option limits the amount of WAL processed per run so the process exits and is spawned again by the next <cmd>archive-push</cmd>, which rechecks the queue. Lower values recheck the queue more often at the cost of spawning the asynchronous process more frequently. The value is rounded down to a whole number of WAL segments but at least one segment is always processed.</p>
+                        </text>
+
+                        <example>1GiB</example>
+                    </config-key>
+
                     <config-key id="archive-push-queue-max" name="Maximum Archive Push Queue Size">
                         <summary>Maximum size of the <postgres/> archive queue.</summary>
 
@@ -1641,6 +1653,8 @@
                             <p>If this occurs then the archive log stream will be interrupted and PITR will not be possible past that point. A new backup will be required to regain full restore capability.</p>
 
                             <p>In asynchronous mode the entire queue will be dropped to prevent spurts of WAL getting through before the queue limit is exceeded again.</p>
+
+                            <p>In asynchronous mode this limit is only checked at the start of each <cmd>archive-push</cmd> run, so the queue can grow beyond it within a single run. Reduce <br-option>archive-push-batch-size</br-option> to check the queue more frequently.</p>
 
                             <p>The purpose of this feature is to prevent the log volume from filling up at which point <postgres/> will stop completely. Better to lose the backup than have <postgres/> go down.</p>
                         </text>
