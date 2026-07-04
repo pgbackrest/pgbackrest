@@ -89,7 +89,7 @@ testRun(void)
         TEST_STORAGE_LIST(storageTest, NULL, NULL, .comment = "check lock file does not exist");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("foreign lock detection");
+        TEST_TITLE("own lock detection");
 
         argList = strLstNew();
         hrnCfgArgRawZ(argList, cfgOptStanza, "test");
@@ -98,14 +98,14 @@ testRun(void)
         hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
         HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .noStd = true);
 
-        TEST_RESULT_BOOL(cmdLockForeign(), false, "no lock is not foreign");
+        TEST_RESULT_BOOL(cmdLockOwn(), false, "no lock is not our own");
 
-        // A lock held by this process (same exec id) is not foreign
+        // A lock held by this process (same exec id) is our own
         TEST_RESULT_VOID(cmdLockAcquireP(), "acquire archive lock");
-        TEST_RESULT_BOOL(cmdLockForeign(), false, "own lock is not foreign");
+        TEST_RESULT_BOOL(cmdLockOwn(), true, "own lock is detected");
         TEST_RESULT_VOID(cmdLockReleaseP(), "release lock");
 
-        // A lock held by a process with a different exec id is foreign
+        // A lock held by a process with a different exec id is not our own
         HRN_FORK_BEGIN()
         {
             HRN_FORK_CHILD_BEGIN()
@@ -128,7 +128,7 @@ testRun(void)
                 // Wait for child to acquire lock
                 HRN_FORK_PARENT_NOTIFY_GET(0);
 
-                TEST_RESULT_BOOL(cmdLockForeign(), true, "lock from another exec id is foreign");
+                TEST_RESULT_BOOL(cmdLockOwn(), false, "lock from another exec id is not our own");
 
                 // Notify child to release lock
                 HRN_FORK_PARENT_NOTIFY_PUT(0);
