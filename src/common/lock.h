@@ -34,6 +34,9 @@ Functions
 // Initialize lock module
 FN_EXTERN void lockInit(const String *path, const String *execId);
 
+// Exec id for this process, as set by lockInit()
+FN_EXTERN const String *lockExecId(void);
+
 // Acquire a lock
 typedef struct LockAcquireParam
 {

@@ -612,6 +612,69 @@ queueNeed(
     FUNCTION_LOG_RETURN(STRING_LIST, result);
 }
 
+/***********************************************************************************************************************************
+Get a single WAL segment synchronously, i.e. copy it directly from the repository to the destination rather than using the async
+spool queue. Returns 0 if the segment was found and copied, else 1. Throws on error.
+***********************************************************************************************************************************/
+static int
+archiveGetSingle(const String *const walSegment, const String *const walDestination)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, walSegment);
+        FUNCTION_LOG_PARAM(STRING, walDestination);
+    FUNCTION_LOG_END();
+
+    ASSERT(walSegment != NULL);
+    ASSERT(walDestination != NULL);
+
+    int result = 1;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Check for the archive file
+        StringList *const archiveRequestList = strLstNew();
+        strLstAdd(archiveRequestList, walSegment);
+
+        const ArchiveGetCheckResult checkResult = archiveGetCheck(archiveRequestList);
+
+        // If there was an error then throw it
+        if (checkResult.errorType != NULL)
+            THROW_CODE(errorTypeCode(checkResult.errorType), strZ(checkResult.errorMessage));
+
+        // Get the archive file
+        if (!lstEmpty(checkResult.archiveFileMapList))
+        {
+            // There can only be one file mapping since only one file was requested
+            ASSERT(lstSize(checkResult.archiveFileMapList) == 1);
+            const ArchiveFileMap *const fileMap = lstGet(checkResult.archiveFileMapList, 0);
+
+            // Get the file
+            const ArchiveGetFileResult fileResult = archiveGetFile(
+                storageLocalWrite(), fileMap->request, fileMap->actualList, walDestination);
+
+            // Output file warnings
+            for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileResult.warnList); warnIdx++)
+                LOG_WARN(strZ(strLstGet(fileResult.warnList, warnIdx)));
+
+            // If there was no error then the file existed
+            const ArchiveGetFile *const file = lstGet(fileMap->actualList, fileResult.actualIdx);
+            ASSERT(file != NULL);
+
+            LOG_INFO_FMT(
+                FOUND_IN_REPO_ARCHIVE_MSG, strZ(walSegment), cfgOptionGroupName(cfgOptGrpRepo, file->repoIdx),
+                strZ(file->archiveId));
+
+            result = 0;
+        }
+        // Else log that the file was not found
+        else
+            LOG_INFO_FMT(UNABLE_TO_FIND_IN_ARCHIVE_MSG, strZ(walSegment));
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(INT, result);
+}
+
 /**********************************************************************************************************************************/
 FN_EXTERN int
 cmdArchiveGet(void)
@@ -655,6 +718,7 @@ cmdArchiveGet(void)
             bool foundOk = false;                                       // Was an OK file found which confirms the file was missing?
             bool queueFull = false;                                     // Is the queue half or more full?
             bool forked = false;                                        // Has the async process been forked yet?
+            bool syncGet = false;                                       // Was the segment resolved by a synchronous get?
 
             // Loop and wait for the WAL segment to be pushed
             Wait *const wait = waitNew(cfgOptionUInt64(cfgOptArchiveTimeout));
@@ -773,6 +837,20 @@ cmdArchiveGet(void)
                     forked = true;
                 }
 
+                // If the segment was not found and a foreign async process holds the lock, then that process was spawned by a
+                // different main process (e.g. a prior invocation filling the queue for the old timeline after a timeline switch)
+                // and will not fetch the requested segment. Rather than wait for it and risk a timeout on a segment that actually
+                // exists -- which can end recovery prematurely -- fetch the segment synchronously. Wait until after the first run so
+                // an async process spawned above gets a chance to fetch the segment into the queue first.
+                if (!found && !first && cmdLockForeign())
+                {
+                    result = archiveGetSingle(walSegment, walDestination);
+                    found = result == 0;
+                    syncGet = true;
+
+                    break;
+                }
+
                 // Exit loop if WAL was found
                 if (found)
                     break;
@@ -782,8 +860,8 @@ cmdArchiveGet(void)
             }
             while (waitMore(wait));
 
-            // If the WAL segment was not found
-            if (!found)
+            // If the WAL segment was not found and it was not resolved by a synchronous get (which does its own logging)
+            if (!found && !syncGet)
             {
                 // If no ok file was found then something may be wrong with the async process. It's better to throw an error here
                 // than report not found for debugging purposes. Either way PostgreSQL will halt if it has not reached consistency.
@@ -805,46 +883,7 @@ cmdArchiveGet(void)
         }
         // Else perform synchronous get
         else
-        {
-            // Check for the archive file
-            StringList *const archiveRequestList = strLstNew();
-            strLstAdd(archiveRequestList, walSegment);
-
-            const ArchiveGetCheckResult checkResult = archiveGetCheck(archiveRequestList);
-
-            // If there was an error then throw it
-            if (checkResult.errorType != NULL)
-                THROW_CODE(errorTypeCode(checkResult.errorType), strZ(checkResult.errorMessage));
-
-            // Get the archive file
-            if (!lstEmpty(checkResult.archiveFileMapList))
-            {
-                // There can only be one file mapping since only one file was requested
-                ASSERT(lstSize(checkResult.archiveFileMapList) == 1);
-                const ArchiveFileMap *const fileMap = lstGet(checkResult.archiveFileMapList, 0);
-
-                // Get the file
-                const ArchiveGetFileResult fileResult = archiveGetFile(
-                    storageLocalWrite(), fileMap->request, fileMap->actualList, walDestination);
-
-                // Output file warnings
-                for (unsigned int warnIdx = 0; warnIdx < strLstSize(fileResult.warnList); warnIdx++)
-                    LOG_WARN(strZ(strLstGet(fileResult.warnList, warnIdx)));
-
-                // If there was no error then the file existed
-                const ArchiveGetFile *const file = lstGet(fileMap->actualList, fileResult.actualIdx);
-                ASSERT(file != NULL);
-
-                LOG_INFO_FMT(
-                    FOUND_IN_REPO_ARCHIVE_MSG, strZ(walSegment), cfgOptionGroupName(cfgOptGrpRepo, file->repoIdx),
-                    strZ(file->archiveId));
-
-                result = 0;
-            }
-            // Else log that the file was not found
-            else
-                LOG_INFO_FMT(UNABLE_TO_FIND_IN_ARCHIVE_MSG, strZ(walSegment));
-        }
+            result = archiveGetSingle(walSegment, walDestination);
     }
     MEM_CONTEXT_TEMP_END();
 

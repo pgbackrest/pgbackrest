@@ -113,6 +113,37 @@ cmdLockAcquire(const LockAcquireParam param)
 }
 
 /**********************************************************************************************************************************/
+FN_EXTERN bool
+cmdLockForeign(void)
+{
+    FUNCTION_LOG_VOID(logLevelDebug);
+
+    ASSERT(cfgLockType() != lockTypeNone);
+
+    bool result = false;
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        const StringList *const lockList = cmdLockList();
+
+        // A valid lock held by a different exec id was taken by an async process spawned by a different main process
+        for (unsigned int lockListIdx = 0; lockListIdx < strLstSize(lockList); lockListIdx++)
+        {
+            const LockReadResult lockResult = lockReadP(strLstGet(lockList, lockListIdx));
+
+            if (lockResult.status == lockReadStatusValid && !strEq(lockResult.data.execId, lockExecId()))
+            {
+                result = true;
+                break;
+            }
+        }
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN(BOOL, result);
+}
+
+/**********************************************************************************************************************************/
 FN_EXTERN void
 cmdLockWrite(const LockWriteParam param)
 {

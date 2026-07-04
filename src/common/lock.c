@@ -86,6 +86,17 @@ lockInit(const String *const path, const String *const execId)
     FUNCTION_LOG_RETURN_VOID();
 }
 
+/**********************************************************************************************************************************/
+FN_EXTERN const String *
+lockExecId(void)
+{
+    FUNCTION_TEST_VOID();
+
+    ASSERT(lockLocal.memContext != NULL);
+
+    FUNCTION_TEST_RETURN_CONST(STRING, lockLocal.execId);
+}
+
 /***********************************************************************************************************************************
 Read contents of lock file
 ***********************************************************************************************************************************/

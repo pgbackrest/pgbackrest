@@ -735,9 +735,19 @@ testRun(void)
         TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000002\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("unable to get lock");
+        TEST_TITLE("foreign lock forces a synchronous get");
 
-        // Make sure the process times out when it can't get a lock
+        // Set up a valid repo so the synchronous get can check for the segment
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}\n");
+
+        // When a foreign async process (a different exec id) holds the lock it was spawned by a different main process and will not
+        // fetch the requested segment, so the segment is fetched synchronously rather than waiting for the async process
         HRN_FORK_BEGIN()
         {
             HRN_FORK_CHILD_BEGIN()
@@ -760,10 +770,22 @@ testRun(void)
                 // Wait for child to acquire lock
                 HRN_FORK_PARENT_NOTIFY_GET(0);
 
-                TEST_ERROR(
-                    cmdArchiveGet(), ArchiveTimeoutError,
-                    "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)\n"
-                    "HINT: check '" HRN_PATH "/test1-archive-get-async.log' for errors.");
+                // The segment exists in the repo so it is fetched synchronously rather than waiting for the foreign async process
+                HRN_STORAGE_PUT_EMPTY(
+                    storageRepoWrite(),
+                    STORAGE_REPO_ARCHIVE "/10-1/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+
+                TEST_RESULT_INT(cmdArchiveGet(), 0, "synchronous get while foreign lock is held");
+                TEST_RESULT_LOG("P00   INFO: found 000000010000000100000001 in the repo1: 10-1 archive");
+                TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
+
+                // The segment no longer exists so it is reported missing rather than timing out
+                TEST_STORAGE_EXISTS(
+                    storageRepoWrite(),
+                    STORAGE_REPO_ARCHIVE "/10-1/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd", .remove = true);
+
+                TEST_RESULT_INT(cmdArchiveGet(), 1, "synchronous get while foreign lock is held, segment missing");
+                TEST_RESULT_LOG("P00   INFO: unable to find 000000010000000100000001 in the archive");
 
                 // Notify child to release lock
                 HRN_FORK_PARENT_NOTIFY_PUT(0);

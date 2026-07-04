@@ -29,6 +29,10 @@ FN_EXTERN void cmdLockWrite(LockWriteParam param);
 // Read a command lock file held by another process to get information about what the process is doing
 FN_EXTERN LockReadResult cmdLockRead(LockType lockType, const String *stanza, unsigned int repoKey);
 
+// Is a command lock held by a process with a different exec id, i.e. an async process spawned by a different main process? This lets
+// async archive-get fetch a segment synchronously rather than wait for an async process that will not fetch it.
+FN_EXTERN bool cmdLockForeign(void);
+
 // Release command lock(s)
 #define cmdLockReleaseP(...)                                                                                                       \
     cmdLockRelease((LockReleaseParam){VAR_PARAM_INIT, __VA_ARGS__})
