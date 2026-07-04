@@ -892,7 +892,8 @@ testRun(void)
             "P01 DETAIL: pushed WAL file '000000010000000100000001' to the archive\n"
             "P01   WARN: could not push WAL file '000000010000000100000002' to the archive (will be retried): "
             "[55] raised from local-1 shim protocol: " STORAGE_ERROR_READ_MISSING "\n"
-            "            [RETRY DETAIL OMITTED]",
+            "            [RETRY DETAIL OMITTED]\n"
+            "P00   WARN: stopped archive-push after an error, remaining WAL will be processed on the next run",
             TEST_PATH "/pg/pg_xlog/000000010000000100000002");
 
         TEST_STORAGE_EXISTS(
@@ -1033,6 +1034,7 @@ testRun(void)
         bufUsedSet(walBufferBatch, bufSize(walBufferBatch));
         memset(bufPtr(walBufferBatch), 0x88, bufSize(walBufferBatch));
         HRN_PG_WAL_TO_BUFFER(walBufferBatch, PG_VERSION_18);
+        const char *walBufferBatchSha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBufferBatch)));
 
         HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000010", walBufferBatch);
         HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000011", walBufferBatch);
@@ -1145,6 +1147,54 @@ testRun(void)
             "000000010000000100000011.ok\n"
             "000000010000000100000012.ok\n"
             "000000010000000100000013.ok\n",
+            .comment = "check status files");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stop async processing after an error");
+
+        // Remove status and ready files to get a clean state
+        HRN_STORAGE_PATH_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT);
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog/archive_status", .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog/archive_status");
+
+        // Create WAL segments and ready files for six segments. There are more segments than will be processed to prove that
+        // processing stops after an error and leaves the remaining WAL for the next run.
+        for (unsigned int walIdx = 4; walIdx <= 9; walIdx++)
+        {
+            HRN_STORAGE_PUT(storagePgWrite(), zNewFmt("pg_xlog/00000001000000010000000%u", walIdx), walBufferBatch);
+            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), zNewFmt("pg_xlog/archive_status/00000001000000010000000%u.ready", walIdx));
+        }
+
+        // Make the repo archive path read-only so each push errors when it writes, simulating an unavailable repository
+        HRN_STORAGE_MODE(storageTest, "repo/archive/test/18-1/0000000100000001", .mode = 0500);
+
+        argListTemp = strLstDup(argList);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp, .role = cfgCmdRoleAsync);
+
+        // The job that errors and the one already in flight (process-max is 1) both complete, then scheduling stops
+        TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
+        TEST_RESULT_LOG_FMT(
+            "P00   INFO: push 6 WAL file(s) to archive: 000000010000000100000004...000000010000000100000009\n"
+            "P01   WARN: could not push WAL file '000000010000000100000004' to the archive (will be retried): "
+            "[104] raised from local-1 shim protocol: archive-push command encountered error(s):\n"
+            "            repo1: [FileOpenError] unable to open file '" TEST_PATH
+            "/repo/archive/test/18-1/0000000100000001/000000010000000100000004-%s' for write: [13] Permission denied\n"
+            "P01   WARN: could not push WAL file '000000010000000100000005' to the archive (will be retried): "
+            "[104] raised from local-1 shim protocol: archive-push command encountered error(s):\n"
+            "            repo1: [FileOpenError] unable to open file '" TEST_PATH
+            "/repo/archive/test/18-1/0000000100000001/000000010000000100000005-%s' for write: [13] Permission denied\n"
+            "P00   WARN: stopped archive-push after an error, remaining WAL will be processed on the next run",
+            walBufferBatchSha1, walBufferBatchSha1);
+
+        // Restore the repo mode so later tests can write
+        HRN_STORAGE_MODE(storageTest, "repo/archive/test/18-1/0000000100000001");
+
+        // Only the segments processed before stopping have status files; the rest are left for the next run
+        TEST_STORAGE_LIST(
+            storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT,
+            "000000010000000100000004.error\n"
+            "000000010000000100000005.error\n",
             .comment = "check status files");
 
         // Uninstall local command handler shim

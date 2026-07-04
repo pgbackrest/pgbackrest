@@ -15,6 +15,19 @@
             </release-item>
 
             <release-item>
+                <github-issue id="2629"/>
+                <github-pull-request id="2799"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="vut12"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix <setting>archive-push-queue-max</setting> not enforced when a WAL file errors.</p>
+            </release-item>
+
+            <release-item>
                 <release-item-contributor-list>
                     <release-item-contributor id="christophe.pettus"/>
                     <release-item-reviewer id="david.steele"/>
@@ -140,6 +153,19 @@
             </release-item>
 
             <release-item>
+                <github-issue id="1848"/>
+                <github-pull-request id="2802"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="sebastien.lardiere"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Exit async <cmd>archive-push</cmd> on first error.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2785"/>
 
                 <release-item-contributor-list>
@@ -148,6 +174,17 @@
                 </release-item-contributor-list>
 
                 <p>Harden HTTP chunked response parsing.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2774"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="gunnar.lindholm"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fewer binary searches when building manifest.</p>
             </release-item>
 
             <release-item>
