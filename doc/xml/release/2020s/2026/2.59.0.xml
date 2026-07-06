@@ -2,12 +2,51 @@
     <release-core-list>
         <release-bug-list>
             <release-item>
+                <github-issue id="2622"/>
+                <github-pull-request id="2797"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="dima19017"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix <cmd>expire</cmd> removing a backup in progress on another host.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2629"/>
+                <github-pull-request id="2799"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="vut12"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix <setting>archive-push-queue-max</setting> not enforced when a WAL file errors.</p>
+            </release-item>
+
+            <release-item>
                 <release-item-contributor-list>
                     <release-item-contributor id="christophe.pettus"/>
                     <release-item-reviewer id="david.steele"/>
                 </release-item-contributor-list>
 
                 <p>Fix potential buffer overrun in error module.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1768"/>
+                <github-pull-request id="2796"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="naveen"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix heap overflow when a pg option is set without pg1.</p>
             </release-item>
         </release-bug-list>
 
@@ -62,6 +101,21 @@
 
         <release-improvement-list>
             <release-item>
+                <github-issue id="2739"/>
+                <github-issue id="2772"/>
+                <github-pull-request id="2793"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="mustafa0x"/>
+                    <release-item-ideator id="tisserat"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Reconnect SFTP storage after the server drops an idle connection.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2773"/>
 
                 <release-item-contributor-list>
@@ -99,6 +153,19 @@
             </release-item>
 
             <release-item>
+                <github-issue id="1848"/>
+                <github-pull-request id="2802"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="sebastien.lardiere"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Exit async <cmd>archive-push</cmd> on first error.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2785"/>
 
                 <release-item-contributor-list>
@@ -107,6 +174,17 @@
                 </release-item-contributor-list>
 
                 <p>Harden HTTP chunked response parsing.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2774"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="gunnar.lindholm"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fewer binary searches when building manifest.</p>
             </release-item>
 
             <release-item>

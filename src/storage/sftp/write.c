@@ -47,24 +47,13 @@ storageWriteSftpOpen(THIS_VOID)
 
     const unsigned long int flags = LIBSSH2_FXF_CREAT | LIBSSH2_FXF_WRITE | LIBSSH2_FXF_TRUNC;
 
-    // Open the file
+    // Retry the open once if the connection was lost (e.g. the server dropped an idle connection) and reopened successfully
+    unsigned int retry = 0;
+    int connErrno;
+
     do
     {
-        this->sftpHandle = libssh2_sftp_open_ex(
-            storageSftpSessionSftp(this->storage), strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp), flags,
-            (int)this->modeFile, LIBSSH2_SFTP_OPENFILE);
-    }
-    while (this->sftpHandle == NULL &&
-           storageSftpWaitFd(this->storage, libssh2_session_last_errno(storageSftpSession(this->storage))));
-
-    // Attempt to create the path if it is missing
-    if (this->sftpHandle == NULL && libssh2_session_last_errno(storageSftpSession(this->storage)) == LIBSSH2_ERROR_SFTP_PROTOCOL &&
-        libssh2_sftp_last_error(storageSftpSessionSftp(this->storage)) == LIBSSH2_FX_NO_SUCH_FILE)
-    {
-        // Create the path
-        storageInterfacePathCreateP(this->storage, this->path, false, false, this->modePath);
-
-        // Open file again
+        // Open the file
         do
         {
             this->sftpHandle = libssh2_sftp_open_ex(
@@ -72,8 +61,27 @@ storageWriteSftpOpen(THIS_VOID)
                 (int)this->modeFile, LIBSSH2_SFTP_OPENFILE);
         }
         while (this->sftpHandle == NULL &&
-               storageSftpWaitFd(this->storage, libssh2_session_last_errno(storageSftpSession(this->storage))));
+               storageSftpWaitFd(this->storage, (connErrno = libssh2_session_last_errno(storageSftpSession(this->storage)))));
+
+        // Attempt to create the path if it is missing
+        if (this->sftpHandle == NULL && libssh2_session_last_errno(storageSftpSession(this->storage)) == LIBSSH2_ERROR_SFTP_PROTOCOL
+            && libssh2_sftp_last_error(storageSftpSessionSftp(this->storage)) == LIBSSH2_FX_NO_SUCH_FILE)
+        {
+            // Create the path
+            storageInterfacePathCreateP(this->storage, this->path, false, false, this->modePath);
+
+            // Open file again
+            do
+            {
+                this->sftpHandle = libssh2_sftp_open_ex(
+                    storageSftpSessionSftp(this->storage), strZ(this->nameTmp), (unsigned int)strSize(this->nameTmp), flags,
+                    (int)this->modeFile, LIBSSH2_SFTP_OPENFILE);
+            }
+            while (this->sftpHandle == NULL &&
+                   storageSftpWaitFd(this->storage, (connErrno = libssh2_session_last_errno(storageSftpSession(this->storage)))));
+        }
     }
+    while (this->sftpHandle == NULL && retry++ == 0 && storageSftpReconnect(this->storage, connErrno));
 
     // Handle error
     if (this->sftpHandle == NULL)

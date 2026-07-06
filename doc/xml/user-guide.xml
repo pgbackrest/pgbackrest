@@ -801,7 +801,8 @@
             <execute if ="{[os-type-is-rhel]}" user="root" user-force="y">
                 <exe-cmd>aws configure set ca_bundle {[ca-cert-path]}/pgbackrest-ca.crt</exe-cmd>
             </execute>
-            <execute user="root" user-force="y">
+            <!-- Retry to allow time for the S3 server (Ceph) to finish starting up before creating the bucket -->
+            <execute user="root" user-force="y" retry="60">
                 <exe-cmd>aws --endpoint-url https://{[s3-endpoint]} s3 mb s3://{[s3-bucket]}</exe-cmd>
             </execute>
             <execute user="root" user-force="y">

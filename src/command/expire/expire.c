@@ -875,32 +875,34 @@ removeExpiredBackup(const InfoBackup *const infoBackup, const String *const adho
         // Initialize the index to the latest backup on disk
         unsigned int backupIdx = 0;
 
-        // Only remove the resumable backup if there is a possibility it is a dependent of the adhoc label being expired
-        if (adhocBackupLabel != NULL && !strLstEmpty(backupList))
+        // The latest backup on disk may be resumable or in-progress (has a backup.manifest.copy but no backup.manifest). A backup
+        // in this state must not be removed by default: it may be a crashed backup that the next backup will resume or clean, or it
+        // may be actively running on another host (e.g. backup runs on the primary while expire runs on a standby). Removing it in
+        // the latter case corrupts the in-progress backup. Only the latest backup can be in this state.
+        if (!strLstEmpty(backupList))
         {
             const String *const manifestFileName = strNewFmt(
-                STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(strLstGet(backupList, backupIdx)));
+                STORAGE_REPO_BACKUP "/%s/" BACKUP_MANIFEST_FILE, strZ(strLstGet(backupList, 0)));
             const String *const manifestCopyFileName = strNewFmt("%s" INFO_COPY_EXT, strZ(manifestFileName));
 
             // If the latest backup is resumable (has a backup.manifest.copy but no backup.manifest)
             if (!storageExistsP(storageRepoIdx(repoIdx), manifestFileName) &&
                 storageExistsP(storageRepoIdx(repoIdx), manifestCopyFileName))
             {
-                // If the resumable backup is not related to the expired adhoc backup then don't remove it
-                if (!strBeginsWith(strLstGet(backupList, backupIdx), strSubN(adhocBackupLabel, 0, 16)))
-                {
-                    backupIdx = 1;
-                }
-                // Else it may be related to the adhoc backup so check if its ancestor still exists
-                else
+                // Protect the resumable/in-progress backup by default
+                backupIdx = 1;
+
+                // During adhoc expiration the resumable backup may be a dependent of the label being expired, in which case it
+                // should be removed along with it -- but only when its ancestor no longer exists in backup.info
+                if (adhocBackupLabel != NULL && strBeginsWith(strLstGet(backupList, 0), strSubN(adhocBackupLabel, 0, 16)))
                 {
                     const Manifest *const manifestResume = manifestLoadFile(
                         storageRepoIdx(repoIdx), manifestFileName, cfgOptionIdxStrId(cfgOptRepoCipherType, repoIdx),
                         infoPgCipherPass(infoBackupPg(infoBackup)));
 
-                    // If the ancestor of the resumable backup still exists in backup.info then do not remove the resumable backup
-                    if (infoBackupLabelExists(infoBackup, manifestData(manifestResume)->backupLabelPrior))
-                        backupIdx = 1;
+                    // If the ancestor of the resumable backup no longer exists in backup.info then it can be removed
+                    if (!infoBackupLabelExists(infoBackup, manifestData(manifestResume)->backupLabelPrior))
+                        backupIdx = 0;
                 }
             }
         }

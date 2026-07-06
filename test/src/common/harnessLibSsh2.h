@@ -305,6 +305,19 @@ Macros for defining groups of functions that implement commands
     HRN_LIBSSH2_DISCONNECT(),                                                                                                      \
     HRN_LIBSSH2_SESSION_FREE()
 
+// Set of functions mimicking a reconnect after the server drops an idle connection. The broken session is freed without a graceful
+// shutdown/disconnect (see storageSftpConnFree()) and then a new session is opened. Note that libssh2_init() is not called again.
+#define HRNLIBSSH2_MACRO_RECONNECT()                                                                                               \
+    HRN_LIBSSH2_SESSION_FREE(),                                                                                                    \
+    HRN_LIBSSH2_SESSION_INIT(),                                                                                                    \
+    HRN_LIBSSH2_HANDSHAKE(),                                                                                                       \
+    HRN_LIBSSH2_KNOWNHOST_INIT(),                                                                                                  \
+    HRN_LIBSSH2_KNOWNHOST_READFILE(KNOWNHOSTS_FILE_CSTR, .resultInt = 5),                                                          \
+    HRN_LIBSSH2_HOSTKEY(),                                                                                                         \
+    HRN_LIBSSH2_KNOWNHOST_CHECK(LIBSSH2_KNOWNHOST_CHECK_MATCH),                                                                    \
+    HRN_LIBSSH2_USERAUTH(),                                                                                                        \
+    HRN_LIBSSH2_SFTP_INIT()
+
 /***********************************************************************************************************************************
 Functions
 ***********************************************************************************************************************************/
