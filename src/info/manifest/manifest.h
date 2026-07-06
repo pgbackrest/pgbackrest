@@ -359,6 +359,16 @@ FN_EXTERN void manifestFileAdd(Manifest *this, ManifestFile *file);
 // Find file in pack format by name
 FN_EXTERN const ManifestFilePack *manifestFilePackFind(const Manifest *this, const String *name);
 
+// Find file in pack format by name, returning NULL when missing. Cheaper than calling manifestFileExists() followed by
+// manifestFilePackFind() because it does only one binary search.
+FN_INLINE_ALWAYS const ManifestFilePack *
+manifestFilePackFindDefault(const Manifest *const this, const String *const name)
+{
+    ASSERT_INLINE(name != NULL);
+    const ManifestFilePack *const *const filePack = lstFindDefault(THIS_PUB(Manifest)->fileList, &name, NULL);
+    return filePack == NULL ? NULL : *filePack;
+}
+
 // Find file by name
 FN_INLINE_ALWAYS ManifestFile
 manifestFileFind(const Manifest *const this, const String *const name)
