@@ -1568,6 +1568,16 @@ testRun(void)
             cmdExpire(), OptionInvalidValueError,
             "'" BOGUS_STR "' is not a valid WAL segment name for option '--archive-expire-before'");
 
+        // A .partial suffix is not an exact segment and must be rejected - otherwise it would shift the removal boundary and
+        // expire the segment the option is meant to keep
+        argList = strLstDup(argListAvoidWarn);
+        hrnCfgArgRawZ(argList, cfgOptArchiveExpireBefore, "000000010000000000000006.partial");
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
+
+        TEST_ERROR(
+            cmdExpire(), OptionInvalidValueError,
+            "'000000010000000000000006.partial' is not a valid WAL segment name for option '--archive-expire-before'");
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("archive-expire-before - no backup to retain, current archive id only");
 

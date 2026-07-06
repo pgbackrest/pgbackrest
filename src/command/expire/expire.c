@@ -1070,8 +1070,10 @@ cmdExpire(void)
                 THROW_FMT(OptionInvalidValueError, "'%s' is not a valid backup label format", strZ(adhocBackupLabel));
         }
 
-        // If --archive-expire-before is set, the value must be a valid WAL segment name
-        if (cfgOptionTest(cfgOptArchiveExpireBefore) && !walIsSegment(cfgOptionStr(cfgOptArchiveExpireBefore)))
+        // If --archive-expire-before is set, the value must be an exact WAL segment name. Match the strict segment expression
+        // rather than walIsSegment(), which also accepts a .partial suffix that would shift the removal boundary by a segment.
+        if (cfgOptionTest(cfgOptArchiveExpireBefore) &&
+            !regExpMatchOne(WAL_SEGMENT_REGEXP_STR, cfgOptionStr(cfgOptArchiveExpireBefore)))
         {
             THROW_FMT(
                 OptionInvalidValueError, "'%s' is not a valid WAL segment name for option '--archive-expire-before'",
