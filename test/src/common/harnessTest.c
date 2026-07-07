@@ -8,6 +8,7 @@ C Test Harness
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -320,6 +321,27 @@ hrnDiff(const char *expected, const char *actual)
     harnessDiffBuffer[strlen(harnessDiffBuffer) - 1] = 0;
 
     FUNCTION_HARNESS_RETURN(STRINGZ, harnessDiffBuffer);
+}
+
+/**********************************************************************************************************************************/
+static char harnessSystemStatusBuffer[64];
+
+const char *
+hrnSystemStatus(int status)
+{
+    FUNCTION_HARNESS_BEGIN();
+        FUNCTION_HARNESS_PARAM(INT, status);
+    FUNCTION_HARNESS_END();
+
+    // Decode the status returned by system() into an exit code or terminating signal
+    if (status == -1)
+        snprintf(harnessSystemStatusBuffer, sizeof(harnessSystemStatusBuffer), "UNABLE TO EXECUTE");
+    else if (WIFSIGNALED(status))
+        snprintf(harnessSystemStatusBuffer, sizeof(harnessSystemStatusBuffer), "TERMINATED BY SIGNAL %d", WTERMSIG(status));
+    else
+        snprintf(harnessSystemStatusBuffer, sizeof(harnessSystemStatusBuffer), "FAILED WITH EXIT CODE %d", WEXITSTATUS(status));
+
+    FUNCTION_HARNESS_RETURN(STRINGZ, harnessSystemStatusBuffer);
 }
 
 /**********************************************************************************************************************************/

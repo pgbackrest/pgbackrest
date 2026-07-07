@@ -624,6 +624,7 @@ typedef enum
     cfgOptRepoS3Role,
     cfgOptRepoS3Service,
     cfgOptRepoS3SseCustomerKey,
+    cfgOptRepoS3StsHost,
     cfgOptRepoS3Token,
     cfgOptRepoS3UriStyle,
     cfgOptRepoSftpHost,

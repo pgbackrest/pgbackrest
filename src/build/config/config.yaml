@@ -2408,6 +2408,14 @@ option:
     default: s3
     required: false
 
+  repo-s3-sts-host:
+    inherit: repo-s3-bucket
+    default: sts.amazonaws.com
+    depend:
+      option: repo-s3-key-type
+      list:
+        - web-id
+
   repo-s3-uri-style:
     section: global
     group: repo
