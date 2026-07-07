@@ -1068,8 +1068,8 @@ testRun(void)
         HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog/archive_status", .recurse = true);
         HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog/archive_status");
 
-        // Create one valid WAL segment and ready files for two segments. A batch size smaller than a single segment still pushes one
-        // segment so that progress is always made.
+        // Create one valid WAL segment and ready files for two segments. A batch size smaller than a single segment still pushes
+        // one segment so that progress is always made.
         HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000014", walBufferBatch);
 
         for (unsigned int walIdx = 20; walIdx <= 21; walIdx++)
@@ -1126,8 +1126,8 @@ testRun(void)
         for (unsigned int walIdx = 16; walIdx <= 19; walIdx++)
             HRN_STORAGE_PUT_EMPTY(storagePgWrite(), zNewFmt("pg_xlog/archive_status/0000000100000001%08X.ready", walIdx));
 
-        // The batch size (two segments = 32MiB) is under the queue-max but the full queue (four segments = 64MiB) exceeds it, so the
-        // entire queue is dropped rather than truncated to the batch
+        // The batch size (two segments = 32MiB) is under the queue-max but the full queue (four segments = 64MiB) exceeds it, so
+        // the entire queue is dropped rather than truncated to the batch
         argListTemp = strLstDup(argList);
         hrnCfgArgRawZ(argListTemp, cfgOptArchivePushBatchSize, "32MiB");
         hrnCfgArgRawZ(argListTemp, cfgOptArchivePushQueueMax, "48MiB");
