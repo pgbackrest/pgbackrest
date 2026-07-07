@@ -153,6 +153,29 @@
             </release-item>
 
             <release-item>
+                <github-issue id="2791"/>
+                <github-pull-request id="2798"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="simon.gratton"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Allow the <proper>S3</proper> STS endpoint to be configured.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2803"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add <setting>archive-push-batch-size</setting> to limit WAL pushed per asynchronous run.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="1848"/>
                 <github-pull-request id="2802"/>
 
@@ -256,6 +279,17 @@
 
                 <p><proper>C11</proper> is now the minimum C standard.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2735"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Make <setting>stanza</setting> option internal for the <cmd>repo-*</cmd> commands.</p>
+            </release-item>
         </release-improvement-list>
 
         <release-development-list>
@@ -272,6 +306,23 @@
             </release-item>
         </release-development-list>
     </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <github-issue id="1407"/>
+                <github-pull-request id="2805"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="ron.johnson"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Document that info reads encryption settings from global section.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
 
     <release-test-list>
         <release-improvement-list>

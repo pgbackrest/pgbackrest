@@ -48,6 +48,9 @@ void hrnFileWrite(const char *fileName, const uint8_t *buffer, size_t bufferSize
 // Diff two strings using command-line diff tool
 const char *hrnDiff(const char *actual, const char *expected);
 
+// Describe the status returned by system() as an exit code or terminating signal
+const char *hrnSystemStatus(int status);
+
 // Set timezone
 void hrnTzSet(const char *tz);
 
@@ -356,11 +359,7 @@ System call harness
         int TEST_SYSTEM_FMT_result = system(command);                                                                              \
                                                                                                                                    \
         if (TEST_SYSTEM_FMT_result != 0)                                                                                           \
-        {                                                                                                                          \
-            THROW_FMT(                                                                                                             \
-                AssertError, "SYSTEM COMMAND: %s\n\nFAILED WITH CODE %d\n\nTHROWN AT:\n%s", command, TEST_SYSTEM_FMT_result,       \
-                errorStackTrace());                                                                                                \
-        }                                                                                                                          \
+            THROW_FMT(AssertError, "SYSTEM COMMAND: %s\n\n%s", command, hrnSystemStatus(TEST_SYSTEM_FMT_result));                  \
     } while (0)
 
 #define HRN_SYSTEM_FMT(...)                                                                                                        \

@@ -161,14 +161,14 @@ jobs:
 
       matrix:
         os:
-          - version: '14.3'
-          - version: '15.0'
+          - version: '14.4'
+          - version: '15.1'
 
     steps:
       - uses: actions/checkout@v6
 
       - name: Run Test
-        uses: cross-platform-actions/action@v1.0.0
+        uses: cross-platform-actions/action@v1.3.0
         with:
           operating_system: freebsd
           version: ${{matrix.os.version}}

@@ -432,6 +432,11 @@ logPost(LogPreResult *const logData, const LogLevel logLevel, const LogLevel log
     ASSERT_LOG_LEVEL(logRangeMax);
     ASSERT(logRangeMin <= logRangeMax);
 
+    // Reserve room for the linefeed and null terminator. snprintf() returns the untruncated length, so a message longer than the
+    // buffer can leave bufferPos past the end; limit it so the writes below stay in bounds.
+    if (logData->bufferPos > LOG_BUFFER_SIZE - 2)
+        logData->bufferPos = LOG_BUFFER_SIZE - 2;
+
     // Add linefeed
     logBuffer[logData->bufferPos++] = '\n';
     logBuffer[logData->bufferPos] = 0;
@@ -491,10 +496,12 @@ logSignal(const LogLevel logLevel, const char *const signalName)
     memcpy(logBuffer, LOG_SIGNAL_MESSAGE_PRE, sizeof(LOG_SIGNAL_MESSAGE_PRE) - 1);
     LogPreResult logData = {.bufferPos = sizeof(LOG_SIGNAL_MESSAGE_PRE) - 1, .logBufferStdErr = logBuffer, .indentSize = 4};
 
-    // Add signal name and ensure string is zero-terminated
-    strncpy(logBuffer + logData.bufferPos, signalName, sizeof(logBuffer) - logData.bufferPos - 1);
-    logData.bufferPos += strlen(signalName);
-    logBuffer[sizeof(logBuffer) - 1] = 0;
+    // Add signal name and update buffer position (memcpy includes the null terminator). A signal name is always a short internal
+    // constant that fits the buffer and memcpy is async-signal-safe, unlike snprintf().
+    const size_t signalNameSize = strlen(signalName);
+
+    memcpy(logBuffer + logData.bufferPos, signalName, signalNameSize + 1);
+    logData.bufferPos += signalNameSize;
 
     logPost(&logData, logLevel, LOG_LEVEL_MIN, LOG_LEVEL_MAX);
 
@@ -523,9 +530,7 @@ logInternal(
     LogPreResult logData = logPre(logLevel, processId, fileName, functionName, code);
 
     // Copy message into buffer and update buffer position
-    strncpy(logBuffer + logData.bufferPos, message, sizeof(logBuffer) - logData.bufferPos);
-    logBuffer[sizeof(logBuffer) - 1] = 0;
-    logData.bufferPos += strlen(logBuffer + logData.bufferPos);
+    logData.bufferPos += (size_t)snprintf(logBuffer + logData.bufferPos, LOG_BUFFER_SIZE - logData.bufferPos, "%s", message);
 
     logPost(&logData, logLevel, logRangeMin, logRangeMax);
 

@@ -2,6 +2,7 @@
 Test Log Handler
 ***********************************************************************************************************************************/
 #include <fcntl.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <common/regExp.h>
@@ -197,6 +198,19 @@ testRun(void)
             logInternalFmt(logLevelWarn, LOG_LEVEL_MIN, LOG_LEVEL_MAX, UINT_MAX, "file", "function", 0, "format %d", 99),
             "log warn");
         TEST_RESULT_Z(logBuffer, "P44   WARN: format 99\n", "    check log");
+
+        // A message longer than the buffer is truncated in logPost() with room kept for the linefeed and null terminator. Use a
+        // range that produces no output so the large message is not written to a file descriptor.
+        char logMessageBig[LOG_BUFFER_SIZE + 1];
+        memset(logMessageBig, 'a', LOG_BUFFER_SIZE);
+        logMessageBig[LOG_BUFFER_SIZE] = '\0';
+
+        logBuffer[0] = 0;
+        TEST_RESULT_VOID(
+            logInternal(logLevelWarn, logLevelError, logLevelError, UINT_MAX, "file", "function", 0, logMessageBig),
+            "log message larger than buffer");
+        TEST_RESULT_UINT(strlen(logBuffer), LOG_BUFFER_SIZE - 1, "    check truncated to buffer size");
+        TEST_RESULT_BOOL(logBuffer[LOG_BUFFER_SIZE - 2] == '\n', true, "    check linefeed kept at end");
 
         // This won't be logged due to the range
         TEST_RESULT_VOID(

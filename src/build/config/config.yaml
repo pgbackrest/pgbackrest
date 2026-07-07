@@ -442,12 +442,16 @@ option:
       manifest: {}
       repo-get:
         required: false
+        internal: true
       repo-ls:
         required: false
+        internal: true
       repo-put:
         required: false
+        internal: true
       repo-rm:
         required: false
+        internal: true
       restore: {}
       stanza-create: {}
       stanza-delete: {}
@@ -1058,6 +1062,17 @@ option:
     command:
       archive-get: {}
     command-role:
+      main: {}
+
+  archive-push-batch-size:
+    section: global
+    type: size
+    default: 16GiB
+    allow-range: [1MiB, 4PiB]
+    command:
+      archive-push: {}
+    command-role:
+      async: {}
       main: {}
 
   archive-push-queue-max:
@@ -2404,6 +2419,14 @@ option:
     inherit: repo-s3-bucket
     default: s3
     required: false
+
+  repo-s3-sts-host:
+    inherit: repo-s3-bucket
+    default: sts.amazonaws.com
+    depend:
+      option: repo-s3-key-type
+      list:
+        - web-id
 
   repo-s3-uri-style:
     section: global

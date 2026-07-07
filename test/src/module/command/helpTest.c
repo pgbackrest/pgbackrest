@@ -348,6 +348,7 @@ testRun(void)
             "  --repo-s3-role                      S3 repository role\n"
             "  --repo-s3-service                   S3 signing service\n"
             "  --repo-s3-sse-customer-key          S3 repository SSE customer key\n"
+            "  --repo-s3-sts-host                  S3 repository STS endpoint\n"
             "  --repo-s3-token                     S3 repository security token\n"
             "  --repo-s3-uri-style                 S3 URI Style\n"
             "  --repo-sftp-host                    SFTP repository host\n"
@@ -502,6 +503,11 @@ testRun(void)
             "Repository cipher passphrase.\n"
             "\n"
             "Passphrase used to encrypt/decrypt files of the repository.\n"
+            "\n"
+            "NOTE: When run without the stanza option the info command reads encryption\n"
+            "settings only from the global section. If encryption settings are configured\n"
+            "per stanza, run the info command with the stanza option to read an encrypted\n"
+            "stanza.\n"
             "\n"
             "current: <redacted>\n",
             helpVersion);

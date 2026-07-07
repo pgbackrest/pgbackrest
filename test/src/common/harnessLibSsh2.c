@@ -651,7 +651,7 @@ libssh2_sftp_symlink_ex(
             if (hrnLibSsh2->target != NULL)
             {
                 if (strSize(hrnLibSsh2->target) < PATH_MAX)
-                    strncpy(target, strZ(hrnLibSsh2->target), strSize(hrnLibSsh2->target));
+                    memcpy(target, strZ(hrnLibSsh2->target), strSize(hrnLibSsh2->target));
                 else
                     THROW_FMT(AssertError, "link target too large for buffer");
             }
@@ -733,7 +733,10 @@ libssh2_sftp_readdir_ex(
     MEM_CONTEXT_TEMP_END();
 
     if (hrnLibSsh2->fileName != NULL)
-        strncpy(buffer, strZ(hrnLibSsh2->fileName), buffer_maxlen);
+    {
+        ASSERT(strSize(hrnLibSsh2->fileName) < buffer_maxlen);
+        memcpy(buffer, strZ(hrnLibSsh2->fileName), strSize(hrnLibSsh2->fileName) + 1);
+    }
 
     // libssh2_sftp_readdir_ex() returns the number of bytes in the entry name (0 at end of directory). Derive it from the scripted
     // file name so tests need not specify it; a negative resultInt (e.g. EAGAIN) is returned as-is.
@@ -809,7 +812,7 @@ libssh2_sftp_read(LIBSSH2_SFTP_HANDLE *handle, char *buffer, size_t buffer_maxle
 
     // copy read into buffer
     if (hrnLibSsh2->readBuffer != NULL)
-        strncpy(buffer, strZ(hrnLibSsh2->readBuffer), strSize(hrnLibSsh2->readBuffer));
+        memcpy(buffer, strZ(hrnLibSsh2->readBuffer), strSize(hrnLibSsh2->readBuffer));
 
     // Return the number of bytes read, defaulting an omitted (0) result to the read buffer size (0 when there is no read buffer)
     return hrnLibSsh2->resultInt != 0 ?

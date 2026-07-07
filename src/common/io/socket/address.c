@@ -259,6 +259,7 @@ addrInfoPrefer(AddressInfo *const this, const unsigned int index)
 Convert address to a zero-terminated string
 ***********************************************************************************************************************************/
 #define ADDR_INFO_STR_BUFFER_SIZE                                   48
+#define ADDR_INFO_STR_INVALID                                       "invalid"
 
 static void
 addrInfoToZ(const struct addrinfo *const addrInfo, char *const address, const size_t addressSize)
@@ -269,11 +270,12 @@ addrInfoToZ(const struct addrinfo *const addrInfo, char *const address, const si
         FUNCTION_TEST_PARAM(SIZE, addressSize);
     FUNCTION_TEST_END();
 
+    ASSERT(addrInfo != NULL);
+    ASSERT(address != NULL);
+    ASSERT(addressSize >= sizeof(ADDR_INFO_STR_INVALID));
+
     if (getnameinfo(addrInfo->ai_addr, addrInfo->ai_addrlen, address, (socklen_t)addressSize, 0, 0, NI_NUMERICHOST) != 0)
-    {
-        strncpy(address, "invalid", addressSize);
-        address[addressSize - 1] = '\0';
-    }
+        memcpy(address, ADDR_INFO_STR_INVALID, sizeof(ADDR_INFO_STR_INVALID));
 
     FUNCTION_TEST_RETURN_VOID();
 }
