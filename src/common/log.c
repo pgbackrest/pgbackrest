@@ -432,6 +432,11 @@ logPost(LogPreResult *const logData, const LogLevel logLevel, const LogLevel log
     ASSERT_LOG_LEVEL(logRangeMax);
     ASSERT(logRangeMin <= logRangeMax);
 
+    // Reserve room for the linefeed and null terminator. snprintf() returns the untruncated length, so a message longer than the
+    // buffer can leave bufferPos past the end; limit it so the writes below stay in bounds.
+    if (logData->bufferPos > LOG_BUFFER_SIZE - 2)
+        logData->bufferPos = LOG_BUFFER_SIZE - 2;
+
     // Add linefeed
     logBuffer[logData->bufferPos++] = '\n';
     logBuffer[logData->bufferPos] = 0;
