@@ -377,6 +377,140 @@ logExpire(ArchiveExpired *const archiveExpire, const String *const archiveId, co
 }
 
 /***********************************************************************************************************************************
+Expire WAL for a single archive id, removing everything not covered by the supplied retention ranges
+***********************************************************************************************************************************/
+static void
+expireArchiveId(
+    const String *const archiveId, const List *const archiveRangeList, const String *const archiveExpireMax,
+    const unsigned int repoIdx)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STRING, archiveId);
+        FUNCTION_LOG_PARAM(LIST, archiveRangeList);
+        FUNCTION_LOG_PARAM(STRING, archiveExpireMax);
+        FUNCTION_LOG_PARAM(UINT, repoIdx);
+    FUNCTION_LOG_END();
+
+    ASSERT(archiveId != NULL);
+    ASSERT(archiveRangeList != NULL);
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Initialize the expired archive information for this archive id
+        ArchiveExpired archiveExpire = {.total = 0, .start = NULL, .stop = NULL};
+
+        // Get all major archive paths (timeline and first 32 bits of LSN)
+        const StringList *const walPathList = strLstSort(
+            storageListP(
+                storageRepoIdx(repoIdx), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(archiveId)),
+                .expression = STRDEF(WAL_SEGMENT_DIR_REGEXP)),
+            sortOrderAsc);
+
+        for (unsigned int walIdx = 0; walIdx < strLstSize(walPathList); walIdx++)
+        {
+            const String *const walPath = strLstGet(walPathList, walIdx);
+            bool removeArchive = true;
+
+            // Keep the path if it falls in the range of any backup in retention
+            for (unsigned int rangeIdx = 0; rangeIdx < lstSize(archiveRangeList); rangeIdx++)
+            {
+                const ArchiveRange *const archiveRange = lstGet(archiveRangeList, rangeIdx);
+
+                if (strCmp(walPath, strSubN(archiveRange->start, 0, 16)) >= 0 &&
+                    (archiveRange->stop == NULL || strCmp(walPath, strSubN(archiveRange->stop, 0, 16)) <= 0))
+                {
+                    removeArchive = false;
+                    break;
+                }
+            }
+
+            // Remove the entire directory if all archive is expired
+            if (removeArchive)
+            {
+                // Execute the real expiration and deletion only if the dry-run mode is disabled
+                if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+                {
+                    storagePathRemoveP(
+                        storageRepoIdxWrite(repoIdx), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(walPath)),
+                        .recurse = true);
+                }
+
+                LOG_DETAIL_FMT(
+                    "%s: %s remove archive path %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), strZ(archiveId), strZ(walPath));
+
+                archiveExpire.total++;
+                archiveExpire.stop = strDup(walPath);
+
+                // Update start for the first WAL path removed
+                if (archiveExpire.start == NULL)
+                    archiveExpire.start = strDup(walPath);
+            }
+            // Else delete individual files instead if the major path is less than or equal to the most recent retention backup.
+            // This optimization prevents scanning though major paths that could not possibly have anything to expire.
+            else if (strCmp(walPath, strSubN(archiveExpireMax, 0, 16)) <= 0)
+            {
+                // Look for files in the archive directory
+                const StringList *const walSubPathList = strLstSort(
+                    storageListP(
+                        storageRepoIdx(repoIdx), strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(walPath)),
+                        .expression = STRDEF("^[0-F]{24}.*$")),
+                    sortOrderAsc);
+
+                for (unsigned int subIdx = 0; subIdx < strLstSize(walSubPathList); subIdx++)
+                {
+                    removeArchive = true;
+                    const String *const walSubPath = strLstGet(walSubPathList, subIdx);
+
+                    // Determine if the individual archive log is used in a backup
+                    for (unsigned int rangeIdx = 0; rangeIdx < lstSize(archiveRangeList); rangeIdx++)
+                    {
+                        const ArchiveRange *const archiveRange = lstGet(archiveRangeList, rangeIdx);
+
+                        if (strCmp(strSubN(walSubPath, 0, 24), archiveRange->start) >= 0 &&
+                            (archiveRange->stop == NULL || strCmp(strSubN(walSubPath, 0, 24), archiveRange->stop) <= 0))
+                        {
+                            removeArchive = false;
+                            break;
+                        }
+                    }
+
+                    // Remove archive log if it is not used in a backup
+                    if (removeArchive)
+                    {
+                        // Execute the real expiration and deletion only if the dry-run mode is disabled
+                        if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
+                        {
+                            storageRemoveP(
+                                storageRepoIdxWrite(repoIdx),
+                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s/%s", strZ(archiveId), strZ(walPath), strZ(walSubPath)));
+                        }
+
+                        // Track that this archive was removed
+                        archiveExpire.total++;
+                        archiveExpire.stop = strDup(strSubN(walSubPath, 0, 24));
+
+                        if (archiveExpire.start == NULL)
+                            archiveExpire.start = strDup(strSubN(walSubPath, 0, 24));
+                    }
+                    else
+                        logExpire(&archiveExpire, archiveId, repoIdx);
+                }
+            }
+        }
+
+        // Log if no archive was expired
+        if (archiveExpire.total == 0)
+            LOG_INFO_FMT("%s: %s no archive to remove", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), strZ(archiveId));
+        // Log if there is more to log
+        else
+            logExpire(&archiveExpire, archiveId, repoIdx);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
 Process archive retention
 ***********************************************************************************************************************************/
 static void
@@ -494,9 +628,6 @@ removeExpiredArchive(const InfoBackup *const infoBackup, const bool timeBasedFul
                     const String *const archiveId = infoPgArchiveId(infoArchivePgData, pgIdx);
                     StringList *const localBackupRetentionList = strLstNew();
 
-                    // Initialize the expired archive information for this archive ID
-                    ArchiveExpired archiveExpire = {.total = 0, .start = NULL, .stop = NULL};
-
                     for (unsigned int archiveIdx = 0; archiveIdx < strLstSize(listArchiveDisk); archiveIdx++)
                     {
                         // Is there an archive directory for this archiveId? If not, move on to the next.
@@ -594,8 +725,6 @@ removeExpiredArchive(const InfoBackup *const infoBackup, const bool timeBasedFul
 
                         // Only expire if the selected backup has archive data - backups performed with --no-online will
                         // not have archive data and cannot be used for expiration.
-                        bool removeArchive = false;
-
                         if (archiveRetentionBackup.backupArchiveStart != NULL)
                         {
                             // Get archive ranges to preserve. Because archive retention can be less than total retention it is
@@ -638,123 +767,8 @@ removeExpiredArchive(const InfoBackup *const infoBackup, const bool timeBasedFul
                                 }
                             }
 
-                            // Get all major archive paths (timeline and first 32 bits of LSN)
-                            const StringList *const walPathList =
-                                strLstSort(
-                                    storageListP(
-                                        storageRepoIdx(repoIdx), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(archiveId)),
-                                        .expression = STRDEF(WAL_SEGMENT_DIR_REGEXP)),
-                                    sortOrderAsc);
-
-                            for (unsigned int walIdx = 0; walIdx < strLstSize(walPathList); walIdx++)
-                            {
-                                const String *const walPath = strLstGet(walPathList, walIdx);
-                                removeArchive = true;
-
-                                // Keep the path if it falls in the range of any backup in retention
-                                for (unsigned int rangeIdx = 0; rangeIdx < lstSize(archiveRangeList); rangeIdx++)
-                                {
-                                    const ArchiveRange *const archiveRange = lstGet(archiveRangeList, rangeIdx);
-
-                                    if (strCmp(walPath, strSubN(archiveRange->start, 0, 16)) >= 0 &&
-                                        (archiveRange->stop == NULL || strCmp(walPath, strSubN(archiveRange->stop, 0, 16)) <= 0))
-                                    {
-                                        removeArchive = false;
-                                        break;
-                                    }
-                                }
-
-                                // Remove the entire directory if all archive is expired
-                                if (removeArchive)
-                                {
-                                    // Execute the real expiration and deletion only if the dry-run mode is disabled
-                                    if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
-                                    {
-                                        storagePathRemoveP(
-                                            storageRepoIdxWrite(repoIdx),
-                                            strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(walPath)),
-                                            .recurse = true);
-                                    }
-
-                                    LOG_DETAIL_FMT(
-                                        "%s: %s remove archive path %s", cfgOptionGroupName(cfgOptGrpRepo, repoIdx),
-                                        strZ(archiveId), strZ(walPath));
-
-                                    archiveExpire.total++;
-                                    archiveExpire.stop = strDup(walPath);
-
-                                    // Update start for the first WAL path removed
-                                    if (archiveExpire.start == NULL)
-                                        archiveExpire.start = strDup(walPath);
-                                }
-                                // Else delete individual files instead if the major path is less than or equal to the most recent
-                                // retention backup. This optimization prevents scanning though major paths that could not possibly
-                                // have anything to expire.
-                                else if (strCmp(walPath, strSubN(archiveExpireMax, 0, 16)) <= 0)
-                                {
-                                    // Look for files in the archive directory
-                                    const StringList *const walSubPathList =
-                                        strLstSort(
-                                            storageListP(
-                                                storageRepoIdx(repoIdx),
-                                                strNewFmt(STORAGE_REPO_ARCHIVE "/%s/%s", strZ(archiveId), strZ(walPath)),
-                                                .expression = STRDEF("^[0-F]{24}.*$")),
-                                            sortOrderAsc);
-
-                                    for (unsigned int subIdx = 0; subIdx < strLstSize(walSubPathList); subIdx++)
-                                    {
-                                        removeArchive = true;
-                                        const String *const walSubPath = strLstGet(walSubPathList, subIdx);
-
-                                        // Determine if the individual archive log is used in a backup
-                                        for (unsigned int rangeIdx = 0; rangeIdx < lstSize(archiveRangeList); rangeIdx++)
-                                        {
-                                            const ArchiveRange *const archiveRange = lstGet(archiveRangeList, rangeIdx);
-
-                                            if (strCmp(strSubN(walSubPath, 0, 24), archiveRange->start) >= 0 &&
-                                                (archiveRange->stop == NULL ||
-                                                 strCmp(strSubN(walSubPath, 0, 24), archiveRange->stop) <= 0))
-                                            {
-                                                removeArchive = false;
-                                                break;
-                                            }
-                                        }
-
-                                        // Remove archive log if it is not used in a backup
-                                        if (removeArchive)
-                                        {
-                                            // Execute the real expiration and deletion only if the dry-run mode is disabled
-                                            if (!cfgOptionValid(cfgOptDryRun) || !cfgOptionBool(cfgOptDryRun))
-                                            {
-                                                storageRemoveP(
-                                                    storageRepoIdxWrite(repoIdx),
-                                                    strNewFmt(
-                                                        STORAGE_REPO_ARCHIVE "/%s/%s/%s", strZ(archiveId), strZ(walPath),
-                                                        strZ(walSubPath)));
-                                            }
-
-                                            // Track that this archive was removed
-                                            archiveExpire.total++;
-                                            archiveExpire.stop = strDup(strSubN(walSubPath, 0, 24));
-
-                                            if (archiveExpire.start == NULL)
-                                                archiveExpire.start = strDup(strSubN(walSubPath, 0, 24));
-                                        }
-                                        else
-                                            logExpire(&archiveExpire, archiveId, repoIdx);
-                                    }
-                                }
-                            }
-
-                            // Log if no archive was expired
-                            if (archiveExpire.total == 0)
-                            {
-                                LOG_INFO_FMT(
-                                    "%s: %s no archive to remove", cfgOptionGroupName(cfgOptGrpRepo, repoIdx), strZ(archiveId));
-                            }
-                            // Log if there is more to log
-                            else
-                                logExpire(&archiveExpire, archiveId, repoIdx);
+                            // Expire WAL for this archive id according to the retention ranges computed above
+                            expireArchiveId(archiveId, archiveRangeList, archiveExpireMax, repoIdx);
 
                             // Look for history files to expire based on the timeline of backupArchiveStart
                             const String *const backupArchiveStartTimeline = strSubN(
