@@ -118,7 +118,8 @@ storageS3Helper(const unsigned int repoIdx, const bool write, StoragePathExpress
                 (StorageS3UriStyle)cfgOptionIdxSeq(cfgOptRepoS3UriStyle, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Key, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoS3KeySecret, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3Token, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoS3KmsKeyId, repoIdx), cfgOptionIdxStrNull(cfgOptRepoS3SseCustomerKey, repoIdx), role,
-                tokenFile, credUrl, credCmd, (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx),
+                tokenFile, credUrl, credCmd, cfgOptionIdxStrNull(cfgOptRepoS3StsHost, repoIdx),
+                (size_t)cfgOptionIdxUInt64(cfgOptRepoStorageUploadChunkSize, repoIdx),
                 cfgOptionIdxKvNull(cfgOptRepoStorageTag, repoIdx), host, port, ioTimeoutMs(), protocolType,
                 cfgOptionIdxBool(cfgOptRepoStorageVerifyTls, repoIdx), cfgOptionIdxStrNull(cfgOptRepoStorageCaFile, repoIdx),
                 cfgOptionIdxStrNull(cfgOptRepoStorageCaPath, repoIdx), cfgOptionIdxBool(cfgOptRepoS3RequesterPays, repoIdx));

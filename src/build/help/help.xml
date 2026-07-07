@@ -1140,6 +1140,16 @@
                         <example>s3-outposts</example>
                     </config-key>
 
+                    <config-key id="repo-s3-sts-host" name="S3 Repository STS Endpoint">
+                        <summary>S3 repository STS endpoint.</summary>
+
+                        <text>
+                            <p>The STS endpoint used to retrieve temporary credentials when <br-option>repo-s3-key-type=web-id</br-option> is configured. Set to a regional endpoint (e.g. <id>sts.us-east-1.amazonaws.com</id>) to use regional STS, which may be required for GovCloud, China regions, or to reduce latency.</p>
+                        </text>
+
+                        <example>sts.us-east-1.amazonaws.com</example>
+                    </config-key>
+
                     <config-key id="repo-s3-uri-style" name="S3 Repository URI Style">
                         <summary>S3 URI Style.</summary>
 
