@@ -63,6 +63,17 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2801"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add <setting>archive-expire-before option to clean up WAL archive.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2786"/>
 
                 <release-item-contributor-list>
