@@ -575,7 +575,7 @@ cmdArchivePushAsync(void)
                 strLstSize(jobData.walFileList) == 1 ?
                     "" : zNewFmt("...%s", strZ(strLstGet(jobData.walFileList, strLstSize(jobData.walFileList) - 1))));
 
-            // Drop files if the queue max has been exceeded
+            // Drop files if queue max has been exceeded
             if (drop)
             {
                 for (unsigned int walFileIdx = 0; walFileIdx < strLstSize(jobData.walFileList); walFileIdx++)
