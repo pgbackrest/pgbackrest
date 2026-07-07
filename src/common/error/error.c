@@ -407,7 +407,7 @@ errorInternalThrowFmt(
     // Format message
     va_list argument;
     va_start(argument, format);
-    vsnprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, format, argument);
+    vsnprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE, format, argument);
     va_end(argument);
 
     errorInternalThrow(errorType, fileName, functionName, fileLine, messageBufferTemp, NULL);
@@ -421,9 +421,9 @@ errorInternalThrowSys(
 {
     // Format message with system message appended
     if (errNo == 0)
-        snprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, "%s", message);
+        snprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE, "%s", message);
     else
-        snprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, "%s: [%d] %s", message, errNo, strerror(errNo));
+        snprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE, "%s: [%d] %s", message, errNo, strerror(errNo));
 
     errorInternalThrow(errorType, fileName, functionName, fileLine, messageBufferTemp, NULL);
 }
@@ -449,12 +449,12 @@ errorInternalThrowSysFmt(
     // Format message
     va_list argument;
     va_start(argument, format);
-    size_t messageSize = (size_t)vsnprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, format, argument);
+    size_t messageSize = (size_t)vsnprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE, format, argument);
     va_end(argument);
 
     // Append the system message
     if (errNo != 0)
-        snprintf(messageBufferTemp + messageSize, ERROR_MESSAGE_BUFFER_SIZE - 1 - messageSize, ": [%d] %s", errNo, strerror(errNo));
+        snprintf(messageBufferTemp + messageSize, ERROR_MESSAGE_BUFFER_SIZE - messageSize, ": [%d] %s", errNo, strerror(errNo));
 
     errorInternalThrow(errorType, fileName, functionName, fileLine, messageBufferTemp, NULL);
 }
@@ -471,14 +471,14 @@ errorInternalThrowOnSysFmt(
         // Format message
         va_list argument;
         va_start(argument, format);
-        size_t messageSize = (size_t)vsnprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, format, argument);
+        size_t messageSize = (size_t)vsnprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE, format, argument);
         va_end(argument);
 
         // Append the system message
         if (errNo != 0)
         {
             snprintf(
-                messageBufferTemp + messageSize, ERROR_MESSAGE_BUFFER_SIZE - 1 - messageSize, ": [%d] %s", errNo, strerror(errNo));
+                messageBufferTemp + messageSize, ERROR_MESSAGE_BUFFER_SIZE - messageSize, ": [%d] %s", errNo, strerror(errNo));
         }
 
         errorInternalThrow(errorType, fileName, functionName, fileLine, messageBufferTemp, NULL);
