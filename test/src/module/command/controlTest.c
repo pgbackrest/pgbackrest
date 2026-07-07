@@ -255,6 +255,12 @@ testRun(void)
         {
             HRN_FORK_CHILD_BEGIN()
             {
+                // Ignore the term signal sent by stop so the child keeps holding both lock files until the parent releases it. The
+                // child owns two lock files with the same process id and stop must read both (skipping the duplicate) before the
+                // process exits. If the child were terminated by the signal it could release the second lock before stop reads it,
+                // making stop see the file as unlocked and warn about it.
+                signal(SIGTERM, SIG_IGN);
+
                 lockInit(STRDEF(HRN_PATH "/lock"), cfgOptionStr(cfgOptExecId));
                 TEST_RESULT_BOOL(
                     lockAcquireP(cmdLockFileName(cfgOptionStr(cfgOptStanza), lockTypeArchive, 1)), true, "create archive lock");
@@ -264,7 +270,7 @@ testRun(void)
                 // Notify parent that lock has been acquired
                 HRN_FORK_CHILD_NOTIFY_PUT();
 
-                // Wait for parent to allow release lock but it will not arrive before the process is terminated
+                // Wait for parent to allow release lock
                 HRN_FORK_CHILD_NOTIFY_GET();
             }
             HRN_FORK_CHILD_END();
@@ -278,6 +284,9 @@ testRun(void)
                     cmdStop(), "stanza, create stop file, force - lock file with another process lock, processId is valid");
 
                 TEST_RESULT_LOG_FMT("P00   INFO: sent term signal to process %d", HRN_FORK_PROCESS_ID(0));
+
+                // Notify child to release lock
+                HRN_FORK_PARENT_NOTIFY_PUT(0);
             }
             HRN_FORK_PARENT_END();
         }

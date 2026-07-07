@@ -52,6 +52,7 @@ Option constants
 #define CFGOPT_ARCHIVE_MISSING_RETRY                                "archive-missing-retry"
 #define CFGOPT_ARCHIVE_MODE                                         "archive-mode"
 #define CFGOPT_ARCHIVE_MODE_CHECK                                   "archive-mode-check"
+#define CFGOPT_ARCHIVE_PUSH_BATCH_SIZE                              "archive-push-batch-size"
 #define CFGOPT_ARCHIVE_PUSH_QUEUE_MAX                               "archive-push-queue-max"
 #define CFGOPT_ARCHIVE_TIMEOUT                                      "archive-timeout"
 #define CFGOPT_BACKUP_STANDBY                                       "backup-standby"
@@ -144,7 +145,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            194
+#define CFG_OPTION_TOTAL                                            196
 
 /***********************************************************************************************************************************
 Option value constants
@@ -489,6 +490,7 @@ typedef enum
     cfgOptArchiveMissingRetry,
     cfgOptArchiveMode,
     cfgOptArchiveModeCheck,
+    cfgOptArchivePushBatchSize,
     cfgOptArchivePushQueueMax,
     cfgOptArchiveTimeout,
     cfgOptBackupStandby,
@@ -622,6 +624,7 @@ typedef enum
     cfgOptRepoS3Role,
     cfgOptRepoS3Service,
     cfgOptRepoS3SseCustomerKey,
+    cfgOptRepoS3StsHost,
     cfgOptRepoS3Token,
     cfgOptRepoS3UriStyle,
     cfgOptRepoSftpHost,
