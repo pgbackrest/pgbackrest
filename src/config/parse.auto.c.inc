@@ -10702,6 +10702,14 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                              // opt/stanza
         PARSE_RULE_OPTION_SECTION(CommandLine),                                                                        // opt/stanza
                                                                                                                        // opt/stanza
+        PARSE_RULE_OPTION_COMMAND_INTERNAL_LIST                                                                        // opt/stanza
+        (                                                                                                              // opt/stanza
+            PARSE_RULE_OPTION_COMMAND_INTERNAL(RepoGet, true),                                                         // opt/stanza
+            PARSE_RULE_OPTION_COMMAND_INTERNAL(RepoLs, true),                                                          // opt/stanza
+            PARSE_RULE_OPTION_COMMAND_INTERNAL(RepoPut, true),                                                         // opt/stanza
+            PARSE_RULE_OPTION_COMMAND_INTERNAL(RepoRm, true),                                                          // opt/stanza
+        )                                                                                                              // opt/stanza
+                                                                                                                       // opt/stanza
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                 // opt/stanza
         (                                                                                                              // opt/stanza
             PARSE_RULE_OPTION_COMMAND(Annotate)                                                                        // opt/stanza

@@ -434,12 +434,16 @@ option:
       manifest: {}
       repo-get:
         required: false
+        internal: true
       repo-ls:
         required: false
+        internal: true
       repo-put:
         required: false
+        internal: true
       repo-rm:
         required: false
+        internal: true
       restore: {}
       stanza-create: {}
       stanza-delete: {}
