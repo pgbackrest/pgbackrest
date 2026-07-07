@@ -1390,8 +1390,7 @@ jsonWritePush(JsonWrite *const this, const JsonType type, const String *const ke
                     SIZE_OF_STRUCT_MEMBER(JsonWriteStack, keyLast) - 1);
             }
 
-            strncpy(item->keyLast, strZ(key), SIZE_OF_STRUCT_MEMBER(JsonWriteStack, keyLast) - 1);
-            item->keyLast[SIZE_OF_STRUCT_MEMBER(JsonWriteStack, keyLast) - 1] = '\0';
+            memcpy(item->keyLast, strZ(key), strSize(key) + 1);
 
             this->key = true;
         }
