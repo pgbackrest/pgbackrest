@@ -47,6 +47,7 @@ Option constants
 #define CFGOPT_ARCHIVE_ASYNC                                        "archive-async"
 #define CFGOPT_ARCHIVE_CHECK                                        "archive-check"
 #define CFGOPT_ARCHIVE_COPY                                         "archive-copy"
+#define CFGOPT_ARCHIVE_EXPIRE_BEFORE                                "archive-expire-before"
 #define CFGOPT_ARCHIVE_GET_QUEUE_MAX                                "archive-get-queue-max"
 #define CFGOPT_ARCHIVE_HEADER_CHECK                                 "archive-header-check"
 #define CFGOPT_ARCHIVE_MISSING_RETRY                                "archive-missing-retry"
@@ -145,7 +146,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            196
+#define CFG_OPTION_TOTAL                                            197
 
 /***********************************************************************************************************************************
 Option value constants
@@ -485,6 +486,7 @@ typedef enum
     cfgOptArchiveAsync,
     cfgOptArchiveCheck,
     cfgOptArchiveCopy,
+    cfgOptArchiveExpireBefore,
     cfgOptArchiveGetQueueMax,
     cfgOptArchiveHeaderCheck,
     cfgOptArchiveMissingRetry,

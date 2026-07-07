@@ -2328,6 +2328,18 @@
                 </text>
 
                 <option-list>
+                    <option id="archive-expire-before" name="Expire Archive Before">
+                        <summary>Remove WAL archive earlier than the specified WAL segment.</summary>
+
+                        <text>
+                            <p>Remove WAL segments earlier than the specified segment, but only those that are not required by a retained backup, that is, segments older than the earliest backup set to retain, or any segment when the repository contains no backup. The specified segment and everything after it are kept. This mirrors the value passed by <postgres/> to <pg-setting>archive_cleanup_command</pg-setting> as <id>%r</id>.</p>
+
+                            <p>This option is primarily intended for archive-only repositories where no backups are stored. It can also be used to reclaim WAL archive space before the first backup when full retention has not yet been met to trigger archive expiration.</p>
+                        </text>
+
+                        <example>000000010000000000000010</example>
+                    </option>
+
                     <option id="oldest" name="Oldest">
                         <summary>Expire the oldest eligible backup set.</summary>
 

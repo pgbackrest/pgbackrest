@@ -445,9 +445,11 @@ expireArchiveId(
                 if (archiveExpire.start == NULL)
                     archiveExpire.start = strDup(walPath);
             }
-            // Else delete individual files instead if the major path is less than or equal to the most recent retention backup.
-            // This optimization prevents scanning though major paths that could not possibly have anything to expire.
-            else if (strCmp(walPath, strSubN(archiveExpireMax, 0, 16)) <= 0)
+            // Else delete individual files instead if the major path is at or below the scan boundary. This optimization prevents
+            // scanning through major paths that could not possibly have anything to expire. When there is no retention backup
+            // (archiveExpireMax is NULL, e.g. archive-expire-before with no backup) the optimization does not apply, so scan
+            // whenever the path was not removed in bulk.
+            else if (archiveExpireMax == NULL || strCmp(walPath, strSubN(archiveExpireMax, 0, 16)) <= 0)
             {
                 // Look for files in the archive directory
                 const StringList *const walSubPathList = strLstSort(
@@ -572,9 +574,14 @@ removeExpiredArchive(const InfoBackup *const infoBackup, const bool timeBasedFul
                     break;
             }
 
+            // Cap removal at the requested segment when --archive-expire-before is set: only WAL strictly before it may be removed
+            const String *const walExpireBefore =
+                cfgOptionTest(cfgOptArchiveExpireBefore) ? cfgOptionStr(cfgOptArchiveExpireBefore) : NULL;
+
             // Expire archives. If no backups were found or the number of backups found is not enough to satisfy archive retention
             // then preserve current archive logs - too soon to expire them.
-            if (!strLstEmpty(globalBackupRetentionList) && archiveRetention <= strLstSize(globalBackupRetentionList))
+            if (walExpireBefore != NULL ||
+                (!strLstEmpty(globalBackupRetentionList) && archiveRetention <= strLstSize(globalBackupRetentionList)))
             {
                 // Attempt to load the archive info file
                 const InfoArchive *const infoArchive = infoArchiveLoadFile(
@@ -657,11 +664,22 @@ removeExpiredArchive(const InfoBackup *const infoBackup, const bool timeBasedFul
                         // If no backup to retain was found
                         if (strLstEmpty(localBackupRetentionList))
                         {
-                            // If this is not the current database, then delete the archive directory else do nothing since the
-                            // current DB archive directory must not be deleted
                             const InfoPgData currentPg = infoPgDataCurrent(infoArchivePgData);
 
-                            if (currentPg.id != archivePgId)
+                            // If archive-expire-before is set, remove only WAL earlier than the requested segment, keeping the
+                            // segment and everything after it (still required to restart recovery). Model the boundary as a single
+                            // open range [walExpireBefore, NULL] so the shared expiration logic keeps all WAL >= the segment.
+                            if (walExpireBefore != NULL && currentPg.id == archivePgId)
+                            {
+                                List *const archiveRangeList = lstNewP(sizeof(ArchiveRange));
+                                ArchiveRange archiveRange = {.start = strDup(walExpireBefore), .stop = NULL};
+                                lstAdd(archiveRangeList, &archiveRange);
+
+                                expireArchiveId(archiveId, archiveRangeList, NULL, repoIdx);
+                            }
+                            // Otherwise, if this is not the current database, delete the whole archive directory. The current DB
+                            // archive directory is the live destination for archive-push and must not be deleted.
+                            else if (currentPg.id != archivePgId)
                             {
                                 String *fullPath = storagePathP(
                                     storageRepoIdx(repoIdx), strNewFmt(STORAGE_REPO_ARCHIVE "/%s", strZ(archiveId)));
@@ -765,6 +783,22 @@ removeExpiredArchive(const InfoBackup *const infoBackup, const bool timeBasedFul
                                     // Add the archive range to the list
                                     lstAdd(archiveRangeList, &archiveRange);
                                 }
+                            }
+
+                            // If --archive-expire-before is set, preserve everything from the requested segment up to the retention
+                            // backup start, so that only WAL strictly before the segment is eligible for removal. The condition
+                            // walExpireBefore < archiveExpireMax avoids an inverted range and skips the case where the segment is
+                            // newer than the retention backup start (nothing extra to preserve there). archiveExpireMax is always
+                            // set here: the retention backup is in archiveIdBackupList and has an archive start (checked above).
+                            if (walExpireBefore != NULL && strCmp(walExpireBefore, archiveExpireMax) < 0)
+                            {
+                                ArchiveRange archiveRange =
+                                {
+                                    .start = strDup(walExpireBefore),
+                                    .stop = strDup(archiveExpireMax),
+                                };
+
+                                lstAdd(archiveRangeList, &archiveRange);
                             }
 
                             // Expire WAL for this archive id according to the retention ranges computed above
@@ -1034,6 +1068,16 @@ cmdExpire(void)
             // If the label format is invalid, then error
             if (!regExpMatchOne(backupRegExpP(.full = true, .differential = true, .incremental = true), adhocBackupLabel))
                 THROW_FMT(OptionInvalidValueError, "'%s' is not a valid backup label format", strZ(adhocBackupLabel));
+        }
+
+        // If --archive-expire-before is set, the value must be an exact WAL segment name. Match the strict segment expression
+        // rather than walIsSegment(), which also accepts a .partial suffix that would shift the removal boundary by a segment.
+        if (cfgOptionTest(cfgOptArchiveExpireBefore) &&
+            !regExpMatchOne(WAL_SEGMENT_REGEXP_STR, cfgOptionStr(cfgOptArchiveExpireBefore)))
+        {
+            THROW_FMT(
+                OptionInvalidValueError, "'%s' is not a valid WAL segment name for option '--archive-expire-before'",
+                strZ(cfgOptionStr(cfgOptArchiveExpireBefore)));
         }
 
         // Track any errors that may occur
