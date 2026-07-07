@@ -838,11 +838,11 @@ cmdArchiveGet(void)
                 }
 
                 // If the segment is not in the queue and our own async process is not holding the lock then the segment will not be
-                // fetched by us: either a foreign async process holds the lock (spawned by a different main process, e.g. filling the
-                // queue for the old timeline after a timeline switch) and will not fetch our segment, or no async process is running
-                // because ours failed. Rather than wait for it and risk a timeout on a segment that actually exists -- which can end
-                // recovery prematurely -- fetch the segment synchronously. Skip the first run so an async process spawned above (or by
-                // a prior invocation) gets a chance to take the lock and fetch the segment first.
+                // fetched by us: either a foreign async process holds the lock (spawned by a different main process, e.g. filling
+                // the queue for the old timeline after a timeline switch) and will not fetch our segment, or no async process is
+                // running because ours failed. Rather than wait for it and risk a timeout on a segment that actually exists --
+                // which can end recovery prematurely -- fetch the segment synchronously. Skip the first run so an async process
+                // spawned above (or by a prior invocation) gets a chance to take the lock first.
                 if (!found && !first && !cmdLockOwn())
                 {
                     result = archiveGetSingle(walSegment, walDestination);
