@@ -681,8 +681,8 @@ testRun(void)
 
         THROW_ON_SYS_ERROR(chdir(strZ(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
 
-        // A child holding the lock with our own (inherited) exec id simulates our own async process running and holding the lock, so
-        // the segment is waited for rather than fetched synchronously and the wait times out
+        // A child holding the lock with our own (inherited) exec id simulates our own async process running and holding the lock,
+        // so the segment is waited for rather than fetched synchronously and the wait times out
         HRN_FORK_BEGIN()
         {
             HRN_FORK_CHILD_BEGIN()
@@ -721,8 +721,8 @@ testRun(void)
 
         HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok");
 
-        // With no async process holding the lock the segment is fetched synchronously, which here surfaces the repo error rather than
-        // waiting out the timeout
+        // With no async process holding the lock the segment is fetched synchronously, which here surfaces the repo error rather
+        // than waiting out the timeout
         TEST_ERROR(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
 
         TEST_RESULT_LOG(
