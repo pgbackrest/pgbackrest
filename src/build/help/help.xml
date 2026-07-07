@@ -1556,6 +1556,8 @@
 
                         <text>
                             <p>The setting is enabled by default. Use caution when disabling this option as doing so will result in retaining all backups and archives indefinitely, which could cause your repository to run out of space. The <cmd>expire</cmd> command will need to be run regularly to prevent this from happening.</p>
+
+                            <p>When <cmd>expire</cmd> is run automatically after a successful backup it uses the configuration of the <cmd>backup</cmd> command, so options set only in an <cmd>expire</cmd> command section (e.g. <id>[global:expire]</id>) are not applied. To apply <cmd>expire</cmd>-specific configuration, disable this option and run the <cmd>expire</cmd> command separately.</p>
                         </text>
 
                         <example>y</example>
