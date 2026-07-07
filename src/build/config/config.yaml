@@ -1052,6 +1052,17 @@ option:
     command-role:
       main: {}
 
+  archive-push-batch-size:
+    section: global
+    type: size
+    default: 16GiB
+    allow-range: [1MiB, 4PiB]
+    command:
+      archive-push: {}
+    command-role:
+      async: {}
+      main: {}
+
   archive-push-queue-max:
     section: global
     type: size
