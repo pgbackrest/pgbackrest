@@ -1224,7 +1224,7 @@ testRun(void)
                     "HTTP request failed with 400:\n"
                     "*** Path/Query ***:\n"
                     "GET /?Action=AssumeRoleWithWebIdentity&RoleArn=arn%%3Aaws%%3Aiam%%3A%%3A123456789012%%3Arole%%2FTestRole"
-                        "&RoleSessionName=pgBackRest&Version=2011-06-15&WebIdentityToken=<redacted>\n"
+                    "&RoleSessionName=pgBackRest&Version=2011-06-15&WebIdentityToken=<redacted>\n"
                     "*** Request Headers ***:\n"
                     "content-length: 0\n"
                     "host: %s\n"
