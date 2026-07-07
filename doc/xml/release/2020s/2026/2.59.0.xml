@@ -307,6 +307,23 @@
         </release-development-list>
     </release-core-list>
 
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <github-issue id="1407"/>
+                <github-pull-request id="2805"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="ron.johnson"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Document that info reads encryption settings from global section.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
+
     <release-test-list>
         <release-improvement-list>
             <release-item>

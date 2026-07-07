@@ -1422,6 +1422,8 @@
 
                         <text>
                             <p>Passphrase used to encrypt/decrypt files of the repository.</p>
+
+                            <admonition type="note">When run without the <br-option>stanza</br-option> option the <cmd>info</cmd> command reads encryption settings only from the <setting>global</setting> section. If encryption settings are configured per stanza, run the <cmd>info</cmd> command with the <br-option>stanza</br-option> option to read an encrypted stanza.</admonition>
                         </text>
 
                         <example>zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO</example>

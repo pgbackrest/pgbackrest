@@ -1351,6 +1351,8 @@
                 <backrest-config-option section="global" key="repo1-cipher-pass">{[backrest-repo-cipher-pass]}</backrest-config-option>
             </backrest-config>
 
+            <admonition type="note">Encryption settings are placed in the <id>[global]</id> section, above, so the <cmd>info</cmd> command can read all stanzas. Without the <br-option>stanza</br-option> option the <cmd>info</cmd> command reads encryption settings only from the <id>[global]</id> section, so encryption settings configured per stanza require the <br-option>stanza</br-option> option to read an encrypted stanza.</admonition>
+
             <p>Once the repository has been configured and the stanza created and checked, the repository encryption settings cannot be changed.</p>
         </section>
 
