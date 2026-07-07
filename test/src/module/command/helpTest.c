@@ -504,6 +504,11 @@ testRun(void)
             "\n"
             "Passphrase used to encrypt/decrypt files of the repository.\n"
             "\n"
+            "NOTE: When run without the stanza option the info command reads encryption\n"
+            "settings only from the global section. If encryption settings are configured\n"
+            "per stanza, run the info command with the stanza option to read an encrypted\n"
+            "stanza.\n"
+            "\n"
             "current: <redacted>\n",
             helpVersion);
 
