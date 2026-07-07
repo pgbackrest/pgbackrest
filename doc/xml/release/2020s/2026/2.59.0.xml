@@ -165,6 +165,17 @@
             </release-item>
 
             <release-item>
+                <github-pull-request id="2803"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add <setting>archive-push-batch-size</setting> to limit WAL pushed per asynchronous run.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="1848"/>
                 <github-pull-request id="2802"/>
 
