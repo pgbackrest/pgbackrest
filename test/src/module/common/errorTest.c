@@ -171,6 +171,7 @@ testRun(void)
 
                             char bigMessage[sizeof(messageBuffer) + 128];
                             memset(bigMessage, 'A', sizeof(bigMessage));
+                            bigMessage[sizeof(bigMessage) - 1] = '\0';
 
                             THROW(AssertError, bigMessage);
                         }

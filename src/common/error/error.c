@@ -377,20 +377,13 @@ errorInternalThrow(
 
     // Assign message to the error. If errorMessage() is passed as the message there is no need to make a copy.
     if (message != messageBuffer)
-    {
-        strncpy(messageBuffer, message, sizeof(messageBuffer));
-        messageBuffer[sizeof(messageBuffer) - 1] = 0;
-    }
+        snprintf(messageBuffer, sizeof(messageBuffer), "%s", message);
 
     errorContext.error.message = (const char *)messageBuffer;
 
     // If a stack trace was provided
     if (stackTrace != NULL)
-    {
-        // strncpy() does not null-terminate when the source length >= size, so force termination on stackTraceBuffer
-        strncpy(stackTraceBuffer, stackTrace, sizeof(stackTraceBuffer) - 1);
-        stackTraceBuffer[sizeof(stackTraceBuffer) - 1] = '\0';
-    }
+        snprintf(stackTraceBuffer, sizeof(stackTraceBuffer), "%s", stackTrace);
     // Else generate the stack trace for the error
     else if (
         stackTraceToZ(
@@ -428,10 +421,7 @@ errorInternalThrowSys(
 {
     // Format message with system message appended
     if (errNo == 0)
-    {
-        strncpy(messageBufferTemp, message, ERROR_MESSAGE_BUFFER_SIZE - 1);
-        messageBufferTemp[sizeof(messageBuffer) - 1] = 0;
-    }
+        snprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, "%s", message);
     else
         snprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE - 1, "%s: [%d] %s", message, errNo, strerror(errNo));
 

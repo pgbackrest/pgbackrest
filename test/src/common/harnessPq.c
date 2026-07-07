@@ -308,8 +308,8 @@ PQcancel(PGcancel *cancel, char *errbuf, int errbufsize)
 
     if (!hrnPq->resultInt)
     {
-        strncpy(errbuf, hrnPq->resultZ, (size_t)errbufsize);
-        errbuf[errbufsize - 1] = '\0';
+        ASSERT(strlen(hrnPq->resultZ) < (size_t)errbufsize);
+        memcpy(errbuf, hrnPq->resultZ, strlen(hrnPq->resultZ) + 1);
     }
 
     return hrnPq->resultInt;
