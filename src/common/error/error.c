@@ -452,6 +452,10 @@ errorInternalThrowSysFmt(
     size_t messageSize = (size_t)vsnprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE, format, argument);
     va_end(argument);
 
+    // vsnprintf() returns the untruncated length; limit it so the appended system message stays in bounds
+    if (messageSize > ERROR_MESSAGE_BUFFER_SIZE - 1)
+        messageSize = ERROR_MESSAGE_BUFFER_SIZE - 1;
+
     // Append the system message
     if (errNo != 0)
         snprintf(messageBufferTemp + messageSize, ERROR_MESSAGE_BUFFER_SIZE - messageSize, ": [%d] %s", errNo, strerror(errNo));
@@ -473,6 +477,10 @@ errorInternalThrowOnSysFmt(
         va_start(argument, format);
         size_t messageSize = (size_t)vsnprintf(messageBufferTemp, ERROR_MESSAGE_BUFFER_SIZE, format, argument);
         va_end(argument);
+
+        // vsnprintf() returns the untruncated length; limit it so the appended system message stays in bounds
+        if (messageSize > ERROR_MESSAGE_BUFFER_SIZE - 1)
+            messageSize = ERROR_MESSAGE_BUFFER_SIZE - 1;
 
         // Append the system message
         if (errNo != 0)
