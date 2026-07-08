@@ -151,6 +151,18 @@
                 </text>
 
                 <config-key-list>
+                    <config-key id="allow-root" name="Allow Run as Root">
+                        <summary>Allow the command to run as the root user.</summary>
+
+                        <text>
+                            <p>By default only the <cmd>restore</cmd> command may be run as the root user since it is designed to carefully manage file ownership. Running other commands as root risks creating files (e.g. in the repository) that are owned by root and therefore inaccessible to the PostgreSQL user, causing later commands to fail.</p>
+
+                            <p>Enable this option to run a command as root anyway. However, it is far better to run <backrest/> as the user that owns the repository and PostgreSQL cluster.</p>
+                        </text>
+
+                        <example>y</example>
+                    </config-key>
+
                     <config-key id="beta" name="Allow Beta Features">
                         <summary>Allow beta features.</summary>
 
