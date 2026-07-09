@@ -399,6 +399,19 @@
 
                 <p>Document that <setting>expire-auto</setting> uses the <cmd>backup</cmd> command configuration.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="2737"/>
+                <github-pull-request id="2809"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="lkanbus"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Document adjusting the <proper>logrotate</proper> <id>su</id> directive for a dedicated user.</p>
+            </release-item>
         </release-improvement-list>
     </release-doc-list>
 
