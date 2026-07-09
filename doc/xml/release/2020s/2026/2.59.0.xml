@@ -261,6 +261,19 @@
             </release-item>
 
             <release-item>
+                <github-issue id="1997"/>
+                <github-pull-request id="2808"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="mitchell.grice"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Report the actual error when an <proper>S3</proper> credential request fails.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2757"/>
                 <github-pull-request id="2760"/>
 
