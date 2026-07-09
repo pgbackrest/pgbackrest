@@ -695,6 +695,30 @@ testRun(void)
         TEST_ERROR(cmdArchivePush(), OptionRequiredError, "'archive-push' command in async mode requires option 'pg1-path'");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when unable to create spool path in the foreground");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        strLstAddZ(argList, TEST_PATH "/pg/pg_xlog/000000010000000100000001");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        // Make the spool path read-only so the foreground fails to create the spool out path and reports the error directly instead
+        // of leaving it in the async log and timing out
+        HRN_STORAGE_PATH_CREATE(storageTest, "spool", .mode = 0500);
+
+        TEST_ERROR(
+            cmdArchivePush(), PathCreateError, "unable to create path '" TEST_PATH "/spool/archive': [13] Permission denied");
+
+        // The foreground holds the lock when it errors (as it does in production, where the process then exits), so release it and
+        // restore the spool path mode for the following tests
+        cmdLockReleaseP();
+        HRN_STORAGE_MODE(storageTest, "spool");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check timeout on async error");
 
         // Call with a bogus exe name so the async process will error out and we can make sure timeouts work
