@@ -250,6 +250,8 @@ testRun(void)
             "\n"
             "General Options:\n"
             "\n"
+            "  --allow-root                        allow the command to run as the root user\n"
+            "                                      [default=y]\n"
             "  --buffer-size                       buffer size for I/O operations\n"
             "                                      [current=32768, default=1MiB]\n"
             "  --cmd                               pgBackRest command\n"

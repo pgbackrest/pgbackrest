@@ -884,6 +884,101 @@ Option parse data
 
 static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 {
+    PARSE_RULE_OPTION                                                                                              // opt/allow-root
+    (                                                                                                              // opt/allow-root
+        PARSE_RULE_OPTION_NAME("allow-root"),                                                                      // opt/allow-root
+        PARSE_RULE_OPTION_TYPE(Boolean),                                                                           // opt/allow-root
+        PARSE_RULE_OPTION_NEGATE(true),                                                                            // opt/allow-root
+        PARSE_RULE_OPTION_RESET(true),                                                                             // opt/allow-root
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                          // opt/allow-root
+        PARSE_RULE_OPTION_SECTION(Global),                                                                         // opt/allow-root
+                                                                                                                   // opt/allow-root
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                             // opt/allow-root
+        (                                                                                                          // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                                    // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                 // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                      // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Check)                                                                       // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                      // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                        // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                    // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                     // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                      // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                                     // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                      // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                     // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Server)                                                                      // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(ServerPing)                                                                  // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                               // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Start)                                                                       // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Stop)                                                                        // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                      // opt/allow-root
+        ),                                                                                                         // opt/allow-root
+                                                                                                                   // opt/allow-root
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                            // opt/allow-root
+        (                                                                                                          // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                 // opt/allow-root
+        ),                                                                                                         // opt/allow-root
+                                                                                                                   // opt/allow-root
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                            // opt/allow-root
+        (                                                                                                          // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                 // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                      // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                     // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                      // opt/allow-root
+        ),                                                                                                         // opt/allow-root
+                                                                                                                   // opt/allow-root
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                           // opt/allow-root
+        (                                                                                                          // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                                    // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                 // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                      // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Check)                                                                       // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                      // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                        // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                    // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                     // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                      // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                                     // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                      // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                     // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                               // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                      // opt/allow-root
+        ),                                                                                                         // opt/allow-root
+                                                                                                                   // opt/allow-root
+        PARSE_RULE_OPTIONAL                                                                                        // opt/allow-root
+        (                                                                                                          // opt/allow-root
+            PARSE_RULE_OPTIONAL_GROUP                                                                              // opt/allow-root
+            (                                                                                                      // opt/allow-root
+                PARSE_RULE_FILTER_CMD                                                                              // opt/allow-root
+                (                                                                                                  // opt/allow-root
+                    PARSE_RULE_VAL_CMD(Restore),                                                                   // opt/allow-root
+                ),                                                                                                 // opt/allow-root
+                                                                                                                   // opt/allow-root
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                        // opt/allow-root
+                (                                                                                                  // opt/allow-root
+                    PARSE_RULE_VAL_BOOL_TRUE,                                                                      // opt/allow-root
+                ),                                                                                                 // opt/allow-root
+            ),                                                                                                     // opt/allow-root
+                                                                                                                   // opt/allow-root
+            PARSE_RULE_OPTIONAL_GROUP                                                                              // opt/allow-root
+            (                                                                                                      // opt/allow-root
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                        // opt/allow-root
+                (                                                                                                  // opt/allow-root
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                                     // opt/allow-root
+                ),                                                                                                 // opt/allow-root
+            ),                                                                                                     // opt/allow-root
+        ),                                                                                                         // opt/allow-root
+    ),                                                                                                             // opt/allow-root
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                              // opt/annotation
     (                                                                                                              // opt/annotation
         PARSE_RULE_OPTION_NAME("annotation"),                                                                      // opt/annotation
@@ -11917,6 +12012,7 @@ Order for option parse resolution
 static const uint8_t optionResolveOrder[] =
 {
     cfgOptStanza,                                                                                               // opt-resolve-order
+    cfgOptAllowRoot,                                                                                            // opt-resolve-order
     cfgOptAnnotation,                                                                                           // opt-resolve-order
     cfgOptArchiveAsync,                                                                                         // opt-resolve-order
     cfgOptArchiveExpireBefore,                                                                                  // opt-resolve-order

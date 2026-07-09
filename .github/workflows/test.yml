@@ -57,7 +57,7 @@ jobs:
           - param: test --vm=a324 --param=no-coverage --param=no-performance
 
           # RHEL documentation
-          - param: doc --vm=rh8
+          - param: doc --vm=rh9
 
           # All integration tests
           - param: test --vm=rh8 --param=module=integration

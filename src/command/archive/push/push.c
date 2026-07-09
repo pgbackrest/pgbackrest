@@ -143,11 +143,9 @@ archivePushProcessList(const String *const walPath)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Create the spool out path if it does not already exist
-        storagePathCreateP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT_STR);
-
         // Read the status files from the spool directory, then remove any files that do not end in ok and create a list of the
-        // ok files for further processing
+        // ok files for further processing. The spool out path is created by the foreground process before the async process is
+        // forked.
         const StringList *const statusList = strLstSort(
             storageListP(storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT_STR, .errorOnMissing = true), sortOrderAsc);
 
@@ -364,6 +362,11 @@ cmdArchivePush(void)
                     StringList *const commandExec = cfgExecParam(cfgCmdArchivePush, cfgCmdRoleAsync, optionReplace, true, false);
                     strLstInsert(commandExec, 0, cfgBin());
                     strLstAdd(commandExec, strPath(walFile));
+
+                    // Create the spool out path in the foreground. If this fails (e.g. permission denied) the error is thrown here
+                    // and reaches the PostgreSQL log immediately, rather than only in the async process, where it cannot be written
+                    // to the spool as a status file and only appears as an archive timeout.
+                    storagePathCreateP(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT_STR);
 
                     // Clear errors for the current archive file
                     archiveAsyncErrorClear(archiveModePush, archiveFile);

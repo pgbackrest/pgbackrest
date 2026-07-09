@@ -43,6 +43,7 @@ Option group constants
 /***********************************************************************************************************************************
 Option constants
 ***********************************************************************************************************************************/
+#define CFGOPT_ALLOW_ROOT                                           "allow-root"
 #define CFGOPT_ANNOTATION                                           "annotation"
 #define CFGOPT_ARCHIVE_ASYNC                                        "archive-async"
 #define CFGOPT_ARCHIVE_CHECK                                        "archive-check"
@@ -146,7 +147,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            197
+#define CFG_OPTION_TOTAL                                            198
 
 /***********************************************************************************************************************************
 Option value constants
@@ -482,6 +483,7 @@ Option enum
 ***********************************************************************************************************************************/
 typedef enum
 {
+    cfgOptAllowRoot,
     cfgOptAnnotation,
     cfgOptArchiveAsync,
     cfgOptArchiveCheck,

@@ -102,6 +102,12 @@ pgBackRest repositories can be located in S3, Azure, and GCS compatible object s
 
 pgBackRest can encrypt the repository to secure backups wherever they are stored.
 
+### Ransomware & Malware Protection
+
+When the repository is stored on versioned object storage, pgBackRest can read the repository as it was at a point-in-time. If backups are deleted or corrupted by accident, malware, or ransomware, a target time can be used to recover data from before the damage occurred.
+
+Versioning is supported by S3, Azure, and GCS compatible object stores. Object locking for S3 and soft delete for GCS or Azure can provide additional protection against tampering.
+
 ### Compatibility with ten versions of PostgreSQL
 
 pgBackRest includes support for ten versions of PostgreSQL, the five supported versions and the last five EOL versions. This allows ample time to upgrade to a supported version.

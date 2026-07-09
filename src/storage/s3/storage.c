@@ -396,8 +396,11 @@ storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
         // Load the token from the given file for each request since the token may be updated during execution
         const String *const webIdToken = strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), this->tokenFile)));
 
-        // Get credentials
-        HttpQuery *const query = httpQueryNewP();
+        // Get credentials. Redact the web identity token so it is not exposed if the query is logged, e.g. in an error.
+        StringList *const queryRedactList = strLstNew();
+        strLstAddZ(queryRedactList, "WebIdentityToken");
+
+        HttpQuery *const query = httpQueryNewP(.redactList = queryRedactList);
         httpQueryAdd(query, STRDEF("Action"), STRDEF("AssumeRoleWithWebIdentity"));
         httpQueryAdd(query, STRDEF("RoleArn"), this->credRole);
         httpQueryAdd(query, STRDEF("RoleSessionName"), STRDEF(PROJECT_NAME));
@@ -408,7 +411,10 @@ storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
             this->credHttpClient, HTTP_VERB_GET_STR, FSLASH_STR, .header = header, .query = query);
         HttpResponse *const response = httpRequestResponse(request, true);
 
-        CHECK(FormatError, httpResponseCode(response) != HTTP_RESPONSE_CODE_NOT_FOUND, "invalid response code");
+        // Error if the request was not successful, e.g. the web identity token is invalid. Without this the error would be a
+        // confusing report that AssumeRoleWithWebIdentityResult is missing rather than the actual error returned by AWS.
+        if (!httpResponseCodeOk(response))
+            httpRequestError(request, response);
 
         // Copy credentials
         const XmlNode *const xmlCred =
@@ -457,13 +463,18 @@ storageS3AuthPodId(StorageS3 *const this, const HttpHeader *const header)
         // Load the token from the given file for each request since the token may be updated during execution
         const String *const podIdToken = strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), this->tokenFile)));
 
-        // Get credentials
+        // Get credentials. Redact the authorization header, which holds the token, so it is not exposed if the header is logged,
+        // e.g. in an error.
         HttpRequest *const request = httpRequestNewP(
             this->credHttpClient, HTTP_VERB_GET_STR, this->credPath,
-            .header = httpHeaderAdd(httpHeaderDup(header, NULL), HTTP_HEADER_AUTHORIZATION_STR, podIdToken));
+            .header = httpHeaderAdd(httpHeaderDup(header, this->headerRedactList), HTTP_HEADER_AUTHORIZATION_STR, podIdToken));
         HttpResponse *const response = httpRequestResponse(request, true);
 
-        CHECK(FormatError, httpResponseCode(response) != HTTP_RESPONSE_CODE_NOT_FOUND, "invalid response code");
+        // Error if the request was not successful, e.g. the pod identity token is invalid. Without this the error would be a
+        // confusing report about missing JSON keys rather than the actual error returned by AWS.
+        if (!httpResponseCodeOk(response))
+            httpRequestError(request, response);
+
         const KeyValue *const kvResponse = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
 
         // Copy credentials
