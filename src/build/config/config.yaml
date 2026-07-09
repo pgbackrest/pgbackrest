@@ -275,6 +275,14 @@ optionGroup:
 option:
   # Command-line only options
   #---------------------------------------------------------------------------------------------------------------------------------
+  archive-expire-before:
+    type: string
+    required: false
+    command:
+      expire: {}
+    command-role:
+      main: {}
+
   config:
     type: string
     default-type: literal
@@ -434,12 +442,16 @@ option:
       manifest: {}
       repo-get:
         required: false
+        internal: true
       repo-ls:
         required: false
+        internal: true
       repo-put:
         required: false
+        internal: true
       repo-rm:
         required: false
+        internal: true
       restore: {}
       stanza-create: {}
       stanza-delete: {}
@@ -1050,6 +1062,17 @@ option:
     command:
       archive-get: {}
     command-role:
+      main: {}
+
+  archive-push-batch-size:
+    section: global
+    type: size
+    default: 16GiB
+    allow-range: [1MiB, 4PiB]
+    command:
+      archive-push: {}
+    command-role:
+      async: {}
       main: {}
 
   archive-push-queue-max:

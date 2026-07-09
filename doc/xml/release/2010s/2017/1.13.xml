@@ -65,7 +65,7 @@
 
             <release-item>
                 <release-item-contributor-list>
-                    <release-item-contributor id="benoit.lobréau"/>
+                    <release-item-contributor id="benoit.lobreau"/>
                 </release-item-contributor-list>
 
                 <p>Added warning to update <code>pg_tablespace.spclocation</code> when remapping tablespaces in <postgres/> &lt; 9.2.</p>

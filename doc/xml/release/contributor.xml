@@ -165,7 +165,7 @@
     <contributor-id type="github">benjaminjb</contributor-id>
 </contributor>
 
-<contributor id="benoit.lobréau">
+<contributor id="benoit.lobreau">
     <contributor-name-display>blogh</contributor-name-display>
     <contributor-id type="github">blogh</contributor-id>
 </contributor>
@@ -908,6 +908,11 @@
 <contributor id="milosz.suchy">
     <contributor-name-display>Milosz Suchy</contributor-name-display>
     <contributor-id type="github">Yuxael</contributor-id>
+</contributor>
+
+<contributor id="mitchell.grice">
+    <contributor-name-display>Mitchell Grice</contributor-name-display>
+    <contributor-id type="github">gricey432</contributor-id>
 </contributor>
 
 <contributor id="mohamed.insaf.k">

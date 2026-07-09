@@ -31,6 +31,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("128MiB"),                                                                                          // val/str
     PARSE_RULE_STRPUB("15m"),                                                                                             // val/str
     PARSE_RULE_STRPUB("15s"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("16GiB"),                                                                                           // val/str
     PARSE_RULE_STRPUB("16KiB"),                                                                                           // val/str
     PARSE_RULE_STRPUB("16MiB"),                                                                                           // val/str
     PARSE_RULE_STRPUB("19"),                                                                                              // val/str
@@ -168,6 +169,7 @@ typedef enum
     parseRuleValStrQT_128MiB_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_15m_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_15s_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_16GiB_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_16KiB_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_16MiB_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_19_QT,                                                                                         // val/str/enum
@@ -401,6 +403,7 @@ static const int64_t parseRuleValueSize[] =
     20971520,                                                                                                            // val/size
     134217728,                                                                                                           // val/size
     1073741824,                                                                                                          // val/size
+    17179869184,                                                                                                         // val/size
     1099511627776,                                                                                                       // val/size
     1125899906842624,                                                                                                    // val/size
     4503599627370496,                                                                                                    // val/size
@@ -426,6 +429,7 @@ static const uint8_t parseRuleValueSizeStrMap[] =
     parseRuleValStrQT_20MiB_QT,                                                                                   // val/size/strmap
     parseRuleValStrQT_128MiB_QT,                                                                                  // val/size/strmap
     parseRuleValStrQT_1GiB_QT,                                                                                    // val/size/strmap
+    parseRuleValStrQT_16GiB_QT,                                                                                   // val/size/strmap
     parseRuleValStrQT_1TiB_QT,                                                                                    // val/size/strmap
     parseRuleValStrQT_1PiB_QT,                                                                                    // val/size/strmap
     parseRuleValStrQT_4PiB_QT,                                                                                    // val/size/strmap
@@ -451,6 +455,7 @@ typedef enum
     parseRuleValSize20MiB,                                                                                          // val/size/enum
     parseRuleValSize128MiB,                                                                                         // val/size/enum
     parseRuleValSize1GiB,                                                                                           // val/size/enum
+    parseRuleValSize16GiB,                                                                                          // val/size/enum
     parseRuleValSize1TiB,                                                                                           // val/size/enum
     parseRuleValSize1PiB,                                                                                           // val/size/enum
     parseRuleValSize4PiB,                                                                                           // val/size/enum
@@ -1052,6 +1057,19 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                       // opt/archive-copy
     ),                                                                                                           // opt/archive-copy
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                   // opt/archive-expire-before
+    (                                                                                                   // opt/archive-expire-before
+        PARSE_RULE_OPTION_NAME("archive-expire-before"),                                                // opt/archive-expire-before
+        PARSE_RULE_OPTION_TYPE(String),                                                                 // opt/archive-expire-before
+        PARSE_RULE_OPTION_REQUIRED(false),                                                              // opt/archive-expire-before
+        PARSE_RULE_OPTION_SECTION(CommandLine),                                                         // opt/archive-expire-before
+                                                                                                        // opt/archive-expire-before
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                  // opt/archive-expire-before
+        (                                                                                               // opt/archive-expire-before
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                           // opt/archive-expire-before
+        ),                                                                                              // opt/archive-expire-before
+    ),                                                                                                  // opt/archive-expire-before
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                   // opt/archive-get-queue-max
     (                                                                                                   // opt/archive-get-queue-max
         PARSE_RULE_OPTION_NAME("archive-get-queue-max"),                                                // opt/archive-get-queue-max
@@ -1216,6 +1234,42 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),                                                                                             // opt/archive-mode-check
         ),                                                                                                 // opt/archive-mode-check
     ),                                                                                                     // opt/archive-mode-check
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                 // opt/archive-push-batch-size
+    (                                                                                                 // opt/archive-push-batch-size
+        PARSE_RULE_OPTION_NAME("archive-push-batch-size"),                                            // opt/archive-push-batch-size
+        PARSE_RULE_OPTION_TYPE(Size),                                                                 // opt/archive-push-batch-size
+        PARSE_RULE_OPTION_RESET(true),                                                                // opt/archive-push-batch-size
+        PARSE_RULE_OPTION_REQUIRED(true),                                                             // opt/archive-push-batch-size
+        PARSE_RULE_OPTION_SECTION(Global),                                                            // opt/archive-push-batch-size
+                                                                                                      // opt/archive-push-batch-size
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                // opt/archive-push-batch-size
+        (                                                                                             // opt/archive-push-batch-size
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                    // opt/archive-push-batch-size
+        ),                                                                                            // opt/archive-push-batch-size
+                                                                                                      // opt/archive-push-batch-size
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                               // opt/archive-push-batch-size
+        (                                                                                             // opt/archive-push-batch-size
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                    // opt/archive-push-batch-size
+        ),                                                                                            // opt/archive-push-batch-size
+                                                                                                      // opt/archive-push-batch-size
+        PARSE_RULE_OPTIONAL                                                                           // opt/archive-push-batch-size
+        (                                                                                             // opt/archive-push-batch-size
+            PARSE_RULE_OPTIONAL_GROUP                                                                 // opt/archive-push-batch-size
+            (                                                                                         // opt/archive-push-batch-size
+                PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                       // opt/archive-push-batch-size
+                (                                                                                     // opt/archive-push-batch-size
+                    PARSE_RULE_VAL_SIZE(1MiB),                                                        // opt/archive-push-batch-size
+                    PARSE_RULE_VAL_SIZE(4PiB),                                                        // opt/archive-push-batch-size
+                ),                                                                                    // opt/archive-push-batch-size
+                                                                                                      // opt/archive-push-batch-size
+                PARSE_RULE_OPTIONAL_DEFAULT                                                           // opt/archive-push-batch-size
+                (                                                                                     // opt/archive-push-batch-size
+                    PARSE_RULE_VAL_SIZE(16GiB),                                                       // opt/archive-push-batch-size
+                ),                                                                                    // opt/archive-push-batch-size
+            ),                                                                                        // opt/archive-push-batch-size
+        ),                                                                                            // opt/archive-push-batch-size
+    ),                                                                                                // opt/archive-push-batch-size
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                  // opt/archive-push-queue-max
     (                                                                                                  // opt/archive-push-queue-max
@@ -10661,6 +10715,14 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                              // opt/stanza
         PARSE_RULE_OPTION_SECTION(CommandLine),                                                                        // opt/stanza
                                                                                                                        // opt/stanza
+        PARSE_RULE_OPTION_COMMAND_INTERNAL_LIST                                                                        // opt/stanza
+        (                                                                                                              // opt/stanza
+            PARSE_RULE_OPTION_COMMAND_INTERNAL(RepoGet, true),                                                         // opt/stanza
+            PARSE_RULE_OPTION_COMMAND_INTERNAL(RepoLs, true),                                                          // opt/stanza
+            PARSE_RULE_OPTION_COMMAND_INTERNAL(RepoPut, true),                                                         // opt/stanza
+            PARSE_RULE_OPTION_COMMAND_INTERNAL(RepoRm, true),                                                          // opt/stanza
+        )                                                                                                              // opt/stanza
+                                                                                                                       // opt/stanza
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                 // opt/stanza
         (                                                                                                              // opt/stanza
             PARSE_RULE_OPTION_COMMAND(Annotate)                                                                        // opt/stanza
@@ -11857,10 +11919,12 @@ static const uint8_t optionResolveOrder[] =
     cfgOptStanza,                                                                                               // opt-resolve-order
     cfgOptAnnotation,                                                                                           // opt-resolve-order
     cfgOptArchiveAsync,                                                                                         // opt-resolve-order
+    cfgOptArchiveExpireBefore,                                                                                  // opt-resolve-order
     cfgOptArchiveGetQueueMax,                                                                                   // opt-resolve-order
     cfgOptArchiveHeaderCheck,                                                                                   // opt-resolve-order
     cfgOptArchiveMissingRetry,                                                                                  // opt-resolve-order
     cfgOptArchiveMode,                                                                                          // opt-resolve-order
+    cfgOptArchivePushBatchSize,                                                                                 // opt-resolve-order
     cfgOptArchivePushQueueMax,                                                                                  // opt-resolve-order
     cfgOptArchiveTimeout,                                                                                       // opt-resolve-order
     cfgOptBackupStandby,                                                                                        // opt-resolve-order

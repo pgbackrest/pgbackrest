@@ -110,6 +110,71 @@ testRun(void)
             "P00   WARN: 'STRID5(\"abcd\")' should be 'STRID5(\"abcd\", 0x20c410)'\n"
             "P00   WARN: 'STRID6(\"abcd\", 0x20c410)' should be 'STRID5(\"abcd\", 0x20c410)'\n"
             "P00   WARN: 'STRID6S(\"abcd\", 37, 0x20c410)' should be 'STRID5S(\"abcd\", 37, 0x41883fe)'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("lintChar()");
+
+        // Invisible/bidirectional/homoglyph/control characters written as \xNN escapes so this test file stays 7-bit ASCII
+        HRN_STORAGE_PUT_Z(
+            storageTest, "repo/test.c",
+            "int normal;\n"                                             // Printable ASCII is allowed
+            "\tint tabbed;\n"                                           // Tab is allowed
+            "int zero\xe2\x80\x8bwidth;\n"                              // U+200B zero width space
+            "int bidi\xe2\x80\xae;\n"                                   // U+202E right-to-left override
+            "int cyr\xd0\xb0;\n"                                        // U+0430 cyrillic homoglyph of 'a'
+            "int emoji\xf0\x9f\x98\x80;\n"                              // U+1F600 four-byte sequence
+            "int cr;\r\n"                                               // U+000D carriage return
+            "int trunc\xf0");                                           // Truncated lead byte at end of file
+
+        // A skip-listed file is exempt even though its content would otherwise be flagged
+        HRN_STORAGE_PUT_Z(storageTest, "repo/doc/resource/git-history.cache", "[]\n");
+
+        TEST_ERROR(
+            cmdTest(
+                STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("none"), 3, STRDEF("invalid"),
+                STRDEF("common/stack-trace"), 0, 1, logLevelDebug, true, NULL, NULL, false, false, false, true),
+            FormatError, "6 linter error(s) in 'test.c' (see warnings above)");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: line 3 contains disallowed character U+200B (source must be 7-bit ASCII)\n"
+            "P00   WARN: line 4 contains disallowed character U+202E (source must be 7-bit ASCII)\n"
+            "P00   WARN: line 5 contains disallowed character U+0430 (source must be 7-bit ASCII)\n"
+            "P00   WARN: line 6 contains disallowed character U+1F600 (source must be 7-bit ASCII)\n"
+            "P00   WARN: line 7 contains disallowed character U+000D (source must be 7-bit ASCII)\n"
+            "P00   WARN: line 8 contains disallowed character U+00F0 (source must be 7-bit ASCII)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("lintChar() binary file");
+
+        // A binary file (contains a null byte) is not allowed; the skip-listed cache above is still exempt
+        HRN_STORAGE_PUT(storageTest, "repo/test.c", BUF("a\0b", 3));
+
+        TEST_ERROR(
+            cmdTest(
+                STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("none"), 3, STRDEF("invalid"),
+                STRDEF("common/stack-trace"), 0, 1, logLevelDebug, true, NULL, NULL, false, false, false, true),
+            FormatError, "1 linter error(s) in 'test.c' (see warnings above)");
+
+        TEST_RESULT_LOG("P00   WARN: unexpected binary file (add to the linter skip list if intentional)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("lintStrId() runs on .c.inc but not .auto.c.inc");
+
+        // Generated .auto.c.inc and vendored .vendor.c.inc are exempt from the StringId check, so their bad StringIds must not be
+        // flagged (both sort before b.c.inc)
+        HRN_STORAGE_PUT_Z(storageTest, "repo/a.auto.c.inc", "STRID5(\"abcd\")\n");
+        HRN_STORAGE_PUT_Z(storageTest, "repo/a.vendor.c.inc", "STRID5(\"abcd\")\n");
+
+        // A hand-written .c.inc is checked, so its bad StringId is flagged
+        HRN_STORAGE_PUT_Z(storageTest, "repo/b.c.inc", "STRID5(\"abcd\")\n");
+
+        TEST_ERROR(
+            cmdTest(
+                STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("none"), 3, STRDEF("invalid"),
+                STRDEF("common/stack-trace"), 0, 1, logLevelDebug, true, NULL, NULL, false, false, false, true),
+            FormatError, "1 linter error(s) in 'b.c.inc' (see warnings above)");
+
+        TEST_RESULT_LOG("P00   WARN: 'STRID5(\"abcd\")' should be 'STRID5(\"abcd\", 0x20c410)'");
     }
 
     // *****************************************************************************************************************************
