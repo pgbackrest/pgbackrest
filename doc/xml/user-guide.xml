@@ -2700,6 +2700,8 @@
 
             <p>The <user>{[br-user]}</user> user is created to own the <backrest/> repository. Any user can own the repository but it is best not to use <user>postgres</user> (if it exists) to avoid confusion.</p>
 
+            <admonition type="note">When <backrest/> is installed from a package, a <proper>logrotate</proper> configuration such as <file>/etc/logrotate.d/pgbackrest</file> may be provided that rotates the logs as a specific user via the <id>su</id> directive (e.g. <id>su postgres postgres</id>). Since the files in <path>/var/log/pgbackrest</path> are owned by the user that runs <backrest/> (here <user>{[br-user]}</user>), the <id>su</id> directive must be updated to match this user or <proper>logrotate</proper> will fail with a permission error.</admonition>
+
             <execute-list host="{[host-repo1]}">
                 <title>Create <user>{[br-user]}</user> user</title>
 
