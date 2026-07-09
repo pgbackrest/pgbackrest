@@ -227,6 +227,18 @@
             </release-item>
 
             <release-item>
+                <github-issue id="1693"/>
+                <github-pull-request id="2812"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Error when running as root unless <setting>allow-root</setting> is enabled.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2774"/>
 
                 <release-item-contributor-list>
