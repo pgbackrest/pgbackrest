@@ -80,9 +80,7 @@ bldCfgParseCommandRole(Yaml *const yaml)
         {
             strLstAdd(result, yamlScalarNext(yaml).value);
 
-            // Each role's value is an empty map
-            yamlEventNextCheck(yaml, yamlEventTypeMapBegin);
-            yamlEventNextCheck(yaml, yamlEventTypeMapEnd);
+            yamlMapEmpty(yaml);
         }
         YAML_MAP_END();
     }
@@ -197,9 +195,7 @@ bldCfgParseOptionGroupList(Yaml *const yaml)
         {
             BldCfgOptionGroupRaw optGrpRaw = {.name = yamlScalarNext(yaml).value};
 
-            // Value is an empty map
-            yamlEventNextCheck(yaml, yamlEventTypeMapBegin);
-            yamlEventNextCheck(yaml, yamlEventTypeMapEnd);
+            yamlMapEmpty(yaml);
 
             MEM_CONTEXT_BEGIN(lstMemContext(result))
             {
@@ -329,7 +325,7 @@ bldCfgParseAllowList(Yaml *const yaml, const List *const optList)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If allow list is defined
-        if (yamlEventPeek(yaml).type == yamlEventTypeSeqBegin)
+        if (yamlEventPeekIs(yaml, yamlEventTypeSeqBegin))
         {
             MEM_CONTEXT_PRIOR_BEGIN()
             {
@@ -342,7 +338,7 @@ bldCfgParseAllowList(Yaml *const yaml, const List *const optList)
                 BldCfgOptionValue bldCfgOptionValue;
 
                 // A scalar is a bare value; a map is a value with a condition
-                if (yamlEventPeek(yaml).type == yamlEventTypeScalar)
+                if (yamlEventPeekIs(yaml, yamlEventTypeScalar))
                 {
                     bldCfgOptionValue.value = yamlScalarNext(yaml).value;
                     bldCfgOptionValue.condition = NULL;
@@ -433,7 +429,7 @@ bldCfgParseAllowRange(Yaml *const yaml)
         yamlEventNextCheck(yaml, yamlEventTypeSeqBegin);
 
         // If the range is a simple [min, max] pair
-        if (yamlEventPeek(yaml).type == yamlEventTypeScalar)
+        if (yamlEventPeekIs(yaml, yamlEventTypeScalar))
         {
             const YamlEvent allowRangeMinVal = yamlScalarNext(yaml);
             const YamlEvent allowRangeMaxVal = yamlScalarNext(yaml);
@@ -535,7 +531,7 @@ bldCfgParseDefault(Yaml *const yaml)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If a scalar then a simple default value
-        if (yamlEventPeek(yaml).type == yamlEventTypeScalar)
+        if (yamlEventPeekIs(yaml, yamlEventTypeScalar))
         {
             const YamlEvent defaultVal = yamlScalarNext(yaml);
 
@@ -598,7 +594,7 @@ bldCfgParseDepend(Yaml *const yaml, const List *const optList)
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If a map then depend is defined
-        if (yamlEventPeek(yaml).type == yamlEventTypeMapBegin)
+        if (yamlEventPeekIs(yaml, yamlEventTypeMapBegin))
         {
             BldCfgOptionDependRaw optDependRaw = {0};
 
@@ -711,9 +707,7 @@ bldCfgParseOptionDeprecate(Yaml *const yaml)
             const String *name = yamlScalarNext(yaml).value;
             bool indexed = false;
 
-            // Value is an empty map
-            yamlEventNextCheck(yaml, yamlEventTypeMapBegin);
-            yamlEventNextCheck(yaml, yamlEventTypeMapEnd);
+            yamlMapEmpty(yaml);
 
             // Determine if this deprecation is indexed
             const size_t questionPos = (size_t)strChr(name, '?');
@@ -790,7 +784,7 @@ bldCfgParseOptionCommandList(Yaml *const yaml, const List *const cmdList, const 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         // If a map then the command list is defined
-        if (yamlEventPeek(yaml).type == yamlEventTypeMapBegin)
+        if (yamlEventPeekIs(yaml, yamlEventTypeMapBegin))
         {
             List *const optCmdRawList = lstNewP(sizeof(BldCfgOptionCommandRaw), .comparator = lstComparatorStr);
 

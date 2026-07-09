@@ -34,7 +34,7 @@ bldPgVersionList(Yaml *const yaml)
                 BldPgVersionRaw pgRaw = {.release = true};
 
                 // If map then the version has attributes
-                if (yamlEventPeek(yaml).type == yamlEventTypeMapBegin)
+                if (yamlEventPeekIs(yaml, yamlEventTypeMapBegin))
                 {
                     YAML_MAP_BEGIN(yaml)
                     {

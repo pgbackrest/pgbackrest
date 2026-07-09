@@ -41,7 +41,7 @@ bldErrParseErrorList(Yaml *const yaml)
             BldErrErrorRaw errRaw = {.name = yamlScalarNext(yaml).value};
 
             // If scalar then it is an error code
-            if (yamlEventPeek(yaml).type == yamlEventTypeScalar)
+            if (yamlEventPeekIs(yaml, yamlEventTypeScalar))
             {
                 errRaw.code = cvtZToUInt(strZ(yamlScalarNext(yaml).value));
             }

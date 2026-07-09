@@ -65,6 +65,13 @@ YamlEvent yamlEventCheck(YamlEvent event, YamlEventType type);
 // Peek at the next event
 YamlEvent yamlEventPeek(Yaml *this);
 
+// Is the next event of the given type?
+FN_INLINE_ALWAYS bool
+yamlEventPeekIs(Yaml *const this, const YamlEventType type)
+{
+    return yamlEventPeek(this).type == type;
+}
+
 // Get next scalar
 FN_INLINE_ALWAYS YamlEvent
 yamlScalarNext(Yaml *const this)
@@ -87,6 +94,14 @@ FN_INLINE_ALWAYS void
 yamlScalarNextCheckZ(Yaml *const this, const char *const value)
 {
     yamlScalarNextCheck(this, STR(value));
+}
+
+// Consume an empty map (map begin immediately followed by map end)
+FN_INLINE_ALWAYS void
+yamlMapEmpty(Yaml *const this)
+{
+    yamlEventNextCheck(this, yamlEventTypeMapBegin);
+    yamlEventNextCheck(this, yamlEventTypeMapEnd);
 }
 
 // Convert an event to a boolean (or error)
