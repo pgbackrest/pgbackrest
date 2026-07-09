@@ -18,9 +18,11 @@ because build.h is the first include in every file and poisoned identifiers are 
 #include <string.h>
 
 #undef sprintf
+#undef strcat
+#undef strcpy
 #undef strncpy
 
-#pragma GCC poison sprintf strncpy
+#pragma GCC poison sprintf strcat strcpy strncpy
 
 /***********************************************************************************************************************************
 Include build.auto.h and other (hopefully small) header files that are commonly used.

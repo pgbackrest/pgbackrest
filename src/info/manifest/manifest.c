@@ -278,7 +278,7 @@ manifestNewBuild(
                         strFree(relationInit);
 
                         // Save the file id so we don't need to do the lookup next time if it doesn't change
-                        strcpy(lastRelationFileId, relationFileId);
+                        memcpy(lastRelationFileId, relationFileId, nameIdx + 1);
                     }
 
                     // If relation is unlogged then remove it

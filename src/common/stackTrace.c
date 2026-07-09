@@ -186,7 +186,7 @@ stackTraceParamBuffer(const char *const paramName)
     }
 
     // Add the parameter name
-    strcpy(data->param + data->paramSize, paramName);
+    memcpy(data->param + data->paramSize, paramName, paramNameSize);
     data->paramSize += paramNameSize;
 
     // Add param/value separator

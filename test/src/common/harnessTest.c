@@ -528,12 +528,12 @@ hrnTestResultBool(int actual, int expected)
         if (actual < 0 || actual > 1)
             snprintf(actualZ, sizeof(actualZ), "INVALID(%d)", actual);
         else
-            actual ? strcpy(actualZ, "true") : strcpy(actualZ, "false");
+            snprintf(actualZ, sizeof(actualZ), "%s", actual ? "true" : "false");
 
         if (expected < 0 || expected > 1)
             snprintf(expectedZ, sizeof(expectedZ), "INVALID(%d)", expected);
         else
-            expected ? strcpy(expectedZ, "true") : strcpy(expectedZ, "false");
+            snprintf(expectedZ, sizeof(expectedZ), "%s", expected ? "true" : "false");
 
         hrnTestResultDiff(actualZ, expectedZ);
     }
