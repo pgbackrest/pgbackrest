@@ -852,7 +852,7 @@ testRun(void)
             cfgLoad(strLstSize(argList), strLstPtr(argList)), OptionInvalidError,
             "the 'archive-get' command must not be run as the root user\n"
             "HINT: running as root can create files that the regular user cannot access, causing later commands to fail.\n"
-            "HINT: set the 'allow-root' option to run this command as root.");
+            "HINT: set the 'allow-root' option to allow running this command as root.");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("allow run as root when allow-root is enabled");

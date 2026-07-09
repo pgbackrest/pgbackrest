@@ -481,7 +481,7 @@ cfgLoad(const unsigned int argListSize, const char *argList[])
                     OptionInvalidError,
                     "the '%s' command must not be run as the root user\n"
                     "HINT: running as root can create files that the regular user cannot access, causing later commands to fail.\n"
-                    "HINT: set the '" CFGOPT_ALLOW_ROOT "' option to run this command as root.",
+                    "HINT: set the '" CFGOPT_ALLOW_ROOT "' option to allow running this command as root.",
                     cfgCommandName());
             }
         }
