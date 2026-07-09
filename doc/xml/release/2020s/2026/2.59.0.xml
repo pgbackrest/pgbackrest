@@ -412,6 +412,19 @@
 
                 <p>Document adjusting the <proper>logrotate</proper> <id>su</id> directive for a dedicated user.</p>
             </release-item>
+
+            <release-item>
+                <github-issue id="1633"/>
+                <github-pull-request id="2811"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="alex.richman"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Document that end-of-line comments are not supported in config files.</p>
+            </release-item>
         </release-improvement-list>
     </release-doc-list>
 
