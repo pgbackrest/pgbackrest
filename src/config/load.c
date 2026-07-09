@@ -17,6 +17,7 @@ Configuration Load
 #include "common/io/tls/common.h"
 #include "common/log.h"
 #include "common/memContext.h"
+#include "common/user.h"
 #include "config/config.intern.h"
 #include "config/load.h"
 #include "config/parse.h"
@@ -464,6 +465,26 @@ cfgLoad(const unsigned int argListSize, const char *argList[])
 
         // Load the log settings
         cfgLoadLogSetting();
+
+        // Error when running as the root user unless it is explicitly allowed. Running as root can create files owned by root that
+        // the regular user is then unable to access, which is a common cause of hard-to-diagnose failures. The allow-root option
+        // defaults to true only for the restore command, which is designed to run as root and manages file ownership carefully. The
+        // check applies to all command roles so a non-root command cannot run as root on a remote. It is skipped for help/version
+        // (where the option is not valid) since those may reasonably be run as root.
+        if (!cfgCommandHelp() && cfgOptionValid(cfgOptAllowRoot) && !cfgOptionBool(cfgOptAllowRoot))
+        {
+            userInit();
+
+            if (userRoot())
+            {
+                THROW_FMT(
+                    OptionInvalidError,
+                    "the '%s' command must not be run as the root user\n"
+                    "HINT: running as root can create files that the regular user cannot access, causing later commands to fail.\n"
+                    "HINT: set the '" CFGOPT_ALLOW_ROOT "' option to allow running this command as root.",
+                    cfgCommandName());
+            }
+        }
 
         // Neutralize the umask to make the repository file/path modes more consistent
         if (cfgOptionValid(cfgOptNeutralUmask) && cfgOptionBool(cfgOptNeutralUmask))

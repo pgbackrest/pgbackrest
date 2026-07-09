@@ -232,7 +232,7 @@ eval
         executeTest('docker rm -f $(docker ps -a -q)', {bSuppressError => true});
 
         # Generate deployment docs for RHEL
-        if (!defined($strVm) || $strVm eq VM_RH8)
+        if (!defined($strVm) || $strVm eq VM_RH9)
         {
             &log(INFO, "Generate RHEL documentation");
 

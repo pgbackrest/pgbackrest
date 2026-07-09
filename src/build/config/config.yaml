@@ -679,6 +679,15 @@ option:
 
   # General options
   #---------------------------------------------------------------------------------------------------------------------------------
+  allow-root:
+    section: global
+    type: boolean
+    default: false
+    command:
+      +role: any
+      restore:
+        default: true
+
   archive-timeout:
     section: global
     type: time

@@ -37,7 +37,7 @@
 
         <!-- Defines the container image that will be used to build the host -->
         <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:22.04</variable>
-        <variable key="os-image" if="{[os-type-is-rhel]}">rockylinux/rockylinux:8</variable>
+        <variable key="os-image" if="{[os-type-is-rhel]}">rockylinux/rockylinux:9</variable>
 
         <variable key="user-guide-subtitle" if="{[os-type-is-debian]}">{[os-debian-title]}</variable>
         <variable key="user-guide-subtitle" if="{[os-type-is-rhel]}">{[os-rhel-title]}</variable>
@@ -360,14 +360,14 @@
         VOLUME [ "/sys/fs/cgroup" ]
 
         # Install packages
-        RUN yum install -y openssh-server openssh-clients sudo wget vim openssl findutils dnf-plugins-core 2>&amp;1
-
-        # Enable PowerTools repository (only available on RHEL8)
-        RUN dnf config-manager --set-enabled powertools || true
+        RUN yum install -y openssh-server openssh-clients sudo wget vim openssl findutils dnf-plugins-core awscli2 2>&amp;1
 
         # Install and enable epel repository
         RUN dnf -y install epel-release
         RUN crb enable
+
+        # Install packages that require epel
+        RUN dnf install -y azure-cli
 
         # Install CA certificate
         RUN update-ca-trust extract
@@ -379,22 +379,13 @@
             ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key
 
         # Install PGDG PostgreSQL repository
-        RUN rpm -ivh https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-`uname -m`/pgdg-redhat-repo-latest.noarch.rpm
+        RUN rpm -ivh https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-`uname -m`/pgdg-redhat-repo-latest.noarch.rpm
 
         # Disable default PostgreSQL repository
         RUN command -v dnf >/dev/null 2>&amp;1 &amp;&amp; dnf -qy module disable postgresql || true
 
         # Install PostgreSQL
         RUN yum install -y postgresql{[pg-version]}-server postgresql{[pg-version-upgrade]}-server
-
-        # Install Azure CLI
-        RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc
-        RUN dnf install -y https://packages.microsoft.com/config/rhel/8/packages-microsoft-prod.rpm
-        RUN dnf install -y azure-cli
-
-        # Install AWS CLI
-        RUN dnf install -y python3-pip
-        RUN pip3 install awscli --upgrade
 
         # Install systemctl replacement that works without systemd running
         ENV SYSCTL_REP_VER=1.5.8066
