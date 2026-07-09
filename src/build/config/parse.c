@@ -133,7 +133,7 @@ bldCfgParseCommandList(Yaml *const yaml)
                     else if (strEqZ(cmdDef, "log-level-default"))
                         cmdRaw.logLevelDefault = strLower(strDup(cmdDefVal.value));
                     else if (strEqZ(cmdDef, "parameter-allowed"))
-                        cmdRaw.parameterAllowed = strLower(strDup(cmdDefVal.value));
+                        cmdRaw.parameterAllowed = yamlBoolParse(cmdDefVal);
                     else
                         THROW_FMT(FormatError, "unknown command definition '%s'", strZ(cmdDef));
                 }
