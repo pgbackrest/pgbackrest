@@ -274,6 +274,19 @@
             </release-item>
 
             <release-item>
+                <github-issue id="1408"/>
+                <github-pull-request id="2810"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="don.seiler"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Report <cmd>archive-push</cmd> spool path errors to the PostgreSQL log.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2757"/>
                 <github-pull-request id="2760"/>
 
