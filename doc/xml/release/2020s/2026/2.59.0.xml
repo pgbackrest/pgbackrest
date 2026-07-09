@@ -63,6 +63,20 @@
             </release-item>
 
             <release-item>
+                <commit subject="Extract WAL expiration into expireArchiveId()."/>
+                <commit subject="Add archive-expire-before option to clean up WAL archive.">
+                    <github-pull-request id="2801"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add <setting>archive-expire-before</setting> option to clean up WAL archive.</p>
+            </release-item>
+
+            <release-item>
                 <github-pull-request id="2786"/>
 
                 <release-item-contributor-list>
@@ -320,6 +334,19 @@
                 </release-item-contributor-list>
 
                 <p>Document that info reads encryption settings from global section.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1874"/>
+                <github-pull-request id="2807"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="sebastien.lardiere"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Document that <setting>expire-auto</setting> uses the <cmd>backup</cmd> command configuration.</p>
             </release-item>
         </release-improvement-list>
     </release-doc-list>

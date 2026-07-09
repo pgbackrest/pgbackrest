@@ -75,6 +75,8 @@ use constant VM_D12                                                 => 'd12';
     push @EXPORT, qw(VM_D12);
 use constant VM_RH8                                                 => 'rh8';
     push @EXPORT, qw(VM_RH8);
+use constant VM_RH9                                                 => 'rh9';
+    push @EXPORT, qw(VM_RH9);
 use constant VM_F44                                                 => 'f44';
     push @EXPORT, qw(VM_F44);
 use constant VM_U22                                                 => 'u22';
