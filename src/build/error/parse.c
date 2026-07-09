@@ -36,50 +36,31 @@ bldErrParseErrorList(Yaml *const yaml)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        yamlEventNextCheck(yaml, yamlEventTypeMapBegin);
-
-        YamlEvent err = yamlEventNext(yaml);
-
-        do
+        YAML_MAP_BEGIN(yaml)
         {
-            yamlEventCheck(err, yamlEventTypeScalar);
-
-            BldErrErrorRaw errRaw =
-            {
-                .name = err.value,
-            };
-
-            YamlEvent errDef = yamlEventNext(yaml);
+            BldErrErrorRaw errRaw = {.name = yamlScalarNext(yaml).value};
 
             // If scalar then it is an error code
-            if (errDef.type == yamlEventTypeScalar)
+            if (yamlEventPeek(yaml).type == yamlEventTypeScalar)
             {
-                errRaw.code = cvtZToUInt(strZ(errDef.value));
+                errRaw.code = cvtZToUInt(strZ(yamlScalarNext(yaml).value));
             }
             // Else there may be multiple definitions
             else
             {
-                yamlEventCheck(errDef, yamlEventTypeMapBegin);
-                YamlEvent errDef = yamlEventNextCheck(yaml, yamlEventTypeScalar);
-
-                do
+                YAML_MAP_BEGIN(yaml)
                 {
-                    YamlEvent errDefVal = yamlEventNextCheck(yaml, yamlEventTypeScalar);
+                    const String *const errDef = yamlScalarNext(yaml).value;
+                    const YamlEvent errDefVal = yamlScalarNext(yaml);
 
-                    if (strEqZ(errDef.value, "code"))
-                    {
+                    if (strEqZ(errDef, "code"))
                         errRaw.code = cvtZToUInt(strZ(errDefVal.value));
-                    }
-                    else if (strEqZ(errDef.value, "fatal"))
-                    {
+                    else if (strEqZ(errDef, "fatal"))
                         errRaw.fatal = yamlBoolParse(errDefVal);
-                    }
                     else
-                        THROW_FMT(FormatError, "unknown error definition '%s'", strZ(errDef.value));
-
-                    errDef = yamlEventNext(yaml);
+                        THROW_FMT(FormatError, "unknown error definition '%s'", strZ(errDef));
                 }
-                while (errDef.type != yamlEventTypeMapEnd);
+                YAML_MAP_END();
             }
 
             if (errRaw.code < ERROR_CODE_MIN || errRaw.code > ERROR_CODE_MAX)
@@ -102,10 +83,8 @@ bldErrParseErrorList(Yaml *const yaml)
                 lstAdd(result, &bldErrError);
             }
             MEM_CONTEXT_END();
-
-            err = yamlEventNext(yaml);
         }
-        while (err.type != yamlEventTypeMapEnd);
+        YAML_MAP_END();
     }
     MEM_CONTEXT_TEMP_END();
 

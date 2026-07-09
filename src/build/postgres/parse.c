@@ -29,35 +29,35 @@ bldPgVersionList(Yaml *const yaml)
         // Parse version list
         if (strEqZ(pgDef.value, "version"))
         {
-            yamlEventNextCheck(yaml, yamlEventTypeSeqBegin);
-
-            YamlEvent ver = yamlEventNext(yaml);
-
-            do
+            YAML_SEQ_BEGIN(yaml)
             {
                 BldPgVersionRaw pgRaw = {.release = true};
 
-                if (ver.type == yamlEventTypeMapBegin)
+                // If map then the version has attributes
+                if (yamlEventPeek(yaml).type == yamlEventTypeMapBegin)
                 {
-                    pgRaw.version = yamlEventNextCheck(yaml, yamlEventTypeScalar).value;
-                    yamlEventNextCheck(yaml, yamlEventTypeMapBegin);
-
-                    YamlEvent verDef = yamlEventNextCheck(yaml, yamlEventTypeScalar);
-                    YamlEvent verDefVal = yamlEventNextCheck(yaml, yamlEventTypeScalar);
-
-                    // Get release setting
-                    if (strEqZ(verDef.value, "release"))
+                    YAML_MAP_BEGIN(yaml)
                     {
-                        pgRaw.release = yamlBoolParse(verDefVal);
-                    }
-                    else
-                        THROW_FMT(FormatError, "unknown postgres definition '%s'", strZ(verDef.value));
+                        pgRaw.version = yamlScalarNext(yaml).value;
 
-                    yamlEventNextCheck(yaml, yamlEventTypeMapEnd);
-                    yamlEventNextCheck(yaml, yamlEventTypeMapEnd);
+                        YAML_MAP_BEGIN(yaml)
+                        {
+                            const String *const verDef = yamlScalarNext(yaml).value;
+                            const YamlEvent verDefVal = yamlScalarNext(yaml);
+
+                            // Get release setting
+                            if (strEqZ(verDef, "release"))
+                                pgRaw.release = yamlBoolParse(verDefVal);
+                            else
+                                THROW_FMT(FormatError, "unknown postgres definition '%s'", strZ(verDef));
+                        }
+                        YAML_MAP_END();
+                    }
+                    YAML_MAP_END();
                 }
+                // Else the version is a scalar
                 else
-                    pgRaw.version = ver.value;
+                    pgRaw.version = yamlScalarNext(yaml).value;
 
                 // Add to list
                 MEM_CONTEXT_BEGIN(lstMemContext(result))
@@ -71,10 +71,8 @@ bldPgVersionList(Yaml *const yaml)
                     lstAdd(result, &bldPgVersion);
                 }
                 MEM_CONTEXT_END();
-
-                ver = yamlEventNext(yaml);
             }
-            while (ver.type != yamlEventTypeSeqEnd);
+            YAML_SEQ_END();
         }
         else
             THROW_FMT(FormatError, "unknown postgres definition '%s'", strZ(pgDef.value));

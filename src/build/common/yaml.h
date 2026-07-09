@@ -104,31 +104,30 @@ yamlFree(Yaml *const this)
 /***********************************************************************************************************************************
 Helper macros for iterating sequences and maps
 ***********************************************************************************************************************************/
-#define YAML_ITER_BEGIN(yamlParam, eventBegin)                                                                                     \
+#define YAML_ITER_BEGIN(yamlParam, eventBegin, eventEnd)                                                                           \
     do                                                                                                                             \
     {                                                                                                                              \
-        Yaml *const YAML_ITER_yaml = yaml;                                                                                         \
+        Yaml *const YAML_ITER_yaml = yamlParam;                                                                                    \
         yamlEventNextCheck(YAML_ITER_yaml, eventBegin);                                                                            \
                                                                                                                                    \
-        do                                                                                                                         \
+        while (yamlEventPeek(YAML_ITER_yaml).type != eventEnd)                                                                     \
         {
 
 #define YAML_ITER_END(eventEnd)                                                                                                    \
         }                                                                                                                          \
-        while (yamlEventPeek(YAML_ITER_yaml).type != eventEnd);                                                                    \
                                                                                                                                    \
         yamlEventNextCheck(YAML_ITER_yaml, eventEnd);                                                                              \
     }                                                                                                                              \
     while (0)
 
 #define YAML_SEQ_BEGIN(yaml)                                                                                                       \
-    YAML_ITER_BEGIN(yaml, yamlEventTypeSeqBegin)
+    YAML_ITER_BEGIN(yaml, yamlEventTypeSeqBegin, yamlEventTypeSeqEnd)
 
 #define YAML_SEQ_END()                                                                                                             \
     YAML_ITER_END(yamlEventTypeSeqEnd);
 
 #define YAML_MAP_BEGIN(yaml)                                                                                                       \
-    YAML_ITER_BEGIN(yaml, yamlEventTypeMapBegin)
+    YAML_ITER_BEGIN(yaml, yamlEventTypeMapBegin, yamlEventTypeMapEnd)
 
 #define YAML_MAP_END()                                                                                                             \
     YAML_ITER_END(yamlEventTypeMapEnd);
