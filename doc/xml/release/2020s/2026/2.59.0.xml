@@ -37,6 +37,19 @@
             </release-item>
 
             <release-item>
+                <github-issue id="2754"/>
+                <github-pull-request id="2804"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="georgy.shelkovy"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix use-after-free of parallel protocol client.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="1768"/>
                 <github-pull-request id="2796"/>
 
@@ -258,6 +271,32 @@
                 </release-item-contributor-list>
 
                 <p>Report the underlying error when a query fails to complete.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1997"/>
+                <github-pull-request id="2808"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="mitchell.grice"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Report the actual error when an <proper>S3</proper> credential request fails.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1408"/>
+                <github-pull-request id="2810"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="don.seiler"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Report <cmd>archive-push</cmd> spool path errors to the PostgreSQL log.</p>
             </release-item>
 
             <release-item>

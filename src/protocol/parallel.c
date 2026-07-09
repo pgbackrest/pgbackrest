@@ -192,14 +192,16 @@ protocolParallelProcess(ProtocolParallel *const this)
         // Find new jobs to be run
         for (unsigned int clientIdx = 0; clientIdx < lstSize(this->clientList); clientIdx++)
         {
-            // If nothing is running for this client
-            if (this->clientJobList[clientIdx].job == NULL)
+            ProtocolClient **const clientRef = lstGet(this->clientList, clientIdx);
+
+            // If nothing is running for this client and it has not already been freed
+            if (this->clientJobList[clientIdx].job == NULL && *clientRef != NULL)
             {
                 MEM_CONTEXT_BEGIN(lstMemContext(this->jobList))
                 {
                     // Get a new job
                     ProtocolParallelJob *const job = this->callbackFunction(this->callbackData, clientIdx);
-                    ProtocolClient *const client = *(ProtocolClient **)lstGet(this->clientList, clientIdx);
+                    ProtocolClient *const client = *clientRef;
 
                     // If a new job was found
                     if (job != NULL)
@@ -219,9 +221,13 @@ protocolParallelProcess(ProtocolParallel *const this)
                         this->clientJobList[clientIdx].job = job;
                         this->clientJobList[clientIdx].session = session;
                     }
-                    // Else no more jobs for this client so free it
+                    // Else no more jobs for this client so free it. Clear the client reference so it is not freed again (and its
+                    // freed memory read while logging) on a subsequent call.
                     else
+                    {
                         protocolHelperFree(client);
+                        *clientRef = NULL;
+                    }
                 }
                 MEM_CONTEXT_END();
             }

@@ -90,7 +90,7 @@ warning_enable = [
     # Warn if a global variable is defined without a previous declaration
     '-Wmissing-variable-declarations',
 
-    # Warn about anything that depends on the “size of” a function type or of void
+    # Warn about anything that depends on the "size of" a function type or of void
     '-Wpointer-arith',
 
     # Warn if anything is declared more than once in the same scope, even when the extra declaration is valid and changes nothing
@@ -112,7 +112,7 @@ warning_disable = [
     # Warn for variables that might be changed by longjmp or vfork. Disable because of constant false positives/negatives.
     '-Wno-clobbered',
 
-    # Warn if a structure’s initializer has some fields missing. Disable so we can initialize with {0}.
+    # Warn if a structure's initializer has some fields missing. Disable so we can initialize with {0}.
     '-Wno-missing-field-initializers',
 ]
 
