@@ -12,13 +12,15 @@ Ban unsafe functions
 
 Poison unsafe functions so any use is a compile error. System headers containing poisoned identifiers must be processed first
 because build.h is the first include in every file and poisoned identifiers are not exempt inside system headers. #undef prevents a
-"poisoning existing macro" warning where fortify has defined strncpy as a macro.
+"poisoning existing macro" warning where fortify has defined the function as a macro.
 ***********************************************************************************************************************************/
+#include <stdio.h>
 #include <string.h>
 
+#undef sprintf
 #undef strncpy
 
-#pragma GCC poison strncpy
+#pragma GCC poison sprintf strncpy
 
 /***********************************************************************************************************************************
 Include build.auto.h and other (hopefully small) header files that are commonly used.
