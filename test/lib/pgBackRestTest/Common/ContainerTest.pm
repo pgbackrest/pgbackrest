@@ -447,6 +447,13 @@ sub containerBuild
                     "    dnf -y install epel-release && \\\n" .
                     "    crb enable && \\\n";
             }
+            elsif ($strOS eq VM_RH9 || $strOS eq VM_RH10)
+            {
+                $strScript .=
+                    "    dnf install -y dnf-plugins-core && \\\n" .
+                    "    dnf -y install epel-release && \\\n" .
+                    "    crb enable && \\\n";
+            }
 
             $strScript .=
                 "    yum -y update && \\\n" .
@@ -455,6 +462,11 @@ sub containerBuild
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
                 "        libyaml-devel zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 perl-JSON-PP ccache meson \\\n" .
                 "        libssh2-devel zstd libzstd-devel systemd-devel";
+
+            if ($strOS eq VM_RH9 || $strOS eq VM_RH10)
+            {
+                $strScript .= " valgrind";
+            }
         }
         elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
@@ -513,16 +525,40 @@ sub containerBuild
 
             if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
             {
-                $strScript .=
-                    "    rpm --import https://download.postgresql.org/pub/repos/yum/keys/RPM-GPG-KEY-PGDG && \\\n";
+                # RHEL 10's rpm-sequoia OpenPGP backend rejects the SHA-1 binding signature in the PGDG GPG key, and the
+                # crypto-policy SHA1 subpolicy that could re-enable it was removed in EL-10. So rh10 skips the key import
+                # and installs the repo/packages with gpg checks disabled (acceptable for a throwaway test container).
+                if ($strOS ne VM_RH10 && vmPgRepo($strOS))
+                {
+                    $strScript .=
+                        "    rpm --import https://download.postgresql.org/pub/repos/yum/keys/RPM-GPG-KEY-PGDG && \\\n";
+                }
 
-                if ($strOS eq VM_RH8)
+                if (!vmPgRepo($strOS))
+                {
+                    # Enable the native PostgreSQL application stream instead of adding the PGDG repo
+                    $strScript .=
+                        "    dnf -y module enable postgresql:" . @{$oOS->{&VM_DB}}[-1] . " && \\\n";
+                }
+                elsif ($strOS eq VM_RH9)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-" . hostArch() . "/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-" . hostArch() . "/" .
                             "pgdg-redhat-repo-latest.noarch.rpm && \\\n" .
-                        "    dnf -qy module disable postgresql && \\\n";
+                        "    dnf -qy module disable postgresql && \\\n" .
+                        "    yum -y install libcurl-devel && \\\n";
+                }
+                elsif ($strOS eq VM_RH10)
+                {
+                    # Install the repo without a gpg check and disable gpgcheck on the PGDG repos (see the SHA-1 note
+                    # above). RHEL 10 also dropped dnf modularity, so there is no postgresql module to disable.
+                    $strScript .=
+                        "    dnf -y install --nogpgcheck \\\n" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-10-" . hostArch() . "/" .
+                            "pgdg-redhat-repo-latest.noarch.rpm && \\\n" .
+                        "    sed -i 's/gpgcheck=1/gpgcheck=0/g' /etc/yum.repos.d/pgdg-redhat-all.repo && \\\n" .
+                        "    yum -y install libcurl-devel && \\\n";
                 }
                 elsif ($strOS eq VM_F44)
                 {
@@ -577,15 +613,23 @@ sub containerBuild
                 {
                     if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
                     {
-                        my $strDbVersionNoDot = $strDbVersion;
-                        $strDbVersionNoDot =~ s/\.//;
-
-                        $strScript .= " postgresql${strDbVersionNoDot}-server";
-
-                        # Add development package for the latest version of postgres
-                        if ($strDbVersion eq @{$oOS->{&VM_DB}}[-1])
+                        # Native RHEL installs the unversioned server package from the application stream
+                        if (!vmPgRepo($strOS))
                         {
-                            $strScript .= " postgresql${strDbVersionNoDot}-devel";
+                            $strScript .= " postgresql-server";
+                        }
+                        else
+                        {
+                            my $strDbVersionNoDot = $strDbVersion;
+                            $strDbVersionNoDot =~ s/\.//;
+
+                            $strScript .= " postgresql${strDbVersionNoDot}-server";
+
+                            # Add development package for the latest version of postgres
+                            if ($strDbVersion eq @{$oOS->{&VM_DB}}[-1])
+                            {
+                                $strScript .= " postgresql${strDbVersionNoDot}-devel";
+                            }
                         }
                     }
                     elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
@@ -604,8 +648,8 @@ sub containerBuild
             }
         }
 
-        # Add path to latest version of postgres
-        if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
+        # Add path to latest version of postgres (PGDG installs to a versioned path; native packages use /usr/bin)
+        if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL && vmPgRepo($strOS))
         {
             $strScript .=
                 "\n\nENV PATH=/usr/pgsql-" . @{$oOS->{&VM_DB}}[-1] . "/bin:\$PATH\n" .

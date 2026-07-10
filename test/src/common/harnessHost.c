@@ -944,8 +944,9 @@ hrnHostPgBinPath(HrnHost *const this)
             const String *const pgPathList[] =
             {
                 strNewFmt("/usr/lib/postgresql/%s/bin", version),   // Debian
-                strNewFmt("/usr/pgsql-%s/bin", version),            // RHEL
+                strNewFmt("/usr/pgsql-%s/bin", version),            // RHEL (PGDG)
                 strNewFmt("/usr/libexec/postgresql%s", version),    // Alpine
+                strNewZ("/usr/bin"),                                // Native (e.g. RHEL application stream)
             };
 
             for (unsigned int pgPathIdx = 0; pgPath == NULL && pgPathIdx < LENGTH_OF(pgPathList); pgPathIdx++)

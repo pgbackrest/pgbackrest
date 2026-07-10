@@ -67,6 +67,12 @@ jobs:
           # All integration tests
           - param: test --vm=rh8 --param=module=integration
 
+          # All unit and integration tests
+          - param: test --vm=rh9 --param=no-coverage --param=no-performance
+
+          # All unit and integration tests
+          - param: test --vm=rh10 --param=no-coverage --param=no-performance
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v6
