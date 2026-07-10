@@ -48,11 +48,16 @@ use constant CONTAINER_DEBUG                                        => false;
 my $hContainerCache;
 
 ####################################################################################################################################
-# Container repo - defines the Docker repository where the containers will be located
+# Container repo - defines the container registry where the containers will be located
 ####################################################################################################################################
 sub containerRepo
 {
-    return PROJECT_EXE . qw(/) . 'test';
+    # The pgbackrest namespace is the canonical cache that every environment pulls from and only pgbackrest CI can push to. Pass an
+    # owner to build the tag for that owner's own cache instead (a fork can push to and pull from it). Images are always tagged in
+    # the pgbackrest namespace locally so Docker calls do not need to know which cache they came from.
+    my $strOwner = shift;
+
+    return 'ghcr.io/' . (defined($strOwner) ? $strOwner : PROJECT_EXE) . '/test';
 }
 
 push @EXPORT, qw(containerRepo);
@@ -90,44 +95,84 @@ sub containerWrite
         (defined($strScript) && $strScript ne ''?
             "\n\nRUN echo '" . (CONTAINER_DEBUG ? 'DEBUG' : 'OPTIMIZED') . " BUILD'" . $strScript : '');
 
-    # Search for the image in the cache
-    my $strScriptSha1;
+    # Base images are cached in the container registry, keyed by a hash of the generated Dockerfile combined with the manual
+    # revision from container.yaml. Images are pulled from the pgbackrest cache first, then from the repository owner's own cache
+    # when running on a fork, and built locally if neither has them. A build is pushed to the cache the environment can write to
+    # (the fork's own cache on a fork, else the pgbackrest cache). The image is always tagged in the pgbackrest namespace locally,
+    # so downstream Docker calls reference a single name regardless of where it came from.
     my $bCached = false;
+    my $strCacheTag;
+    my $strForkCacheTag;
 
     if ($strImage =~ /\-base\-/)
     {
-        $strScriptSha1 = sha1_hex($strScript);
+        # The revision forces a rebuild when the Dockerfile is unchanged but the upstream packages have changed, e.g. a new
+        # PostgreSQL beta. A container uses its own revision if it has one, otherwise the required "all" revision (validated in
+        # containerBuild). So bumping "all" rebuilds only the containers without their own revision; a container with its own
+        # revision is rebuilt by bumping that revision (or deleting its cached tag). The revision is also placed in the tag for
+        # reference.
+        my $strRevision = defined($hContainerCache->{$strOS}) ? $hContainerCache->{$strOS} : $hContainerCache->{&VM_ALL};
+        my $strCacheImage = "${strImage}-${strRevision}-" . substr(sha1_hex($strScript . $strRevision), 0, 12);
 
-        foreach my $strBuild (reverse(keys(%{$hContainerCache})))
+        $strCacheTag = containerRepo() . ":${strCacheImage}";
+
+        # On a fork also use the fork owner's own cache, which it can write to
+        my $strOwner = $ENV{GITHUB_REPOSITORY_OWNER} ? lc($ENV{GITHUB_REPOSITORY_OWNER}) : PROJECT_EXE;
+        $strForkCacheTag = $strOwner ne PROJECT_EXE ? containerRepo($strOwner) . ":${strCacheImage}" : undef;
+
+        # Pull from the pgbackrest cache first, then the fork's own cache. A failed pull (image missing or no read access) falls
+        # through to the next cache or a local build.
+        if (!(defined($bForce) && $bForce))
         {
-            my $strArchLookup = defined($strArch) ? $strArch : hostArch();
-
-            if (defined($hContainerCache->{$strBuild}{$strArchLookup}{$strOS}) &&
-                $hContainerCache->{$strBuild}{$strArchLookup}{$strOS} eq $strScriptSha1)
+            foreach my $strPullTag ($strCacheTag, defined($strForkCacheTag) ? $strForkCacheTag : ())
             {
-                &log(INFO, "Using cached ${strTag}-${strBuild} image (${strScriptSha1}) ...");
+                &log(INFO, "Checking cache ${strPullTag} ...");
 
-                $strScript =
-                    "# ${strTitle} Container\n" .
-                    "FROM ${strTag}-${strBuild}";
+                my $oPull = new pgBackRestTest::Common::ExecuteTest(
+                    "docker pull ${strPullTag}", {bSuppressStdErr => true, bSuppressError => true});
+                $oPull->begin();
 
-                $bCached = true;
+                if ($oPull->end() == 0)
+                {
+                    &log(INFO, "Using cached ${strPullTag} image");
+                    executeTest("docker tag ${strPullTag} ${strTag}");
+                    $bCached = true;
+                    last;
+                }
             }
         }
     }
 
     if (!$bCached)
     {
-        &log(INFO, "Building ${strTag} image" . (defined($strScriptSha1) ? " (${strScriptSha1})" : '') . ' ...');
-    }
+        &log(INFO, "Building ${strTag} image" . (defined($strCacheTag) ? " (${strCacheTag})" : '') . ' ...');
 
-    # Write the image
-    $oStorageDocker->put("${strTempPath}/${strImage}", trim($strScript) . "\n");
-    executeTest(
-        'docker build' . (defined($strArch) ? " --platform linux/${strArch}" : '') .
-        (defined($bForce) && $bForce ? ' --no-cache' : '') . " -f ${strTempPath}/${strImage} -t ${strTag} " .
-            $oStorageDocker->pathGet('test'),
-        {bSuppressStdErr => true, bShowOutputAsync => (logLevel())[1] eq DETAIL});
+        # Write and build the image
+        $oStorageDocker->put("${strTempPath}/${strImage}", trim($strScript) . "\n");
+        executeTest(
+            'docker build' . (defined($strArch) ? " --platform linux/${strArch}" : '') .
+            (defined($bForce) && $bForce ? ' --no-cache' : '') . " -f ${strTempPath}/${strImage} -t ${strTag} " .
+                $oStorageDocker->pathGet('test'),
+            {bSuppressStdErr => true, bShowOutputAsync => (logLevel())[1] eq DETAIL});
+
+        # Push the base image to the cache this environment can write to (the fork's own cache on a fork, else the pgbackrest
+        # cache) and log when it succeeds. Best effort since it requires write access, which is not available locally or on pull
+        # requests from forks; those just use the image they built.
+        if (defined($strCacheTag))
+        {
+            my $strPushTag = defined($strForkCacheTag) ? $strForkCacheTag : $strCacheTag;
+            executeTest("docker tag ${strTag} ${strPushTag}", {bSuppressError => true});
+
+            my $oPush = new pgBackRestTest::Common::ExecuteTest(
+                "docker push ${strPushTag}", {bSuppressStdErr => true, bSuppressError => true});
+            $oPush->begin();
+
+            if ($oPush->end() == 0)
+            {
+                &log(INFO, "Cached ${strPushTag} image");
+            }
+        }
+    }
 }
 
 ####################################################################################################################################
@@ -347,6 +392,13 @@ sub containerBuild
     YAML::XS->import(qw(Load));
 
     $hContainerCache = Load(${$oStorageDocker->get($oStorageDocker->pathGet('test/container.yaml'))});
+
+    # The "all" revision is required so it can never be accidentally unset, which would change every image hash at once. It can
+    # only be bumped.
+    if (ref($hContainerCache) ne 'HASH' || !defined($hContainerCache->{&VM_ALL}))
+    {
+        confess &log(ERROR, "the 'all' revision is required in test/container.yaml");
+    }
 
     # Remove old images on force
     if ($bVmForce)

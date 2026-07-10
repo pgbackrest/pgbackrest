@@ -20,6 +20,11 @@ jobs:
   test:
     runs-on: ubuntu-22.04
 
+    # Allow pushing base images to the GHCR container cache
+    permissions:
+      contents: read
+      packages: write
+
     strategy:
       # Let all the jobs run to completion even if one fails
       fail-fast: false
@@ -68,6 +73,12 @@ jobs:
         with:
           path: pgbackrest
 
+      # Log in so base images can be pushed to the cache. Best effort -- pull is anonymous and push is skipped when the token is
+      # read-only (e.g. pull requests from forks).
+      - name: Login to GHCR
+        continue-on-error: true
+        run: echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u ${{github.actor}} --password-stdin
+
       - name: Run Test
         run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl ${{matrix.param}} --param=build-max=2
 
@@ -82,11 +93,20 @@ jobs:
   aarch64:
     runs-on: ubuntu-22.04-arm
 
+    # Allow pushing base images to the GHCR container cache
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v6
         with:
           path: pgbackrest
+
+      - name: Login to GHCR
+        continue-on-error: true
+        run: echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u ${{github.actor}} --password-stdin
 
       - name: Run Test
         run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl test --vm=u22 --param=c-only --param=no-coverage --param=no-back-trace --param=build-max=2
@@ -96,6 +116,11 @@ jobs:
   # test on one big-endian architecture to be sure that checksums are correct.
   arch:
     runs-on: ubuntu-24.04
+
+    # Allow pushing base images to the GHCR container cache
+    permissions:
+      contents: read
+      packages: write
 
     strategy:
       # Let all the jobs run to completion even if one fails
@@ -117,6 +142,10 @@ jobs:
           sudo apt-get update
           sudo DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y perl sudo libxml-checker-perl libyaml-perl rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config make gcc ccache meson git liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev
           docker run --privileged --rm tonistiigi/binfmt --install all
+
+      - name: Login to GHCR
+        continue-on-error: true
+        run: echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u ${{github.actor}} --password-stdin
 
       - name: Build VM
         run: ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm-build --vm=u22 --vm-arch=${{matrix.arch}}

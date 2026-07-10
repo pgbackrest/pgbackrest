@@ -1252,7 +1252,7 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
         hrnHostLocal.nonVersionSpecific);
 
     // Create pg hosts
-    const String *const image = strNewFmt("pgbackrest/test:%s-test-%s", testVm(), testArchitecture());
+    const String *const image = strNewFmt("ghcr.io/pgbackrest/test:%s-test-%s", testVm(), testArchitecture());
 
     hrnHostBuildRun(line, HRN_HOST_PG1, image);
     HrnHost *const pg2 = hrnHostBuildRun(line, HRN_HOST_PG2, image);
