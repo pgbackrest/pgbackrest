@@ -26,6 +26,7 @@ testRun(void)
         const String *const lockFile1Name = STRDEF("test1" LOCK_FILE_EXT);
 
         TEST_RESULT_VOID(lockInit(TEST_PATH_STR, STRDEF("1-test")), "init lock module");
+        TEST_RESULT_STR_Z(lockExecId(), "1-test", "check exec id");
         TEST_RESULT_BOOL(lockAcquireP(lockFile1Name), true, "acquire lock");
         TEST_ERROR_FMT(lockAcquireP(lockFile1Name), AssertError, "lock on file 'test1.lock' already held");
 

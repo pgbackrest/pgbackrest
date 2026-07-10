@@ -28,6 +28,19 @@
             </release-item>
 
             <release-item>
+                <github-issue id="2423"/>
+                <github-pull-request id="2806"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="jimmy.yih"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix async <cmd>archive-get</cmd> failure during recovery across a timeline switch.</p>
+            </release-item>
+
+            <release-item>
                 <release-item-contributor-list>
                     <release-item-contributor id="christophe.pettus"/>
                     <release-item-reviewer id="david.steele"/>
