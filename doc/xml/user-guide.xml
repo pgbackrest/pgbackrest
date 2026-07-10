@@ -37,7 +37,7 @@
 
         <!-- Defines the container image that will be used to build the host -->
         <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:22.04</variable>
-        <variable key="os-image" if="{[os-type-is-rhel]}">rockylinux/rockylinux:8</variable>
+        <variable key="os-image" if="{[os-type-is-rhel]}">rockylinux/rockylinux:9</variable>
 
         <variable key="user-guide-subtitle" if="{[os-type-is-debian]}">{[os-debian-title]}</variable>
         <variable key="user-guide-subtitle" if="{[os-type-is-rhel]}">{[os-rhel-title]}</variable>
@@ -360,14 +360,14 @@
         VOLUME [ "/sys/fs/cgroup" ]
 
         # Install packages
-        RUN yum install -y openssh-server openssh-clients sudo wget vim openssl findutils dnf-plugins-core 2>&amp;1
-
-        # Enable PowerTools repository (only available on RHEL8)
-        RUN dnf config-manager --set-enabled powertools || true
+        RUN yum install -y openssh-server openssh-clients sudo wget vim openssl findutils dnf-plugins-core awscli2 2>&amp;1
 
         # Install and enable epel repository
         RUN dnf -y install epel-release
         RUN crb enable
+
+        # Install packages that require epel
+        RUN dnf install -y azure-cli
 
         # Install CA certificate
         RUN update-ca-trust extract
@@ -379,22 +379,13 @@
             ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key
 
         # Install PGDG PostgreSQL repository
-        RUN rpm -ivh https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-`uname -m`/pgdg-redhat-repo-latest.noarch.rpm
+        RUN rpm -ivh https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-`uname -m`/pgdg-redhat-repo-latest.noarch.rpm
 
         # Disable default PostgreSQL repository
         RUN command -v dnf >/dev/null 2>&amp;1 &amp;&amp; dnf -qy module disable postgresql || true
 
         # Install PostgreSQL
         RUN yum install -y postgresql{[pg-version]}-server postgresql{[pg-version-upgrade]}-server
-
-        # Install Azure CLI
-        RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc
-        RUN dnf install -y https://packages.microsoft.com/config/rhel/8/packages-microsoft-prod.rpm
-        RUN dnf install -y azure-cli
-
-        # Install AWS CLI
-        RUN dnf install -y python3-pip
-        RUN pip3 install awscli --upgrade
 
         # Install systemctl replacement that works without systemd running
         ENV SYSCTL_REP_VER=1.5.8066
@@ -1153,7 +1144,7 @@
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
-            <p><backrest/> configuration files follow a Windows INI-like convention. Sections are denoted by text in brackets and key/value pairs are contained in each section. Lines beginning with <id>#</id> are ignored and can be used as comments. Quoting is not supported and whitespace is trimmed from keys and values. Sections will be merged if they appear more than once.</p>
+            <p><backrest/> configuration files follow a Windows INI-like convention. Sections are denoted by text in brackets and key/value pairs are contained in each section. Lines beginning with <id>#</id> are ignored and can be used as comments, but end-of-line comments following a value on the same line are not supported. Quoting is not supported and whitespace is trimmed from keys and values. Sections will be merged if they appear more than once.</p>
 
             <p>There are multiple ways the <backrest/> configuration files can be loaded:</p>
             <list>
@@ -1350,6 +1341,8 @@
                 <backrest-config-option section="global" key="repo1-cipher-type">{[backrest-repo-cipher-type]}</backrest-config-option>
                 <backrest-config-option section="global" key="repo1-cipher-pass">{[backrest-repo-cipher-pass]}</backrest-config-option>
             </backrest-config>
+
+            <admonition type="note">Encryption settings are placed in the <id>[global]</id> section, above, so the <cmd>info</cmd> command can read all stanzas. Without the <br-option>stanza</br-option> option the <cmd>info</cmd> command reads encryption settings only from the <id>[global]</id> section, so encryption settings configured per stanza require the <br-option>stanza</br-option> option to read an encrypted stanza.</admonition>
 
             <p>Once the repository has been configured and the stanza created and checked, the repository encryption settings cannot be changed.</p>
         </section>
@@ -2706,6 +2699,8 @@
             <host-add id="{[host-repo1-id]}" name="{[host-repo1]}" user="{[host-repo1-user]}" image="{[host-repo1-image]}" os="{[os-type]}" mount="{[host-repo1-mount]}" option="{[host-mem]}"/>
 
             <p>The <user>{[br-user]}</user> user is created to own the <backrest/> repository. Any user can own the repository but it is best not to use <user>postgres</user> (if it exists) to avoid confusion.</p>
+
+            <admonition type="note">When <backrest/> is installed from a package, a <proper>logrotate</proper> configuration such as <file>/etc/logrotate.d/pgbackrest</file> may be provided that rotates the logs as a specific user via the <id>su</id> directive (e.g. <id>su postgres postgres</id>). Since the files in <path>/var/log/pgbackrest</path> are owned by the user that runs <backrest/> (here <user>{[br-user]}</user>), the <id>su</id> directive must be updated to match this user or <proper>logrotate</proper> will fail with a permission error.</admonition>
 
             <execute-list host="{[host-repo1]}">
                 <title>Create <user>{[br-user]}</user> user</title>

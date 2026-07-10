@@ -316,8 +316,8 @@ testRun(void)
         // Check stderr
         char buffer[4096];
 
-        sprintf(
-            buffer,
+        snprintf(
+            buffer, sizeof(buffer),
             "DEBUG:     test::test_func: message\n"
             "           message2\n"
             "INFO: [DRY-RUN] info message\n"

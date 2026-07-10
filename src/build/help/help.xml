@@ -151,6 +151,18 @@
                 </text>
 
                 <config-key-list>
+                    <config-key id="allow-root" name="Allow Run as Root">
+                        <summary>Allow the command to run as the root user.</summary>
+
+                        <text>
+                            <p>By default only the <cmd>restore</cmd> command may be run as the root user since it is designed to carefully manage file ownership. Running other commands as root risks creating files (e.g. in the repository) that are owned by root and therefore inaccessible to the PostgreSQL user, causing later commands to fail.</p>
+
+                            <p>Enable this option to run a command as root anyway. However, it is far better to run <backrest/> as the user that owns the repository and PostgreSQL cluster.</p>
+                        </text>
+
+                        <example>y</example>
+                    </config-key>
+
                     <config-key id="beta" name="Allow Beta Features">
                         <summary>Allow beta features.</summary>
 
@@ -1422,6 +1434,8 @@
 
                         <text>
                             <p>Passphrase used to encrypt/decrypt files of the repository.</p>
+
+                            <admonition type="note">When run without the <br-option>stanza</br-option> option the <cmd>info</cmd> command reads encryption settings only from the <setting>global</setting> section. If encryption settings are configured per stanza, run the <cmd>info</cmd> command with the <br-option>stanza</br-option> option to read an encrypted stanza.</admonition>
                         </text>
 
                         <example>zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO</example>
@@ -1554,6 +1568,8 @@
 
                         <text>
                             <p>The setting is enabled by default. Use caution when disabling this option as doing so will result in retaining all backups and archives indefinitely, which could cause your repository to run out of space. The <cmd>expire</cmd> command will need to be run regularly to prevent this from happening.</p>
+
+                            <p>When <cmd>expire</cmd> is run automatically after a successful backup it uses the configuration of the <cmd>backup</cmd> command, so options set only in an <cmd>expire</cmd> command section (e.g. <id>[global:expire]</id>) are not applied. To apply <cmd>expire</cmd>-specific configuration, disable this option and run the <cmd>expire</cmd> command separately.</p>
                         </text>
 
                         <example>y</example>
@@ -2326,6 +2342,18 @@
                 </text>
 
                 <option-list>
+                    <option id="archive-expire-before" name="Expire Archive Before">
+                        <summary>Remove WAL archive earlier than the specified WAL segment.</summary>
+
+                        <text>
+                            <p>Remove WAL segments earlier than the specified segment, but only those that are not required by a retained backup, that is, segments older than the earliest backup set to retain, or any segment when the repository contains no backup. The specified segment and everything after it are kept. This mirrors the value passed by <postgres/> to <pg-setting>archive_cleanup_command</pg-setting> as <id>%r</id>.</p>
+
+                            <p>This option is primarily intended for archive-only repositories where no backups are stored. It can also be used to reclaim WAL archive space before the first backup when full retention has not yet been met to trigger archive expiration.</p>
+                        </text>
+
+                        <example>000000010000000000000010</example>
+                    </option>
+
                     <option id="oldest" name="Oldest">
                         <summary>Expire the oldest eligible backup set.</summary>
 

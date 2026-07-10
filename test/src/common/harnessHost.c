@@ -944,8 +944,9 @@ hrnHostPgBinPath(HrnHost *const this)
             const String *const pgPathList[] =
             {
                 strNewFmt("/usr/lib/postgresql/%s/bin", version),   // Debian
-                strNewFmt("/usr/pgsql-%s/bin", version),            // RHEL
+                strNewFmt("/usr/pgsql-%s/bin", version),            // RHEL (PGDG)
                 strNewFmt("/usr/libexec/postgresql%s", version),    // Alpine
+                strNewZ("/usr/bin"),                                // Native (e.g. RHEL application stream)
             };
 
             for (unsigned int pgPathIdx = 0; pgPath == NULL && pgPathIdx < LENGTH_OF(pgPathList); pgPathIdx++)
@@ -1252,7 +1253,7 @@ hrnHostBuild(const int line, const HrnHostTestDefine *const testMatrix, const si
         hrnHostLocal.nonVersionSpecific);
 
     // Create pg hosts
-    const String *const image = strNewFmt("pgbackrest/test:%s-test-%s", testVm(), testArchitecture());
+    const String *const image = strNewFmt("ghcr.io/pgbackrest/test:%s-test-%s", testVm(), testArchitecture());
 
     hrnHostBuildRun(line, HRN_HOST_PG1, image);
     HrnHost *const pg2 = hrnHostBuildRun(line, HRN_HOST_PG2, image);

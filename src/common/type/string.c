@@ -462,7 +462,7 @@ strCatZ(String *const this, const char *const cat)
         strResize(this, sizeGrow);
 
         // Append the string
-        strcpy(this->pub.buffer + strSize(this), cat);
+        memcpy(this->pub.buffer + strSize(this), cat, sizeGrow + 1);
         this->pub.size += (unsigned int)sizeGrow;
         this->pub.extra -= (unsigned int)sizeGrow;
     }

@@ -1195,6 +1195,45 @@ testRun(void)
                 driver->credHost = hrnServerHost();
                 driver->credHttpClient = httpClientNew(sckClientNew(host, testPortAuth, 5000, 5000), 5000);
 
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error when the credentials request fails");
+
+                // The web identity token is redacted from the query and the STS error is included rather than hidden by a failure
+                // to parse the expected success response
+                // {uncrustify_off - comment inside string}
+                #define TEST_SERVICE_ERROR                                                                                         \
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"                                                                   \
+                    "<ErrorResponse xmlns=\"https://sts.amazonaws.com/doc/2011-06-15/\">"                                          \
+                    "<Error>"                                                                                                      \
+                    "<Type>Sender</Type>"                                                                                          \
+                    "<Code>InvalidIdentityToken</Code>"                                                                            \
+                    "<Message>No OpenIDConnect provider found in your account for the audience</Message>"                          \
+                    "</Error>"                                                                                                     \
+                    "</ErrorResponse>"
+                // {uncrustify_on}
+
+                hrnServerScriptAccept(auth);
+
+                testRequestP(auth, NULL, HTTP_VERB_GET, TEST_SERVICE_URI);
+                testResponseP(auth, .code = 400, .content = TEST_SERVICE_ERROR);
+
+                hrnServerScriptClose(auth);
+
+                TEST_ERROR_FMT(
+                    storageInfoP(s3, STRDEF("BOGUS"), .ignoreMissing = true), ProtocolError,
+                    "HTTP request failed with 400:\n"
+                    "*** Path/Query ***:\n"
+                    "GET /?Action=AssumeRoleWithWebIdentity&RoleArn=arn%%3Aaws%%3Aiam%%3A%%3A123456789012%%3Arole%%2FTestRole"
+                    "&RoleSessionName=pgBackRest&Version=2011-06-15&WebIdentityToken=<redacted>\n"
+                    "*** Request Headers ***:\n"
+                    "content-length: 0\n"
+                    "host: %s\n"
+                    "*** Response Headers ***:\n"
+                    "content-length: %zu\n"
+                    "*** Response Content ***:\n"
+                    TEST_SERVICE_ERROR,
+                    strZ(hrnServerHost()), strlen(TEST_SERVICE_ERROR));
+
                 hrnServerScriptAccept(service);
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -1315,6 +1354,34 @@ testRun(void)
 
                 // Set partSize to a small value for testing
                 driver->partSize = 16;
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error when the credentials request fails");
+
+                #define TEST_PODID_ERROR                            "{\"message\":\"invalid authorization token\"}"
+
+                hrnServerScriptAccept(auth);
+
+                testRequestP(auth, NULL, HTTP_VERB_GET, TEST_PODID_GET, .authorization = TEST_PODID_TOKEN);
+                testResponseP(auth, .code = 400, .content = TEST_PODID_ERROR);
+
+                hrnServerScriptClose(auth);
+
+                // The authorization header holding the token is redacted and the error body is included
+                TEST_ERROR_FMT(
+                    storageInfoP(s3, STRDEF("BOGUS"), .ignoreMissing = true), ProtocolError,
+                    "HTTP request failed with 400:\n"
+                    "*** Path/Query ***:\n"
+                    "GET /v1/credentials\n"
+                    "*** Request Headers ***:\n"
+                    "authorization: <redacted>\n"
+                    "content-length: 0\n"
+                    "host: %s\n"
+                    "*** Response Headers ***:\n"
+                    "content-length: %zu\n"
+                    "*** Response Content ***:\n"
+                    TEST_PODID_ERROR,
+                    strZ(hrnServerHost()), strlen(TEST_PODID_ERROR));
 
                 hrnServerScriptAccept(service);
 

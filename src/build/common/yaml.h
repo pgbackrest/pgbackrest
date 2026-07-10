@@ -65,6 +65,13 @@ YamlEvent yamlEventCheck(YamlEvent event, YamlEventType type);
 // Peek at the next event
 YamlEvent yamlEventPeek(Yaml *this);
 
+// Is the next event of the given type?
+FN_INLINE_ALWAYS bool
+yamlEventPeekIs(Yaml *const this, const YamlEventType type)
+{
+    return yamlEventPeek(this).type == type;
+}
+
 // Get next scalar
 FN_INLINE_ALWAYS YamlEvent
 yamlScalarNext(Yaml *const this)
@@ -89,6 +96,14 @@ yamlScalarNextCheckZ(Yaml *const this, const char *const value)
     yamlScalarNextCheck(this, STR(value));
 }
 
+// Consume an empty map (map begin immediately followed by map end)
+FN_INLINE_ALWAYS void
+yamlMapEmpty(Yaml *const this)
+{
+    yamlEventNextCheck(this, yamlEventTypeMapBegin);
+    yamlEventNextCheck(this, yamlEventTypeMapEnd);
+}
+
 // Convert an event to a boolean (or error)
 bool yamlBoolParse(YamlEvent event);
 
@@ -104,31 +119,30 @@ yamlFree(Yaml *const this)
 /***********************************************************************************************************************************
 Helper macros for iterating sequences and maps
 ***********************************************************************************************************************************/
-#define YAML_ITER_BEGIN(yamlParam, eventBegin)                                                                                     \
+#define YAML_ITER_BEGIN(yamlParam, eventBegin, eventEnd)                                                                           \
     do                                                                                                                             \
     {                                                                                                                              \
-        Yaml *const YAML_ITER_yaml = yaml;                                                                                         \
+        Yaml *const YAML_ITER_yaml = yamlParam;                                                                                    \
         yamlEventNextCheck(YAML_ITER_yaml, eventBegin);                                                                            \
                                                                                                                                    \
-        do                                                                                                                         \
+        while (yamlEventPeek(YAML_ITER_yaml).type != eventEnd)                                                                     \
         {
 
 #define YAML_ITER_END(eventEnd)                                                                                                    \
         }                                                                                                                          \
-        while (yamlEventPeek(YAML_ITER_yaml).type != eventEnd);                                                                    \
                                                                                                                                    \
         yamlEventNextCheck(YAML_ITER_yaml, eventEnd);                                                                              \
     }                                                                                                                              \
     while (0)
 
 #define YAML_SEQ_BEGIN(yaml)                                                                                                       \
-    YAML_ITER_BEGIN(yaml, yamlEventTypeSeqBegin)
+    YAML_ITER_BEGIN(yaml, yamlEventTypeSeqBegin, yamlEventTypeSeqEnd)
 
 #define YAML_SEQ_END()                                                                                                             \
     YAML_ITER_END(yamlEventTypeSeqEnd);
 
 #define YAML_MAP_BEGIN(yaml)                                                                                                       \
-    YAML_ITER_BEGIN(yaml, yamlEventTypeMapBegin)
+    YAML_ITER_BEGIN(yaml, yamlEventTypeMapBegin, yamlEventTypeMapEnd)
 
 #define YAML_MAP_END()                                                                                                             \
     YAML_ITER_END(yamlEventTypeMapEnd);

@@ -250,6 +250,8 @@ testRun(void)
             "\n"
             "General Options:\n"
             "\n"
+            "  --allow-root                        allow the command to run as the root user\n"
+            "                                      [default=y]\n"
             "  --buffer-size                       buffer size for I/O operations\n"
             "                                      [current=32768, default=1MiB]\n"
             "  --cmd                               pgBackRest command\n"
@@ -503,6 +505,11 @@ testRun(void)
             "Repository cipher passphrase.\n"
             "\n"
             "Passphrase used to encrypt/decrypt files of the repository.\n"
+            "\n"
+            "NOTE: When run without the stanza option the info command reads encryption\n"
+            "settings only from the global section. If encryption settings are configured\n"
+            "per stanza, run the info command with the stanza option to read an encrypted\n"
+            "stanza.\n"
             "\n"
             "current: <redacted>\n",
             helpVersion);

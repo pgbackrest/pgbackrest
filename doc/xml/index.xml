@@ -188,6 +188,15 @@
         </section>
 
         <!-- =================================================================================================================== -->
+        <section id="repo-versioning">
+            <title>Ransomware &amp; Malware Protection</title>
+
+            <p>When the repository is stored on versioned object storage, <backrest/> can read the repository as it was at a point-in-time. If backups are deleted or corrupted by accident, malware, or ransomware, a target time can be used to recover data from before the damage occurred.</p>
+
+            <p>Versioning is supported by <proper>S3</proper>, <proper>Azure</proper>, and GCS compatible object stores. Object locking for <proper>S3</proper> and soft delete for <proper>GCS</proper> or <proper>Azure</proper> can provide additional protection against tampering.</p>
+        </section>
+
+        <!-- =================================================================================================================== -->
         <section id="postgres-compatibility">
             <title>Compatibility with ten versions of <postgres/></title>
 

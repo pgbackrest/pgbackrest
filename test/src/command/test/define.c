@@ -83,7 +83,7 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                             {
                                 TestDefCoverage testDefCoverage = {0};
 
-                                if (yamlEventPeek(yaml).type == yamlEventTypeScalar)
+                                if (yamlEventPeekIs(yaml, yamlEventTypeScalar))
                                 {
                                     testDefCoverage.name = yamlScalarNext(yaml).value;
                                     testDefCoverage.coverable = true;
@@ -140,7 +140,7 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                             TestDefHarness testDefHarness = {.integration = true};
                             StringList *harnessIncludeList = strLstNew();
 
-                            if (yamlEventPeek(yaml).type == yamlEventTypeScalar)
+                            if (yamlEventPeekIs(yaml, yamlEventTypeScalar))
                             {
                                 testDefHarness.name = yamlScalarNext(yaml).value;
                             }
@@ -167,7 +167,7 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                                             const String *const shim = yamlScalarNext(yaml).value;
                                             strLstAdd(harnessIncludeList, shim);
 
-                                            if (yamlEventPeek(yaml).type == yamlEventTypeScalar)
+                                            if (yamlEventPeekIs(yaml, yamlEventTypeScalar))
                                             {
                                                 yamlScalarNext(yaml);
                                             }

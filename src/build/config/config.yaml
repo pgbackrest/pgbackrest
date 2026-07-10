@@ -275,6 +275,14 @@ optionGroup:
 option:
   # Command-line only options
   #---------------------------------------------------------------------------------------------------------------------------------
+  archive-expire-before:
+    type: string
+    required: false
+    command:
+      expire: {}
+    command-role:
+      main: {}
+
   config:
     type: string
     default-type: literal
@@ -671,6 +679,15 @@ option:
 
   # General options
   #---------------------------------------------------------------------------------------------------------------------------------
+  allow-root:
+    section: global
+    type: boolean
+    default: false
+    command:
+      +role: any
+      restore:
+        default: true
+
   archive-timeout:
     section: global
     type: time
