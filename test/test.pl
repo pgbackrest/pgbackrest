@@ -35,7 +35,6 @@ use pgBackRestDoc::Common::String;
 use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestTest::Common::BuildTest;
-use pgBackRestTest::Common::CodeCountTest;
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -74,7 +73,6 @@ test.pl [options]
    --no-performance     do not run performance tests
    --gen-only           only run auto-generation
    --gen-check          check that auto-generated files are correct (used in CI to detect changes)
-   --code-count         generate code counts
    --no-back-trace      don't run backrace on C unit tests (may be slow with valgrind)
    --no-valgrind        don't run valgrind on C unit tests (saves time)
    --no-coverage        don't run coverage on C unit tests (saves time)
@@ -155,7 +153,6 @@ my $bContainerOnly = false;
 my $bNoPerformance = false;
 my $bGenOnly = false;
 my $bGenCheck = false;
-my $bCodeCount = false;
 my $bProfile = false;
 my $bNoBackTrace = false;
 my $bNoValgrind = false;
@@ -202,7 +199,6 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-performance' => \$bNoPerformance,
             'gen-only' => \$bGenOnly,
             'gen-check' => \$bGenCheck,
-            'code-count' => \$bCodeCount,
             'code-format' => \$bCodeFormat,
             'code-format-check' => \$bCodeFormatCheck,
             'profile' => \$bProfile,
@@ -582,16 +578,6 @@ eval
             }
         }
 
-        exit 0;
-    }
-
-    # Generate code counts
-    #-------------------------------------------------------------------------------------------------------------------------------
-    if ($bCodeCount)
-    {
-        &log(INFO, "classify code files");
-
-        codeCountScan($oStorageBackRest, $strBackRestBase);
         exit 0;
     }
 

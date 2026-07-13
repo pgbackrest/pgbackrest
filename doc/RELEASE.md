@@ -30,11 +30,6 @@ to:
 #define PROJECT_VERSION_SUFFIX                                      ""
 ```
 
-## Update code counts
-```
-pgbackrest/test/test.pl --code-count
-```
-
 ## Update sponsors
 
 Add new sponsors and move to past sponsors when sponsorship has lapsed.
@@ -219,11 +214,6 @@ to:
 Run deploy to generate git history (ctrl-c as soon as the file is generated):
 ```
 pgbackrest/doc/release.pl --build
-```
-
-Run code count to add new release file:
-```
-pgbackrest/test/test.pl --code-count
 ```
 
 Commit and push to integration:
