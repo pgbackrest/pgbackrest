@@ -291,16 +291,16 @@ unit:
       - name: io
         total: 6
         feature: IO
-        harness: pack
         harness:
-          name: fd
-          shim:
-            common/io/fd:
-              function:
-                - fdReady
-            common/io/fdWrite:
-              function:
-                - ioFdWriteInternal
+          - pack
+          - name: fd
+            shim:
+              common/io/fd:
+                function:
+                  - fdReady
+              common/io/fdWrite:
+                function:
+                  - ioFdWriteInternal
 
         coverage:
           - common/io/bufferRead
@@ -378,14 +378,14 @@ unit:
       - name: io-tls
         total: 6
         feature: SOCKET
-        harness: server
         harness:
-          name: socket
-          shim:
-            common/io/socket/client:
-              function:
-                - sckClientOpen
-                - sckClientOpenWait
+          - server
+          - name: socket
+            shim:
+              common/io/socket/client:
+                function:
+                  - sckClientOpen
+                  - sckClientOpenWait
 
         coverage:
           - common/io/client
@@ -440,21 +440,19 @@ unit:
       - name: lock
         total: 1
         harness:
-          name: config
-          shim:
-            config/load: ~
-        harness:
-          name: lock
-          shim:
-            common/lock:
-              function:
-                - lockInit
-        harness:
-          name: storageHelper
-          shim:
-            storage/helper:
-              function:
-                - storageRepoGet
+          - name: config
+            shim:
+              config/load: ~
+          - name: lock
+            shim:
+              common/lock:
+                function:
+                  - lockInit
+          - name: storageHelper
+            shim:
+              storage/helper:
+                function:
+                  - storageRepoGet
 
         coverage:
           - common/lock
@@ -927,16 +925,15 @@ unit:
       - name: backup
         total: 12
         harness:
-          name: backup
-          integration: false
-          shim:
-            command/backup/backup:
-              function:
-                - backupProcess
-        harness:
-          name: blockIncr
-          shim:
-            command/restore/blockDelta: ~
+          - name: backup
+            integration: false
+            shim:
+              command/backup/backup:
+                function:
+                  - backupProcess
+          - name: blockIncr
+            shim:
+              command/restore/blockDelta: ~
 
         coverage:
           - command/backup/backup
