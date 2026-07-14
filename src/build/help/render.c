@@ -288,8 +288,16 @@ bldHlpRenderHelpAutoCCmp(const BldCfg bldCfg, const BldHlp bldHlp)
 }
 
 /***********************************************************************************************************************************
-Output buffer to a file as a byte array
+Output buffer to a file as a C string
 ***********************************************************************************************************************************/
+// Map bytes that have a short named escape to their two-character escape sequence. Bytes not in the map are written directly when
+// printable or as a three-digit octal escape otherwise.
+static const char *const helpDataEscapeMap[256] =
+{
+    ['\a'] = "\\a", ['\b'] = "\\b", ['\t'] = "\\t", ['\n'] = "\\n", ['\v'] = "\\v", ['\f'] = "\\f", ['\r'] = "\\r",
+    ['"'] = "\\\"", ['\\'] = "\\\\", ['?'] = "\\?",
+};
+
 static void
 bldHlpRenderHelpAutoC(const Storage *const storageRepo, const BldCfg bldCfg, const BldHlp bldHlp)
 {
@@ -299,37 +307,56 @@ bldHlpRenderHelpAutoC(const Storage *const storageRepo, const BldCfg bldCfg, con
     String *const help = strCatFmt(
         strNew(),
         "%s"
-        "static const uint8_t helpData[%zu] =\n"
-        "{\n",
+        "VR_NON_STRING static const char helpData[%zu] =\n"
+        "\"",
         strZ(bldHeader("help", "Help Data")), bufUsed(buffer));
 
-    bool first = true;
-    size_t lineSize = 0;
-    char byteZ[4];
+    // Encode the compressed data as a single C string literal. This is much more compact than a list of byte values, which matters
+    // now that help.auto.c.inc is checked in as an asset. The data is not NUL-terminated so the array is declared VR_NON_STRING and
+    // sized to exactly match the data.
+    //
+    // Physical lines are broken at a fixed width using a backslash-newline continuation, which the preprocessor removes before the
+    // string is tokenized. This keeps every line the same width even when the break falls in the middle of an escape sequence. The
+    // opening quote occupies the first column of the first line.
+    size_t lineSize = 1;
 
     for (unsigned int bufferIdx = 0; bufferIdx < bufUsed(buffer); bufferIdx++)
     {
-        snprintf(byteZ, sizeof(byteZ), "%u", bufPtrConst(buffer)[bufferIdx]);
+        const uint8_t byte = bufPtrConst(buffer)[bufferIdx];
 
-        if (strlen(byteZ) + 1 + (first ? 0 : 1) + lineSize > 128)
+        // Look up the escape sequence, falling back to a direct printable character or a three-digit octal escape
+        char escBuf[5];
+        const char *escZ = helpDataEscapeMap[byte];
+
+        if (escZ == NULL)
         {
-            strCatChr(help, '\n');
-            first = true;
+            if (byte >= 0x20 && byte <= 0x7e)
+            {
+                escBuf[0] = (char)byte;
+                escBuf[1] = '\0';
+            }
+            else
+                snprintf(escBuf, sizeof(escBuf), "\\%03o", byte);
+
+            escZ = escBuf;
         }
 
-        if (first)
+        // Append the escape, breaking the line with a continuation once it is full. Counting the trailing continuation backslash
+        // the line is 132 characters wide, matching the rest of the source.
+        for (; *escZ != '\0'; escZ++)
         {
-            strCatZ(help, "    ");
-            lineSize = 0;
+            if (lineSize == 131)
+            {
+                strCatZ(help, "\\\n");
+                lineSize = 0;
+            }
+
+            strCatChr(help, *escZ);
+            lineSize++;
         }
-
-        strCatFmt(help, "%s%s,", first ? "" : " ", byteZ);
-
-        lineSize += strlen(byteZ) + 1 + (first ? 0 : 1);
-        first = false;
     }
 
-    strCatZ(help, "\n};\n");
+    strCatZ(help, "\";\n");
 
     // Write to storage
     bldPut(storageRepo, "src/command/help/help.auto.c.inc", BUFSTR(help));
