@@ -8,9 +8,9 @@ Test Backup Manifest Handler
 #include "info/infoBackup.h"
 #include "storage/posix/storage.h"
 
-#include "common/harnessInfo.h"
-#include "common/harnessManifest.h"
-#include "common/harnessPostgres.h"
+#include "harness/info.h"
+#include "harness/manifest.h"
+#include "harness/postgres.h"
 
 /***********************************************************************************************************************************
 Special string constants

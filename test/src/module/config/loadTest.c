@@ -6,7 +6,7 @@ Test Configuration Load
 #include "protocol/helper.h"
 #include "version.h"
 
-#include "common/harnessConfig.h"
+#include "harness/config.h"
 #include "storage/cifs/storage.h"
 #include "storage/posix/storage.h"
 

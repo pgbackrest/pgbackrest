@@ -8,9 +8,9 @@ NOTE: references to 9.4 are intentionally included in this test to ensure that i
 #include "common/io/bufferWrite.h"
 #include "storage/posix/storage.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessFork.h"
-#include "common/harnessInfo.h"
+#include "harness/config.h"
+#include "harness/fork.h"
+#include "harness/info.h"
 
 /***********************************************************************************************************************************
 Test Run

@@ -3,8 +3,8 @@ Test Build Help
 ***********************************************************************************************************************************/
 #include "storage/posix/storage.h"
 
-#include "common/harnessPack.h"
-#include "common/harnessStorage.h"
+#include "harness/pack.h"
+#include "harness/storage.h"
 
 /***********************************************************************************************************************************
 Test Run

@@ -7,9 +7,9 @@ Test Remote Command
 #include "protocol/server.h"
 #include "storage/posix/storage.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessFork.h"
-#include "common/harnessStorage.h"
+#include "harness/config.h"
+#include "harness/fork.h"
+#include "harness/storage.h"
 
 /***********************************************************************************************************************************
 Test Run

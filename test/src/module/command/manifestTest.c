@@ -8,11 +8,11 @@ Test Manifest Command
 #include "command/stanza/create.h"
 #include "storage/posix/storage.h"
 
-#include "common/harnessBackup.h"
-#include "common/harnessConfig.h"
-#include "common/harnessPostgres.h"
-#include "common/harnessProtocol.h"
-#include "common/harnessStorage.h"
+#include "harness/backup.h"
+#include "harness/config.h"
+#include "harness/postgres.h"
+#include "harness/protocol.h"
+#include "harness/storage.h"
 
 /***********************************************************************************************************************************
 Test Run

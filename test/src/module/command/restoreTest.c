@@ -12,17 +12,17 @@ Test Restore Command
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
 
-#include "common/harnessBackup.h"
-#include "common/harnessBlockIncr.h"
-#include "common/harnessConfig.h"
-#include "common/harnessInfo.h"
-#include "common/harnessManifest.h"
-#include "common/harnessPostgres.h"
-#include "common/harnessProtocol.h"
-#include "common/harnessRestore.h"
-#include "common/harnessStorage.h"
-#include "common/harnessStorageHelper.h"
-#include "common/harnessTime.h"
+#include "harness/backup.h"
+#include "harness/blockIncr.h"
+#include "harness/config.h"
+#include "harness/info.h"
+#include "harness/manifest.h"
+#include "harness/postgres.h"
+#include "harness/protocol.h"
+#include "harness/restore.h"
+#include "harness/storage.h"
+#include "harness/storageHelper.h"
+#include "harness/time.h"
 
 /***********************************************************************************************************************************
 Special string constants

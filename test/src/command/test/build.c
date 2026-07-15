@@ -354,7 +354,7 @@ testBldUnit(TestBuild *const this)
             if (module->type == testDefTypeIntegration && !harness->integration)
                 continue;
 
-            const String *const harnessFile = strNewFmt("test/src/common/%s.c", strZ(bldEnum("harness", harness->name)));
+            const String *const harnessFile = strNewFmt("test/src/harness/%s.c", strZ(harness->name));
             const String *harnessPath = strNewFmt("%s/%s", strZ(pathRepo), strZ(harnessFile));
 
             // If there are includes then copy and update the harness
@@ -470,7 +470,7 @@ testBldUnit(TestBuild *const this)
             const TestDefHarness *const harness = lstGet(module->harnessList, harnessIdx);
 
             // Add harness depends
-            const String *const harnessDependPath = strNewFmt("test/src/common/%s", strZ(bldEnum("harness", harness->name)));
+            const String *const harnessDependPath = strNewFmt("test/src/harness/%s", strZ(harness->name));
             StorageIterator *const storageItr = storageNewItrP(
                 testBldStorageRepo(this), harnessDependPath, .expression = STRDEF("\\.c$"), .sortOrder = sortOrderAsc);
 
@@ -500,7 +500,7 @@ testBldUnit(TestBuild *const this)
 
         strCatFmt(
             mesonBuild,
-            "    '%s/test/src/common/harnessTest.c',\n"
+            "    '%s/test/src/harness/test.c',\n"
             "    'test.c',\n"
             ")\n"
             "\n"

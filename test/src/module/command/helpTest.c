@@ -7,8 +7,8 @@ Test Help Command
 #include "storage/posix/storage.h"
 #include "version.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessStorage.h"
+#include "harness/config.h"
+#include "harness/storage.h"
 
 /***********************************************************************************************************************************
 Configuration load with just enough functionality to test help

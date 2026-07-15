@@ -411,7 +411,7 @@ if (testBegin("expireBackup()"))
 
 #### Setting up the command to be run
 
-The [harnessConfig.h](https://github.com/pgbackrest/pgbackrest/blob/main/test/src/common/harnessConfig.h) describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a `StringList` which must be defined and passed to the `HRN_CFG_LOAD()` macro with the command. For example, the following will set up a test to run `pgbackrest --repo-path=test/test-0/repo info` command on multiple repositories, one of which is encrypted:
+The [config.h](https://github.com/pgbackrest/pgbackrest/blob/main/test/src/harness/config.h) describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a `StringList` which must be defined and passed to the `HRN_CFG_LOAD()` macro with the command. For example, the following will set up a test to run `pgbackrest --repo-path=test/test-0/repo info` command on multiple repositories, one of which is encrypted:
 ```
 StringList *argList = strLstNew();                                  // Create an empty string list
 hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");          // Add the --repo-path option
@@ -423,7 +423,7 @@ HRN_CFG_LOAD(cfgCmdInfo, argList);                                  // Load the 
 
 #### Storing a file
 
-Sometimes it is desirable to store or manipulate files before or during a test and then confirm the contents. The [harnessStorage.h](https://github.com/pgbackrest/pgbackrest/blob/main/test/src/common/harnessStorage.h) file contains macros (e.g. `HRN_STORAGE_PUT` and `TEST_STORAGE_GET`) for doing this. In addition, `HRN_INFO_PUT` is convenient for writing out info files (archive.info, backup.info, backup.manifest) since it will automatically add header and checksum information.
+Sometimes it is desirable to store or manipulate files before or during a test and then confirm the contents. The [storage.h](https://github.com/pgbackrest/pgbackrest/blob/main/test/src/harness/storage.h) file contains macros (e.g. `HRN_STORAGE_PUT` and `TEST_STORAGE_GET`) for doing this. In addition, `HRN_INFO_PUT` is convenient for writing out info files (archive.info, backup.info, backup.manifest) since it will automatically add header and checksum information.
 ```
 HRN_STORAGE_PUT_EMPTY(
     storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-1/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd.gz");
@@ -431,7 +431,7 @@ HRN_STORAGE_PUT_EMPTY(
 
 #### Testing results
 
-Tests are run and results confirmed via macros that are described in [harnessTest.h](https://github.com/pgbackrest/pgbackrest/blob/main/test/src/common/harnessTest.h). With the exception of TEST_ERROR, the third parameter is a short description of the test. Some of the more common macros are:
+Tests are run and results confirmed via macros that are described in [test.h](https://github.com/pgbackrest/pgbackrest/blob/main/test/src/harness/test.h). With the exception of TEST_ERROR, the third parameter is a short description of the test. Some of the more common macros are:
 
 - `TEST_RESULT_STR` - Test the actual value of the string returned by the function.
 
@@ -457,7 +457,7 @@ In the above, `Pxx` indicates the process (P) and the process number (xx), e.g. 
 
 #### Testing using child process
 
-Sometimes it is useful to use a child process for testing. Below is a simple example. See [harnessFork.h](https://github.com/pgbackrest/pgbackrest/blob/main/test/src/common/harnessFork.h) for more details.
+Sometimes it is useful to use a child process for testing. Below is a simple example. See [fork.h](https://github.com/pgbackrest/pgbackrest/blob/main/test/src/harness/fork.h) for more details.
 ```
 HRN_FORK_BEGIN()
 {
@@ -501,7 +501,7 @@ HRN_FORK_END();
 
 #### Testing using a shim
 
-A PostgreSQL libpq shim is provided to simulate interactions with PostgreSQL. Below is a simple example. See [harnessPq.h](https://github.com/pgbackrest/pgbackrest/blob/main/test/src/common/harnessPq.h) for more details.
+A PostgreSQL libpq shim is provided to simulate interactions with PostgreSQL. Below is a simple example. See [pq.h](https://github.com/pgbackrest/pgbackrest/blob/main/test/src/harness/pq.h) for more details.
 ```
 // Set up two standbys but no primary
 HRN_PQ_SCRIPT_SET(

@@ -10,8 +10,8 @@ define.yaml. THe PostgreSQL version can be adjusted by changing TEST_PG_VERSION.
 ***********************************************************************************************************************************/
 #include "common/type/json.h"
 
-#include "common/harnessPack.h"
-#include "common/harnessPq.h"
+#include "harness/pack.h"
+#include "harness/pq.h"
 
 /***********************************************************************************************************************************
 Test Run

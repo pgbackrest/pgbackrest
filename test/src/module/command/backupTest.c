@@ -10,16 +10,16 @@ Test Backup Command
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
 
-#include "common/harnessBackup.h"
-#include "common/harnessBlockIncr.h"
-#include "common/harnessConfig.h"
-#include "common/harnessManifest.h"
-#include "common/harnessPack.h"
-#include "common/harnessPostgres.h"
-#include "common/harnessPq.h"
-#include "common/harnessProtocol.h"
-#include "common/harnessStorage.h"
-#include "common/harnessTime.h"
+#include "harness/backup.h"
+#include "harness/blockIncr.h"
+#include "harness/config.h"
+#include "harness/manifest.h"
+#include "harness/pack.h"
+#include "harness/postgres.h"
+#include "harness/pq.h"
+#include "harness/protocol.h"
+#include "harness/storage.h"
+#include "harness/time.h"
 
 /***********************************************************************************************************************************
 Get a list of all files in the backup and a redacted version of the manifest that can be tested against a static string

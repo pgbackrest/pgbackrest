@@ -8,11 +8,11 @@ Test Check Command
 #include "storage/helper.h"
 #include "storage/posix/storage.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessInfo.h"
-#include "common/harnessPostgres.h"
-#include "common/harnessPq.h"
-#include "common/harnessStorage.h"
+#include "harness/config.h"
+#include "harness/info.h"
+#include "harness/postgres.h"
+#include "harness/pq.h"
+#include "harness/storage.h"
 
 /***********************************************************************************************************************************
 Test Run

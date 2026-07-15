@@ -10,11 +10,11 @@ Test Protocol
 #include "storage/storage.h"
 #include "version.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessError.h"
-#include "common/harnessFork.h"
-#include "common/harnessPack.h"
-#include "common/harnessServer.h"
+#include "harness/config.h"
+#include "harness/error.h"
+#include "harness/fork.h"
+#include "harness/pack.h"
+#include "harness/server.h"
 
 /***********************************************************************************************************************************
 Test protocol server command handlers

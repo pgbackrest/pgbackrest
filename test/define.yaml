@@ -22,7 +22,7 @@
 #         used to automatically check for errors in later tests. The common/error test is not able to access this error handling
 #         because it is used to implement the error handling, so it must do error testing in a more primitive way.
 #     * harness - Adds a harness module that contains functions to aid in testing. For example, the "log" harness includes the
-#         common/harnessLog module to aid in expect log testing.
+#         harness/log module to aid in expect log testing.
 #       * shim - list of modules that are shimmed in the harness. This allows the harness to access static elements of the module to
 #         provide additional services for unit testing. A shim can have a 'function' list. In this case the listed functions in the
 #         C module will be appended with _SHIMMED and an implementation with the same function signature must be provided in the

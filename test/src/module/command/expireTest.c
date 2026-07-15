@@ -9,10 +9,10 @@ NOTE: references to 9.4 are intentionally included in this test to ensure that e
 #include "common/io/bufferRead.h"
 #include "storage/posix/storage.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessInfo.h"
-#include "common/harnessStorage.h"
-#include "common/harnessTime.h"
+#include "harness/config.h"
+#include "harness/info.h"
+#include "harness/storage.h"
+#include "harness/time.h"
 
 /***********************************************************************************************************************************
 Helper functions

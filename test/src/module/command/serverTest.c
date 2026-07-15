@@ -5,11 +5,11 @@ Test Server Command
 #include "storage/posix/storage.h"
 #include "storage/remote/storage.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessFork.h"
-#include "common/harnessServer.h"
-#include "common/harnessStorage.h"
-#include "common/harnessSystemd.h"
+#include "harness/config.h"
+#include "harness/fork.h"
+#include "harness/server.h"
+#include "harness/storage.h"
+#include "harness/systemd.h"
 
 /***********************************************************************************************************************************
 Test Run

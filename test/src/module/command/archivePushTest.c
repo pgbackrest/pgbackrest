@@ -7,11 +7,11 @@ Test Archive Push Command
 #include "postgres/version.h"
 #include "storage/posix/storage.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessFork.h"
-#include "common/harnessInfo.h"
-#include "common/harnessPostgres.h"
-#include "common/harnessProtocol.h"
+#include "harness/config.h"
+#include "harness/fork.h"
+#include "harness/info.h"
+#include "harness/postgres.h"
+#include "harness/protocol.h"
 
 /***********************************************************************************************************************************
 Test Run

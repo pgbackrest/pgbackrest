@@ -6,8 +6,8 @@ Test IO
 
 #include "common/type/json.h"
 
-#include "common/harnessFork.h"
-#include "common/harnessPack.h"
+#include "harness/fork.h"
+#include "harness/pack.h"
 
 /***********************************************************************************************************************************
 Test functions for IoRead that are not covered by testing the IoBufferRead object

@@ -8,10 +8,10 @@ Real Integration Test
 #include "postgres/version.h"
 #include "storage/helper.h"
 
-#include "common/harnessErrorRetry.h"
-#include "common/harnessHost.h"
-#include "common/harnessPostgres.h"
-#include "common/harnessStorage.h"
+#include "harness/errorRetry.h"
+#include "harness/host.h"
+#include "harness/postgres.h"
+#include "harness/storage.h"
 
 /***********************************************************************************************************************************
 Test definition

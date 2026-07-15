@@ -5,9 +5,9 @@ Test Exit Routines
 #include "config/config.h"
 #include "version.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessError.h"
-#include "common/harnessFork.h"
+#include "harness/config.h"
+#include "harness/error.h"
+#include "harness/fork.h"
 
 /***********************************************************************************************************************************
 Test Run

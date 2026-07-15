@@ -6,10 +6,10 @@ Test Posix/CIFS Storage
 #include "storage/read.h"
 #include "storage/write.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessFork.h"
-#include "common/harnessStorage.h"
-#include "common/harnessTime.h"
+#include "harness/config.h"
+#include "harness/fork.h"
+#include "harness/storage.h"
+#include "harness/time.h"
 
 /***********************************************************************************************************************************
 Test function for path expression

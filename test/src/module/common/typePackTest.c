@@ -4,7 +4,7 @@ Test Pack Type
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 
-#include "common/harnessPack.h"
+#include "harness/pack.h"
 
 /***********************************************************************************************************************************
 Test Run

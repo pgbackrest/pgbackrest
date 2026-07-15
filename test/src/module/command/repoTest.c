@@ -5,9 +5,9 @@ Test Repo Commands
 #include "common/io/bufferWrite.h"
 #include "storage/posix/storage.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessInfo.h"
-#include "common/harnessStorageHelper.h"
+#include "harness/config.h"
+#include "harness/info.h"
+#include "harness/storageHelper.h"
 
 #include "info/infoArchive.h"
 #include "info/infoBackup.h"

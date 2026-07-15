@@ -3,7 +3,7 @@ Test Error Handling
 ***********************************************************************************************************************************/
 #include <assert.h>
 
-#include "common/harnessFork.h"
+#include "harness/fork.h"
 
 /***********************************************************************************************************************************
 Declare some error locally because real errors won't work for some tests -- they could also break as errors change

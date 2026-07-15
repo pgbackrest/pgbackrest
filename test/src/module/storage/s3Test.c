@@ -8,10 +8,10 @@ Test S3 Storage
 #include "storage/helper.h"
 #include "version.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessFork.h"
-#include "common/harnessServer.h"
-#include "common/harnessStorage.h"
+#include "harness/config.h"
+#include "harness/fork.h"
+#include "harness/server.h"
+#include "harness/storage.h"
 
 /***********************************************************************************************************************************
 Constants

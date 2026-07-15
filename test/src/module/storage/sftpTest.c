@@ -10,12 +10,12 @@ Test SFTP Storage
 #include "storage/sftp/storage.h"
 #include "storage/write.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessFd.h"
-#include "common/harnessFork.h"
-#include "common/harnessLibSsh2.h"
-#include "common/harnessSocket.h"
-#include "common/harnessStorage.h"
+#include "harness/config.h"
+#include "harness/fd.h"
+#include "harness/fork.h"
+#include "harness/libSsh2.h"
+#include "harness/socket.h"
+#include "harness/storage.h"
 
 /***********************************************************************************************************************************
 Constants

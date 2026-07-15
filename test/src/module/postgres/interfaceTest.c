@@ -3,8 +3,8 @@ Test PostgreSQL Interface
 ***********************************************************************************************************************************/
 #include "storage/posix/storage.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessPostgres.h"
+#include "harness/config.h"
+#include "harness/postgres.h"
 
 /***********************************************************************************************************************************
 Test Run

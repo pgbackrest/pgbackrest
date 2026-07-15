@@ -11,11 +11,11 @@ Test Remote Storage
 #include "config/protocol.h"
 #include "postgres/interface.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessPack.h"
-#include "common/harnessProtocol.h"
-#include "common/harnessStorage.h"
-#include "common/harnessTime.h"
+#include "harness/config.h"
+#include "harness/pack.h"
+#include "harness/protocol.h"
+#include "harness/storage.h"
+#include "harness/time.h"
 
 /***********************************************************************************************************************************
 Test Run

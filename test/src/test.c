@@ -116,8 +116,8 @@ STRING_EXTERN(TEST_GROUP_STR, TEST_GROUP);
 // Path to source -- used to construct __FILENAME__ tests
 #define TEST_PGB_PATH                                               "{[C_TEST_PGB_PATH]}"
 
-#include "common/harnessDebug.h"
-#include "common/harnessTest.intern.h"
+#include "harness/debug.h"
+#include "harness/test.intern.h"
 
 // Is log expect testing enabled?
 #define TEST_LOG_EXPECT                                             {[C_TEST_LOG_EXPECT]}
@@ -127,7 +127,7 @@ STRING_EXTERN(TEST_GROUP_STR, TEST_GROUP);
 #endif
 
 #ifdef HRN_FEATURE_LOG
-#include "common/harnessLog.h"
+#include "harness/log.h"
 #endif
 
 {[C_TEST_INCLUDE]}
@@ -138,7 +138,7 @@ Includes that are not generally used by tests
 #include <assert.h>
 
 #if defined(HRN_INTEST_SOCKET) || defined(HRN_FEATURE_SOCKET)
-#include "common/harnessServer.h"
+#include "harness/server.h"
 #include "common/io/socket/common.h"
 #endif
 

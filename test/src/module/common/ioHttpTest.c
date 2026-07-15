@@ -10,8 +10,8 @@ Test HTTP
 #include "common/io/socket/client.h"
 #include "common/io/tls/client.h"
 
-#include "common/harnessFork.h"
-#include "common/harnessServer.h"
+#include "harness/fork.h"
+#include "harness/server.h"
 
 /***********************************************************************************************************************************
 HTTP user agent header

@@ -4,12 +4,12 @@ Test Archive Get Command
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessFork.h"
-#include "common/harnessInfo.h"
-#include "common/harnessPostgres.h"
-#include "common/harnessProtocol.h"
-#include "common/harnessStorage.h"
+#include "harness/config.h"
+#include "harness/fork.h"
+#include "harness/info.h"
+#include "harness/postgres.h"
+#include "harness/protocol.h"
+#include "harness/storage.h"
 
 /***********************************************************************************************************************************
 Test Run

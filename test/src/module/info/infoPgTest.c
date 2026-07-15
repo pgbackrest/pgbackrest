@@ -4,8 +4,8 @@ Test PostgreSQL Info Handler
 #include "common/io/bufferRead.h"
 #include "common/io/bufferWrite.h"
 
-#include "common/harnessInfo.h"
-#include "common/harnessPostgres.h"
+#include "harness/info.h"
+#include "harness/postgres.h"
 
 /***********************************************************************************************************************************
 Test save callback

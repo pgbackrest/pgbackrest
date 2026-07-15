@@ -5,7 +5,7 @@ Test Configuration Parse
 #include "protocol/helper.h"
 #include "storage/posix/storage.h"
 
-#include "common/harnessConfig.h"
+#include "harness/config.h"
 
 #define TEST_BACKREST_EXE                                           "pgbackrest"
 
