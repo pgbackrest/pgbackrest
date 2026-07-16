@@ -61,7 +61,8 @@
 
         <!-- Path where builds are performed -->
         <variable key="build-path">/build</variable>
-        <variable key="build-br-path">{[build-path]}/pgbackrest-release-{[version]}</variable>
+        <variable key="build-br-path">{[build-path]}/pgbackrest-{[version]}</variable>
+        <variable key="build-br-path-tmp">{[build-path]}/pgbackrest-{[version]}-tmp</variable>
         <variable key="build-meson-path">{[build-path]}/pgbackrest</variable>
 
         <!-- PostreSQL versions to run documentation for and min/max versions represented -->
@@ -316,7 +317,7 @@
         RUN rm /etc/apt/apt.conf.d/70debconf &amp;&amp; \
             apt-get update &amp;&amp; \
             apt-get install -y --no-install-recommends sudo ssh curl vim gnupg lsb-release iputils-ping ca-certificates \
-                    tzdata locales libssh2-1-dev awscli 2>&amp;1
+                    tzdata locales libssh2-1-dev awscli git libyaml-dev libxml-checker-perl 2>&amp;1
 
         {[sudo-disable-core-dump]}
 
@@ -360,7 +361,7 @@
         VOLUME [ "/sys/fs/cgroup" ]
 
         # Install packages
-        RUN yum install -y openssh-server openssh-clients sudo wget vim openssl findutils dnf-plugins-core awscli2 2>&amp;1
+        RUN yum install -y openssh-server openssh-clients sudo wget vim openssl findutils dnf-plugins-core awscli2 git 2>&amp;1
 
         # Install and enable epel repository
         RUN dnf -y install epel-release
@@ -368,6 +369,9 @@
 
         # Install packages that require epel
         RUN dnf install -y azure-cli
+
+        # Install dev packages
+        RUN yum install -y libyaml-devel 2>&amp;1
 
         # Install CA certificate
         RUN update-ca-trust extract
@@ -386,6 +390,12 @@
 
         # Install PostgreSQL
         RUN yum install -y postgresql{[pg-version]}-server postgresql{[pg-version-upgrade]}-server
+
+        # XML::Checker::Parser has no RHEL package; install its packaged XML::Parser dependency, cpanm the pure-Perl layer, and
+        # remove the build tools in the same layer so they do not persist in the image
+        RUN yum install -y perl-XML-Parser perl-App-cpanminus make perl-ExtUtils-MakeMaker &amp;&amp; \
+            cpanm --notest XML::Checker::Parser &amp;&amp; \
+            yum remove -y perl-App-cpanminus make perl-ExtUtils-MakeMaker
 
         # Install systemctl replacement that works without systemd running
         ENV SYSCTL_REP_VER=1.5.8066
@@ -995,17 +1005,6 @@
                     tar zx -C {[build-path]}
                 </exe-cmd>
             </execute>
-
-            <!-- These commands simulate what the command above would do if it could be run -->
-            <execute user="root" show="n">
-                <exe-cmd>mkdir -p {[build-br-path]}</exe-cmd>
-            </execute>
-            <execute user="root" show="n">
-                <exe-cmd>cp -r {[pgbackrest-repo-path]}/* {[build-br-path]}</exe-cmd>
-            </execute>
-            <execute user="root" show="n">
-                <exe-cmd>chown -R {[host-build-user]} {[build-path]}</exe-cmd>
-            </execute>
         </execute-list>
 
         <execute-list host="{[host-build]}">
@@ -1018,19 +1017,70 @@
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
                 <exe-cmd>
                     apt-get install python3-distutils meson gcc libpq-dev libssl-dev libxml2-dev
-                    pkg-config liblz4-dev libzstd-dev libbz2-dev libz-dev libyaml-dev libssh2-1-dev
-                    libsystemd-dev
+                    pkg-config liblz4-dev libzstd-dev libbz2-dev libz-dev libssh2-1-dev libsystemd-dev
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
             <execute if="{[os-type-is-rhel]}" user="root" pre="y">
                 <exe-cmd>
-                    yum install meson gcc postgresql{[pg-version]}-devel openssl-devel
-                    libxml2-devel lz4-devel libzstd-devel bzip2-devel libyaml-devel libssh2-devel
-                    systemd-devel
+                    yum install meson gcc postgresql{[pg-version]}-devel openssl-devel libxml2-devel
+                    lz4-devel libzstd-devel bzip2-devel libssh2-devel systemd-devel
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+            </execute>
+
+            <!-- These rest of the commands in this execute-block simulate downloading the distribution tarball -->
+            <execute user="root" user-force="y" show="n" bash-wrap="y">
+                <exe-cmd>
+                    mkdir -p {[build-br-path-tmp]} &amp;&amp;
+                    chown -R {[host-build-user]} {[build-path]}
+                </exe-cmd>
+            </execute>
+            <execute show="n">
+                <exe-cmd>
+                    git config --global --add safe.directory {[pgbackrest-repo-path]} &amp;&amp;
+                    git -C {[pgbackrest-repo-path]} ls-files -c --others --exclude-standard |
+                    grep -v '^doc/resource/exe\.cache$' |
+                    tar -C {[pgbackrest-repo-path]} -cf - -T - | tar -C {[build-br-path-tmp]} -xf -
+                </exe-cmd>
+            </execute>
+
+            <!-- Build a git repo that can be used with meson dist. We need a new repo because there may be files that are not
+                 checked in during development and meson dist will ignore them -->
+            <execute show="n">
+                <exe-cmd>
+                    git config --global user.name "test" &amp;&amp;
+                    git config --global user.email "test@test.com" &amp;&amp;
+                    git -C {[build-br-path-tmp]} init 2>&amp;1 &amp;&amp;
+                    git -C {[build-br-path-tmp]} add . &amp;&amp;
+                    git -C {[build-br-path-tmp]} commit -a -m "test"
+                </exe-cmd>
+            </execute>
+
+            <!-- Create a distribution tarball with meson dist. Fake the dist output of release.pl to save time. -->
+            <execute show="n">
+                <exe-cmd>
+                    meson setup {[build-meson-path]} {[build-br-path-tmp]} &amp;&amp;
+                    ninja -C {[build-meson-path]} src/build-code &amp;&amp;
+                    mkdir -p {[build-br-path-tmp]}/doc/output/html &amp;&amp;
+                    mkdir -p {[build-br-path-tmp]}/doc/output/man &amp;&amp;
+                    PYTHONWARNINGS=ignore meson dist -C {[build-meson-path]} --formats gztar &amp;&amp;
+                    tar zx -C {[build-path]} -f {[build-meson-path]}/meson-dist/pgbackrest-{[version]}.tar.gz &amp;&amp;
+                    rm -rf {[build-meson-path]}
+                </exe-cmd>
+            </execute>
+
+            <!-- Remove libyaml now that we are done with it so future dependencies will cause a failure -->
+            <execute if="{[os-type-is-debian]}" user="root" show="n">
+                <exe-cmd>
+                    apt-get remove -y libyaml-dev 2>&amp;1
+                </exe-cmd>
+            </execute>
+            <execute if="{[os-type-is-rhel]}" user="root" show="n">
+                <exe-cmd>
+                    yum remove -y libyaml-devel 2>&amp;1
+                </exe-cmd>
             </execute>
         </execute-list>
 

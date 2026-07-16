@@ -1,3 +1,13 @@
 # Classify all .h/c.inc files as C
 *.h linguist-language=C
 *.c.inc linguist-language=C
+
+# The distribution tarball (git archive) ships only what is needed to build pgbackrest: exclude everything, then re-include the
+# build inputs. src/build (code generation) is excluded because dist.sh ships the generated files instead. dist.sh also adds the
+# generated docs, the .inc files, the dist marker, and a distribution README.
+/* export-ignore
+/src -export-ignore
+/src/build export-ignore
+/meson.build -export-ignore
+/meson_options.txt -export-ignore
+/LICENSE -export-ignore

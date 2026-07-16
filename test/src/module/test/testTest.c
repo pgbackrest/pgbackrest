@@ -192,6 +192,7 @@ testRun(void)
 
         HRN_STORAGE_PUT_Z(storageTest, "repo/meson.build", strZ(mesonBuildRoot));
         strReplace(mesonBuildRoot, STRDEF("subdir('"), STRDEF("# subdir('"));
+        strReplace(mesonBuildRoot, STRDEF("meson.add_dist_script("), STRDEF("# meson.add_dist_script("));
 
         strCatZ(
             mesonBuildRoot,

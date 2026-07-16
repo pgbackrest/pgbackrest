@@ -398,6 +398,9 @@ testBldUnit(TestBuild *const this)
         // Comment out subdirs that are not used for testing
         strReplace(mesonBuild, STRDEF("subdir('"), STRDEF("# subdir('"));
 
+        // Comment out the distribution script, which is only used when building a distribution tarball
+        strReplace(mesonBuild, STRDEF("meson.add_dist_script("), STRDEF("# meson.add_dist_script("));
+
         if (!testBldBackTrace(this))
         {
             strReplace(

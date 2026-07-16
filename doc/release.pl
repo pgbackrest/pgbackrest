@@ -60,6 +60,8 @@ release.pl [options]
  Release Options:
    --build          Build the cache before release (should be included in the release commit)
    --deploy         Deploy documentation to website (can be done as docs are updated)
+   --dist           Deploy documentation to dist
+   --no-exe         Skip doc execution (just generate HTML, only applies to dist)
    --no-gen         Don't auto-generate
    --vm             vm to build documentation for
 =cut
@@ -73,7 +75,9 @@ my $bQuiet = false;
 my $strLogLevel = 'info';
 my $bBuild = false;
 my $bDeploy = false;
+my $bDist = false;
 my $bNoGen = false;
+my $bNoExe = false;
 my $strVm = undef;
 
 GetOptions ('help' => \$bHelp,
@@ -82,7 +86,9 @@ GetOptions ('help' => \$bHelp,
             'log-level=s' => \$strLogLevel,
             'build' => \$bBuild,
             'deploy' => \$bDeploy,
+            'dist' => \$bDist,
             'no-gen' => \$bNoGen,
+            'no-exe' => \$bNoExe,
             'vm=s' => \$strVm)
     or pod2usage(2);
 
@@ -106,9 +112,9 @@ eval
     }
 
     # If neither build nor deploy is requested then error
-    if (!$bBuild && !$bDeploy)
+    if (!$bBuild && !$bDeploy && !$bDist)
     {
-        confess &log(ERROR, 'neither --build nor --deploy requested, nothing to do');
+        confess &log(ERROR, 'neither --build nor --deploy nor --dist requested, nothing to do');
     }
 
     # Set console log level
@@ -305,6 +311,20 @@ eval
         # Update permissions
         executeTest("find ${strDeployPath} -path .git -prune -type d -exec chmod 750 {} +");
         executeTest("find ${strDeployPath} -path .git -prune -type f -exec chmod 640 {} +");
+    }
+
+    # Generate dist documentation
+    if ($bDist)
+    {
+        &log(INFO, "Generate dist documentation");
+
+        my $strParam =
+            "--var=project-url-root=index.html --exclude=metric --exclude=news --var=logo=n --var=news=n --var=sponsor=n" .
+            ($bNoExe ? ' --no-exe' : ($bDev ? '' : ' --cache-only --var=release-date-static=y'));
+
+        executeTest("${strDocExe} ${strParam} --key-var=os-type=rhel --out=html");
+        $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-rhel.html");
+        executeTest("${strDocExe} ${strParam} --out-preserve --out=html --out=man");
     }
 
     # Exit with success
