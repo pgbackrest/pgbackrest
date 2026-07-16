@@ -1094,6 +1094,15 @@
                 <exe-cmd>ninja -C {[build-meson-path]}</exe-cmd>
             </execute>
         </execute-list>
+
+        <execute-list host="{[host-build]}">
+            <title>Optionally run smoke tests to verify <backrest/> was built correctly</title>
+
+            <execute show="y">
+                <exe-cmd>meson test -C {[build-meson-path]} --suite smoke</exe-cmd>
+                <exe-highlight>smoke OK</exe-highlight>
+            </execute>
+        </execute-list>
     </section>
 
     <!-- ======================================================================================================================= -->

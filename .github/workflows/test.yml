@@ -240,6 +240,74 @@ jobs:
         run: |
           diff ${GITHUB_WORKSPACE?}/pgbackrest/.github/workflows/symbol.out <(nm -gj --defined-only build/src/pgbackrest)
 
+  # Build and run the smoke test against multiple PostgreSQL versions. This runs directly on the runner rather than in a test
+  # container because it is the same check a packager would run on a distribution tarball, i.e. build with meson and run the smoke
+  # test with nothing but the build environment. Also check that the smoke test is formatted since it is the only Python file.
+  smoke:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+        with:
+          path: pgbackrest
+
+      - name: Install
+        run: |
+          sudo apt-get update
+          # libcurl4-openssl-dev is required because the libpq installed from PGDG for newer versions of PostgreSQL depends on
+          # libcurl for OAuth support
+          DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y zlib1g-dev libssl-dev \
+            libxml2-dev libpq-dev libyaml-dev pkg-config meson liblz4-dev libzstd-dev libbz2-dev black postgresql-common \
+            python3-yaml libcurl4-openssl-dev
+
+          # Do not create a cluster when a PostgreSQL package is installed since the smoke test creates its own
+          sudo sed -i 's/^\#create\_main\_cluster.*$/create\_main\_cluster \= false/' /etc/postgresql-common/createcluster.conf
+
+          # Read the supported versions from postgres.yaml so this list never needs to be updated here. Versions marked
+          # "release: false" have not been released and are published in a component named for the version.
+          python3 -c "
+          import sys, yaml
+          for version in yaml.safe_load(open(sys.argv[1]))['version']:
+              if isinstance(version, dict):
+                  (name, config), = version.items()
+                  print(name, 'released' if config.get('release', True) else 'unreleased')
+              else:
+                  print(version, 'released')
+          " "${GITHUB_WORKSPACE?}/pgbackrest/src/build/postgres/postgres.yaml" > pg-version.txt
+          cat pg-version.txt
+
+          # Install the PostgreSQL apt repository (PGDG), adding a component for each unreleased version
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y \
+            -c "$(awk '$2 == "unreleased" {printf "%s ", $1}' pg-version.txt)"
+
+          # Install every supported version
+          DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y \
+            $(awk '{printf "postgresql-%s ", $1}' pg-version.txt)
+
+      # Check that the smoke test is formatted to project standards. On failure the exact command to fix it is printed so it can be
+      # copied and run locally.
+      - name: Check Format
+        run: |
+          cd ${GITHUB_WORKSPACE?}/pgbackrest
+
+          if ! black --check --diff --line-length=132 test/smoke.py; then
+              echo
+              echo "ERROR: test/smoke.py is not formatted correctly. Run this from the pgbackrest path to fix it:"
+              echo
+              echo "    black --line-length=132 test/smoke.py"
+              echo
+              exit 1
+          fi
+
+      - name: Build
+        run: |
+          meson setup build ${GITHUB_WORKSPACE?}/pgbackrest
+          ninja -C build src/pgbackrest
+
+      - name: Run Smoke Test
+        run: meson test -C build --suite smoke -v
+
   # Check that code is correctly formatted
   code-format:
     runs-on: ubuntu-22.04

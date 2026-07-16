@@ -234,6 +234,7 @@ rm -rf .cache/ccache
 meson setup dist/verify/build dist/verify/pgbackrest-${VERSION?}
 ninja -C dist/verify/build
 dist/verify/build/src/pgbackrest version
+meson test -C build --suite smoke
 ```
 
 ## Push to main

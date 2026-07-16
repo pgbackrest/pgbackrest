@@ -564,6 +564,7 @@ eval
             if ($strFile eq 'doc/doc.pl' ||
                 $strFile eq 'doc/release.pl' ||
                 $strFile eq 'test/ci.pl' ||
+                $strFile eq 'test/smoke.py' ||
                 $strFile eq 'test/test.pl' ||
                 $strFile eq 'src/build/dist.sh' ||
                 $hManifest->{$strFile}{type} eq 'd')

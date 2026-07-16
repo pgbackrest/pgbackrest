@@ -283,6 +283,10 @@ endif
 ####################################################################################################################################
 subdir('src')
 
+# The smoke test is shipped in the distribution so packagers can verify a build. It is in a subdir because unit test builds comment
+# out all subdirs, which excludes the smoke test from them.
+subdir('test')
+
 # The doc and test tools generate code and are not built from a distribution tarball
 if not dist
     subdir('doc/src')

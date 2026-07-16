@@ -273,7 +273,7 @@ src_pgbackrest = [
     'main.c',
 ]
 
-executable(
+pgbackrest_exe = executable(
     'pgbackrest',
     src_common,
     src_pgbackrest,

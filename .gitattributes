@@ -4,10 +4,15 @@
 
 # The distribution tarball (git archive) ships only what is needed to build pgbackrest: exclude everything, then re-include the
 # build inputs. src/build (code generation) is excluded because dist.sh ships the generated files instead. dist.sh also adds the
-# generated docs, the .inc files, the dist marker, and a distribution README.
+# generated docs, the .inc files, the dist marker, and a distribution README. The smoke test (test/smoke.py) and the meson.build that
+# runs it are shipped so packagers can verify a build; the rest of test is excluded.
 /* export-ignore
 /src -export-ignore
 /src/build export-ignore
+/test -export-ignore
+/test/* export-ignore
+/test/meson.build -export-ignore
+/test/smoke.py -export-ignore
 /meson.build -export-ignore
 /meson_options.txt -export-ignore
 /LICENSE -export-ignore
