@@ -20,6 +20,12 @@
         <variable key="backrest-page-configuration">configuration</variable>
         <variable key="backrest-page-command">command</variable>
         <variable key="backrest-page-release">release</variable>
+
+        <!-- Include news section? -->
+        <variable key="news">y</variable>
+
+        <!-- Include sponsor section? -->
+        <variable key="sponsor">y</variable>
     </variable-list>
 
     <!-- ======================================================================================================================= -->
@@ -34,7 +40,7 @@
     </section>
 
     <!-- ======================================================================================================================= -->
-    <section id="news">
+    <section if="'{[news]}' eq 'y'" id="news">
         <title>News</title>
 
         <p><b>May 18, 2026</b> - <link page="news" section="/will-continue">{[project]} Will Continue!</link></p>
@@ -43,7 +49,7 @@
     </section>
 
     <!-- ======================================================================================================================= -->
-    <section id="sponsors">
+    <section if="'{[sponsor]}' eq 'y'" id="sponsors">
         <title>Sponsors</title>
 
         <p><backrest/> would not exist without sponsorship. Writing new features, fixing bugs, reviewing contributions, answering questions from the community, and maintenance all take a considerable amount of time. Please consider a <link url="{[github-url-root]}/sponsors/dwsteele">sponsorship</link> if you use <backrest/> in your enterprise.</p>
@@ -232,6 +238,6 @@
 
         <p>Creating a robust disaster recovery policy with proper replication and backup strategies can be a very complex and daunting task. You may find that you need help during the architecture phase and ongoing support to ensure that your enterprise continues running smoothly.</p>
 
-        <p>Our <link section="/sponsors">sponsors</link> offer products and services that include <backrest/> support and can help with your disaster recovery needs.</p>
+        <p if="'{[sponsor]}' eq 'y'">Our <link section="/sponsors">sponsors</link> offer products and services that include <backrest/> support and can help with your disaster recovery needs.</p>
     </section>
 </doc>
