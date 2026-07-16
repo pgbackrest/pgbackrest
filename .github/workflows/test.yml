@@ -88,12 +88,16 @@ jobs:
       - name: Run Test
         run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl ${{matrix.param}} --param=build-max=2
 
-      # Output the coverage report on failure in case the failure was caused by lack of coverage. This is not ideal since the report
-      # needs to be copied from the log output into an HTML file where it can be viewed, but better than nothing.
-      - name: Coverage Report
+      # Upload the coverage report on failure in case the failure was caused by lack of coverage so uncovered lines can be
+      # inspected from the run's artifacts
+      - name: Upload Coverage Report
         if: failure()
-        run: |
-          cat ${GITHUB_WORKSPACE?}/pgbackrest/test/result/coverage/coverage.html
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: pgbackrest/test/result/coverage/coverage.html
+          archive: false
+          if-no-files-found: ignore
 
   # Unit tests on aarch64 with valgrind
   aarch64:
