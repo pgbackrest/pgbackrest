@@ -575,7 +575,7 @@ eval
             {
                 confess &log(
                     ERROR,
-                    "expected mode for '${strExpectedMode}' for '${strFile}' but found '" . $hManifest->{$strFile}{mode} . "'");
+                    "expected mode '${strExpectedMode}' for '${strFile}' but found '" . $hManifest->{$strFile}{mode} . "'");
             }
         }
 
