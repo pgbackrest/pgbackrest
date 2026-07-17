@@ -206,15 +206,20 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Run Test
+      - name: Start VM
         uses: cross-platform-actions/action@v1.3.0
         with:
           operating_system: freebsd
           version: ${{matrix.os.version}}
-          run: |
-            uname -a
-            sudo pkg update && sudo pkg upgrade -y libiconv && sudo pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync meson
-            cd .. && perl ${GITHUB_WORKSPACE?}/test/test.pl --vm-max=2 --no-coverage --no-valgrind  --module=command --test=backup --test=info --test=archive-push
+
+      # The custom shell runs the commands in the VM started above. Do not set this as a job default since the checkout step must
+      # run on the host.
+      - name: Run Test
+        shell: cpa.sh {0}
+        run: |
+          uname -a
+          sudo pkg update && sudo pkg upgrade -y libiconv && sudo pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync meson
+          cd .. && perl ${GITHUB_WORKSPACE?}/test/test.pl --vm-max=2 --no-coverage --no-valgrind  --module=command --test=backup --test=info --test=archive-push
 
   # Run meson unity build to check for errors, unused functions, and externed functions
   unity:
