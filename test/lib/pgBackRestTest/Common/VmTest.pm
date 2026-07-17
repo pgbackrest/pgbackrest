@@ -55,8 +55,17 @@ use constant VM_ARCH_AARCH64                                        => 'aarch64'
     push @EXPORT, qw(VM_ARCH_AARCH64);
 use constant VM_ARCH_I386                                           => 'i386';
     push @EXPORT, qw(VM_ARCH_I386);
+use constant VM_ARCH_PPC64LE                                        => 'ppc64le';
+    push @EXPORT, qw(VM_ARCH_PPC64LE);
+use constant VM_ARCH_S390X                                          => 's390x';
+    push @EXPORT, qw(VM_ARCH_S390X);
 use constant VM_ARCH_X86_64                                         => 'x86_64';
     push @EXPORT, qw(VM_ARCH_X86_64);
+
+# List of architectures that a container can be built for
+use constant VM_ARCH_LIST                                           =>
+    (VM_ARCH_AARCH64, VM_ARCH_I386, VM_ARCH_PPC64LE, VM_ARCH_S390X, VM_ARCH_X86_64);
+    push @EXPORT, qw(VM_ARCH_LIST);
 
 ####################################################################################################################################
 # Valid VM list

@@ -5,17 +5,25 @@
 # for the VM below. On a cache hit the image is pulled instead of being built locally, which saves a lot of time. Images are
 # pushed automatically after a build when write access to the registry is available (i.e. from CI on the pgBackRest repository).
 #
+# A base image is built per VM and architecture, so a revision applies to a VM on a single architecture or on all of them,
+# depending on how it is keyed below.
+#
 # The Dockerfile hash already forces a rebuild whenever the container definition changes. The revision here forces a rebuild when
 # the Dockerfile is unchanged but the upstream packages have changed, e.g. a new PostgreSQL beta is released. Set values date-style
 # (e.g. 20260710A) and commit to document the bump; this produces a new image tag so the next build misses the cache, rebuilds,
 # and repushes.
 #
-# The "all" key is required and applies to every container that does not have its own revision, so it can only ever be bumped,
-# never unset. A per-VM key is optional and overrides "all" for that container. Bumping "all" therefore rebuilds only the
-# containers without their own revision; a container with its own revision is rebuilt by bumping that revision (or deleting its
-# cached tag manually).
+# The "all" key is required and applies to every container that does not have a more specific revision, so it can only ever be
+# bumped, never unset. A per-VM key overrides "all" for that container on every architecture, and a per-VM-and-architecture key
+# overrides both for that container on that architecture only. Bumping "all" therefore rebuilds only the containers without a more
+# specific revision; a container with a more specific revision is rebuilt by bumping that revision (or deleting its cached tag
+# manually).
 #
-# Add per-VM overrides as needed, e.g.:
-#   rh10: 20260710A    # rebuild just rh10 (independent of "all")
+# Prefer a per-VM-and-architecture key when the packages only changed on some architectures. A per-VM key rebuilds every
+# architecture the container is built for, including the emulated ones (ppc64le, s390x) that are very slow to build.
+#
+# Add overrides as needed, e.g.:
+#   rh10: 20260710A          # rebuild rh10 on every architecture (independent of "all")
+#   rh10-x86_64: 20260710A   # rebuild rh10 on x86_64 only (independent of "all" and "rh10")
 # **********************************************************************************************************************************
 all: 20260710A

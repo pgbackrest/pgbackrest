@@ -107,11 +107,13 @@ sub containerWrite
     if ($strImage =~ /\-base\-/)
     {
         # The revision forces a rebuild when the Dockerfile is unchanged but the upstream packages have changed, e.g. a new
-        # PostgreSQL beta. A container uses its own revision if it has one, otherwise the required "all" revision (validated in
-        # containerBuild). So bumping "all" rebuilds only the containers without their own revision; a container with its own
-        # revision is rebuilt by bumping that revision (or deleting its cached tag). The revision is also placed in the tag for
-        # reference.
-        my $strRevision = defined($hContainerCache->{$strOS}) ? $hContainerCache->{$strOS} : $hContainerCache->{&VM_ALL};
+        # PostgreSQL beta. A container uses the revision for its vm and architecture if it has one, else the revision for its vm,
+        # else the required "all" revision (all validated in containerBuild). So bumping "all" rebuilds only the containers without
+        # a more specific revision; a container with a more specific revision is rebuilt by bumping that revision (or deleting its
+        # cached tag). The revision is also placed in the tag for reference.
+        my $strRevision =
+            defined($hContainerCache->{"${strOS}-${strArch}"}) ? $hContainerCache->{"${strOS}-${strArch}"} :
+                (defined($hContainerCache->{$strOS}) ? $hContainerCache->{$strOS} : $hContainerCache->{&VM_ALL});
         my $strCacheImage = "${strImage}-${strRevision}-" . substr(sha1_hex($strScript . $strRevision), 0, 12);
 
         $strCacheTag = containerRepo() . ":${strCacheImage}";
@@ -398,6 +400,30 @@ sub containerBuild
     if (ref($hContainerCache) ne 'HASH' || !defined($hContainerCache->{&VM_ALL}))
     {
         confess &log(ERROR, "the 'all' revision is required in test/container.yaml");
+    }
+
+    # Validate the revisions. A revision is keyed by "all", a vm, or a vm qualified with an architecture, e.g. "u22-x86_64". Without
+    # this an invalid key would silently fall back to a less specific revision and the expected rebuild would never happen.
+    foreach my $strKey (sort(keys(%{$hContainerCache})))
+    {
+        if (!defined($hContainerCache->{$strKey}) || ref($hContainerCache->{$strKey}) ne '')
+        {
+            confess &log(ERROR, "revision '${strKey}' in test/container.yaml must be set to a value");
+        }
+
+        next if $strKey eq VM_ALL;
+
+        my ($strKeyVm, $strKeyArch) = split('-', $strKey, 2);
+
+        if (!defined(vmGet()->{$strKeyVm}) || $strKeyVm eq VM_NONE)
+        {
+            confess &log(ERROR, "revision '${strKey}' in test/container.yaml has invalid vm '${strKeyVm}'");
+        }
+
+        if (defined($strKeyArch) && !grep($_ eq $strKeyArch, VM_ARCH_LIST))
+        {
+            confess &log(ERROR, "revision '${strKey}' in test/container.yaml has invalid architecture '${strKeyArch}'");
+        }
     }
 
     # Remove old images on force
