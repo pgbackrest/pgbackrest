@@ -998,7 +998,7 @@
                 <exe-cmd>mkdir -p {[build-path]}</exe-cmd>
             </execute>
 
-            <execute skip="y">
+            <execute skip="y" cmd-line-len="110">
                 <exe-cmd>
                     curl -fsSL
                     {[github-url-release]}/{[version]}.tar.gz |
