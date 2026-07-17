@@ -398,7 +398,7 @@
             yum remove -y perl-App-cpanminus make perl-ExtUtils-MakeMaker
 
         # Install systemctl replacement that works without systemd running
-        ENV SYSCTL_REP_VER=1.5.8066
+        ENV SYSCTL_REP_VER=1.5.9063
         RUN wget -q -O - https://github.com/gdraheim/docker-systemctl-replacement/archive/refs/tags/v${SYSCTL_REP_VER?}.tar.gz | \
             tar zx -C /root
         RUN rm -f /usr/bin/systemctl
