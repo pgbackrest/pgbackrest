@@ -483,7 +483,7 @@ sub containerBuild
 
             $strScript .=
                 "    yum -y update && \\\n" .
-                "    yum -y install openssh-server openssh-clients wget sudo git \\\n" .
+                "    yum -y install openssh-server openssh-clients sudo git \\\n" .
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl \\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
                 "        libyaml-devel zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 perl-JSON-PP ccache meson \\\n" .
@@ -499,7 +499,7 @@ sub containerBuild
             $strScript .=
                 "    export DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive && \\\n" .
                 "    apt-get update && \\\n" .
-                "    apt-get install -y --no-install-recommends openssh-server wget sudo gcc make git \\\n" .
+                "    apt-get install -y --no-install-recommends openssh-server sudo gcc make git \\\n" .
                 "        libdbd-pg-perl libhtml-parser-perl libssl-dev libperl-dev python3-distutils \\\n" .
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
                 "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config \\\n" .
