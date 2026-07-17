@@ -82,7 +82,6 @@
         <source key="metric"/>
         <source key="coding"/>
         <source key="contributing"/>
-        <source key="documentation"/>
     </source-list>
 
     <render-list>
@@ -109,7 +108,6 @@
                 e.g. `/home/vagrant/pgbackrest`, then a symlink may be used, e.g. `ln -s /path/to/repo /home/vagrant/pgbackrest`.
             -->
             <render-source key="contributing" file="../../../CONTRIBUTING.md"/>
-            <render-source key="documentation" file="../../README.md"/>
         </render>
     </render-list>
 </doc>
