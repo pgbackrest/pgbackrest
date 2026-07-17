@@ -179,7 +179,24 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Install
-        run: brew install -q pkg-config openssl@3 libpq libxml2 libyaml meson
+        run: |
+          # Untap everything not provided by Homebrew since only official taps are trusted and untrusted taps added by the
+          # runner image generate warnings. Uninstall the packages provided by a tap before untapping it since untapping a
+          # tap that still has packages installed also warns. Nothing installed here comes from a third-party tap.
+          for tap in $(brew tap); do
+              case ${tap} in
+                  homebrew/*) ;;
+                  *)
+                      for package in $(brew list --full-name | grep "^${tap}/" || true); do
+                          brew uninstall --force ${package}
+                      done
+
+                      brew untap ${tap}
+                      ;;
+              esac
+          done
+
+          brew install -q pkg-config openssl@3 libpq libxml2 libyaml meson
 
       - name: Debug
         run: |
