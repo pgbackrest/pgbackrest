@@ -1001,7 +1001,7 @@
             <execute skip="y" cmd-line-len="110">
                 <exe-cmd>
                     curl -fsSL
-                    {[github-url-release]}/{[version]}.tar.gz |
+                    {[github-url-release]}/pgbackrest-{[version]}.tar.gz |
                     tar zx -C {[build-path]}
                 </exe-cmd>
             </execute>
