@@ -1,0 +1,35 @@
+# Documentation builds, one per documented distribution. The documentation is built by running the commands it contains in
+# containers, so this is also an end-to-end test of those commands. No container cache or coverage is required here because the doc
+# build does not use the test containers.
+name: doc
+
+on: workflow_call
+
+# Limit permissions on the repository
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    strategy:
+      # Let all the jobs run to completion even if one fails
+      fail-fast: false
+
+      matrix:
+        include:
+          # Debian/Ubuntu documentation
+          - vm: u22
+
+          # RHEL documentation
+          - vm: rh9
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+        with:
+          path: pgbackrest
+
+      - name: Build Documentation
+        run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl doc --vm=${{matrix.vm}}

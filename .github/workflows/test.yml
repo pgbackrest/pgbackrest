@@ -1,3 +1,8 @@
+# Run the unit, integration, and documentation tests for a commit or pull request.
+#
+# The jobs are defined in reusable workflows so that this file remains a readable index of what runs, while still producing a
+# single run in the Actions UI. Only this file has a trigger -- the called workflows are all on: workflow_call. Permissions are
+# granted here because a called workflow can only maintain or reduce the permissions of the token it is given, never elevate them.
 name: test
 
 on:
@@ -17,335 +22,27 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    runs-on: ubuntu-22.04
+  doc:
+    uses: ./.github/workflows/test-doc.yml
+
+  linux:
+    uses: ./.github/workflows/test-linux.yml
 
     # Allow pushing base images to the GHCR container cache
     permissions:
       contents: read
       packages: write
 
-    strategy:
-      # Let all the jobs run to completion even if one fails
-      fail-fast: false
-
-      # The first jobs should be the canaries in the coal mine, i.e. the most likely to fail if there are problems in the code. They
-      # should also be a good mix of unit, integration, and documentation tests.
-      #
-      # In general tests should be ordered from slowest to fastest. This does not make a difference for testing a single commit, but
-      # when multiple commits are being tested it is best to have the slowest jobs first so that as jobs become available they will
-      # tackle the slowest tests first.
-      matrix:
-        include:
-          # All tests (without coverage or valgrind) for 32-bit
-          - param: test --vm=d12 --vm-arch=i386 --param=no-performance --param=no-coverage --param=no-valgrind
-
-          # Debian/Ubuntu documentation
-          - param: doc --vm=u22
-
-          # All integration tests
-          - param: test --vm=u22 --param=module=integration
-
-          # All unit tests with coverage, backtrace and alternate timezone
-          - param: test --vm=u22 --param=c-only --param=no-valgrind --param=tz=America/New_York
-
-          # All unit tests with valgrind (disable coverage and backtrace for performance)
-          - param: test --vm=u22 --param=c-only --param=no-coverage --param=no-back-trace
-
-          # All unit tests on the newest gcc available
-          - param: test --vm=f44 --param=c-only --param=no-valgrind --param=no-coverage --param=no-performance
-
-          # All unit and integration tests on musl libc (oldest Alpine)
-          - param: test --vm=a321 --param=no-coverage --param=no-performance
-
-          # All unit and integration tests on musl libc (newest Alpine)
-          - param: test --vm=a324 --param=no-coverage --param=no-performance
-
-          # RHEL documentation
-          - param: doc --vm=rh9
-
-          # All integration tests
-          - param: test --vm=rh8 --param=module=integration
-
-          # All unit and integration tests
-          - param: test --vm=rh9 --param=no-coverage --param=no-performance
-
-          # All unit and integration tests
-          - param: test --vm=rh10 --param=no-coverage --param=no-performance
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-        with:
-          path: pgbackrest
-
-      # Log in so base images can be pushed to the cache. Best effort -- pull is anonymous and push is skipped when the token is
-      # read-only (e.g. pull requests from forks).
-      - name: Login to GHCR
-        continue-on-error: true
-        run: echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u ${{github.actor}} --password-stdin
-
-      - name: Run Test
-        run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl ${{matrix.param}} --param=build-max=2
-
-      # Upload the coverage report on failure in case the failure was caused by lack of coverage so uncovered lines can be
-      # inspected from the run's artifacts
-      - name: Upload Coverage Report
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: coverage-report
-          path: pgbackrest/test/result/coverage/coverage.html
-          archive: false
-          if-no-files-found: ignore
-
-  # Unit tests on aarch64 with valgrind
-  aarch64:
-    runs-on: ubuntu-22.04-arm
-
-    # Allow pushing base images to the GHCR container cache
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-        with:
-          path: pgbackrest
-
-      - name: Login to GHCR
-        continue-on-error: true
-        run: echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u ${{github.actor}} --password-stdin
-
-      - name: Run Test
-        run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl test --vm=u22 --param=c-only --param=no-coverage --param=no-back-trace --param=build-max=2
-
-  # Basic tests on other architectures using emulation. The emulation is so slow that running all the unit tests would be too
-  # expensive, but this at least shows that the build works and some of the more complex tests run. In particular, it is good to
-  # test on one big-endian architecture to be sure that checksums are correct.
   arch:
-    runs-on: ubuntu-24.04
+    uses: ./.github/workflows/test-arch.yml
 
     # Allow pushing base images to the GHCR container cache
     permissions:
       contents: read
       packages: write
 
-    strategy:
-      # Let all the jobs run to completion even if one fails
-      fail-fast: false
+  bsd:
+    uses: ./.github/workflows/test-bsd.yml
 
-      matrix:
-        include:
-          - arch: 'ppc64le'
-          - arch: 's390x'
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-        with:
-          path: pgbackrest
-
-      - name: Install
-        run: |
-          sudo apt-get update
-          sudo DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y perl sudo libxml-checker-perl libyaml-perl rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config make gcc ccache meson git liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev
-          docker run --privileged --rm tonistiigi/binfmt --install all
-
-      - name: Login to GHCR
-        continue-on-error: true
-        run: echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u ${{github.actor}} --password-stdin
-
-      - name: Build VM
-        run: ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm-build --vm=u22 --vm-arch=${{matrix.arch}}
-
-      - name: Run Test
-        run: |
-          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup
-          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --no-optimize --build-max=2 --module=postgres --test=interface
-
-  # Selected unit tests on MacOS
-  macos:
-    runs-on: macos-26
-    env:
-      LDFLAGS: -L/opt/homebrew/opt/openssl@3/lib -L/opt/homebrew/opt/libpq/lib -L/opt/homebrew/opt/libxml2/lib -L/opt/homebrew/opt/libyaml/lib
-      CPPFLAGS: -I/opt/homebrew/opt/openssl@3/include -I/opt/homebrew/opt/libpq/include -I/opt/homebrew/opt/libxml2/include/libxml2 -I/opt/homebrew/opt/libyaml/include
-      PERL5LIB: /opt/homebrew/opt/perl5/lib/perl5
-      PKG_CONFIG_PATH: /opt/homebrew/opt/libpq/lib/pkgconfig:/opt/homebrew/opt/openssl@3/lib/pkgconfig
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-
-      - name: Install
-        run: |
-          # Untap everything not provided by Homebrew since only official taps are trusted and untrusted taps added by the
-          # runner image generate warnings. Uninstall the packages provided by a tap before untapping it since untapping a
-          # tap that still has packages installed also warns. Nothing installed here comes from a third-party tap.
-          for tap in $(brew tap); do
-              case ${tap} in
-                  homebrew/*) ;;
-                  *)
-                      for package in $(brew list --full-name | grep "^${tap}/" || true); do
-                          brew uninstall --force ${package}
-                      done
-
-                      brew untap ${tap}
-                      ;;
-              esac
-          done
-
-          brew install -q pkg-config openssl@3 libpq libxml2 libyaml meson
-
-      - name: Debug
-        run: |
-          pwd
-          echo ${HOME?}
-          ls -lah
-          ls -lah ${GITHUB_WORKSPACE?}
-
-      - name: Run Test
-        run: cd .. && ${GITHUB_WORKSPACE?}/test/test.pl --vm-max=2 --no-coverage --no-valgrind  --module=command --test=backup --test=info --test=archive-push
-
-  # Selected unit tests on FreeBSD
-  freebsd:
-    runs-on: ubuntu-24.04
-    strategy:
-      # Let all the jobs run to completion even if one fails
-      fail-fast: false
-
-      matrix:
-        os:
-          - version: '14.4'
-          - version: '15.1'
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Start VM
-        uses: cross-platform-actions/action@v1.3.0
-        with:
-          operating_system: freebsd
-          version: ${{matrix.os.version}}
-
-      # The custom shell runs the commands in the VM started above. Do not set this as a job default since the checkout step must
-      # run on the host.
-      - name: Run Test
-        shell: cpa.sh {0}
-        run: |
-          uname -a
-          sudo pkg update && sudo pkg upgrade -y libiconv && sudo pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync meson
-          cd .. && perl ${GITHUB_WORKSPACE?}/test/test.pl --vm-max=2 --no-coverage --no-valgrind  --module=command --test=backup --test=info --test=archive-push
-
-  # Run meson unity build to check for errors, unused functions, and externed functions
-  unity:
-    runs-on: ubuntu-24.04
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-        with:
-          path: pgbackrest
-
-      - name: Install
-        run: |
-          sudo apt-get update
-          DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config meson liblz4-dev libzstd-dev libbz2-dev
-
-      - name: Build
-        run: |
-          meson setup --unity=on -Dwerror=true build ${GITHUB_WORKSPACE?}/pgbackrest
-          ninja -vC build
-
-      - name: Check
-        run: |
-          diff ${GITHUB_WORKSPACE?}/pgbackrest/.github/workflows/symbol.out <(nm -gj --defined-only build/src/pgbackrest)
-
-  # Build and run the smoke test against multiple PostgreSQL versions. This runs in a minimal container rather than directly on the
-  # runner because the runner image has a large amount of preinstalled software that cannot be controlled, while the smoke test is
-  # meant to run with nothing but the build environment, i.e. the same check a packager would run on a distribution tarball. Also
-  # check that the smoke test is formatted since it is the only Python file.
-  smoke:
-    runs-on: ubuntu-24.04
-    container: ubuntu:24.04
-
-    steps:
-      # Install the build environment before checkout since the container does not even have git, which checkout requires in order
-      # to clone rather than download the code via the GitHub API. ca-certificates/curl/gnupg/lsb-release are required by the PGDG
-      # script run below and libcurl4-openssl-dev is required because the libpq installed from PGDG for newer versions of PostgreSQL
-      # depends on libcurl for OAuth support.
-      - name: Install
-        run: |
-          apt-get update
-          DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y git ca-certificates curl gnupg \
-            lsb-release build-essential zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config meson liblz4-dev \
-            libzstd-dev libbz2-dev black postgresql-common python3-yaml libcurl4-openssl-dev
-
-      - name: Checkout Code
-        uses: actions/checkout@v6
-        with:
-          path: pgbackrest
-
-      - name: Install PostgreSQL
-        run: |
-          # Do not create a cluster when a PostgreSQL package is installed since the smoke test creates its own
-          sed -i 's/^\#create\_main\_cluster.*$/create\_main\_cluster \= false/' /etc/postgresql-common/createcluster.conf
-
-          # Read the supported versions from postgres.yaml so this list never needs to be updated here. Versions marked
-          # "release: false" have not been released and are published in a component named for the version.
-          python3 -c "
-          import sys, yaml
-          for version in yaml.safe_load(open(sys.argv[1]))['version']:
-              if isinstance(version, dict):
-                  (name, config), = version.items()
-                  print(name, 'released' if config.get('release', True) else 'unreleased')
-              else:
-                  print(version, 'released')
-          " "${GITHUB_WORKSPACE?}/pgbackrest/src/build/postgres/postgres.yaml" > pg-version.txt
-          cat pg-version.txt
-
-          # Install the PostgreSQL apt repository (PGDG), adding a component for each unreleased version
-          /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y \
-            -c "$(awk '$2 == "unreleased" {printf "%s ", $1}' pg-version.txt)"
-
-          # Install every supported version
-          DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            $(awk '{printf "postgresql-%s ", $1}' pg-version.txt)
-
-      # Check that the smoke test is formatted to project standards. On failure the exact command to fix it is printed so it can be
-      # copied and run locally.
-      - name: Check Format
-        run: |
-          cd ${GITHUB_WORKSPACE?}/pgbackrest
-
-          if ! black --check --diff --line-length=132 test/smoke.py; then
-              echo
-              echo "ERROR: test/smoke.py is not formatted correctly. Run this from the pgbackrest path to fix it:"
-              echo
-              echo "    black --line-length=132 test/smoke.py"
-              echo
-              exit 1
-          fi
-
-      - name: Build
-        run: |
-          meson setup build ${GITHUB_WORKSPACE?}/pgbackrest
-          ninja -C build src/pgbackrest
-
-      - name: Run Smoke Test
-        run: meson test -C build --suite smoke -v
-
-  # Check that code is correctly formatted
-  code-format:
-    runs-on: ubuntu-22.04
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-        with:
-          path: pgbackrest
-
-      - name: Check
-        run: |
-          cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl test --param=code-format-check
+  misc:
+    uses: ./.github/workflows/test-misc.yml
