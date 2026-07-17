@@ -69,6 +69,10 @@ testRun(void)
         HrnHost *const pg2 = hrnHostPg2();
         HrnHost *const repo = hrnHostRepo();
 
+        // Log the version of PostgreSQL installed on the host. The test matrix only specifies the major version so this shows the
+        // minor version, which is especially useful during the beta period.
+        TEST_LOG(strZ(strTrim(hrnHostExecP(pg1, strNewFmt("%s/pg_ctl --version", strZ(hrnHostPgBinPath(pg1)))))));
+
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("create pg cluster");
         {

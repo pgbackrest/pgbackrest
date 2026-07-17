@@ -172,6 +172,16 @@ def pg_version(bin_dir):
     return major * 100 + int(match.group(2))
 
 
+# Read the full version string from a bin directory, e.g. "pg_ctl (PostgreSQL) 19beta2". This is only called for an install
+# returned by find_postgres(), where pg_version() has already run pg_ctl successfully.
+def pg_version_full(bin_dir):
+    output = subprocess.check_output(
+        [os.path.join(bin_dir, "pg_ctl"), "--version"], universal_newlines=True, stderr=subprocess.STDOUT
+    )
+
+    return output.strip()
+
+
 # Return a sorted list of (version, bin_dir) and a sorted list of versions skipped because pgBackRest does not support them. The
 # installs are deduplicated by the real path of initdb so a symlinked install is not run twice.
 def find_postgres(extra_dirs, only_versions, supported):
@@ -517,6 +527,10 @@ def main():
     for version, bin_dir in installs:
         label = "PostgreSQL %s (%s)" % (version_str(version), bin_dir)
         sys.stdout.write("=== %s ===\n" % label)
+
+        # Log the version of PostgreSQL installed on the host. Only the major version is discovered above so this shows the minor
+        # version, which is especially useful during the beta period.
+        sys.stdout.write("%s\n" % pg_version_full(bin_dir))
         sys.stdout.flush()
 
         start = time.time()
