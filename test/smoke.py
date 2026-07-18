@@ -461,6 +461,30 @@ def resolve_runner(verbose, user_name):
 
 
 ####################################################################################################################################
+# Read the machine architecture and endianness from an ELF binary. This confirms which architecture is actually being exercised,
+# which matters when the binary is built for a foreign architecture and run under emulation.
+####################################################################################################################################
+def binary_arch(path):
+    # ELF e_machine values for the architectures pgBackRest is built on
+    machines = {0x03: "i386", 0x3E: "x86_64", 0x15: "ppc64", 0x16: "s390x", 0xB7: "aarch64", 0x28: "arm"}
+
+    with open(path, "rb") as file:
+        header = file.read(20)
+
+    if len(header) < 20 or header[:4] != b"\x7fELF":
+        return "unknown (not an ELF binary)"
+
+    little = header[5] == 1
+    machine = int.from_bytes(header[18:20], "little" if little else "big")
+
+    return "%s (%s-bit %s-endian)" % (
+        machines.get(machine, "machine 0x%02X" % machine),
+        "64" if header[4] == 2 else "32",
+        "little" if little else "big",
+    )
+
+
+####################################################################################################################################
 # Main
 ####################################################################################################################################
 def main():
@@ -512,10 +536,11 @@ def main():
         return 1
 
     sys.stdout.write(
-        "pgbackrest smoke test: %s\nrunning as: %s\nversions supported: %s\nversions found: %s\n\n"
+        "pgbackrest smoke test: %s\nrunning as: %s\narchitecture: %s\nversions supported: %s\nversions found: %s\n\n"
         % (
             pgbackrest,
             runner.user,
+            binary_arch(pgbackrest),
             ", ".join(version_str(v) for v in sorted(supported)) if supported else "unknown",
             ", ".join(version_str(v) for v, _ in installs),
         )
