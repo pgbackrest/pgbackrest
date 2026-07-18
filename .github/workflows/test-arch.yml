@@ -79,8 +79,27 @@ jobs:
 
       - name: Run Test
         run: |
-          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup
+          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --no-optimize --build-max=2 --module=common --test=type-pack --test=crypto --test=compress
           ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --no-optimize --build-max=2 --module=postgres --test=interface
+          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup --test=restore --test=archive-get --test=archive-push --test=verify
+
+      # Run the smoke test against the arch build: a real PostgreSQL driven through a full backup/restore/verify cycle, which
+      # exercises checksums end-to-end on big-endian. It reuses the pgbackrest binary already built for the arch above and the
+      # single PostgreSQL version baked into the arch base image. A fresh container is started (test.pl removes its own) with the
+      # SSH entrypoint overridden and run as root so smoke.py can drop to the postgres user, as the misc smoke job does.
+      #
+      # The binary is copied to /tmp first: test.pl creates the test tree mode 0770 owned by the build user, so the unprivileged
+      # postgres user that smoke.py drops to cannot traverse it to execute the binary. /tmp is world-accessible -- it is where
+      # smoke.py puts its own work dirs -- so the copy there is reachable.
+      - name: Run Smoke Test
+        run: |
+          rm -rf /tmp/smoke && mkdir -p /tmp/smoke
+          cp ${GITHUB_WORKSPACE?}/test/build/u22/src/pgbackrest /tmp/smoke/pgbackrest
+          docker run --rm --platform linux/${{matrix.arch}} -u root --entrypoint python3 \
+            -v ${GITHUB_WORKSPACE?}/pgbackrest:${GITHUB_WORKSPACE?}/pgbackrest \
+            -v /tmp/smoke:/tmp/smoke \
+            ghcr.io/pgbackrest/test:u22-test-${{matrix.arch}} \
+            ${GITHUB_WORKSPACE?}/pgbackrest/test/smoke.py --pgbackrest /tmp/smoke/pgbackrest
 
       # Save on always() so the cache is still warmed even when tests fail
       - name: Save ccache

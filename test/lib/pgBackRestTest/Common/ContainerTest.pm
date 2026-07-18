@@ -672,6 +672,15 @@ sub containerBuild
                     }
                 }
             }
+            # On other architectures (e.g. ppc64le, s390x) install a single PostgreSQL version for the smoke test via the
+            # postgresql metapackage (its default from the configured repo). The full version matrix is skipped to keep the
+            # emulated build fast; one version is enough to check the build and exercise checksums end-to-end on big-endian.
+            elsif (defined($oOS->{&VM_DB}) && @{$oOS->{&VM_DB}} > 0 && $$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+            {
+                $strScript .= sectionHeader() .
+                    "# Install a single PostgreSQL version for the smoke test\n" .
+                    "    apt-get install -y --no-install-recommends postgresql";
+            }
         }
 
         # Add path to latest version of postgres (PGDG installs to a versioned path; native packages use /usr/bin)
