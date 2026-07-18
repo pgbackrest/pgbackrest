@@ -4,17 +4,17 @@
 
 pgBackRest is a reliable backup and restore solution for PostgreSQL that seamlessly scales up to the largest databases and workloads.
 
-pgBackRest [v2.58.0](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.58.0) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
+pgBackRest [v2.58.0](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.58.0) is the current stable release. Release notes are on the [Releases](https://pgbackrest.org/release.html) page.
 
 Please give us a star on [GitHub](https://github.com/pgbackrest/pgbackrest) if you like pgBackRest!
 
 ## News
 
-**May 18, 2026** - [pgBackRest Will Continue!](http://www.pgbackrest.org/news.html#will-continue)
+**May 18, 2026** - [pgBackRest Will Continue!](https://pgbackrest.org/news.html#will-continue)
 
-**May 7, 2026** - [Maintenance Update](http://www.pgbackrest.org/news.html#maintenance-update)
+**May 7, 2026** - [Maintenance Update](https://pgbackrest.org/news.html#maintenance-update)
 
-**April 27, 2026** - [pgBackRest Is No Longer Being Maintained](http://www.pgbackrest.org/news.html#no-longer-maintained)
+**April 27, 2026** - [pgBackRest Is No Longer Being Maintained](https://pgbackrest.org/news.html#no-longer-maintained)
 
 ## Sponsors
 
@@ -116,11 +116,11 @@ pgBackRest includes support for ten versions of PostgreSQL, the five supported v
 
 pgBackRest strives to be easy to configure and operate:
 
-- [User guides](http://www.pgbackrest.org/user-guide-index.html) for various operating systems and PostgreSQL versions.
+- [User guides](https://pgbackrest.org/user-guide-index.html) for various operating systems and PostgreSQL versions.
 
-- [Command reference](http://www.pgbackrest.org/command.html) for command-line operations.
+- [Command reference](https://pgbackrest.org/command.html) for command-line operations.
 
-- [Configuration reference](http://www.pgbackrest.org/configuration.html) for creating pgBackRest configurations.
+- [Configuration reference](https://pgbackrest.org/configuration.html) for creating pgBackRest configurations.
 
 ## Contributions
 

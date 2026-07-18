@@ -20,7 +20,7 @@ Code fixes or new features can be submitted via pull requests. Ideas for new fea
 
 Bug reports should be [submitted as issues](https://github.com/pgbackrest/pgbackrest/issues). Please provide as much information as possible to aid in determining the cause of the problem.
 
-You will always receive credit in the [release notes](http://www.pgbackrest.org/release.html) for your contributions.
+You will always receive credit in the [release notes](https://pgbackrest.org/release.html) for your contributions.
 
 Coding standards are defined in [CODING.md](https://github.com/pgbackrest/pgbackrest/blob/main/CODING.md) and some important coding details and an example are provided in the [Coding](#coding) section below. At a minimum, unit tests must be written and run and the documentation generated before [submitting a Pull Request](#submitting-a-pull-request); see the [Testing](#testing) section below for details.
 

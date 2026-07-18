@@ -664,7 +664,7 @@ testRun(void)
             "\n"
             "SEE ALSO\n"
             "  /usr/share/doc/pgbackrest-doc/html/index.html\n"
-            "  http://www.pgbackrest.org\n");
+            "  https://pgbackrest.org\n");
     }
 
     FUNCTION_HARNESS_RETURN_VOID();

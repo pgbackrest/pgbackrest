@@ -15,7 +15,7 @@
         <variable key="github-url-projects">{[github-url-base]}/projects</variable>
         <variable key="github-url-contributing">{[github-url-main]}/CONTRIBUTING.md</variable>
 
-        <variable key="backrest-url-base">http://www.pgbackrest.org</variable>
+        <variable key="backrest-url-base">https://pgbackrest.org</variable>
         <variable key="backrest-page-user-guide-index">user-guide-index</variable>
         <variable key="backrest-page-configuration">configuration</variable>
         <variable key="backrest-page-command">command</variable>
