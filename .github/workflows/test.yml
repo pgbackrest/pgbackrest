@@ -44,5 +44,8 @@ jobs:
   bsd:
     uses: ./.github/workflows/test-bsd.yml
 
+  dist:
+    uses: ./.github/workflows/test-dist.yml
+
   misc:
     uses: ./.github/workflows/test-misc.yml

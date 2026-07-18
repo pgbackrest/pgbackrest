@@ -1,5 +1,5 @@
-# Checks that do not fit into any of the per-platform workflows, i.e. the unity build, the smoke test that a packager would run,
-# and code formatting. These all run on a stock x86_64 Linux runner.
+# Checks that do not fit into any of the per-platform workflows, i.e. the unity build and code formatting. These all run on a stock
+# x86_64 Linux runner.
 name: misc
 
 on: workflow_call
@@ -33,61 +33,24 @@ jobs:
         run: |
           diff ${GITHUB_WORKSPACE?}/pgbackrest/.github/workflows/data/symbol.out <(nm -gj --defined-only build/src/pgbackrest)
 
-  # Build and run the smoke test against multiple PostgreSQL versions. This runs in a minimal container rather than directly on the
-  # runner because the runner image has a large amount of preinstalled software that cannot be controlled, while the smoke test is
-  # meant to run with nothing but the build environment, i.e. the same check a packager would run on a distribution tarball. Also
-  # check that the smoke test is formatted since it is the only Python file.
-  smoke:
-    runs-on: ubuntu-24.04
-    container: ubuntu:24.04
+  # Check that code is correctly formatted
+  code-format:
+    runs-on: ubuntu-22.04
 
     steps:
-      # Install the build environment before checkout since the container does not even have git, which checkout requires in order
-      # to clone rather than download the code via the GitHub API. ca-certificates/curl/gnupg/lsb-release are required by the PGDG
-      # script run below and libcurl4-openssl-dev is required because the libpq installed from PGDG for newer versions of PostgreSQL
-      # depends on libcurl for OAuth support.
-      - name: Install
-        run: |
-          apt-get update
-          DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y git ca-certificates curl gnupg \
-            lsb-release build-essential zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config meson liblz4-dev \
-            libzstd-dev libbz2-dev black postgresql-common python3-yaml libcurl4-openssl-dev
-
       - name: Checkout Code
         uses: actions/checkout@v6
         with:
           path: pgbackrest
 
-      - name: Install PostgreSQL
+      # Check that the smoke test, the only Python file, is formatted. On failure the exact command to fix it is printed so it can
+      # be copied and run locally. This runs before the C format check because that check runs ci.pl, which removes passwordless
+      # sudo, and installing black needs it.
+      - name: Check Python Format
         run: |
-          # Do not create a cluster when a PostgreSQL package is installed since the smoke test creates its own
-          sed -i 's/^\#create\_main\_cluster.*$/create\_main\_cluster \= false/' /etc/postgresql-common/createcluster.conf
+          sudo apt-get update
+          DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y black
 
-          # Read the supported versions from postgres.yaml so this list never needs to be updated here. Versions marked
-          # "release: false" have not been released and are published in a component named for the version.
-          python3 -c "
-          import sys, yaml
-          for version in yaml.safe_load(open(sys.argv[1]))['version']:
-              if isinstance(version, dict):
-                  (name, config), = version.items()
-                  print(name, 'released' if config.get('release', True) else 'unreleased')
-              else:
-                  print(version, 'released')
-          " "${GITHUB_WORKSPACE?}/pgbackrest/src/build/postgres/postgres.yaml" > pg-version.txt
-          cat pg-version.txt
-
-          # Install the PostgreSQL apt repository (PGDG), adding a component for each unreleased version
-          /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y \
-            -c "$(awk '$2 == "unreleased" {printf "%s ", $1}' pg-version.txt)"
-
-          # Install every supported version
-          DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            $(awk '{printf "postgresql-%s ", $1}' pg-version.txt)
-
-      # Check that the smoke test is formatted to project standards. On failure the exact command to fix it is printed so it can be
-      # copied and run locally.
-      - name: Check Format
-        run: |
           cd ${GITHUB_WORKSPACE?}/pgbackrest
 
           if ! black --check --diff --line-length=132 test/smoke.py; then
@@ -99,24 +62,6 @@ jobs:
               exit 1
           fi
 
-      - name: Build
-        run: |
-          meson setup build ${GITHUB_WORKSPACE?}/pgbackrest
-          ninja -C build src/pgbackrest
-
-      - name: Run Smoke Test
-        run: meson test -C build --suite smoke -v
-
-  # Check that code is correctly formatted
-  code-format:
-    runs-on: ubuntu-22.04
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-        with:
-          path: pgbackrest
-
-      - name: Check
+      - name: Check C Format
         run: |
           cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl test --param=code-format-check
