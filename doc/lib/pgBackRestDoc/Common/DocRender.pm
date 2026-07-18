@@ -652,14 +652,15 @@ sub processTag
                     }
                     elsif ($strType eq 'markdown')
                     {
+                        # Markdown does not support cross-page section anchors so point at the website
                         if (defined($strSection))
                         {
-                            confess &log(
-                                ERROR,
-                                "page and section links not supported for type ${strType}, value '" . $oTag->valueGet() . "'");
+                            $strUrl = '{[backrest-url-base]}/' . $oTag->paramGet('page') . '.html#' . substr($strSection, 1);
                         }
-
-                        $strUrl = "${strPage}.md";
+                        else
+                        {
+                            $strUrl = "${strPage}.md";
+                        }
                     }
                     else
                     {
