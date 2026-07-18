@@ -1,0 +1,79 @@
+name: ccache
+description: >-
+  Restore and save the ccache via GHCR. A container registry is not branch-scoped like actions/cache, so a run pulls the ccache
+  that the previous run on any branch of this fork pushed, and a fork that has not run yet falls back to the canonical pgbackrest
+  cache. This warms the compile cache across the many short-lived branches that fork-based development produces.
+
+inputs:
+  mode:
+    description: restore (pull and unpack the cache) or save (pack and push it)
+    required: true
+  arch:
+    description: architecture the cache is keyed on, e.g. ppc64le
+    required: true
+  path:
+    description: ccache directory relative to the workspace, e.g. test/ccache
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: ccache ${{inputs.mode}}
+      shell: bash
+      env:
+        MODE: ${{inputs.mode}}
+        ARCH: ${{inputs.arch}}
+        CACHE_PATH: ${{inputs.path}}
+      run: |
+        # The fork's own namespace is writable by its own runs and shared across its branches; the canonical pgbackrest namespace
+        # is the read-only seed for a fork that has not run yet. On pgbackrest itself the two resolve to the same tag.
+        own="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/test-ccache:${ARCH}"
+        canonical="ghcr.io/pgbackrest/test-ccache:${ARCH}"
+        dir="${GITHUB_WORKSPACE?}/${CACHE_PATH}"
+
+        if [ "${MODE}" = restore ]; then
+            mkdir -p "${dir}"
+
+            # Pull the fork's own cache first (freshest for this fork), then the canonical cache. The tarball is held in a scratch
+            # image that is never run, only created so the tarball can be copied out.
+            for tag in "${own}" "${canonical}"; do
+                if docker pull -q "${tag}" 2>/dev/null; then
+                    cid=$(docker create "${tag}")
+                    docker cp "${cid}:/ccache.tgz" /tmp/ccache.tgz
+                    docker rm "${cid}" > /dev/null
+                    tar -xzf /tmp/ccache.tgz -C "${dir}"
+                    echo "ccache restored from ${tag}"
+                    restored=1
+                    break
+                fi
+            done
+
+            [ -n "${restored:-}" ] || echo "no ccache found, starting cold"
+
+            # Bound the cache. Written after the restore so this value always wins over any carried in the restored cache.
+            echo 'max_size = 1GiB' > "${dir}/ccache.conf"
+        elif [ "${MODE}" = save ]; then
+            [ -d "${dir}" ] || { echo "no ccache to save"; exit 0; }
+
+            # Show the size and stats to judge whether the cache is working. The stats are cumulative over every run that fed the
+            # cache. Best effort: the runner's ccache may be a newer version than the one in the container that wrote the cache,
+            # and some jobs may not have ccache installed at all.
+            du -sh "${dir}" || true
+            CCACHE_DIR="${dir}" ccache -s || true
+
+            # Pack the cache and push it to the writable namespace. Best effort: pull requests from forks get a read-only token so
+            # the push fails and the run just uses what it built, exactly as the base image cache does. The image carries a dummy
+            # CMD only so it can be created (never run) on restore to copy the tarball out; a scratch image with no command cannot.
+            mkdir -p /tmp/ccache-context
+            tar -czf /tmp/ccache-context/ccache.tgz -C "${dir}" .
+            printf 'FROM scratch\nCOPY ccache.tgz /ccache.tgz\nCMD ["/ccache.tgz"]\n' > /tmp/ccache-context/Dockerfile
+
+            if docker build -q -t "${own}" /tmp/ccache-context && docker push "${own}"; then
+                echo "ccache saved to ${own}"
+            else
+                echo "ccache push skipped (no write access)"
+            fi
+        else
+            echo "unknown mode: ${MODE}"
+            exit 1
+        fi

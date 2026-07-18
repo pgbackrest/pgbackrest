@@ -452,6 +452,21 @@ eval
 
     buildPutDiffers($oStorageBackRest, "${strBackRestBase}/src/version.h", $strVersionCNew);
 
+    # Set the ccache path
+    #-------------------------------------------------------------------------------------------------------------------------------
+    # A single cache is shared by the host and all containers so a file compiled in one is a hit in the others, e.g.
+    # test-pgbackrest is built both on the host and in the build container. ccache is safe for concurrent access so there is no
+    # need to keep a separate cache per vm or vm index. Keep the cache in the test path so it is removed by --clean.
+    my $strCCachePath = "${strTestPath}/ccache";
+
+    if (!$oStorageTest->pathExists($strCCachePath))
+    {
+        $oStorageTest->pathCreate($strCCachePath, {strMode => '0770', bCreateParent => true});
+    }
+
+    # Set for builds that run on the host. Containers are passed the path explicitly since docker does not pass the environment.
+    $ENV{CCACHE_DIR} = $strCCachePath;
+
     # Start build container if vm is not none
     #-------------------------------------------------------------------------------------------------------------------------------
     my $strPlatform = defined($strVmArch) ? " --platform linux/${strVmArch}" : '';
@@ -459,17 +474,11 @@ eval
 
     if ($strVm ne VM_NONE)
     {
-        my $strCCachePath = "${strTestPath}/ccache-0/${strVm}";
-
-        if (!$oStorageTest->pathExists($strCCachePath))
-        {
-            $oStorageTest->pathCreate($strCCachePath, {strMode => '0770', bCreateParent => true});
-        }
-
+        # The cache does not need to be mounted since it is in the test path, which is mounted below
         executeTest(
             "docker run${strPlatform} -itd -h test-build --name=test-build" .
                 " -v ${strBackRestBase}:${strBackRestBase} -v ${strTestPath}:${strTestPath}" .
-                " -v ${strCCachePath}:/home/${\TEST_USER}/.ccache" . " ${strImage}",
+                " -e CCACHE_DIR=${strCCachePath} ${strImage}",
             {bSuppressStdErr => true});
     }
 

@@ -196,13 +196,9 @@ sub run
                 $self->{oStorageTest}->pathCreate($self->{strDataPath}, {strMode => '0770'});
             }
 
-            # Create ccache directory
-            my $strCCachePath = "$self->{strTestPath}/ccache-$self->{iVmIdx}/$self->{oTest}->{&TEST_VM}";
-
-            if ($self->{oTest}->{&TEST_C} && !$self->{oStorageTest}->pathExists($strCCachePath))
-            {
-                $self->{oStorageTest}->pathCreate($strCCachePath, {strMode => '0770', bCreateParent => true});
-            }
+            # ccache path shared with the host and the build container. This is created by test.pl so it is guaranteed to exist
+            # before being mounted below, which keeps docker from creating it as root.
+            my $strCCachePath = "$self->{strTestPath}/ccache";
 
             if ($self->{oTest}->{&TEST_CONTAINER})
             {
@@ -218,7 +214,8 @@ sub run
                         " -v $self->{strBackRestBase}:$self->{strBackRestBase}" .
                         " -v $self->{strRepoPath}:$self->{strRepoPath}" .
                         ($self->{oTest}->{&TEST_C} ? " -v ${strBuildPath}:${strBuildPath}:ro" : '') .
-                        ($self->{oTest}->{&TEST_C} ? " -v ${strCCachePath}:/home/${\TEST_USER}/.ccache" : '') .
+                        ($self->{oTest}->{&TEST_C} ? " -v ${strCCachePath}:${strCCachePath}" : '') .
+                        ($self->{oTest}->{&TEST_C} ? " -e CCACHE_DIR=${strCCachePath}" : '') .
                         ' ' . $self->{strImage},
                         {bSuppressStdErr => true});
                 }

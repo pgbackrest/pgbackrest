@@ -69,7 +69,24 @@ jobs:
       - name: Build VM
         run: ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm-build --vm=u22 --vm-arch=${{matrix.arch}}
 
+      # Compiling under emulation is slow enough that a warm ccache saves a lot of time
+      - name: Restore ccache
+        uses: ./pgbackrest/.github/action/ccache
+        with:
+          mode: restore
+          arch: ${{matrix.arch}}
+          path: test/ccache
+
       - name: Run Test
         run: |
           ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup
           ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --no-optimize --build-max=2 --module=postgres --test=interface
+
+      # Save on always() so the cache is still warmed even when tests fail
+      - name: Save ccache
+        if: always()
+        uses: ./pgbackrest/.github/action/ccache
+        with:
+          mode: save
+          arch: ${{matrix.arch}}
+          path: test/ccache
