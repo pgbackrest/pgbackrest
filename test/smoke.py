@@ -3,8 +3,7 @@
 # pgBackRest Smoke Test
 #
 # A minimal, dependency-free (Python standard library only) sanity check that a built pgbackrest binary actually works. It finds
-# every PostgreSQL installation on the system, using the same path list as the test harness (test/src/harness/host.c), and drives
-# pgbackrest through a full backup/restore cycle against each version found:
+# every PostgreSQL installation on the system and drives pgbackrest through a full backup/restore cycle against each version found:
 #
 #   initdb -> configure -> stanza-create -> check -> full backup -> load data -> incr backup -> wipe -> restore -> verify
 #
@@ -127,12 +126,16 @@ class Runner:
 ####################################################################################################################################
 # Discover PostgreSQL installations
 ####################################################################################################################################
-# Candidate bin directories, mirroring the list in test/src/harness/host.c
+# Candidate bin directories. This is a superset of the list in test/src/harness/host.c since the smoke test also runs where the
+# integration tests cannot, i.e. MacOS and FreeBSD.
 def pg_bin_candidates(extra_dirs):
     candidates = []
     candidates += sorted(glob.glob("/usr/lib/postgresql/*/bin"))  # Debian
     candidates += sorted(glob.glob("/usr/pgsql-*/bin"))  # RHEL (PGDG)
     candidates += sorted(glob.glob("/usr/libexec/postgresql*"))  # Alpine
+    candidates += sorted(glob.glob("/opt/homebrew/opt/postgresql@*/bin"))  # MacOS (Homebrew on ARM)
+    candidates += sorted(glob.glob("/usr/local/opt/postgresql@*/bin"))  # MacOS (Homebrew on Intel)
+    candidates += ["/usr/local/bin"]  # FreeBSD
     candidates += ["/usr/bin"]  # Native (e.g. RHEL application stream)
     candidates += list(extra_dirs)
 
