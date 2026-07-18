@@ -1,5 +1,13 @@
-<release date="XXXX-XX-XX" version="2.59.0dev" title="UNDER DEVELOPMENT">
+<release date="2026-07-20" version="2.59.0" title="PostgreSQL 19 Support">
     <release-core-list>
+        <text>
+            <p><b>NOTE TO PACKAGERS</b>: A new distribution tarball is available which simplifies the build process by providing pregenerated HTML documentation, man page, and code. The tarball is attached to each release as an asset and is named <file>pgbackrest-{version}.tar.gz</file>. See the <file>README.md</file> in the tarball for details. Please use the new distribution tarball to avoid the additional build tooling required to generate code in future releases.</p>
+
+            <p><b>NOTE TO PACKAGERS</b>: There is a new optional dependency on <id>libsystemd</id>.</p>
+
+            <p><b>IMPORTANT NOTE</b>: Starting with this release, only the <cmd>restore</cmd> command may be run as root by default. Use <setting>allow-root</setting> to run other commands as root (though this is not recommended).</p>
+        </text>
+
         <release-bug-list>
             <release-item>
                 <github-issue id="2622"/>
@@ -41,6 +49,10 @@
             </release-item>
 
             <release-item>
+                <commit subject="Fix potential buffer overrun in error module."/>
+                <commit subject="Use the full buffer when formatting error messages."/>
+                <commit subject="Prevent an out-of-bounds error buffer write on an oversized message."/>
+
                 <release-item-contributor-list>
                     <release-item-contributor id="christophe.pettus"/>
                     <release-item-reviewer id="david.steele"/>
@@ -266,7 +278,7 @@
             </release-item>
 
             <release-item>
-                <github-issue id="2732"/>
+                <github-pull-request id="2732"/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
@@ -328,6 +340,14 @@
             </release-item>
 
             <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Hint that pgBackRest may be out of date when a version is unsupported.</p>
+            </release-item>
+
+            <release-item>
                 <github-issue id="2757"/>
                 <github-pull-request id="2760"/>
 
@@ -360,22 +380,11 @@
 
                 <p><proper>C11</proper> is now the minimum C standard.</p>
             </release-item>
-
-            <release-item>
-                <github-issue id="2735"/>
-
-                <release-item-contributor-list>
-                    <release-item-contributor id="david.steele"/>
-                    <release-item-reviewer id="stefan.fercot"/>
-                </release-item-contributor-list>
-
-                <p>Make <setting>stanza</setting> option internal for the <cmd>repo-*</cmd> commands.</p>
-            </release-item>
         </release-improvement-list>
 
         <release-development-list>
             <release-item>
-                <github-issue id="2731"/>
+                <github-pull-request id="2731"/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
@@ -390,6 +399,17 @@
 
     <release-doc-list>
         <release-improvement-list>
+            <release-item>
+                <github-issue id="2735"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Make <setting>stanza</setting> option internal for the <cmd>repo-*</cmd> commands.</p>
+            </release-item>
+
             <release-item>
                 <github-issue id="1407"/>
                 <github-pull-request id="2805"/>
