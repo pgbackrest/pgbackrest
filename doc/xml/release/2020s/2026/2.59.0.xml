@@ -1,7 +1,7 @@
 <release date="2026-07-20" version="2.59.0" title="PostgreSQL 19 Support">
     <release-core-list>
         <text>
-            <p><b>NOTE TO PACKAGERS</b>: A new distribution tarball is available which simplifies the build process by providing pregenerated HTML documentation, man page, and code. The tarball is attached to each release as an asset and is named <file>pgbackrest-{version}.tar.gz</file>. See the <file>README.md</file> in the tarball for details. Please use the new distribution tarball to avoid the additional build tooling required to generate code in future releases.</p>
+            <p><b>NOTE TO PACKAGERS</b>: A new distribution tarball is available which simplifies the build process by providing pregenerated HTML documentation, man page, and code. The tarball is attached to each release as an asset and is named <file>pgbackrest-{version}.tar.gz</file>. See the <file>README.md</file> in the tarball for details. Please use the new distribution tarball to avoid the additional build tooling required to generate code in future releases. See <link page="news" section="/distribution-tarball">New Distribution Tarball</link> for more information.</p>
 
             <p><b>NOTE TO PACKAGERS</b>: There is a new optional dependency on <id>libsystemd</id>.</p>
 

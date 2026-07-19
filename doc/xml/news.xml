@@ -57,7 +57,7 @@
 
             <list>
                 <list-item>Only the restore command may be run as root by default. Use allow-root to run other commands as root (though this is not recommended).</list-item>
-                <list-item>A new distribution tarball with pregenerated documentation, man page, and code is attached to each release to simplify packaging.</list-item>
+                <list-item>A new distribution tarball with pregenerated documentation, man page, and code is attached to each release to simplify packaging. See <link url="{[backrest-url-base]}/news.html#distribution-tarball">New Distribution Tarball</link> for more information.</list-item>
                 <list-item>There is a new optional dependency on libsystemd.</list-item>
             </list>
         </section>
@@ -69,7 +69,6 @@
                 <list-item><link url="{[backrest-url-base]}">Website</link></list-item>
                 <list-item><link page="user-guide-index">User Guides</link></list-item>
                 <list-item><link page="release">Release Notes</link></list-item>
-                <list-item><link url="{[backrest-url-base]}#support">Support</link></list-item>
             </list>
         </section>
 
