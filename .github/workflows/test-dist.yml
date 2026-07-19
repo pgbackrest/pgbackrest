@@ -96,6 +96,7 @@ jobs:
               | grep -E "pgbackrest-[^/]+/(${files})\$" \
               | awk '$3 == 0 { print "ERROR: zero-size file: " $NF; rc = 1 } END { exit rc }'
 
+      # The release process depends on the upload filename so do not modify it without also modifying the release process
       - name: Upload Tarball
         uses: actions/upload-artifact@v7
         with:
