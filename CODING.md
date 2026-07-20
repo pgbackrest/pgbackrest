@@ -6,6 +6,7 @@ pgBackRest uses uncrustify to check/update the code formatting. If the `code-for
 ```
 pgbackrest/test/test.pl --code-format
 ```
+
 Also review the standards in the following sections below. Some standards require further explanation and others are not enforced by uncrustify.
 
 ## Standards
@@ -26,6 +27,7 @@ StringList *removeList = infoBackupDataLabelList(
 StringList *removeList = infoBackupDataLabelList(infoBackup, strNewFmt("^%s.*", strZ(strLstGet(currentBackupList,
     fullIdx))));
 ```
+
 If a conditional, then after a completed conditional, for example:
 ```
 // CORRECT - location of line break after a completed conditional if line length is greater than 132
@@ -82,6 +84,7 @@ Type names use camel case with the first letter upper case:
 ```c
 #define MY_CONSTANT                                                 "STRING"
 ```
+
 The value should be aligned at column 69 whenever possible.
 
 This type of constant should mostly be used for strings. Use enums whenever possible for integer constants.
@@ -95,10 +98,12 @@ Externed strings should be declared in the header file as:
 #define SAMPLE_VALUE                                                "STRING"
     STRING_DECLARE(SAMPLE_VALUE_STR);
 ```
+
 And in the C file as:
 ```c
 STRING_EXTERN(SAMPLE_VALUE_STR,                                     SAMPLE_VALUE);
 ```
+
 Static strings declared in the C file are not required to have a `#define` if the `#define` version is not used. Externed strings must always have the `#define` in the header file.
 
 **Enum Constants**
@@ -111,6 +116,7 @@ typedef enum
     cipherModeDecrypt,
 } CipherMode;
 ```
+
 Note the comma after the last element. This reduces diff churn when new elements are added.
 
 #### Macros
@@ -122,6 +128,7 @@ Macros should follow the format:
 #define MACRO(paramName1, paramName2)   \
     <code>
 ```
+
 If the macro defines a block it should look like:
 ```c
 #define MACRO_2(paramName1, paramName2) \
@@ -129,6 +136,7 @@ If the macro defines a block it should look like:
     <code>                              \
 }
 ```
+
 Continuation characters should be aligned at column 132 (unlike the examples above that have been shortened for display purposes).
 
 To avoid conflicts, variables in a macro will be named `[macro name]_[var name]`, e.g. `TEST_RESULT_resultExpected`. Variables that need to be accessed in wrapped code should be provided accessor macros.
@@ -154,6 +162,7 @@ No braces needed:
 if (condition)
     return value;
 ```
+
 Braces needed:
 ```c
 if (conditionThatUsesEntireLine1 &&
@@ -170,6 +179,7 @@ if (condition)
         valueThatUsesEntireLine2;
 }
 ```
+
 Braces should be added to `switch` statement cases that have a significant amount of code. As a general rule of thumb, if the code block in the `case` is large enough to have blank lines and/or multiple comments then it should be enclosed in braces.
 ```c
 switch (int)
@@ -232,6 +242,7 @@ lstSize(const List *const this)
     return THIS_PUB(List)->listSize;
 }
 ```
+
 `THIS_PUB()` ensures that `this != NULL` so there is no need to check that in the calling function.
 
 And the C file:
@@ -242,6 +253,7 @@ struct List
     ...
 };
 ```
+
 The public struct must be the first member of the private struct. The naming convention for the public struct is to add `Pub` to the end of the private struct name.
 
 ### Variadic Functions
@@ -264,16 +276,19 @@ typedef struct StoragePathCreateParam
 
 void storagePathCreate(const Storage *this, const String *pathExp, StoragePathCreateParam param);
 ```
+
 Continuation characters should be aligned at column 132 (unlike the example above that has been shortened for display purposes).
 
 This function can be called without variable parameters:
 ```c
 storagePathCreateP(storageLocal(), "/tmp/pgbackrest");
 ```
+
 Or with variable parameters:
 ```c
 storagePathCreateP(storageLocal(), "/tmp/pgbackrest", .errorOnExists = true, .mode = 0777);
 ```
+
 If the majority of functions in a module or object are variadic it is best to provide macros for all functions even if they do not have variable parameters. Do not use the base function when variadic macros exist.
 
 ## Testing
@@ -286,6 +301,7 @@ The `uncoverable` keyword marks code that can never be covered. For instance, a 
 ```c
 }   // {uncoverable - function throws error so never returns}
 ```
+
 Subsequent code that is uncoverable for the same reason is marked with `// {+uncoverable}`.
 
 #### Uncovered Code
@@ -294,4 +310,5 @@ Marks code that is not tested for one reason or another. This should be kept to 
 ```c
 exit(EXIT_FAILURE); // {uncovered - test harness does not support non-zero exit}
 ```
+
 Subsequent code that is uncovered for the same reason is marked with `// {+uncovered}`.

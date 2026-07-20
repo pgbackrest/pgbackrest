@@ -236,7 +236,7 @@ sub sectionProcess
         # Add descriptive text
         elsif ($oChild->nameGet() eq 'p')
         {
-            if (defined($strLastChild) && $strLastChild ne 'code-block' && $strLastChild ne 'table')
+            if (defined($strLastChild) && $strLastChild ne 'table')
             {
                 $strMarkdown .= "\n";
             }
