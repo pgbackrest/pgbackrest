@@ -1,5 +1,10 @@
 [
     {
+        "commit": "f84c8357d49ea9452cd606531e9c4c322c41bc2e",
+        "date": "2026-07-20 15:13:35 +0700",
+        "subject": "v2.59.0: PostgreSQL 19 Support"
+    },
+    {
         "commit": "d24d1edfbd46936f78177aec48ddf30ecb07da2f",
         "date": "2026-07-18 18:36:19 +0700",
         "subject": "Resolve markdown cross-page section links to the website.",
