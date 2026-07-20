@@ -527,6 +527,70 @@ testRun(void)
     // *****************************************************************************************************************************
     if (testBegin("ProtocolClient, ProtocolCommand, and ProtocolServer"))
     {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("greeting not found");
+
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN()
+            {
+                // Noise that exceeds the skip bound without ever producing a greeting
+                ioWriteStrLine(
+                    HRN_FORK_CHILD_WRITE(),
+                    STRDEF("0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789"));
+                ioWriteStrLine(HRN_FORK_CHILD_WRITE(), strNewFmt("%*s", 65436, ""));
+                ioWriteFlush(HRN_FORK_CHILD_WRITE());
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_CHILD_BEGIN()
+            {
+                // A single line too large to buffer
+                ioWriteStrLine(HRN_FORK_CHILD_WRITE(), strNewFmt("%*s", 65537, ""));
+                ioWriteFlush(HRN_FORK_CHILD_WRITE());
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_CHILD_BEGIN()
+            {
+                // Noise followed by eof, e.g. the remote command was not found
+                ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("bash: pgbackrest: command not found"));
+                ioWriteFlush(HRN_FORK_CHILD_WRITE());
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN()
+            {
+                // Set the buffer size so a single line can be too large to buffer
+                const size_t ioBufferSizeDefault = ioBufferSize();
+                ioBufferSizeSet(65536);
+
+                TEST_ERROR(
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
+                    ProtocolError,
+                    "greeting not found after 65538 byte(s) of unexpected output beginning with"
+                    " '0123456789012345678901234567890123456789012345678901234567890123...'\n"
+                    "HINT: is the remote shell printing output for non-interactive sessions?");
+
+                TEST_ERROR(
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(1), HRN_FORK_PARENT_WRITE(1)),
+                    ProtocolError,
+                    "greeting not found (unable to find line in 65536 byte buffer)\n"
+                    "HINT: is the remote shell printing output for non-interactive sessions?");
+
+                TEST_ERROR(
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(2), HRN_FORK_PARENT_WRITE(2)),
+                    ProtocolError,
+                    "greeting not found (unexpected eof while reading line) after 36 byte(s) of unexpected output beginning with"
+                    " 'bash: pgbackrest: command not found'\n"
+                    "HINT: is the remote shell printing output for non-interactive sessions?");
+
+                ioBufferSizeSet(ioBufferSizeDefault);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
+
         HRN_FORK_BEGIN()
         {
             HRN_FORK_CHILD_BEGIN()
@@ -534,9 +598,10 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("bogus greetings - child process");
 
-                // Noise before the greeting (e.g. a login banner) is skipped, so the client sees the bogus greeting on the next
-                // line
+                // Noise before the greeting (e.g. a login banner) is skipped, even when it begins with {, so the client sees the
+                // bogus greeting on a later line
                 ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("bogus greeting"));
+                ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("{login banner}"));
                 ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("{\"name\":999}"));
                 ioWriteFlush(HRN_FORK_CHILD_WRITE());
                 ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("{\"name\":null}"));
@@ -551,12 +616,12 @@ testRun(void)
                     HRN_FORK_CHILD_WRITE(), STRDEF("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"bogus\"}"));
                 ioWriteFlush(HRN_FORK_CHILD_WRITE());
 
-                // Noise before the greeting is bounded; a single line larger than the bound must error
-                ioWriteStrLine(HRN_FORK_CHILD_WRITE(), strNewFmt("%*s", 65537, ""));
-                ioWriteFlush(HRN_FORK_CHILD_WRITE());
-
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("server with error");
+
+                // Noise in a packet separate from the greeting, which the client skips with a warning
+                ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("login banner"));
+                ioWriteFlush(HRN_FORK_CHILD_WRITE());
 
                 ProtocolServer *server = NULL;
 
@@ -612,13 +677,10 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("bogus greetings - client");
 
-                // The noise line before the bogus greeting is skipped with a warning
+                // The noise lines before the bogus greeting are skipped
                 TEST_ERROR(
                     protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
                     ProtocolError, "greeting key 'name' must be string type");
-
-                TEST_RESULT_LOG("P00   WARN: skipped 15 byte(s) of unexpected output before greeting from test client");
-
                 TEST_ERROR(
                     protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
                     ProtocolError, "greeting key 'name' must be string type");
@@ -642,15 +704,6 @@ testRun(void)
                     "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?");
 
                 // -----------------------------------------------------------------------------------------------------------------
-                TEST_TITLE("skip bound exceeded - client");
-
-                TEST_ERROR(
-                    protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
-                    ProtocolError,
-                    "greeting not found after 65538 bytes of unexpected output\n"
-                    "HINT: is the remote shell printing output for non-interactive sessions?");
-
-                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("new client with successful handshake");
 
                 ProtocolClient *client = NULL;
@@ -667,6 +720,8 @@ testRun(void)
                     TEST_RESULT_VOID(protocolClientMove(NULL, memContextPrior()), "move null client");
                 }
                 MEM_CONTEXT_TEMP_END();
+
+                TEST_RESULT_LOG("P00   WARN: skipped 13 byte(s) of unexpected output before greeting from test client");
 
                 TEST_RESULT_INT(protocolClientIoReadFd(client), ioReadFd(client->pub.read), "get read fd");
 

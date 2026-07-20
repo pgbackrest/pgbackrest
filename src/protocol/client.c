@@ -13,9 +13,14 @@ Protocol Client
 #include "version.h"
 
 /***********************************************************************************************************************************
-Maximum bytes of unexpected output (e.g. a login banner from the remote shell) tolerated before the greeting
+Maximum bytes of unexpected output (e.g. a login banner from the remote shell) tolerated before the greeting, maximum bytes of that
+output sampled for error reporting, and the hint added to errors when the greeting is not found
 ***********************************************************************************************************************************/
 #define PROTOCOL_GREETING_SKIP_MAX                                  65536
+#define PROTOCOL_GREETING_SKIP_SAMPLE_MAX                           64
+
+#define PROTOCOL_GREETING_NOT_FOUND_HINT                                                                                           \
+    "HINT: is the remote shell printing output for non-interactive sessions?"
 
 /***********************************************************************************************************************************
 Client state enum
@@ -345,70 +350,110 @@ protocolClientNew(const String *const name, const String *const service, IoRead 
             .sessionList = lstNewP(sizeof(ProtocolClientSession)),
         };
 
-        // Read, parse, and check the protocol greeting
+        // Read, parse, and check the protocol greeting. The greeting is a JSON object on a single line so any line that does not
+        // parse as one is unexpected output (e.g. a login banner printed by the remote shell for a non-interactive SSH session),
+        // which is skipped since it would otherwise make the remote unusable. Skipped output is bounded so a stream that never
+        // produces a greeting errors cleanly and errors include a sample of the output to help identify the source.
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            // Skip any output before the greeting, e.g. a login banner printed by the remote shell for non-interactive SSH
-            // sessions, which would otherwise make the remote unusable. The greeting is always a JSON object on a single line so
-            // any line that does not start with { cannot be the greeting. The skipped output is bounded so a stream that never
-            // produces a greeting errors cleanly.
-            const String *greetingLine = ioReadLine(this->pub.read);
-            size_t skipSize = 0;
+            String *const skipSample = strNew();
+            volatile size_t skipSize = 0;
+            volatile bool greetingFound = false;
 
-            while (!strBeginsWithZ(greetingLine, "{"))
+            do
             {
-                skipSize += strSize(greetingLine) + 1;
+                String *volatile greetingLine = NULL;
 
-                if (skipSize > PROTOCOL_GREETING_SKIP_MAX)
+                TRY_BEGIN()
                 {
+                    greetingLine = ioReadLine(this->pub.read);
+                }
+                CATCH(FileReadError)
+                {
+                    // The stream ended or a line was too large to buffer so the greeting is not coming
+                    if (skipSize == 0)
+                        THROW_FMT(ProtocolError, "greeting not found (%s)\n" PROTOCOL_GREETING_NOT_FOUND_HINT, errorMessage());
+
                     THROW_FMT(
                         ProtocolError,
-                        "greeting not found after %zu bytes of unexpected output\n"
-                        "HINT: is the remote shell printing output for non-interactive sessions?", skipSize);
+                        "greeting not found (%s) after %zu byte(s) of unexpected output beginning with '%s'\n"
+                        PROTOCOL_GREETING_NOT_FOUND_HINT, errorMessage(), skipSize, strZ(skipSample));
                 }
+                TRY_END();
 
-                greetingLine = ioReadLine(this->pub.read);
+                TRY_BEGIN()
+                {
+                    JsonRead *const greeting = jsonReadNew(greetingLine);
+
+                    jsonReadObjectBegin(greeting);
+
+                    const struct
+                    {
+                        const StringId key;
+                        const char *const value;
+                    } expected[] =
+                    {
+                        {.key = PROTOCOL_GREETING_NAME, .value = PROJECT_NAME},
+                        {.key = PROTOCOL_GREETING_SERVICE, .value = strZ(service)},
+                        {.key = PROTOCOL_GREETING_VERSION, .value = PROJECT_VERSION},
+                    };
+
+                    for (unsigned int expectedIdx = 0; expectedIdx < LENGTH_OF(expected); expectedIdx++)
+                    {
+                        if (!jsonReadKeyExpectStrId(greeting, expected[expectedIdx].key))
+                            THROW_FMT(ProtocolError, "unable to find greeting key '%s'", zNewStrId(expected[expectedIdx].key));
+
+                        if (jsonReadTypeNext(greeting) != jsonTypeString)
+                            THROW_FMT(ProtocolError, "greeting key '%s' must be string type", zNewStrId(expected[expectedIdx].key));
+
+                        const String *const actualValue = jsonReadStr(greeting);
+
+                        if (!strEqZ(actualValue, expected[expectedIdx].value))
+                        {
+                            THROW_FMT(
+                                ProtocolError,
+                                "expected value '%s' for greeting key '%s' but got '%s'\n"
+                                "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?",
+                                expected[expectedIdx].value, zNewStrId(expected[expectedIdx].key), strZ(actualValue));
+                        }
+                    }
+
+                    jsonReadObjectEnd(greeting);
+
+                    greetingFound = true;
+                }
+                CATCH(JsonFormatError)
+                {
+                    // The line is not a greeting so skip it, keeping the beginning of the skipped output for error reporting
+                    skipSize += strSize(greetingLine) + 1;
+
+                    if (strEmpty(skipSample))
+                    {
+                        if (strSize(greetingLine) > PROTOCOL_GREETING_SKIP_SAMPLE_MAX)
+                        {
+                            strCatZN(skipSample, strZ(greetingLine), PROTOCOL_GREETING_SKIP_SAMPLE_MAX);
+                            strCatZ(skipSample, "...");
+                        }
+                        else
+                            strCat(skipSample, greetingLine);
+                    }
+
+                    if (skipSize > PROTOCOL_GREETING_SKIP_MAX)
+                    {
+                        THROW_FMT(
+                            ProtocolError,
+                            "greeting not found after %zu byte(s) of unexpected output beginning with '%s'\n"
+                            PROTOCOL_GREETING_NOT_FOUND_HINT, skipSize, strZ(skipSample));
+                    }
+
+                    strFree(greetingLine);
+                }
+                TRY_END();
             }
+            while (!greetingFound);
 
             if (skipSize != 0)
                 LOG_WARN_FMT("skipped %zu byte(s) of unexpected output before greeting from %s", skipSize, strZ(name));
-
-            JsonRead *const greeting = jsonReadNew(greetingLine);
-
-            jsonReadObjectBegin(greeting);
-
-            const struct
-            {
-                const StringId key;
-                const char *const value;
-            } expected[] =
-            {
-                {.key = PROTOCOL_GREETING_NAME, .value = PROJECT_NAME},
-                {.key = PROTOCOL_GREETING_SERVICE, .value = strZ(service)},
-                {.key = PROTOCOL_GREETING_VERSION, .value = PROJECT_VERSION},
-            };
-
-            for (unsigned int expectedIdx = 0; expectedIdx < LENGTH_OF(expected); expectedIdx++)
-            {
-                if (!jsonReadKeyExpectStrId(greeting, expected[expectedIdx].key))
-                    THROW_FMT(ProtocolError, "unable to find greeting key '%s'", zNewStrId(expected[expectedIdx].key));
-
-                if (jsonReadTypeNext(greeting) != jsonTypeString)
-                    THROW_FMT(ProtocolError, "greeting key '%s' must be string type", zNewStrId(expected[expectedIdx].key));
-
-                const String *const actualValue = jsonReadStr(greeting);
-
-                if (!strEqZ(actualValue, expected[expectedIdx].value))
-                {
-                    THROW_FMT(
-                        ProtocolError,
-                        "expected value '%s' for greeting key '%s' but got '%s'\n"
-                        "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?",
-                        expected[expectedIdx].value, zNewStrId(expected[expectedIdx].key), strZ(actualValue));
-                }
-            }
-
-            jsonReadObjectEnd(greeting);
         }
         MEM_CONTEXT_TEMP_END();
 
