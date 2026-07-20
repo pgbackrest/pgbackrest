@@ -260,7 +260,7 @@ pgbackrest/test/test.pl --vm-out --module=common --test=wait
                 
     P00   INFO: P1-T1/1 - vm=none, module=common, test=wait
                 
-        P00   INFO: test command begin 2.58.0: [common/wait] --log-level=info --no-log-timestamp --repo-path=/home/vagrant/test/repo --scale=1 --test-path=/home/vagrant/test --vm=none --vm-id=0
+        P00   INFO: test command begin 2.59.0: [common/wait] --log-level=info --no-log-timestamp --repo-path=/home/vagrant/test/repo --scale=1 --test-path=/home/vagrant/test --vm=none --vm-id=0
         P00   INFO: test command end: completed successfully
         run 1 - waitNew(), waitMore, and waitFree()
                       L0018     expect AssertError: assertion 'waitTime <= 999999000' failed
@@ -348,8 +348,9 @@ pgbackrest/test/test.pl --vm-build --vm=u22
 --- output ---
 
     P00   INFO: test begin on x86_64 - log level info
-    P00   INFO: Using cached pgbackrest/test:u22-base-x86_64-20260119A image (8ee008aecbcf21b205116969db4000838c989a4a) ...
-    P00   INFO: Building pgbackrest/test:u22-test-x86_64 image ...
+    P00   INFO: Checking cache ghcr.io/pgbackrest/test:u22-base-x86_64-20260717A-bbc27d6dee5c ...
+    P00   INFO: Using cached ghcr.io/pgbackrest/test:u22-base-x86_64-20260717A-bbc27d6dee5c image
+    P00   INFO: Building ghcr.io/pgbackrest/test:u22-test-x86_64 image ...
     P00   INFO: Build Complete
 ```
 > **NOTE:** to build all the vms, just omit the `--vm` option above.

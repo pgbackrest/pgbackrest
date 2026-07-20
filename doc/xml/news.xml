@@ -4,6 +4,82 @@
     <description>News</description>
 
     <!-- ======================================================================================================================= -->
+    <section id="distribution-tarball">
+        <title>New Distribution Tarball</title>
+
+        <p><b>July 20, 2026</b></p>
+
+        <p>Starting with <backrest/> 2.59.0, every release includes a distribution tarball that makes building from source simpler. Unlike a checkout of the git repository, the tarball ships the generated source and the rendered documentation pre-built, so <backrest/> builds and installs without the code generation or documentation tooling that a repository checkout requires.</p>
+
+        <p>The tarball contains the <backrest/> source with the pre-generated code, the command reference man page, the HTML documentation, and a smoke test to verify the build. It builds with meson and ninja using only the usual <backrest/> libraries.</p>
+
+        <p>The tarball is attached to each release as an asset named <file>pgbackrest-{version}.tar.gz</file>, along with a matching <file>.sha256sum</file> checksum. Download it from the <link url="{[github-url-base]}/releases">releases</link> page on GitHub, then see the <file>README.md</file> in the tarball for build and test instructions.</p>
+
+        <p>Packagers are encouraged to build from the distribution tarball to avoid the extra build tooling that generating code and documentation will require in future releases.</p>
+    </section>
+
+    <!-- ======================================================================================================================= -->
+    <section id="release-2-59-0">
+        <title><backrest/> 2.59.0 Released</title>
+
+        <p><b>July 20, 2026</b></p>
+
+        <p>The <backrest/> community is pleased to announce the release of <link url="{[backrest-url-base]}">{[project]}</link> 2.59.0, the latest version of the reliable, easy-to-use backup and restore solution that can seamlessly scale up to the largest databases and workloads.</p>
+
+        <p><backrest/> supports a robust set of features for managing your backup and recovery infrastructure, including: parallel backup/restore, full/differential/incremental backups, block incremental backup, multiple repositories, delta restore, parallel asynchronous archiving, malware/ransomware protection, per-file checksums, page checksums (when enabled) validated during backup, multiple compression types, encryption, partial/failed backup resume, backup from standby, tablespace and link support, S3/Azure/GCS/SFTP support, backup expiration, local/remote operation via SSH or TLS, flexible configuration, and more.</p>
+
+        <p><backrest/> can be installed from the <link url="https://yum.postgresql.org">{[postgres]} Yum Repository</link> or the <link url="https://apt.postgresql.org">{[postgres]} APT Repository</link> and packages are also available for many other distributions. Source code can be downloaded from <link page="release">releases</link>.</p>
+
+        <section id="feature">
+            <title>Significant New Features and Improvements</title>
+
+            <list>
+                <list-item><postgres/> 19 support (David Steele)</list-item>
+                <list-item>Add archive-expire-before option to clean up WAL archive (Stefan Fercot)</list-item>
+                <list-item>Add support for S3 Outposts (Shiva Kumar Ambigi)</list-item>
+                <list-item>Add S3 process authentication (David Steele)</list-item>
+                <list-item>Add user/group caching for faster manifest build (Gunnar Lindholm)</list-item>
+                <list-item>Reconnect SFTP storage after the server drops an idle connection (David Steele)</list-item>
+                <list-item>Add per-repo backup progress to info command output (Will Morland)</list-item>
+                <list-item>Add batch delete for Azure storage (David Steele)</list-item>
+                <list-item>Add backup.info checks to verify command (Denis Garsh)</list-item>
+                <list-item>Allow the S3 STS endpoint to be configured (Simon Gratton)</list-item>
+                <list-item>Add systemd notify integration (Andrew Jackson)</list-item>
+                <list-item>Error when running as root unless allow-root is enabled (David Steele)</list-item>
+                <list-item>Exit async archive-push on first error (David Steele)</list-item>
+            </list>
+
+            <p>See the <link page="release" section="2.59.0">2.59.0 Release Notes</link> for additional features and improvements.</p>
+        </section>
+
+        <section id="note">
+            <title>Important Notes</title>
+
+            <list>
+                <list-item>Only the restore command may be run as root by default. Use allow-root to run other commands as root (though this is not recommended).</list-item>
+                <list-item>A new distribution tarball with pregenerated documentation, man page, and code is attached to each release to simplify packaging. See <link url="{[backrest-url-base]}/news.html#distribution-tarball">New Distribution Tarball</link> for more information.</list-item>
+                <list-item>There is a new optional dependency on libsystemd.</list-item>
+            </list>
+        </section>
+
+        <section id="link">
+            <title>Links</title>
+
+            <list>
+                <list-item><link url="{[backrest-url-base]}">Website</link></list-item>
+                <list-item><link page="user-guide-index">User Guides</link></list-item>
+                <list-item><link page="release">Release Notes</link></list-item>
+            </list>
+        </section>
+
+        <section id="Sponsorship">
+            <title>Sponsorship</title>
+
+            <p>This release was made possible by the generous sponsorship of <link url="https://aws.amazon.com">AWS</link>, <link url="https://supabase.com">Supabase</link>, <link url="https://pgedge.com">pgEdge</link>, <link url="https://tigerdata.com">Tiger Data</link>, <link url="https://percona.com">Percona</link>, <link url="https://eon.io">Eon</link>, <link url="https://xata.io">Xata</link>, <link url="https://dalibo.com">Dalibo</link>, and <link url="https://dataegret.com/">Data Egret</link>.</p>
+        </section>
+    </section>
+
+    <!-- ======================================================================================================================= -->
     <section id="will-continue">
         <title><backrest/> Will Continue!</title>
 

@@ -67,7 +67,7 @@ tar czvf pgbackrest.tgz cov-int
 - Upload results:
 ```
 curl --form token=${COVERITY_TOKEN?} --form email="${COVERITY_EMAIL?}" --form file=@pgbackrest.tgz \
-    --form version="${COVERITY_VERSION?}" --form description="dev build" \
+    --form version="${COVERITY_VERSION?}" --form description="pre-release build" \
     "https://scan.coverity.com/builds?project=pgbackrest%2Fpgbackrest"
 ```
 
@@ -144,14 +144,14 @@ Wait for CI testing to complete before proceeding to the next step.
 
 ## Create release on Github and dist tarball
 
-Set the release variables. `GITHUB_TOKEN` needs the `contents: write` permission:
+Set the release variables. `GITHUB_TOKEN` needs the `contents: write` permission to create the release and `actions: read` to download the tarball artifact (a classic token with the `repo` scope covers both):
 ```
 export GITHUB_TOKEN=?
 export GITHUB_REPO=pgbackrest/pgbackrest
 export GIT_BRANCH=integration
 ```
 
-Build the distribution tarball from a fresh checkout so the tree is clean for `meson dist`. Run the commands below from an empty directory.
+Release the distribution tarball that CI built and tested for the release commit rather than building one locally. Every push to the release branch builds the tarball, checks it for missing files, and smoke tests it on a range of distributions, so the most recent run's artifact is the exact tested bytes to release. Run the commands below from an empty directory.
 
 Shallow clone the release branch, then derive the version, release commit, and commit subject from the checkout. `RELEASE_COMMIT` is the tip commit, but only if its subject starts with `v${VERSION}:` -- if it comes back blank a later commit was added and the release steps are out of order:
 ```
@@ -164,23 +164,31 @@ echo ${RELEASE_COMMIT?}
 echo ${RELEASE_TITLE?}
 ```
 
-Generate the distribution documentation. This writes the man page and HTML to `dist/repo/doc/output`, which the dist tarball picks up (the gitignored output does not dirty the tree):
+Find the most recent CI run for the release branch and confirm it built the release commit and passed. A mismatch means CI has not finished for the release commit or a later commit has landed; a non-success conclusion means the tarball was not fully tested:
 ```
-dist/repo/doc/release.pl --dist
-```
-
-Configure the build and build the code generator, which the dist script uses to produce the shipped files:
-```
-meson setup dist/build dist/repo
-ninja -C dist/build src/build-code
-```
-
-Build the tarball. `meson dist` runs `src/build/dist.sh` to generate the `.inc` files, copy the documentation into `doc`, and write the `dist` marker, then builds and tests the extracted tarball to confirm it compiles without the code generation tooling:
-```
-meson dist -C dist/build --formats gztar
+RUN=$(curl -sS -H "Authorization: Bearer ${GITHUB_TOKEN?}" -H "Accept: application/vnd.github+json" \
+    "https://api.github.com/repos/${GITHUB_REPO?}/actions/workflows/test.yml/runs?branch=${GIT_BRANCH?}&per_page=1")
+export RUN_ID=$(echo "${RUN?}" | jq -r '.workflow_runs[0].id')
+RUN_SHA=$(echo "${RUN?}" | jq -r '.workflow_runs[0].head_sha')
+RUN_STATUS=$(echo "${RUN?}" | jq -r '.workflow_runs[0].conclusion')
+echo "run ${RUN_ID?} ${RUN_SHA?} ${RUN_STATUS?}"
+[ "${RUN_SHA?}" = "${RELEASE_COMMIT?}" ] && [ "${RUN_STATUS?}" = "success" ] || { echo "not a passing build of the release commit"; false; }
 ```
 
-This produces `dist/build/meson-dist/pgbackrest-2.14.0.tar.gz` (named from the version in `meson.build`) along with its `pgbackrest-2.14.0.tar.gz.sha256sum` checksum. A successful `meson dist` means the tarball is self-contained and is the exact artifact to release.
+That run uploads the tarball as the `dist-tarball` artifact. Get its download URL, then download and extract it. The download needs the token, and GitHub wraps artifacts in a zip so it must be unzipped to get the tarball:
+```
+export ARTIFACT_URL=$(curl -sS -H "Authorization: Bearer ${GITHUB_TOKEN?}" -H "Accept: application/vnd.github+json" \
+    "https://api.github.com/repos/${GITHUB_REPO?}/actions/runs/${RUN_ID?}/artifacts?name=dist-tarball" \
+    | jq -r '.artifacts[0].archive_download_url')
+mkdir -p dist/build/meson-dist
+curl -sSL -H "Authorization: Bearer ${GITHUB_TOKEN?}" "${ARTIFACT_URL?}" -o dist/dist-tarball.zip
+unzip -o dist/dist-tarball.zip -d dist/build/meson-dist
+```
+
+The artifact ships only the tarball, so regenerate its checksum. The result is identical to CI's since it is the same bytes, and it lands at the path the upload step below expects, `dist/build/meson-dist/pgbackrest-{version}.tar.gz` with its `pgbackrest-{version}.tar.gz.sha256sum`:
+```
+( cd dist/build/meson-dist && sha256sum pgbackrest-${VERSION?}.tar.gz > pgbackrest-${VERSION?}.tar.gz.sha256sum )
+```
 
 Immutable releases are enabled, so release assets are locked once the release is published. Create the release as a draft with the tarball attached, then set the notes and publish it in the next section.
 
@@ -234,7 +242,6 @@ rm -rf .cache/ccache
 meson setup dist/verify/build dist/verify/pgbackrest-${VERSION?}
 ninja -C dist/verify/build
 dist/verify/build/src/pgbackrest version
-meson test -C build --suite smoke
 ```
 
 ## Push to main
