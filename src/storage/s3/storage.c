@@ -676,7 +676,7 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
             result = httpRequestNewP(
                 this->httpClient, verb, path, .query = param.query, .header = requestHeader, .content = param.content);
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 

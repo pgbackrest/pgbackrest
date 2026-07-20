@@ -193,7 +193,7 @@ infoNewLoad(IoRead *const read, InfoLoadNewCallback *const callbackFunction, voi
                                 {
                                     this->pub.backrestVersion = varStr(jsonToVar(value->value));
                                 }
-                                MEM_CONTEXT_END();
+                                MEM_CONTEXT_OBJ_END();
                             }
                             // Store checksum to be validated later
                             else if (strEqZ(value->key, INFO_KEY_CHECKSUM))
@@ -202,7 +202,7 @@ infoNewLoad(IoRead *const read, InfoLoadNewCallback *const callbackFunction, voi
                                 {
                                     checksumExpected = varStr(jsonToVar(value->value));
                                 }
-                                MEM_CONTEXT_END();
+                                MEM_CONTEXT_OBJ_END();
                             }
                         }
                         // Process cipher section
@@ -215,7 +215,7 @@ infoNewLoad(IoRead *const read, InfoLoadNewCallback *const callbackFunction, voi
                                 {
                                     this->pub.cipherPass = varStr(jsonToVar(value->value));
                                 }
-                                MEM_CONTEXT_END();
+                                MEM_CONTEXT_OBJ_END();
                             }
                         }
                         // Else pass to callback for processing
@@ -410,7 +410,7 @@ infoCipherPassSet(Info *const this, const String *const cipherPass)
     {
         this->pub.cipherPass = strDup(cipherPass);
     }
-    MEM_CONTEXT_END();
+    MEM_CONTEXT_OBJ_END();
 
     FUNCTION_TEST_RETURN_VOID();
 }

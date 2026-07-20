@@ -516,7 +516,7 @@ storageGcsRequestAsync(StorageGcs *const this, const String *const verb, Storage
             result = httpRequestNewP(
                 this->httpClient, verb, path, .query = query, .header = requestHeader, .content = content);
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
