@@ -119,7 +119,7 @@ jobs:
         # The image is the whole matrix so the job name is just the image, which is unambiguous. Each image's native PostgreSQL,
         # fixed for the life of the distribution, is what the smoke test discovers and runs against.
         image:
-          - debian:11
+          - debian:12
           - debian:13
           - ubuntu:22.04
           - ubuntu:26.04
@@ -150,11 +150,6 @@ jobs:
               apt-get update
               apt-get install -y --no-install-recommends meson gcc pkg-config libpq-dev libssl-dev libxml2-dev \
                   liblz4-dev libzstd-dev libbz2-dev zlib1g-dev postgresql
-
-              # debian:11 only: its meson (0.56) cannot configure the python installation without setuptools
-              if [ "${{ matrix.image }}" = "debian:11" ]; then
-                  apt-get install -y --no-install-recommends python3-setuptools
-              fi
           elif command -v dnf >/dev/null; then
               # RHEL-family (Rocky) needs EPEL and the CodeReady Builder repo for meson and the -devel packages; Fedora has them in
               # the main repo and has neither.
