@@ -534,8 +534,9 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("bogus greetings - child process");
 
+                // Noise before the greeting (e.g. a login banner) is skipped, so the client sees the bogus greeting on the next
+                // line
                 ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("bogus greeting"));
-                ioWriteFlush(HRN_FORK_CHILD_WRITE());
                 ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("{\"name\":999}"));
                 ioWriteFlush(HRN_FORK_CHILD_WRITE());
                 ioWriteStrLine(HRN_FORK_CHILD_WRITE(), STRDEF("{\"name\":null}"));
@@ -548,6 +549,10 @@ testRun(void)
                 ioWriteFlush(HRN_FORK_CHILD_WRITE());
                 ioWriteStrLine(
                     HRN_FORK_CHILD_WRITE(), STRDEF("{\"name\":\"pgBackRest\",\"service\":\"test\",\"version\":\"bogus\"}"));
+                ioWriteFlush(HRN_FORK_CHILD_WRITE());
+
+                // Noise before the greeting is bounded; a single line larger than the bound must error
+                ioWriteStrLine(HRN_FORK_CHILD_WRITE(), strNewFmt("%*s", 65537, ""));
                 ioWriteFlush(HRN_FORK_CHILD_WRITE());
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -607,12 +612,13 @@ testRun(void)
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("bogus greetings - client");
 
-                TEST_ERROR(
-                    protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
-                    JsonFormatError, "invalid type at: bogus greeting");
+                // The noise line before the bogus greeting is skipped with a warning
                 TEST_ERROR(
                     protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
                     ProtocolError, "greeting key 'name' must be string type");
+
+                TEST_RESULT_LOG("P00   WARN: skipped 15 byte(s) of unexpected output before greeting from test client");
+
                 TEST_ERROR(
                     protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
                     ProtocolError, "greeting key 'name' must be string type");
@@ -634,6 +640,15 @@ testRun(void)
                     ProtocolError,
                     "expected value '" PROJECT_VERSION "' for greeting key 'version' but got 'bogus'\n"
                     "HINT: is the same version of " PROJECT_NAME " installed on the local and remote host?");
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("skip bound exceeded - client");
+
+                TEST_ERROR(
+                    protocolClientNew(STRDEF("test client"), STRDEF("test"), HRN_FORK_PARENT_READ(0), HRN_FORK_PARENT_WRITE(0)),
+                    ProtocolError,
+                    "greeting not found after 65538 bytes of unexpected output\n"
+                    "HINT: is the remote shell printing output for non-interactive sessions?");
 
                 // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("new client with successful handshake");

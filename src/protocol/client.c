@@ -13,6 +13,11 @@ Protocol Client
 #include "version.h"
 
 /***********************************************************************************************************************************
+Maximum bytes of unexpected output (e.g. a login banner from the remote shell) tolerated before the greeting
+***********************************************************************************************************************************/
+#define PROTOCOL_GREETING_SKIP_MAX                                  65536
+
+/***********************************************************************************************************************************
 Client state enum
 ***********************************************************************************************************************************/
 typedef enum
@@ -343,7 +348,32 @@ protocolClientNew(const String *const name, const String *const service, IoRead 
         // Read, parse, and check the protocol greeting
         MEM_CONTEXT_TEMP_BEGIN()
         {
-            JsonRead *const greeting = jsonReadNew(ioReadLine(this->pub.read));
+            // Skip any output before the greeting, e.g. a login banner printed by the remote shell for non-interactive SSH
+            // sessions, which would otherwise make the remote unusable. The greeting is always a JSON object on a single line so
+            // any line that does not start with { cannot be the greeting. The skipped output is bounded so a stream that never
+            // produces a greeting errors cleanly.
+            const String *greetingLine = ioReadLine(this->pub.read);
+            size_t skipSize = 0;
+
+            while (!strBeginsWithZ(greetingLine, "{"))
+            {
+                skipSize += strSize(greetingLine) + 1;
+
+                if (skipSize > PROTOCOL_GREETING_SKIP_MAX)
+                {
+                    THROW_FMT(
+                        ProtocolError,
+                        "greeting not found after %zu bytes of unexpected output\n"
+                        "HINT: is the remote shell printing output for non-interactive sessions?", skipSize);
+                }
+
+                greetingLine = ioReadLine(this->pub.read);
+            }
+
+            if (skipSize != 0)
+                LOG_WARN_FMT("skipped %zu byte(s) of unexpected output before greeting from %s", skipSize, strZ(name));
+
+            JsonRead *const greeting = jsonReadNew(greetingLine);
 
             jsonReadObjectBegin(greeting);
 
