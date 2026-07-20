@@ -348,8 +348,8 @@ pgbackrest/test/test.pl --vm-build --vm=u22
 --- output ---
 
     P00   INFO: test begin on x86_64 - log level info
-    P00   INFO: Checking cache ghcr.io/pgbackrest/test:u22-base-x86_64-20260710A-49f5ab617257 ...
-    P00   INFO: Using cached ghcr.io/pgbackrest/test:u22-base-x86_64-20260710A-49f5ab617257 image
+    P00   INFO: Checking cache ghcr.io/pgbackrest/test:u22-base-x86_64-20260717A-bbc27d6dee5c ...
+    P00   INFO: Using cached ghcr.io/pgbackrest/test:u22-base-x86_64-20260717A-bbc27d6dee5c image
     P00   INFO: Building ghcr.io/pgbackrest/test:u22-test-x86_64 image ...
     P00   INFO: Build Complete
 ```
