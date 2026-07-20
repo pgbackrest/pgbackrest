@@ -163,10 +163,8 @@ cmdTest(
                     execOneExpectP(strNewFmt("meson configure %s '%s'", strZ(mesonSetup), strZ(pathUnitBuild)));
                 }
 
-                // Remove old coverage data. Note that coverage can be in different paths depending on the meson version.
-                const String *const pathCoverage =
-                    storagePathExistsP(storageUnitBuild, STRDEF("test-unit.p")) ?
-                        STRDEF("test-unit.p") : STRDEF("test-unit@exe");
+                // Remove old coverage data
+                const String *const pathCoverage = STRDEF("test-unit.p");
 
                 StorageIterator *const storageItr = storageNewItrP(
                     storageUnitBuild, pathCoverage, .expression = STRDEF("\\.gcda$"));
