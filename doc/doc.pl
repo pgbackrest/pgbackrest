@@ -355,6 +355,9 @@ eval
         }
     }
 
+    # Verify page/section links now that all pages have been rendered and their section anchors are known
+    $oManifest->linkVerify();
+
     # Cache the manifest (mostly useful for testing rendering changes in the code)
     if (!$bNoCache && !$bCacheOnly)
     {
