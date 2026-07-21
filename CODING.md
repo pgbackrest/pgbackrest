@@ -63,7 +63,6 @@ typedef struct InlineCommentExample
 Variable names use camel case with the first letter lower-case.
 
 - `stanzaName` - the name of the stanza
-
 - `nameIdx` - loop variable for iterating through a list of names
 
 Variable names should be descriptive. Avoid `i`, `j`, etc.

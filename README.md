@@ -117,9 +117,7 @@ pgBackRest includes support for ten versions of PostgreSQL, the five supported v
 pgBackRest strives to be easy to configure and operate:
 
 - [User guides](https://pgbackrest.org/user-guide-index.html) for various operating systems and PostgreSQL versions.
-
 - [Command reference](https://pgbackrest.org/command.html) for command-line operations.
-
 - [Configuration reference](https://pgbackrest.org/configuration.html) for creating pgBackRest configurations.
 
 ## Contributions

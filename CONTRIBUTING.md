@@ -210,15 +210,10 @@ pgbackrest/doc/doc.pl --out=html
 Examples of test runs are provided in the following sections. There are several important options for running a test:
 
 - `--dry-run` - without any other options, this will list all the available tests
-
 - `--module` - identifies the module in which the test is located
-
 - `--test` - the actual test set to be run
-
 - `--run` - a number identifying the run within a test if testing a single run rather than the entire test
-
 - `--vm-out` - displays the test output (helpful for monitoring the progress)
-
 - `--vm` - identifies the pre-built container when using Docker, otherwise the setting should be `none`. See [test.yml](https://github.com/pgbackrest/pgbackrest/blob/main/.github/workflows/test.yml) for a list of valid vm codes noted by `param: test`.
 
 For more options, run the test or documentation engine with the `--help` option:
@@ -378,7 +373,6 @@ pgbackrest/test/test.pl --vm=u22 --module=postgres --test=interface --run=2
 The goal of unit testing is to have 100 percent code coverage. Two files will usually be involved in this process:
 
 - **define.yaml** - defines the number of tests to be run for each module and test file. There is a comment at the top of the file that provides more information about this file.
-
 - **src/module/somefileTest.c** - where "somefile" is the path and name of the test file where the unit tests are located for the code being updated (e.g. `src/module/command/expireTest.c`).
 
 #### define.yaml
@@ -437,15 +431,10 @@ HRN_STORAGE_PUT_EMPTY(
 Tests are run and results confirmed via macros that are described in [test.h](https://github.com/pgbackrest/pgbackrest/blob/main/test/src/harness/test.h). With the exception of TEST_ERROR, the third parameter is a short description of the test. Some of the more common macros are:
 
 - `TEST_RESULT_STR` - Test the actual value of the string returned by the function.
-
 - `TEST_RESULT_UINT` / `TEST_RESULT_INT` - Test for an unsigned integer / integer.
-
 - `TEST_RESULT_BOOL` - Test a boolean value.
-
 - `TEST_RESULT_PTR` / `TEST_RESULT_PTR_NE` - Test a pointer: useful for testing if the pointer is `NULL` or not equal (`NE`) to `NULL`.
-
 - `TEST_RESULT_VOID` - The function being tested returns a `void`. This is then usually followed by tests that ensure other actions occurred (e.g. a file was written to disk).
-
 - `TEST_ERROR` / `TEST_ERROR_FMT` - Test that a specific error code was raised with specific wording.
 > **NOTE:** `HRN_*` macros should be used only for test setup and cleanup. `TEST_*` macros must be used for testing results.
 
@@ -566,7 +555,6 @@ Options can be added to a command or multiple commands. Options can be configura
 To add an option, two files need be to be modified:
 
 - `src/build/config/config.yaml`
-
 - `src/build/help/help.xml`
 
 These files are discussed in the following sections along with how to verify the `help` command output.
@@ -595,15 +583,10 @@ set:
 Note that `section:` is not present thereby making this a command-line only option defined as follows:
 
 - `set` - the name of the option
-
 - `type` - the type of the option. Valid values for types are: `boolean`, `hash`, `integer`, `list`, `path`, `size`, `string`, and `time`
-
 - `command` - list each command for which the option is valid. If a command is not listed, then the option is not valid for the command and an error will be thrown if it is attempted to be used for that command. In this case the valid commands are `backup` and `restore`.
-
 - `backup` - details the requirements for the `--set` option for the `backup` command. It is dependent on the option `--stanza`, meaning it is only allowed to be specified for the `backup` command if the `--stanza` option has been specified. And `required: false` indicates that the `--set` option is never required, even with the dependency.
-
 - `restore` - details the requirements for the `--set` option for the `restore` command. Since `required:` is omitted, it is not required to be set by the user but it is required by the command and will default to `latest` if it has not been specified by the user.
-
 - `command-role` - defines the processes for which the option is valid. `main` indicates the option will be used by the main process and not be passed on to other local/remote processes.
 
 #### EXAMPLE 2 hypothetical configuration file option
@@ -625,19 +608,12 @@ repo-test-type:
 ```
 
 - `repo-test-type` - the name of the option
-
 - `section` - the section of the configuration file where this option is valid (omitted for command line only options, see [Example 1](#example-1-hypothetical-command-line-only-option) above)
-
 - `type` - the type of the option. Valid values for types are: `boolean`, `hash`, `integer`, `list`, `path`, `size`, `string`, and `time`
-
 - `group` - indicates that this option is part of the `repo` group of indexed options and therefore will follow the indexing rules e.g. `repo1-test-type`.
-
 - `default` - sets a default for the option if the option is not provided when the command is run. The default can be global (as it is here) or it can be specified for a specific command in the command section (as in [Example 1](#example-1-hypothetical-command-line-only-option) above).
-
 - `allow-list` - lists the allowable values for the option for all commands for which the option is valid.
-
 - `command` - list each command for which the option is valid. If a command is not listed, then the option is not valid for the command and an error will be thrown if it is attempted to be used for that command. In this case the valid commands are `backup` and `restore`.
-
 - `command-role` - defines the processes for which the option is valid. `main` indicates the option will be used by the main process and not be passed on to other local/remote processes.
 
 When `test.pl` is run the `config.auto.h` file will be generated to contain the constants used for options in the code. For the C enums, any dashes in the option name will be removed, camel-cased and prefixed with `cfgOpt`, e.g. `repo-path` becomes `cfgOptRepoPath`.
@@ -698,25 +674,19 @@ The resulting Docker containers can be listed with `docker ps` and the container
 Before submitting a Pull Request:
 
 - Does it meet the [coding standards](https://github.com/pgbackrest/pgbackrest/blob/main/CODING.md)?
-
 - Have [Unit Tests](#writing-a-unit-test) been written and [run](#running-a-unit-test) with 100% coverage?
-
 - If your submission includes changes to the help or online documentation, have the [help](#testing-the-help) and [documentation](#testing-the-documentation) tests been run?
-
 - Has it passed continuous integration testing? Simply renaming your branch with the appendix `-cig` and pushing it to your GitHub account will initiate GitHub Actions to run CI tests.
 
 When submitting a Pull Request:
 
 - Provide a short submission title.
-
 - Write a detailed comment to describe the purpose of your submission and any issue(s), if any, it is resolving; a link to the GitHub issue is also helpful.
-
 - Select the `integration` branch as the base for your PR, do not select `main` nor any other branch.
 
 After submitting a Pull Request:
 
 - One or more reviewers will be assigned.
-
 - Respond to any issues (conversations) in GitHub but do not resolve the conversation; the reviewer is responsible for ensuring the issue raised has been resolved and marking the conversation resolved. It is helpful to supply the commit in your reply if one was submitted to fix the issue.
 
 Lastly, thank you for contributing to pgBackRest!
