@@ -325,6 +325,10 @@ eval
         executeTest("${strDocExe} ${strParam} --key-var=os-type=rhel --out=html");
         $oStorageDoc->move("$strDocHtml/user-guide.html", "$strDocHtml/user-guide-rhel.html");
         executeTest("${strDocExe} ${strParam} --out-preserve --out=html --out=man");
+
+        # Render the distribution README (doc/DIST.md) that meson dist copies into the tarball as README.md. It is generated from
+        # doc/xml/distribution.xml rather than committed, so --include renders only that source to markdown.
+        executeTest("${strDocExe} --out=markdown --include=distribution");
     }
 
     # Exit with success

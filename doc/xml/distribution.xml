@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE doc SYSTEM "doc.dtd">
+<doc title="{[project]} Distribution" toc="n">
+    <description>{[project]} distribution build and test instructions.</description>
+
+    <!-- ======================================================================================================================= -->
+    <section id="overview">
+        <title>Overview</title>
+
+        <p>This is a <backrest/> build distribution. Unlike a checkout of the <link url="{[github-url-base]}">git repository</link>, it ships the generated source and the rendered documentation pre-built, so <backrest/> can be built and installed without the code generation or the documentation tooling.</p>
+
+        <p>See <link url="{[backrest-url-base]}">{[backrest-url-base]}</link> for complete documentation.</p>
+    </section>
+
+    <!-- ======================================================================================================================= -->
+    <section id="contents">
+        <title>Contents</title>
+
+        <list>
+            <list-item><file>src</file> -- <backrest/> source, including the pre-generated <file>*.auto.c.inc</file> files</list-item>
+            <list-item><file>doc/man</file> -- command reference</list-item>
+            <list-item><file>doc/html</file> -- HTML documentation</list-item>
+            <list-item><file>test</file> -- smoke test to verify the build</list-item>
+            <list-item><file>meson.build</file>, <file>meson_options.txt</file> -- build configuration</list-item>
+            <list-item><file>LICENSE</file></list-item>
+        </list>
+    </section>
+
+    <!-- ======================================================================================================================= -->
+    <section id="build">
+        <title>Build</title>
+
+        <p><backrest/> builds with meson and ninja. The required libraries are libpq, OpenSSL (&gt;= 1.1.1), libxml2, lz4, bz2, and zlib; zstd, libssh2 (for SFTP), and libsystemd are optional. For example, on Debian/Ubuntu:</p>
+
+        <code-block>
+apt-get install meson gcc pkg-config libpq-dev libssl-dev libxml2-dev \
+    liblz4-dev libzstd-dev libbz2-dev libz-dev libssh2-1-dev libsystemd-dev
+        </code-block>
+
+        <p>Then configure, build, and install:</p>
+
+        <code-block>
+meson setup build .
+ninja -C build
+meson install -C build
+        </code-block>
+
+        <p>The <file>pgbackrest</file> binary is built at <file>build/src/pgbackrest</file>.</p>
+    </section>
+
+    <!-- ======================================================================================================================= -->
+    <section id="test">
+        <title>Test</title>
+
+        <p>A smoke test is included to verify that the build works. It finds each <postgres/> installation on the system and runs the newly-built <file>pgbackrest</file> through a backup and restore cycle against every supported version found: create a cluster, configure archiving, create the stanza, check, back up, restore, and verify that the restored data matches. Versions that <backrest/> does not support are reported and skipped. The test requires nothing beyond the build environment and <postgres/> -- no additional Python packages.</p>
+
+        <p>Run it with meson after building:</p>
+
+        <code-block>
+meson test -C build --suite smoke
+        </code-block>
+
+        <p>Add <code>-v</code> to stream the output of each step as it runs:</p>
+
+        <code-block>
+meson test -C build --suite smoke -v
+        </code-block>
+
+        <p><postgres/> is searched for in the standard packaging paths:</p>
+
+        <list>
+            <list-item><file>/usr/lib/postgresql/&lt;version&gt;/bin</file> (Debian/Ubuntu)</list-item>
+            <list-item><file>/usr/pgsql-&lt;version&gt;/bin</file> (RHEL)</list-item>
+            <list-item><file>/usr/libexec/postgresql&lt;version&gt;</file> (Alpine)</list-item>
+            <list-item><file>/usr/bin</file></list-item>
+        </list>
+
+        <p>Each version is tested in a temporary directory with its own repository and a private unix socket, so a running <postgres/> cluster is not disturbed. The test fails when there is no <postgres/> to test against, since a test that silently does nothing does not verify the build. Since <postgres/> will not run as root, running the test as root drops to the <code>postgres</code> user and fails if that user does not exist.</p>
+
+        <p>The test can also be run directly, which allows the defaults to be overridden:</p>
+
+        <code-block>
+python3 test/smoke.py --pgbackrest build/src/pgbackrest
+        </code-block>
+
+        <p>Useful options are <code>--pg-bin-path</code> to search an additional path for <postgres/>, <code>--version</code> to test only a specific version, and <code>--user</code> to select the user to drop to when running as root. Use <code>--help</code> for the complete list.</p>
+    </section>
+
+    <!-- ======================================================================================================================= -->
+    <section id="documentation">
+        <title>Documentation</title>
+
+        <p>The rendered documentation is in <file>doc</file>: the command reference in <file>doc/man</file> and the HTML documentation in <file>doc/html</file>.</p>
+
+        <p>Two user guides are provided, Debian/Ubuntu and RHEL/Rocky/Alma. If only one user guide is required, replace <file>user-guide-index.html</file> with the desired user guide. For example, to keep only the Debian/Ubuntu user guide:</p>
+
+        <code-block>
+mv user-guide.html user-guide-index.html
+rm user-guide-rhel.html
+        </code-block>
+    </section>
+</doc>

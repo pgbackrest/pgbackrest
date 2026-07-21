@@ -1065,6 +1065,7 @@
                     ninja -C {[build-meson-path]} src/build-code &amp;&amp;
                     mkdir -p {[build-br-path-tmp]}/doc/output/html &amp;&amp;
                     mkdir -p {[build-br-path-tmp]}/doc/output/man &amp;&amp;
+                    touch {[build-br-path-tmp]}/doc/DIST.md &amp;&amp;
                     PYTHONWARNINGS=ignore meson dist -C {[build-meson-path]} --formats gztar &amp;&amp;
                     tar zx -C {[build-path]} -f {[build-meson-path]}/meson-dist/pgbackrest-{[version]}.tar.gz &amp;&amp;
                     rm -rf {[build-meson-path]}
