@@ -301,6 +301,10 @@
 
         <!-- Don't allow sudo to disable core dump (suppresses errors, see https://github.com/sudo-project/sudo/issues/42) -->
         <variable key="sudo-disable-core-dump">RUN echo "Set disable_coredump false" >> /etc/sudo.conf</variable>
+
+        <!-- Debian/Ubuntu packages required to build from source or the distribution tarball. Split with a backslash continuation so each line stays within the command line length limit when shown; the doc executor keeps the existing continuation rather than adding its own. -->
+        <variable key="build-package-debian">meson gcc libpq-dev libssl-dev libxml2-dev pkg-config \
+    liblz4-dev libzstd-dev libbz2-dev libz-dev libssh2-1-dev libsystemd-dev</variable>
     </variable-list>
 
     <!-- Setup hosts used to build the documentation =========================================================================== -->
@@ -1015,10 +1019,7 @@
             </execute>
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
-                <exe-cmd>
-                    apt-get install python3-distutils meson gcc libpq-dev libssl-dev libxml2-dev
-                    pkg-config liblz4-dev libzstd-dev libbz2-dev libz-dev libssh2-1-dev libsystemd-dev
-                </exe-cmd>
+                <exe-cmd>apt-get install {[build-package-debian]}</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 

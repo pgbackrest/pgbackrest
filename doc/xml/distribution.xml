@@ -33,8 +33,7 @@
         <p><backrest/> builds with meson and ninja. The required libraries are libpq, OpenSSL (&gt;= 1.1.1), libxml2, lz4, bz2, and zlib; zstd, libssh2 (for SFTP), and libsystemd are optional. For example, on Debian/Ubuntu:</p>
 
         <code-block>
-apt-get install meson gcc pkg-config libpq-dev libssl-dev libxml2-dev \
-    liblz4-dev libzstd-dev libbz2-dev libz-dev libssh2-1-dev libsystemd-dev
+apt-get install {[build-package-debian]}
         </code-block>
 
         <p>Then configure, build, and install:</p>
@@ -45,7 +44,7 @@ ninja -C build
 meson install -C build
         </code-block>
 
-        <p>The <file>pgbackrest</file> binary is built at <file>build/src/pgbackrest</file>.</p>
+        <p>The <file>pgbackrest</file> binary is built at <file>build/src/pgbackrest</file>. See the <link page="user-guide" section="/build">user guide</link> for detailed build instructions, including dependencies for other operating systems.</p>
     </section>
 
     <!-- ======================================================================================================================= -->
