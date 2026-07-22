@@ -210,6 +210,7 @@
     <!ATTLIST host-define if CDATA "">
     <!ATTLIST host-define image CDATA #REQUIRED>
     <!ATTLIST host-define from CDATA #REQUIRED>
+    <!ATTLIST host-define revision CDATA "0">
 
 <!ELEMENT host-add (execute*)>
     <!ATTLIST host-add if CDATA "">

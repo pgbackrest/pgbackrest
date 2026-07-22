@@ -24,7 +24,7 @@
     </variable-list>
 
     <!-- Setup hosts used to build the documentation =========================================================================== -->
-    <host-define if="{[os-type-is-debian]}" image="{[host-contrib-image]}" from="ubuntu:22.04">
+    <host-define if="{[os-type-is-debian]}" image="{[host-contrib-image]}" from="ubuntu:22.04" revision="20260721A">
         {[copy-ca-cert]}
 
         # Fix root tty

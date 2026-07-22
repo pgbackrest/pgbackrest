@@ -308,7 +308,8 @@
     </variable-list>
 
     <!-- Setup hosts used to build the documentation =========================================================================== -->
-    <host-define if="{[os-type-is-debian]}" image="{[host-image]}" from="{[os-image]}">
+    <!-- The revision on each host-define combines with the Dockerfile hash to key the GHCR base image cache. Bump it date-style (e.g. 20260721A), like the test container revisions in test/container.yaml, to force a rebuild when the Dockerfile is unchanged but the upstream packages have changed. -->
+    <host-define if="{[os-type-is-debian]}" image="{[host-image]}" from="{[os-image]}" revision="20260721A">
         {[copy-ca-cert]}
 
         # Fix root tty
@@ -359,7 +360,7 @@
         ENTRYPOINT service ssh restart &amp;&amp; bash
     </host-define>
 
-    <host-define if="{[os-type-is-rhel]}" image="{[host-image]}" from="{[os-image]}">
+    <host-define if="{[os-type-is-rhel]}" image="{[host-image]}" from="{[os-image]}" revision="20260721A">
         {[copy-ca-cert]}
 
         VOLUME [ "/sys/fs/cgroup" ]
@@ -2578,6 +2579,7 @@
 
             <execute user="postgres" output="y">
                 <exe-cmd>{[project-exe]} {[dash]}-stanza={[postgres-cluster-demo]} {[dash]}-log-level-console=info stanza-create</exe-cmd>
+                <exe-cmd-extra>--io-timeout=120</exe-cmd-extra>
                 <exe-highlight>completed successfully</exe-highlight>
             </execute>
         </execute-list>

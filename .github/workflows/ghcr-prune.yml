@@ -1,13 +1,13 @@
-# Prune the GHCR container caches so they do not grow without bound. Both packages are pure caches that are rebuilt on demand, so
+# Prune the GHCR container caches so they do not grow without bound. All packages are pure caches that are rebuilt on demand, so
 # deleting an entry only costs a one-time rebuild on the next run that needs it. Anything meant to persist lives in a separate
-# package, so everything in these two can be treated as disposable.
+# package, so everything in these can be treated as disposable.
 #
-# The test package holds the base image cache, keyed by a hash of the generated Dockerfile. When a Dockerfile changes a new hash
-# tag is pushed and the old tag is orphaned but never overwritten, so stale entries accumulate as tagged images that a rule
+# The test and doc packages hold base image caches, keyed by a hash of the generated Dockerfile. When a Dockerfile changes a new
+# hash tag is pushed and the old tag is orphaned but never overwritten, so stale entries accumulate as tagged images that a rule
 # limited to untagged versions can never reach. A cache hit does not re-push, so an entry that is still valid but unchanged ages
 # out on its original date. The test-ccache package holds the compile cache, tagged per architecture and overwritten on every
-# save, so each save orphans the previous digest as an untagged image with nothing referencing it. The two therefore need
-# different rules: age out old tags for test, and simply drop the untagged orphans for test-ccache.
+# save, so each save orphans the previous digest as an untagged image with nothing referencing it. The two kinds therefore need
+# different rules: age out old tags for test and doc, and simply drop the untagged orphans for test-ccache.
 name: ghcr-prune
 
 on:
@@ -47,6 +47,21 @@ jobs:
         uses: dataaxiom/ghcr-cleanup-action@v1
         with:
           package: test
+          older-than: 2 months
+          delete-tags: '*'
+          delete-untagged: true
+          dry-run: ${{inputs.dry-run || false}}
+
+      - name: Label doc prune
+        run: echo '# doc (base image cache)' >> "${GITHUB_STEP_SUMMARY?}"
+
+      # Documentation base image cache. Same idea as the test package -- keyed by Dockerfile hash, cache hits do not re-push -- so
+      # delete every tag and any untagged manifest older than two months; anything still in use is rebuilt and re-pushed on the next
+      # run that needs it.
+      - name: Prune doc base image cache
+        uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          package: doc
           older-than: 2 months
           delete-tags: '*'
           delete-untagged: true

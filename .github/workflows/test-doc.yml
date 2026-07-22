@@ -1,6 +1,7 @@
 # Documentation builds, one per documented distribution. The documentation is built by running the commands it contains in
-# containers, so this is also an end-to-end test of those commands. No container cache or coverage is required here because the doc
-# build does not use the test containers.
+# containers, so this is also an end-to-end test of those commands. No coverage is required here because the doc build does not use
+# the test containers, but the base host image for each distribution is cached in its own GHCR package (ghcr.io/pgbackrest/doc) so
+# the expensive PostgreSQL/CLI install is not rebuilt on every run.
 name: doc
 
 on: workflow_call
@@ -12,6 +13,11 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-22.04
+
+    # Allow pushing base images to the GHCR container cache
+    permissions:
+      contents: read
+      packages: write
 
     strategy:
       # Let all the jobs run to completion even if one fails
@@ -30,6 +36,12 @@ jobs:
         uses: actions/checkout@v6
         with:
           path: pgbackrest
+
+      # Log in so base images can be pushed to the cache. Best effort -- pull is anonymous and push is skipped when the token is
+      # read-only (e.g. pull requests from forks).
+      - name: Login to GHCR
+        continue-on-error: true
+        run: echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u ${{github.actor}} --password-stdin
 
       - name: Build Documentation
         run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl doc --vm=${{matrix.vm}}

@@ -29,6 +29,7 @@ use pgBackRestTest::Common::Storage;
 use pgBackRestTest::Common::StoragePosix;
 
 use pgBackRestDoc::Common::Doc;
+use pgBackRestDoc::Common::DocContainer;
 use pgBackRestDoc::Common::DocManifest;
 use pgBackRestDoc::Common::Exception;
 use pgBackRestDoc::Common::Log;
@@ -279,14 +280,14 @@ eval
                     {
                         my $strImage = $oManifest->variableReplace($oHostDefine->paramGet('image'));
                         my $strFrom = $oManifest->variableReplace($oHostDefine->paramGet('from'));
+                        my $strRevision = $oHostDefine->paramGet('revision', false, '0');
                         my $strDockerfile = "${strOutputPath}/doc-host.dockerfile";
+                        my $strScript =
+                            "FROM ${strFrom}\n\n" . trim($oManifest->variableReplace($oHostDefine->valueGet())) . "\n";
 
                         &log(INFO, "Build vm '${strImage}' from '${strFrom}'");
 
-                        $oStorageDoc->put(
-                            $strDockerfile,
-                            "FROM ${strFrom}\n\n" . trim($oManifest->variableReplace($oHostDefine->valueGet())) . "\n");
-                        executeTest("docker build -f ${strDockerfile} -t ${strImage} ${strBasePath}", {bSuppressStdErr => true});
+                        dockerBuildCached($oStorageDoc, $strDockerfile, $strImage, $strScript, $strBasePath, $strRevision);
                     }
                 }
             }

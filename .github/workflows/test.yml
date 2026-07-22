@@ -25,6 +25,11 @@ jobs:
   doc:
     uses: ./.github/workflows/test-doc.yml
 
+    # Allow pushing base images to the GHCR container cache
+    permissions:
+      contents: read
+      packages: write
+
   linux:
     uses: ./.github/workflows/test-linux.yml
 
