@@ -33,6 +33,9 @@ typedef struct StorageReadMultiDefault
     uint64_t readOver;                                              // Bytes to read over rather than open file with new offset
     unsigned int queueMax;                                          // Max size of read queue
     bool eof;                                                       // End-of-file indicator
+#ifdef DEBUG
+    bool opened;                                                    // Has open been called? Reads may not be added after open.
+#endif
 } StorageReadMultiDefault;
 
 /***********************************************************************************************************************************
@@ -134,6 +137,10 @@ storageReadMultiDefaultOpen(THIS_VOID)
     ASSERT(this != NULL);
 
     storageReadMultiDefaultQueue(this, false);
+
+#ifdef DEBUG
+    this->opened = true;
+#endif
 
     FUNCTION_LOG_RETURN(BOOL, true);
 }
@@ -274,6 +281,7 @@ storageReadMultiDefaultAdd(THIS_VOID, const String *const file, const StorageRea
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
+    ASSERT(!this->opened);
 
     // Check if new request can be combined with prior request
     StorageReadMultiRequest *const requestPrior = lstEmpty(this->requestList) ? NULL : lstGetLast(this->requestList);
