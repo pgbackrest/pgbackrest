@@ -19,6 +19,8 @@ struct StorageReadMulti
     StorageReadMultiPub pub;                                        // Publicly accessible variables
     const Storage *storage;                                         // Storage
     void *driver;                                                   // Driver
+    String *versionFile;                                            // Last file a version id was resolved for (target by time)
+    String *versionId;                                              // Version id resolved for versionFile
 };
 
 /***********************************************************************************************************************************
@@ -485,7 +487,7 @@ storageReadMultiAdd(StorageReadMulti *const this, const String *const fileExp, S
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(fileExp != NULL);
+    ASSERT(fileExp != NULL && !strEmpty(fileExp));
     ASSERT(param.limit == NULL || varType(param.limit) == varTypeUInt64);
 
     MEM_CONTEXT_TEMP_BEGIN()
@@ -495,10 +497,24 @@ storageReadMultiAdd(StorageReadMulti *const this, const String *const fileExp, S
         // If targeting by time and the version has not already been resolved then look up the version id
         if (param.versionId == NULL && storageTargetTime(this->storage) != 0)
         {
-            param.versionId = storageInfoP(this->storage, fileExp, .ignoreMissing = true).versionId;
+            // References to a file are added together so reuse the version id resolved for the prior file when it is the same,
+            // rather than looking it up again. Otherwise resolve the version id as of the target time and cache it for reuse.
+            if (strEmpty(this->versionFile) || !strEq(this->versionFile, fileExp))
+            {
+                const String *const versionId = storageInfoP(this->storage, fileExp, .ignoreMissing = true).versionId;
 
-            if (param.versionId == NULL)
-                THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(path));
+                if (versionId == NULL)
+                    THROW_FMT(FileMissingError, STORAGE_ERROR_READ_MISSING, strZ(path));
+
+                MEM_CONTEXT_OBJ_BEGIN(this)
+                {
+                    this->versionFile = strCat(strTrunc(this->versionFile), fileExp);
+                    this->versionId = strCat(strTrunc(this->versionId), versionId);
+                }
+                MEM_CONTEXT_OBJ_END();
+            }
+
+            param.versionId = this->versionId;
         }
 
         storageReadMultiDriverInterface(this->driver)->add(this->driver, path, param);
@@ -537,6 +553,8 @@ storageReadMultiNew(const Storage *const storage, const unsigned int prefetch, c
                 storageInterface(storage).newReadMulti != NULL ?
                     storageInterface(storage).newReadMulti(storageDriver(storage)) :
                     storageReadMultiDefaultNew(storage, prefetch, readOver),
+            .versionFile = strNew(),
+            .versionId = strNew(),
         };
 
         ASSERT(storageReadMultiDriverInterface(this->driver)->add != NULL);

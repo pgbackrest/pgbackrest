@@ -884,7 +884,11 @@ testRun(void)
 
         StorageReadMulti *readMulti = NULL;
         TEST_ASSIGN(readMulti, storageNewReadMultiP(storageRepo), "new multi read");
-        TEST_RESULT_VOID(storageReadMultiAddP(readMulti, STRDEF("test1")), "add versioned file");
+        TEST_RESULT_VOID(
+            storageReadMultiAddP(readMulti, STRDEF("test1"), .offset = 0, .limit = VARUINT64(3)), "add versioned file");
+        TEST_RESULT_VOID(
+            storageReadMultiAddP(readMulti, STRDEF("test1"), .offset = 3, .limit = VARUINT64(2)),
+            "add same versioned file, reusing the resolved version");
         TEST_ERROR(
             storageReadMultiAddP(readMulti, STRDEF("missing")), FileMissingError,
             "unable to open missing file '" TEST_PATH "/repo128/missing' for read");
