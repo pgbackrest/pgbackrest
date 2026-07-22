@@ -8,14 +8,15 @@ Test Backup Manifest Handler
 #include "info/infoBackup.h"
 #include "storage/posix/storage.h"
 
-#include "common/harnessInfo.h"
-#include "common/harnessManifest.h"
-#include "common/harnessPostgres.h"
+#include "harness/info.h"
+#include "harness/manifest.h"
+#include "harness/postgres.h"
 
 /***********************************************************************************************************************************
 Special string constants
 ***********************************************************************************************************************************/
-#define SHRUG_EMOJI                                                 "¯\\_(ツ)_/¯"
+// Shrug emoji as \xNN escapes to preserve 7-bit ASCII; runtime bytes are two U+00AF and a U+30C4 katakana tu around ASCII \_(...)_/
+#define SHRUG_EMOJI                                                 "\xc2\xaf\\_(\xe3\x83\x84)_/\xc2\xaf"
 
 /***********************************************************************************************************************************
 Test Run

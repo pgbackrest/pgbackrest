@@ -3,7 +3,7 @@ Test Stack Trace Handler
 ***********************************************************************************************************************************/
 #include <assert.h>
 
-#include "common/harnessStackTrace.h"
+#include "harness/stackTrace.h"
 
 #ifdef HAVE_LIBBACKTRACE
 

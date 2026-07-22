@@ -8,10 +8,10 @@ Test S3 Storage
 #include "storage/helper.h"
 #include "version.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessFork.h"
-#include "common/harnessServer.h"
-#include "common/harnessStorage.h"
+#include "harness/config.h"
+#include "harness/fork.h"
+#include "harness/server.h"
+#include "harness/storage.h"
 
 /***********************************************************************************************************************************
 Constants
@@ -1209,6 +1209,36 @@ testRun(void)
 
                 TEST_RESULT_STR_Z(driver->credRole, TEST_SERVICE_ROLE, "check role");
                 TEST_RESULT_STR_Z(driver->tokenFile, TEST_SERVICE_TOKEN_FILE, "check token file");
+                TEST_RESULT_STR_Z(driver->credHost, "sts.amazonaws.com", "check default sts host");
+
+                // Default sts host resolves to the default https port
+                char logBuf[STACK_TRACE_PARAM_MAX];
+
+                TEST_RESULT_VOID(
+                    FUNCTION_LOG_OBJECT_FORMAT(driver->credHttpClient, httpClientToLog, logBuf, sizeof(logBuf)),
+                    "credHttpClient toLog");
+                TEST_RESULT_BOOL(
+                    strstr(logBuf, "{host: sts.amazonaws.com, port: 443, ") != NULL, true, "check default sts host and port");
+
+                // Use custom sts host with an explicit port
+                argList = strLstDup(commonArgList);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
+                hrnCfgArgRawZ(argList, cfgOptRepoS3KeyType, "web-id");
+                hrnCfgArgRawZ(argList, cfgOptRepoS3StsHost, "sts.us-east-1.amazonaws.com:9443");
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+                s3 = storageRepoGet(0, true);
+                driver = (StorageS3 *)storageDriver(s3);
+
+                TEST_RESULT_STR_Z(driver->credHost, "sts.us-east-1.amazonaws.com", "check custom sts host");
+
+                // Custom sts host and port flow through to the credential client
+                TEST_RESULT_VOID(
+                    FUNCTION_LOG_OBJECT_FORMAT(driver->credHttpClient, httpClientToLog, logBuf, sizeof(logBuf)),
+                    "credHttpClient toLog");
+                TEST_RESULT_BOOL(
+                    strstr(logBuf, "{host: sts.us-east-1.amazonaws.com, port: 9443, ") != NULL, true,
+                    "check custom sts host and port");
 
                 // Set partSize to a small value for testing
                 driver->partSize = 16;
@@ -1216,6 +1246,45 @@ testRun(void)
                 // Testing requires the auth http client to be redirected
                 driver->credHost = hrnServerHost();
                 driver->credHttpClient = httpClientNew(sckClientNew(host, testPortAuth, 5000, 5000), 5000);
+
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error when the credentials request fails");
+
+                // The web identity token is redacted from the query and the STS error is included rather than hidden by a failure
+                // to parse the expected success response
+                // {uncrustify_off - comment inside string}
+                #define TEST_SERVICE_ERROR                                                                                         \
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"                                                                   \
+                    "<ErrorResponse xmlns=\"https://sts.amazonaws.com/doc/2011-06-15/\">"                                          \
+                    "<Error>"                                                                                                      \
+                    "<Type>Sender</Type>"                                                                                          \
+                    "<Code>InvalidIdentityToken</Code>"                                                                            \
+                    "<Message>No OpenIDConnect provider found in your account for the audience</Message>"                          \
+                    "</Error>"                                                                                                     \
+                    "</ErrorResponse>"
+                // {uncrustify_on}
+
+                hrnServerScriptAccept(auth);
+
+                testRequestP(auth, NULL, HTTP_VERB_GET, TEST_SERVICE_URI);
+                testResponseP(auth, .code = 400, .content = TEST_SERVICE_ERROR);
+
+                hrnServerScriptClose(auth);
+
+                TEST_ERROR_FMT(
+                    storageInfoP(s3, STRDEF("BOGUS"), .ignoreMissing = true), ProtocolError,
+                    "HTTP request failed with 400:\n"
+                    "*** Path/Query ***:\n"
+                    "GET /?Action=AssumeRoleWithWebIdentity&RoleArn=arn%%3Aaws%%3Aiam%%3A%%3A123456789012%%3Arole%%2FTestRole"
+                    "&RoleSessionName=pgBackRest&Version=2011-06-15&WebIdentityToken=<redacted>\n"
+                    "*** Request Headers ***:\n"
+                    "content-length: 0\n"
+                    "host: %s\n"
+                    "*** Response Headers ***:\n"
+                    "content-length: %zu\n"
+                    "*** Response Content ***:\n"
+                    TEST_SERVICE_ERROR,
+                    strZ(hrnServerHost()), strlen(TEST_SERVICE_ERROR));
 
                 hrnServerScriptAccept(service);
 
@@ -1338,6 +1407,34 @@ testRun(void)
                 // Set partSize to a small value for testing
                 driver->partSize = 16;
 
+                // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("error when the credentials request fails");
+
+                #define TEST_PODID_ERROR                            "{\"message\":\"invalid authorization token\"}"
+
+                hrnServerScriptAccept(auth);
+
+                testRequestP(auth, NULL, HTTP_VERB_GET, TEST_PODID_GET, .authorization = TEST_PODID_TOKEN);
+                testResponseP(auth, .code = 400, .content = TEST_PODID_ERROR);
+
+                hrnServerScriptClose(auth);
+
+                // The authorization header holding the token is redacted and the error body is included
+                TEST_ERROR_FMT(
+                    storageInfoP(s3, STRDEF("BOGUS"), .ignoreMissing = true), ProtocolError,
+                    "HTTP request failed with 400:\n"
+                    "*** Path/Query ***:\n"
+                    "GET /v1/credentials\n"
+                    "*** Request Headers ***:\n"
+                    "authorization: <redacted>\n"
+                    "content-length: 0\n"
+                    "host: %s\n"
+                    "*** Response Headers ***:\n"
+                    "content-length: %zu\n"
+                    "*** Response Content ***:\n"
+                    TEST_PODID_ERROR,
+                    strZ(hrnServerHost()), strlen(TEST_PODID_ERROR));
+
                 hrnServerScriptAccept(service);
 
                 // -----------------------------------------------------------------------------------------------------------------
@@ -1412,9 +1509,49 @@ testRun(void)
                 hrnServerScriptEnd(auth);
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("switch to process authentication");
+
+                hrnServerScriptClose(service);
+
+                #define TEST_PROCESS_ACCESS_KEY                     "pp"
+                #define TEST_PROCESS_SECRET_KEY                     "qq"
+                #define TEST_PROCESS_SESSION_TOKEN                  "rr"
+                #define TEST_PROCESS_CMD                            TEST_PATH "/process-cred"
+
+                // Write a script that takes access key, secret key, token, and expiration as parameters and outputs JSON
+                HRN_STORAGE_PUT_Z(
+                    storagePosixNewP(TEST_PATH_STR, .write = true), TEST_PROCESS_CMD,
+                    "#!/bin/sh\n"
+                    "echo '{\"AccessKeyId\":\"'$1'\",\"SecretAccessKey\":\"'$2'\",\"SessionToken\":\"'$3'\""
+                    ",\"Expiration\":\"'$4'\"}'\n");
+
+                HRN_SYSTEM("chmod +x " TEST_PROCESS_CMD);
+
+                const String *const processExpiration = testS3DateTime(time(NULL) + (S3_CREDENTIAL_RENEW_SEC * 2));
+
+                argList = strLstDup(commonArgList);
+                hrnCfgArgRawFmt(argList, cfgOptRepoStorageHost, "%s:%u", strZ(host), testPort);
+                hrnCfgArgRawZ(argList, cfgOptRepoS3KeyType, "process");
+                hrnCfgArgRawZ(argList, cfgOptRepoS3ProcessCmd, TEST_PROCESS_CMD);
+                hrnCfgArgRawZ(argList, cfgOptRepoS3ProcessCmd, TEST_PROCESS_ACCESS_KEY);
+                hrnCfgArgRawZ(argList, cfgOptRepoS3ProcessCmd, TEST_PROCESS_SECRET_KEY);
+                hrnCfgArgRawZ(argList, cfgOptRepoS3ProcessCmd, TEST_PROCESS_SESSION_TOKEN);
+                hrnCfgArgRawFmt(argList, cfgOptRepoS3ProcessCmd, "%s", strZ(processExpiration));
+                HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+                s3 = storageRepoGet(0, true);
+                driver = (StorageS3 *)storageDriver(s3);
+
+                TEST_RESULT_UINT(strLstSize(driver->credCmd), 5, "check process cmd list size");
+
+                hrnServerScriptAccept(service);
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("list basic level");
 
-                testRequestP(service, s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2F");
+                testRequestP(
+                    service, s3, HTTP_VERB_GET, "/?delimiter=%2F&list-type=2&prefix=path%2Fto%2F",
+                    .accessKey = TEST_PROCESS_ACCESS_KEY, .securityToken = TEST_PROCESS_SESSION_TOKEN);
                 testResponseP(
                     service,
                     .content =

@@ -80,6 +80,11 @@
     <contributor-id type="github">anarazel</contributor-id>
 </contributor>
 
+<contributor id="andrew.charlton">
+    <contributor-name-display>Andrew Charlton</contributor-name-display>
+    <contributor-id type="github">andrewcharlton</contributor-id>
+</contributor>
+
 <contributor id="andrew.jackson">
     <contributor-name-display>Andrew Jackson</contributor-name-display>
     <contributor-id type="github">AndrewJackson2020</contributor-id>
@@ -88,6 +93,11 @@
 <contributor id="andrew.lecuyer">
     <contributor-name-display>Andrew L'Ecuyer</contributor-name-display>
     <contributor-id type="github">andrewlecuyer</contributor-id>
+</contributor>
+
+<contributor id="andrew.pogrebnoi">
+    <contributor-name-display>Andrew Pogrebnoi</contributor-name-display>
+    <contributor-id type="github">dAdAbird</contributor-id>
 </contributor>
 
 <contributor id="andrew.schwartz">
@@ -130,6 +140,11 @@
     <contributor-id type="github">argdenis</contributor-id>
 </contributor>
 
+<contributor id="artur.zakirov">
+    <contributor-name-display>Artur Zakirov</contributor-name-display>
+    <contributor-id type="github">za-arthur</contributor-id>
+</contributor>
+
 <contributor id="asjonos">
     <contributor-name-display>asjonos</contributor-name-display>
     <contributor-id type="github">asjonos</contributor-id>
@@ -150,7 +165,7 @@
     <contributor-id type="github">benjaminjb</contributor-id>
 </contributor>
 
-<contributor id="benoit.lobréau">
+<contributor id="benoit.lobreau">
     <contributor-name-display>blogh</contributor-name-display>
     <contributor-id type="github">blogh</contributor-id>
 </contributor>
@@ -279,6 +294,11 @@
     <contributor-id type="github">cjames53</contributor-id>
 </contributor>
 
+<contributor id="crispy">
+    <contributor-name-display>Crispy</contributor-name-display>
+    <contributor-id type="github">Crispy1975</contributor-id>
+</contributor>
+
 <contributor id="ctenuun">
     <contributor-name-display>Tenuun</contributor-name-display>
     <contributor-id type="github">ctenuun</contributor-id>
@@ -337,6 +357,11 @@
 <contributor id="devrim.gunduz">
     <contributor-name-display>Devrim G&amp;uuml;nd&amp;uuml;z</contributor-name-display>
     <contributor-id type="github">devrimgunduz</contributor-id>
+</contributor>
+
+<contributor id="dima19017">
+    <contributor-name-display>Dmitrii</contributor-name-display>
+    <contributor-id type="github">dima19017</contributor-id>
 </contributor>
 
 <contributor id="dmitry.didovicher">
@@ -670,6 +695,11 @@
     <contributor-id type="github">JBromage</contributor-id>
 </contributor>
 
+<contributor id="jimmy.yih">
+    <contributor-name-display>Jimmy Yih</contributor-name-display>
+    <contributor-id type="github">jimmyyih</contributor-id>
+</contributor>
+
 <contributor id="joe.wildish">
     <contributor-name-display>Joe Wildish</contributor-name-display>
     <contributor-id type="github">joewildish</contributor-id>
@@ -740,6 +770,11 @@
     <contributor-id type="github">levkk</contributor-id>
 </contributor>
 
+<contributor id="lkanbus">
+    <contributor-name-display>lkanbus</contributor-name-display>
+    <contributor-id type="github">lkanbus</contributor-id>
+</contributor>
+
 <contributor id="loop-evgeny">
     <contributor-name-display>loop-evgeny</contributor-name-display>
     <contributor-id type="github">loop-evgeny</contributor-id>
@@ -795,6 +830,11 @@
     <contributor-id type="github">marceloneppel</contributor-id>
 </contributor>
 
+<contributor id="marco.fontana">
+    <contributor-name-display>Marco Fontana</contributor-name-display>
+    <contributor-id type="github">marf</contributor-id>
+</contributor>
+
 <contributor id="marco.montagna">
     <contributor-name-display>Marco Montagna</contributor-name-display>
     <contributor-id type="github">mmontagna</contributor-id>
@@ -828,6 +868,11 @@
 <contributor id="maxim.michkov">
     <contributor-name-display>Maxim Michkov</contributor-name-display>
     <contributor-id type="github">silent-observer</contributor-id>
+</contributor>
+
+<contributor id="naveen">
+    <contributor-name-display>Naveen</contributor-name-display>
+    <contributor-id type="github">navaneswarareddy</contributor-id>
 </contributor>
 
 <contributor id="mibiio">
@@ -875,6 +920,11 @@
     <contributor-id type="github">Yuxael</contributor-id>
 </contributor>
 
+<contributor id="mitchell.grice">
+    <contributor-name-display>Mitchell Grice</contributor-name-display>
+    <contributor-id type="github">gricey432</contributor-id>
+</contributor>
+
 <contributor id="mohamed.insaf.k">
     <contributor-name-display>Mohamed Insaf K</contributor-name-display>
     <contributor-id type="github">insafk</contributor-id>
@@ -893,6 +943,11 @@
 <contributor id="moiz.ibrar">
     <contributor-name-display>Moiz Ibrar</contributor-name-display>
     <contributor-id type="github">moizpgedge</contributor-id>
+</contributor>
+
+<contributor id="mustafa0x">
+    <contributor-name-display>mustafa0x</contributor-name-display>
+    <contributor-id type="github">mustafa0x</contributor-id>
 </contributor>
 
 <contributor id="navid.golpayegani">
@@ -1090,6 +1145,16 @@
     <contributor-id type="github">ShivakumarAmbigiTR</contributor-id>
 </contributor>
 
+<contributor id="shubham">
+    <contributor-name-display>Shubham</contributor-name-display>
+    <contributor-id type="github">bas3line</contributor-id>
+</contributor>
+
+<contributor id="simon.gratton">
+    <contributor-name-display>Simon Gratton</contributor-name-display>
+    <contributor-id type="github">simon-gratton</contributor-id>
+</contributor>
+
 <contributor id="slava.moudry">
     <contributor-name-display>Slava Moudry</contributor-name-display>
     <contributor-id type="github">slava-pagerduty</contributor-id>
@@ -1152,6 +1217,11 @@
 <contributor id="timothee.peignier">
     <contributor-name-display>Timoth&amp;eacute;e Peignier</contributor-name-display>
     <contributor-id type="github">cyberdelia</contributor-id>
+</contributor>
+
+<contributor id="tisserat">
+    <contributor-name-display>tisserat</contributor-name-display>
+    <contributor-id type="github">tisserat</contributor-id>
 </contributor>
 
 <contributor id="todd.vernick">
@@ -1250,6 +1320,11 @@
 <contributor id="vthriller">
     <contributor-name-display>vthriller</contributor-name-display>
     <contributor-id type="github">vthriller</contributor-id>
+</contributor>
+
+<contributor id="vut12">
+    <contributor-name-display>vut12</contributor-name-display>
+    <contributor-id type="github">vut12</contributor-id>
 </contributor>
 
 <contributor id="will.m">

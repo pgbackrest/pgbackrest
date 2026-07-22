@@ -39,8 +39,9 @@ Error messages
 #define STORAGE_ERROR_LIST_INFO                                     "unable to list file info for path '%s'"
 #define STORAGE_ERROR_LIST_INFO_MISSING                             "unable to list file info for missing path '%s'"
 
+#define STORAGE_ERROR_FILE_REMOVE                                   "unable to remove file '%s'"
+
 #define STORAGE_ERROR_PATH_REMOVE                                   "unable to remove path '%s'"
-#define STORAGE_ERROR_PATH_REMOVE_FILE                              "unable to remove file '%s'"
 #define STORAGE_ERROR_PATH_REMOVE_MISSING                           "unable to remove missing path '%s'"
 
 #define STORAGE_ERROR_PATH_SYNC                                     "unable to sync path '%s'"

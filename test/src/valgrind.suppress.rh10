@@ -1,0 +1,26 @@
+# RHEL 10 ships zlib-ng, which uses aligned_alloc() for its internal deflate/inflate buffers. Valgrind reports these
+# aligned library allocations as "possibly lost" (it only finds interior pointers to them), so suppress the false
+# positive for any allocation made inside zlib-ng.
+{
+    zlib_ng_aligned_alloc
+    Memcheck:Leak
+    match-leak-kinds: possible
+    fun:aligned_alloc
+    obj:*libz.so*zlib-ng*
+}
+# libgcc's stack unwinder reads uninitialized memory (a false positive) while generating backtraces. rh10 runs valgrind
+# with back-trace enabled, so suppress it here as well as in valgrind.suppress.none.
+{
+    libgcc_unwind_uninit_cond
+    Memcheck:Cond
+    ...
+    fun:_Unwind_Backtrace
+    fun:backtrace_full
+}
+{
+    libgcc_unwind_uninit_value
+    Memcheck:Value8
+    ...
+    fun:_Unwind_Backtrace
+    fun:backtrace_full
+}

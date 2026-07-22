@@ -43,15 +43,18 @@ Option group constants
 /***********************************************************************************************************************************
 Option constants
 ***********************************************************************************************************************************/
+#define CFGOPT_ALLOW_ROOT                                           "allow-root"
 #define CFGOPT_ANNOTATION                                           "annotation"
 #define CFGOPT_ARCHIVE_ASYNC                                        "archive-async"
 #define CFGOPT_ARCHIVE_CHECK                                        "archive-check"
 #define CFGOPT_ARCHIVE_COPY                                         "archive-copy"
+#define CFGOPT_ARCHIVE_EXPIRE_BEFORE                                "archive-expire-before"
 #define CFGOPT_ARCHIVE_GET_QUEUE_MAX                                "archive-get-queue-max"
 #define CFGOPT_ARCHIVE_HEADER_CHECK                                 "archive-header-check"
 #define CFGOPT_ARCHIVE_MISSING_RETRY                                "archive-missing-retry"
 #define CFGOPT_ARCHIVE_MODE                                         "archive-mode"
 #define CFGOPT_ARCHIVE_MODE_CHECK                                   "archive-mode-check"
+#define CFGOPT_ARCHIVE_PUSH_BATCH_SIZE                              "archive-push-batch-size"
 #define CFGOPT_ARCHIVE_PUSH_QUEUE_MAX                               "archive-push-queue-max"
 #define CFGOPT_ARCHIVE_TIMEOUT                                      "archive-timeout"
 #define CFGOPT_BACKUP_STANDBY                                       "backup-standby"
@@ -144,7 +147,7 @@ Option constants
 #define CFGOPT_VERBOSE                                              "verbose"
 #define CFGOPT_VERSION                                              "version"
 
-#define CFG_OPTION_TOTAL                                            195
+#define CFG_OPTION_TOTAL                                            200
 
 /***********************************************************************************************************************************
 Option value constants
@@ -344,6 +347,9 @@ Option value constants
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_POD_ID                           3
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_POD_ID_STRID                     STRID5S("pod-id", 3, 0x89d91f08)
 #define CFGOPTVAL_REPO_S3_KEY_TYPE_POD_ID_Z                         "pod-id"
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_PROCESS                          4
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_PROCESS_STRID                    STRID5S("process", 4, 0x4e651be50a)
+#define CFGOPTVAL_REPO_S3_KEY_TYPE_PROCESS_Z                        "process"
 
 #define CFGOPTVAL_REPO_S3_URI_STYLE_HOST                            0
 #define CFGOPTVAL_REPO_S3_URI_STYLE_HOST_STRID                      STRID5S("host", 0, 0xa4de82)
@@ -477,15 +483,18 @@ Option enum
 ***********************************************************************************************************************************/
 typedef enum
 {
+    cfgOptAllowRoot,
     cfgOptAnnotation,
     cfgOptArchiveAsync,
     cfgOptArchiveCheck,
     cfgOptArchiveCopy,
+    cfgOptArchiveExpireBefore,
     cfgOptArchiveGetQueueMax,
     cfgOptArchiveHeaderCheck,
     cfgOptArchiveMissingRetry,
     cfgOptArchiveMode,
     cfgOptArchiveModeCheck,
+    cfgOptArchivePushBatchSize,
     cfgOptArchivePushQueueMax,
     cfgOptArchiveTimeout,
     cfgOptBackupStandby,
@@ -613,11 +622,13 @@ typedef enum
     cfgOptRepoS3KeySecret,
     cfgOptRepoS3KeyType,
     cfgOptRepoS3KmsKeyId,
+    cfgOptRepoS3ProcessCmd,
     cfgOptRepoS3Region,
     cfgOptRepoS3RequesterPays,
     cfgOptRepoS3Role,
     cfgOptRepoS3Service,
     cfgOptRepoS3SseCustomerKey,
+    cfgOptRepoS3StsHost,
     cfgOptRepoS3Token,
     cfgOptRepoS3UriStyle,
     cfgOptRepoSftpHost,

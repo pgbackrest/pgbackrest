@@ -37,6 +37,7 @@ struct HttpResponse
     HttpResponsePub pub;                                            // Publicly accessible variables
     HttpSession *session;                                           // HTTP session
     bool contentChunked;                                            // Is the response content chunked?
+    bool contentSizeSet;                                            // Was content size specified?
     uint64_t contentSize;                                           // Content size (ignored for chunked)
     uint64_t contentRemaining;                                      // Content remaining (per chunk if chunked)
     bool closeOnContentEof;                                         // Will server close after content is sent?
@@ -143,11 +144,22 @@ httpResponseRead(THIS_VOID, Buffer *const buffer, const bool block)
                     if (this->contentChunked && this->contentRemaining == 0)
                     {
                         // Read length of next chunk
-                        this->contentRemaining = cvtZToUInt64Base(strZ(strTrim(ioReadLine(rawRead))), 16);
+                        const String *chunkHeader = strTrim(ioReadLine(rawRead));
+                        const int chunkExtPos = strChr(chunkHeader, ';');
 
-                        // If content remaining is still zero then eof
+                        if (chunkExtPos != -1)
+                            chunkHeader = strTrim(strSubN(chunkHeader, 0, (size_t)chunkExtPos));
+
+                        this->contentRemaining = cvtZToUInt64Base(strZ(chunkHeader), 16);
+
+                        // A zero-size chunk terminates the response
                         if (this->contentRemaining == 0)
+                        {
+                            // Consume chunk trailers and the blank line that terminates them.
+                            while (strSize(strTrim(ioReadLine(rawRead))) != 0);
+
                             this->contentEof = true;
+                        }
                     }
 
                     // Read if there is content remaining
@@ -175,7 +187,7 @@ httpResponseRead(THIS_VOID, Buffer *const buffer, const bool block)
                     {
                         // If chunked then consume the blank line that follows every chunk. There might be more chunk data so loop
                         // back around to check.
-                        if (this->contentChunked)
+                        if (this->contentChunked && !this->contentEof)
                         {
                             ioReadLine(rawRead);
                         }
@@ -275,19 +287,21 @@ httpResponseStatusRead(HttpResponse *const this, IoRead *const read)
 Read response headers
 ***********************************************************************************************************************************/
 static void
-httpResponseHeaderRead(HttpResponse *const this, IoRead *const read)
+httpResponseHeaderRead(HttpResponse *const this, IoRead *const read, const bool allowEof)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(HTTP_RESPONSE, this);
         FUNCTION_TEST_PARAM(IO_READ, read);
+        FUNCTION_TEST_PARAM(BOOL, allowEof);
     FUNCTION_TEST_END();
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
         do
         {
-            // Read the next header
-            String *const header = strTrim(ioReadLine(read));
+            // Read the next header. In a multipart part the headers may be terminated by the boundary rather than a blank line (the
+            // boundary's leading CRLF doubles as the terminator), so allow eof to end the header block in that case.
+            String *const header = strTrim(ioReadLineParam(read, allowEof));
 
             // If the header is empty then we have reached the end of the headers
             if (strSize(header) == 0)
@@ -306,7 +320,7 @@ httpResponseHeaderRead(HttpResponse *const this, IoRead *const read)
             if (strEq(headerKey, HTTP_HEADER_TRANSFER_ENCODING_STR))
             {
                 // Error if transfer encoding is not chunked
-                if (!strEq(headerValue, HTTP_VALUE_TRANSFER_ENCODING_CHUNKED_STR))
+                if (!strEq(strLower(headerValue), HTTP_VALUE_TRANSFER_ENCODING_CHUNKED_STR))
                 {
                     THROW_FMT(
                         FormatError, "only '%s' is supported for '%s' header", HTTP_VALUE_TRANSFER_ENCODING_CHUNKED,
@@ -319,6 +333,7 @@ httpResponseHeaderRead(HttpResponse *const this, IoRead *const read)
             // Read content size
             if (strEq(headerKey, HTTP_HEADER_CONTENT_LENGTH_STR))
             {
+                this->contentSizeSet = true;
                 this->contentSize = cvtZToUInt64(strZ(headerValue));
                 this->contentRemaining = this->contentSize;
             }
@@ -334,7 +349,7 @@ httpResponseHeaderRead(HttpResponse *const this, IoRead *const read)
         while (1);
 
         // Error if transfer encoding and content length are both set
-        if (this->contentChunked && this->contentSize > 0)
+        if (this->contentChunked && this->contentSizeSet)
         {
             THROW_FMT(
                 FormatError, "'%s' and '%s' headers are both set", HTTP_HEADER_TRANSFER_ENCODING,
@@ -387,7 +402,7 @@ httpResponseNew(HttpSession *const session, const String *const verb, const bool
     httpResponseStatusRead(this, httpSessionIoReadP(this->session));
 
     // Read headers
-    httpResponseHeaderRead(this, httpSessionIoReadP(this->session));
+    httpResponseHeaderRead(this, httpSessionIoReadP(this->session), false);
 
     // Was content returned in the response? HEAD will report content but not actually return any.
     this->contentExists =
@@ -540,7 +555,7 @@ httpResponseMultiNext(HttpResponseMulti *const this)
             IoRead *const responseIo = ioBufferReadNewOpen(response);
 
             // Read multipart headers
-            httpResponseHeaderRead(result, responseIo);
+            httpResponseHeaderRead(result, responseIo, true);
 
             CHECK(
                 FormatError,
@@ -550,8 +565,8 @@ httpResponseMultiNext(HttpResponseMulti *const this)
             // Read status
             httpResponseStatusRead(result, responseIo);
 
-            // Read headers
-            httpResponseHeaderRead(result, responseIo);
+            // Read headers (eof is allowed since the boundary, not a blank line, may terminate the embedded response headers)
+            httpResponseHeaderRead(result, responseIo, true);
 
             // Read content
             CHECK(FormatError, !result->contentChunked, "chunked encoding not supported in multipart");

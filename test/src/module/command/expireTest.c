@@ -9,10 +9,10 @@ NOTE: references to 9.4 are intentionally included in this test to ensure that e
 #include "common/io/bufferRead.h"
 #include "storage/posix/storage.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessInfo.h"
-#include "common/harnessStorage.h"
-#include "common/harnessTime.h"
+#include "harness/config.h"
+#include "harness/info.h"
+#include "harness/storage.h"
+#include "harness/time.h"
 
 /***********************************************************************************************************************************
 Helper functions
@@ -444,6 +444,60 @@ testRun(void)
         TEST_TITLE("skip adhoc when no backups");
 
         TEST_RESULT_VOID(removeExpiredBackup(infoBackup, STRDEF("20181118-152100F"), 0), "expire");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("in-progress/resumable latest backup is not removed by non-adhoc expire");
+
+        // Start from a clean backup path so the listing reflects only this test
+        HRN_STORAGE_PATH_REMOVE(storageRepoWrite(), STORAGE_REPO_BACKUP, .recurse = true);
+
+        // backup.info with a single committed full backup. The in-progress backup below is not yet in backup.info, which is exactly
+        // the state seen by expire on one host while a backup is running on another host.
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE,
+            "[backup:current]\n"
+            "20181119-152138F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000010000000000000002\",\"backup-archive-stop\":\"000000010000000000000002\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "\n"
+            "[db]\n"
+            "db-catalog-version=201409291\n"
+            "db-control-version=942\n"
+            "db-id=1\n"
+            "db-system-id=6625592122879095702\n"
+            "db-version=\"9.4\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702"
+            ",\"db-version\":\"9.4\"}");
+
+        TEST_ASSIGN(
+            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL), "get backup.info");
+
+        // Committed backup (in backup.info) and an older orphan backup that is not in backup.info and has no manifest copy
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152138F/" BOGUS_STR, BOGUS_STR);
+        HRN_STORAGE_PUT_Z(storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152100F/" BOGUS_STR, BOGUS_STR);
+
+        // Latest backup on disk is in-progress/resumable: it has backup.manifest.copy but no backup.manifest and is not in
+        // backup.info, so it must not be removed
+        HRN_STORAGE_PUT_EMPTY(
+            storageRepoWrite(), STORAGE_REPO_BACKUP "/20181119-152800F/" BACKUP_MANIFEST_FILE INFO_COPY_EXT);
+
+        TEST_RESULT_VOID(removeExpiredBackup(infoBackup, NULL, 0), "expire with in-progress latest backup");
+
+        TEST_RESULT_LOG("P00   INFO: repo1: remove expired backup 20181119-152100F");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_BACKUP,
+            "20181119-152138F/\n"
+            "20181119-152138F/BOGUS\n"
+            "20181119-152800F/\n"
+            "20181119-152800F/backup.manifest.copy\n"
+            "backup.info\n");
     }
 
     // *****************************************************************************************************************************
@@ -1489,6 +1543,172 @@ testRun(void)
             "P00   INFO: repo1: 10-2 no archive to remove\n"
             "P00   INFO: repo1: remove expired backup history path 2017\n"
             "P00   INFO: repo1: remove expired backup history manifest 20181029-152138F.manifest.gz");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archive-expire-before valid WAL segment name");
+
+        argList = strLstDup(argListBase);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionFull, "2");
+        hrnCfgArgRawZ(argList, cfgOptArchiveExpireBefore, "000000030000000000000006");
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(cmdExpire(), "valid archive-expire-before passes validation and expires nothing new");
+        TEST_RESULT_LOG(
+            "P00   INFO: repo1: 9.4-1 no archive to remove\n"
+            "P00   INFO: repo1: 10-2 no archive to remove");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archive-expire-before invalid WAL segment name");
+
+        argList = strLstDup(argListAvoidWarn);
+        hrnCfgArgRawZ(argList, cfgOptArchiveExpireBefore, BOGUS_STR);
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
+
+        TEST_ERROR(
+            cmdExpire(), OptionInvalidValueError,
+            "'" BOGUS_STR "' is not a valid WAL segment name for option '--archive-expire-before'");
+
+        // A .partial suffix is not an exact segment and must be rejected - otherwise it would shift the removal boundary and
+        // expire the segment the option is meant to keep
+        argList = strLstDup(argListAvoidWarn);
+        hrnCfgArgRawZ(argList, cfgOptArchiveExpireBefore, "000000010000000000000006.partial");
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
+
+        TEST_ERROR(
+            cmdExpire(), OptionInvalidValueError,
+            "'000000010000000000000006.partial' is not a valid WAL segment name for option '--archive-expire-before'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archive-expire-before - no backup to retain, current archive id only");
+
+        // Clear archive left from prior tests so only the WAL generated below is present
+        HRN_STORAGE_PATH_REMOVE(storageRepoWrite(), STORAGE_REPO_ARCHIVE, .recurse = true);
+
+        // No current backups. Two archive ids: 9.4-1 (old/non-current) and 10-2 (current)
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE,
+            "[db]\n"
+            "db-catalog-version=201707211\n"
+            "db-control-version=1002\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"10\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702"
+            ",\"db-version\":\"9.4\"}\n"
+            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089"
+            ",\"db-version\":\"10\"}\n");
+
+        TEST_ASSIGN(
+            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL), "get backup.info");
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"10\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":6625592122879095702,\"db-version\":\"9.4\"}\n"
+            "2={\"db-id\":6626363367545678089,\"db-version\":\"10\"}");
+
+        // Generate a fresh set of WAL for each archive id
+        archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 10, "9.4-1", "0000000100000000");
+        archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 10, "10-2", "0000000100000000");
+
+        argList = strLstDup(argListAvoidWarn);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "1");
+        hrnCfgArgRawZ(argList, cfgOptArchiveExpireBefore, "000000010000000000000005");
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(
+            removeExpiredArchive(infoBackup, false, 0),
+            "archive-expire-before triggers expiration though repo1-retention-archive is not satisfied by any backup");
+
+        TEST_RESULT_BOOL(
+            storagePathExistsP(storageRepo(), STRDEF(STORAGE_REPO_ARCHIVE "/9.4-1")), false,
+            "9.4-1 (old, non-current) removed entirely regardless of archive-expire-before");
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/10-2/0000000100000000", archiveExpectList(5, 10, "0000000100000000"),
+            .comment = "10-2 (current): only WAL before 000000010000000000000005 removed, segment and later kept");
+        TEST_RESULT_LOG(
+            "P00   INFO: repo1: remove archive path " TEST_PATH "/repo/archive/db/9.4-1\n"
+            "P00   INFO: repo1: 10-2 remove archive, start = 000000010000000000000001, stop = 000000010000000000000004");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archive-expire-before - before retained backup start, caps gap removal");
+
+        // Clear the leftover 10-2 archive from the prior test
+        HRN_STORAGE_PATH_REMOVE(storageRepoWrite(), STORAGE_REPO_ARCHIVE "/10-2", .recurse = true);
+
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_BACKUP_PATH_FILE,
+            "[backup:current]\n"
+            "20181119-152800F={"
+            "\"backrest-format\":5,\"backrest-version\":\"2.08dev\","
+            "\"backup-archive-start\":\"000000010000000000000006\",\"backup-archive-stop\":\"000000010000000000000006\","
+            "\"backup-info-repo-size\":2369186,\"backup-info-repo-size-delta\":2369186,"
+            "\"backup-info-size\":20162900,\"backup-info-size-delta\":20162900,"
+            "\"backup-timestamp-start\":1542640898,\"backup-timestamp-stop\":1542640911,\"backup-type\":\"full\","
+            "\"db-id\":1,\"option-archive-check\":true,\"option-archive-copy\":false,\"option-backup-standby\":false,"
+            "\"option-checksum-page\":true,\"option-compress\":true,\"option-hardlink\":false,\"option-online\":true}\n"
+            "\n"
+            "[db]\n"
+            "db-catalog-version=201707211\n"
+            "db-control-version=1002\n"
+            "db-id=2\n"
+            "db-system-id=6626363367545678089\n"
+            "db-version=\"10\"\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-catalog-version\":201409291,\"db-control-version\":942,\"db-system-id\":6625592122879095702"
+            ",\"db-version\":\"9.4\"}\n"
+            "2={\"db-catalog-version\":201707211,\"db-control-version\":1002,\"db-system-id\":6626363367545678089"
+            ",\"db-version\":\"10\"}\n");
+
+        TEST_ASSIGN(
+            infoBackup, infoBackupLoadFile(storageRepo(), INFO_BACKUP_PATH_FILE_STR, cipherTypeNone, NULL), "get backup.info");
+
+        archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 10, "9.4-1", "0000000100000000");
+
+        argList = strLstDup(argListAvoidWarn);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "1");
+        hrnCfgArgRawZ(argList, cfgOptArchiveExpireBefore, "000000010000000000000003");
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(
+            removeExpiredArchive(infoBackup, false, 0), "archive-expire-before before backup start caps removal at the segment");
+
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", archiveExpectList(3, 10, "0000000100000000"),
+            .comment =
+                "only WAL before 000000010000000000000003 removed though backup only requires from 000000010000000000000006");
+        TEST_RESULT_LOG(
+            "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000002");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archive-expire-before - at/after retained backup start, no effect beyond normal retention");
+
+        HRN_STORAGE_PATH_REMOVE(storageRepoWrite(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", .recurse = true);
+        archiveGenerate(storageRepoWrite(), STORAGE_REPO_ARCHIVE, 1, 10, "9.4-1", "0000000100000000");
+
+        argList = strLstDup(argListAvoidWarn);
+        hrnCfgArgRawZ(argList, cfgOptRepoRetentionArchive, "1");
+        hrnCfgArgRawZ(argList, cfgOptArchiveExpireBefore, "000000010000000000000007");
+        HRN_CFG_LOAD(cfgCmdExpire, argList);
+
+        TEST_RESULT_VOID(
+            removeExpiredArchive(infoBackup, false, 0),
+            "archive-expire-before at/after backup start cannot remove WAL the backup requires");
+
+        TEST_STORAGE_LIST(
+            storageRepo(), STORAGE_REPO_ARCHIVE "/9.4-1/0000000100000000", archiveExpectList(6, 10, "0000000100000000"),
+            .comment =
+                "same result as without archive-expire-before: WAL before backup start (000000010000000000000006) removed");
+        TEST_RESULT_LOG(
+            "P00   INFO: repo1: 9.4-1 remove archive, start = 000000010000000000000001, stop = 000000010000000000000005");
     }
 
     // *****************************************************************************************************************************

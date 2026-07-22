@@ -4,23 +4,23 @@
 
 pgBackRest is a reliable backup and restore solution for PostgreSQL that seamlessly scales up to the largest databases and workloads.
 
-pgBackRest [v2.58.0](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.58.0) is the current stable release. Release notes are on the [Releases](http://www.pgbackrest.org/release.html) page.
+pgBackRest [v2.59.0](https://github.com/pgbackrest/pgbackrest/releases/tag/release/2.59.0) is the current stable release. Release notes are on the [Releases](https://pgbackrest.org/release.html) page.
 
 Please give us a star on [GitHub](https://github.com/pgbackrest/pgbackrest) if you like pgBackRest!
 
 ## News
 
-**May 18, 2026** - [pgBackRest Will Continue!](http://www.pgbackrest.org/news.html#will-continue)
+**July 20, 2026** - [New Distribution Tarball](https://pgbackrest.org/news.html#distribution-tarball)
 
-**May 7, 2026** - [Maintenance Update](http://www.pgbackrest.org/news.html#maintenance-update)
+**July 20, 2026** - [pgBackRest 2.59.0 Released](https://pgbackrest.org/news.html#release-2-59-0)
 
-**April 27, 2026** - [pgBackRest Is No Longer Being Maintained](http://www.pgbackrest.org/news.html#no-longer-maintained)
+**May 18, 2026** - [pgBackRest Will Continue!](https://pgbackrest.org/news.html#will-continue)
 
 ## Sponsors
 
 pgBackRest would not exist without sponsorship. Writing new features, fixing bugs, reviewing contributions, answering questions from the community, and maintenance all take a considerable amount of time. Please consider a [sponsorship](https://github.com/sponsors/dwsteele) if you use pgBackRest in your enterprise.
 
-Our sponsors: [AWS](https://aws.amazon.com), [Supabase](https://supabase.com), [pgEdge](https://pgedge.com), [Tiger Data](https://tigerdata.com), [Percona](https://percona.com), [Eon](https://eon.io).
+Our sponsors: [AWS](https://aws.amazon.com), [Supabase](https://supabase.com), [pgEdge](https://pgedge.com), [Tiger Data](https://tigerdata.com), [Percona](https://percona.com), [Eon](https://eon.io), [Xata](https://xata.io), [Dalibo](https://dalibo.com), [Data Egret](https://dataegret.com/).
 
 We are grateful to our sponsors for investing in open-source infrastructure that benefits the entire PostgreSQL community.
 
@@ -102,6 +102,12 @@ pgBackRest repositories can be located in S3, Azure, and GCS compatible object s
 
 pgBackRest can encrypt the repository to secure backups wherever they are stored.
 
+### Ransomware & Malware Protection
+
+When the repository is stored on versioned object storage, pgBackRest can read the repository as it was at a point-in-time. If backups are deleted or corrupted by accident, malware, or ransomware, a target time can be used to recover data from before the damage occurred.
+
+Versioning is supported by S3, Azure, and GCS compatible object stores. Object locking for S3 and soft delete for GCS or Azure can provide additional protection against tampering.
+
 ### Compatibility with ten versions of PostgreSQL
 
 pgBackRest includes support for ten versions of PostgreSQL, the five supported versions and the last five EOL versions. This allows ample time to upgrade to a supported version.
@@ -110,11 +116,9 @@ pgBackRest includes support for ten versions of PostgreSQL, the five supported v
 
 pgBackRest strives to be easy to configure and operate:
 
-- [User guides](http://www.pgbackrest.org/user-guide-index.html) for various operating systems and PostgreSQL versions.
-
-- [Command reference](http://www.pgbackrest.org/command.html) for command-line operations.
-
-- [Configuration reference](http://www.pgbackrest.org/configuration.html) for creating pgBackRest configurations.
+- [User guides](https://pgbackrest.org/user-guide-index.html) for various operating systems and PostgreSQL versions.
+- [Command reference](https://pgbackrest.org/command.html) for command-line operations.
+- [Configuration reference](https://pgbackrest.org/configuration.html) for creating pgBackRest configurations.
 
 ## Contributions
 

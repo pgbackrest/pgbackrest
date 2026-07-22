@@ -64,6 +64,9 @@ typedef enum
 
     // Can reads be retried?
     storageFeatureReadRetry,
+
+    // Can files be detected as missing on remove?
+    storageFeatureFileRemoveMissing,
 } StorageFeature;
 
 /***********************************************************************************************************************************

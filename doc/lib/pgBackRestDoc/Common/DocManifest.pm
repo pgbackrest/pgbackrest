@@ -621,6 +621,38 @@ sub renderOutGet
 }
 
 ####################################################################################################################################
+# linkVerify
+#
+# Verify that every page/section link points at a section that exists. This must be done after all pages have been rendered since
+# the section anchors for a page are only known once it has been rendered. Links to a page that was not rendered in this build
+# (e.g. a partial build with --include/--exclude) are skipped since the section anchors are not available to check.
+####################################################################################################################################
+sub linkVerify
+{
+    my $self = shift;
+
+    # Assign function parameters, defaults, and log debug info
+    my ($strOperation) = logDebugParam(__PACKAGE__ . '->linkVerify');
+
+    foreach my $rhLink (@{$self->{rhyLinkVerify} || []})
+    {
+        # Skip if the linked page was not rendered in this build
+        next if (!defined($self->{hPageAnchor}{$rhLink->{page}}));
+
+        # Error if the section does not exist on the page
+        if (!defined($self->{hPageAnchor}{$rhLink->{page}}{substr($rhLink->{section}, 1)}))
+        {
+            confess &log(
+                ERROR,
+                "page '$rhLink->{source}' has a link to page '$rhLink->{page}' section '$rhLink->{section}' that does not exist");
+        }
+    }
+
+    # Return from function and log return values if any
+    return logDebugReturn($strOperation);
+}
+
+####################################################################################################################################
 # cacheKey
 ####################################################################################################################################
 sub cacheKey

@@ -1958,13 +1958,6 @@ backupJobCallback(void *const data, const unsigned int clientIdx)
             {
                 const ManifestFile file = manifestFileUnpack(jobData->manifest, *(ManifestFilePack **)lstGet(queue, fileIdx));
 
-                // Continue if the next file would make the bundle too large. There may be a smaller one that will fit.
-                if (fileTotal > 0 && fileSize + file.size >= jobData->bundleSize)
-                {
-                    fileIdx++;
-                    continue;
-                }
-
                 // Is this file a block incremental?
                 const bool blockIncr = jobData->blockIncr && file.blockIncrSize > 0;
 

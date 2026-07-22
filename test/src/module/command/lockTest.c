@@ -3,8 +3,9 @@ Test Command Lock Handler
 ***********************************************************************************************************************************/
 #include "storage/posix/storage.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessStorage.h"
+#include "harness/config.h"
+#include "harness/fork.h"
+#include "harness/storage.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -86,6 +87,55 @@ testRun(void)
 
         TEST_RESULT_VOID(cmdLockReleaseP(), "release locks");
         TEST_STORAGE_LIST(storageTest, NULL, NULL, .comment = "check lock file does not exist");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("own lock detection");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/pg1");
+        hrnCfgArgRawZ(argList, cfgOptLockPath, TEST_PATH);
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        HRN_CFG_LOAD(cfgCmdArchiveGet, argList, .noStd = true);
+
+        TEST_RESULT_BOOL(cmdLockOwn(), false, "no lock is not our own");
+
+        // A lock held by this process (same exec id) is our own
+        TEST_RESULT_VOID(cmdLockAcquireP(), "acquire archive lock");
+        TEST_RESULT_BOOL(cmdLockOwn(), true, "own lock is detected");
+        TEST_RESULT_VOID(cmdLockReleaseP(), "release lock");
+
+        // A lock held by a process with a different exec id is not our own
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN()
+            {
+                lockInit(cfgOptionStr(cfgOptLockPath), STRDEF("999-dededede"));
+                TEST_RESULT_VOID(cmdLockAcquireP(.returnOnNoLock = true), "acquire lock in child");
+
+                // Notify parent that lock has been acquired
+                HRN_FORK_CHILD_NOTIFY_PUT();
+
+                // Wait for parent to allow release lock
+                HRN_FORK_CHILD_NOTIFY_GET();
+
+                cmdLockReleaseP();
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN()
+            {
+                // Wait for child to acquire lock
+                HRN_FORK_PARENT_NOTIFY_GET(0);
+
+                TEST_RESULT_BOOL(cmdLockOwn(), false, "lock from another exec id is not our own");
+
+                // Notify child to release lock
+                HRN_FORK_PARENT_NOTIFY_PUT(0);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("acquire backup:remote command lock");

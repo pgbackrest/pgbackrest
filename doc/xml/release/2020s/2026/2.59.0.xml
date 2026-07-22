@@ -1,6 +1,134 @@
-<release date="XXXX-XX-XX" version="2.59.0dev" title="UNDER DEVELOPMENT">
+<release date="2026-07-20" version="2.59.0" title="PostgreSQL 19 Support">
     <release-core-list>
+        <text>
+            <p><b>NOTE TO PACKAGERS</b>: A new distribution tarball is available which simplifies the build process by providing pregenerated HTML documentation, man page, and code. The tarball is attached to each release as an asset and is named <file>pgbackrest-{version}.tar.gz</file>. See the <file>README.md</file> in the tarball for details. Please use the new distribution tarball to avoid the additional build tooling required to generate code in future releases. See <link page="news" section="/distribution-tarball">New Distribution Tarball</link> for more information.</p>
+
+            <p><b>NOTE TO PACKAGERS</b>: There is a new optional dependency on <id>libsystemd</id>.</p>
+
+            <p><b>IMPORTANT NOTE</b>: Starting with this release, only the <cmd>restore</cmd> command may be run as root by default. Use <setting>allow-root</setting> to run other commands as root (though this is not recommended).</p>
+        </text>
+
+        <release-bug-list>
+            <release-item>
+                <github-issue id="2622"/>
+                <github-pull-request id="2797"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="dima19017"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix <cmd>expire</cmd> removing a backup in progress on another host.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2629"/>
+                <github-pull-request id="2799"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="vut12"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Fix <setting>archive-push-queue-max</setting> not enforced when a WAL file errors.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2423"/>
+                <github-pull-request id="2806"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="jimmy.yih"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix async <cmd>archive-get</cmd> failure during recovery across a timeline switch.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Fix potential buffer overrun in error module."/>
+                <commit subject="Use the full buffer when formatting error messages."/>
+                <commit subject="Prevent an out-of-bounds error buffer write on an oversized message."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="christophe.pettus"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix potential buffer overrun in error module.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2754"/>
+                <github-pull-request id="2804"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="georgy.shelkovy"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix use-after-free of parallel protocol client.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1768"/>
+                <github-pull-request id="2796"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="naveen"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Fix heap overflow when a pg option is set without pg1.</p>
+            </release-item>
+        </release-bug-list>
+
         <release-feature-list>
+            <release-item>
+                <commit subject="PostgreSQL 19beta1 support.">
+                    <github-pull-request id="2779"/>
+                </commit>
+                <commit subject="PostgreSQL 19beta2 support."/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p><proper>PostgreSQL 19beta2</proper> support.</p>
+            </release-item>
+
+            <release-item>
+                <commit subject="Extract WAL expiration into expireArchiveId()."/>
+                <commit subject="Add archive-expire-before option to clean up WAL archive.">
+                    <github-pull-request id="2801"/>
+                </commit>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="stefan.fercot"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Add <setting>archive-expire-before</setting> option to clean up WAL archive.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2786"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                    <release-item-reviewer id="crispy"/>
+                </release-item-contributor-list>
+
+                <p>Add batch delete for <proper>Azure</proper> storage.</p>
+            </release-item>
+
             <release-item>
                 <github-pull-request id="2762"/>
 
@@ -12,9 +140,36 @@
 
                 <p>Add support for <proper>S3 Outposts</proper>.</p>
             </release-item>
+
+            <release-item>
+                <github-pull-request id="2778"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="andrew.charlton"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="andrew.charlton"/>
+                </release-item-contributor-list>
+
+                <p>Add <proper>S3</proper> process authentication.</p>
+            </release-item>
         </release-feature-list>
 
         <release-improvement-list>
+            <release-item>
+                <github-issue id="2739"/>
+                <github-issue id="2772"/>
+                <github-pull-request id="2793"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="mustafa0x"/>
+                    <release-item-ideator id="tisserat"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Reconnect SFTP storage after the server drops an idle connection.</p>
+            </release-item>
+
             <release-item>
                 <github-pull-request id="2773"/>
 
@@ -53,7 +208,77 @@
             </release-item>
 
             <release-item>
-                <github-issue id="2732"/>
+                <github-issue id="2791"/>
+                <github-pull-request id="2798"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="simon.gratton"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Allow the <proper>S3</proper> STS endpoint to be configured.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2803"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Add <setting>archive-push-batch-size</setting> to limit WAL pushed per asynchronous run.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1848"/>
+                <github-pull-request id="2802"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="sebastien.lardiere"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Exit async <cmd>archive-push</cmd> on first error.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2785"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="shubham"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Harden HTTP chunked response parsing.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1693"/>
+                <github-pull-request id="2812"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Error when running as root unless <setting>allow-root</setting> is enabled.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2774"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="gunnar.lindholm"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fewer binary searches when building manifest.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2732"/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
@@ -62,6 +287,64 @@
                 </release-item-contributor-list>
 
                 <p>Improve seek performance during block incremental delta restore.</p>
+            </release-item>
+
+            <release-item>
+                <github-pull-request id="2794"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Bundle backup files in order rather than scanning for a better fit.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2789"/>
+                <github-pull-request id="2790"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="marco.fontana"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="andrew.pogrebnoi"/>
+                </release-item-contributor-list>
+
+                <p>Report the underlying error when a query fails to complete.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1997"/>
+                <github-pull-request id="2808"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="mitchell.grice"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Report the actual error when an <proper>S3</proper> credential request fails.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1408"/>
+                <github-pull-request id="2810"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="don.seiler"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Report <cmd>archive-push</cmd> spool path errors to the PostgreSQL log.</p>
+            </release-item>
+
+            <release-item>
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Hint that pgBackRest may be out of date when a version is unsupported.</p>
             </release-item>
 
             <release-item>
@@ -101,7 +384,7 @@
 
         <release-development-list>
             <release-item>
-                <github-issue id="2731"/>
+                <github-pull-request id="2731"/>
 
                 <release-item-contributor-list>
                     <release-item-contributor id="david.steele"/>
@@ -113,4 +396,86 @@
             </release-item>
         </release-development-list>
     </release-core-list>
+
+    <release-doc-list>
+        <release-improvement-list>
+            <release-item>
+                <github-issue id="2735"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Make <setting>stanza</setting> option internal for the <cmd>repo-*</cmd> commands.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1407"/>
+                <github-pull-request id="2805"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="ron.johnson"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Document that info reads encryption settings from global section.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1874"/>
+                <github-pull-request id="2807"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="sebastien.lardiere"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="stefan.fercot"/>
+                </release-item-contributor-list>
+
+                <p>Document that <setting>expire-auto</setting> uses the <cmd>backup</cmd> command configuration.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="2737"/>
+                <github-pull-request id="2809"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="lkanbus"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Document adjusting the <proper>logrotate</proper> <id>su</id> directive for a dedicated user.</p>
+            </release-item>
+
+            <release-item>
+                <github-issue id="1633"/>
+                <github-pull-request id="2811"/>
+
+                <release-item-contributor-list>
+                    <release-item-ideator id="alex.richman"/>
+                    <release-item-contributor id="david.steele"/>
+                    <release-item-reviewer id="douglas.j.hunley"/>
+                </release-item-contributor-list>
+
+                <p>Document that end-of-line comments are not supported in config files.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-doc-list>
+
+    <release-test-list>
+        <release-improvement-list>
+            <release-item>
+                <github-pull-request id="2784"/>
+
+                <release-item-contributor-list>
+                    <release-item-contributor id="artur.zakirov"/>
+                    <release-item-reviewer id="david.steele"/>
+                </release-item-contributor-list>
+
+                <p>Fix Alpine group conflicts in CI containers.</p>
+            </release-item>
+        </release-improvement-list>
+    </release-test-list>
 </release>

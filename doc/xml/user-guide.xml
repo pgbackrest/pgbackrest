@@ -37,7 +37,7 @@
 
         <!-- Defines the container image that will be used to build the host -->
         <variable key="os-image" if="{[os-type-is-debian]}">ubuntu:22.04</variable>
-        <variable key="os-image" if="{[os-type-is-rhel]}">rockylinux/rockylinux:8</variable>
+        <variable key="os-image" if="{[os-type-is-rhel]}">rockylinux/rockylinux:9</variable>
 
         <variable key="user-guide-subtitle" if="{[os-type-is-debian]}">{[os-debian-title]}</variable>
         <variable key="user-guide-subtitle" if="{[os-type-is-rhel]}">{[os-rhel-title]}</variable>
@@ -61,7 +61,8 @@
 
         <!-- Path where builds are performed -->
         <variable key="build-path">/build</variable>
-        <variable key="build-br-path">{[build-path]}/pgbackrest-release-{[version]}</variable>
+        <variable key="build-br-path">{[build-path]}/pgbackrest-{[version]}</variable>
+        <variable key="build-br-path-tmp">{[build-path]}/pgbackrest-{[version]}-tmp</variable>
         <variable key="build-meson-path">{[build-path]}/pgbackrest</variable>
 
         <!-- PostreSQL versions to run documentation for and min/max versions represented -->
@@ -147,7 +148,7 @@
         <variable key="gcs-key">/etc/pgbackrest/gcs-key.json</variable>
 
         <!-- S3 Settings -->
-        <variable key="s3-image">minio/minio</variable>             <!-- Minio docker image -->
+        <variable key="s3-image">quay.io/ceph/ceph:v19</variable>   <!-- Ceph docker image -->
         <variable key="s3-all">n</variable>                         <!-- Build all the documentation with S3? -->
         <variable key="s3-local">y</variable>
         <variable key="s3-bucket">demo-bucket</variable>
@@ -300,6 +301,10 @@
 
         <!-- Don't allow sudo to disable core dump (suppresses errors, see https://github.com/sudo-project/sudo/issues/42) -->
         <variable key="sudo-disable-core-dump">RUN echo "Set disable_coredump false" >> /etc/sudo.conf</variable>
+
+        <!-- Debian/Ubuntu packages required to build from source or the distribution tarball. Split with a backslash continuation so each line stays within the command line length limit when shown; the doc executor keeps the existing continuation rather than adding its own. -->
+        <variable key="build-package-debian">meson gcc libpq-dev libssl-dev libxml2-dev pkg-config \
+    liblz4-dev libzstd-dev libbz2-dev libz-dev libssh2-1-dev libsystemd-dev</variable>
     </variable-list>
 
     <!-- Setup hosts used to build the documentation =========================================================================== -->
@@ -316,7 +321,7 @@
         RUN rm /etc/apt/apt.conf.d/70debconf &amp;&amp; \
             apt-get update &amp;&amp; \
             apt-get install -y --no-install-recommends sudo ssh curl vim gnupg lsb-release iputils-ping ca-certificates \
-                    tzdata locales libssh2-1-dev 2>&amp;1
+                    tzdata locales libssh2-1-dev awscli git libyaml-dev libxml-checker-perl 2>&amp;1
 
         {[sudo-disable-core-dump]}
 
@@ -360,14 +365,17 @@
         VOLUME [ "/sys/fs/cgroup" ]
 
         # Install packages
-        RUN yum install -y openssh-server openssh-clients sudo wget vim openssl findutils dnf-plugins-core 2>&amp;1
-
-        # Enable PowerTools repository (only available on RHEL8)
-        RUN dnf config-manager --set-enabled powertools || true
+        RUN yum install -y openssh-server openssh-clients sudo vim openssl findutils dnf-plugins-core awscli2 git 2>&amp;1
 
         # Install and enable epel repository
         RUN dnf -y install epel-release
         RUN crb enable
+
+        # Install packages that require epel
+        RUN dnf install -y azure-cli
+
+        # Install dev packages
+        RUN yum install -y libyaml-devel 2>&amp;1
 
         # Install CA certificate
         RUN update-ca-trust extract
@@ -379,7 +387,7 @@
             ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key
 
         # Install PGDG PostgreSQL repository
-        RUN rpm -ivh https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-`uname -m`/pgdg-redhat-repo-latest.noarch.rpm
+        RUN rpm -ivh https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-`uname -m`/pgdg-redhat-repo-latest.noarch.rpm
 
         # Disable default PostgreSQL repository
         RUN command -v dnf >/dev/null 2>&amp;1 &amp;&amp; dnf -qy module disable postgresql || true
@@ -387,14 +395,15 @@
         # Install PostgreSQL
         RUN yum install -y postgresql{[pg-version]}-server postgresql{[pg-version-upgrade]}-server
 
-        # Install Azure CLI
-        RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc
-        RUN dnf install -y https://packages.microsoft.com/config/rhel/8/packages-microsoft-prod.rpm
-        RUN dnf install -y azure-cli
+        # XML::Checker::Parser has no RHEL package; install its packaged XML::Parser dependency, cpanm the pure-Perl layer, and
+        # remove the build tools in the same layer so they do not persist in the image
+        RUN yum install -y perl-XML-Parser perl-App-cpanminus make perl-ExtUtils-MakeMaker &amp;&amp; \
+            cpanm --notest XML::Checker::Parser &amp;&amp; \
+            yum remove -y perl-App-cpanminus make perl-ExtUtils-MakeMaker
 
         # Install systemctl replacement that works without systemd running
-        ENV SYSCTL_REP_VER=1.5.8066
-        RUN wget -q -O - https://github.com/gdraheim/docker-systemctl-replacement/archive/refs/tags/v${SYSCTL_REP_VER?}.tar.gz | \
+        ENV SYSCTL_REP_VER=1.5.9063
+        RUN curl -fsSL https://github.com/gdraheim/docker-systemctl-replacement/archive/refs/tags/v${SYSCTL_REP_VER?}.tar.gz | \
             tar zx -C /root
         RUN rm -f /usr/bin/systemctl
         RUN cp /root/docker-systemctl-replacement-${SYSCTL_REP_VER?}/files/docker/systemctl3.py /usr/bin/systemctl
@@ -782,14 +791,27 @@
             </execute>
         </execute-list>
 
-        <execute-list if="'{[s3-local]}' eq 'y' &amp;&amp; '{[s3-setup-create-bucket]}' eq 'y'" host="{[host-s3]}" show="n">
+        <execute-list if="'{[s3-local]}' eq 'y' &amp;&amp; '{[s3-setup-create-bucket]}' eq 'y'" host="{[host-pg1]}" show="n">
             <title>Create bucket</title>
 
             <execute user="root" user-force="y">
-                <exe-cmd>mc --insecure alias set s3 https://127.0.0.1 {[s3-key]} {[s3-key-secret]}</exe-cmd>
+                <exe-cmd>aws configure set aws_access_key_id {[s3-key]}</exe-cmd>
             </execute>
             <execute user="root" user-force="y">
-                <exe-cmd>mc --insecure mb --with-versioning s3/{[s3-bucket]}</exe-cmd>
+                <exe-cmd>aws configure set aws_secret_access_key {[s3-key-secret]}</exe-cmd>
+            </execute>
+            <execute user="root" user-force="y">
+                <exe-cmd>aws configure set region {[s3-region]}</exe-cmd>
+            </execute>
+            <execute if ="{[os-type-is-rhel]}" user="root" user-force="y">
+                <exe-cmd>aws configure set ca_bundle {[ca-cert-path]}/pgbackrest-ca.crt</exe-cmd>
+            </execute>
+            <!-- Retry to allow time for the S3 server (Ceph) to start up and for the new bucket to become available -->
+            <execute user="root" user-force="y" retry="30">
+                <exe-cmd>aws --endpoint-url https://{[s3-endpoint]} s3 mb s3://{[s3-bucket]}</exe-cmd>
+            </execute>
+            <execute user="root" user-force="y" retry="30">
+                <exe-cmd>aws --endpoint-url https://{[s3-endpoint]} s3api put-bucket-versioning --bucket {[s3-bucket]} --versioning-configuration Status=Enabled</exe-cmd>
             </execute>
         </execute-list>
 
@@ -886,7 +908,7 @@
         <host-add if="'{[azure-local]}' eq 'y'" id="{[host-azure-id]}" name="{[host-azure]}" user="root" image="{[azure-image]}" os="{[os-type]}" option="-v {[fake-cert-path]}/azure-server.crt:/root/public.crt:ro -v {[fake-cert-path]}/azure-server.key:/root/private.key:ro -e AZURITE_ACCOUNTS='{[azure-account]}:{[azure-key]}'" param="azurite-blob --blobPort 443 --blobHost 0.0.0.0 --cert=/root/public.crt --key=/root/private.key --skipApiVersionCheck" update-hosts="n"/>
 
         <!-- Create S3 server first to allow it time to boot before being used -->
-        <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="{[s3-image]}" os="{[os-type]}" option="-v {[fake-cert-path]}/s3-server.crt:/root/.minio/certs/public.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/.minio/certs/private.key:ro -e MINIO_REGION={[s3-region]} -e MINIO_DOMAIN={[s3-endpoint]} -e MINIO_BROWSER=off -e MINIO_ACCESS_KEY={[s3-key]} -e MINIO_SECRET_KEY={[s3-key-secret]}" param="server /data --address :443" update-hosts="n"/>
+        <host-add if="'{[s3-local]}' eq 'y'" id="{[host-s3-id]}" name="{[host-s3]}" user="root" image="{[s3-image]}" os="{[os-type]}" option="-v {[fake-cert-path]}/s3-server.crt:/root/s3-server.crt:ro -v {[fake-cert-path]}/s3-server.key:/root/s3-server.key:ro -v {[host-repo-path]}/doc/resource/ceph/bootstrap.sh:/bootstrap.sh:ro -e RGW_DNS_NAME={[s3-endpoint]} -e S3_ACCESS_KEY={[s3-key]} -e S3_SECRET_KEY={[s3-key-secret]}" param="bash /bootstrap.sh" update-hosts="n"/>
 
         <!-- Create SFTP server first to allow it time to boot before being used -->
         <host-add id="{[host-sftp-id]}" name="{[host-sftp]}" user="{[host-sftp-user]}" image="{[host-sftp-image]}" os="{[os-type]}" mount="{[host-sftp-mount]}"/>
@@ -980,23 +1002,12 @@
                 <exe-cmd>mkdir -p {[build-path]}</exe-cmd>
             </execute>
 
-            <execute skip="y">
+            <execute skip="y" cmd-line-len="110">
                 <exe-cmd>
-                    wget -q -O -
-                    {[github-url-release]}/{[version]}.tar.gz |
+                    curl -fsSL
+                    {[github-url-release]}/pgbackrest-{[version]}.tar.gz |
                     tar zx -C {[build-path]}
                 </exe-cmd>
-            </execute>
-
-            <!-- These commands simulate what the command above would do if it could be run -->
-            <execute user="root" show="n">
-                <exe-cmd>mkdir -p {[build-br-path]}</exe-cmd>
-            </execute>
-            <execute user="root" show="n">
-                <exe-cmd>cp -r {[pgbackrest-repo-path]}/* {[build-br-path]}</exe-cmd>
-            </execute>
-            <execute user="root" show="n">
-                <exe-cmd>chown -R {[host-build-user]} {[build-path]}</exe-cmd>
             </execute>
         </execute-list>
 
@@ -1008,21 +1019,70 @@
             </execute>
 
             <execute if="{[os-type-is-debian]}" user="root" pre="y">
-                <exe-cmd>
-                    apt-get install python3-distutils meson gcc libpq-dev libssl-dev libxml2-dev
-                    pkg-config liblz4-dev libzstd-dev libbz2-dev libz-dev libyaml-dev libssh2-1-dev
-                    libsystemd-dev
-                </exe-cmd>
+                <exe-cmd>apt-get install {[build-package-debian]}</exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
             </execute>
 
             <execute if="{[os-type-is-rhel]}" user="root" pre="y">
                 <exe-cmd>
-                    yum install meson gcc postgresql{[pg-version]}-devel openssl-devel
-                    libxml2-devel lz4-devel libzstd-devel bzip2-devel libyaml-devel libssh2-devel
-                    systemd-devel
+                    yum install meson gcc postgresql{[pg-version]}-devel openssl-devel libxml2-devel
+                    lz4-devel libzstd-devel bzip2-devel libssh2-devel systemd-devel
                 </exe-cmd>
                 <exe-cmd-extra>-y 2>&amp;1</exe-cmd-extra>
+            </execute>
+
+            <!-- These rest of the commands in this execute-block simulate downloading the distribution tarball -->
+            <execute user="root" user-force="y" show="n" bash-wrap="y">
+                <exe-cmd>
+                    mkdir -p {[build-br-path-tmp]} &amp;&amp;
+                    chown -R {[host-build-user]} {[build-path]}
+                </exe-cmd>
+            </execute>
+            <execute show="n">
+                <exe-cmd>
+                    git config --global --add safe.directory {[pgbackrest-repo-path]} &amp;&amp;
+                    git -C {[pgbackrest-repo-path]} ls-files -c --others --exclude-standard |
+                    grep -v '^doc/resource/exe\.cache$' |
+                    tar -C {[pgbackrest-repo-path]} -cf - -T - | tar -C {[build-br-path-tmp]} -xf -
+                </exe-cmd>
+            </execute>
+
+            <!-- Build a git repo that can be used with meson dist. We need a new repo because there may be files that are not
+                 checked in during development and meson dist will ignore them -->
+            <execute show="n">
+                <exe-cmd>
+                    git config --global user.name "test" &amp;&amp;
+                    git config --global user.email "test@test.com" &amp;&amp;
+                    git -C {[build-br-path-tmp]} init 2>&amp;1 &amp;&amp;
+                    git -C {[build-br-path-tmp]} add . &amp;&amp;
+                    git -C {[build-br-path-tmp]} commit -a -m "test"
+                </exe-cmd>
+            </execute>
+
+            <!-- Create a distribution tarball with meson dist. Fake the dist output of release.pl to save time. -->
+            <execute show="n">
+                <exe-cmd>
+                    meson setup {[build-meson-path]} {[build-br-path-tmp]} &amp;&amp;
+                    ninja -C {[build-meson-path]} src/build-code &amp;&amp;
+                    mkdir -p {[build-br-path-tmp]}/doc/output/html &amp;&amp;
+                    mkdir -p {[build-br-path-tmp]}/doc/output/man &amp;&amp;
+                    touch {[build-br-path-tmp]}/doc/DIST.md &amp;&amp;
+                    PYTHONWARNINGS=ignore meson dist -C {[build-meson-path]} --formats gztar &amp;&amp;
+                    tar zx -C {[build-path]} -f {[build-meson-path]}/meson-dist/pgbackrest-{[version]}.tar.gz &amp;&amp;
+                    rm -rf {[build-meson-path]}
+                </exe-cmd>
+            </execute>
+
+            <!-- Remove libyaml now that we are done with it so future dependencies will cause a failure -->
+            <execute if="{[os-type-is-debian]}" user="root" show="n">
+                <exe-cmd>
+                    apt-get remove -y libyaml-dev 2>&amp;1
+                </exe-cmd>
+            </execute>
+            <execute if="{[os-type-is-rhel]}" user="root" show="n">
+                <exe-cmd>
+                    yum remove -y libyaml-devel 2>&amp;1
+                </exe-cmd>
             </execute>
         </execute-list>
 
@@ -1034,6 +1094,15 @@
             </execute>
             <execute>
                 <exe-cmd>ninja -C {[build-meson-path]}</exe-cmd>
+            </execute>
+        </execute-list>
+
+        <execute-list host="{[host-build]}">
+            <title>Optionally run smoke tests to verify <backrest/> was built correctly</title>
+
+            <execute show="y">
+                <exe-cmd>meson test -C {[build-meson-path]} --suite smoke</exe-cmd>
+                <exe-highlight>smoke OK</exe-highlight>
             </execute>
         </execute-list>
     </section>
@@ -1136,7 +1205,7 @@
                 <backrest-config-option section="global" key="log-timestamp">n</backrest-config-option>
             </backrest-config>
 
-            <p><backrest/> configuration files follow a Windows INI-like convention. Sections are denoted by text in brackets and key/value pairs are contained in each section. Lines beginning with <id>#</id> are ignored and can be used as comments. Quoting is not supported and whitespace is trimmed from keys and values. Sections will be merged if they appear more than once.</p>
+            <p><backrest/> configuration files follow a Windows INI-like convention. Sections are denoted by text in brackets and key/value pairs are contained in each section. Lines beginning with <id>#</id> are ignored and can be used as comments, but end-of-line comments following a value on the same line are not supported. Quoting is not supported and whitespace is trimmed from keys and values. Sections will be merged if they appear more than once.</p>
 
             <p>There are multiple ways the <backrest/> configuration files can be loaded:</p>
             <list>
@@ -1333,6 +1402,8 @@
                 <backrest-config-option section="global" key="repo1-cipher-type">{[backrest-repo-cipher-type]}</backrest-config-option>
                 <backrest-config-option section="global" key="repo1-cipher-pass">{[backrest-repo-cipher-pass]}</backrest-config-option>
             </backrest-config>
+
+            <admonition type="note">Encryption settings are placed in the <id>[global]</id> section, above, so the <cmd>info</cmd> command can read all stanzas. Without the <br-option>stanza</br-option> option the <cmd>info</cmd> command reads encryption settings only from the <id>[global]</id> section, so encryption settings configured per stanza require the <br-option>stanza</br-option> option to read an encrypted stanza.</admonition>
 
             <p>Once the repository has been configured and the stanza created and checked, the repository encryption settings cannot be changed.</p>
         </section>
@@ -2619,19 +2690,26 @@
 
             <execute user="postgres" output="y">
                 <exe-cmd>{[project-exe]} --stanza={[postgres-cluster-demo]} --repo=3 info</exe-cmd>
-                <exe-highlight>missing stanza data</exe-highlight>
+                <exe-highlight>missing stanza path</exe-highlight>
             </execute>
         </execute-list>
 
         <p>However, since the storage is versioned, it is possible to look at the repository at a time before the stanza was deleted. Finding the target time can be tricky depending on the situation, but in this case the time when the stanza was deleted can be determined by checking when <file>backup.info</file> was deleted.</p>
 
-        <execute-list host="{[host-s3]}">
-            <title>Use <id>mc</id> to list versions of <file>backup.info</file> in the bucket</title>
+        <execute-list host="{[host-pg1]}">
+            <title>List versions of <file>backup.info</file> in the bucket</title>
 
             <execute user="root" user-force="y" output="y">
-                <exe-cmd>mc ls --versions s3/{[s3-bucket]}/{[s3-repo]}/backup/demo/backup.info</exe-cmd>
-                <exe-cmd-extra>--insecure</exe-cmd-extra>
-                <exe-highlight>backup\.info$</exe-highlight>
+                <exe-cmd>
+                    key={[s3-repo]}/backup/demo/backup.info;
+                    aws s3api list-object-versions --bucket {[s3-bucket]}
+                        --prefix $key --output table
+                        --query "sort_by([Versions[?Key=='$key'].{Action:'PUT',
+                        Modified:LastModified,Object:Key},
+                        DeleteMarkers[?Key=='$key'].{Action:'DELETE',
+                        Modified:LastModified,Object:Key}][],&amp;Modified)"
+                </exe-cmd>
+                <exe-cmd-extra>--endpoint-url https://{[s3-endpoint]}</exe-cmd-extra>
             </execute>
         </execute-list>
 
@@ -2682,6 +2760,8 @@
             <host-add id="{[host-repo1-id]}" name="{[host-repo1]}" user="{[host-repo1-user]}" image="{[host-repo1-image]}" os="{[os-type]}" mount="{[host-repo1-mount]}" option="{[host-mem]}"/>
 
             <p>The <user>{[br-user]}</user> user is created to own the <backrest/> repository. Any user can own the repository but it is best not to use <user>postgres</user> (if it exists) to avoid confusion.</p>
+
+            <admonition type="note">When <backrest/> is installed from a package, a <proper>logrotate</proper> configuration such as <file>/etc/logrotate.d/pgbackrest</file> may be provided that rotates the logs as a specific user via the <id>su</id> directive (e.g. <id>su postgres postgres</id>). Since the files in <path>/var/log/pgbackrest</path> are owned by the user that runs <backrest/> (here <user>{[br-user]}</user>), the <id>su</id> directive must be updated to match this user or <proper>logrotate</proper> will fail with a permission error.</admonition>
 
             <execute-list host="{[host-repo1]}">
                 <title>Create <user>{[br-user]}</user> user</title>

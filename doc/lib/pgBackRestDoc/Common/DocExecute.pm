@@ -118,8 +118,9 @@ sub executeKey
     my $strUser = $self->{oManifest}->variableReplace($oCommand->paramGet('user', false, DOC_USER));
     $strCommand = ($strUser eq DOC_USER || $bUserForce ? '' : ('sudo ' . ($strUser eq 'root' ? '' : "-u $strUser "))) . $strCommand;
 
-    # Format and split command
-    $strCommand =~ s/[ ]*\n[ ]*/ \\\n    /smg;
+    # Format and split command. A newline becomes a backslash continuation; an existing trailing backslash (e.g. from a variable
+    # split to fit the line length limit) is preserved rather than doubled.
+    $strCommand =~ s/[ ]*\\?[ ]*\n[ ]*/ \\\n    /smg;
     $strCommand =~ s/ \\\@ \\//smg;
     my @stryCommand = split("\n", $strCommand);
 
@@ -206,13 +207,16 @@ sub execute
 
     if ($bShow && $self->{bExe} && $self->isRequired($oSection))
     {
-        # Make sure that no lines are greater than 80 chars
+        # Make sure that no lines are greater than the max length, which may be overridden when the command contains a long
+        # unbreakable token, e.g. a url
+        my $iCmdLineLen = $oCommand->paramGet('cmd-line-len', false, $self->{iCmdLineLen});
+
         foreach my $strLine (split("\n", $strCommand))
         {
-            if (length(trim($strLine)) > $self->{iCmdLineLen})
+            if (length(trim($strLine)) > $iCmdLineLen)
             {
                 confess &log(ERROR,
-                    "command has a line > $self->{iCmdLineLen} characters:\n${strCommand}\noffending line: ${strLine}");
+                    "command has a line > ${iCmdLineLen} characters:\n${strCommand}\noffending line: ${strLine}");
             }
         }
     }

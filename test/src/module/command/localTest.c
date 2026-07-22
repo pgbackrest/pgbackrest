@@ -6,8 +6,8 @@ Test Local Command
 #include "protocol/client.h"
 #include "protocol/server.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessFork.h"
+#include "harness/config.h"
+#include "harness/fork.h"
 
 /***********************************************************************************************************************************
 Test Run

@@ -10,8 +10,8 @@ define.yaml. THe PostgreSQL version can be adjusted by changing TEST_PG_VERSION.
 ***********************************************************************************************************************************/
 #include "common/type/json.h"
 
-#include "common/harnessPack.h"
-#include "common/harnessPq.h"
+#include "harness/pack.h"
+#include "harness/pq.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -317,6 +317,62 @@ testRun(void)
 #endif
 
         TEST_RESULT_PTR(pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultAny), NULL, "execute set");
+
+        #undef TEST_QUERY
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("connection lost while completing query");
+
+        #define TEST_PQ_ERROR                                       "server closed the connection unexpectedly"
+        #define TEST_QUERY                                          "set client_encoding = 'UTF8'"
+
+#ifndef HARNESS_PQ_REAL
+        HRN_PQ_SCRIPT_SET(
+            {.function = HRN_PQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
+            {.function = HRN_PQ_CONSUMEINPUT},
+            {.function = HRN_PQ_ISBUSY},
+            {.function = HRN_PQ_GETRESULT},
+            {.function = HRN_PQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},
+            {.function = HRN_PQ_CLEAR},
+            {.function = HRN_PQ_GETRESULT},
+            {.function = HRN_PQ_RESULTERRORMESSAGE, .resultZ = TEST_PQ_ERROR "\n"},
+            {.function = HRN_PQ_CLEAR});
+#endif
+
+        TEST_ERROR(
+            pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultNone), DbQueryError,
+            "unable to complete query '" TEST_QUERY "': " TEST_PQ_ERROR "\n"
+            "HINT: this is usually caused by the connection to PostgreSQL being lost while the query was running.\n"
+            "HINT: check idle_session_timeout and idle_in_transaction_session_timeout for aggressive settings.\n"
+            "HINT: check the PostgreSQL log and network for a crash, restart, or timeout.");
+
+        #undef TEST_PQ_ERROR
+        #undef TEST_QUERY
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("connection lost while completing query with no error detail");
+
+        #define TEST_QUERY                                          "set client_encoding = 'UTF8'"
+
+#ifndef HARNESS_PQ_REAL
+        HRN_PQ_SCRIPT_SET(
+            {.function = HRN_PQ_SENDQUERY, .param = "[\"" TEST_QUERY "\"]", .resultInt = 1},
+            {.function = HRN_PQ_CONSUMEINPUT},
+            {.function = HRN_PQ_ISBUSY},
+            {.function = HRN_PQ_GETRESULT},
+            {.function = HRN_PQ_RESULTSTATUS, .resultInt = PGRES_COMMAND_OK},
+            {.function = HRN_PQ_CLEAR},
+            {.function = HRN_PQ_GETRESULT},
+            {.function = HRN_PQ_RESULTERRORMESSAGE, .resultZ = "\n"},
+            {.function = HRN_PQ_CLEAR});
+#endif
+
+        TEST_ERROR(
+            pgClientQuery(client, STRDEF(TEST_QUERY), pgClientQueryResultNone), DbQueryError,
+            "unable to complete query '" TEST_QUERY "'\n"
+            "HINT: this is usually caused by the connection to PostgreSQL being lost while the query was running.\n"
+            "HINT: check idle_session_timeout and idle_in_transaction_session_timeout for aggressive settings.\n"
+            "HINT: check the PostgreSQL log and network for a crash, restart, or timeout.");
 
         #undef TEST_QUERY
 

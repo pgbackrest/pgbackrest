@@ -6,12 +6,12 @@ Test Database
 #include "common/type/json.h"
 #include "storage/remote/protocol.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessFork.h"
-#include "common/harnessLog.h"
-#include "common/harnessPack.h"
-#include "common/harnessPostgres.h"
-#include "common/harnessPq.h"
+#include "harness/config.h"
+#include "harness/fork.h"
+#include "harness/log.h"
+#include "harness/pack.h"
+#include "harness/postgres.h"
+#include "harness/pq.h"
 
 /***********************************************************************************************************************************
 Macro to check that replay is making progress -- this does not seem useful enough to be included in the pq harness header

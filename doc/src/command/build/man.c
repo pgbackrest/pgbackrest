@@ -291,7 +291,7 @@ referenceManRender(const XmlNode *const indexRoot, const BldCfg *const bldCfg, c
             result,
             "\nSEE ALSO\n"
             "  /usr/share/doc/pgbackrest-doc/html/index.html\n"
-            "  http://www.pgbackrest.org\n");
+            "  https://pgbackrest.org\n");
     }
     MEM_CONTEXT_TEMP_END();
 

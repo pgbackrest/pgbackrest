@@ -22,8 +22,8 @@ running out of memory on the test systems or taking an undue amount of time. It 
 #include "postgres/version.h"
 #include "storage/posix/storage.h"
 
-#include "common/harnessInfo.h"
-#include "common/harnessStorage.h"
+#include "harness/info.h"
+#include "harness/storage.h"
 
 /***********************************************************************************************************************************
 Test sort comparator

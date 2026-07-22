@@ -7,11 +7,11 @@ Test Archive Push Command
 #include "postgres/version.h"
 #include "storage/posix/storage.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessFork.h"
-#include "common/harnessInfo.h"
-#include "common/harnessPostgres.h"
-#include "common/harnessProtocol.h"
+#include "harness/config.h"
+#include "harness/fork.h"
+#include "harness/info.h"
+#include "harness/postgres.h"
+#include "harness/protocol.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -90,6 +90,20 @@ testRun(void)
 
         TEST_RESULT_BOOL(
             archivePushDrop(STRDEF("pg_wal"), archivePushProcessList(STRDEF(TEST_PATH "/db/pg_wal"))), true, "wal is dropped");
+
+        // The queue must be measured against the ready list rather than the process list. WAL 3 has already been pushed (ok file)
+        // but not yet acknowledged by PostgreSQL (ready file still present), so it is in the ready list but not the process list.
+        // Set queue max so the process list ({2, 5, 6} = 48MB) does not exceed it but the ready list ({2, 3, 5, 6} = 64MB) does.
+        argListDrop = strLstDup(argList);
+        hrnCfgArgRawFmt(argListDrop, cfgOptArchivePushQueueMax, "%zu", (size_t)16 * 1024 * 1024 * 3);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListDrop, .role = cfgCmdRoleAsync);
+
+        TEST_RESULT_BOOL(
+            archivePushDrop(STRDEF("pg_wal"), archivePushProcessList(STRDEF(TEST_PATH "/db/pg_wal"))), false,
+            "process list does not exceed queue max");
+        TEST_RESULT_BOOL(
+            archivePushDrop(STRDEF("pg_wal"), archivePushReadyList(STRDEF(TEST_PATH "/db/pg_wal"))), true,
+            "ready list exceeds queue max");
 
         // No WAL to be processed
         TEST_RESULT_BOOL(archivePushDrop(STRDEF("pg_wal"), strLstNew()), false, "no WAL to be processed");
@@ -470,14 +484,16 @@ testRun(void)
         TEST_ERROR(
             cmdArchivePush(), VersionNotSupportedError,
             "unexpected WAL magic 999\n"
-            "HINT: is this version of PostgreSQL supported?");
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
 
         HRN_PG_CONTROL_OVERRIDE_VERSION_PUT(storagePgWrite(), PG_VERSION_11, 1501, .catalogVersion = 202211111);
 
         TEST_ERROR(
             cmdArchivePush(), VersionNotSupportedError,
             "unexpected control version = 1501 and catalog version = 202211111\n"
-            "HINT: is this version of PostgreSQL supported?");
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
 
         argListTemp = strLstDup(argList);
         hrnCfgArgRawZ(argListTemp, cfgOptPgVersionForce, "11");
@@ -679,6 +695,30 @@ testRun(void)
         TEST_ERROR(cmdArchivePush(), OptionRequiredError, "'archive-push' command in async mode requires option 'pg1-path'");
 
         // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when unable to create spool path in the foreground");
+
+        argList = strLstNew();
+        hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
+        hrnCfgArgRawZ(argList, cfgOptStanza, "test");
+        hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
+        hrnCfgArgRawZ(argList, cfgOptPgPath, TEST_PATH "/pg");
+        hrnCfgArgRawZ(argList, cfgOptRepoPath, TEST_PATH "/repo");
+        strLstAddZ(argList, TEST_PATH "/pg/pg_xlog/000000010000000100000001");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argList);
+
+        // Make the spool path read-only so the foreground fails to create the spool out path and reports the error directly instead
+        // of leaving it in the async log and timing out
+        HRN_STORAGE_PATH_CREATE(storageTest, "spool", .mode = 0500);
+
+        TEST_ERROR(
+            cmdArchivePush(), PathCreateError, "unable to create path '" TEST_PATH "/spool/archive': [13] Permission denied");
+
+        // The foreground holds the lock when it errors (as it does in production, where the process then exits), so release it and
+        // restore the spool path mode for the following tests
+        cmdLockReleaseP();
+        HRN_STORAGE_MODE(storageTest, "spool");
+
+        // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check timeout on async error");
 
         // Call with a bogus exe name so the async process will error out and we can make sure timeouts work
@@ -876,7 +916,8 @@ testRun(void)
             "P01 DETAIL: pushed WAL file '000000010000000100000001' to the archive\n"
             "P01   WARN: could not push WAL file '000000010000000100000002' to the archive (will be retried): "
             "[55] raised from local-1 shim protocol: " STORAGE_ERROR_READ_MISSING "\n"
-            "            [RETRY DETAIL OMITTED]",
+            "            [RETRY DETAIL OMITTED]\n"
+            "P00   WARN: stopped archive-push after an error, remaining WAL will be processed on the next run",
             TEST_PATH "/pg/pg_xlog/000000010000000100000002");
 
         TEST_STORAGE_EXISTS(
@@ -1000,6 +1041,184 @@ testRun(void)
             storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT,
             "000000010000000100000001.ok\n"
             "000000010000000100000002.ok\n",
+            .comment = "check status files");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("limit WAL pushed per run to archive-push-batch-size");
+
+        // Remove status and ready files to get a clean state
+        HRN_STORAGE_PATH_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT);
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog/archive_status", .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog/archive_status");
+
+        // Create two valid WAL segments and ready files for four segments. With the batch size set to two segments (32MiB) only the
+        // first two are pushed and the last two are left for the next run.
+        Buffer *walBufferBatch = bufNew((size_t)16 * 1024 * 1024);
+        bufUsedSet(walBufferBatch, bufSize(walBufferBatch));
+        memset(bufPtr(walBufferBatch), 0x88, bufSize(walBufferBatch));
+        HRN_PG_WAL_TO_BUFFER(walBufferBatch, PG_VERSION_18);
+        const char *walBufferBatchSha1 = strZ(strNewEncode(encodingHex, cryptoHashOne(hashTypeSha1, walBufferBatch)));
+
+        HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000010", walBufferBatch);
+        HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000011", walBufferBatch);
+
+        for (unsigned int walIdx = 16; walIdx <= 19; walIdx++)
+            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), zNewFmt("pg_xlog/archive_status/0000000100000001%08X.ready", walIdx));
+
+        argListTemp = strLstDup(argList);
+        hrnCfgArgRawZ(argListTemp, cfgOptArchivePushBatchSize, "32MiB");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp, .role = cfgCmdRoleAsync);
+
+        TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL batch");
+        TEST_RESULT_LOG(
+            "P00   INFO: push 2 WAL file(s) to archive: 000000010000000100000010...000000010000000100000011\n"
+            "P01 DETAIL: pushed WAL file '000000010000000100000010' to the archive\n"
+            "P01 DETAIL: pushed WAL file '000000010000000100000011' to the archive");
+
+        // Only the batch was processed; the remaining ready files are left for the next run
+        TEST_STORAGE_LIST(
+            storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT,
+            "000000010000000100000010.ok\n"
+            "000000010000000100000011.ok\n",
+            .comment = "check status files");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("always push at least one WAL file when batch size is below the segment size");
+
+        // Remove status and ready files to get a clean state
+        HRN_STORAGE_PATH_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT);
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog/archive_status", .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog/archive_status");
+
+        // Create one valid WAL segment and ready files for two segments. A batch size smaller than a single segment still pushes
+        // one segment so that progress is always made.
+        HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000014", walBufferBatch);
+
+        for (unsigned int walIdx = 20; walIdx <= 21; walIdx++)
+            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), zNewFmt("pg_xlog/archive_status/0000000100000001%08X.ready", walIdx));
+
+        argListTemp = strLstDup(argList);
+        hrnCfgArgRawZ(argListTemp, cfgOptArchivePushBatchSize, "1MiB");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp, .role = cfgCmdRoleAsync);
+
+        TEST_RESULT_VOID(cmdArchivePushAsync(), "push single WAL");
+        TEST_RESULT_LOG(
+            "P00   INFO: push 1 WAL file(s) to archive: 000000010000000100000014\n"
+            "P01 DETAIL: pushed WAL file '000000010000000100000014' to the archive");
+
+        // Only one segment was processed; the other ready file is left for the next run
+        TEST_STORAGE_LIST(
+            storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT, "000000010000000100000014.ok\n", .comment = "check status files");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when the first ready segment has zero size");
+
+        // Remove status and ready files to get a clean state
+        HRN_STORAGE_PATH_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT);
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog/archive_status", .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog/archive_status");
+
+        // Create ready files for two segments with a zero-size first segment. A ready WAL segment should never be zero size, so the
+        // command errors immediately instead of applying the batch size.
+        HRN_STORAGE_PUT_EMPTY(storagePgWrite(), "pg_xlog/000000010000000100000016");
+
+        for (unsigned int walIdx = 22; walIdx <= 23; walIdx++)
+            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), zNewFmt("pg_xlog/archive_status/0000000100000001%08X.ready", walIdx));
+
+        argListTemp = strLstDup(argList);
+        hrnCfgArgRawZ(argListTemp, cfgOptArchivePushBatchSize, "1MiB");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp, .role = cfgCmdRoleAsync);
+
+        TEST_ERROR(
+            cmdArchivePushAsync(), FormatError, "size of WAL segment '000000010000000100000016' is 0");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("archive-push-queue-max is checked against the full queue, not the batch");
+
+        // Remove status and ready files to get a clean state
+        HRN_STORAGE_PATH_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT);
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog/archive_status", .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog/archive_status");
+
+        // Create the first segment (used to size the queue) and ready files for four segments
+        HRN_STORAGE_PUT(storagePgWrite(), "pg_xlog/000000010000000100000010", walBufferBatch);
+
+        for (unsigned int walIdx = 16; walIdx <= 19; walIdx++)
+            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), zNewFmt("pg_xlog/archive_status/0000000100000001%08X.ready", walIdx));
+
+        // The batch size (two segments = 32MiB) is under the queue-max but the full queue (four segments = 64MiB) exceeds it, so
+        // the entire queue is dropped rather than truncated to the batch
+        argListTemp = strLstDup(argList);
+        hrnCfgArgRawZ(argListTemp, cfgOptArchivePushBatchSize, "32MiB");
+        hrnCfgArgRawZ(argListTemp, cfgOptArchivePushQueueMax, "48MiB");
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp, .role = cfgCmdRoleAsync);
+
+        TEST_RESULT_VOID(cmdArchivePushAsync(), "drop entire queue");
+        TEST_RESULT_LOG(
+            "P00   INFO: push 4 WAL file(s) to archive: 000000010000000100000010...000000010000000100000013\n"
+            "P00   WARN: dropped WAL file '000000010000000100000010' because archive queue exceeded 48MB\n"
+            "P00   WARN: dropped WAL file '000000010000000100000011' because archive queue exceeded 48MB\n"
+            "P00   WARN: dropped WAL file '000000010000000100000012' because archive queue exceeded 48MB\n"
+            "P00   WARN: dropped WAL file '000000010000000100000013' because archive queue exceeded 48MB");
+
+        TEST_STORAGE_LIST(
+            storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT,
+            "000000010000000100000010.ok\n"
+            "000000010000000100000011.ok\n"
+            "000000010000000100000012.ok\n"
+            "000000010000000100000013.ok\n",
+            .comment = "check status files");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("stop async processing after an error");
+
+        // Remove status and ready files to get a clean state
+        HRN_STORAGE_PATH_REMOVE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT, .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_OUT);
+        HRN_STORAGE_PATH_REMOVE(storagePgWrite(), "pg_xlog/archive_status", .recurse = true);
+        HRN_STORAGE_PATH_CREATE(storagePgWrite(), "pg_xlog/archive_status");
+
+        // Create WAL segments and ready files for six segments. There are more segments than will be processed to prove that
+        // processing stops after an error and leaves the remaining WAL for the next run.
+        for (unsigned int walIdx = 4; walIdx <= 9; walIdx++)
+        {
+            HRN_STORAGE_PUT(storagePgWrite(), zNewFmt("pg_xlog/00000001000000010000000%u", walIdx), walBufferBatch);
+            HRN_STORAGE_PUT_EMPTY(storagePgWrite(), zNewFmt("pg_xlog/archive_status/00000001000000010000000%u.ready", walIdx));
+        }
+
+        // Make the repo archive path read-only so each push errors when it writes, simulating an unavailable repository
+        HRN_STORAGE_MODE(storageTest, "repo/archive/test/18-1/0000000100000001", .mode = 0500);
+
+        argListTemp = strLstDup(argList);
+        HRN_CFG_LOAD(cfgCmdArchivePush, argListTemp, .role = cfgCmdRoleAsync);
+
+        // The job that errors and the one already in flight (process-max is 1) both complete, then scheduling stops
+        TEST_RESULT_VOID(cmdArchivePushAsync(), "push WAL segments");
+        TEST_RESULT_LOG_FMT(
+            "P00   INFO: push 6 WAL file(s) to archive: 000000010000000100000004...000000010000000100000009\n"
+            "P01   WARN: could not push WAL file '000000010000000100000004' to the archive (will be retried): "
+            "[104] raised from local-1 shim protocol: archive-push command encountered error(s):\n"
+            "            repo1: [FileOpenError] unable to open file '" TEST_PATH
+            "/repo/archive/test/18-1/0000000100000001/000000010000000100000004-%s' for write: [13] Permission denied\n"
+            "P01   WARN: could not push WAL file '000000010000000100000005' to the archive (will be retried): "
+            "[104] raised from local-1 shim protocol: archive-push command encountered error(s):\n"
+            "            repo1: [FileOpenError] unable to open file '" TEST_PATH
+            "/repo/archive/test/18-1/0000000100000001/000000010000000100000005-%s' for write: [13] Permission denied\n"
+            "P00   WARN: stopped archive-push after an error, remaining WAL will be processed on the next run",
+            walBufferBatchSha1, walBufferBatchSha1);
+
+        // Restore the repo mode so later tests can write
+        HRN_STORAGE_MODE(storageTest, "repo/archive/test/18-1/0000000100000001");
+
+        // Only the segments processed before stopping have status files; the rest are left for the next run
+        TEST_STORAGE_LIST(
+            storageSpool(), STORAGE_SPOOL_ARCHIVE_OUT,
+            "000000010000000100000004.error\n"
+            "000000010000000100000005.error\n",
             .comment = "check status files");
 
         // Uninstall local command handler shim

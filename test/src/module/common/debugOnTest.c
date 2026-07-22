@@ -3,8 +3,8 @@ Test Debug Macros and Routines
 ***********************************************************************************************************************************/
 #include "common/log.h"
 
-#include "common/harnessLog.h"
 #include "common/macro.h"
+#include "harness/log.h"
 
 static void
 testFunction3(void)

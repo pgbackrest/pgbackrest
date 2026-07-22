@@ -16,7 +16,7 @@
         <variable key="host-contrib-image">pgbackrest/doc:contrib</variable>
 
         <variable key="github-url-test">{[github-url-main]}/test/src</variable>
-        <variable key="github-url-test-common">{[github-url-main]}/test/src/common</variable>
+        <variable key="github-url-test-harness">{[github-url-main]}/test/src/harness</variable>
         <variable key="github-url-src">{[github-url-main]}/src</variable>
         <variable key="github-url-src-common">{[github-url-src]}/common</variable>
 
@@ -459,7 +459,7 @@ if (testBegin("expireBackup()"))
             <section id="test-command">
                 <title>Setting up the command to be run</title>
 
-                <p>The <link url="{[github-url-test-common]}/harnessConfig.h">harnessConfig.h</link> describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a <code>StringList</code> which must be defined and passed to the <code>HRN_CFG_LOAD()</code> macro with the command. For example, the following will set up a test to run <cmd>pgbackrest --repo-path=test/test-0/repo info</cmd> command on multiple repositories, one of which is encrypted:</p>
+                <p>The <link url="{[github-url-test-harness]}/config.h">config.h</link> describes a list of functions that should be used when configuration options are required for a command being tested. Options are set in a <code>StringList</code> which must be defined and passed to the <code>HRN_CFG_LOAD()</code> macro with the command. For example, the following will set up a test to run <cmd>pgbackrest --repo-path=test/test-0/repo info</cmd> command on multiple repositories, one of which is encrypted:</p>
 
                 <code-block>
 StringList *argList = strLstNew();                                  // Create an empty string list
@@ -475,7 +475,7 @@ HRN_CFG_LOAD(cfgCmdInfo, argList);                                  // Load the 
             <section id="test-store">
                 <title>Storing a file</title>
 
-                <p>Sometimes it is desirable to store or manipulate files before or during a test and then confirm the contents. The <link url="{[github-url-test-common]}/harnessStorage.h">harnessStorage.h</link> file contains macros (e.g. <code>HRN_STORAGE_PUT</code> and <code>TEST_STORAGE_GET</code>) for doing this. In addition, <code>HRN_INFO_PUT</code> is convenient for writing out info files (archive.info, backup.info, backup.manifest) since it will automatically add header and checksum information.</p>
+                <p>Sometimes it is desirable to store or manipulate files before or during a test and then confirm the contents. The <link url="{[github-url-test-harness]}/storage.h">storage.h</link> file contains macros (e.g. <code>HRN_STORAGE_PUT</code> and <code>TEST_STORAGE_GET</code>) for doing this. In addition, <code>HRN_INFO_PUT</code> is convenient for writing out info files (archive.info, backup.info, backup.manifest) since it will automatically add header and checksum information.</p>
 
                 <code-block>
 HRN_STORAGE_PUT_EMPTY(
@@ -487,7 +487,7 @@ HRN_STORAGE_PUT_EMPTY(
             <section id="test-results">
                 <title>Testing results</title>
 
-                <p>Tests are run and results confirmed via macros that are described in <link url="{[github-url-test-common]}/harnessTest.h">harnessTest.h</link>. With the exception of TEST_ERROR, the third parameter is a short description of the test. Some of the more common macros are:</p>
+                <p>Tests are run and results confirmed via macros that are described in <link url="{[github-url-test-harness]}/test.h">test.h</link>. With the exception of TEST_ERROR, the third parameter is a short description of the test. Some of the more common macros are:</p>
 
                 <list>
                     <list-item><id>TEST_RESULT_STR</id> - Test the actual value of the string returned by the function.</list-item>
@@ -519,7 +519,7 @@ TEST_RESULT_LOG(
             <section id="test-child">
                 <title>Testing using child process</title>
 
-                <p>Sometimes it is useful to use a child process for testing. Below is a simple example. See <link url="{[github-url-test-common]}/harnessFork.h">harnessFork.h</link> for more details.</p>
+                <p>Sometimes it is useful to use a child process for testing. Below is a simple example. See <link url="{[github-url-test-harness]}/fork.h">fork.h</link> for more details.</p>
 
                 <code-block>
 HRN_FORK_BEGIN()
@@ -567,7 +567,7 @@ HRN_FORK_END();
             <section id="test-shim">
                 <title>Testing using a shim</title>
 
-                <p>A <postgres/> libpq shim is provided to simulate interactions with <postgres/>. Below is a simple example. See <link url="{[github-url-test-common]}/harnessPq.h">harnessPq.h</link> for more details.</p>
+                <p>A <postgres/> libpq shim is provided to simulate interactions with <postgres/>. Below is a simple example. See <link url="{[github-url-test-harness]}/pq.h">pq.h</link> for more details.</p>
 
                 <code-block>
 // Set up two standbys but no primary

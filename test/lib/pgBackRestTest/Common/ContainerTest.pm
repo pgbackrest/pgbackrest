@@ -48,11 +48,16 @@ use constant CONTAINER_DEBUG                                        => false;
 my $hContainerCache;
 
 ####################################################################################################################################
-# Container repo - defines the Docker repository where the containers will be located
+# Container repo - defines the container registry where the containers will be located
 ####################################################################################################################################
 sub containerRepo
 {
-    return PROJECT_EXE . qw(/) . 'test';
+    # The pgbackrest namespace is the canonical cache that every environment pulls from and only pgbackrest CI can push to. Pass an
+    # owner to build the tag for that owner's own cache instead (a fork can push to and pull from it). Images are always tagged in
+    # the pgbackrest namespace locally so Docker calls do not need to know which cache they came from.
+    my $strOwner = shift;
+
+    return 'ghcr.io/' . (defined($strOwner) ? $strOwner : PROJECT_EXE) . '/test';
 }
 
 push @EXPORT, qw(containerRepo);
@@ -90,44 +95,86 @@ sub containerWrite
         (defined($strScript) && $strScript ne ''?
             "\n\nRUN echo '" . (CONTAINER_DEBUG ? 'DEBUG' : 'OPTIMIZED') . " BUILD'" . $strScript : '');
 
-    # Search for the image in the cache
-    my $strScriptSha1;
+    # Base images are cached in the container registry, keyed by a hash of the generated Dockerfile combined with the manual
+    # revision from container.yaml. Images are pulled from the pgbackrest cache first, then from the repository owner's own cache
+    # when running on a fork, and built locally if neither has them. A build is pushed to the cache the environment can write to
+    # (the fork's own cache on a fork, else the pgbackrest cache). The image is always tagged in the pgbackrest namespace locally,
+    # so downstream Docker calls reference a single name regardless of where it came from.
     my $bCached = false;
+    my $strCacheTag;
+    my $strForkCacheTag;
 
     if ($strImage =~ /\-base\-/)
     {
-        $strScriptSha1 = sha1_hex($strScript);
+        # The revision forces a rebuild when the Dockerfile is unchanged but the upstream packages have changed, e.g. a new
+        # PostgreSQL beta. A container uses the revision for its vm and architecture if it has one, else the revision for its vm,
+        # else the required "all" revision (all validated in containerBuild). So bumping "all" rebuilds only the containers without
+        # a more specific revision; a container with a more specific revision is rebuilt by bumping that revision (or deleting its
+        # cached tag). The revision is also placed in the tag for reference.
+        my $strRevision =
+            defined($hContainerCache->{"${strOS}-${strArch}"}) ? $hContainerCache->{"${strOS}-${strArch}"} :
+                (defined($hContainerCache->{$strOS}) ? $hContainerCache->{$strOS} : $hContainerCache->{&VM_ALL});
+        my $strCacheImage = "${strImage}-${strRevision}-" . substr(sha1_hex($strScript . $strRevision), 0, 12);
 
-        foreach my $strBuild (reverse(keys(%{$hContainerCache})))
+        $strCacheTag = containerRepo() . ":${strCacheImage}";
+
+        # On a fork also use the fork owner's own cache, which it can write to
+        my $strOwner = $ENV{GITHUB_REPOSITORY_OWNER} ? lc($ENV{GITHUB_REPOSITORY_OWNER}) : PROJECT_EXE;
+        $strForkCacheTag = $strOwner ne PROJECT_EXE ? containerRepo($strOwner) . ":${strCacheImage}" : undef;
+
+        # Pull from the pgbackrest cache first, then the fork's own cache. A failed pull (image missing or no read access) falls
+        # through to the next cache or a local build.
+        if (!(defined($bForce) && $bForce))
         {
-            my $strArchLookup = defined($strArch) ? $strArch : hostArch();
-
-            if (defined($hContainerCache->{$strBuild}{$strArchLookup}{$strOS}) &&
-                $hContainerCache->{$strBuild}{$strArchLookup}{$strOS} eq $strScriptSha1)
+            foreach my $strPullTag ($strCacheTag, defined($strForkCacheTag) ? $strForkCacheTag : ())
             {
-                &log(INFO, "Using cached ${strTag}-${strBuild} image (${strScriptSha1}) ...");
+                &log(INFO, "Checking cache ${strPullTag} ...");
 
-                $strScript =
-                    "# ${strTitle} Container\n" .
-                    "FROM ${strTag}-${strBuild}";
+                my $oPull = new pgBackRestTest::Common::ExecuteTest(
+                    "docker pull ${strPullTag}", {bSuppressStdErr => true, bSuppressError => true});
+                $oPull->begin();
 
-                $bCached = true;
+                if ($oPull->end() == 0)
+                {
+                    &log(INFO, "Using cached ${strPullTag} image");
+                    executeTest("docker tag ${strPullTag} ${strTag}");
+                    $bCached = true;
+                    last;
+                }
             }
         }
     }
 
     if (!$bCached)
     {
-        &log(INFO, "Building ${strTag} image" . (defined($strScriptSha1) ? " (${strScriptSha1})" : '') . ' ...');
-    }
+        &log(INFO, "Building ${strTag} image" . (defined($strCacheTag) ? " (${strCacheTag})" : '') . ' ...');
 
-    # Write the image
-    $oStorageDocker->put("${strTempPath}/${strImage}", trim($strScript) . "\n");
-    executeTest(
-        'docker build' . (defined($strArch) ? " --platform linux/${strArch}" : '') .
-        (defined($bForce) && $bForce ? ' --no-cache' : '') . " -f ${strTempPath}/${strImage} -t ${strTag} " .
-            $oStorageDocker->pathGet('test'),
-        {bSuppressStdErr => true, bShowOutputAsync => (logLevel())[1] eq DETAIL});
+        # Write and build the image
+        $oStorageDocker->put("${strTempPath}/${strImage}", trim($strScript) . "\n");
+        executeTest(
+            'docker build' . (defined($strArch) ? " --platform linux/${strArch}" : '') .
+            (defined($bForce) && $bForce ? ' --no-cache' : '') . " -f ${strTempPath}/${strImage} -t ${strTag} " .
+                $oStorageDocker->pathGet('test'),
+            {bSuppressStdErr => true, bShowOutputAsync => (logLevel())[1] eq DETAIL});
+
+        # Push the base image to the cache this environment can write to (the fork's own cache on a fork, else the pgbackrest
+        # cache) and log when it succeeds. Best effort since it requires write access, which is not available locally or on pull
+        # requests from forks; those just use the image they built.
+        if (defined($strCacheTag))
+        {
+            my $strPushTag = defined($strForkCacheTag) ? $strForkCacheTag : $strCacheTag;
+            executeTest("docker tag ${strTag} ${strPushTag}", {bSuppressError => true});
+
+            my $oPush = new pgBackRestTest::Common::ExecuteTest(
+                "docker push ${strPushTag}", {bSuppressStdErr => true, bSuppressError => true});
+            $oPush->begin();
+
+            if ($oPush->end() == 0)
+            {
+                &log(INFO, "Cached ${strPushTag} image");
+            }
+        }
+    }
 }
 
 ####################################################################################################################################
@@ -147,7 +194,7 @@ sub groupCreate
     }
     elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_ALPINE)
     {
-        return "addgroup -g${iId} ${strName}";
+        return "getent group ${strName} >/dev/null || addgroup -g${iId} ${strName}";
     }
 }
 
@@ -348,6 +395,37 @@ sub containerBuild
 
     $hContainerCache = Load(${$oStorageDocker->get($oStorageDocker->pathGet('test/container.yaml'))});
 
+    # The "all" revision is required so it can never be accidentally unset, which would change every image hash at once. It can
+    # only be bumped.
+    if (ref($hContainerCache) ne 'HASH' || !defined($hContainerCache->{&VM_ALL}))
+    {
+        confess &log(ERROR, "the 'all' revision is required in test/container.yaml");
+    }
+
+    # Validate the revisions. A revision is keyed by "all", a vm, or a vm qualified with an architecture, e.g. "u22-x86_64". Without
+    # this an invalid key would silently fall back to a less specific revision and the expected rebuild would never happen.
+    foreach my $strKey (sort(keys(%{$hContainerCache})))
+    {
+        if (!defined($hContainerCache->{$strKey}) || ref($hContainerCache->{$strKey}) ne '')
+        {
+            confess &log(ERROR, "revision '${strKey}' in test/container.yaml must be set to a value");
+        }
+
+        next if $strKey eq VM_ALL;
+
+        my ($strKeyVm, $strKeyArch) = split('-', $strKey, 2);
+
+        if (!defined(vmGet()->{$strKeyVm}) || $strKeyVm eq VM_NONE)
+        {
+            confess &log(ERROR, "revision '${strKey}' in test/container.yaml has invalid vm '${strKeyVm}'");
+        }
+
+        if (defined($strKeyArch) && !grep($_ eq $strKeyArch, VM_ARCH_LIST))
+        {
+            confess &log(ERROR, "revision '${strKey}' in test/container.yaml has invalid architecture '${strKeyArch}'");
+        }
+    }
+
     # Remove old images on force
     if ($bVmForce)
     {
@@ -395,21 +473,33 @@ sub containerBuild
                     "    dnf -y install epel-release && \\\n" .
                     "    crb enable && \\\n";
             }
+            elsif ($strOS eq VM_RH9 || $strOS eq VM_RH10)
+            {
+                $strScript .=
+                    "    dnf install -y dnf-plugins-core && \\\n" .
+                    "    dnf -y install epel-release && \\\n" .
+                    "    crb enable && \\\n";
+            }
 
             $strScript .=
                 "    yum -y update && \\\n" .
-                "    yum -y install openssh-server openssh-clients wget sudo git \\\n" .
+                "    yum -y install openssh-server openssh-clients sudo git \\\n" .
                 "        perl perl-Digest-SHA perl-DBD-Pg perl-YAML-LibYAML openssl \\\n" .
                 "        gcc make perl-ExtUtils-MakeMaker perl-Test-Simple openssl-devel perl-ExtUtils-Embed rpm-build \\\n" .
                 "        libyaml-devel zlib-devel libxml2-devel lz4-devel lz4 bzip2-devel bzip2 perl-JSON-PP ccache meson \\\n" .
                 "        libssh2-devel zstd libzstd-devel systemd-devel";
+
+            if ($strOS eq VM_RH9 || $strOS eq VM_RH10)
+            {
+                $strScript .= " valgrind";
+            }
         }
         elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
         {
             $strScript .=
                 "    export DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive && \\\n" .
                 "    apt-get update && \\\n" .
-                "    apt-get install -y --no-install-recommends openssh-server wget sudo gcc make git \\\n" .
+                "    apt-get install -y --no-install-recommends openssh-server sudo gcc make git \\\n" .
                 "        libdbd-pg-perl libhtml-parser-perl libssl-dev libperl-dev python3-distutils \\\n" .
                 "        libyaml-libyaml-perl tzdata devscripts lintian libxml-checker-perl txt2man debhelper \\\n" .
                 "        libppi-html-perl libtemplate-perl libtest-differences-perl zlib1g-dev libxml2-dev pkg-config \\\n" .
@@ -461,22 +551,46 @@ sub containerBuild
 
             if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
             {
-                $strScript .=
-                    "    rpm --import https://download.postgresql.org/pub/repos/yum/keys/RPM-GPG-KEY-PGDG && \\\n";
-
-                if ($strOS eq VM_RH8)
+                # RHEL 10's rpm-sequoia OpenPGP backend rejects the SHA-1 binding signature in the PGDG GPG key, and the
+                # crypto-policy SHA1 subpolicy that could re-enable it was removed in EL-10. So rh10 skips the key import
+                # and installs the repo/packages with gpg checks disabled (acceptable for a throwaway test container).
+                if ($strOS ne VM_RH10 && vmPgRepo($strOS))
                 {
                     $strScript .=
-                        "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-" . hostArch() . "/" .
-                            "pgdg-redhat-repo-latest.noarch.rpm && \\\n" .
-                        "    dnf -qy module disable postgresql && \\\n";
+                        "    rpm --import https://download.postgresql.org/pub/repos/yum/keys/RPM-GPG-KEY-PGDG && \\\n";
                 }
-                elsif ($strOS eq VM_F43)
+
+                if (!vmPgRepo($strOS))
+                {
+                    # Enable the native PostgreSQL application stream instead of adding the PGDG repo
+                    $strScript .=
+                        "    dnf -y module enable postgresql:" . @{$oOS->{&VM_DB}}[-1] . " && \\\n";
+                }
+                elsif ($strOS eq VM_RH9)
                 {
                     $strScript .=
                         "    rpm -ivh \\\n" .
-                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-43-" . hostArch() . "/" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-9-" . hostArch() . "/" .
+                            "pgdg-redhat-repo-latest.noarch.rpm && \\\n" .
+                        "    dnf -qy module disable postgresql && \\\n" .
+                        "    yum -y install libcurl-devel && \\\n";
+                }
+                elsif ($strOS eq VM_RH10)
+                {
+                    # Install the repo without a gpg check and disable gpgcheck on the PGDG repos (see the SHA-1 note
+                    # above). RHEL 10 also dropped dnf modularity, so there is no postgresql module to disable.
+                    $strScript .=
+                        "    dnf -y install --nogpgcheck \\\n" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/EL-10-" . hostArch() . "/" .
+                            "pgdg-redhat-repo-latest.noarch.rpm && \\\n" .
+                        "    sed -i 's/gpgcheck=1/gpgcheck=0/g' /etc/yum.repos.d/pgdg-redhat-all.repo && \\\n" .
+                        "    yum -y install libcurl-devel && \\\n";
+                }
+                elsif ($strOS eq VM_F44)
+                {
+                    $strScript .=
+                        "    rpm -ivh \\\n" .
+                        "        https://download.postgresql.org/pub/repos/yum/reporpms/F-44-" . hostArch() . "/" .
                             "pgdg-fedora-repo-latest.noarch.rpm && \\\n" .
                         "    yum -y install libcurl-devel && \\\n"
                 }
@@ -490,7 +604,9 @@ sub containerBuild
                 {
                     $strScript .=
                         "    apt-get install -y --no-install-recommends postgresql-common && \\\n" .
-                        "    /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y && \\\n";
+                        "    /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y" .
+                            ($strOS eq VM_U22 && ($strArch eq VM_ARCH_AARCH64 || $strArch eq VM_ARCH_X86_64) ? ' -c 19' : '') .
+                            " && \\\n";
                 }
 
                 $strScript .=
@@ -523,15 +639,23 @@ sub containerBuild
                 {
                     if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
                     {
-                        my $strDbVersionNoDot = $strDbVersion;
-                        $strDbVersionNoDot =~ s/\.//;
-
-                        $strScript .= " postgresql${strDbVersionNoDot}-server";
-
-                        # Add development package for the latest version of postgres
-                        if ($strDbVersion eq @{$oOS->{&VM_DB}}[-1])
+                        # Native RHEL installs the unversioned server package from the application stream
+                        if (!vmPgRepo($strOS))
                         {
-                            $strScript .= " postgresql${strDbVersionNoDot}-devel";
+                            $strScript .= " postgresql-server";
+                        }
+                        else
+                        {
+                            my $strDbVersionNoDot = $strDbVersion;
+                            $strDbVersionNoDot =~ s/\.//;
+
+                            $strScript .= " postgresql${strDbVersionNoDot}-server";
+
+                            # Add development package for the latest version of postgres
+                            if ($strDbVersion eq @{$oOS->{&VM_DB}}[-1])
+                            {
+                                $strScript .= " postgresql${strDbVersionNoDot}-devel";
+                            }
                         }
                     }
                     elsif ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
@@ -548,10 +672,19 @@ sub containerBuild
                     }
                 }
             }
+            # On other architectures (e.g. ppc64le, s390x) install a single PostgreSQL version for the smoke test via the
+            # postgresql metapackage (its default from the configured repo). The full version matrix is skipped to keep the
+            # emulated build fast; one version is enough to check the build and exercise checksums end-to-end on big-endian.
+            elsif (defined($oOS->{&VM_DB}) && @{$oOS->{&VM_DB}} > 0 && $$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_DEBIAN)
+            {
+                $strScript .= sectionHeader() .
+                    "# Install a single PostgreSQL version for the smoke test\n" .
+                    "    apt-get install -y --no-install-recommends postgresql";
+            }
         }
 
-        # Add path to latest version of postgres
-        if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL)
+        # Add path to latest version of postgres (PGDG installs to a versioned path; native packages use /usr/bin)
+        if ($$oVm{$strOS}{&VM_OS_BASE} eq VM_OS_BASE_RHEL && vmPgRepo($strOS))
         {
             $strScript .=
                 "\n\nENV PATH=/usr/pgsql-" . @{$oOS->{&VM_DB}}[-1] . "/bin:\$PATH\n" .
@@ -604,7 +737,7 @@ sub containerBuild
                 "    echo '***********************************************' >> /etc/issue.net && \\\n" .
                 "    echo 'Banner /etc/issue.net'                           >> /etc/ssh/sshd_config";
 
-            if ($strOS eq VM_U22)
+            if ($strOS eq VM_U22 || $strOS eq VM_A321)
             {
                 $strScript .= sectionHeader() .
                     "    echo '# Add PubkeyAcceptedAlgorithms (required for SFTP)'              >> /etc/ssh/sshd_config && \\\n" .
@@ -616,7 +749,7 @@ sub containerBuild
             # only thing running in the container.
             $strScript .= sectionHeader() .
                 "# Rename conflicting group\n" .
-                '    sed -i s/.*\:x\:' . TEST_GROUP_ID . '\:$/' . TEST_GROUP . '\:x\:' . TEST_GROUP_ID . "\:/ /etc/group";
+                "    sed -i 's/^[^:]*:x:" . TEST_GROUP_ID . ":.*/" . TEST_GROUP . ":x:" . TEST_GROUP_ID . ":/' /etc/group";
 
             $strScript .= sectionHeader() .
                 "# Create test user\n" .

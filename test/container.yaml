@@ -1,32 +1,33 @@
 # **********************************************************************************************************************************
-# Container Cache
+# Container Cache Revisions
 #
-# Contains hashes for containers that are available on Docker hub. If present, the container can be pulled instead of being built
-# locally which saves a lot of time. Note: these are hashes of the Dockerfile not the actual binary image.
+# Base images are cached in the container registry (GHCR) keyed by a hash of the generated Dockerfile combined with the revision
+# for the VM below. On a cache hit the image is pulled instead of being built locally, which saves a lot of time. Images are
+# pushed automatically after a build when write access to the registry is available (i.e. from CI on the pgBackRest repository).
 #
-# To build a new image:
-# - if Dockerfile has changed, just build as usual
-# - if Dockerfile has not changed, comment out vm hash below and use --vm-force when building
+# A base image is built per VM and architecture, so a revision applies to a VM on a single architecture or on all of them,
+# depending on how it is keyed below.
 #
-# To upload a new image:
-# - docker login -u pgbackrest
-# - DATE=YYYYMMDDX;VM=X;ARCH=X;BASE=pgbackrest/test:${VM?}-base-${ARCH?};docker tag ${BASE?} ${BASE?}-${DATE?} && docker push ${BASE?}-${DATE?}
+# The Dockerfile hash already forces a rebuild whenever the container definition changes. The revision here forces a rebuild when
+# the Dockerfile is unchanged but the upstream packages have changed, e.g. a new PostgreSQL beta is released. Set values date-style
+# (e.g. 20260710A) and commit to document the bump; this produces a new image tag so the next build misses the cache, rebuilds,
+# and repushes.
+#
+# The "all" key is required and applies to every container that does not have a more specific revision, so it can only ever be
+# bumped, never unset. A per-VM key overrides "all" for that container on every architecture, and a per-VM-and-architecture key
+# overrides both for that container on that architecture only. Bumping "all" therefore rebuilds only the containers without a more
+# specific revision; a container with a more specific revision is rebuilt by bumping that revision (or deleting its cached tag
+# manually).
+#
+# Prefer a per-VM-and-architecture key when the packages only changed on some architectures. A per-VM key rebuilds every
+# architecture the container is built for, including the emulated ones (ppc64le, s390x) that are very slow to build.
+#
+# Add overrides as needed, e.g.:
+#   rh10: 20260710A          # rebuild rh10 on every architecture (independent of "all")
+#   rh10-x86_64: 20260710A   # rebuild rh10 on x86_64 only (independent of "all" and "rh10")
 # **********************************************************************************************************************************
-20260529A:
-  aarch64:
-    u22: 003a17aace256ed45378c079c895acdff93129b5
+all: 20260710A
 
-  i386:
-    d11: 6207f028a09126176dc86760a691631d1ebf4ffa
-
-  s390x:
-    u22: 2ab1bb42a3815ee6102f0be6ea1b3c579d09e136
-
-  ppc64le:
-    u22: 2ab1bb42a3815ee6102f0be6ea1b3c579d09e136
-
-  x86_64:
-    a321: dab99d91eed1710c68dae28efa5cd0e27e0a7f60
-    f43: da6dfd044362e930922962dcbada001d4e3c42c8
-    rh8: 0142e914cbf025f405a34d4c432e72c303476fe6
-    u22: 003a17aace256ed45378c079c895acdff93129b5
+# PostgreSQL 19 beta 2
+u22-x86_64: 20260717A
+u22-aarch64: 20260717A

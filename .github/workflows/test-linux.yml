@@ -1,0 +1,80 @@
+# Unit and integration tests on Linux, each running in a container for the distribution being tested. This is the bulk of the
+# testing and the only place that coverage runs.
+name: linux
+
+on: workflow_call
+
+# Limit permissions on the repository
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+
+    # Allow pushing base images to the GHCR container cache
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      # Let all the jobs run to completion even if one fails
+      fail-fast: false
+
+      matrix:
+        include:
+          # All tests (without coverage or valgrind) for 32-bit
+          - param: test --vm=d12 --vm-arch=i386 --param=no-performance --param=no-coverage --param=no-valgrind
+
+          # All integration tests
+          - param: test --vm=u22 --param=module=integration
+
+          # All unit tests with coverage, backtrace and alternate timezone
+          - param: test --vm=u22 --param=c-only --param=no-valgrind --param=tz=America/New_York
+
+          # All unit tests with valgrind (disable coverage and backtrace for performance)
+          - param: test --vm=u22 --param=c-only --param=no-coverage --param=no-back-trace
+
+          # All unit tests on the newest gcc available
+          - param: test --vm=f44 --param=c-only --param=no-valgrind --param=no-coverage --param=no-performance
+
+          # All unit and integration tests on musl libc (oldest Alpine)
+          - param: test --vm=a321 --param=no-coverage --param=no-performance
+
+          # All unit and integration tests on musl libc (newest Alpine)
+          - param: test --vm=a324 --param=no-coverage --param=no-performance
+
+          # All integration tests
+          - param: test --vm=rh8 --param=module=integration
+
+          # All unit and integration tests
+          - param: test --vm=rh9 --param=no-coverage --param=no-performance
+
+          # All unit and integration tests
+          - param: test --vm=rh10 --param=no-coverage --param=no-performance
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+        with:
+          path: pgbackrest
+
+      # Log in so base images can be pushed to the cache. Best effort -- pull is anonymous and push is skipped when the token is
+      # read-only (e.g. pull requests from forks).
+      - name: Login to GHCR
+        continue-on-error: true
+        run: echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u ${{github.actor}} --password-stdin
+
+      - name: Run Test
+        run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl ${{matrix.param}} --param=build-max=2
+
+      # Upload the coverage report on failure in case the failure was caused by lack of coverage so uncovered lines can be
+      # inspected from the run's artifacts
+      - name: Upload Coverage Report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: pgbackrest/test/result/coverage/coverage.html
+          archive: false
+          if-no-files-found: ignore

@@ -3,8 +3,8 @@ Test PostgreSQL Interface
 ***********************************************************************************************************************************/
 #include "storage/posix/storage.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessPostgres.h"
+#include "harness/config.h"
+#include "harness/postgres.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -57,8 +57,9 @@ testRun(void)
     {
         TEST_ERROR(
             pgControlVersion(70300), VersionNotSupportedError,
-            "invalid PostgreSQL version 70300\n"
-            "HINT: is this version of PostgreSQL supported?");
+            "invalid PostgreSQL version 7.3\n"
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_96), 960, "9.6 control version");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_11), 1100, "11 control version");
         TEST_RESULT_UINT(pgControlVersion(PG_VERSION_17), 1700, "17 control version");
@@ -79,7 +80,8 @@ testRun(void)
         TEST_ERROR(
             pgControlFromFile(storageTest, NULL), VersionNotSupportedError,
             "unexpected control version = 1501 and catalog version = 202211111\n"
-            "HINT: is this version of PostgreSQL supported?");
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid CRC");
@@ -157,7 +159,16 @@ testRun(void)
         HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_11, .pageChecksumVersion = 2);
 
         TEST_ERROR(
-            pgControlFromFile(storageTest, NULL), FormatError, "page checksum version is 2 but only 0 and 1 are valid");
+            pgControlFromFile(storageTest, NULL), FormatError, "page checksum version is 2 but must be <= 1");
+
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_19, .pageChecksumVersion = 4);
+
+        TEST_ERROR(
+            pgControlFromFile(storageTest, NULL), FormatError, "page checksum version is 4 but must be <= 3");
+
+        HRN_PG_CONTROL_PUT(storageTest, PG_VERSION_19, .pageChecksumVersion = 3);
+
+        TEST_RESULT_UINT(pgControlFromFile(storageTest, NULL).pageChecksumVersion, 0, "incomplete checksums cleared");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("check all valid page sizes");
@@ -224,13 +235,13 @@ testRun(void)
         TEST_RESULT_UINT(info.pageSize, pgPageSize16, "check page size");
 
         HRN_PG_CONTROL_PUT(
-            storageTest, PG_VERSION_18, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_18),
+            storageTest, PG_VERSION_19, .systemId = 0xEFEFEFEFEF, .catalogVersion = hrnPgCatalogVersion(PG_VERSION_19),
             .checkpoint = 0xAABBAABBEEFFEEFF, .timeline = 88, .pageSize = pgPageSize32);
 
         TEST_ASSIGN(info, pgControlFromFile(storageTest, NULL), "get control info");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "check system id");
-        TEST_RESULT_UINT(info.version, PG_VERSION_18, "check version");
-        TEST_RESULT_UINT(info.catalogVersion, 202506291, "check catalog version");
+        TEST_RESULT_UINT(info.version, PG_VERSION_19, "check version");
+        TEST_RESULT_UINT(info.catalogVersion, 202605131, "check catalog version");
         TEST_RESULT_UINT(info.checkpoint, 0xAABBAABBEEFFEEFF, "check checkpoint");
         TEST_RESULT_UINT(info.timeline, 88, "check timeline");
         TEST_RESULT_UINT(info.pageSize, pgPageSize32, "check page size");
@@ -245,11 +256,13 @@ testRun(void)
         TEST_ERROR(
             pgControlFromFile(storageTest, NULL), VersionNotSupportedError,
             "unexpected control version = 1501 and catalog version = 202211111\n"
-            "HINT: is this version of PostgreSQL supported?");
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
         TEST_ERROR(
             pgControlFromFile(storageTest, STRDEF("99")), VersionNotSupportedError,
-            "invalid PostgreSQL version 990000\n"
-            "HINT: is this version of PostgreSQL supported?");
+            "invalid PostgreSQL version 99\n"
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
 
         TEST_ASSIGN(info, pgControlFromFile(storageTest, STRDEF(PG_VERSION_15_Z)), "get control info v90");
         TEST_RESULT_UINT(info.systemId, 0xEFEFEFEFEF, "check system id");
@@ -459,7 +472,8 @@ testRun(void)
         TEST_ERROR(
             pgWalFromBuffer(result, NULL), VersionNotSupportedError,
             "unexpected WAL magic 777\n"
-            "HINT: is this version of PostgreSQL supported?");
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("invalid wal flag");
@@ -499,7 +513,8 @@ testRun(void)
         TEST_ERROR(
             pgWalFromBuffer(result, NULL), VersionNotSupportedError,
             "unexpected WAL magic 777\n"
-            "HINT: is this version of PostgreSQL supported?");
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
 
         TEST_ASSIGN(info, pgWalFromFile(walFile, storageTest, STRDEF(PG_VERSION_15_Z)), "force wal info v15");
         TEST_RESULT_UINT(info.systemId, 0xFAFAFAFA, "check system id");

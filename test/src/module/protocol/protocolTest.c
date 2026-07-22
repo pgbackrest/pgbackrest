@@ -10,11 +10,11 @@ Test Protocol
 #include "storage/storage.h"
 #include "version.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessError.h"
-#include "common/harnessFork.h"
-#include "common/harnessPack.h"
-#include "common/harnessServer.h"
+#include "harness/config.h"
+#include "harness/error.h"
+#include "harness/fork.h"
+#include "harness/pack.h"
+#include "harness/server.h"
 
 /***********************************************************************************************************************************
 Test protocol server command handlers
@@ -199,6 +199,8 @@ typedef struct TestParallelJobCallback
     List *jobList;                                                  // List of jobs to process
     unsigned int jobIdx;                                            // Current index in the list to be processed
     bool clientSeen[2];                                             // Make sure the client idx was seen
+    bool clientDone[2];                                             // Client was told there are no more jobs
+    unsigned int clientReprocess;                                   // Times a client was queried after being told there are none
 } TestParallelJobCallback;
 
 static ProtocolParallelJob *
@@ -222,6 +224,13 @@ testParallelJobCallback(void *data, unsigned int clientIdx)
 
         FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, protocolParallelJobMove(job, memContextCurrent()));
     }
+
+    // No jobs left. Once a client has been told this it is freed and must not be queried again -- if it is then the parallel
+    // executor is reprocessing (and re-freeing) a client that no longer exists.
+    if (listData->clientDone[clientIdx])
+        listData->clientReprocess++;
+
+    listData->clientDone[clientIdx] = true;
 
     FUNCTION_TEST_RETURN(PROTOCOL_PARALLEL_JOB, NULL);
 }
@@ -1235,6 +1244,12 @@ testRun(void)
 
                 TEST_RESULT_BOOL(protocolParallelDone(parallel), true, "check done");
                 TEST_RESULT_BOOL(protocolParallelDone(parallel), true, "check still done");
+
+                // A client whose jobs are exhausted is freed on the process() call that finds no more work. Since other clients are
+                // still running, process() is called again -- but the freed client must not be queried or freed a second time
+                // (which
+                // previously read freed memory while logging the client for FUNCTION_LOG_PARAM).
+                TEST_RESULT_UINT(data.clientReprocess, 0, "no client reprocessed after being freed");
 
                 TEST_RESULT_VOID(protocolParallelFree(parallel), "free parallel");
 

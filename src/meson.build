@@ -96,25 +96,27 @@ src_build_code = [
     'common/compress/bz2/compress.c',
 ]
 
-build_code = executable(
-    'build-code',
-    src_common,
-    src_build_code,
-    dependencies: [
-        lib_backtrace,
-        lib_bz2,
-        lib_xml,
-        lib_yaml
-    ],
-    c_args: [
-        arg_unity,
-    ],
-)
+if not dist
+    build_code = executable(
+        'build-code',
+        src_common,
+        src_build_code,
+        dependencies: [
+            lib_backtrace,
+            lib_bz2,
+            lib_xml,
+            lib_yaml
+        ],
+        c_args: [
+            arg_unity,
+        ],
+    )
+endif
 
-# Build help.auto.c.inc
+# Build help.auto.c.inc (or use the copy shipped in the distribution tarball)
 subdir('command/help')
 
-# Build interface.auto.c.inc
+# Build interface.auto.c.inc (or use the copy shipped in the distribution tarball)
 subdir('postgres')
 
 ####################################################################################################################################
@@ -273,7 +275,7 @@ src_pgbackrest = [
     'main.c',
 ]
 
-executable(
+pgbackrest_exe = executable(
     'pgbackrest',
     src_common,
     src_pgbackrest,

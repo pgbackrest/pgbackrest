@@ -1,3 +1,8 @@
+# Run the unit, integration, and documentation tests for a commit or pull request.
+#
+# The jobs are defined in reusable workflows so that this file remains a readable index of what runs, while still producing a
+# single run in the Actions UI. Only this file has a trigger -- the called workflows are all on: workflow_call. Permissions are
+# granted here because a called workflow can only maintain or reduce the permissions of the token it is given, never elevate them.
 name: test
 
 on:
@@ -17,197 +22,30 @@ permissions:
   contents: read
 
 jobs:
-  test:
-    runs-on: ubuntu-22.04
+  doc:
+    uses: ./.github/workflows/test-doc.yml
 
-    strategy:
-      # Let all the jobs run to completion even if one fails
-      fail-fast: false
+  linux:
+    uses: ./.github/workflows/test-linux.yml
 
-      # The first jobs should be the canaries in the coal mine, i.e. the most likely to fail if there are problems in the code. They
-      # should also be a good mix of unit, integration, and documentation tests.
-      #
-      # In general tests should be ordered from slowest to fastest. This does not make a difference for testing a single commit, but
-      # when multiple commits are being tested it is best to have the slowest jobs first so that as jobs become available they will
-      # tackle the slowest tests first.
-      matrix:
-        include:
-          # All tests (without coverage or valgrind) for 32-bit
-          - param: test --vm=d11 --vm-arch=i386 --param=no-performance --param=no-coverage --param=no-valgrind
+    # Allow pushing base images to the GHCR container cache
+    permissions:
+      contents: read
+      packages: write
 
-          # Debian/Ubuntu documentation
-          - param: doc --vm=u22
-
-          # All integration tests
-          - param: test --vm=u22 --param=module=integration
-
-          # All unit tests with coverage, backtrace and alternate timezone
-          - param: test --vm=u22 --param=c-only --param=no-valgrind --param=tz=America/New_York
-
-          # All unit tests with valgrind (disable coverage and backtrace for performance)
-          - param: test --vm=u22 --param=c-only --param=no-coverage --param=no-back-trace
-
-          # All unit tests on the newest gcc available
-          - param: test --vm=f43 --param=c-only --param=no-valgrind --param=no-coverage --param=no-performance
-
-          # All unit tests on musl libc
-          - param: test --vm=a321 --param=c-only --param=no-coverage --param=no-performance
-
-          # RHEL documentation
-          - param: doc --vm=rh8
-
-          # All integration tests
-          - param: test --vm=rh8 --param=module=integration
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-        with:
-          path: pgbackrest
-
-      - name: Run Test
-        run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl ${{matrix.param}} --param=build-max=2
-
-      # Output the coverage report on failure in case the failure was caused by lack of coverage. This is not ideal since the report
-      # needs to be copied from the log output into an HTML file where it can be viewed, but better than nothing.
-      - name: Coverage Report
-        if: failure()
-        run: |
-          cat ${GITHUB_WORKSPACE?}/pgbackrest/test/result/coverage/coverage.html
-
-  # Unit tests on aarch64 with valgrind
-  aarch64:
-    runs-on: ubuntu-22.04-arm
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-        with:
-          path: pgbackrest
-
-      - name: Run Test
-        run: cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl test --vm=u22 --param=c-only --param=no-coverage --param=no-back-trace --param=build-max=2
-
-  # Basic tests on other architectures using emulation. The emulation is so slow that running all the unit tests would be too
-  # expensive, but this at least shows that the build works and some of the more complex tests run. In particular, it is good to
-  # test on one big-endian architecture to be sure that checksums are correct.
   arch:
-    runs-on: ubuntu-24.04
+    uses: ./.github/workflows/test-arch.yml
 
-    strategy:
-      # Let all the jobs run to completion even if one fails
-      fail-fast: false
+    # Allow pushing base images to the GHCR container cache
+    permissions:
+      contents: read
+      packages: write
 
-      matrix:
-        include:
-          - arch: 'ppc64le'
-          - arch: 's390x'
+  bsd:
+    uses: ./.github/workflows/test-bsd.yml
 
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-        with:
-          path: pgbackrest
+  dist:
+    uses: ./.github/workflows/test-dist.yml
 
-      - name: Install
-        run: |
-          sudo apt-get update
-          sudo DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive apt-get install -y perl sudo libxml-checker-perl libyaml-perl rsync zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config make gcc ccache meson git liblz4-dev liblz4-tool zstd libzstd-dev bzip2 libbz2-dev
-          docker run --privileged --rm tonistiigi/binfmt --install all
-
-      - name: Build VM
-        run: ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm-build --vm=u22 --vm-arch=${{matrix.arch}}
-
-      - name: Run Test
-        run: |
-          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --no-optimize --build-max=2 --module=command --test=backup
-          ${GITHUB_WORKSPACE?}/pgbackrest/test/test.pl --vm=u22 --vm-arch=${{matrix.arch}} --no-valgrind --no-coverage --no-optimize --build-max=2 --module=postgres --test=interface
-
-  # Selected unit tests on MacOS
-  macos:
-    runs-on: macos-26
-    env:
-      LDFLAGS: -L/opt/homebrew/opt/openssl@3/lib -L/opt/homebrew/opt/libpq/lib -L/opt/homebrew/opt/libxml2/lib -L/opt/homebrew/opt/libyaml/lib
-      CPPFLAGS: -I/opt/homebrew/opt/openssl@3/include -I/opt/homebrew/opt/libpq/include -I/opt/homebrew/opt/libxml2/include/libxml2 -I/opt/homebrew/opt/libyaml/include
-      PERL5LIB: /opt/homebrew/opt/perl5/lib/perl5
-      PKG_CONFIG_PATH: /opt/homebrew/opt/libpq/lib/pkgconfig:/opt/homebrew/opt/openssl@3/lib/pkgconfig
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-
-      - name: Install
-        run: brew install -q pkg-config openssl@3 libpq libxml2 libyaml meson
-
-      - name: Debug
-        run: |
-          pwd
-          echo ${HOME?}
-          ls -lah
-          ls -lah ${GITHUB_WORKSPACE?}
-
-      - name: Run Test
-        run: cd .. && ${GITHUB_WORKSPACE?}/test/test.pl --vm-max=2 --no-coverage --no-valgrind  --module=command --test=backup --test=info --test=archive-push
-
-  # Selected unit tests on FreeBSD
-  freebsd:
-    runs-on: ubuntu-24.04
-    strategy:
-      # Let all the jobs run to completion even if one fails
-      fail-fast: false
-
-      matrix:
-        os:
-          - version: '14.3'
-          - version: '15.0'
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Run Test
-        uses: cross-platform-actions/action@v1.0.0
-        with:
-          operating_system: freebsd
-          version: ${{matrix.os.version}}
-          run: |
-            uname -a
-            sudo pkg update && sudo pkg upgrade -y libiconv && sudo pkg install -y bash git postgresql-libpqxx pkgconf libxml2 gmake perl5 libyaml p5-YAML-LibYAML rsync meson
-            cd .. && perl ${GITHUB_WORKSPACE?}/test/test.pl --vm-max=2 --no-coverage --no-valgrind  --module=command --test=backup --test=info --test=archive-push
-
-  # Run meson unity build to check for errors, unused functions, and externed functions
-  unity:
-    runs-on: ubuntu-24.04
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-        with:
-          path: pgbackrest
-
-      - name: Install
-        run: |
-          sudo apt-get update
-          DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y zlib1g-dev libssl-dev libxml2-dev libpq-dev libyaml-dev pkg-config meson liblz4-dev libzstd-dev libbz2-dev
-
-      - name: Build
-        run: |
-          meson setup --unity=on -Dwerror=true build ${GITHUB_WORKSPACE?}/pgbackrest
-          ninja -vC build
-
-      - name: Check
-        run: |
-          diff ${GITHUB_WORKSPACE?}/pgbackrest/.github/workflows/symbol.out <(nm -gj --defined-only build/src/pgbackrest)
-
-  # Check that code is correctly formatted
-  code-format:
-    runs-on: ubuntu-22.04
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-        with:
-          path: pgbackrest
-
-      - name: Check
-        run: |
-          cd ${HOME?} && ${GITHUB_WORKSPACE?}/pgbackrest/test/ci.pl test --param=code-format-check
+  misc:
+    uses: ./.github/workflows/test-misc.yml

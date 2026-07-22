@@ -3,7 +3,7 @@ Test Test Command
 ***********************************************************************************************************************************/
 #include "storage/posix/storage.h"
 
-#include "common/harnessStorage.h"
+#include "harness/storage.h"
 
 /***********************************************************************************************************************************
 Build list of test files to compare
@@ -110,6 +110,71 @@ testRun(void)
             "P00   WARN: 'STRID5(\"abcd\")' should be 'STRID5(\"abcd\", 0x20c410)'\n"
             "P00   WARN: 'STRID6(\"abcd\", 0x20c410)' should be 'STRID5(\"abcd\", 0x20c410)'\n"
             "P00   WARN: 'STRID6S(\"abcd\", 37, 0x20c410)' should be 'STRID5S(\"abcd\", 37, 0x41883fe)'");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("lintChar()");
+
+        // Invisible/bidirectional/homoglyph/control characters written as \xNN escapes so this test file stays 7-bit ASCII
+        HRN_STORAGE_PUT_Z(
+            storageTest, "repo/test.c",
+            "int normal;\n"                                             // Printable ASCII is allowed
+            "\tint tabbed;\n"                                           // Tab is allowed
+            "int zero\xe2\x80\x8bwidth;\n"                              // U+200B zero width space
+            "int bidi\xe2\x80\xae;\n"                                   // U+202E right-to-left override
+            "int cyr\xd0\xb0;\n"                                        // U+0430 cyrillic homoglyph of 'a'
+            "int emoji\xf0\x9f\x98\x80;\n"                              // U+1F600 four-byte sequence
+            "int cr;\r\n"                                               // U+000D carriage return
+            "int trunc\xf0");                                           // Truncated lead byte at end of file
+
+        // A skip-listed file is exempt even though its content would otherwise be flagged
+        HRN_STORAGE_PUT_Z(storageTest, "repo/doc/resource/git-history.cache", "[]\n");
+
+        TEST_ERROR(
+            cmdTest(
+                STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("none"), 3, STRDEF("invalid"),
+                STRDEF("common/stack-trace"), 0, 1, logLevelDebug, true, NULL, NULL, false, false, false, true),
+            FormatError, "6 linter error(s) in 'test.c' (see warnings above)");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: line 3 contains disallowed character U+200B (source must be 7-bit ASCII)\n"
+            "P00   WARN: line 4 contains disallowed character U+202E (source must be 7-bit ASCII)\n"
+            "P00   WARN: line 5 contains disallowed character U+0430 (source must be 7-bit ASCII)\n"
+            "P00   WARN: line 6 contains disallowed character U+1F600 (source must be 7-bit ASCII)\n"
+            "P00   WARN: line 7 contains disallowed character U+000D (source must be 7-bit ASCII)\n"
+            "P00   WARN: line 8 contains disallowed character U+00F0 (source must be 7-bit ASCII)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("lintChar() binary file");
+
+        // A binary file (contains a null byte) is not allowed; the skip-listed cache above is still exempt
+        HRN_STORAGE_PUT(storageTest, "repo/test.c", BUF("a\0b", 3));
+
+        TEST_ERROR(
+            cmdTest(
+                STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("none"), 3, STRDEF("invalid"),
+                STRDEF("common/stack-trace"), 0, 1, logLevelDebug, true, NULL, NULL, false, false, false, true),
+            FormatError, "1 linter error(s) in 'test.c' (see warnings above)");
+
+        TEST_RESULT_LOG("P00   WARN: unexpected binary file (add to the linter skip list if intentional)");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("lintStrId() runs on .c.inc but not .auto.c.inc");
+
+        // Generated .auto.c.inc and vendored .vendor.c.inc are exempt from the StringId check, so their bad StringIds must not be
+        // flagged (both sort before b.c.inc)
+        HRN_STORAGE_PUT_Z(storageTest, "repo/a.auto.c.inc", "STRID5(\"abcd\")\n");
+        HRN_STORAGE_PUT_Z(storageTest, "repo/a.vendor.c.inc", "STRID5(\"abcd\")\n");
+
+        // A hand-written .c.inc is checked, so its bad StringId is flagged
+        HRN_STORAGE_PUT_Z(storageTest, "repo/b.c.inc", "STRID5(\"abcd\")\n");
+
+        TEST_ERROR(
+            cmdTest(
+                STRDEF(TEST_PATH "/repo"), storagePathP(storageTest, STRDEF("test")), STRDEF("none"), 3, STRDEF("invalid"),
+                STRDEF("common/stack-trace"), 0, 1, logLevelDebug, true, NULL, NULL, false, false, false, true),
+            FormatError, "1 linter error(s) in 'b.c.inc' (see warnings above)");
+
+        TEST_RESULT_LOG("P00   WARN: 'STRID5(\"abcd\")' should be 'STRID5(\"abcd\", 0x20c410)'");
     }
 
     // *****************************************************************************************************************************
@@ -127,6 +192,7 @@ testRun(void)
 
         HRN_STORAGE_PUT_Z(storageTest, "repo/meson.build", strZ(mesonBuildRoot));
         strReplace(mesonBuildRoot, STRDEF("subdir('"), STRDEF("# subdir('"));
+        strReplace(mesonBuildRoot, STRDEF("meson.add_dist_script("), STRDEF("# meson.add_dist_script("));
 
         strCatZ(
             mesonBuildRoot,
@@ -144,7 +210,7 @@ testRun(void)
         // harnessError.c
         // -------------------------------------------------------------------------------------------------------------------------
         String *const harnessErrorC = strCat(
-            strNew(), strNewBuf(storageGetP(storageNewReadP(storageRepo, STRDEF("test/src/common/harnessError.c")))));
+            strNew(), strNewBuf(storageGetP(storageNewReadP(storageRepo, STRDEF("test/src/harness/error.c")))));
 
         strReplace(harnessErrorC, STRDEF("{[SHIM_MODULE]}"), STRDEF("#include \"" TEST_PATH "/repo/src/common/error/error.c\""));
 
@@ -220,15 +286,15 @@ testRun(void)
             "        containerReq: true\n"
             "        total: 1\n"
             "        define: -DNDEBUG\n"
-            "        harness: noShim\n"
             "        harness:\n"
-            "          name: shim\n"
-            "          shim:\n"
-            "            test/common/shim:\n"
-            "              function:\n"
-            "                - shimFunc\n"
-            "                - shimFunc2\n"
-            "            test/common/shim2: ~\n"
+            "          - noShim\n"
+            "          - name: shim\n"
+            "            shim:\n"
+            "              test/common/shim:\n"
+            "                function:\n"
+            "                  - shimFunc\n"
+            "                  - shimFunc2\n"
+            "              test/common/shim2: ~\n"
             "        coverage:\n"
             "          - test/common/shim\n"
             "          - test/common/shim2\n"
@@ -276,15 +342,15 @@ testRun(void)
             "src/common/type/param.h",
             "src/common/type/stringStatic.h",
             "src/common/type/stringStatic.c",
-            "test/src/common/harnessDebug.h",
-            "test/src/common/harnessLog.h",
-            "test/src/common/harnessError.c",
-            "test/src/common/harnessError.h",
-            "test/src/common/harnessStackTrace.h",
-            "test/src/common/harnessStackTrace.c",
-            "test/src/common/harnessTest.c",
-            "test/src/common/harnessTest.h",
-            "test/src/common/harnessTest.intern.h",
+            "test/src/harness/debug.h",
+            "test/src/harness/log.h",
+            "test/src/harness/error.c",
+            "test/src/harness/error.h",
+            "test/src/harness/stackTrace.h",
+            "test/src/harness/stackTrace.c",
+            "test/src/harness/test.c",
+            "test/src/harness/test.h",
+            "test/src/harness/test.intern.h",
             "test/src/module/common/stackTraceTest.c",
             "test/src/test.c");
 
@@ -307,8 +373,8 @@ testRun(void)
             "meson.build\n"
             "meson_options.txt\n"
             "src/common/stackTrace.c\n"
-            "test/src/common/harnessError.c\n"
-            "test/src/common/harnessStackTrace.c\n"
+            "test/src/harness/error.c\n"
+            "test/src/harness/stackTrace.c\n"
             "test.c\n",
             "check files");
 
@@ -330,8 +396,8 @@ testRun(void)
                         MESON_COMMENT_BLOCK "\n"
                         "src_unit = files(\n"
                         "    '../../../repo/src/common/debug.c',\n"
-                        "    'test/src/common/harnessError.c',\n"
-                        "    '../../../repo/test/src/common/harnessTest.c',\n"
+                        "    'test/src/harness/error.c',\n"
+                        "    '../../../repo/test/src/harness/test.c',\n"
                         "    'test.c',\n"
                         ")\n"
                         "\n"
@@ -364,11 +430,11 @@ testRun(void)
             {
                 TEST_STORAGE_GET(storageUnit, strZ(file), mesonOption);
             }
-            else if (strEqZ(file, "src/common/stackTrace.c") || strEqZ(file, "test/src/common/harnessStackTrace.c"))
+            else if (strEqZ(file, "src/common/stackTrace.c") || strEqZ(file, "test/src/harness/stackTrace.c"))
             {
                 // No test needed
             }
-            else if (strEqZ(file, "test/src/common/harnessError.c"))
+            else if (strEqZ(file, "test/src/harness/error.c"))
             {
                 TEST_STORAGE_GET(storageUnit, strZ(file), strZ(harnessErrorC));
             }
@@ -389,9 +455,9 @@ testRun(void)
                 strReplace(
                     testCDup, STRDEF("{[C_INCLUDE]}"),
                     STRDEF(
-                        "#include \"test/src/common/harnessStackTrace.c\"\n"
+                        "#include \"test/src/harness/stackTrace.c\"\n"
                         "#include \"../../../repo/src/common/type/stringStatic.c\""));
-                strReplace(testCDup, STRDEF("{[C_INCLUDE]}"), STRDEF("#include \"test/src/common/harnessStackTrace.c\""));
+                strReplace(testCDup, STRDEF("{[C_INCLUDE]}"), STRDEF("#include \"test/src/harness/stackTrace.c\""));
                 strReplace(
                     testCDup, STRDEF("{[C_TEST_INCLUDE]}"),
                     STRDEF("#include \"../../../repo/test/src/module/common/stackTraceTest.c\""));
@@ -414,7 +480,7 @@ testRun(void)
 
         TEST_COPY(
             storageRepo, storageTest,
-            "test/src/common/harnessFork.h",
+            "test/src/harness/fork.h",
             "test/src/module/common/errorTest.c");
 
         TEST_RESULT_VOID(
@@ -432,7 +498,7 @@ testRun(void)
             fileList,
             "meson.build\n"
             "meson_options.txt\n"
-            "test/src/common/harnessError.c\n"
+            "test/src/harness/error.c\n"
             "test.c\n",
             "check files");
 
@@ -454,7 +520,7 @@ testRun(void)
                         "src_unit = files(\n"
                         "    '../../../repo/src/common/stackTrace.c',\n"
                         "    '../../../repo/src/common/type/stringStatic.c',\n"
-                        "    '../../../repo/test/src/common/harnessTest.c',\n"
+                        "    '../../../repo/test/src/harness/test.c',\n"
                         "    'test.c',\n"
                         ")\n"
                         "\n"
@@ -487,7 +553,7 @@ testRun(void)
             {
                 TEST_STORAGE_GET(storageUnit, strZ(file), mesonOption);
             }
-            else if (strEqZ(file, "test/src/common/harnessError.c"))
+            else if (strEqZ(file, "test/src/harness/error.c"))
             {
                 TEST_STORAGE_GET(storageUnit, strZ(file), strZ(harnessErrorC));
             }
@@ -507,7 +573,7 @@ testRun(void)
 
                 strReplace(
                     testCDup, STRDEF("{[C_INCLUDE]}"),
-                    STRDEF("#include \"test/src/common/harnessError.c\""));
+                    STRDEF("#include \"test/src/harness/error.c\""));
                 strReplace(
                     testCDup, STRDEF("{[C_TEST_INCLUDE]}"),
                     STRDEF("#include \"../../../repo/test/src/module/common/errorTest.c\""));
@@ -581,9 +647,9 @@ testRun(void)
             "    (void)shimFunc; // To suppress unused warnings\n"
             "}\n");
 
-        HRN_STORAGE_PUT_Z(storageTest, "repo/test/src/common/harnessShim.c", strZ(harnessShimC));
-        HRN_STORAGE_PUT_EMPTY(storageTest, "repo/test/src/common/harnessShim/sub.c");
-        HRN_STORAGE_PUT_EMPTY(storageTest, "repo/test/src/common/harnessNoShim.c");
+        HRN_STORAGE_PUT_Z(storageTest, "repo/test/src/harness/shim.c", strZ(harnessShimC));
+        HRN_STORAGE_PUT_EMPTY(storageTest, "repo/test/src/harness/shim/sub.c");
+        HRN_STORAGE_PUT_EMPTY(storageTest, "repo/test/src/harness/noShim.c");
         HRN_STORAGE_PUT_EMPTY(storageTest, "repo/test/src/common/include.c");
 
         strReplace(
@@ -638,10 +704,10 @@ testRun(void)
             "meson.build\n"
             "meson_options.txt\n"
             "src/common/stackTrace.c\n"
-            "test/src/common/harnessError.c\n"
-            "test/src/common/harnessShim.c\n"
-            "test/src/common/harnessStackTrace.c\n"
             "test/src/common/shim.c\n"
+            "test/src/harness/error.c\n"
+            "test/src/harness/shim.c\n"
+            "test/src/harness/stackTrace.c\n"
             "test.c\n",
             "check files");
 
@@ -667,10 +733,10 @@ testRun(void)
                         "src_unit = files(\n"
                         "    '../../../repo/src/common/type/stringStatic.c',\n"
                         "    '../../../repo/src/common/debug.c',\n"
-                        "    'test/src/common/harnessStackTrace.c',\n"
-                        "    '../../../repo/test/src/common/harnessNoShim.c',\n"
-                        "    '../../../repo/test/src/common/harnessShim/sub.c',\n"
-                        "    '../../../repo/test/src/common/harnessTest.c',\n"
+                        "    'test/src/harness/stackTrace.c',\n"
+                        "    '../../../repo/test/src/harness/noShim.c',\n"
+                        "    '../../../repo/test/src/harness/shim/sub.c',\n"
+                        "    '../../../repo/test/src/harness/test.c',\n"
                         "    'test.c',\n"
                         ")\n"
                         "\n"
@@ -714,15 +780,15 @@ testRun(void)
             {
                 TEST_STORAGE_GET(storageUnit, strZ(file), mesonOption);
             }
-            else if (strEqZ(file, "src/common/stackTrace.c") || strEqZ(file, "test/src/common/harnessStackTrace.c"))
+            else if (strEqZ(file, "src/common/stackTrace.c") || strEqZ(file, "test/src/harness/stackTrace.c"))
             {
                 // No test needed
             }
-            else if (strEqZ(file, "test/src/common/harnessError.c"))
+            else if (strEqZ(file, "test/src/harness/error.c"))
             {
                 TEST_STORAGE_GET(storageUnit, strZ(file), strZ(harnessErrorC));
             }
-            else if (strEqZ(file, "test/src/common/harnessShim.c"))
+            else if (strEqZ(file, "test/src/harness/shim.c"))
             {
                 TEST_STORAGE_GET(storageUnit, strZ(file), strZ(harnessShimC));
             }
@@ -756,8 +822,8 @@ testRun(void)
                     testCDup,
                     STRDEF("{[C_INCLUDE]}"),
                     STRDEF(
-                        "#include \"test/src/common/harnessShim.c\"\n"
-                        "#include \"test/src/common/harnessError.c\"\n"
+                        "#include \"test/src/harness/shim.c\"\n"
+                        "#include \"test/src/harness/error.c\"\n"
                         "#include \"../../../repo/test/src/common/include.c\"\n"
                         "#include \"../../../repo/doc/src/command/build/build.c\""));
                 strReplace(
@@ -826,9 +892,9 @@ testRun(void)
             fileList,
             "meson.build\n"
             "meson_options.txt\n"
-            "test/src/common/harnessError.c\n"
-            "test/src/common/harnessShim.c\n"
             "test/src/common/shim.c\n"
+            "test/src/harness/error.c\n"
+            "test/src/harness/shim.c\n"
             "test.c\n",
             "check files");
 
@@ -852,10 +918,10 @@ testRun(void)
                         "    '../../../repo/src/common/stackTrace.c',\n"
                         "    '../../../repo/src/common/type/stringStatic.c',\n"
                         "    '../../../repo/src/common/debug.c',\n"
-                        "    'test/src/common/harnessError.c',\n"
-                        "    '../../../repo/test/src/common/harnessNoShim.c',\n"
-                        "    'test/src/common/harnessShim.c',\n"
-                        "    '../../../repo/test/src/common/harnessTest.c',\n"
+                        "    'test/src/harness/error.c',\n"
+                        "    '../../../repo/test/src/harness/noShim.c',\n"
+                        "    'test/src/harness/shim.c',\n"
+                        "    '../../../repo/test/src/harness/test.c',\n"
                         "    'test.c',\n"
                         ")\n"
                         "\n"
@@ -898,15 +964,15 @@ testRun(void)
             {
                 TEST_STORAGE_GET(storageUnit, strZ(file), mesonOption);
             }
-            else if (strEqZ(file, "src/common/stackTrace.c") || strEqZ(file, "test/src/common/harnessStackTrace.c"))
+            else if (strEqZ(file, "src/common/stackTrace.c") || strEqZ(file, "test/src/harness/stackTrace.c"))
             {
                 // No test needed
             }
-            else if (strEqZ(file, "test/src/common/harnessError.c"))
+            else if (strEqZ(file, "test/src/harness/error.c"))
             {
                 TEST_STORAGE_GET(storageUnit, strZ(file), strZ(harnessErrorC));
             }
-            else if (strEqZ(file, "test/src/common/harnessShim.c"))
+            else if (strEqZ(file, "test/src/harness/shim.c"))
             {
                 String *const harnessShimCInt = strCat(strNew(), harnessShimC);
                 strReplace(harnessShimCInt, STRDEF("uXX"), STRDEF("none"));
@@ -1000,10 +1066,10 @@ testRun(void)
             "meson.build\n"
             "meson_options.txt\n"
             "src/common/stackTrace.c\n"
-            "test/src/common/harnessError.c\n"
-            "test/src/common/harnessShim.c\n"
-            "test/src/common/harnessStackTrace.c\n"
             "test/src/common/shim.c\n"
+            "test/src/harness/error.c\n"
+            "test/src/harness/shim.c\n"
+            "test/src/harness/stackTrace.c\n"
             "test.c\n",
             "check files");
 
@@ -1027,12 +1093,12 @@ testRun(void)
                         "src_unit = files(\n"
                         "    '../../../repo/src/common/type/stringStatic.c',\n"
                         "    '../../../repo/src/common/debug.c',\n"
-                        "    'test/src/common/harnessError.c',\n"
-                        "    'test/src/common/harnessStackTrace.c',\n"
-                        "    '../../../repo/test/src/common/harnessNoShim.c',\n"
-                        "    '../../../repo/test/src/common/harnessShim/sub.c',\n"
-                        "    'test/src/common/harnessShim.c',\n"
-                        "    '../../../repo/test/src/common/harnessTest.c',\n"
+                        "    'test/src/harness/error.c',\n"
+                        "    'test/src/harness/stackTrace.c',\n"
+                        "    '../../../repo/test/src/harness/noShim.c',\n"
+                        "    '../../../repo/test/src/harness/shim/sub.c',\n"
+                        "    'test/src/harness/shim.c',\n"
+                        "    '../../../repo/test/src/harness/test.c',\n"
                         "    'test.c',\n"
                         ")\n"
                         "\n"
@@ -1075,15 +1141,15 @@ testRun(void)
             {
                 TEST_STORAGE_GET(storageUnit, strZ(file), mesonOption);
             }
-            else if (strEqZ(file, "src/common/stackTrace.c") || strEqZ(file, "test/src/common/harnessStackTrace.c"))
+            else if (strEqZ(file, "src/common/stackTrace.c") || strEqZ(file, "test/src/harness/stackTrace.c"))
             {
                 // No test needed
             }
-            else if (strEqZ(file, "test/src/common/harnessError.c"))
+            else if (strEqZ(file, "test/src/harness/error.c"))
             {
                 TEST_STORAGE_GET(storageUnit, strZ(file), strZ(harnessErrorC));
             }
-            else if (strEqZ(file, "test/src/common/harnessShim.c"))
+            else if (strEqZ(file, "test/src/harness/shim.c"))
             {
                 TEST_STORAGE_GET(storageUnit, strZ(file), strZ(harnessShimC));
             }

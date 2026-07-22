@@ -35,7 +35,6 @@ use pgBackRestDoc::Common::String;
 use pgBackRestDoc::ProjectInfo;
 
 use pgBackRestTest::Common::BuildTest;
-use pgBackRestTest::Common::CodeCountTest;
 use pgBackRestTest::Common::ContainerTest;
 use pgBackRestTest::Common::DefineTest;
 use pgBackRestTest::Common::ExecuteTest;
@@ -74,7 +73,6 @@ test.pl [options]
    --no-performance     do not run performance tests
    --gen-only           only run auto-generation
    --gen-check          check that auto-generated files are correct (used in CI to detect changes)
-   --code-count         generate code counts
    --no-back-trace      don't run backrace on C unit tests (may be slow with valgrind)
    --no-valgrind        don't run valgrind on C unit tests (saves time)
    --no-coverage        don't run coverage on C unit tests (saves time)
@@ -155,7 +153,6 @@ my $bContainerOnly = false;
 my $bNoPerformance = false;
 my $bGenOnly = false;
 my $bGenCheck = false;
-my $bCodeCount = false;
 my $bProfile = false;
 my $bNoBackTrace = false;
 my $bNoValgrind = false;
@@ -202,7 +199,6 @@ GetOptions ('q|quiet' => \$bQuiet,
             'no-performance' => \$bNoPerformance,
             'gen-only' => \$bGenOnly,
             'gen-check' => \$bGenCheck,
-            'code-count' => \$bCodeCount,
             'code-format' => \$bCodeFormat,
             'code-format-check' => \$bCodeFormatCheck,
             'profile' => \$bProfile,
@@ -456,6 +452,21 @@ eval
 
     buildPutDiffers($oStorageBackRest, "${strBackRestBase}/src/version.h", $strVersionCNew);
 
+    # Set the ccache path
+    #-------------------------------------------------------------------------------------------------------------------------------
+    # A single cache is shared by the host and all containers so a file compiled in one is a hit in the others, e.g.
+    # test-pgbackrest is built both on the host and in the build container. ccache is safe for concurrent access so there is no
+    # need to keep a separate cache per vm or vm index. Keep the cache in the test path so it is removed by --clean.
+    my $strCCachePath = "${strTestPath}/ccache";
+
+    if (!$oStorageTest->pathExists($strCCachePath))
+    {
+        $oStorageTest->pathCreate($strCCachePath, {strMode => '0770', bCreateParent => true});
+    }
+
+    # Set for builds that run on the host. Containers are passed the path explicitly since docker does not pass the environment.
+    $ENV{CCACHE_DIR} = $strCCachePath;
+
     # Start build container if vm is not none
     #-------------------------------------------------------------------------------------------------------------------------------
     my $strPlatform = defined($strVmArch) ? " --platform linux/${strVmArch}" : '';
@@ -463,17 +474,11 @@ eval
 
     if ($strVm ne VM_NONE)
     {
-        my $strCCachePath = "${strTestPath}/ccache-0/${strVm}";
-
-        if (!$oStorageTest->pathExists($strCCachePath))
-        {
-            $oStorageTest->pathCreate($strCCachePath, {strMode => '0770', bCreateParent => true});
-        }
-
+        # The cache does not need to be mounted since it is in the test path, which is mounted below
         executeTest(
             "docker run${strPlatform} -itd -h test-build --name=test-build" .
                 " -v ${strBackRestBase}:${strBackRestBase} -v ${strTestPath}:${strTestPath}" .
-                " -v ${strCCachePath}:/home/${\TEST_USER}/.ccache" . " ${strImage}",
+                " -e CCACHE_DIR=${strCCachePath} ${strImage}",
             {bSuppressStdErr => true});
     }
 
@@ -568,7 +573,9 @@ eval
             if ($strFile eq 'doc/doc.pl' ||
                 $strFile eq 'doc/release.pl' ||
                 $strFile eq 'test/ci.pl' ||
+                $strFile eq 'test/smoke.py' ||
                 $strFile eq 'test/test.pl' ||
+                $strFile eq 'src/build/dist.sh' ||
                 $hManifest->{$strFile}{type} eq 'd')
             {
                 $strExpectedMode = sprintf('%04o', oct($hManifest->{$strFile}{mode}) & 0777);
@@ -578,20 +585,10 @@ eval
             {
                 confess &log(
                     ERROR,
-                    "expected mode for '${strExpectedMode}' for '${strFile}' but found '" . $hManifest->{$strFile}{mode} . "'");
+                    "expected mode '${strExpectedMode}' for '${strFile}' but found '" . $hManifest->{$strFile}{mode} . "'");
             }
         }
 
-        exit 0;
-    }
-
-    # Generate code counts
-    #-------------------------------------------------------------------------------------------------------------------------------
-    if ($bCodeCount)
-    {
-        &log(INFO, "classify code files");
-
-        codeCountScan($oStorageBackRest, $strBackRestBase);
         exit 0;
     }
 

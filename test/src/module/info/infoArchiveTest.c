@@ -7,7 +7,7 @@ Test Archive Info Handler
 #include "common/io/bufferWrite.h"
 #include "storage/posix/storage.h"
 
-#include "common/harnessInfo.h"
+#include "harness/info.h"
 
 /***********************************************************************************************************************************
 Test Run

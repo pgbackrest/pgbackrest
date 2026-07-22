@@ -4,12 +4,12 @@ Test Archive Get Command
 #include "common/io/fdRead.h"
 #include "common/io/fdWrite.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessFork.h"
-#include "common/harnessInfo.h"
-#include "common/harnessPostgres.h"
-#include "common/harnessProtocol.h"
-#include "common/harnessStorage.h"
+#include "harness/config.h"
+#include "harness/fork.h"
+#include "harness/info.h"
+#include "harness/postgres.h"
+#include "harness/protocol.h"
+#include "harness/storage.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -670,9 +670,8 @@ testRun(void)
             " scheme.");
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("WAL not found - timeout");
+        TEST_TITLE("WAL not found - timeout while our own async process holds the lock");
 
-        // Make sure the process times out when there is nothing to get
         argList = strLstDup(argBaseList);
         hrnCfgArgRawZ(argList, cfgOptSpoolPath, TEST_PATH "/spool");
         hrnCfgArgRawBool(argList, cfgOptArchiveAsync, true);
@@ -682,20 +681,61 @@ testRun(void)
 
         THROW_ON_SYS_ERROR(chdir(strZ(cfgOptionStr(cfgOptPgPath))) != 0, PathMissingError, "unable to chdir()");
 
-        TEST_ERROR(
-            cmdArchiveGet(), ArchiveTimeoutError,
-            "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)\n"
-            "HINT: check '" HRN_PATH "/test1-archive-get-async.log' for errors.");
+        // A child holding the lock with our own (inherited) exec id simulates our own async process running and holding the lock,
+        // so the segment is waited for rather than fetched synchronously and the wait times out
+        HRN_FORK_BEGIN()
+        {
+            HRN_FORK_CHILD_BEGIN()
+            {
+                TEST_RESULT_VOID(cmdLockAcquireP(.returnOnNoLock = true), "acquire lock with our own exec id in child");
+
+                // Notify parent that lock has been acquired
+                HRN_FORK_CHILD_NOTIFY_PUT();
+
+                // Wait for parent to allow release lock
+                HRN_FORK_CHILD_NOTIFY_GET();
+
+                cmdLockReleaseP();
+            }
+            HRN_FORK_CHILD_END();
+
+            HRN_FORK_PARENT_BEGIN()
+            {
+                // Wait for child to acquire lock
+                HRN_FORK_PARENT_NOTIFY_GET(0);
+
+                TEST_ERROR(
+                    cmdArchiveGet(), ArchiveTimeoutError,
+                    "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)\n"
+                    "HINT: check '" HRN_PATH "/test1-archive-get-async.log' for errors.");
+
+                // Notify child to release lock
+                HRN_FORK_PARENT_NOTIFY_PUT(0);
+            }
+            HRN_FORK_PARENT_END();
+        }
+        HRN_FORK_END();
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("check for missing WAL");
+        TEST_TITLE("check for missing WAL - synchronous get when no async process is running");
 
         HRN_STORAGE_PUT_EMPTY(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok");
 
-        TEST_ERROR(
-            cmdArchiveGet(), ArchiveTimeoutError,
-            "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)\n"
-            "HINT: check '" HRN_PATH "/test1-archive-get-async.log' for errors.");
+        // With no async process holding the lock the segment is fetched synchronously, which here surfaces the repo error rather
+        // than waiting out the timeout
+        TEST_ERROR(cmdArchiveGet(), RepoInvalidError, "unable to find a valid repository");
+
+        TEST_RESULT_LOG(
+            "P00   WARN: repo1: [FileMissingError] unable to load info file '" TEST_PATH "/repo/archive/test1/archive.info' or"
+            " '" TEST_PATH "/repo/archive/test1/archive.info.copy':\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/test1/archive.info' for read\n"
+            "            FileMissingError: unable to open missing file '" TEST_PATH "/repo/archive/test1/archive.info.copy' for"
+            " read\n"
+            "            HINT: archive.info cannot be opened but is required to push/get WAL segments.\n"
+            "            HINT: is archive_command configured correctly in postgresql.conf?\n"
+            "            HINT: has a stanza-create been performed?\n"
+            "            HINT: use --no-archive-check to disable archive checks during backup if you have an alternate archiving"
+            " scheme.");
 
         TEST_RESULT_BOOL(
             storageExistsP(storageSpool(), STRDEF(STORAGE_SPOOL_ARCHIVE_IN "/000000010000000100000001.ok")), false,
@@ -735,9 +775,19 @@ testRun(void)
         TEST_STORAGE_LIST(storageSpoolWrite(), STORAGE_SPOOL_ARCHIVE_IN, "000000010000000100000002\n", .remove = true);
 
         // -------------------------------------------------------------------------------------------------------------------------
-        TEST_TITLE("unable to get lock");
+        TEST_TITLE("foreign lock forces a synchronous get");
 
-        // Make sure the process times out when it can't get a lock
+        // Set up a valid repo so the synchronous get can check for the segment
+        HRN_INFO_PUT(
+            storageRepoWrite(), INFO_ARCHIVE_PATH_FILE,
+            "[db]\n"
+            "db-id=1\n"
+            "\n"
+            "[db:history]\n"
+            "1={\"db-id\":" HRN_PG_SYSTEMID_10_Z ",\"db-version\":\"10\"}\n");
+
+        // When a foreign async process (a different exec id) holds the lock it was spawned by a different main process and will not
+        // fetch the requested segment, so the segment is fetched synchronously rather than waiting for the async process
         HRN_FORK_BEGIN()
         {
             HRN_FORK_CHILD_BEGIN()
@@ -760,10 +810,22 @@ testRun(void)
                 // Wait for child to acquire lock
                 HRN_FORK_PARENT_NOTIFY_GET(0);
 
-                TEST_ERROR(
-                    cmdArchiveGet(), ArchiveTimeoutError,
-                    "unable to get WAL file '000000010000000100000001' from the archive asynchronously after 1 second(s)\n"
-                    "HINT: check '" HRN_PATH "/test1-archive-get-async.log' for errors.");
+                // The segment exists in the repo so it is fetched synchronously rather than waiting for the foreign async process
+                HRN_STORAGE_PUT_EMPTY(
+                    storageRepoWrite(),
+                    STORAGE_REPO_ARCHIVE "/10-1/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd");
+
+                TEST_RESULT_INT(cmdArchiveGet(), 0, "synchronous get while foreign lock is held");
+                TEST_RESULT_LOG("P00   INFO: found 000000010000000100000001 in the repo1: 10-1 archive");
+                TEST_STORAGE_LIST(storagePgWrite(), "pg_wal", "RECOVERYXLOG\n", .remove = true);
+
+                // The segment no longer exists so it is reported missing rather than timing out
+                TEST_STORAGE_EXISTS(
+                    storageRepoWrite(),
+                    STORAGE_REPO_ARCHIVE "/10-1/000000010000000100000001-abcdabcdabcdabcdabcdabcdabcdabcdabcdabcd", .remove = true);
+
+                TEST_RESULT_INT(cmdArchiveGet(), 1, "synchronous get while foreign lock is held, segment missing");
+                TEST_RESULT_LOG("P00   INFO: unable to find 000000010000000100000001 in the archive");
 
                 // Notify child to release lock
                 HRN_FORK_PARENT_NOTIFY_PUT(0);
@@ -855,7 +917,8 @@ testRun(void)
         TEST_ERROR(
             cmdArchiveGet(), VersionNotSupportedError,
             "unexpected control version = 1501 and catalog version = 202211111\n"
-            "HINT: is this version of PostgreSQL supported?");
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
 
         StringList *argListTemp = strLstDup(argList);
         hrnCfgArgRawZ(argListTemp, cfgOptPgVersionForce, "10");

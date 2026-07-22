@@ -8,13 +8,13 @@ Test Verify Command
 #include "postgres/version.h"
 #include "storage/posix/storage.h"
 
-#include "common/harnessBackup.h"
-#include "common/harnessConfig.h"
-#include "common/harnessInfo.h"
-#include "common/harnessPostgres.h"
-#include "common/harnessPq.h"
+#include "harness/backup.h"
+#include "harness/config.h"
+#include "harness/info.h"
+#include "harness/postgres.h"
+#include "harness/pq.h"
 
-#include "common/harnessProtocol.h"
+#include "harness/protocol.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -1886,7 +1886,8 @@ testRun(void)
         TEST_ERROR(
             verifyProcess(cfgOptionBool(cfgOptVerbose)), VersionNotSupportedError,
             "unexpected WAL magic 999\n"
-            "HINT: is this version of PostgreSQL supported?");
+            "HINT: is this version of PostgreSQL supported?\n"
+            "HINT: is pgBackRest up to date on all hosts?");
         TEST_RESULT_LOG(
             "P00 DETAIL: no backups exist in the repo");
 

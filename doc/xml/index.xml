@@ -10,16 +10,22 @@
         <variable key="github-url-base">{[github-url-root]}/pgbackrest/pgbackrest</variable>
         <variable key="github-url-main">{[github-url-base]}/blob/main</variable>
         <variable key="github-url-issues">{[github-url-base]}/issues</variable>
-        <variable key="github-url-release">{[github-url-base]}/archive/release</variable>
+        <variable key="github-url-release">{[github-url-base]}/releases/download/release%2F{[version]}</variable>
         <variable key="github-url-license">{[github-url-main]}/LICENSE</variable>
         <variable key="github-url-projects">{[github-url-base]}/projects</variable>
         <variable key="github-url-contributing">{[github-url-main]}/CONTRIBUTING.md</variable>
 
-        <variable key="backrest-url-base">http://www.pgbackrest.org</variable>
+        <variable key="backrest-url-base">https://pgbackrest.org</variable>
         <variable key="backrest-page-user-guide-index">user-guide-index</variable>
         <variable key="backrest-page-configuration">configuration</variable>
         <variable key="backrest-page-command">command</variable>
         <variable key="backrest-page-release">release</variable>
+
+        <!-- Include news section? -->
+        <variable key="news">y</variable>
+
+        <!-- Include sponsor section? -->
+        <variable key="sponsor">y</variable>
     </variable-list>
 
     <!-- ======================================================================================================================= -->
@@ -34,16 +40,16 @@
     </section>
 
     <!-- ======================================================================================================================= -->
-    <section id="news">
+    <section if="'{[news]}' eq 'y'" id="news">
         <title>News</title>
 
+        <p><b>July 20, 2026</b> - <link page="news" section="/distribution-tarball">New Distribution Tarball</link></p>
+        <p><b>July 20, 2026</b> - <link page="news" section="/release-2-59-0">{[project]} 2.59.0 Released</link></p>
         <p><b>May 18, 2026</b> - <link page="news" section="/will-continue">{[project]} Will Continue!</link></p>
-        <p><b>May 7, 2026</b> - <link page="news" section="/maintenance-update">Maintenance Update</link></p>
-        <p><b>April 27, 2026</b> - <link page="news" section="/no-longer-maintained">{[project]} Is No Longer Being Maintained</link></p>
     </section>
 
     <!-- ======================================================================================================================= -->
-    <section id="sponsors">
+    <section if="'{[sponsor]}' eq 'y'" id="sponsors">
         <title>Sponsors</title>
 
         <p><backrest/> would not exist without sponsorship. Writing new features, fixing bugs, reviewing contributions, answering questions from the community, and maintenance all take a considerable amount of time. Please consider a <link url="{[github-url-root]}/sponsors/dwsteele">sponsorship</link> if you use <backrest/> in your enterprise.</p>
@@ -57,6 +63,9 @@
             <sponsor img="tigerdata-light.svg" img-dark="tigerdata-dark.svg" url="https://tigerdata.com" width="180">Tiger Data</sponsor>
             <sponsor img="percona-light.svg" img-dark="percona-dark.svg" url="https://percona.com" width="185">Percona</sponsor>
             <sponsor img="eon.svg" url="https://eon.io" width="90">Eon</sponsor>
+            <sponsor img="xata-light.svg" img-dark="xata-dark.svg" url="https://xata.io" width="120">Xata</sponsor>
+            <sponsor img="dalibo.svg" url="https://dalibo.com" width="150">Dalibo</sponsor>
+            <sponsor img="dataegret-light.svg" img-dark="dataegret-dark.svg" url="https://dataegret.com/" width="165">Data Egret</sponsor>
         </sponsor-list>
 
         <p>We are grateful to our sponsors for investing in open-source infrastructure that benefits the entire <postgres/> community.</p>
@@ -185,6 +194,15 @@
         </section>
 
         <!-- =================================================================================================================== -->
+        <section id="repo-versioning">
+            <title>Ransomware &amp; Malware Protection</title>
+
+            <p>When the repository is stored on versioned object storage, <backrest/> can read the repository as it was at a point-in-time. If backups are deleted or corrupted by accident, malware, or ransomware, a target time can be used to recover data from before the damage occurred.</p>
+
+            <p>Versioning is supported by <proper>S3</proper>, <proper>Azure</proper>, and GCS compatible object stores. Object locking for <proper>S3</proper> and soft delete for <proper>GCS</proper> or <proper>Azure</proper> can provide additional protection against tampering.</p>
+        </section>
+
+        <!-- =================================================================================================================== -->
         <section id="postgres-compatibility">
             <title>Compatibility with ten versions of <postgres/></title>
 
@@ -220,6 +238,6 @@
 
         <p>Creating a robust disaster recovery policy with proper replication and backup strategies can be a very complex and daunting task. You may find that you need help during the architecture phase and ongoing support to ensure that your enterprise continues running smoothly.</p>
 
-        <p>Our <link section="/sponsors">sponsors</link> offer products and services that include <backrest/> support and can help with your disaster recovery needs.</p>
+        <p if="'{[sponsor]}' eq 'y'">Our <link section="/sponsors">sponsors</link> offer products and services that include <backrest/> support and can help with your disaster recovery needs.</p>
     </section>
 </doc>

@@ -31,6 +31,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("128MiB"),                                                                                          // val/str
     PARSE_RULE_STRPUB("15m"),                                                                                             // val/str
     PARSE_RULE_STRPUB("15s"),                                                                                             // val/str
+    PARSE_RULE_STRPUB("16GiB"),                                                                                           // val/str
     PARSE_RULE_STRPUB("16KiB"),                                                                                           // val/str
     PARSE_RULE_STRPUB("16MiB"),                                                                                           // val/str
     PARSE_RULE_STRPUB("19"),                                                                                              // val/str
@@ -115,6 +116,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("postgres"),                                                                                        // val/str
     PARSE_RULE_STRPUB("prefer"),                                                                                          // val/str
     PARSE_RULE_STRPUB("preserve"),                                                                                        // val/str
+    PARSE_RULE_STRPUB("process"),                                                                                         // val/str
     PARSE_RULE_STRPUB("progress"),                                                                                        // val/str
     PARSE_RULE_STRPUB("promote"),                                                                                         // val/str
     PARSE_RULE_STRPUB("repo"),                                                                                            // val/str
@@ -130,6 +132,7 @@ static const StringPubConst parseRuleValueStr[] =
     PARSE_RULE_STRPUB("standby"),                                                                                         // val/str
     PARSE_RULE_STRPUB("storage.googleapis.com"),                                                                          // val/str
     PARSE_RULE_STRPUB("strict"),                                                                                          // val/str
+    PARSE_RULE_STRPUB("sts.amazonaws.com"),                                                                               // val/str
     PARSE_RULE_STRPUB("text"),                                                                                            // val/str
     PARSE_RULE_STRPUB("time"),                                                                                            // val/str
     PARSE_RULE_STRPUB("tls"),                                                                                             // val/str
@@ -166,6 +169,7 @@ typedef enum
     parseRuleValStrQT_128MiB_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_15m_QT,                                                                                        // val/str/enum
     parseRuleValStrQT_15s_QT,                                                                                        // val/str/enum
+    parseRuleValStrQT_16GiB_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_16KiB_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_16MiB_QT,                                                                                      // val/str/enum
     parseRuleValStrQT_19_QT,                                                                                         // val/str/enum
@@ -250,6 +254,7 @@ typedef enum
     parseRuleValStrQT_postgres_QT,                                                                                   // val/str/enum
     parseRuleValStrQT_prefer_QT,                                                                                     // val/str/enum
     parseRuleValStrQT_preserve_QT,                                                                                   // val/str/enum
+    parseRuleValStrQT_process_QT,                                                                                    // val/str/enum
     parseRuleValStrQT_progress_QT,                                                                                   // val/str/enum
     parseRuleValStrQT_promote_QT,                                                                                    // val/str/enum
     parseRuleValStrQT_repo_QT,                                                                                       // val/str/enum
@@ -265,6 +270,7 @@ typedef enum
     parseRuleValStrQT_standby_QT,                                                                                    // val/str/enum
     parseRuleValStrQT_storage_DT_googleapis_DT_com_QT,                                                               // val/str/enum
     parseRuleValStrQT_strict_QT,                                                                                     // val/str/enum
+    parseRuleValStrQT_sts_DT_amazonaws_DT_com_QT,                                                                    // val/str/enum
     parseRuleValStrQT_text_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_time_QT,                                                                                       // val/str/enum
     parseRuleValStrQT_tls_QT,                                                                                        // val/str/enum
@@ -397,6 +403,7 @@ static const int64_t parseRuleValueSize[] =
     20971520,                                                                                                            // val/size
     134217728,                                                                                                           // val/size
     1073741824,                                                                                                          // val/size
+    17179869184,                                                                                                         // val/size
     1099511627776,                                                                                                       // val/size
     1125899906842624,                                                                                                    // val/size
     4503599627370496,                                                                                                    // val/size
@@ -422,6 +429,7 @@ static const uint8_t parseRuleValueSizeStrMap[] =
     parseRuleValStrQT_20MiB_QT,                                                                                   // val/size/strmap
     parseRuleValStrQT_128MiB_QT,                                                                                  // val/size/strmap
     parseRuleValStrQT_1GiB_QT,                                                                                    // val/size/strmap
+    parseRuleValStrQT_16GiB_QT,                                                                                   // val/size/strmap
     parseRuleValStrQT_1TiB_QT,                                                                                    // val/size/strmap
     parseRuleValStrQT_1PiB_QT,                                                                                    // val/size/strmap
     parseRuleValStrQT_4PiB_QT,                                                                                    // val/size/strmap
@@ -447,6 +455,7 @@ typedef enum
     parseRuleValSize20MiB,                                                                                          // val/size/enum
     parseRuleValSize128MiB,                                                                                         // val/size/enum
     parseRuleValSize1GiB,                                                                                           // val/size/enum
+    parseRuleValSize16GiB,                                                                                          // val/size/enum
     parseRuleValSize1TiB,                                                                                           // val/size/enum
     parseRuleValSize1PiB,                                                                                           // val/size/enum
     parseRuleValSize4PiB,                                                                                           // val/size/enum
@@ -875,6 +884,101 @@ Option parse data
 
 static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
 {
+    PARSE_RULE_OPTION                                                                                              // opt/allow-root
+    (                                                                                                              // opt/allow-root
+        PARSE_RULE_OPTION_NAME("allow-root"),                                                                      // opt/allow-root
+        PARSE_RULE_OPTION_TYPE(Boolean),                                                                           // opt/allow-root
+        PARSE_RULE_OPTION_NEGATE(true),                                                                            // opt/allow-root
+        PARSE_RULE_OPTION_RESET(true),                                                                             // opt/allow-root
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                          // opt/allow-root
+        PARSE_RULE_OPTION_SECTION(Global),                                                                         // opt/allow-root
+                                                                                                                   // opt/allow-root
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                             // opt/allow-root
+        (                                                                                                          // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                                    // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                 // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                      // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Check)                                                                       // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                      // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                        // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                    // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                     // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                      // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                                     // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                      // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                     // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Server)                                                                      // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(ServerPing)                                                                  // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                               // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Start)                                                                       // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Stop)                                                                        // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                      // opt/allow-root
+        ),                                                                                                         // opt/allow-root
+                                                                                                                   // opt/allow-root
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                            // opt/allow-root
+        (                                                                                                          // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                 // opt/allow-root
+        ),                                                                                                         // opt/allow-root
+                                                                                                                   // opt/allow-root
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                            // opt/allow-root
+        (                                                                                                          // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                 // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                      // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                     // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                      // opt/allow-root
+        ),                                                                                                         // opt/allow-root
+                                                                                                                   // opt/allow-root
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                           // opt/allow-root
+        (                                                                                                          // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                                    // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                                  // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                                 // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                      // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Check)                                                                       // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                      // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                        // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                                    // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                                     // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                      // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                                     // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                      // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                                     // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                                // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                                // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                               // opt/allow-root
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                      // opt/allow-root
+        ),                                                                                                         // opt/allow-root
+                                                                                                                   // opt/allow-root
+        PARSE_RULE_OPTIONAL                                                                                        // opt/allow-root
+        (                                                                                                          // opt/allow-root
+            PARSE_RULE_OPTIONAL_GROUP                                                                              // opt/allow-root
+            (                                                                                                      // opt/allow-root
+                PARSE_RULE_FILTER_CMD                                                                              // opt/allow-root
+                (                                                                                                  // opt/allow-root
+                    PARSE_RULE_VAL_CMD(Restore),                                                                   // opt/allow-root
+                ),                                                                                                 // opt/allow-root
+                                                                                                                   // opt/allow-root
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                        // opt/allow-root
+                (                                                                                                  // opt/allow-root
+                    PARSE_RULE_VAL_BOOL_TRUE,                                                                      // opt/allow-root
+                ),                                                                                                 // opt/allow-root
+            ),                                                                                                     // opt/allow-root
+                                                                                                                   // opt/allow-root
+            PARSE_RULE_OPTIONAL_GROUP                                                                              // opt/allow-root
+            (                                                                                                      // opt/allow-root
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                        // opt/allow-root
+                (                                                                                                  // opt/allow-root
+                    PARSE_RULE_VAL_BOOL_FALSE,                                                                     // opt/allow-root
+                ),                                                                                                 // opt/allow-root
+            ),                                                                                                     // opt/allow-root
+        ),                                                                                                         // opt/allow-root
+    ),                                                                                                             // opt/allow-root
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                              // opt/annotation
     (                                                                                                              // opt/annotation
         PARSE_RULE_OPTION_NAME("annotation"),                                                                      // opt/annotation
@@ -1048,6 +1152,19 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         ),                                                                                                       // opt/archive-copy
     ),                                                                                                           // opt/archive-copy
     // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                   // opt/archive-expire-before
+    (                                                                                                   // opt/archive-expire-before
+        PARSE_RULE_OPTION_NAME("archive-expire-before"),                                                // opt/archive-expire-before
+        PARSE_RULE_OPTION_TYPE(String),                                                                 // opt/archive-expire-before
+        PARSE_RULE_OPTION_REQUIRED(false),                                                              // opt/archive-expire-before
+        PARSE_RULE_OPTION_SECTION(CommandLine),                                                         // opt/archive-expire-before
+                                                                                                        // opt/archive-expire-before
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                  // opt/archive-expire-before
+        (                                                                                               // opt/archive-expire-before
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                           // opt/archive-expire-before
+        ),                                                                                              // opt/archive-expire-before
+    ),                                                                                                  // opt/archive-expire-before
+    // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                   // opt/archive-get-queue-max
     (                                                                                                   // opt/archive-get-queue-max
         PARSE_RULE_OPTION_NAME("archive-get-queue-max"),                                                // opt/archive-get-queue-max
@@ -1212,6 +1329,42 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),                                                                                             // opt/archive-mode-check
         ),                                                                                                 // opt/archive-mode-check
     ),                                                                                                     // opt/archive-mode-check
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                 // opt/archive-push-batch-size
+    (                                                                                                 // opt/archive-push-batch-size
+        PARSE_RULE_OPTION_NAME("archive-push-batch-size"),                                            // opt/archive-push-batch-size
+        PARSE_RULE_OPTION_TYPE(Size),                                                                 // opt/archive-push-batch-size
+        PARSE_RULE_OPTION_RESET(true),                                                                // opt/archive-push-batch-size
+        PARSE_RULE_OPTION_REQUIRED(true),                                                             // opt/archive-push-batch-size
+        PARSE_RULE_OPTION_SECTION(Global),                                                            // opt/archive-push-batch-size
+                                                                                                      // opt/archive-push-batch-size
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                // opt/archive-push-batch-size
+        (                                                                                             // opt/archive-push-batch-size
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                    // opt/archive-push-batch-size
+        ),                                                                                            // opt/archive-push-batch-size
+                                                                                                      // opt/archive-push-batch-size
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                               // opt/archive-push-batch-size
+        (                                                                                             // opt/archive-push-batch-size
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                    // opt/archive-push-batch-size
+        ),                                                                                            // opt/archive-push-batch-size
+                                                                                                      // opt/archive-push-batch-size
+        PARSE_RULE_OPTIONAL                                                                           // opt/archive-push-batch-size
+        (                                                                                             // opt/archive-push-batch-size
+            PARSE_RULE_OPTIONAL_GROUP                                                                 // opt/archive-push-batch-size
+            (                                                                                         // opt/archive-push-batch-size
+                PARSE_RULE_OPTIONAL_ALLOW_RANGE                                                       // opt/archive-push-batch-size
+                (                                                                                     // opt/archive-push-batch-size
+                    PARSE_RULE_VAL_SIZE(1MiB),                                                        // opt/archive-push-batch-size
+                    PARSE_RULE_VAL_SIZE(4PiB),                                                        // opt/archive-push-batch-size
+                ),                                                                                    // opt/archive-push-batch-size
+                                                                                                      // opt/archive-push-batch-size
+                PARSE_RULE_OPTIONAL_DEFAULT                                                           // opt/archive-push-batch-size
+                (                                                                                     // opt/archive-push-batch-size
+                    PARSE_RULE_VAL_SIZE(16GiB),                                                       // opt/archive-push-batch-size
+                ),                                                                                    // opt/archive-push-batch-size
+            ),                                                                                        // opt/archive-push-batch-size
+        ),                                                                                            // opt/archive-push-batch-size
+    ),                                                                                                // opt/archive-push-batch-size
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                  // opt/archive-push-queue-max
     (                                                                                                  // opt/archive-push-queue-max
@@ -7851,6 +8004,7 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
                     PARSE_RULE_VAL_STRID(auto),                                                              // opt/repo-s3-key-type
                     PARSE_RULE_VAL_STRID(web_DS_id),                                                         // opt/repo-s3-key-type
                     PARSE_RULE_VAL_STRID(pod_DS_id),                                                         // opt/repo-s3-key-type
+                    PARSE_RULE_VAL_STRID(process),                                                           // opt/repo-s3-key-type
                 ),                                                                                           // opt/repo-s3-key-type
                                                                                                              // opt/repo-s3-key-type
                 PARSE_RULE_OPTIONAL_DEFAULT                                                                  // opt/repo-s3-key-type
@@ -7939,6 +8093,86 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),                                                                                             // opt/repo-s3-kms-key-id
         ),                                                                                                 // opt/repo-s3-kms-key-id
     ),                                                                                                     // opt/repo-s3-kms-key-id
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                     // opt/repo-s3-process-cmd
+    (                                                                                                     // opt/repo-s3-process-cmd
+        PARSE_RULE_OPTION_NAME("repo-s3-process-cmd"),                                                    // opt/repo-s3-process-cmd
+        PARSE_RULE_OPTION_TYPE(List),                                                                     // opt/repo-s3-process-cmd
+        PARSE_RULE_OPTION_RESET(true),                                                                    // opt/repo-s3-process-cmd
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                 // opt/repo-s3-process-cmd
+        PARSE_RULE_OPTION_SECTION(Global),                                                                // opt/repo-s3-process-cmd
+        PARSE_RULE_OPTION_MULTI(true),                                                                    // opt/repo-s3-process-cmd
+        PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                 // opt/repo-s3-process-cmd
+                                                                                                          // opt/repo-s3-process-cmd
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                    // opt/repo-s3-process-cmd
+        (                                                                                                 // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                           // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                         // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                        // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                             // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(Check)                                                              // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                             // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(Info)                                                               // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                           // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                            // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                             // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                            // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                             // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                            // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                       // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                       // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                      // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                             // opt/repo-s3-process-cmd
+        ),                                                                                                // opt/repo-s3-process-cmd
+                                                                                                          // opt/repo-s3-process-cmd
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                   // opt/repo-s3-process-cmd
+        (                                                                                                 // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                         // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                        // opt/repo-s3-process-cmd
+        ),                                                                                                // opt/repo-s3-process-cmd
+                                                                                                          // opt/repo-s3-process-cmd
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                   // opt/repo-s3-process-cmd
+        (                                                                                                 // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                         // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                        // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                             // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                            // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                             // opt/repo-s3-process-cmd
+        ),                                                                                                // opt/repo-s3-process-cmd
+                                                                                                          // opt/repo-s3-process-cmd
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                  // opt/repo-s3-process-cmd
+        (                                                                                                 // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                           // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                         // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                        // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                             // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(Check)                                                              // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                             // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(Info)                                                               // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                           // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                            // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                             // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                            // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                             // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                            // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                       // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                       // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                      // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                             // opt/repo-s3-process-cmd
+        ),                                                                                                // opt/repo-s3-process-cmd
+                                                                                                          // opt/repo-s3-process-cmd
+        PARSE_RULE_OPTIONAL                                                                               // opt/repo-s3-process-cmd
+        (                                                                                                 // opt/repo-s3-process-cmd
+            PARSE_RULE_OPTIONAL_GROUP                                                                     // opt/repo-s3-process-cmd
+            (                                                                                             // opt/repo-s3-process-cmd
+                PARSE_RULE_OPTIONAL_DEPEND                                                                // opt/repo-s3-process-cmd
+                (                                                                                         // opt/repo-s3-process-cmd
+                    PARSE_RULE_VAL_OPT(RepoS3KeyType),                                                    // opt/repo-s3-process-cmd
+                    PARSE_RULE_VAL_STRID(process),                                                        // opt/repo-s3-process-cmd
+                ),                                                                                        // opt/repo-s3-process-cmd
+            ),                                                                                            // opt/repo-s3-process-cmd
+        ),                                                                                                // opt/repo-s3-process-cmd
+    ),                                                                                                    // opt/repo-s3-process-cmd
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                          // opt/repo-s3-region
     (                                                                                                          // opt/repo-s3-region
@@ -8347,6 +8581,90 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
             ),                                                                                       // opt/repo-s3-sse-customer-key
         ),                                                                                           // opt/repo-s3-sse-customer-key
     ),                                                                                               // opt/repo-s3-sse-customer-key
+    // -----------------------------------------------------------------------------------------------------------------------------
+    PARSE_RULE_OPTION                                                                                        // opt/repo-s3-sts-host
+    (                                                                                                        // opt/repo-s3-sts-host
+        PARSE_RULE_OPTION_NAME("repo-s3-sts-host"),                                                          // opt/repo-s3-sts-host
+        PARSE_RULE_OPTION_TYPE(String),                                                                      // opt/repo-s3-sts-host
+        PARSE_RULE_OPTION_RESET(true),                                                                       // opt/repo-s3-sts-host
+        PARSE_RULE_OPTION_REQUIRED(true),                                                                    // opt/repo-s3-sts-host
+        PARSE_RULE_OPTION_SECTION(Global),                                                                   // opt/repo-s3-sts-host
+        PARSE_RULE_OPTION_GROUP_ID(Repo),                                                                    // opt/repo-s3-sts-host
+                                                                                                             // opt/repo-s3-sts-host
+        PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                       // opt/repo-s3-sts-host
+        (                                                                                                    // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                              // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                            // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                           // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(Check)                                                                 // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                  // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                              // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                               // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                               // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                               // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                          // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                          // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                         // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/repo-s3-sts-host
+        ),                                                                                                   // opt/repo-s3-sts-host
+                                                                                                             // opt/repo-s3-sts-host
+        PARSE_RULE_OPTION_COMMAND_ROLE_ASYNC_VALID_LIST                                                      // opt/repo-s3-sts-host
+        (                                                                                                    // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                            // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                           // opt/repo-s3-sts-host
+        ),                                                                                                   // opt/repo-s3-sts-host
+                                                                                                             // opt/repo-s3-sts-host
+        PARSE_RULE_OPTION_COMMAND_ROLE_LOCAL_VALID_LIST                                                      // opt/repo-s3-sts-host
+        (                                                                                                    // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                            // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                           // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                               // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/repo-s3-sts-host
+        ),                                                                                                   // opt/repo-s3-sts-host
+                                                                                                             // opt/repo-s3-sts-host
+        PARSE_RULE_OPTION_COMMAND_ROLE_REMOTE_VALID_LIST                                                     // opt/repo-s3-sts-host
+        (                                                                                                    // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(Annotate)                                                              // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(ArchiveGet)                                                            // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(ArchivePush)                                                           // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(Backup)                                                                // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(Check)                                                                 // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(Expire)                                                                // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(Info)                                                                  // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(Manifest)                                                              // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(RepoGet)                                                               // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(RepoLs)                                                                // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(RepoPut)                                                               // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(RepoRm)                                                                // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(Restore)                                                               // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(StanzaCreate)                                                          // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(StanzaDelete)                                                          // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(StanzaUpgrade)                                                         // opt/repo-s3-sts-host
+            PARSE_RULE_OPTION_COMMAND(Verify)                                                                // opt/repo-s3-sts-host
+        ),                                                                                                   // opt/repo-s3-sts-host
+                                                                                                             // opt/repo-s3-sts-host
+        PARSE_RULE_OPTIONAL                                                                                  // opt/repo-s3-sts-host
+        (                                                                                                    // opt/repo-s3-sts-host
+            PARSE_RULE_OPTIONAL_GROUP                                                                        // opt/repo-s3-sts-host
+            (                                                                                                // opt/repo-s3-sts-host
+                PARSE_RULE_OPTIONAL_DEPEND                                                                   // opt/repo-s3-sts-host
+                (                                                                                            // opt/repo-s3-sts-host
+                    PARSE_RULE_VAL_OPT(RepoS3KeyType),                                                       // opt/repo-s3-sts-host
+                    PARSE_RULE_VAL_STRID(web_DS_id),                                                         // opt/repo-s3-sts-host
+                ),                                                                                           // opt/repo-s3-sts-host
+                                                                                                             // opt/repo-s3-sts-host
+                PARSE_RULE_OPTIONAL_DEFAULT                                                                  // opt/repo-s3-sts-host
+                (                                                                                            // opt/repo-s3-sts-host
+                    PARSE_RULE_VAL_STR(QT_sts_DT_amazonaws_DT_com_QT),                                       // opt/repo-s3-sts-host
+                ),                                                                                           // opt/repo-s3-sts-host
+            ),                                                                                               // opt/repo-s3-sts-host
+        ),                                                                                                   // opt/repo-s3-sts-host
+    ),                                                                                                       // opt/repo-s3-sts-host
     // -----------------------------------------------------------------------------------------------------------------------------
     PARSE_RULE_OPTION                                                                                           // opt/repo-s3-token
     (                                                                                                           // opt/repo-s3-token
@@ -10676,6 +10994,14 @@ static const ParseRuleOption parseRuleOption[CFG_OPTION_TOTAL] =
         PARSE_RULE_OPTION_REQUIRED(true),                                                                              // opt/stanza
         PARSE_RULE_OPTION_SECTION(CommandLine),                                                                        // opt/stanza
                                                                                                                        // opt/stanza
+        PARSE_RULE_OPTION_COMMAND_INTERNAL_LIST                                                                        // opt/stanza
+        (                                                                                                              // opt/stanza
+            PARSE_RULE_OPTION_COMMAND_INTERNAL(RepoGet, true),                                                         // opt/stanza
+            PARSE_RULE_OPTION_COMMAND_INTERNAL(RepoLs, true),                                                          // opt/stanza
+            PARSE_RULE_OPTION_COMMAND_INTERNAL(RepoPut, true),                                                         // opt/stanza
+            PARSE_RULE_OPTION_COMMAND_INTERNAL(RepoRm, true),                                                          // opt/stanza
+        )                                                                                                              // opt/stanza
+                                                                                                                       // opt/stanza
         PARSE_RULE_OPTION_COMMAND_ROLE_MAIN_VALID_LIST                                                                 // opt/stanza
         (                                                                                                              // opt/stanza
             PARSE_RULE_OPTION_COMMAND(Annotate)                                                                        // opt/stanza
@@ -11870,12 +12196,15 @@ Order for option parse resolution
 static const uint8_t optionResolveOrder[] =
 {
     cfgOptStanza,                                                                                               // opt-resolve-order
+    cfgOptAllowRoot,                                                                                            // opt-resolve-order
     cfgOptAnnotation,                                                                                           // opt-resolve-order
     cfgOptArchiveAsync,                                                                                         // opt-resolve-order
+    cfgOptArchiveExpireBefore,                                                                                  // opt-resolve-order
     cfgOptArchiveGetQueueMax,                                                                                   // opt-resolve-order
     cfgOptArchiveHeaderCheck,                                                                                   // opt-resolve-order
     cfgOptArchiveMissingRetry,                                                                                  // opt-resolve-order
     cfgOptArchiveMode,                                                                                          // opt-resolve-order
+    cfgOptArchivePushBatchSize,                                                                                 // opt-resolve-order
     cfgOptArchivePushQueueMax,                                                                                  // opt-resolve-order
     cfgOptArchiveTimeout,                                                                                       // opt-resolve-order
     cfgOptBackupStandby,                                                                                        // opt-resolve-order
@@ -12015,11 +12344,13 @@ static const uint8_t optionResolveOrder[] =
     cfgOptRepoS3Endpoint,                                                                                       // opt-resolve-order
     cfgOptRepoS3KeyType,                                                                                        // opt-resolve-order
     cfgOptRepoS3KmsKeyId,                                                                                       // opt-resolve-order
+    cfgOptRepoS3ProcessCmd,                                                                                     // opt-resolve-order
     cfgOptRepoS3Region,                                                                                         // opt-resolve-order
     cfgOptRepoS3RequesterPays,                                                                                  // opt-resolve-order
     cfgOptRepoS3Role,                                                                                           // opt-resolve-order
     cfgOptRepoS3Service,                                                                                        // opt-resolve-order
     cfgOptRepoS3SseCustomerKey,                                                                                 // opt-resolve-order
+    cfgOptRepoS3StsHost,                                                                                        // opt-resolve-order
     cfgOptRepoS3Token,                                                                                          // opt-resolve-order
     cfgOptRepoS3UriStyle,                                                                                       // opt-resolve-order
     cfgOptRepoSftpHost,                                                                                         // opt-resolve-order

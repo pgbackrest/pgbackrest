@@ -1,5 +1,971 @@
 [
     {
+        "commit": "f84c8357d49ea9452cd606531e9c4c322c41bc2e",
+        "date": "2026-07-20 15:13:35 +0700",
+        "subject": "v2.59.0: PostgreSQL 19 Support"
+    },
+    {
+        "commit": "d24d1edfbd46936f78177aec48ddf30ecb07da2f",
+        "date": "2026-07-18 18:36:19 +0700",
+        "subject": "Resolve markdown cross-page section links to the website.",
+        "body": "A markdown link that specified both a page and a section failed to render when the target page was itself rendered as markdown, because markdown cannot reliably anchor into another generated file.\n\nResolve these links to the website URL with the section anchor, matching how links to pages that are not rendered as markdown already behave, so a markdown document can link to a section of another."
+    },
+    {
+        "commit": "42db536fa7f33c4af1817939df0d71e4b1442139",
+        "date": "2026-07-18 18:30:01 +0700",
+        "subject": "Update the project URL to https://pgbackrest.org.",
+        "body": "The site now serves over HTTPS at the apex domain, so switch from http://www.pgbackrest.org to https://pgbackrest.org.\n\nChange the backrest-url-base variable that generates the documentation links and the URL hardcoded in the man page SEE ALSO section, then regenerate README.md and CONTRIBUTING.md and update the doc build test to match."
+    },
+    {
+        "commit": "cb911bbcf1e534bbeb3c5ec341208f3cff1c3e49",
+        "date": "2026-07-18 18:22:44 +0700",
+        "subject": "Remove NEWS.md in favor of generating it from news.xml.",
+        "body": "NEWS.md is the release announcement copied to a postgresql.org news item. It was maintained by hand for each release, but that content now lives in news.xml and is rendered to NEWS.md by the documentation build.\n\nRemove the committed file and add it to .gitignore so it is treated as generated output and regenerated when an announcement is needed."
+    },
+    {
+        "commit": "8a0d856d64f3c634d097d97533836f167b1938a1",
+        "date": "2026-07-18 15:17:18 +0700",
+        "subject": "Build and smoke test the distribution tarball on many distributions.",
+        "body": "The distribution tarball ships the generated source and the rendered documentation so it builds without the code generation or documentation tooling that a git checkout requires. Add a workflow that exercises this contract: build the tarball, then on a range of distributions build and smoke test it in a fresh container that has only the required packages, which is both a test and a record of what a packager needs on each.\n\nThe tarball is built once, since it is distribution-independent by design, and uploaded as an artifact; a matrix job then consumes it per distribution and drives the built binary through a full backup, restore, and verify cycle against that distribution's native PostgreSQL. The containers are run with docker directly rather than as job containers because the runner's glibc Node.js cannot execute the checkout and artifact actions inside a musl container, which keeps one path for glibc and musl alike.\n\nDebian, Ubuntu, Rocky, Fedora, and Alpine are covered, and the tarball is built with -Dwerror so a compiler warning on any of them fails the build. A separate check confirms the tarball ships exactly the expected generated and rendered files and that none of them is empty, catching a broken code generation or documentation render before it is uploaded.\n\nAlso remove the smoke job from the misc workflow, since building and smoke testing the tarball now covers the check a packager would run, and move its format check for smoke.py, the only Python file, into the code-format job with the other formatting checks."
+    },
+    {
+        "commit": "94f82ea9cfcd60a94a696ccb1ffb11f6edff9b0b",
+        "date": "2026-07-18 12:13:22 +0700",
+        "subject": "Run the smoke test on MacOS and FreeBSD.",
+        "body": "The bsd test group cannot run the integration tests because there are no containers available, but the smoke test drives a backup/restore cycle against each installed PostgreSQL and so provides basic coverage on these platforms. Teach the smoke test the Homebrew and FreeBSD bin paths so it can find the installations there.\n\nDiscover the PostgreSQL versions to test at install time rather than naming them so the tests do not break when a version becomes unavailable. Read the supported versions from the generated header, intersect them with what the platform offers, and test the oldest and newest of the result.\n\nOn MacOS only keg-only formulae that are neither deprecated nor disabled are considered since the binaries in a formula that is not keg-only load libpq from the linked prefix and fail unless the formula is linked.\n\nOn FreeBSD the ports all install into the same prefix and conflict, so only one version can be installed at a time and the oldest goes on the older OS while the newest goes on the newer OS. Install the versioned client and server packages instead of postgresql-libpqxx, which depends on the default PostgreSQL version."
+    },
+    {
+        "commit": "de0d746c244bfa8e6c1bd64ef23127d6041c107d",
+        "date": "2026-07-18 12:07:25 +0700",
+        "subject": "Run more tests on the emulated architectures.",
+        "body": "Now that a persistent ccache has made compiling under emulation affordable, broaden the tests run there to better check that checksums are correct on big-endian. Add the command restore, archive-get, archive-push, and verify tests alongside backup, and the common type-pack, crypto, and compress tests, which exercise the serialization, checksum, and compression code that a byte-order bug would break.\n\nAlso add a smoke test that drives a real PostgreSQL through a full backup, restore, and verify cycle, checking checksums end-to-end rather than against synthetic harness data. This needs a PostgreSQL server, so install a single version in the base image for these architectures; the full version matrix is skipped to keep the emulated build fast."
+    },
+    {
+        "commit": "0bd9eee889617c3a95225dedbbae9e13b24d2075",
+        "date": "2026-07-18 11:58:33 +0700",
+        "subject": "Persist the ccache across CI runs using a container registry.",
+        "body": "Consolidate the per-vm and per-vm-index ccache directories into a single cache shared by the host and every container, passed with CCACHE_DIR instead of mounted at ~/.ccache. A file compiled in one place is then a hit in the others, e.g. test-pgbackrest is built both on the host and in the build container, and since ccache is safe for concurrent access there is no need to split the cache. It stays in the test path so --clean removes it.\n\nStore and restore that cache in GHCR via a new composite action. Unlike actions/cache a registry is not branch-scoped, so a short-lived branch starts warm from the last run on the fork rather than cold, which matters most for the emulated architecture jobs where compiling is slow. The action pulls the fork's own cache first and falls back to the canonical pgbackrest cache for a fork that has not run yet; the push is best effort so pull requests from forks that cannot write just use what they built."
+    },
+    {
+        "commit": "084b202ca1b8b85c8da61e29b0b86e71643ca665",
+        "date": "2026-07-18 11:28:41 +0700",
+        "subject": "Output the architecture in the smoke test.",
+        "body": "The smoke test now reads the ELF header of the pgbackrest binary being tested and prints its machine architecture and endianness, e.g. \"s390x (64-bit big-endian)\", right after the user it runs as. This makes it easy to confirm which architecture is actually being exercised, which matters when a binary built for a foreign architecture is run under emulation."
+    },
+    {
+        "commit": "1055287f4962465659609f5a0b6f769f53f7578b",
+        "date": "2026-07-17 17:17:23 +0700",
+        "subject": "Split the test workflow into reusable workflows.",
+        "body": "test.yml had grown large enough to be awkward to navigate, but splitting it into independent workflows would have produced a separate run in the Actions UI for each file and required the push/pull_request trigger to be duplicated in every one.\n\nInstead test.yml becomes a dispatcher that calls reusable workflows, so it remains a readable index of what runs while still producing a single run. Only test.yml has a trigger and the called workflows are all on: workflow_call. Permissions are granted in the dispatcher since a called workflow can only maintain or reduce the permissions of the token it is given, never elevate them.\n\nThe jobs are grouped by platform into linux, arch, and bsd, with doc for the documentation builds and misc for the checks that do not fit any of them.\n\nThe documentation builds are worth separating because they have little in common with the tests they were mixed in with. They do not use the test containers, so they need no GHCR login or packages: write permission to maintain the container cache, and they generate no coverage, so there is no report to upload on failure. The build-max parameter was already ignored for doc since ci.pl only passes parameters through on the test path, so it is not carried over.\n\nJob names gain the calling job as a prefix, e.g. linux / test, which is the cost of getting a single run.\n\nAlso move symbol.out into a data directory since it is not a workflow and GitHub only scans the top level of .github/workflows."
+    },
+    {
+        "commit": "aaec9bad64eb464d1b4ed0faa655a8e903f07035",
+        "date": "2026-07-17 13:02:34 +0700",
+        "subject": "Remove out-of-date instructions for building documentation.",
+        "body": "These instructions are long out of date and it does not seem worth updating them since packagers should now be using the pre-generated documentation in the distribution tarball introduced in 8fcfef5d."
+    },
+    {
+        "commit": "db9552c16d70ef8d86f16d6ddcb4d943130fdd21",
+        "date": "2026-07-17 12:55:44 +0700",
+        "subject": "Download the distribution tarball rather than the source archive.",
+        "body": "The user guide build section demonstrates building from the distribution tarball but the download command still points at the GitHub source archive url for the release tag. That tarball is just the repository contents, so it has neither the generated files nor the dist marker, and building it requires the code generation tooling that the documented dependencies do not include. It also unpacks to pgbackrest-release-<version> rather than the pgbackrest-<version> path that build-br-path has used since the distribution tarball was introduced.\n\nPoint github-url-release at the distribution tarball attached to the release instead. The release tag contains a slash, e.g. release/2.59.0, which must be percent-encoded as %2F in the asset download path.\n\nThe url renders on a single line of 110 characters, which is why the download command carries a cmd-line-len override.\n\nThis was missed in 8fcfef5d."
+    },
+    {
+        "commit": "0951013d74ba6c570b81701a4b9686c9e168f41b",
+        "date": "2026-07-17 12:51:18 +0700",
+        "subject": "Allow cmd-line-len to be overridden per command.",
+        "body": "The documentation build errors when a rendered command has a line longer than cmd-line-len, which is configured per document and defaults to 80. The check keeps commands readable in the rendered output, but a command containing a single token longer than the limit cannot satisfy it no matter where the line is broken, e.g. a url.\n\nAdd a cmd-line-len parameter to execute that overrides the document setting for a single command so the limit continues to apply to every other command."
+    },
+    {
+        "commit": "a32211aef80f803aa2d81900de89bd5a9e534669",
+        "date": "2026-07-17 12:10:38 +0700",
+        "subject": "Use curl instead of wget.",
+        "body": "curl is already used elsewhere in the documentation and is preinstalled on the container images, while wget is not installed on any of them by default. Standardize on curl.\n\nUpdate the systemctl replacement and release tarball downloads in the user guide to use curl -fsSL. This is equivalent to the wget flags it replaces, except that -f makes curl fail on an HTTP error rather than piping the error page into tar.\n\nRemove wget from the RHEL documentation container instead of replacing it with curl, since curl is already provided by curl-minimal. Installing the curl package there would fail because it conflicts with curl-minimal.\n\nRemove wget from the test containers entirely. Nothing has invoked it since the lcov, nodejs, pip, minio, and s3 server downloads that needed it were removed. The PGDG repository keys it once fetched are now retrieved by rpm/dnf directly on RHEL, and on Debian the key is shipped with postgresql-common."
+    },
+    {
+        "commit": "4b90ff9a790c17fdb56d42e2ade523ee7bb3eed6",
+        "date": "2026-07-17 11:56:14 +0700",
+        "subject": "Update the systemctl replacement to 1.5.9063.",
+        "body": "Move to the last release of the 1.5 branch to pick up a year of fixes.\n\nThe 1.7 branch is where upstream development continues, but it lowered the default log level from ERROR to NOTE, which surfaces a warning about postgresql-{[pg-version]}.service using /bin/kill for ExecReload. The warning is not new, it was simply below the log level before, and 1.7 offers no way to suppress it since --no-warn is accepted but ignored and -c is applied after the log level is set."
+    },
+    {
+        "commit": "8c9712e81cb8ba929d82e33c84c400788230b933",
+        "date": "2026-07-17 11:52:10 +0700",
+        "subject": "Run the smoke test in a container rather than on the runner.",
+        "body": "The runner image comes with a large amount of preinstalled software that cannot be controlled, which makes it a poor stand-in for the environment a packager builds in. Run the job in a minimal ubuntu:24.04 container instead so the smoke test runs with nothing but the build environment that the job explicitly installs.\n\nInstall the build environment before checkout since the container does not include git, which checkout requires in order to clone rather than download the code via the GitHub API. Also add build-essential for the compiler and ca-certificates/curl/gnupg/lsb-release for the PGDG script, all of which were previously provided by the runner image.\n\nSince the container runs as root, the smoke test now drops to the postgres user, which exercises a path that was not covered when the job ran as the runner user."
+    },
+    {
+        "commit": "d856595643966328cd059faa1ab7ed43722f35a0",
+        "date": "2026-07-17 10:57:29 +0700",
+        "subject": "Untap non-official taps in the MacOS test job.",
+        "body": "The GitHub runner image adds taps such as aws/tap but never trusts them, so Homebrew 6.0 tap trust emits a warning on every brew command that auto-updates. Untap everything except the official Homebrew taps since no formula used in test comes from a third-party tap.\n\nUninstall the packages provided by a tap before untapping it. The runner image installs packer from hashicorp/tap and bicep from azure/bicep, and untapping a tap that still has packages installed warns just as the trust check does."
+    },
+    {
+        "commit": "77c832927caa1e76fe187538dc7ba6b4a54ae325",
+        "date": "2026-07-17 10:35:34 +0700",
+        "subject": "Use the custom shell to run FreeBSD tests in the VM.",
+        "body": "The run parameter of cross-platform-actions/action is deprecated in favor of starting the VM in one step and running commands in subsequent steps with the cpa.sh custom shell."
+    },
+    {
+        "commit": "2777395dacc35aec51572d3e75c621725e2f9d9c",
+        "date": "2026-07-17 09:06:10 +0700",
+        "subject": "PostgreSQL 19beta2 support.",
+        "body": "Bump the u22 revision on x86_64 and aarch64 so the base images are rebuilt and pick up the new beta from apt.postgresql.org. Key the revision by architecture rather than by VM so the ppc64le and s390x images, which do not install PostgreSQL 19, are not rebuilt under emulation for no reason.\n\nSince there are no code changes beta1 continues to work."
+    },
+    {
+        "commit": "2164336bece5711f40351c01e90db2e834b7792a",
+        "date": "2026-07-17 08:08:58 +0700",
+        "subject": "Log the full PostgreSQL version in the integration and smoke tests.",
+        "body": "Both tests only report the major version of PostgreSQL, which is not enough to identify the build. The integration test takes the major version from the test matrix and the smoke test parses it out of pg_ctl during discovery, so neither shows the minor version. This matters most during the beta period, where a rebuild of a container or a package update can move the installed version from one beta to the next without anything in the test output changing.\n\nLog the output of pg_ctl --version in both tests, e.g. \"pg_ctl (PostgreSQL) 19beta2\". The integration test logs it after the hosts are built, so the version is reported even when cluster creation fails. The smoke test logs it under the header for each version it tests.\n\nUse pg_ctl rather than postgres since the tests already require pg_ctl to run a cluster, so no error handling is needed when it cannot be found. The postmaster symlink is not an option because it was removed in PostgreSQL 16."
+    },
+    {
+        "commit": "fe59278f753a009ca804258dd66c9ec2bf142239",
+        "date": "2026-07-17 08:05:48 +0700",
+        "subject": "Allow container cache revisions to be set per architecture.",
+        "body": "A base image is built per VM and architecture but a revision could only be keyed by VM, so bumping one rebuilt every architecture. This is expensive for u22, which is built for x86_64, aarch64, ppc64le, and s390x, since the last two are built under emulation in CI and are very slow. A new PostgreSQL beta packaged for only some architectures does not change the others, so those rebuilds just reproduce identical images under a new tag.\n\nAllow a revision to be keyed by VM and architecture, e.g. u22-x86_64. A container uses the revision for its VM and architecture if it has one, else the revision for its VM, else the required \"all\" revision. Keying by VM alone is unchanged and still rebuilds every architecture.\n\nValidate the revision keys. Only the presence of \"all\" was checked before, so a key with a misspelled VM or architecture, or with no value at all, silently fell back to a less specific revision and the expected rebuild never happened. Add VM_ARCH_PPC64LE, VM_ARCH_S390X, and a list of valid architectures to support the check, since these architectures were previously named only in the CI workflow."
+    },
+    {
+        "commit": "f087c83845b86434829121b8075d1d0c4224cc61",
+        "date": "2026-07-16 17:38:05 +0700",
+        "subject": "Add a smoke test to verify a build against installed PostgreSQL.",
+        "body": "The test suite is too complex and time-consuming for packagers to run, so provide a basic smoke test that exercises major functionality to show that a build works. test/smoke.py searches the paths used by the test harness for each PostgreSQL installation and runs the built pgbackrest through a full cycle for every supported version found: initdb, stanza-create, check, full backup, incremental backup, restore, and verification that the restored data matches. Each version runs in a temporary directory with its own repository and a private unix socket, so a running cluster is not disturbed.\n\nRun the test with meson test --suite smoke. It uses only the Python standard library since meson already requires Python. The test fails rather than skips when there is no PostgreSQL to test against, since a test that silently does nothing does not verify the build. PostgreSQL will not run as root, so running as root drops to the postgres user and fails when that user does not exist.\n\nThe supported versions are read from the generated src/postgres/version.auto.h so that versions pgBackRest does not support are skipped rather than failing. The header is used rather than src/build/postgres/postgres.yaml because the latter is not shipped in the distribution.\n\nThe test is defined in test/meson.build rather than the root meson.build because unit test builds comment out all subdirs, which excludes the smoke test from them. .gitattributes ships test/smoke.py and test/meson.build in the distribution tarball, and DIST.md and the user guide document how to run it.\n\nAdd a CI job that builds on Ubuntu 24.04 and runs the smoke test against every supported version, installed from PGDG with a component added for versions that are not released yet. The version list comes from postgres.yaml so it does not need to be maintained in the workflow. The job also checks that smoke.py is formatted with black."
+    },
+    {
+        "commit": "30e1e279856b2398f1963cb45bd17e793ebd006e",
+        "date": "2026-07-16 17:12:07 +0700",
+        "subject": "Add a smoke test to verify a build against installed PostgreSQL.",
+        "body": "The test suite is too complex and time-consuming for packagers to run, so provide a basic smoke test that exercises major functionality to show that a build works. test/smoke.py searches the paths used by the test harness for each PostgreSQL installation and runs the built pgbackrest through a full cycle for every supported version found: initdb, stanza-create, check, full backup, incremental backup, restore, and verification that the restored data matches. Each version runs in a temporary directory with its own repository and a private unix socket, so a running cluster is not disturbed.\n\nRun the test with meson test --suite smoke. It uses only the Python standard library since meson already requires Python. The test fails rather than skips when there is no PostgreSQL to test against, since a test that silently does nothing does not verify the build. PostgreSQL will not run as root, so running as root drops to the postgres user and fails when that user does not exist.\n\nThe supported versions are read from the generated src/postgres/version.auto.h so that versions pgBackRest does not support are skipped rather than failing. The header is used rather than src/build/postgres/postgres.yaml because the latter is not shipped in the distribution.\n\nThe test is defined in test/meson.build rather than the root meson.build because unit test builds comment out all subdirs, which excludes the smoke test from them. .gitattributes ships test/smoke.py and test/meson.build in the distribution tarball, and DIST.md and the user guide document how to run it.\n\nAdd a CI job that builds on Ubuntu 24.04 and runs the smoke test against every supported version, installed from PGDG with a component added for versions that are not released yet. The version list comes from postgres.yaml so it does not need to be maintained in the workflow. The job also checks that smoke.py is formatted with black."
+    },
+    {
+        "commit": "74e858dbdb049a0597efa42a309b22f8a8feb2ba",
+        "date": "2026-07-16 16:19:11 +0700",
+        "subject": "Fix duplicated word in the file mode error message.",
+        "body": "The message read \"expected mode for '0644' for 'src/file.c' but found '0755'\", where the extra \"for\" made the expected mode read as a file name. Drop it so the message reads \"expected mode '0644' for 'src/file.c' but found '0755'\"."
+    },
+    {
+        "commit": "6e709faf2ca1b382ec11608d5a3fdea83c074a3f",
+        "date": "2026-07-16 13:34:04 +0700",
+        "subject": "Upload the coverage report as a CI artifact instead of logging it.",
+        "body": "On failure the coverage report was written to the job log with cat, which meant copying the HTML out of the log and into a file before it could be viewed. Upload it as an artifact instead so it can be downloaded directly from a failed run.\n\nThe upload ignores a missing report (most matrix jobs run with no coverage) and skips the zip archive since the report is a single HTML file."
+    },
+    {
+        "commit": "8fcfef5d8732055f9bc8e50224d5b7a988512e61",
+        "date": "2026-07-16 13:05:20 +0700",
+        "subject": "Provide a distribution tarball with generated code and documentation.",
+        "body": "meson dist produces the tarball via src/build/dist.sh, which regenerates help.auto.c.inc and interface.auto.c.inc, copies the man page and HTML into doc, and writes a dist marker to the root. When the marker is present the build uses the shipped files and skips build-code, libyaml, and the doc and test tools, so the tarball compiles and installs without the code generation or documentation tooling.\n\n.gitattributes export-ignore rules limit the tarball to what is needed to build: src (except the src/build code generation sources), meson.build, meson_options.txt, and LICENSE, plus the generated files, docs, marker, and a README copied from doc/DIST.md.\n\nRELEASE.md documents building the tarball, attaching it to a draft release, verifying it, and publishing. The user guides demonstrate building from the tarball."
+    },
+    {
+        "commit": "85ddcc94f9fe99731f3e018c4e0d1aa1cea6b153",
+        "date": "2026-07-16 10:51:00 +0700",
+        "subject": "Add logo, news, and sponsor toggles to the documentation.",
+        "body": "Add the logo, news, and sponsor document variables, all defaulting to y so the rendered documentation is unchanged. Setting a variable to n omits the corresponding content: logo omits the project logo file and its og:image link, news omits the news section, and sponsor omits the sponsor sections and their logos.\n\nThis allows the documentation to be rendered without the logo, news, and sponsor content that is only relevant to the website."
+    },
+    {
+        "commit": "b7fdb0d823fac1d22f9e3d39606977832ba37771",
+        "date": "2026-07-15 10:24:59 +0700",
+        "subject": "Move test harness files to test/src/harness and drop the prefix.",
+        "body": "The harness modules were the only files in test/src/common and each was named with a harness prefix, e.g. common/harnessLog.c. Move them to test/src/harness and drop the prefix so the file name matches the module it supports, e.g. harness/log.c.\n\nRenaming in place would leave harness headers such as log.h, lock.h, and time.h at the same include path (common/) as their real src/common counterparts. Because test/src precedes src on the include path, the harness header would shadow the real one, so the harness must live under a distinct harness/ path.\n\nAdjust the harness path construction in command/test/build.c, normalize the include guards to a TEST_HARNESS_ prefix (fixing blockIncr.h, which incorrectly used BLOCK_DELTA), and update the harness file references in the contributing documentation."
+    },
+    {
+        "commit": "43505fd82389fa65ec46c74eb37112e140cb9aa3",
+        "date": "2026-07-14 22:34:34 +0700",
+        "subject": "Store help data as a C string instead of a byte array.",
+        "body": "Write the compressed help data as a single C string literal rather than a list of byte values so it is much more compact, which will matter if help.auto.c.inc is checked in as an asset. Printable bytes are written directly, bytes with a short named escape are mapped through a lookup table, and the rest use three-digit octal escapes.\n\nPhysical lines are broken at a fixed width with a backslash-newline continuation, which the preprocessor removes before the string is tokenized. This lets an escape span a line break so every line stays the same width.\n\nThe data is not NUL-terminated, so the array is declared VR_NON_STRING and sized to exactly match the data."
+    },
+    {
+        "commit": "18b3857056360a8f6cb5c83412d6c9147557f6c4",
+        "date": "2026-07-14 15:09:28 +0700",
+        "subject": "Normalize harness definitions in define.yaml to YAML lists.",
+        "body": "Several test modules defined the harness key more than once in a single test, either a bare name alongside a map or multiple maps, which relies on the YAML parser accepting duplicate mapping keys. Combine these into a single YAML list per test so a test can declare multiple harnesses without duplicate keys, which a stricter parser rejects. Modules with a single bare name or map are left unchanged.\n\nUpdate the define parser to accept a harness sequence in addition to the existing bare name and single map forms; the parsed data structures are unchanged. Only the C parser consumes the harness and shim keys, so no other parsing is affected. Update the harness test fixture to the list form to cover the new sequence branch."
+    },
+    {
+        "commit": "276e701cfe1711b698448a69dfb509001defb365",
+        "date": "2026-07-13 11:07:16 +0700",
+        "subject": "Remove code count functionality from test.pl.",
+        "body": "The code counts were informational only and required ongoing upkeep of file-type.yaml, so remove the --code-count option, the CodeCountTest module, the generated file-type.yaml, and the related release steps. This can be restored later if it proves useful."
+    },
+    {
+        "commit": "baed942af0d61fcf3c2cb1f7d1bf1d6fe5bb6df9",
+        "date": "2026-07-10 15:18:09 +0700",
+        "subject": "Fix async archive-get failure during recovery across a timeline switch.",
+        "body": "During recovery PostgreSQL calls archive-get serially, once per WAL segment and each invocation with its own exec id. When async archive-get needs to fill the spool queue it takes the archive lock, releases it, and forks a detached async process that reacquires the lock at startup. The lock is released before the forked process has taken it.\n\nA main process returns to PostgreSQL as soon as it finds its segment in the spool, which happens immediately when a prior async process has already fetched it, so PostgreSQL starts the next archive-get before the just-forked async process has reacquired the lock. That next main process finds the lock free and forks an async process of its own. The two async processes race for the lock; one takes it and the other, holding a different exec id, fails to acquire it and dies before it can fetch the requested segment.\n\nThe main process that forked the failed async process waits out archive-timeout and returns an error to PostgreSQL. This is especially damaging on a timeline switch because the failed async process was the only one that would have fetched the requested segment; the surviving async process is filling a different timeline. A false timeout on a segment that actually exists can end recovery prematurely.\n\nWhen the requested segment is not in the spool queue and the archive lock is not held by our own async process, the segment will not be delivered: either a foreign async process holds the lock (spawned by a different main process, e.g. filling the queue for another timeline) or no async process is running because ours failed. In that case fetch the segment synchronously rather than waiting. The main process now waits for an async process only while its own async process holds the lock."
+    },
+    {
+        "commit": "37865f314f1f73db44fb223ee5768ab1bfee7f66",
+        "date": "2026-07-10 14:58:34 +0700",
+        "subject": "Add RHEL 9 and 10 tests and switch RHEL 8 to native PostgreSQL.",
+        "body": "Add RHEL 9 and RHEL 10 (Rocky Linux) as test VMs that run the unit and integration tests, and switch RHEL 8 to the older PostgreSQL that ships natively with the distribution via an application stream. The native packages install to /usr/bin rather than the PGDG path, which the psql-bin setting and the integration host harness now handle.\n\nRHEL 10 required several adjustments: its rpm-sequoia OpenPGP backend rejects the SHA-1 signature on the PGDG key (and the crypto policy that would allow it was removed), so the PGDG repository is installed without gpg checks; it dropped dnf modularity, so there is no postgresql module to disable; and its zlib-ng build trips a valgrind \"possibly lost\" false positive that is suppressed."
+    },
+    {
+        "commit": "c1f486000e57b2196a6266d3cfc5aff7e89e264b",
+        "date": "2026-07-10 14:23:07 +0700",
+        "subject": "Cache test container base images in GHCR.",
+        "body": "Base images were pulled from Docker Hub by looking up a hash of the generated Dockerfile in container.yaml, which required manually building the image, pushing it, and committing the new hash whenever the Dockerfile changed. Instead cache the base images in GHCR keyed by a hash of the Dockerfile and a revision, pulling on a hit and pushing after a build so the manual steps are no longer needed.\n\nImages are pulled from the pgbackrest cache first, then from the repository owner's own cache when running on a fork, and built locally if neither has them. A build is pushed back to the fork's own cache on a fork, otherwise to the pgbackrest cache, but the push is best effort and does nothing without write access, as when building locally or on a pull request from a fork. The image is always tagged in the pgbackrest namespace locally so the rest of the build and the integration harness reference a single name regardless of which cache supplied it.\n\nThe revision comes from container.yaml and forces a rebuild when the Dockerfile is unchanged but the upstream packages have changed, e.g. a new PostgreSQL beta. The required \"all\" revision applies to every container that does not set its own revision, so bumping it rebuilds those containers together, while a per-VM revision overrides \"all\" for that container and is bumped independently. The revision is also included in the image tag for reference.\n\nGrant package write permission and add a GHCR login to the CI jobs that build containers, and update the integration harness to reference the GHCR image name."
+    },
+    {
+        "commit": "36ed215a1600bd0a8a1d65b41ba2974124ed3df2",
+        "date": "2026-07-09 17:26:46 +0700",
+        "subject": "Replace strcpy() with memcpy() and ban strcpy()/strcat().",
+        "body": "Security scanners flag strcpy() as unsafe because it performs an unbounded write and silently overflows the destination when the source is longer than expected. Every remaining use already knows the exact length being copied, so replace each with a bounded memcpy() (or snprintf() in the test harness, matching the adjacent idiom).\n\nPoison strcpy() and strcat() in build.h so any future use is a compile-time error that will be caught by CI. There are no strcat() uses to remove, but ban it alongside strcpy() as it has the same unbounded-write hazard. string.h is included and the macros are undefined first for the same reason as strncpy(): fortify defines them as macros, and system headers must be processed before the identifier is poisoned."
+    },
+    {
+        "commit": "443df647b205d091af9ca2a15cc1990ee5f9306f",
+        "date": "2026-07-09 14:28:26 +0700",
+        "subject": "Replace sprintf() with snprintf() and ban it.",
+        "body": "Security scanners flag sprintf() as unsafe because it performs an unbounded write and silently overflows the destination when the formatted output exceeds it. There is a single use left, in the log test, so remove it to avoid the noise.\n\nThe stderr check builds an expected string into a fixed 4096-byte buffer; use snprintf() with sizeof(buffer), which is bounded and always null-terminates, matching the idiom already used elsewhere in the tests.\n\nPoison sprintf() in build.h so any future use is a compile-time error that will be caught by CI. stdio.h is included and the macro is undefined first for the same reason as strncpy(): fortify defines sprintf() as a macro, and system headers must be processed before the identifier is poisoned."
+    },
+    {
+        "commit": "2ec93c26b6543946bc6e7ac83a8afbb1507cd269",
+        "date": "2026-07-09 14:02:27 +0700",
+        "subject": "Add YAML helpers for the peek-type and empty-map idioms.",
+        "body": "yamlEventPeekIs() replaces the yamlEventPeek(yaml).type == X test and yamlMapEmpty() replaces the map-begin/map-end pair used to consume an empty map value. Apply them in the config, error, and postgres build parsers and the test define parser."
+    },
+    {
+        "commit": "92b38113eae0acecaa474e54c2d3d55d312f9d9b",
+        "date": "2026-07-09 13:34:01 +0700",
+        "subject": "Fix parsing of the parameter-allowed command definition.",
+        "body": "The value was assigned the result of strLower(strDup()), a non-NULL String pointer, into the boolean parameterAllowed field, so it was always true whenever the key was present regardless of the value. The expression was copied from the adjacent log-level-default definition (which is a string) and never changed to yamlBoolParse().\n\nThis does not change the generated output since config.yaml always sets parameter-allowed to true, but parameter-allowed of false would previously have been parsed as true."
+    },
+    {
+        "commit": "2ccacd46281164644d5af6e6d3cb110b40f49186",
+        "date": "2026-07-09 13:28:22 +0700",
+        "subject": "Simplify the build YAML parsers with iteration macros.",
+        "body": "The config, error, and postgres build parsers walked the libyaml event stream by hand, repeating the same begin/next/do-while scaffolding and empty-collection special cases in nearly every function. Reuse the YAML_MAP_BEGIN/YAML_SEQ_BEGIN iteration macros (already used by the test define parser) so each parser reads more like the structure it parses.\n\nRework the macros to test for the end event with a peek at the top of the loop rather than a do/while at the bottom. This makes empty maps and sequences zero-iteration and removes the manual empty-collection handling the config parser required, since config.yaml contains many empty {} maps while the other build YAML never does.\n\nAlso drop the braces around single-statement if/else branches in the parser dispatch chains, which did not match the surrounding style where braces are used only for multi-line bodies."
+    },
+    {
+        "commit": "85717992cadbfdabc571fb23914b62b08c7f6f44",
+        "date": "2026-07-09 12:23:40 +0700",
+        "subject": "Document that end-of-line comments are not supported in config files.",
+        "body": "End-of-line comments have never been supported by the INI parser, though they may appear to work for some option types by coincidence. Clarify in the documentation that only full-line comments are supported."
+    },
+    {
+        "commit": "bde2c509c923fbe2844c10b0f95c55973378d2ae",
+        "date": "2026-07-09 11:38:36 +0700",
+        "subject": "Document adjusting the logrotate su directive for a dedicated user.",
+        "body": "Packages may install a logrotate configuration that rotates the pgBackRest logs as a specific user (e.g. postgres) via the su directive. When a dedicated user owns the repository and logs, the su directive must be updated to match that user or logrotate will fail with a permission error."
+    },
+    {
+        "commit": "0daf53da03fb179b5771b6aaa559f9e0cc5842bb",
+        "date": "2026-07-09 10:59:03 +0700",
+        "subject": "Error when running as root unless allow-root is enabled.",
+        "body": "Running as the root user for commands other than restore can create files (e.g. backup.info in the repository) owned by root that the PostgreSQL user cannot access, causing later commands to fail.\n\nAdd the allow-root option to gate this. It defaults to false for all commands except restore, which is designed to run as root and manages file ownership carefully. The check applies to all command roles so a non-root command cannot run as root on a remote, and is skipped for help/version."
+    },
+    {
+        "commit": "31432ed3977302b5e183f2b592d85afb521b4f55",
+        "date": "2026-07-09 10:16:22 +0700",
+        "subject": "Fix use-after-free of parallel protocol client.",
+        "body": "When a client's job callback returned no more work, protocolParallelProcess() freed the client with protocolHelperFree() but left the now-dangling pointer in clientList and did not mark the slot done. Since process() keeps being called while other clients are still running, the same slot was revisited on a later call and protocolHelperFree() was invoked again on the freed client. At debug/trace log level the entry parameter log formatted the freed client via protocolClientToLog(), reading freed memory and segfaulting (reported during a parallel backup run with --log-level-file=trace).\n\nThis was introduced in 4a94b6b, which replaced protocolLocalFree(clientIdx + 1) (logging a scalar process id) with protocolHelperFree(client) (logging a dereferenced client pointer), turning the pre-existing repeated free into a use-after-free.\n\nClear the client reference after freeing so the exhausted client is neither queried nor freed a second time."
+    },
+    {
+        "commit": "7b0159c7dfd69763b63b1385fd564c18a4a5c1bc",
+        "date": "2026-07-09 09:54:56 +0700",
+        "subject": "Report archive-push spool path errors to the PostgreSQL log.",
+        "body": "In async mode the spool out path was created only by the async process. If it could not be created (e.g. permission denied) then the async process also could not write its error status file to the spool, so the foreground process never saw the error and failed only with a generic archive timeout that pointed at the async log. The operator then had to cross-reference a second log file to find the real cause.\n\nCreate the spool out path in the foreground before forking the async process, as archive-get already does. A permission error is now thrown in the process PostgreSQL invokes and appears in the PostgreSQL log immediately. Since the foreground always creates the path before the async process runs, the redundant create in archivePushProcessList() is removed."
+    },
+    {
+        "commit": "b0c57c280d727e743b72a6d86e2c3e413307e44b",
+        "date": "2026-07-09 09:36:35 +0700",
+        "subject": "Report the actual error when an S3 credential request fails.",
+        "body": "Web identity (web-id) and pod identity (pod-id) credential requests parsed the response as if it had succeeded, so an error from AWS was reported as a confusing failure to find AssumeRoleWithWebIdentityResult (web-id) or missing JSON keys (pod-id) rather than the actual error.\n\nReport the error returned by AWS using httpRequestError(), as the main request path already does. Redact the web identity token in the query and the pod identity token in the authorization header so they are not exposed when the request is logged."
+    },
+    {
+        "commit": "5a4646a7f8a7a5229f732c39103be8c83e186d8a",
+        "date": "2026-07-08 19:33:44 +0700",
+        "subject": "Update RHEL documentation to Rocky Linux 9.",
+        "body": "Rocky Linux 8 is getting old so move the RHEL user guide and documentation CI to Rocky Linux 9, updating the base image and the PGDG repository to EL-9.\n\nInstall awscli from the awscli2 package and azure-cli from EPEL instead of pulling awscli through pip and azure-cli from the Microsoft package repository. This simplifies the build and drops the pip and Microsoft repository dependencies.\n\nRemove the RHEL 8 PowerTools repository since CRB is already enabled via crb on Rocky 9."
+    },
+    {
+        "commit": "ab4de698eb125a35baaf772184a4f2b0a2612abd",
+        "date": "2026-07-08 16:33:10 +0700",
+        "subject": "Add ransomware and malware protection to the feature list.",
+        "body": "The repo-target-time feature allows a repository on versioned object storage to be read at a point-in-time, but this protection against accidental, malware, or ransomware damage was not mentioned in the feature list."
+    },
+    {
+        "commit": "c16a81844a5005d52943ea70ca74b90e23c46c54",
+        "date": "2026-07-08 15:48:13 +0700",
+        "subject": "Add linter check for hidden characters and binary files.",
+        "body": "Invisible, bidirectional, and homoglyph characters can hide code that looks benign under review, e.g. Trojan Source and Glassworm, and binary files cannot be reviewed at all. The linter now walks every file in the repo and requires it to be 7-bit ASCII text with tab and newline as the only permitted control characters, which catches the entire class at once. A short skip list exempts the two committed binary files and the generated git-history.cache.\n\nThe StringId check now also runs on hand-written .c.inc files, excluding generated .auto.c.inc and vendored .vendor.c.inc.\n\nIntentional non-ASCII test data is written with \\xNN escapes, an accented contributor id is normalized to ASCII, and smart quotes in meson.build are replaced."
+    },
+    {
+        "commit": "9c9c9e71345ce792bc925e41568fd69286b874a7",
+        "date": "2026-07-08 12:24:40 +0700",
+        "subject": "Report the actual error when a unit test fails during coverage testing.",
+        "body": "When a unit test failed under valgrind (or otherwise exited before flushing coverage data) the real error was hidden and replaced by a gcov error about the missing coverage file.\n\nThe test command pipes output to tee so stderr can be copied to both stderr and stdout, but that made the pipeline return tee's exit status rather than the test's. The masked (zero) status caused the harness to attempt coverage generation, which then failed on the missing coverage data and reported that failure instead of the actual test error.\n\nSave the test exit status to a file and exit with it explicitly so the real status is preserved through the pipe. PIPESTATUS/pipefail cannot be used here because the vm=none path runs through dash."
+    },
+    {
+        "commit": "cf847f94cd7ab6517ec1abb30075fb53dc75d5f8",
+        "date": "2026-07-07 20:57:08 +0700",
+        "subject": "Document that expire-auto uses the backup command configuration.",
+        "body": "When expire runs automatically after a successful backup it uses the configuration loaded for the backup command, so options set only in an expire command section are not applied. Note this behavior in the expire-auto option help and point users to disabling it and running expire separately when expire-specific configuration is needed."
+    },
+    {
+        "commit": "4945139392c21f197f2e307abc3c89b5548cef8d",
+        "date": "2026-07-07 18:31:54 +0700",
+        "subject": "Add archive-expire-before option to clean up WAL archive.",
+        "body": "Add a new command-line option archive-expire-before to the expire command. It removes WAL segments earlier than a given segment from the archive, while never removing WAL that a retained backup still requires.\n\nA typical use is to drive archive clean-up from a standby's restartpoint (using PostgreSQL's archive_cleanup_command) without having to fall back to pg_archivecleanup and lose pgBackRest's retention safeguards."
+    },
+    {
+        "commit": "6cd692b1b321faf544ee3a9b1f503fd48007d7c7",
+        "date": "2026-07-07 17:56:34 +0700",
+        "subject": "Extract WAL expiration into expireArchiveId().",
+        "body": "Move the per-archive-id WAL removal loop out of removeExpiredArchive() into a new expireArchiveId() function that takes the archive id, the retention ranges to preserve, and the scan boundary. This is a pure refactor with no change in behavior."
+    },
+    {
+        "commit": "2137bda1a5a1ad890d0137feffe8491102041af3",
+        "date": "2026-07-07 16:53:50 +0700",
+        "subject": "Document that info reads encryption settings from global section.",
+        "body": "The info command reads encryption settings only from the global section when run without the stanza option, so encryption settings configured per stanza require the stanza option to read an encrypted stanza. Note this in the user guide encryption section and the repo-cipher-pass config reference."
+    },
+    {
+        "commit": "fad857896965347d10b13cbccaba27a6e44c85c8",
+        "date": "2026-07-07 15:43:50 +0700",
+        "subject": "Prevent a flaky command/control test when stop terminates a process.",
+        "body": "The \"processId is valid\" test in command/control had a child process acquire two archive lock files under a single pid, then relied on stop --force sending a term signal to that process. cmdStop() sends the term signal after reading the first lock file but before reading the second, so on a fast or loaded host (most often Debian 12 in CI) the child could receive the signal and release its flock on the second file before stop read it. stop then saw the file as unlocked rather than duplicate and emitted a spurious \"unable to read lock file\" warning, failing the log expectation.\n\nHave the child ignore the term signal so it keeps holding both lock files until the parent explicitly releases it after checking the log. This makes stop reliably see the second file as a duplicate of an already-signaled pid and skip it, closing the race window entirely rather than narrowing it with timeouts. kill() still returns success, so the single \"sent term signal\" message is logged as before."
+    },
+    {
+        "commit": "3e9eabd8a5551cdaeb6bc78a52f000eaf239defb",
+        "date": "2026-07-07 15:26:14 +0700",
+        "subject": "Make stanza option internal for the repo-* commands.",
+        "body": "The stanza option is accepted by repo-get, repo-ls, repo-put, and repo-rm but does not construct a stanza-specific path as the documentation implied. It is only meaningful in combination with the storage path constants (e.g. <REPO:ARCHIVE>, <REPO:BACKUP>), which are themselves undocumented. This left the option documented but apparently non-functional for anyone spelling out the repository path directly.\n\nMark the option as internal for these commands so it no longer appears in the help/reference while remaining fully functional. This preserves existing usage (e.g. check_pgbackrest and macro-based tooling) with no behavioral change."
+    },
+    {
+        "commit": "34a035f4d62f06822c1f60f72a605762cc1ad79c",
+        "date": "2026-07-07 15:19:33 +0700",
+        "subject": "Add archive-push-batch-size to limit WAL pushed per asynchronous run.",
+        "body": "In asynchronous mode archive-push pushes every ready WAL segment in a single run and archive-push-queue-max is only checked at the start of the run, so a run that works through a large backlog can let the queue grow well past the limit before it is rechecked.\n\nAdd the archive-push-batch-size option (default 16GiB) to cap the amount of WAL pushed per run. The list of WAL to be pushed is trimmed to a whole number of segments using the size of the first ready segment, always keeping at least one, so the process exits and is respawned by the next archive-push, which rechecks the queue. Lower the value to recheck the queue more often at the cost of spawning the asynchronous process more frequently."
+    },
+    {
+        "commit": "3a71dc839a89b83f592c1d5813c068bcded1b6bc",
+        "date": "2026-07-07 12:57:04 +0700",
+        "subject": "Prevent an out-of-bounds error buffer write on an oversized message.",
+        "body": "errorInternalThrowSysFmt() appends the system message at messageBufferTemp + messageSize, where messageSize is the vsnprintf() return value: the untruncated length. A formatted message that reaches ERROR_MESSAGE_BUFFER_SIZE pushes that offset to or past the end of the buffer and underflows the remaining-size argument, so the \": [errno] ...\" suffix is written out of bounds into the adjacent stack trace buffer.\n\nLimit messageSize to ERROR_MESSAGE_BUFFER_SIZE - 1 before the append, in errorInternalThrowSysFmt() and its coverage-only twin errorInternalThrowOnSysFmt(), so it stays in bounds; the message content is already truncated by vsnprintf().\n\nThis mirrors the logPost() fix in c6e7ba81, and like it requires a single formatted message larger than the buffer to reach."
+    },
+    {
+        "commit": "c6e7ba81ab766494ec487f20d33c9086b29fafd1",
+        "date": "2026-07-07 12:38:39 +0700",
+        "subject": "Prevent an out-of-bounds log buffer write on an oversized message.",
+        "body": "logPost() appends the linefeed and null terminator at bufferPos, which each caller advances by the return value of snprintf()/vsnprintf(). That return value is the untruncated length, so a single log message longer than LOG_BUFFER_SIZE leaves bufferPos past the end of the 32 KiB logBuffer and the two writes land out of bounds. The message content itself is already truncated safely by snprintf(); only the terminator placement was unsafe.\n\nLimit bufferPos to LOG_BUFFER_SIZE - 2 in logPost() so the linefeed and terminator always fit. This is a single choke point that also covers the same pattern in logInternalFmt() and logPre(), and closes an off-by-one that remained even when a message exactly filled the buffer."
+    },
+    {
+        "commit": "2af68385aad069aa5d08f0b52ce9993367af52e4",
+        "date": "2026-07-07 12:29:44 +0700",
+        "subject": "Report a readable status when a test system command fails.",
+        "body": "HRN_SYSTEM built its failure message from the raw system() return value and embedded errorStackTrace() in it. That return value is a wait status (32512 when the command cannot be found), not an exit code, and is meaningless to the reader. Worse, errorStackTrace() asserts that an error is currently populated, so when a command failed with no active error the assert aborted the test binary before the AssertError could be thrown.\n\nDecode the status with hrnSystemStatus() into the exit code (127 in that example), the terminating signal, or an unable-to-execute note, and drop the redundant stack trace since the harness already prints one when it reports the error."
+    },
+    {
+        "commit": "11f5582dfe696187cab1f15d08f649a5117730b3",
+        "date": "2026-07-07 12:26:38 +0700",
+        "subject": "Allow the S3 STS endpoint to be configured.",
+        "body": "The STS endpoint used to retrieve temporary credentials for web identity authentication (repo-s3-key-type=web-id) was hardcoded to the global sts.amazonaws.com. Credentials issued by the global endpoint are not honored in AWS opt-in regions such as eu-central-2, which require tokens from the corresponding regional STS endpoint, so authentication failed there.\n\nAdd repo-s3-sts-host to configure the STS endpoint, defaulting to sts.amazonaws.com so existing behavior is unchanged. Setting a regional endpoint such as sts.eu-central-2.amazonaws.com enables web identity authentication in opt-in regions and may also be used for GovCloud, China regions, or to reduce latency."
+    },
+    {
+        "commit": "5ca98abc91f823ef97ff6a1e77d65727d1259218",
+        "date": "2026-07-07 11:31:45 +0700",
+        "subject": "Use the full buffer when formatting error messages.",
+        "body": "snprintf() and vsnprintf() take the total destination size and reserve the byte for the null terminator themselves, so passing ERROR_MESSAGE_BUFFER_SIZE - 1 needlessly discarded the last usable byte of messageBufferTemp. Pass the full ERROR_MESSAGE_BUFFER_SIZE; the output is still bounded and null-terminated.\n\nIn the *Fmt variants the appended system message drops the matching - 1 so it continues to consume exactly the space left after the formatted message."
+    },
+    {
+        "commit": "976c0fa73ca66b6268937dc53331db5e8536b7b2",
+        "date": "2026-07-07 11:05:03 +0700",
+        "subject": "Replace strncpy() with memcpy()/snprintf() and ban it.",
+        "body": "Security scanners routinely flag strncpy() as unsafe (it does not null-terminate when the source length meets or exceeds the size), generating noise even where each call is correct. Remove every use to avoid the churn.\n\nWhere the source length is known to fit the destination, use a plain memcpy(): the config option name and JSON key (both already bounded by a preceding size check that throws), the \"invalid\" address fallback, and the exact-length symlink target and buffered read in the libssh2 test harness. In addrInfoToZ() the \"invalid\" literal is promoted to a macro and new asserts document that the caller's buffer is large enough.\n\nWhere the copy may truncate, use snprintf(\"%s\", ...), which always null-terminates and matches the idiom already used in these files (logInternalFmt() and the sibling snprintf() in errorInternalThrowSys()): the error message, stack trace, and log message buffers. A memcpy() with a length clamp was avoided here because the clamp branch is unreachable in practice (these buffers are already bounded) and would break 100% coverage.\n\nlogSignal() runs in a signal handler where snprintf() is not async-signal-safe, so it uses memcpy() of the (always short, internal) signal name including its null terminator.\n\nThe libssh2 readdir and libpq PQcancel test shims assert the scripted value fits and then memcpy() it with its null terminator; tests always script a value that fits, so emulating the truncating library calls is unnecessary and harness files are not coverage targets.\n\nThe error test builds an over-long message by filling a buffer with a repeated character; null-terminate it so the new snprintf(\"%s\", ...) has a bounded string to read, where strncpy() previously tolerated the missing terminator via its length argument.\n\nPoison strncpy() in build.h so any future use is a compile-time error that will be caught by CI."
+    },
+    {
+        "commit": "e41a84e01a749cfcd4a9f71ac287e7e3015772c2",
+        "date": "2026-07-07 08:36:31 +0700",
+        "subject": "Update FreeBSD CI versions."
+    },
+    {
+        "commit": "f1ef62956adabf305a7e959477ea1bb668fd8d65",
+        "date": "2026-07-03 16:54:47 +0700",
+        "subject": "Fewer binary searches when building manifest.",
+        "body": "manifestBuildIncr() iterates every file in the new manifest and, for each file that will be copied, looks up the matching file in the prior manifest. It located that file with manifestFileExists() and then fetched it with manifestFileFind(), and later wrote the result back with manifestFileUpdate(), which searches for the file by name yet again. That is three binary searches per file where one is enough, so on a cluster with millions of files the loop performs millions of redundant searches.\n\nReduce this to a single search per file. manifestFilePackFindDefault() returns the prior file pack, or NULL when it is missing, in one search instead of the manifestFileExists()/manifestFileFind() pair. manifestFileUpdateByIdx() writes the updated file back using the index already known from the enclosing loop rather than searching for it by name.\n\nMove the file asserts from manifestFileUpdate() down into manifestFilePackUpdate() so both update paths keep the same validation now that manifestFileUpdateByIdx() bypasses manifestFileUpdate()."
+    },
+    {
+        "commit": "a0c14359392e283d88f72e7f9f815d9e78ddfb10",
+        "date": "2026-07-03 16:32:00 +0700",
+        "subject": "Exit async archive-push on first error.",
+        "body": "When the repository was unavailable the async archive-push process kept trying every ready WAL segment, retrying each failure and writing an error file for it. Because the archive queue is only checked at the start of each run, a run could take so long that the WAL volume filled and PostgreSQL stopped before archive-push-queue-max was rechecked.\n\nExit the run as soon as any job errors so the async process is respawned by the next archive-push, which rechecks the queue and drops WAL once it exceeds archive-push-queue-max. Continuing past an error cannot relieve disk pressure because PostgreSQL cannot recycle any WAL past the oldest unarchived segment, so the segments pushed ahead free nothing; the only relief is the queue-max drop. job-retry already absorbs transient failures before they are reported here, so a reported error is a real failure and there is little benefit to continuing.\n\nIn-flight jobs are allowed to finish so their status is recorded and no segment is pushed twice."
+    },
+    {
+        "commit": "a6cba0a018929f381f9dcea50ffd5f0d8fd5806d",
+        "date": "2026-07-03 16:19:15 +0700",
+        "subject": "Retry S3 bucket creation to allow time for Ceph to start up.",
+        "body": "Since Ceph replaced Minio as the documentation S3 server it is slower to start, and the bucket-creation command in the user guide can run before the Ceph RGW endpoint is accepting connections, failing the doc build with \"Could not connect to the endpoint URL\".\n\nAdd a retry to the aws s3 mb command, which is the first command to contact the endpoint since the preceding aws configure set commands only write local config. The executor reruns it until it succeeds or the timeout elapses, so once the bucket is created the versioning command that follows no longer races startup."
+    },
+    {
+        "commit": "7fe363658639bbc2f70e53496fa6da4acb9e481e",
+        "date": "2026-07-03 15:49:46 +0700",
+        "subject": "Fix archive-push-queue-max not enforced when a WAL file errors.",
+        "body": "In asynchronous mode archive-push-queue-max measured the queue against the process list (WAL that still needs to be pushed) rather than the ready list (all WAL that PostgreSQL is waiting to archive). When a WAL file errored repeatedly the async look-ahead kept pushing the later files successfully and writing their ok status files, but PostgreSQL retries the failed file in order and never acknowledges the later ones, so those files dropped out of the process list while their WAL remained in pg_wal. The queue therefore appeared tiny and was never dropped, letting pg_wal fill the disk — exactly the outcome the option exists to prevent.\n\nMeasure the queue against the ready list, as synchronous mode already does. The files that get dropped are unchanged, so writing the ok status for the failed file unblocks PostgreSQL, which then acknowledges the already-pushed files from their existing status files and drains the queue."
+    },
+    {
+        "commit": "a31febfbd9ba639589fe57e4083ae9358b1306a4",
+        "date": "2026-06-30 16:38:40 +0700",
+        "subject": "Reconnect SFTP storage after the server drops an idle connection.",
+        "body": "pgBackRest opens a separate libssh2 session for read and write storage and one can sit idle for many minutes (for example the repository read session during the parallel copy phase of a backup). SFTP servers and intervening firewalls drop such idle connections, and the next use failed with a socket-level libssh2 error because there was no reconnect path.\n\nDetect a lost connection from the libssh2 socket error (SOCKET_RECV, SOCKET_TIMEOUT, SOCKET_DISCONNECT, or BAD_USE), transparently reopen the session, and retry the operation once. Recovery is applied at the read, write, and directory open boundaries, which is where the reported failures occur. SOCKET_SEND is excluded since a failed send is ambiguous, and storageSftpInfo() does not reconnect because it generally runs while a directory listing handle is open.\n\nTo support reopening, the connection sequence is extracted into storageSftpOpen() so it can be run again, the connection parameters are retained on the storage object, and the read and write objects fetch the session through the storageSftpSession()/storageSftpSessionSftp() getters so they pick up a reopened session rather than a cached pointer."
+    },
+    {
+        "commit": "aa0e215019f50f92a8f0c97f907affc1d3bf86c4",
+        "date": "2026-06-30 12:32:46 +0700",
+        "subject": "Fix expire removing a backup in progress on another host.",
+        "body": "During expiration any backup directory on disk that is not present in backup.info is removed. A backup in progress is not added to backup.info until it completes, so when expire runs on one host while a backup runs on another (e.g. expire on a standby while the primary backs up) the in-progress backup is deleted and corrupted.\n\nThe guard that preserves a resumable backup (one with backup.manifest.copy but no backup.manifest) was only applied during adhoc expiration. Apply it during all expiration so an in-progress or resumable latest backup is never removed. The adhoc case, where a resumable dependent of the expired backup is removed when its ancestor no longer exists, is unchanged."
+    },
+    {
+        "commit": "2d767de3c59cf5570639e75755dc73c626fb99e1",
+        "date": "2026-06-30 10:42:59 +0700",
+        "subject": "Fix heap overflow when a pg option is set without pg1.",
+        "body": "The pg group always reserves index 0 for key 1 (pg1) to maintain compatibility with older versions, but the index map was sized only from the keys that were actually configured. When pg options were set at keys other than 1 while key 1 was absent (e.g. pg2-path and pg3-path with no pg1-path) the reserved index was written one element past the end of the map. The stray write landed in allocator slack on glibc but corrupted the heap on musl, causing the segmentation fault reported on Alpine.\n\nThe undersized map also caused the highest-numbered pg path to be silently dropped even where the overflow itself did no visible damage.\n\nSize the map to include the reserved index and set the group index total to the number of entries actually written. The reserved key 1 has no values in this case so it is removed later as a phantom group index, and commands that require pg1-path continue to error as before."
+    },
+    {
+        "commit": "2b8226b44d8537c900b74110306ea4fcf2dd2d12",
+        "date": "2026-06-29 10:47:20 +0700",
+        "subject": "Fix neutral-umask documentation to match actual lock/log modes",
+        "body": "The neutral-umask help text claimed the lock and log directories are created with directory and file modes 0770 and 0660, but the code creates them with the standard defaults of 0750 and 0640. The log directory is also no longer created automatically. Remove the inaccurate sentence so the documentation reflects the code."
+    },
+    {
+        "commit": "d4f697ebce705f9439798f970103fd38f829dfff",
+        "date": "2026-06-29 08:57:07 +0700",
+        "subject": "Hint that pgBackRest may be out of date when a version is unsupported.",
+        "body": "When pgBackRest encounters a PostgreSQL version it does not recognize — looking up the version interface, reading pg_control, or reading a WAL header — it reports the version as unsupported with a single hint asking whether the version is supported. A frequent cause is simply that pgBackRest is out of date on a host, e.g. an old binary on the restore host reading a backup from a newer cluster, but the message gave no indication of this.\n\nAdd a second hint suggesting that pgBackRest may need to be updated on all hosts. Also report the version from pgInterfaceVersion() in user-facing form (e.g. 13 rather than 130000) and use the PG_NAME/PROJECT_NAME macros in place of the hard-coded names."
+    },
+    {
+        "commit": "a1e1542e405dd20bc1d6821ae4fe622e899a8e10",
+        "date": "2026-06-25 17:51:19 +0700",
+        "subject": "Replace Minio with Ceph for S3 documentation and testing.",
+        "body": "The Minio project is no longer maintained and the commercial successor, AIStore, requires an API key even for the free version, which is not very friendly for CI.\n\nUse Ceph instead. While slower, Ceph (in addition to being maintained) has the advantage of correctly handing prefixes with no current versions when listing."
+    },
+    {
+        "commit": "253dbc3f03e5581c98bb97b252dc77b8defd3693",
+        "date": "2026-06-25 15:52:17 +0700",
+        "subject": "Bundle backup files in order rather than scanning for a better fit.",
+        "body": "Previously a file that would push a bundle over repo-bundle-size was skipped in the hope that a smaller file later in the queue would fit, which kept bundles under the target size at the cost of additional file unpacks.\n\nNow files are added to the bundle in queue order and the bundle is closed once it reaches repo-bundle-size. As a result a bundle may exceed the target size by up to repo-bundle-limit, i.e. the size of the file that crosses the threshold, which is now noted in the help for repo-bundle-size.\n\nIn addition to the immediate benefits, this is important for a future commit where preserving bundle order from the prior backup is important."
+    },
+    {
+        "commit": "23e966cd8f17a8cd446b04901d0ae66ebf4118ee",
+        "date": "2026-06-25 15:31:53 +0700",
+        "subject": "Report the underlying error when a query fails to complete.",
+        "body": "After processing a query result, pgClientQuery() drained the connection with a CHECK that the next PQgetResult() returned NULL, raising a generic ServiceError (\"NULL result required to complete request\") when it did not. This fires when the connection is lost after the first result is delivered but before the command completes, e.g. under load, so the message exposed none of the actual cause and discarded the extra result that held it.\n\nFetch the extra result, raise a DbQueryError that includes its error message, and free it. Add hints pointing at a lost connection, aggressive idle_session_timeout / idle_in_transaction_session_timeout settings, and the PostgreSQL log and network as the likely causes."
+    },
+    {
+        "commit": "b5a578a5c2c88d53fca0ee8cfbfb8ee662ce7e48",
+        "date": "2026-06-24 10:43:30 +0700",
+        "subject": "Add S3 process authentication.",
+        "body": "Add a process value to repo-s3-key-type and a repo-s3-process-cmd option that specifies a command (and optional arguments) to execute for retrieving temporary S3 credentials. The first list entry is the command and the remaining entries are passed as parameters.\n\nThe process must output JSON containing AccessKeyId, SecretAccessKey, SessionToken, and Expiration fields, following the AWS process credential provider format. Credentials are automatically refreshed before the expiration time."
+    },
+    {
+        "commit": "f5aa587fa482f82fa4d8e1829e35407425b1f183",
+        "date": "2026-06-22 20:25:34 +0700",
+        "subject": "Add sponsors."
+    },
+    {
+        "commit": "d72bea9fe7c3975fc6832a51b0b0c1c041c467d2",
+        "date": "2026-06-19 15:24:17 +0700",
+        "subject": "Fetch the libssh2 session from storage in SFTP read/write objects.",
+        "body": "The SFTP read and write objects cached the libssh2 session and sftp session pointers passed to their constructors. Add storageSftpSession() and storageSftpSessionSftp() getters and fetch the session from the storage object instead, removing the session parameters from storageReadSftpNew() and storageWriteSftpNew().\n\nFetching the session on demand means the read and write objects always use the storage object's current session rather than a copy taken at construction. The will be used in a future commit to pick up a new session after transparently reopening a connection the server dropped while idle."
+    },
+    {
+        "commit": "7da81569a0f43fdd580f01a329c626cf7213c10e",
+        "date": "2026-06-19 14:12:01 +0700",
+        "subject": "Remove the unused sftpHandle field from the SFTP storage driver.",
+        "body": "StorageSftp carried an sftpHandle field that production code never set. Directory listing opens a local handle, and each read/write object opens and owns its own handle in its open function, so this field was always NULL.\n\nDespite that it was passed to storageReadSftpNew() and storageWriteSftpNew(), which immediately overwrite their own sftpHandle when the file is opened, and was \"closed\" in storageSftpLibSsh2SessionFreeResource(). Both paths were dead.\n\nRemove the field, the constructor parameter (and its function log), and the close block in the free resource. Drop the unit tests that populated the field to exercise the removed close path, and extend the free-resource branch test so the sftp_shutdown EAGAIN retry loop stays covered."
+    },
+    {
+        "commit": "af586e230e5a17467e5e4051f4a655db154a1356",
+        "date": "2026-06-19 12:39:40 +0700",
+        "subject": "Throw real SFTP read-open errors instead of masking them as missing.",
+        "body": "Previously storageReadSftpOpen() only inspected the failure when the libssh2 error was LIBSSH2_ERROR_SFTP_PROTOCOL or LIBSSH2_ERROR_EAGAIN. Any other error (e.g. a socket error such as LIBSSH2_ERROR_SOCKET_RECV) fell through silently, leaving a NULL handle and causing the storage layer to report the file as missing.\n\nThrow on any open failure except a genuine missing file (SFTP_PROTOCOL + LIBSSH2_FX_NO_SUCH_FILE), which is still returned to the caller via the result so ignoreMissing continues to work. This brings read-open error handling in line with storageWriteSftpOpen()."
+    },
+    {
+        "commit": "1c57106e2dc1f5df45eec71145d03feb32c5ae49",
+        "date": "2026-06-19 11:36:42 +0700",
+        "subject": "Simplify error handling in SFTP storageWriteSftpOpen().",
+        "body": "The nested LIBSSH2_ERROR_SFTP_PROTOCOL check called storageSftpEvalLibSsh2Error() identically in both branches, so collapse it into a single condition that throws FileMissingError for the no-such-file case and otherwise falls through to storageSftpEvalLibSsh2Error(). This is safe because storageSftpEvalLibSsh2Error() already omits the sftp error detail when the error is not a protocol error, and libssh2_sftp_last_error() can be read unconditionally since it has no side effects."
+    },
+    {
+        "commit": "b2106121e69b7a42607a27d61f3715ce401d15c2",
+        "date": "2026-06-18 13:28:31 +0700",
+        "subject": "Use a storage feature to gate remove errorOnMissing.",
+        "body": "The Azure, GCS, and S3 drivers each asserted that errorOnMissing was never set in their remove function, hardcoding in every driver the fact that it cannot detect a missing file on remove. That capability was implied by an assert scattered across the drivers rather than declared anywhere.\n\nAdd a storageFeatureFileRemoveMissing feature that a driver sets when it can report a file as missing on remove, and enable it for the Posix driver (but not CIFS, which shares the driver). Move the check into storageRemove(), which now asserts errorOnMissing is set only when the storage supports the feature, and drop the redundant per-driver asserts along with the now-unused errorOnMissing log parameter."
+    },
+    {
+        "commit": "9ea20ad9d07d339af6cbaf7c0989b04f0aece9b7",
+        "date": "2026-06-18 12:32:20 +0700",
+        "subject": "Bring SFTP storageRemove() in line with the other repository storage drivers.",
+        "body": "The SFTP driver, like the Azure, GCS, and S3 drivers, is only ever used for repositories, and no repository code path requests errorOnMissing on remove. Those cloud drivers therefore assert that errorOnMissing is never set, but storageSftpRemove() still honored it.\n\nAssert that errorOnMissing is never set and drop it from the remove logic, so a missing file is always ignored and every other libssh2/SFTP result is raised. This matches the cloud drivers and removes a code path that was never exercised in production."
+    },
+    {
+        "commit": "3ce84b97a72181e7a2d7453aee1383fe9784ada4",
+        "date": "2026-06-18 00:30:29 +0700",
+        "subject": "Change storage for storageMoveP() call in storage/posix unit test.",
+        "body": "Since the source file will be deleted the specified storage needs to be the same storage as the source file and writable.\n\nCurrently there is a loophole what allows this to work but it will be enforced in a future commit."
+    },
+    {
+        "commit": "c869963f8cbe1bd7eefc5d6f241936c07aaf21f6",
+        "date": "2026-06-18 00:05:05 +0700",
+        "subject": "Error on SFTP remove failures other than missing file.",
+        "body": "storageSftpRemove() only raised an error for a libssh2 LIBSSH2_ERROR_SFTP_PROTOCOL result; any other result (e.g. a transport failure such as LIBSSH2_ERROR_SOCKET_SEND) was silently treated as a successful removal unless errorOnMissing was set. A send failure says nothing about whether the file was removed -- the request may never have reached the server -- so the file could remain on the repository while pgBackRest believed it was gone.\n\nRaise an error for every result except a genuine LIBSSH2_FX_NO_SUCH_FILE when errorOnMissing is not set, which is the only case where a failed remove legitimately maps to success."
+    },
+    {
+        "commit": "ce33913a80697e2d2873e4e8d8975eb09bbf6bd3",
+        "date": "2026-06-17 22:44:13 +0700",
+        "subject": "Unify the file remove error message.",
+        "body": "storageRemove() (Posix and SFTP) threw the ad-hoc \"unable to remove '%s'\" while path remove used STORAGE_ERROR_PATH_REMOVE_FILE \"unable to remove file '%s'\", so the same failure was reported two different ways depending on the entry point.\n\nReplace STORAGE_ERROR_PATH_REMOVE_FILE with STORAGE_ERROR_FILE_REMOVE and use it for both single-file and recursive path removal, so every file removal failure now reads \"unable to remove file '%s'\". The SFTP path remove detail is also separated with a colon (\"...': libssh sftp [...]\") to match similar messages instead of a bare space."
+    },
+    {
+        "commit": "7fd8bc89a15cb039111aa85fd37f9dc68f7c4d6d",
+        "date": "2026-06-17 12:22:42 +0700",
+        "subject": "Fix potential buffer overrun in error module.",
+        "body": "errorInternalThrow() called strncpy(stackTraceBuffer, stackTrace, n - 1) followed by messageBuffer[n - 1] = '\\0' -- a copy-paste bug that wrote the NUL terminator into the wrong buffer.\n\nSince both buffers are ERROR_MESSAGE_BUFFER_SIZE the errant write was in-bounds and messageBuffer was already terminated, so the bug was silent in practice. But when stackTrace's length >= sizeof(stackTraceBuffer) - 1, strncpy() does not null-terminate, leaving stackTraceBuffer non-terminated and exposing errorContext.error.stackTrace to over-read by any consumer."
+    },
+    {
+        "commit": "5b77f9bc22fc8b7bb42a29df0ab74ff1d87a0c8d",
+        "date": "2026-06-17 12:15:48 +0700",
+        "subject": "Refactor SFTP unit tests.",
+        "body": "Replace the verbose, hand-built HrnLibSsh2 script entries in the SFTP unit tests with a set of per-function HRN_LIBSSH2_* response macros (one per libssh2 shim function). Each macro names its function, bakes in the fixed parameters the production code always passes, and defaults the common result, so a test supplies only the values that vary as trailing designated initializers.\n\nThe harness now defaults omitted values rather than requiring every field to be spelled out: libssh2_session_hostkey() defaults length/type/value; libssh2_sftp_stat_ex() defaults an omitted .attr to a regular file with mode 0640, defaults .flags to the standard attribute set (adding a size for regular files), and defaults .uid/.gid to the test user/group. Add HRN_LIBSSH2_ATTR_EXISTENCE (path exists but reports no attributes) and HRN_LIBSSH2_OWNER_ROOT (report ownership by root) sentinels, plus HRN_LIBSSH2_DIR/FILE/LINK/FIFO() helpers that OR a file type with an octal mode.\n\nReplace the NULL-terminated script array and hrnLibSsh2ScriptSet(array) with HRN_LIBSSH2_SCRIPT_SET(...), which computes the script length so no terminator entry is needed; hrnLibSsh2ScriptSet() now takes an explicit size. Rebuild HRNLIBSSH2_MACRO_STARTUP/SHUTDOWN() and HOSTKEY_HASH_ENTRY() on top of the new macros, and stat_ex now verifies the requested stat_type (via .follow) instead of scripting it as a parameter.\n\nReorganize the tests themselves: split bundled comment groups into TEST_TITLE sections, split scripts per section, and drop redundant connect/disconnect setup. Remove tests that duplicate Posix tests for common code. Remove duplicative SFTP tests. Rename HrnLibSsh2 fields for clarity (attrPerms -> attr/mode, symlinkExTarget -> target).\n\nThese changes cut sftpTest.c roughly in half."
+    },
+    {
+        "commit": "ffa325b8a44c1e9e44dc038bbcc8aece6f312a90",
+        "date": "2026-06-17 11:24:30 +0700",
+        "subject": "Add batch delete for Azure storage.",
+        "body": "Path remove (used by expire and friends) issued one HTTP DELETE per file. Use the Azure Blob Batch API to remove up to 256 objects per request, as the GCS driver already does, by sending the deletes as multipart sub-requests.\n\nAzure's batch parser is stricter than the MIME/OData spec it is based on: it requires the body to begin with the boundary delimiter (no leading CRLF preamble) and splits header lines on \": \", so the multipart builder now emits the opening delimiter without a leading CRLF and writes the MIME part headers and embedded sub-request headers in the \"Name: value\" form. The multipart request code is shared with the GCS driver, which accepts either form.\n\nAzure omits the blank line that terminates the headers of an empty-body sub-response, relying on the boundary's CRLF as the terminator, so multipart response header parsing now allows eof to end the header block.\n\nSub-requests that fail (not 2xx or 404) are retried individually. A failed part is mapped back to the original request by its position in the response rather than the echoed content-id header, since Azure omits content-id on some error responses."
+    },
+    {
+        "commit": "34bba828c6ba97579d65c2199c02d94bf31257a5",
+        "date": "2026-06-14 16:41:31 +0700",
+        "subject": "Harden HTTP chunked response parsing.",
+        "body": "Tolerate chunk extensions by stripping everything from the first ';' on the chunk-size line before parsing the hex size, and consume any chunk trailers (and the blank line that terminates them) following the terminating zero-size chunk so the connection is left aligned for reuse.\n\nTreat the transfer-encoding value case-insensitively so \"Chunked\" is accepted as \"chunked\".\n\nReject a response that sets both transfer-encoding and content-length even when content-length is 0. The previous check keyed off contentSize > 0, so a zero content-length slipped through. Track whether the header was present with a dedicated flag and reject the ambiguous combination uniformly, as RFC 7230 permits."
+    },
+    {
+        "commit": "bc6d399a6a160f5fa41dd3a98ae046dff66e56a8",
+        "date": "2026-06-14 16:18:33 +0700",
+        "subject": "PostgreSQL 19beta1 support.",
+        "body": "Add PostgreSQL 19 as an unreleased version (release: false) and vendor its control/checkpoint structures, catalog and control versions, and XLOG_PAGE_MAGIC.\n\nPostgreSQL 19 stores data_checksum_version in pg_control as a four-state ChecksumStateType enum (OFF, VERSION, INPROGRESS_OFF, INPROGRESS_ON) rather than the prior 0/1 value. Validate the field against the version-appropriate maximum and clear the in-progress states to 0, since page checksums cannot be relied on while checksums are being enabled or disabled. Consumers of pageChecksumVersion therefore continue to see only 0 or 1.\n\nAdd the PG19 test harness and the supporting Perl/CI plumbing (DbVersion, VmTest, container build) and adjust the integration test matrix."
+    },
+    {
+        "commit": "dde263d699bade3ba791c6da1f4813873c3b0fee",
+        "date": "2026-06-14 10:14:19 +0700",
+        "subject": "Clarify zero-size chunk comment in HTTP response parsing.",
+        "body": "The previous \"still zero\" wording leaned on the reader tracking that contentRemaining was zero on entry and remained zero after parsing the next chunk size. State the actual meaning instead: a zero-size chunk terminates the response."
+    },
+    {
+        "commit": "e166a33f48a00192c09b0f1cea3465243c03d1f1",
+        "date": "2026-06-13 12:46:46 +0700",
+        "subject": "Prevent recursive exit() on signal.",
+        "body": "musl 1.2.6 intentionally crashes when exit() is called recursively, which happened when a signal arrived while exit() was already in progress, e.g. when a server terminated a child that was already exiting. Set a flag when exit is in progress so exitOnSignal() ignores the signal and allows the in-flight exit() to complete. Reset the flag in exitInit() since a forked child may inherit it from a parent that was exiting.\n\nAlso call exitSafe() before notifying the parent in the server tests so a signal sent in response to the notification cannot arrive before the exit in progress flag is set.\n\nAdd Alpine 3.24 to CI to exercise the unit tests against musl 1.2.6, which is where this crash was found."
+    },
+    {
+        "commit": "aca779a6ec3f4d6ba1d7c2d5c8bbb2fa64e215ef",
+        "date": "2026-06-13 12:18:33 +0700",
+        "subject": "Run integration tests on Alpine 3.21 (musl libc).",
+        "body": "Drop the c-only restriction for the a321 CI job so the full unit and integration suites run on musl libc, exercising the integration tests (including SFTP) against Alpine in addition to glibc.\n\nApply the ssh-rsa HostKeyAlgorithms/PubkeyAcceptedAlgorithms workaround to a321 as well as u22, since Alpine 3.21 ships OpenSSH 9.x which no longer offers the SHA-1 ssh-rsa host-key algorithm by default and the libssh2 client requires it (otherwise the SFTP handshake fails key exchange with LIBSSH2_ERROR_KEX_FAILURE).\n\nSuppress the libssh2_session_init_ex and libssh2_session_handshake \"possibly lost\" leaks reported by valgrind during SFTP integration. These are persistent allocations tied to the session lifetime and are flagged only on the Linux CI runner where valgrind wraps the integration test binary. The suppressions go in valgrind.suppress.none because integration tests always run with vm none.\n\nGeneralize hrnHostPgBinPath() to probe the Debian, RHEL, and Alpine PostgreSQL bin paths in turn rather than hardcoding two, and throw a clear assert if none match.\n\nAdd a321 to the default VM list, install PostgreSQL 15/16/17 on Alpine, and point VMDEF_PGSQL_BIN at the Alpine layout. Rebuild the a321 base image accordingly."
+    },
+    {
+        "commit": "760dd8db69e7c6e5cbb9c5b7e2067b6813cf4497",
+        "date": "2026-06-12 21:34:45 +0700",
+        "subject": "Fix Alpine group conflicts in CI containers.",
+        "body": "Handle /etc/group entries with non-empty member fields when renaming TEST_GROUP_ID and only create the Alpine group when it does not already exist."
+    },
+    {
+        "commit": "3ce9fb95636c223461c0b321e39fb3ca917c4dbc",
+        "date": "2026-06-12 21:04:06 +0700",
+        "subject": "Update Fedora CI container to Fedora 44."
+    },
+    {
+        "commit": "cb694fcb4d46e770897dc6824497efaae2762530",
+        "date": "2026-06-12 20:57:16 +0700",
+        "subject": "Update (almost) EOL Debian 11 to Debian 12 in CI.",
+        "body": "Debian 11 will be EOL just after the next release but it is also a blocker for some planned work due to old package versions. It seems fine to just expire it a bit early.\n\nAlso update the integration tests to run Debian 12 on Posix since Azure is not supported on i386."
+    },
+    {
+        "commit": "3e2e3b1ff057147b356dd28b6b38c143799fb764",
+        "date": "2026-06-12 11:46:58 +0700",
+        "subject": "Add code count exclusion for SVG files."
+    },
+    {
+        "commit": "464f3020a9c4de2f82c5bfaabffaacfb6d0cfd7b",
+        "date": "2026-06-12 10:11:49 +0700",
+        "subject": "Move ignoreMissing out of the storage read drivers.",
+        "body": "Previously each read driver decided whether a missing file was an error, which duplicated the ignoreMissing logic across the Posix, SFTP, remote, S3, Azure, and GCS drivers. Now driver open() simply reports whether the file exists and StorageRead throws FileMissingError when missing files are not ignored.\n\nSince the client now makes this decision, ignoreMissing no longer needs to be passed through the remote protocol and a missing file is reported locally rather than as an error raised from the remote."
+    },
+    {
+        "commit": "2b7825ad4695aeee5e8fc44038ba8caf06c8d1a1",
+        "date": "2026-06-11 12:10:35 +0700",
+        "subject": "Add valgrind suppressions for libbacktrace unwind false positives.",
+        "body": "When libbacktrace is enabled, throwing an error calls backtrace_full(), which unwinds the stack with libgcc's _Unwind_Backtrace. On aarch64 the unwinder (and glibc's _dl_find_object, which it calls to look up unwind tables) branches on values valgrind considers uninitialised. Since tests run under valgrind with --exit-on-first-error=yes, the false positive aborted any test that happened to trip it, e.g. storage/sftp.\n\nSuppress Cond and Value8 errors that originate inside _Unwind_Backtrace when called from backtrace_full."
+    },
+    {
+        "commit": "eaac49e3c28d61e5121260b62dc31111fa6a7830",
+        "date": "2026-06-09 13:27:53 +0700",
+        "subject": "Move issue template to new format required by Github.",
+        "body": ".github/ISSUE_TEMPLATE.md is no longer filling new issues even though it should still be working according to the documentation.\n\nRather than fight the system just move to the new format."
+    },
+    {
+        "commit": "6c518001c24ad2405eaf750d358f69703322a221",
+        "date": "2026-06-09 12:37:48 +0700",
+        "subject": "Add support for S3 Outposts.",
+        "body": "Add a repo-s3-service option that controls the SigV4 signing service name. Defaults to 's3' for standard S3 endpoints. Set to 's3-outposts' when using an S3 Outposts endpoint.\n\nThe signing service is used in the credential scope, HMAC signing key derivation, and authorization header. The option accepts free-form input to support future AWS service variants."
+    },
+    {
+        "commit": "a953aa74b51e05cde3e5ace02473442f941da7f9",
+        "date": "2026-06-09 11:23:15 +0700",
+        "subject": "Invert storage read/write interface ownership.",
+        "body": "Previously, drivers constructed StorageRead/StorageWrite objects directly and stored metadata in a shared interface struct. Now, StorageRead/StorageWrite create the driver via storageInterfaceNewReadP()/NewWriteP() and mediate between IoRead/IoWrite and the driver. Drivers return opaque objects and own their metadata independently.\n\nThis loosens the tight coupling between drivers and the StorageRead/StorageWrite layer. The remote write driver replaces its back-pointer to StorageWrite with a filterGroup callback, eliminating the circular dependency. It makes retry in StorageRead much more readable.\n\nAlso move the logic for testing whether a file version could not be found out of the drivers and into StorageRead."
+    },
+    {
+        "commit": "71f52f7d923211d6e5641c0aac61fd4d8da8e966",
+        "date": "2026-06-08 17:15:27 +0700",
+        "subject": "Remove extraneous pathSync test in the SFTP storage driver.",
+        "body": "The driver does not implement path sync so there is not reason to test the behavior."
+    },
+    {
+        "commit": "7d4c0d58edd6f62170b57e9b3372360d4336ae94",
+        "date": "2026-06-08 17:08:58 +0700",
+        "subject": "Test the Posix driver for syncPath rather than StorageWrite.",
+        "body": "The syncPath value in StorageWrite is for informational purposes and does not determine if the path is actually synced or not.\n\nInstead probe the Posix driver to make sure that syncPath is disabled so there is no error on CIFS."
+    },
+    {
+        "commit": "0c62043419d46437b8a63637162e7554cbef495a",
+        "date": "2026-06-04 15:07:50 +0700",
+        "subject": "Rename execOne() to execOneExpect().",
+        "body": "This clears the way to use the shorter version in the core code."
+    },
+    {
+        "commit": "beb189fbb3c467244580cc58a3966a9ddd5c689c",
+        "date": "2026-06-04 11:31:44 +0700",
+        "subject": "Add repo-s3-key-type=pod-id documentation missed in 79544f64."
+    },
+    {
+        "commit": "c02ddc3ad993485e6aca50aa26fa5a0f9e5b3232",
+        "date": "2026-06-01 12:59:46 +0900",
+        "subject": "Update lock-threads action version.",
+        "body": "Also remove unused PR settings."
+    },
+    {
+        "commit": "e1cbd5b55c65d34b4c471a179f674d1d0f9aa772",
+        "date": "2026-05-29 12:15:28 +0900",
+        "subject": "New CI container builds.",
+        "body": "These should have been updated in 742fff17 when libsystemd was added but doing it now includes the last PostgreSQL minor releases."
+    },
+    {
+        "commit": "1e6d23fea72ac9c599f8b62a2e0a3de02d0d08d0",
+        "date": "2026-05-29 10:36:48 +0900",
+        "subject": "Add user/group caching for faster manifest build.",
+        "body": "On systems where uid/gid lookups are routed to a remote name service (sssd, systemd-userdbd, LDAP, etc.), every getpwuid()/getgrgid() call incurs a Unix socket round-trip. This dominates the manifest build phase for clusters with millions of files, even though the data files almost always share a single owner.\n\nAdd a small fixed-size (16-entry) per-process cache for userNameFromId() and groupNameFromId(). Linear scan is faster than a hash table at this size. Negative results (unknown ids) are also cached. Cache overflow falls through to uncached lookups."
+    },
+    {
+        "commit": "2cc9898fa14e10ba04f5ab6d213cafbb695369fa",
+        "date": "2026-05-28 22:17:30 +0900",
+        "subject": "Remove extraneous const."
+    },
+    {
+        "commit": "742fff174a3f5baaed932afa284334ca2aa1be82",
+        "date": "2026-05-19 11:37:48 +0900",
+        "subject": "Add systemd notify integration.",
+        "body": "Allow systemd to have a better understanding as to when pgBackRest has finished starting or is stopping.\n\nThis implementation is based off of the existing implementations in\nPostgreSQL [1] and PgBouncer [2]. PgBouncer also has an\nimplementation for `notify-reload` but this is not implemented here\nas it is a very recent feature [3] that is unavailable on many Linux\ndistributions.\n\n[1] https://www.postgresql.org/message-id/flat/CAFj8pRA4%3DhVj-d%3D8O7PSMjopsFUHPcAftd5tLqFC_xb035hNQA%40mail.gmail.com#e346a6189d8b0ed44c745c4aaaef587f\n[2] https://github.com/pgbouncer/pgbouncer/commit/3816a0073f09944a6f7eaa278d2226ca4942b911\n[3] https://github.com/systemd/systemd/blob/fa6d3bffe30064c4d4092b3daa749465f08d35fb/NEWS#L6176"
+    },
+    {
+        "commit": "3a6c67183cd9c6a12c24f0d978ef5e501b7c3fcf",
+        "date": "2026-05-19 10:19:58 +0900",
+        "subject": "C11 is now the minimum C standard.",
+        "body": "This standard is over fifteen years old and the features we are interested in seem well supported on popular compilers.\n\nThe main advantage is that static_assert() will now display the specified message on error rather than the ever-cryptic `negative width\nin bit-field '__error_if_negative'`. Now that we can depend on having\nstatic_assert() we can replace our STATIC_ASSERT_STMT() macro.\n\nReplace our ALIGN_OF() macro with alignof().\n\nReplace our FN_NO_RETURN macro with noreturn. Include stdnoreturn.h in build.h to avoid needing to include it in many header files.\n\nUse an anonymous union in common/type/json.c where it simplifies syntax.\nOther uses of union seem better as they are."
+    },
+    {
+        "commit": "6a40144d91a1e304f39f8fb1fd0e17e57a84b3df",
+        "date": "2026-05-18 20:27:00 +0900",
+        "subject": "Add sponsors and announcement that pgBackRest will continue."
+    },
+    {
+        "commit": "91b8dd60351c53b6a90c6aa3ce0d938ceb861cab",
+        "date": "2026-05-18 20:14:45 +0900",
+        "subject": "Add news page.",
+        "body": "Move recent announcements that were added to the top of the homepage."
+    },
+    {
+        "commit": "e0c934d231e9cfda4f63e2c8831915cf8b23319d",
+        "date": "2026-05-18 10:05:02 +0900",
+        "subject": "Fix documentation typos."
+    },
+    {
+        "commit": "892b60bc7908b3d2d7825f611e72f25a958a9019",
+        "date": "2026-05-17 11:56:56 +0900",
+        "subject": "Add dark mode favicon.",
+        "body": "In dark mode the black favicon was barely visible. Use a white favicon in dark mode instead.\n\nAlso, use the new SVG logo for the favicon and update logo.png to the new style."
+    },
+    {
+        "commit": "7ad4fd21c1e0c9c715f4241f184e9e01bfb49929",
+        "date": "2026-05-16 16:55:12 +0900",
+        "subject": "Remove attribution for armchair icon since it is now licensed."
+    },
+    {
+        "commit": "684f12c6cb3ea8852a59d2ae32e709f1f4dc3e3f",
+        "date": "2026-04-27 13:17:20 +0900",
+        "subject": "Remove information about v1 releases.",
+        "body": "These releases do no support any current version of PostgreSQL so they are of limited value."
+    },
+    {
+        "commit": "77312b33ba913132b33401d862c2e354f323c786",
+        "date": "2026-04-14 14:51:42 +0700",
+        "subject": "Add per-repo backup progress to info command output.",
+        "body": "When backups are running on multiple repositories simultaneously, the info command now reports per-repo progress in addition to the existing overall progress. A new repo array is included in JSON output for backup locks. This avoids confusing progress jumps when one repo finishes before another."
+    },
+    {
+        "commit": "ce8bb04d5b91b41a5b5f9218f622de775a50ab29",
+        "date": "2026-04-14 12:40:33 +0700",
+        "subject": "Limit CI permissions on the repository to read."
+    },
+    {
+        "commit": "2ef86735347e2d5f93d8a484f26dcb5e4f88f01d",
+        "date": "2026-04-14 12:34:32 +0700",
+        "subject": "Remove CodeQL CI job.",
+        "body": "This job has never surfaced any useful data and now it is failing, so remove it.\n\nIt appears that CodeQL can now be automated directly within the Github interface, so that seems like a better route if we decide to reenable it."
+    },
+    {
+        "commit": "afd6939656db0934e3557efc9acdcbe5074aabd4",
+        "date": "2026-04-13 18:22:49 +0700",
+        "subject": "Allow FreeBSD tests to continue running even if one fails."
+    },
+    {
+        "commit": "c823ce2f7cc714bdba589fb37ea9497e9acbf977",
+        "date": "2026-04-13 18:19:41 +0700",
+        "subject": "Update GitHub Actions versions."
+    },
+    {
+        "commit": "45987413d3b99d530d5627177b83bf67d0a26d25",
+        "date": "2026-04-13 18:11:36 +0700",
+        "subject": "Migrate Cirrus CI tests to Github Actions.",
+        "body": "Cirrus CI is shutting down on June 1 so migrate all tests. This could have been done before, probably, but it was not clear how to run FreeBSD on Github Actions. The cross-platforms-actions action solves that problem.\n\nFix a couple of minor test issues found on MacOS.\n\nAlso remove the dead make-cmd option. This has not been valid since the migration to meson."
+    },
+    {
+        "commit": "d3cdff17f5c038807045c26c604eed6677c6749b",
+        "date": "2026-04-10 13:26:21 +0700",
+        "subject": "Migrate documentation block rendering to C.",
+        "body": "This also requires a fair amount of support code that cannot be removed from Perl yet."
+    },
+    {
+        "commit": "ff69fcb6714d215cf55e1a8e08b04e5c0a0649f0",
+        "date": "2026-04-07 10:20:29 +0700",
+        "subject": "Remove obsolete Perl code."
+    },
+    {
+        "commit": "7f82fb6635c1e3e9dd285d53076e9aee3fbf1ca2",
+        "date": "2026-03-30 16:39:44 +0700",
+        "subject": "Add backup.info checks to verify command.",
+        "body": "Verify currently checks only backup directories present in the repository and does not validate consistency with backup.info. As a result, discrepancies between the repo contents and backup.info may go unnoticed.\n\nWarn if a backup directory exists but is not described in backup.info. Warn if a backup is listed in backup.info but missing on disk. Add backups found only in backup.info (but not on disk) to the processing list so that verify command reports their status as manifest missing."
+    },
+    {
+        "commit": "6704ffacfbf8f6a65353268cb0c036289c2d3610",
+        "date": "2026-03-24 15:04:52 +0700",
+        "subject": "Test changes in preparation for additional verification of backup.info."
+    },
+    {
+        "commit": "6e4f10203fef225f29590ea9bffa4990417e9cbd",
+        "date": "2026-03-23 11:22:25 +0700",
+        "subject": "Remove unused backtrace-supported.h include.",
+        "body": "This header is only useful for autoconf builds and in any case it was not being used correctly."
+    },
+    {
+        "commit": "088537454983f5d040f9b857e60ed0939220541b",
+        "date": "2026-03-23 10:44:57 +0700",
+        "subject": "Add alternate error to common/io/tls test module for WSL."
+    },
+    {
+        "commit": "e54b4a42fd15291e872b937b23d92867237d8f7f",
+        "date": "2026-03-17 11:46:33 +0700",
+        "subject": "Move archiveAsyncExec() to command/command module and rename.",
+        "body": "Spawning an async process is useful for more than archive-get/push so move the function to a module used by all commands."
+    },
+    {
+        "commit": "9016b362fcf6ca04031716cd49216f9e69f35108",
+        "date": "2026-03-07 21:46:15 +0700",
+        "subject": "Comment out unused CSS elements.",
+        "body": "These are useful to denote elements that could be styled but currently work with defaults. However, CSS linters dislike empty rules so comment them out. This was already done with some rules but not followed consistently."
+    },
+    {
+        "commit": "6d7ddc3e0a6fc62fee002fbd689cf4205b726ff8",
+        "date": "2026-03-07 15:35:11 +0700",
+        "subject": "Add support for sponsors in the documentation.",
+        "body": "This allows logos to be displayed for sponsors in HTML on the homepage.\n\nThe markdown will continue to list sponsors in text but the list will be pulled from the new XML."
+    },
+    {
+        "commit": "4397d122470d4309f86186f885f74a07be132fc6",
+        "date": "2026-03-04 21:37:13 +0700",
+        "subject": "Remove FreeBSD 13 and add FreeBSD 15 to Cirrus CI.",
+        "body": "FreeBSD 13 will be EOL soon after the next release."
+    },
+    {
+        "commit": "8e711d40cbf6775b01aad9818388a45c36c7ae7f",
+        "date": "2026-03-04 20:15:55 +0700",
+        "subject": "Update Fedora test image to Fedora 43."
+    },
+    {
+        "commit": "9bb26a5065e36c1776b04129eecb02b1bddfd3b9",
+        "date": "2026-03-04 17:16:18 +0700",
+        "subject": "Update PostgresQL versions in user guide.",
+        "body": "PostgreSQL 13 is EOL and no longer available in the yum.postgresql.org repository.\n\nUpdate the base and upgrade versions of the RHEL and Debian documentation to better cover supported versions."
+    },
+    {
+        "commit": "4a2008c6ed218ad6773cfd83e49ac56c8242b525",
+        "date": "2026-02-23 16:51:21 +0700",
+        "subject": "Ensure backup-timestamp-start is non-zero in unit tests.",
+        "body": "The unit tests do not require this field to be non-zero so in general it has not been set.\n\nHowever, in production this field is always set and can be used to calculate timestamp deltas, which will be useful in a future commit.\n\nCommit the test changes separately to show that there is no change in behavior."
+    },
+    {
+        "commit": "b908d5e2c5b37ef968f19e2c40a1001e19e5b87f",
+        "date": "2026-02-21 08:37:31 +0700",
+        "subject": "Improve seek performance during block incremental delta restore.",
+        "body": "The prior code issued a seek for each block even if the file was in the correct position. The extra call to lseek() was probably not too expensive but a flush was also required in case of a seek on the next loop. Flushing the write buffer after each block (which is often 8KiB) was definitely wasteful.\n\nFix this by adding seek to the IoWrite interface. That means the file position can be tracked and calls to seek/flush are only done when needed.\n\nSeek during write is only used in PGDATA during restore so seek functionality is only added to the Posix driver."
+    },
+    {
+        "commit": "009644b443b755cd1f407a7ba34ebbf273608346",
+        "date": "2026-02-20 17:56:30 +0700",
+        "subject": "Update always_inline to __always_inline__.",
+        "body": "This is the preferred syntax to avoid conflict with user-defined macros."
+    },
+    {
+        "commit": "2c747f277e0869a130fafc135a78d2f87af96acf",
+        "date": "2026-02-20 13:14:01 +0700",
+        "subject": "Add meson check for __builtin_types_compatible_p().",
+        "body": "This check was lost in the migration from autoconf which means that the UNCONSTIFY() macros has not been enforcing since then.\n\nAdd the check so UNCONSTIFY() enforces as expected."
+    },
+    {
+        "commit": "fc42e85d8c73473558006675e2a2a312fb7e0801",
+        "date": "2026-02-19 22:53:52 +0700",
+        "subject": "Fix incorrect postgres/interface unit test title."
+    },
+    {
+        "commit": "119c089cccccd773bc8eb517f82ec6c36e5fb37d",
+        "date": "2026-02-19 22:33:05 +0700",
+        "subject": "Update uncrustify to recognize .c.inc files.",
+        "body": "But ignore .auto.c.inc and .vendor.c.inc files."
+    },
+    {
+        "commit": "1ce2522e359e9968087562dd5db94f248370780e",
+        "date": "2026-02-19 22:28:36 +0700",
+        "subject": "Refactor info/manifest module into included modules.",
+        "body": "Similar to 1db52ef9 break up this module to make it more maintainable."
+    },
+    {
+        "commit": "27fff599eef3575d9751ed4e5907debcc05372b4",
+        "date": "2026-02-19 22:23:01 +0700",
+        "subject": "Move info/manifest.c to info/manifest/manifest.c.",
+        "body": "This module will be split up so move it to its own path first."
+    },
+    {
+        "commit": "cf003f67e71b33cf83a653ff5c918b551e2d47be",
+        "date": "2026-02-17 15:05:33 +0700",
+        "subject": "Move static build defines to build.h.",
+        "body": "Putting these defines in meson.build is a bit annoying because of the added syntax and double commenting. Since the defines are static there is no good reason to have them there.\n\nThis also creates a place for test builds to add global defines -- again rather than in meson.build."
+    },
+    {
+        "commit": "b9eb7f811307c070d4015ebbb64eb9dc3b231a66",
+        "date": "2026-02-16 10:00:35 +0700",
+        "subject": "Fix test error message typos and add error details."
+    },
+    {
+        "commit": "27319dde50194a055a746d3b3c2e68f711a8e13f",
+        "date": "2026-02-16 09:03:39 +0700",
+        "subject": "Explicitly free block map read in restoreFile().",
+        "body": "This will be freed when the current file is complete but freeing it before the write is opened saves memory."
+    },
+    {
+        "commit": "17db234f1bbdef7f57d2c80cd41473016c5eb893",
+        "date": "2026-02-14 12:57:35 +0700",
+        "subject": "Reverse sort order in backup and restore comparators.",
+        "body": "Both of these lists were sorted descending so all comparisons in the comparator had to be reversed. This made it hard to reason about sort order.\n\nIt makes more sense to sort ascending and have the comparisons also be ascending. The final sort order remains the same."
+    },
+    {
+        "commit": "1db52ef9f387ddf451213bcc5aeb900519d2782e",
+        "date": "2026-02-13 10:20:47 +0700",
+        "subject": "Refactor restore module into included modules.",
+        "body": "The restore module has been large and unwieldy for some time but I have been loathe to split it into separate compilation units because it means maintaining additional header files, updating build files, and losing optimizations from static functions. These functions are only used internally by restore and it seems wasteful to extern them.\n\nWe already have a number of cases where C files are included directly into other C files, especially .vendor.c.inc and .auto.c.inc files. We also include C files to add functionality needed for build/doc/test to core objects without having to add that functionality to core. See src/build/common/string.c for an example.\n\nThe test/coverage code already supports C includes but I had to update it to recognize the new extension."
+    },
+    {
+        "commit": "bc3ef206799595c5c07e206c3626ca0816bbd3b0",
+        "date": "2026-02-09 22:23:40 +0700",
+        "subject": "Move initialization of StorageRead and StorageWrite to interface.",
+        "body": "Moving initialization to the interface consolidates code and removes duplication in the drivers. This will become critical as the interface manipulates multiple drivers to improve performance.\n\nThis refactor is less important for StorageWrite but it seems better to keep them consistent."
+    },
+    {
+        "commit": "8d59a6f67eaa05acdb291acf3d580e1c331b6efc",
+        "date": "2026-02-08 17:39:14 +0700",
+        "subject": "Remove package build testing.",
+        "body": "This made sense during the days when the project was juggling Perl code, a C binary, and a C library. These days the build is far simpler and this dependency just means build failures when salsa.debian.org is cranky (often) without any apparent benefit."
+    },
+    {
+        "commit": "607965144392cf64a700443a2ada5dce198aac96",
+        "date": "2026-02-07 17:01:32 +0700",
+        "subject": "Minor memory context optimization in restoreFile().",
+        "body": "The temp mem context block was outside the if statement that determines if a file needs to be copied or not, which meant that some mem contexts would never be used.\n\nReverse this order to avoid creating unused mem contexts."
+    },
+    {
+        "commit": "06b99d93dc7c76461b8e39b6cf653665963ec4d5",
+        "date": "2026-02-07 13:19:08 +0700",
+        "subject": "Calculate limit for Posix/SFTP during read instead of when created.",
+        "body": "This was not a bug since the Posix/SFTP drivers do not allow read retries but it could easily turn into a bug if retries are enabled in the future so it seems safer to move the logic to a location that will work with retries."
+    },
+    {
+        "commit": "e11fe39d0bbc9c6b71a7c232d3381ce1c0dec554",
+        "date": "2026-02-01 11:35:05 +0700",
+        "subject": "Improve designated initializers in data arrays.",
+        "body": "Designated initializers were being used to initialize the structs but not the arrays. Adding designated initializers makes the code a little clearer.\n\nIn the packTypeMapData array designated initializers also allow removal of the explicit zero padding and make initialization order unimportant (though it is better to keep them in order to match the enum)."
+    },
+    {
+        "commit": "10d18be71923adbb396c2fd124c708c57be2fbb2",
+        "date": "2026-02-01 11:23:41 +0700",
+        "subject": "Fix comments in common/pack module."
+    },
+    {
+        "commit": "449529f98fad1ff50b8662c66230e469e311f91d",
+        "date": "2026-01-30 08:18:06 +0700",
+        "subject": "Fix typo in NEWS.md."
+    },
+    {
+        "commit": "b8b0dbceb333353158132e845e443a1391a9b3c3",
+        "date": "2026-01-23 16:10:09 +0700",
+        "subject": "Fix float-equal compiler warnings.",
+        "body": "ed390780 added this warning but included an extra dash which caused it to be ignored. Remove the extra dash so the warning is applied.\n\nAlso remove some unused test code that violated the new warning."
+    },
+    {
+        "commit": "c2b10a85b77aa19b3540f25a8c5324d68211aa14",
+        "date": "2026-01-23 10:17:56 +0700",
+        "subject": "Use more specific warning for nonstring meson compiler probe.",
+        "body": "Previously -Wextra was used, which is overly broad and led to the issue in 303e7458. Instead use a specific error to avoid side effects.\n\nIt is possible that this warning will not be recognized by all compilers but that is not an issue since this is only important for development. Warnings are ignored for production builds."
+    },
+    {
+        "commit": "d4465bd6f78d6d58d18ebedbe8f63b55d0ae2508",
+        "date": "2026-01-23 10:08:48 +0700",
+        "subject": "Suppress unused parameter errors in meson compiler probes.",
+        "body": "The main() parameters in meson compiler probes were not being used but could cause unused parameter errors.\n\nSince the parameters are not needed remove them. This also has the benefit of making the code a bit simpler."
+    },
+    {
+        "commit": "af8a9e1ea797e07367c8a100714ce03d873f9dbc",
+        "date": "2026-01-21 16:50:30 +0700",
+        "subject": "Update NEWS.md for new version and features."
+    },
+    {
+        "commit": "9fb9f73066c87370430b75dee8fe6171ec791d48",
+        "date": "2026-01-20 12:30:05 +0700",
+        "subject": "Documentation no longer builds on PostgreSQL < 10.",
+        "body": "pgBackRest still supports PostgreSQL 9.6 but documentation is not built for EOL versions.\n\nThis will simplify the migration of the documentation to C."
+    },
+    {
+        "commit": "9ea54af67c122ce4f59263089b14ae3cfd28167d",
+        "date": "2026-01-20 12:17:52 +0700",
+        "subject": "Enhance StringId with optional sequence information.",
+        "body": "It is convenient that a StringId can be used as an integer and also be rendered as a string. However, in many cases it is simpler and more efficient to have a sequence that can be used for lookup into an array or in a switch statement. This is particularly useful for StringIds generated by the config module.\n\nSequences cannot be used everywhere, though. In some cases StringIds are generated from text stored in files (e.g. compress type) in which case it is not possible to add sequence info without additional complexity."
+    },
+    {
+        "commit": "2a4fcf4b582e0636108a71882244e34462fe3809",
+        "date": "2026-01-19 17:36:38 +0700",
+        "subject": "Update LICENSE.txt and PostgreSQL copyright for 2026."
+    },
+    {
+        "commit": "d9f778ee3238bd6aaef0e92dba97e70c92b1cd5e",
+        "date": "2026-01-19 17:17:07 +0700",
+        "subject": "Begin v2.59.0 development."
+    },
+    {
         "commit": "d50cfa9ee0b0b921fb6823165c65f23ff5fed0fc",
         "date": "2026-01-19 17:03:44 +0700",
         "subject": "v2.58.0: Object Storage Improvements"

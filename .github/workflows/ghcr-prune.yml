@@ -1,0 +1,65 @@
+# Prune the GHCR container caches so they do not grow without bound. Both packages are pure caches that are rebuilt on demand, so
+# deleting an entry only costs a one-time rebuild on the next run that needs it. Anything meant to persist lives in a separate
+# package, so everything in these two can be treated as disposable.
+#
+# The test package holds the base image cache, keyed by a hash of the generated Dockerfile. When a Dockerfile changes a new hash
+# tag is pushed and the old tag is orphaned but never overwritten, so stale entries accumulate as tagged images that a rule
+# limited to untagged versions can never reach. A cache hit does not re-push, so an entry that is still valid but unchanged ages
+# out on its original date. The test-ccache package holds the compile cache, tagged per architecture and overwritten on every
+# save, so each save orphans the previous digest as an untagged image with nothing referencing it. The two therefore need
+# different rules: age out old tags for test, and simply drop the untagged orphans for test-ccache.
+name: ghcr-prune
+
+on:
+  schedule:
+    # Weekly, on a day and time that does not collide with lock-thread.
+    - cron: '30 8 * * 1'
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Log what would be deleted without deleting anything
+        type: boolean
+        default: false
+
+# Deleting package versions requires write access to packages. The default GITHUB_TOKEN works because this repository has the Admin
+# role on these packages (it published them). If that ever changes, replace secrets.GITHUB_TOKEN below with a classic PAT that has
+# the write:packages and delete:packages scopes.
+permissions:
+  packages: write
+
+# Never let two prunes run at once.
+concurrency:
+  group: ghcr-prune
+
+jobs:
+  prune:
+    runs-on: ubuntu-latest
+
+    steps:
+      # The action hardcodes an identical "GHCR Cleanup Summary" heading for every run, so precede each with a heading of our own to
+      # label which package the summary below it covers.
+      - name: Label test prune
+        run: echo '# test (base image cache)' >> "${GITHUB_STEP_SUMMARY?}"
+
+      # Base image cache. The whole package is disposable, so delete every tag and any untagged manifest older than two months;
+      # anything still in use is simply rebuilt and re-pushed on the next run that needs it.
+      - name: Prune test base image cache
+        uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          package: test
+          older-than: 2 months
+          delete-tags: '*'
+          delete-untagged: true
+          dry-run: ${{inputs.dry-run || false}}
+
+      - name: Label test-ccache prune
+        run: echo '# test-ccache (compile cache)' >> "${GITHUB_STEP_SUMMARY?}"
+
+      # Compile cache. The live cache is the current per-architecture tags; every other digest is an orphan left by an overwrite and
+      # is referenced by nothing, so deleting all untagged versions removes exactly the dead weight and keeps every live cache.
+      - name: Prune test-ccache compile cache
+        uses: dataaxiom/ghcr-cleanup-action@v1
+        with:
+          package: test-ccache
+          delete-untagged: true
+          dry-run: ${{inputs.dry-run || false}}

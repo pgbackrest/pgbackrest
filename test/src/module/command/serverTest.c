@@ -5,11 +5,11 @@ Test Server Command
 #include "storage/posix/storage.h"
 #include "storage/remote/storage.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessFork.h"
-#include "common/harnessServer.h"
-#include "common/harnessStorage.h"
-#include "common/harnessSystemd.h"
+#include "harness/config.h"
+#include "harness/fork.h"
+#include "harness/server.h"
+#include "harness/storage.h"
+#include "harness/systemd.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -163,11 +163,14 @@ testRun(void)
 
                         TEST_RESULT_VOID(cmdServer(strLstSize(argList), strLstPtr(argList)), "server");
 
-                        // If this is a child process then exit immediately
+                        // If this is a child process then exit immediately. Call exitSafe() before notifying the parent so a
+                        // signal sent in response to the notification cannot arrive before the exit in progress flag is set.
                         if (pid != getpid())
                         {
+                            const int result = exitSafe(0, false, signalTypeNone);
+
                             HRN_FORK_CHILD_NOTIFY_PUT();
-                            exit(0);
+                            exit(result);
                         }
 
                         // Check that sd_notify calls were made
@@ -273,11 +276,14 @@ testRun(void)
 
                         TEST_RESULT_VOID(cmdServer(strLstSize(argList), strLstPtr(argList)), "server");
 
-                        // If this is a child process then exit immediately
+                        // If this is a child process then exit immediately. Call exitSafe() before notifying the parent so a
+                        // signal sent in response to the notification cannot arrive before the exit in progress flag is set.
                         if (pid != getpid())
                         {
+                            const int result = exitSafe(0, false, signalTypeNone);
+
                             HRN_FORK_CHILD_NOTIFY_PUT();
-                            exit(0);
+                            exit(result);
                         }
 
                         // Check that sd_notify calls were made

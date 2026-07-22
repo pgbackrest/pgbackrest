@@ -11,11 +11,11 @@ Test Remote Storage
 #include "config/protocol.h"
 #include "postgres/interface.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessPack.h"
-#include "common/harnessProtocol.h"
-#include "common/harnessStorage.h"
-#include "common/harnessTime.h"
+#include "harness/config.h"
+#include "harness/pack.h"
+#include "harness/protocol.h"
+#include "harness/storage.h"
+#include "harness/time.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -706,7 +706,8 @@ testRun(void)
 
         TEST_ERROR(
             storageRemoveP(storageRepoWrite, file, .errorOnMissing = true), FileRemoveError,
-            "raised from remote-0 shim protocol: unable to remove '" TEST_PATH "/repo128/file.txt': [2] No such file or directory");
+            "raised from remote-0 shim protocol: unable to remove file '" TEST_PATH "/repo128/file.txt':"
+            " [2] No such file or directory");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("ignore missing file");

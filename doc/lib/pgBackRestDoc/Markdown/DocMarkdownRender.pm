@@ -236,19 +236,23 @@ sub sectionProcess
         # Add descriptive text
         elsif ($oChild->nameGet() eq 'p')
         {
-            if (defined($strLastChild) && $strLastChild ne 'code-block' && $strLastChild ne 'table')
+            if (defined($strLastChild) && $strLastChild ne 'table')
             {
                 $strMarkdown .= "\n";
             }
 
             $strMarkdown .= "\n" . $self->processText($oChild->textGet());
         }
-        # Add a list
+        # Add a list. Separate the list from the prior element with a blank line but keep the items together so the list reads as a
+        # unit when the markdown is viewed as plain text.
         elsif ($oChild->nameGet() eq 'list')
         {
+            my $bFirst = true;
+
             foreach my $oListItem ($oChild->nodeList())
             {
-                $strMarkdown .= "\n\n- " . $self->processText($oListItem->textGet());
+                $strMarkdown .= ($bFirst ? "\n\n- " : "\n- ") . $self->processText($oListItem->textGet());
+                $bFirst = false;
             }
         }
         # Add a sponsor list

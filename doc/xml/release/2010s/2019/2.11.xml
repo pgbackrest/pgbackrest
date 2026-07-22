@@ -3,7 +3,7 @@
         <release-bug-list>
             <release-item>
                 <release-item-contributor-list>
-                    <release-item-ideator id="benoit.lobréau"/>
+                    <release-item-ideator id="benoit.lobreau"/>
                 </release-item-contributor-list>
 
                 <p>Fix possible truncated WAL segments when an error occurs mid-write.</p>
@@ -65,7 +65,7 @@
 
             <release-item>
                 <release-item-contributor-list>
-                    <release-item-contributor id="benoit.lobréau"/>
+                    <release-item-contributor id="benoit.lobreau"/>
                 </release-item-contributor-list>
 
                 <p>Add additional options to <file>backup.manifest</file> for debugging purposes.</p>

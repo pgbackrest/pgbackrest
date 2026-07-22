@@ -12,3 +12,17 @@
     fun:_Unwind_Backtrace
     fun:backtrace_full
 }
+{
+    libssh2_session_handshake
+    Memcheck:Leak
+    match-leak-kinds: possible
+    ...
+    fun:libssh2_session_handshake
+}
+{
+    libssh2_session_init_ex
+    Memcheck:Leak
+    match-leak-kinds: possible
+    ...
+    fun:libssh2_session_init_ex
+}

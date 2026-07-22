@@ -6,9 +6,9 @@ Test Backup Info Handler
 #include "common/io/bufferWrite.h"
 #include "storage/posix/storage.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessInfo.h"
-#include "common/harnessPostgres.h"
+#include "harness/config.h"
+#include "harness/info.h"
+#include "harness/postgres.h"
 
 /***********************************************************************************************************************************
 Test Run

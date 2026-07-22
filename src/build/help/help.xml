@@ -151,6 +151,18 @@
                 </text>
 
                 <config-key-list>
+                    <config-key id="allow-root" name="Allow Run as Root">
+                        <summary>Allow the command to run as the root user.</summary>
+
+                        <text>
+                            <p>By default only the <cmd>restore</cmd> command may be run as the root user since it is designed to carefully manage file ownership. Running other commands as root risks creating files (e.g. in the repository) that are owned by root and therefore inaccessible to the PostgreSQL user, causing later commands to fail.</p>
+
+                            <p>Enable this option to run a command as root anyway. However, it is far better to run <backrest/> as the user that owns the repository and PostgreSQL cluster.</p>
+                        </text>
+
+                        <example>y</example>
+                    </config-key>
+
                     <config-key id="beta" name="Allow Beta Features">
                         <summary>Allow beta features.</summary>
 
@@ -317,7 +329,7 @@
                         <summary>Use a neutral umask.</summary>
 
                         <text>
-                            <p>Sets the umask to 0000 so modes in the repository are created in a sensible way. The default directory mode is 0750 and default file mode is 0640. The lock and log directories set the directory and file mode to 0770 and 0660 respectively.</p>
+                            <p>Sets the umask to 0000 so modes in the repository are created in a sensible way. The default directory mode is 0750 and default file mode is 0640.</p>
 
                             <p>To use the executing user's umask instead specify <setting>neutral-umask=n</setting> in the config file or <setting>--no-neutral-umask</setting> on the command line.</p>
                         </text>
@@ -679,7 +691,7 @@
                         <summary>Target size for file bundles.</summary>
 
                         <text>
-                            <p>Defines the total size of files that will be added to a single bundle. Most bundles will be smaller than this size but it is possible that some will be slightly larger, so do not set this option to the maximum size that your file system allows.</p>
+                            <p>Defines the target size for files that will be added to a single bundle. The uncompressed bundle size may be as large as <br-option>repo-bundle-size</br-option> + <br-option>repo-bundle-limit</br-option>, so do not set this option to the maximum size that your file system allows.</p>
 
                             <p>In general, it is not a good idea to set this option too high because retries will need to redo the entire bundle.</p>
                         </text>
@@ -1025,6 +1037,7 @@
                                 <list-item><id>auto</id> - Automatically retrieve temporary credentials</list-item>
                                 <list-item><id>web-id</id> - Automatically retrieve web identity credentials</list-item>
                                 <list-item><id>pod-id</id> - Automatically retrieve EKS pod identity credentials</list-item>
+                                <list-item><id>process</id> - Retrieve credentials by executing a process</list-item>
                             </list>
                         </text>
 
@@ -1075,6 +1088,20 @@
                         <example>s3.amazonaws.com</example>
                     </config-key>
 
+                    <config-key id="repo-s3-process-cmd" name="S3 Authentication Process Command">
+                        <summary>S3 authentication process command.</summary>
+
+                        <text>
+                            <p>Command (and optional arguments) to execute for retrieving temporary S3 credentials. The first list entry is the command and the remaining entries are passed as parameters.</p>
+
+                            <p>The process must output JSON containing <id>AccessKeyId</id>, <id>SecretAccessKey</id>, <id>SessionToken</id>, and <id>Expiration</id> fields. Credentials will be automatically refreshed before the expiration time. See <link url="https://docs.aws.amazon.com/sdkref/latest/guide/feature-process-credentials.html#feature-process-credentials-output">Process Credential Provider</link> for format details.</p>
+                        </text>
+
+                        <example>/usr/local/bin/get-credentials</example>
+                        <example>--role</example>
+                        <example>my-role</example>
+                    </config-key>
+
                     <config-key id="repo-s3-role" name="S3 Repository Role">
                         <summary>S3 repository role.</summary>
 
@@ -1123,6 +1150,16 @@
                         </text>
 
                         <example>s3-outposts</example>
+                    </config-key>
+
+                    <config-key id="repo-s3-sts-host" name="S3 Repository STS Endpoint">
+                        <summary>S3 repository STS endpoint.</summary>
+
+                        <text>
+                            <p>The STS endpoint used to retrieve temporary credentials when <br-option>repo-s3-key-type=web-id</br-option> is configured. Set to a regional endpoint (e.g. <id>sts.us-east-1.amazonaws.com</id>) to use regional STS, which may be required for GovCloud, China regions, or to reduce latency.</p>
+                        </text>
+
+                        <example>sts.us-east-1.amazonaws.com</example>
                     </config-key>
 
                     <config-key id="repo-s3-uri-style" name="S3 Repository URI Style">
@@ -1419,6 +1456,8 @@
 
                         <text>
                             <p>Passphrase used to encrypt/decrypt files of the repository.</p>
+
+                            <admonition type="note">When run without the <br-option>stanza</br-option> option the <cmd>info</cmd> command reads encryption settings only from the <setting>global</setting> section. If encryption settings are configured per stanza, run the <cmd>info</cmd> command with the <br-option>stanza</br-option> option to read an encrypted stanza.</admonition>
                         </text>
 
                         <example>zWaf6XtpjIVZC5444yXB+cgFDFl7MxGlgkZSaoPvTGirhPygu4jOKOXf9LO4vjfO</example>
@@ -1551,6 +1590,8 @@
 
                         <text>
                             <p>The setting is enabled by default. Use caution when disabling this option as doing so will result in retaining all backups and archives indefinitely, which could cause your repository to run out of space. The <cmd>expire</cmd> command will need to be run regularly to prevent this from happening.</p>
+
+                            <p>When <cmd>expire</cmd> is run automatically after a successful backup it uses the configuration of the <cmd>backup</cmd> command, so options set only in an <cmd>expire</cmd> command section (e.g. <id>[global:expire]</id>) are not applied. To apply <cmd>expire</cmd>-specific configuration, disable this option and run the <cmd>expire</cmd> command separately.</p>
                         </text>
 
                         <example>y</example>
@@ -1634,6 +1675,18 @@
                         <example>n</example>
                     </config-key>
 
+                    <config-key id="archive-push-batch-size" name="Archive Push Batch Size">
+                        <summary>Maximum amount of WAL to push per asynchronous run.</summary>
+
+                        <text>
+                            <p>In asynchronous mode the <cmd>archive-push</cmd> process pushes all the WAL segments that are ready in a single run. Since <br-option>archive-push-queue-max</br-option> is only checked at the start of each run, a run that processes a very large number of segments can let the queue grow well beyond the limit before it is rechecked.</p>
+
+                            <p>This option limits the amount of WAL processed per run so the process exits and is spawned again by the next <cmd>archive-push</cmd>, which rechecks the queue. Lower values recheck the queue more often at the cost of spawning the asynchronous process more frequently. The value is rounded down to a whole number of WAL segments but at least one segment is always processed.</p>
+                        </text>
+
+                        <example>1GiB</example>
+                    </config-key>
+
                     <config-key id="archive-push-queue-max" name="Maximum Archive Push Queue Size">
                         <summary>Maximum size of the <postgres/> archive queue.</summary>
 
@@ -1648,6 +1701,8 @@
                             <p>If this occurs then the archive log stream will be interrupted and PITR will not be possible past that point. A new backup will be required to regain full restore capability.</p>
 
                             <p>In asynchronous mode the entire queue will be dropped to prevent spurts of WAL getting through before the queue limit is exceeded again.</p>
+
+                            <p>In asynchronous mode this limit is only checked at the start of each <cmd>archive-push</cmd> run, so the queue can grow beyond it within a single run. Reduce <br-option>archive-push-batch-size</br-option> to check the queue more frequently.</p>
 
                             <p>The purpose of this feature is to prevent the log volume from filling up at which point <postgres/> will stop completely. Better to lose the backup than have <postgres/> go down.</p>
                         </text>
@@ -2309,6 +2364,18 @@
                 </text>
 
                 <option-list>
+                    <option id="archive-expire-before" name="Expire Archive Before">
+                        <summary>Remove WAL archive earlier than the specified WAL segment.</summary>
+
+                        <text>
+                            <p>Remove WAL segments earlier than the specified segment, but only those that are not required by a retained backup, that is, segments older than the earliest backup set to retain, or any segment when the repository contains no backup. The specified segment and everything after it are kept. This mirrors the value passed by <postgres/> to <pg-setting>archive_cleanup_command</pg-setting> as <id>%r</id>.</p>
+
+                            <p>This option is primarily intended for archive-only repositories where no backups are stored. It can also be used to reclaim WAL archive space before the first backup when full retention has not yet been met to trigger archive expiration.</p>
+                        </text>
+
+                        <example>000000010000000000000010</example>
+                    </option>
+
                     <option id="oldest" name="Oldest">
                         <summary>Expire the oldest eligible backup set.</summary>
 

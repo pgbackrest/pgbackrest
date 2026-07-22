@@ -89,7 +89,7 @@ ioSessionPeerNameSet(IoSession *const this, const String *const peerName)       
     {
         this->pub.peerName = strDup(peerName);                                                                      // {vm_covered}
     }
-    MEM_CONTEXT_END();                                                                                              // {vm_covered}
+    MEM_CONTEXT_OBJ_END();                                                                                          // {vm_covered}
 
     FUNCTION_TEST_RETURN_VOID();                                                                                    // {vm_covered}
 }                                                                                                                   // {vm_covered}

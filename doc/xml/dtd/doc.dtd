@@ -70,6 +70,7 @@
     <!ATTLIST execute err-expect CDATA "">
     <!ATTLIST execute retry CDATA "">
     <!ATTLIST execute variable-key CDATA "">
+    <!ATTLIST execute cmd-line-len CDATA "">
 <!ELEMENT exe-cmd (#PCDATA)>
 <!ELEMENT exe-cmd-extra (#PCDATA)>
 <!ELEMENT exe-highlight (#PCDATA)>

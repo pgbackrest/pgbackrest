@@ -66,7 +66,7 @@ Format the request (excluding content)
 static String *
 httpRequestFmt(
     const String *const verb, const String *const path, const HttpQuery *const query, const HttpHeader *const header,
-    const bool agent)
+    const bool agent, const bool headerSpace)
 {
     FUNCTION_TEST_BEGIN();
         FUNCTION_TEST_PARAM(STRING, verb);
@@ -74,6 +74,7 @@ httpRequestFmt(
         FUNCTION_TEST_PARAM(HTTP_QUERY, query);
         FUNCTION_TEST_PARAM(HTTP_HEADER, header);
         FUNCTION_TEST_PARAM(BOOL, agent);
+        FUNCTION_TEST_PARAM(BOOL, headerSpace);
     FUNCTION_TEST_END();
 
     ASSERT(verb != NULL);
@@ -93,14 +94,16 @@ httpRequestFmt(
         if (agent)
             strCatZ(result, HTTP_HEADER_USER_AGENT ":" PROJECT_NAME "/" PROJECT_VERSION "\r\n");
 
-        // Add headers
+        // Add headers. A space after the colon is used for multipart sub-requests since Azure's batch parser requires the canonical
+        // "Name: value" form, but is omitted for normal requests to preserve existing behavior.
         StringList *const headerList = httpHeaderList(header);
 
         for (unsigned int headerIdx = 0; headerIdx < strLstSize(headerList); headerIdx++)
         {
             const String *const headerKey = strLstGet(headerList, headerIdx);
 
-            strCatFmt(result, "%s:%s\r\n", strZ(headerKey), strZ(httpHeaderGet(header, headerKey)));
+            strCatFmt(
+                result, headerSpace ? "%s: %s\r\n" : "%s:%s\r\n", strZ(headerKey), strZ(httpHeaderGet(header, headerKey)));
         }
 
         // Add blank line to end of headers
@@ -167,7 +170,7 @@ httpRequestProcess(HttpRequest *const this, const bool waitForResponse, const bo
                             BUFSTR(
                                 httpRequestFmt(
                                     httpRequestVerb(this), httpRequestPath(this), httpRequestQuery(this), httpRequestHeader(this),
-                                    true)));
+                                    true, false)));
 
                         // Write out content if any
                         if (this->content != NULL)
@@ -393,13 +396,14 @@ httpRequestMultiAdd(
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Construct request header
+        // Construct request header. The MIME part headers use the canonical "Name: value" form (capitalized name, space after the
+        // colon) since Azure's batch parser is stricter than the MIME/OData spec and rejects other forms.
         String *const request = strNew();
 
-        strCatZ(request, HTTP_HEADER_CONTENT_TYPE ":" HTTP_HEADER_CONTENT_TYPE_HTTP "\r\n");
-        strCatZ(request, HTTP_HEADER_CONTENT_TRANSFER_ENCODING ":" HTTP_HEADER_CONTENT_TRANSFER_ENCODING_BINARY "\r\n");
-        strCatFmt(request, HTTP_HEADER_CONTENT_ID ":%s\r\n\r\n", strZ(contentId));
-        strCat(request, httpRequestFmt(verb, path, param.query, param.header, false));
+        strCatZ(request, "Content-Type: " HTTP_HEADER_CONTENT_TYPE_HTTP "\r\n");
+        strCatZ(request, "Content-Transfer-Encoding: " HTTP_HEADER_CONTENT_TRANSFER_ENCODING_BINARY "\r\n");
+        strCatFmt(request, "Content-ID: %s\r\n\r\n", strZ(contentId));
+        strCat(request, httpRequestFmt(verb, path, param.query, param.header, false, true));
 
         MEM_CONTEXT_OBJ_BEGIN(this->contentList)
         {
@@ -453,13 +457,15 @@ httpRequestMultiContent(HttpRequestMulti *const this)
 
     MEM_CONTEXT_TEMP_BEGIN()
     {
-        // Generate boundary
+        // Generate boundary. The leading CRLF is conceptually part of the delimiter that precedes each subsequent part, but the
+        // opening delimiter is emitted without it below since Azure's batch parser requires the body to begin with the delimiter.
         Buffer *const boundary = bufNew(boundarySize);
         bufCat(boundary, BUFSTRDEF(HTTP_MULTIPART_BOUNDARY_PRE));
         bufCat(boundary, this->boundaryRaw);
 
-        // Add first boundary
-        bufCat(result, boundary);
+        // Add first boundary (without the leading CRLF so the body begins with the delimiter)
+        bufCat(result, BUFSTRDEF(HTTP_MULTIPART_BOUNDARY_OPEN));
+        bufCat(result, this->boundaryRaw);
         bufCat(result, BUFSTRDEF(HTTP_MULTIPART_BOUNDARY_POST));
 
         // Add content and boundaries

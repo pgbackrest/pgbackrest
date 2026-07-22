@@ -1,0 +1,153 @@
+# Selected unit tests and the smoke test on BSD-derived operating systems. MacOS runs directly on the runner while FreeBSD runs in a
+# VM hosted on a Linux runner.
+name: bsd
+
+on: workflow_call
+
+# Limit permissions on the repository
+permissions:
+  contents: read
+
+jobs:
+  # Selected unit tests and the smoke test on MacOS
+  macos:
+    runs-on: macos-26
+    env:
+      LDFLAGS: -L/opt/homebrew/opt/openssl@3/lib -L/opt/homebrew/opt/libpq/lib -L/opt/homebrew/opt/libxml2/lib -L/opt/homebrew/opt/libyaml/lib
+      CPPFLAGS: -I/opt/homebrew/opt/openssl@3/include -I/opt/homebrew/opt/libpq/include -I/opt/homebrew/opt/libxml2/include/libxml2 -I/opt/homebrew/opt/libyaml/include
+      PERL5LIB: /opt/homebrew/opt/perl5/lib/perl5
+      PKG_CONFIG_PATH: /opt/homebrew/opt/libpq/lib/pkgconfig:/opt/homebrew/opt/openssl@3/lib/pkgconfig
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+
+      - name: Install
+        run: |
+          # Untap everything not provided by Homebrew since only official taps are trusted and untrusted taps added by the
+          # runner image generate warnings. Uninstall the packages provided by a tap before untapping it since untapping a
+          # tap that still has packages installed also warns. Nothing installed here comes from a third-party tap.
+          for tap in $(brew tap); do
+              case ${tap} in
+                  homebrew/*) ;;
+                  *)
+                      for package in $(brew list --full-name | grep "^${tap}/" || true); do
+                          brew uninstall --force ${package}
+                      done
+
+                      brew untap ${tap}
+                      ;;
+              esac
+          done
+
+          brew install -q pkg-config openssl@3 libpq libxml2 libyaml meson
+
+          # The PostgreSQL versions supported by pgBackRest, oldest first, read from the generated header so the list never needs to
+          # be updated here
+          pgSupport=$(sed -n 's/^#define PG_VERSION_[0-9_]*_Z  *"\([0-9.]*\)".*/postgresql@\1/p' \
+              ${GITHUB_WORKSPACE?}/src/postgres/version.auto.h)
+
+          # The PostgreSQL formulae that are safe to test against, i.e. keg-only and neither deprecated nor disabled. The binaries
+          # in a formula that is not keg-only load libpq from the linked prefix rather than the keg and fail unless the formula is
+          # linked, and a deprecated formula is eventually disabled and can no longer be installed. Homebrew packages only released
+          # versions so betas never appear here.
+          pgSafe=$(brew info --json=v2 --formula $(brew search --formula '/^postgresql@[0-9.]*$/' | grep '^postgresql@') | \
+              jq -r '.formulae[] | select(.keg_only and (.deprecated | not) and (.disabled | not)) | .name')
+
+          # Install the oldest and newest version that is both supported and safe. The order comes from the supported list since
+          # these do not sort naturally, e.g. postgresql@9.6 is not greater than postgresql@10.
+          pgInstall=$(echo "${pgSupport}" | grep -xF "${pgSafe}")
+          echo "postgresql available: $(echo ${pgInstall})"
+
+          brew install -q $(echo "${pgInstall}" | head -1) $(echo "${pgInstall}" | tail -1)
+
+      - name: Debug
+        run: |
+          pwd
+          echo ${HOME?}
+          ls -lah
+          ls -lah ${GITHUB_WORKSPACE?}
+
+      - name: Run Test
+        run: cd .. && ${GITHUB_WORKSPACE?}/test/test.pl --vm-max=2 --no-coverage --no-valgrind  --module=command --test=backup --test=info --test=archive-push
+
+      # The integration tests cannot run here because there are no containers, but the smoke test drives a backup/restore cycle
+      # against each PostgreSQL installed above, which covers the basics
+      - name: Run Smoke Test
+        run: |
+          cd ..
+          meson setup build ${GITHUB_WORKSPACE?}
+          ninja -C build src/pgbackrest
+          meson test -C build --suite smoke -v
+
+  # Selected unit tests and the smoke test on FreeBSD
+  freebsd:
+    runs-on: ubuntu-24.04
+    strategy:
+      # Let all the jobs run to completion even if one fails
+      fail-fast: false
+
+      matrix:
+        # The PostgreSQL ports all install into the same prefix and conflict with each other, so only one version can be installed
+        # at a time. Test the oldest supported version on the oldest FreeBSD and the newest on the newest FreeBSD, which covers both
+        # without doubling the number of jobs. The versions are discovered during install rather than named here.
+        os:
+          - version: '14.4'
+            pg: oldest
+
+          - version: '15.1'
+            pg: newest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Start VM
+        uses: cross-platform-actions/action@v1.3.0
+        with:
+          operating_system: freebsd
+          version: ${{matrix.os.version}}
+
+      # The custom shell runs the commands in the VM started above. Do not set this as a job default since the checkout step must
+      # run on the host.
+      - name: Install
+        shell: cpa.sh {0}
+        run: |
+          uname -a
+          sudo pkg update && sudo pkg upgrade -y libiconv
+
+          # The PostgreSQL versions supported by pgBackRest, oldest first, read from the generated header so the list never needs to
+          # be updated here. FreeBSD leaves the dot out of the package name, e.g. 9.6 is postgresql96-server.
+          pgSupport=$(sed -n 's/^#define PG_VERSION_[0-9_]*_Z  *"\([0-9.]*\)".*/\1/p' \
+              ${GITHUB_WORKSPACE?}/src/postgres/version.auto.h | tr -d . | sed 's/^/postgresql/;s/$/-server/')
+
+          # The versions that are both supported and available. FreeBSD removes a version once it is end-of-life and does not
+          # package betas, so everything available is safe to test. The order comes from the supported list since these do not sort
+          # naturally, e.g. postgresql96-server is not greater than postgresql10-server.
+          pgAvail=$(echo "${pgSupport}" | grep -xF "$(pkg rquery -x '%n' '^postgresql[0-9]*-server$')")
+          echo "postgresql available: $(echo ${pgAvail})"
+
+          # Only one version can be installed at a time so the matrix selects either the oldest or the newest
+          if [ ${{matrix.os.pg}} = oldest ]; then
+              pgServer=$(echo "${pgAvail}" | head -1)
+          else
+              pgServer=$(echo "${pgAvail}" | tail -1)
+          fi
+
+          # postgresql*-client provides the libpq to build against and postgresql*-server provides the tooling the smoke test needs
+          # to create a cluster
+          sudo pkg install -y bash git ${pgServer%-server}-client ${pgServer} pkgconf libxml2 gmake perl5 libyaml \
+            p5-YAML-LibYAML rsync meson
+
+      - name: Run Test
+        shell: cpa.sh {0}
+        run: cd .. && perl ${GITHUB_WORKSPACE?}/test/test.pl --vm-max=2 --no-coverage --no-valgrind  --module=command --test=backup --test=info --test=archive-push
+
+      # The integration tests cannot run here because there are no containers, but the smoke test drives a backup/restore cycle
+      # against the PostgreSQL installed above, which covers the basics
+      - name: Run Smoke Test
+        shell: cpa.sh {0}
+        run: |
+          cd ..
+          meson setup build ${GITHUB_WORKSPACE?}
+          ninja -C build src/pgbackrest
+          meson test -C build --suite smoke -v

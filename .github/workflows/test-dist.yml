@@ -1,0 +1,190 @@
+# Build the distribution tarball and prove it builds and passes the smoke test on a variety of distributions using nothing but the
+# packages a packager would install. The tarball ships the generated source and the rendered documentation, so unlike a git
+# checkout it builds without the code generation or documentation tooling. This is both a test and living documentation of what a
+# packager needs on each distribution.
+#
+# The dist job builds the tarball once, since it is distribution-independent by design, and uploads it. Each build job then consumes
+# it in a fresh container that has only the required packages plus the distribution's native PostgreSQL. The containers are run
+# directly rather than as job containers because the runner's glibc Node.js cannot execute the checkout and artifact actions inside
+# a musl container (Alpine); running docker directly keeps one uniform path for every distribution.
+name: dist
+
+on: workflow_call
+
+# Limit permissions on the repository
+permissions:
+  contents: read
+
+jobs:
+  # Build the distribution tarball. This is the only place the code generation and documentation tooling is needed, so it runs with
+  # a full build environment; the tarball it produces needs none of that.
+  dist:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v6
+        with:
+          path: pgbackrest
+
+      # The build environment for the code generator and the documentation C helper, plus libxml-checker-perl, which the
+      # documentation tooling requires (XML::Checker::Parser). The runner already provides perl, git, and python3.
+      - name: Install
+        run: |
+          sudo apt-get update
+          DEBCONF_NONINTERACTIVE_SEEN=true DEBIAN_FRONTEND=noninteractive sudo apt-get install -y meson gcc pkg-config \
+            libssl-dev libxml2-dev libpq-dev libyaml-dev liblz4-dev libzstd-dev libbz2-dev zlib1g-dev libxml-checker-perl
+
+      - name: Build Tarball
+        run: |
+          cd ${GITHUB_WORKSPACE?}
+
+          # Render the man page and HTML documentation into doc/output, which meson dist copies into the tarball. The output is
+          # gitignored so the tree stays clean for meson dist. --no-exe skips executing the commands embedded in the documentation,
+          # which would require containers and a great deal of time; it still produces all the files, which are shipped in the
+          # tarball but not used by the build or the smoke test.
+          pgbackrest/doc/release.pl --dist --no-exe
+
+          # Configure the build and build the code generator, which meson dist runs to produce the shipped generated files
+          meson setup build pgbackrest
+          ninja -C build src/build-code
+
+          # Build the tarball. meson dist runs src/build/dist.sh to bake in the generated files, documentation, and dist marker.
+          # --no-tests skips building and testing the extracted tarball here since that is exactly what the build jobs below do,
+          # each on its own distribution.
+          meson dist -C build --formats gztar --no-tests
+
+      # Check that the tarball ships exactly the expected generated files (the *.auto.c.inc code and the rendered documentation) and
+      # that none of them is empty. Only the path list is compared, not sizes or timestamps, so a missing or unexpected file is
+      # caught here while the zero-size check below catches a file that exists but was generated or rendered empty. Update the list
+      # when the generated or documentation file set changes.
+      - name: Check Tarball
+        env:
+          # Generated files shipped in the tarball, as path regexps relative to the version directory. Joined into a single
+          # expression below and used for both the path list and the zero-size check.
+          FILES: |
+            src/command/help/help\.auto\.c\.inc
+            src/postgres/interface\.auto\.c\.inc
+            doc/html/[^/]+
+            doc/man/[^/]+
+        run: |
+          # Join the file list above into one extended-regexp expression
+          files=$(printf '%s' "$FILES" | awk 'NF' | paste -sd '|' -)
+
+          diff - <(tar tzf build/meson-dist/pgbackrest-*.tar.gz \
+              | sed 's#^pgbackrest-[^/]*/##' \
+              | grep -E "^(${files})\$" \
+              | LC_ALL=C sort) <<'EOF'
+          doc/html/command.html
+          doc/html/configuration.html
+          doc/html/default.css
+          doc/html/faq.html
+          doc/html/index.html
+          doc/html/logo.svg
+          doc/html/release.html
+          doc/html/user-guide-index.html
+          doc/html/user-guide-rhel.html
+          doc/html/user-guide.html
+          doc/man/pgbackrest.1.txt
+          src/command/help/help.auto.c.inc
+          src/postgres/interface.auto.c.inc
+          EOF
+
+          # Confirm none of those generated files is zero size, which would pass the path check above but indicate a broken
+          # generation or render.
+          tar tzvf build/meson-dist/pgbackrest-*.tar.gz \
+              | grep -E "pgbackrest-[^/]+/(${files})\$" \
+              | awk '$3 == 0 { print "ERROR: zero-size file: " $NF; rc = 1 } END { exit rc }'
+
+      # The release process depends on the upload filename so do not modify it without also modifying the release process
+      - name: Upload Tarball
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist-tarball
+          path: build/meson-dist/pgbackrest-*.tar.gz
+          if-no-files-found: error
+
+  # Build and smoke test the tarball on each distribution in a fresh container that has only the required packages plus the
+  # distribution's native PostgreSQL. The PostgreSQL version is the one native to the distribution, which is fixed for its life, so
+  # it is not discovered here.
+  build:
+    needs: dist
+    runs-on: ubuntu-24.04
+
+    strategy:
+      # Let all the jobs run to completion even if one fails
+      fail-fast: false
+
+      matrix:
+        # The image is the whole matrix so the job name is just the image, which is unambiguous. Each image's native PostgreSQL,
+        # fixed for the life of the distribution, is what the smoke test discovers and runs against.
+        image:
+          - debian:12
+          - debian:13
+          - ubuntu:22.04
+          - ubuntu:26.04
+          - rockylinux/rockylinux:8
+          - rockylinux/rockylinux:9
+          - rockylinux/rockylinux:10
+          - fedora:44
+          - alpine:3.21
+          - alpine:3.24
+
+    steps:
+      - name: Download Tarball
+        uses: actions/download-artifact@v7
+        with:
+          name: dist-tarball
+          path: dist
+
+      # Install the packages a packager would install, extract the tarball, build it, and run the smoke test, which finds the
+      # native PostgreSQL and drives a full backup/restore/verify cycle against it. The package set is chosen by the package manager
+      # present so a new version of a distribution needs only a new image in the matrix above. meson compile is used rather than
+      # ninja because the ninja backend is invoked differently across distributions (e.g. ninja-build on RHEL); meson selects it.
+      - name: Build and Smoke Test
+        run: |
+          docker run --rm -i -v ${GITHUB_WORKSPACE?}/dist:/dist:ro ${{ matrix.image }} /bin/sh -eux <<'SCRIPT'
+          # Install the build environment and the native PostgreSQL, choosing the package set for the package manager present
+          if command -v apt-get >/dev/null; then
+              export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true
+              apt-get update
+              apt-get install -y --no-install-recommends meson gcc pkg-config libpq-dev libssl-dev libxml2-dev \
+                  liblz4-dev libzstd-dev libbz2-dev zlib1g-dev postgresql
+          elif command -v dnf >/dev/null; then
+              # RHEL-family (Rocky) needs EPEL and the CodeReady Builder repo for meson and the -devel packages; Fedora has them in
+              # the main repo and has neither.
+              case "${{ matrix.image }}" in
+                  rockylinux/*)
+                      dnf install -y epel-release dnf-plugins-core
+
+                      # The CRB repo is named powertools on EL8; remove this branch when rockylinux/rockylinux:8 is dropped.
+                      if [ "${{ matrix.image }}" = "rockylinux/rockylinux:8" ]; then
+                          dnf config-manager --set-enabled powertools
+                      else
+                          dnf config-manager --set-enabled crb
+                      fi
+                      ;;
+              esac
+
+              dnf install -y meson gcc pkgconf-pkg-config libpq-devel openssl-devel libxml2-devel \
+                  lz4-devel libzstd-devel bzip2-devel zlib-devel postgresql-server
+          else
+              # Alpine. postgresql-client provides psql, which the smoke test needs alongside the server.
+              apk add meson gcc musl-dev pkgconf libpq-dev openssl-dev libxml2-dev \
+                  lz4-dev zstd-dev bzip2-dev zlib-dev postgresql postgresql-client
+          fi
+
+          # Extract the tarball into a world-traversable path so the unprivileged postgres user the smoke test drops to can reach
+          # the built binary
+          mkdir -p /build
+          tar -xzf /dist/pgbackrest-*.tar.gz -C /build --strip-components=1
+          cd /build
+
+          # Build with only the packages installed above -- no code generation or documentation tooling. -Dwerror turns any
+          # compiler warning into an error so a warning on any distribution's compiler fails the job and gets fixed.
+          meson setup -Dwerror=true build .
+          meson compile -C build
+
+          # Run the smoke test exactly as documented for packagers
+          meson test -C build --suite smoke -v
+          SCRIPT

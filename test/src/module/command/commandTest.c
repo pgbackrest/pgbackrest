@@ -7,7 +7,7 @@ Test Common Command Routines
 #include "common/stat.h"
 #include "version.h"
 
-#include "common/harnessConfig.h"
+#include "harness/config.h"
 
 /***********************************************************************************************************************************
 Test Run

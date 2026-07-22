@@ -8,9 +8,9 @@ Test Tls Client
 #include "common/io/fdWrite.h"
 #include "storage/posix/storage.h"
 
-#include "common/harnessFork.h"
-#include "common/harnessServer.h"
-#include "common/harnessStorage.h"
+#include "harness/fork.h"
+#include "harness/server.h"
+#include "harness/storage.h"
 
 /***********************************************************************************************************************************
 Server cert with only a common name to test absence of alt names

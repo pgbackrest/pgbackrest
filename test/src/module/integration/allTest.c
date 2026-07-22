@@ -8,10 +8,10 @@ Real Integration Test
 #include "postgres/version.h"
 #include "storage/helper.h"
 
-#include "common/harnessErrorRetry.h"
-#include "common/harnessHost.h"
-#include "common/harnessPostgres.h"
-#include "common/harnessStorage.h"
+#include "harness/errorRetry.h"
+#include "harness/host.h"
+#include "harness/postgres.h"
+#include "harness/storage.h"
 
 /***********************************************************************************************************************************
 Test definition
@@ -21,14 +21,15 @@ static HrnHostTestDefine testMatrix[] =
     // {uncrustify_off - struct alignment}
     {.pg = "9.6", .repo = "repo", .tls = 0, .stg = "azure", .enc = 0, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1},
     {.pg =  "10", .repo =  "pg2", .tls = 0, .stg =  "sftp", .enc = 1, .cmp =   "gz", .rt = 1, .bnd = 1, .bi = 0},
-    {.pg =  "11", .repo = "repo", .tls = 1, .stg =   "gcs", .enc = 0, .cmp =  "zst", .rt = 2, .bnd = 0, .bi = 0},
-    {.pg =  "12", .repo = "repo", .tls = 0, .stg =    "s3", .enc = 1, .cmp =  "lz4", .rt = 1, .bnd = 1, .bi = 1},
-    {.pg =  "13", .repo =  "pg2", .tls = 1, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
-    {.pg =  "14", .repo = "repo", .tls = 0, .stg =   "gcs", .enc = 0, .cmp =  "lz4", .rt = 1, .bnd = 1, .bi = 0},
-    {.pg =  "15", .repo =  "pg2", .tls = 0, .stg = "azure", .enc = 1, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1},
+    {.pg =  "11", .repo = "repo", .tls = 1, .stg =   "gcs", .enc = 0, .cmp =  "lz4", .rt = 2, .bnd = 0, .bi = 0},
+    {.pg =  "12", .repo = "repo", .tls = 0, .stg =    "s3", .enc = 1, .cmp =  "zst", .rt = 1, .bnd = 1, .bi = 1},
+    {.pg =  "13", .repo =  "pg2", .tls = 1, .stg = "azure", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
+    {.pg =  "14", .repo = "repo", .tls = 0, .stg =   "gcs", .enc = 0, .cmp =  "bz2", .rt = 1, .bnd = 1, .bi = 0},
+    {.pg =  "15", .repo =  "pg2", .tls = 0, .stg = "posix", .enc = 1, .cmp = "none", .rt = 2, .bnd = 1, .bi = 1},
     {.pg =  "16", .repo = "repo", .tls = 0, .stg =  "sftp", .enc = 0, .cmp =  "zst", .rt = 1, .bnd = 1, .bi = 1},
     {.pg =  "17", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
-    {.pg =  "18", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
+    {.pg =  "18", .repo =  "pg2", .tls = 1, .stg =    "s3", .enc = 1, .cmp =  "lz4", .rt = 1, .bnd = 1, .bi = 1},
+    {.pg =  "19", .repo = "repo", .tls = 0, .stg = "posix", .enc = 0, .cmp = "none", .rt = 1, .bnd = 0, .bi = 0},
     // {uncrustify_on}
 };
 
@@ -67,6 +68,10 @@ testRun(void)
         HrnHost *const pg1 = hrnHostPg1();
         HrnHost *const pg2 = hrnHostPg2();
         HrnHost *const repo = hrnHostRepo();
+
+        // Log the version of PostgreSQL installed on the host. The test matrix only specifies the major version so this shows the
+        // minor version, which is especially useful during the beta period.
+        TEST_LOG(strZ(strTrim(hrnHostExecP(pg1, strNewFmt("%s/pg_ctl --version", strZ(hrnHostPgBinPath(pg1)))))));
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("create pg cluster");

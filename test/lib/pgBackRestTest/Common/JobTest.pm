@@ -196,13 +196,9 @@ sub run
                 $self->{oStorageTest}->pathCreate($self->{strDataPath}, {strMode => '0770'});
             }
 
-            # Create ccache directory
-            my $strCCachePath = "$self->{strTestPath}/ccache-$self->{iVmIdx}/$self->{oTest}->{&TEST_VM}";
-
-            if ($self->{oTest}->{&TEST_C} && !$self->{oStorageTest}->pathExists($strCCachePath))
-            {
-                $self->{oStorageTest}->pathCreate($strCCachePath, {strMode => '0770', bCreateParent => true});
-            }
+            # ccache path shared with the host and the build container. This is created by test.pl so it is guaranteed to exist
+            # before being mounted below, which keeps docker from creating it as root.
+            my $strCCachePath = "$self->{strTestPath}/ccache";
 
             if ($self->{oTest}->{&TEST_CONTAINER})
             {
@@ -218,7 +214,8 @@ sub run
                         " -v $self->{strBackRestBase}:$self->{strBackRestBase}" .
                         " -v $self->{strRepoPath}:$self->{strRepoPath}" .
                         ($self->{oTest}->{&TEST_C} ? " -v ${strBuildPath}:${strBuildPath}:ro" : '') .
-                        ($self->{oTest}->{&TEST_C} ? " -v ${strCCachePath}:/home/${\TEST_USER}/.ccache" : '') .
+                        ($self->{oTest}->{&TEST_C} ? " -v ${strCCachePath}:${strCCachePath}" : '') .
+                        ($self->{oTest}->{&TEST_C} ? " -e CCACHE_DIR=${strCCachePath}" : '') .
                         ' ' . $self->{strImage},
                         {bSuppressStdErr => true});
                 }
@@ -267,14 +264,19 @@ sub run
                     (defined($self->{oTest}->{&TEST_DB}) ? ' --pg-version=' . $self->{oTest}->{&TEST_DB} : '') .
                     ($self->{bBackTraceUnit} ? '' : ' --no-back-trace') . ($bCoverage ? '' : ' --no-coverage') . ' test ' .
                     $self->{oTest}->{&TEST_MODULE} . '/' . $self->{oTest}->{&TEST_NAME} . " && \\\n" .
-                # Allow stderr to be copied to stderr and stdout
+                # Copy stderr to both stderr and stdout so it is displayed and detected as an error. Piping to tee would mask the
+                # test exit status (the pipe returns tee's status) so save the status to a file and exit with it explicitly.
+                # Otherwise a test failure (e.g. a valgrind error) would be hidden and reported as missing coverage instead.
                 "exec 3>&1 && \\\n" .
+                '{ ' .
                 # Test with valgrind when requested
                 ($bValgrind ?
                     'valgrind -q --gen-suppressions=all' .
                     ($self->{oStorageTest}->exists($strValgrindSuppress) ? " --suppressions=${strValgrindSuppress}" : '') .
                     " --exit-on-first-error=yes --leak-check=full --leak-resolution=high --error-exitcode=25" . ' ' : '') .
-                    "$self->{strUnitPath}/build/test-unit 2>&1 1>&3 | tee /dev/stderr" .
+                    "$self->{strUnitPath}/build/test-unit 2>&1 1>&3; echo \$? > $self->{strUnitPath}/result; } | " .
+                    "tee /dev/stderr && \\\n" .
+                "exit \$(cat $self->{strUnitPath}/result)" .
                 ($strVm ne VM_NONE ? "'" : '');
 
             my $oExec = new pgBackRestTest::Common::ExecuteTest(

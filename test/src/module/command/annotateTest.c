@@ -5,8 +5,8 @@ Test Annotate Command
 #include "common/io/bufferWrite.h"
 #include "storage/posix/storage.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessInfo.h"
+#include "harness/config.h"
+#include "harness/info.h"
 
 /***********************************************************************************************************************************
 Test Run

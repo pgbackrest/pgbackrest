@@ -7,9 +7,9 @@ Generally speaking, the starting values should be high enough to "blow up" in te
 problems without taking very long if everything is running smoothly. These starting values can then be scaled up for profiling and
 stress testing as needed.
 ***********************************************************************************************************************************/
-#include "common/harnessConfig.h"
-#include "common/harnessFork.h"
-#include "common/harnessStorage.h"
+#include "harness/config.h"
+#include "harness/fork.h"
+#include "harness/storage.h"
 
 #include "common/compress/gz/compress.h"
 #include "common/compress/lz4/compress.h"

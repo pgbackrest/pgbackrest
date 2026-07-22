@@ -105,27 +105,32 @@ sub process
                 or confess &log(ERROR, "unable to copy $self->{strFaviconFile} to ${strFaviconFileDestination}");
         }
 
-        # Copy the project logo file
-        if (defined($self->{strProjectLogoFile}))
+        # Copy the project logo file unless the logo is disabled
+        if (defined($self->{strProjectLogoFile}) && !$self->{oManifest}->variableTest('logo', 'n'))
         {
             my $strProjectLogoFileDestination = "$self->{strHtmlPath}/" . $self->{oManifest}->variableGet('project-logo');
             copy($self->{strProjectLogoFile}, $strProjectLogoFileDestination)
                 or confess &log(ERROR, "unable to copy $self->{strProjectLogoFile} to ${strProjectLogoFileDestination}");
         }
 
-        # Copy sponsor logos
-        my $strSponsorDestinationPath = "$self->{strHtmlPath}/sponsor";
-        my @strySponsorList = $self->{oManifest}->storage()->list($self->{strSponsorPath});
-
-        $self->{oManifest}->storage()->pathCreate($strSponsorDestinationPath, {bIgnoreExists => true});
-
-        foreach my $strSponsor (@strySponsorList)
+        # Copy sponsor logos unless sponsors are disabled
+        if (!$self->{oManifest}->variableTest('sponsor', 'n'))
         {
-            next if $strSponsor eq '.';
+            my $strSponsorDestinationPath = "$self->{strHtmlPath}/sponsor";
+            my @strySponsorList = $self->{oManifest}->storage()->list($self->{strSponsorPath});
 
-            copy("$self->{strSponsorPath}/${strSponsor}", "${strSponsorDestinationPath}/${strSponsor}")
-                or confess &log(
-                    ERROR, "unable to copy $self->{strSponsorPath}/${strSponsor} to ${strSponsorDestinationPath}/${strSponsor}");
+            $self->{oManifest}->storage()->pathCreate($strSponsorDestinationPath, {bIgnoreExists => true});
+
+            foreach my $strSponsor (@strySponsorList)
+            {
+                next if $strSponsor eq '.';
+
+                copy("$self->{strSponsorPath}/${strSponsor}", "${strSponsorDestinationPath}/${strSponsor}")
+                    or confess &log(
+                        ERROR,
+                        "unable to copy $self->{strSponsorPath}/${strSponsor} to" .
+                            " ${strSponsorDestinationPath}/${strSponsor}");
+            }
         }
     }
 

@@ -7,6 +7,7 @@ S3 Storage
 
 #include "common/crypto/hash.h"
 #include "common/debug.h"
+#include "common/exec.h"
 #include "common/io/http/client.h"
 #include "common/io/http/common.h"
 #include "common/io/socket/client.h"
@@ -119,6 +120,7 @@ struct StorageS3
     const String *credPath;                                         // Credential url path
     const String *credRole;                                         // Role to use for credential requests
     const String *tokenFile;                                        // File with token to use for web-id/pod-id credential requests
+    const StringList *credCmd;                                       // Command and parameters for process credential requests
     time_t credExpirationTime;                                      // Time the temporary credentials expire
 
     // Current signing key and date it is valid for
@@ -381,9 +383,6 @@ Automatically get credentials for an associated web identity service account
 
 Documentation is found at: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRoleWithWebIdentity.html
 ***********************************************************************************************************************************/
-STRING_STATIC(S3_STS_HOST_STR,                                      "sts.amazonaws.com");
-#define S3_STS_PORT                                                 443
-
 static void
 storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
 {
@@ -397,8 +396,11 @@ storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
         // Load the token from the given file for each request since the token may be updated during execution
         const String *const webIdToken = strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), this->tokenFile)));
 
-        // Get credentials
-        HttpQuery *const query = httpQueryNewP();
+        // Get credentials. Redact the web identity token so it is not exposed if the query is logged, e.g. in an error.
+        StringList *const queryRedactList = strLstNew();
+        strLstAddZ(queryRedactList, "WebIdentityToken");
+
+        HttpQuery *const query = httpQueryNewP(.redactList = queryRedactList);
         httpQueryAdd(query, STRDEF("Action"), STRDEF("AssumeRoleWithWebIdentity"));
         httpQueryAdd(query, STRDEF("RoleArn"), this->credRole);
         httpQueryAdd(query, STRDEF("RoleSessionName"), STRDEF(PROJECT_NAME));
@@ -409,7 +411,10 @@ storageS3AuthWebId(StorageS3 *const this, const HttpHeader *const header)
             this->credHttpClient, HTTP_VERB_GET_STR, FSLASH_STR, .header = header, .query = query);
         HttpResponse *const response = httpRequestResponse(request, true);
 
-        CHECK(FormatError, httpResponseCode(response) != HTTP_RESPONSE_CODE_NOT_FOUND, "invalid response code");
+        // Error if the request was not successful, e.g. the web identity token is invalid. Without this the error would be a
+        // confusing report that AssumeRoleWithWebIdentityResult is missing rather than the actual error returned by AWS.
+        if (!httpResponseCodeOk(response))
+            httpRequestError(request, response);
 
         // Copy credentials
         const XmlNode *const xmlCred =
@@ -458,13 +463,18 @@ storageS3AuthPodId(StorageS3 *const this, const HttpHeader *const header)
         // Load the token from the given file for each request since the token may be updated during execution
         const String *const podIdToken = strNewBuf(storageGetP(storageNewReadP(storagePosixNewP(FSLASH_STR), this->tokenFile)));
 
-        // Get credentials
+        // Get credentials. Redact the authorization header, which holds the token, so it is not exposed if the header is logged,
+        // e.g. in an error.
         HttpRequest *const request = httpRequestNewP(
             this->credHttpClient, HTTP_VERB_GET_STR, this->credPath,
-            .header = httpHeaderAdd(httpHeaderDup(header, NULL), HTTP_HEADER_AUTHORIZATION_STR, podIdToken));
+            .header = httpHeaderAdd(httpHeaderDup(header, this->headerRedactList), HTTP_HEADER_AUTHORIZATION_STR, podIdToken));
         HttpResponse *const response = httpRequestResponse(request, true);
 
-        CHECK(FormatError, httpResponseCode(response) != HTTP_RESPONSE_CODE_NOT_FOUND, "invalid response code");
+        // Error if the request was not successful, e.g. the pod identity token is invalid. Without this the error would be a
+        // confusing report about missing JSON keys rather than the actual error returned by AWS.
+        if (!httpResponseCodeOk(response))
+            httpRequestError(request, response);
+
         const KeyValue *const kvResponse = varKv(jsonToVar(strNewBuf(httpResponseContent(response))));
 
         // Copy credentials
@@ -481,6 +491,49 @@ storageS3AuthPodId(StorageS3 *const this, const HttpHeader *const header)
 
         // Update expiration time
         const String *const credExpirationTime = varStr(kvGet(kvResponse, VARSTRDEF("Expiration")));
+        CHECK(FormatError, credExpirationTime != NULL, "expiration missing");
+        this->credExpirationTime = storageS3CvtTime(credExpirationTime);
+    }
+    MEM_CONTEXT_TEMP_END();
+
+    FUNCTION_LOG_RETURN_VOID();
+}
+
+/***********************************************************************************************************************************
+Get credentials from a process credential provider
+
+The process is executed and the JSON output is parsed for AccessKeyId, SecretAccessKey, SessionToken, and Expiration. Based on the
+"process credential provider" documentation at https://docs.aws.amazon.com/sdkref/latest/guide/feature-process-credentials.html
+***********************************************************************************************************************************/
+VARIANT_STRDEF_STATIC(S3_JSON_TAG_SESSION_TOKEN_VAR,                "SessionToken");
+
+static void
+storageS3AuthProcess(StorageS3 *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE_S3, this);
+    FUNCTION_LOG_END();
+
+    MEM_CONTEXT_TEMP_BEGIN()
+    {
+        // Execute the credential process and parse JSON output
+        const String *const output = execOne(this->credCmd);
+        const KeyValue *const kvResponse = varKv(jsonToVar(output));
+
+        // Copy credentials
+        MEM_CONTEXT_OBJ_BEGIN(this)
+        {
+            this->accessKey = strDup(varStr(kvGet(kvResponse, S3_JSON_TAG_ACCESS_KEY_ID_VAR)));
+            CHECK(FormatError, this->accessKey != NULL, "access key missing");
+            this->secretAccessKey = strDup(varStr(kvGet(kvResponse, S3_JSON_TAG_SECRET_ACCESS_KEY_VAR)));
+            CHECK(FormatError, this->secretAccessKey != NULL, "secret access key missing");
+            this->securityToken = strDup(varStr(kvGet(kvResponse, S3_JSON_TAG_SESSION_TOKEN_VAR)));
+            CHECK(FormatError, this->securityToken != NULL, "session token missing");
+        }
+        MEM_CONTEXT_OBJ_END();
+
+        // Update expiration time
+        const String *const credExpirationTime = varStr(kvGet(kvResponse, S3_JSON_TAG_EXPIRATION_VAR));
         CHECK(FormatError, credExpirationTime != NULL, "expiration missing");
         this->credExpirationTime = storageS3CvtTime(credExpirationTime);
     }
@@ -566,31 +619,39 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
             strFree(this->secretAccessKey);
             strFree(this->securityToken);
 
-            // Set content-length and host headers
-            HttpHeader *credHeader = httpHeaderNew(NULL);
-            httpHeaderAdd(credHeader, HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
-            httpHeaderAdd(credHeader, HTTP_HEADER_HOST_STR, this->credHost);
-
-            // Get credentials
-            switch (this->keyType)
+            // Process credential authentication (no HTTP client needed)
+            if (this->keyType == storageS3KeyTypeProcess)
             {
-                // Auto authentication
-                case storageS3KeyTypeAuto:
-                    storageS3AuthAuto(this, credHeader);
-                    break;
+                storageS3AuthProcess(this);
+            }
+            // Else HTTP-based authentication methods
+            else
+            {
+                // Set content-length and host headers
+                HttpHeader *credHeader = httpHeaderNew(NULL);
+                httpHeaderAdd(credHeader, HTTP_HEADER_CONTENT_LENGTH_STR, ZERO_STR);
+                httpHeaderAdd(credHeader, HTTP_HEADER_HOST_STR, this->credHost);
 
-                // Pod identity authentication
-                case storageS3KeyTypePodId:
-                    storageS3AuthPodId(this, credHeader);
-                    break;
-
-                // Web identity authentication
-                default:
+                switch (this->keyType)
                 {
-                    ASSERT(this->keyType == storageS3KeyTypeWebId);
+                    // Auto authentication
+                    case storageS3KeyTypeAuto:
+                        storageS3AuthAuto(this, credHeader);
+                        break;
 
-                    storageS3AuthWebId(this, credHeader);
-                    break;
+                    // Pod identity authentication
+                    case storageS3KeyTypePodId:
+                        storageS3AuthPodId(this, credHeader);
+                        break;
+
+                    // Web identity authentication
+                    default:
+                    {
+                        ASSERT(this->keyType == storageS3KeyTypeWebId);
+
+                        storageS3AuthWebId(this, credHeader);
+                        break;
+                    }
                 }
             }
 
@@ -615,7 +676,7 @@ storageS3RequestAsync(StorageS3 *const this, const String *const verb, const Str
             result = httpRequestNewP(
                 this->httpClient, verb, path, .query = param.query, .header = requestHeader, .content = param.content);
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1205,12 +1266,11 @@ storageS3Remove(THIS_VOID, const String *const file, const StorageInterfaceRemov
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_S3, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
+        (void)param;
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
-    ASSERT(!param.errorOnMissing);
 
     httpResponseFree(storageS3RequestP(this, HTTP_VERB_DELETE_STR, file));
 
@@ -1237,9 +1297,10 @@ storageS3New(
     const StorageS3KeyType keyType, const StorageS3UriStyle uriStyle, const String *const accessKey,
     const String *const secretAccessKey, const String *const securityToken, const String *const kmsKeyId,
     const String *sseCustomerKey, const String *const credRole, const String *const tokenFile, const String *const credUrl,
-    const size_t partSize, const KeyValue *const tag, const String *host, const unsigned int port, const TimeMSec timeout,
-    const HttpProtocolType protocolType, const bool verifyPeer, const String *const caFile, const String *const caPath,
-    const bool requesterPays, const unsigned int prefetch, const uint64_t readOver)
+    const StringList *const credCmd, const String *const stsHost, const size_t partSize, const KeyValue *const tag,
+    const String *host, const unsigned int port, const TimeMSec timeout, const HttpProtocolType protocolType,
+    const bool verifyPeer, const String *const caFile, const String *const caPath, const bool requesterPays,
+    const unsigned int prefetch, const uint64_t readOver)
 {
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STRING, path);
@@ -1252,6 +1313,7 @@ storageS3New(
         FUNCTION_LOG_PARAM(STRING, service);
         FUNCTION_LOG_PARAM(ENUM, keyType);
         FUNCTION_LOG_PARAM(ENUM, uriStyle);
+        FUNCTION_LOG_PARAM(STRING, stsHost);
         FUNCTION_TEST_PARAM(STRING, accessKey);
         FUNCTION_TEST_PARAM(STRING, secretAccessKey);
         FUNCTION_TEST_PARAM(STRING, securityToken);
@@ -1260,6 +1322,7 @@ storageS3New(
         FUNCTION_TEST_PARAM(STRING, credRole);
         FUNCTION_TEST_PARAM(STRING, tokenFile);
         FUNCTION_TEST_PARAM(STRING, credUrl);
+        FUNCTION_TEST_PARAM(STRING_LIST, credCmd);
         FUNCTION_LOG_PARAM(SIZE, partSize);
         FUNCTION_LOG_PARAM(KEY_VALUE, tag);
         FUNCTION_LOG_PARAM(STRING, host);
@@ -1355,14 +1418,16 @@ storageS3New(
                 ASSERT(credRole != NULL);
                 ASSERT(tokenFile != NULL);
 
+                const HttpUrl *const stsHostUrl = httpUrlNewParseP(stsHost, .type = httpProtocolTypeHttps);
+
                 this->credRole = strDup(credRole);
                 this->tokenFile = strDup(tokenFile);
-                this->credHost = S3_STS_HOST_STR;
+                this->credHost = httpUrlHost(stsHostUrl);
                 this->credExpirationTime = time(NULL);
                 this->credHttpClient = httpClientNew(
                     tlsClientNewP(
-                        sckClientNew(this->credHost, S3_STS_PORT, timeout, timeout), this->credHost, timeout, timeout, true,
-                        .caFile = caFile, .caPath = caPath),
+                        sckClientNew(this->credHost, httpUrlPort(stsHostUrl), timeout, timeout), this->credHost, timeout, timeout,
+                        true, .caFile = caFile, .caPath = caPath),
                     timeout);
 
                 break;
@@ -1381,6 +1446,18 @@ storageS3New(
                 this->credPath = strDup(httpUrlPath(url));
                 this->credExpirationTime = time(NULL);
                 this->credHttpClient = httpClientNew(sckClientNew(this->credHost, httpUrlPort(url), timeout, timeout), timeout);
+
+                break;
+            }
+
+            // Initialize process credential provider
+            case storageS3KeyTypeProcess:
+            {
+                ASSERT(accessKey == NULL && secretAccessKey == NULL && securityToken == NULL);
+                ASSERT(credCmd != NULL);
+
+                this->credCmd = strLstDup(credCmd);
+                this->credExpirationTime = time(NULL);
 
                 break;
             }

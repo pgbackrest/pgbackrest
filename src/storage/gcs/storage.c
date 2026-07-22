@@ -516,7 +516,7 @@ storageGcsRequestAsync(StorageGcs *const this, const String *const verb, Storage
             result = httpRequestNewP(
                 this->httpClient, verb, path, .query = query, .header = requestHeader, .content = content);
         }
-        MEM_CONTEXT_END();
+        MEM_CONTEXT_PRIOR_END();
     }
     MEM_CONTEXT_TEMP_END();
 
@@ -1154,12 +1154,11 @@ storageGcsRemove(THIS_VOID, const String *const file, const StorageInterfaceRemo
     FUNCTION_LOG_BEGIN(logLevelDebug);
         FUNCTION_LOG_PARAM(STORAGE_GCS, this);
         FUNCTION_LOG_PARAM(STRING, file);
-        FUNCTION_LOG_PARAM(BOOL, param.errorOnMissing);
+        (void)param;
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
     ASSERT(file != NULL);
-    ASSERT(!param.errorOnMissing);
 
     statInc(GCS_STAT_REMOVE_STR);
     httpResponseFree(storageGcsRequestP(this, HTTP_VERB_DELETE_STR, .object = file, .allowMissing = true));

@@ -1,6 +1,7 @@
 /***********************************************************************************************************************************
 Test HTTP
 ***********************************************************************************************************************************/
+#include <errno.h>
 #include <unistd.h>
 
 #include "common/io/fdRead.h"
@@ -9,8 +10,8 @@ Test HTTP
 #include "common/io/socket/client.h"
 #include "common/io/tls/client.h"
 
-#include "common/harnessFork.h"
-#include "common/harnessServer.h"
+#include "harness/fork.h"
+#include "harness/server.h"
 
 /***********************************************************************************************************************************
 HTTP user agent header
@@ -375,7 +376,7 @@ testRun(void)
 
         TEST_ERROR_FMT(
             httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), HostConnectError,
-            "unable to connect to 'localhost:34342 (127.0.0.1)': [111] Connection refused\n"
+            "unable to connect to 'localhost:34342 (127.0.0.1)': [" STRINGIFY(ECONNREFUSED) "] Connection refused\n"
             "[RETRY DETAIL OMITTED]");
 
         HRN_FORK_BEGIN()
@@ -521,6 +522,17 @@ testRun(void)
 
                 hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
                 hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\ntransfer-encoding:chunked\r\ncontent-length:777\r\n\r\n");
+
+                hrnServerScriptClose(http);
+
+                TEST_ERROR(
+                    httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), FormatError,
+                    "'transfer-encoding' and 'content-length' headers are both set");
+
+                hrnServerScriptAccept(http);
+
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
+                hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\ntransfer-encoding:chunked\r\ncontent-length:0\r\n\r\n");
 
                 hrnServerScriptClose(http);
 
@@ -909,6 +921,35 @@ testRun(void)
                 TEST_RESULT_STR_Z(strNewBuf(buffer), "", "check response");
 
                 // -----------------------------------------------------------------------------------------------------------------
+                TEST_TITLE("request with chunked content extensions and trailers");
+
+                hrnServerScriptAccept(http);
+
+                hrnServerScriptExpectZ(http, "GET / HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
+                hrnServerScriptReplyZ(
+                    http,
+                    "HTTP/1.1 200 OK\r\nTransfer-Encoding:Chunked\r\n\r\n"
+                    "5;foo=bar\r\nhello\r\n"
+                    "0\r\nx-trailer: y\r\n\r\n");
+
+                TEST_ASSIGN(response, httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/")), false), "request");
+                TEST_RESULT_VOID(
+                    FUNCTION_LOG_OBJECT_FORMAT(httpResponseHeader(response), httpHeaderToLog, logBuf, sizeof(logBuf)),
+                    "httpHeaderToLog");
+                TEST_RESULT_Z(logBuf, "{transfer-encoding: 'chunked'}", "check response headers");
+
+                buffer = bufNew(6);
+
+                TEST_RESULT_VOID(ioRead(httpResponseIoRead(response), buffer), "read response");
+                TEST_RESULT_STR_Z(strNewBuf(buffer), "hello", "check response");
+
+                hrnServerScriptExpectZ(http, "GET /reuse HTTP/1.1\r\n" TEST_USER_AGENT "\r\n");
+                hrnServerScriptReplyZ(http, "HTTP/1.1 200 OK\r\ncontent-length:2\r\n\r\nOK");
+
+                TEST_ASSIGN(response, httpRequestResponse(httpRequestNewP(client, STRDEF("GET"), STRDEF("/reuse")), true), "request");
+                TEST_RESULT_STR_Z(strNewBuf(httpResponseContent(response)), "OK", "check response");
+
+                // -----------------------------------------------------------------------------------------------------------------
                 TEST_TITLE("request with multipart request and response");
 
                 ioBufferSizeSet(512);
@@ -920,17 +961,17 @@ testRun(void)
                     "GET / HTTP/1.1\r\n" TEST_USER_AGENT
                     "content-type:multipart/mixed; boundary=QKX4EYg4LARJ\r\n"
                     "hdr1:1\r\n\r\n"
-                    "\r\n--QKX4EYg4LARJ\r\n"
-                    "content-type:application/http\r\n"
-                    "content-transfer-encoding:binary\r\n"
-                    "content-id:0\r\n\r\n"
+                    "--QKX4EYg4LARJ\r\n"
+                    "Content-Type: application/http\r\n"
+                    "Content-Transfer-Encoding: binary\r\n"
+                    "Content-ID: 0\r\n\r\n"
                     "GET / HTTP/1.1\r\n\r\n"
                     "\r\n--QKX4EYg4LARJ\r\n"
-                    "content-type:application/http\r\n"
-                    "content-transfer-encoding:binary\r\n"
-                    "content-id:1\r\n\r\n"
+                    "Content-Type: application/http\r\n"
+                    "Content-Transfer-Encoding: binary\r\n"
+                    "Content-ID: 1\r\n\r\n"
                     "POST /ack HTTP/1.1\r\n"
-                    "content-length:3\r\n\r\n"
+                    "content-length: 3\r\n\r\n"
                     HTTP_MULTIPART_BOUNDARY_INIT
                     "\r\n--QKX4EYg4LARJ--\r\n");
                 hrnServerScriptReplyZ(
@@ -940,7 +981,8 @@ testRun(void)
                     "--XXX\r\n"
                     "content-type:application/http\r\n"
                     "content-id:0\r\n\r\n"
-                    "HTTP/1.1 200 OK\r\n\r\n"
+                    // Headers terminated by the boundary rather than a blank line (as Azure does for empty-body parts)
+                    "HTTP/1.1 200 OK\r\n"
                     "\r\n--XXX\r\n"
                     "content-type:application/http\r\n"
                     "content-id:1\r\n"

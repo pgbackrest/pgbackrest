@@ -6,7 +6,7 @@ Test Configuration Load
 #include "protocol/helper.h"
 #include "version.h"
 
-#include "common/harnessConfig.h"
+#include "harness/config.h"
 #include "storage/cifs/storage.h"
 #include "storage/posix/storage.h"
 
@@ -830,6 +830,48 @@ testRun(void)
         umask(0111);
         TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config for no-neutral-umask");
         TEST_RESULT_INT(umask(0), 0111, "umask was not reset");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error when run as root and allow-root is disabled");
+
+        // Force root so the check can be exercised without actually running as root. userInit() is called first so this value is
+        // not overwritten when cfgLoad() calls userInit().
+        userInit();
+        userLocalData.userRoot = true;
+
+        argList = strLstNew();
+        strLstAddZ(argList, PROJECT_BIN);
+        hrnCfgArgRawZ(argList, cfgOptStanza, "db");
+        hrnCfgArgRawZ(argList, cfgOptPgPath, "/path/to/pg");
+        hrnCfgArgRawZ(argList, cfgOptLogLevelConsole, "off");
+        hrnCfgArgRawZ(argList, cfgOptLogLevelStderr, "off");
+        hrnCfgArgRawZ(argList, cfgOptLogLevelFile, "off");
+        strLstAddZ(argList, CFGCMD_ARCHIVE_GET);
+
+        TEST_ERROR(
+            cfgLoad(strLstSize(argList), strLstPtr(argList)), OptionInvalidError,
+            "the 'archive-get' command must not be run as the root user\n"
+            "HINT: running as root can create files that the regular user cannot access, causing later commands to fail.\n"
+            "HINT: set the 'allow-root' option to allow running this command as root.");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("allow run as root when allow-root is enabled");
+
+        hrnCfgArgRawBool(argList, cfgOptAllowRoot, true);
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load config as root with allow-root");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("allow run as root when allow-root is not valid for the command");
+
+        argList = strLstNew();
+        strLstAddZ(argList, PROJECT_BIN);
+        strLstAddZ(argList, CFGCMD_VERSION);
+
+        TEST_RESULT_VOID(cfgLoad(strLstSize(argList), strLstPtr(argList)), "load version command as root");
+
+        // Reset root so subsequent tests are not affected
+        userLocalData.userRoot = false;
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("no command");

@@ -92,7 +92,7 @@ sub process
             ' - ' . $self->{oManifest}->variableGet('project-tagline') : '')),
         $self->{oManifest}->variableReplace($strTitle . (defined($strSubTitle) ? " - ${strSubTitle}" : '')),
         $self->{oManifest}->variableGet('project-favicon'),
-        $self->{oManifest}->variableGet('project-logo'),
+        $self->{oManifest}->variableTest('logo', 'n') ? undef : $self->{oManifest}->variableGet('project-logo'),
         $self->{oManifest}->variableReplace(trim($self->{oDoc}->fieldGet('description'))),
         $self->{bPretty},
         $self->{bCompact},

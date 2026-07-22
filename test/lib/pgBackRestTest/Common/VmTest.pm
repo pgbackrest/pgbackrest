@@ -55,8 +55,17 @@ use constant VM_ARCH_AARCH64                                        => 'aarch64'
     push @EXPORT, qw(VM_ARCH_AARCH64);
 use constant VM_ARCH_I386                                           => 'i386';
     push @EXPORT, qw(VM_ARCH_I386);
+use constant VM_ARCH_PPC64LE                                        => 'ppc64le';
+    push @EXPORT, qw(VM_ARCH_PPC64LE);
+use constant VM_ARCH_S390X                                          => 's390x';
+    push @EXPORT, qw(VM_ARCH_S390X);
 use constant VM_ARCH_X86_64                                         => 'x86_64';
     push @EXPORT, qw(VM_ARCH_X86_64);
+
+# List of architectures that a container can be built for
+use constant VM_ARCH_LIST                                           =>
+    (VM_ARCH_AARCH64, VM_ARCH_I386, VM_ARCH_PPC64LE, VM_ARCH_S390X, VM_ARCH_X86_64);
+    push @EXPORT, qw(VM_ARCH_LIST);
 
 ####################################################################################################################################
 # Valid VM list
@@ -69,17 +78,23 @@ use constant VM_NONE                                                => 'none';
 
 use constant VM_A321                                                 => 'a321';
     push @EXPORT, qw(VM_A321);
-use constant VM_D11                                                 => 'd11';
-    push @EXPORT, qw(VM_D11);
+use constant VM_A324                                                 => 'a324';
+    push @EXPORT, qw(VM_A324);
+use constant VM_D12                                                 => 'd12';
+    push @EXPORT, qw(VM_D12);
 use constant VM_RH8                                                 => 'rh8';
     push @EXPORT, qw(VM_RH8);
-use constant VM_F43                                                 => 'f43';
-    push @EXPORT, qw(VM_F43);
+use constant VM_RH9                                                 => 'rh9';
+    push @EXPORT, qw(VM_RH9);
+use constant VM_RH10                                                => 'rh10';
+    push @EXPORT, qw(VM_RH10);
+use constant VM_F44                                                 => 'f44';
+    push @EXPORT, qw(VM_F44);
 use constant VM_U22                                                 => 'u22';
     push @EXPORT, qw(VM_U22);
 
 # List of default test VMs
-use constant VM_LIST                                                => (VM_D11, VM_RH8, VM_U22);
+use constant VM_LIST                                                => (VM_D12, VM_RH8, VM_RH9, VM_RH10, VM_U22, VM_A321, VM_A324);
     push @EXPORT, qw(VM_LIST);
 
 my $oyVm =
@@ -108,11 +123,34 @@ my $oyVm =
         &VM_OS_BASE => VM_OS_BASE_ALPINE,
         &VM_IMAGE => 'alpine:3.21',
         &VMDEF_PG_REPO => false,
-        &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
+        &VMDEF_PGSQL_BIN => '/usr/libexec/postgresql{[version]}',
 
         &VM_DB =>
         [
+            PG_VERSION_15,
+            PG_VERSION_16,
             PG_VERSION_17,
+        ],
+
+        &VM_DB_TEST =>
+        [
+            PG_VERSION_16,
+        ],
+    },
+
+    # Alpine 3.24
+    &VM_A324 =>
+    {
+        &VM_OS_BASE => VM_OS_BASE_ALPINE,
+        &VM_IMAGE => 'alpine:3.24',
+        &VMDEF_PG_REPO => false,
+        &VMDEF_PGSQL_BIN => '/usr/libexec/postgresql{[version]}',
+
+        &VM_DB =>
+        [
+            PG_VERSION_16,
+            PG_VERSION_17,
+            PG_VERSION_18,
         ],
 
         &VM_DB_TEST =>
@@ -121,22 +159,22 @@ my $oyVm =
         ],
     },
 
-    # Debian 11
-    &VM_D11 =>
+    # Debian 12
+    &VM_D12 =>
     {
         &VM_OS_BASE => VM_OS_BASE_DEBIAN,
-        &VM_IMAGE => 'debian:11',
+        &VM_IMAGE => 'debian:12',
         &VMDEF_PG_REPO => false,
         &VMDEF_PGSQL_BIN => '/usr/lib/postgresql/{[version]}/bin',
 
         &VM_DB =>
         [
-            PG_VERSION_13,
+            PG_VERSION_15,
         ],
 
         &VM_DB_TEST =>
         [
-            PG_VERSION_13,
+            PG_VERSION_15,
         ],
     },
 
@@ -145,6 +183,25 @@ my $oyVm =
     {
         &VM_OS_BASE => VM_OS_BASE_RHEL,
         &VM_IMAGE => 'rockylinux/rockylinux:8',
+        &VMDEF_PG_REPO => false,
+        &VMDEF_PGSQL_BIN => '/usr/bin',
+
+        &VM_DB =>
+        [
+            PG_VERSION_10,
+        ],
+
+        &VM_DB_TEST =>
+        [
+            PG_VERSION_10,
+        ],
+    },
+
+    # RHEL 9
+    &VM_RH9 =>
+    {
+        &VM_OS_BASE => VM_OS_BASE_RHEL,
+        &VM_IMAGE => 'rockylinux/rockylinux:9',
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
 
         &VM_DB =>
@@ -153,22 +210,42 @@ my $oyVm =
             PG_VERSION_15,
             PG_VERSION_16,
             PG_VERSION_17,
+            PG_VERSION_18,
         ],
 
         &VM_DB_TEST =>
         [
             PG_VERSION_14,
-            PG_VERSION_15,
-            PG_VERSION_16,
-            PG_VERSION_17,
         ],
     },
 
-    # Fedora 43
-    &VM_F43 =>
+    # RHEL 10
+    &VM_RH10 =>
     {
         &VM_OS_BASE => VM_OS_BASE_RHEL,
-        &VM_IMAGE => 'fedora:43',
+        &VM_IMAGE => 'rockylinux/rockylinux:10',
+        &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
+
+        &VM_DB =>
+        [
+            PG_VERSION_14,
+            PG_VERSION_15,
+            PG_VERSION_16,
+            PG_VERSION_17,
+            PG_VERSION_18,
+        ],
+
+        &VM_DB_TEST =>
+        [
+            PG_VERSION_18,
+        ],
+    },
+
+    # Fedora 44
+    &VM_F44 =>
+    {
+        &VM_OS_BASE => VM_OS_BASE_RHEL,
+        &VM_IMAGE => 'fedora:44',
         &VMDEF_PGSQL_BIN => '/usr/pgsql-{[version]}/bin',
         &VMDEF_COVERAGE_C => true,
 
@@ -207,15 +284,16 @@ my $oyVm =
             PG_VERSION_16,
             PG_VERSION_17,
             PG_VERSION_18,
+            PG_VERSION_19,
         ],
 
         &VM_DB_TEST =>
         [
             PG_VERSION_96,
-            PG_VERSION_10,
             PG_VERSION_11,
             PG_VERSION_12,
-            PG_VERSION_18,
+            PG_VERSION_13,
+            PG_VERSION_19,
         ],
     },
 };

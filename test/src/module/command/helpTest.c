@@ -7,8 +7,8 @@ Test Help Command
 #include "storage/posix/storage.h"
 #include "version.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessStorage.h"
+#include "harness/config.h"
+#include "harness/storage.h"
 
 /***********************************************************************************************************************************
 Configuration load with just enough functionality to test help
@@ -250,6 +250,8 @@ testRun(void)
             "\n"
             "General Options:\n"
             "\n"
+            "  --allow-root                        allow the command to run as the root user\n"
+            "                                      [default=y]\n"
             "  --buffer-size                       buffer size for I/O operations\n"
             "                                      [current=32768, default=1MiB]\n"
             "  --cmd                               pgBackRest command\n"
@@ -342,11 +344,13 @@ testRun(void)
             "  --repo-s3-key-secret                S3 repository secret access key\n"
             "  --repo-s3-key-type                  S3 repository key type\n"
             "  --repo-s3-kms-key-id                S3 repository KMS key\n"
+            "  --repo-s3-process-cmd               S3 authentication process command\n"
             "  --repo-s3-region                    S3 repository region\n"
             "  --repo-s3-requester-pays            S3 repository requester pays\n"
             "  --repo-s3-role                      S3 repository role\n"
             "  --repo-s3-service                   S3 signing service\n"
             "  --repo-s3-sse-customer-key          S3 repository SSE customer key\n"
+            "  --repo-s3-sts-host                  S3 repository STS endpoint\n"
             "  --repo-s3-token                     S3 repository security token\n"
             "  --repo-s3-uri-style                 S3 URI Style\n"
             "  --repo-sftp-host                    SFTP repository host\n"
@@ -503,6 +507,11 @@ testRun(void)
             "Repository cipher passphrase.\n"
             "\n"
             "Passphrase used to encrypt/decrypt files of the repository.\n"
+            "\n"
+            "NOTE: When run without the stanza option the info command reads encryption\n"
+            "settings only from the global section. If encryption settings are configured\n"
+            "per stanza, run the info command with the stanza option to read an encrypted\n"
+            "stanza.\n"
             "\n"
             "current: <redacted>\n",
             helpVersion);

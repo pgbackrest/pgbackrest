@@ -3,7 +3,7 @@ Test Error Handling
 ***********************************************************************************************************************************/
 #include <assert.h>
 
-#include "common/harnessFork.h"
+#include "harness/fork.h"
 
 /***********************************************************************************************************************************
 Declare some error locally because real errors won't work for some tests -- they could also break as errors change
@@ -171,6 +171,7 @@ testRun(void)
 
                             char bigMessage[sizeof(messageBuffer) + 128];
                             memset(bigMessage, 'A', sizeof(bigMessage));
+                            bigMessage[sizeof(bigMessage) - 1] = '\0';
 
                             THROW(AssertError, bigMessage);
                         }
@@ -407,6 +408,37 @@ testRun(void)
             printf("%s\n", errorMessage());
             assert(errorCode() == AssertError.code);
             assert(strcmp(errorMessage(), "message 1") == 0);
+        }
+        TRY_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        // A formatted message larger than the buffer is truncated instead of overflowing when the system message is appended
+        char bigMessage[sizeof(messageBuffer) + 128];
+        memset(bigMessage, 'A', sizeof(bigMessage));
+        bigMessage[sizeof(bigMessage) - 1] = '\0';
+
+        TRY_BEGIN()
+        {
+            errno = EIO;
+            THROW_SYS_ERROR_FMT(AssertError, "%s", bigMessage);
+        }
+        CATCH_FATAL()
+        {
+            assert(errorCode() == AssertError.code);
+            assert(strlen(errorMessage()) == sizeof(messageBuffer) - 1);
+        }
+        TRY_END();
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TRY_BEGIN()
+        {
+            errno = EIO;
+            THROW_ON_SYS_ERROR_FMT(true, AssertError, "%s", bigMessage);
+        }
+        CATCH_FATAL()
+        {
+            assert(errorCode() == AssertError.code);
+            assert(strlen(errorMessage()) == sizeof(messageBuffer) - 1);
         }
         TRY_END();
     }

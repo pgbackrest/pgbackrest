@@ -5,9 +5,9 @@ Test Exit Routines
 #include "config/config.h"
 #include "version.h"
 
-#include "common/harnessConfig.h"
-#include "common/harnessError.h"
-#include "common/harnessFork.h"
+#include "harness/config.h"
+#include "harness/error.h"
+#include "harness/fork.h"
 
 /***********************************************************************************************************************************
 Test Run
@@ -30,6 +30,7 @@ testRun(void)
     if (testBegin("exitInit() and exitOnSignal()"))
     {
         TEST_RESULT_INT(exitSafe(0, false, signalTypeNone), 0, "exit with no command");
+        TEST_RESULT_VOID(exitOnSignal(signalTypeTerm), "ignore signal when exit in progress");
         HRN_CFG_LOAD(cfgCmdHelp, strLstNew());
 
         HRN_FORK_BEGIN()
