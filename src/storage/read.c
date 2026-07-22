@@ -20,7 +20,8 @@ struct StorageRead
     uint64_t bytesRead;                                             // Bytes that have been successfully read
     bool retry;                                                     // Are read retries allowed?
     bool compressible;                                              // Is the read compressible?
-    bool openAsync;                                                 // Async open that must be completed before first read
+    bool async;                                                     // Async (deferred) open result enabled
+    bool openAsync;                                                 // Async open pending completion before first read
 };
 
 /***********************************************************************************************************************************
@@ -52,15 +53,16 @@ storageReadOpen(THIS_VOID)
     {
         result = storageReadDriverInterface(this->driver)->open(this->driver);
 
-        // If the open was async then it is not yet known if the file exists
+        // If the driver open was async then it is not yet known if the file exists
         if (result && storageReadDriverInterface(this->driver)->openAsync != NULL)
         {
-            // If missing files are ignored then complete the open now to determine if the file exists. Otherwise defer completing
-            // the open until first read so multiple opens can be in flight at once.
-            if (this->pub.ignoreMissing)
-                result = storageReadDriverInterface(this->driver)->openAsync(this->driver);
-            else
+            // Defer completing the open until the first read so that multiple opens can be in flight at once, but only when async
+            // is enabled (multi-read prefetch). Otherwise complete the open now so existence is known as soon as the read is
+            // opened, which is what a single read expects. Async is never combined with ignore missing, see storageReadNew().
+            if (this->async)
                 this->openAsync = true;
+            else
+                result = storageReadDriverInterface(this->driver)->openAsync(this->driver);
         }
     }
 
@@ -233,13 +235,14 @@ static const IoReadInterface storageIoReadInterface =
 
 FN_EXTERN StorageRead *
 storageReadNew(
-    const Storage *const storage, const String *const name, const bool ignoreMissing, const bool compressible,
+    const Storage *const storage, const String *const name, const bool ignoreMissing, const bool async, const bool compressible,
     const uint64_t offset, const Variant *const limit, const bool version, const String *const versionId)
 {
     FUNCTION_LOG_BEGIN(logLevelTrace);
         FUNCTION_LOG_PARAM(STORAGE, storage);
         FUNCTION_LOG_PARAM(STRING, name);
         FUNCTION_LOG_PARAM(BOOL, ignoreMissing);
+        FUNCTION_LOG_PARAM(BOOL, async);
         FUNCTION_LOG_PARAM(BOOL, compressible);
         FUNCTION_LOG_PARAM(UINT64, offset);
         FUNCTION_LOG_PARAM(VARIANT, limit);
@@ -251,6 +254,8 @@ storageReadNew(
 
     ASSERT(storage != NULL);
     ASSERT(name != NULL);
+    // Async (deferred) open cannot be used with ignore missing files
+    ASSERT(!async || !ignoreMissing);
 
     OBJ_NEW_BEGIN(StorageRead, .childQty = MEM_CONTEXT_QTY_MAX)
     {
@@ -262,6 +267,7 @@ storageReadNew(
                 .versionId = versionId),
             .retry = storageFeature(storage, storageFeatureReadRetry),
             .compressible = compressible,
+            .async = async,
             .pub =
             {
                 .type = storageType(storage),

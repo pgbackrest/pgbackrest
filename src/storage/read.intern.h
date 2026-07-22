@@ -25,8 +25,8 @@ typedef struct StorageReadInterface
 Constructors
 ***********************************************************************************************************************************/
 FN_EXTERN StorageRead *storageReadNew(
-    const Storage *storage, const String *name, bool ignoreMissing, bool compressible, uint64_t offset, const Variant *limit,
-    bool version, const String *versionId);
+    const Storage *storage, const String *name, bool ignoreMissing, bool async, bool compressible, uint64_t offset,
+    const Variant *limit, bool version, const String *versionId);
 
 /***********************************************************************************************************************************
 Getters

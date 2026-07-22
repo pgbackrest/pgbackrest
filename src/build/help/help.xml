@@ -1308,7 +1308,7 @@
                         <summary>Repository storage prefetch.</summary>
 
                         <text>
-                            <p>Determines the number of requests to prefetch when read from object stores, e.g. <proper>S3</proper>. This is not true concurrency but it reduces the latency involved in submitting requests.</p>
+                            <p>Determines the number of requests to prefetch when reading from object stores, e.g. <proper>S3</proper>. This is not true concurrency but it reduces the latency involved in submitting requests.</p>
 
                             <p>Note that the number of open requests per read will be one greater than prefetch, since the initial read cannot be prefetched.</p>
                         </text>

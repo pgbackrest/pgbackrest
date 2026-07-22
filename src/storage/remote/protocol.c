@@ -432,7 +432,7 @@ storageRemoteReadOpenProtocol(PackRead *const param)
 
         // Create the read object ignoring missing since the client decides whether a missing file is an error
         StorageRead *const fileRead = storageReadNew(
-            storageRemoteProtocolLocal.storage, file, true, false, offset, limit, versionId != NULL, versionId);
+            storageRemoteProtocolLocal.storage, file, true, false, false, offset, limit, versionId != NULL, versionId);
 
         // Set filter group based on passed filters
         storageRemoteFilterGroup(ioReadFilterGroup(storageReadIo(fileRead)), filter);

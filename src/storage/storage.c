@@ -528,7 +528,8 @@ storageNewRead(const Storage *const this, const String *const fileExp, const Sto
 
         result = storageReadMove(
             storageReadNew(
-                this, path, param.ignoreMissing, param.compressible, param.offset, param.limit, this->targetTime != 0, versionId),
+                this, path, param.ignoreMissing, false, param.compressible, param.offset, param.limit, this->targetTime != 0,
+                versionId),
             memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();

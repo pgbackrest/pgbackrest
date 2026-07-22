@@ -97,7 +97,7 @@ storageReadMultiDefaultQueue(StorageReadMultiDefault *const this, const bool pre
             MEM_CONTEXT_OBJ_BEGIN(this->queue)
             {
                 StorageRead *const read = storageReadNew(
-                    this->storage, request->file, false, request->compressible, request->offset,
+                    this->storage, request->file, false, true, request->compressible, request->offset,
                     request->limit != STORAGE_READ_MULTI_NO_LIMIT ? VARUINT64(request->limit) : NULL,
                     request->versionId != NULL, request->versionId);
                 ioReadOpen(storageReadIo(read));
