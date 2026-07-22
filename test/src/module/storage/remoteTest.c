@@ -300,7 +300,7 @@ testRun(void)
         TEST_RESULT_BOOL(storageReadIgnoreMissing(fileRead), false, "check ignore missing");
         TEST_RESULT_STR_Z(storageReadName(fileRead), TEST_PATH "/repo128/test.txt", "check name");
         TEST_RESULT_UINT(storageReadRemote(fileRead->driver, bufNew(32), false), 0, "nothing more to read");
-        TEST_RESULT_UINT(((StorageReadRemote *)fileRead->driver)->protocolReadBytes, bufSize(contentBuf), "check read size");
+        TEST_RESULT_UINT(((StorageReadRemote *)fileRead->driver)->stream.protocolReadBytes, bufSize(contentBuf), "check read size");
 
         // Enable protocol compression in the storage object
         ((StorageRemote *)storageDriver(storageRepo))->compressLevel = 3;
@@ -310,7 +310,7 @@ testRun(void)
 
         TEST_ASSIGN(fileRead, storageNewReadP(storageRepo, STRDEF("test.txt"), .limit = VARUINT64(11)), "get file");
         TEST_RESULT_STR_Z(strNewBuf(storageGetP(fileRead)), "BABABABABAB", "check contents");
-        TEST_RESULT_UINT(((StorageReadRemote *)fileRead->driver)->protocolReadBytes, 11, "check read size");
+        TEST_RESULT_UINT(((StorageReadRemote *)fileRead->driver)->stream.protocolReadBytes, 11, "check read size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("read partial file then close");
@@ -362,7 +362,8 @@ testRun(void)
         TEST_RESULT_BOOL(bufEq(storageGetP(fileRead), contentBuf), true, "check contents");
         // We don't know how much protocol compression there will be exactly, but make sure this is some
         TEST_RESULT_BOOL(
-            ((StorageReadRemote *)fileRead->driver)->protocolReadBytes < bufSize(contentBuf), true, "check compressed read size");
+            ((StorageReadRemote *)fileRead->driver)->stream.protocolReadBytes < bufSize(contentBuf), true,
+            "check compressed read size");
 
         // -------------------------------------------------------------------------------------------------------------------------
         TEST_TITLE("file missing");
@@ -424,6 +425,107 @@ testRun(void)
 
         TEST_ERROR(
             storageRemoteFilterGroup(ioFilterGroupNew(), pckWriteResult(filterWrite)), AssertError, "unable to add filter 'bogus'");
+    }
+
+    // *****************************************************************************************************************************
+    if (testBegin("storageNewReadMulti()"))
+    {
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("empty multi read");
+
+        StorageReadMulti *readMulti = NULL;
+        TEST_ASSIGN(readMulti, storageNewReadMultiP(storageRepo), "new multi read");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadMultiIo(readMulti)), true, "open");
+        TEST_RESULT_UINT(ioRead(storageReadMultiIo(readMulti), bufNew(16)), 0, "read returns no data");
+        TEST_RESULT_BOOL(ioReadEof(storageReadMultiIo(readMulti)), true, "eof");
+        TEST_RESULT_VOID(ioReadClose(storageReadMultiIo(readMulti)), "close");
+        TEST_RESULT_VOID(storageReadMultiFree(readMulti), "free");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("error on missing file");
+
+        TEST_ASSIGN(readMulti, storageNewReadMultiP(storageRepo), "new multi read");
+        TEST_RESULT_VOID(storageReadMultiAddP(readMulti, STRDEF("missing.txt")), "add missing file");
+        TEST_ERROR_FMT(
+            ioReadOpen(storageReadMultiIo(readMulti)), FileMissingError,
+            "raised from remote-0 shim protocol: " STORAGE_ERROR_READ_MISSING, TEST_PATH "/repo128/missing.txt");
+        TEST_RESULT_VOID(storageReadMultiFree(readMulti), "free");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi read with combined, gapped, and unlimited requests");
+
+        HRN_STORAGE_PUT_Z(storageTest, TEST_PATH "/repo128/multi1.txt", "0123456789");
+        HRN_STORAGE_PUT_Z(storageTest, TEST_PATH "/repo128/multi2.txt", "ABCDEFGHIJ");
+
+        // Disable protocol compression in the storage object
+        ((StorageRemote *)storageDriver(storageRepo))->compressLevel = 0;
+
+        TEST_ASSIGN(readMulti, storageNewReadMultiP(storageRepo), "new multi read");
+        TEST_RESULT_VOID(storageReadMultiAddP(readMulti, STRDEF("multi1.txt"), .offset = 1, .limit = VARUINT64(3)), "add range");
+        TEST_RESULT_VOID(
+            storageReadMultiAddP(readMulti, STRDEF("multi1.txt"), .offset = 4, .limit = VARUINT64(2)), "add contiguous range");
+        TEST_RESULT_VOID(
+            storageReadMultiAddP(readMulti, STRDEF("multi1.txt"), .offset = 8, .limit = VARUINT64(2)), "add gapped range");
+        TEST_RESULT_VOID(storageReadMultiAddP(readMulti, STRDEF("multi2.txt")), "add file with no limit");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadMultiIo(readMulti)), true, "open");
+
+        Buffer *bufferMulti = bufNew(256);
+        TEST_RESULT_UINT(ioRead(storageReadMultiIo(readMulti), bufferMulti), 17, "read");
+        TEST_RESULT_STR_Z(strNewBuf(bufferMulti), "1234589ABCDEFGHIJ", "check contents");
+        TEST_RESULT_BOOL(ioReadEof(storageReadMultiIo(readMulti)), true, "eof");
+        TEST_RESULT_VOID(ioReadClose(storageReadMultiIo(readMulti)), "close");
+        TEST_RESULT_VOID(storageReadMultiFree(readMulti), "free");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi read larger than chunk size");
+
+        HRN_STORAGE_PUT(storageTest, TEST_PATH "/repo128/multi3.txt", contentBuf);
+
+        TEST_ASSIGN(readMulti, storageNewReadMultiP(storageRepo), "new multi read");
+        TEST_RESULT_VOID(storageReadMultiAddP(readMulti, STRDEF("multi3.txt")), "add file");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadMultiIo(readMulti)), true, "open");
+
+        bufferMulti = bufNew(bufSize(contentBuf) + 1);
+        TEST_RESULT_UINT(ioRead(storageReadMultiIo(readMulti), bufferMulti), bufUsed(contentBuf), "read");
+        TEST_RESULT_BOOL(bufEq(bufferMulti, contentBuf), true, "check contents");
+        TEST_RESULT_VOID(ioReadClose(storageReadMultiIo(readMulti)), "close");
+        TEST_RESULT_VOID(storageReadMultiFree(readMulti), "free");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi read with protocol compression");
+
+        // Enable protocol compression in the storage object
+        ((StorageRemote *)storageDriver(storageRepo))->compressLevel = 3;
+
+        HRN_STORAGE_PUT(storageTest, TEST_PATH "/repo128/multi3.txt", contentBuf);
+
+        TEST_ASSIGN(readMulti, storageNewReadMultiP(storageRepo), "new multi read");
+        TEST_RESULT_VOID(storageReadMultiAddP(readMulti, STRDEF("multi3.txt"), .compressible = true), "add compressible file");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadMultiIo(readMulti)), true, "open");
+
+        bufferMulti = bufNew(bufSize(contentBuf) + 1);
+        TEST_RESULT_UINT(ioRead(storageReadMultiIo(readMulti), bufferMulti), bufUsed(contentBuf), "read");
+        TEST_RESULT_BOOL(bufEq(bufferMulti, contentBuf), true, "check contents");
+        // We don't know how much protocol compression there will be exactly, but make sure there is some
+        TEST_RESULT_BOOL(
+            ((StorageReadMultiRemote *)readMulti->driver)->stream.protocolReadBytes < bufSize(contentBuf), true,
+            "check compressed read size");
+        TEST_RESULT_VOID(ioReadClose(storageReadMultiIo(readMulti)), "close");
+        TEST_RESULT_VOID(storageReadMultiFree(readMulti), "free");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi read partial then close");
+
+        TEST_ASSIGN(readMulti, storageNewReadMultiP(storageRepo), "new multi read");
+        TEST_RESULT_VOID(storageReadMultiAddP(readMulti, STRDEF("multi1.txt")), "add file");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadMultiIo(readMulti)), true, "open");
+
+        bufferMulti = bufNew(4);
+        TEST_RESULT_UINT(ioRead(storageReadMultiIo(readMulti), bufferMulti), 4, "partial read");
+        TEST_RESULT_STR_Z(strNewBuf(bufferMulti), "0123", "check contents");
+        TEST_RESULT_BOOL(ioReadEof(storageReadMultiIo(readMulti)), false, "no eof");
+        TEST_RESULT_VOID(ioReadClose(storageReadMultiIo(readMulti)), "close");
+        TEST_RESULT_VOID(storageReadMultiFree(readMulti), "free");
     }
 
     // *****************************************************************************************************************************
@@ -776,6 +878,27 @@ testRun(void)
             .level = storageInfoLevelBasic);
         TEST_STORAGE_GET(storageRepo, "test1", "test1");
         TEST_RESULT_INT(storageInfoP(storageRepo, STRDEF("test1")).timeModified, 1724734625, "check time");
+
+        // -------------------------------------------------------------------------------------------------------------------------
+        TEST_TITLE("multi read targeted by time");
+
+        StorageReadMulti *readMulti = NULL;
+        TEST_ASSIGN(readMulti, storageNewReadMultiP(storageRepo), "new multi read");
+        TEST_RESULT_VOID(
+            storageReadMultiAddP(readMulti, STRDEF("test1"), .offset = 0, .limit = VARUINT64(3)), "add versioned file");
+        TEST_RESULT_VOID(
+            storageReadMultiAddP(readMulti, STRDEF("test1"), .offset = 3, .limit = VARUINT64(2)),
+            "add same versioned file, reusing the resolved version");
+        TEST_ERROR(
+            storageReadMultiAddP(readMulti, STRDEF("missing")), FileMissingError,
+            "unable to open missing file '" TEST_PATH "/repo128/missing' for read");
+        TEST_RESULT_BOOL(ioReadOpen(storageReadMultiIo(readMulti)), true, "open");
+
+        Buffer *const bufferVersion = bufNew(16);
+        TEST_RESULT_UINT(ioRead(storageReadMultiIo(readMulti), bufferVersion), 5, "read");
+        TEST_RESULT_STR_Z(strNewBuf(bufferVersion), "test1", "check version contents");
+        TEST_RESULT_VOID(ioReadClose(storageReadMultiIo(readMulti)), "close");
+        TEST_RESULT_VOID(storageReadMultiFree(readMulti), "free");
     }
 
     // When clients are freed by protocolClientFree() they do not wait for a response. We need to wait for a response here to be

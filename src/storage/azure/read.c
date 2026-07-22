@@ -28,12 +28,38 @@ struct StorageReadAzure
     const Variant *limit;                                           // Read limit (NULL for no limit)
     const String *versionId;                                        // Version id (NULL for most recent)
 
+    HttpRequest *httpRequest;                                       // HTTP request
     HttpResponse *httpResponse;                                     // HTTP response
 };
 
 /***********************************************************************************************************************************
 Open the file
 ***********************************************************************************************************************************/
+static bool
+storageReadAzureOpenAsync(THIS_VOID)
+{
+    THIS(StorageReadAzure);
+
+    FUNCTION_LOG_BEGIN(logLevelTrace);
+        FUNCTION_LOG_PARAM(STORAGE_READ_AZURE, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+    ASSERT(this->httpRequest != NULL);
+
+    // Wait for response
+    MEM_CONTEXT_OBJ_BEGIN(this)
+    {
+        this->httpResponse = storageAzureResponseP(this->httpRequest, .allowMissing = true, .contentIo = true);
+
+        httpRequestFree(this->httpRequest);
+        this->httpRequest = NULL;
+    }
+    MEM_CONTEXT_OBJ_END();
+
+    FUNCTION_LOG_RETURN(BOOL, httpResponseCodeOk(this->httpResponse));
+}
+
 static bool
 storageReadAzureOpen(THIS_VOID)
 {
@@ -49,14 +75,14 @@ storageReadAzureOpen(THIS_VOID)
     // Request the file
     MEM_CONTEXT_OBJ_BEGIN(this)
     {
-        this->httpResponse = storageAzureRequestP(
+        this->httpRequest = storageAzureRequestAsyncP(
             this->storage, HTTP_VERB_GET_STR, .path = this->name,
             .query = this->versionId != NULL ? httpQueryPut(httpQueryNewP(), AZURE_QUERY_VERSION_ID_STR, this->versionId) : NULL,
-            .header = httpHeaderPutRange(httpHeaderNew(NULL), this->offset, this->limit), .allowMissing = true, .contentIo = true);
+            .header = httpHeaderPutRange(httpHeaderNew(NULL), this->offset, this->limit));
     }
     MEM_CONTEXT_OBJ_END();
 
-    FUNCTION_LOG_RETURN(BOOL, httpResponseCodeOk(this->httpResponse));
+    FUNCTION_LOG_RETURN(BOOL, true);
 }
 
 /***********************************************************************************************************************************
@@ -73,9 +99,10 @@ storageReadAzure(THIS_VOID, Buffer *const buffer, const bool block)
         FUNCTION_LOG_PARAM(BOOL, block);
     FUNCTION_LOG_END();
 
-    ASSERT(this != NULL && this->httpResponse != NULL);
-    ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
+    ASSERT(this != NULL);
+    ASSERT(this->httpResponse != NULL);
     ASSERT(buffer != NULL && !bufFull(buffer));
+    ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
 
     FUNCTION_LOG_RETURN(SIZE, ioRead(httpResponseIoRead(this->httpResponse), buffer));
 }
@@ -92,7 +119,8 @@ storageReadAzureEof(THIS_VOID)
         FUNCTION_TEST_PARAM(STORAGE_READ_AZURE, this);
     FUNCTION_TEST_END();
 
-    ASSERT(this != NULL && this->httpResponse != NULL);
+    ASSERT(this != NULL);
+    ASSERT(this->httpResponse != NULL);
     ASSERT(httpResponseIoRead(this->httpResponse) != NULL);
 
     FUNCTION_TEST_RETURN(BOOL, ioReadEof(httpResponseIoRead(this->httpResponse)));
@@ -111,8 +139,9 @@ storageReadAzureClose(THIS_VOID)
     FUNCTION_LOG_END();
 
     ASSERT(this != NULL);
-    ASSERT(this->httpResponse != NULL);
 
+    httpRequestFree(this->httpRequest);
+    this->httpRequest = NULL;
     httpResponseFree(this->httpResponse);
     this->httpResponse = NULL;
 
@@ -125,6 +154,7 @@ static const StorageReadInterface storageReadAzureInterface =
     .close = storageReadAzureClose,
     .eof = storageReadAzureEof,
     .open = storageReadAzureOpen,
+    .openAsync = storageReadAzureOpenAsync,
     .read = storageReadAzure,
 };
 

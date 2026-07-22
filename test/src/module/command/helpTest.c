@@ -367,6 +367,8 @@ testRun(void)
             "  --repo-storage-ca-path              repository storage CA path\n"
             "  --repo-storage-host                 repository storage host\n"
             "  --repo-storage-port                 repository storage port\n"
+            "  --repo-storage-prefetch             repository storage prefetch\n"
+            "  --repo-storage-read-over            repository storage read over\n"
             "  --repo-storage-tag                  repository storage tag(s)\n"
             "  --repo-storage-upload-chunk-size    repository storage upload chunk size\n"
             "  --repo-storage-verify-tls           repository storage certificate verify\n"

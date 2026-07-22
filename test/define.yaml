@@ -355,6 +355,7 @@ unit:
           - storage/iterator
           - storage/list
           - storage/read
+          - storage/readMulti
           - storage/storage
           - storage/write
 
@@ -474,6 +475,7 @@ unit:
           - protocol/server
           - storage/helper
           - storage/remote/read
+          - storage/remote/readMulti
           - storage/remote/protocol
           - storage/remote/storage
           - storage/remote/write
@@ -568,14 +570,16 @@ unit:
 
       # ----------------------------------------------------------------------------------------------------------------------------
       - name: remote
-        total: 11
+        total: 12
 
         coverage:
           - storage/remote/read
+          - storage/remote/readMulti
           - storage/remote/protocol
           - storage/remote/storage
           - storage/remote/write
           - storage/helper
+          - storage/readMulti
           - storage/storage
 
         include:
@@ -595,6 +599,7 @@ unit:
 
         include:
           - storage/helper
+          - storage/readMulti
           - storage/storage
           - storage/write
 
@@ -610,6 +615,7 @@ unit:
 
         include:
           - storage/helper
+          - storage/readMulti
           - storage/storage
           - storage/write
 
@@ -623,6 +629,7 @@ unit:
           - storage/s3/storage
           - storage/s3/write
           - storage/read
+          - storage/readMulti
           - storage/write
           - storage/helper
 

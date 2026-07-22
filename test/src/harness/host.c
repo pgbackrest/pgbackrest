@@ -743,7 +743,7 @@ hrnHostConfig(HrnHost *const this)
                         this->pub.repo1Storage = storageAzureNew(
                             hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_AZURE_CONTAINER), STRDEF(HRN_HOST_AZURE_ACCOUNT),
                             storageAzureKeyTypeShared, STRDEF(HRN_HOST_AZURE_KEY), 4 * 1024 * 1024, NULL, hrnHostIp(azure),
-                            storageAzureUriStylePath, 443, ioTimeoutMs(), httpProtocolTypeHttps, false, NULL, NULL);
+                            storageAzureUriStylePath, 443, ioTimeoutMs(), httpProtocolTypeHttps, false, NULL, NULL, 2, 8192);
                     }
                     MEM_CONTEXT_OBJ_END();
 
@@ -765,7 +765,8 @@ hrnHostConfig(HrnHost *const this)
                         this->pub.repo1Storage = storageGcsNew(
                             hrnHostRepo1Path(this), true, 0, NULL, STRDEF(HRN_HOST_GCS_BUCKET), storageGcsKeyTypeToken,
                             STRDEF(HRN_HOST_GCS_KEY), 4 * 1024 * 1024, NULL,
-                            strNewFmt("%s:%d", strZ(hrnHostIp(gcs)), HRN_HOST_GCS_PORT), ioTimeoutMs(), false, NULL, NULL, NULL);
+                            strNewFmt("%s:%d", strZ(hrnHostIp(gcs)), HRN_HOST_GCS_PORT), ioTimeoutMs(), false, NULL, NULL, NULL, 2,
+                            8192);
                     }
                     MEM_CONTEXT_OBJ_END();
 
@@ -790,7 +791,7 @@ hrnHostConfig(HrnHost *const this)
                             STR(HRN_HOST_S3_REGION), STRDEF("s3"), storageS3KeyTypeShared, storageS3UriStyleHost,
                             STRDEF(HRN_HOST_S3_ACCESS_KEY), STRDEF(HRN_HOST_S3_ACCESS_SECRET_KEY), NULL, NULL, NULL, NULL, NULL,
                             NULL, NULL, NULL, 5 * 1024 * 1024, NULL, hrnHostIp(s3), 443, ioTimeoutMs(), httpProtocolTypeHttps,
-                            false, NULL, NULL, NULL);
+                            false, NULL, NULL, NULL, 2, 8192);
                     }
                     MEM_CONTEXT_OBJ_END();
 

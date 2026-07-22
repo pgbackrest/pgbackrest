@@ -1304,6 +1304,18 @@
                         <example>/etc/pki/tls/certs</example>
                     </config-key>
 
+                    <config-key id="repo-storage-prefetch" name="Repository Storage Prefetch">
+                        <summary>Repository storage prefetch.</summary>
+
+                        <text>
+                            <p>Determines the number of requests to prefetch when reading from object stores, e.g. <proper>S3</proper>. This is not true concurrency but it reduces the latency involved in submitting requests.</p>
+
+                            <p>Note that the number of open requests per read will be one greater than prefetch, since the initial read cannot be prefetched.</p>
+                        </text>
+
+                        <example>7</example>
+                    </config-key>
+
                     <config-key id="repo-storage-host" name="Repository Storage Host">
                         <summary>Repository storage host.</summary>
 
@@ -1322,6 +1334,16 @@
                         </text>
 
                         <example>9000</example>
+                    </config-key>
+
+                    <config-key id="repo-storage-read-over" name="Repository Storage Read Over">
+                        <summary>Repository storage read over.</summary>
+
+                        <text>
+                            <p>Bundles may contain data that is not needed during restore, for example files that already exist. This option skips over unneeded data without starting a new read request on object stores. This is generally faster since the latency on new read requests is higher than continuing a read already in progress. It is also less expensive for most storage classes.</p>
+                        </text>
+
+                        <example>128KiB</example>
                     </config-key>
 
                     <config-key id="repo-storage-tag" name="Repository Storage Tag">

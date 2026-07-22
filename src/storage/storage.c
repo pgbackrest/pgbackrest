@@ -528,12 +528,27 @@ storageNewRead(const Storage *const this, const String *const fileExp, const Sto
 
         result = storageReadMove(
             storageReadNew(
-                this, path, param.ignoreMissing, param.compressible, param.offset, param.limit, this->targetTime != 0, versionId),
+                this, path, param.ignoreMissing, false, param.compressible, param.offset, param.limit, this->targetTime != 0,
+                versionId),
             memContextPrior());
     }
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN(STORAGE_READ, result);
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN StorageReadMulti *
+storageNewReadMulti(const Storage *const this)
+{
+    FUNCTION_LOG_BEGIN(logLevelDebug);
+        FUNCTION_LOG_PARAM(STORAGE, this);
+    FUNCTION_LOG_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_LOG_RETURN(
+        STORAGE_READ_MULTI, storageReadMultiNew(this, this->pub.interface.prefetch, this->pub.interface.readOver));
 }
 
 /**********************************************************************************************************************************/
@@ -822,6 +837,19 @@ storageRemove(const Storage *const this, const String *const fileExp, const Stor
     MEM_CONTEXT_TEMP_END();
 
     FUNCTION_LOG_RETURN_VOID();
+}
+
+/**********************************************************************************************************************************/
+FN_EXTERN time_t
+storageTargetTime(const Storage *const this)
+{
+    FUNCTION_TEST_BEGIN();
+        FUNCTION_TEST_PARAM(STORAGE, this);
+    FUNCTION_TEST_END();
+
+    ASSERT(this != NULL);
+
+    FUNCTION_TEST_RETURN(TIME, this->targetTime);
 }
 
 /**********************************************************************************************************************************/
