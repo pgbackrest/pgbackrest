@@ -91,8 +91,9 @@ storageReadMultiDefaultQueue(StorageReadMultiDefault *const this, const bool pre
     // If the read queue is less than max then queue more reads
     if (lstSize(this->queue) < this->queueMax)
     {
-        // Look for request to queue but skip the last request during prelim queueing since it might not be complete
-        for (unsigned int requestIdx = lstSize(this->queue); requestIdx < lstSize(this->requestList) - prelim; requestIdx++)
+        // Look for request to queue but skip the last request during prelim queueing since it might not be complete. Add prelim to
+        // requestIdx rather than subtracting from list size to avoid an unsigned underflow when the list is empty.
+        for (unsigned int requestIdx = lstSize(this->queue); requestIdx + prelim < lstSize(this->requestList); requestIdx++)
         {
             const StorageReadMultiRequest *const request = lstGet(this->requestList, requestIdx);
 
