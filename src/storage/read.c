@@ -141,7 +141,13 @@ storageRead(THIS_VOID, Buffer *const buffer, const bool block)
                             .offset = this->pub.offset + this->bytesRead,
                             .limit = this->pub.limit != NULL ? varNewUInt64(varUInt64(this->pub.limit) - this->bytesRead) : NULL,
                             .versionId = this->pub.versionId);
-                        storageReadDriverInterface(this->driver)->open(this->driver);
+
+                        // Open should always return true either because a) the file still exists or b) the driver is async and
+                        // existence will be checked later. This is a CHECK() because currently there are not drivers that have
+                        // retry without async.
+                        CHECK_FMT(
+                            FileMissingError, storageReadDriverInterface(this->driver)->open(this->driver),
+                            STORAGE_ERROR_READ_MISSING, strZ(storageReadName(this)));
 
                         // Complete async open on the next try
                         this->openAsync = storageReadDriverInterface(this->driver)->openAsync != NULL;
