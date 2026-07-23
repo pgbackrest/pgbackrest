@@ -121,6 +121,9 @@ storageWritePosixOpen(THIS_VOID)
     // Set free callback to ensure the file descriptor is freed
     memContextCallbackSet(objMemContext(this), storageWritePosixFreeResource, this);
 
+    // advise we don't need to keep on cache
+    posix_fadvise(this->fd, 0, 0, POSIX_FADV_DONTNEED);
+
     // Update user/group owner
     if (this->user != NULL || this->group != NULL)
     {
