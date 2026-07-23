@@ -21,6 +21,8 @@ output sampled for error reporting, and the hint added to errors caused by unexp
 #define PROTOCOL_GREETING_SKIP_MAX                                  65536
 #define PROTOCOL_GREETING_SKIP_SAMPLE_MAX                           64
 
+#define PROTOCOL_GREETING_UNEXPECTED_OUTPUT_FMT                                                                                    \
+    "after %zu byte(s) of unexpected output beginning with '%s'"
 #define PROTOCOL_GREETING_UNEXPECTED_OUTPUT_HINT                                                                                   \
     "HINT: is the remote shell printing output for non-interactive sessions?"
 
@@ -341,8 +343,8 @@ protocolClientGreetingNotFound(const char *const reason, const size_t skipSize, 
 
     THROW_FMT(
         ProtocolError,
-        "greeting not found (%s) after %zu byte(s) of unexpected output beginning with '%s'\n"
-        PROTOCOL_GREETING_UNEXPECTED_OUTPUT_HINT, reason, skipSize, strZ(skipSample));
+        "greeting not found (%s) " PROTOCOL_GREETING_UNEXPECTED_OUTPUT_FMT "\n" PROTOCOL_GREETING_UNEXPECTED_OUTPUT_HINT,
+        reason, skipSize, strZ(skipSample));
 }
 
 /**********************************************************************************************************************************/
@@ -376,20 +378,21 @@ protocolClientNew(const String *const name, const String *const service, IoRead 
             .sessionList = lstNewP(sizeof(ProtocolClientSession)),
         };
 
-        // Read, parse, and check the protocol greeting. The greeting is a JSON object on a single line so any line that does not
-        // begin as one is unexpected output (e.g. a login banner printed by the remote shell for a non-interactive SSH session).
-        // Unexpected output is an error since more of it is likely to arrive in the middle of the protocol session, but search for
-        // the greeting first so the error can confirm that the correct remote was reached. The search is bounded so a stream that
-        // never produces a greeting errors cleanly and errors include a sample of the output to help identify the source.
+        // Read, parse, and check the protocol greeting. The greeting is a machine-generated JSON object on a single line so it
+        // always begins with { and any line that does not is unexpected output (e.g. a login banner printed by the remote shell
+        // for a non-interactive SSH session). Unexpected output is an error since more of it is likely to arrive in the middle of
+        // the protocol session, but search for the greeting first so the error can confirm that the correct remote was reached.
+        // The search is bounded so a stream that never produces a greeting errors cleanly and errors include a sample of the
+        // output to help identify the source.
         MEM_CONTEXT_TEMP_BEGIN()
         {
             String *const skipSample = strNew();
-            volatile size_t skipSize = 0;
-            volatile bool greetingFound = false;
+            size_t skipSize = 0;
+            bool greetingFound = false;
 
             do
             {
-                String *volatile greetingLine = NULL;
+                String *greetingLine = NULL;
 
                 TRY_BEGIN()
                 {
@@ -402,18 +405,7 @@ protocolClientNew(const String *const name, const String *const service, IoRead 
                 }
                 TRY_END();
 
-                JsonRead *volatile greeting = NULL;
-                volatile bool greetingIsJson = false;
-
-                TRY_BEGIN()
-                {
-                    greeting = jsonReadNew(greetingLine);
-
-                    jsonReadObjectBegin(greeting);
-
-                    greetingIsJson = true;
-                }
-                CATCH(JsonFormatError)
+                if (!strBeginsWithZ(greetingLine, "{"))
                 {
                     // The line does not begin as a JSON object so it is unexpected output rather than a malformed greeting. Skip
                     // it, keeping a sample of the skipped output (sanitized to printable characters) for error reporting.
@@ -437,14 +429,16 @@ protocolClientNew(const String *const name, const String *const service, IoRead 
                         protocolClientGreetingNotFound("maximum unexpected output exceeded", skipSize, skipSample);
 
                     strFree(greetingLine);
-                    jsonReadFree(greeting);
                 }
-                TRY_END();
-
-                // Once the line begins as a JSON object any error from parsing or validation is a real greeting mismatch (e.g. a
-                // version skew or protocol change) rather than unexpected output, so let it propagate
-                if (greetingIsJson)
+                // Else the line begins as a JSON object so treat it as the greeting. Any error from parsing or validation is a
+                // real greeting mismatch (e.g. a version skew or protocol change) rather than unexpected output, so let it
+                // propagate.
+                else
                 {
+                    JsonRead *const greeting = jsonReadNew(greetingLine);
+
+                    jsonReadObjectBegin(greeting);
+
                     const struct
                     {
                         const StringId key;
@@ -490,7 +484,7 @@ protocolClientNew(const String *const name, const String *const service, IoRead 
             {
                 THROW_FMT(
                     ProtocolError,
-                    "greeting found after %zu byte(s) of unexpected output beginning with '%s'\n"
+                    "greeting found " PROTOCOL_GREETING_UNEXPECTED_OUTPUT_FMT "\n"
                     PROTOCOL_GREETING_UNEXPECTED_OUTPUT_HINT "\n"
                     "HINT: unexpected output may interrupt the protocol at any time so the connection cannot be used until the"
                     " output is disabled.",
