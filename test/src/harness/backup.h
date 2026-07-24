@@ -71,4 +71,8 @@ void hrnBackupPqScript(unsigned int pgVersion, time_t backupTimeStart, HrnBackup
 
 void hrnBackupScriptSet(const HrnBackupScript *script, unsigned int scriptSize);
 
+// Shim backupFileComparator() to always place global/pg_control at the end of the bundle. This is required for reproducibility
+// since the contents of pg_control vary by architecture so may compress differently and change bundle offsets.
+void hrnBackupFileComparatorShim(void);
+
 #endif

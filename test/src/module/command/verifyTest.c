@@ -24,6 +24,9 @@ testRun(void)
 {
     FUNCTION_HARNESS_VOID();
 
+    // Shim backupFileComparator to place pg_control at end of bundle
+    hrnBackupFileComparatorShim();
+
     // Create storage
     Storage *storageTest = storagePosixNewP(TEST_PATH_STR, .write = true);
 
@@ -2396,10 +2399,10 @@ testRun(void)
             "P00   INFO: backup start archive = 0000000105D944C000000000, lsn = 5d944c0/0\n"
             "P00   INFO: check archive for prior segment 0000000105D944BF000000FF\n"
             "P00 DETAIL: store zero-length file " TEST_PATH "/pg1/postgresql.auto.conf\n"
-            "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/0, 2B, 0.00%) checksum [SHA1]\n"
-            "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/44 (bundle 1/10, 16KB, 5.71%) checksum [SHA1]\n"
-            "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (bundle 1/68, 256KB, 97.14%) checksum [SHA1]\n"
-            "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/544, 8KB, 100.00%) checksum [SHA1]\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/44 (bundle 1/0, 16KB, 5.71%) checksum [SHA1]\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/base/1/2 (bundle 1/57, 256KB, 97.14%) checksum [SHA1]\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/PG_VERSION (bundle 1/533, 2B, 97.14%) checksum [SHA1]\n"
+            "P01 DETAIL: backup file " TEST_PATH "/pg1/global/pg_control (bundle 1/543, 8KB, 100.00%) checksum [SHA1]\n"
             "P00   INFO: execute backup stop and wait for all WAL segments to archive\n"
             "P00   INFO: backup stop archive = 0000000105D944C000000000, lsn = 5d944c0/800000\n"
             "P00 DETAIL: wrote 'backup_label' file returned from backup stop function\n"
