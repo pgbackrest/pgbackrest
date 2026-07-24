@@ -32,12 +32,19 @@ typedef struct TestDefHarness
     const StringList *includeList;                                  // List of modules to include directly in harness
 } TestDefHarness;
 
+// Shimmed function
+typedef struct TestDefShimFunction
+{
+    const String *name;                                             // Function name
+    const String *inc;                                              // Included module the function is defined in (NULL if in shim)
+} TestDefShimFunction;
+
 // Shimmed code modules
 typedef struct TestDefShim
 {
     const String *name;                                             // Shim module name
     bool integration;                                               // Include in integration tests?
-    const StringList *functionList;                                 // List of functions to shim
+    const List *functionList;                                       // List of TestDefShimFunction to shim
 } TestDefShim;
 
 typedef struct TestDefModule

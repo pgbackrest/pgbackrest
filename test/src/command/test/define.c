@@ -66,18 +66,50 @@ testDefParseHarness(Yaml *const yaml, List *const globalHarnessList, List *const
                         {
                             .name = shim,
                             .integration = testDefHarness.integration,
-                            .functionList = strLstNew()
+                            .functionList = lstNewP(sizeof(TestDefShimFunction)),
                         };
 
                         YAML_MAP_BEGIN(yaml)
                         {
                             yamlScalarNextCheckZ(yaml, "function");
 
-                            StringList *const functionList = strLstNew();
+                            List *const functionList = lstNewP(sizeof(TestDefShimFunction));
 
                             YAML_SEQ_BEGIN(yaml)
                             {
-                                strLstAdd(functionList, yamlScalarNext(yaml).value);
+                                TestDefShimFunction function = {0};
+
+                                // A bare scalar is a function defined in the shim module
+                                if (yamlEventPeekIs(yaml, yamlEventTypeScalar))
+                                {
+                                    function.name = yamlScalarNext(yaml).value;
+                                }
+                                // Else a map, e.g. "- func: {inc: mod}", where the function is defined in the included module
+                                else
+                                {
+                                    YAML_MAP_BEGIN(yaml)
+                                    {
+                                        function.name = yamlScalarNext(yaml).value;
+
+                                        YAML_MAP_BEGIN(yaml)
+                                        {
+                                            yamlScalarNextCheckZ(yaml, "inc");
+                                            function.inc = yamlScalarNext(yaml).value;
+                                        }
+                                        YAML_MAP_END();
+                                    }
+                                    YAML_MAP_END();
+                                }
+
+                                // Copy the strings into the list context since they are referenced after parsing
+                                MEM_CONTEXT_OBJ_BEGIN(functionList)
+                                {
+                                    function.name = strDup(function.name);
+                                    function.inc = strDup(function.inc);
+                                }
+                                MEM_CONTEXT_OBJ_END();
+
+                                lstAdd(functionList, &function);
                             }
                             YAML_SEQ_END();
 
@@ -319,11 +351,27 @@ testDefParseModuleList(Yaml *const yaml, List *const moduleList)
                             for (unsigned int shimIdx = 0; shimIdx < lstSize(globalShimList); shimIdx++)
                             {
                                 const TestDefShim *const globalShim = lstGet(globalShimList, shimIdx);
+
+                                // Copy the shim function list
+                                List *const functionList = lstNewP(sizeof(TestDefShimFunction));
+
+                                for (unsigned int funcIdx = 0; funcIdx < lstSize(globalShim->functionList); funcIdx++)
+                                {
+                                    const TestDefShimFunction *const globalFunction = lstGet(globalShim->functionList, funcIdx);
+                                    const TestDefShimFunction function =
+                                    {
+                                        .name = strDup(globalFunction->name),
+                                        .inc = strDup(globalFunction->inc),
+                                    };
+
+                                    lstAdd(functionList, &function);
+                                }
+
                                 const TestDefShim testDefShim =
                                 {
                                     .name = strDup(globalShim->name),
                                     .integration = globalShim->integration,
-                                    .functionList = strLstDup(globalShim->functionList),
+                                    .functionList = functionList,
                                 };
 
                                 lstAdd(shimList, &testDefShim);
